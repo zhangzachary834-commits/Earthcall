@@ -27,7 +27,12 @@ public:
 
     void removeMember(Singular* s);
 
+    // Since members are Singulars*, that means a Relation can be part of a Formation. 
     const std::vector<Singular*>& getMembers() const { return members; }
+
+    // If we want to get the "hard" members, we use this.
+    // Need to change the code to reflect this.
+    const std::vector<Singular*>& getNonRelationMembers() const { return members; }
 
     // -----------------------------------------------------------------
     // Relation management helpers
