@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Earthcall Integration Example</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .section h2 {
+            margin-top: 0;
+            color: #ffd700;
+            font-size: 1.5em;
+        }
+
+        .button {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        .button.secondary {
+            background: linear-gradient(45deg, #4834d4, #686de0);
+        }
+
+        .button.success {
+            background: linear-gradient(45deg, #00b894, #00cec9);
+        }
+
+        .input-group {
+            margin: 15px 0;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 16px;
+        }
+
+        input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+
+        .status.connected {
+            background: rgba(0, 184, 148, 0.3);
+            border: 1px solid #00b894;
+        }
+
+        .status.disconnected {
+            background: rgba(255, 107, 107, 0.3);
+            border: 1px solid #ff6b6b;
+        }
+
+        .canvas-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        #drawingCanvas {
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            cursor: crosshair;
+        }
+
+        .color-picker {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+            justify-content: center;
+        }
+
+        .color-option {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .color-option:hover {
+            transform: scale(1.1);
+        }
+
+        .color-option.selected {
+            border-color: white;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 Earthcall Creative Studio</h1>
+        
+        <!-- Connection Status -->
+        <div class="section">
+            <h2>🔗 Connection Status</h2>
+            <div id="connectionStatus" class="status disconnected">
+                Disconnected from Earthcall
+            </div>
+            <button class="button" onclick="connectToEarthcall()">Connect to Earthcall</button>
+            <button class="button secondary" onclick="requestPermissions()">Request Permissions</button>
+        </div>
+
+        <!-- Brush System -->
+        <div class="section">
+            <h2>🖌️ Brush System</h2>
+            <div class="input-group">
+                <label for="brushSize">Brush Size:</label>
+                <input type="range" id="brushSize" min="1" max="50" value="10">
+                <span id="brushSizeValue">10</span>
+            </div>
+            
+            <div class="input-group">
+                <label for="brushOpacity">Opacity:</label>
+                <input type="range" id="brushOpacity" min="0" max="100" value="100">
+                <span id="brushOpacityValue">100%</span>
+            </div>
+
+            <div class="color-picker">
+                <div class="color-option selected" style="background: #ff0000;" data-color="#ff0000"></div>
+                <div class="color-option" style="background: #00ff00;" data-color="#00ff00"></div>
+                <div class="color-option" style="background: #0000ff;" data-color="#0000ff"></div>
+                <div class="color-option" style="background: #ffff00;" data-color="#ffff00"></div>
+                <div class="color-option" style="background: #ff00ff;" data-color="#ff00ff"></div>
+                <div class="color-option" style="background: #00ffff;" data-color="#00ffff"></div>
+                <div class="color-option" style="background: #ffffff;" data-color="#ffffff"></div>
+            </div>
+
+            <button class="button" onclick="createBrushStroke()">Create Brush Stroke</button>
+            <button class="button secondary" onclick="clearCanvas()">Clear Canvas</button>
+        </div>
+
+        <!-- Drawing Canvas -->
+        <div class="section">
+            <h2>🎨 Drawing Canvas</h2>
+            <div class="canvas-container">
+                <canvas id="drawingCanvas" width="600" height="400"></canvas>
+            </div>
+            <button class="button success" onclick="sendDrawingToEarthcall()">Send to Earthcall</button>
+        </div>
+
+        <!-- Design System -->
+        <div class="section">
+            <h2>🎨 Design System</h2>
+            <div class="input-group">
+                <label for="designType">Design Type:</label>
+                <select id="designType">
+                    <option value="shape">Geometric Shape</option>
+                    <option value="texture">Texture Pattern</option>
+                    <option value="pattern">Decorative Pattern</option>
+                </select>
+            </div>
+            
+            <div class="input-group">
+                <label for="designName">Design Name:</label>
+                <input type="text" id="designName" placeholder="Enter design name">
+            </div>
+
+            <button class="button" onclick="createDesignElement()">Create Design Element</button>
+            <button class="button secondary" onclick="applyDesignTemplate()">Apply Template</button>
+        </div>
+
+        <!-- Avatar System -->
+        <div class="section">
+            <h2>👤 Avatar System</h2>
+            <div class="input-group">
+                <label for="avatarPart">Avatar Part:</label>
+                <select id="avatarPart">
+                    <option value="head">Head</option>
+                    <option value="body">Body</option>
+                    <option value="arms">Arms</option>
+                    <option value="legs">Legs</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label for="modificationType">Modification Type:</label>
+                <select id="modificationType">
+                    <option value="color">Color Change</option>
+                    <option value="shape">Shape Modification</option>
+                    <option value="texture">Texture Change</option>
+                </select>
+            </div>
+
+            <button class="button" onclick="modifyAvatar()">Modify Avatar</button>
+            <button class="button secondary" onclick="exportAvatar()">Export Avatar</button>
+        </div>
+
+        <!-- Communication Log -->
+        <div class="section">
+            <h2>📡 Communication Log</h2>
+            <div id="logContainer" style="height: 200px; overflow-y: auto; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px; font-family: monospace; font-size: 12px;">
+                <div>Waiting for connection...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Earthcall Integration API
+        class EarthcallIntegration {
+            constructor() {
+                this.connected = false;
+                this.permissions = [];
+                this.canvas = document.getElementById('drawingCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.isDrawing = false;
+                this.lastX = 0;
+                this.lastY = 0;
+                this.currentColor = '#ff0000';
+                this.brushSize = 10;
+                this.brushOpacity = 1.0;
+                
+                this.setupCanvas();
+                this.setupEventListeners();
+            }
+
+            setupCanvas() {
+                this.ctx.fillStyle = 'rgba(0,0,0,0.1)';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+            }
+
+            setupEventListeners() {
+                // Canvas drawing events
+                this.canvas.addEventListener('mousedown', (e) => this.startDrawing(e));
+                this.canvas.addEventListener('mousemove', (e) => this.draw(e));
+                this.canvas.addEventListener('mouseup', () => this.stopDrawing());
+                this.canvas.addEventListener('mouseout', () => this.stopDrawing());
+
+                // Color picker events
+                document.querySelectorAll('.color-option').forEach(option => {
+                    option.addEventListener('click', (e) => {
+                        document.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('selected'));
+                        e.target.classList.add('selected');
+                        this.currentColor = e.target.dataset.color;
+                    });
+                });
+
+                // Brush size slider
+                document.getElementById('brushSize').addEventListener('input', (e) => {
+                    this.brushSize = parseInt(e.target.value);
+                    document.getElementById('brushSizeValue').textContent = this.brushSize;
+                });
+
+                // Brush opacity slider
+                document.getElementById('brushOpacity').addEventListener('input', (e) => {
+                    this.brushOpacity = parseInt(e.target.value) / 100;
+                    document.getElementById('brushOpacityValue').textContent = parseInt(e.target.value) + '%';
+                });
+            }
+
+            startDrawing(e) {
+                this.isDrawing = true;
+                const rect = this.canvas.getBoundingClientRect();
+                this.lastX = e.clientX - rect.left;
+                this.lastY = e.clientY - rect.top;
+            }
+
+            draw(e) {
+                if (!this.isDrawing) return;
+
+                const rect = this.canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                this.ctx.globalAlpha = this.brushOpacity;
+                this.ctx.strokeStyle = this.currentColor;
+                this.ctx.lineWidth = this.brushSize;
+                this.ctx.lineCap = 'round';
+
+                this.ctx.beginPath();
+                this.ctx.moveTo(this.lastX, this.lastY);
+                this.ctx.lineTo(x, y);
+                this.ctx.stroke();
+
+                this.lastX = x;
+                this.lastY = y;
+            }
+
+            stopDrawing() {
+                this.isDrawing = false;
+            }
+
+            connect() {
+                // Simulate connection to Earthcall
+                this.connected = true;
+                this.log('Connected to Earthcall successfully!', 'success');
+                this.updateConnectionStatus();
+            }
+
+            requestPermissions() {
+                const permissions = [
+                    'brush_system',
+                    'design_system', 
+                    'avatar_system',
+                    'world_access'
+                ];
+
+                this.permissions = permissions;
+                this.log('Permissions granted: ' + permissions.join(', '), 'success');
+            }
+
+            createBrushStroke() {
+                if (!this.connected) {
+                    this.log('Not connected to Earthcall!', 'error');
+                    return;
+                }
+
+                const stroke = {
+                    type: 'brush_stroke',
+                    settings: {
+                        size: this.brushSize,
+                        opacity: this.brushOpacity,
+                        color: this.currentColor,
+                        brush_type: 'default'
+                    },
+                    layer_name: 'web_integration_layer'
+                };
+
+                this.log('Creating brush stroke: ' + JSON.stringify(stroke), 'info');
+                // In real implementation, this would send to Earthcall
+            }
+
+            sendDrawingToEarthcall() {
+                if (!this.connected) {
+                    this.log('Not connected to Earthcall!', 'error');
+                    return;
+                }
+
+                const imageData = this.canvas.toDataURL();
+                this.log('Sending drawing to Earthcall...', 'info');
+                // In real implementation, this would send the image data to Earthcall
+            }
+
+            createDesignElement() {
+                if (!this.connected) {
+                    this.log('Not connected to Earthcall!', 'error');
+                    return;
+                }
+
+                const designType = document.getElementById('designType').value;
+                const designName = document.getElementById('designName').value || 'Web Design';
+
+                const element = {
+                    type: 'design_element',
+                    name: designName,
+                    design_type: designType,
+                    position: { x: 0, y: 0, z: 0 },
+                    properties: {
+                        color: this.currentColor,
+                        size: this.brushSize
+                    }
+                };
+
+                this.log('Creating design element: ' + JSON.stringify(element), 'info');
+            }
+
+            modifyAvatar() {
+                if (!this.connected) {
+                    this.log('Not connected to Earthcall!', 'error');
+                    return;
+                }
+
+                const part = document.getElementById('avatarPart').value;
+                const modificationType = document.getElementById('modificationType').value;
+
+                const modification = {
+                    type: 'avatar_modification',
+                    part: part,
+                    modification_type: modificationType,
+                    parameters: {
+                        color: this.currentColor,
+                        intensity: this.brushOpacity
+                    }
+                };
+
+                this.log('Modifying avatar: ' + JSON.stringify(modification), 'info');
+            }
+
+            log(message, type = 'info') {
+                const logContainer = document.getElementById('logContainer');
+                const timestamp = new Date().toLocaleTimeString();
+                const logEntry = document.createElement('div');
+                logEntry.style.color = type === 'error' ? '#ff6b6b' : type === 'success' ? '#00b894' : '#ffffff';
+                logEntry.textContent = `[${timestamp}] ${message}`;
+                logContainer.appendChild(logEntry);
+                logContainer.scrollTop = logContainer.scrollHeight;
+            }
+
+            updateConnectionStatus() {
+                const status = document.getElementById('connectionStatus');
+                if (this.connected) {
+                    status.textContent = 'Connected to Earthcall';
+                    status.className = 'status connected';
+                } else {
+                    status.textContent = 'Disconnected from Earthcall';
+                    status.className = 'status disconnected';
+                }
+            }
+
+            clearCanvas() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                this.setupCanvas();
+                this.log('Canvas cleared', 'info');
+            }
+        }
+
+        // Initialize integration
+        const earthcall = new EarthcallIntegration();
+
+        // Global functions for button clicks
+        function connectToEarthcall() {
+            earthcall.connect();
+        }
+
+        function requestPermissions() {
+            earthcall.requestPermissions();
+        }
+
+        function createBrushStroke() {
+            earthcall.createBrushStroke();
+        }
+
+        function sendDrawingToEarthcall() {
+            earthcall.sendDrawingToEarthcall();
+        }
+
+        function createDesignElement() {
+            earthcall.createDesignElement();
+        }
+
+        function applyDesignTemplate() {
+            earthcall.log('Applying design template...', 'info');
+        }
+
+        function modifyAvatar() {
+            earthcall.modifyAvatar();
+        }
+
+        function exportAvatar() {
+            earthcall.log('Exporting avatar...', 'info');
+        }
+
+        function clearCanvas() {
+            earthcall.clearCanvas();
+        }
+    </script>
+</body>
+</html> 

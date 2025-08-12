@@ -1,0 +1,26 @@
+{
+    "configurations": [
+        {
+            "name": "Mac",
+            "includePath": [
+                "${workspaceFolder}/sight-cpp/src**",
+                "/opt/homebrew/include",
+                "${workspaceFolder}/sight-cpp/src/ZonesOfEarth",
+                "${workspaceFolder}/sight-cpp/src/Person",
+                "${workspaceFolder}/sight-cpp/src/ZonesOfEarth/HomesOfEarth",
+                "${workspaceFolder}/sight-cpp/src/ZonesOfEarth/Ourverse",
+                "${workspaceFolder}/sight-cpp/src/Relation",
+                "${workspaceFolder}/sight-cpp/src/Person/Body"
+            ],
+            "defines": [],
+            "macFrameworkPath": [
+                "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks"
+            ],
+            "compilerPath": "/usr/bin/clang",
+            "cStandard": "c17",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "macos-clang-arm64"
+        }
+    ],
+    "version": 4
+}

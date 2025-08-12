@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dimension of Thought</title>
+    <link rel="stylesheet" href="style.css" type="text/css">
+</head>
+<body>
+    <h1>Welcome to Dimension of Thought</h1>
+    <button onclick="fetchBackend()">Click Me to Ping Backend</button>
+    <p id="response">No data yet.</p>
+
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

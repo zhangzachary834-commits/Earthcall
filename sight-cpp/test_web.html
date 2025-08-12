@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Earthcall Web Integration Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            padding: 50px;
+            margin: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+        p {
+            font-size: 1.2em;
+            line-height: 1.6;
+        }
+        .status {
+            background: rgba(255,255,255,0.2);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .button {
+            background: #4CAF50;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.1em;
+            cursor: pointer;
+            margin: 10px;
+        }
+        .button:hover {
+            background: #45a049;
+        }
+        .demo-section {
+            background: rgba(0,0,0,0.3);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .modifiable-element {
+            background: #ff6b6b;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            transition: all 0.3s ease;
+        }
+        .earthcall-overlay {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            z-index: 1000;
+            display: none;
+        }
+        .earthcall-overlay.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 id="main-title">🌐 Earthcall Web Integration</h1>
+        <div class="status">
+            <h2>✅ WebKit Integration Working!</h2>
+            <p>If you can see this page, the WebKit integration is working correctly.</p>
+            <p>This is a native macOS WebView embedded in Earthcall.</p>
+        </div>
+        
+        <div class="demo-section">
+            <h3>🎨 Modifiable Elements (Test with Earthcall Tools)</h3>
+            <div id="modifiable-box" class="modifiable-element">
+                <h4>This box can be modified!</h4>
+                <p>Try changing my background color, size, or text using the Earthcall web tools.</p>
+            </div>
+            
+            <div id="another-element" class="modifiable-element">
+                <h4>Another modifiable element</h4>
+                <p>You can modify this one too!</p>
+            </div>
+        </div>
+        
+        <div class="demo-section">
+            <h3>🔧 Test Features:</h3>
+            <button class="button" onclick="testJavaScript()">Test JavaScript</button>
+            <button class="button" onclick="testEarthcallAPI()">Test Earthcall API</button>
+            <button class="button" onclick="window.open('https://www.google.com', '_blank')">Open Google</button>
+            <button class="button" onclick="showEarthcallOverlay()">Show Earthcall Overlay</button>
+            <button class="button" onclick="addRandomElement()">Add Random Element</button>
+        </div>
+        
+        <div id="output" class="status">
+            <h3>Output:</h3>
+            <p id="result">Click buttons above to test functionality...</p>
+        </div>
+        
+        <div id="dynamic-content" class="demo-section">
+            <h3>Dynamic Content Area</h3>
+            <p>New elements will be added here when you use Earthcall's web tools.</p>
+        </div>
+    </div>
+
+    <div id="earthcall-overlay" class="earthcall-overlay">
+        <h4>🌍 Earthcall Overlay</h4>
+        <p>This overlay was created by Earthcall!</p>
+        <button onclick="hideEarthcallOverlay()">Close</button>
+    </div>
+
+    <script>
+        function testJavaScript() {
+            document.getElementById('result').innerHTML = '✅ JavaScript is working! Time: ' + new Date().toLocaleTimeString();
+        }
+        
+        function testEarthcallAPI() {
+            if (window.earthcall) {
+                document.getElementById('result').innerHTML = '✅ Earthcall API is available!';
+            } else {
+                document.getElementById('result').innerHTML = '❌ Earthcall API not found (this is normal for now)';
+            }
+        }
+        
+        function showEarthcallOverlay() {
+            document.getElementById('earthcall-overlay').classList.add('show');
+        }
+        
+        function hideEarthcallOverlay() {
+            document.getElementById('earthcall-overlay').classList.remove('show');
+        }
+        
+        function addRandomElement() {
+            const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57'];
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            const html = `<div style="background: ${color}; padding: 10px; margin: 10px 0; border-radius: 5px;">
+                <h4>Random Element ${Date.now()}</h4>
+                <p>This was added dynamically!</p>
+            </div>`;
+            document.getElementById('dynamic-content').insertAdjacentHTML('beforeend', html);
+        }
+        
+        // Test that the page loaded
+        window.onload = function() {
+            console.log('🌐 Earthcall Web Integration Test Page Loaded');
+            document.getElementById('result').innerHTML = '✅ Page loaded successfully! WebKit integration is working.';
+            
+            // Add some interactive elements
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('modifiable-element')) {
+                    e.target.style.transform = 'scale(1.05)';
+                    setTimeout(() => {
+                        e.target.style.transform = 'scale(1)';
+                    }, 200);
+                }
+            });
+        };
+        
+        // Listen for Earthcall modifications
+        window.addEventListener('earthcall-modification', function(e) {
+            console.log('🌍 Earthcall modification detected:', e.detail);
+            document.getElementById('result').innerHTML = '🌍 Earthcall modified: ' + JSON.stringify(e.detail);
+        });
+    </script>
+</body>
+</html> 
