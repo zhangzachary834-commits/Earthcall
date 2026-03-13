@@ -2,6 +2,8 @@
 #include "Core/Engine.hpp"
 #include "../../imgui/backends/imgui_impl_glfw.h"
 #include "Form/Object/Object.hpp"
+#include "Form/Object/AngleTools.hpp"
+#include "Form/Object/Contour.hpp"
 #include "Rendering/BrushSystem.hpp"
 #include "Rendering/DesignSystem.hpp"
 #include "Form/Object/Formation/Formations.hpp"
@@ -13,6 +15,7 @@
 #include "Rendering/ShadingSystem.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
 #include "Rendering/HighlightSystem.hpp"
+#include "Rendering/RelationManagerWindow.hpp"
 #include "ZonesOfEarth/Ourverse/Ourverse.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
@@ -369,17 +372,29 @@ bool Game::init() {
     _keyboardHandler.bindKey(GLFW_KEY_Z, "undo", [this]() {
         // Undo last stroke
         if (_current3DMode == Mode3D::FaceBrush) {
-            // Find the object under cursor and undo its last stroke
+            Object* target = _selectedObject3D;
+            if (!target) {
+                if (_current3DTarget == ToolTarget3D::AvatarBodyParts) {
+                    for (auto* part : _player.getBody().parts) {
+                        if (part) {
+                            target = part;
+                            break;
+                        }
+                    }
+                } else {
             const auto& objects = mgr.active().world().getOwnedObjects();
-            if (!objects.empty()) {
                 for (const auto& up : objects) {
                     Object* obj = up.get();
                     if (obj) {
-                        // For now, undo the last stroke on the first face
-                        obj->undoStroke(0);
+                            target = obj;
                         break;
                     }
                 }
+                }
+            }
+            if (target) {
+                // For now, undo the last stroke on the first face
+                target->undoStroke(0);
             }
         }
     });
@@ -548,7 +563,9 @@ void Game::update(float dt) {
     // Creation Tools
     // --------------------------------------------------------------
     {
-        bool overUI = ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow) || ImGui::IsAnyItemActive() || ImGui::IsAnyItemHovered();
+        const ImGuiIO& io = ImGui::GetIO();
+        bool uiWantsMouse = io.WantCaptureMouse || ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup);
+        bool overUI = uiWantsMouse || ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow) || ImGui::IsAnyItemActive() || ImGui::IsAnyItemHovered();
         if (!overUI) {
         bool mouseLeftNow = glfwGetMouseButton(_window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
         double xpos, ypos;
@@ -562,6 +579,26 @@ void Game::update(float dt) {
 
         setCursorX(mx);
         setCursorY(my);
+
+        bool useAvatarTargets = (_current3DTarget == ToolTarget3D::AvatarBodyParts);
+        auto collect3DTargets = [&](std::vector<Object*>& targets) {
+            targets.clear();
+            if (useAvatarTargets) {
+                for (auto* part : _player.getBody().parts) {
+                    if (!part) continue;
+                    targets.push_back(part);
+                    for (const auto& sub : part->getSubObjects()) {
+                        if (sub) targets.push_back(sub.get());
+                    }
+                }
+                return;
+            }
+            const auto& objects = mgr.active().world().getOwnedObjects();
+            for (const auto& up : objects) {
+                targets.push_back(up.get());
+            }
+        };
+        std::vector<Object*> toolTargets;
 
         // 2D Creation
         if (_current3DMode == Mode3D::None) {
@@ -700,10 +737,18 @@ void Game::update(float dt) {
         // Need to refactor this into Tool.cpp
         // Ensure every object created is owned by the current zone
         else if (_current3DMode == Mode3D::BrushCreate) {
-            Tool::ShapeGenerator3D(_window, this, mgr);
+            BodyPart* shapePart = nullptr;
+            if (useAvatarTargets) {
+                shapePart = dynamic_cast<BodyPart*>(_selectedObject3D);
+            }
+            Tool::ShapeGenerator3D(_window, this, mgr, shapePart);
         } else if (_current3DMode == Mode3D::Pottery) {
-            Tool::Pottery3D(_window, this, mgr, dt);
+            collect3DTargets(toolTargets);
+            glm::mat4 avatarRoot = glm::translate(glm::mat4(1.0f), _player.position);
+            Tool::Pottery3D(_window, this, mgr, dt, toolTargets,
+                            useAvatarTargets ? &avatarRoot : nullptr);
         } else if (_current3DMode == Mode3D::Selection) {
+            collect3DTargets(toolTargets);
             // 3D Selection: set selected object on single click
             if (mouseLeftNow && !_mouseLeftPressedLast) {
                 glGetIntegerv(GL_VIEWPORT, _cameraViewport);
@@ -716,9 +761,9 @@ void Game::update(float dt) {
                 gluUnProject(winX, winY, 1.0, _cameraModelview, _cameraProjection, _cameraViewport, &farX,&farY,&farZ);
                 glm::vec3 rayO(nearX,nearY,nearZ); glm::vec3 rayDir = glm::normalize(glm::vec3(farX,farY,farZ)-rayO);
                 float nearestT = 1e9f; Object* hitObj=nullptr;
-                const auto& objects = mgr.active().world().getOwnedObjects();
-                for (const auto& up : objects) {
-                    Object* obj = up.get();
+                const auto& objects = toolTargets;
+                for (auto* obj : objects) {
+                    if (!obj) continue;
                     float t; int face; glm::vec2 uv;
                     if (obj->raycastFace(rayO, rayDir, t, face, uv)) {
                         if (t > 0.0f && t < nearestT) { nearestT = t; hitObj = obj; }
@@ -733,9 +778,11 @@ void Game::update(float dt) {
                 ImGui::End();
             }
         } else if (_current3DMode == Mode3D::FacePaint) {
-            Tool::FacePaint(_window, this, mgr, dt);
+            collect3DTargets(toolTargets);
+            Tool::FacePaint(_window, this, mgr, dt, toolTargets);
         } else if (_current3DMode == Mode3D::FaceBrush) {
-            Tool::FaceBrush(_window, this, mgr, dt);
+            collect3DTargets(toolTargets);
+            Tool::FaceBrush(_window, this, mgr, dt, toolTargets);
         }
 
         _mouseLeftPressedLast = mouseLeftNow;
@@ -1035,32 +1082,9 @@ void Game::render() {
         Object temp;
         temp.setGeometryType(_currentPrimitive);
         
-        // Initialize polyhedron data for preview if needed
+        // Initialize polyhedron data for preview using the unified builder
         if (_currentPrimitive == Object::GeometryType::Polyhedron) {
-            if (_useCustomPolyhedron && !_customPolyhedronVertices.empty()) {
-                // Use custom polyhedron for preview
-                temp.setPolyhedronData(Object::PolyhedronData::createCustomPolyhedron(
-                    _customPolyhedronVertices, _customPolyhedronFaces));
-            } else {
-                // Use concave variant for preview based on selection
-                switch (_currentConcaveType) {
-                    case 0: // Regular
-                        temp.setPolyhedronData(Object::PolyhedronData::createRegularPolyhedron(_currentPolyhedronType));
-                        break;
-                    case 1: // Concave
-                        temp.setPolyhedronData(Object::PolyhedronData::createConcavePolyhedron(_currentPolyhedronType, 0.5f, _concavityAmount));
-                        break;
-                    case 2: // Star
-                        temp.setPolyhedronData(Object::PolyhedronData::createStarPolyhedron(_currentPolyhedronType, 0.5f, _spikeLength));
-                        break;
-                    case 3: // Crater
-                        temp.setPolyhedronData(Object::PolyhedronData::createCraterPolyhedron(_currentPolyhedronType, 0.5f, _craterDepth));
-                        break;
-                    default:
-                        temp.setPolyhedronData(Object::PolyhedronData::createRegularPolyhedron(_currentPolyhedronType));
-                        break;
-                }
-            }
+            temp.setPolyhedronData(buildCurrentPolyhedron());
         }
         
         temp.drawObject();
@@ -1280,6 +1304,12 @@ void Game::render() {
 
         ImGui::Begin("Character Designer", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 
+        if (_current3DTarget == ToolTarget3D::AvatarBodyParts) {
+            if (auto* pickedPart = dynamic_cast<BodyPart*>(_selectedObject3D)) {
+                selectedPart = pickedPart;
+            }
+        }
+
         ImGui::Checkbox("\xF0\x9F\x94\x92 Design Lock", &designLocked); // padlock icon
         ImGui::Separator();
         
@@ -1302,12 +1332,18 @@ void Game::render() {
 
                     ImGui::Text("Editing: %s", selectedPart->getName().c_str());
 
+                    // --- Primary shape selector ---
+                    const char* shapeNames[] = {"Cube", "Sphere", "Cylinder", "Cone", "Polyhedron"};
+                    int curShape = static_cast<int>(selectedPart->getPrimaryShape());
+                    if (ImGui::Combo("Shape", &curShape, shapeNames, IM_ARRAYSIZE(shapeNames)) && !designLocked) {
+                        selectedPart->setPrimaryShape(static_cast<Object::GeometryType>(curShape));
+                    }
+
                     // Dimensions slider
                     glm::vec3 dims = selectedPart->getGeometry().getDimensions();
                     float dimArr[3] = {dims.x, dims.y, dims.z};
                     if (ImGui::SliderFloat3("Dimensions", dimArr, 0.05f, 1.0f, "%.2f") && !designLocked) {
                         selectedPart->getGeometry().setDimensions({dimArr[0], dimArr[1], dimArr[2]});
-                        // Update collision zone to reflect new size
                         selectedPart->setTransform(selectedPart->getTransform());
                     }
 
@@ -1315,6 +1351,43 @@ void Game::render() {
                     float col[3] = {selectedPart->getColor()[0], selectedPart->getColor()[1], selectedPart->getColor()[2]};
                     if (ImGui::ColorEdit3("Color", col) && !designLocked) {
                         selectedPart->setColor(col[0], col[1], col[2]);
+                    }
+
+                    // --- Composite sub-objects ---
+                    ImGui::Separator();
+                    ImGui::Text("Sub-Objects (%zu)", selectedPart->getSubObjectCount());
+
+                    for (size_t si = 0; si < selectedPart->getSubObjectCount(); ++si) {
+                        Object* sub = selectedPart->getSubObject(si);
+                        if (!sub) continue;
+                        ImGui::PushID(static_cast<int>(si));
+
+                        int subShape = static_cast<int>(sub->getGeometryType());
+                        ImGui::SetNextItemWidth(100);
+                        if (ImGui::Combo("##SubShape", &subShape, shapeNames, IM_ARRAYSIZE(shapeNames)) && !designLocked) {
+                            sub->setGeometryType(static_cast<Object::GeometryType>(subShape));
+                        }
+                        ImGui::SameLine();
+
+                        glm::mat4 localT = selectedPart->getSubObjectLocalOffset(si);
+                        float subPos[3] = {localT[3][0], localT[3][1], localT[3][2]};
+                        ImGui::SetNextItemWidth(200);
+                        if (ImGui::SliderFloat3("Offset", subPos, -1.0f, 1.0f, "%.2f") && !designLocked) {
+                            localT[3][0] = subPos[0]; localT[3][1] = subPos[1]; localT[3][2] = subPos[2];
+                            selectedPart->setSubObjectLocalOffset(si, localT);
+                        }
+                        ImGui::SameLine();
+                        if (ImGui::Button("X") && !designLocked) {
+                            selectedPart->removeSubObject(si);
+                            ImGui::PopID();
+                            break;
+                        }
+
+                        ImGui::PopID();
+                    }
+
+                    if (ImGui::Button("+ Add Sub-Object") && !designLocked) {
+                        selectedPart->addSubObject(Object::GeometryType::Cube, glm::mat4(1.0f));
                     }
 
                     // Health and damage system
@@ -1502,6 +1575,63 @@ void Game::render() {
     glGetDoublev(GL_PROJECTION_MATRIX, _cameraProjection);
 }
 
+/*void Game::renderRelationManagerWindow(bool* open) {
+    if (!open) return;
+
+    ImGui::SetNextWindowSize(ImVec2(520, 420), ImGuiCond_FirstUseEver);
+    if (ImGui::Begin("Relation Manager", open)) {
+        auto& registry = Physics::registry();
+        const auto& relations = registry.getAll();
+
+        ImGui::TextUnformatted("Source: Physics Relation Registry");
+        ImGui::Separator();
+
+        static char typeFilter[64] = "";
+        static char entityFilter[64] = "";
+        ImGui::InputText("Type Filter", typeFilter, IM_ARRAYSIZE(typeFilter));
+        ImGui::InputText("Entity Filter", entityFilter, IM_ARRAYSIZE(entityFilter));
+
+        ImGui::Separator();
+
+        if (relations.empty()) {
+            ImGui::TextUnformatted("No relations found.");
+        } else {
+            size_t matchCount = 0;
+            if (ImGui::BeginListBox("##RelationList", ImVec2(0.0f, 220.0f))) {
+                bool anyMatch = false;
+                for (const auto& rel : relations) {
+                    if (!rel) continue;
+                    if (typeFilter[0] != '\0') {
+                        if (rel->type.find(typeFilter) == std::string::npos) continue;
+                    }
+                    if (entityFilter[0] != '\0') {
+                        bool matchA = rel->entityA.find(entityFilter) != std::string::npos;
+                        bool matchB = rel->entityB.find(entityFilter) != std::string::npos;
+                        if (!matchA && !matchB) continue;
+                    }
+                    ++matchCount;
+                    anyMatch = true;
+                    char label[256];
+                    snprintf(label, sizeof(label), "%s: %s %s %s (w=%.2f, ev=%zu)",
+                             rel->type.c_str(),
+                             rel->entityA.c_str(),
+                             rel->directed ? "->" : "<->",
+                             rel->entityB.c_str(),
+                             rel->weight,
+                             rel->events.size());
+                    ImGui::Selectable(label, false);
+                }
+                if (!anyMatch) {
+                    ImGui::TextUnformatted("<no matches>");
+                }
+                ImGui::EndListBox();
+            }
+            ImGui::Text("Showing %zu of %zu", matchCount, relations.size());
+        }
+    }
+    ImGui::End();
+}*/
+
 void Game::renderCreatorToolbar() {
     // ------------------------------------------------------------------
     // Small host window containing a menu to toggle individual tool panes
@@ -1512,6 +1642,7 @@ void Game::renderCreatorToolbar() {
     static bool showWorld  = true;
     static bool showAssets = true;
     static bool showBonds  = true;
+    static bool showRelations = true;
     static bool showCursor = true;
 
     ImGui::SetNextWindowSize(ImVec2(550, 400), ImGuiCond_FirstUseEver);
@@ -1525,6 +1656,7 @@ void Game::renderCreatorToolbar() {
             ImGui::MenuItem("World",  nullptr, &showWorld);
             ImGui::MenuItem("Assets", nullptr, &showAssets);
             ImGui::MenuItem("Bonds",  nullptr, &showBonds);
+            ImGui::MenuItem("Relations", nullptr, &showRelations);
             ImGui::MenuItem("Cursor Tools",  nullptr, &showCursor);
             ImGui::EndMenu();
         }
@@ -2098,6 +2230,23 @@ void Game::renderCreatorToolbar() {
                 _current3DMode = static_cast<Mode3D>(modeIdx);
             }
 
+            ImGui::Separator();
+            int targetIdx = static_cast<int>(_current3DTarget);
+            const char* targetNames[] = {"World Objects", "Avatar Body Parts"};
+            if (ImGui::Combo("Target", &targetIdx, targetNames, IM_ARRAYSIZE(targetNames))) {
+                _current3DTarget = static_cast<ToolTarget3D>(targetIdx);
+                _selectedObject3D = nullptr;
+            }
+            if (_current3DTarget == ToolTarget3D::AvatarBodyParts && _current3DMode == Mode3D::BrushCreate) {
+                if (_selectedObject3D && dynamic_cast<BodyPart*>(_selectedObject3D)) {
+                    ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f),
+                                       "Adding sub-objects to: %s", _selectedObject3D->getIdentifier().c_str());
+                } else {
+                    ImGui::TextColored(ImVec4(1.0f, 0.7f, 0.0f, 1.0f),
+                                       "Select a body part first (use Selection tool).");
+                }
+            }
+
             // Advanced Face Paint Options (only in Face Fill mode)
             if (_current3DMode == Mode3D::FacePaint) {
                 ImGui::Separator();
@@ -2354,6 +2503,126 @@ void Game::renderCreatorToolbar() {
                     }
                     
                     ImGui::Text("Custom: %d vertices, %d faces", _customPolyhedronVertexCount, _customPolyhedronFaceCount);
+                }
+
+                // ---- Irregular Polyhedra ----
+                ImGui::Separator();
+                if (ImGui::CollapsingHeader("Irregular Polyhedra")) {
+                    const char* irregularNames[] = {
+                        "None (use Regular)", "Prism", "Antiprism",
+                        "Pyramid", "Bipyramid", "Frustum"
+                    };
+                    if (ImGui::Combo("Irregular Shape", &_irregularType,
+                                     irregularNames, IM_ARRAYSIZE(irregularNames))) {
+                        // Selection changed
+                    }
+
+                    if (_irregularType > 0) {
+                        ImGui::SliderInt("Base Sides", &_irregularBaseSides, 3, 20);
+                        ImGui::SliderFloat("Height", &_irregularHeight, 0.1f, 3.0f, "%.2f");
+
+                        if (_irregularType == 5) { // Frustum
+                            ImGui::SliderFloat("Top Scale", &_frustumTopScale, 0.05f, 0.95f, "%.2f");
+                        }
+
+                        // Quick-info about the shape
+                        const char* shapeDesc[] = {
+                            "", "Extruded polygon (flat top & bottom, straight sides)",
+                            "Twisted polygon pair (alternating triangles)",
+                            "Polygon base with a pointed apex",
+                            "Double pyramid (diamond shape)",
+                            "Pyramid with its top sliced off"
+                        };
+                        ImGui::TextWrapped("%s", shapeDesc[_irregularType]);
+                    }
+                }
+
+                // ---- Shape Operations (Topological Modifiers) ----
+                ImGui::Separator();
+                if (ImGui::CollapsingHeader("Shape Operations")) {
+                    ImGui::Checkbox("Truncate (slice off vertices)", &_applyTruncation);
+                    if (_applyTruncation) {
+                        ImGui::SliderFloat("Truncation Amount", &_truncationAmount,
+                                           0.05f, 0.45f, "%.2f");
+                        ImGui::TextWrapped("Slices every vertex to create new faces. "
+                                           "A truncated icosahedron is a soccer ball!");
+                    }
+
+                    ImGui::Checkbox("Dual (swap faces & vertices)", &_applyDual);
+                    if (_applyDual) {
+                        ImGui::TextWrapped("Creates the dual polyhedron: faces become "
+                                           "vertices and vertices become faces. "
+                                           "The dual of a cube is an octahedron.");
+                    }
+                }
+
+                // ---- Contour & Angle Analysis ----
+                ImGui::Separator();
+                if (ImGui::CollapsingHeader("Contour & Angle Info")) {
+                    Object::PolyhedronData previewData = buildCurrentPolyhedron();
+
+                    // Contour classification
+                    ImGui::TextUnformatted("Contour Types (flat vs round):");
+                    int flatCount = 0, roundCount = 0;
+                    for (auto ct : previewData.contourTypes) {
+                        if (ct == Object::PolyhedronData::ContourType::Flat) flatCount++;
+                        else roundCount++;
+                    }
+                    ImGui::Text("  Flat contours: %d", flatCount);
+                    ImGui::Text("  Round contours: %d", roundCount);
+
+                    ImGui::Separator();
+                    ImGui::TextUnformatted("Topology:");
+                    int V = previewData.getVertexCount();
+                    int F = previewData.getFaceCount();
+                    int E = static_cast<int>(previewData.edgeInfos.size());
+                    ImGui::Text("  Vertices: %d", V);
+                    ImGui::Text("  Edges: %d", E);
+                    ImGui::Text("  Faces: %d", F);
+                    ImGui::Text("  Euler (V-E+F): %d", AngleTools::eulerCharacteristic(V, E, F));
+                    ImGui::Text("  Convex: %s", previewData.isConvex ? "Yes" : "No");
+
+                    // Dihedral angle statistics
+                    if (!previewData.dihedralAngles.empty()) {
+                        ImGui::Separator();
+                        ImGui::TextUnformatted("Dihedral Angles (between adjacent faces):");
+                        float minDA = 999.0f, maxDA = -999.0f, sumDA = 0.0f;
+                        for (const auto& da : previewData.dihedralAngles) {
+                            float deg = da.angleDegrees();
+                            minDA = std::min(minDA, deg);
+                            maxDA = std::max(maxDA, deg);
+                            sumDA += deg;
+                        }
+                        float avgDA = sumDA / static_cast<float>(previewData.dihedralAngles.size());
+                        ImGui::Text("  Min: %.1f deg", minDA);
+                        ImGui::Text("  Max: %.1f deg", maxDA);
+                        ImGui::Text("  Avg: %.1f deg", avgDA);
+                        ImGui::Text("  Count: %d", static_cast<int>(previewData.dihedralAngles.size()));
+                    }
+
+                    // Edge length statistics
+                    if (!previewData.edgeInfos.empty()) {
+                        ImGui::Separator();
+                        ImGui::TextUnformatted("Edge Lengths:");
+                        float minLen = 999.0f, maxLen = 0.0f;
+                        for (const auto& ei : previewData.edgeInfos) {
+                            minLen = std::min(minLen, ei.length);
+                            maxLen = std::max(maxLen, ei.length);
+                        }
+                        ImGui::Text("  Min: %.4f", minLen);
+                        ImGui::Text("  Max: %.4f", maxLen);
+                        bool isRegular = (maxLen - minLen) < 0.001f;
+                        ImGui::Text("  Uniform: %s", isRegular ? "Yes (regular)" : "No (irregular)");
+                    }
+
+                    // Total angle deficit (Descartes' theorem)
+                    float totalDeficit = AngleTools::totalAngleDeficit(
+                        previewData.vertices, previewData.faces);
+                    ImGui::Separator();
+                    ImGui::Text("Total angle deficit: %.2f rad (%.1f deg)",
+                                totalDeficit, totalDeficit * 180.0f / static_cast<float>(M_PI));
+                    ImGui::TextWrapped("(Should be ~12.57 rad / 720 deg for any closed "
+                                       "convex polyhedron -- Descartes' theorem)");
                 }
             } else if (_currentPrimitive == Object::GeometryType::Polyhedron) {
                 // Simple polyhedron controls for other modes
@@ -2738,6 +3007,17 @@ void Game::renderCreatorToolbar() {
         ImGui::End();
     }
 
+    // ------------------------------------------------------------------
+    // Relation Manager window
+    // ------------------------------------------------------------------
+#ifdef ImGuiConfigFlags_DockingEnable
+    ImGui::SetNextWindowDockID(dockspace_id, ImGuiCond_FirstUseEver);
+#endif
+    if (showRelations) {
+        // renderRelationManagerWindow(&showRelations);
+        Rendering::renderRelationManagerWindow(&showRelations, Physics::registry());
+    }
+
     // Show save/load dialogs if requested
     drawLoadWindow();
     drawSaveWindow();
@@ -2865,18 +3145,8 @@ void Game::saveState(const std::string& filename) {
     }
     j["flying"]        = Physics::getFlying();
 
-    // Dynamic objects (skip baseline 0 & 1)
-    // NOTE: We now serialize all objects per-zone under zj["world"] (authoritative source) (single source of truth).
-    // The legacy top-level j["objects"] caused duplication on load and physics pushed overlapping copies apart (scatter).
-    // Keeping this commented to avoid reintroducing the bug while preserving the old code for reference.
-    // nlohmann::json objArr = nlohmann::json::array();
-    // const auto& objs = zoneWorld.getOwnedObjects();
-    // for(size_t i=2;i<objs.size();++i){ const auto& o = objs[i];
-    //     // Reuse full object serialization (includes transform, geometryType, faceColors, faceTextures)
-    //     json oj = *o;
-    //     objArr.push_back(std::move(oj));
-    // }
-    // j["objects"] = objArr;
+    // Player avatar body (includes per-face textures on each body part)
+    j["playerBody"] = bodyToJson(_player.getBody());
 
     std::ofstream out(filename); out<<j.dump(2);
 }
@@ -2939,6 +3209,9 @@ void Game::saveStateWithLog(const std::string& customName) {
         objArr.push_back(std::move(oj));
     }
     j["objects"] = objArr;
+
+    // Player avatar body (includes per-face textures on each body part)
+    j["playerBody"] = bodyToJson(_player.getBody());
 
     // Use the new SaveSystem to write the file
     SaveSystem::writeJson(j, customName, SaveSystem::SaveType::GAME);
@@ -3040,19 +3313,10 @@ void Game::loadState(const std::string& filename){
             }
         }
 
-        // Load dynamic objects (skip baseline 0 & 1)
-        // NOTE: The authoritative per-zone serialization is zj["world"].
-        // The legacy top-level j["objects"] duplicated the world objects on load, causing overlapping instances
-        // that then scattered due to physics resolution. We keep the legacy loader commented out.
-        // if(j.contains("objects")) {
-        //     const auto& objArr = j["objects"];
-        //     for(size_t i=0;i<objArr.size();++i){
-        //         if(i<2) continue; // Skip baseline objects
-        //         std::unique_ptr<Object> obj(new Object());
-        //         from_json(objArr[i], *obj);
-        //         zoneWorld.addObject(std::move(obj));
-        //     }
-        // }
+        // Player avatar body (includes per-face textures on each body part)
+        if (j.contains("playerBody")) {
+            bodyFromJson(j["playerBody"], _player.getBody());
+        }
 
     }
     catch(const std::exception& e) {
@@ -3266,6 +3530,80 @@ void Game::drawSaveManager() {
         }
     }
     ImGui::End();
+}
+
+// Helper to build a regular polygon with n sides as a list of 2D points
+static std::vector<glm::vec2> makeRegularPolygon2D(int n, float radius = 0.5f) {
+    std::vector<glm::vec2> pts;
+    pts.reserve(n);
+    for (int i = 0; i < n; ++i) {
+        float angle = 2.0f * static_cast<float>(M_PI) * i / n;
+        pts.push_back(glm::vec2(std::cos(angle) * radius, std::sin(angle) * radius));
+    }
+    return pts;
+}
+
+Object::PolyhedronData Game::buildCurrentPolyhedron() const {
+    Object::PolyhedronData data;
+
+    // Step 1: build base shape
+    if (_useCustomPolyhedron && !_customPolyhedronVertices.empty()) {
+        data = Object::PolyhedronData::createCustomPolyhedron(
+            _customPolyhedronVertices, _customPolyhedronFaces);
+    } else if (_irregularType > 0) {
+        auto basePoly = makeRegularPolygon2D(_irregularBaseSides, 0.5f);
+        switch (_irregularType) {
+            case 1: // Prism
+                data = Object::PolyhedronData::createPrism(basePoly, _irregularHeight);
+                break;
+            case 2: // Antiprism
+                data = Object::PolyhedronData::createAntiprism(_irregularBaseSides, 0.5f, _irregularHeight);
+                break;
+            case 3: // Pyramid
+                data = Object::PolyhedronData::createPyramid(basePoly, _irregularHeight);
+                break;
+            case 4: // Bipyramid
+                data = Object::PolyhedronData::createBipyramid(_irregularBaseSides, 0.5f, _irregularHeight);
+                break;
+            case 5: // Frustum
+                data = Object::PolyhedronData::createFrustum(basePoly, _irregularHeight, _frustumTopScale);
+                break;
+            default:
+                data = Object::PolyhedronData::createRegularPolyhedron(_currentPolyhedronType);
+                break;
+        }
+    } else {
+        switch (_currentConcaveType) {
+            case 0:
+                data = Object::PolyhedronData::createRegularPolyhedron(_currentPolyhedronType);
+                break;
+            case 1:
+                data = Object::PolyhedronData::createConcavePolyhedron(
+                    _currentPolyhedronType, 0.5f, _concavityAmount);
+                break;
+            case 2:
+                data = Object::PolyhedronData::createStarPolyhedron(
+                    _currentPolyhedronType, 0.5f, _spikeLength);
+                break;
+            case 3:
+                data = Object::PolyhedronData::createCraterPolyhedron(
+                    _currentPolyhedronType, 0.5f, _craterDepth);
+                break;
+            default:
+                data = Object::PolyhedronData::createRegularPolyhedron(_currentPolyhedronType);
+                break;
+        }
+    }
+
+    // Step 2: apply modifiers
+    if (_applyTruncation) {
+        data = Object::PolyhedronData::truncate(data, _truncationAmount);
+    }
+    if (_applyDual) {
+        data = Object::PolyhedronData::createDual(data);
+    }
+
+    return data;
 }
 
 void Game::_generateCustomPolyhedron() {

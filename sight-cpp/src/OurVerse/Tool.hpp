@@ -98,10 +98,14 @@ public:
 
     static void use(GLFWwindow* window, ZoneManager& mgr, Zone& zone, Type type, Core::Game& game);
 
-    static void ShapeGenerator3D(GLFWwindow* window, Core::Game* game, ZoneManager& mgr);
-    static void Pottery3D(GLFWwindow* window, Core::Game* game, ZoneManager& mgr, float dt);
-    static void FacePaint(GLFWwindow* window, Core::Game* game, ZoneManager& mgr, float dt);
-    static void FaceBrush(GLFWwindow* window, Core::Game* game, ZoneManager& mgr, float dt);
+    static void ShapeGenerator3D(GLFWwindow* window, Core::Game* game, ZoneManager& mgr,
+                                 BodyPart* targetPart = nullptr);
+    static void Pottery3D(GLFWwindow* window, Core::Game* game, ZoneManager& mgr, float dt,
+                          const std::vector<Object*>& targets, const glm::mat4* avatarRoot);
+    static void FacePaint(GLFWwindow* window, Core::Game* game, ZoneManager& mgr, float dt,
+                          const std::vector<Object*>& targets);
+    static void FaceBrush(GLFWwindow* window, Core::Game* game, ZoneManager& mgr, float dt,
+                          const std::vector<Object*>& targets);
     static void Selection3D(GLFWwindow* window, Core::Game* game, ZoneManager& mgr, float dt);
 
     Type getType() const;

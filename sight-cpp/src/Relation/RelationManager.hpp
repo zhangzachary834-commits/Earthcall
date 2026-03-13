@@ -2,12 +2,21 @@
 
 #include <vector>
 #include <string>
+#include <memory>
+#include <ctime>
 #include "Relation.hpp"
 #include "json.hpp"
 #include "Core/EventBus.hpp"
 
 // Forward declaration for the event
-struct RelationCreatedEvent;
+// struct RelationCreatedEvent;
+struct RelationCreatedEvent {
+    std::shared_ptr<const Relation> relation;
+    std::time_t timestamp;
+
+    explicit RelationCreatedEvent(std::shared_ptr<const Relation> r)
+        : relation(std::move(r)), timestamp(std::time(nullptr)) {}
+};
 
 // Centralized container/utility class for working with collections of Relation
 // objects. This abstraction makes it easy to add/remove/query relations,
@@ -15,11 +24,13 @@ struct RelationCreatedEvent;
 class RelationManager {
 public:
     // Add a new relation to the set (no duplicate checks for now).
-    void add(const Relation& r);
+    // void add(const Relation& r);
+    void add(const std::shared_ptr<Relation>& r);
 
     // Remove a relation; returns true if a matching relation was found and
     // erased.
-    bool remove(const Relation& r);
+    // bool remove(const Relation& r);
+    bool remove(const std::shared_ptr<Relation>& r);
 
     // Remove all relations connecting the two entities. If `type` is not
     // empty, only relations of that type are removed. Returns true if at
@@ -27,16 +38,19 @@ public:
     bool removeBetween(const std::string& a, const std::string& b, const std::string& type = "");
 
     // Query helpers ------------------------------------------------------
-    std::vector<Relation> getRelationsOf(const std::string& entity) const;
-    std::vector<Relation> getRelationsBetween(const std::string& a, const std::string& b) const;
+    // std::vector<Relation> getRelationsOf(const std::string& entity) const;
+    // std::vector<Relation> getRelationsBetween(const std::string& a, const std::string& b) const;
+    std::vector<std::shared_ptr<Relation>> getRelationsOf(const std::string& entity) const;
+    std::vector<std::shared_ptr<Relation>> getRelationsBetween(const std::string& a, const std::string& b) const;
 
     // (De)Serialization --------------------------------------------------
     nlohmann::json toJson() const;
     void loadFromJson(const nlohmann::json& j);
 
     // Access underlying storage (read-only)
-    const std::vector<Relation>& getAll() const { return relations; }
+    // const std::vector<Relation>& getAll() const { return relations; }
+    const std::vector<std::shared_ptr<Relation>>& getAll() const { return relations; }
 
 private:
-    std::vector<Relation> relations;
+    std::vector<std::shared_ptr<Relation>> relations;
 }; 

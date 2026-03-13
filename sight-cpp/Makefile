@@ -7,7 +7,7 @@ CXXFLAGS = -std=c++17 -Wall -Wextra \
            -I./src/Form \
            -I./src/ZonesOfEarth \
            -I./src/Person/Body \
-           -I./imgui \
+           -I../imgui \
            -I/opt/homebrew/Cellar/glfw/3.4/include \
            -I/opt/homebrew/include \
            -DGL_SILENCE_DEPRECATION
@@ -20,7 +20,7 @@ LDFLAGS = -L/opt/homebrew/Cellar/lib \
 
 # Directories
 SRC_DIR = src
-IMGUI_DIR = imgui
+IMGUI_DIR = ../imgui
 BUILD_DIR = build
 
 # Source files

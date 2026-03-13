@@ -1,5 +1,6 @@
 #include "AvatarManager.hpp"
 #include "Util/SaveSystem.hpp"
+#include "Util/Serialization.hpp"
 #include "Soul/Soul.hpp"
 #include <iostream>
 #include <algorithm>
@@ -363,27 +364,8 @@ void AvatarManager::saveAvatarState(const std::string& avatarName, const std::st
         j["skinTone"] = avatar->state.skinTone;
         j["mode"] = static_cast<int>(avatar->getMode());
         
-        // Save body parts if available
-        if (avatar->getBody().parts.size() > 0) {
-            nlohmann::json partsArray = nlohmann::json::array();
-            for (auto* part : avatar->getBody().parts) {
-                if (part) {
-                    nlohmann::json partJson;
-                    partJson["name"] = part->getName();
-                    auto dims = part->getGeometry().getDimensions();
-                    partJson["dimensions"] = {dims.x, dims.y, dims.z};
-                    auto col = part->getColor();
-                    partJson["color"] = {col[0], col[1], col[2]};
-                    const glm::mat4& T = part->getTransform();
-                    std::vector<float> tvals(16);
-                    const float* ptrT = &T[0][0];
-                    for(int k=0;k<16;++k) tvals[k]=ptrT[k];
-                    partJson["transform"] = tvals;
-                    partsArray.push_back(partJson);
-                }
-            }
-            j["bodyParts"] = partsArray;
-        }
+        // Save full body state (dimensions, colors, transforms, faceTextures)
+        j["body"] = bodyToJson(avatar->getBody());
         
         // Use SaveSystem to write the file
         SaveSystem::writeJson(j, avatarName, SaveSystem::SaveType::AVATAR);
@@ -414,8 +396,12 @@ void AvatarManager::loadAvatarState(const std::string& avatarName, const std::st
                     avatar->setMode(static_cast<Person::GameMode>(j["mode"].get<int>()));
                 }
                 
-                // Load body parts if available
-                if (j.contains("bodyParts")) {
+                // Load full body state (dimensions, colors, transforms, faceTextures)
+                if (j.contains("body")) {
+                    bodyFromJson(j["body"], avatar->getBody());
+                }
+                // Legacy: load old saves that only had "bodyParts" without textures
+                else if (j.contains("bodyParts")) {
                     const auto& partsArray = j["bodyParts"];
                     for (size_t i = 0; i < partsArray.size() && i < avatar->getBody().parts.size(); ++i) {
                         auto* part = avatar->getBody().parts[i];

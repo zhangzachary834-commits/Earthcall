@@ -30,11 +30,12 @@ public:
 
     std::vector<Zone> zones;
     std::vector<Home> homes;
-    std::vector<Relation> relations;
+    std::vector<std::shared_ptr<Relation>> relations;
 
     void addZone(Zone zone);
     void addHome(Home home);
-    void relate(Relation relation);
+    // void relate(Relation relation);
+    void relate(const std::shared_ptr<Relation>& relation);
     void display() const;
     void renderModeUI();
 

@@ -9,7 +9,10 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include "Singular.hpp"
 #include "Core/EventBus.hpp"
+#include "Contour.hpp"
+#include "AngleTools.hpp"
 #include <unordered_map>
+#include <memory>
 #include <string>
 
 // Forward declaration to break circular dependency
@@ -67,6 +70,22 @@ public:
         std::vector<bool> faceConvexity;      // Convexity of individual faces
         std::vector<float> faceAreas;         // Area of each face
         std::vector<float> vertexCurvatures;  // Curvature at each vertex
+
+        // ----- Contour classification (flat vs round) -----
+        enum class ContourType { Flat, Round };
+        std::vector<ContourType> contourTypes;
+
+        struct ContourCurvature {
+            float gaussianCurvature = 0.0f;
+            float meanCurvature     = 0.0f;
+            float principalK1      = 0.0f;
+            float principalK2      = 0.0f;
+        };
+        std::vector<ContourCurvature> contourCurvatures;
+
+        // ----- Angle data (precomputed on demand) -----
+        std::vector<AngleTools::DihedralAngle> dihedralAngles;
+        std::vector<AngleTools::EdgeInfo>      edgeInfos;
         
         // Constructor for common polyhedrons
         PolyhedronData() = default;
@@ -82,6 +101,35 @@ public:
         static PolyhedronData createConcavePolyhedron(int numFaces, float radius = 0.5f, float concavity = 0.3f);
         static PolyhedronData createStarPolyhedron(int numFaces, float radius = 0.5f, float spikeLength = 0.3f);
         static PolyhedronData createCraterPolyhedron(int numFaces, float radius = 0.5f, float craterDepth = 0.2f);
+
+        // ----- Irregular polyhedron builders -----
+
+        // Prism: extrude (stretch upward) an arbitrary 2D polygon base
+        static PolyhedronData createPrism(
+            const std::vector<glm::vec2>& basePolygon, float height, float radius = 0.5f);
+
+        // Antiprism: two parallel polygons joined by alternating triangles
+        static PolyhedronData createAntiprism(int n, float radius = 0.5f, float height = 1.0f);
+
+        // Pyramid: arbitrary polygon base with a single apex (tip)
+        static PolyhedronData createPyramid(
+            const std::vector<glm::vec2>& basePolygon, float apexHeight, float radius = 0.5f);
+
+        // Bipyramid: two pyramids joined at their base (like a diamond shape)
+        static PolyhedronData createBipyramid(int n, float radius = 0.5f, float height = 1.0f);
+
+        // Frustum: a pyramid with its top cut off (truncated pyramid)
+        static PolyhedronData createFrustum(
+            const std::vector<glm::vec2>& basePolygon, float height,
+            float topScale = 0.5f, float radius = 0.5f);
+
+        // ----- Topological operations (shape-algebra) -----
+
+        // Truncation: slice off every vertex to create new faces
+        static PolyhedronData truncate(const PolyhedronData& source, float amount = 0.3f);
+
+        // Dual: swap faces and vertices (the dual of a cube is an octahedron, etc.)
+        static PolyhedronData createDual(const PolyhedronData& source);
         
         // Generate UV coordinates for texturing
         void generateUVs();
@@ -123,6 +171,20 @@ public:
 
         // Uniformly scale vertices so the furthest vertex from origin matches the requested radius
         void scaleToRadius(float radius);
+
+        // ----- Contour and angle analysis -----
+
+        // Classify each face as Flat or Round based on vertex planarity
+        void classifyContours();
+
+        // Build a full FlatContour or RoundContour object for a given face
+        std::unique_ptr<Contour> buildContour(int faceIndex) const;
+
+        // Compute all dihedral angles and edge info
+        void computeAngleData();
+
+        // Recompute all derived properties at once (normals, areas, contours, angles, etc.)
+        void recomputeAll();
     };
 
     std::string screenMode();
@@ -510,8 +572,13 @@ public:
     Object(const Object&) = delete;
     Object& operator=(const Object&) = delete;
 
-    virtual void setTransform(const glm::mat4& t) { transform = t; }
+    virtual void setTransform(const glm::mat4& t) {
+        transform = t;
+        // Keep collision data in sync so selection outlines and physics queries stay aligned.
+        updateCollisionZone(transform);
+    }
     virtual glm::mat4 getTransform() const { return transform; }
+    virtual glm::mat4 getRaycastTransform() const { return transform; }
 
     // Generalized ray-face intersection for painting across all geometry types.
     // Returns true if hit, along with distance t in world units, the face index, and UV in [0,1].
@@ -545,6 +612,10 @@ public:
                                const std::vector<std::vector<int>>& faces);
 
     virtual ~Object() = default;
+
+    // Owning body part (non-null when this Object is a sub-object of a BodyPart)
+    void setOwnerBodyPart(BodyPart* owner) { part = owner; }
+    BodyPart* getOwnerBodyPart() const { return part; }
 
     // Singular interface implementation
     std::string getIdentifier() const override { return objectID; }

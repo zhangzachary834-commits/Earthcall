@@ -1,4 +1,6 @@
 #include "Object.hpp"
+#include "Contour.hpp"
+#include "AngleTools.hpp"
 #include <GLFW/glfw3.h>
 #include <OpenGL/glu.h>
 #include <algorithm>
@@ -8,6 +10,7 @@
 #include <limits>  // for numeric_limits
 #include <optional>
 #include <unordered_set>
+#include <unordered_map>
 #include "Rendering/HighlightSystem.hpp"
 
 #ifndef M_PI
@@ -432,6 +435,514 @@ void Object::PolyhedronData::scaleToRadius(float radius) {
     float s = radius / maxR;
     for (auto& v : vertices) v *= s;
 }
+
+// ===========================================================================
+//  Irregular polyhedron factory methods
+// ===========================================================================
+
+Object::PolyhedronData Object::PolyhedronData::createPrism(
+    const std::vector<glm::vec2>& basePolygon, float height, float radius)
+{
+    PolyhedronData data;
+    int n = static_cast<int>(basePolygon.size());
+    if (n < 3) return data;
+
+    float halfH = height * 0.5f;
+
+    // Bottom vertices (y = -halfH), then top vertices (y = +halfH)
+    for (int i = 0; i < n; ++i)
+        data.vertices.push_back(glm::vec3(basePolygon[i].x, -halfH, basePolygon[i].y));
+    for (int i = 0; i < n; ++i)
+        data.vertices.push_back(glm::vec3(basePolygon[i].x, halfH, basePolygon[i].y));
+
+    // Bottom face (reversed winding for outward normal pointing -Y)
+    std::vector<int> bottom;
+    for (int i = n - 1; i >= 0; --i) bottom.push_back(i);
+    data.faces.push_back(bottom);
+
+    // Top face
+    std::vector<int> top;
+    for (int i = 0; i < n; ++i) top.push_back(n + i);
+    data.faces.push_back(top);
+
+    // Side faces (quads connecting bottom edge to top edge)
+    for (int i = 0; i < n; ++i) {
+        int next = (i + 1) % n;
+        data.faces.push_back({i, next, n + next, n + i});
+    }
+
+    data.ensureOutwardWinding();
+    data.scaleToRadius(radius);
+    data.recomputeAll();
+    return data;
+}
+
+Object::PolyhedronData Object::PolyhedronData::createAntiprism(
+    int n, float radius, float height)
+{
+    PolyhedronData data;
+    if (n < 3) return data;
+
+    float halfH = height * 0.5f;
+    float twistAngle = static_cast<float>(M_PI) / n; // Half-step rotation
+
+    // Bottom ring
+    for (int i = 0; i < n; ++i) {
+        float angle = 2.0f * static_cast<float>(M_PI) * i / n;
+        data.vertices.push_back(glm::vec3(std::cos(angle), -halfH, std::sin(angle)));
+    }
+    // Top ring (rotated by half a step)
+    for (int i = 0; i < n; ++i) {
+        float angle = 2.0f * static_cast<float>(M_PI) * i / n + twistAngle;
+        data.vertices.push_back(glm::vec3(std::cos(angle), halfH, std::sin(angle)));
+    }
+
+    // Bottom face
+    std::vector<int> bottom;
+    for (int i = n - 1; i >= 0; --i) bottom.push_back(i);
+    data.faces.push_back(bottom);
+
+    // Top face
+    std::vector<int> top;
+    for (int i = 0; i < n; ++i) top.push_back(n + i);
+    data.faces.push_back(top);
+
+    // Alternating triangles connecting the two rings
+    for (int i = 0; i < n; ++i) {
+        int botCur  = i;
+        int botNext = (i + 1) % n;
+        int topCur  = n + i;
+        int topNext = n + (i + 1) % n;
+
+        // Triangle pointing up
+        data.faces.push_back({botCur, botNext, topCur});
+        // Triangle pointing down
+        data.faces.push_back({botNext, topNext, topCur});
+    }
+
+    data.ensureOutwardWinding();
+    data.scaleToRadius(radius);
+    data.recomputeAll();
+    return data;
+}
+
+Object::PolyhedronData Object::PolyhedronData::createPyramid(
+    const std::vector<glm::vec2>& basePolygon, float apexHeight, float radius)
+{
+    PolyhedronData data;
+    int n = static_cast<int>(basePolygon.size());
+    if (n < 3) return data;
+
+    // Base vertices at y = 0
+    for (int i = 0; i < n; ++i)
+        data.vertices.push_back(glm::vec3(basePolygon[i].x, 0.0f, basePolygon[i].y));
+
+    // Apex vertex
+    int apexIdx = n;
+    data.vertices.push_back(glm::vec3(0.0f, apexHeight, 0.0f));
+
+    // Base face (reversed winding)
+    std::vector<int> base;
+    for (int i = n - 1; i >= 0; --i) base.push_back(i);
+    data.faces.push_back(base);
+
+    // Triangular side faces
+    for (int i = 0; i < n; ++i) {
+        int next = (i + 1) % n;
+        data.faces.push_back({i, next, apexIdx});
+    }
+
+    data.ensureOutwardWinding();
+    data.scaleToRadius(radius);
+    data.recomputeAll();
+    return data;
+}
+
+Object::PolyhedronData Object::PolyhedronData::createBipyramid(
+    int n, float radius, float height)
+{
+    PolyhedronData data;
+    if (n < 3) return data;
+
+    float halfH = height * 0.5f;
+
+    // Equatorial ring (the "waist" of the diamond)
+    for (int i = 0; i < n; ++i) {
+        float angle = 2.0f * static_cast<float>(M_PI) * i / n;
+        data.vertices.push_back(glm::vec3(std::cos(angle), 0.0f, std::sin(angle)));
+    }
+
+    // Top apex
+    int topIdx = n;
+    data.vertices.push_back(glm::vec3(0.0f, halfH, 0.0f));
+
+    // Bottom apex
+    int botIdx = n + 1;
+    data.vertices.push_back(glm::vec3(0.0f, -halfH, 0.0f));
+
+    // Upper triangles
+    for (int i = 0; i < n; ++i) {
+        int next = (i + 1) % n;
+        data.faces.push_back({i, next, topIdx});
+    }
+
+    // Lower triangles (reversed winding relative to upper)
+    for (int i = 0; i < n; ++i) {
+        int next = (i + 1) % n;
+        data.faces.push_back({next, i, botIdx});
+    }
+
+    data.ensureOutwardWinding();
+    data.scaleToRadius(radius);
+    data.recomputeAll();
+    return data;
+}
+
+Object::PolyhedronData Object::PolyhedronData::createFrustum(
+    const std::vector<glm::vec2>& basePolygon, float height,
+    float topScale, float radius)
+{
+    PolyhedronData data;
+    int n = static_cast<int>(basePolygon.size());
+    if (n < 3) return data;
+
+    float halfH = height * 0.5f;
+
+    // Bottom vertices
+    for (int i = 0; i < n; ++i)
+        data.vertices.push_back(glm::vec3(basePolygon[i].x, -halfH, basePolygon[i].y));
+
+    // Top vertices (scaled down version of the base)
+    for (int i = 0; i < n; ++i)
+        data.vertices.push_back(glm::vec3(basePolygon[i].x * topScale, halfH,
+                                           basePolygon[i].y * topScale));
+
+    // Bottom face (reversed winding)
+    std::vector<int> bottom;
+    for (int i = n - 1; i >= 0; --i) bottom.push_back(i);
+    data.faces.push_back(bottom);
+
+    // Top face
+    std::vector<int> top;
+    for (int i = 0; i < n; ++i) top.push_back(n + i);
+    data.faces.push_back(top);
+
+    // Side faces (trapezoids connecting bottom to top)
+    for (int i = 0; i < n; ++i) {
+        int next = (i + 1) % n;
+        data.faces.push_back({i, next, n + next, n + i});
+    }
+
+    data.ensureOutwardWinding();
+    data.scaleToRadius(radius);
+    data.recomputeAll();
+    return data;
+}
+
+
+// ===========================================================================
+//  Topological operations
+// ===========================================================================
+
+Object::PolyhedronData Object::PolyhedronData::truncate(
+    const PolyhedronData& source, float amount)
+{
+    PolyhedronData result;
+    if (source.vertices.empty() || source.faces.empty()) return result;
+
+    amount = std::clamp(amount, 0.01f, 0.49f);
+
+    // For each original edge, compute two new vertices by interpolating
+    // "amount" from each endpoint toward the other
+    struct EdgeKey {
+        int a, b;
+        EdgeKey(int i, int j) : a(std::min(i,j)), b(std::max(i,j)) {}
+        bool operator==(const EdgeKey& o) const { return a == o.a && b == o.b; }
+    };
+    struct EKHash {
+        size_t operator()(const EdgeKey& k) const {
+            return std::hash<long long>()(static_cast<long long>(k.a) << 32 | k.b);
+        }
+    };
+
+    // Map from (originalEdge, whichEndpoint) -> new vertex index
+    // Key: (edge, endpoint) where endpoint is 0 (near a) or 1 (near b)
+    std::unordered_map<EdgeKey, std::pair<int,int>, EKHash> edgeNewVerts;
+
+    for (const auto& face : source.faces) {
+        for (size_t i = 0; i < face.size(); ++i) {
+            int v0 = face[i];
+            int v1 = face[(i + 1) % face.size()];
+            EdgeKey ek(v0, v1);
+            if (edgeNewVerts.find(ek) == edgeNewVerts.end()) {
+                // Two new vertices along this edge
+                glm::vec3 pA = glm::mix(source.vertices[ek.a], source.vertices[ek.b], amount);
+                glm::vec3 pB = glm::mix(source.vertices[ek.b], source.vertices[ek.a], amount);
+                int idxA = static_cast<int>(result.vertices.size());
+                result.vertices.push_back(pA);
+                int idxB = static_cast<int>(result.vertices.size());
+                result.vertices.push_back(pB);
+                edgeNewVerts[ek] = {idxA, idxB};
+            }
+        }
+    }
+
+    auto getNewIdx = [&](int originalV, int otherV) -> int {
+        EdgeKey ek(originalV, otherV);
+        auto it = edgeNewVerts.find(ek);
+        if (it == edgeNewVerts.end()) return -1;
+        return (originalV == ek.a) ? it->second.first : it->second.second;
+    };
+
+    // Truncated face: replace each original face with a new face using the
+    // interpolated vertices
+    for (const auto& face : source.faces) {
+        std::vector<int> newFace;
+        for (size_t i = 0; i < face.size(); ++i) {
+            int prev = face[(i + face.size() - 1) % face.size()];
+            int curr = face[i];
+            int next = face[(i + 1) % face.size()];
+            int fromPrev = getNewIdx(curr, prev);
+            int toNext   = getNewIdx(curr, next);
+            if (fromPrev >= 0) newFace.push_back(fromPrev);
+            if (toNext >= 0)   newFace.push_back(toNext);
+        }
+        if (newFace.size() >= 3)
+            result.faces.push_back(newFace);
+    }
+
+    // Vertex figures: for each original vertex, collect the surrounding
+    // new vertices and form a new face
+    std::unordered_map<int, std::vector<std::pair<int, int>>> vertexNeighborEdges;
+    for (const auto& face : source.faces) {
+        for (size_t i = 0; i < face.size(); ++i) {
+            int curr = face[i];
+            int next = face[(i + 1) % face.size()];
+            vertexNeighborEdges[curr].push_back({curr, next});
+        }
+    }
+
+    for (const auto& kv : vertexNeighborEdges) {
+        int origV = kv.first;
+        const auto& neighbors = kv.second;
+
+        // Collect new vertices around this original vertex
+        std::vector<int> ring;
+        for (const auto& edge : neighbors) {
+            int newIdx = getNewIdx(edge.first, edge.second);
+            if (newIdx >= 0) ring.push_back(newIdx);
+        }
+
+        if (ring.size() >= 3) {
+            // Sort ring by angle around the original vertex direction
+            glm::vec3 center(0.0f);
+            for (int idx : ring) center += result.vertices[idx];
+            center /= static_cast<float>(ring.size());
+
+            glm::vec3 normal = glm::normalize(source.vertices[origV]);
+            glm::vec3 ref = (std::fabs(normal.y) < 0.9f) ? glm::vec3(0,1,0) : glm::vec3(1,0,0);
+            glm::vec3 t1 = glm::normalize(glm::cross(ref, normal));
+            glm::vec3 t2 = glm::normalize(glm::cross(normal, t1));
+
+            std::vector<std::pair<float, int>> angleIdx;
+            for (int idx : ring) {
+                glm::vec3 d = result.vertices[idx] - center;
+                float a = std::atan2(glm::dot(d, t2), glm::dot(d, t1));
+                angleIdx.push_back({a, idx});
+            }
+            std::sort(angleIdx.begin(), angleIdx.end());
+
+            std::vector<int> sortedRing;
+            for (const auto& p : angleIdx) sortedRing.push_back(p.second);
+            result.faces.push_back(sortedRing);
+        }
+    }
+
+    result.ensureOutwardWinding();
+    result.recomputeAll();
+    return result;
+}
+
+Object::PolyhedronData Object::PolyhedronData::createDual(
+    const PolyhedronData& source)
+{
+    PolyhedronData result;
+    if (source.vertices.empty() || source.faces.empty()) return result;
+
+    // Dual vertices = centroids of source faces
+    result.vertices.reserve(source.faces.size());
+    for (const auto& face : source.faces) {
+        glm::vec3 centroid(0.0f);
+        for (int idx : face) centroid += source.vertices[idx];
+        centroid /= static_cast<float>(face.size());
+        result.vertices.push_back(centroid);
+    }
+
+    // Dual faces: for each source vertex, collect indices of source faces
+    // that contain it, ordered by angle around the vertex normal
+    std::unordered_map<int, std::vector<int>> vertexToFaces;
+    for (int fi = 0; fi < static_cast<int>(source.faces.size()); ++fi) {
+        for (int vi : source.faces[fi]) {
+            vertexToFaces[vi].push_back(fi);
+        }
+    }
+
+    for (const auto& kv : vertexToFaces) {
+        int vi = kv.first;
+        const auto& incidentFaces = kv.second;
+        if (incidentFaces.size() < 3) continue;
+
+        // Sort faces by angle around the vertex normal
+        glm::vec3 vn = glm::normalize(source.vertices[vi]);
+        glm::vec3 ref = (std::fabs(vn.y) < 0.9f) ? glm::vec3(0,1,0) : glm::vec3(1,0,0);
+        glm::vec3 t1 = glm::normalize(glm::cross(ref, vn));
+        glm::vec3 t2 = glm::normalize(glm::cross(vn, t1));
+
+        std::vector<std::pair<float, int>> angleIdx;
+        for (int fi : incidentFaces) {
+            glm::vec3 d = result.vertices[fi] - source.vertices[vi];
+            float a = std::atan2(glm::dot(d, t2), glm::dot(d, t1));
+            angleIdx.push_back({a, fi});
+        }
+        std::sort(angleIdx.begin(), angleIdx.end());
+
+        std::vector<int> dualFace;
+        for (const auto& p : angleIdx) dualFace.push_back(p.second);
+        result.faces.push_back(dualFace);
+    }
+
+    result.ensureOutwardWinding();
+    float maxR = 0.0f;
+    for (const auto& v : source.vertices) maxR = std::max(maxR, glm::length(v));
+    if (maxR > 1e-8f) result.scaleToRadius(maxR);
+    result.recomputeAll();
+    return result;
+}
+
+
+// ===========================================================================
+//  Contour and angle analysis
+// ===========================================================================
+
+void Object::PolyhedronData::classifyContours() {
+    contourTypes.clear();
+    contourCurvatures.clear();
+    contourTypes.reserve(faces.size());
+    contourCurvatures.reserve(faces.size());
+
+    for (size_t fi = 0; fi < faces.size(); ++fi) {
+        const auto& face = faces[fi];
+        if (face.size() < 3) {
+            contourTypes.push_back(ContourType::Flat);
+            contourCurvatures.push_back({});
+            continue;
+        }
+
+        // Check planarity: measure max distance of vertices from the plane
+        // defined by the first three vertices
+        glm::vec3 v0 = vertices[face[0]];
+        glm::vec3 v1 = vertices[face[1]];
+        glm::vec3 v2 = vertices[face[2]];
+        glm::vec3 normal = glm::cross(v1 - v0, v2 - v0);
+        float nLen = glm::length(normal);
+        if (nLen < 1e-8f) {
+            contourTypes.push_back(ContourType::Flat);
+            contourCurvatures.push_back({});
+            continue;
+        }
+        normal /= nLen;
+
+        float maxDist = 0.0f;
+        for (size_t i = 3; i < face.size(); ++i) {
+            float d = std::fabs(glm::dot(vertices[face[i]] - v0, normal));
+            maxDist = std::max(maxDist, d);
+        }
+
+        // Threshold: if vertices deviate from the plane by more than a small
+        // fraction of the face's extent, classify as Round
+        float faceExtent = 0.0f;
+        for (size_t i = 0; i < face.size(); ++i) {
+            for (size_t j = i + 1; j < face.size(); ++j) {
+                faceExtent = std::max(faceExtent,
+                    glm::length(vertices[face[i]] - vertices[face[j]]));
+            }
+        }
+        float threshold = faceExtent * 0.01f;
+
+        if (maxDist > threshold && face.size() > 3) {
+            contourTypes.push_back(ContourType::Round);
+            // Estimate curvature from vertex deviation
+            ContourCurvature cc;
+            float avgDeviation = 0.0f;
+            int deviationCount = 0;
+            for (size_t i = 3; i < face.size(); ++i) {
+                avgDeviation += std::fabs(glm::dot(vertices[face[i]] - v0, normal));
+                deviationCount++;
+            }
+            if (deviationCount > 0) avgDeviation /= deviationCount;
+            float radius = (avgDeviation > 1e-8f)
+                ? (faceExtent * faceExtent) / (8.0f * avgDeviation) + avgDeviation / 2.0f
+                : 0.0f;
+            if (radius > 1e-8f) {
+                cc.principalK1 = 1.0f / radius;
+                cc.principalK2 = 1.0f / radius;
+                cc.gaussianCurvature = cc.principalK1 * cc.principalK2;
+                cc.meanCurvature = (cc.principalK1 + cc.principalK2) / 2.0f;
+            }
+            contourCurvatures.push_back(cc);
+        } else {
+            contourTypes.push_back(ContourType::Flat);
+            contourCurvatures.push_back({});
+        }
+    }
+}
+
+std::unique_ptr<Contour> Object::PolyhedronData::buildContour(int faceIndex) const {
+    if (faceIndex < 0 || faceIndex >= static_cast<int>(faces.size())) return nullptr;
+
+    bool isRound = (faceIndex < static_cast<int>(contourTypes.size()))
+                   && contourTypes[faceIndex] == ContourType::Round;
+
+    if (!isRound) {
+        auto fc = std::make_unique<FlatContour>(faces[faceIndex], vertices);
+        fc->id = faceIndex;
+        return fc;
+    }
+
+    // For round contours, create a spherical approximation
+    const auto& face = faces[faceIndex];
+    glm::vec3 centroid(0.0f);
+    for (int idx : face) centroid += vertices[idx];
+    centroid /= static_cast<float>(face.size());
+
+    float avgR = 0.0f;
+    for (int idx : face) avgR += glm::length(vertices[idx] - centroid);
+    avgR /= static_cast<float>(face.size());
+
+    auto rc = std::make_unique<RoundContour>();
+    rc->id = faceIndex;
+    *rc = RoundContour::createSpherical(
+        centroid, avgR, 0.0f, static_cast<float>(M_PI),
+        0.0f, 2.0f * static_cast<float>(M_PI), face);
+    return rc;
+}
+
+void Object::PolyhedronData::computeAngleData() {
+    if (faceNormals.empty()) computeNormals();
+    dihedralAngles = AngleTools::computeDihedralAngles(vertices, faces, faceNormals);
+    edgeInfos = AngleTools::computeAllEdgeInfo(vertices, faces, faceNormals);
+}
+
+void Object::PolyhedronData::recomputeAll() {
+    computeNormals();
+    analyzeConvexity();
+    computeFaceAreas();
+    computeVertexCurvatures();
+    generateUVs();
+    classifyContours();
+    computeAngleData();
+}
+
 
 void Object::PolyhedronData::analyzeConvexity() {
     isConvex = true;
@@ -1288,11 +1799,18 @@ void Object::drawHighlightOutline() const {
 
     // Draw 3-4 inflated shells of collision AABB as wireframes for a soft glow effect
     // Tailored to the object shape via its collisionZone corners (AABB). For more complex shapes, this can be extended.
-    glm::vec3 minCorner = collisionZone.corners[0];
-    glm::vec3 maxCorner = collisionZone.corners[0];
+    // IMPORTANT: collisionZone.corners are stored in world space, but this function is typically called
+    // after the object's model transform has already been applied via glMultMatrixf(...).
+    // If we draw world-space corners here, they get transformed again (double-transform), causing the outline
+    // to appear offset from the object. Convert to local space first.
+    glm::mat4 invModel = glm::inverse(getTransform());
+    glm::vec3 localCorner0 = glm::vec3(invModel * glm::vec4(collisionZone.corners[0], 1.0f));
+    glm::vec3 minCorner = localCorner0;
+    glm::vec3 maxCorner = localCorner0;
     for (int i = 1; i < 8; ++i) {
-        minCorner = glm::min(minCorner, collisionZone.corners[i]);
-        maxCorner = glm::max(maxCorner, collisionZone.corners[i]);
+        glm::vec3 cLocal = glm::vec3(invModel * glm::vec4(collisionZone.corners[i], 1.0f));
+        minCorner = glm::min(minCorner, cLocal);
+        maxCorner = glm::max(maxCorner, cLocal);
     }
 
     // Compute center and half-extent
@@ -1346,7 +1864,7 @@ void Object::drawHighlightOutline() const {
 bool Object::raycastFace(const glm::vec3& rayOriginWorld, const glm::vec3& rayDirWorld,
                          float& outT, int& outFaceIndex, glm::vec2& outUV) const {
     // Transform ray to local space
-    glm::mat4 inv = glm::inverse(getTransform());
+    glm::mat4 inv = glm::inverse(getRaycastTransform());
     glm::vec3 oL = glm::vec3(inv * glm::vec4(rayOriginWorld, 1.0f));
     glm::vec3 dL = glm::normalize(glm::vec3(inv * glm::vec4(rayDirWorld, 0.0f)));
 

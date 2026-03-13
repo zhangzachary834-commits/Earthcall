@@ -179,6 +179,28 @@ public:
     
     float getCraterDepth() const { return _craterDepth; }
     void setCraterDepth(float depth) { _craterDepth = depth; }
+
+    // Irregular polyhedron getters/setters
+    // 0=None/Regular, 1=Prism, 2=Antiprism, 3=Pyramid, 4=Bipyramid, 5=Frustum
+    int getIrregularType() const { return _irregularType; }
+    void setIrregularType(int type) { _irregularType = type; }
+    int getIrregularBaseSides() const { return _irregularBaseSides; }
+    void setIrregularBaseSides(int n) { _irregularBaseSides = n; }
+    float getIrregularHeight() const { return _irregularHeight; }
+    void setIrregularHeight(float h) { _irregularHeight = h; }
+    float getFrustumTopScale() const { return _frustumTopScale; }
+    void setFrustumTopScale(float s) { _frustumTopScale = s; }
+
+    // Shape modifiers (applied after base shape creation)
+    bool getApplyTruncation() const { return _applyTruncation; }
+    void setApplyTruncation(bool v) { _applyTruncation = v; }
+    float getTruncationAmount() const { return _truncationAmount; }
+    void setTruncationAmount(float a) { _truncationAmount = a; }
+    bool getApplyDual() const { return _applyDual; }
+    void setApplyDual(bool v) { _applyDual = v; }
+
+    // Build a PolyhedronData from the current UI settings (regular or irregular + modifiers)
+    Object::PolyhedronData buildCurrentPolyhedron() const;
     
     // Face brush getters/setters
     float getFaceBrushRadius() const { return _faceBrushRadius; }
@@ -377,6 +399,7 @@ private:
     void onFramebufferSize(int width, int height);
 
     enum class Mode3D { None = -1, FacePaint = 0, FaceBrush, BrushCreate, Pottery, Selection };
+    enum class ToolTarget3D { WorldObjects = 0, AvatarBodyParts };
 
     // Creator/toolbar -----------------------------------------------------
 
@@ -392,8 +415,10 @@ private:
     Tool _currentTool { Tool::Type::Brush };
     float _currentColor[3] = {1.0f, 0.9f, 0.2f};
     Mode3D _current3DMode = Mode3D::None;
+    ToolTarget3D _current3DTarget = ToolTarget3D::WorldObjects;
 
     void renderCreatorToolbar();
+    // void renderRelationManagerWindow(bool* open);
 
     // Advanced primitive brush settings (subset)
     Object::GeometryType _currentPrimitive = Object::GeometryType::Cube;
@@ -411,6 +436,17 @@ private:
     float _concavityAmount = 0.3f;
     float _spikeLength = 0.3f;
     float _craterDepth = 0.2f;
+
+    // Irregular polyhedron settings
+    int _irregularType = 0;        // 0=None/Regular, 1=Prism, 2=Antiprism, 3=Pyramid, 4=Bipyramid, 5=Frustum
+    int _irregularBaseSides = 5;
+    float _irregularHeight = 1.0f;
+    float _frustumTopScale = 0.5f;
+
+    // Shape modifiers (applied after base shape creation)
+    bool _applyTruncation = false;
+    float _truncationAmount = 0.3f;
+    bool _applyDual = false;
     
     float _brushSize = 1.0f;
     glm::vec3 _brushScale {1.0f};

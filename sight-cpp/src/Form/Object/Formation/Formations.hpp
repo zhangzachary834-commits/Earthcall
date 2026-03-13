@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <algorithm>
+#include <memory>
 #include "Form/Form.hpp"
 #include <glm/glm.hpp>
 #include "Relation/RelationManager.hpp"
@@ -41,10 +42,12 @@ public:
     const RelationManager& relations() const { return relationMgr; }
 
     // Convenience wrapper to add a relation directly
-    void addRelation(const Relation& r) { relationMgr.add(r); }
+    // void addRelation(const Relation& r) { relationMgr.add(r); }
+    void addRelation(const std::shared_ptr<Relation>& r) { relationMgr.add(r); }
     
     // Add a relation directly (alias for addRelation)
-    void add(const Relation& r) { relationMgr.add(r); }
+    // void add(const Relation& r) { relationMgr.add(r); }
+    void add(const std::shared_ptr<Relation>& r) { relationMgr.add(r); }
     
     // Build a simple fully-connected graph between all objects currently
     // in this formation (undirected, weight 1.0, type="member")

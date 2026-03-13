@@ -23,7 +23,11 @@ void Ourverse::addHome(Home home) {
     homes.push_back(home);
 }
 
-void Ourverse::relate(Relation relation) {
+// void Ourverse::relate(Relation relation) {
+//     relations.push_back(relation);
+// }
+void Ourverse::relate(const std::shared_ptr<Relation>& relation) {
+    if (!relation) return;
     relations.push_back(relation);
 }
 
@@ -31,9 +35,10 @@ void Ourverse::display() const {
     std::cout << "🌐 OURVERSE STATUS 🌐" << std::endl;
     for (const auto& z : zones) z.describe();
     for (const auto& h : homes) h.welcome();
-    for (const auto& r : relations) r.describe();
+    for (const auto& r : relations) {
+        if (r) r->describe();
+    }
 }
-
 
 void Ourverse::renderModeUI() {
     ImGui::Separator();

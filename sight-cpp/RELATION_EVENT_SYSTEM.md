@@ -13,11 +13,15 @@ When a new Relation is created in the system, an event called `RelationCreatedEv
 ```cpp
 #include "Core/EventBus.hpp"
 #include "Relation/RelationManager.hpp"
+#include <memory>
 
 // Create a function to handle the event
 void handleNewRelation(const RelationCreatedEvent& event) {
-    std::cout << "New relation created: " << event.relation.type << std::endl;
-    std::cout << "Between: " << event.relation.entityA << " and " << event.relation.entityB << std::endl;
+    // std::cout << "New relation created: " << event.relation.type << std::endl;
+    // std::cout << "Between: " << event.relation.entityA << " and " << event.relation.entityB << std::endl;
+    if (!event.relation) return;
+    std::cout << "New relation created: " << event.relation->type << std::endl;
+    std::cout << "Between: " << event.relation->entityA << " and " << event.relation->entityB << std::endl;
 }
 
 // Subscribe to the event
@@ -30,14 +34,16 @@ Whenever you add a new relation to a RelationManager, the event will be triggere
 
 ```cpp
 RelationManager manager;
-Relation friendship("friend", "Alice", "Bob");
+// Relation friendship("friend", "Alice", "Bob");
+// manager.add(friendship); // This triggers the RelationCreatedEvent
+auto friendship = std::make_shared<Relation>("friend", "Alice", "Bob");
 manager.add(friendship); // This triggers the RelationCreatedEvent
 ```
 
 ### 3. What information is available
 
 The `RelationCreatedEvent` contains:
-- `relation`: The complete Relation object that was created
+- `relation`: The complete Relation object (as a shared pointer) that was created
 - `timestamp`: When the event was triggered
 
 The Relation object contains:

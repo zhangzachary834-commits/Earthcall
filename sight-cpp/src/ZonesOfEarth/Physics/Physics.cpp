@@ -420,11 +420,15 @@ namespace Physics {
     RelationManager& registry() { return g_physicsRegistry; }
 
     void recordGravity(const Singular& obj, const Singular& env, float strength) {
-        g_physicsRegistry.add(Relation{"gravity", obj, env, true, strength});
+        // g_physicsRegistry.add(Relation{"gravity", obj, env, true, strength});
+        auto rel = std::make_shared<Relation>("gravity", obj, env, true, strength);
+        g_physicsRegistry.add(rel);
     }
 
     void recordCollision(const Singular& a, const Singular& b, float strength) {
-        g_physicsRegistry.add(Relation{"collision", a, b, false, strength});
+        // g_physicsRegistry.add(Relation{"collision", a, b, false, strength});
+        auto rel = std::make_shared<Relation>("collision", a, b, false, strength);
+        g_physicsRegistry.add(rel);
     }
 
     void applyGravity(glm::vec3& position,

@@ -76,7 +76,8 @@ void Formations::rebuildCompleteGraph() {
     for (size_t i = 0; i < members.size(); ++i) {
         for (size_t j = i + 1; j < members.size(); ++j) {
             if (!members[i] || !members[j]) continue;
-            Relation rel{"member", *members[i], *members[j]};
+            // Relation rel{"member", *members[i], *members[j]};
+            auto rel = std::make_shared<Relation>("member", *members[i], *members[j]);
             relationMgr.add(rel);
         }
     }

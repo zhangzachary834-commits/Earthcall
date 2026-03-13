@@ -4,7 +4,78 @@
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "GLFW/glfw3.h"
 #include "AdvancedFacePaint.hpp"
+#include <algorithm>
+#include <cmath>
 #include <iostream>
+
+namespace {
+void applyToolTransform(Object* obj, const glm::mat4& worldTransform, const glm::mat4* avatarRoot) {
+    if (!obj) return;
+
+    // Primary body part — update via local transform relative to avatar root
+    if (auto* part = dynamic_cast<BodyPart*>(obj)) {
+        if (avatarRoot) {
+            glm::mat4 local = glm::inverse(*avatarRoot) * worldTransform;
+            part->setLocalTransform(local);
+        } else {
+            part->setTransform(worldTransform);
+        }
+        return;
+    }
+
+    // Sub-object belonging to a body part — convert world transform to
+    // body-part-local offset so the sub-object stays attached correctly
+    if (BodyPart* owner = obj->getOwnerBodyPart()) {
+        glm::mat4 localOffset = glm::inverse(owner->getTransform()) * worldTransform;
+        for (size_t i = 0; i < owner->getSubObjectCount(); ++i) {
+            if (owner->getSubObject(i) == obj) {
+                owner->setSubObjectLocalOffset(i, localOffset);
+                break;
+            }
+        }
+        return;
+    }
+
+    obj->setTransform(worldTransform);
+}
+
+// Commented out - no longer needed since BodyParts now have proper faceTextures
+// and can use raycastFace() like regular Objects.
+// bool raycastCollisionAABB(const Object* obj, const glm::vec3& rayOrigin, const glm::vec3& rayDir, float& outT) {
+//     if (!obj) return false;
+//     glm::vec3 minCorner = obj->collisionZone.corners[0];
+//     glm::vec3 maxCorner = obj->collisionZone.corners[0];
+//     for (int i = 1; i < 8; ++i) {
+//         minCorner = glm::min(minCorner, obj->collisionZone.corners[i]);
+//         maxCorner = glm::max(maxCorner, obj->collisionZone.corners[i]);
+//     }
+//
+//     float tMin = 0.0f;
+//     float tMax = 1e9f;
+//     for (int axis = 0; axis < 3; ++axis) {
+//         float origin = rayOrigin[axis];
+//         float dir = rayDir[axis];
+//         if (fabs(dir) < 1e-6f) {
+//             if (origin < minCorner[axis] || origin > maxCorner[axis]) {
+//                 return false;
+//             }
+//         } else {
+//             float invD = 1.0f / dir;
+//             float t1 = (minCorner[axis] - origin) * invD;
+//             float t2 = (maxCorner[axis] - origin) * invD;
+//             if (t1 > t2) std::swap(t1, t2);
+//             tMin = std::max(tMin, t1);
+//             tMax = std::min(tMax, t2);
+//             if (tMin > tMax) {
+//                 return false;
+//             }
+//         }
+//     }
+//
+//     outT = tMin;
+//     return outT >= 0.0f;
+// }
+} // namespace
 
 // Tool class methods are already implemented inline in the header file
 // This file can be used for additional tool functionality in the future
@@ -506,7 +577,8 @@ void Tool::use(GLFWwindow *window, ZoneManager &mgr, Zone &zone, Type type, Core
     }
 }
 
-void Tool::ShapeGenerator3D(GLFWwindow *window, Core::Game *game, ZoneManager &mgr)
+void Tool::ShapeGenerator3D(GLFWwindow *window, Core::Game *game, ZoneManager &mgr,
+                            BodyPart* targetPart)
 {
     // In the future, refactor mouse to be handled by Zone system and Perspective system, not Tool.
     bool mouseLeftNow = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
@@ -564,11 +636,12 @@ void Tool::ShapeGenerator3D(GLFWwindow *window, Core::Game *game, ZoneManager &m
             for (const auto &uptr : objects)
             {
                 Object *obj = uptr.get();
+            glm::mat4 raycastTransform = obj->getRaycastTransform();
 
                 if (obj->getGeometryType() == Object::GeometryType::Cube)
                 {
                     // --- Existing AABB intersection in object local space ---
-                    glm::mat4 inv = glm::inverse(obj->getTransform());
+                glm::mat4 inv = glm::inverse(raycastTransform);
                     glm::vec3 oL = glm::vec3(inv * glm::vec4(rayO, 1.0f));
                     glm::vec3 dL = glm::normalize(glm::vec3(inv * glm::vec4(rayDir, 0.0f)));
                     float tMin = -1e9f, tMax = 1e9f;
@@ -621,11 +694,11 @@ void Tool::ShapeGenerator3D(GLFWwindow *window, Core::Game *game, ZoneManager &m
                 else
                 {
                     // --- Bounding-sphere intersection for non-cube primitives ---
-                    glm::vec3 centerWorld = glm::vec3(obj->getTransform() * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+                glm::vec3 centerWorld = glm::vec3(raycastTransform * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
                     // Extract world scale along each axis from transform columns
-                    glm::vec3 colX = glm::vec3(obj->getTransform()[0]);
-                    glm::vec3 colY = glm::vec3(obj->getTransform()[1]);
-                    glm::vec3 colZ = glm::vec3(obj->getTransform()[2]);
+                glm::vec3 colX = glm::vec3(raycastTransform[0]);
+                glm::vec3 colY = glm::vec3(raycastTransform[1]);
+                glm::vec3 colZ = glm::vec3(raycastTransform[2]);
                     float scaleX = glm::length(colX);
                     float scaleY = glm::length(colY);
                     float scaleZ = glm::length(colZ);
@@ -653,16 +726,17 @@ void Tool::ShapeGenerator3D(GLFWwindow *window, Core::Game *game, ZoneManager &m
             if (nearestT < 1e8f && hitObj)
             {
                 glm::vec3 hitPoint = rayO + rayDir * nearestT;
+                glm::mat4 hitTransform = hitObj->getRaycastTransform();
                 glm::vec3 nWorld;
                 if (hitIsCube)
                 {
                     glm::vec3 nLocal(0.0f);
                     nLocal[hitAxis] = static_cast<float>(hitSign);
-                    nWorld = glm::normalize(glm::vec3(hitObj->getTransform() * glm::vec4(nLocal, 0.0f)));
+                    nWorld = glm::normalize(glm::vec3(hitTransform * glm::vec4(nLocal, 0.0f)));
                 }
                 else
                 {
-                    glm::vec3 centerWorld = glm::vec3(hitObj->getTransform() * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+                    glm::vec3 centerWorld = glm::vec3(hitTransform * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
                     nWorld = glm::normalize(hitPoint - centerWorld);
                 }
                 glm::vec3 half = glm::vec3(game->getBrushScale().x * game->getBrushSize(), game->getBrushScale().y * game->getBrushSize(), game->getBrushScale().z * game->getBrushSize()) * 0.5f;
@@ -683,62 +757,47 @@ void Tool::ShapeGenerator3D(GLFWwindow *window, Core::Game *game, ZoneManager &m
             spawnPos.z = std::round(spawnPos.z / game->getBrushGridSize()) * game->getBrushGridSize();
         }
 
-        // Create a new Object
-        std::unique_ptr<Object> obj(new Object());
-        obj->setGeometryType(game->getCurrentPrimitive());
-
-        // Add this Object to the Game's active zone object Formation/list
-        // game->getActiveZone().addObject(std::move(obj)); // Removed for now
-
-        // 3D Face Brush
-        // Initialize polyhedron data if needed
-        if (game->getCurrentPrimitive() == Object::GeometryType::Polyhedron)
-        {
-            if (game->getUseCustomPolyhedron() && !game->getCustomPolyhedronVertices().empty())
-            {
-                // Use custom polyhedron
-                obj->setPolyhedronData(Object::PolyhedronData::createCustomPolyhedron(
-                    game->getCustomPolyhedronVertices(), game->getCustomPolyhedronFaces()));
-            }
-            else
-            {
-                // Use concave variant based on selection
-                switch (game->getCurrentConcaveType())
-                {
-                case 0: // Regular
-                    obj->setPolyhedronData(Object::PolyhedronData::createRegularPolyhedron(game->getCurrentPolyhedronType()));
-                    break;
-                case 1: // Concave
-                    obj->setPolyhedronData(Object::PolyhedronData::createConcavePolyhedron(game->getCurrentPolyhedronType(), 0.5f, game->getConcavityAmount()));
-                    break;
-                case 2: // Star
-                    obj->setPolyhedronData(Object::PolyhedronData::createStarPolyhedron(game->getCurrentPolyhedronType(), 0.5f, game->getSpikeLength()));
-                    break;
-                case 3: // Crater
-                    obj->setPolyhedronData(Object::PolyhedronData::createCraterPolyhedron(game->getCurrentPolyhedronType(), 0.5f, game->getCraterDepth()));
-                    break;
-                default:
-                    obj->setPolyhedronData(Object::PolyhedronData::createRegularPolyhedron(game->getCurrentPolyhedronType()));
-                    break;
-                }
-            }
-        }
-
         glm::mat4 t = glm::translate(glm::mat4(1.0f), spawnPos);
         glm::vec3 totalScale = glm::vec3(game->getBrushScale().x * game->getBrushSize(),
                                          game->getBrushScale().y * game->getBrushSize(),
                                          game->getBrushScale().z * game->getBrushSize());
         t = glm::scale(t, totalScale);
-        obj->setTransform(t);
-        obj->updateCollisionZone(t);
-        for (int f = 0; f < 6; ++f)
-            obj->setFaceColor(f, game->getCurrentColor(0), game->getCurrentColor(1), game->getCurrentColor(2));
-        mgr.active().world().addObject(std::move(obj));
+
+        if (targetPart) {
+            // Convert world-space transform into body-part-local space
+            glm::mat4 partWorld = targetPart->getTransform();
+            glm::mat4 localT = glm::inverse(partWorld) * t;
+
+            Object* sub = targetPart->addSubObject(game->getCurrentPrimitive(), localT);
+            if (sub && game->getCurrentPrimitive() == Object::GeometryType::Polyhedron) {
+                sub->setPolyhedronData(game->buildCurrentPolyhedron());
+            }
+            if (sub) {
+                for (int f = 0; f < 6; ++f)
+                    sub->setFaceColor(f, game->getCurrentColor(0), game->getCurrentColor(1), game->getCurrentColor(2));
+            }
+        } else {
+            std::unique_ptr<Object> obj(new Object());
+            obj->setGeometryType(game->getCurrentPrimitive());
+
+            if (game->getCurrentPrimitive() == Object::GeometryType::Polyhedron)
+            {
+                obj->setPolyhedronData(game->buildCurrentPolyhedron());
+            }
+
+            obj->setTransform(t);
+            obj->updateCollisionZone(t);
+            for (int f = 0; f < 6; ++f)
+                obj->setFaceColor(f, game->getCurrentColor(0), game->getCurrentColor(1), game->getCurrentColor(2));
+            mgr.active().world().addObject(std::move(obj));
+        }
     }
 }
 
-void Tool::Pottery3D(GLFWwindow *window, Core::Game *game, ZoneManager &mgr, float dt)
+void Tool::Pottery3D(GLFWwindow *window, Core::Game *game, ZoneManager &mgr, float dt,
+                     const std::vector<Object*>& targets, const glm::mat4* avatarRoot)
 {
+    (void)mgr;
     // Implement 3D pottery functionality here
     // Pottery sculpting logic: modify existing object geometry by scaling along hit normal
     bool mouseLeftNow = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
@@ -770,13 +829,14 @@ void Tool::Pottery3D(GLFWwindow *window, Core::Game *game, ZoneManager &mgr, flo
         int hitAxis = -1;
         int hitSign = 1;
         bool hitIsCube = false;
-        const auto &objects = mgr.active().world().getOwnedObjects();
-        for (const auto &uptr : objects)
+        const auto &objects = targets;
+        for (auto *obj : objects)
         {
-            Object *obj = uptr.get();
+            if (!obj) continue;
+            glm::mat4 raycastTransform = obj->getRaycastTransform();
             if (obj->getGeometryType() == Object::GeometryType::Cube)
             {
-                glm::mat4 inv = glm::inverse(obj->getTransform());
+                glm::mat4 inv = glm::inverse(raycastTransform);
                 glm::vec3 oL = glm::vec3(inv * glm::vec4(rayO, 1.0f));
                 glm::vec3 dL = glm::normalize(glm::vec3(inv * glm::vec4(rayDir, 0.0f)));
                 float tMin = -1e9f, tMax = 1e9f;
@@ -829,10 +889,10 @@ void Tool::Pottery3D(GLFWwindow *window, Core::Game *game, ZoneManager &mgr, flo
             else
             {
                 // Bounding sphere for other primitives
-                glm::vec3 centerWorld = glm::vec3(obj->getTransform() * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
-                glm::vec3 colX = glm::vec3(obj->getTransform()[0]);
-                glm::vec3 colY = glm::vec3(obj->getTransform()[1]);
-                glm::vec3 colZ = glm::vec3(obj->getTransform()[2]);
+                glm::vec3 centerWorld = glm::vec3(raycastTransform * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+                glm::vec3 colX = glm::vec3(raycastTransform[0]);
+                glm::vec3 colY = glm::vec3(raycastTransform[1]);
+                glm::vec3 colZ = glm::vec3(raycastTransform[2]);
                 float radius = 0.5f * std::max({glm::length(colX), glm::length(colY), glm::length(colZ)});
                 glm::vec3 oc = rayO - centerWorld;
                 float b = glm::dot(oc, rayDir);
@@ -907,14 +967,16 @@ void Tool::Pottery3D(GLFWwindow *window, Core::Game *game, ZoneManager &mgr, flo
 
             glm::mat4 newT = glm::translate(glm::mat4(1.0f), translation);
             newT = glm::scale(newT, glm::vec3(scaleX, scaleY, scaleZ));
-            hitObj->setTransform(newT);
-            hitObj->updateCollisionZone(newT);
+            applyToolTransform(hitObj, newT, avatarRoot);
+            // hitObj->updateCollisionZone(newT); // handled by setTransform/setLocalTransform
         }
     }
 }
 
-void Tool::FacePaint(GLFWwindow *window, Core::Game *game, ZoneManager &mgr, float dt)
+void Tool::FacePaint(GLFWwindow *window, Core::Game *game, ZoneManager &mgr, float dt,
+                     const std::vector<Object*>& targets)
 {
+    (void)mgr;
     bool mouseLeftNow = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
     if (mouseLeftNow && !game->getMouseLeftPressedLast())
     {
@@ -944,10 +1006,13 @@ void Tool::FacePaint(GLFWwindow *window, Core::Game *game, ZoneManager &mgr, flo
         Object *hitObj = nullptr;
         int hitFace = -1;
         glm::vec2 hitUV(0.0f);
-        const auto &objects = mgr.active().world().getOwnedObjects();
-        for (const auto &up : objects)
+        const auto &objects = targets;
+        for (auto *obj : objects)
         {
-            Object *obj = up.get();
+            if (!obj) continue;
+            
+            // Use raycastFace for all objects including BodyParts
+            // BodyParts now have proper faceTextures initialized
             float t;
             int f;
             glm::vec2 uv;
@@ -988,8 +1053,10 @@ void Tool::FacePaint(GLFWwindow *window, Core::Game *game, ZoneManager &mgr, flo
     }
 }
 
- void Tool::FaceBrush(GLFWwindow *window, Core::Game *game, ZoneManager &mgr, float dt)
+ void Tool::FaceBrush(GLFWwindow *window, Core::Game *game, ZoneManager &mgr, float dt,
+                      const std::vector<Object*>& targets)
  {
+    (void)mgr;
      bool mouseLeftNow = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
      if (mouseLeftNow)
     {
@@ -1016,10 +1083,13 @@ void Tool::FacePaint(GLFWwindow *window, Core::Game *game, ZoneManager &mgr, flo
         Object *hitObj = nullptr;
         int hitFace = -1;
         glm::vec2 uv(0.0f);
-        const auto &objects = mgr.active().world().getOwnedObjects();
-        for (const auto &up : objects)
+        const auto &objects = targets;
+        for (auto *obj : objects)
         {
-            Object *obj = up.get();
+            if (!obj) continue;
+            
+            // Use raycastFace for all objects including BodyParts
+            // BodyParts now have proper faceTextures initialized
             float t;
             int f;
             glm::vec2 hitUV;

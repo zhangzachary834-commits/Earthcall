@@ -2,15 +2,15 @@
 #include <algorithm>
 
 // Event structure for when a new Relation is created
-struct RelationCreatedEvent {
+/*struct RelationCreatedEvent {
     const Relation& relation;
     std::time_t timestamp;
     
     RelationCreatedEvent(const Relation& r) 
         : relation(r), timestamp(std::time(nullptr)) {}
-};
+};*/
 
-void RelationManager::add(const Relation& r) {
+/*void RelationManager::add(const Relation& r) {
     // Check if an equivalent relation already exists (same type & endpoints)
     auto it = std::find_if(relations.begin(), relations.end(), [&](const Relation& other) {
         bool sameType = other.type == r.type;
@@ -49,9 +49,54 @@ void RelationManager::add(const Relation& r) {
         RelationCreatedEvent event(newRel);
         Core::EventBus::instance().publish(event);
     }
+}*/
+
+void RelationManager::add(const std::shared_ptr<Relation>& r) {
+    if (!r) return;
+
+    const Relation& input = *r;
+    // Check if an equivalent relation already exists (same type & endpoints)
+    auto it = std::find_if(relations.begin(), relations.end(), [&](const std::shared_ptr<Relation>& otherPtr) {
+        if (!otherPtr) return false;
+        const Relation& other = *otherPtr;
+        bool sameType = other.type == input.type;
+        bool sameDir  = other.directed == input.directed;
+
+        if (!sameType || !sameDir) return false;
+
+        if (input.directed) {
+            // Directed: order matters
+            return other.entityA == input.entityA && other.entityB == input.entityB;
+        }
+        // Undirected: order independent
+        bool matchForward  = other.entityA == input.entityA && other.entityB == input.entityB;
+        bool matchBackward = other.entityA == input.entityB && other.entityB == input.entityA;
+        return matchForward || matchBackward;
+    });
+
+    if (it != relations.end()) {
+        // Existing relation – append an event capturing this interaction
+        RelationEvent ev;
+        ev.timestamp    = std::time(nullptr);
+        ev.description  = input.type;
+        ev.deltaWeight  = input.weight;
+        (*it)->addEvent(ev);
+
+        // Optional: update aggregate weight (could use running average, etc.)
+        (*it)->weight += input.weight;
+    } else {
+        // New relation – create initial event
+        RelationEvent ev{std::time(nullptr), input.type, input.weight};
+        r->events.push_back(ev);
+        relations.push_back(r);
+        
+        // Trigger event for new relation creation
+        RelationCreatedEvent event(r);
+        Core::EventBus::instance().publish(event);
+    }
 }
 
-bool RelationManager::remove(const Relation& r) {
+/*bool RelationManager::remove(const Relation& r) {
     auto it = std::find_if(relations.begin(), relations.end(), [&](const Relation& other) {
         return other.type == r.type &&
                other.entityA == r.entityA &&
@@ -63,30 +108,65 @@ bool RelationManager::remove(const Relation& r) {
         return true;
     }
     return false;
+}*/
+
+bool RelationManager::remove(const std::shared_ptr<Relation>& r) {
+    if (!r) return false;
+    const Relation& target = *r;
+    auto it = std::find_if(relations.begin(), relations.end(), [&](const std::shared_ptr<Relation>& otherPtr) {
+        if (!otherPtr) return false;
+        const Relation& other = *otherPtr;
+        return other.type == target.type &&
+               other.entityA == target.entityA &&
+               other.entityB == target.entityB &&
+               other.directed == target.directed;
+    });
+    if (it != relations.end()) {
+        relations.erase(it);
+        return true;
+    }
+    return false;
 }
 
 bool RelationManager::removeBetween(const std::string& a, const std::string& b, const std::string& type) {
     auto oldSize = relations.size();
-    relations.erase(std::remove_if(relations.begin(), relations.end(), [&](const Relation& r) {
-        bool matchesEntities = r.isBetween(a, b);
-        bool matchesType = type.empty() || r.type == type;
+    relations.erase(std::remove_if(relations.begin(), relations.end(), [&](const std::shared_ptr<Relation>& r) {
+        if (!r) return false;
+        bool matchesEntities = r->isBetween(a, b);
+        bool matchesType = type.empty() || r->type == type;
         return matchesEntities && matchesType;
     }), relations.end());
     return relations.size() != oldSize;
 }
 
-std::vector<Relation> RelationManager::getRelationsOf(const std::string& entity) const {
+/*std::vector<Relation> RelationManager::getRelationsOf(const std::string& entity) const {
     std::vector<Relation> result;
     for (const auto& r : relations) {
         if (r.involves(entity)) result.push_back(r);
     }
     return result;
+}*/
+
+std::vector<std::shared_ptr<Relation>> RelationManager::getRelationsOf(const std::string& entity) const {
+    std::vector<std::shared_ptr<Relation>> result;
+    for (const auto& r : relations) {
+        if (r && r->involves(entity)) result.push_back(r);
+    }
+    return result;
 }
 
-std::vector<Relation> RelationManager::getRelationsBetween(const std::string& a, const std::string& b) const {
+/*std::vector<Relation> RelationManager::getRelationsBetween(const std::string& a, const std::string& b) const {
     std::vector<Relation> result;
     for (const auto& r : relations) {
         if (r.isBetween(a, b)) result.push_back(r);
+    }
+    return result;
+}*/
+
+std::vector<std::shared_ptr<Relation>> RelationManager::getRelationsBetween(const std::string& a, const std::string& b) const {
+    std::vector<std::shared_ptr<Relation>> result;
+    for (const auto& r : relations) {
+        if (r && r->isBetween(a, b)) result.push_back(r);
     }
     return result;
 }
@@ -94,7 +174,8 @@ std::vector<Relation> RelationManager::getRelationsBetween(const std::string& a,
 nlohmann::json RelationManager::toJson() const {
     nlohmann::json arr = nlohmann::json::array();
     for (const auto& r : relations) {
-        arr.push_back(r.toJson());
+        if (!r) continue;
+        arr.push_back(r->toJson());
     }
     return arr;
 }
@@ -103,6 +184,6 @@ void RelationManager::loadFromJson(const nlohmann::json& j) {
     relations.clear();
     if (!j.is_array()) return;
     for (const auto& item : j) {
-        relations.push_back(Relation::fromJson(item));
+        relations.push_back(std::make_shared<Relation>(Relation::fromJson(item)));
     }
 } 

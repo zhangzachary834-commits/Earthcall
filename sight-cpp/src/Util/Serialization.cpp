@@ -229,6 +229,207 @@ void from_json(const nlohmann::json& j, Object& obj){
 }
 
 // ------------------------------------------------------------------
+// BodyPart (reuses Object faceTexture serialization)
+// ------------------------------------------------------------------
+nlohmann::json bodyPartToJson(const BodyPart& part) {
+    nlohmann::json j;
+    j["name"] = part.getName();
+    j["type"] = static_cast<int>(part.getType());
+
+    // Primary 3D shape
+    j["geometryType"] = static_cast<int>(part.getPrimaryShape());
+
+    // Geometry dimensions
+    auto dims = part.getGeometry().getDimensions();
+    j["dimensions"] = {dims.x, dims.y, dims.z};
+    j["geometryShape"] = static_cast<int>(part.getGeometry().getShape());
+
+    // Base color
+    const float* col = part.getColor();
+    j["color"] = {col[0], col[1], col[2]};
+
+    // Local transform (relative to body root)
+    j["localTransform"] = mat4ToVector(part.localTransform());
+
+    // Face textures — same format as Object serialization
+    if (!part.faceTextures.empty()) {
+        nlohmann::json texArr = nlohmann::json::array();
+        for (const auto& ft : part.faceTextures) {
+            if (ft.useLayers) {
+                ft.compositeLayers();
+            }
+            nlohmann::json ftj;
+            ftj["size"] = ft.size;
+            ftj["pixelsB64"] = base64Encode(ft.pixels);
+            texArr.push_back(std::move(ftj));
+        }
+        j["textureVersion"] = 1;
+        j["faceTextures"] = std::move(texArr);
+    }
+
+    // Legacy faceColors
+    nlohmann::json faces = nlohmann::json::array();
+    for (int f = 0; f < 6; ++f) {
+        faces.push_back({part.faceColors[f][0], part.faceColors[f][1], part.faceColors[f][2]});
+    }
+    j["faceColors"] = faces;
+
+    // Composite sub-objects — save local offsets, not world transforms
+    if (part.getSubObjectCount() > 0) {
+        nlohmann::json subArr = nlohmann::json::array();
+        for (size_t si = 0; si < part.getSubObjectCount(); ++si) {
+            const Object* sub = part.getSubObject(si);
+            if (!sub) continue;
+            nlohmann::json sj;
+            to_json(sj, *sub);
+            // Override transform with the local offset (to_json wrote world transform)
+            sj["transform"] = mat4ToVector(part.getSubObjectLocalOffset(si));
+            subArr.push_back(std::move(sj));
+        }
+        j["subObjects"] = std::move(subArr);
+    }
+
+    return j;
+}
+
+void bodyPartFromJson(const nlohmann::json& j, BodyPart& part) {
+    // Primary 3D shape (must come before texture load so face count is correct)
+    if (j.contains("geometryType")) {
+        part.setPrimaryShape(static_cast<Object::GeometryType>(j["geometryType"].get<int>()));
+    }
+
+    // Geometry dimensions
+    if (j.contains("dimensions")) {
+        auto dims = j["dimensions"];
+        if (dims.size() >= 3) {
+            part.getGeometry().setDimensions(glm::vec3(dims[0], dims[1], dims[2]));
+        }
+    }
+
+    // Base color
+    if (j.contains("color")) {
+        auto col = j["color"];
+        if (col.size() >= 3) {
+            part.setColor(col[0], col[1], col[2]);
+        }
+    }
+
+    // Local transform
+    if (j.contains("localTransform")) {
+        auto tvals = j["localTransform"].get<std::vector<float>>();
+        if (tvals.size() == 16) {
+            part.setLocalTransform(vectorToMat4(tvals));
+        }
+    }
+
+    // Legacy faceColors
+    if (j.contains("faceColors")) {
+        const auto& faces = j["faceColors"];
+        for (size_t f = 0; f < faces.size() && f < 6; ++f) {
+            part.setFaceColor(static_cast<int>(f), faces[f][0], faces[f][1], faces[f][2]);
+        }
+    }
+
+    // Face textures (same as Object deserialization)
+    if (j.contains("faceTextures")) {
+        const auto& arr = j["faceTextures"];
+        int limit = std::min<int>(static_cast<int>(arr.size()), static_cast<int>(part.faceTextures.size()));
+        for (int i = 0; i < limit; ++i) {
+            const auto& ftj = arr[i];
+            int size = ftj.value("size", (i < static_cast<int>(part.faceTextures.size()) ? part.faceTextures[i].size : 64));
+            std::string b64 = ftj.value("pixelsB64", std::string());
+            if (!b64.empty()) {
+                std::vector<uint8_t> data = base64Decode(b64);
+                if (size > 0 && static_cast<int>(data.size()) == size * size * 4 &&
+                    i < static_cast<int>(part.faceTextures.size())) {
+                    auto& ft = part.faceTextures[i];
+                    ft.size = size;
+                    ft.pixels = std::move(data);
+                    ft.updateWholeGPU();
+                }
+            }
+        }
+    }
+
+    // Composite sub-objects — saved transforms are local offsets
+    if (j.contains("subObjects")) {
+        while (part.getSubObjectCount() > 0) {
+            part.removeSubObject(part.getSubObjectCount() - 1);
+        }
+        for (const auto& sj : j["subObjects"]) {
+            auto gt = static_cast<Object::GeometryType>(sj.value("geometryType", 0));
+
+            // Extract the local offset from the saved transform
+            glm::mat4 localOffset(1.0f);
+            std::vector<float> tvals = sj.value("transform", std::vector<float>{});
+            if (tvals.size() == 16) {
+                localOffset = vectorToMat4(tvals);
+            }
+
+            Object* sub = part.addSubObject(gt, localOffset);
+            if (sub) {
+                // Load everything except transform (already set by addSubObject)
+                glm::mat4 savedWorld = sub->getTransform();
+                from_json(sj, *sub);
+                sub->setTransform(savedWorld);
+            }
+        }
+    }
+}
+
+nlohmann::json bodyToJson(const Body& body) {
+    nlohmann::json j;
+    j["shape"] = body.shape;
+    j["artStyle"] = body.artStyle;
+    j["bodyType"] = static_cast<int>(body.bodyType);
+    j["proportions"] = static_cast<int>(body.proportions);
+    j["height"] = body.height;
+    j["weight"] = body.weight;
+    j["muscleMass"] = body.muscleMass;
+    j["bodyFat"] = body.bodyFat;
+
+    nlohmann::json partsArr = nlohmann::json::array();
+    for (const auto* part : body.parts) {
+        if (part) {
+            partsArr.push_back(bodyPartToJson(*part));
+        }
+    }
+    j["bodyParts"] = partsArr;
+
+    return j;
+}
+
+void bodyFromJson(const nlohmann::json& j, Body& body) {
+    if (j.contains("bodyType")) {
+        body.setBodyType(static_cast<Body::BodyType>(j["bodyType"].get<int>()));
+    }
+    if (j.contains("proportions")) {
+        body.setProportions(static_cast<Body::Proportions>(j["proportions"].get<int>()));
+    }
+    if (j.contains("height")) body.height = j["height"].get<float>();
+    if (j.contains("weight")) body.weight = j["weight"].get<float>();
+    if (j.contains("muscleMass")) body.muscleMass = j["muscleMass"].get<float>();
+    if (j.contains("bodyFat")) body.bodyFat = j["bodyFat"].get<float>();
+
+    // Match saved parts to existing parts by name
+    if (j.contains("bodyParts")) {
+        const auto& partsArr = j["bodyParts"];
+        for (const auto& pj : partsArr) {
+            std::string name = pj.value("name", std::string());
+            if (name.empty()) continue;
+
+            // Find matching part in the body
+            for (auto* part : body.parts) {
+                if (part && part->getName() == name) {
+                    bodyPartFromJson(pj, *part);
+                    break;
+                }
+            }
+        }
+    }
+}
+
+// ------------------------------------------------------------------
 // World
 // ------------------------------------------------------------------
 void to_json(nlohmann::json& j, const World& world){
