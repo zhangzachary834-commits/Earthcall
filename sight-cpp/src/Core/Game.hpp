@@ -398,6 +398,9 @@ private:
     // Internal handlers ---------------------------------------------------
     void onFramebufferSize(int width, int height);
 
+    // Save serialization helper (shared by saveState & saveStateWithLog)
+    nlohmann::json buildSaveJson() const;
+
     enum class Mode3D { None = -1, FacePaint = 0, FaceBrush, BrushCreate, Pottery, Selection };
     enum class ToolTarget3D { WorldObjects = 0, AvatarBodyParts };
 
