@@ -391,19 +391,34 @@ namespace Physics {
         glm::vec3 dragForce = -airResistance * body.velocity;
         applyForce(body, dragForce);
 
+        // If the object is resting on (or very near) the ground, cancel any
+        // net downward force so gravity doesn't keep pulling it through the
+        // floor every frame (which caused the ground-level jitter).
+        const float GROUND_REST_EPS = 0.01f;
+        bool onGround = (position.y - groundY) < GROUND_REST_EPS;
+        if (onGround) {
+            // Cancel downward component of accumulated force (ground reaction)
+            if (body.accumulatedForce.y < 0.0f) {
+                body.accumulatedForce.y = 0.0f;
+            }
+            // Kill any residual downward velocity
+            if (body.velocity.y < 0.0f) {
+                body.velocity.y = 0.0f;
+            }
+            // Snap position exactly to ground if slightly below
+            if (position.y < groundY) {
+                position.y = groundY;
+            }
+        }
+
         glm::vec3 acceleration = body.accumulatedForce / std::max(0.0001f, body.mass);
         body.velocity += acceleration * deltaTime;
         position      += body.velocity * deltaTime;
 
-        // Robust ground collision with snapping to avoid small oscillations
-        const float GROUND_SNAP_EPS = 1e-3f;
+        // Final safety clamp: never allow below ground
         if (position.y < groundY) {
             position.y = groundY;
             if (body.velocity.y < 0.0f) body.velocity.y = 0.0f;
-        } else if (std::abs(position.y - groundY) < GROUND_SNAP_EPS) {
-            // Snap to plane if within epsilon and heading downward negligibly
-            position.y = groundY;
-            body.velocity.y = 0.0f;
         }
 
         clearForces(body);
@@ -483,6 +498,7 @@ namespace Physics {
             else playerBody.velocity.y = 0.0f;
         }
 
+        // integrate() now handles ground-rest cancellation internally
         integrate(playerBody, position, deltaTime, airResistance, groundY);
 
         // Optionally: expose energies for debugging
