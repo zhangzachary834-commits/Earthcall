@@ -28,6 +28,20 @@ void Zone::unload() {
     std::cout << "🌍 Zone '" << _name << "' unloaded." << std::endl;
 }
 
+void Zone::syncFormationMembers(const std::vector<Singular*>& extraMembers) {
+    _formation.addMember(_world.get());
+    for (const auto& up : _world->getOwnedObjects()) {
+        if (up) _formation.addMember(up.get());
+    }
+    for (auto* member : extraMembers) {
+        _formation.addMember(member);
+    }
+}
+
+void Zone::applyFormationRelations() {
+    _formation.applyAttachmentRelations();
+}
+
 Zone::Zone(const std::string& name, Scope scope)
     : _name(name), _scope(scope), _world(std::make_unique<World>()), _formation(Form::ShapeType::Cube, {1.0f, 1.0f, 1.0f})
 {

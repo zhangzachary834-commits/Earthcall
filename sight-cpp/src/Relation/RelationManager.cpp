@@ -171,6 +171,14 @@ std::vector<std::shared_ptr<Relation>> RelationManager::getRelationsBetween(cons
     return result;
 }
 
+std::vector<std::shared_ptr<Relation>> RelationManager::getRelationsOfType(const std::string& type) const {
+    std::vector<std::shared_ptr<Relation>> result;
+    for (const auto& r : relations) {
+        if (r && r->type == type) result.push_back(r);
+    }
+    return result;
+}
+
 nlohmann::json RelationManager::toJson() const {
     nlohmann::json arr = nlohmann::json::array();
     for (const auto& r : relations) {

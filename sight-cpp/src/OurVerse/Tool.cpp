@@ -39,6 +39,57 @@ void applyToolTransform(Object* obj, const glm::mat4& worldTransform, const glm:
     obj->setTransform(worldTransform);
 }
 
+bool buildMouseRay(GLFWwindow* window, Core::Game* game, glm::vec3& rayOrigin, glm::vec3& rayDir) {
+    if (!window || !game) return false;
+
+    double xpos = 0.0;
+    double ypos = 0.0;
+    glfwGetCursorPos(window, &xpos, &ypos);
+
+    int winW = 0;
+    int winH = 0;
+    glfwGetWindowSize(window, &winW, &winH);
+    int fW = 0;
+    int fH = 0;
+    glfwGetFramebufferSize(window, &fW, &fH);
+    if (winW <= 0 || winH <= 0 || fW <= 0 || fH <= 0) return false;
+
+    float scaleX = static_cast<float>(fW) / static_cast<float>(winW);
+    float scaleY = static_cast<float>(fH) / static_cast<float>(winH);
+    double winX = xpos * scaleX;
+    double winY = ypos * scaleY;
+    winY = game->getCameraViewport()[3] - winY;
+
+    GLdouble nearX = 0.0, nearY = 0.0, nearZ = 0.0;
+    GLdouble farX = 0.0, farY = 0.0, farZ = 0.0;
+    gluUnProject(winX, winY, 0.0, game->getCameraModelview(), game->getCameraProjection(),
+                 game->getCameraViewport(), &nearX, &nearY, &nearZ);
+    gluUnProject(winX, winY, 1.0, game->getCameraModelview(), game->getCameraProjection(),
+                 game->getCameraViewport(), &farX, &farY, &farZ);
+
+    rayOrigin = glm::vec3(nearX, nearY, nearZ);
+    rayDir = glm::normalize(glm::vec3(farX, farY, farZ) - rayOrigin);
+    return glm::length(rayDir) > 1e-6f;
+}
+
+Object* pickNearestObject(const std::vector<Object*>& targets,
+                          const glm::vec3& rayOrigin,
+                          const glm::vec3& rayDir) {
+    float nearestT = 1e9f;
+    Object* hitObj = nullptr;
+    for (auto* obj : targets) {
+        if (!obj) continue;
+        float t = 0.0f;
+        int face = -1;
+        glm::vec2 uv(0.0f);
+        if (obj->raycastFace(rayOrigin, rayDir, t, face, uv) && t > 0.0f && t < nearestT) {
+            nearestT = t;
+            hitObj = obj;
+        }
+    }
+    return hitObj;
+}
+
 // Commented out - no longer needed since BodyParts now have proper faceTextures
 // and can use raycastFace() like regular Objects.
 // bool raycastCollisionAABB(const Object* obj, const glm::vec3& rayOrigin, const glm::vec3& rayDir, float& outT) {
@@ -971,6 +1022,87 @@ void Tool::Pottery3D(GLFWwindow *window, Core::Game *game, ZoneManager &mgr, flo
             // hitObj->updateCollisionZone(newT); // handled by setTransform/setLocalTransform
         }
     }
+}
+
+void Tool::Rotate3D(GLFWwindow *window, Core::Game *game, ZoneManager &mgr, float dt,
+                    const std::vector<Object*>& targets, const glm::mat4* avatarRoot)
+{
+    (void)mgr;
+    static bool dragging = false;
+    static double lastCursorX = 0.0;
+    static double lastCursorY = 0.0;
+
+    bool mouseLeftNow = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
+    double cursorX = 0.0;
+    double cursorY = 0.0;
+    glfwGetCursorPos(window, &cursorX, &cursorY);
+
+    glm::vec3 rayOrigin(0.0f);
+    glm::vec3 rayDir(0.0f, 0.0f, -1.0f);
+    buildMouseRay(window, game, rayOrigin, rayDir);
+
+    if (mouseLeftNow && !game->getMouseLeftPressedLast()) {
+        if (Object* hit = pickNearestObject(targets, rayOrigin, rayDir)) {
+            game->setSelectedObject3D(hit);
+        }
+        dragging = true;
+        lastCursorX = cursorX;
+        lastCursorY = cursorY;
+    } else if (!mouseLeftNow) {
+        dragging = false;
+    }
+
+    Object* selected = game->getSelectedObject3D();
+    if (selected) {
+        selected->setRotationResponsiveness(game->getRotationToolSmoothness());
+
+        if (dragging && mouseLeftNow) {
+            float dx = static_cast<float>(cursorX - lastCursorX);
+            float dy = static_cast<float>(cursorY - lastCursorY);
+            glm::vec3 deltaDegrees(0.0f);
+            float sensitivity = game->getRotationToolSensitivity();
+
+            if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ||
+                glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS) {
+                deltaDegrees.z = dx * sensitivity;
+            } else {
+                switch (game->getRotationAxisMode()) {
+                    case Core::Game::RotationAxisMode::FreeXY:
+                        deltaDegrees.x = -dy * sensitivity;
+                        deltaDegrees.y = dx * sensitivity;
+                        break;
+                    case Core::Game::RotationAxisMode::X:
+                        deltaDegrees.x = -dy * sensitivity;
+                        break;
+                    case Core::Game::RotationAxisMode::Y:
+                        deltaDegrees.y = dx * sensitivity;
+                        break;
+                    case Core::Game::RotationAxisMode::Z:
+                        deltaDegrees.z = dx * sensitivity;
+                        break;
+                    case Core::Game::RotationAxisMode::AuthoritativeAxis: {
+                        float axisAmount = (dx - dy) * sensitivity;
+                        deltaDegrees = selected->getAuthoritativeAxis() * axisAmount;
+                        break;
+                    }
+                }
+            }
+
+            if (glm::dot(deltaDegrees, deltaDegrees) > 1e-12f) {
+                selected->addTargetRotationDegrees(deltaDegrees);
+            }
+        }
+
+        if (avatarRoot) {
+            glm::mat4 steppedTransform(1.0f);
+            if (selected->advanceRotation(selected->getTransform(), dt, steppedTransform)) {
+                applyToolTransform(selected, steppedTransform, avatarRoot);
+            }
+        }
+    }
+
+    lastCursorX = cursorX;
+    lastCursorY = cursorY;
 }
 
 void Tool::FacePaint(GLFWwindow *window, Core::Game *game, ZoneManager &mgr, float dt,

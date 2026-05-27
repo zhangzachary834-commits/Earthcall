@@ -106,7 +106,16 @@ static glm::mat4 vectorToMat4(const std::vector<float>& v){
 void to_json(nlohmann::json& j, const Object& obj){
     j = nlohmann::json{};
     j["geometryType"] = static_cast<int>(obj.getGeometryType());
+    j["objectID"] = obj.getIdentifier();
     j["transform"] = mat4ToVector(obj.getTransform());
+    j["center"] = {obj.getCenter().x, obj.getCenter().y, obj.getCenter().z};
+    j["authoritativeAxis"] = {obj.getAuthoritativeAxis().x,
+                               obj.getAuthoritativeAxis().y,
+                               obj.getAuthoritativeAxis().z};
+    j["targetRotation"] = {obj.getTargetRotationEulerDegrees().x,
+                            obj.getTargetRotationEulerDegrees().y,
+                            obj.getTargetRotationEulerDegrees().z};
+    j["rotationResponsiveness"] = obj.getRotationResponsiveness();
     // Persist baseline marker so baseline demo objects remain identifiable after load
     if (obj.hasAttribute("baseline")) {
         j["baseline"] = obj.getAttribute("baseline");
@@ -159,8 +168,29 @@ void to_json(nlohmann::json& j, const Object& obj){
 void from_json(const nlohmann::json& j, Object& obj){
     int gt = j.value("geometryType", 0);
     obj.setGeometryType(static_cast<Object::GeometryType>(gt));
+    if (j.contains("objectID") && j["objectID"].is_string()) {
+        obj.setObjectID(j["objectID"].get<std::string>());
+    }
     std::vector<float> tvals = j.value("transform", std::vector<float>{});
     if(tvals.size()==16){ obj.setTransform(vectorToMat4(tvals)); }
+    if (j.contains("center") && j["center"].is_array() && j["center"].size() >= 3) {
+        obj.setCenter(glm::vec3(j["center"][0].get<float>(),
+                                j["center"][1].get<float>(),
+                                j["center"][2].get<float>()));
+    }
+    if (j.contains("authoritativeAxis") && j["authoritativeAxis"].is_array() && j["authoritativeAxis"].size() >= 3) {
+        obj.setAuthoritativeAxis(glm::vec3(j["authoritativeAxis"][0].get<float>(),
+                                           j["authoritativeAxis"][1].get<float>(),
+                                           j["authoritativeAxis"][2].get<float>()));
+    }
+    if (j.contains("rotationResponsiveness")) {
+        obj.setRotationResponsiveness(j["rotationResponsiveness"].get<float>());
+    }
+    if (j.contains("targetRotation") && j["targetRotation"].is_array() && j["targetRotation"].size() >= 3) {
+        obj.setTargetRotationEulerDegrees(glm::vec3(j["targetRotation"][0].get<float>(),
+                                                    j["targetRotation"][1].get<float>(),
+                                                    j["targetRotation"][2].get<float>()));
+    }
     if (j.contains("baseline") && j["baseline"].is_string()) {
         obj.setAttribute("baseline", j["baseline"].get<std::string>());
     }
@@ -250,6 +280,14 @@ nlohmann::json bodyPartToJson(const BodyPart& part) {
 
     // Local transform (relative to body root)
     j["localTransform"] = mat4ToVector(part.localTransform());
+    j["center"] = {part.getCenter().x, part.getCenter().y, part.getCenter().z};
+    j["authoritativeAxis"] = {part.getAuthoritativeAxis().x,
+                               part.getAuthoritativeAxis().y,
+                               part.getAuthoritativeAxis().z};
+    j["targetRotation"] = {part.getTargetRotationEulerDegrees().x,
+                            part.getTargetRotationEulerDegrees().y,
+                            part.getTargetRotationEulerDegrees().z};
+    j["rotationResponsiveness"] = part.getRotationResponsiveness();
 
     // Face textures — same format as Object serialization
     if (!part.faceTextures.empty()) {
@@ -320,6 +358,24 @@ void bodyPartFromJson(const nlohmann::json& j, BodyPart& part) {
         if (tvals.size() == 16) {
             part.setLocalTransform(vectorToMat4(tvals));
         }
+    }
+    if (j.contains("center") && j["center"].is_array() && j["center"].size() >= 3) {
+        part.setCenter(glm::vec3(j["center"][0].get<float>(),
+                                 j["center"][1].get<float>(),
+                                 j["center"][2].get<float>()));
+    }
+    if (j.contains("authoritativeAxis") && j["authoritativeAxis"].is_array() && j["authoritativeAxis"].size() >= 3) {
+        part.setAuthoritativeAxis(glm::vec3(j["authoritativeAxis"][0].get<float>(),
+                                            j["authoritativeAxis"][1].get<float>(),
+                                            j["authoritativeAxis"][2].get<float>()));
+    }
+    if (j.contains("rotationResponsiveness")) {
+        part.setRotationResponsiveness(j["rotationResponsiveness"].get<float>());
+    }
+    if (j.contains("targetRotation") && j["targetRotation"].is_array() && j["targetRotation"].size() >= 3) {
+        part.setTargetRotationEulerDegrees(glm::vec3(j["targetRotation"][0].get<float>(),
+                                                     j["targetRotation"][1].get<float>(),
+                                                     j["targetRotation"][2].get<float>()));
     }
 
     // Legacy faceColors

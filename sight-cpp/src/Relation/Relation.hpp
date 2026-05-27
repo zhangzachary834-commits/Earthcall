@@ -4,6 +4,8 @@
 #include "Singular.hpp"
 #include <vector>
 #include <ctime>
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 // Forward declare for JSON definitions later
 struct RelationEvent {
@@ -33,6 +35,19 @@ struct RelationEvent {
 // the relation.
 class Relation : public Singular {
 public:
+    struct AttachmentData {
+        bool enabled = false;
+        glm::mat4 localOffset = glm::mat4(1.0f); // child relative to parent
+        glm::vec3 parentAnchor = glm::vec3(0.0f);
+        glm::vec3 childAnchor = glm::vec3(0.0f);
+        bool inheritTranslation = true;
+        bool inheritRotation = true;
+        bool inheritScale = true;
+
+        nlohmann::json toJson() const;
+        static AttachmentData fromJson(const nlohmann::json& j);
+    };
+
     // ---------------------------------------------------------------------
     // Constructors
     // ---------------------------------------------------------------------
@@ -72,6 +87,7 @@ public:
     // ---------------------------------------------------------------------
     nlohmann::json toJson() const;
     static Relation fromJson(const nlohmann::json& j);
+    bool isAttachment() const { return type == "attachment" || attachment.enabled; }
 
     // Singular interface
     std::string getIdentifier() const override { return entityA + "-" + type + "-" + entityB; }
@@ -89,6 +105,7 @@ public:
 
     // Timeline of interaction events that influenced this relation
     std::vector<RelationEvent> events;
+    AttachmentData attachment;
 
     void addEvent(const RelationEvent& e) { events.push_back(e); }
 };

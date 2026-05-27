@@ -234,6 +234,16 @@ public:
     
     float getPotteryStrength() const { return _potteryStrength; }
     void setPotteryStrength(float strength) { _potteryStrength = strength; }
+
+    enum class RotationAxisMode { FreeXY = 0, X, Y, Z, AuthoritativeAxis };
+    RotationAxisMode getRotationAxisMode() const { return _rotationAxisMode; }
+    void setRotationAxisMode(RotationAxisMode mode) { _rotationAxisMode = mode; }
+
+    float getRotationToolSensitivity() const { return _rotationToolSensitivity; }
+    void setRotationToolSensitivity(float sensitivity) { _rotationToolSensitivity = sensitivity; }
+
+    float getRotationToolSmoothness() const { return _rotationToolSmoothness; }
+    void setRotationToolSmoothness(float smoothness) { _rotationToolSmoothness = smoothness; }
     
     // Keyboard handler access
     KeyboardHandler& getKeyboardHandler() { return _keyboardHandler; }
@@ -401,7 +411,7 @@ private:
     // Save serialization helper (shared by saveState & saveStateWithLog)
     nlohmann::json buildSaveJson() const;
 
-    enum class Mode3D { None = -1, FacePaint = 0, FaceBrush, BrushCreate, Pottery, Selection };
+    enum class Mode3D { None = -1, FacePaint = 0, FaceBrush, BrushCreate, Pottery, Rotation, Selection };
     enum class ToolTarget3D { WorldObjects = 0, AvatarBodyParts };
 
     // Creator/toolbar -----------------------------------------------------
@@ -460,6 +470,10 @@ private:
     // Pottery (sculpt) tool settings ------------------------------------
     PotteryTool _currentPotteryTool = PotteryTool::Expand; // default tool
     float _potteryStrength = 0.2f; // default visual strength
+
+    RotationAxisMode _rotationAxisMode = RotationAxisMode::FreeXY;
+    float _rotationToolSensitivity = 0.35f;
+    float _rotationToolSmoothness = 10.0f;
 
     float _faceBrushRadius = 0.1f; // relative to texture (0-1)
     float _faceBrushSoftness = 1.0f; // 1 = hard, 0 = very soft

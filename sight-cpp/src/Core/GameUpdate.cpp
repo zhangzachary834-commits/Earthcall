@@ -126,6 +126,19 @@ void Game::update(float dt) {
                 targets.push_back(up.get());
             }
         };
+        std::vector<Singular*> formationMembers;
+        formationMembers.reserve(mgr.active().world().getOwnedObjects().size() + _player.getBody().parts.size() * 2);
+        for (const auto& up : mgr.active().world().getOwnedObjects()) {
+            if (up) formationMembers.push_back(up.get());
+        }
+        for (auto* part : _player.getBody().parts) {
+            if (!part) continue;
+            formationMembers.push_back(static_cast<Object*>(part));
+            for (const auto& sub : part->getSubObjects()) {
+                if (sub) formationMembers.push_back(sub.get());
+            }
+        }
+        mgr.active().syncFormationMembers(formationMembers);
         std::vector<Object*> toolTargets;
 
         // 2D Creation
@@ -261,6 +274,11 @@ void Game::update(float dt) {
             glm::mat4 avatarRoot = glm::translate(glm::mat4(1.0f), _player.position);
             Tool::Pottery3D(_window, this, mgr, dt, toolTargets,
                             useAvatarTargets ? &avatarRoot : nullptr);
+        } else if (_current3DMode == Mode3D::Rotation) {
+            collect3DTargets(toolTargets);
+            glm::mat4 avatarRoot = glm::translate(glm::mat4(1.0f), _player.position);
+            Tool::Rotate3D(_window, this, mgr, dt, toolTargets,
+                           useAvatarTargets ? &avatarRoot : nullptr);
         } else if (_current3DMode == Mode3D::Selection) {
             collect3DTargets(toolTargets);
             // 3D Selection: set selected object on single click
@@ -307,6 +325,7 @@ void Game::update(float dt) {
 
     // Update world (physics etc.)
     mgr.active().world().update(dt);
+    mgr.active().applyFormationRelations();
     // Sync highlight selection
     Rendering::HighlightSystem::setSelected(_selectedObject3D);
 

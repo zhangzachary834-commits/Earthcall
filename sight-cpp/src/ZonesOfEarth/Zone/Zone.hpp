@@ -183,6 +183,8 @@ public:
     const Formations& formation() const { return _formation; }
     void load();
     void unload();
+    void syncFormationMembers(const std::vector<Singular*>& extraMembers = {});
+    void applyFormationRelations();
 
     // Singular interface
     std::string getIdentifier() const override { return _name; }

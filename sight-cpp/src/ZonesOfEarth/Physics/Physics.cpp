@@ -10,6 +10,7 @@
 #include <cfloat>
 #include <atomic>
 #include <cmath>
+#include <limits>
 
 // Static registry of physics relations
 static RelationManager g_physicsRegistry;
@@ -96,6 +97,261 @@ namespace Physics {
         obj->setTransform(t);
     }
 
+    struct SupportPoint {
+        glm::vec3 minkowski{0.0f};
+        glm::vec3 pointA{0.0f};
+        glm::vec3 pointB{0.0f};
+    };
+
+    static SupportPoint support(const Object* a, const Object* b, const glm::vec3& dir) {
+        glm::vec3 pa = a->getSupportPointWorld(dir);
+        glm::vec3 pb = b->getSupportPointWorld(-dir);
+        return SupportPoint{pa - pb, pa, pb};
+    }
+
+    static bool sameDirection(const glm::vec3& a, const glm::vec3& b) {
+        return glm::dot(a, b) > 0.0f;
+    }
+
+    static glm::vec3 perpendicularTo(const glm::vec3& v) {
+        glm::vec3 axis = std::abs(v.x) < 0.8f ? glm::vec3(1.0f, 0.0f, 0.0f) : glm::vec3(0.0f, 1.0f, 0.0f);
+        glm::vec3 p = glm::cross(v, axis);
+        if (glm::dot(p, p) <= 1e-12f) {
+            p = glm::cross(v, glm::vec3(0.0f, 0.0f, 1.0f));
+        }
+        if (glm::dot(p, p) <= 1e-12f) {
+            return glm::vec3(1.0f, 0.0f, 0.0f);
+        }
+        return glm::normalize(p);
+    }
+
+    static bool handleSimplex(std::vector<SupportPoint>& simplex, glm::vec3& dir) {
+        const SupportPoint& aPoint = simplex.back();
+        glm::vec3 a = aPoint.minkowski;
+        glm::vec3 ao = -a;
+
+        if (simplex.size() == 2) {
+            glm::vec3 b = simplex[0].minkowski;
+            glm::vec3 ab = b - a;
+            if (sameDirection(ab, ao)) {
+                dir = glm::cross(glm::cross(ab, ao), ab);
+                if (glm::dot(dir, dir) <= 1e-12f) {
+                    dir = perpendicularTo(ab);
+                }
+            } else {
+                simplex = {aPoint};
+                dir = ao;
+            }
+            return false;
+        }
+
+        if (simplex.size() == 3) {
+            const SupportPoint& bPoint = simplex[1];
+            const SupportPoint& cPoint = simplex[0];
+            glm::vec3 b = bPoint.minkowski;
+            glm::vec3 c = cPoint.minkowski;
+            glm::vec3 ab = b - a;
+            glm::vec3 ac = c - a;
+            glm::vec3 abc = glm::cross(ab, ac);
+
+            glm::vec3 acPerp = glm::cross(abc, ac);
+            if (sameDirection(acPerp, ao)) {
+                if (sameDirection(ac, ao)) {
+                    simplex = {cPoint, aPoint};
+                    dir = glm::cross(glm::cross(ac, ao), ac);
+                } else {
+                    simplex = {bPoint, aPoint};
+                    glm::vec3 abDir = glm::cross(glm::cross(ab, ao), ab);
+                    dir = glm::dot(abDir, abDir) > 1e-12f ? abDir : perpendicularTo(ab);
+                }
+                return false;
+            }
+
+            glm::vec3 abPerp = glm::cross(ab, abc);
+            if (sameDirection(abPerp, ao)) {
+                simplex = {bPoint, aPoint};
+                dir = glm::cross(glm::cross(ab, ao), ab);
+                if (glm::dot(dir, dir) <= 1e-12f) {
+                    dir = perpendicularTo(ab);
+                }
+                return false;
+            }
+
+            if (sameDirection(abc, ao)) {
+                dir = abc;
+            } else {
+                simplex = {bPoint, cPoint, aPoint};
+                dir = -abc;
+            }
+            return false;
+        }
+
+        if (simplex.size() == 4) {
+            const SupportPoint& bPoint = simplex[2];
+            const SupportPoint& cPoint = simplex[1];
+            const SupportPoint& dPoint = simplex[0];
+            glm::vec3 b = bPoint.minkowski;
+            glm::vec3 c = cPoint.minkowski;
+            glm::vec3 d = dPoint.minkowski;
+
+            glm::vec3 ab = b - a;
+            glm::vec3 ac = c - a;
+            glm::vec3 ad = d - a;
+            glm::vec3 abc = glm::cross(ab, ac);
+            glm::vec3 acd = glm::cross(ac, ad);
+            glm::vec3 adb = glm::cross(ad, ab);
+
+            if (sameDirection(abc, ao)) {
+                simplex = {cPoint, bPoint, aPoint};
+                dir = abc;
+                return false;
+            }
+            if (sameDirection(acd, ao)) {
+                simplex = {dPoint, cPoint, aPoint};
+                dir = acd;
+                return false;
+            }
+            if (sameDirection(adb, ao)) {
+                simplex = {bPoint, dPoint, aPoint};
+                dir = adb;
+                return false;
+            }
+            return true;
+        }
+
+        return false;
+    }
+
+    static bool gjkIntersect(const Object* a, const Object* b, std::vector<SupportPoint>& simplex) {
+        simplex.clear();
+        glm::vec3 dir = getObjectPos(a) - getObjectPos(b);
+        if (glm::dot(dir, dir) <= 1e-12f) {
+            dir = glm::vec3(1.0f, 0.0f, 0.0f);
+        }
+
+        simplex.push_back(support(a, b, dir));
+        dir = -simplex.back().minkowski;
+        if (glm::dot(dir, dir) <= 1e-12f) {
+            dir = glm::vec3(1.0f, 0.0f, 0.0f);
+        }
+
+        for (int iteration = 0; iteration < 32; ++iteration) {
+            SupportPoint next = support(a, b, dir);
+            if (glm::dot(next.minkowski, dir) <= 1e-6f) {
+                return false;
+            }
+            simplex.push_back(next);
+            if (handleSimplex(simplex, dir)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    struct EpaFace {
+        int a = 0;
+        int b = 0;
+        int c = 0;
+        glm::vec3 normal{0.0f, 1.0f, 0.0f};
+        float distance = 0.0f;
+    };
+
+    static EpaFace makeFace(const std::vector<SupportPoint>& polytope, int ia, int ib, int ic) {
+        EpaFace face;
+        face.a = ia;
+        face.b = ib;
+        face.c = ic;
+
+        glm::vec3 a = polytope[ia].minkowski;
+        glm::vec3 b = polytope[ib].minkowski;
+        glm::vec3 c = polytope[ic].minkowski;
+        glm::vec3 normal = glm::cross(b - a, c - a);
+        if (glm::dot(normal, normal) <= 1e-12f) {
+            face.normal = glm::vec3(0.0f, 1.0f, 0.0f);
+            face.distance = std::numeric_limits<float>::max();
+            return face;
+        }
+
+        normal = glm::normalize(normal);
+        float distance = glm::dot(normal, a);
+        if (distance < 0.0f) {
+            std::swap(face.b, face.c);
+            face.normal = -normal;
+            face.distance = -distance;
+        } else {
+            face.normal = normal;
+            face.distance = distance;
+        }
+        return face;
+    }
+
+    static void addBorderEdge(std::vector<std::pair<int, int>>& edges, int a, int b) {
+        for (auto it = edges.begin(); it != edges.end(); ++it) {
+            if (it->first == b && it->second == a) {
+                edges.erase(it);
+                return;
+            }
+        }
+        edges.emplace_back(a, b);
+    }
+
+    static bool epaPenetration(const Object* a,
+                               const Object* b,
+                               const std::vector<SupportPoint>& simplex,
+                               glm::vec3& outNormal,
+                               float& outDepth) {
+        if (simplex.size() < 4) return false;
+
+        std::vector<SupportPoint> polytope = simplex;
+        std::vector<EpaFace> faces;
+        faces.push_back(makeFace(polytope, 0, 1, 2));
+        faces.push_back(makeFace(polytope, 0, 3, 1));
+        faces.push_back(makeFace(polytope, 0, 2, 3));
+        faces.push_back(makeFace(polytope, 1, 3, 2));
+
+        const float tolerance = 1e-4f;
+        for (int iteration = 0; iteration < 64; ++iteration) {
+            auto closestFaceIt = std::min_element(faces.begin(), faces.end(), [](const EpaFace& lhs, const EpaFace& rhs) {
+                return lhs.distance < rhs.distance;
+            });
+            if (closestFaceIt == faces.end() || closestFaceIt->distance == std::numeric_limits<float>::max()) {
+                return false;
+            }
+
+            EpaFace closestFace = *closestFaceIt;
+            SupportPoint next = support(a, b, closestFace.normal);
+            float supportDistance = glm::dot(next.minkowski, closestFace.normal);
+            if (supportDistance - closestFace.distance <= tolerance) {
+                outNormal = closestFace.normal;
+                outDepth = supportDistance;
+                return true;
+            }
+
+            int newIndex = static_cast<int>(polytope.size());
+            polytope.push_back(next);
+
+            std::vector<std::pair<int, int>> borderEdges;
+            for (auto it = faces.begin(); it != faces.end();) {
+                glm::vec3 facePoint = polytope[it->a].minkowski;
+                if (glm::dot(it->normal, next.minkowski - facePoint) > tolerance) {
+                    addBorderEdge(borderEdges, it->a, it->b);
+                    addBorderEdge(borderEdges, it->b, it->c);
+                    addBorderEdge(borderEdges, it->c, it->a);
+                    it = faces.erase(it);
+                } else {
+                    ++it;
+                }
+            }
+
+            for (const auto& edge : borderEdges) {
+                faces.push_back(makeFace(polytope, edge.first, edge.second, newIndex));
+            }
+        }
+
+        return false;
+    }
+
     void updateBodies(std::vector<std::unique_ptr<Object>>& objects,
                       float deltaTime,
                       float gravityAccel,
@@ -131,12 +387,13 @@ namespace Physics {
                     }
                     case LawType::Collision: {
                         // Collision is handled later in broadphase/narrowphase
+                        // Clean this code up so its not good to have collision part here and another one separately
                         break;
                     }
                     case LawType::CenterGravity: {
                         // Pull toward current world center-of-mass of all eligible objects
                         glm::vec3 com = computeWorldCenterOfMass(objects, &law.target);
-                        glm::vec3 pos = getObjectPos(obj);
+                        glm::vec3 pos = obj->getWorldCenter();
                         glm::vec3 delta = com - pos;
                         float len = glm::length(delta);
                         if (len > 1e-4f) {
@@ -184,12 +441,12 @@ namespace Physics {
             const size_t count = objects.size();
             for (size_t i = 0; i < count; ++i) {
                 Object* a = objects[i].get(); if (!a) continue; if (!objectMatchesTarget(*a, gravityFieldTarget)) continue;
-                glm::vec3 posA = getObjectPos(a);
+                glm::vec3 posA = a->getWorldCenter();
                 RigidBody& bodyA = getBodyFor(a);
                 float massA = getObjectMass(a, bodyA.mass);
                 for (size_t j = i + 1; j < count; ++j) {
                     Object* b = objects[j].get(); if (!b) continue; if (!objectMatchesTarget(*b, gravityFieldTarget)) continue;
-                    glm::vec3 posB = getObjectPos(b);
+                    glm::vec3 posB = b->getWorldCenter();
                     RigidBody& bodyB = getBodyFor(b);
                     float massB = getObjectMass(b, bodyB.mass);
                     glm::vec3 r = posB - posA;
@@ -251,7 +508,7 @@ namespace Physics {
             setObjectPos(obj, pos);
         }
 
-        // 4. Detect and resolve object-object collisions (AABB) -----------
+        // 4. Detect and resolve object-object collisions -------------------
         // First update collision zones for all objects using latest transforms
         for(const auto& upObj : objects){
             if(!upObj) continue;
@@ -259,6 +516,7 @@ namespace Physics {
         }
 
         const size_t objCount = objects.size();
+        // If necesary its better to keep the AABB thing as an algorithm to check if another collision algorithm is necesary to be used
         // If at least one Collision law exists, only resolve collisions for objects matching any Collision law target
         bool anyCollisionLaw = false; for (const auto& law : laws) { if (law.enabled && law.type == LawType::Collision) { anyCollisionLaw = true; break; } }
         for(size_t i = 0; i < objCount; ++i){
@@ -296,32 +554,55 @@ namespace Physics {
                     if (!allowed) continue; // don't resolve this pair
                 }
 
-                // Compute overlap amounts
+                glm::vec3 centerA = (minA + maxA) * 0.5f;
+                glm::vec3 centerB = (minB + maxB) * 0.5f;
+
                 float overlapAmtX = std::min(maxA.x, maxB.x) - std::max(minA.x, minB.x);
                 float overlapAmtY = std::min(maxA.y, maxB.y) - std::max(minA.y, minB.y);
                 float overlapAmtZ = std::min(maxA.z, maxB.z) - std::max(minA.z, minB.z);
-
-                // Find the smallest overlap axis to resolve collision
-                float minOverlap = overlapAmtX; int axis = 0;
+                float minOverlap = overlapAmtX;
+                int axis = 0;
                 if(overlapAmtY < minOverlap){ minOverlap = overlapAmtY; axis = 1; }
                 if(overlapAmtZ < minOverlap){ minOverlap = overlapAmtZ; axis = 2; }
+                if(minOverlap <= 0.0f) continue;
 
-                if(minOverlap <= 0.0f) continue; // shouldn't happen but guard
+                glm::vec3 collisionNormal(0.0f);
+                float penetrationDepth = minOverlap;
+                bool narrowPhaseHit = false;
 
-                // Direction: push objects apart along chosen axis away from each other
-                glm::vec3 centerA = (minA + maxA) * 0.5f;
-                glm::vec3 centerB = (minB + maxB) * 0.5f;
-                float sign = 0.0f;
-                switch(axis){
-                    case 0: sign = (centerA.x < centerB.x) ? -1.0f : 1.0f; break;
-                    case 1: sign = (centerA.y < centerB.y) ? -1.0f : 1.0f; break;
-                    case 2: sign = (centerA.z < centerB.z) ? -1.0f : 1.0f; break;
+                if (a->isCollisionShapeConvex() && b->isCollisionShapeConvex()) {
+                    std::vector<SupportPoint> simplex;
+                    glm::vec3 epaNormal(0.0f);
+                    float epaDepth = 0.0f;
+                    if (gjkIntersect(a, b, simplex) && epaPenetration(a, b, simplex, epaNormal, epaDepth) && epaDepth > 0.0f) {
+                        collisionNormal = epaNormal;
+                        if (glm::dot(centerA - centerB, collisionNormal) < 0.0f) {
+                            collisionNormal = -collisionNormal;
+                        }
+                        penetrationDepth = epaDepth;
+                        narrowPhaseHit = true;
+                    }
                 }
-                float pushDist = (minOverlap * 0.5f) + 0.001f; // add small epsilon
-                glm::vec3 correction(0.0f);
-                if(axis == 0) correction.x = pushDist * sign;
-                else if(axis == 1) correction.y = pushDist * sign;
-                else correction.z = pushDist * sign;
+
+                if (!narrowPhaseHit) {
+                    float sign = 0.0f;
+                    switch(axis){
+                        case 0: sign = (centerA.x < centerB.x) ? -1.0f : 1.0f; break;
+                        case 1: sign = (centerA.y < centerB.y) ? -1.0f : 1.0f; break;
+                        case 2: sign = (centerA.z < centerB.z) ? -1.0f : 1.0f; break;
+                    }
+                    if(axis == 0) collisionNormal.x = sign;
+                    else if(axis == 1) collisionNormal.y = sign;
+                    else collisionNormal.z = sign;
+                }
+
+                if (glm::dot(collisionNormal, collisionNormal) <= 1e-12f || penetrationDepth <= 0.0f) {
+                    continue;
+                }
+
+                collisionNormal = glm::normalize(collisionNormal);
+                float pushDist = (penetrationDepth * 0.5f) + 0.001f;
+                glm::vec3 correction = collisionNormal * pushDist;
 
                 // Apply corrections to positions
                 glm::vec3 posA = getObjectPos(a);
@@ -331,18 +612,13 @@ namespace Physics {
                 setObjectPos(a, posA);
                 setObjectPos(b, posB);
 
-                // Damp velocities along collision axis to prevent tunneling
                 RigidBody& bodyA = getBodyFor(a);
                 RigidBody& bodyB = getBodyFor(b);
-                if(axis == 0){ bodyA.velocity.x = 0.0f; bodyB.velocity.x = 0.0f; }
-                else if(axis == 1){ bodyA.velocity.y = 0.0f; bodyB.velocity.y = 0.0f; }
-                else { bodyA.velocity.z = 0.0f; bodyB.velocity.z = 0.0f; }
-
-                // Publish collision event for EventBus listeners
-                glm::vec3 collisionPoint = (centerA + centerB) * 0.5f;
-                glm::vec3 collisionNormal = glm::normalize(centerA - centerB);
                 float impactForce = glm::length(bodyA.velocity) + glm::length(bodyB.velocity);
+                bodyA.velocity -= collisionNormal * glm::dot(bodyA.velocity, collisionNormal);
+                bodyB.velocity -= collisionNormal * glm::dot(bodyB.velocity, collisionNormal);
                 
+                glm::vec3 collisionPoint = (centerA + centerB) * 0.5f;
                 PhysicsCollisionEvent collisionEvent(a, b, collisionPoint, collisionNormal, impactForce);
                 Core::EventBus::instance().publish(collisionEvent);
 
@@ -546,27 +822,9 @@ namespace Physics {
             glm::mat4 transform = obj->getTransform();
             obj->updateCollisionZone(transform);
 
-            if (obj->isPointInside(position)) {
-                // Determine the axis-aligned bounding box of the object
-                glm::vec3 minCorner = obj->collisionZone.corners[0];
-                glm::vec3 maxCorner = obj->collisionZone.corners[0];
-                for (int i = 1; i < 8; ++i) {
-                    minCorner = glm::min(minCorner, obj->collisionZone.corners[i]);
-                    maxCorner = glm::max(maxCorner, obj->collisionZone.corners[i]);
-                }
-
-                // Push position out to nearest face
-                float dx = std::min(std::abs(position.x - minCorner.x), std::abs(position.x - maxCorner.x));
-                float dy = std::min(std::abs(position.y - minCorner.y), std::abs(position.y - maxCorner.y));
-                float dz = std::min(std::abs(position.z - minCorner.z), std::abs(position.z - maxCorner.z));
-
-                if (dx <= dy && dx <= dz) {
-                    position.x = (std::abs(position.x - minCorner.x) < std::abs(position.x - maxCorner.x)) ? minCorner.x : maxCorner.x;
-                } else if (dy <= dx && dy <= dz) {
-                    position.y = (std::abs(position.y - minCorner.y) < std::abs(position.y - maxCorner.y)) ? minCorner.y : maxCorner.y;
-                } else {
-                    position.z = (std::abs(position.z - minCorner.z) < std::abs(position.z - maxCorner.z)) ? minCorner.z : maxCorner.z;
-                }
+            glm::vec3 correction(0.0f);
+            if (obj->computePointPenetration(position, correction)) {
+                position += correction;
             }
         }
     }
@@ -667,7 +925,7 @@ namespace Physics {
             RigidBody& body = getBodyFor(obj);
             float m = getObjectMass(obj, body.mass);
             if (m <= 0.0f) continue;
-            glm::vec3 pos = getObjectPos(obj);
+            glm::vec3 pos = obj->getWorldCenter();
             sumWeighted += pos * m;
             totalMass += m;
         }
@@ -687,7 +945,7 @@ namespace Physics {
             RigidBody& body = getBodyFor(obj);
             float m = getObjectMass(obj, body.mass);
             if (m <= 0.0f) continue;
-            glm::vec3 pos = getObjectPos(obj);
+            glm::vec3 pos = obj->getWorldCenter();
             glm::vec3 r = pos - position;
             float dist2 = glm::dot(r, r) + softeningEpsilon * softeningEpsilon;
             if (dist2 <= 1e-12f) continue;

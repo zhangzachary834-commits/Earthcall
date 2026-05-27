@@ -24,9 +24,11 @@ void KeyboardHandler::update() {
         return;
     }
     
-    // Update key states - convert Pressed to Held
+    // Advance transient states so JustPressed is only visible for one update cycle.
     for (auto& [key, binding] : _keyBindings) {
-        if (binding.state == KeyState::Pressed) {
+        if (binding.state == KeyState::JustPressed) {
+            binding.state = KeyState::Pressed;
+        } else if (binding.state == KeyState::Pressed) {
             binding.state = KeyState::Held;
         }
     }
@@ -98,7 +100,9 @@ void KeyboardHandler::clearBindings() {
 bool KeyboardHandler::isKeyPressed(int key) const {
     auto it = _keyBindings.find(key);
     if (it != _keyBindings.end()) {
-        return it->second.state == KeyState::JustPressed || it->second.state == KeyState::Pressed;
+        return it->second.state == KeyState::JustPressed ||
+               it->second.state == KeyState::Pressed ||
+               it->second.state == KeyState::Held;
     }
     return false;
 }

@@ -1,0 +1,7 @@
+Machine learning systems improve when they see useful examples.
+Language models predict the next token from earlier tokens.
+Small educational models can reveal the logic behind generation.
+Patterns in text become probabilities after training.
+A better corpus usually produces better answers.
+Large language models scale this idea with transformers and huge datasets.
+This tiny project keeps the mechanics visible and easy to debug.

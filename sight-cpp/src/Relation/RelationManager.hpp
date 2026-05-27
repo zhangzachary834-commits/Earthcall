@@ -42,6 +42,7 @@ public:
     // std::vector<Relation> getRelationsBetween(const std::string& a, const std::string& b) const;
     std::vector<std::shared_ptr<Relation>> getRelationsOf(const std::string& entity) const;
     std::vector<std::shared_ptr<Relation>> getRelationsBetween(const std::string& a, const std::string& b) const;
+    std::vector<std::shared_ptr<Relation>> getRelationsOfType(const std::string& type) const;
 
     // (De)Serialization --------------------------------------------------
     nlohmann::json toJson() const;

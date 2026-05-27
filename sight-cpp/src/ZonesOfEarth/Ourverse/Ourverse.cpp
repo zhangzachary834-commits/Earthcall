@@ -309,25 +309,9 @@ void Ourverse::renderModeUI() {
 
 void Ourverse::updateObjectCollisions(glm::vec3& position, const Object& obj, const glm::mat4& transform) const {
     obj.updateCollisionZone(transform);
-    if (obj.isPointInside(position)) {
-        // Push the position out to the nearest face of the cube's AABB
-        glm::vec3 minCorner = obj.collisionZone.corners[0];
-        glm::vec3 maxCorner = obj.collisionZone.corners[0];
-        for (int i = 1; i < 8; ++i) {
-            minCorner = glm::min(minCorner, obj.collisionZone.corners[i]);
-            maxCorner = glm::max(maxCorner, obj.collisionZone.corners[i]);
-        }
-        // Find the closest face and move the position to that face
-        float dx = std::min(std::abs(position.x - minCorner.x), std::abs(position.x - maxCorner.x));
-        float dy = std::min(std::abs(position.y - minCorner.y), std::abs(position.y - maxCorner.y));
-        float dz = std::min(std::abs(position.z - minCorner.z), std::abs(position.z - maxCorner.z));
-        if (dx <= dy && dx <= dz) {
-            position.x = (std::abs(position.x - minCorner.x) < std::abs(position.x - maxCorner.x)) ? minCorner.x : maxCorner.x;
-        } else if (dy <= dx && dy <= dz) {
-            position.y = (std::abs(position.y - minCorner.y) < std::abs(position.y - maxCorner.y)) ? minCorner.y : maxCorner.y;
-        } else {
-            position.z = (std::abs(position.z - minCorner.z) < std::abs(position.z - maxCorner.z)) ? minCorner.z : maxCorner.z;
-        }
+    glm::vec3 correction(0.0f);
+    if (obj.computePointPenetration(position, correction)) {
+        position += correction;
     }
 }
 

@@ -611,7 +611,7 @@ void Game::renderCreatorToolbar() {
     if (show3D) {
         if (ImGui::Begin(u8"\xF0\x9F\x94\xB3 3D", &show3D)) {
             int modeIdx = static_cast<int>(_current3DMode);
-            const char* modeNames[] = {"Face Fill", "Face Brush", "Shape Generator", "Pottery", "Selection"};
+            const char* modeNames[] = {"Face Fill", "Face Brush", "Shape Generator", "Pottery", "Rotation", "Selection"};
             if (ImGui::Combo("SubMode", &modeIdx, modeNames, IM_ARRAYSIZE(modeNames))) {
                 _current3DMode = static_cast<Mode3D>(modeIdx);
             }
@@ -985,6 +985,55 @@ void Game::renderCreatorToolbar() {
                 ImGui::SliderFloat("Strength", &_potteryStrength, 0.01f, 2.0f, "%.2f");
             }
 
+            if (_current3DMode == Mode3D::Rotation) {
+                ImGui::Separator();
+                ImGui::TextUnformatted("Rotation Tool");
+                ImGui::TextWrapped("Click to select, then drag in the viewport. Horizontal drag rotates around Y, vertical drag rotates around X, and holding Shift rotates around Z.");
+
+                const char* axisModeNames[] = {"Free XY", "X", "Y", "Z", "Authoritative Axis"};
+                int axisModeIdx = static_cast<int>(_rotationAxisMode);
+                if (ImGui::Combo("Axis Mode", &axisModeIdx, axisModeNames, IM_ARRAYSIZE(axisModeNames))) {
+                    _rotationAxisMode = static_cast<RotationAxisMode>(axisModeIdx);
+                }
+
+                ImGui::SliderFloat("Sensitivity", &_rotationToolSensitivity, 0.05f, 2.0f, "%.2f");
+                ImGui::SliderFloat("Smoothness", &_rotationToolSmoothness, 1.0f, 20.0f, "%.2f");
+
+                if (_selectedObject3D) {
+                    ImGui::Separator();
+                    ImGui::Text("Selected: %s", _selectedObject3D->getIdentifier().c_str());
+
+                    glm::vec3 center = _selectedObject3D->getCenter();
+                    if (ImGui::DragFloat3("Center", &center.x, 0.01f, -10.0f, 10.0f, "%.2f")) {
+                        _selectedObject3D->setCenter(center);
+                    }
+
+                    glm::vec3 axis = _selectedObject3D->getAuthoritativeAxis();
+                    if (ImGui::DragFloat3("Authoritative Axis", &axis.x, 0.01f, -1.0f, 1.0f, "%.2f")) {
+                        _selectedObject3D->setAuthoritativeAxis(axis);
+                    }
+
+                    glm::vec3 currentRotation = _selectedObject3D->getRotationEulerDegrees();
+                    ImGui::Text("Current Rotation: %.1f  %.1f  %.1f", currentRotation.x, currentRotation.y, currentRotation.z);
+
+                    glm::vec3 targetRotation = _selectedObject3D->getTargetRotationEulerDegrees();
+                    if (ImGui::DragFloat3("Target Rotation", &targetRotation.x, 0.5f, -720.0f, 720.0f, "%.1f deg")) {
+                        _selectedObject3D->setTargetRotationEulerDegrees(targetRotation);
+                    }
+
+                    if (ImGui::Button("Snap To Target")) {
+                        _selectedObject3D->setRotationEulerDegrees(_selectedObject3D->getTargetRotationEulerDegrees());
+                    }
+                    ImGui::SameLine();
+                    if (ImGui::Button("Stop Rotation")) {
+                        _selectedObject3D->setTargetRotationEulerDegrees(_selectedObject3D->getRotationEulerDegrees());
+                    }
+                } else {
+                    ImGui::TextColored(ImVec4(1.0f, 0.7f, 0.0f, 1.0f),
+                                       "No object selected yet. Click an object in the viewport to rotate it.");
+                }
+            }
+
             // Placement mode controls
             ImGui::Separator();
             int placeIdx = static_cast<int>(_placementMode);
@@ -1248,6 +1297,20 @@ void Game::renderCreatorToolbar() {
                 if (ImGui::Button("Create Bond") && objAIdx != objBIdx && objAIdx < static_cast<int>(labels.size()) && objBIdx < static_cast<int>(labels.size())) {
                     Physics::addBond(objs[objAIdx].get(), objs[objBIdx].get());
                 }
+                ImGui::SameLine();
+                if (ImGui::Button("Create Attachment") && objAIdx != objBIdx && objAIdx < static_cast<int>(labels.size()) && objBIdx < static_cast<int>(labels.size())) {
+                    Object* parent = objs[objAIdx].get();
+                    Object* child = objs[objBIdx].get();
+                    if (parent && child) {
+                        mgr.active().syncFormationMembers({parent, child});
+                        auto relation = std::make_shared<Relation>("attachment", *parent, *child, true, 1.0f);
+                        relation->attachment.enabled = true;
+                        relation->attachment.localOffset = glm::inverse(parent->getTransform()) * child->getTransform();
+                        relation->attachment.parentAnchor = parent->getCenter();
+                        relation->attachment.childAnchor = child->getCenter();
+                        mgr.active().formation().addRelation(relation);
+                    }
+                }
             } else {
                 ImGui::TextUnformatted("No objects available.");
             }
@@ -1304,6 +1367,36 @@ void Game::renderCreatorToolbar() {
                     if (ImGui::Button("Remove Bond")) {
                         Physics::removeBond(bond.a, bond.b);
                         selectedBond = -1;
+                    }
+                }
+            }
+
+            ImGui::Separator();
+            ImGui::Text("Attachment Relations:");
+            const auto attachments = mgr.active().formation().relations().getRelationsOfType("attachment");
+            if (attachments.empty()) {
+                ImGui::TextUnformatted("<none>");
+            } else {
+                static int selectedAttachment = -1;
+                if (ImGui::BeginListBox("##AttachmentList", ImVec2(-FLT_MIN, 120))) {
+                    for (int i = 0; i < static_cast<int>(attachments.size()); ++i) {
+                        if (!attachments[i]) continue;
+                        char label[256];
+                        std::snprintf(label, sizeof(label), "%d: %s -> %s", i,
+                                      attachments[i]->entityA.c_str(),
+                                      attachments[i]->entityB.c_str());
+                        if (ImGui::Selectable(label, selectedAttachment == i)) {
+                            selectedAttachment = i;
+                        }
+                    }
+                    ImGui::EndListBox();
+                }
+
+                if (selectedAttachment >= 0 && selectedAttachment < static_cast<int>(attachments.size()) && attachments[selectedAttachment]) {
+                    auto rel = attachments[selectedAttachment];
+                    if (ImGui::Button("Remove Attachment")) {
+                        mgr.active().formation().removeRelation(rel);
+                        selectedAttachment = -1;
                     }
                 }
             }

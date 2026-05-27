@@ -102,6 +102,8 @@ public:
                                  BodyPart* targetPart = nullptr);
     static void Pottery3D(GLFWwindow* window, Core::Game* game, ZoneManager& mgr, float dt,
                           const std::vector<Object*>& targets, const glm::mat4* avatarRoot);
+    static void Rotate3D(GLFWwindow* window, Core::Game* game, ZoneManager& mgr, float dt,
+                         const std::vector<Object*>& targets, const glm::mat4* avatarRoot);
     static void FacePaint(GLFWwindow* window, Core::Game* game, ZoneManager& mgr, float dt,
                           const std::vector<Object*>& targets);
     static void FaceBrush(GLFWwindow* window, Core::Game* game, ZoneManager& mgr, float dt,

@@ -3,6 +3,7 @@
 #include "AngleTools.hpp"
 #include <GLFW/glfw3.h>
 #include <OpenGL/glu.h>
+#include <glm/gtc/quaternion.hpp>
 #include <algorithm>
 #include <cstring>
 #include <cstdlib> // for rand()
@@ -11,6 +12,7 @@
 #include <optional>
 #include <unordered_set>
 #include <unordered_map>
+#include <atomic>
 #include "Rendering/HighlightSystem.hpp"
 
 #ifndef M_PI
@@ -1928,11 +1930,12 @@ bool Object::raycastFace(const glm::vec3& rayOriginWorld, const glm::vec3& rayDi
     };
 
     auto intersectCylinder = [&](float& tHit, int& faceIndex, glm::vec2& uv) -> bool {
-        // Cylinder axis along Z, radius 0.5, height z in [0,1] (matching drawCylinderPrimitive offset by -0.5)
+        // Cylinder axis along Z, radius 0.5, centered at origin: z in [-0.5, 0.5]
+        // (drawObject applies glTranslatef(0,0,-0.5) before drawing, so local space is [-0.5,0.5])
         const float r = 0.5f;
         float bestT = 1e9f; int bestFace = -1; glm::vec2 bestUV(0.0f);
 
-        // Side: x^2 + y^2 = r^2, z in [0,1]
+        // Side: x^2 + y^2 = r^2, z in [-0.5, 0.5]
         float A = dL.x * dL.x + dL.y * dL.y;
         float B = 2.0f * (oL.x * dL.x + oL.y * dL.y);
         float C = oL.x * oL.x + oL.y * oL.y - r * r;
@@ -1945,9 +1948,9 @@ bool Object::raycastFace(const glm::vec3& rayOriginWorld, const glm::vec3& rayDi
                 auto testT = [&](float t) {
                     if (t > 1e-6f) {
                         glm::vec3 p = oL + dL * t;
-                        if (p.z >= 0.0f && p.z <= 1.0f) {
+                        if (p.z >= -0.5f && p.z <= 0.5f) {
                             float u = 0.5f + atan2f(p.y, p.x) / (2.0f * (float)M_PI);
-                            float v = glm::clamp(p.z, 0.0f, 1.0f);
+                            float v = glm::clamp(p.z + 0.5f, 0.0f, 1.0f);
                             if (t < bestT) { bestT = t; bestFace = 0; bestUV = glm::vec2(u, v); }
                         }
                     }
@@ -1956,10 +1959,10 @@ bool Object::raycastFace(const glm::vec3& rayOriginWorld, const glm::vec3& rayDi
             }
         }
 
-        // Caps at z = 0 and z = 1 share one texture (face 1)
+        // Caps at z = -0.5 (bottom) and z = 0.5 (top), share one texture (face 1)
         if (fabs(dL.z) > 1e-6f) {
             for (int sgn = 0; sgn <= 1; ++sgn) {
-                float zPlane = sgn == 0 ? 0.0f : 1.0f;
+                float zPlane = sgn == 0 ? -0.5f : 0.5f;
                 float t = (zPlane - oL.z) / dL.z;
                 if (t > 1e-6f) {
                     glm::vec3 p = oL + dL * t;
@@ -1980,15 +1983,18 @@ bool Object::raycastFace(const glm::vec3& rayOriginWorld, const glm::vec3& rayDi
     };
 
     auto intersectCone = [&](float& tHit, int& faceIndex, glm::vec2& uv) -> bool {
-        // Cone axis +Z, height 1, base at z=0, apex at z=1, base radius 0.5
-        // Matches drawCylinderPrimitive(0.0f) with pre-translate -0.5
+        // Cone axis +Z: base (radius 0.5) at z=-0.5, apex at z=+0.5, z in [-0.5, 0.5]
+        // Implicit surface: x^2 + y^2 = k^2 * (0.5 - z)^2, k = 0.5
+        // (drawObject applies glTranslatef(0,0,-0.5) before gluCylinder(0.5,0,1), so local space is [-0.5,0.5])
         float bestT = 1e9f; int bestFace = -1; glm::vec2 bestUV(0.0f);
 
-        // Side: for cone along +Z, implicit: x^2 + y^2 = (k z)^2 with k = r/h = 0.5/1 = 0.5, and 0<=z<=1
+        // Side: x^2 + y^2 = (0.5*(0.5-z))^2, z in [-0.5, 0.5]
+        // Quadratic coefficients derived from substituting ray into surface equation:
         float k = 0.5f;
+        float oz_off = 0.5f - oL.z;   // (0.5 - oz), distance of ray origin from apex in Z
         float A = dL.x * dL.x + dL.y * dL.y - (k * k) * dL.z * dL.z;
-        float B = 2.0f * (oL.x * dL.x + oL.y * dL.y - (k * k) * oL.z * dL.z);
-        float C = oL.x * oL.x + oL.y * oL.y - (k * k) * oL.z * oL.z;
+        float B = 2.0f * (oL.x * dL.x + oL.y * dL.y) + 2.0f * (k * k) * oz_off * dL.z;
+        float C = oL.x * oL.x + oL.y * oL.y - (k * k) * oz_off * oz_off;
         if (fabs(A) > 1e-6f) {
             float disc = B * B - 4.0f * A * C;
             if (disc >= 0.0f) {
@@ -1998,10 +2004,10 @@ bool Object::raycastFace(const glm::vec3& rayOriginWorld, const glm::vec3& rayDi
                 auto testT = [&](float t) {
                     if (t > 1e-6f) {
                         glm::vec3 p = oL + dL * t;
-                        if (p.z >= 0.0f && p.z <= 1.0f) {
+                        if (p.z >= -0.5f && p.z <= 0.5f) {
                             float theta = atan2f(p.y, p.x);
                             float u = 0.5f + theta / (2.0f * (float)M_PI);
-                            float v = glm::clamp(p.z, 0.0f, 1.0f); // 0 at base, 1 at tip
+                            float v = glm::clamp(0.5f - p.z, 0.0f, 1.0f); // 0 at apex (z=+0.5), 1 at base (z=-0.5)
                             if (t < bestT) { bestT = t; bestFace = 0; bestUV = glm::vec2(u, v); }
                         }
                     }
@@ -2010,9 +2016,9 @@ bool Object::raycastFace(const glm::vec3& rayOriginWorld, const glm::vec3& rayDi
             }
         }
 
-        // Base disc at z = 0, radius 0.5 (face 1)
+        // Base disc at z = -0.5, radius 0.5 (face 1)
         if (fabs(dL.z) > 1e-6f) {
-            float t = (0.0f - oL.z) / dL.z;
+            float t = (-0.5f - oL.z) / dL.z;
             if (t > 1e-6f) {
                 glm::vec3 p = oL + dL * t;
                 float r2 = p.x * p.x + p.y * p.y;
@@ -2122,6 +2128,129 @@ bool Object::raycastFace(const glm::vec3& rayOriginWorld, const glm::vec3& rayDi
     return false;
 }
 
+namespace {
+glm::vec3 transformNormalToWorld(const glm::mat4& transform, const glm::vec3& localNormal) {
+    glm::mat3 linear(transform);
+    glm::vec3 worldNormal = glm::transpose(glm::inverse(linear)) * localNormal;
+    float len = glm::length(worldNormal);
+    if (len <= 1e-6f) return glm::vec3(0.0f, 1.0f, 0.0f);
+    return worldNormal / len;
+}
+
+glm::vec3 closestPointOnTriangle(const glm::vec3& p,
+                                 const glm::vec3& a,
+                                 const glm::vec3& b,
+                                 const glm::vec3& c) {
+    glm::vec3 ab = b - a;
+    glm::vec3 ac = c - a;
+    glm::vec3 ap = p - a;
+
+    float d1 = glm::dot(ab, ap);
+    float d2 = glm::dot(ac, ap);
+    if (d1 <= 0.0f && d2 <= 0.0f) return a;
+
+    glm::vec3 bp = p - b;
+    float d3 = glm::dot(ab, bp);
+    float d4 = glm::dot(ac, bp);
+    if (d3 >= 0.0f && d4 <= d3) return b;
+
+    float vc = d1 * d4 - d3 * d2;
+    if (vc <= 0.0f && d1 >= 0.0f && d3 <= 0.0f) {
+        float v = d1 / (d1 - d3);
+        return a + v * ab;
+    }
+
+    glm::vec3 cp = p - c;
+    float d5 = glm::dot(ab, cp);
+    float d6 = glm::dot(ac, cp);
+    if (d6 >= 0.0f && d5 <= d6) return c;
+
+    float vb = d5 * d2 - d1 * d6;
+    if (vb <= 0.0f && d2 >= 0.0f && d6 <= 0.0f) {
+        float w = d2 / (d2 - d6);
+        return a + w * ac;
+    }
+
+    float va = d3 * d6 - d5 * d4;
+    if (va <= 0.0f && (d4 - d3) >= 0.0f && (d5 - d6) >= 0.0f) {
+        glm::vec3 bc = c - b;
+        float w = (d4 - d3) / ((d4 - d3) + (d5 - d6));
+        return b + w * bc;
+    }
+
+    float denom = 1.0f / (va + vb + vc);
+    float v = vb * denom;
+    float w = vc * denom;
+    return a + ab * v + ac * w;
+}
+
+bool rayIntersectsTriangle(const glm::vec3& origin,
+                           const glm::vec3& dir,
+                           const glm::vec3& a,
+                           const glm::vec3& b,
+                           const glm::vec3& c,
+                           float& outT) {
+    const float EPS = 1e-6f;
+    glm::vec3 ab = b - a;
+    glm::vec3 ac = c - a;
+    glm::vec3 pvec = glm::cross(dir, ac);
+    float det = glm::dot(ab, pvec);
+    if (std::abs(det) <= EPS) return false;
+
+    float invDet = 1.0f / det;
+    glm::vec3 tvec = origin - a;
+    float u = glm::dot(tvec, pvec) * invDet;
+    if (u < EPS || u > 1.0f - EPS) return false;
+
+    glm::vec3 qvec = glm::cross(tvec, ab);
+    float v = glm::dot(dir, qvec) * invDet;
+    if (v < EPS || u + v > 1.0f - EPS) return false;
+
+    float t = glm::dot(ac, qvec) * invDet;
+    if (t <= EPS) return false;
+    outT = t;
+    return true;
+}
+} // namespace
+
+namespace {
+glm::vec3 extractScaleFromTransform(const glm::mat4& transform) {
+    glm::vec3 scale(glm::length(glm::vec3(transform[0])),
+                    glm::length(glm::vec3(transform[1])),
+                    glm::length(glm::vec3(transform[2])));
+    if (scale.x <= 1e-6f) scale.x = 1.0f;
+    if (scale.y <= 1e-6f) scale.y = 1.0f;
+    if (scale.z <= 1e-6f) scale.z = 1.0f;
+    return scale;
+}
+
+glm::vec3 extractRotationDegreesFromTransform(const glm::mat4& transform) {
+    glm::vec3 scale = extractScaleFromTransform(transform);
+    glm::mat3 rotationBasis;
+    rotationBasis[0] = glm::vec3(transform[0]) / scale.x;
+    rotationBasis[1] = glm::vec3(transform[1]) / scale.y;
+    rotationBasis[2] = glm::vec3(transform[2]) / scale.z;
+
+    if (glm::determinant(rotationBasis) < 0.0f) {
+        rotationBasis[0] = -rotationBasis[0];
+    }
+
+    glm::quat rotation = glm::normalize(glm::quat_cast(rotationBasis));
+    return glm::degrees(glm::eulerAngles(rotation));
+}
+
+float wrapDegrees(float degrees) {
+    float wrapped = std::fmod(degrees, 360.0f);
+    if (wrapped > 180.0f) wrapped -= 360.0f;
+    if (wrapped < -180.0f) wrapped += 360.0f;
+    return wrapped;
+}
+
+float shortestAngleDelta(float current, float target) {
+    return wrapDegrees(target - current);
+}
+} // namespace
+
 void Object::updateCollisionZone(const glm::mat4& transform) const {
     if (geometryType == GeometryType::Polyhedron && !polyhedronData.vertices.empty()) {
         // For polyhedrons, compute bounding box from all vertices
@@ -2163,17 +2292,395 @@ void Object::updateCollisionZone(const glm::mat4& transform) const {
     }
 }
 
-bool Object::isPointInside(const glm::vec3& point) const {
-    // Compute AABB from corners
+glm::vec3 Object::getLocalSupportPoint(const glm::vec3& localDirection) const {
+    glm::vec3 dir = localDirection;
+    if (glm::dot(dir, dir) <= 1e-12f) dir = glm::vec3(1.0f, 0.0f, 0.0f);
+
+    switch (geometryType) {
+        case GeometryType::Cube:
+            return glm::vec3(dir.x >= 0.0f ? 0.5f : -0.5f,
+                             dir.y >= 0.0f ? 0.5f : -0.5f,
+                             dir.z >= 0.0f ? 0.5f : -0.5f);
+        case GeometryType::Sphere: {
+            glm::vec3 n = glm::normalize(dir);
+            return n * 0.5f;
+        }
+        case GeometryType::Cylinder: {
+            glm::vec2 radial(dir.x, dir.y);
+            float radialLen = glm::length(radial);
+            glm::vec3 support(0.0f, 0.0f, dir.z >= 0.0f ? 0.5f : -0.5f);
+            if (radialLen > 1e-6f) {
+                glm::vec2 radialDir = radial / radialLen;
+                support.x = radialDir.x * 0.5f;
+                support.y = radialDir.y * 0.5f;
+            }
+            return support;
+        }
+        case GeometryType::Cone: {
+            glm::vec2 radial(dir.x, dir.y);
+            float radialLen = glm::length(radial);
+            float apexScore = 0.5f * dir.z;
+            float baseScore = 0.5f * radialLen - 0.5f * dir.z;
+            if (apexScore >= baseScore) {
+                return glm::vec3(0.0f, 0.0f, 0.5f);
+            }
+
+            glm::vec3 support(0.0f, 0.0f, -0.5f);
+            if (radialLen > 1e-6f) {
+                glm::vec2 radialDir = radial / radialLen;
+                support.x = radialDir.x * 0.5f;
+                support.y = radialDir.y * 0.5f;
+            }
+            return support;
+        }
+        case GeometryType::Polyhedron: {
+            if (polyhedronData.vertices.empty()) {
+                return glm::vec3(dir.x >= 0.0f ? 0.5f : -0.5f,
+                                 dir.y >= 0.0f ? 0.5f : -0.5f,
+                                 dir.z >= 0.0f ? 0.5f : -0.5f);
+            }
+
+            float bestDot = -std::numeric_limits<float>::max();
+            glm::vec3 bestVertex = polyhedronData.vertices.front();
+            for (const auto& vertex : polyhedronData.vertices) {
+                float candidate = glm::dot(vertex, dir);
+                if (candidate > bestDot) {
+                    bestDot = candidate;
+                    bestVertex = vertex;
+                }
+            }
+            return bestVertex;
+        }
+    }
+
+    return glm::vec3(0.0f);
+}
+
+glm::vec3 Object::getSupportPointWorld(const glm::vec3& worldDirection) const {
+    glm::mat4 transform = getRaycastTransform();
+    glm::mat3 linear(transform);
+    glm::vec3 localDirection = glm::transpose(linear) * worldDirection;
+    glm::vec3 localSupport = getLocalSupportPoint(localDirection);
+    return glm::vec3(transform * glm::vec4(localSupport, 1.0f));
+}
+
+bool Object::isCollisionShapeConvex() const {
+    if (geometryType != GeometryType::Polyhedron) return true;
+    return polyhedronData.getIsConvex();
+}
+
+bool Object::computeLocalPointPenetration(const glm::vec3& localPoint,
+                                          glm::vec3& outSurfacePoint,
+                                          glm::vec3& outLocalNormal) const {
+    switch (geometryType) {
+        case GeometryType::Cube: {
+            if (std::abs(localPoint.x) > 0.5f || std::abs(localPoint.y) > 0.5f || std::abs(localPoint.z) > 0.5f) {
+                return false;
+            }
+
+            float dx = 0.5f - std::abs(localPoint.x);
+            float dy = 0.5f - std::abs(localPoint.y);
+            float dz = 0.5f - std::abs(localPoint.z);
+
+            outSurfacePoint = localPoint;
+            if (dx <= dy && dx <= dz) {
+                outLocalNormal = glm::vec3(localPoint.x >= 0.0f ? 1.0f : -1.0f, 0.0f, 0.0f);
+                outSurfacePoint.x = 0.5f * outLocalNormal.x;
+            } else if (dy <= dx && dy <= dz) {
+                outLocalNormal = glm::vec3(0.0f, localPoint.y >= 0.0f ? 1.0f : -1.0f, 0.0f);
+                outSurfacePoint.y = 0.5f * outLocalNormal.y;
+            } else {
+                outLocalNormal = glm::vec3(0.0f, 0.0f, localPoint.z >= 0.0f ? 1.0f : -1.0f);
+                outSurfacePoint.z = 0.5f * outLocalNormal.z;
+            }
+            return true;
+        }
+        case GeometryType::Sphere: {
+            float len = glm::length(localPoint);
+            if (len > 0.5f) return false;
+
+            if (len > 1e-6f) {
+                outLocalNormal = localPoint / len;
+                outSurfacePoint = outLocalNormal * 0.5f;
+            } else {
+                outLocalNormal = glm::vec3(1.0f, 0.0f, 0.0f);
+                outSurfacePoint = outLocalNormal * 0.5f;
+            }
+            return true;
+        }
+        case GeometryType::Cylinder: {
+            glm::vec2 radial(localPoint.x, localPoint.y);
+            float radialLen = glm::length(radial);
+            if (radialLen > 0.5f || std::abs(localPoint.z) > 0.5f) return false;
+
+            float sideDepth = 0.5f - radialLen;
+            float capDepth = 0.5f - std::abs(localPoint.z);
+            if (sideDepth <= capDepth) {
+                glm::vec2 radialDir = radialLen > 1e-6f ? radial / radialLen : glm::vec2(1.0f, 0.0f);
+                outLocalNormal = glm::vec3(radialDir.x, radialDir.y, 0.0f);
+                outSurfacePoint = glm::vec3(radialDir.x * 0.5f, radialDir.y * 0.5f, localPoint.z);
+            } else {
+                outLocalNormal = glm::vec3(0.0f, 0.0f, localPoint.z >= 0.0f ? 1.0f : -1.0f);
+                outSurfacePoint = glm::vec3(localPoint.x, localPoint.y, 0.5f * outLocalNormal.z);
+            }
+            return true;
+        }
+        case GeometryType::Cone: {
+            float h = localPoint.z + 0.5f;
+            if (h < 0.0f || h > 1.0f) return false;
+
+            glm::vec2 radial(localPoint.x, localPoint.y);
+            float radialLen = glm::length(radial);
+            float maxRadius = 0.5f * (1.0f - h);
+            if (radialLen > maxRadius) return false;
+
+            glm::vec2 q(radialLen, h);
+            glm::vec2 baseEdge(0.5f, 0.0f);
+            glm::vec2 apex(0.0f, 1.0f);
+            glm::vec2 side = apex - baseEdge;
+            float sideT = glm::dot(q - baseEdge, side) / glm::dot(side, side);
+            sideT = std::clamp(sideT, 0.0f, 1.0f);
+            glm::vec2 projected = baseEdge + side * sideT;
+
+            glm::vec3 sideSurface(0.0f, 0.0f, projected.y - 0.5f);
+            if (projected.x > 1e-6f && radialLen > 1e-6f) {
+                glm::vec2 radialDir = radial / radialLen;
+                sideSurface.x = radialDir.x * projected.x;
+                sideSurface.y = radialDir.y * projected.x;
+            }
+
+            glm::vec3 baseSurface(localPoint.x, localPoint.y, -0.5f);
+            float baseDist2 = glm::dot(baseSurface - localPoint, baseSurface - localPoint);
+            float sideDist2 = glm::dot(sideSurface - localPoint, sideSurface - localPoint);
+            if (baseDist2 <= sideDist2) {
+                outSurfacePoint = baseSurface;
+                outLocalNormal = glm::vec3(0.0f, 0.0f, -1.0f);
+            } else {
+                outSurfacePoint = sideSurface;
+                glm::vec3 delta = localPoint - sideSurface;
+                if (glm::dot(delta, delta) > 1e-12f) {
+                    outLocalNormal = glm::normalize(delta);
+                } else {
+                    outLocalNormal = glm::normalize(glm::vec3(localPoint.x, localPoint.y, 0.5f));
+                }
+            }
+            return true;
+        }
+        case GeometryType::Polyhedron: {
+            if (polyhedronData.vertices.empty() || polyhedronData.faces.empty()) return false;
+
+            glm::vec3 closestPoint(0.0f);
+            glm::vec3 closestNormal(0.0f, 1.0f, 0.0f);
+            float closestDist2 = std::numeric_limits<float>::max();
+            int intersections = 0;
+            const glm::vec3 rayDir = glm::normalize(glm::vec3(1.0f, 0.371f, 0.529f));
+
+            bool convex = polyhedronData.getIsConvex();
+            bool insideConvex = convex;
+            float minPlaneDepth = std::numeric_limits<float>::max();
+            glm::vec3 bestPlaneNormal(0.0f, 1.0f, 0.0f);
+            glm::vec3 bestPlaneSurface(0.0f);
+
+            for (size_t faceIndex = 0; faceIndex < polyhedronData.faces.size(); ++faceIndex) {
+                const auto& face = polyhedronData.faces[faceIndex];
+                if (face.size() < 3) continue;
+
+                glm::vec3 faceNormal = (faceIndex < polyhedronData.faceNormals.size())
+                    ? polyhedronData.faceNormals[faceIndex]
+                    : computeNewellNormal(polyhedronData.vertices, face);
+                glm::vec3 v0 = polyhedronData.vertices[face[0]];
+
+                if (convex) {
+                    float planeDistance = glm::dot(faceNormal, localPoint - v0);
+                    if (planeDistance > 1e-5f) {
+                        insideConvex = false;
+                    } else if (-planeDistance < minPlaneDepth) {
+                        minPlaneDepth = -planeDistance;
+                        bestPlaneNormal = faceNormal;
+                        bestPlaneSurface = localPoint - planeDistance * faceNormal;
+                    }
+                }
+
+                for (size_t i = 1; i + 1 < face.size(); ++i) {
+                    glm::vec3 a = polyhedronData.vertices[face[0]];
+                    glm::vec3 b = polyhedronData.vertices[face[i]];
+                    glm::vec3 c = polyhedronData.vertices[face[i + 1]];
+
+                    glm::vec3 candidate = closestPointOnTriangle(localPoint, a, b, c);
+                    glm::vec3 delta = candidate - localPoint;
+                    float dist2 = glm::dot(delta, delta);
+                    if (dist2 < closestDist2) {
+                        closestDist2 = dist2;
+                        closestPoint = candidate;
+                        closestNormal = faceNormal;
+                    }
+
+                    float hitT = 0.0f;
+                    if (rayIntersectsTriangle(localPoint, rayDir, a, b, c, hitT)) {
+                        ++intersections;
+                    }
+                }
+            }
+
+            bool inside = convex ? insideConvex : ((intersections % 2) == 1);
+            if (!inside) return false;
+
+            if (convex && minPlaneDepth < std::numeric_limits<float>::max()) {
+                outSurfacePoint = bestPlaneSurface;
+                outLocalNormal = bestPlaneNormal;
+                return true;
+            }
+
+            outSurfacePoint = closestPoint;
+            glm::vec3 delta = localPoint - closestPoint;
+            if (glm::dot(delta, delta) > 1e-12f) {
+                outLocalNormal = glm::normalize(delta);
+            } else {
+                outLocalNormal = closestNormal;
+            }
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool Object::computePointPenetration(const glm::vec3& point, glm::vec3& outCorrection) const {
     glm::vec3 minCorner = collisionZone.corners[0];
     glm::vec3 maxCorner = collisionZone.corners[0];
     for (int i = 1; i < 8; ++i) {
         minCorner = glm::min(minCorner, collisionZone.corners[i]);
         maxCorner = glm::max(maxCorner, collisionZone.corners[i]);
     }
-    return (point.x >= minCorner.x && point.x <= maxCorner.x &&
-            point.y >= minCorner.y && point.y <= maxCorner.y &&
-            point.z >= minCorner.z && point.z <= maxCorner.z);
+    if (point.x < minCorner.x || point.x > maxCorner.x ||
+        point.y < minCorner.y || point.y > maxCorner.y ||
+        point.z < minCorner.z || point.z > maxCorner.z) {
+        return false;
+    }
+
+    glm::mat4 collisionTransform = getRaycastTransform();
+    glm::mat4 inv = glm::inverse(collisionTransform);
+    glm::vec3 localPoint = glm::vec3(inv * glm::vec4(point, 1.0f));
+
+    glm::vec3 localSurface(0.0f);
+    glm::vec3 localNormal(0.0f, 1.0f, 0.0f);
+    if (!computeLocalPointPenetration(localPoint, localSurface, localNormal)) {
+        return false;
+    }
+
+    glm::vec3 worldSurface = glm::vec3(collisionTransform * glm::vec4(localSurface, 1.0f));
+    glm::vec3 worldNormal = transformNormalToWorld(collisionTransform, localNormal);
+    outCorrection = (worldSurface - point) + worldNormal * 0.001f;
+    if (glm::dot(outCorrection, outCorrection) <= 1e-12f) {
+        outCorrection = worldNormal * 0.001f;
+    }
+    return true;
+}
+
+bool Object::isPointInside(const glm::vec3& point) const {
+    glm::vec3 correction(0.0f);
+    return computePointPenetration(point, correction);
+}
+
+void Object::setTransform(const glm::mat4& t) {
+    transform = t;
+    syncRotationStateFromTransform(transform, !preserveRotationTargetOnTransformSet);
+    updateCollisionZone(transform);
+}
+
+void Object::setAuthoritativeAxis(const glm::vec3& axis) {
+    if (glm::dot(axis, axis) <= 1e-12f) {
+        authoritativeAxis = glm::vec3(0.0f, 1.0f, 0.0f);
+        return;
+    }
+    authoritativeAxis = glm::normalize(axis);
+}
+
+void Object::setRotationEulerDegrees(const glm::vec3& degrees) {
+    glm::vec3 wrapped(wrapDegrees(degrees.x), wrapDegrees(degrees.y), wrapDegrees(degrees.z));
+    rotationEulerDegrees = wrapped;
+    targetRotationEulerDegrees = wrapped;
+
+    preserveRotationTargetOnTransformSet = true;
+    setTransform(composeTransformWithRotation(transform, rotationEulerDegrees));
+    preserveRotationTargetOnTransformSet = false;
+}
+
+void Object::setTargetRotationEulerDegrees(const glm::vec3& degrees) {
+    targetRotationEulerDegrees = glm::vec3(wrapDegrees(degrees.x),
+                                           wrapDegrees(degrees.y),
+                                           wrapDegrees(degrees.z));
+}
+
+void Object::addTargetRotationDegrees(const glm::vec3& deltaDegrees) {
+    setTargetRotationEulerDegrees(targetRotationEulerDegrees + deltaDegrees);
+}
+
+void Object::setRotationResponsiveness(float responsiveness) {
+    rotationResponsiveness = std::max(0.1f, responsiveness);
+}
+
+bool Object::hasPendingRotation() const {
+    return std::abs(shortestAngleDelta(rotationEulerDegrees.x, targetRotationEulerDegrees.x)) > 0.01f ||
+           std::abs(shortestAngleDelta(rotationEulerDegrees.y, targetRotationEulerDegrees.y)) > 0.01f ||
+           std::abs(shortestAngleDelta(rotationEulerDegrees.z, targetRotationEulerDegrees.z)) > 0.01f;
+}
+
+void Object::syncRotationStateFromTransform(const glm::mat4& sourceTransform, bool syncTarget) {
+    rotationEulerDegrees = extractRotationDegreesFromTransform(sourceTransform);
+    rotationEulerDegrees.x = wrapDegrees(rotationEulerDegrees.x);
+    rotationEulerDegrees.y = wrapDegrees(rotationEulerDegrees.y);
+    rotationEulerDegrees.z = wrapDegrees(rotationEulerDegrees.z);
+    if (syncTarget) {
+        targetRotationEulerDegrees = rotationEulerDegrees;
+    }
+}
+
+glm::mat4 Object::composeTransformWithRotation(const glm::mat4& sourceTransform,
+                                               const glm::vec3& rotationDegrees) const {
+    glm::vec3 translation = glm::vec3(sourceTransform[3]);
+    glm::vec3 scale = extractScaleFromTransform(sourceTransform);
+
+    glm::mat4 rebuilt = glm::translate(glm::mat4(1.0f), translation);
+    rebuilt = glm::rotate(rebuilt, glm::radians(rotationDegrees.x), glm::vec3(1.0f, 0.0f, 0.0f));
+    rebuilt = glm::rotate(rebuilt, glm::radians(rotationDegrees.y), glm::vec3(0.0f, 1.0f, 0.0f));
+    rebuilt = glm::rotate(rebuilt, glm::radians(rotationDegrees.z), glm::vec3(0.0f, 0.0f, 1.0f));
+    rebuilt = glm::scale(rebuilt, scale);
+    return rebuilt;
+}
+
+bool Object::advanceRotation(const glm::mat4& sourceTransform, float dt, glm::mat4& outTransform) {
+    syncRotationStateFromTransform(sourceTransform, false);
+
+    glm::vec3 next = rotationEulerDegrees;
+    float blend = 1.0f - std::exp(-std::max(0.1f, rotationResponsiveness) * std::max(0.0f, dt));
+    bool changed = false;
+
+    for (int axis = 0; axis < 3; ++axis) {
+        float delta = shortestAngleDelta(next[axis], targetRotationEulerDegrees[axis]);
+        if (std::abs(delta) <= 0.01f) {
+            next[axis] = targetRotationEulerDegrees[axis];
+            continue;
+        }
+        next[axis] = wrapDegrees(next[axis] + delta * blend);
+        changed = true;
+    }
+
+    rotationEulerDegrees = next;
+    outTransform = composeTransformWithRotation(sourceTransform, rotationEulerDegrees);
+    return changed;
+}
+
+bool Object::updateRotation(float dt) {
+    glm::mat4 nextTransform(1.0f);
+    if (!advanceRotation(transform, dt, nextTransform)) {
+        return false;
+    }
+
+    preserveRotationTargetOnTransformSet = true;
+    setTransform(nextTransform);
+    preserveRotationTargetOnTransformSet = false;
+    return true;
 }
 
 void Object::drawPolyhedron() const {
@@ -2289,7 +2796,12 @@ void Object::createCustomPolyhedron(const std::vector<glm::vec3>& vertices,
 }
 
 Object::Object() {
+    static std::atomic<uint64_t> nextObjectId{1};
+    if (objectID.empty()) {
+        objectID = "object-" + std::to_string(nextObjectId.fetch_add(1));
+    }
     initFaceTextures();
+    syncRotationStateFromTransform(transform);
 }
 
 // Hover detection method implementations

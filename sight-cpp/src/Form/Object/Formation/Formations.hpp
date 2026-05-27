@@ -25,6 +25,8 @@ public:
 
     // ------ Generic membership helpers (any Singular) ------------
     void addMember(Singular* s);
+    bool hasMember(const Singular* s) const;
+    Singular* findMemberByIdentifier(const std::string& identifier) const;
 
     void removeMember(Singular* s);
 
@@ -42,16 +44,19 @@ public:
     const RelationManager& relations() const { return relationMgr; }
 
     // Convenience wrapper to add a relation directly
-    // void addRelation(const Relation& r) { relationMgr.add(r); }
-    void addRelation(const std::shared_ptr<Relation>& r) { relationMgr.add(r); }
+    void addRelation(const std::shared_ptr<Relation>& r);
+    bool removeRelation(const std::shared_ptr<Relation>& r);
     
     // Add a relation directly (alias for addRelation)
-    // void add(const Relation& r) { relationMgr.add(r); }
-    void add(const std::shared_ptr<Relation>& r) { relationMgr.add(r); }
+    void add(const std::shared_ptr<Relation>& r) { addRelation(r); }
     
     // Build a simple fully-connected graph between all objects currently
     // in this formation (undirected, weight 1.0, type="member")
     void rebuildCompleteGraph();
+    void applyAttachmentRelations();
+    const std::vector<std::shared_ptr<Formations>>& getSubformations() const { return subformations; }
+    std::string getRelationTypeTag() const { return relationTypeTag; }
+    void setRelationTypeTag(const std::string& type) { relationTypeTag = type; }
 
     // Render the formation and its constituent objects
     void draw() const;
@@ -71,6 +76,11 @@ public:
     std::string getIdentifier() const override { return "Formations"; }
 
 private:
+    void integrateRelationTopology(const std::shared_ptr<Relation>& r);
+    std::shared_ptr<Formations> findOrCreateRelationFormation(const std::shared_ptr<Relation>& r);
+
     std::vector<Singular*> members;
     RelationManager relationMgr;
+    std::vector<std::shared_ptr<Formations>> subformations;
+    std::string relationTypeTag;
 };

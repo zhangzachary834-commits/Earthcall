@@ -42,6 +42,7 @@ nlohmann::json Game::buildSaveJson() const {
         zj["strokes"] = strokesJ;
         // Serialize the 3-D world owned by this zone
         zj["world"] = z.world();
+        zj["formationRelations"] = z.formation().relations().toJson();
         zonesJson.push_back(zj);
     }
     j["zones"] = zonesJson;
@@ -161,6 +162,11 @@ void Game::loadState(const std::string& filename) {
                 // Load 3-D world objects for this zone
                 if (zj.contains("world")) {
                     from_json(zj["world"], z.world());
+                }
+                if (zj.contains("formationRelations")) {
+                    for (const auto& relJson : zj["formationRelations"]) {
+                        z.formation().add(std::make_shared<Relation>(Relation::fromJson(relJson)));
+                    }
                 }
                 zonesVec.push_back(std::move(z));
             }

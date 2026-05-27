@@ -32,6 +32,11 @@ void World::update(float dt){
     for (int s = 0; s < steps; ++s) {
         Physics::applyGravity(*_cameraPos, physicsEnabled, static_cast<Physics::GameMode>(mode), stepDt, groundY);
         if(mode==Mode::Survival && Physics::getFlying()) Physics::setFlying(false);
+        for (const auto& up : _objects) {
+            if (up && up->hasPendingRotation()) {
+                up->updateRotation(stepDt);
+            }
+        }
         if(physicsEnabled){
             for(const auto& up: _objects) if(up) Physics::getBodyFor(up.get());
             Physics::updateBodies(_objects, stepDt, 9.81f, 0.1f, groundY);

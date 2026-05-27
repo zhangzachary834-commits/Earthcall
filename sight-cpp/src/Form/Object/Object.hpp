@@ -111,7 +111,8 @@ public:
         // Antiprism: two parallel polygons joined by alternating triangles
         static PolyhedronData createAntiprism(int n, float radius = 0.5f, float height = 1.0f);
 
-        // Pyramid: arbitrary polygon base with a single apex (tip)
+        // Pyramid: arbitrary polygon base
+        //  with a single apex (tip)
         static PolyhedronData createPyramid(
             const std::vector<glm::vec2>& basePolygon, float apexHeight, float radius = 0.5f);
 
@@ -221,6 +222,7 @@ public:
     // Unique identifier for the object.
     std::string getObjectID();
     void setObjectID(int oi);
+    void setObjectID(const std::string& oi) { objectID = oi; }
 
     std::string getObjectType() const;
     void setObjectType(int ot);
@@ -303,14 +305,35 @@ public:
 protected:
     glm::mat4 transform = glm::mat4(1.0f);
 
+// elsehwere faces must be separated into round faces and flat faces. 
+
 public:
 
     // Must upgrade to a more robust polygonic collision system to host collision zones beyond cubes
     struct CollisionZone {
-        glm::vec3 corners[8]; // 8 corners of the cube in world space
-        // For polyhedrons, we'll use the bounding box approach for now
+        // AABB Box for mechanical reference
+        glm::vec3 corners[8]; // 8 corners of the AABB cube in world space
+        // iterating min and max can be added here instead of inside the collision method to make it more efficient
+
         // TODO: Implement proper polyhedron collision detection
+        std::vector<glm::vec3> vertices;
+        // TODO: implement method to fill in the ColliisionZone for complex polyhedrons
+        // Complex polyhedrons will be polyhedrons that have both round and flat faces, because this means we need to use both vertices and a radial/parametric model.
+
+        // Algorithm detecting if two shapes are touching or overlapping:
+        bool isTouching(const CollisionZone& space) const {
+            // Use the matrix algorithm here
+            
+            return false;
+        }
+
+        // Convenience overload — defined out-of-line below Object's class definition,
+        // because Object is still an incomplete type at this point in the header
+        // (we're declaring a nested struct inside Object).
+        bool isTouching(const Object& object) const;
+
     };
+
     mutable CollisionZone collisionZone;
 
     // -----------------------------------------------------------------
@@ -554,6 +577,9 @@ public:
 
     void updateCollisionZone(const glm::mat4& transform) const;
     bool isPointInside(const glm::vec3& point) const;
+    bool computePointPenetration(const glm::vec3& point, glm::vec3& outCorrection) const;
+    glm::vec3 getSupportPointWorld(const glm::vec3& worldDirection) const;
+    bool isCollisionShapeConvex() const;
 
     void drawCube() const;
     void drawPolyhedron() const;
@@ -561,6 +587,7 @@ public:
     void drawObject() const;
     void drawHighlightOutline() const;
 
+    // not implemented yet
     void interactWith(Formations&);
     void onInteraction(Formations&);
 
@@ -572,13 +599,30 @@ public:
     Object(const Object&) = delete;
     Object& operator=(const Object&) = delete;
 
-    virtual void setTransform(const glm::mat4& t) {
-        transform = t;
-        // Keep collision data in sync so selection outlines and physics queries stay aligned.
-        updateCollisionZone(transform);
-    }
+    virtual void setTransform(const glm::mat4& t);
     virtual glm::mat4 getTransform() const { return transform; }
     virtual glm::mat4 getRaycastTransform() const { return transform; }
+
+    const glm::vec3& getCenter() const { return center; }
+    void setCenter(const glm::vec3& c) { center = c; }
+    glm::vec3 getWorldCenter() const { return glm::vec3(getTransform() * glm::vec4(center, 1.0f)); }
+
+    const glm::vec3& getAuthoritativeAxis() const { return authoritativeAxis; }
+    void setAuthoritativeAxis(const glm::vec3& axis);
+
+    glm::vec3 getRotationEulerDegrees() const { return rotationEulerDegrees; }
+    glm::vec3 getTargetRotationEulerDegrees() const { return targetRotationEulerDegrees; }
+    void setRotationEulerDegrees(const glm::vec3& degrees);
+    void setTargetRotationEulerDegrees(const glm::vec3& degrees);
+    void addTargetRotationDegrees(const glm::vec3& deltaDegrees);
+
+    float getRotationResponsiveness() const { return rotationResponsiveness; }
+    void setRotationResponsiveness(float responsiveness);
+
+    bool hasPendingRotation() const;
+    bool updateRotation(float dt);
+    bool advanceRotation(const glm::mat4& sourceTransform, float dt, glm::mat4& outTransform);
+    void syncRotationStateFromTransform(const glm::mat4& sourceTransform, bool syncTarget = true);
 
     // Generalized ray-face intersection for painting across all geometry types.
     // Returns true if hit, along with distance t in world units, the face index, and UV in [0,1].
@@ -633,6 +677,13 @@ public:
     const std::vector<std::string>& getTags() const { return tags; }
 
 private:
+    glm::vec3 getLocalSupportPoint(const glm::vec3& localDirection) const;
+    bool computeLocalPointPenetration(const glm::vec3& localPoint,
+                                      glm::vec3& outSurfacePoint,
+                                      glm::vec3& outLocalNormal) const;
+    glm::mat4 composeTransformWithRotation(const glm::mat4& sourceTransform,
+                                           const glm::vec3& rotationDegrees) const;
+
     // Hover state tracking
     mutable bool _isHovered = false;
     mutable glm::vec3 _hoverPoint{0.0f, 0.0f, 0.0f};
@@ -641,7 +692,20 @@ private:
     // Attributes and tags storage
     std::unordered_map<std::string, std::string> attributes;
     std::vector<std::string> tags;
+
+    glm::vec3 center{0.0f, 0.0f, 0.0f};
+    glm::vec3 authoritativeAxis{0.0f, 1.0f, 0.0f};
+    glm::vec3 rotationEulerDegrees{0.0f, 0.0f, 0.0f};
+    glm::vec3 targetRotationEulerDegrees{0.0f, 0.0f, 0.0f};
+    float rotationResponsiveness = 10.0f;
+    bool preserveRotationTargetOnTransformSet = false;
 };
+
+// Out-of-line definition: by this point Object is a complete type, so
+// `object.collisionZone` is a legal member access.
+inline bool Object::CollisionZone::isTouching(const Object& object) const {
+    return isTouching(object.collisionZone);
+}
 
 struct StateSnapshot {
     float time;
