@@ -18,36 +18,36 @@ std::vector<glm::vec2> makeRegularPolygon2D(int n, float radius) {
 
 } // namespace
 
-Object::PolyhedronData PolyhedronSettings::build() const {
-    Object::PolyhedronData data;
+PolyhedronData PolyhedronSettings::build() const {
+    PolyhedronData data;
 
     if (useCustom && !customVertices.empty()) {
-        data = Object::PolyhedronData::createCustomPolyhedron(customVertices, customFaces);
+        data = PolyhedronData::createCustomPolyhedron(customVertices, customFaces);
     } else if (irregularType > 0) {
         auto basePoly = makeRegularPolygon2D(irregularBaseSides, 0.5f);
         switch (irregularType) {
-            case 1: data = Object::PolyhedronData::createPrism(basePoly, irregularHeight); break;
-            case 2: data = Object::PolyhedronData::createAntiprism(irregularBaseSides, 0.5f, irregularHeight); break;
-            case 3: data = Object::PolyhedronData::createPyramid(basePoly, irregularHeight); break;
-            case 4: data = Object::PolyhedronData::createBipyramid(irregularBaseSides, 0.5f, irregularHeight); break;
-            case 5: data = Object::PolyhedronData::createFrustum(basePoly, irregularHeight, frustumTopScale); break;
-            default: data = Object::PolyhedronData::createRegularPolyhedron(currentType); break;
+            case 1: data = PolyhedronData::createPrism(basePoly, irregularHeight); break;
+            case 2: data = PolyhedronData::createAntiprism(irregularBaseSides, 0.5f, irregularHeight); break;
+            case 3: data = PolyhedronData::createPyramid(basePoly, irregularHeight); break;
+            case 4: data = PolyhedronData::createBipyramid(irregularBaseSides, 0.5f, irregularHeight); break;
+            case 5: data = PolyhedronData::createFrustum(basePoly, irregularHeight, frustumTopScale); break;
+            default: data = PolyhedronData::createRegularPolyhedron(currentType); break;
         }
     } else {
         switch (concaveType) {
-            case 0: data = Object::PolyhedronData::createRegularPolyhedron(currentType); break;
-            case 1: data = Object::PolyhedronData::createConcavePolyhedron(currentType, 0.5f, concavityAmount); break;
-            case 2: data = Object::PolyhedronData::createStarPolyhedron(currentType, 0.5f, spikeLength); break;
-            case 3: data = Object::PolyhedronData::createCraterPolyhedron(currentType, 0.5f, craterDepth); break;
-            default: data = Object::PolyhedronData::createRegularPolyhedron(currentType); break;
+            case 0: data = PolyhedronData::createRegularPolyhedron(currentType); break;
+            case 1: data = PolyhedronData::createConcavePolyhedron(currentType, 0.5f, concavityAmount); break;
+            case 2: data = PolyhedronData::createStarPolyhedron(currentType, 0.5f, spikeLength); break;
+            case 3: data = PolyhedronData::createCraterPolyhedron(currentType, 0.5f, craterDepth); break;
+            default: data = PolyhedronData::createRegularPolyhedron(currentType); break;
         }
     }
 
     if (applyTruncation) {
-        data = Object::PolyhedronData::truncate(data, truncationAmount);
+        data = PolyhedronData::truncate(data, truncationAmount);
     }
     if (applyDual) {
-        data = Object::PolyhedronData::createDual(data);
+        data = PolyhedronData::createDual(data);
     }
 
     return data;

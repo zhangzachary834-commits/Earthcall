@@ -233,7 +233,7 @@ void from_json(const nlohmann::json& j, Object& obj){
         }
         if (!verts.empty() && !faces.empty()) {
             // Use setPolyhedronData so textures are resized appropriately
-            obj.setPolyhedronData(Object::PolyhedronData::createCustomPolyhedron(verts, faces));
+            obj.setPolyhedronData(PolyhedronData::createCustomPolyhedron(verts, faces));
         }
     }
 

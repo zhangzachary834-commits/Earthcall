@@ -897,12 +897,12 @@ void Game::renderCreatorToolbar() {
                 // ---- Contour & Angle Analysis ----
                 ImGui::Separator();
                 if (ImGui::CollapsingHeader("Contour & Angle Info")) {
-                    Object::PolyhedronData previewData = buildCurrentPolyhedron();
+                    PolyhedronData previewData = buildCurrentPolyhedron();
 
                     ImGui::TextUnformatted("Contour Types (flat vs round):");
                     int flatCount = 0, roundCount = 0;
                     for (auto ct : previewData.contourTypes) {
-                        if (ct == Object::PolyhedronData::ContourType::Flat) flatCount++;
+                        if (ct == PolyhedronData::ContourType::Flat) flatCount++;
                         else roundCount++;
                     }
                     ImGui::Text("  Flat contours: %d", flatCount);

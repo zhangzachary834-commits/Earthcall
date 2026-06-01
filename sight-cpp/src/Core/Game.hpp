@@ -240,7 +240,7 @@ public:
 
     // buildCurrentPolyhedron's GitHub implementation lives in GamePolyhedron.cpp.
     // After this merge it will be removed and Game returns the component's build directly.
-    Object::PolyhedronData buildCurrentPolyhedron() const { return _polyhedron.build(); }
+    PolyhedronData buildCurrentPolyhedron() const { return _polyhedron.build(); }
 
     // Face brush
     float getFaceBrushRadius()   const { return _faceBrush.radius; }

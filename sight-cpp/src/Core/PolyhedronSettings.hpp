@@ -37,8 +37,8 @@ struct PolyhedronSettings {
     float truncationAmount  = 0.3f;
     bool  applyDual         = false;
 
-    // Build a Object::PolyhedronData from current settings (regular or irregular + modifiers).
-    Object::PolyhedronData build() const;
+    // Build a PolyhedronData from current settings (regular or irregular + modifiers).
+    PolyhedronData build() const;
 
     // Generate the custom vertices/faces from customVertexCount / customFaceCount.
     void generateCustom();
