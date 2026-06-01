@@ -255,6 +255,21 @@ void BodyPart::setPrimaryShape(Object::GeometryType gt) {
     }
 }
 
+bool BodyPart::hasCustomTextures() const {
+    // A texture is "custom" if any pixel differs from a flat fill.
+    // Quick heuristic: check a few sample pixels against the first pixel.
+    for (const auto& ft : faceTextures) {
+        if (ft.pixels.size() < 4) continue;
+        uint32_t first = *reinterpret_cast<const uint32_t*>(ft.pixels.data());
+        size_t totalPixels = ft.pixels.size() / 4;
+        for (size_t p = 1; p < totalPixels; p += std::max<size_t>(1, totalPixels / 64)) {
+            uint32_t sample = reinterpret_cast<const uint32_t*>(ft.pixels.data())[p];
+            if (sample != first) return true;
+        }
+    }
+    return false;
+}
+
 // -----------------------------------------------------------------
 // Composite sub-object management
 // -----------------------------------------------------------------

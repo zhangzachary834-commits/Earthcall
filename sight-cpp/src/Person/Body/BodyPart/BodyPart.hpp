@@ -66,6 +66,9 @@ class BodyPart : public Object, public Formations {
     void setPrimaryShape(Object::GeometryType gt);
     Object::GeometryType getPrimaryShape() const { return getGeometryType(); }
 
+    // True if any face texture has been painted (i.e. not a flat fill).
+    bool hasCustomTextures() const;
+
     // -----------------------------------------------------------------
     // Composite sub-objects — a body part is a Formation of 1+ Objects
     // Sub-objects store world transforms on the Object for raycasting/
