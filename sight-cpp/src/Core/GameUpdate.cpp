@@ -35,7 +35,7 @@ void Game::update(float dt) {
     _mouseHandler.update();
 
     // Update camera front from mouse handler
-    _cameraFront = _mouseHandler.calculateCameraFront();
+    _camera.front = _mouseHandler.calculateCameraFront();
 
     // Check if any text input is active (ImGui)
     bool anyTextInputActive = ImGui::IsAnyItemActive() || ImGui::IsWindowFocused();
@@ -43,40 +43,40 @@ void Game::update(float dt) {
     // ----------------------------------------------------------------------------
     // Camera movement WASD + SHIFT/SPACE (continuous movement)
     // ----------------------------------------------------------------------------
-    float actualSpeed = _cameraSpeed;
+    float actualSpeed = _camera.speed;
     if (glfwGetKey(_window, GLFW_KEY_V) == GLFW_PRESS) actualSpeed *= 2.5f; // sprint
     if (glfwGetKey(_window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS) actualSpeed *= 0.3f; // slow
 
     if (_mouseHandler.isCursorLocked() && !_mainMenu.isOpen() && !anyTextInputActive) {
         // Calculate movement vectors that ignore camera pitch so WASD behaves like Minecraft
-        glm::vec3 forwardXZ = glm::normalize(glm::vec3(_cameraFront.x, 0.0f, _cameraFront.z));
+        glm::vec3 forwardXZ = glm::normalize(glm::vec3(_camera.front.x, 0.0f, _camera.front.z));
         if (glm::length(forwardXZ) < 1e-3f) forwardXZ = glm::vec3(0.0f, 0.0f, -1.0f); // fallback
-        glm::vec3 rightXZ   = glm::normalize(glm::cross(forwardXZ, _cameraUp));
+        glm::vec3 rightXZ   = glm::normalize(glm::cross(forwardXZ, _camera.up));
 
-        if (glfwGetKey(_window, GLFW_KEY_W) == GLFW_PRESS) _cameraPos += actualSpeed * forwardXZ;
-        if (glfwGetKey(_window, GLFW_KEY_S) == GLFW_PRESS) _cameraPos -= actualSpeed * forwardXZ;
-        if (glfwGetKey(_window, GLFW_KEY_A) == GLFW_PRESS) _cameraPos -= rightXZ * actualSpeed;
-        if (glfwGetKey(_window, GLFW_KEY_D) == GLFW_PRESS) _cameraPos += rightXZ * actualSpeed;
-        if (glfwGetKey(_window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) _cameraPos -= actualSpeed * _cameraUp;
-        if (glfwGetKey(_window, GLFW_KEY_SPACE) == GLFW_PRESS) _cameraPos += actualSpeed * _cameraUp;
+        if (glfwGetKey(_window, GLFW_KEY_W) == GLFW_PRESS) _camera.pos += actualSpeed * forwardXZ;
+        if (glfwGetKey(_window, GLFW_KEY_S) == GLFW_PRESS) _camera.pos -= actualSpeed * forwardXZ;
+        if (glfwGetKey(_window, GLFW_KEY_A) == GLFW_PRESS) _camera.pos -= rightXZ * actualSpeed;
+        if (glfwGetKey(_window, GLFW_KEY_D) == GLFW_PRESS) _camera.pos += rightXZ * actualSpeed;
+        if (glfwGetKey(_window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) _camera.pos -= actualSpeed * _camera.up;
+        if (glfwGetKey(_window, GLFW_KEY_SPACE) == GLFW_PRESS) _camera.pos += actualSpeed * _camera.up;
 
         // Reset anchor if mode switched out of ManualDistance
-        if(_placementMode != BrushPlacementMode::ManualDistance){ _manualAnchorValid = false; }
+        if(_placement.mode != BrushPlacementMode::ManualDistance){ _placement.anchorValid = false; }
 
         // Manual offset tweak with keys when using ManualDistance - only when not typing
-        if (_placementMode == BrushPlacementMode::ManualDistance && _current3DMode == Mode3D::BrushCreate && !anyTextInputActive) {
+        if (_placement.mode == BrushPlacementMode::ManualDistance && _current3DMode == Mode3D::BrushCreate && !anyTextInputActive) {
             float step = 0.1f;
-            if (glfwGetKey(_window, GLFW_KEY_RIGHT) == GLFW_PRESS) _manualOffset.x += step;
-            if (glfwGetKey(_window, GLFW_KEY_LEFT)  == GLFW_PRESS) _manualOffset.x -= step;
-            if (glfwGetKey(_window, GLFW_KEY_PAGE_UP) == GLFW_PRESS) _manualOffset.y += step;
-            if (glfwGetKey(_window, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS) _manualOffset.y -= step;
-            if (glfwGetKey(_window, GLFW_KEY_UP)   == GLFW_PRESS) _manualOffset.z += step;
-            if (glfwGetKey(_window, GLFW_KEY_DOWN) == GLFW_PRESS) _manualOffset.z -= step;
+            if (glfwGetKey(_window, GLFW_KEY_RIGHT) == GLFW_PRESS) _placement.manualOffset.x += step;
+            if (glfwGetKey(_window, GLFW_KEY_LEFT)  == GLFW_PRESS) _placement.manualOffset.x -= step;
+            if (glfwGetKey(_window, GLFW_KEY_PAGE_UP) == GLFW_PRESS) _placement.manualOffset.y += step;
+            if (glfwGetKey(_window, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS) _placement.manualOffset.y -= step;
+            if (glfwGetKey(_window, GLFW_KEY_UP)   == GLFW_PRESS) _placement.manualOffset.z += step;
+            if (glfwGetKey(_window, GLFW_KEY_DOWN) == GLFW_PRESS) _placement.manualOffset.z -= step;
         }
     }
 
     // Sync player anchor with camera position
-    glm::vec3 anchor = _cameraPos - glm::vec3(0.0f, _player.getBody().getEyeHeight(), 0.0f);
+    glm::vec3 anchor = _camera.pos - glm::vec3(0.0f, _player.getBody().getEyeHeight(), 0.0f);
     _player.position = anchor;
     _player.updatePose();
 
@@ -235,7 +235,7 @@ void Game::update(float dt) {
                     }
                     // Legacy fallback for compatibility
                     else {
-                        if (_useAdvanced2DBrush) {
+                        if (_brush.useAdvanced2D) {
                             if (mouseLeftNow && !_mouseLeftPressedLast) {
                                 zone.startStroke(mx, my);
                             } else if (mouseLeftNow && _mouseLeftPressedLast) {
@@ -283,14 +283,14 @@ void Game::update(float dt) {
             collect3DTargets(toolTargets);
             // 3D Selection: set selected object on single click
             if (mouseLeftNow && !_mouseLeftPressedLast) {
-                glGetIntegerv(GL_VIEWPORT, _cameraViewport);
-                glGetDoublev(GL_MODELVIEW_MATRIX, _cameraModelview);
-                glGetDoublev(GL_PROJECTION_MATRIX, _cameraProjection);
+                glGetIntegerv(GL_VIEWPORT, _camera.viewport);
+                glGetDoublev(GL_MODELVIEW_MATRIX, _camera.modelview);
+                glGetDoublev(GL_PROJECTION_MATRIX, _camera.projection);
                 double winX = xpos * scaleX; double winY = ypos * scaleY;
-                winY = _cameraViewport[3] - winY;
+                winY = _camera.viewport[3] - winY;
                 GLdouble nearX,nearY,nearZ,farX,farY,farZ;
-                gluUnProject(winX, winY, 0.0, _cameraModelview, _cameraProjection, _cameraViewport, &nearX,&nearY,&nearZ);
-                gluUnProject(winX, winY, 1.0, _cameraModelview, _cameraProjection, _cameraViewport, &farX,&farY,&farZ);
+                gluUnProject(winX, winY, 0.0, _camera.modelview, _camera.projection, _camera.viewport, &nearX,&nearY,&nearZ);
+                gluUnProject(winX, winY, 1.0, _camera.modelview, _camera.projection, _camera.viewport, &farX,&farY,&farZ);
                 glm::vec3 rayO(nearX,nearY,nearZ); glm::vec3 rayDir = glm::normalize(glm::vec3(farX,farY,farZ)-rayO);
                 float nearestT = 1e9f; Object* hitObj=nullptr;
                 const auto& objects = toolTargets;
@@ -334,8 +334,8 @@ void Game::update(float dt) {
         constexpr float EYE_TO_FEET = 0.9f;
         constexpr float RADIUS = 0.3f;
 
-        glm::vec3 rightVec = glm::normalize(glm::cross(_cameraFront, _cameraUp));
-        glm::vec3 forwardXZ = glm::normalize(glm::vec3(_cameraFront.x, 0.0f, _cameraFront.z));
+        glm::vec3 rightVec = glm::normalize(glm::cross(_camera.front, _camera.up));
+        glm::vec3 forwardXZ = glm::normalize(glm::vec3(_camera.front.x, 0.0f, _camera.front.z));
         if (glm::length(forwardXZ) < 1e-3f) forwardXZ = glm::vec3(0.0f,0.0f,1.0f);
 
         glm::vec3 offsets[5] = {
@@ -347,12 +347,12 @@ void Game::update(float dt) {
         };
 
         for (const auto& off : offsets) {
-            glm::vec3 sampleEye  = _cameraPos + off;
+            glm::vec3 sampleEye  = _camera.pos + off;
             glm::vec3 sampleFeet = sampleEye  - glm::vec3(0.0f, EYE_TO_FEET, 0.0f);
             Physics::enforceCollisions(sampleEye,  mgr.active().world().getOwnedObjects());
             Physics::enforceCollisions(sampleFeet, mgr.active().world().getOwnedObjects());
             glm::vec3 resolvedCenter = sampleEye - off;
-            _cameraPos = resolvedCenter;
+            _camera.pos = resolvedCenter;
         }
     }
 
@@ -369,13 +369,13 @@ void Game::update(float dt) {
         totalDelta += (corrected - pos);
     }
     if (glm::length(totalDelta) > 1e-4f) {
-        _cameraPos += totalDelta;
+        _camera.pos += totalDelta;
         _player.position += totalDelta;
         _player.updatePose();
     }
 
     // Final sync so avatar anchors exactly to camera for next frame
-    _player.position = _cameraPos - glm::vec3(0.0f, _player.getBody().getEyeHeight(), 0.0f);
+    _player.position = _camera.pos - glm::vec3(0.0f, _player.getBody().getEyeHeight(), 0.0f);
     _player.updatePose();
 
     // Process menu hotkeys (must be after potential cursor unlock to allow selection)

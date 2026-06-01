@@ -450,11 +450,11 @@ void Game::renderCreatorToolbar() {
 
             // Legacy compatibility
             ImGui::Separator();
-            ImGui::Checkbox("Use Advanced 2D Brush", &_useAdvanced2DBrush);
-            if (_useAdvanced2DBrush) {
+            ImGui::Checkbox("Use Advanced 2D Brush", &_brush.useAdvanced2D);
+            if (_brush.useAdvanced2D) {
                 ImGui::SameLine();
                 if (ImGui::Button("Advanced Settings")) {
-                    _show2DBrushPanel = !_show2DBrushPanel;
+                    _brush.show2DPanel = !_brush.show2DPanel;
                 }
             }
 
@@ -469,8 +469,8 @@ void Game::renderCreatorToolbar() {
     // ------------------------------------------------------------------
     // 2D Advanced Brush Panel
     // ------------------------------------------------------------------
-    if (_show2DBrushPanel && _useAdvanced2DBrush) {
-        if (ImGui::Begin("Advanced 2D Brush", &_show2DBrushPanel)) {
+    if (_brush.show2DPanel && _brush.useAdvanced2D) {
+        if (ImGui::Begin("Advanced 2D Brush", &_brush.show2DPanel)) {
             Zone& zone = mgr.active();
 
             if (!zone.getBrushSystem()) {
@@ -638,18 +638,18 @@ void Game::renderCreatorToolbar() {
                 ImGui::Separator();
                 ImGui::TextUnformatted(u8"\xF0\x9F\x8E\xA8 Advanced Face Paint Options");
 
-                if (ImGui::Checkbox("Enable Advanced Face Paint", &_useAdvancedFacePaint)) {
-                    if (_useAdvancedFacePaint) {
+                if (ImGui::Checkbox("Enable Advanced Face Paint", &_advancedFacePaint.enabled)) {
+                    if (_advancedFacePaint.enabled) {
                         AdvancedFacePaint::initializeAdvancedPainter();
                     }
                 }
 
-                if (_useAdvancedFacePaint) {
+                if (_advancedFacePaint.enabled) {
                     ImGui::Indent();
 
                     // Gradient Options
                     if (ImGui::CollapsingHeader("Gradient Options", ImGuiTreeNodeFlags_DefaultOpen)) {
-                        AdvancedFacePaint::GradientSettings& gradSettings = _currentGradientSettings;
+                        AdvancedFacePaint::GradientSettings& gradSettings = _advancedFacePaint.gradient;
 
                         const char* gradientTypes[] = {"Linear", "Radial", "Angular", "Diamond", "Noise", "Custom"};
                         int gradTypeIdx = static_cast<int>(gradSettings.type);
@@ -680,7 +680,7 @@ void Game::renderCreatorToolbar() {
 
                     // Smudge Options
                     if (ImGui::CollapsingHeader("Smudge Options", ImGuiTreeNodeFlags_DefaultOpen)) {
-                        AdvancedFacePaint::SmudgeSettings& smudgeSettings = _currentSmudgeSettings;
+                        AdvancedFacePaint::SmudgeSettings& smudgeSettings = _advancedFacePaint.smudge;
 
                         const char* smudgeTypes[] = {"Normal", "Directional", "Radial", "Spiral", "Noise", "Custom"};
                         int smudgeTypeIdx = static_cast<int>(smudgeSettings.type);
@@ -716,11 +716,11 @@ void Game::renderCreatorToolbar() {
                     ImGui::TextUnformatted("Preview & Apply");
 
                     if (ImGui::Button("Preview Gradient")) {
-                        _showAdvancedFacePaintPanel = true;
+                        _advancedFacePaint.panelVisible = true;
                     }
                     ImGui::SameLine();
                     if (ImGui::Button("Preview Smudge")) {
-                        _showAdvancedFacePaintPanel = true;
+                        _advancedFacePaint.panelVisible = true;
                     }
                     ImGui::SameLine();
                     if (ImGui::Button("Apply to Selected Face")) {
@@ -732,52 +732,52 @@ void Game::renderCreatorToolbar() {
             }
 
             ImGui::Separator();
-            int primitiveIdx = static_cast<int>(_currentPrimitive);
+            int primitiveIdx = static_cast<int>(_polyhedron.primitive);
             const char* primitiveNames[] = {"Cube", "Sphere", "Cylinder", "Cone", "Polyhedron"};
             if (ImGui::Combo("Shape", &primitiveIdx, primitiveNames, IM_ARRAYSIZE(primitiveNames))) {
-                _currentPrimitive = static_cast<Object::GeometryType>(primitiveIdx);
+                _polyhedron.primitive = static_cast<Object::GeometryType>(primitiveIdx);
             }
 
             // Enhanced Polyhedron Generator (only in Shape Generator mode)
-            if (_currentPrimitive == Object::GeometryType::Polyhedron && _current3DMode == Mode3D::BrushCreate) {
+            if (_polyhedron.primitive == Object::GeometryType::Polyhedron && _current3DMode == Mode3D::BrushCreate) {
                 ImGui::Separator();
                 ImGui::TextUnformatted(u8"\xF0\x9F\x94\xB7 Polyhedron Generator");
 
                 ImGui::TextUnformatted("Regular Polyhedrons:");
-                if (ImGui::Button("Tetrahedron (4)")) { _currentPolyhedronType = 4; }
+                if (ImGui::Button("Tetrahedron (4)")) { _polyhedron.currentType = 4; }
                 ImGui::SameLine();
-                if (ImGui::Button("Octahedron (8)")) { _currentPolyhedronType = 8; }
+                if (ImGui::Button("Octahedron (8)")) { _polyhedron.currentType = 8; }
                 ImGui::SameLine();
-                if (ImGui::Button("Dodecahedron (12)")) { _currentPolyhedronType = 12; }
+                if (ImGui::Button("Dodecahedron (12)")) { _polyhedron.currentType = 12; }
                 ImGui::SameLine();
-                if (ImGui::Button("Icosahedron (20)")) { _currentPolyhedronType = 20; }
+                if (ImGui::Button("Icosahedron (20)")) { _polyhedron.currentType = 20; }
 
                 ImGui::Separator();
                 ImGui::TextUnformatted("Advanced Options:");
 
                 static int customFaceCount = 4;
                 if (ImGui::SliderInt("Custom Face Count", &customFaceCount, 3, 50)) {
-                    _currentPolyhedronType = customFaceCount;
+                    _polyhedron.currentType = customFaceCount;
                 }
 
                 if (ImGui::Button(u8"\xF0\x9F\x8E\xB2 Random Polyhedron")) {
-                    _currentPolyhedronType = 4 + (rand() % 17);
+                    _polyhedron.currentType = 4 + (rand() % 17);
                 }
                 ImGui::SameLine();
                 if (ImGui::Button(u8"\xF0\x9F\x8E\xB2 Random Complex")) {
-                    _currentPolyhedronType = 8 + (rand() % 13);
+                    _polyhedron.currentType = 8 + (rand() % 13);
                 }
 
                 ImGui::Separator();
                 ImGui::TextUnformatted("Quick Presets:");
-                if (ImGui::Button("Simple (4-8)")) { _currentPolyhedronType = 4 + (rand() % 5); }
+                if (ImGui::Button("Simple (4-8)")) { _polyhedron.currentType = 4 + (rand() % 5); }
                 ImGui::SameLine();
-                if (ImGui::Button("Medium (8-12)")) { _currentPolyhedronType = 8 + (rand() % 5); }
+                if (ImGui::Button("Medium (8-12)")) { _polyhedron.currentType = 8 + (rand() % 5); }
                 ImGui::SameLine();
-                if (ImGui::Button("Complex (12-20)")) { _currentPolyhedronType = 12 + (rand() % 9); }
+                if (ImGui::Button("Complex (12-20)")) { _polyhedron.currentType = 12 + (rand() % 9); }
 
                 ImGui::Separator();
-                ImGui::Text("Selected: %d faces", _currentPolyhedronType);
+                ImGui::Text("Selected: %d faces", _polyhedron.currentType);
 
                 const char* polyhedronNames[] = {
                     "Unknown", "Unknown", "Unknown", "Unknown", "Tetrahedron",
@@ -786,11 +786,11 @@ void Game::renderCreatorToolbar() {
                     "Unknown", "Unknown", "Unknown", "Unknown", "Icosahedron"
                 };
 
-                if (_currentPolyhedronType >= 4 && _currentPolyhedronType <= 20) {
-                    ImGui::Text("Type: %s", polyhedronNames[_currentPolyhedronType]);
+                if (_polyhedron.currentType >= 4 && _polyhedron.currentType <= 20) {
+                    ImGui::Text("Type: %s", polyhedronNames[_polyhedron.currentType]);
                 }
 
-                if (_currentPolyhedronType > 12) {
+                if (_polyhedron.currentType > 12) {
                     ImGui::TextColored(ImVec4(1.0f, 0.7f, 0.0f, 1.0f), u8"\xE2\x9A\xA0 Complex polyhedron - may affect performance");
                 }
 
@@ -801,48 +801,48 @@ void Game::renderCreatorToolbar() {
                 static int concaveType = 0;
                 const char* concaveTypes[] = {"Regular", "Concave", "Star", "Crater"};
                 if (ImGui::Combo("Variant", &concaveType, concaveTypes, IM_ARRAYSIZE(concaveTypes))) {
-                    _currentConcaveType = concaveType;
+                    _polyhedron.concaveType = concaveType;
                 }
 
                 if (concaveType == 1) {
                     static float concavity = 0.3f;
                     if (ImGui::SliderFloat("Concavity", &concavity, 0.1f, 0.8f, "%.2f")) {
-                        _concavityAmount = concavity;
+                        _polyhedron.concavityAmount = concavity;
                     }
                 } else if (concaveType == 2) {
                     static float spikeLength = 0.3f;
                     if (ImGui::SliderFloat("Spike Length", &spikeLength, 0.1f, 1.0f, "%.2f")) {
-                        _spikeLength = spikeLength;
+                        _polyhedron.spikeLength = spikeLength;
                     }
                 } else if (concaveType == 3) {
                     static float craterDepth = 0.2f;
                     if (ImGui::SliderFloat("Crater Depth", &craterDepth, 0.1f, 0.5f, "%.2f")) {
-                        _craterDepth = craterDepth;
+                        _polyhedron.craterDepth = craterDepth;
                     }
                 }
 
                 // Custom polyhedron generation
                 ImGui::Separator();
                 ImGui::TextUnformatted("Custom Polyhedron:");
-                ImGui::Checkbox("Use Custom Polyhedron", &_useCustomPolyhedron);
+                ImGui::Checkbox("Use Custom Polyhedron", &_polyhedron.useCustom);
 
-                if (_useCustomPolyhedron) {
-                    if (ImGui::SliderInt("Vertex Count", &_customPolyhedronVertexCount, 3, 20)) {
-                        _generateCustomPolyhedron();
+                if (_polyhedron.useCustom) {
+                    if (ImGui::SliderInt("Vertex Count", &_polyhedron.customVertexCount, 3, 20)) {
+                        _polyhedron.generateCustom();
                     }
-                    if (ImGui::SliderInt("Face Count", &_customPolyhedronFaceCount, 3, 20)) {
-                        _generateCustomPolyhedron();
+                    if (ImGui::SliderInt("Face Count", &_polyhedron.customFaceCount, 3, 20)) {
+                        _polyhedron.generateCustom();
                     }
 
                     if (ImGui::Button(u8"\xF0\x9F\x94\x84 Regenerate Custom")) {
-                        _generateCustomPolyhedron();
+                        _polyhedron.generateCustom();
                     }
                     ImGui::SameLine();
                     if (ImGui::Button(u8"\xF0\x9F\x92\xBE Save Custom")) {
                         ImGui::OpenPopup("Custom Polyhedron Saved");
                     }
 
-                    ImGui::Text("Custom: %d vertices, %d faces", _customPolyhedronVertexCount, _customPolyhedronFaceCount);
+                    ImGui::Text("Custom: %d vertices, %d faces", _polyhedron.customVertexCount, _polyhedron.customFaceCount);
                 }
 
                 // ---- Irregular Polyhedra ----
@@ -852,16 +852,16 @@ void Game::renderCreatorToolbar() {
                         "None (use Regular)", "Prism", "Antiprism",
                         "Pyramid", "Bipyramid", "Frustum"
                     };
-                    if (ImGui::Combo("Irregular Shape", &_irregularType,
+                    if (ImGui::Combo("Irregular Shape", &_polyhedron.irregularType,
                                      irregularNames, IM_ARRAYSIZE(irregularNames))) {
                     }
 
-                    if (_irregularType > 0) {
-                        ImGui::SliderInt("Base Sides", &_irregularBaseSides, 3, 20);
-                        ImGui::SliderFloat("Height", &_irregularHeight, 0.1f, 3.0f, "%.2f");
+                    if (_polyhedron.irregularType > 0) {
+                        ImGui::SliderInt("Base Sides", &_polyhedron.irregularBaseSides, 3, 20);
+                        ImGui::SliderFloat("Height", &_polyhedron.irregularHeight, 0.1f, 3.0f, "%.2f");
 
-                        if (_irregularType == 5) {
-                            ImGui::SliderFloat("Top Scale", &_frustumTopScale, 0.05f, 0.95f, "%.2f");
+                        if (_polyhedron.irregularType == 5) {
+                            ImGui::SliderFloat("Top Scale", &_polyhedron.frustumTopScale, 0.05f, 0.95f, "%.2f");
                         }
 
                         const char* shapeDesc[] = {
@@ -871,23 +871,23 @@ void Game::renderCreatorToolbar() {
                             "Double pyramid (diamond shape)",
                             "Pyramid with its top sliced off"
                         };
-                        ImGui::TextWrapped("%s", shapeDesc[_irregularType]);
+                        ImGui::TextWrapped("%s", shapeDesc[_polyhedron.irregularType]);
                     }
                 }
 
                 // ---- Shape Operations (Topological Modifiers) ----
                 ImGui::Separator();
                 if (ImGui::CollapsingHeader("Shape Operations")) {
-                    ImGui::Checkbox("Truncate (slice off vertices)", &_applyTruncation);
-                    if (_applyTruncation) {
-                        ImGui::SliderFloat("Truncation Amount", &_truncationAmount,
+                    ImGui::Checkbox("Truncate (slice off vertices)", &_polyhedron.applyTruncation);
+                    if (_polyhedron.applyTruncation) {
+                        ImGui::SliderFloat("Truncation Amount", &_polyhedron.truncationAmount,
                                            0.05f, 0.45f, "%.2f");
                         ImGui::TextWrapped("Slices every vertex to create new faces. "
                                            "A truncated icosahedron is a soccer ball!");
                     }
 
-                    ImGui::Checkbox("Dual (swap faces & vertices)", &_applyDual);
-                    if (_applyDual) {
+                    ImGui::Checkbox("Dual (swap faces & vertices)", &_polyhedron.applyDual);
+                    if (_polyhedron.applyDual) {
                         ImGui::TextWrapped("Creates the dual polyhedron: faces become "
                                            "vertices and vertices become faces. "
                                            "The dual of a cube is an octahedron.");
@@ -958,31 +958,31 @@ void Game::renderCreatorToolbar() {
                     ImGui::TextWrapped("(Should be ~12.57 rad / 720 deg for any closed "
                                        "convex polyhedron -- Descartes' theorem)");
                 }
-            } else if (_currentPrimitive == Object::GeometryType::Polyhedron) {
+            } else if (_polyhedron.primitive == Object::GeometryType::Polyhedron) {
                 ImGui::Separator();
                 ImGui::TextUnformatted("Polyhedron Type:");
-                if (ImGui::Button("Tetrahedron")) { _currentPolyhedronType = 4; }
+                if (ImGui::Button("Tetrahedron")) { _polyhedron.currentType = 4; }
                 ImGui::SameLine();
-                if (ImGui::Button("Octahedron")) { _currentPolyhedronType = 8; }
+                if (ImGui::Button("Octahedron")) { _polyhedron.currentType = 8; }
                 ImGui::SameLine();
-                if (ImGui::Button("Dodecahedron")) { _currentPolyhedronType = 12; }
+                if (ImGui::Button("Dodecahedron")) { _polyhedron.currentType = 12; }
                 ImGui::SameLine();
-                if (ImGui::Button("Icosahedron")) { _currentPolyhedronType = 20; }
-                ImGui::Text("Selected: %d faces", _currentPolyhedronType);
+                if (ImGui::Button("Icosahedron")) { _polyhedron.currentType = 20; }
+                ImGui::Text("Selected: %d faces", _polyhedron.currentType);
             }
 
-            ImGui::SliderFloat("Uniform Size", &_brushSize, 0.1f, 10.0f, "%.2f");
+            ImGui::SliderFloat("Uniform Size", &_brush.size, 0.1f, 10.0f, "%.2f");
 
             // Pottery specific controls
             if (_current3DMode == Mode3D::Pottery) {
                 ImGui::Separator();
                 ImGui::TextUnformatted("Pottery Tool:");
-                bool isChisel = _currentPotteryTool == PotteryTool::Chisel;
-                if (ImGui::RadioButton("Chisel", isChisel)) _currentPotteryTool = PotteryTool::Chisel;
+                bool isChisel = _pottery.currentTool == PotteryTool::Chisel;
+                if (ImGui::RadioButton("Chisel", isChisel)) _pottery.currentTool = PotteryTool::Chisel;
                 ImGui::SameLine();
-                bool isExpand = _currentPotteryTool == PotteryTool::Expand;
-                if (ImGui::RadioButton("Expand", isExpand)) _currentPotteryTool = PotteryTool::Expand;
-                ImGui::SliderFloat("Strength", &_potteryStrength, 0.01f, 2.0f, "%.2f");
+                bool isExpand = _pottery.currentTool == PotteryTool::Expand;
+                if (ImGui::RadioButton("Expand", isExpand)) _pottery.currentTool = PotteryTool::Expand;
+                ImGui::SliderFloat("Strength", &_pottery.strength, 0.01f, 2.0f, "%.2f");
             }
 
             if (_current3DMode == Mode3D::Rotation) {
@@ -991,13 +991,13 @@ void Game::renderCreatorToolbar() {
                 ImGui::TextWrapped("Click to select, then drag in the viewport. Horizontal drag rotates around Y, vertical drag rotates around X, and holding Shift rotates around Z.");
 
                 const char* axisModeNames[] = {"Free XY", "X", "Y", "Z", "Authoritative Axis"};
-                int axisModeIdx = static_cast<int>(_rotationAxisMode);
+                int axisModeIdx = static_cast<int>(_rotation.axisMode);
                 if (ImGui::Combo("Axis Mode", &axisModeIdx, axisModeNames, IM_ARRAYSIZE(axisModeNames))) {
-                    _rotationAxisMode = static_cast<RotationAxisMode>(axisModeIdx);
+                    _rotation.axisMode = static_cast<RotationAxisMode>(axisModeIdx);
                 }
 
-                ImGui::SliderFloat("Sensitivity", &_rotationToolSensitivity, 0.05f, 2.0f, "%.2f");
-                ImGui::SliderFloat("Smoothness", &_rotationToolSmoothness, 1.0f, 20.0f, "%.2f");
+                ImGui::SliderFloat("Sensitivity", &_rotation.sensitivity, 0.05f, 2.0f, "%.2f");
+                ImGui::SliderFloat("Smoothness", &_rotation.smoothness, 1.0f, 20.0f, "%.2f");
 
                 if (_selectedObject3D) {
                     ImGui::Separator();
@@ -1036,21 +1036,21 @@ void Game::renderCreatorToolbar() {
 
             // Placement mode controls
             ImGui::Separator();
-            int placeIdx = static_cast<int>(_placementMode);
+            int placeIdx = static_cast<int>(_placement.mode);
             const char* placeNames[] = {"In Front", "Manual Distance", "Cursor Snap"};
             if (ImGui::Combo("Placement", &placeIdx, placeNames, IM_ARRAYSIZE(placeNames))) {
-                _placementMode = static_cast<BrushPlacementMode>(placeIdx);
+                _placement.mode = static_cast<BrushPlacementMode>(placeIdx);
             }
-            if (_placementMode == BrushPlacementMode::ManualDistance && _prevPlacementMode != BrushPlacementMode::ManualDistance) {
-                _manualAnchorPos      = _cameraPos + _cameraFront * 2.0f;
-                _manualAnchorRight    = glm::normalize(glm::cross(_cameraFront, _cameraUp));
-                _manualAnchorUp       = _cameraUp;
-                _manualAnchorForward  = _cameraFront;
-                _manualAnchorValid    = true;
+            if (_placement.mode == BrushPlacementMode::ManualDistance && _placement.prevMode != BrushPlacementMode::ManualDistance) {
+                _placement.anchorPos      = _camera.pos + _camera.front * 2.0f;
+                _placement.anchorRight    = glm::normalize(glm::cross(_camera.front, _camera.up));
+                _placement.anchorUp       = _camera.up;
+                _placement.anchorForward  = _camera.front;
+                _placement.anchorValid    = true;
             }
-            _prevPlacementMode = _placementMode;
-            if (_placementMode == BrushPlacementMode::ManualDistance) {
-                ImGui::SliderFloat3("Offset XYZ", &_manualOffset.x, -20.0f, 20.0f, "%.2f");
+            _placement.prevMode = _placement.mode;
+            if (_placement.mode == BrushPlacementMode::ManualDistance) {
+                ImGui::SliderFloat3("Offset XYZ", &_placement.manualOffset.x, -20.0f, 20.0f, "%.2f");
                 ImGui::TextUnformatted("X = right, Y = up, Z = forward");
             }
 
@@ -1060,9 +1060,9 @@ void Game::renderCreatorToolbar() {
 
                 ImGui::Text("Brush Type:");
                 const char* brushTypeNames[] = {"Normal", "Airbrush", "Chalk", "Spray", "Smudge", "Clone"};
-                int brushTypeIdx = static_cast<int>(_currentBrushType);
+                int brushTypeIdx = static_cast<int>(_brush.type);
                 if (ImGui::Combo("##BrushType", &brushTypeIdx, brushTypeNames, IM_ARRAYSIZE(brushTypeNames))) {
-                    _currentBrushType = static_cast<BrushType>(brushTypeIdx);
+                    _brush.type = static_cast<BrushType>(brushTypeIdx);
                 }
 
                 // Brush Presets
@@ -1070,75 +1070,75 @@ void Game::renderCreatorToolbar() {
                 ImGui::Text("Brush Presets:");
                 if (ImGui::Button("Save Preset")) {
                     BrushPreset preset;
-                    preset.name = "Custom " + std::to_string(_brushPresets.size() + 1);
-                    preset.type = _currentBrushType;
-                    preset.radius = _faceBrushRadius;
-                    preset.softness = _faceBrushSoftness;
-                    preset.opacity = _brushOpacity;
-                    preset.flow = _brushFlow;
-                    preset.spacing = _brushSpacing;
-                    preset.density = _brushDensity;
-                    preset.strength = _brushStrength;
-                    _brushPresets.push_back(preset);
+                    preset.name = "Custom " + std::to_string(_brush.presets.size() + 1);
+                    preset.type = _brush.type;
+                    preset.radius = _faceBrush.radius;
+                    preset.softness = _faceBrush.softness;
+                    preset.opacity = _brush.opacity;
+                    preset.flow = _brush.flow;
+                    preset.spacing = _brush.spacing;
+                    preset.density = _brush.density;
+                    preset.strength = _brush.strength;
+                    _brush.presets.push_back(preset);
                 }
                 ImGui::SameLine();
-                if (ImGui::Button("Load Preset") && !_brushPresets.empty()) {
-                    if (_currentPreset >= 0 && _currentPreset < static_cast<int>(_brushPresets.size())) {
-                        const BrushPreset& preset = _brushPresets[_currentPreset];
-                        _currentBrushType = preset.type;
-                        _faceBrushRadius = preset.radius;
-                        _faceBrushSoftness = preset.softness;
-                        _brushOpacity = preset.opacity;
-                        _brushFlow = preset.flow;
-                        _brushSpacing = preset.spacing;
-                        _brushDensity = preset.density;
-                        _brushStrength = preset.strength;
+                if (ImGui::Button("Load Preset") && !_brush.presets.empty()) {
+                    if (_brush.currentPreset >= 0 && _brush.currentPreset < static_cast<int>(_brush.presets.size())) {
+                        const BrushPreset& preset = _brush.presets[_brush.currentPreset];
+                        _brush.type = preset.type;
+                        _faceBrush.radius = preset.radius;
+                        _faceBrush.softness = preset.softness;
+                        _brush.opacity = preset.opacity;
+                        _brush.flow = preset.flow;
+                        _brush.spacing = preset.spacing;
+                        _brush.density = preset.density;
+                        _brush.strength = preset.strength;
                     }
                 }
 
-                if (!_brushPresets.empty()) {
+                if (!_brush.presets.empty()) {
                     std::vector<const char*> presetNames;
-                    for (const auto& preset : _brushPresets) {
+                    for (const auto& preset : _brush.presets) {
                         presetNames.push_back(preset.name.c_str());
                     }
-                    ImGui::Combo("##PresetSelect", &_currentPreset, presetNames.data(), static_cast<int>(presetNames.size()));
+                    ImGui::Combo("##PresetSelect", &_brush.currentPreset, presetNames.data(), static_cast<int>(presetNames.size()));
                 }
 
                 ImGui::Separator();
                 ImGui::Text("Basic Settings:");
-                ImGui::SliderFloat("Brush Radius", &_faceBrushRadius, 0.01f, 2.0f, "%.2f");
-                ImGui::SliderFloat("Softness", &_faceBrushSoftness, 0.0f, 2.0f, "%.2f");
-                ImGui::SliderFloat("Opacity", &_brushOpacity, 0.0f, 1.0f, "%.2f");
-                ImGui::SliderFloat("Flow", &_brushFlow, 0.0f, 1.0f, "%.2f");
+                ImGui::SliderFloat("Brush Radius", &_faceBrush.radius, 0.01f, 2.0f, "%.2f");
+                ImGui::SliderFloat("Softness", &_faceBrush.softness, 0.0f, 2.0f, "%.2f");
+                ImGui::SliderFloat("Opacity", &_brush.opacity, 0.0f, 1.0f, "%.2f");
+                ImGui::SliderFloat("Flow", &_brush.flow, 0.0f, 1.0f, "%.2f");
 
                 ImGui::Separator();
                 ImGui::Text("Advanced Dynamics:");
-                ImGui::SliderFloat("Spacing", &_brushSpacing, 0.01f, 0.5f, "%.2f");
-                ImGui::SliderFloat("Density", &_brushDensity, 0.1f, 1.0f, "%.2f");
-                ImGui::SliderFloat("Strength", &_brushStrength, 0.0f, 1.0f, "%.2f");
+                ImGui::SliderFloat("Spacing", &_brush.spacing, 0.01f, 0.5f, "%.2f");
+                ImGui::SliderFloat("Density", &_brush.density, 0.1f, 1.0f, "%.2f");
+                ImGui::SliderFloat("Strength", &_brush.strength, 0.0f, 1.0f, "%.2f");
 
                 ImGui::Separator();
                 ImGui::Text("Pressure Simulation:");
-                ImGui::Checkbox("Enable Pressure", &_usePressureSimulation);
-                if (_usePressureSimulation) {
-                    ImGui::SliderFloat("Sensitivity", &_pressureSensitivity, 0.1f, 5.0f, "%.2f");
-                    ImGui::SliderFloat("Current Pressure", &_currentPressure, 0.1f, 1.0f, "%.2f");
+                ImGui::Checkbox("Enable Pressure", &_brush.usePressureSimulation);
+                if (_brush.usePressureSimulation) {
+                    ImGui::SliderFloat("Sensitivity", &_brush.pressureSensitivity, 0.1f, 5.0f, "%.2f");
+                    ImGui::SliderFloat("Current Pressure", &_brush.currentPressure, 0.1f, 1.0f, "%.2f");
                 }
 
                 ImGui::Separator();
                 ImGui::Text("Stroke Settings:");
-                ImGui::Checkbox("Stroke Interpolation", &_useStrokeInterpolation);
-                ImGui::Checkbox("Show Brush Cursor", &_showBrushCursor);
-                ImGui::Checkbox("Show Brush Preview", &_showBrushPreview);
+                ImGui::Checkbox("Stroke Interpolation", &_brush.useStrokeInterpolation);
+                ImGui::Checkbox("Show Brush Cursor", &_brush.showCursor);
+                ImGui::Checkbox("Show Brush Preview", &_brush.showPreview);
 
-                if (_currentBrushType == BrushType::Clone) {
+                if (_brush.type == BrushType::Clone) {
                     ImGui::Separator();
                     ImGui::Text("Clone Tool:");
-                    ImGui::Checkbox("Clone Active", &_cloneToolActive);
-                    if (_cloneToolActive) {
-                        ImGui::SliderFloat2("Clone Offset", &_cloneOffset.x, -1.0f, 1.0f, "%.2f");
+                    ImGui::Checkbox("Clone Active", &_clone.active);
+                    if (_clone.active) {
+                        ImGui::SliderFloat2("Clone Offset", &_clone.offset.x, -1.0f, 1.0f, "%.2f");
                         if (ImGui::Button("Set Source Point")) {
-                            _cloneSourceUV = _brushCursorPos;
+                            _clone.sourceUV = _brush.cursorPos;
                         }
                     }
                 }
@@ -1174,17 +1174,17 @@ void Game::renderCreatorToolbar() {
 
                 ImGui::Separator();
                 ImGui::Text("UV Controls:");
-                ImGui::SliderFloat("U Offset", &_faceBrushUOffset, -2.0f, 2.0f, "%.2f");
-                ImGui::SliderFloat("V Offset", &_faceBrushVOffset, -2.0f, 2.0f, "%.2f");
+                ImGui::SliderFloat("U Offset", &_faceBrush.uOffset, -2.0f, 2.0f, "%.2f");
+                ImGui::SliderFloat("V Offset", &_faceBrush.vOffset, -2.0f, 2.0f, "%.2f");
                 const char* axisNames[] = {"X","Y","Z"};
-                ImGui::Combo("Axis 1", &_faceBrushUAxis, axisNames, 3);
-                ImGui::Combo("Axis 2", &_faceBrushVAxis, axisNames, 3);
-                if(_faceBrushVAxis == _faceBrushUAxis) {
+                ImGui::Combo("Axis 1", &_faceBrush.uAxis, axisNames, 3);
+                ImGui::Combo("Axis 2", &_faceBrush.vAxis, axisNames, 3);
+                if(_faceBrush.vAxis == _faceBrush.uAxis) {
                     ImGui::TextColored(ImVec4(1,0,0,1), "Axis 1 and Axis 2 must differ!");
                 }
-                ImGui::Checkbox("Invert Axis 1", &_faceBrushInvertU);
+                ImGui::Checkbox("Invert Axis 1", &_faceBrush.invertU);
                 ImGui::SameLine();
-                ImGui::Checkbox("Invert Axis 2", &_faceBrushInvertV);
+                ImGui::Checkbox("Invert Axis 2", &_faceBrush.invertV);
 
                 ImGui::Separator();
                 ImGui::Text("History:");
@@ -1252,16 +1252,16 @@ void Game::renderCreatorToolbar() {
             }
             ImGui::SameLine();
             if (ImGui::Button(u8"\xF0\x9F\x92\xBE Save As...")) {
-                _showSaveWindow = true;
+                _saveLoad.showSaveWindow = true;
             }
             ImGui::SameLine();
             if (ImGui::Button(u8"\xF0\x9F\x93\x82 Load")) {
                 updateSaveFiles();
-                _showLoadWindow = true;
+                _saveLoad.showLoadWindow = true;
             }
             ImGui::SameLine();
             if (ImGui::Button(u8"\xF0\x9F\x93\x81 Save Manager")) {
-                _showSaveManager = true;
+                _saveLoad.showManager = true;
             }
         }
         ImGui::End();

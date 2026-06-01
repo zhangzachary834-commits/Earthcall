@@ -4,7 +4,7 @@
 //   GameUpdate.cpp      – update()
 //   GameRender.cpp      – render()
 //   GameToolbar.cpp     – renderCreatorToolbar()
-//   GamePolyhedron.cpp  – buildCurrentPolyhedron(), _generateCustomPolyhedron()
+//   GamePolyhedron.cpp  – buildCurrentPolyhedron(), _polyhedron.generateCustom()
 //   GameSaveLoad.cpp    – save / load / shutdown / save-UI dialogs
 
 #include "Game.hpp"
@@ -30,11 +30,11 @@ Game::~Game() {
 // ---- Simple accessors ------------------------------------------------
 
 bool Game::getAdvanced2DBrush() const {
-    return _useAdvanced2DBrush;
+    return _brush.useAdvanced2D;
 }
 
 void Game::setAdvanced2DBrush(bool value) {
-    _useAdvanced2DBrush = value;
+    _brush.useAdvanced2D = value;
 }
 
 bool Game::getMouseLeftPressedLast() const {
@@ -46,7 +46,7 @@ void Game::setMouseLeftPressedLast(bool value) {
 }
 
 void Game::setPlacementMode(BrushPlacementMode mode) {
-    _placementMode = mode;
+    _placement.mode = mode;
 }
 
 } // namespace Core

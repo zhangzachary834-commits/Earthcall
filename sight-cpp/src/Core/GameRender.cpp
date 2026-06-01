@@ -57,7 +57,7 @@ void Game::render() {
 
     // Current active zone's 3-D world (accessible throughout render)
     auto& zoneWorld = mgr.active().world();
-    zoneWorld.setCamera(&_cameraPos);
+    zoneWorld.setCamera(&_camera.pos);
 
     // ------------------------------------------------------------------
     // Projection
@@ -80,23 +80,23 @@ void Game::render() {
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    vec3 eyePos   = _cameraPos;
-    vec3 lookDir  = _cameraFront;
+    vec3 eyePos   = _camera.pos;
+    vec3 lookDir  = _camera.front;
     const float CAMERA_DISTANCE = 4.0f;
 
     if (_currentPerspective == PerspectiveMode::ThirdPerson) {
-        eyePos  = _cameraPos - _cameraFront * CAMERA_DISTANCE;
+        eyePos  = _camera.pos - _camera.front * CAMERA_DISTANCE;
     } else if (_currentPerspective == PerspectiveMode::SecondPerson) {
-        eyePos  = _cameraPos + _cameraFront * CAMERA_DISTANCE;
+        eyePos  = _camera.pos + _camera.front * CAMERA_DISTANCE;
     }
 
-    vec3 lookTarget = _cameraPos + lookDir;
+    vec3 lookTarget = _camera.pos + lookDir;
     gluLookAt(eyePos.x, eyePos.y, eyePos.z,
               lookTarget.x, lookTarget.y, lookTarget.z,
-              _cameraUp.x, _cameraUp.y, _cameraUp.z);
+              _camera.up.x, _camera.up.y, _camera.up.z);
 
     // Update lighting position to follow camera
-    ShadingSystem::update(_cameraPos);
+    ShadingSystem::update(_camera.pos);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -139,7 +139,7 @@ void Game::render() {
         // Build a small sample grid around the camera
         int N = Physics::getGravityVisualizationDensity();
         float span = 6.0f; // world units across the grid
-        glm::vec3 center = _cameraPos + _cameraFront * 4.0f;
+        glm::vec3 center = _camera.pos + _camera.front * 4.0f;
         for (int xi = 0; xi < N; ++xi) {
             for (int yi = 0; yi < N; ++yi) {
                 for (int zi = 0; zi < N; ++zi) {
@@ -173,17 +173,17 @@ void Game::render() {
     // ------------------------------------------------------------------
     if (_current3DMode == Mode3D::BrushCreate) {
         glm::vec3 previewPos;
-        if (_placementMode == BrushPlacementMode::InFront) {
-            previewPos = _cameraPos + _cameraFront * 2.0f;
-        } else if (_placementMode == BrushPlacementMode::ManualDistance) {
-            if(!_manualAnchorValid){
-                _manualAnchorPos      = _cameraPos + _cameraFront * 2.0f;
-                _manualAnchorRight    = glm::normalize(glm::cross(_cameraFront, _cameraUp));
-                _manualAnchorUp       = _cameraUp;
-                _manualAnchorForward  = _cameraFront;
-                _manualAnchorValid    = true;
+        if (_placement.mode == BrushPlacementMode::InFront) {
+            previewPos = _camera.pos + _camera.front * 2.0f;
+        } else if (_placement.mode == BrushPlacementMode::ManualDistance) {
+            if(!_placement.anchorValid){
+                _placement.anchorPos      = _camera.pos + _camera.front * 2.0f;
+                _placement.anchorRight    = glm::normalize(glm::cross(_camera.front, _camera.up));
+                _placement.anchorUp       = _camera.up;
+                _placement.anchorForward  = _camera.front;
+                _placement.anchorValid    = true;
             }
-            previewPos = _manualAnchorPos + _manualAnchorRight * _manualOffset.x + _manualAnchorUp * _manualOffset.y + _manualAnchorForward * _manualOffset.z;
+            previewPos = _placement.anchorPos + _placement.anchorRight * _placement.manualOffset.x + _placement.anchorUp * _placement.manualOffset.y + _placement.anchorForward * _placement.manualOffset.z;
         } else {
             // CursorSnap – approximate using same raycast as spawn (without altering state)
             double mx,my; glfwGetCursorPos(_window,&mx,&my);
@@ -192,10 +192,10 @@ void Game::render() {
             float sx = static_cast<float>(fW)/winW;
             float sy = static_cast<float>(fH)/winH;
             double winX = mx*sx; double winY = my*sy;
-            winY = _cameraViewport[3] - winY;
+            winY = _camera.viewport[3] - winY;
             GLdouble nx,ny,nz,fx,fy,fz;
-            gluUnProject(winX,winY,0.0,_cameraModelview,_cameraProjection,_cameraViewport,&nx,&ny,&nz);
-            gluUnProject(winX,winY,1.0,_cameraModelview,_cameraProjection,_cameraViewport,&fx,&fy,&fz);
+            gluUnProject(winX,winY,0.0,_camera.modelview,_camera.projection,_camera.viewport,&nx,&ny,&nz);
+            gluUnProject(winX,winY,1.0,_camera.modelview,_camera.projection,_camera.viewport,&fx,&fy,&fz);
             glm::vec3 rayO(nx,ny,nz);
             glm::vec3 rayDir = glm::normalize(glm::vec3(fx,fy,fz)-rayO);
             float nearestT=1e9f; int hitAxis=-1; int hitSign=1; Object* hitObj=nullptr;
@@ -231,24 +231,24 @@ void Game::render() {
                 glm::vec3 nWorld;
                 if(hitIsCube){glm::vec3 nLocal(0.0f); nLocal[hitAxis]=static_cast<float>(hitSign); nWorld=glm::normalize(glm::vec3(hitObj->getTransform()*glm::vec4(nLocal,0.0f)));}
                 else{glm::vec3 centerWorld=glm::vec3(hitObj->getTransform()*glm::vec4(0.0f,0.0f,0.0f,1.0f)); nWorld=glm::normalize(hitPoint-centerWorld);}
-                glm::vec3 half=glm::vec3(_brushScale.x*_brushSize,_brushScale.y*_brushSize,_brushScale.z*_brushSize)*0.5f;
+                glm::vec3 half=glm::vec3(_brush.scale.x*_brush.size,_brush.scale.y*_brush.size,_brush.scale.z*_brush.size)*0.5f;
                 float offAmt=glm::dot(glm::abs(nWorld),half)+0.01f;
                 previewPos = hitPoint + nWorld*offAmt;
-            } else previewPos = _cameraPos + _cameraFront * 2.0f;
+            } else previewPos = _camera.pos + _camera.front * 2.0f;
         }
 
         // Apply optional grid-snap just like the actual spawn logic
-        if (_brushGridSnap && _brushGridSize > 1e-6f) {
-            previewPos.x = std::round(previewPos.x / _brushGridSize) * _brushGridSize;
-            previewPos.y = std::round(previewPos.y / _brushGridSize) * _brushGridSize;
-            previewPos.z = std::round(previewPos.z / _brushGridSize) * _brushGridSize;
+        if (_brush.gridSnap && _brush.gridSize > 1e-6f) {
+            previewPos.x = std::round(previewPos.x / _brush.gridSize) * _brush.gridSize;
+            previewPos.y = std::round(previewPos.y / _brush.gridSize) * _brush.gridSize;
+            previewPos.z = std::round(previewPos.z / _brush.gridSize) * _brush.gridSize;
         }
 
         // Build transform: translate -> scale
         glm::mat4 previewT = glm::translate(glm::mat4(1.0f), previewPos);
-        glm::vec3 totalScale = glm::vec3(_brushScale.x * _brushSize,
-                                         _brushScale.y * _brushSize,
-                                         _brushScale.z * _brushSize);
+        glm::vec3 totalScale = glm::vec3(_brush.scale.x * _brush.size,
+                                         _brush.scale.y * _brush.size,
+                                         _brush.scale.z * _brush.size);
         previewT = glm::scale(previewT, totalScale);
 
         // Render as translucent wireframe so it does not occlude view
@@ -263,10 +263,10 @@ void Game::render() {
         glMultMatrixf(&previewT[0][0]);
         // Draw primitive outline using same geometry type
         Object temp;
-        temp.setGeometryType(_currentPrimitive);
+        temp.setGeometryType(_polyhedron.primitive);
 
         // Initialize polyhedron data for preview using the unified builder
-        if (_currentPrimitive == Object::GeometryType::Polyhedron) {
+        if (_polyhedron.primitive == Object::GeometryType::Polyhedron) {
             temp.setPolyhedronData(buildCurrentPolyhedron());
         }
 
@@ -317,7 +317,7 @@ void Game::render() {
 #endif
 
     // Brush cursor rendering for Face Brush tool
-    if (_current3DMode == Mode3D::FaceBrush && _showBrushCursor && _brushCursorVisible) {
+    if (_current3DMode == Mode3D::FaceBrush && _brush.showCursor && _brush.cursorVisible) {
         glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT);
         glDisable(GL_DEPTH_TEST);
         glEnable(GL_BLEND);
@@ -334,7 +334,7 @@ void Game::render() {
 
         float screenX = getCursorX();
         float screenY = getCursorY();
-        float cursorSize = _faceBrushRadius * 100.0f * _brushPreviewSize;
+        float cursorSize = _faceBrush.radius * 100.0f * _brush.previewSize;
 
         // Draw brush cursor circle
         glColor4f(1.0f, 1.0f, 1.0f, 0.8f);
@@ -349,9 +349,9 @@ void Game::render() {
         glEnd();
 
         // Draw inner circle for softness indication
-        if (_faceBrushSoftness < 1.0f) {
+        if (_faceBrush.softness < 1.0f) {
             glColor4f(1.0f, 1.0f, 1.0f, 0.4f);
-            float innerSize = cursorSize * _faceBrushSoftness;
+            float innerSize = cursorSize * _faceBrush.softness;
             glBegin(GL_LINE_LOOP);
             for (int i = 0; i < 32; ++i) {
                 float angle = 2.0f * M_PI * i / 32.0f;
@@ -740,9 +740,9 @@ void Game::render() {
     }
 
     // update camera matrices after gluLookAt in render() right after setting view:
-    glGetIntegerv(GL_VIEWPORT, _cameraViewport);
-    glGetDoublev(GL_MODELVIEW_MATRIX, _cameraModelview);
-    glGetDoublev(GL_PROJECTION_MATRIX, _cameraProjection);
+    glGetIntegerv(GL_VIEWPORT, _camera.viewport);
+    glGetDoublev(GL_MODELVIEW_MATRIX, _camera.modelview);
+    glGetDoublev(GL_PROJECTION_MATRIX, _camera.projection);
 }
 
 } // namespace Core

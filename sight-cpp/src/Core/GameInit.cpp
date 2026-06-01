@@ -62,9 +62,9 @@ bool Game::init() {
 
     // Enhanced main menu options (non-destructive; all previous features intact)
     _mainMenu.addOption("Quick Save", GLFW_KEY_S, [this]() { saveStateWithLog(); });
-    _mainMenu.addOption("Save As...", GLFW_KEY_A, [this]() { _showSaveWindow = true; });
-    _mainMenu.addOption("Load", GLFW_KEY_L, [this]() { updateSaveFiles(); _showLoadWindow = true; });
-    _mainMenu.addOption("Save Manager", GLFW_KEY_G, [this]() { _showSaveManager = true; });
+    _mainMenu.addOption("Save As...", GLFW_KEY_A, [this]() { _saveLoad.showSaveWindow = true; });
+    _mainMenu.addOption("Load", GLFW_KEY_L, [this]() { updateSaveFiles(); _saveLoad.showLoadWindow = true; });
+    _mainMenu.addOption("Save Manager", GLFW_KEY_G, [this]() { _saveLoad.showManager = true; });
     _mainMenu.addOption("Toggle Chat", GLFW_KEY_H, [this]() { _showChatWindow = !_showChatWindow; });
     _mainMenu.addOption("Toggle Toolbar", GLFW_KEY_T, [this]() { _showToolbar = !_showToolbar; });
     _mainMenu.addOption("Toggle Physics", GLFW_KEY_P, [this]() { _world.togglePhysics(); });
@@ -85,7 +85,7 @@ bool Game::init() {
     // --------------------------------------------------------------
     // World baseline objects (spinning cube + ground)
     // --------------------------------------------------------------
-    _world.setCamera(&_cameraPos);
+    _world.setCamera(&_camera.pos);
 
     {
         std::unique_ptr<Object> cube(new Object());
@@ -102,8 +102,8 @@ bool Game::init() {
     // Physics default true
     _world.setMode(Ourverse::GameMode::Creative);
 
-    // Ensure _player initial position matches _cameraPos
-    glm::vec3 anchor = _cameraPos - glm::vec3(0.0f, _player.getBody().getEyeHeight(), 0.0f);
+    // Ensure _player initial position matches _camera.pos
+    glm::vec3 anchor = _camera.pos - glm::vec3(0.0f, _player.getBody().getEyeHeight(), 0.0f);
     _player.position = anchor;
     _player.updatePose();
 
@@ -117,34 +117,34 @@ bool Game::init() {
 
     // Initialize custom polyhedron
     try {
-        _generateCustomPolyhedron();
+        _polyhedron.generateCustom();
         printf("[Init] Checkpoint E: custom polyhedron generated\n");
     } catch (...) {
         printf("[Init] Warning: custom polyhedron generation failed, continuing with defaults.\n");
     }
 
     // Initialize default brush presets
-    _brushPresets.clear();
+    _brush.presets.clear();
 
-    _brushPresets.push_back(PresetBuilder("Soft Brush", BrushType::Normal)
+    _brush.presets.push_back(BrushPresetBuilder("Soft Brush", BrushType::Normal)
         .radius(0.15f).softness(0.3f).opacity(0.7f).flow(0.8f).spacing(0.05f).density(0.5f).strength(0.5f).build());
-    _brushPresets.push_back(PresetBuilder("Hard Brush", BrushType::Normal)
+    _brush.presets.push_back(BrushPresetBuilder("Hard Brush", BrushType::Normal)
         .radius(0.1f).softness(1.0f).opacity(1.0f).flow(1.0f).spacing(0.02f).density(0.5f).strength(0.5f).build());
-    _brushPresets.push_back(PresetBuilder("Airbrush", BrushType::Airbrush)
+    _brush.presets.push_back(BrushPresetBuilder("Airbrush", BrushType::Airbrush)
         .radius(0.2f).softness(0.5f).opacity(0.5f).flow(0.6f).spacing(0.1f).density(0.8f).strength(0.5f).build());
-    _brushPresets.push_back(PresetBuilder("Chalk", BrushType::Chalk)
+    _brush.presets.push_back(BrushPresetBuilder("Chalk", BrushType::Chalk)
         .radius(0.12f).softness(0.2f).opacity(0.9f).flow(0.7f).spacing(0.08f).density(0.5f).strength(0.5f).build());
-    _brushPresets.push_back(PresetBuilder("Smudge", BrushType::Smudge)
+    _brush.presets.push_back(BrushPresetBuilder("Smudge", BrushType::Smudge)
         .radius(0.18f).softness(0.4f).opacity(1.0f).flow(1.0f).spacing(0.03f).density(0.5f).strength(0.7f).build());
-    _brushPresets.push_back(PresetBuilder("Clone", BrushType::Clone)
+    _brush.presets.push_back(BrushPresetBuilder("Clone", BrushType::Clone)
         .radius(0.15f).softness(0.6f).opacity(0.8f).flow(1.0f).spacing(0.05f).density(0.5f).strength(0.5f).build());
 
     // Initialize Advanced Face Paint System
     AdvancedFacePaint::initializeAdvancedPainter();
 
     // Initialize default advanced face paint settings
-    _currentGradientSettings = AdvancedFacePaint::GradientSettings();
-    _currentSmudgeSettings = AdvancedFacePaint::SmudgeSettings();
+    _advancedFacePaint.gradient = AdvancedFacePaint::GradientSettings();
+    _advancedFacePaint.smudge = AdvancedFacePaint::SmudgeSettings();
 
     // Initialize keyboard handler
     _keyboardHandler.setGameInstance(this);

@@ -48,9 +48,9 @@ nlohmann::json Game::buildSaveJson() const {
     j["zones"] = zonesJson;
 
     // Camera and player view
-    j["cameraPos"]   = {_cameraPos.x, _cameraPos.y, _cameraPos.z};
-    j["cameraFront"] = {_cameraFront.x, _cameraFront.y, _cameraFront.z};
-    j["cameraUp"]    = {_cameraUp.x, _cameraUp.y, _cameraUp.z};
+    j["cameraPos"]   = {_camera.pos.x, _camera.pos.y, _camera.pos.z};
+    j["cameraFront"] = {_camera.front.x, _camera.front.y, _camera.front.z};
+    j["cameraUp"]    = {_camera.up.x, _camera.up.y, _camera.up.z};
     j["yaw"]   = _mouseHandler.getYaw();
     j["pitch"] = _mouseHandler.getPitch();
 
@@ -179,13 +179,13 @@ void Game::loadState(const std::string& filename) {
 
         // Load camera and player view
         if (j.contains("cameraPos")) {
-            _cameraPos = glm::vec3(j["cameraPos"][0], j["cameraPos"][1], j["cameraPos"][2]);
+            _camera.pos = glm::vec3(j["cameraPos"][0], j["cameraPos"][1], j["cameraPos"][2]);
         }
         if (j.contains("cameraFront")) {
-            _cameraFront = glm::vec3(j["cameraFront"][0], j["cameraFront"][1], j["cameraFront"][2]);
+            _camera.front = glm::vec3(j["cameraFront"][0], j["cameraFront"][1], j["cameraFront"][2]);
         }
         if (j.contains("cameraUp")) {
-            _cameraUp = glm::vec3(j["cameraUp"][0], j["cameraUp"][1], j["cameraUp"][2]);
+            _camera.up = glm::vec3(j["cameraUp"][0], j["cameraUp"][1], j["cameraUp"][2]);
         }
         _mouseHandler.setYaw(j.value("yaw", -90.0f));
         _mouseHandler.setPitch(j.value("pitch", 0.0f));
@@ -267,16 +267,16 @@ void Game::shutdown() {
 // updateSaveFiles
 // ------------------------------------------------------------------
 void Game::updateSaveFiles() {
-    _saveFiles = SaveSystem::listFiles(SaveSystem::SaveType::GAME);
+    _saveLoad.files = SaveSystem::listFiles(SaveSystem::SaveType::GAME);
 }
 
 // ------------------------------------------------------------------
 // drawLoadWindow
 // ------------------------------------------------------------------
 void Game::drawLoadWindow() {
-    if (!_showLoadWindow) return;
+    if (!_saveLoad.showLoadWindow) return;
     ImGui::SetNextWindowSize(ImVec2(500, 400), ImGuiCond_FirstUseEver);
-    if (ImGui::Begin("Load Game State", &_showLoadWindow, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize)) {
+    if (ImGui::Begin("Load Game State", &_saveLoad.showLoadWindow, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize)) {
         ImGui::Text("Select a save file to load:");
         ImGui::Separator();
 
@@ -310,7 +310,7 @@ void Game::drawLoadWindow() {
 
                 if (ImGui::Selectable(displayText.c_str())) {
                     loadState(meta.fullPath);
-                    _showLoadWindow = false;
+                    _saveLoad.showLoadWindow = false;
                 }
 
                 // Show tooltip with full path
@@ -333,7 +333,7 @@ void Game::drawLoadWindow() {
         }
         ImGui::SameLine();
         if (ImGui::Button("Close")) {
-            _showLoadWindow = false;
+            _saveLoad.showLoadWindow = false;
         }
     }
     ImGui::End();
@@ -343,29 +343,29 @@ void Game::drawLoadWindow() {
 // drawSaveWindow
 // ------------------------------------------------------------------
 void Game::drawSaveWindow() {
-    if (!_showSaveWindow) return;
+    if (!_saveLoad.showSaveWindow) return;
     ImGui::SetNextWindowSize(ImVec2(400, 200), ImGuiCond_FirstUseEver);
-    if (ImGui::Begin("Save Game State", &_showSaveWindow, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize)) {
+    if (ImGui::Begin("Save Game State", &_saveLoad.showSaveWindow, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize)) {
         ImGui::Text("Save your current game state:");
         ImGui::Separator();
 
         ImGui::Text("Save Name (optional):");
-        ImGui::InputText("##SaveName", _customSaveName, sizeof(_customSaveName));
+        ImGui::InputText("##SaveName", _saveLoad.customName, sizeof(_saveLoad.customName));
 
         ImGui::Separator();
 
         if (ImGui::Button("Save with Timestamp")) {
             saveStateWithLog("");
-            _showSaveWindow = false;
+            _saveLoad.showSaveWindow = false;
         }
         ImGui::SameLine();
         if (ImGui::Button("Save with Custom Name")) {
-            saveStateWithLog(_customSaveName);
-            _showSaveWindow = false;
+            saveStateWithLog(_saveLoad.customName);
+            _saveLoad.showSaveWindow = false;
         }
         ImGui::SameLine();
         if (ImGui::Button("Cancel")) {
-            _showSaveWindow = false;
+            _saveLoad.showSaveWindow = false;
         }
 
         ImGui::Separator();
@@ -378,9 +378,9 @@ void Game::drawSaveWindow() {
 // drawSaveManager
 // ------------------------------------------------------------------
 void Game::drawSaveManager() {
-    if (!_showSaveManager) return;
+    if (!_saveLoad.showManager) return;
     ImGui::SetNextWindowSize(ImVec2(600, 500), ImGuiCond_FirstUseEver);
-    if (ImGui::Begin("Save Manager", &_showSaveManager, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize)) {
+    if (ImGui::Begin("Save Manager", &_saveLoad.showManager, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize)) {
 
         // Tabs for different save types
         if (ImGui::BeginTabBar("SaveTypes")) {
@@ -531,7 +531,7 @@ void Game::drawSaveManager() {
 
         ImGui::Separator();
         if (ImGui::Button("Close")) {
-            _showSaveManager = false;
+            _saveLoad.showManager = false;
         }
     }
     ImGui::End();
