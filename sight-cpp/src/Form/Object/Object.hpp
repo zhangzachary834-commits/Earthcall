@@ -11,9 +11,9 @@
 #include "Core/EventBus.hpp"
 #include "Contour.hpp"
 #include "AngleTools.hpp"
-#include "PolyhedronData.hpp"
-#include "FaceTexture.hpp"
-#include "CollisionZone.hpp"
+#include "Object/PolyhedronData.hpp"
+#include "Object/FaceTexture.hpp"
+#include "Object/CollisionZone.hpp"
 #include <unordered_map>
 #include <memory>
 #include <string>

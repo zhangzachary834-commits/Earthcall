@@ -4,8 +4,8 @@
 #include <memory>
 #include <vector>
 #include <glm/glm.hpp>
-#include "AngleTools.hpp"
-#include "Contour.hpp"
+#include "../AngleTools.hpp"
+#include "../Contour.hpp"
 
 // Polyhedron geometry container and shape-algebra factory.
 // Lifted out of Object so polygon math has its own home.
