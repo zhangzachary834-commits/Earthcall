@@ -82,6 +82,8 @@ public:
     AvatarState state;
     std::vector<Animation> animations;
     Animation* currentAnimation = nullptr;
+    bool _idleActive = false;
+    bool _walkActive = false;
     
     // Interaction system
     std::vector<Person*> nearbyAvatars;
@@ -124,6 +126,28 @@ public:
     void playAnimation(const std::string& name, bool loop = false);
     void stopAnimation();
     void updateAnimation(float deltaTime);
+
+    // Automation System (time-driven body-part motion on top of the rest pose).
+    // Advance every body part's automation clocks once per frame; updatePose()
+    // then samples them. Keeping advance separate from sampling lets updatePose
+    // run several times per frame without over-advancing the clips.
+    void updateBodyAutomations(float deltaTime);
+    // Author clip libraries onto the body parts.
+    void playIdleAutomation();              // gentle breathing / sway
+    void playWalkAutomation(float speed);   // swing legs & arms; speed scales tempo
+    void stopBodyAutomations();
+    bool isWalkAutomationActive() const { return _walkActive; }
+    bool isIdleAutomationActive() const { return _idleActive; }
+
+    // Apply a locomotion intent: walking swaps in the walk cycle (tempo tracks
+    // speed), standing still settles into idle. Holds the transition guard so it
+    // is safe to call every frame. Normally driven via the LocomotionChanged
+    // event (see PersonEvents.hpp) rather than called directly.
+    void setLocomotion(bool moving, float speed);
+
+    // Install the single EventBus router that dispatches LocomotionChanged to
+    // its target Person. Idempotent; call once at startup.
+    static void installLocomotionRouting();
     
     // Interaction System
     void interactWith(Person* other);

@@ -540,11 +540,20 @@ namespace Physics {
                     maxB = glm::max(maxB, corner);
                 }
 
-                // Check for overlap along all three axes
+                // Cheap AABB pre-filter (used as a perf gate, not the authoritative test).
                 bool overlapX = (minA.x <= maxB.x) && (maxA.x >= minB.x);
                 bool overlapY = (minA.y <= maxB.y) && (maxA.y >= minB.y);
                 bool overlapZ = (minA.z <= maxB.z) && (maxA.z >= minB.z);
-                if(!(overlapX && overlapY && overlapZ)) continue; // no collision
+                if(!(overlapX && overlapY && overlapZ)) continue;
+
+                // SAT touch gate for polyhedra — exact 1:1 with the rendered geometry.
+                // For non-polyhedra (cube/sphere/cylinder/cone) Object::isTouching returns
+                // false; fall back to the AABB overlap result we already have above.
+                const bool bothPolyhedra =
+                    a->getGeometryType() == Object::GeometryType::Polyhedron &&
+                    b->getGeometryType() == Object::GeometryType::Polyhedron;
+                if (bothPolyhedra && !a->isTouching(*b)) continue;
+
                 if (anyCollisionLaw) {
                     bool allowed = false;
                     for (const auto& law : laws) {
@@ -818,6 +827,13 @@ namespace Physics {
 
     void enforceCollisions(glm::vec3& position, const std::vector<std::unique_ptr<Object>>& objects) {
         for (const auto& obj : objects) {
+            if (!obj) continue;
+            // Skip the baseline ground placeholder: it is a solid AABB cube whose
+            // top face sits exactly at groundY, so resting on it registers as a
+            // perpetual penetration and fights gravity (the ground-level jitter).
+            // Ground contact is handled separately by the groundY plane clamp in
+            // integrate(), exactly as the object-object resolver already does.
+            if (obj->getAttribute("baseline") == std::string("ground")) continue;
             // Update collision zone based on current transform
             glm::mat4 transform = obj->getTransform();
             obj->updateCollisionZone(transform);

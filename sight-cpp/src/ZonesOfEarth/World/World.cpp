@@ -30,11 +30,18 @@ void World::update(float dt){
     float stepDt = dt / steps;
 
     for (int s = 0; s < steps; ++s) {
-        Physics::applyGravity(*_cameraPos, physicsEnabled, static_cast<Physics::GameMode>(mode), stepDt, groundY);
+        // The camera is the eye; it rests at the ground top plus the eye
+        // height so the player's feet sit on the floor instead of the eye
+        // (which would bury the body and cause ground-level jitter).
+        Physics::applyGravity(*_cameraPos, physicsEnabled, static_cast<Physics::GameMode>(mode), stepDt, groundY + _playerEyeHeight);
         if(mode==Mode::Survival && Physics::getFlying()) Physics::setFlying(false);
         for (const auto& up : _objects) {
-            if (up && up->hasPendingRotation()) {
+            if (!up) continue;
+            if (up->hasPendingRotation()) {
                 up->updateRotation(stepDt);
+            }
+            if (up->hasAutomations()) {
+                up->updateAutomations(stepDt);
             }
         }
         if(physicsEnabled){

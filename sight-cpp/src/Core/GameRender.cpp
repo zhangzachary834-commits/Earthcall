@@ -58,6 +58,7 @@ void Game::render() {
     // Current active zone's 3-D world (accessible throughout render)
     auto& zoneWorld = mgr.active().world();
     zoneWorld.setCamera(&_camera.pos);
+    zoneWorld.setPlayerEyeHeight(_player.getBody().getEyeHeight());
 
     // ------------------------------------------------------------------
     // Projection

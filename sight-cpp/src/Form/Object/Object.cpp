@@ -1,6 +1,7 @@
 #include "Object.hpp"
 #include "Contour.hpp"
 #include "AngleTools.hpp"
+#include "Automation/AutomationEvents.hpp"
 #include <GLFW/glfw3.h>
 #include <OpenGL/glu.h>
 #include <glm/gtc/quaternion.hpp>
@@ -1499,6 +1500,80 @@ bool Object::isPointInside(const glm::vec3& point) const {
     return computePointPenetration(point, correction);
 }
 
+bool Object::isTouching(const Object& other) const {
+    constexpr float EPS = 1e-5f;
+
+    if (geometryType != GeometryType::Polyhedron ||
+        other.geometryType != GeometryType::Polyhedron ||
+        polyhedronData.vertices.empty() || polyhedronData.faces.empty() ||
+        other.polyhedronData.vertices.empty() || other.polyhedronData.faces.empty()) {
+        return false;
+    }
+
+    auto toWorld = [](const glm::mat4& m, const std::vector<glm::vec3>& local) {
+        std::vector<glm::vec3> world;
+        world.reserve(local.size());
+        for (const auto& v : local) {
+            world.push_back(glm::vec3(m * glm::vec4(v, 1.0f)));
+        }
+        return world;
+    };
+    const std::vector<glm::vec3> worldA = toWorld(transform, polyhedronData.vertices);
+    const std::vector<glm::vec3> worldB = toWorld(other.transform, other.polyhedronData.vertices);
+
+    auto project = [](const std::vector<glm::vec3>& verts, const glm::vec3& axis,
+                      float& outMin, float& outMax) {
+        outMin = std::numeric_limits<float>::max();
+        outMax = -std::numeric_limits<float>::max();
+        for (const auto& v : verts) {
+            float d = glm::dot(v, axis);
+            outMin = std::min(outMin, d);
+            outMax = std::max(outMax, d);
+        }
+    };
+
+    auto isSeparating = [&](const glm::vec3& axis) {
+        if (glm::dot(axis, axis) < EPS * EPS) return false;
+        float minA, maxA, minB, maxB;
+        project(worldA, axis, minA, maxA);
+        project(worldB, axis, minB, maxB);
+        return (maxA < minB - EPS) || (maxB < minA - EPS);
+    };
+
+    for (const auto& face : polyhedronData.faces) {
+        if (face.size() < 3) continue;
+        if (isSeparating(PolyhedronData::computeNewellNormal(worldA, face))) return false;
+    }
+    for (const auto& face : other.polyhedronData.faces) {
+        if (face.size() < 3) continue;
+        if (isSeparating(PolyhedronData::computeNewellNormal(worldB, face))) return false;
+    }
+
+    auto collectEdges = [](const std::vector<glm::vec3>& verts,
+                           const std::vector<std::vector<int>>& faces) {
+        std::vector<glm::vec3> dirs;
+        for (const auto& face : faces) {
+            size_t n = face.size();
+            for (size_t i = 0; i < n; ++i) {
+                dirs.push_back(verts[face[(i + 1) % n]] - verts[face[i]]);
+            }
+        }
+        return dirs;
+    };
+    const std::vector<glm::vec3> edgesA = collectEdges(worldA, polyhedronData.faces);
+    const std::vector<glm::vec3> edgesB = collectEdges(worldB, other.polyhedronData.faces);
+    for (const auto& eA : edgesA) {
+        for (const auto& eB : edgesB) {
+            glm::vec3 axis = glm::cross(eA, eB);
+            if (glm::length(axis) > EPS) {
+                if (isSeparating(glm::normalize(axis))) return false;
+            }
+        }
+    }
+
+    return true;
+}
+
 void Object::setTransform(const glm::mat4& t) {
     transform = t;
     syncRotationStateFromTransform(transform, !preserveRotationTargetOnTransformSet);
@@ -1597,6 +1672,53 @@ bool Object::updateRotation(float dt) {
     preserveRotationTargetOnTransformSet = true;
     setTransform(nextTransform);
     preserveRotationTargetOnTransformSet = false;
+    return true;
+}
+
+// ---------------------------------------------------------------------
+// Automation
+// ---------------------------------------------------------------------
+void Object::setAutomationRest(const glm::mat4& rest) {
+    _automation.rest = rest;
+    _automation.restValid = true;
+}
+
+void Object::addAutomation(const Automation::Clip& clip) {
+    if (!_automation.restValid) {
+        _automation.rest = transform;
+        _automation.restValid = true;
+    }
+    _automation.clips.push_back(clip);
+}
+
+void Object::clearAutomations() {
+    _automation.clips.clear();
+}
+
+void Object::advanceAutomations(float dt) {
+    std::vector<std::string> finished;
+    Automation::advance(_automation, dt, &finished);
+    for (const auto& name : finished) {
+        Core::EventBus::instance().publish(Automation::ClipFinished{this, name});
+    }
+}
+
+glm::mat4 Object::sampleAutomations(const glm::mat4& base) const {
+    return Automation::compose(_automation, base);
+}
+
+bool Object::updateAutomations(float dt) {
+    if (!Automation::active(_automation)) return false;
+    if (!_automation.restValid) {
+        _automation.rest = transform;
+        _automation.restValid = true;
+    }
+    std::vector<std::string> finished;
+    Automation::advance(_automation, dt, &finished);
+    setTransform(Automation::compose(_automation, transform));
+    for (const auto& name : finished) {
+        Core::EventBus::instance().publish(Automation::ClipFinished{this, name});
+    }
     return true;
 }
 

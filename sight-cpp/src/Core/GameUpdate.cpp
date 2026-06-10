@@ -12,6 +12,8 @@
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
 #include "Person/Body/BodyPart/BodyPart.hpp"
+#include "Person/PersonEvents.hpp"
+#include "Core/EventBus.hpp"
 
 #include <GLFW/glfw3.h>
 #include <OpenGL/glu.h>
@@ -47,6 +49,7 @@ void Game::update(float dt) {
     if (glfwGetKey(_window, GLFW_KEY_V) == GLFW_PRESS) actualSpeed *= 2.5f; // sprint
     if (glfwGetKey(_window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS) actualSpeed *= 0.3f; // slow
 
+    glm::vec3 posBeforeMove = _camera.pos;
     if (_mouseHandler.isCursorLocked() && !_mainMenu.isOpen() && !anyTextInputActive) {
         // Calculate movement vectors that ignore camera pitch so WASD behaves like Minecraft
         glm::vec3 forwardXZ = glm::normalize(glm::vec3(_camera.front.x, 0.0f, _camera.front.z));
@@ -73,6 +76,19 @@ void Game::update(float dt) {
             if (glfwGetKey(_window, GLFW_KEY_UP)   == GLFW_PRESS) _placement.manualOffset.z += step;
             if (glfwGetKey(_window, GLFW_KEY_DOWN) == GLFW_PRESS) _placement.manualOffset.z -= step;
         }
+    }
+
+    // Drive body automations from how far the player travelled this frame:
+    // publish the locomotion intent (a Person-side router turns it into walk/
+    // idle clips), then advance the clocks directly on the hot path.
+    {
+        glm::vec3 horizDelta = _camera.pos - posBeforeMove;
+        horizDelta.y = 0.0f;
+        float distance = glm::length(horizDelta);
+        bool moving = distance > 1e-5f;
+        float speedPerSec = (moving && dt > 1e-5f) ? distance / dt : 0.0f;
+        Core::EventBus::instance().publish(LocomotionChanged{&_player, moving, speedPerSec});
+        _player.updateBodyAutomations(dt);
     }
 
     // Sync player anchor with camera position

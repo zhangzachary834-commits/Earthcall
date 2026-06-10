@@ -29,6 +29,12 @@ public:
 
     // Physics & camera --------------------------------------------------
     void setCamera(glm::vec3* cam) { _cameraPos = cam; }
+    // Vertical distance from the player's feet (the part that rests on the
+    // ground) up to the camera/eye. The camera is the point we integrate, so
+    // its rest height must be groundTop + eyeHeight, otherwise resting the eye
+    // on the floor buries the body and the per-bodypart collision resolver
+    // fights gravity every frame (the ground-level jitter).
+    void setPlayerEyeHeight(float h) { _playerEyeHeight = h; }
     void togglePhysics() { physicsEnabled = !physicsEnabled; }
     bool isPhysicsEnabled() const { return physicsEnabled; }
     void setMode(Mode m){ mode = m; }
@@ -45,6 +51,7 @@ public:
 private:
     std::vector<std::unique_ptr<Object>> _objects;
     glm::vec3* _cameraPos = nullptr;
+    float _playerEyeHeight = 0.0f;
     bool physicsEnabled = true;
     Mode mode = Mode::Creative;
 }; 

@@ -105,6 +105,11 @@ bool Game::init() {
     // Ensure _player initial position matches _camera.pos
     glm::vec3 anchor = _camera.pos - glm::vec3(0.0f, _player.getBody().getEyeHeight(), 0.0f);
     _player.position = anchor;
+    // Route LocomotionChanged events to their target Person (once), then settle
+    // the avatar into a living idle by default; movement publishes the event
+    // that swaps this for a walk cycle (see Game::update).
+    Person::installLocomotionRouting();
+    _player.playIdleAutomation();
     _player.updatePose();
 
     // --------------------------------------------------------------

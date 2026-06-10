@@ -7,6 +7,8 @@
 #include "Form/Object/Formation/Menu/stb_easy_font.h"
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
+#include "PersonEvents.hpp"
+#include "Core/EventBus.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 
 // Forward-declare global ZoneManager defined in main.cpp
@@ -215,14 +217,156 @@ void Person::updatePose() {
     glm::mat4 base = glm::translate(glm::mat4(1.0f), position);
     for (auto* part : body.parts) {
         if (!part) continue;
-        glm::mat4 worldT = base * part->localTransform();
+        // Sample (pure) any automations on top of the authored local pose.
+        // updateBodyAutomations() does the once-per-frame time advance; this
+        // only reads, so updatePose stays safe to call several times a frame.
+        glm::mat4 local = part->hasAutomations()
+                              ? part->sampleAutomations(part->localTransform())
+                              : part->localTransform();
+        glm::mat4 worldT = base * local;
         part->setTransform(worldT);
     }
+}
+
+void Person::updateBodyAutomations(float deltaTime) {
+    for (auto* part : body.parts) {
+        if (!part || !part->hasAutomations()) continue;
+        // The authored local pose is the rest that animated channels build on.
+        part->setAutomationRest(part->localTransform());
+        part->advanceAutomations(deltaTime);
+    }
+}
+
+void Person::stopBodyAutomations() {
+    for (auto* part : body.parts) {
+        if (part) part->clearAutomations();
+    }
+    _idleActive = false;
+    _walkActive = false;
+}
+
+void Person::playIdleAutomation() {
+    stopBodyAutomations();
+    _idleActive = true;
+
+    for (auto* part : body.parts) {
+        if (!part) continue;
+        const float sideX = part->localTransform()[3].x;  // <0 left, >0 right
+        Automation::Clip clip;
+        clip.name = "idle";
+        clip.loop = true;
+
+        switch (part->getType()) {
+            case BodyPart::Type::Torso:
+            case BodyPart::Type::Organ: {
+                // Slow breathing: chest rises and swells a touch.
+                Automation::Track sclY{Automation::Channel::SclY, Automation::Wave::Sine, 0.025f, 0.3f, 0.0f, 0.0f};
+                Automation::Track posY{Automation::Channel::PosY, Automation::Wave::Sine, 0.015f, 0.3f, 0.0f, 0.0f};
+                clip.tracks = {sclY, posY};
+                break;
+            }
+            case BodyPart::Type::Head: {
+                Automation::Track sway{Automation::Channel::RotY, Automation::Wave::Sine, 5.0f, 0.18f, 0.0f, 0.0f};
+                clip.tracks = {sway};
+                break;
+            }
+            case BodyPart::Type::Arm: {
+                // Arms drift gently outward/in, opposite on each side.
+                Automation::Track sway{Automation::Channel::RotZ, Automation::Wave::Sine, 3.0f, 0.25f, sideX < 0.0f ? 0.0f : 0.5f, 0.0f};
+                clip.tracks = {sway};
+                break;
+            }
+            default:
+                continue;  // legs/feet stay planted while idle
+        }
+
+        part->addAutomation(clip);
+        part->setAutomationRest(part->localTransform());
+    }
+}
+
+void Person::playWalkAutomation(float speed) {
+    // Map metres/second of travel to a stride tempo (cycles per second).
+    const float tempo = glm::clamp(speed * 0.9f, 0.8f, 3.2f);
+
+    if (!_walkActive) {
+        stopBodyAutomations();
+        _walkActive = true;
+
+        for (auto* part : body.parts) {
+            if (!part) continue;
+            const float sideX = part->localTransform()[3].x;  // <0 left, >0 right
+            Automation::Clip clip;
+            clip.name = "walk";
+            clip.loop = true;
+
+            switch (part->getType()) {
+                case BodyPart::Type::Leg: {
+                    Automation::Track swing{Automation::Channel::RotX, Automation::Wave::Sine, 26.0f, 1.0f, sideX < 0.0f ? 0.0f : 0.5f, 0.0f};
+                    clip.tracks = {swing};
+                    break;
+                }
+                case BodyPart::Type::Foot: {
+                    Automation::Track swing{Automation::Channel::RotX, Automation::Wave::Sine, 12.0f, 1.0f, sideX < 0.0f ? 0.0f : 0.5f, 0.0f};
+                    clip.tracks = {swing};
+                    break;
+                }
+                case BodyPart::Type::Arm: {
+                    // Arms swing opposite to the same-side leg.
+                    Automation::Track swing{Automation::Channel::RotX, Automation::Wave::Sine, 18.0f, 1.0f, sideX < 0.0f ? 0.5f : 0.0f, 0.0f};
+                    clip.tracks = {swing};
+                    break;
+                }
+                case BodyPart::Type::Torso: {
+                    // Subtle vertical bob in step with the stride (twice per cycle).
+                    Automation::Track bob{Automation::Channel::PosY, Automation::Wave::Sine, 0.02f, 2.0f, 0.0f, 0.0f};
+                    clip.tracks = {bob};
+                    break;
+                }
+                default:
+                    continue;
+            }
+
+            part->addAutomation(clip);
+            part->setAutomationRest(part->localTransform());
+        }
+    }
+
+    // Keep the stride tempo in sync with current travel speed without
+    // rebuilding (which would reset the clip clocks and stutter the cycle).
+    for (auto* part : body.parts) {
+        if (!part) continue;
+        for (auto& clip : part->automationState().clips) {
+            if (clip.name == "walk") clip.speed = tempo;
+        }
+    }
+}
+
+void Person::setLocomotion(bool moving, float speed) {
+    if (moving) {
+        playWalkAutomation(speed);
+    } else if (_walkActive || !_idleActive) {
+        // Only rebuild on the walk->idle transition; otherwise leave the idle
+        // clocks running so the breathing cycle doesn't restart every frame.
+        playIdleAutomation();
+    }
+}
+
+void Person::installLocomotionRouting() {
+    static bool installed = false;
+    if (installed) return;
+    installed = true;
+    // One subscription for all Persons: the event names its own target, so we
+    // avoid per-Person subscriptions (Core::EventBus has no unsubscribe).
+    Core::EventBus::instance().subscribe<LocomotionChanged>([](const LocomotionChanged& e) {
+        if (e.person) e.person->setLocomotion(e.moving, e.speed);
+    });
 }
 
 void Person::update(float deltaTime) {
     updateState(deltaTime);
     updateAnimation(deltaTime);
+    updateBodyAutomations(deltaTime);
     updatePhysics(deltaTime);
     updatePose();
 }

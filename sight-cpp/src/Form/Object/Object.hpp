@@ -14,6 +14,7 @@
 #include "Object/PolyhedronData.hpp"
 #include "Object/FaceTexture.hpp"
 #include "Object/CollisionZone.hpp"
+#include "Automation/Automation.hpp"
 #include <unordered_map>
 #include <memory>
 #include <string>
@@ -212,6 +213,13 @@ public:
     void updateCollisionZone(const glm::mat4& transform) const;
     bool isPointInside(const glm::vec3& point) const;
     bool computePointPenetration(const glm::vec3& point, glm::vec3& outCorrection) const;
+
+    // Exact convex-polyhedron overlap test via the Separating Axis Theorem.
+    // Operates directly on the world-space polyhedron geometry (1:1 with the
+    // rendered shape) rather than an AABB approximation. Polyhedra only for now;
+    // returns false if either object lacks valid polyhedron data.
+    // TODO: concave shapes need convex decomposition; round shapes handled later.
+    bool isTouching(const Object& other) const;
     glm::vec3 getSupportPointWorld(const glm::vec3& worldDirection) const;
     bool isCollisionShapeConvex() const;
 
@@ -257,6 +265,27 @@ public:
     bool updateRotation(float dt);
     bool advanceRotation(const glm::mat4& sourceTransform, float dt, glm::mat4& outTransform);
     void syncRotationStateFromTransform(const glm::mat4& sourceTransform, bool syncTarget = true);
+
+    // -----------------------------------------------------------------
+    // Automation (time-driven motion). See Automation/Automation.hpp.
+    // -----------------------------------------------------------------
+    // Add a clip; the current transform is captured as the rest pose the first
+    // time a clip is added (so offsets layer on top of where the object sits).
+    void addAutomation(const Automation::Clip& clip);
+    void clearAutomations();
+    bool hasAutomations() const { return !_automation.clips.empty(); }
+    Automation::State& automationState() { return _automation; }
+    // Explicitly set the rest pose that animated channels build on.
+    void setAutomationRest(const glm::mat4& rest);
+
+    // World-object path: advance clips by dt and apply to this object's
+    // transform in one call (use once per frame). Returns true if applied.
+    bool updateAutomations(float dt);
+
+    // Decoupled path for hierarchical targets (e.g. body parts): advance the
+    // clock once per frame, then sample as many times as needed against a base.
+    void advanceAutomations(float dt);
+    glm::mat4 sampleAutomations(const glm::mat4& base) const;
 
     // Generalized ray-face intersection for painting across all geometry types.
     // Returns true if hit, along with distance t in world units, the face index, and UV in [0,1].
@@ -333,6 +362,8 @@ private:
     glm::vec3 targetRotationEulerDegrees{0.0f, 0.0f, 0.0f};
     float rotationResponsiveness = 10.0f;
     bool preserveRotationTargetOnTransformSet = false;
+
+    Automation::State _automation;
 };
 
 // Out-of-line definition: by this point Object is a complete type, so
