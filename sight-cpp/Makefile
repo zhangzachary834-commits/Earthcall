@@ -48,20 +48,26 @@ $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)/$(SRC_DIR)
 	mkdir -p $(BUILD_DIR)/$(IMGUI_DIR)
 
+# Header-dependency tracking: -MMD writes a .d file next to each .o listing the
+# headers it included, -MP adds phony targets so renamed/removed headers don't
+# break the build. Without this, editing a header (e.g. Game.hpp) would NOT
+# recompile the .cpp files that include it, producing ODR / stale-layout bugs.
+DEPFLAGS = -MMD -MP
+
 # Compile source files
 $(BUILD_DIR)/%.o: %.cpp | $(BUILD_DIR)
 	@mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(DEPFLAGS) -c $< -o $@
 
 # Compile Objective-C++ files (for WebKit integration)
 $(BUILD_DIR)/src/Integration/RealWebView.o: src/Integration/RealWebView.cpp | $(BUILD_DIR)
 	@mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) -ObjC++ -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(DEPFLAGS) -ObjC++ -c $< -o $@
 
 # Compile WebIntegration with Objective-C++ (it includes RealWebView.hpp)
 $(BUILD_DIR)/src/Integration/WebIntegration.o: src/Integration/WebIntegration.cpp | $(BUILD_DIR)
 	@mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) -ObjC++ -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(DEPFLAGS) -ObjC++ -c $< -o $@
 
 # Link the executable
 $(TARGET): $(OBJECTS)
@@ -74,6 +80,9 @@ clean:
 # Run the program
 run: $(TARGET)
 	./$(TARGET)
+
+# Pull in auto-generated header dependencies (.d files next to each .o)
+-include $(OBJECTS:.o=.d)
 
 # Phony targets
 .PHONY: all clean run 

@@ -321,9 +321,13 @@ void Game::registerCallbacks() {
 
 void Game::sMouseCallback(GLFWwindow* win, double xpos, double ypos) {
     Game* self = static_cast<Game*>(glfwGetWindowUserPointer(win));
-    if (self && self->_prevCursorPosCallback) {
-        self->_prevCursorPosCallback(win, xpos, ypos); // forward to ImGui (or whatever was there)
-    }
+    // Forward to ImGui by calling its backend directly (same pattern as the
+    // mouse-button and scroll callbacks). The previous code forwarded through a
+    // runtime-saved function pointer (_prevCursorPosCallback); when ImGui is
+    // initialised with install_callbacks=true that saved pointer could be stale
+    // and crash (EXC_BAD_ACCESS in mouseMoved:). Calling the symbol directly is
+    // link-time resolved and safe.
+    ImGui_ImplGlfw_CursorPosCallback(win, xpos, ypos);
     if (self) self->_mouseHandler.handleMouseMove(xpos, ypos);
 }
 

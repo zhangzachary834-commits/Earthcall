@@ -366,6 +366,17 @@ private:
     // Animation
     float _cubeAngle = 0.0f;
 
+    // Player movement controller -----------------------------------------
+    // A single authoritative per-frame resolve owns _camera.pos. Gravity,
+    // jump and ground/support contact are integrated here; object collisions
+    // only push the player horizontally. Body parts are posed *from* the
+    // resolved position and never push the camera back (that competition was
+    // the source of the ground/cube jitter).
+    void  stepMovement(float dt);
+    float _playerVelY        = 0.0f;  // vertical velocity (world units/sec)
+    bool  _playerGrounded    = false; // resting on ground/support this frame
+    bool  _jumpKeyDownLast   = false; // edge-trigger for jump
+
     // Forwarded GLFW callbacks (so ImGui still gets events)
     GLFWcursorposfun       _prevCursorPosCallback       = nullptr;
     GLFWwindowfocusfun     _prevFocusCallback           = nullptr;

@@ -43,26 +43,13 @@ void Game::update(float dt) {
     bool anyTextInputActive = ImGui::IsAnyItemActive() || ImGui::IsWindowFocused();
 
     // ----------------------------------------------------------------------------
-    // Camera movement WASD + SHIFT/SPACE (continuous movement)
+    // Player movement: a single authoritative resolve owns _camera.pos.
+    // (Horizontal input + gravity/jump + ground contact, all in stepMovement.)
     // ----------------------------------------------------------------------------
-    float actualSpeed = _camera.speed;
-    if (glfwGetKey(_window, GLFW_KEY_V) == GLFW_PRESS) actualSpeed *= 2.5f; // sprint
-    if (glfwGetKey(_window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS) actualSpeed *= 0.3f; // slow
+    stepMovement(dt);
 
-    glm::vec3 posBeforeMove = _camera.pos;
+    // Tool-only key handling that previously rode along with the movement block.
     if (_mouseHandler.isCursorLocked() && !_mainMenu.isOpen() && !anyTextInputActive) {
-        // Calculate movement vectors that ignore camera pitch so WASD behaves like Minecraft
-        glm::vec3 forwardXZ = glm::normalize(glm::vec3(_camera.front.x, 0.0f, _camera.front.z));
-        if (glm::length(forwardXZ) < 1e-3f) forwardXZ = glm::vec3(0.0f, 0.0f, -1.0f); // fallback
-        glm::vec3 rightXZ   = glm::normalize(glm::cross(forwardXZ, _camera.up));
-
-        if (glfwGetKey(_window, GLFW_KEY_W) == GLFW_PRESS) _camera.pos += actualSpeed * forwardXZ;
-        if (glfwGetKey(_window, GLFW_KEY_S) == GLFW_PRESS) _camera.pos -= actualSpeed * forwardXZ;
-        if (glfwGetKey(_window, GLFW_KEY_A) == GLFW_PRESS) _camera.pos -= rightXZ * actualSpeed;
-        if (glfwGetKey(_window, GLFW_KEY_D) == GLFW_PRESS) _camera.pos += rightXZ * actualSpeed;
-        if (glfwGetKey(_window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) _camera.pos -= actualSpeed * _camera.up;
-        if (glfwGetKey(_window, GLFW_KEY_SPACE) == GLFW_PRESS) _camera.pos += actualSpeed * _camera.up;
-
         // Reset anchor if mode switched out of ManualDistance
         if(_placement.mode != BrushPlacementMode::ManualDistance){ _placement.anchorValid = false; }
 
@@ -77,24 +64,6 @@ void Game::update(float dt) {
             if (glfwGetKey(_window, GLFW_KEY_DOWN) == GLFW_PRESS) _placement.manualOffset.z -= step;
         }
     }
-
-    // Drive body automations from how far the player travelled this frame:
-    // publish the locomotion intent (a Person-side router turns it into walk/
-    // idle clips), then advance the clocks directly on the hot path.
-    {
-        glm::vec3 horizDelta = _camera.pos - posBeforeMove;
-        horizDelta.y = 0.0f;
-        float distance = glm::length(horizDelta);
-        bool moving = distance > 1e-5f;
-        float speedPerSec = (moving && dt > 1e-5f) ? distance / dt : 0.0f;
-        Core::EventBus::instance().publish(LocomotionChanged{&_player, moving, speedPerSec});
-        _player.updateBodyAutomations(dt);
-    }
-
-    // Sync player anchor with camera position
-    glm::vec3 anchor = _camera.pos - glm::vec3(0.0f, _player.getBody().getEyeHeight(), 0.0f);
-    _player.position = anchor;
-    _player.updatePose();
 
     // Update avatar system
     _avatarManager.updateAllAvatars(dt);
@@ -345,58 +314,142 @@ void Game::update(float dt) {
     // Sync highlight selection
     Rendering::HighlightSystem::setSelected(_selectedObject3D);
 
-    // Extra collision samples around the player (simple capsule approximation)
-    {
-        constexpr float EYE_TO_FEET = 0.9f;
-        constexpr float RADIUS = 0.3f;
-
-        glm::vec3 rightVec = glm::normalize(glm::cross(_camera.front, _camera.up));
-        glm::vec3 forwardXZ = glm::normalize(glm::vec3(_camera.front.x, 0.0f, _camera.front.z));
-        if (glm::length(forwardXZ) < 1e-3f) forwardXZ = glm::vec3(0.0f,0.0f,1.0f);
-
-        glm::vec3 offsets[5] = {
-            glm::vec3(0),
-            rightVec * RADIUS,
-            -rightVec * RADIUS,
-            forwardXZ * RADIUS,
-            -forwardXZ * RADIUS
-        };
-
-        for (const auto& off : offsets) {
-            glm::vec3 sampleEye  = _camera.pos + off;
-            glm::vec3 sampleFeet = sampleEye  - glm::vec3(0.0f, EYE_TO_FEET, 0.0f);
-            Physics::enforceCollisions(sampleEye,  mgr.active().world().getOwnedObjects());
-            Physics::enforceCollisions(sampleFeet, mgr.active().world().getOwnedObjects());
-            glm::vec3 resolvedCenter = sampleEye - off;
-            _camera.pos = resolvedCenter;
-        }
-    }
-
-    // Update body part world transforms based on (possibly corrected) player position
-    _player.updatePose();
-
-    // Per-bodypart collision refinement – single aggregate delta
-    glm::vec3 totalDelta(0.0f);
-    for (auto* part : _player.getBody().parts) {
-        if (!part) continue;
-        glm::vec3 pos = glm::vec3(part->getTransform()[3]);
-        glm::vec3 corrected = pos;
-        Physics::enforceCollisions(corrected, mgr.active().world().getOwnedObjects());
-        totalDelta += (corrected - pos);
-    }
-    if (glm::length(totalDelta) > 1e-4f) {
-        _camera.pos += totalDelta;
-        _player.position += totalDelta;
-        _player.updatePose();
-    }
-
-    // Final sync so avatar anchors exactly to camera for next frame
-    _player.position = _camera.pos - glm::vec3(0.0f, _player.getBody().getEyeHeight(), 0.0f);
-    _player.updatePose();
+    // NOTE: player/world collision and ground contact are resolved entirely in
+    // stepMovement(). The old per-sample and per-bodypart camera shoves used to
+    // live here; they fought gravity every frame and caused the ground/cube
+    // jitter, so they were removed. Body parts are posed *from* the camera, not
+    // the other way around.
 
     // Process menu hotkeys (must be after potential cursor unlock to allow selection)
     _mainMenu.processInput(_window);
     _mouseHandler.setMenuOpen(_mainMenu.isOpen());
+}
+
+// ---------------------------------------------------------------------------
+// stepMovement: the single authoritative player-movement resolve.
+//
+// Order each frame:
+//   1. horizontal intent (WASD, pitch-flattened)  -> move on XZ
+//   2. resolve object collisions HORIZONTALLY ONLY -> can't walk through walls
+//   3. find the support height under the feet      -> floor or object top
+//   4. vertical: fly input, or gravity + jump, clamped so feet never sink
+//      below the support (this is what kills the gravity-vs-collision fight)
+//   5. write _camera.pos once, then pose the body parts from it
+//
+// Vertical contact is owned solely here; collisions never push the player up.
+// ---------------------------------------------------------------------------
+void Game::stepMovement(float dt) {
+    const bool anyTextInputActive = ImGui::IsAnyItemActive() || ImGui::IsWindowFocused();
+    const bool canMove = _mouseHandler.isCursorLocked() && !_mainMenu.isOpen() && !anyTextInputActive;
+    const bool flying  = Physics::getFlying();
+
+    const auto& objects = mgr.active().world().getOwnedObjects();
+    const float eyeH = _player.getBody().getEyeHeight();
+    const glm::vec3 posBefore = _camera.pos;
+
+    float actualSpeed = _camera.speed;
+    if (glfwGetKey(_window, GLFW_KEY_V) == GLFW_PRESS) actualSpeed *= 2.5f;       // sprint
+    if (glfwGetKey(_window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS) actualSpeed *= 0.3f; // slow
+
+    // 1. Horizontal intent (ignores pitch so WASD behaves like Minecraft).
+    if (canMove) {
+        glm::vec3 forwardXZ = glm::normalize(glm::vec3(_camera.front.x, 0.0f, _camera.front.z));
+        if (glm::length(forwardXZ) < 1e-3f) forwardXZ = glm::vec3(0.0f, 0.0f, -1.0f);
+        glm::vec3 rightXZ = glm::normalize(glm::cross(forwardXZ, _camera.up));
+
+        glm::vec3 move(0.0f);
+        if (glfwGetKey(_window, GLFW_KEY_W) == GLFW_PRESS) move += forwardXZ;
+        if (glfwGetKey(_window, GLFW_KEY_S) == GLFW_PRESS) move -= forwardXZ;
+        if (glfwGetKey(_window, GLFW_KEY_D) == GLFW_PRESS) move += rightXZ;
+        if (glfwGetKey(_window, GLFW_KEY_A) == GLFW_PRESS) move -= rightXZ;
+        if (glm::length(move) > 1e-4f) _camera.pos += glm::normalize(move) * actualSpeed;
+    }
+
+    // 2. Resolve object collisions horizontally only. We let enforceCollisions
+    //    compute the push-out, then discard its vertical component so resting on
+    //    a surface never shoves the player up (that was the jitter).
+    {
+        constexpr float RADIUS = 0.3f;
+        glm::vec3 rightVec  = glm::normalize(glm::cross(_camera.front, _camera.up));
+        glm::vec3 forwardXZ = glm::normalize(glm::vec3(_camera.front.x, 0.0f, _camera.front.z));
+        if (glm::length(forwardXZ) < 1e-3f) forwardXZ = glm::vec3(0.0f, 0.0f, 1.0f);
+        glm::vec3 offsets[5] = { glm::vec3(0), rightVec*RADIUS, -rightVec*RADIUS,
+                                 forwardXZ*RADIUS, -forwardXZ*RADIUS };
+        for (const auto& off : offsets) {
+            // sample at eye and feet so both head-height and leg-height walls block us
+            for (float h : { 0.0f, eyeH }) {
+                glm::vec3 sample = _camera.pos + off - glm::vec3(0.0f, h, 0.0f);
+                glm::vec3 before = sample;
+                Physics::enforceCollisions(sample, objects); // baseline ground already skipped
+                glm::vec3 d = sample - before;
+                d.y = 0.0f;                                   // horizontal push-out only
+                _camera.pos += d;
+            }
+        }
+    }
+
+    // 3. Support height under the feet: global ground, raised to the top of any
+    //    object the player is standing within the XZ footprint of.
+    float supportY = 0.0f; // global floor; matches World ground plane
+    {
+        const float feetY = _camera.pos.y - eyeH;
+        const float standTol = 0.05f; // top must be at/below the feet to be a floor
+        for (const auto& up : objects) {
+            if (!up) continue;
+            up->updateCollisionZone(up->getTransform());
+            glm::vec3 mn = up->collisionZone.corners[0], mx = mn;
+            for (int i = 1; i < 8; ++i) {
+                mn = glm::min(mn, up->collisionZone.corners[i]);
+                mx = glm::max(mx, up->collisionZone.corners[i]);
+            }
+            if (_camera.pos.x < mn.x || _camera.pos.x > mx.x) continue;
+            if (_camera.pos.z < mn.z || _camera.pos.z > mx.z) continue;
+            if (mx.y <= feetY + standTol) supportY = std::max(supportY, mx.y);
+        }
+    }
+    const float minEyeY = supportY + eyeH;
+
+    // 4. Vertical resolve.
+    const bool jumpKeyDown = canMove && glfwGetKey(_window, GLFW_KEY_SPACE) == GLFW_PRESS;
+    if (flying) {
+        float vy = 0.0f;
+        if (jumpKeyDown) vy += actualSpeed;
+        if (canMove && glfwGetKey(_window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) vy -= actualSpeed;
+        _camera.pos.y += vy;
+        _playerVelY = 0.0f;
+        _playerGrounded = false;
+    } else {
+        constexpr float GRAVITY    = 9.81f;
+        constexpr float JUMP_SPEED = 5.0f;
+        if (jumpKeyDown && !_jumpKeyDownLast && _playerGrounded) {
+            _playerVelY = JUMP_SPEED;   // jump impulse
+            _playerGrounded = false;
+        }
+        _playerVelY -= GRAVITY * dt;     // integrate gravity
+        _camera.pos.y += _playerVelY * dt;
+    }
+    _jumpKeyDownLast = jumpKeyDown;
+
+    // Floor constraint: feet can never sink below the support surface.
+    if (_camera.pos.y <= minEyeY) {
+        _camera.pos.y = minEyeY;
+        if (_playerVelY < 0.0f) _playerVelY = 0.0f;
+        _playerGrounded = true;
+    } else {
+        _playerGrounded = !flying && (_camera.pos.y - minEyeY) <= 1e-3f;
+    }
+
+    // 5. Locomotion event + animation clocks, then a single pose from the camera.
+    glm::vec3 horizDelta = _camera.pos - posBefore;
+    horizDelta.y = 0.0f;
+    const float distance = glm::length(horizDelta);
+    const bool moving = distance > 1e-5f;
+    const float speedPerSec = (moving && dt > 1e-5f) ? distance / dt : 0.0f;
+    Core::EventBus::instance().publish(LocomotionChanged{&_player, moving, speedPerSec});
+    _player.updateBodyAutomations(dt);
+
+    _player.position = _camera.pos - glm::vec3(0.0f, eyeH, 0.0f);
+    _player.updatePose();
 }
 
 } // namespace Core

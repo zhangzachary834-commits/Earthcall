@@ -11,7 +11,11 @@
 #include "Rendering/HighlightSystem.hpp"
 
 void World::update(float dt){
-    if(!_cameraPos) return;
+    // NOTE: the player/camera is no longer simulated here. All player movement,
+    // gravity, ground/support contact and collision live in Game::stepMovement
+    // so there is a single authoritative writer of the camera position. World
+    // simulates only the world's own objects (rotations, automations, physics).
+
     // ground Y based on object tagged as baseline ground if exists; fall back to index 1
     float groundY = 0.0f;
     size_t groundIdx = 1;
@@ -30,10 +34,6 @@ void World::update(float dt){
     float stepDt = dt / steps;
 
     for (int s = 0; s < steps; ++s) {
-        // The camera is the eye; it rests at the ground top plus the eye
-        // height so the player's feet sit on the floor instead of the eye
-        // (which would bury the body and cause ground-level jitter).
-        Physics::applyGravity(*_cameraPos, physicsEnabled, static_cast<Physics::GameMode>(mode), stepDt, groundY + _playerEyeHeight);
         if(mode==Mode::Survival && Physics::getFlying()) Physics::setFlying(false);
         for (const auto& up : _objects) {
             if (!up) continue;
@@ -47,7 +47,6 @@ void World::update(float dt){
         if(physicsEnabled){
             for(const auto& up: _objects) if(up) Physics::getBodyFor(up.get());
             Physics::updateBodies(_objects, stepDt, 9.81f, 0.1f, groundY);
-            Physics::enforceCollisions(*_cameraPos, _objects);
         }
     }
 }
