@@ -1,13 +1,8 @@
-// GameToolbar.cpp – Game::renderCreatorToolbar() and all its sub-windows
-// Split from Game.cpp during refactor. This was the biggest chunk (~1400 lines).
+// GameToolbar.cpp - unified Creator Console for creation, editing, and world tools.
 
 #include "Game.hpp"
-#include "Core/Engine.hpp"
 #include "Form/Object/Object.hpp"
-#include "Form/Object/AngleTools.hpp"
-#include "Form/Object/Contour.hpp"
 #include "Rendering/BrushSystem.hpp"
-#include "Rendering/DesignSystem.hpp"
 #include "Rendering/RelationManagerWindow.hpp"
 #include "OurVerse/Tool.hpp"
 #include "OurVerse/AdvancedFacePaint.hpp"
@@ -16,499 +11,296 @@
 #include "ZonesOfEarth/Physics/Physics.hpp"
 #include "Person/Body/BodyPart/BodyPart.hpp"
 
-#include <GLFW/glfw3.h>
 #include <imgui.h>
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
-#include <cmath>
-#include <cstring>
+#include <cstdio>
+#include <memory>
 #include <string>
 #include <vector>
 
 extern ZoneManager mgr;
 
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
+namespace {
+
+void sameLineEvery(int index, int perRow) {
+    if ((index + 1) % perRow != 0) {
+        ImGui::SameLine();
+    }
+}
+
+void pushActiveButtonStyle(bool active, const ImVec4& color, const ImVec4& hoverColor) {
+    if (!active) return;
+    ImGui::PushStyleColor(ImGuiCol_Button, color);
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, hoverColor);
+}
+
+void popActiveButtonStyle(bool active) {
+    if (active) {
+        ImGui::PopStyleColor(2);
+    }
+}
+
+void configurePaintBrushPreset(Zone& zone, Tool::Type type) {
+    if (!zone.getBrushSystem()) {
+        zone.initializeBrushSystem();
+    }
+
+    zone.setCloneActive(false);
+    switch (type) {
+        case Tool::Type::Pencil:
+            zone.setBrushType(BrushSystem::BrushType::Normal);
+            zone.setBrushRadius(0.035f);
+            zone.setBrushOpacity(1.0f);
+            zone.setBrushFlow(1.0f);
+            zone.setBrushSpacing(0.012f);
+            break;
+        case Tool::Type::Pen:
+            zone.setBrushType(BrushSystem::BrushType::Normal);
+            zone.setBrushRadius(0.055f);
+            zone.setBrushOpacity(1.0f);
+            zone.setBrushFlow(1.0f);
+            zone.setBrushSpacing(0.008f);
+            break;
+        case Tool::Type::Marker:
+            zone.setBrushType(BrushSystem::BrushType::Normal);
+            zone.setBrushRadius(0.13f);
+            zone.setBrushOpacity(0.55f);
+            zone.setBrushFlow(0.75f);
+            zone.setBrushSpacing(0.02f);
+            break;
+        case Tool::Type::Airbrush:
+            zone.setBrushType(BrushSystem::BrushType::Airbrush);
+            break;
+        case Tool::Type::Chalk:
+            zone.setBrushType(BrushSystem::BrushType::Chalk);
+            break;
+        case Tool::Type::Spray:
+            zone.setBrushType(BrushSystem::BrushType::Spray);
+            break;
+        case Tool::Type::Smudge:
+            zone.setBrushType(BrushSystem::BrushType::Smudge);
+            break;
+        case Tool::Type::Clone:
+            zone.setBrushType(BrushSystem::BrushType::Clone);
+            zone.setCloneActive(true);
+            zone.setCloneOffset(glm::vec2(-0.08f, -0.08f));
+            break;
+        case Tool::Type::Brush:
+        case Tool::Type::Eraser:
+        case Tool::Type::Delete:
+        case Tool::Type::MagicEraser:
+            zone.setBrushType(BrushSystem::BrushType::Normal);
+            break;
+        default:
+            break;
+    }
+}
+
+} // namespace
 
 namespace Core {
 
 void Game::renderCreatorToolbar() {
-    // ------------------------------------------------------------------
-    // Small host window containing a menu to toggle individual tool panes
-    // ------------------------------------------------------------------
-
-    static bool showPaint  = true;
-    static bool show3D     = true;
-    static bool showWorld  = true;
-    static bool showAssets = true;
-    static bool showBonds  = true;
-    static bool showRelations = true;
-    static bool showCursor = true;
-
-    ImGui::SetNextWindowSize(ImVec2(550, 400), ImGuiCond_FirstUseEver);
-    ImGui::Begin(u8"\xF0\x9F\x9B\xA0 Earthcall Creator", nullptr,
-                 ImGuiWindowFlags_MenuBar);
-
-    if (ImGui::BeginMenuBar()) {
-        if (ImGui::BeginMenu("Windows")) {
-            ImGui::MenuItem("Paint",  nullptr, &showPaint);
-            ImGui::MenuItem("3D",     nullptr, &show3D);
-            ImGui::MenuItem("World",  nullptr, &showWorld);
-            ImGui::MenuItem("Assets", nullptr, &showAssets);
-            ImGui::MenuItem("Bonds",  nullptr, &showBonds);
-            ImGui::MenuItem("Relations", nullptr, &showRelations);
-            ImGui::MenuItem("Cursor Tools",  nullptr, &showCursor);
-            ImGui::EndMenu();
-        }
-        ImGui::EndMenuBar();
+    Zone& zone = mgr.active();
+    if (!zone.getDesignSystem()) {
+        zone.initializeDesignSystem();
     }
 
-#ifdef ImGuiConfigFlags_DockingEnable
-    static ImGuiID dockspace_id = 0;
-    if (dockspace_id == 0) dockspace_id = ImGui::GetID("CreatorDockSpace");
-    ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f));
-#endif
-
-    ImGui::End(); // End host window
-
-    // ------------------------------------------------------------------
-    // Paint window
-    // ------------------------------------------------------------------
-#ifdef ImGuiConfigFlags_DockingEnable
-    ImGui::SetNextWindowDockID(dockspace_id, ImGuiCond_FirstUseEver);
-#endif
-    if (showPaint) {
-        if (ImGui::Begin(u8"\xF0\x9F\x8E\xA8 Professional 2D Design", &showPaint)) {
-            Zone& zone = mgr.active();
-
-            // Ensure design system is initialized
-            if (!zone.getDesignSystem()) {
-                zone.initializeDesignSystem();
-            }
-
-            // Tool Categories
-            if (ImGui::BeginTabBar("DesignTools")) {
-
-                // Drawing Tools Tab
-                if (ImGui::BeginTabItem(u8"\xF0\x9F\x96\x8C Drawing")) {
-                    ImGui::BeginGroup();
-
-                    if (ImGui::Button(u8"\xF0\x9F\x96\x8C Brush")) {
-                        _currentTool = Tool(Tool::Type::Brush);
-                        zone.setDesignTool(Tool::Type::Brush);
-                        _current3DMode = Mode3D::None;
-                    }
-            ImGui::SameLine();
-                    if (ImGui::Button(u8"\xE2\x9C\x8F\xEF\xB8\x8F Pencil")) {
-                        _currentTool = Tool(Tool::Type::Pencil);
-                        zone.setDesignTool(Tool::Type::Pencil);
-                        _current3DMode = Mode3D::None;
-                    }
-            ImGui::SameLine();
-                    if (ImGui::Button(u8"\xF0\x9F\x96\x8A Pen")) {
-                        _currentTool = Tool(Tool::Type::Pen);
-                        zone.setDesignTool(Tool::Type::Pen);
-                        _current3DMode = Mode3D::None;
-                    }
-
-                    if (ImGui::Button(u8"\xF0\x9F\x92\xA8 Airbrush")) {
-                        _currentTool = Tool(Tool::Type::Airbrush);
-                        zone.setDesignTool(Tool::Type::Airbrush);
-                        _current3DMode = Mode3D::None;
-                    }
-            ImGui::SameLine();
-                    if (ImGui::Button(u8"\xF0\x9F\x96\xBC Chalk")) {
-                        _currentTool = Tool(Tool::Type::Chalk);
-                        zone.setDesignTool(Tool::Type::Chalk);
-                        _current3DMode = Mode3D::None;
-                    }
-                    ImGui::SameLine();
-                    if (ImGui::Button(u8"\xF0\x9F\x8E\xA8 Spray")) {
-                        _currentTool = Tool(Tool::Type::Spray);
-                        zone.setDesignTool(Tool::Type::Spray);
-                        _current3DMode = Mode3D::None;
-                    }
-
-                    if (ImGui::Button(u8"\xF0\x9F\x91\x86 Smudge")) {
-                        _currentTool = Tool(Tool::Type::Smudge);
-                        zone.setDesignTool(Tool::Type::Smudge);
-                        _current3DMode = Mode3D::None;
-                    }
-                    ImGui::SameLine();
-                    if (ImGui::Button(u8"\xF0\x9F\x93\x8B Clone")) {
-                        _currentTool = Tool(Tool::Type::Clone);
-                        zone.setDesignTool(Tool::Type::Clone);
-                        _current3DMode = Mode3D::None;
-                    }
-
-                    ImGui::EndGroup();
-                    ImGui::EndTabItem();
-                }
-
-                // Erasing Tools Tab
-                if (ImGui::BeginTabItem(u8"\xF0\x9F\xA7\xBD Erasing")) {
-                    ImGui::BeginGroup();
-
-                    if (ImGui::Button(u8"\xF0\x9F\xA7\xBD Eraser")) {
-                        _currentTool = Tool(Tool::Type::Eraser);
-                        zone.setDesignTool(Tool::Type::Eraser);
-                        _current3DMode = Mode3D::None;
-                    }
-                    ImGui::SameLine();
-                    if (ImGui::Button(u8"\xE2\x9C\xA8 Magic Eraser")) {
-                        _currentTool = Tool(Tool::Type::MagicEraser);
-                        zone.setDesignTool(Tool::Type::MagicEraser);
-                        _current3DMode = Mode3D::None;
-                    }
-
-                    ImGui::EndGroup();
-                    ImGui::EndTabItem();
-                }
-
-                // Selection Tools Tab
-                if (ImGui::BeginTabItem(u8"\xE2\xAC\x9C Selection")) {
-                    ImGui::BeginGroup();
-
-                    if (ImGui::Button(u8"\xE2\xAC\x9C Selection")) {
-                        _currentTool = Tool(Tool::Type::Selection);
-                        zone.setDesignTool(Tool::Type::Selection);
-                        _current3DMode = Mode3D::None;
-                    }
-                    ImGui::SameLine();
-                    if (ImGui::Button(u8"\xF0\x9F\x94\x97 Lasso")) {
-                        _currentTool = Tool(Tool::Type::Lasso);
-                        zone.setDesignTool(Tool::Type::Lasso);
-                        _current3DMode = Mode3D::None;
-                    }
-
-                    if (ImGui::Button(u8"\xF0\x9F\xAA\x84 Magic Wand")) {
-                        _currentTool = Tool(Tool::Type::MagicWand);
-                        zone.setDesignTool(Tool::Type::MagicWand);
-                        _current3DMode = Mode3D::None;
-                    }
-                    ImGui::SameLine();
-                    if (ImGui::Button(u8"\xF0\x9F\x93\xA6 Marquee")) {
-                        _currentTool = Tool(Tool::Type::Marquee);
-                        zone.setDesignTool(Tool::Type::Marquee);
-                        _current3DMode = Mode3D::None;
-                    }
-
-                    ImGui::EndGroup();
-                    ImGui::EndTabItem();
-                }
-
-                // Shape Tools Tab
-                if (ImGui::BeginTabItem(u8"\xF0\x9F\x94\xB7 Shapes")) {
-                    ImGui::BeginGroup();
-
-                    if (ImGui::Button(u8"\xE2\xAC\x9C Rectangle")) {
-                        _currentTool = Tool(Tool::Type::Rectangle);
-                        zone.setDesignTool(Tool::Type::Rectangle);
-                        _current3DMode = Mode3D::None;
-                    }
-                    ImGui::SameLine();
-                    if (ImGui::Button(u8"\xE2\xAD\x95 Ellipse")) {
-                        _currentTool = Tool(Tool::Type::Ellipse);
-                        zone.setDesignTool(Tool::Type::Ellipse);
-                        _current3DMode = Mode3D::None;
-                    }
-                    ImGui::SameLine();
-                    if (ImGui::Button(u8"\xF0\x9F\x94\xB7 Polygon")) {
-                        _currentTool = Tool(Tool::Type::Polygon);
-                        zone.setDesignTool(Tool::Type::Polygon);
-                        _current3DMode = Mode3D::None;
-                    }
-
-                    if (ImGui::Button(u8"\xE2\x9E\x96 Line")) {
-                        _currentTool = Tool(Tool::Type::Line);
-                        zone.setDesignTool(Tool::Type::Line);
-                        _current3DMode = Mode3D::None;
-                    }
-                    ImGui::SameLine();
-                    if (ImGui::Button(u8"\xE2\x9E\xA1\xEF\xB8\x8F Arrow")) {
-                        _currentTool = Tool(Tool::Type::Arrow);
-                        zone.setDesignTool(Tool::Type::Arrow);
-                        _current3DMode = Mode3D::None;
-                    }
-                    ImGui::SameLine();
-                    if (ImGui::Button(u8"\xE2\xAD\x90 Star")) {
-                        _currentTool = Tool(Tool::Type::Star);
-                        zone.setDesignTool(Tool::Type::Star);
-                        _current3DMode = Mode3D::None;
-                    }
-
-                    if (ImGui::Button(u8"\xE2\x9D\xA4\xEF\xB8\x8F Heart")) {
-                        _currentTool = Tool(Tool::Type::Heart);
-                        zone.setDesignTool(Tool::Type::Heart);
-                        _current3DMode = Mode3D::None;
-                    }
-                    ImGui::SameLine();
-                    if (ImGui::Button(u8"\xF0\x9F\x94\xB6 Custom")) {
-                        _currentTool = Tool(Tool::Type::CustomShape);
-                        zone.setDesignTool(Tool::Type::CustomShape);
-                        _current3DMode = Mode3D::None;
-                    }
-
-                    ImGui::EndGroup();
-                    ImGui::EndTabItem();
-                }
-
-                // Text Tools Tab
-                if (ImGui::BeginTabItem("T Text")) {
-                    ImGui::BeginGroup();
-
-                    if (ImGui::Button(u8"T Text")) {
-                        _currentTool = Tool(Tool::Type::Text);
-                        zone.setDesignTool(Tool::Type::Text);
-                        _current3DMode = Mode3D::None;
-                    }
-                    ImGui::SameLine();
-                    if (ImGui::Button(u8"T\xE2\x86\x95\xEF\xB8\x8F Vertical")) {
-                        _currentTool = Tool(Tool::Type::TextVertical);
-                        zone.setDesignTool(Tool::Type::TextVertical);
-                        _current3DMode = Mode3D::None;
-                    }
-                    ImGui::SameLine();
-                    if (ImGui::Button(u8"T\xE3\x80\xB0\xEF\xB8\x8F Path")) {
-                        _currentTool = Tool(Tool::Type::TextPath);
-                        zone.setDesignTool(Tool::Type::TextPath);
-                        _current3DMode = Mode3D::None;
-                    }
-
-                    ImGui::EndGroup();
-                    ImGui::EndTabItem();
-                }
-
-                // Transform Tools Tab
-                if (ImGui::BeginTabItem(u8"\xF0\x9F\x94\x84 Transform")) {
-                    ImGui::BeginGroup();
-
-                    if (ImGui::Button(u8"\xE2\x9C\x8B Move")) {
-                        _currentTool = Tool(Tool::Type::Move);
-                        zone.setDesignTool(Tool::Type::Move);
-                        _current3DMode = Mode3D::None;
-                    }
-                    ImGui::SameLine();
-                    if (ImGui::Button(u8"\xF0\x9F\x94\x8D Scale")) {
-                        _currentTool = Tool(Tool::Type::Scale);
-                        zone.setDesignTool(Tool::Type::Scale);
-                        _current3DMode = Mode3D::None;
-                    }
-                    ImGui::SameLine();
-                    if (ImGui::Button(u8"\xF0\x9F\x94\x84 Rotate")) {
-                        _currentTool = Tool(Tool::Type::Rotate);
-                        zone.setDesignTool(Tool::Type::Rotate);
-                        _current3DMode = Mode3D::None;
-                    }
-
-                    if (ImGui::Button(u8"\xF0\x9F\x93\x90 Skew")) {
-                        _currentTool = Tool(Tool::Type::Skew);
-                        zone.setDesignTool(Tool::Type::Skew);
-                        _current3DMode = Mode3D::None;
-                    }
-                    ImGui::SameLine();
-                    if (ImGui::Button(u8"\xF0\x9F\x94\x80 Distort")) {
-                        _currentTool = Tool(Tool::Type::Distort);
-                        zone.setDesignTool(Tool::Type::Distort);
-                        _current3DMode = Mode3D::None;
-                    }
-                    ImGui::SameLine();
-                    if (ImGui::Button(u8"\xF0\x9F\x8F\x97\xEF\xB8\x8F Perspective")) {
-                        _currentTool = Tool(Tool::Type::Perspective);
-                        zone.setDesignTool(Tool::Type::Perspective);
-                        _current3DMode = Mode3D::None;
-                    }
-
-                    ImGui::EndGroup();
-                    ImGui::EndTabItem();
-                }
-
-                // Effects Tools Tab
-                if (ImGui::BeginTabItem(u8"\xF0\x9F\x8E\xA8 Effects")) {
-                    ImGui::BeginGroup();
-
-                    if (ImGui::Button(u8"\xF0\x9F\x8C\xAB\xEF\xB8\x8F Blur")) {
-                        _currentTool = Tool(Tool::Type::Blur);
-                        zone.setDesignTool(Tool::Type::Blur);
-                        _current3DMode = Mode3D::None;
-                    }
-                    ImGui::SameLine();
-                    if (ImGui::Button(u8"\xF0\x9F\x94\xAA Sharpen")) {
-                        _currentTool = Tool(Tool::Type::Sharpen);
-                        zone.setDesignTool(Tool::Type::Sharpen);
-                        _current3DMode = Mode3D::None;
-                    }
-                    ImGui::SameLine();
-                    if (ImGui::Button(u8"\xF0\x9F\x93\xBB Noise")) {
-                        _currentTool = Tool(Tool::Type::Noise);
-                        zone.setDesignTool(Tool::Type::Noise);
-                        _current3DMode = Mode3D::None;
-                    }
-
-                    if (ImGui::Button(u8"\xF0\x9F\x8F\x9B\xEF\xB8\x8F Emboss")) {
-                        _currentTool = Tool(Tool::Type::Emboss);
-                        zone.setDesignTool(Tool::Type::Emboss);
-                        _current3DMode = Mode3D::None;
-                    }
-                    ImGui::SameLine();
-                    if (ImGui::Button(u8"\xF0\x9F\x92\xA1 Glow")) {
-                        _currentTool = Tool(Tool::Type::Glow);
-                        zone.setDesignTool(Tool::Type::Glow);
-                        _current3DMode = Mode3D::None;
-                    }
-                    ImGui::SameLine();
-                    if (ImGui::Button(u8"\xF0\x9F\x91\xA4 Shadow")) {
-                        _currentTool = Tool(Tool::Type::Shadow);
-                        zone.setDesignTool(Tool::Type::Shadow);
-                        _current3DMode = Mode3D::None;
-                    }
-
-                    if (ImGui::Button(u8"\xF0\x9F\x8C\x88 Gradient")) {
-                        _currentTool = Tool(Tool::Type::Gradient);
-                        zone.setDesignTool(Tool::Type::Gradient);
-                        _current3DMode = Mode3D::None;
-                    }
-                    ImGui::SameLine();
-                    if (ImGui::Button(u8"\xF0\x9F\x94\xB2 Pattern")) {
-                        _currentTool = Tool(Tool::Type::Pattern);
-                        zone.setDesignTool(Tool::Type::Pattern);
-                        _current3DMode = Mode3D::None;
-                    }
-
-                    ImGui::EndGroup();
-                    ImGui::EndTabItem();
-                }
-
-                // Utility Tools Tab
-                if (ImGui::BeginTabItem(u8"\xF0\x9F\x94\xA7 Utility")) {
-                    ImGui::BeginGroup();
-
-                    if (ImGui::Button(u8"\xF0\x9F\x8E\xAF Color Picker")) {
-                        _currentTool = Tool(Tool::Type::ColorPicker);
-                        zone.setDesignTool(Tool::Type::ColorPicker);
-                        _current3DMode = Mode3D::None;
-                    }
-                    ImGui::SameLine();
-                    if (ImGui::Button(u8"\xF0\x9F\x92\x89 Eyedropper")) {
-                        _currentTool = Tool(Tool::Type::Eyedropper);
-                        zone.setDesignTool(Tool::Type::Eyedropper);
-                        _current3DMode = Mode3D::None;
-                    }
-                    ImGui::SameLine();
-                    if (ImGui::Button(u8"\xE2\x9C\x8B Hand")) {
-                        _currentTool = Tool(Tool::Type::Hand);
-                        zone.setDesignTool(Tool::Type::Hand);
-                        _current3DMode = Mode3D::None;
-                    }
-
-                    if (ImGui::Button(u8"\xF0\x9F\x94\x8D Zoom")) {
-                        _currentTool = Tool(Tool::Type::Zoom);
-                        zone.setDesignTool(Tool::Type::Zoom);
-                        _current3DMode = Mode3D::None;
-                    }
-                    ImGui::SameLine();
-                    if (ImGui::Button(u8"\xE2\x9C\x82\xEF\xB8\x8F Crop")) {
-                        _currentTool = Tool(Tool::Type::Crop);
-                        zone.setDesignTool(Tool::Type::Crop);
-                        _current3DMode = Mode3D::None;
-                    }
-                    ImGui::SameLine();
-                    if (ImGui::Button(u8"\xF0\x9F\x94\xAA Slice")) {
-                        _currentTool = Tool(Tool::Type::Slice);
-                        zone.setDesignTool(Tool::Type::Slice);
-                        _current3DMode = Mode3D::None;
-                    }
-
-                    ImGui::EndGroup();
-                    ImGui::EndTabItem();
-                }
-
-                ImGui::EndTabBar();
-            }
-
-            ImGui::Separator();
-
-            // Color and Properties Panel
-            ImGui::BeginGroup();
-            ImGui::Text("Color & Properties:");
-            ImGui::SameLine();
-            if (ImGui::ColorEdit3("##MainColor", _currentColor, ImGuiColorEditFlags_NoInputs)) {
-                zone.setDrawColor(_currentColor[0], _currentColor[1], _currentColor[2]);
-            }
-
-            // Layer Management
-            ImGui::Separator();
-            ImGui::Text("Layer Management:");
-            if (ImGui::Button("Add Layer")) {
-                zone.addDesignLayer();
-            }
-            ImGui::SameLine();
-            if (ImGui::Button("Remove Layer")) {
-                zone.removeDesignLayer(0);
-            }
-
-            // Legacy compatibility
-            ImGui::Separator();
-            ImGui::Checkbox("Use Advanced 2D Brush", &_brush.useAdvanced2D);
-            if (_brush.useAdvanced2D) {
-                ImGui::SameLine();
-                if (ImGui::Button("Advanced Settings")) {
-                    _brush.show2DPanel = !_brush.show2DPanel;
-                }
-            }
-
-            // Show current tool status
-            ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.0f, 1.0f), "Current Tool: %s", Tool(_currentTool).getTypeName().c_str());
-
-            ImGui::EndGroup();
-        }
+    ImGui::SetNextWindowPos(ImVec2(12.0f, 12.0f), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(430.0f, 720.0f), ImGuiCond_FirstUseEver);
+    if (!ImGui::Begin("Earthcall Creator Console", &_showToolbar, ImGuiWindowFlags_NoCollapse)) {
         ImGui::End();
+        drawLoadWindow();
+        drawSaveWindow();
+        drawSaveManager();
+        return;
     }
 
-    // ------------------------------------------------------------------
-    // 2D Advanced Brush Panel
-    // ------------------------------------------------------------------
-    if (_brush.show2DPanel && _brush.useAdvanced2D) {
-        if (ImGui::Begin("Advanced 2D Brush", &_brush.show2DPanel)) {
-            Zone& zone = mgr.active();
+    renderCreatorSectionTabs();
+    ImGui::Separator();
 
-            if (!zone.getBrushSystem()) {
-                zone.initializeBrushSystem();
+    switch (_creatorSection) {
+        case CreatorSection::Paint:
+            renderPaintConsole(zone);
+            break;
+        case CreatorSection::Create3D:
+            render3DConsole();
+            break;
+        case CreatorSection::World:
+            renderWorldConsole();
+            break;
+        case CreatorSection::Assets:
+            renderAssetsConsole(zone);
+            break;
+        case CreatorSection::Relations:
+            renderRelationsConsole(zone);
+            break;
+    }
+
+    renderCreatorStatusBar();
+    ImGui::End();
+
+    if (_showRelationManager) {
+        Rendering::renderRelationManagerWindow(&_showRelationManager, Physics::registry());
+    }
+
+    drawLoadWindow();
+    drawSaveWindow();
+    drawSaveManager();
+}
+
+void Game::renderCreatorSectionTabs() {
+    renderSectionButton(CreatorSection::Paint, "Paint");
+    ImGui::SameLine();
+    renderSectionButton(CreatorSection::Create3D, "3D");
+    ImGui::SameLine();
+    renderSectionButton(CreatorSection::World, "World");
+    ImGui::SameLine();
+    renderSectionButton(CreatorSection::Assets, "Assets");
+    ImGui::SameLine();
+    renderSectionButton(CreatorSection::Relations, "Relations");
+}
+
+void Game::renderSectionButton(CreatorSection section, const char* label) {
+    const bool active = _creatorSection == section;
+    pushActiveButtonStyle(active, ImVec4(0.24f, 0.43f, 0.78f, 1.0f),
+                          ImVec4(0.30f, 0.52f, 0.92f, 1.0f));
+    const bool pressed = ImGui::Button(label, ImVec2(78.0f, 0.0f));
+    popActiveButtonStyle(active);
+    if (pressed) {
+        _creatorSection = section;
+    }
+}
+
+void Game::setPaintTool(Zone& zone, Tool::Type type) {
+    _currentTool = Tool(type);
+    zone.setDesignTool(type);
+    _current3DMode = Mode3D::None;
+
+    if (!zone.getBrushSystem()) {
+        zone.initializeBrushSystem();
+    }
+    configurePaintBrushPreset(zone, type);
+}
+
+void Game::renderPaintToolButton(Zone& zone, Tool::Type type, const char* label) {
+    const bool active = _current3DMode == Mode3D::None && _currentTool.getType() == type;
+    pushActiveButtonStyle(active, ImVec4(0.30f, 0.50f, 0.31f, 1.0f),
+                          ImVec4(0.36f, 0.62f, 0.38f, 1.0f));
+    const bool pressed = ImGui::Button(label, ImVec2(118.0f, 0.0f));
+    popActiveButtonStyle(active);
+    if (pressed) {
+        setPaintTool(zone, type);
+    }
+}
+
+void Game::renderPaintConsole(Zone& zone) {
+    struct PaintToolDef {
+        Tool::Type type;
+        const char* label;
+    };
+
+    static const PaintToolDef drawingTools[] = {
+        {Tool::Type::Brush, "Brush"},
+        {Tool::Type::Pencil, "Pencil"},
+        {Tool::Type::Pen, "Pen"},
+        {Tool::Type::Airbrush, "Airbrush"},
+        {Tool::Type::Chalk, "Chalk"},
+        {Tool::Type::Spray, "Spray"},
+        {Tool::Type::Smudge, "Smudge"},
+        {Tool::Type::Clone, "Clone"}
+    };
+    static const PaintToolDef shapeTools[] = {
+        {Tool::Type::Rectangle, "Rectangle"},
+        {Tool::Type::Ellipse, "Ellipse"},
+        {Tool::Type::Polygon, "Polygon"},
+        {Tool::Type::Line, "Line"},
+        {Tool::Type::Arrow, "Arrow"},
+        {Tool::Type::Star, "Star"},
+        {Tool::Type::Heart, "Heart"},
+        {Tool::Type::CustomShape, "Custom"}
+    };
+    static const PaintToolDef utilityTools[] = {
+        {Tool::Type::Eraser, "Eraser"},
+        {Tool::Type::Delete, "Delete"},
+        {Tool::Type::MagicEraser, "Magic Eraser"},
+        {Tool::Type::Selection, "Select"},
+        {Tool::Type::Lasso, "Lasso"},
+        {Tool::Type::MagicWand, "Wand"},
+        {Tool::Type::Marquee, "Marquee"},
+        {Tool::Type::ColorPicker, "Color"},
+        {Tool::Type::Eyedropper, "Dropper"}
+    };
+    static const PaintToolDef textTools[] = {
+        {Tool::Type::Text, "Text"},
+        {Tool::Type::TextVertical, "Vertical"},
+        {Tool::Type::TextPath, "Path"}
+    };
+    ImGui::TextUnformatted("Tool Belt");
+    for (int i = 0; i < IM_ARRAYSIZE(drawingTools); ++i) {
+        renderPaintToolButton(zone, drawingTools[i].type, drawingTools[i].label);
+        sameLineEvery(i, 3);
+    }
+
+    ImGui::Spacing();
+    if (ImGui::CollapsingHeader("Shapes", ImGuiTreeNodeFlags_DefaultOpen)) {
+        for (int i = 0; i < IM_ARRAYSIZE(shapeTools); ++i) {
+            renderPaintToolButton(zone, shapeTools[i].type, shapeTools[i].label);
+            sameLineEvery(i, 3);
+        }
+    }
+
+    if (ImGui::CollapsingHeader("Utility")) {
+        for (int i = 0; i < IM_ARRAYSIZE(utilityTools); ++i) {
+            renderPaintToolButton(zone, utilityTools[i].type, utilityTools[i].label);
+            sameLineEvery(i, 3);
+        }
+    }
+
+    if (ImGui::CollapsingHeader("Text")) {
+        for (int i = 0; i < IM_ARRAYSIZE(textTools); ++i) {
+            renderPaintToolButton(zone, textTools[i].type, textTools[i].label);
+            sameLineEvery(i, 3);
+        }
+    }
+
+    ImGui::Separator();
+    ImGui::TextUnformatted("Paint Inspector");
+    if (ImGui::ColorEdit3("Color", _currentColor, ImGuiColorEditFlags_NoInputs)) {
+        zone.setDrawColor(_currentColor[0], _currentColor[1], _currentColor[2]);
+    }
+
+    ImGui::Checkbox("Advanced 2D Brush", &_brush.useAdvanced2D);
+    if (_brush.useAdvanced2D) {
+        if (!zone.getBrushSystem()) {
+            zone.initializeBrushSystem();
+        }
+        BrushSystem* brushSystem = zone.getBrushSystem();
+        if (brushSystem) {
+            const char* brushTypes[] = {"Normal", "Airbrush", "Chalk", "Spray", "Smudge", "Clone"};
+            int currentType = static_cast<int>(brushSystem->getBrushType());
+            if (ImGui::Combo("Brush Type", &currentType, brushTypes, IM_ARRAYSIZE(brushTypes))) {
+                zone.setBrushType(static_cast<BrushSystem::BrushType>(currentType));
             }
 
-            BrushSystem* brushSystem = zone.getBrushSystem();
+            float radius = brushSystem->getRadius();
+            if (ImGui::SliderFloat("Radius", &radius, 0.01f, 2.0f, "%.3f")) {
+                zone.setBrushRadius(radius);
+            }
 
-            if (brushSystem) {
-                const char* brushTypes[] = {"Normal", "Airbrush", "Chalk", "Spray", "Smudge", "Clone"};
-                int currentType = static_cast<int>(brushSystem->getBrushType());
-                if (ImGui::Combo("Brush Type", &currentType, brushTypes, 6)) {
-                    zone.setBrushType(static_cast<BrushSystem::BrushType>(currentType));
-                }
+            float opacity = brushSystem->getOpacity();
+            if (ImGui::SliderFloat("Opacity", &opacity, 0.0f, 1.0f, "%.2f")) {
+                zone.setBrushOpacity(opacity);
+            }
 
-                ImGui::Text("Brush System Status: Active");
-                ImGui::Text("Active Layer: %d", brushSystem->getActiveLayer());
-                ImGui::Text("Layer Count: %d", brushSystem->getLayerCount());
+            float flow = brushSystem->getFlow();
+            if (ImGui::SliderFloat("Flow", &flow, 0.0f, 1.0f, "%.2f")) {
+                zone.setBrushFlow(flow);
+            }
 
-                ImGui::Separator();
-                ImGui::Text("Basic Settings:");
-                float radius = brushSystem->getRadius();
-                if (ImGui::SliderFloat("Radius", &radius, 0.01f, 2.0f, "%.3f")) {
-                    zone.setBrushRadius(radius);
-                }
-
-                float opacity = brushSystem->getOpacity();
-                if (ImGui::SliderFloat("Opacity", &opacity, 0.0f, 3.0f, "%.2f")) {
-                    zone.setBrushOpacity(opacity);
-                }
-
-                float flow = brushSystem->getFlow();
-                if (ImGui::SliderFloat("Flow", &flow, 0.0f, 3.0f, "%.2f")) {
-                    zone.setBrushFlow(flow);
-                }
-
-                ImGui::Separator();
-                ImGui::Text("Advanced Dynamics:");
+            if (ImGui::CollapsingHeader("Dynamics")) {
                 float spacing = brushSystem->getSpacing();
                 if (ImGui::SliderFloat("Spacing", &spacing, 0.01f, 2.0f, "%.3f")) {
                     zone.setBrushSpacing(spacing);
@@ -524,900 +316,471 @@ void Game::renderCreatorToolbar() {
                     zone.setBrushStrength(strength);
                 }
 
-                ImGui::Separator();
-                ImGui::Text("Pressure Simulation:");
-                bool usePressure = brushSystem->getUseLayers();
-                if (ImGui::Checkbox("Enable Pressure", &usePressure)) {
-                    zone.setPressureSimulation(usePressure);
+                if (ImGui::Checkbox("Pressure Simulation", &_use2DPressureSimulation)) {
+                    zone.setPressureSimulation(_use2DPressureSimulation);
                 }
-
-                ImGui::Separator();
-                ImGui::Text("Stroke Settings:");
-                bool useInterpolation = true;
-                if (ImGui::Checkbox("Stroke Interpolation", &useInterpolation)) {
-                    zone.setStrokeInterpolation(useInterpolation);
+                float pressureSensitivity = brushSystem->getPressureSensitivity();
+                if (ImGui::SliderFloat("Pressure Sensitivity", &pressureSensitivity, 0.01f, 5.0f, "%.2f")) {
+                    zone.setPressureSensitivity(pressureSensitivity);
                 }
+                bool interpolate = brushSystem->getStrokeInterpolation();
+                if (ImGui::Checkbox("Stroke Interpolation", &interpolate)) {
+                    zone.setStrokeInterpolation(interpolate);
+                }
+            }
 
-                ImGui::Separator();
-                ImGui::Text("Layer System:");
+            if (ImGui::CollapsingHeader("Layers")) {
                 bool useLayers = brushSystem->getUseLayers();
                 if (ImGui::Checkbox("Use Layers", &useLayers)) {
                     zone.setUseLayers(useLayers);
                 }
-
-                if (useLayers) {
-                    int layerCount = brushSystem->getLayerCount();
-                    ImGui::Text("Layers: %d", layerCount);
-
-                    if (ImGui::Button("Add Layer")) {
-                        zone.addLayer();
-                    }
-                    ImGui::SameLine();
-                    if (ImGui::Button("Delete Layer")) {
-                        zone.deleteLayer(brushSystem->getActiveLayer());
-                    }
-
-                    int activeLayer = brushSystem->getActiveLayer();
-                    if (ImGui::SliderInt("Active Layer", &activeLayer, 0, std::max(0, layerCount - 1))) {
-                        zone.setActiveLayer(activeLayer);
-                    }
+                int activeLayer = brushSystem->getActiveLayer();
+                int layerMax = std::max(0, brushSystem->getLayerCount() - 1);
+                if (ImGui::SliderInt("Active Layer", &activeLayer, 0, layerMax)) {
+                    zone.setActiveLayer(activeLayer);
                 }
-
-                if (currentType == 5) { // Clone
-                    ImGui::Separator();
-                    ImGui::Text("Clone Tool:");
-                    bool cloneActive = brushSystem->getCloneActive();
-                    if (ImGui::Checkbox("Clone Active", &cloneActive)) {
-                        zone.setCloneActive(cloneActive);
-                    }
-
-                    if (cloneActive) {
-                        static glm::vec2 cloneOffset(0.0f, 0.0f);
-                        if (ImGui::SliderFloat2("Clone Offset", &cloneOffset.x, -1.0f, 1.0f, "%.2f")) {
-                            zone.setCloneOffset(cloneOffset);
-                        }
-                    }
+                float layerOpacity = brushSystem->getLayerOpacity();
+                if (ImGui::SliderFloat("Layer Opacity", &layerOpacity, 0.0f, 1.0f, "%.2f")) {
+                    zone.setLayerOpacity(layerOpacity);
                 }
-
-                ImGui::Separator();
-                ImGui::Text("History:");
-                if (ImGui::Button("Undo (Ctrl+Z)")) {
-                    zone.undo();
+                const char* blendModes[] = {"Normal", "Multiply", "Screen", "Overlay", "Add", "Subtract"};
+                int blendMode = static_cast<int>(brushSystem->getBlendMode());
+                if (ImGui::Combo("Blend Mode", &blendMode, blendModes, IM_ARRAYSIZE(blendModes))) {
+                    zone.setBlendMode(static_cast<BrushSystem::BlendMode>(blendMode));
+                }
+                if (ImGui::Button("Add Layer")) {
+                    zone.addLayer();
                 }
                 ImGui::SameLine();
-                if (ImGui::Button("Redo (Ctrl+Y)")) {
-                    zone.redo();
-                }
-                ImGui::SameLine();
-                if (ImGui::Button("Clear History")) {
-                    zone.clearHistory();
-                }
-            } else {
-                ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Error: Brush System failed to initialize!");
-                if (ImGui::Button("Retry Initialization")) {
-                    zone.initializeBrushSystem();
+                if (ImGui::Button("Delete Layer")) {
+                    zone.deleteLayer(brushSystem->getActiveLayer());
                 }
             }
         }
-        ImGui::End();
     }
 
-    // ------------------------------------------------------------------
-    // 3D window
-    // ------------------------------------------------------------------
-#ifdef ImGuiConfigFlags_DockingEnable
-    ImGui::SetNextWindowDockID(dockspace_id, ImGuiCond_FirstUseEver);
-#endif
-    if (show3D) {
-        if (ImGui::Begin(u8"\xF0\x9F\x94\xB3 3D", &show3D)) {
-            int modeIdx = static_cast<int>(_current3DMode);
-            const char* modeNames[] = {"Face Fill", "Face Brush", "Shape Generator", "Pottery", "Rotation", "Selection"};
-            if (ImGui::Combo("SubMode", &modeIdx, modeNames, IM_ARRAYSIZE(modeNames))) {
-                _current3DMode = static_cast<Mode3D>(modeIdx);
-            }
-
-            ImGui::Separator();
-            int targetIdx = static_cast<int>(_current3DTarget);
-            const char* targetNames[] = {"World Objects", "Avatar Body Parts"};
-            if (ImGui::Combo("Target", &targetIdx, targetNames, IM_ARRAYSIZE(targetNames))) {
-                _current3DTarget = static_cast<ToolTarget3D>(targetIdx);
-                _selectedObject3D = nullptr;
-            }
-            if (_current3DTarget == ToolTarget3D::AvatarBodyParts && _current3DMode == Mode3D::BrushCreate) {
-                if (_selectedObject3D && dynamic_cast<BodyPart*>(_selectedObject3D)) {
-                    ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f),
-                                       "Adding sub-objects to: %s", _selectedObject3D->getIdentifier().c_str());
-                } else {
-                    ImGui::TextColored(ImVec4(1.0f, 0.7f, 0.0f, 1.0f),
-                                       "Select a body part first (use Selection tool).");
-                }
-            }
-
-            // Advanced Face Paint Options (only in Face Fill mode)
-            if (_current3DMode == Mode3D::FacePaint) {
-                ImGui::Separator();
-                ImGui::TextUnformatted(u8"\xF0\x9F\x8E\xA8 Advanced Face Paint Options");
-
-                if (ImGui::Checkbox("Enable Advanced Face Paint", &_advancedFacePaint.enabled)) {
-                    if (_advancedFacePaint.enabled) {
-                        AdvancedFacePaint::initializeAdvancedPainter();
-                    }
-                }
-
-                if (_advancedFacePaint.enabled) {
-                    ImGui::Indent();
-
-                    // Gradient Options
-                    if (ImGui::CollapsingHeader("Gradient Options", ImGuiTreeNodeFlags_DefaultOpen)) {
-                        AdvancedFacePaint::GradientSettings& gradSettings = _advancedFacePaint.gradient;
-
-                        const char* gradientTypes[] = {"Linear", "Radial", "Angular", "Diamond", "Noise", "Custom"};
-                        int gradTypeIdx = static_cast<int>(gradSettings.type);
-                        if (ImGui::Combo("Gradient Type", &gradTypeIdx, gradientTypes, IM_ARRAYSIZE(gradientTypes))) {
-                            gradSettings.type = static_cast<AdvancedFacePaint::GradientType>(gradTypeIdx);
-                        }
-
-                        ImGui::ColorEdit4("Start Color", &gradSettings.startColor.x);
-                        ImGui::ColorEdit4("End Color", &gradSettings.endColor.x);
-
-                        ImGui::SliderFloat2("Start Point", &gradSettings.startPoint.x, 0.0f, 1.0f, "%.2f");
-                        ImGui::SliderFloat2("End Point", &gradSettings.endPoint.x, 0.0f, 1.0f, "%.2f");
-
-                        ImGui::SliderFloat("Angle", &gradSettings.angle, 0.0f, 360.0f, "%.1f\xC2\xB0");
-
-                        if (gradSettings.type == AdvancedFacePaint::GradientType::Noise) {
-                            ImGui::SliderFloat("Noise Scale", &gradSettings.noiseScale, 0.1f, 10.0f, "%.2f");
-                            ImGui::SliderInt("Noise Octaves", &gradSettings.noiseOctaves, 1, 8);
-                            ImGui::SliderFloat("Noise Persistence", &gradSettings.noisePersistence, 0.1f, 1.0f, "%.2f");
-                            ImGui::SliderFloat("Noise Lacunarity", &gradSettings.noiseLacunarity, 1.0f, 4.0f, "%.2f");
-                        }
-
-                        ImGui::Checkbox("Use Alpha", &gradSettings.useAlpha);
-                        if (gradSettings.useAlpha) {
-                            ImGui::SliderFloat("Alpha Blend", &gradSettings.alphaBlend, 0.0f, 1.0f, "%.2f");
-                        }
-                    }
-
-                    // Smudge Options
-                    if (ImGui::CollapsingHeader("Smudge Options", ImGuiTreeNodeFlags_DefaultOpen)) {
-                        AdvancedFacePaint::SmudgeSettings& smudgeSettings = _advancedFacePaint.smudge;
-
-                        const char* smudgeTypes[] = {"Normal", "Directional", "Radial", "Spiral", "Noise", "Custom"};
-                        int smudgeTypeIdx = static_cast<int>(smudgeSettings.type);
-                        if (ImGui::Combo("Smudge Type", &smudgeTypeIdx, smudgeTypes, IM_ARRAYSIZE(smudgeTypes))) {
-                            smudgeSettings.type = static_cast<AdvancedFacePaint::SmudgeType>(smudgeTypeIdx);
-                        }
-
-                        ImGui::SliderFloat("Strength", &smudgeSettings.strength, 0.0f, 1.0f, "%.2f");
-                        ImGui::SliderFloat("Radius", &smudgeSettings.radius, 0.01f, 1.0f, "%.2f");
-                        ImGui::SliderFloat("Softness", &smudgeSettings.softness, 0.1f, 2.0f, "%.2f");
-                        ImGui::SliderFloat("Pressure", &smudgeSettings.pressure, 0.1f, 2.0f, "%.2f");
-
-                        if (smudgeSettings.type == AdvancedFacePaint::SmudgeType::Directional) {
-                            ImGui::SliderFloat2("Direction", &smudgeSettings.direction.x, -1.0f, 1.0f, "%.2f");
-                            ImGui::SliderFloat("Directional Strength", &smudgeSettings.directionalStrength, 0.0f, 1.0f, "%.2f");
-                        }
-
-                        if (smudgeSettings.type == AdvancedFacePaint::SmudgeType::Spiral) {
-                            ImGui::SliderFloat("Speed", &smudgeSettings.speed, 0.1f, 5.0f, "%.2f");
-                            ImGui::SliderFloat("Turbulence", &smudgeSettings.turbulence, 0.01f, 1.0f, "%.2f");
-                            ImGui::SliderFloat("Spiral Turns", &smudgeSettings.spiralTurns, 0.5f, 5.0f, "%.2f");
-                        }
-
-                        if (smudgeSettings.type == AdvancedFacePaint::SmudgeType::Noise) {
-                            ImGui::SliderFloat("Noise Intensity", &smudgeSettings.noiseIntensity, 0.0f, 1.0f, "%.2f");
-                            ImGui::SliderFloat("Noise Scale", &smudgeSettings.noiseScale, 0.1f, 10.0f, "%.2f");
-                        }
-
-                        ImGui::Checkbox("Use Pressure", &smudgeSettings.usePressure);
-                    }
-
-                    ImGui::Separator();
-                    ImGui::TextUnformatted("Preview & Apply");
-
-                    if (ImGui::Button("Preview Gradient")) {
-                        _advancedFacePaint.panelVisible = true;
-                    }
-                    ImGui::SameLine();
-                    if (ImGui::Button("Preview Smudge")) {
-                        _advancedFacePaint.panelVisible = true;
-                    }
-                    ImGui::SameLine();
-                    if (ImGui::Button("Apply to Selected Face")) {
-                        // Apply current settings to selected face
-                    }
-
-                    ImGui::Unindent();
-                }
-            }
-
-            ImGui::Separator();
-            int primitiveIdx = static_cast<int>(_polyhedron.primitive);
-            const char* primitiveNames[] = {"Cube", "Sphere", "Cylinder", "Cone", "Polyhedron"};
-            if (ImGui::Combo("Shape", &primitiveIdx, primitiveNames, IM_ARRAYSIZE(primitiveNames))) {
-                _polyhedron.primitive = static_cast<Object::GeometryType>(primitiveIdx);
-            }
-
-            // Enhanced Polyhedron Generator (only in Shape Generator mode)
-            if (_polyhedron.primitive == Object::GeometryType::Polyhedron && _current3DMode == Mode3D::BrushCreate) {
-                ImGui::Separator();
-                ImGui::TextUnformatted(u8"\xF0\x9F\x94\xB7 Polyhedron Generator");
-
-                ImGui::TextUnformatted("Regular Polyhedrons:");
-                if (ImGui::Button("Tetrahedron (4)")) { _polyhedron.currentType = 4; }
-                ImGui::SameLine();
-                if (ImGui::Button("Octahedron (8)")) { _polyhedron.currentType = 8; }
-                ImGui::SameLine();
-                if (ImGui::Button("Dodecahedron (12)")) { _polyhedron.currentType = 12; }
-                ImGui::SameLine();
-                if (ImGui::Button("Icosahedron (20)")) { _polyhedron.currentType = 20; }
-
-                ImGui::Separator();
-                ImGui::TextUnformatted("Advanced Options:");
-
-                static int customFaceCount = 4;
-                if (ImGui::SliderInt("Custom Face Count", &customFaceCount, 3, 50)) {
-                    _polyhedron.currentType = customFaceCount;
-                }
-
-                if (ImGui::Button(u8"\xF0\x9F\x8E\xB2 Random Polyhedron")) {
-                    _polyhedron.currentType = 4 + (rand() % 17);
-                }
-                ImGui::SameLine();
-                if (ImGui::Button(u8"\xF0\x9F\x8E\xB2 Random Complex")) {
-                    _polyhedron.currentType = 8 + (rand() % 13);
-                }
-
-                ImGui::Separator();
-                ImGui::TextUnformatted("Quick Presets:");
-                if (ImGui::Button("Simple (4-8)")) { _polyhedron.currentType = 4 + (rand() % 5); }
-                ImGui::SameLine();
-                if (ImGui::Button("Medium (8-12)")) { _polyhedron.currentType = 8 + (rand() % 5); }
-                ImGui::SameLine();
-                if (ImGui::Button("Complex (12-20)")) { _polyhedron.currentType = 12 + (rand() % 9); }
-
-                ImGui::Separator();
-                ImGui::Text("Selected: %d faces", _polyhedron.currentType);
-
-                const char* polyhedronNames[] = {
-                    "Unknown", "Unknown", "Unknown", "Unknown", "Tetrahedron",
-                    "Unknown", "Unknown", "Unknown", "Octahedron", "Unknown",
-                    "Unknown", "Unknown", "Dodecahedron", "Unknown", "Unknown",
-                    "Unknown", "Unknown", "Unknown", "Unknown", "Icosahedron"
-                };
-
-                if (_polyhedron.currentType >= 4 && _polyhedron.currentType <= 20) {
-                    ImGui::Text("Type: %s", polyhedronNames[_polyhedron.currentType]);
-                }
-
-                if (_polyhedron.currentType > 12) {
-                    ImGui::TextColored(ImVec4(1.0f, 0.7f, 0.0f, 1.0f), u8"\xE2\x9A\xA0 Complex polyhedron - may affect performance");
-                }
-
-                // Convex/Concave Polyhedron Controls
-                ImGui::Separator();
-                ImGui::TextUnformatted(u8"\xF0\x9F\x94\xB7 Convex/Concave Variants:");
-
-                static int concaveType = 0;
-                const char* concaveTypes[] = {"Regular", "Concave", "Star", "Crater"};
-                if (ImGui::Combo("Variant", &concaveType, concaveTypes, IM_ARRAYSIZE(concaveTypes))) {
-                    _polyhedron.concaveType = concaveType;
-                }
-
-                if (concaveType == 1) {
-                    static float concavity = 0.3f;
-                    if (ImGui::SliderFloat("Concavity", &concavity, 0.1f, 0.8f, "%.2f")) {
-                        _polyhedron.concavityAmount = concavity;
-                    }
-                } else if (concaveType == 2) {
-                    static float spikeLength = 0.3f;
-                    if (ImGui::SliderFloat("Spike Length", &spikeLength, 0.1f, 1.0f, "%.2f")) {
-                        _polyhedron.spikeLength = spikeLength;
-                    }
-                } else if (concaveType == 3) {
-                    static float craterDepth = 0.2f;
-                    if (ImGui::SliderFloat("Crater Depth", &craterDepth, 0.1f, 0.5f, "%.2f")) {
-                        _polyhedron.craterDepth = craterDepth;
-                    }
-                }
-
-                // Custom polyhedron generation
-                ImGui::Separator();
-                ImGui::TextUnformatted("Custom Polyhedron:");
-                ImGui::Checkbox("Use Custom Polyhedron", &_polyhedron.useCustom);
-
-                if (_polyhedron.useCustom) {
-                    if (ImGui::SliderInt("Vertex Count", &_polyhedron.customVertexCount, 3, 20)) {
-                        _polyhedron.generateCustom();
-                    }
-                    if (ImGui::SliderInt("Face Count", &_polyhedron.customFaceCount, 3, 20)) {
-                        _polyhedron.generateCustom();
-                    }
-
-                    if (ImGui::Button(u8"\xF0\x9F\x94\x84 Regenerate Custom")) {
-                        _polyhedron.generateCustom();
-                    }
-                    ImGui::SameLine();
-                    if (ImGui::Button(u8"\xF0\x9F\x92\xBE Save Custom")) {
-                        ImGui::OpenPopup("Custom Polyhedron Saved");
-                    }
-
-                    ImGui::Text("Custom: %d vertices, %d faces", _polyhedron.customVertexCount, _polyhedron.customFaceCount);
-                }
-
-                // ---- Irregular Polyhedra ----
-                ImGui::Separator();
-                if (ImGui::CollapsingHeader("Irregular Polyhedra")) {
-                    const char* irregularNames[] = {
-                        "None (use Regular)", "Prism", "Antiprism",
-                        "Pyramid", "Bipyramid", "Frustum"
-                    };
-                    if (ImGui::Combo("Irregular Shape", &_polyhedron.irregularType,
-                                     irregularNames, IM_ARRAYSIZE(irregularNames))) {
-                    }
-
-                    if (_polyhedron.irregularType > 0) {
-                        ImGui::SliderInt("Base Sides", &_polyhedron.irregularBaseSides, 3, 20);
-                        ImGui::SliderFloat("Height", &_polyhedron.irregularHeight, 0.1f, 3.0f, "%.2f");
-
-                        if (_polyhedron.irregularType == 5) {
-                            ImGui::SliderFloat("Top Scale", &_polyhedron.frustumTopScale, 0.05f, 0.95f, "%.2f");
-                        }
-
-                        const char* shapeDesc[] = {
-                            "", "Extruded polygon (flat top & bottom, straight sides)",
-                            "Twisted polygon pair (alternating triangles)",
-                            "Polygon base with a pointed apex",
-                            "Double pyramid (diamond shape)",
-                            "Pyramid with its top sliced off"
-                        };
-                        ImGui::TextWrapped("%s", shapeDesc[_polyhedron.irregularType]);
-                    }
-                }
-
-                // ---- Shape Operations (Topological Modifiers) ----
-                ImGui::Separator();
-                if (ImGui::CollapsingHeader("Shape Operations")) {
-                    ImGui::Checkbox("Truncate (slice off vertices)", &_polyhedron.applyTruncation);
-                    if (_polyhedron.applyTruncation) {
-                        ImGui::SliderFloat("Truncation Amount", &_polyhedron.truncationAmount,
-                                           0.05f, 0.45f, "%.2f");
-                        ImGui::TextWrapped("Slices every vertex to create new faces. "
-                                           "A truncated icosahedron is a soccer ball!");
-                    }
-
-                    ImGui::Checkbox("Dual (swap faces & vertices)", &_polyhedron.applyDual);
-                    if (_polyhedron.applyDual) {
-                        ImGui::TextWrapped("Creates the dual polyhedron: faces become "
-                                           "vertices and vertices become faces. "
-                                           "The dual of a cube is an octahedron.");
-                    }
-                }
-
-                // ---- Contour & Angle Analysis ----
-                ImGui::Separator();
-                if (ImGui::CollapsingHeader("Contour & Angle Info")) {
-                    PolyhedronData previewData = buildCurrentPolyhedron();
-
-                    ImGui::TextUnformatted("Contour Types (flat vs round):");
-                    int flatCount = 0, roundCount = 0;
-                    for (auto ct : previewData.contourTypes) {
-                        if (ct == PolyhedronData::ContourType::Flat) flatCount++;
-                        else roundCount++;
-                    }
-                    ImGui::Text("  Flat contours: %d", flatCount);
-                    ImGui::Text("  Round contours: %d", roundCount);
-
-                    ImGui::Separator();
-                    ImGui::TextUnformatted("Topology:");
-                    int V = previewData.getVertexCount();
-                    int F = previewData.getFaceCount();
-                    int E = static_cast<int>(previewData.edgeInfos.size());
-                    ImGui::Text("  Vertices: %d", V);
-                    ImGui::Text("  Edges: %d", E);
-                    ImGui::Text("  Faces: %d", F);
-                    ImGui::Text("  Euler (V-E+F): %d", AngleTools::eulerCharacteristic(V, E, F));
-                    ImGui::Text("  Convex: %s", previewData.isConvex ? "Yes" : "No");
-
-                    if (!previewData.dihedralAngles.empty()) {
-                        ImGui::Separator();
-                        ImGui::TextUnformatted("Dihedral Angles (between adjacent faces):");
-                        float minDA = 999.0f, maxDA = -999.0f, sumDA = 0.0f;
-                        for (const auto& da : previewData.dihedralAngles) {
-                            float deg = da.angleDegrees();
-                            minDA = std::min(minDA, deg);
-                            maxDA = std::max(maxDA, deg);
-                            sumDA += deg;
-                        }
-                        float avgDA = sumDA / static_cast<float>(previewData.dihedralAngles.size());
-                        ImGui::Text("  Min: %.1f deg", minDA);
-                        ImGui::Text("  Max: %.1f deg", maxDA);
-                        ImGui::Text("  Avg: %.1f deg", avgDA);
-                        ImGui::Text("  Count: %d", static_cast<int>(previewData.dihedralAngles.size()));
-                    }
-
-                    if (!previewData.edgeInfos.empty()) {
-                        ImGui::Separator();
-                        ImGui::TextUnformatted("Edge Lengths:");
-                        float minLen = 999.0f, maxLen = 0.0f;
-                        for (const auto& ei : previewData.edgeInfos) {
-                            minLen = std::min(minLen, ei.length);
-                            maxLen = std::max(maxLen, ei.length);
-                        }
-                        ImGui::Text("  Min: %.4f", minLen);
-                        ImGui::Text("  Max: %.4f", maxLen);
-                        bool isRegular = (maxLen - minLen) < 0.001f;
-                        ImGui::Text("  Uniform: %s", isRegular ? "Yes (regular)" : "No (irregular)");
-                    }
-
-                    float totalDeficit = AngleTools::totalAngleDeficit(
-                        previewData.vertices, previewData.faces);
-                    ImGui::Separator();
-                    ImGui::Text("Total angle deficit: %.2f rad (%.1f deg)",
-                                totalDeficit, totalDeficit * 180.0f / static_cast<float>(M_PI));
-                    ImGui::TextWrapped("(Should be ~12.57 rad / 720 deg for any closed "
-                                       "convex polyhedron -- Descartes' theorem)");
-                }
-            } else if (_polyhedron.primitive == Object::GeometryType::Polyhedron) {
-                ImGui::Separator();
-                ImGui::TextUnformatted("Polyhedron Type:");
-                if (ImGui::Button("Tetrahedron")) { _polyhedron.currentType = 4; }
-                ImGui::SameLine();
-                if (ImGui::Button("Octahedron")) { _polyhedron.currentType = 8; }
-                ImGui::SameLine();
-                if (ImGui::Button("Dodecahedron")) { _polyhedron.currentType = 12; }
-                ImGui::SameLine();
-                if (ImGui::Button("Icosahedron")) { _polyhedron.currentType = 20; }
-                ImGui::Text("Selected: %d faces", _polyhedron.currentType);
-            }
-
-            ImGui::SliderFloat("Uniform Size", &_brush.size, 0.1f, 10.0f, "%.2f");
-
-            // Pottery specific controls
-            if (_current3DMode == Mode3D::Pottery) {
-                ImGui::Separator();
-                ImGui::TextUnformatted("Pottery Tool:");
-                bool isChisel = _pottery.currentTool == PotteryTool::Chisel;
-                if (ImGui::RadioButton("Chisel", isChisel)) _pottery.currentTool = PotteryTool::Chisel;
-                ImGui::SameLine();
-                bool isExpand = _pottery.currentTool == PotteryTool::Expand;
-                if (ImGui::RadioButton("Expand", isExpand)) _pottery.currentTool = PotteryTool::Expand;
-                ImGui::SliderFloat("Strength", &_pottery.strength, 0.01f, 2.0f, "%.2f");
-            }
-
-            if (_current3DMode == Mode3D::Rotation) {
-                ImGui::Separator();
-                ImGui::TextUnformatted("Rotation Tool");
-                ImGui::TextWrapped("Click to select, then drag in the viewport. Horizontal drag rotates around Y, vertical drag rotates around X, and holding Shift rotates around Z.");
-
-                const char* axisModeNames[] = {"Free XY", "X", "Y", "Z", "Authoritative Axis"};
-                int axisModeIdx = static_cast<int>(_rotation.axisMode);
-                if (ImGui::Combo("Axis Mode", &axisModeIdx, axisModeNames, IM_ARRAYSIZE(axisModeNames))) {
-                    _rotation.axisMode = static_cast<RotationAxisMode>(axisModeIdx);
-                }
-
-                ImGui::SliderFloat("Sensitivity", &_rotation.sensitivity, 0.05f, 2.0f, "%.2f");
-                ImGui::SliderFloat("Smoothness", &_rotation.smoothness, 1.0f, 20.0f, "%.2f");
-
-                if (_selectedObject3D) {
-                    ImGui::Separator();
-                    ImGui::Text("Selected: %s", _selectedObject3D->getIdentifier().c_str());
-
-                    glm::vec3 center = _selectedObject3D->getCenter();
-                    if (ImGui::DragFloat3("Center", &center.x, 0.01f, -10.0f, 10.0f, "%.2f")) {
-                        _selectedObject3D->setCenter(center);
-                    }
-
-                    glm::vec3 axis = _selectedObject3D->getAuthoritativeAxis();
-                    if (ImGui::DragFloat3("Authoritative Axis", &axis.x, 0.01f, -1.0f, 1.0f, "%.2f")) {
-                        _selectedObject3D->setAuthoritativeAxis(axis);
-                    }
-
-                    glm::vec3 currentRotation = _selectedObject3D->getRotationEulerDegrees();
-                    ImGui::Text("Current Rotation: %.1f  %.1f  %.1f", currentRotation.x, currentRotation.y, currentRotation.z);
-
-                    glm::vec3 targetRotation = _selectedObject3D->getTargetRotationEulerDegrees();
-                    if (ImGui::DragFloat3("Target Rotation", &targetRotation.x, 0.5f, -720.0f, 720.0f, "%.1f deg")) {
-                        _selectedObject3D->setTargetRotationEulerDegrees(targetRotation);
-                    }
-
-                    if (ImGui::Button("Snap To Target")) {
-                        _selectedObject3D->setRotationEulerDegrees(_selectedObject3D->getTargetRotationEulerDegrees());
-                    }
-                    ImGui::SameLine();
-                    if (ImGui::Button("Stop Rotation")) {
-                        _selectedObject3D->setTargetRotationEulerDegrees(_selectedObject3D->getRotationEulerDegrees());
-                    }
-                } else {
-                    ImGui::TextColored(ImVec4(1.0f, 0.7f, 0.0f, 1.0f),
-                                       "No object selected yet. Click an object in the viewport to rotate it.");
-                }
-            }
-
-            // Placement mode controls
-            ImGui::Separator();
-            int placeIdx = static_cast<int>(_placement.mode);
-            const char* placeNames[] = {"In Front", "Manual Distance", "Cursor Snap"};
-            if (ImGui::Combo("Placement", &placeIdx, placeNames, IM_ARRAYSIZE(placeNames))) {
-                _placement.mode = static_cast<BrushPlacementMode>(placeIdx);
-            }
-            if (_placement.mode == BrushPlacementMode::ManualDistance && _placement.prevMode != BrushPlacementMode::ManualDistance) {
-                _placement.anchorPos      = _camera.pos + _camera.front * 2.0f;
-                _placement.anchorRight    = glm::normalize(glm::cross(_camera.front, _camera.up));
-                _placement.anchorUp       = _camera.up;
-                _placement.anchorForward  = _camera.front;
-                _placement.anchorValid    = true;
-            }
-            _placement.prevMode = _placement.mode;
-            if (_placement.mode == BrushPlacementMode::ManualDistance) {
-                ImGui::SliderFloat3("Offset XYZ", &_placement.manualOffset.x, -20.0f, 20.0f, "%.2f");
-                ImGui::TextUnformatted("X = right, Y = up, Z = forward");
-            }
-
-            // Face Brush settings
-            if (_current3DMode == Mode3D::FaceBrush) {
-                ImGui::Separator();
-
-                ImGui::Text("Brush Type:");
-                const char* brushTypeNames[] = {"Normal", "Airbrush", "Chalk", "Spray", "Smudge", "Clone"};
-                int brushTypeIdx = static_cast<int>(_brush.type);
-                if (ImGui::Combo("##BrushType", &brushTypeIdx, brushTypeNames, IM_ARRAYSIZE(brushTypeNames))) {
-                    _brush.type = static_cast<BrushType>(brushTypeIdx);
-                }
-
-                // Brush Presets
-                ImGui::Separator();
-                ImGui::Text("Brush Presets:");
-                if (ImGui::Button("Save Preset")) {
-                    BrushPreset preset;
-                    preset.name = "Custom " + std::to_string(_brush.presets.size() + 1);
-                    preset.type = _brush.type;
-                    preset.radius = _faceBrush.radius;
-                    preset.softness = _faceBrush.softness;
-                    preset.opacity = _brush.opacity;
-                    preset.flow = _brush.flow;
-                    preset.spacing = _brush.spacing;
-                    preset.density = _brush.density;
-                    preset.strength = _brush.strength;
-                    _brush.presets.push_back(preset);
-                }
-                ImGui::SameLine();
-                if (ImGui::Button("Load Preset") && !_brush.presets.empty()) {
-                    if (_brush.currentPreset >= 0 && _brush.currentPreset < static_cast<int>(_brush.presets.size())) {
-                        const BrushPreset& preset = _brush.presets[_brush.currentPreset];
-                        _brush.type = preset.type;
-                        _faceBrush.radius = preset.radius;
-                        _faceBrush.softness = preset.softness;
-                        _brush.opacity = preset.opacity;
-                        _brush.flow = preset.flow;
-                        _brush.spacing = preset.spacing;
-                        _brush.density = preset.density;
-                        _brush.strength = preset.strength;
-                    }
-                }
-
-                if (!_brush.presets.empty()) {
-                    std::vector<const char*> presetNames;
-                    for (const auto& preset : _brush.presets) {
-                        presetNames.push_back(preset.name.c_str());
-                    }
-                    ImGui::Combo("##PresetSelect", &_brush.currentPreset, presetNames.data(), static_cast<int>(presetNames.size()));
-                }
-
-                ImGui::Separator();
-                ImGui::Text("Basic Settings:");
-                ImGui::SliderFloat("Brush Radius", &_faceBrush.radius, 0.01f, 2.0f, "%.2f");
-                ImGui::SliderFloat("Softness", &_faceBrush.softness, 0.0f, 2.0f, "%.2f");
-                ImGui::SliderFloat("Opacity", &_brush.opacity, 0.0f, 1.0f, "%.2f");
-                ImGui::SliderFloat("Flow", &_brush.flow, 0.0f, 1.0f, "%.2f");
-
-                ImGui::Separator();
-                ImGui::Text("Advanced Dynamics:");
-                ImGui::SliderFloat("Spacing", &_brush.spacing, 0.01f, 0.5f, "%.2f");
-                ImGui::SliderFloat("Density", &_brush.density, 0.1f, 1.0f, "%.2f");
-                ImGui::SliderFloat("Strength", &_brush.strength, 0.0f, 1.0f, "%.2f");
-
-                ImGui::Separator();
-                ImGui::Text("Pressure Simulation:");
-                ImGui::Checkbox("Enable Pressure", &_brush.usePressureSimulation);
-                if (_brush.usePressureSimulation) {
-                    ImGui::SliderFloat("Sensitivity", &_brush.pressureSensitivity, 0.1f, 5.0f, "%.2f");
-                    ImGui::SliderFloat("Current Pressure", &_brush.currentPressure, 0.1f, 1.0f, "%.2f");
-                }
-
-                ImGui::Separator();
-                ImGui::Text("Stroke Settings:");
-                ImGui::Checkbox("Stroke Interpolation", &_brush.useStrokeInterpolation);
-                ImGui::Checkbox("Show Brush Cursor", &_brush.showCursor);
-                ImGui::Checkbox("Show Brush Preview", &_brush.showPreview);
-
-                if (_brush.type == BrushType::Clone) {
-                    ImGui::Separator();
-                    ImGui::Text("Clone Tool:");
-                    ImGui::Checkbox("Clone Active", &_clone.active);
-                    if (_clone.active) {
-                        ImGui::SliderFloat2("Clone Offset", &_clone.offset.x, -1.0f, 1.0f, "%.2f");
-                        if (ImGui::Button("Set Source Point")) {
-                            _clone.sourceUV = _brush.cursorPos;
-                        }
-                    }
-                }
-
-                ImGui::Separator();
-                ImGui::Text("Layer System:");
-                ImGui::Checkbox("Use Layers", &_useLayers);
-                if (_useLayers) {
-                    ImGui::SliderInt("Active Layer", &_activeLayer, 0, 10);
-                    ImGui::SliderFloat("Layer Opacity", &_layerOpacity, 0.0f, 1.0f, "%.2f");
-
-                    const char* blendModeNames[] = {"Normal", "Multiply", "Screen", "Overlay", "Add", "Subtract"};
-                    ImGui::Combo("Blend Mode", &_blendMode, blendModeNames, IM_ARRAYSIZE(blendModeNames));
-
-                    if (ImGui::Button("Add Layer")) {
-                        const auto& objects = mgr.active().world().getOwnedObjects();
-                        for (const auto& up : objects) {
-                            Object* obj = up.get();
-                            obj->addTextureLayer(0);
-                            break;
-                        }
-                    }
-                    ImGui::SameLine();
-                    if (ImGui::Button("Delete Layer")) {
-                        const auto& objects = mgr.active().world().getOwnedObjects();
-                        for (const auto& up : objects) {
-                            Object* obj = up.get();
-                            obj->deleteTextureLayer(0, _activeLayer);
-                            break;
-                        }
-                    }
-                }
-
-                ImGui::Separator();
-                ImGui::Text("UV Controls:");
-                ImGui::SliderFloat("U Offset", &_faceBrush.uOffset, -2.0f, 2.0f, "%.2f");
-                ImGui::SliderFloat("V Offset", &_faceBrush.vOffset, -2.0f, 2.0f, "%.2f");
-                const char* axisNames[] = {"X","Y","Z"};
-                ImGui::Combo("Axis 1", &_faceBrush.uAxis, axisNames, 3);
-                ImGui::Combo("Axis 2", &_faceBrush.vAxis, axisNames, 3);
-                if(_faceBrush.vAxis == _faceBrush.uAxis) {
-                    ImGui::TextColored(ImVec4(1,0,0,1), "Axis 1 and Axis 2 must differ!");
-                }
-                ImGui::Checkbox("Invert Axis 1", &_faceBrush.invertU);
-                ImGui::SameLine();
-                ImGui::Checkbox("Invert Axis 2", &_faceBrush.invertV);
-
-                ImGui::Separator();
-                ImGui::Text("History:");
-                if (ImGui::Button("Undo (Ctrl+Z)")) {
-                    const auto& objects = mgr.active().world().getOwnedObjects();
-                    for (const auto& up : objects) {
-                        Object* obj = up.get();
-                        obj->undoStroke(0);
-                        break;
-                    }
-                }
-                ImGui::SameLine();
-                if (ImGui::Button("Redo (Ctrl+Y)")) {
-                    // Redo placeholder
-                }
-                ImGui::SameLine();
-                if (ImGui::Button("Clear History")) {
-                    const auto& objects = mgr.active().world().getOwnedObjects();
-                    for (const auto& up : objects) {
-                        Object* obj = up.get();
-                        obj->clearStrokeHistory(0);
-                        break;
-                    }
+    ImGui::Separator();
+    if (ImGui::CollapsingHeader("Design Layers", ImGuiTreeNodeFlags_DefaultOpen)) {
+        int activeDesignLayer = zone.getActiveDesignLayer();
+        int designLayerMax = std::max(0, zone.getDesignLayerCount() - 1);
+        if (ImGui::SliderInt("Active Design Layer", &activeDesignLayer, 0, designLayerMax)) {
+            zone.setActiveDesignLayer(activeDesignLayer);
+        }
+        float designOpacity = zone.getDesignLayerOpacity(activeDesignLayer);
+        if (ImGui::SliderFloat("Design Opacity", &designOpacity, 0.0f, 1.0f, "%.2f")) {
+            zone.setDesignLayerOpacity(activeDesignLayer, designOpacity);
+        }
+        if (ImGui::Button("Add Design Layer")) {
+            zone.addDesignLayer();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Remove Design Layer")) {
+            zone.removeDesignLayer(activeDesignLayer);
+        }
+    }
+
+    ImGui::Separator();
+    if (ImGui::Button("Undo")) {
+        zone.undo();
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Redo")) {
+        zone.redo();
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Clear History")) {
+        zone.clearHistory();
+    }
+}
+
+void Game::set3DMode(Mode3D mode) {
+    _current3DMode = mode;
+    if (mode == Mode3D::FacePaint) {
+        _currentTool = Tool(Tool::Type::FacePaint);
+    } else if (mode == Mode3D::FaceBrush) {
+        _currentTool = Tool(Tool::Type::FaceBrush);
+    }
+}
+
+void Game::render3DModeButton(Mode3D mode, const char* label) {
+    const bool active = _current3DMode == mode;
+    pushActiveButtonStyle(active, ImVec4(0.30f, 0.50f, 0.31f, 1.0f),
+                          ImVec4(0.36f, 0.62f, 0.38f, 1.0f));
+    const bool pressed = ImGui::Button(label, ImVec2(118.0f, 0.0f));
+    popActiveButtonStyle(active);
+    if (pressed) {
+        set3DMode(mode);
+    }
+}
+
+void Game::renderPrimitiveButton(Object::GeometryType primitive, const char* label) {
+    const bool active = _polyhedron.primitive == primitive;
+    pushActiveButtonStyle(active, ImVec4(0.30f, 0.50f, 0.31f, 1.0f),
+                          ImVec4(0.36f, 0.62f, 0.38f, 1.0f));
+    const bool pressed = ImGui::Button(label, ImVec2(118.0f, 0.0f));
+    popActiveButtonStyle(active);
+    if (pressed) {
+        _polyhedron.primitive = primitive;
+    }
+}
+
+void Game::render3DConsole() {
+    struct Mode3DDef {
+        Mode3D mode;
+        const char* label;
+    };
+
+    struct PrimitiveDef {
+        Object::GeometryType primitive;
+        const char* label;
+    };
+
+    static const Mode3DDef modeDefs[] = {
+        {Mode3D::BrushCreate, "Create"},
+        {Mode3D::Selection, "Select"},
+        {Mode3D::FaceBrush, "Face Brush"},
+        {Mode3D::FacePaint, "Face Fill"},
+        {Mode3D::Pottery, "Pottery"},
+        {Mode3D::Rotation, "Rotate"}
+    };
+    static const PrimitiveDef primitiveDefs[] = {
+        {Object::GeometryType::Cube, "Cube"},
+        {Object::GeometryType::Sphere, "Sphere"},
+        {Object::GeometryType::Cylinder, "Cylinder"},
+        {Object::GeometryType::Cone, "Cone"},
+        {Object::GeometryType::Polyhedron, "Polyhedron"}
+    };
+
+    ImGui::TextUnformatted("Mode");
+    for (int i = 0; i < IM_ARRAYSIZE(modeDefs); ++i) {
+        render3DModeButton(modeDefs[i].mode, modeDefs[i].label);
+        sameLineEvery(i, 3);
+    }
+
+    ImGui::Separator();
+    ImGui::TextUnformatted("Target");
+    int targetIdx = static_cast<int>(_current3DTarget);
+    if (ImGui::RadioButton("World Objects", targetIdx == static_cast<int>(ToolTarget3D::WorldObjects))) {
+        _current3DTarget = ToolTarget3D::WorldObjects;
+        _selectedObject3D = nullptr;
+    }
+    ImGui::SameLine();
+    if (ImGui::RadioButton("Avatar Parts", targetIdx == static_cast<int>(ToolTarget3D::AvatarBodyParts))) {
+        _current3DTarget = ToolTarget3D::AvatarBodyParts;
+        _selectedObject3D = nullptr;
+    }
+
+    ImGui::Separator();
+    ImGui::TextUnformatted("Shape");
+    for (int i = 0; i < IM_ARRAYSIZE(primitiveDefs); ++i) {
+        renderPrimitiveButton(primitiveDefs[i].primitive, primitiveDefs[i].label);
+        sameLineEvery(i, 3);
+    }
+
+    ImGui::SliderFloat("Uniform Size", &_brush.size, 0.1f, 10.0f, "%.2f");
+    ImGui::SliderFloat3("Scale", &_brush.scale.x, 0.1f, 8.0f, "%.2f");
+    ImGui::SliderFloat3("Rotation", &_brush.rotation.x, -180.0f, 180.0f, "%.1f");
+    ImGui::Checkbox("Grid Snap", &_brush.gridSnap);
+    if (_brush.gridSnap) {
+        ImGui::SliderFloat("Grid Size", &_brush.gridSize, 0.1f, 5.0f, "%.2f");
+    }
+
+    renderPlacementInspector();
+
+    if (_polyhedron.primitive == Object::GeometryType::Polyhedron) {
+        ImGui::Separator();
+        ImGui::TextUnformatted("Polyhedron");
+        if (ImGui::Button("Tetrahedron")) {
+            _polyhedron.currentType = 4;
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Octahedron")) {
+            _polyhedron.currentType = 8;
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Dodecahedron")) {
+            _polyhedron.currentType = 12;
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Icosahedron")) {
+            _polyhedron.currentType = 20;
+        }
+        ImGui::SliderInt("Faces", &_polyhedron.currentType, 4, 50);
+
+        const char* concaveTypes[] = {"Regular", "Concave", "Star", "Crater"};
+        ImGui::Combo("Variant", &_polyhedron.concaveType, concaveTypes, IM_ARRAYSIZE(concaveTypes));
+        if (_polyhedron.concaveType == 1) {
+            ImGui::SliderFloat("Concavity", &_polyhedron.concavityAmount, 0.1f, 0.8f, "%.2f");
+        } else if (_polyhedron.concaveType == 2) {
+            ImGui::SliderFloat("Spike Length", &_polyhedron.spikeLength, 0.1f, 1.0f, "%.2f");
+        } else if (_polyhedron.concaveType == 3) {
+            ImGui::SliderFloat("Crater Depth", &_polyhedron.craterDepth, 0.1f, 0.5f, "%.2f");
+        }
+
+        if (ImGui::CollapsingHeader("Custom Polyhedron")) {
+            ImGui::Checkbox("Use Custom", &_polyhedron.useCustom);
+            if (_polyhedron.useCustom) {
+                bool changed = false;
+                changed |= ImGui::SliderInt("Vertices", &_polyhedron.customVertexCount, 3, 20);
+                changed |= ImGui::SliderInt("Custom Faces", &_polyhedron.customFaceCount, 3, 20);
+                if (changed || ImGui::Button("Regenerate")) {
+                    _polyhedron.generateCustom();
                 }
             }
         }
-        ImGui::End();
     }
 
-    // ------------------------------------------------------------------
-    // World window
-    // ------------------------------------------------------------------
-#ifdef ImGuiConfigFlags_DockingEnable
-    ImGui::SetNextWindowDockID(dockspace_id, ImGuiCond_FirstUseEver);
-#endif
-    if (showWorld) {
-        if (ImGui::Begin(u8"\xF0\x9F\x8C\x8D World", &showWorld)) {
-            _world.renderModeUI();
+    if (_current3DMode == Mode3D::FaceBrush) {
+        ImGui::Separator();
+        ImGui::TextUnformatted("Face Brush");
+        const char* brushTypeNames[] = {"Normal", "Airbrush", "Chalk", "Spray", "Smudge", "Clone"};
+        int brushTypeIdx = static_cast<int>(_brush.type);
+        if (ImGui::Combo("Brush Type##3d", &brushTypeIdx, brushTypeNames, IM_ARRAYSIZE(brushTypeNames))) {
+            _brush.type = static_cast<BrushType>(brushTypeIdx);
         }
-        ImGui::End();
-    }
+        ImGui::SliderFloat("Brush Radius", &_faceBrush.radius, 0.01f, 2.0f, "%.2f");
+        ImGui::SliderFloat("Softness", &_faceBrush.softness, 0.0f, 2.0f, "%.2f");
+        ImGui::SliderFloat("Opacity", &_brush.opacity, 0.0f, 1.0f, "%.2f");
+        ImGui::SliderFloat("Flow", &_brush.flow, 0.0f, 1.0f, "%.2f");
+        ImGui::Checkbox("Stroke Interpolation", &_brush.useStrokeInterpolation);
+        ImGui::Checkbox("Show Brush Cursor", &_brush.showCursor);
+        ImGui::Checkbox("Show Preview", &_brush.showPreview);
 
-    // ------------------------------------------------------------------
-    // Cursor Tools window
-    // ------------------------------------------------------------------
-#ifdef ImGuiConfigFlags_DockingEnable
-    ImGui::SetNextWindowDockID(dockspace_id, ImGuiCond_FirstUseEver);
-#endif
-    if (showCursor) {
-        bool open = true;
-        _cursorTools.renderUI(open);
-        if (!open) showCursor = false;
-    }
-
-    // ------------------------------------------------------------------
-    // Assets window
-    // ------------------------------------------------------------------
-#ifdef ImGuiConfigFlags_DockingEnable
-    ImGui::SetNextWindowDockID(dockspace_id, ImGuiCond_FirstUseEver);
-#endif
-    if (showAssets) {
-        if (ImGui::Begin(u8"\xF0\x9F\x92\xBE Assets", &showAssets)) {
-            if (ImGui::Button(u8"\xF0\x9F\x92\xBE Quick Save")) {
-                saveStateWithLog();
-            }
+        if (ImGui::CollapsingHeader("UV Mapping")) {
+            ImGui::SliderFloat("U Offset", &_faceBrush.uOffset, -2.0f, 2.0f, "%.2f");
+            ImGui::SliderFloat("V Offset", &_faceBrush.vOffset, -2.0f, 2.0f, "%.2f");
+            const char* axisNames[] = {"X", "Y", "Z"};
+            ImGui::Combo("Axis 1", &_faceBrush.uAxis, axisNames, IM_ARRAYSIZE(axisNames));
+            ImGui::Combo("Axis 2", &_faceBrush.vAxis, axisNames, IM_ARRAYSIZE(axisNames));
+            ImGui::Checkbox("Invert Axis 1", &_faceBrush.invertU);
             ImGui::SameLine();
-            if (ImGui::Button(u8"\xF0\x9F\x92\xBE Save As...")) {
-                _saveLoad.showSaveWindow = true;
-            }
-            ImGui::SameLine();
-            if (ImGui::Button(u8"\xF0\x9F\x93\x82 Load")) {
-                updateSaveFiles();
-                _saveLoad.showLoadWindow = true;
-            }
-            ImGui::SameLine();
-            if (ImGui::Button(u8"\xF0\x9F\x93\x81 Save Manager")) {
-                _saveLoad.showManager = true;
+            ImGui::Checkbox("Invert Axis 2", &_faceBrush.invertV);
+        }
+    }
+
+    if (_current3DMode == Mode3D::FacePaint) {
+        ImGui::Separator();
+        ImGui::Checkbox("Advanced Face Paint", &_advancedFacePaint.enabled);
+        if (_advancedFacePaint.enabled) {
+            AdvancedFacePaint::initializeAdvancedPainter();
+            ImGui::ColorEdit4("Gradient Start", &_advancedFacePaint.gradient.startColor.x);
+            ImGui::ColorEdit4("Gradient End", &_advancedFacePaint.gradient.endColor.x);
+            ImGui::SliderFloat("Gradient Angle", &_advancedFacePaint.gradient.angle, 0.0f, 360.0f, "%.1f");
+            ImGui::SliderFloat("Smudge Strength", &_advancedFacePaint.smudge.strength, 0.0f, 1.0f, "%.2f");
+            ImGui::SliderFloat("Smudge Radius", &_advancedFacePaint.smudge.radius, 0.01f, 1.0f, "%.2f");
+        }
+    }
+
+    if (_current3DMode == Mode3D::Pottery) {
+        ImGui::Separator();
+        bool chisel = _pottery.currentTool == PotteryTool::Chisel;
+        if (ImGui::RadioButton("Chisel", chisel)) {
+            _pottery.currentTool = PotteryTool::Chisel;
+        }
+        ImGui::SameLine();
+        if (ImGui::RadioButton("Expand", !chisel)) {
+            _pottery.currentTool = PotteryTool::Expand;
+        }
+        ImGui::SliderFloat("Strength", &_pottery.strength, 0.01f, 2.0f, "%.2f");
+    }
+
+    if (_current3DMode == Mode3D::Rotation) {
+        ImGui::Separator();
+        const char* axisModeNames[] = {"Free XY", "X", "Y", "Z", "Authoritative Axis"};
+        int axisModeIdx = static_cast<int>(_rotation.axisMode);
+        if (ImGui::Combo("Axis Mode", &axisModeIdx, axisModeNames, IM_ARRAYSIZE(axisModeNames))) {
+            _rotation.axisMode = static_cast<RotationAxisMode>(axisModeIdx);
+        }
+        ImGui::SliderFloat("Sensitivity", &_rotation.sensitivity, 0.05f, 2.0f, "%.2f");
+        ImGui::SliderFloat("Smoothness", &_rotation.smoothness, 1.0f, 20.0f, "%.2f");
+    }
+
+    renderSelectionInspector();
+}
+
+void Game::renderPlacementInspector() {
+    ImGui::Separator();
+    int placeIdx = static_cast<int>(_placement.mode);
+    const char* placeNames[] = {"In Front", "Manual Distance", "Cursor Snap"};
+    if (ImGui::Combo("Placement", &placeIdx, placeNames, IM_ARRAYSIZE(placeNames))) {
+        _placement.mode = static_cast<BrushPlacementMode>(placeIdx);
+    }
+    if (_placement.mode == BrushPlacementMode::ManualDistance &&
+        _placement.prevMode != BrushPlacementMode::ManualDistance) {
+        _placement.anchorPos = _camera.pos + _camera.front * 2.0f;
+        _placement.anchorRight = glm::normalize(glm::cross(_camera.front, _camera.up));
+        _placement.anchorUp = _camera.up;
+        _placement.anchorForward = _camera.front;
+        _placement.anchorValid = true;
+    }
+    _placement.prevMode = _placement.mode;
+    if (_placement.mode == BrushPlacementMode::ManualDistance) {
+        ImGui::SliderFloat3("Offset", &_placement.manualOffset.x, -20.0f, 20.0f, "%.2f");
+    }
+}
+
+void Game::renderSelectionInspector() {
+    ImGui::Separator();
+    ImGui::TextUnformatted("Selection");
+    if (_selectedObject3D) {
+        ImGui::TextWrapped("%s", _selectedObject3D->getIdentifier().c_str());
+        glm::vec3 center = _selectedObject3D->getCenter();
+        if (ImGui::DragFloat3("Center", &center.x, 0.01f, -100.0f, 100.0f, "%.2f")) {
+            _selectedObject3D->setCenter(center);
+        }
+        glm::vec3 targetRotation = _selectedObject3D->getTargetRotationEulerDegrees();
+        if (ImGui::DragFloat3("Target Rotation", &targetRotation.x, 0.5f, -720.0f, 720.0f, "%.1f")) {
+            _selectedObject3D->setTargetRotationEulerDegrees(targetRotation);
+        }
+        if (ImGui::Button("Snap Rotation")) {
+            _selectedObject3D->setRotationEulerDegrees(_selectedObject3D->getTargetRotationEulerDegrees());
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Clear Selection")) {
+            _selectedObject3D = nullptr;
+        }
+    } else {
+        ImGui::TextDisabled("No object selected.");
+    }
+}
+
+void Game::renderWorldConsole() {
+    _world.renderModeUI();
+
+    ImGui::Separator();
+    ImGui::TextUnformatted("Cursor Picking");
+    if (ImGui::Button("Open Cursor Tools")) {
+        _cursorToolsOpen = true;
+    }
+    if (_cursorToolsOpen) {
+        _cursorTools.renderUI(_cursorToolsOpen);
+    }
+}
+
+void Game::renderAssetsConsole(Zone& zone) {
+    if (ImGui::Button("Quick Save")) {
+        saveStateWithLog();
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Save As")) {
+        _saveLoad.showSaveWindow = true;
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Load")) {
+        updateSaveFiles();
+        _saveLoad.showLoadWindow = true;
+    }
+    if (ImGui::Button("Save Manager")) {
+        _saveLoad.showManager = true;
+    }
+
+    ImGui::Separator();
+    ImGui::Text("Zone: %s", zone.name().c_str());
+    ImGui::Text("Objects: %d", static_cast<int>(zone.world().getOwnedObjects().size()));
+    ImGui::Text("Tool: %s", _currentTool.getTypeName().c_str());
+}
+
+void Game::renderRelationsConsole(Zone& zone) {
+    const auto& objs = zone.world().getOwnedObjects();
+
+    ImGui::TextUnformatted("Object Bonds");
+    static int objAIdx = 0;
+    static int objBIdx = 1;
+
+    std::vector<std::string> labels;
+    labels.reserve(objs.size());
+    for (size_t i = 0; i < objs.size(); ++i) {
+        std::string label = "Obj " + std::to_string(i);
+        if (objs[i]) {
+            label += " - " + objs[i]->getIdentifier();
+        }
+        labels.push_back(label);
+    }
+
+    std::vector<const char*> labelPtrs;
+    labelPtrs.reserve(labels.size());
+    for (const auto& label : labels) {
+        labelPtrs.push_back(label.c_str());
+    }
+
+    if (!labelPtrs.empty()) {
+        objAIdx = std::clamp(objAIdx, 0, static_cast<int>(labelPtrs.size()) - 1);
+        objBIdx = std::clamp(objBIdx, 0, static_cast<int>(labelPtrs.size()) - 1);
+        ImGui::Combo("Object A", &objAIdx, labelPtrs.data(), static_cast<int>(labelPtrs.size()));
+        ImGui::Combo("Object B", &objBIdx, labelPtrs.data(), static_cast<int>(labelPtrs.size()));
+        if (ImGui::Button("Create Bond") && objAIdx != objBIdx) {
+            Physics::addBond(objs[objAIdx].get(), objs[objBIdx].get());
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Create Attachment") && objAIdx != objBIdx) {
+            Object* parent = objs[objAIdx].get();
+            Object* child = objs[objBIdx].get();
+            if (parent && child) {
+                zone.syncFormationMembers({parent, child});
+                auto relation = std::make_shared<Relation>("attachment", *parent, *child, true, 1.0f);
+                relation->attachment.enabled = true;
+                relation->attachment.localOffset = glm::inverse(parent->getTransform()) * child->getTransform();
+                relation->attachment.parentAnchor = parent->getCenter();
+                relation->attachment.childAnchor = child->getCenter();
+                zone.formation().addRelation(relation);
             }
         }
-        ImGui::End();
+    } else {
+        ImGui::TextDisabled("No objects available.");
     }
 
-    // ------------------------------------------------------------------
-    // Bonds window
-    // ------------------------------------------------------------------
-#ifdef ImGuiConfigFlags_DockingEnable
-    ImGui::SetNextWindowDockID(dockspace_id, ImGuiCond_FirstUseEver);
-#endif
-    if (showBonds) {
-        if (ImGui::Begin(u8"\xF0\x9F\x94\x97 Bonds", &showBonds)) {
-            auto& zoneWorld = mgr.active().world();
-            const auto& objs = zoneWorld.getOwnedObjects();
-
-            static int objAIdx = 0;
-            static int objBIdx = 1;
-
-            std::vector<std::string> labels;
-            labels.reserve(objs.size());
-            for (size_t i = 0; i < objs.size(); ++i) {
-                char buf[32];
-                snprintf(buf, sizeof(buf), "Obj %zu", i);
-                labels.emplace_back(buf);
-            }
-            std::vector<const char*> cstrs;
-            for (auto& s : labels) cstrs.push_back(s.c_str());
-
-            if (!labels.empty()) {
-                ImGui::Combo("Object A", &objAIdx, cstrs.data(), static_cast<int>(labels.size()));
-                ImGui::Combo("Object B", &objBIdx, cstrs.data(), static_cast<int>(labels.size()));
-                if (ImGui::Button("Create Bond") && objAIdx != objBIdx && objAIdx < static_cast<int>(labels.size()) && objBIdx < static_cast<int>(labels.size())) {
-                    Physics::addBond(objs[objAIdx].get(), objs[objBIdx].get());
-                }
-                ImGui::SameLine();
-                if (ImGui::Button("Create Attachment") && objAIdx != objBIdx && objAIdx < static_cast<int>(labels.size()) && objBIdx < static_cast<int>(labels.size())) {
-                    Object* parent = objs[objAIdx].get();
-                    Object* child = objs[objBIdx].get();
-                    if (parent && child) {
-                        mgr.active().syncFormationMembers({parent, child});
-                        auto relation = std::make_shared<Relation>("attachment", *parent, *child, true, 1.0f);
-                        relation->attachment.enabled = true;
-                        relation->attachment.localOffset = glm::inverse(parent->getTransform()) * child->getTransform();
-                        relation->attachment.parentAnchor = parent->getCenter();
-                        relation->attachment.childAnchor = child->getCenter();
-                        mgr.active().formation().addRelation(relation);
-                    }
-                }
-            } else {
-                ImGui::TextUnformatted("No objects available.");
-            }
-
-            ImGui::Separator();
-
-            ImGui::Text("Auto Bond Rules (shape pairs):");
-            static int shapeAIdx = 0;
-            static int shapeBIdx = 1;
-            const char* shapeNames[] = {"Cube", "Sphere", "Cylinder", "Cone"};
-            ImGui::Combo("Shape A", &shapeAIdx, shapeNames, IM_ARRAYSIZE(shapeNames));
-            ImGui::Combo("Shape B", &shapeBIdx, shapeNames, IM_ARRAYSIZE(shapeNames));
-
-            bool enabled = Physics::getAutoBond(static_cast<Object::GeometryType>(shapeAIdx), static_cast<Object::GeometryType>(shapeBIdx));
-            if (ImGui::Checkbox("Bonded##Enabled", &enabled)) {
-                Physics::setAutoBond(static_cast<Object::GeometryType>(shapeAIdx), static_cast<Object::GeometryType>(shapeBIdx), enabled);
-            }
-
-            ImGui::Separator();
-
-            ImGui::Text("Existing Bonds:");
-            const auto& bonds = Physics::getBonds();
-
-            if (bonds.empty()) {
-                ImGui::TextUnformatted("<none>");
-            } else {
-                static int selectedBond = -1;
-                if (ImGui::BeginListBox("##BondList", ImVec2(-FLT_MIN, 120))) {
-                    for (int i = 0; i < static_cast<int>(bonds.size()); ++i) {
-                        int idxA = -1, idxB = -1;
-                        for (size_t j = 0; j < objs.size(); ++j) {
-                            if (objs[j].get() == bonds[i].a) idxA = static_cast<int>(j);
-                            if (objs[j].get() == bonds[i].b) idxB = static_cast<int>(j);
-                        }
-                        char label[64];
-                        snprintf(label, sizeof(label), "%d: Obj %d <-> Obj %d", i, idxA, idxB);
-                        if (ImGui::Selectable(label, selectedBond == i)) {
-                            selectedBond = i;
-                        }
-                    }
-                    ImGui::EndListBox();
-                }
-
-                if (selectedBond >= 0 && selectedBond < static_cast<int>(bonds.size())) {
-                    auto& bond = bonds[selectedBond];
-                    float restLen = bond.restLength;
-                    float strength = bond.strength;
-                    if (ImGui::DragFloat("Rest Length", &restLen, 0.05f, 0.0f, 10.0f, "%.2f")) {
-                        Physics::setBondParams(bond.a, bond.b, restLen, strength);
-                    }
-                    if (ImGui::DragFloat("Strength", &strength, 0.5f, 0.0f, 100.0f, "%.1f")) {
-                        Physics::setBondParams(bond.a, bond.b, restLen, strength);
-                    }
-                    if (ImGui::Button("Remove Bond")) {
-                        Physics::removeBond(bond.a, bond.b);
-                        selectedBond = -1;
-                    }
-                }
-            }
-
-            ImGui::Separator();
-            ImGui::Text("Attachment Relations:");
-            const auto attachments = mgr.active().formation().relations().getRelationsOfType("attachment");
-            if (attachments.empty()) {
-                ImGui::TextUnformatted("<none>");
-            } else {
-                static int selectedAttachment = -1;
-                if (ImGui::BeginListBox("##AttachmentList", ImVec2(-FLT_MIN, 120))) {
-                    for (int i = 0; i < static_cast<int>(attachments.size()); ++i) {
-                        if (!attachments[i]) continue;
-                        char label[256];
-                        std::snprintf(label, sizeof(label), "%d: %s -> %s", i,
-                                      attachments[i]->entityA.c_str(),
-                                      attachments[i]->entityB.c_str());
-                        if (ImGui::Selectable(label, selectedAttachment == i)) {
-                            selectedAttachment = i;
-                        }
-                    }
-                    ImGui::EndListBox();
-                }
-
-                if (selectedAttachment >= 0 && selectedAttachment < static_cast<int>(attachments.size()) && attachments[selectedAttachment]) {
-                    auto rel = attachments[selectedAttachment];
-                    if (ImGui::Button("Remove Attachment")) {
-                        mgr.active().formation().removeRelation(rel);
-                        selectedAttachment = -1;
-                    }
-                }
+    ImGui::Separator();
+    const auto& bonds = Physics::getBonds();
+    ImGui::Text("Bonds: %d", static_cast<int>(bonds.size()));
+    static int selectedBond = -1;
+    if (ImGui::BeginListBox("##BondList", ImVec2(-1.0f, 120.0f))) {
+        for (int i = 0; i < static_cast<int>(bonds.size()); ++i) {
+            char label[96];
+            std::snprintf(label, sizeof(label), "Bond %d", i);
+            if (ImGui::Selectable(label, selectedBond == i)) {
+                selectedBond = i;
             }
         }
-        ImGui::End();
+        ImGui::EndListBox();
     }
 
-    // ------------------------------------------------------------------
-    // Relation Manager window
-    // ------------------------------------------------------------------
-#ifdef ImGuiConfigFlags_DockingEnable
-    ImGui::SetNextWindowDockID(dockspace_id, ImGuiCond_FirstUseEver);
-#endif
-    if (showRelations) {
-        Rendering::renderRelationManagerWindow(&showRelations, Physics::registry());
+    if (selectedBond >= 0 && selectedBond < static_cast<int>(bonds.size())) {
+        const auto& bond = bonds[selectedBond];
+        float restLen = bond.restLength;
+        float strength = bond.strength;
+        if (ImGui::DragFloat("Rest Length", &restLen, 0.05f, 0.0f, 10.0f, "%.2f")) {
+            Physics::setBondParams(bond.a, bond.b, restLen, strength);
+        }
+        if (ImGui::DragFloat("Strength", &strength, 0.5f, 0.0f, 100.0f, "%.1f")) {
+            Physics::setBondParams(bond.a, bond.b, restLen, strength);
+        }
+        if (ImGui::Button("Remove Bond")) {
+            Physics::removeBond(bond.a, bond.b);
+            selectedBond = -1;
+        }
     }
 
-    // Show save/load dialogs if requested
-    drawLoadWindow();
-    drawSaveWindow();
-    drawSaveManager();
+    ImGui::Separator();
+    if (ImGui::Button("Open Relation Manager")) {
+        _showRelationManager = true;
+    }
+}
+
+void Game::renderCreatorStatusBar() {
+    ImGui::Separator();
+    const char* modeLabel = "2D";
+    if (_current3DMode == Mode3D::BrushCreate) modeLabel = "Create";
+    if (_current3DMode == Mode3D::Selection) modeLabel = "Select";
+    if (_current3DMode == Mode3D::FaceBrush) modeLabel = "Face Brush";
+    if (_current3DMode == Mode3D::FacePaint) modeLabel = "Face Fill";
+    if (_current3DMode == Mode3D::Pottery) modeLabel = "Pottery";
+    if (_current3DMode == Mode3D::Rotation) modeLabel = "Rotate";
+
+    ImGui::Text("Mode: %s", modeLabel);
+    ImGui::SameLine();
+    ImGui::Text("Tool: %s", _currentTool.getTypeName().c_str());
+    ImGui::SameLine();
+    ImGui::Text("Physics: %s", _world.isPhysicsEnabled() ? "On" : "Off");
 }
 
 } // namespace Core

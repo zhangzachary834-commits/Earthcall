@@ -3,6 +3,70 @@
 #include "Tool.hpp"
 #include "Core/Game.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
+#include "Rendering/BrushSystem.hpp"
+#include <string>
+
+namespace {
+
+void activateDesignTool(Zone& zone, Tool::Type type) {
+    zone.setDesignTool(type);
+    if (!zone.getBrushSystem()) {
+        zone.initializeBrushSystem();
+    }
+
+    switch (type) {
+        case Tool::Type::Airbrush:
+            zone.setBrushType(BrushSystem::BrushType::Airbrush);
+            break;
+        case Tool::Type::Pencil:
+            zone.setBrushType(BrushSystem::BrushType::Normal);
+            zone.setBrushRadius(0.035f);
+            zone.setBrushOpacity(1.0f);
+            zone.setBrushFlow(1.0f);
+            zone.setBrushSpacing(0.012f);
+            break;
+        case Tool::Type::Pen:
+            zone.setBrushType(BrushSystem::BrushType::Normal);
+            zone.setBrushRadius(0.055f);
+            zone.setBrushOpacity(1.0f);
+            zone.setBrushFlow(1.0f);
+            zone.setBrushSpacing(0.008f);
+            break;
+        case Tool::Type::Marker:
+            zone.setBrushType(BrushSystem::BrushType::Normal);
+            zone.setBrushRadius(0.13f);
+            zone.setBrushOpacity(0.55f);
+            zone.setBrushFlow(0.75f);
+            zone.setBrushSpacing(0.02f);
+            break;
+        case Tool::Type::Chalk:
+            zone.setBrushType(BrushSystem::BrushType::Chalk);
+            break;
+        case Tool::Type::Spray:
+            zone.setBrushType(BrushSystem::BrushType::Spray);
+            break;
+        case Tool::Type::Smudge:
+            zone.setBrushType(BrushSystem::BrushType::Smudge);
+            break;
+        case Tool::Type::Clone:
+            zone.setBrushType(BrushSystem::BrushType::Clone);
+            zone.setCloneActive(true);
+            zone.setCloneOffset(glm::vec2(-0.08f, -0.08f));
+            break;
+        case Tool::Type::Brush:
+        case Tool::Type::Eraser:
+        case Tool::Type::Delete:
+        case Tool::Type::MagicEraser:
+            zone.setBrushType(BrushSystem::BrushType::Normal);
+            zone.setCloneActive(false);
+            break;
+        default:
+            zone.setCloneActive(false);
+            break;
+    }
+}
+
+} // namespace
 
 ElementalToolHandler::ElementalToolHandler(ZoneManager* mgr) {
     // Constructor
@@ -14,6 +78,8 @@ ElementalToolHandler::~ElementalToolHandler() {
 }
 
 void ElementalToolHandler::tool_status_update(Core::Game* game, GLFWwindow* window) {
+    (void)game;
+    (void)window;
     static bool showPaint = true;
     
     if (ImGui::Begin(u8"🎨 Professional 2D Design", &showPaint)) {
@@ -33,37 +99,35 @@ void ElementalToolHandler::tool_status_update(Core::Game* game, GLFWwindow* wind
                 
                 // Drawing Tools
                 if (ImGui::Button(u8"🖌 Brush")) { 
-                    // Cursor Note: These tool changes would need to be implemented in the Game class
-                    // My reply: Needs to be implemented here to avoid cluttering the Game class with design tools.
-                    // For now, just show the button
+                    activateDesignTool(zone, Tool::Type::Brush);
                 }
                 ImGui::SameLine();
                 if (ImGui::Button(u8"✏️ Pencil")) { 
-                    // Tool change implementation needed
+                    activateDesignTool(zone, Tool::Type::Pencil);
                 }
                 ImGui::SameLine();
                 if (ImGui::Button(u8"🖊 Pen")) { 
-                    // Tool change implementation needed
+                    activateDesignTool(zone, Tool::Type::Pen);
                 }
                 
                 if (ImGui::Button(u8"💨 Airbrush")) { 
-                    // Tool change implementation needed
+                    activateDesignTool(zone, Tool::Type::Airbrush);
                 }
                 ImGui::SameLine();
                 if (ImGui::Button(u8"🖼 Chalk")) { 
-                    // Tool change implementation needed
+                    activateDesignTool(zone, Tool::Type::Chalk);
                 }
                 ImGui::SameLine();
                 if (ImGui::Button(u8"🎨 Spray")) { 
-                    // Tool change implementation needed
+                    activateDesignTool(zone, Tool::Type::Spray);
                 }
                 
                 if (ImGui::Button(u8"👆 Smudge")) { 
-                    // Tool change implementation needed
+                    activateDesignTool(zone, Tool::Type::Smudge);
                 }
                 ImGui::SameLine();
                 if (ImGui::Button(u8"📋 Clone")) { 
-                    // Tool change implementation needed
+                    activateDesignTool(zone, Tool::Type::Clone);
                 }
                 
                 ImGui::EndGroup();
@@ -75,11 +139,15 @@ void ElementalToolHandler::tool_status_update(Core::Game* game, GLFWwindow* wind
                 ImGui::BeginGroup();
                 
                 if (ImGui::Button(u8"🧽 Eraser")) { 
-                    // Tool change implementation needed
+                    activateDesignTool(zone, Tool::Type::Eraser);
+                }
+                ImGui::SameLine();
+                if (ImGui::Button(u8"⌫ Delete")) {
+                    activateDesignTool(zone, Tool::Type::Delete);
                 }
                 ImGui::SameLine();
                 if (ImGui::Button(u8"✨ Magic Eraser")) { 
-                    // Tool change implementation needed
+                    activateDesignTool(zone, Tool::Type::MagicEraser);
                 }
                 
                 ImGui::EndGroup();
@@ -91,19 +159,19 @@ void ElementalToolHandler::tool_status_update(Core::Game* game, GLFWwindow* wind
                 ImGui::BeginGroup();
                 
                 if (ImGui::Button(u8"⬜ Selection")) { 
-                    // Tool change implementation needed
+                    activateDesignTool(zone, Tool::Type::Selection);
                 }
                 ImGui::SameLine();
                 if (ImGui::Button(u8"🔗 Lasso")) { 
-                    // Tool change implementation needed
+                    activateDesignTool(zone, Tool::Type::Lasso);
                 }
                 
                 if (ImGui::Button(u8"🪄 Magic Wand")) { 
-                    // Tool change implementation needed
+                    activateDesignTool(zone, Tool::Type::MagicWand);
                 }
                 ImGui::SameLine();
                 if (ImGui::Button(u8"📦 Marquee")) { 
-                    // Tool change implementation needed
+                    activateDesignTool(zone, Tool::Type::Marquee);
                 }
                 
                 ImGui::EndGroup();
@@ -115,35 +183,35 @@ void ElementalToolHandler::tool_status_update(Core::Game* game, GLFWwindow* wind
                 ImGui::BeginGroup();
                 
                 if (ImGui::Button(u8"⬜ Rectangle")) { 
-                    // Tool change implementation needed
+                    activateDesignTool(zone, Tool::Type::Rectangle);
                 }
                 ImGui::SameLine();
                 if (ImGui::Button(u8"⭕ Ellipse")) { 
-                    // Tool change implementation needed
+                    activateDesignTool(zone, Tool::Type::Ellipse);
                 }
                 ImGui::SameLine();
                 if (ImGui::Button(u8"🔷 Polygon")) { 
-                    // Tool change implementation needed
+                    activateDesignTool(zone, Tool::Type::Polygon);
                 }
                 
                 if (ImGui::Button(u8"➖ Line")) { 
-                    // Tool change implementation needed
+                    activateDesignTool(zone, Tool::Type::Line);
                 }
                 ImGui::SameLine();
                 if (ImGui::Button(u8"➡️ Arrow")) { 
-                    // Tool change implementation needed
+                    activateDesignTool(zone, Tool::Type::Arrow);
                 }
                 ImGui::SameLine();
                 if (ImGui::Button(u8"⭐ Star")) { 
-                    // Tool change implementation needed
+                    activateDesignTool(zone, Tool::Type::Star);
                 }
                 
                 if (ImGui::Button(u8"❤️ Heart")) { 
-                    // Tool change implementation needed
+                    activateDesignTool(zone, Tool::Type::Heart);
                 }
                 ImGui::SameLine();
                 if (ImGui::Button(u8"🔶 Custom")) { 
-                    // Tool change implementation needed
+                    activateDesignTool(zone, Tool::Type::CustomShape);
                 }
                 
                 ImGui::EndGroup();
@@ -155,87 +223,15 @@ void ElementalToolHandler::tool_status_update(Core::Game* game, GLFWwindow* wind
                 ImGui::BeginGroup();
                 
                 if (ImGui::Button(u8"T Text")) { 
-                    // Tool change implementation needed
+                    activateDesignTool(zone, Tool::Type::Text);
                 }
                 ImGui::SameLine();
                 if (ImGui::Button(u8"T↕️ Vertical")) { 
-                    // Tool change implementation needed
+                    activateDesignTool(zone, Tool::Type::TextVertical);
                 }
                 ImGui::SameLine();
                 if (ImGui::Button(u8"T〰️ Path")) { 
-                    // Tool change implementation needed
-                }
-                
-                ImGui::EndGroup();
-                ImGui::EndTabItem();
-            }
-            
-            // Transform Tools Tab
-            if (ImGui::BeginTabItem("🔄 Transform")) {
-                ImGui::BeginGroup();
-                
-                if (ImGui::Button(u8"✋ Move")) { 
-                    // Tool change implementation needed
-                }
-                ImGui::SameLine();
-                if (ImGui::Button(u8"🔍 Scale")) { 
-                    // Tool change implementation needed
-                }
-                ImGui::SameLine();
-                if (ImGui::Button(u8"🔄 Rotate")) { 
-                    // Tool change implementation needed
-                }
-                
-                if (ImGui::Button(u8"📐 Skew")) { 
-                    // Tool change implementation needed
-                }
-                ImGui::SameLine();
-                if (ImGui::Button(u8"🔀 Distort")) { 
-                    // Tool change implementation needed
-                }
-                ImGui::SameLine();
-                if (ImGui::Button(u8"🏗️ Perspective")) { 
-                    // Tool change implementation needed
-                }
-                
-                ImGui::EndGroup();
-                ImGui::EndTabItem();
-            }
-            
-            // Effects Tools Tab
-            if (ImGui::BeginTabItem("🎨 Effects")) {
-                ImGui::BeginGroup();
-                
-                if (ImGui::Button(u8"🌫️ Blur")) { 
-                    // Tool change implementation needed
-                }
-                ImGui::SameLine();
-                if (ImGui::Button(u8"🔪 Sharpen")) { 
-                    // Tool change implementation needed
-                }
-                ImGui::SameLine();
-                if (ImGui::Button(u8"📻 Noise")) { 
-                    // Tool change implementation needed
-                }
-                
-                if (ImGui::Button(u8"🏛️ Emboss")) { 
-                    // Tool change implementation needed
-                }
-                ImGui::SameLine();
-                if (ImGui::Button(u8"💡 Glow")) { 
-                    // Tool change implementation needed
-                }
-                ImGui::SameLine();
-                if (ImGui::Button(u8"👤 Shadow")) { 
-                    // Tool change implementation needed
-                }
-                
-                if (ImGui::Button(u8"🌈 Gradient")) { 
-                    // Tool change implementation needed
-                }
-                ImGui::SameLine();
-                if (ImGui::Button(u8"🔲 Pattern")) { 
-                    // Tool change implementation needed
+                    activateDesignTool(zone, Tool::Type::TextPath);
                 }
                 
                 ImGui::EndGroup();
@@ -247,29 +243,13 @@ void ElementalToolHandler::tool_status_update(Core::Game* game, GLFWwindow* wind
                 ImGui::BeginGroup();
                 
                 if (ImGui::Button(u8"🎯 Color Picker")) { 
-                    // Tool change implementation needed
+                    activateDesignTool(zone, Tool::Type::ColorPicker);
                 }
                 ImGui::SameLine();
                 if (ImGui::Button(u8"💉 Eyedropper")) { 
-                    // Tool change implementation needed
+                    activateDesignTool(zone, Tool::Type::Eyedropper);
                 }
-                ImGui::SameLine();
-                if (ImGui::Button(u8"✋ Hand")) { 
-                    // Tool change implementation needed
-                }
-                
-                if (ImGui::Button(u8"🔍 Zoom")) { 
-                    // Tool change implementation needed
-                }
-                ImGui::SameLine();
-                if (ImGui::Button(u8"✂️ Crop")) { 
-                    // Tool change implementation needed
-                }
-                ImGui::SameLine();
-                if (ImGui::Button(u8"🔪 Slice")) { 
-                    // Tool change implementation needed
-                }
-                
+
                 ImGui::EndGroup();
                 ImGui::EndTabItem();
             }
@@ -284,25 +264,27 @@ void ElementalToolHandler::tool_status_update(Core::Game* game, GLFWwindow* wind
         ImGui::Text("Color & Properties:");
         ImGui::SameLine();
         
-        // Get current color from game (placeholder for now)
-        float currentColor[3] = {1.0f, 0.9f, 0.2f}; // Default color
+        glm::vec3 zoneColor = zone.getCurrentColor();
+        float currentColor[3] = {zoneColor.r, zoneColor.g, zoneColor.b};
         if (ImGui::ColorEdit3("##MainColor", currentColor, ImGuiColorEditFlags_NoInputs)) {
-            // Color change implementation needed
+            zone.setDrawColor(currentColor[0], currentColor[1], currentColor[2]);
         }
         
         // Layer Management
         ImGui::Separator();
         ImGui::Text("Layer Management:");
         if (ImGui::Button("Add Layer")) {
-            // Add layer implementation needed
+            zone.addDesignLayer();
         }
         ImGui::SameLine();
         if (ImGui::Button("Remove Layer")) {
-            // Remove layer implementation needed
+            zone.removeDesignLayer(zone.getActiveDesignLayer());
         }
         
         // Show current tool status
-        ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.0f, 1.0f), "Current Tool: %s", "Brush"); // Placeholder
+        const DesignSystem* designSystem = zone.getDesignSystem();
+        std::string currentToolName = designSystem ? Tool(designSystem->getCurrentTool()).getTypeName() : "Brush";
+        ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.0f, 1.0f), "Current Tool: %s", currentToolName.c_str());
         
         ImGui::EndGroup();
     }

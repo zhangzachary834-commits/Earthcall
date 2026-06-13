@@ -28,6 +28,7 @@ public:
         
         // Erasing Tools
         Eraser,
+        Delete,
         MagicEraser,
         
         // Selection Tools
@@ -108,7 +109,8 @@ public:
                           const std::vector<Object*>& targets);
     static void FaceBrush(GLFWwindow* window, Core::Game* game, ZoneManager& mgr, float dt,
                           const std::vector<Object*>& targets);
-    static void Selection3D(GLFWwindow* window, Core::Game* game, ZoneManager& mgr, float dt);
+    static void Selection3D(GLFWwindow* window, Core::Game* game,
+                            const std::vector<Object*>& targets);
 
     Type getType() const;
     std::string getTypeName() const;

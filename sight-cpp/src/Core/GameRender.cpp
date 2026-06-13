@@ -307,6 +307,37 @@ void Game::render() {
 
     mgr.active().renderArt();
 
+    if (_drawingStraightLine && _current3DMode == Mode3D::None && _currentTool.getType() == Tool::Type::Brush) {
+        auto* brushSystem = mgr.active().getBrushSystem();
+        const float previewOpacity = brushSystem ? std::clamp(brushSystem->getOpacity(), 0.25f, 0.95f) : 0.85f;
+        const float previewWidth = brushSystem ? std::max(1.0f, brushSystem->getRadius() * 50.0f) : 2.0f;
+
+        glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_LINE_BIT | GL_CURRENT_BIT);
+        glDisable(GL_LIGHTING);
+        glDisable(GL_DEPTH_TEST);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glLineWidth(previewWidth);
+        glColor4f(_currentColor[0], _currentColor[1], _currentColor[2], previewOpacity);
+        glBegin(GL_LINES);
+        glVertex2f(_straightLineStartX, _straightLineStartY);
+        glVertex2f(_straightLineEndX, _straightLineEndY);
+        glEnd();
+
+        glLineWidth(1.0f);
+        glColor4f(1.0f, 1.0f, 1.0f, 0.65f);
+        glBegin(GL_LINE_LOOP);
+        constexpr int handleSegments = 16;
+        constexpr float handleRadius = 4.0f;
+        for (int i = 0; i < handleSegments; ++i) {
+            const float angle = 2.0f * static_cast<float>(M_PI) * static_cast<float>(i) / static_cast<float>(handleSegments);
+            glVertex2f(_straightLineEndX + std::cos(angle) * handleRadius,
+                       _straightLineEndY + std::sin(angle) * handleRadius);
+        }
+        glEnd();
+        glPopAttrib();
+    }
+
     glPopMatrix();
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();

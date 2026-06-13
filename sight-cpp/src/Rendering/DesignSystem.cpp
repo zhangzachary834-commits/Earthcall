@@ -1,6 +1,7 @@
 #include "DesignSystem.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "Util/SaveSystem.hpp"
+#include "Form/Object/Formation/Menu/stb_easy_font.h"
 #include <GLFW/glfw3.h>
 #include <algorithm>
 #include <cmath>
@@ -8,6 +9,136 @@
 #include <cstring>
 #include <iostream>
 #include <fstream>
+#include <unordered_map>
+#include <utility>
+
+namespace {
+
+std::vector<glm::vec2> rectangleFromBounds(const glm::vec2& a, const glm::vec2& b) {
+    const float minX = std::min(a.x, b.x);
+    const float minY = std::min(a.y, b.y);
+    const float maxX = std::max(a.x, b.x);
+    const float maxY = std::max(a.y, b.y);
+    return {
+        glm::vec2(minX, minY),
+        glm::vec2(maxX, minY),
+        glm::vec2(maxX, maxY),
+        glm::vec2(minX, maxY)
+    };
+}
+
+bool pointInPolygon(const glm::vec2& point, const std::vector<glm::vec2>& polygon) {
+    if (polygon.size() < 3) return false;
+
+    bool inside = false;
+    for (size_t i = 0, j = polygon.size() - 1; i < polygon.size(); j = i++) {
+        const glm::vec2& a = polygon[i];
+        const glm::vec2& b = polygon[j];
+        const bool intersects = ((a.y > point.y) != (b.y > point.y)) &&
+            (point.x < (b.x - a.x) * (point.y - a.y) / ((b.y - a.y) + 0.000001f) + a.x);
+        if (intersects) {
+            inside = !inside;
+        }
+    }
+    return inside;
+}
+
+nlohmann::json vec2ToJson(const glm::vec2& value) {
+    return nlohmann::json::array({value.x, value.y});
+}
+
+nlohmann::json vec3ToJson(const glm::vec3& value) {
+    return nlohmann::json::array({value.x, value.y, value.z});
+}
+
+float jsonFloatAt(const nlohmann::json& value, size_t index, float fallback) {
+    if (!value.is_array() || index >= value.size() || !value[index].is_number()) {
+        return fallback;
+    }
+    return value[index].get<float>();
+}
+
+glm::vec2 vec2FromJson(const nlohmann::json& value, const glm::vec2& fallback = glm::vec2(0.0f)) {
+    return glm::vec2(jsonFloatAt(value, 0, fallback.x), jsonFloatAt(value, 1, fallback.y));
+}
+
+glm::vec3 vec3FromJson(const nlohmann::json& value, const glm::vec3& fallback = glm::vec3(0.0f)) {
+    return glm::vec3(jsonFloatAt(value, 0, fallback.x),
+                     jsonFloatAt(value, 1, fallback.y),
+                     jsonFloatAt(value, 2, fallback.z));
+}
+
+nlohmann::json textStyleToJson(const TextSystem::TextStyle& style) {
+    return {
+        {"fontFamily", style.fontFamily},
+        {"fontSize", style.fontSize},
+        {"bold", style.bold},
+        {"italic", style.italic},
+        {"underline", style.underline},
+        {"strikethrough", style.strikethrough},
+        {"color", vec3ToJson(style.color)},
+        {"opacity", style.opacity},
+        {"alignment", vec2ToJson(style.alignment)},
+        {"lineSpacing", style.lineSpacing},
+        {"letterSpacing", style.letterSpacing},
+        {"wordWrap", style.wordWrap},
+        {"maxLines", style.maxLines}
+    };
+}
+
+TextSystem::TextStyle textStyleFromJson(const nlohmann::json& value) {
+    TextSystem::TextStyle style;
+    if (!value.is_object()) return style;
+    style.fontFamily = value.value("fontFamily", style.fontFamily);
+    style.fontSize = value.value("fontSize", style.fontSize);
+    style.bold = value.value("bold", style.bold);
+    style.italic = value.value("italic", style.italic);
+    style.underline = value.value("underline", style.underline);
+    style.strikethrough = value.value("strikethrough", style.strikethrough);
+    if (value.contains("color")) style.color = vec3FromJson(value["color"], style.color);
+    style.opacity = value.value("opacity", style.opacity);
+    if (value.contains("alignment")) style.alignment = vec2FromJson(value["alignment"], style.alignment);
+    style.lineSpacing = value.value("lineSpacing", style.lineSpacing);
+    style.letterSpacing = value.value("letterSpacing", style.letterSpacing);
+    style.wordWrap = value.value("wordWrap", style.wordWrap);
+    style.maxLines = value.value("maxLines", style.maxLines);
+    return style;
+}
+
+nlohmann::json shapeStyleToJson(const ShapeSystem::ShapeStyle& style) {
+    return {
+        {"fillColor", vec3ToJson(style.fillColor)},
+        {"strokeColor", vec3ToJson(style.strokeColor)},
+        {"fillOpacity", style.fillOpacity},
+        {"strokeOpacity", style.strokeOpacity},
+        {"strokeWidth", style.strokeWidth},
+        {"fillEnabled", style.fillEnabled},
+        {"strokeEnabled", style.strokeEnabled},
+        {"strokeStyle", style.strokeStyle},
+        {"cornerRadius", style.cornerRadius},
+        {"sides", style.sides},
+        {"starPoints", style.starPoints}
+    };
+}
+
+ShapeSystem::ShapeStyle shapeStyleFromJson(const nlohmann::json& value) {
+    ShapeSystem::ShapeStyle style;
+    if (!value.is_object()) return style;
+    if (value.contains("fillColor")) style.fillColor = vec3FromJson(value["fillColor"], style.fillColor);
+    if (value.contains("strokeColor")) style.strokeColor = vec3FromJson(value["strokeColor"], style.strokeColor);
+    style.fillOpacity = value.value("fillOpacity", style.fillOpacity);
+    style.strokeOpacity = value.value("strokeOpacity", style.strokeOpacity);
+    style.strokeWidth = value.value("strokeWidth", style.strokeWidth);
+    style.fillEnabled = value.value("fillEnabled", style.fillEnabled);
+    style.strokeEnabled = value.value("strokeEnabled", style.strokeEnabled);
+    style.strokeStyle = value.value("strokeStyle", style.strokeStyle);
+    style.cornerRadius = value.value("cornerRadius", style.cornerRadius);
+    style.sides = value.value("sides", style.sides);
+    style.starPoints = value.value("starPoints", style.starPoints);
+    return style;
+}
+
+} // namespace
 
 // ============================================================================
 // TextSystem Implementation
@@ -44,6 +175,7 @@ void TextSystem::removeText(const std::string& id) {
         size_t index = it->second;
         _textElements.erase(_textElements.begin() + index);
         _textIndexMap.erase(it);
+        _selectedTexts.erase(std::remove(_selectedTexts.begin(), _selectedTexts.end(), id), _selectedTexts.end());
         
         // Update indices
         for (auto& pair : _textIndexMap) {
@@ -87,6 +219,7 @@ void TextSystem::selectText(const std::string& id) {
     for (auto& element : _textElements) {
         element.selected = false;
     }
+    _selectedTexts.clear();
     
     // Select the specified text
     TextElement* element = getTextElement(id);
@@ -108,35 +241,49 @@ std::vector<std::string> TextSystem::getSelectedTexts() const {
 }
 
 void TextSystem::renderTexts() const {
-    // TODO: Implement proper text rendering using OpenGL
     for (const auto& element : _textElements) {
-        if (element.visible) {
-            // Simple text rendering using OpenGL
-            glPushMatrix();
-            glLoadIdentity();
-            glTranslatef(element.position.x, element.position.y, 0.0f);
-            
-            // Apply text style
-            glColor3f(element.style.color.x, element.style.color.y, element.style.color.z);
-            glLineWidth(1.0f);
-            
-            // Simple text rendering (placeholder - would use proper font rendering)
-            glBegin(GL_LINES);
-            // Draw a simple text indicator
-            float textWidth = element.text.length() * 8.0f; // Approximate width
-            glVertex2f(0, 0);
-            glVertex2f(textWidth, 0);
-            glVertex2f(0, 0);
-            glVertex2f(0, 16);
-            glVertex2f(textWidth, 0);
-            glVertex2f(textWidth, 16);
-            glVertex2f(0, 16);
-            glVertex2f(textWidth, 16);
-            glEnd();
-            
-            glPopMatrix();
-        }
+        renderTextElement(element, 1.0f);
     }
+}
+
+void TextSystem::renderText(const std::string& id, float layerOpacity) const {
+    auto it = _textIndexMap.find(id);
+    if (it != _textIndexMap.end() && it->second < _textElements.size()) {
+        renderTextElement(_textElements[it->second], layerOpacity);
+    }
+}
+
+void TextSystem::renderTextElement(const TextElement& element, float layerOpacity) const {
+    if (!element.visible) {
+        return;
+    }
+
+    glPushMatrix();
+    glLoadIdentity();
+    glTranslatef(element.position.x, element.position.y, 0.0f);
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glColor4f(element.style.color.x,
+              element.style.color.y,
+              element.style.color.z,
+              std::clamp(element.style.opacity * layerOpacity, 0.0f, 1.0f));
+    glScalef(std::max(0.25f, element.style.fontSize / 16.0f),
+             std::max(0.25f, element.style.fontSize / 16.0f),
+             1.0f);
+
+    std::string text = element.text.empty() ? "Text" : element.text;
+    char vertexBuffer[24000];
+    int quads = stb_easy_font_print(0.0f, 0.0f, const_cast<char*>(text.c_str()), nullptr, vertexBuffer, sizeof(vertexBuffer));
+    if (quads > 0) {
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glVertexPointer(2, GL_FLOAT, 16, vertexBuffer);
+        glDrawArrays(GL_QUADS, 0, quads * 4);
+        glDisableClientState(GL_VERTEX_ARRAY);
+    }
+
+    glDisable(GL_BLEND);
+    glPopMatrix();
 }
 
 void TextSystem::applyTextEffect(const std::string& id, const std::string& effectType, float intensity) {
@@ -211,6 +358,7 @@ void ShapeSystem::removeShape(const std::string& id) {
         size_t index = it->second;
         _shapeElements.erase(_shapeElements.begin() + index);
         _shapeIndexMap.erase(it);
+        _selectedShapes.erase(std::remove(_selectedShapes.begin(), _selectedShapes.end(), id), _selectedShapes.end());
         
         // Update indices
         for (auto& pair : _shapeIndexMap) {
@@ -248,6 +396,7 @@ void ShapeSystem::selectShape(const std::string& id) {
     for (auto& element : _shapeElements) {
         element.selected = false;
     }
+    _selectedShapes.clear();
     
     // Select the specified shape
     ShapeElement* element = getShapeElement(id);
@@ -269,91 +418,72 @@ std::vector<std::string> ShapeSystem::getSelectedShapes() const {
 }
 
 void ShapeSystem::renderShapes() const {
-    // TODO: Implement shape rendering using OpenGL
     for (const auto& element : _shapeElements) {
-        if (element.visible) {
-            glPushMatrix();
-            glLoadIdentity();
-            glTranslatef(element.position.x, element.position.y, 0.0f);
-            glRotatef(element.rotation, 0.0f, 0.0f, 1.0f);
-            
-            // Apply shape style
-            if (element.style.fillEnabled) {
-                glColor3f(element.style.fillColor.x, element.style.fillColor.y, element.style.fillColor.z);
-                glEnable(GL_BLEND);
-                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                glColor4f(element.style.fillColor.x, element.style.fillColor.y, element.style.fillColor.z, element.style.fillOpacity);
-            }
-            
-            // Render shape based on type
-            switch (element.type) {
-                case ShapeType::Rectangle:
-                    renderRectangle(element.size.x, element.size.y, element.style.cornerRadius);
-                    break;
-                case ShapeType::Ellipse:
-                    renderEllipse(element.size.x, element.size.y);
-                    break;
-                case ShapeType::Line:
-                    renderLine(element.size.x, element.size.y);
-                    break;
-                case ShapeType::Polygon:
-                    renderPolygon(element.size.x, element.size.y, element.style.sides);
-                    break;
-                case ShapeType::Star:
-                    renderStar(element.size.x, element.size.y, element.style.starPoints);
-                    break;
-                case ShapeType::Heart:
-                    renderHeart(element.size.x, element.size.y);
-                    break;
-                case ShapeType::Arrow:
-                    renderArrow(element.size.x, element.size.y);
-                    break;
-                case ShapeType::Custom:
-                    renderCustomShape(element.customPoints);
-                    break;
-            }
-            
-            // Render stroke if enabled
-            if (element.style.strokeEnabled) {
-                glColor3f(element.style.strokeColor.x, element.style.strokeColor.y, element.style.strokeColor.z);
-                glLineWidth(element.style.strokeWidth);
-                glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-                
-                // Re-render shape as wireframe for stroke
-                switch (element.type) {
-                    case ShapeType::Rectangle:
-                        renderRectangle(element.size.x, element.size.y, element.style.cornerRadius);
-                        break;
-                    case ShapeType::Ellipse:
-                        renderEllipse(element.size.x, element.size.y);
-                        break;
-                    case ShapeType::Line:
-                        renderLine(element.size.x, element.size.y);
-                        break;
-                    case ShapeType::Polygon:
-                        renderPolygon(element.size.x, element.size.y, element.style.sides);
-                        break;
-                    case ShapeType::Star:
-                        renderStar(element.size.x, element.size.y, element.style.starPoints);
-                        break;
-                    case ShapeType::Heart:
-                        renderHeart(element.size.x, element.size.y);
-                        break;
-                    case ShapeType::Arrow:
-                        renderArrow(element.size.x, element.size.y);
-                        break;
-                    case ShapeType::Custom:
-                        renderCustomShape(element.customPoints);
-                        break;
-                }
-                
-                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-            }
-            
-            glDisable(GL_BLEND);
-            glPopMatrix();
+        renderShapeElement(element, 1.0f);
+    }
+}
+
+void ShapeSystem::renderShape(const std::string& id, float layerOpacity) const {
+    auto it = _shapeIndexMap.find(id);
+    if (it != _shapeIndexMap.end() && it->second < _shapeElements.size()) {
+        renderShapeElement(_shapeElements[it->second], layerOpacity);
+    }
+}
+
+void ShapeSystem::renderShapeElement(const ShapeElement& element, float layerOpacity) const {
+    if (!element.visible) {
+        return;
+    }
+
+    glPushMatrix();
+    glLoadIdentity();
+    glTranslatef(element.position.x, element.position.y, 0.0f);
+    glRotatef(element.rotation, 0.0f, 0.0f, 1.0f);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    if (element.style.fillEnabled) {
+        glColor4f(element.style.fillColor.x,
+                  element.style.fillColor.y,
+                  element.style.fillColor.z,
+                  std::clamp(element.style.fillOpacity * layerOpacity, 0.0f, 1.0f));
+
+        switch (element.type) {
+            case ShapeType::Rectangle: renderRectangle(element.size.x, element.size.y, element.style.cornerRadius); break;
+            case ShapeType::Ellipse: renderEllipse(element.size.x, element.size.y); break;
+            case ShapeType::Line: renderLine(element.size.x, element.size.y); break;
+            case ShapeType::Polygon: renderPolygon(element.size.x, element.size.y, element.style.sides); break;
+            case ShapeType::Star: renderStar(element.size.x, element.size.y, element.style.starPoints); break;
+            case ShapeType::Heart: renderHeart(element.size.x, element.size.y); break;
+            case ShapeType::Arrow: renderArrow(element.size.x, element.size.y); break;
+            case ShapeType::Custom: renderCustomShape(element.customPoints); break;
         }
     }
+
+    if (element.style.strokeEnabled) {
+        glColor4f(element.style.strokeColor.x,
+                  element.style.strokeColor.y,
+                  element.style.strokeColor.z,
+                  std::clamp(element.style.strokeOpacity * layerOpacity, 0.0f, 1.0f));
+        glLineWidth(element.style.strokeWidth);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+        switch (element.type) {
+            case ShapeType::Rectangle: renderRectangle(element.size.x, element.size.y, element.style.cornerRadius); break;
+            case ShapeType::Ellipse: renderEllipse(element.size.x, element.size.y); break;
+            case ShapeType::Line: renderLine(element.size.x, element.size.y); break;
+            case ShapeType::Polygon: renderPolygon(element.size.x, element.size.y, element.style.sides); break;
+            case ShapeType::Star: renderStar(element.size.x, element.size.y, element.style.starPoints); break;
+            case ShapeType::Heart: renderHeart(element.size.x, element.size.y); break;
+            case ShapeType::Arrow: renderArrow(element.size.x, element.size.y); break;
+            case ShapeType::Custom: renderCustomShape(element.customPoints); break;
+        }
+
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
+
+    glDisable(GL_BLEND);
+    glPopMatrix();
 }
 
 void ShapeSystem::applyShapeEffect(const std::string& id, const std::string& effectType, float intensity) {
@@ -443,11 +573,12 @@ void ShapeSystem::renderPolygon(float width, float height, int sides) const {
 void ShapeSystem::renderStar(float width, float height, float points) const {
     if (points < 3) points = 3;
     if (points > 20) points = 20;
+    const float outerRadius = std::min(width, height) * 0.5f;
     
     glBegin(GL_POLYGON);
     for (int i = 0; i < points * 2; ++i) {
         float angle = 2.0f * M_PI * i / (points * 2);
-        float radius = (i % 2 == 0) ? width/2 : width/4;
+        float radius = (i % 2 == 0) ? outerRadius : outerRadius * 0.5f;
         float x = radius * cos(angle);
         float y = radius * sin(angle);
         glVertex2f(x, y);
@@ -592,7 +723,7 @@ EffectsSystem::Effect* EffectsSystem::getEffect(const std::string& id) {
 
 void EffectsSystem::applyBlur(std::vector<uint8_t>& pixels, int width, int height, float intensity) const {
     // Simple box blur implementation
-    if (pixels.size() < width * height * 4) return;
+    if (pixels.size() < static_cast<size_t>(width * height * 4)) return;
     
     std::vector<uint8_t> temp = pixels;
     int radius = static_cast<int>(intensity * 5.0f);
@@ -632,7 +763,7 @@ void EffectsSystem::applyBlur(std::vector<uint8_t>& pixels, int width, int heigh
 
 void EffectsSystem::applySharpen(std::vector<uint8_t>& pixels, int width, int height, float intensity) const {
     // Simple sharpen implementation
-    if (pixels.size() < width * height * 4) return;
+    if (pixels.size() < static_cast<size_t>(width * height * 4)) return;
     
     std::vector<uint8_t> temp = pixels;
     float factor = intensity * 0.5f;
@@ -656,6 +787,8 @@ void EffectsSystem::applySharpen(std::vector<uint8_t>& pixels, int width, int he
 }
 
 void EffectsSystem::applyNoise(std::vector<uint8_t>& pixels, int width, int height, float intensity) const {
+    (void)width;
+    (void)height;
     // Simple noise implementation
     for (size_t i = 0; i < pixels.size(); i += 4) {
         int noise = static_cast<int>((rand() % 100 - 50) * intensity);
@@ -668,16 +801,25 @@ void EffectsSystem::applyNoise(std::vector<uint8_t>& pixels, int width, int heig
 }
 
 void EffectsSystem::applyGlow(std::vector<uint8_t>& pixels, int width, int height, const Effect& effect) const {
+    (void)pixels;
+    (void)width;
+    (void)height;
     // TODO: Implement glow effect
     printf("Applied glow effect with radius %.1f\n", effect.radius);
 }
 
 void EffectsSystem::applyShadow(std::vector<uint8_t>& pixels, int width, int height, const Effect& effect) const {
+    (void)pixels;
+    (void)width;
+    (void)height;
     // TODO: Implement shadow effect
     printf("Applied shadow effect with offset (%.1f, %.1f)\n", effect.offset.x, effect.offset.y);
 }
 
 void EffectsSystem::applyGradient(std::vector<uint8_t>& pixels, int width, int height, const Effect& effect) const {
+    (void)pixels;
+    (void)width;
+    (void)height;
     // TODO: Implement gradient effect
     printf("Applied gradient effect with color (%.1f, %.1f, %.1f)\n", effect.color.x, effect.color.y, effect.color.z);
 }
@@ -695,20 +837,26 @@ SelectionSystem::~SelectionSystem() {
 }
 
 std::string SelectionSystem::createSelection(SelectionType type, const std::vector<glm::vec2>& points) {
+    if (points.empty()) {
+        return "";
+    }
+
     std::string id = "selection_" + std::to_string(_nextSelectionId++);
     
     Selection selection;
     selection.type = type;
-    selection.points = points;
+    selection.points = (type == SelectionType::Rectangle && points.size() == 2)
+        ? rectangleFromBounds(points[0], points[1])
+        : points;
     selection.active = true;
     selection.id = id;
     
     // Calculate bounds
-    if (!points.empty()) {
-        selection.bounds[0] = points[0];
-        selection.bounds[1] = points[0];
+    if (!selection.points.empty()) {
+        selection.bounds[0] = selection.points[0];
+        selection.bounds[1] = selection.points[0];
         
-        for (const auto& point : points) {
+        for (const auto& point : selection.points) {
             selection.bounds[0].x = std::min(selection.bounds[0].x, point.x);
             selection.bounds[0].y = std::min(selection.bounds[0].y, point.y);
             selection.bounds[1].x = std::max(selection.bounds[1].x, point.x);
@@ -745,28 +893,45 @@ void SelectionSystem::clearAllSelections() {
 }
 
 void SelectionSystem::selectAll() {
-    // TODO: Implement select all functionality
-    printf("Select all\n");
+    createSelection(SelectionType::Rectangle, {glm::vec2(0.0f, 0.0f), glm::vec2(1.0f, 1.0f)});
 }
 
 void SelectionSystem::invertSelection() {
-    // TODO: Implement invert selection functionality
-    printf("Invert selection\n");
+    for (auto& selection : _selections) {
+        selection.active = !selection.active;
+    }
 }
 
 void SelectionSystem::expandSelection(float amount) {
-    // TODO: Implement expand selection functionality
-    printf("Expand selection by %.1f\n", amount);
+    amount = std::max(0.0f, amount);
+    for (auto& selection : _selections) {
+        if (!selection.active) continue;
+        selection.bounds[0] -= glm::vec2(amount);
+        selection.bounds[1] += glm::vec2(amount);
+        selection.points = rectangleFromBounds(selection.bounds[0], selection.bounds[1]);
+        selection.type = SelectionType::Rectangle;
+    }
 }
 
 void SelectionSystem::contractSelection(float amount) {
-    // TODO: Implement contract selection functionality
-    printf("Contract selection by %.1f\n", amount);
+    amount = std::max(0.0f, amount);
+    for (auto& selection : _selections) {
+        if (!selection.active) continue;
+        selection.bounds[0] += glm::vec2(amount);
+        selection.bounds[1] -= glm::vec2(amount);
+        if (selection.bounds[0].x > selection.bounds[1].x) {
+            std::swap(selection.bounds[0].x, selection.bounds[1].x);
+        }
+        if (selection.bounds[0].y > selection.bounds[1].y) {
+            std::swap(selection.bounds[0].y, selection.bounds[1].y);
+        }
+        selection.points = rectangleFromBounds(selection.bounds[0], selection.bounds[1]);
+        selection.type = SelectionType::Rectangle;
+    }
 }
 
 void SelectionSystem::featherSelection(float amount) {
-    // TODO: Implement feather selection functionality
-    printf("Feather selection by %.1f\n", amount);
+    expandSelection(amount * 0.5f);
 }
 
 void SelectionSystem::renderSelections() const {
@@ -789,7 +954,21 @@ void SelectionSystem::renderSelections() const {
 }
 
 bool SelectionSystem::isPointSelected(const glm::vec2& point) const {
-    // TODO: Implement point-in-selection test
+    for (const auto& selection : _selections) {
+        if (!selection.active) continue;
+        const bool inBounds =
+            point.x >= selection.bounds[0].x && point.x <= selection.bounds[1].x &&
+            point.y >= selection.bounds[0].y && point.y <= selection.bounds[1].y;
+        if (!inBounds) continue;
+
+        if (selection.type == SelectionType::Lasso) {
+            if (pointInPolygon(point, selection.points)) {
+                return true;
+            }
+        } else {
+            return true;
+        }
+    }
     return false;
 }
 
@@ -949,7 +1128,8 @@ void DesignSystem::startDrawing(const glm::vec2& position) {
     _startPosition = position;
     _currentPosition = position;
     
-    if (_brushSystem) {
+    if (_brushSystem && _zone) {
+        _brushSystem->saveStrokeState();
         // Use the current color from the zone instead of hardcoded values
         glm::vec3 currentColor = _zone->getCurrentColor();
         _brushSystem->paintDab(position, currentColor);
@@ -960,13 +1140,12 @@ void DesignSystem::startDrawing(const glm::vec2& position) {
 
 void DesignSystem::continueDrawing(const glm::vec2& position) {
     if (_isDrawing) {
-        _currentPosition = position;
-        
-        if (_brushSystem) {
+        if (_brushSystem && _zone) {
             // Use the current color from the zone instead of hardcoded values
             glm::vec3 currentColor = _zone->getCurrentColor();
-            _brushSystem->paintStroke(_startPosition, position, currentColor);
+            _brushSystem->paintStroke(_currentPosition, position, currentColor);
         }
+        _currentPosition = position;
         
         printf("Continued drawing at (%.1f, %.1f)\n", position.x, position.y);
     }
@@ -976,19 +1155,20 @@ void DesignSystem::endDrawing() {
     if (_isDrawing) {
         _isDrawing = false;
         
-        if (_brushSystem) {
-            _brushSystem->saveStrokeState();
-        }
-        
         printf("Ended drawing\n");
     }
 }
 
 void DesignSystem::addText(const std::string& text, const glm::vec2& position) {
-    if (_textSystem) {
+    if (_textSystem && _activeLayer >= 0 && _activeLayer < static_cast<int>(_layers.size())) {
         std::string id = _textSystem->addText(text, position);
         _layers[_activeLayer].elements.push_back(id);
-        saveHistoryEntry("add_text", "{\"id\":\"" + id + "\",\"text\":\"" + text + "\"}");
+        saveHistoryEntry("add_text", nlohmann::json({
+            {"id", id},
+            {"text", text},
+            {"position", vec2ToJson(position)},
+            {"layer", _activeLayer}
+        }).dump());
     }
 }
 
@@ -1002,16 +1182,25 @@ void DesignSystem::editText(const std::string& id, const std::string& newText) {
 void DesignSystem::removeText(const std::string& id) {
     if (_textSystem) {
         _textSystem->removeText(id);
+        for (auto& layer : _layers) {
+            layer.elements.erase(std::remove(layer.elements.begin(), layer.elements.end(), id), layer.elements.end());
+        }
         saveHistoryEntry("remove_text", "{\"id\":\"" + id + "\"}");
     }
 }
 
 void DesignSystem::addShape(Tool::Type shapeType, const glm::vec2& position, const glm::vec2& size) {
-    if (_shapeSystem) {
+    if (_shapeSystem && _activeLayer >= 0 && _activeLayer < static_cast<int>(_layers.size())) {
         ShapeSystem::ShapeType type = mapToolToShapeType(shapeType);
         std::string id = _shapeSystem->addShape(type, position, size);
         _layers[_activeLayer].elements.push_back(id);
-        saveHistoryEntry("add_shape", "{\"id\":\"" + id + "\",\"type\":" + std::to_string(static_cast<int>(type)) + "}");
+        saveHistoryEntry("add_shape", nlohmann::json({
+            {"id", id},
+            {"type", static_cast<int>(type)},
+            {"position", vec2ToJson(position)},
+            {"size", vec2ToJson(size)},
+            {"layer", _activeLayer}
+        }).dump());
     }
 }
 
@@ -1025,6 +1214,9 @@ void DesignSystem::editShape(const std::string& id, const glm::vec2& position, c
 void DesignSystem::removeShape(const std::string& id) {
     if (_shapeSystem) {
         _shapeSystem->removeShape(id);
+        for (auto& layer : _layers) {
+            layer.elements.erase(std::remove(layer.elements.begin(), layer.elements.end(), id), layer.elements.end());
+        }
         saveHistoryEntry("remove_shape", "{\"id\":\"" + id + "\"}");
     }
 }
@@ -1100,7 +1292,7 @@ void DesignSystem::removeEffect(const std::string& id) {
 
 void DesignSystem::addLayer() {
     Layer newLayer;
-    newLayer.name = "Layer " + std::to_string(_layers.size());
+    newLayer.name = "Layer " + std::to_string(_layers.size() + 1);
     _layers.push_back(newLayer);
     _activeLayer = static_cast<int>(_layers.size()) - 1;
     printf("Added layer: %s\n", newLayer.name.c_str());
@@ -1109,7 +1301,9 @@ void DesignSystem::addLayer() {
 void DesignSystem::removeLayer(int layerIndex) {
     if (layerIndex >= 0 && layerIndex < static_cast<int>(_layers.size()) && _layers.size() > 1) {
         _layers.erase(_layers.begin() + layerIndex);
-        if (_activeLayer >= static_cast<int>(_layers.size())) {
+        if (_activeLayer > layerIndex) {
+            --_activeLayer;
+        } else if (_activeLayer >= static_cast<int>(_layers.size())) {
             _activeLayer = static_cast<int>(_layers.size()) - 1;
         }
         printf("Removed layer %d\n", layerIndex);
@@ -1130,10 +1324,49 @@ void DesignSystem::setLayerOpacity(int layerIndex, float opacity) {
     }
 }
 
+float DesignSystem::getLayerOpacity(int layerIndex) const {
+    if (layerIndex >= 0 && layerIndex < static_cast<int>(_layers.size())) {
+        return _layers[layerIndex].opacity;
+    }
+    return 1.0f;
+}
+
+const std::string& DesignSystem::getLayerName(int layerIndex) const {
+    static const std::string fallback = "Layer";
+    if (layerIndex >= 0 && layerIndex < static_cast<int>(_layers.size())) {
+        return _layers[layerIndex].name;
+    }
+    return fallback;
+}
+
 void DesignSystem::render() const {
-    // Render all subsystems
-    if (_textSystem) _textSystem->renderTexts();
-    if (_shapeSystem) _shapeSystem->renderShapes();
+    bool hasLayeredElements = false;
+    for (const auto& layer : _layers) {
+        if (!layer.elements.empty()) {
+            hasLayeredElements = true;
+            break;
+        }
+    }
+
+    if (hasLayeredElements) {
+        for (const auto& layer : _layers) {
+            if (!layer.visible) {
+                continue;
+            }
+
+            for (const auto& id : layer.elements) {
+                if (id.rfind("text_", 0) == 0 && _textSystem) {
+                    _textSystem->renderText(id, layer.opacity);
+                } else if (id.rfind("shape_", 0) == 0 && _shapeSystem) {
+                    _shapeSystem->renderShape(id, layer.opacity);
+                }
+            }
+        }
+    } else {
+        if (_textSystem) _textSystem->renderTexts();
+        if (_shapeSystem) _shapeSystem->renderShapes();
+    }
+
     if (_selectionSystem) _selectionSystem->renderSelections();
     if (_transformSystem) _transformSystem->renderTransforms();
 }
@@ -1146,15 +1379,66 @@ void DesignSystem::renderUI() const {
 void DesignSystem::undo() {
     if (_historyIndex > 0) {
         _historyIndex--;
-        // TODO: Implement undo functionality
-        printf("Undo: %s\n", _history[_historyIndex].action.c_str());
+        const auto& entry = _history[_historyIndex];
+        try {
+            nlohmann::json data = nlohmann::json::parse(entry.data);
+            if (entry.action == "add_text" && _textSystem) {
+                std::string id = data.value("id", "");
+                _textSystem->removeText(id);
+                for (auto& layer : _layers) {
+                    layer.elements.erase(std::remove(layer.elements.begin(), layer.elements.end(), id), layer.elements.end());
+                }
+            } else if (entry.action == "add_shape" && _shapeSystem) {
+                std::string id = data.value("id", "");
+                _shapeSystem->removeShape(id);
+                for (auto& layer : _layers) {
+                    layer.elements.erase(std::remove(layer.elements.begin(), layer.elements.end(), id), layer.elements.end());
+                }
+            } else if (entry.action == "add_effect" && _effectsSystem) {
+                _effectsSystem->removeEffect(data.value("id", ""));
+            } else if (_brushSystem) {
+                _brushSystem->undo();
+            }
+        } catch (const std::exception&) {
+            if (_brushSystem) {
+                _brushSystem->undo();
+            }
+        }
+        printf("Undo: %s\n", entry.action.c_str());
     }
 }
 
 void DesignSystem::redo() {
     if (_historyIndex < _history.size()) {
-        // TODO: Implement redo functionality
-        printf("Redo: %s\n", _history[_historyIndex].action.c_str());
+        const auto& entry = _history[_historyIndex];
+        try {
+            nlohmann::json data = nlohmann::json::parse(entry.data);
+            if (entry.action == "add_text" && _textSystem) {
+                int layerIndex = std::clamp(data.value("layer", _activeLayer), 0, static_cast<int>(_layers.size()) - 1);
+                std::string id = _textSystem->addText(
+                    data.value("text", ""),
+                    vec2FromJson(data.value("position", nlohmann::json::array())));
+                _layers[layerIndex].elements.push_back(id);
+            } else if (entry.action == "add_shape" && _shapeSystem) {
+                int layerIndex = std::clamp(data.value("layer", _activeLayer), 0, static_cast<int>(_layers.size()) - 1);
+                auto type = static_cast<ShapeSystem::ShapeType>(data.value("type", 0));
+                std::string id = _shapeSystem->addShape(
+                    type,
+                    vec2FromJson(data.value("position", nlohmann::json::array())),
+                    vec2FromJson(data.value("size", nlohmann::json::array()), glm::vec2(100.0f)));
+                _layers[layerIndex].elements.push_back(id);
+            } else if (entry.action == "add_effect" && _effectsSystem) {
+                auto type = static_cast<EffectsSystem::EffectType>(data.value("type", 0));
+                _effectsSystem->addEffect(type, 1.0f);
+            } else if (_brushSystem) {
+                _brushSystem->redo();
+            }
+        } catch (const std::exception&) {
+            if (_brushSystem) {
+                _brushSystem->redo();
+            }
+        }
+        printf("Redo: %s\n", entry.action.c_str());
         _historyIndex++;
     }
 }
@@ -1176,10 +1460,115 @@ void DesignSystem::saveDesign(const std::string& filename) const {
         layerJson["visible"] = layer.visible;
         layerJson["opacity"] = layer.opacity;
         layerJson["locked"] = layer.locked;
+        layerJson["elements"] = layer.elements;
         layersArray.push_back(layerJson);
     }
     j["layers"] = layersArray;
     j["activeLayer"] = _activeLayer;
+
+    if (_textSystem) {
+        nlohmann::json textArray = nlohmann::json::array();
+        for (const auto& text : _textSystem->getTextElements()) {
+            textArray.push_back({
+                {"id", text.id},
+                {"text", text.text},
+                {"position", vec2ToJson(text.position)},
+                {"style", textStyleToJson(text.style)},
+                {"selected", text.selected},
+                {"visible", text.visible}
+            });
+        }
+        j["texts"] = textArray;
+    }
+
+    if (_shapeSystem) {
+        nlohmann::json shapeArray = nlohmann::json::array();
+        for (const auto& shape : _shapeSystem->getShapeElements()) {
+            nlohmann::json customPoints = nlohmann::json::array();
+            for (const auto& point : shape.customPoints) {
+                customPoints.push_back(vec2ToJson(point));
+            }
+            shapeArray.push_back({
+                {"id", shape.id},
+                {"type", static_cast<int>(shape.type)},
+                {"position", vec2ToJson(shape.position)},
+                {"size", vec2ToJson(shape.size)},
+                {"rotation", shape.rotation},
+                {"style", shapeStyleToJson(shape.style)},
+                {"selected", shape.selected},
+                {"visible", shape.visible},
+                {"customPoints", customPoints}
+            });
+        }
+        j["shapes"] = shapeArray;
+    }
+
+    if (_effectsSystem) {
+        nlohmann::json effectArray = nlohmann::json::array();
+        for (const auto& effect : _effectsSystem->getEffects()) {
+            effectArray.push_back({
+                {"id", effect.id},
+                {"type", static_cast<int>(effect.type)},
+                {"intensity", effect.intensity},
+                {"color", vec3ToJson(effect.color)},
+                {"offset", vec2ToJson(effect.offset)},
+                {"radius", effect.radius},
+                {"enabled", effect.enabled}
+            });
+        }
+        j["effects"] = effectArray;
+    }
+
+    if (_selectionSystem) {
+        nlohmann::json selectionArray = nlohmann::json::array();
+        for (const auto& selection : _selectionSystem->getSelections()) {
+            nlohmann::json points = nlohmann::json::array();
+            for (const auto& point : selection.points) {
+                points.push_back(vec2ToJson(point));
+            }
+            selectionArray.push_back({
+                {"id", selection.id},
+                {"type", static_cast<int>(selection.type)},
+                {"points", points},
+                {"active", selection.active}
+            });
+        }
+        j["selections"] = selectionArray;
+    }
+
+    if (_transformSystem) {
+        nlohmann::json transformArray = nlohmann::json::array();
+        for (const auto& transform : _transformSystem->getTransforms()) {
+            transformArray.push_back({
+                {"id", transform.id},
+                {"type", static_cast<int>(transform.type)},
+                {"position", vec2ToJson(transform.position)},
+                {"scale", vec2ToJson(transform.scale)},
+                {"rotation", transform.rotation},
+                {"skew", vec2ToJson(transform.skew)},
+                {"active", transform.active}
+            });
+        }
+        j["transforms"] = transformArray;
+    }
+
+    if (_brushSystem) {
+        nlohmann::json brushJson;
+        brushJson["activeLayer"] = _brushSystem->getActiveLayer();
+        brushJson["useLayers"] = _brushSystem->getUseLayers();
+        brushJson["textureSize"] = _brushSystem->getTextureSize();
+        nlohmann::json brushLayers = nlohmann::json::array();
+        for (const auto& layer : _brushSystem->getLayers()) {
+            brushLayers.push_back({
+                {"pixels", layer.pixels},
+                {"opacity", layer.opacity},
+                {"blendMode", static_cast<int>(layer.blendMode)},
+                {"visible", layer.visible}
+            });
+        }
+        brushJson["layers"] = brushLayers;
+        j["brush"] = brushJson;
+    }
     
     // Save history
     nlohmann::json historyArray = nlohmann::json::array();
@@ -1207,6 +1596,31 @@ void DesignSystem::loadDesign(const std::string& filename) {
         if (file.is_open()) {
             nlohmann::json j;
             file >> j;
+
+            std::unordered_map<std::string, std::string> idMap;
+            if (_textSystem) {
+                std::vector<std::string> ids;
+                for (const auto& text : _textSystem->getTextElements()) ids.push_back(text.id);
+                for (const auto& id : ids) _textSystem->removeText(id);
+            }
+            if (_shapeSystem) {
+                std::vector<std::string> ids;
+                for (const auto& shape : _shapeSystem->getShapeElements()) ids.push_back(shape.id);
+                for (const auto& id : ids) _shapeSystem->removeShape(id);
+            }
+            if (_effectsSystem) {
+                std::vector<std::string> ids;
+                for (const auto& effect : _effectsSystem->getEffects()) ids.push_back(effect.id);
+                for (const auto& id : ids) _effectsSystem->removeEffect(id);
+            }
+            if (_selectionSystem) {
+                _selectionSystem->clearAllSelections();
+            }
+            if (_transformSystem) {
+                std::vector<std::string> ids;
+                for (const auto& transform : _transformSystem->getTransforms()) ids.push_back(transform.id);
+                for (const auto& id : ids) _transformSystem->removeTransform(id);
+            }
             
             // Load layers
             if (j.contains("layers")) {
@@ -1218,11 +1632,134 @@ void DesignSystem::loadDesign(const std::string& filename) {
                     layer.visible = layerJson.value("visible", true);
                     layer.opacity = layerJson.value("opacity", 1.0f);
                     layer.locked = layerJson.value("locked", false);
+                    if (layerJson.contains("elements") && layerJson["elements"].is_array()) {
+                        layer.elements = layerJson["elements"].get<std::vector<std::string>>();
+                    }
                     _layers.push_back(layer);
                 }
             }
+            if (_layers.empty()) {
+                Layer defaultLayer;
+                defaultLayer.name = "Background";
+                _layers.push_back(defaultLayer);
+            }
             
             _activeLayer = j.value("activeLayer", 0);
+            _activeLayer = std::clamp(_activeLayer, 0, static_cast<int>(_layers.size()) - 1);
+
+            if (_textSystem && j.contains("texts") && j["texts"].is_array()) {
+                for (const auto& textJson : j["texts"]) {
+                    TextSystem::TextStyle style = textStyleFromJson(textJson.value("style", nlohmann::json::object()));
+                    std::string newId = _textSystem->addText(
+                        textJson.value("text", ""),
+                        vec2FromJson(textJson.value("position", nlohmann::json::array()), glm::vec2(0.0f)),
+                        style);
+                    std::string oldId = textJson.value("id", newId);
+                    idMap[oldId] = newId;
+                    if (auto* text = _textSystem->getTextElement(newId)) {
+                        text->visible = textJson.value("visible", text->visible);
+                        text->selected = textJson.value("selected", text->selected);
+                    }
+                }
+            }
+
+            if (_shapeSystem && j.contains("shapes") && j["shapes"].is_array()) {
+                for (const auto& shapeJson : j["shapes"]) {
+                    ShapeSystem::ShapeType type = static_cast<ShapeSystem::ShapeType>(shapeJson.value("type", 0));
+                    ShapeSystem::ShapeStyle style = shapeStyleFromJson(shapeJson.value("style", nlohmann::json::object()));
+                    std::string newId;
+                    if (type == ShapeSystem::ShapeType::Custom && shapeJson.contains("customPoints")) {
+                        std::vector<glm::vec2> points;
+                        for (const auto& pointJson : shapeJson["customPoints"]) {
+                            points.push_back(vec2FromJson(pointJson));
+                        }
+                        newId = _shapeSystem->addCustomShape(points, vec2FromJson(shapeJson.value("position", nlohmann::json::array())), style);
+                    } else {
+                        newId = _shapeSystem->addShape(
+                            type,
+                            vec2FromJson(shapeJson.value("position", nlohmann::json::array())),
+                            vec2FromJson(shapeJson.value("size", nlohmann::json::array()), glm::vec2(100.0f)),
+                            style);
+                    }
+                    std::string oldId = shapeJson.value("id", newId);
+                    idMap[oldId] = newId;
+                    if (auto* shape = _shapeSystem->getShapeElement(newId)) {
+                        shape->rotation = shapeJson.value("rotation", shape->rotation);
+                        shape->visible = shapeJson.value("visible", shape->visible);
+                        shape->selected = shapeJson.value("selected", shape->selected);
+                    }
+                }
+            }
+
+            for (auto& layer : _layers) {
+                for (auto& id : layer.elements) {
+                    auto mapped = idMap.find(id);
+                    if (mapped != idMap.end()) {
+                        id = mapped->second;
+                    }
+                }
+            }
+
+            if (_effectsSystem && j.contains("effects") && j["effects"].is_array()) {
+                for (const auto& effectJson : j["effects"]) {
+                    auto type = static_cast<EffectsSystem::EffectType>(effectJson.value("type", 0));
+                    std::string id = _effectsSystem->addEffect(type, effectJson.value("intensity", 1.0f));
+                    if (auto* effect = _effectsSystem->getEffect(id)) {
+                        effect->color = vec3FromJson(effectJson.value("color", nlohmann::json::array()), effect->color);
+                        effect->offset = vec2FromJson(effectJson.value("offset", nlohmann::json::array()), effect->offset);
+                        effect->radius = effectJson.value("radius", effect->radius);
+                        effect->enabled = effectJson.value("enabled", effect->enabled);
+                    }
+                }
+            }
+
+            if (_selectionSystem && j.contains("selections") && j["selections"].is_array()) {
+                for (const auto& selectionJson : j["selections"]) {
+                    std::vector<glm::vec2> points;
+                    if (selectionJson.contains("points")) {
+                        for (const auto& pointJson : selectionJson["points"]) {
+                            points.push_back(vec2FromJson(pointJson));
+                        }
+                    }
+                    auto type = static_cast<SelectionSystem::SelectionType>(selectionJson.value("type", 0));
+                    _selectionSystem->createSelection(type, points);
+                }
+            }
+
+            if (_transformSystem && j.contains("transforms") && j["transforms"].is_array()) {
+                for (const auto& transformJson : j["transforms"]) {
+                    auto type = static_cast<TransformSystem::TransformType>(transformJson.value("type", 0));
+                    std::string id = _transformSystem->createTransform(type);
+                    if (auto* transform = _transformSystem->getTransform(id)) {
+                        transform->position = vec2FromJson(transformJson.value("position", nlohmann::json::array()), transform->position);
+                        transform->scale = vec2FromJson(transformJson.value("scale", nlohmann::json::array()), transform->scale);
+                        transform->rotation = transformJson.value("rotation", transform->rotation);
+                        transform->skew = vec2FromJson(transformJson.value("skew", nlohmann::json::array()), transform->skew);
+                        transform->active = transformJson.value("active", transform->active);
+                    }
+                }
+            }
+
+            if (_brushSystem && j.contains("brush") && j["brush"].is_object()) {
+                std::vector<BrushSystem::Layer> brushLayers;
+                const auto& brushJson = j["brush"];
+                if (brushJson.contains("layers") && brushJson["layers"].is_array()) {
+                    for (const auto& layerJson : brushJson["layers"]) {
+                        BrushSystem::Layer layer;
+                        layer.opacity = layerJson.value("opacity", 1.0f);
+                        layer.blendMode = static_cast<BrushSystem::BlendMode>(layerJson.value("blendMode", 0));
+                        layer.visible = layerJson.value("visible", true);
+                        if (layerJson.contains("pixels") && layerJson["pixels"].is_array()) {
+                            layer.pixels = layerJson["pixels"].get<std::vector<uint8_t>>();
+                        }
+                        brushLayers.push_back(std::move(layer));
+                    }
+                }
+                _brushSystem->replaceLayers(
+                    brushLayers,
+                    brushJson.value("activeLayer", 0),
+                    brushJson.value("useLayers", false));
+            }
             
             // Load history
             if (j.contains("history")) {
@@ -1238,6 +1775,7 @@ void DesignSystem::loadDesign(const std::string& filename) {
             }
             
             _historyIndex = j.value("historyIndex", 0);
+            _historyIndex = std::min(_historyIndex, _history.size());
             
             // Load current tool
             if (j.contains("currentTool")) {

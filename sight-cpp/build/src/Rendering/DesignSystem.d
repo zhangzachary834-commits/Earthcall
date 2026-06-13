@@ -262,7 +262,8 @@ build/src/Rendering/DesignSystem.o: src/Rendering/DesignSystem.cpp \
   src/Form/Object/Automation/Automation.hpp \
   src/Person/Body/BodyPart/BodyPart.hpp src/Rendering/BrushSystem.hpp \
   src/ZonesOfEarth/Zone/Zone.hpp \
-  src/ZonesOfEarth/Zone/../World/World.hpp src/Util/SaveSystem.hpp
+  src/ZonesOfEarth/Zone/../World/World.hpp src/Util/SaveSystem.hpp \
+  src/Form/Object/Formation/Menu/stb_easy_font.h
 
 src/Rendering/DesignSystem.hpp:
 
@@ -811,3 +812,5 @@ src/ZonesOfEarth/Zone/Zone.hpp:
 src/ZonesOfEarth/Zone/../World/World.hpp:
 
 src/Util/SaveSystem.hpp:
+
+src/Form/Object/Formation/Menu/stb_easy_font.h:

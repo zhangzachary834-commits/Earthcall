@@ -133,32 +133,33 @@ void Game::update(float dt) {
 
             Tool::Type currentToolType = _currentTool.getType();
 
-            Tool::use(_window, mgr, zone, currentToolType, *this);
             if (currentToolType == Tool::Type::Brush) {
                 // Check for Shift key to enable straight line mode
                 bool shiftPressed = glfwGetKey(_window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ||
                                    glfwGetKey(_window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS;
 
                 // Straight line mode (either from button or Shift+click)
-                if (_straightLineMode || shiftPressed) {
+                if (_drawingStraightLine || _straightLineMode || shiftPressed) {
                     if (mouseLeftNow && !_mouseLeftPressedLast) {
-                        // Start straight line
                         _drawingStraightLine = true;
                         _straightLineStartX = mx;
                         _straightLineStartY = my;
-                        zone.startStroke(mx, my);
-                    } else if (_drawingStraightLine) {
-                        // Update straight line preview on mouse move
-                        zone.endStroke();
+                        _straightLineEndX = mx;
+                        _straightLineEndY = my;
+                        if (!zone.getBrushSystem()) {
+                            zone.initializeBrushSystem();
+                        }
+                    } else if (_drawingStraightLine && mouseLeftNow) {
+                        _straightLineEndX = mx;
+                        _straightLineEndY = my;
+                    } else if (_drawingStraightLine && !mouseLeftNow) {
                         zone.startStroke(_straightLineStartX, _straightLineStartY);
-                        zone.continueStroke(mx, my);
-                    } else if (!mouseLeftNow && _mouseLeftPressedLast && _drawingStraightLine) {
-                        // End straight line
+                        if (std::abs(_straightLineEndX - _straightLineStartX) > 0.5f ||
+                            std::abs(_straightLineEndY - _straightLineStartY) > 0.5f) {
+                            zone.continueStroke(_straightLineEndX, _straightLineEndY);
+                        }
                         zone.endStroke();
                         _drawingStraightLine = false;
-                        if (shiftPressed) {
-                            _straightLineMode = false;
-                        }
                     }
                 } else {
                     // Ensure design system is initialized
@@ -166,83 +167,15 @@ void Game::update(float dt) {
                         zone.initializeDesignSystem();
                     }
 
-                    // Debug output to see what tool is selected
                     static Tool::Type lastToolType = Tool::Type::Brush;
                     if (currentToolType != lastToolType) {
                         printf("Tool changed to: %s (%s)\n", _currentTool.getTypeName().c_str(), _currentTool.getIcon().c_str());
                         lastToolType = currentToolType;
                     }
 
-                    // Drawing tools (including Line)
-                    if (currentToolType == Tool::Type::Brush) {
-                        Tool::use(_window, mgr, zone, currentToolType, *this);
-                    }
-
-                    // Utility tools
-                    else if (currentToolType == Tool::Type::ColorPicker ||
-                             currentToolType == Tool::Type::Eyedropper ||
-                             currentToolType == Tool::Type::Hand ||
-                             currentToolType == Tool::Type::Zoom ||
-                             currentToolType == Tool::Type::Crop ||
-                             currentToolType == Tool::Type::Slice) {
-
-                        if (mouseLeftNow && !_mouseLeftPressedLast) {
-                            switch (currentToolType) {
-                                case Tool::Type::ColorPicker:
-                                case Tool::Type::Eyedropper: {
-                                    float r = static_cast<float>(rand()) / RAND_MAX;
-                                    float g = static_cast<float>(rand()) / RAND_MAX;
-                                    float b = static_cast<float>(rand()) / RAND_MAX;
-                                    zone.setDrawColor(r, g, b);
-                                    break;
-                                }
-
-                                case Tool::Type::Hand:
-                                    printf("Hand tool: Pan view at (%.1f, %.1f)\n", mx, my);
-                                    break;
-
-                                case Tool::Type::Zoom:
-                                    printf("Zoom tool: Zoom at (%.1f, %.1f)\n", mx, my);
-                                    break;
-
-                                case Tool::Type::Crop:
-                                    printf("Crop tool: Start crop at (%.1f, %.1f)\n", mx, my);
-                                    break;
-
-                                case Tool::Type::Slice:
-                                    printf("Slice tool: Start slice at (%.1f, %.1f)\n", mx, my);
-                                    break;
-
-                                default:
-                                    break;
-                            }
-                        }
-                    }
-                    // Legacy fallback for compatibility
-                    else {
-                        if (_brush.useAdvanced2D) {
-                            if (mouseLeftNow && !_mouseLeftPressedLast) {
-                                zone.startStroke(mx, my);
-                            } else if (mouseLeftNow && _mouseLeftPressedLast) {
-                                zone.continueStroke(mx, my);
-                            } else if (!mouseLeftNow && _mouseLeftPressedLast) {
-                                zone.endStroke();
-                            }
-                        } else {
-                            if (mouseLeftNow && !_mouseLeftPressedLast) {
-                                mgr.active().startStroke(mx, my);
-                            } else if (mouseLeftNow && _mouseLeftPressedLast) {
-                                mgr.active().continueStroke(mx, my);
-                            } else if (!mouseLeftNow && _mouseLeftPressedLast) {
-                                mgr.active().endStroke();
-                            }
-                        }
-                    }
+                    Tool::use(_window, mgr, zone, currentToolType, *this);
                 }
-            } else if (_currentTool.getType() == Tool::Type::Eraser) {
-                Tool::use(_window, mgr, zone, currentToolType, *this);
-
-            } else if (_currentTool.getType() == Tool::Type::Rectangle) {
+            } else {
                 Tool::use(_window, mgr, zone, currentToolType, *this);
             }
         }
@@ -266,27 +199,11 @@ void Game::update(float dt) {
                            useAvatarTargets ? &avatarRoot : nullptr);
         } else if (_current3DMode == Mode3D::Selection) {
             collect3DTargets(toolTargets);
-            // 3D Selection: set selected object on single click
+            // 3D Selection: set selected object on single click. Picking (incl.
+            // the locked-cursor crosshair) is handled by Tool::Selection3D using
+            // the cached camera matrices.
             if (mouseLeftNow && !_mouseLeftPressedLast) {
-                glGetIntegerv(GL_VIEWPORT, _camera.viewport);
-                glGetDoublev(GL_MODELVIEW_MATRIX, _camera.modelview);
-                glGetDoublev(GL_PROJECTION_MATRIX, _camera.projection);
-                double winX = xpos * scaleX; double winY = ypos * scaleY;
-                winY = _camera.viewport[3] - winY;
-                GLdouble nearX,nearY,nearZ,farX,farY,farZ;
-                gluUnProject(winX, winY, 0.0, _camera.modelview, _camera.projection, _camera.viewport, &nearX,&nearY,&nearZ);
-                gluUnProject(winX, winY, 1.0, _camera.modelview, _camera.projection, _camera.viewport, &farX,&farY,&farZ);
-                glm::vec3 rayO(nearX,nearY,nearZ); glm::vec3 rayDir = glm::normalize(glm::vec3(farX,farY,farZ)-rayO);
-                float nearestT = 1e9f; Object* hitObj=nullptr;
-                const auto& objects = toolTargets;
-                for (auto* obj : objects) {
-                    if (!obj) continue;
-                    float t; int face; glm::vec2 uv;
-                    if (obj->raycastFace(rayO, rayDir, t, face, uv)) {
-                        if (t > 0.0f && t < nearestT) { nearestT = t; hitObj = obj; }
-                    }
-                }
-                _selectedObject3D = hitObj;
+                Tool::Selection3D(_window, this, toolTargets);
             }
             if (_selectedObject3D) {
                 ImGui::SetNextWindowPos(ImVec2(10, 10), ImGuiCond_Always);

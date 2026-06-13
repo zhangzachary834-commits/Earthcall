@@ -65,6 +65,7 @@ public:
     
     // Text rendering
     void renderTexts() const;
+    void renderText(const std::string& id, float layerOpacity = 1.0f) const;
     
     // Text effects
     void applyTextEffect(const std::string& id, const std::string& effectType, float intensity = 1.0f);
@@ -78,6 +79,8 @@ private:
     std::unordered_map<std::string, size_t> _textIndexMap;
     std::vector<std::string> _selectedTexts;
     int _nextTextId = 1;
+
+    void renderTextElement(const TextElement& element, float layerOpacity) const;
 };
 
 // Shape system for professional shape creation
@@ -145,6 +148,7 @@ public:
     
     // Shape rendering
     void renderShapes() const;
+    void renderShape(const std::string& id, float layerOpacity = 1.0f) const;
     
     // Shape effects
     void applyShapeEffect(const std::string& id, const std::string& effectType, float intensity = 1.0f);
@@ -168,6 +172,7 @@ private:
     void renderHeart(float width, float height) const;
     void renderArrow(float width, float height) const;
     void renderCustomShape(const std::vector<glm::vec2>& points) const;
+    void renderShapeElement(const ShapeElement& element, float layerOpacity) const;
 };
 
 // Effects system for professional visual effects
@@ -391,6 +396,10 @@ public:
     void removeLayer(int layerIndex);
     void setActiveLayer(int layerIndex);
     void setLayerOpacity(int layerIndex, float opacity);
+    int getActiveLayer() const { return _activeLayer; }
+    int getLayerCount() const { return static_cast<int>(_layers.size()); }
+    float getLayerOpacity(int layerIndex) const;
+    const std::string& getLayerName(int layerIndex) const;
     
     // Rendering
     void render() const;

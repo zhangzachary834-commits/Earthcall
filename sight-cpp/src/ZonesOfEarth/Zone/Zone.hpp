@@ -141,6 +141,9 @@ public:
     void removeDesignLayer(int layerIndex);
     void setActiveDesignLayer(int layerIndex);
     void setDesignLayerOpacity(int layerIndex, float opacity);
+    int getActiveDesignLayer() const;
+    int getDesignLayerCount() const;
+    float getDesignLayerOpacity(int layerIndex) const;
 
     const std::string& name() const { return _name; }
     // Safe accessors for diagnostics

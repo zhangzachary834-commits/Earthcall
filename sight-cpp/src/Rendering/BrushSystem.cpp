@@ -5,6 +5,8 @@
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
+#include <limits>
+#include <utility>
 
 BrushSystem::BrushSystem(int textureSize) : _textureSize(textureSize) {
     printf("Creating BrushSystem with texture size: %d\n", textureSize);
@@ -27,11 +29,61 @@ void BrushSystem::setLayerOpacity(float opacity) {
     }
 }
 
+void BrushSystem::setActiveLayer(int layer) {
+    if (layer >= 0 && layer < static_cast<int>(_layers.size())) {
+        _activeLayer = layer;
+    }
+}
+
 void BrushSystem::setBlendMode(BlendMode mode) {
     if (_activeLayer >= 0 && _activeLayer < static_cast<int>(_layers.size())) {
         _layers[_activeLayer].blendMode = mode;
         compositeLayers();
     }
+}
+
+float BrushSystem::getLayerOpacity() const {
+    if (_activeLayer >= 0 && _activeLayer < static_cast<int>(_layers.size())) {
+        return _layers[_activeLayer].opacity;
+    }
+    return 1.0f;
+}
+
+BrushSystem::BlendMode BrushSystem::getBlendMode() const {
+    if (_activeLayer >= 0 && _activeLayer < static_cast<int>(_layers.size())) {
+        return _layers[_activeLayer].blendMode;
+    }
+    return BlendMode::Normal;
+}
+
+void BrushSystem::replaceLayers(const std::vector<Layer>& layers, int activeLayer, bool useLayers) {
+    _layers.clear();
+    const size_t expectedSize = static_cast<size_t>(_textureSize * _textureSize * 4);
+
+    for (auto layer : layers) {
+        if (layer.pixels.size() != expectedSize) {
+            layer.pixels.assign(expectedSize, 0);
+        }
+        layer.strokeHistory.clear();
+        layer.undoStack.clear();
+        layer.pixelUndoStack.clear();
+        layer.pixelRedoStack.clear();
+        layer.opacity = std::clamp(layer.opacity, 0.0f, 1.0f);
+        _layers.push_back(std::move(layer));
+    }
+
+    if (_layers.empty()) {
+        Layer layer;
+        layer.pixels.assign(expectedSize, 0);
+        layer.opacity = 1.0f;
+        layer.blendMode = BlendMode::Normal;
+        layer.visible = true;
+        _layers.push_back(std::move(layer));
+    }
+
+    _activeLayer = std::clamp(activeLayer, 0, static_cast<int>(_layers.size()) - 1);
+    _useLayers = useLayers;
+    requestComposite();
 }
 
 int BrushSystem::addLayer() {
@@ -42,6 +94,8 @@ int BrushSystem::addLayer() {
     newLayer.visible = true;
     newLayer.strokeHistory.clear();
     newLayer.undoStack.clear();
+    newLayer.pixelUndoStack.clear();
+    newLayer.pixelRedoStack.clear();
     
     _layers.push_back(newLayer);
     _activeLayer = static_cast<int>(_layers.size()) - 1;
@@ -53,7 +107,9 @@ int BrushSystem::addLayer() {
 void BrushSystem::deleteLayer(int layerIndex) {
     if (layerIndex >= 0 && layerIndex < static_cast<int>(_layers.size()) && _layers.size() > 1) {
         _layers.erase(_layers.begin() + layerIndex);
-        if (_activeLayer >= static_cast<int>(_layers.size())) {
+        if (_activeLayer > layerIndex) {
+            --_activeLayer;
+        } else if (_activeLayer >= static_cast<int>(_layers.size())) {
             _activeLayer = static_cast<int>(_layers.size()) - 1;
         }
         compositeLayers();
@@ -80,7 +136,8 @@ void BrushSystem::setCurrentPreset(int index) {
 }
 
 void BrushSystem::paintDab(const glm::vec2& position, const glm::vec3& color, float pressure) {
-    if (!isValidPosition(position) || _activeLayer < 0 || _activeLayer >= static_cast<int>(_layers.size())) {
+    glm::vec2 uv = normalizePosition(position);
+    if (!isValidPosition(uv) || _activeLayer < 0 || _activeLayer >= static_cast<int>(_layers.size())) {
         return;
     }
 
@@ -88,14 +145,14 @@ void BrushSystem::paintDab(const glm::vec2& position, const glm::vec3& color, fl
     uint8_t* targetBuffer = layer.pixels.data();
     
     // Calculate brush parameters
-    float radius = _brushRadius * pressure;
-    float opacity = _brushOpacity * pressure;
-    float flow = _brushFlow;
+    float radius = std::max(0.001f, _brushRadius * std::clamp(pressure, 0.1f, 1.0f));
+    float opacity = std::clamp(_brushOpacity * pressure, 0.0f, 1.0f);
+    float flow = std::clamp(_brushFlow, 0.0f, 1.0f);
     
     // Convert position to pixel coordinates
-    int centerX = static_cast<int>(position.x * _textureSize);
-    int centerY = static_cast<int>(position.y * _textureSize);
-    int radiusPx = static_cast<int>(radius * _textureSize);
+    int centerX = std::clamp(static_cast<int>(uv.x * _textureSize), 0, _textureSize - 1);
+    int centerY = std::clamp(static_cast<int>(uv.y * _textureSize), 0, _textureSize - 1);
+    int radiusPx = std::max(1, static_cast<int>(std::ceil(radius * _textureSize)));
     int radiusSq = radiusPx * radiusPx;
     
     // Calculate brush bounds
@@ -149,36 +206,67 @@ void BrushSystem::paintDab(const glm::vec2& position, const glm::vec3& color, fl
         }
     }
     
-    // Save stroke point for history
-    StrokePoint point;
-    point.position = position;
-    point.radius = radius;
-    point.opacity = opacity;
-    point.color = color;
-    point.timestamp = static_cast<float>(glfwGetTime());
-    point.pressure = pressure;
-    
-    layer.strokeHistory.push_back({point});
-    
     compositeLayers();
 }
 
+void BrushSystem::eraseDab(const glm::vec2& position, float radius) {
+    glm::vec2 uv = normalizePosition(position);
+    if (!isValidPosition(uv) || _activeLayer < 0 || _activeLayer >= static_cast<int>(_layers.size())) {
+        return;
+    }
+
+    Layer& layer = _layers[_activeLayer];
+    int centerX = std::clamp(static_cast<int>(uv.x * _textureSize), 0, _textureSize - 1);
+    int centerY = std::clamp(static_cast<int>(uv.y * _textureSize), 0, _textureSize - 1);
+    int radiusPx = std::max(1, static_cast<int>(std::ceil(radius * _textureSize)));
+    int radiusSq = radiusPx * radiusPx;
+
+    int x0 = std::max(0, centerX - radiusPx);
+    int y0 = std::max(0, centerY - radiusPx);
+    int x1 = std::min(_textureSize - 1, centerX + radiusPx);
+    int y1 = std::min(_textureSize - 1, centerY + radiusPx);
+
+    for (int y = y0; y <= y1; ++y) {
+        for (int x = x0; x <= x1; ++x) {
+            int dx = x - centerX;
+            int dy = y - centerY;
+            int distSq = dx * dx + dy * dy;
+            if (distSq <= radiusSq) {
+                float distNorm = std::sqrt(static_cast<float>(distSq)) / static_cast<float>(radiusPx);
+                float intensity = std::clamp(1.0f - distNorm, 0.0f, 1.0f);
+                int idx = getPixelIndex(x, y);
+                float alpha = layer.pixels[idx + 3] / 255.0f;
+                alpha *= (1.0f - intensity * _brushOpacity);
+                layer.pixels[idx + 3] = static_cast<uint8_t>(std::clamp(alpha, 0.0f, 1.0f) * 255.0f);
+            }
+        }
+    }
+
+    requestComposite();
+}
+
 void BrushSystem::paintStroke(const glm::vec2& startPos, const glm::vec2& endPos, const glm::vec3& color) {
+    const glm::vec2 startUv = normalizePosition(startPos);
+    const glm::vec2 endUv = normalizePosition(endPos);
+
     if (!_useStrokeInterpolation) {
-        paintDab(startPos, color);
-        paintDab(endPos, color);
+        beginCompositeBatch();
+        paintDab(startUv, color);
+        paintDab(endUv, color);
+        endCompositeBatch();
         return;
     }
     
-    float distance = glm::length(endPos - startPos);
-    float spacing = _brushSpacing;
-    int steps = static_cast<int>(distance / spacing) + 1;
+    float distance = glm::length(endUv - startUv);
+    float spacing = std::max(0.001f, _brushSpacing);
+    int steps = std::max(1, static_cast<int>(std::ceil(distance / spacing)));
     
     std::vector<StrokePoint> strokePoints;
+    beginCompositeBatch();
     
     for (int i = 0; i <= steps; ++i) {
         float t = static_cast<float>(i) / static_cast<float>(steps);
-        glm::vec2 pos = glm::mix(startPos, endPos, t);
+        glm::vec2 pos = glm::mix(startUv, endUv, t);
         
         float pressure = calculatePressure(pos, static_cast<float>(glfwGetTime()));
         paintDab(pos, color, pressure);
@@ -198,19 +286,22 @@ void BrushSystem::paintStroke(const glm::vec2& startPos, const glm::vec2& endPos
     if (_activeLayer >= 0 && _activeLayer < static_cast<int>(_layers.size())) {
         _layers[_activeLayer].strokeHistory.push_back(strokePoints);
     }
+    endCompositeBatch();
 }
 
 void BrushSystem::paint2DStroke(const std::vector<glm::vec2>& points, const glm::vec3& color) {
     if (points.size() < 2) return;
     
     std::vector<StrokePoint> strokePoints;
+    beginCompositeBatch();
     
     for (size_t i = 0; i < points.size(); ++i) {
-        float pressure = calculatePressure(points[i], static_cast<float>(glfwGetTime()));
-        paintDab(points[i], color, pressure);
+        glm::vec2 pos = normalizePosition(points[i]);
+        float pressure = calculatePressure(pos, static_cast<float>(glfwGetTime()));
+        paintDab(pos, color, pressure);
         
         StrokePoint point;
-        point.position = points[i];
+        point.position = pos;
         point.radius = _brushRadius * pressure;
         point.opacity = _brushOpacity * pressure;
         point.color = color;
@@ -223,33 +314,75 @@ void BrushSystem::paint2DStroke(const std::vector<glm::vec2>& points, const glm:
     if (_activeLayer >= 0 && _activeLayer < static_cast<int>(_layers.size())) {
         _layers[_activeLayer].strokeHistory.push_back(strokePoints);
     }
+    endCompositeBatch();
+}
+
+bool BrushSystem::sampleColor(const glm::vec2& position, glm::vec3& colorOut) const {
+    glm::vec2 uv = normalizePosition(position);
+    if (!isValidPosition(uv) || _compositedTexture.empty()) {
+        return false;
+    }
+
+    int x = std::clamp(static_cast<int>(uv.x * _textureSize), 0, _textureSize - 1);
+    int y = std::clamp(static_cast<int>(uv.y * _textureSize), 0, _textureSize - 1);
+    int idx = getPixelIndex(x, y);
+    if (idx + 3 >= static_cast<int>(_compositedTexture.size()) || _compositedTexture[idx + 3] == 0) {
+        return false;
+    }
+
+    colorOut = glm::vec3(_compositedTexture[idx] / 255.0f,
+                         _compositedTexture[idx + 1] / 255.0f,
+                         _compositedTexture[idx + 2] / 255.0f);
+    return true;
 }
 
 void BrushSystem::saveStrokeState() {
     if (_activeLayer >= 0 && _activeLayer < static_cast<int>(_layers.size())) {
-        _layers[_activeLayer].undoStack = _layers[_activeLayer].strokeHistory;
+        Layer& layer = _layers[_activeLayer];
+        layer.undoStack = layer.strokeHistory;
+        layer.pixelUndoStack.push_back(layer.pixels);
+        layer.pixelRedoStack.clear();
+        constexpr size_t maxSnapshots = 64;
+        if (layer.pixelUndoStack.size() > maxSnapshots) {
+            layer.pixelUndoStack.erase(layer.pixelUndoStack.begin());
+        }
     }
 }
 
 void BrushSystem::undo() {
     if (_activeLayer >= 0 && _activeLayer < static_cast<int>(_layers.size())) {
         Layer& layer = _layers[_activeLayer];
-        if (!layer.undoStack.empty()) {
-            layer.strokeHistory = layer.undoStack;
-            // TODO: Implement full stroke recreation from history
+        if (!layer.pixelUndoStack.empty()) {
+            layer.pixelRedoStack.push_back(layer.pixels);
+            layer.pixels = layer.pixelUndoStack.back();
+            layer.pixelUndoStack.pop_back();
+            if (!layer.strokeHistory.empty()) {
+                layer.strokeHistory.pop_back();
+            }
+            layer.undoStack = layer.strokeHistory;
             compositeLayers();
         }
     }
 }
 
 void BrushSystem::redo() {
-    // TODO: Implement redo functionality
+    if (_activeLayer >= 0 && _activeLayer < static_cast<int>(_layers.size())) {
+        Layer& layer = _layers[_activeLayer];
+        if (!layer.pixelRedoStack.empty()) {
+            layer.pixelUndoStack.push_back(layer.pixels);
+            layer.pixels = layer.pixelRedoStack.back();
+            layer.pixelRedoStack.pop_back();
+            compositeLayers();
+        }
+    }
 }
 
 void BrushSystem::clearHistory() {
     for (auto& layer : _layers) {
         layer.strokeHistory.clear();
         layer.undoStack.clear();
+        layer.pixelUndoStack.clear();
+        layer.pixelRedoStack.clear();
     }
 }
 
@@ -405,12 +538,19 @@ void BrushSystem::applySmudgeEffect(uint8_t* targetBuffer, int x, int y, float i
 }
 
 void BrushSystem::applyCloneEffect(uint8_t* targetBuffer, int x, int y, float intensity) {
-    // Calculate source position
-    glm::vec2 sourcePos = _cloneSource + _cloneOffset;
-    int sourceX = static_cast<int>(sourcePos.x * _textureSize);
-    int sourceY = static_cast<int>(sourcePos.y * _textureSize);
+    glm::vec2 offset = _cloneOffset;
+    if (glm::length(offset) <= 1e-6f) {
+        offset = glm::vec2(-0.08f, -0.08f);
+    }
+
+    int sourceX = x + static_cast<int>(std::round(offset.x * _textureSize));
+    int sourceY = y + static_cast<int>(std::round(offset.y * _textureSize));
     
     if (sourceX >= 0 && sourceX < _textureSize && sourceY >= 0 && sourceY < _textureSize) {
+        int sourceIdx = getPixelIndex(sourceX, sourceY);
+        if (targetBuffer[sourceIdx + 3] == 0) {
+            return;
+        }
         glm::vec3 sourceColor = getPixelColor(targetBuffer, sourceX, sourceY);
         applyBrushEffect(targetBuffer, x, y, sourceColor, intensity);
     }
@@ -453,39 +593,53 @@ glm::vec3 BrushSystem::blendPixels(const glm::vec3& src, const glm::vec3& dst, B
 }
 
 void BrushSystem::compositeLayers() {
-    // Create a composited texture buffer
-    static std::vector<uint8_t> compositedTexture;
-    compositedTexture.resize(_textureSize * _textureSize * 4, 0);
-    
-    // Start with transparent background
-    for (int i = 0; i < _textureSize * _textureSize * 4; i += 4) {
-        compositedTexture[i] = 0;     // R
-        compositedTexture[i + 1] = 0; // G
-        compositedTexture[i + 2] = 0; // B
-        compositedTexture[i + 3] = 0; // A (transparent)
-    }
+    _compositedTexture.assign(_textureSize * _textureSize * 4, 0);
     
     // Composite all visible layers
     for (size_t i = 0; i < _layers.size(); ++i) {
         if (_layers[i].visible && !_layers[i].pixels.empty()) {
-                            for (int y = 0; y < _textureSize; ++y) {
-                    for (int x = 0; x < _textureSize; ++x) {
-                        // Get source and destination colors
-                        glm::vec3 srcColor = getPixelColor(_layers[i].pixels.data(), x, y);
-                        glm::vec3 dstColor = getPixelColor(compositedTexture.data(), x, y);
+            for (int y = 0; y < _textureSize; ++y) {
+                for (int x = 0; x < _textureSize; ++x) {
+                    int idx = getPixelIndex(x, y);
+                    float srcAlpha = (_layers[i].pixels[idx + 3] / 255.0f) * _layers[i].opacity;
+                    if (srcAlpha <= std::numeric_limits<float>::epsilon()) {
+                        continue;
+                    }
+
+                    glm::vec3 srcColor = getPixelColor(_layers[i].pixels.data(), x, y);
+                    glm::vec3 dstColor = getPixelColor(_compositedTexture.data(), x, y);
                     
                     // Blend using the layer's blend mode and opacity
-                    glm::vec3 blendedColor = blendPixels(srcColor, dstColor, _layers[i].blendMode, _layers[i].opacity);
+                    glm::vec3 blendedColor = blendPixels(srcColor, dstColor, _layers[i].blendMode, srcAlpha);
                     
                     // Apply to composited texture
-                    setPixelColor(compositedTexture.data(), x, y, blendedColor);
+                    setPixelColor(_compositedTexture.data(), x, y, blendedColor);
                 }
             }
         }
     }
-    
-    // Store the composited result
-    _compositedTexture = compositedTexture;
+}
+
+void BrushSystem::beginCompositeBatch() {
+    ++_compositeBatchDepth;
+}
+
+void BrushSystem::endCompositeBatch() {
+    if (_compositeBatchDepth > 0) {
+        --_compositeBatchDepth;
+    }
+    if (_compositeBatchDepth == 0 && _compositeDirty) {
+        _compositeDirty = false;
+        compositeLayers();
+    }
+}
+
+void BrushSystem::requestComposite() {
+    if (_compositeBatchDepth > 0) {
+        _compositeDirty = true;
+    } else {
+        compositeLayers();
+    }
 }
 
 float BrushSystem::calculatePressure(const glm::vec2& currentPos, float currentTime) {
@@ -497,7 +651,10 @@ float BrushSystem::calculatePressure(const glm::vec2& currentPos, float currentT
         float timeDelta = currentTime - _lastTime;
         if (timeDelta > 0.0f) {
             float speed = glm::length(currentPos - _lastPosition) / timeDelta;
-            return std::clamp(1.0f - speed * _pressureSensitivity, 0.1f, 1.0f);
+            float pressure = std::clamp(1.0f - speed * _pressureSensitivity, 0.1f, 1.0f);
+            _lastPosition = currentPos;
+            _lastTime = currentTime;
+            return pressure;
         }
     }
     
@@ -508,6 +665,22 @@ float BrushSystem::calculatePressure(const glm::vec2& currentPos, float currentT
 
 bool BrushSystem::isValidPosition(const glm::vec2& pos) const {
     return pos.x >= 0.0f && pos.x <= 1.0f && pos.y >= 0.0f && pos.y <= 1.0f;
+}
+
+glm::vec2 BrushSystem::normalizePosition(const glm::vec2& pos) const {
+    if (isValidPosition(pos)) {
+        return pos;
+    }
+
+    GLint viewport[4] = {0, 0, 0, 0};
+    glGetIntegerv(GL_VIEWPORT, viewport);
+    const float width = static_cast<float>(viewport[2]);
+    const float height = static_cast<float>(viewport[3]);
+    if (width <= 0.0f || height <= 0.0f) {
+        return pos;
+    }
+
+    return glm::vec2(pos.x / width, pos.y / height);
 }
 
 int BrushSystem::getPixelIndex(int x, int y) const {
@@ -521,8 +694,9 @@ glm::vec3 BrushSystem::getPixelColor(const uint8_t* buffer, int x, int y) const 
 
 void BrushSystem::setPixelColor(uint8_t* buffer, int x, int y, const glm::vec3& color) {
     int idx = getPixelIndex(x, y);
-    buffer[idx] = static_cast<uint8_t>(color.r * 255.0f);
-    buffer[idx + 1] = static_cast<uint8_t>(color.g * 255.0f);
-    buffer[idx + 2] = static_cast<uint8_t>(color.b * 255.0f);
+    glm::vec3 clamped = glm::clamp(color, glm::vec3(0.0f), glm::vec3(1.0f));
+    buffer[idx] = static_cast<uint8_t>(clamped.r * 255.0f);
+    buffer[idx + 1] = static_cast<uint8_t>(clamped.g * 255.0f);
+    buffer[idx + 2] = static_cast<uint8_t>(clamped.b * 255.0f);
     buffer[idx + 3] = 255;
 } 

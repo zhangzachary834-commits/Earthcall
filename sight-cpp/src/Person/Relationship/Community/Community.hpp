@@ -1,0 +1,3 @@
+class Community extends Formations {
+    
+}

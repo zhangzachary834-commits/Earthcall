@@ -1,6 +1,7 @@
 #include "Zone.hpp"
 #include "../World/World.hpp"
 #include <iostream>
+#include <algorithm>
 #include "GLFW/glfw3.h"
 
 using Scope = Zone::Scope;
@@ -120,6 +121,10 @@ void Zone::startStroke(float x, float y) {
     // Advanced brush system (primary)
     currentStrokePoints.clear();
     currentStrokePoints.push_back(glm::vec2(x, y));
+    if (brushSystem) {
+        brushSystem->saveStrokeState();
+        brushSystem->paintDab(glm::vec2(x, y), getCurrentColor());
+    }
     
     // Also store in legacy system for rendering
     currentStroke.points.clear();
@@ -135,8 +140,13 @@ void Zone::startStroke(float x, float y) {
 
 void Zone::continueStroke(float x, float y) {
     if (isDrawing) {
+        glm::vec2 previous = currentStrokePoints.empty() ? glm::vec2(x, y) : currentStrokePoints.back();
+
         // Advanced brush system (primary)
         currentStrokePoints.push_back(glm::vec2(x, y));
+        if (brushSystem) {
+            brushSystem->paintStroke(previous, glm::vec2(x, y), getCurrentColor());
+        }
         
         // Also store in legacy system for rendering
         currentStroke.points.push_back(x);
@@ -316,18 +326,27 @@ void Zone::saveStrokeState() {
 }
 
 void Zone::undo() {
+    if (designSystem) {
+        designSystem->undo();
+    }
     if (brushSystem) {
         brushSystem->undo();
     }
 }
 
 void Zone::redo() {
+    if (designSystem) {
+        designSystem->redo();
+    }
     if (brushSystem) {
         brushSystem->redo();
     }
 }
 
 void Zone::clearHistory() {
+    if (designSystem) {
+        designSystem->clearHistory();
+    }
     if (brushSystem) {
         brushSystem->clearHistory();
     }
@@ -345,9 +364,52 @@ void Zone::renderArt() const {
         designSystem->render();
     }
     
-    // Advanced brush system (secondary)
+    bool brushCanvasVisible = false;
     if (brushSystem) {
-        // Draw completed strokes first (these should use their original colors and settings)
+        const auto& pixels = brushSystem->getCompositedTexture();
+        const int textureSize = brushSystem->getTextureSize();
+        brushCanvasVisible = textureSize > 0 && pixels.size() == static_cast<size_t>(textureSize * textureSize * 4) &&
+            std::any_of(pixels.begin() + 3, pixels.end(), [step = size_t{0}](uint8_t alpha) mutable {
+                bool isAlpha = (step++ % 4) == 0;
+                return isAlpha && alpha > 0;
+            });
+
+        if (brushCanvasVisible) {
+            GLint viewport[4] = {0, 0, 0, 0};
+            glGetIntegerv(GL_VIEWPORT, viewport);
+
+            static GLuint brushCanvasTexture = 0;
+            if (brushCanvasTexture == 0) {
+                glGenTextures(1, &brushCanvasTexture);
+            }
+
+            glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_TEXTURE_BIT);
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            glEnable(GL_TEXTURE_2D);
+            glBindTexture(GL_TEXTURE_2D, brushCanvasTexture);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, textureSize, textureSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
+
+            glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+            glBegin(GL_QUADS);
+            glTexCoord2f(0.0f, 0.0f); glVertex2f(0.0f, 0.0f);
+            glTexCoord2f(1.0f, 0.0f); glVertex2f(static_cast<float>(viewport[2]), 0.0f);
+            glTexCoord2f(1.0f, 1.0f); glVertex2f(static_cast<float>(viewport[2]), static_cast<float>(viewport[3]));
+            glTexCoord2f(0.0f, 1.0f); glVertex2f(0.0f, static_cast<float>(viewport[3]));
+            glEnd();
+
+            glBindTexture(GL_TEXTURE_2D, 0);
+            glPopAttrib();
+        }
+    }
+
+    // Stroke path overlay: retained vector paths for hit-testing/history and fallback rendering.
+    if (brushSystem && !brushCanvasVisible) {
+        // Draw completed stroke paths only when there is no pixel canvas yet.
         for (const auto& stroke : strokes) {
             if (stroke.points.size() < 4) continue; // Need at least 2 points
             glLineWidth(stroke.lineWidth); // Use stored line width
@@ -386,7 +448,7 @@ void Zone::renderArt() const {
         }
     }
     
-    // Legacy stroke system (fallback only if no brush system or design system)
+    // Stroke path fallback only if no brush system or design system exists.
     if (!brushSystem && !designSystem) {
         glLineWidth(2.0f);
         
@@ -520,4 +582,16 @@ void Zone::setDesignLayerOpacity(int layerIndex, float opacity) {
     if (designSystem) {
         designSystem->setLayerOpacity(layerIndex, opacity);
     }
+}
+
+int Zone::getActiveDesignLayer() const {
+    return designSystem ? designSystem->getActiveLayer() : 0;
+}
+
+int Zone::getDesignLayerCount() const {
+    return designSystem ? designSystem->getLayerCount() : 0;
+}
+
+float Zone::getDesignLayerOpacity(int layerIndex) const {
+    return designSystem ? designSystem->getLayerOpacity(layerIndex) : 1.0f;
 }

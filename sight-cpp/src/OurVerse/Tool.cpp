@@ -7,8 +7,173 @@
 #include <algorithm>
 #include <cmath>
 #include <iostream>
+#include <utility>
 
 namespace {
+float distanceSqToSegment(const glm::vec2& point, const glm::vec2& a, const glm::vec2& b) {
+    const glm::vec2 ab = b - a;
+    const float lenSq = glm::dot(ab, ab);
+    if (lenSq <= 1e-6f) {
+        return glm::dot(point - a, point - a);
+    }
+    const float t = std::clamp(glm::dot(point - a, ab) / lenSq, 0.0f, 1.0f);
+    const glm::vec2 projection = a + ab * t;
+    return glm::dot(point - projection, point - projection);
+}
+
+float activeEraserRadius(Zone& zone) {
+    if (auto* brushSystem = zone.getBrushSystem()) {
+        return std::max(4.0f, brushSystem->getRadius() * 50.0f);
+    }
+    return 16.0f;
+}
+
+void flushKeptStroke(std::vector<Zone::Stroke>& output, Zone::Stroke stroke) {
+    if (stroke.points.size() >= 4) {
+        output.push_back(std::move(stroke));
+    }
+}
+
+void eraseLegacyStrokeSegments(Zone& zone, const glm::vec2& cursor, float radius) {
+    std::vector<Zone::Stroke> keptStrokes;
+    const float radiusSq = radius * radius;
+
+    for (const auto& stroke : zone.strokes) {
+        if (stroke.points.size() < 4) {
+            continue;
+        }
+
+        Zone::Stroke currentSegment;
+        currentSegment.r = stroke.r;
+        currentSegment.g = stroke.g;
+        currentSegment.b = stroke.b;
+        currentSegment.lineWidth = stroke.lineWidth;
+
+        for (size_t i = 0; i + 3 < stroke.points.size(); i += 2) {
+            const glm::vec2 a(stroke.points[i], stroke.points[i + 1]);
+            const glm::vec2 b(stroke.points[i + 2], stroke.points[i + 3]);
+            const bool eraseSegment = distanceSqToSegment(cursor, a, b) <= radiusSq;
+
+            if (eraseSegment) {
+                flushKeptStroke(keptStrokes, currentSegment);
+                currentSegment.points.clear();
+                currentSegment.r = stroke.r;
+                currentSegment.g = stroke.g;
+                currentSegment.b = stroke.b;
+                currentSegment.lineWidth = stroke.lineWidth;
+                continue;
+            }
+
+            if (currentSegment.points.empty()) {
+                currentSegment.points.push_back(a.x);
+                currentSegment.points.push_back(a.y);
+            }
+            currentSegment.points.push_back(b.x);
+            currentSegment.points.push_back(b.y);
+        }
+
+        flushKeptStroke(keptStrokes, currentSegment);
+    }
+
+    zone.strokes = std::move(keptStrokes);
+}
+
+void deleteLegacyStrokesAt(Zone& zone, const glm::vec2& cursor, float radius, bool matchColor = false) {
+    const float radiusSq = radius * radius;
+    bool haveSampleColor = false;
+    glm::vec3 sampleColor(0.0f);
+
+    if (matchColor) {
+        for (const auto& stroke : zone.strokes) {
+            for (size_t i = 0; i + 3 < stroke.points.size(); i += 2) {
+                const glm::vec2 a(stroke.points[i], stroke.points[i + 1]);
+                const glm::vec2 b(stroke.points[i + 2], stroke.points[i + 3]);
+                if (distanceSqToSegment(cursor, a, b) <= radiusSq) {
+                    sampleColor = glm::vec3(stroke.r, stroke.g, stroke.b);
+                    haveSampleColor = true;
+                    break;
+                }
+            }
+            if (haveSampleColor) break;
+        }
+    }
+
+    auto& strokes = zone.strokes;
+    for (auto it = strokes.begin(); it != strokes.end();) {
+        bool eraseStroke = false;
+        if (matchColor && haveSampleColor) {
+            const glm::vec3 color(it->r, it->g, it->b);
+            eraseStroke = glm::length(color - sampleColor) <= 0.06f;
+        } else {
+            for (size_t i = 0; i + 3 < it->points.size(); i += 2) {
+                const glm::vec2 a(it->points[i], it->points[i + 1]);
+                const glm::vec2 b(it->points[i + 2], it->points[i + 3]);
+                if (distanceSqToSegment(cursor, a, b) <= radiusSq) {
+                    eraseStroke = true;
+                    break;
+                }
+            }
+        }
+
+        if (eraseStroke) {
+            it = strokes.erase(it);
+        } else {
+            ++it;
+        }
+    }
+}
+
+void configureStrokeTool(Zone& zone, Tool::Type type) {
+    if (!zone.getBrushSystem()) {
+        zone.initializeBrushSystem();
+    }
+
+    zone.setCloneActive(false);
+    switch (type) {
+    case Tool::Type::Pencil:
+        zone.setBrushType(BrushSystem::BrushType::Normal);
+        zone.setBrushRadius(0.035f);
+        zone.setBrushOpacity(1.0f);
+        zone.setBrushFlow(1.0f);
+        zone.setBrushSpacing(0.012f);
+        break;
+    case Tool::Type::Pen:
+        zone.setBrushType(BrushSystem::BrushType::Normal);
+        zone.setBrushRadius(0.055f);
+        zone.setBrushOpacity(1.0f);
+        zone.setBrushFlow(1.0f);
+        zone.setBrushSpacing(0.008f);
+        break;
+    case Tool::Type::Marker:
+        zone.setBrushType(BrushSystem::BrushType::Normal);
+        zone.setBrushRadius(0.13f);
+        zone.setBrushOpacity(0.55f);
+        zone.setBrushFlow(0.75f);
+        zone.setBrushSpacing(0.02f);
+        break;
+    case Tool::Type::Airbrush:
+        zone.setBrushType(BrushSystem::BrushType::Airbrush);
+        break;
+    case Tool::Type::Chalk:
+        zone.setBrushType(BrushSystem::BrushType::Chalk);
+        break;
+    case Tool::Type::Spray:
+        zone.setBrushType(BrushSystem::BrushType::Spray);
+        break;
+    case Tool::Type::Smudge:
+        zone.setBrushType(BrushSystem::BrushType::Smudge);
+        break;
+    case Tool::Type::Clone:
+        zone.setBrushType(BrushSystem::BrushType::Clone);
+        zone.setCloneActive(true);
+        zone.setCloneOffset(glm::vec2(-0.08f, -0.08f));
+        break;
+    default:
+        zone.setBrushType(BrushSystem::BrushType::Normal);
+        break;
+    }
+}
+
 void applyToolTransform(Object* obj, const glm::mat4& worldTransform, const glm::mat4* avatarRoot) {
     if (!obj) return;
 
@@ -39,26 +204,34 @@ void applyToolTransform(Object* obj, const glm::mat4& worldTransform, const glm:
     obj->setTransform(worldTransform);
 }
 
+// Build a picking ray in world space. When the cursor is LOCKED (first-person
+// look mode) the OS cursor position is an unbounded drifting value, so instead
+// we shoot through the screen centre — a crosshair pick along the look
+// direction. When unlocked we use the real cursor position.
 bool buildMouseRay(GLFWwindow* window, Core::Game* game, glm::vec3& rayOrigin, glm::vec3& rayDir) {
     if (!window || !game) return false;
 
-    double xpos = 0.0;
-    double ypos = 0.0;
-    glfwGetCursorPos(window, &xpos, &ypos);
+    const GLint* vp = game->getCameraViewport();
+    if (!vp || vp[2] <= 0 || vp[3] <= 0) return false;
 
-    int winW = 0;
-    int winH = 0;
-    glfwGetWindowSize(window, &winW, &winH);
-    int fW = 0;
-    int fH = 0;
-    glfwGetFramebufferSize(window, &fW, &fH);
-    if (winW <= 0 || winH <= 0 || fW <= 0 || fH <= 0) return false;
-
-    float scaleX = static_cast<float>(fW) / static_cast<float>(winW);
-    float scaleY = static_cast<float>(fH) / static_cast<float>(winH);
-    double winX = xpos * scaleX;
-    double winY = ypos * scaleY;
-    winY = game->getCameraViewport()[3] - winY;
+    double winX = 0.0, winY = 0.0; // in framebuffer / GL coords (origin bottom-left)
+    if (game->isCursorLocked()) {
+        // Crosshair: centre of the viewport.
+        winX = vp[0] + vp[2] * 0.5;
+        winY = vp[1] + vp[3] * 0.5;
+    } else {
+        double xpos = 0.0, ypos = 0.0;
+        glfwGetCursorPos(window, &xpos, &ypos);
+        int winW = 0, winH = 0;
+        glfwGetWindowSize(window, &winW, &winH);
+        int fW = 0, fH = 0;
+        glfwGetFramebufferSize(window, &fW, &fH);
+        if (winW <= 0 || winH <= 0 || fW <= 0 || fH <= 0) return false;
+        float scaleX = static_cast<float>(fW) / static_cast<float>(winW);
+        float scaleY = static_cast<float>(fH) / static_cast<float>(winH);
+        winX = xpos * scaleX;
+        winY = vp[3] - ypos * scaleY; // invert Y for OpenGL
+    }
 
     GLdouble nearX = 0.0, nearY = 0.0, nearZ = 0.0;
     GLdouble farX = 0.0, farY = 0.0, farZ = 0.0;
@@ -70,6 +243,56 @@ bool buildMouseRay(GLFWwindow* window, Core::Game* game, glm::vec3& rayOrigin, g
     rayOrigin = glm::vec3(nearX, nearY, nearZ);
     rayDir = glm::normalize(glm::vec3(farX, farY, farZ) - rayOrigin);
     return glm::length(rayDir) > 1e-6f;
+}
+
+// Rich surface pick used by tools that need the hit point / normal (shape
+// placement, pottery). Uses the real per-face raycast (Object::raycastFace) for
+// every geometry type instead of a bounding AABB/sphere approximation, so all
+// 3D tools agree on what the ray hit.
+struct SurfaceHit {
+    Object* obj = nullptr;
+    float   t = 0.0f;
+    int     face = -1;
+    glm::vec3 point{0.0f};
+    glm::vec3 normal{0.0f, 1.0f, 0.0f};
+    bool    isCube = false;
+    int     axis = -1; // cube only: 0=X,1=Y,2=Z
+    int     sign = 1;  // cube only: +1/-1 (outward face direction)
+};
+
+bool pickSurface(const std::vector<Object*>& targets,
+                 const glm::vec3& rayOrigin, const glm::vec3& rayDir,
+                 SurfaceHit& out) {
+    float nearestT = 1e9f;
+    SurfaceHit best;
+    for (auto* obj : targets) {
+        if (!obj) continue;
+        float t = 0.0f; int face = -1; glm::vec2 uv(0.0f);
+        if (obj->raycastFace(rayOrigin, rayDir, t, face, uv) && t > 0.0f && t < nearestT) {
+            nearestT = t;
+            best.obj = obj; best.t = t; best.face = face;
+        }
+    }
+    if (!best.obj) return false;
+
+    best.point = rayOrigin + rayDir * best.t;
+    const glm::mat4 xf = best.obj->getRaycastTransform();
+    if (best.obj->getGeometryType() == Object::GeometryType::Cube && best.face >= 0) {
+        // raycastFace encodes a cube face as axis*2 + (sign>0 ? 0 : 1).
+        best.isCube = true;
+        best.axis = best.face / 2;
+        best.sign = (best.face % 2 == 0) ? 1 : -1;
+        glm::vec3 nLocal(0.0f);
+        nLocal[best.axis] = static_cast<float>(best.sign);
+        best.normal = glm::normalize(glm::vec3(xf * glm::vec4(nLocal, 0.0f)));
+    } else {
+        // Non-cube: approximate the outward normal as (hit - centre).
+        glm::vec3 centre = glm::vec3(xf * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+        glm::vec3 n = best.point - centre;
+        best.normal = (glm::dot(n, n) > 1e-12f) ? glm::normalize(n) : -rayDir;
+    }
+    out = best;
+    return true;
 }
 
 Object* pickNearestObject(const std::vector<Object*>& targets,
@@ -161,6 +384,8 @@ std::string Tool::getTypeName() const
     // Erasing Tools
     case Type::Eraser:
         return "Eraser";
+    case Type::Delete:
+        return "Delete";
     case Type::MagicEraser:
         return "Magic Eraser";
 
@@ -285,9 +510,20 @@ void Tool::use(GLFWwindow *window, ZoneManager &mgr, Zone &zone, Type type, Core
 
     bool mouseLeftNow = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
 
+    const bool strokeTool =
+        type == Type::Brush || type == Type::Pencil || type == Type::Pen ||
+        type == Type::Marker || type == Type::Airbrush || type == Type::Chalk ||
+        type == Type::Spray || type == Type::Smudge || type == Type::Clone;
+
     // Brush Implementation
-    if (type == Type::Brush)
+    if (strokeTool)
     {
+        if (mouseLeftNow && !game.getMouseLeftPressedLast()) {
+            configureStrokeTool(zone, type);
+        } else if (!zone.getBrushSystem()) {
+            zone.initializeBrushSystem();
+        }
+
         if (game.getAdvanced2DBrush())
         {
             if (mouseLeftNow && !game.getMouseLeftPressedLast())
@@ -322,67 +558,61 @@ void Tool::use(GLFWwindow *window, ZoneManager &mgr, Zone &zone, Type type, Core
     }
     else if (type == Type::Eraser)
     {
+        if (mouseLeftNow)
+        {
+            const float radius = activeEraserRadius(zone);
+            if (zone.getBrushSystem()) {
+                if (!game.getMouseLeftPressedLast()) {
+                    zone.getBrushSystem()->saveStrokeState();
+                }
+                zone.getBrushSystem()->eraseDab(
+                    glm::vec2(game.getCursorX(), game.getCursorY()),
+                    std::max(0.01f, zone.getBrushSystem()->getRadius()));
+            }
+
+            eraseLegacyStrokeSegments(zone, glm::vec2(game.getCursorX(), game.getCursorY()), radius);
+        }
+    }
+    else if (type == Type::Delete)
+    {
+        if (mouseLeftNow)
+        {
+            deleteLegacyStrokesAt(zone, glm::vec2(game.getCursorX(), game.getCursorY()), activeEraserRadius(zone));
+        }
+    }
+    else if (type == Type::MagicEraser)
+    {
         if (mouseLeftNow && !game.getMouseLeftPressedLast())
         {
-            float radius = 16.0f;
-            auto &strokes = zone.strokes;
-            for (auto it = strokes.begin(); it != strokes.end();)
-            {
-                bool erase = false;
-                const auto &pts = it->points;
-                if (pts.size() >= 4)
-                {
-                    for (size_t i = 0; i + 3 < pts.size(); i += 2)
-                    {
-                        // line segment p->q
-                        float px = pts[i], py = pts[i + 1];
-                        float qx = pts[i + 2], qy = pts[i + 3];
-                        // distance from mouse to segment
-                        float vx = qx - px;
-                        float vy = qy - py;
-                        float wx = game.getCursorX() - px;
-                        float wy = game.getCursorY() - py;
-                        float len2 = vx * vx + vy * vy;
-                        float t = len2 > 0 ? (vx * wx + vy * wy) / len2 : 0.0f;
-                        if (t < 0.0f)
-                            t = 0.0f;
-                        else if (t > 1.0f)
-                            t = 1.0f;
-                        float projX = px + t * vx;
-                        float projY = py + t * vy;
-                        float dx = game.getCursorX() - projX;
-                        float dy = game.getCursorY() - projY;
-                        if (dx * dx + dy * dy < radius * radius)
-                        {
-                            erase = true;
-                            break;
-                        }
-                    }
-                }
-
-                if (erase)
-                    it = strokes.erase(it);
-                else
-                    ++it;
+            if (zone.getBrushSystem()) {
+                zone.getBrushSystem()->saveStrokeState();
+                zone.getBrushSystem()->eraseDab(
+                    glm::vec2(game.getCursorX(), game.getCursorY()),
+                    std::max(0.02f, zone.getBrushSystem()->getRadius() * 1.75f));
             }
+            deleteLegacyStrokesAt(zone,
+                                  glm::vec2(game.getCursorX(), game.getCursorY()),
+                                  activeEraserRadius(zone) * 1.5f,
+                                  true);
         }
     }
     else if (type == Type::Line)
     {
-        static float startX = 0, startY = 0;
-        static bool drawing = false;
         if (mouseLeftNow && !game.getMouseLeftPressedLast())
         {
-            startX = game.getCursorX();
-            startY = game.getCursorY();
-            drawing = true;
+            game.begin2DToolDrag(type, glm::vec2(game.getCursorX(), game.getCursorY()));
         }
-        else if (!mouseLeftNow && game.getMouseLeftPressedLast() && drawing)
+        else if (mouseLeftNow && game.getMouseLeftPressedLast() && game.is2DToolDragging(type))
         {
-            zone.startStroke(startX, startY);
+            game.update2DToolDrag(glm::vec2(game.getCursorX(), game.getCursorY()));
+        }
+        else if (!mouseLeftNow && game.getMouseLeftPressedLast() && game.is2DToolDragging(type))
+        {
+            glm::vec2 start = game.get2DToolDragStart();
+            zone.startStroke(start.x, start.y);
             zone.continueStroke(game.getCursorX(), game.getCursorY());
             zone.endStroke();
-            drawing = false;
+            game.end2DToolDrag();
         }
     }
     else if (type == Type::Rectangle ||
@@ -394,34 +624,48 @@ void Tool::use(GLFWwindow *window, ZoneManager &mgr, Zone &zone, Type type, Core
              type == Type::CustomShape)
     {
 
-        static float startX = 0, startY = 0;
-        static bool drawing = false;
-
         if (mouseLeftNow && !game.getMouseLeftPressedLast())
         {
-            startX = game.getCursorX();
-            startY = game.getCursorY();
-            drawing = true;
+            game.begin2DToolDrag(type, glm::vec2(game.getCursorX(), game.getCursorY()));
         }
-        else if (!mouseLeftNow && game.getMouseLeftPressedLast() && drawing)
+        else if (mouseLeftNow && game.getMouseLeftPressedLast() && game.is2DToolDragging(type))
         {
-            float width = abs(game.getCursorX() - startX);
-            float height = abs(game.getCursorY() - startY);
+            game.update2DToolDrag(glm::vec2(game.getCursorX(), game.getCursorY()));
+        }
+        else if (!mouseLeftNow && game.getMouseLeftPressedLast() && game.is2DToolDragging(type))
+        {
+            glm::vec2 start = game.get2DToolDragStart();
+            float endX = game.getCursorX();
+            float endY = game.getCursorY();
+            float minX = std::min(start.x, endX);
+            float minY = std::min(start.y, endY);
+            float width = std::abs(endX - start.x);
+            float height = std::abs(endY - start.y);
 
             if (width > 5.0f && height > 5.0f)
             { // Minimum size threshold
-                zone.addDesignShape(type, startX, startY, width, height);
+                zone.addDesignShape(type, minX + width * 0.5f, minY + height * 0.5f, width, height);
             }
 
-            drawing = false;
+            game.end2DToolDrag();
         }
 
         // Color picker tool
     }
-    else if (type == Type::ColorPicker)
+    else if (type == Type::ColorPicker || type == Type::Eyedropper)
     {
         if (mouseLeftNow && !game.getMouseLeftPressedLast())
         {
+            glm::vec3 sampledColor(0.0f);
+            if (zone.getBrushSystem() &&
+                zone.getBrushSystem()->sampleColor(glm::vec2(game.getCursorX(), game.getCursorY()), sampledColor)) {
+                game.setCurrentColor(0, sampledColor.r);
+                game.setCurrentColor(1, sampledColor.g);
+                game.setCurrentColor(2, sampledColor.b);
+                zone.setDrawColor(sampledColor.r, sampledColor.g, sampledColor.b);
+                return;
+            }
+
             float radius = 12.0f;
             for (const auto &stroke : zone.strokes)
             {
@@ -449,20 +693,17 @@ void Tool::use(GLFWwindow *window, ZoneManager &mgr, Zone &zone, Type type, Core
              type == Tool::Type::MagicWand ||
              type == Tool::Type::Marquee)
     {
-        static std::vector<glm::vec2> selectionPoints;
-        static bool selecting = false;
         if (mouseLeftNow && !game.getMouseLeftPressedLast())
         {
-            selectionPoints.clear();
-            selectionPoints.push_back(glm::vec2(game.getCursorX(), game.getCursorY()));
-            selecting = true;
+            game.begin2DToolDrag(type, glm::vec2(game.getCursorX(), game.getCursorY()));
         }
-        else if (mouseLeftNow && game.getMouseLeftPressedLast() && selecting)
+        else if (mouseLeftNow && game.getMouseLeftPressedLast() && game.is2DToolDragging(type))
         {
-            selectionPoints.push_back(glm::vec2(game.getCursorX(), game.getCursorY()));
+            game.update2DToolDrag(glm::vec2(game.getCursorX(), game.getCursorY()));
         }
-        else if (!mouseLeftNow && game.getMouseLeftPressedLast() && selecting)
+        else if (!mouseLeftNow && game.getMouseLeftPressedLast() && game.is2DToolDragging(type))
         {
+            const auto& selectionPoints = game.get2DToolDragPoints();
             if (selectionPoints.size() >= 2)
             {
                 // Create selection based on tool type
@@ -487,7 +728,7 @@ void Tool::use(GLFWwindow *window, ZoneManager &mgr, Zone &zone, Type type, Core
                     zone.getDesignSystem()->getSelectionSystem()->createSelection(selectionType, selectionPoints);
                 }
             }
-            selecting = false;
+            game.end2DToolDrag();
         }
     }
 
@@ -552,7 +793,14 @@ void Tool::use(GLFWwindow *window, ZoneManager &mgr, Zone &zone, Type type, Core
         {
             // Add sample text at click position
             static int textCounter = 1;
-            std::string text = "Text " + std::to_string(textCounter++);
+            std::string text;
+            if (type == Tool::Type::TextVertical) {
+                text = "V\ne\nr\nt\n" + std::to_string(textCounter++);
+            } else if (type == Tool::Type::TextPath) {
+                text = "Path Text " + std::to_string(textCounter++);
+            } else {
+                text = "Text " + std::to_string(textCounter++);
+            }
             zone.addDesignText(text, game.getCursorX(), game.getCursorY());
         }
     }
@@ -565,13 +813,9 @@ void Tool::use(GLFWwindow *window, ZoneManager &mgr, Zone &zone, Type type, Core
              type == Tool::Type::Perspective)
     {
 
-        static glm::vec2 transformStart = glm::vec2(0, 0);
-        static bool transforming = false;
-
         if (mouseLeftNow && !game.getMouseLeftPressedLast())
         {
-            transformStart = glm::vec2(game.getCursorX(), game.getCursorY());
-            transforming = true;
+            game.begin2DToolDrag(type, glm::vec2(game.getCursorX(), game.getCursorY()));
 
             // Create a transform at the click position
             if (zone.getDesignSystem() && zone.getDesignSystem()->getTransformSystem())
@@ -604,10 +848,12 @@ void Tool::use(GLFWwindow *window, ZoneManager &mgr, Zone &zone, Type type, Core
                 zone.getDesignSystem()->getTransformSystem()->createTransform(transformType);
             }
         }
-        else if (mouseLeftNow && game.getMouseLeftPressedLast() && transforming)
+        else if (mouseLeftNow && game.getMouseLeftPressedLast() && game.is2DToolDragging(type))
         {
             // Update transform based on mouse movement
-            glm::vec2 delta = glm::vec2(game.getCursorX(), game.getCursorY()) - transformStart;
+            glm::vec2 delta = glm::vec2(game.getCursorX(), game.getCursorY()) - game.get2DToolDragStart();
+            (void)delta;
+            game.update2DToolDrag(glm::vec2(game.getCursorX(), game.getCursorY()));
 
             if (zone.getDesignSystem() && zone.getDesignSystem()->getTransformSystem())
             {
@@ -621,9 +867,9 @@ void Tool::use(GLFWwindow *window, ZoneManager &mgr, Zone &zone, Type type, Core
                 // This is a simplified approach - in a real system you'd track the active transform
             }
         }
-        else if (!mouseLeftNow && game.getMouseLeftPressedLast() && transforming)
+        else if (!mouseLeftNow && game.getMouseLeftPressedLast() && game.is2DToolDragging(type))
         {
-            transforming = false;
+            game.end2DToolDrag();
         }
     }
 }
@@ -656,143 +902,22 @@ void Tool::ShapeGenerator3D(GLFWwindow *window, Core::Game *game, ZoneManager &m
             spawnPos = game->getManualAnchorPos() + game->getManualAnchorRight() * game->getManualOffset().x + game->getManualAnchorUp() * game->getManualOffset().y + game->getManualAnchorForward() * game->getManualOffset().z;
         }
         else
-        { // CursorSnap
-            // Ray originating from cursor into scene
-            double xpos, ypos;
-            glfwGetCursorPos(window, &xpos, &ypos);
-            double winX = xpos;
-            double winY = ypos;
-            int winW, winH;
-            glfwGetWindowSize(window, &winW, &winH);
-            int fW, fH;
-            glfwGetFramebufferSize(window, &fW, &fH);
-            float scaleX = static_cast<float>(fW) / winW;
-            float scaleY = static_cast<float>(fH) / winH;
-            winX *= scaleX;
-            winY *= scaleY;
-            winY = game->getCameraViewport()[3] - winY; // invert Y for OpenGL
-
-            GLdouble nearX, nearY, nearZ, farX, farY, farZ;
-            gluUnProject(winX, winY, 0.0, game->getCameraModelview(), game->getCameraProjection(), game->getCameraViewport(), &nearX, &nearY, &nearZ);
-            gluUnProject(winX, winY, 1.0, game->getCameraModelview(), game->getCameraProjection(), game->getCameraViewport(), &farX, &farY, &farZ);
-            glm::vec3 rayO(nearX, nearY, nearZ);
-            glm::vec3 rayDir = glm::normalize(glm::vec3(farX, farY, farZ) - rayO);
-
-            float nearestT = 1e9f;
-            int hitAxis = -1;
-            int hitSign = 1;
-            Object *hitObj = nullptr;
-            bool hitIsCube = false; // track geometry for normal computation
+        { // CursorSnap — place the new shape adjacent to the surface under the
+          // cursor (or the crosshair when the cursor is locked).
+            glm::vec3 rayO, rayDir;
+            std::vector<Object*> targets;
             const auto &objects = mgr.active().world().getOwnedObjects();
-            for (const auto &uptr : objects)
-            {
-                Object *obj = uptr.get();
-            glm::mat4 raycastTransform = obj->getRaycastTransform();
+            targets.reserve(objects.size());
+            for (const auto &uptr : objects) if (uptr) targets.push_back(uptr.get());
 
-                if (obj->getGeometryType() == Object::GeometryType::Cube)
-                {
-                    // --- Existing AABB intersection in object local space ---
-                glm::mat4 inv = glm::inverse(raycastTransform);
-                    glm::vec3 oL = glm::vec3(inv * glm::vec4(rayO, 1.0f));
-                    glm::vec3 dL = glm::normalize(glm::vec3(inv * glm::vec4(rayDir, 0.0f)));
-                    float tMin = -1e9f, tMax = 1e9f;
-                    int axis = -1;
-                    int sign = 1;
-                    for (int a = 0; a < 3; ++a)
-                    {
-                        float o = oL[a], d = dL[a];
-                        float t1, t2;
-                        if (fabs(d) < 1e-6f)
-                        {
-                            if (o < -0.5f || o > 0.5f)
-                            {
-                                tMin = 1e9f;
-                                break;
-                            }
-                            t1 = -1e9f;
-                            t2 = 1e9f;
-                        }
-                        else
-                        {
-                            t1 = (-0.5f - o) / d;
-                            t2 = (0.5f - o) / d;
-                        }
-                        if (t1 > t2)
-                            std::swap(t1, t2);
-                        if (t1 > tMin)
-                        {
-                            tMin = t1;
-                            axis = a;
-                            sign = (d > 0 ? -1 : 1);
-                        }
-                        if (t2 < tMax)
-                            tMax = t2;
-                        if (tMin > tMax)
-                        {
-                            tMin = 1e9f;
-                            break;
-                        }
-                    }
-                    if (tMin < nearestT && tMin > 0 && tMin < 1e8f)
-                    {
-                        nearestT = tMin;
-                        hitAxis = axis;
-                        hitSign = sign;
-                        hitObj = obj;
-                        hitIsCube = true;
-                    }
-                }
-                else
-                {
-                    // --- Bounding-sphere intersection for non-cube primitives ---
-                glm::vec3 centerWorld = glm::vec3(raycastTransform * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
-                    // Extract world scale along each axis from transform columns
-                glm::vec3 colX = glm::vec3(raycastTransform[0]);
-                glm::vec3 colY = glm::vec3(raycastTransform[1]);
-                glm::vec3 colZ = glm::vec3(raycastTransform[2]);
-                    float scaleX = glm::length(colX);
-                    float scaleY = glm::length(colY);
-                    float scaleZ = glm::length(colZ);
-                    float radius = 0.5f * std::max(scaleX, std::max(scaleY, scaleZ));
-
-                    glm::vec3 oc = rayO - centerWorld;
-                    float b = glm::dot(oc, rayDir);
-                    float c = glm::dot(oc, oc) - radius * radius;
-                    float h = b * b - c;
-                    if (h >= 0.0f)
-                    {
-                        h = std::sqrt(h);
-                        float t = -b - h; // nearer root
-                        if (t < 0.0f)
-                            t = -b + h; // if inside sphere
-                        if (t > 0.0f && t < nearestT)
-                        {
-                            nearestT = t;
-                            hitObj = obj;
-                            hitIsCube = false;
-                        }
-                    }
-                }
-            }
-            if (nearestT < 1e8f && hitObj)
+            SurfaceHit hit;
+            if (buildMouseRay(window, game, rayO, rayDir) && pickSurface(targets, rayO, rayDir, hit))
             {
-                glm::vec3 hitPoint = rayO + rayDir * nearestT;
-                glm::mat4 hitTransform = hitObj->getRaycastTransform();
-                glm::vec3 nWorld;
-                if (hitIsCube)
-                {
-                    glm::vec3 nLocal(0.0f);
-                    nLocal[hitAxis] = static_cast<float>(hitSign);
-                    nWorld = glm::normalize(glm::vec3(hitTransform * glm::vec4(nLocal, 0.0f)));
-                }
-                else
-                {
-                    glm::vec3 centerWorld = glm::vec3(hitTransform * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
-                    nWorld = glm::normalize(hitPoint - centerWorld);
-                }
-                glm::vec3 half = glm::vec3(game->getBrushScale().x * game->getBrushSize(), game->getBrushScale().y * game->getBrushSize(), game->getBrushScale().z * game->getBrushSize()) * 0.5f;
-                float offsetAmt = glm::dot(glm::abs(nWorld), half) + 0.01f;
-                spawnPos = hitPoint + nWorld * offsetAmt;
+                glm::vec3 half = glm::vec3(game->getBrushScale().x * game->getBrushSize(),
+                                          game->getBrushScale().y * game->getBrushSize(),
+                                          game->getBrushScale().z * game->getBrushSize()) * 0.5f;
+                float offsetAmt = glm::dot(glm::abs(hit.normal), half) + 0.01f;
+                spawnPos = hit.point + hit.normal * offsetAmt;
             }
             else
             {
@@ -855,118 +980,16 @@ void Tool::Pottery3D(GLFWwindow *window, Core::Game *game, ZoneManager &mgr, flo
     if (mouseLeftNow)
     {
         bool firstFrame = !game->getMouseLeftPressedLast();
-        // Build picking ray similar to FacePaint
-        double xpos, ypos;
-        glfwGetCursorPos(window, &xpos, &ypos);
-        double winX = xpos;
-        double winY = ypos;
-        int winW, winH;
-        glfwGetWindowSize(window, &winW, &winH);
-        int fW, fH;
-        glfwGetFramebufferSize(window, &fW, &fH);
-        float scaleX = static_cast<float>(fW) / winW;
-        float scaleY = static_cast<float>(fH) / winH;
-        winX *= scaleX;
-        winY *= scaleY;
-        winY = game->getCameraViewport()[3] - winY;
-        GLdouble nearX, nearY, nearZ, farX, farY, farZ;
-        gluUnProject(winX, winY, 0.0, game->getCameraModelview(), game->getCameraProjection(), game->getCameraViewport(), &nearX, &nearY, &nearZ);
-        gluUnProject(winX, winY, 1.0, game->getCameraModelview(), game->getCameraProjection(), game->getCameraViewport(), &farX, &farY, &farZ);
-        glm::vec3 rayO(nearX, nearY, nearZ);
-        glm::vec3 rayDir = glm::normalize(glm::vec3(farX, farY, farZ) - rayO);
-
-        float nearestT = 1e9f;
-        Object *hitObj = nullptr;
-        int hitAxis = -1;
-        int hitSign = 1;
-        bool hitIsCube = false;
-        const auto &objects = targets;
-        for (auto *obj : objects)
+        // Build picking ray (crosshair when the cursor is locked) and pick the
+        // surface with the shared per-face raycast.
+        glm::vec3 rayO, rayDir;
+        SurfaceHit hit;
+        if (buildMouseRay(window, game, rayO, rayDir) && pickSurface(targets, rayO, rayDir, hit))
         {
-            if (!obj) continue;
-            glm::mat4 raycastTransform = obj->getRaycastTransform();
-            if (obj->getGeometryType() == Object::GeometryType::Cube)
-            {
-                glm::mat4 inv = glm::inverse(raycastTransform);
-                glm::vec3 oL = glm::vec3(inv * glm::vec4(rayO, 1.0f));
-                glm::vec3 dL = glm::normalize(glm::vec3(inv * glm::vec4(rayDir, 0.0f)));
-                float tMin = -1e9f, tMax = 1e9f;
-                int axis = -1;
-                int sign = 1;
-                for (int a = 0; a < 3; ++a)
-                {
-                    float o = oL[a], d = dL[a];
-                    float t1, t2;
-                    if (fabs(d) < 1e-6f)
-                    {
-                        if (o < -0.5f || o > 0.5f)
-                        {
-                            tMin = 1e9f;
-                            break;
-                        }
-                        t1 = -1e9f;
-                        t2 = 1e9f;
-                    }
-                    else
-                    {
-                        t1 = (-0.5f - o) / d;
-                        t2 = (0.5f - o) / d;
-                    }
-                    if (t1 > t2)
-                        std::swap(t1, t2);
-                    if (t1 > tMin)
-                    {
-                        tMin = t1;
-                        axis = a;
-                        sign = (d > 0 ? -1 : 1);
-                    }
-                    if (t2 < tMax)
-                        tMax = t2;
-                    if (tMin > tMax)
-                    {
-                        tMin = 1e9f;
-                        break;
-                    }
-                }
-                if (tMin < nearestT && tMin > 0 && tMin < 1e8f)
-                {
-                    nearestT = tMin;
-                    hitAxis = axis;
-                    hitSign = sign;
-                    hitObj = obj;
-                    hitIsCube = true;
-                }
-            }
-            else
-            {
-                // Bounding sphere for other primitives
-                glm::vec3 centerWorld = glm::vec3(raycastTransform * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
-                glm::vec3 colX = glm::vec3(raycastTransform[0]);
-                glm::vec3 colY = glm::vec3(raycastTransform[1]);
-                glm::vec3 colZ = glm::vec3(raycastTransform[2]);
-                float radius = 0.5f * std::max({glm::length(colX), glm::length(colY), glm::length(colZ)});
-                glm::vec3 oc = rayO - centerWorld;
-                float b = glm::dot(oc, rayDir);
-                float c = glm::dot(oc, oc) - radius * radius;
-                float h = b * b - c;
-                if (h >= 0.0f)
-                {
-                    h = std::sqrt(h);
-                    float t = -b - h;
-                    if (t < 0.0f)
-                        t = -b + h;
-                    if (t > 0.0f && t < nearestT)
-                    {
-                        nearestT = t;
-                        hitObj = obj;
-                        hitIsCube = false;
-                    }
-                }
-            }
-        }
-
-        if (hitObj)
-        {
+            Object *hitObj = hit.obj;
+            int hitAxis = hit.axis;
+            int hitSign = hit.sign;
+            bool hitIsCube = hit.isCube;
             // Determine scale delta
             float dir = (game->getCurrentPotteryTool() == Core::Game::PotteryTool::Expand) ? 1.0f : -1.0f;
             float delta = dir * game->getPotteryStrength() * (firstFrame ? 1.0f : dt); // full step on click, smaller continuous after
@@ -1028,9 +1051,11 @@ void Tool::Rotate3D(GLFWwindow *window, Core::Game *game, ZoneManager &mgr, floa
                     const std::vector<Object*>& targets, const glm::mat4* avatarRoot)
 {
     (void)mgr;
-    static bool dragging = false;
-    static double lastCursorX = 0.0;
-    static double lastCursorY = 0.0;
+    // Drag state lives on Game (not function-local statics) so it can't leak
+    // across tool or object switches.
+    bool dragging = game->getRotateDragging();
+    double lastCursorX = game->getRotateLastCursorX();
+    double lastCursorY = game->getRotateLastCursorY();
 
     bool mouseLeftNow = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
     double cursorX = 0.0;
@@ -1103,36 +1128,22 @@ void Tool::Rotate3D(GLFWwindow *window, Core::Game *game, ZoneManager &mgr, floa
 
     lastCursorX = cursorX;
     lastCursorY = cursorY;
+
+    game->setRotateDragging(dragging);
+    game->setRotateLastCursor(lastCursorX, lastCursorY);
 }
 
 void Tool::FacePaint(GLFWwindow *window, Core::Game *game, ZoneManager &mgr, float dt,
                      const std::vector<Object*>& targets)
 {
     (void)mgr;
+    (void)dt;
     bool mouseLeftNow = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
     if (mouseLeftNow && !game->getMouseLeftPressedLast())
     {
-        // Build picking ray
-        // Ensure camera matrices and viewport are current for this frame
-        const GLint *viewport = game->getCameraViewport();
-        const GLdouble *modelview = game->getCameraModelview();
-        const GLdouble *projection = game->getCameraProjection();
-        double xpos, ypos;
-        glfwGetCursorPos(window, &xpos, &ypos);
-        int winW, winH;
-        glfwGetWindowSize(window, &winW, &winH);
-        int fW, fH;
-        glfwGetFramebufferSize(window, &fW, &fH);
-        float scaleX = static_cast<float>(fW) / winW;
-        float scaleY = static_cast<float>(fH) / winH;
-        double winX = xpos * scaleX;
-        double winY = ypos * scaleY;
-        winY = viewport[3] - winY;
-        GLdouble nearX, nearY, nearZ, farX, farY, farZ;
-        gluUnProject(winX, winY, 0.0, modelview, projection, viewport, &nearX, &nearY, &nearZ);
-        gluUnProject(winX, winY, 1.0, modelview, projection, viewport, &farX, &farY, &farZ);
-        glm::vec3 rayO(nearX, nearY, nearZ);
-        glm::vec3 rayDir = glm::normalize(glm::vec3(farX, farY, farZ) - rayO);
+        // Build picking ray (crosshair when the cursor is locked).
+        glm::vec3 rayO, rayDir;
+        if (!buildMouseRay(window, game, rayO, rayDir)) return;
 
         float nearestT = 1e9f;
         Object *hitObj = nullptr;
@@ -1142,7 +1153,7 @@ void Tool::FacePaint(GLFWwindow *window, Core::Game *game, ZoneManager &mgr, flo
         for (auto *obj : objects)
         {
             if (!obj) continue;
-            
+
             // Use raycastFace for all objects including BodyParts
             // BodyParts now have proper faceTextures initialized
             float t;
@@ -1189,28 +1200,14 @@ void Tool::FacePaint(GLFWwindow *window, Core::Game *game, ZoneManager &mgr, flo
                       const std::vector<Object*>& targets)
  {
     (void)mgr;
+    (void)dt;
      bool mouseLeftNow = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
      if (mouseLeftNow)
     {
-        // Continuous stroke painting while mouse button held
-        // Build picking ray (same as FacePaint)
-        // Ensure camera matrices and viewport are current for this frame
-         const GLint* viewport = game->getCameraViewport();
-         const GLdouble* modelview = game->getCameraModelview();
-         const GLdouble* projection = game->getCameraProjection();
-         double xpos, ypos; glfwGetCursorPos(window, &xpos, &ypos);
-         int winW, winH; glfwGetWindowSize(window,&winW,&winH);
-         int fW, fH; glfwGetFramebufferSize(window,&fW,&fH);
-         float scaleX = static_cast<float>(fW)/winW;
-         float scaleY = static_cast<float>(fH)/winH;
-         double winX = xpos * scaleX;
-         double winY = ypos * scaleY;
-         winY = viewport[3] - winY;
-        GLdouble nearX, nearY, nearZ, farX, farY, farZ;
-         gluUnProject(winX, winY, 0.0, modelview, projection, viewport, &nearX, &nearY, &nearZ);
-         gluUnProject(winX, winY, 1.0, modelview, projection, viewport, &farX, &farY, &farZ);
-        glm::vec3 rayO(nearX, nearY, nearZ);
-        glm::vec3 rayDir = glm::normalize(glm::vec3(farX, farY, farZ) - rayO);
+        // Continuous stroke painting while mouse button held.
+        // Build picking ray (crosshair when the cursor is locked).
+        glm::vec3 rayO, rayDir;
+        if (!buildMouseRay(window, game, rayO, rayDir)) return;
         float nearestT = 1e9f;
         Object *hitObj = nullptr;
         int hitFace = -1;
@@ -1342,9 +1339,15 @@ void Tool::FacePaint(GLFWwindow *window, Core::Game *game, ZoneManager &mgr, flo
     }
 }
 
-void Tool::Selection3D(GLFWwindow *window, Core::Game *game, ZoneManager &mgr, float dt)
+void Tool::Selection3D(GLFWwindow *window, Core::Game *game,
+                       const std::vector<Object*>& targets)
 {
-    // Implement 3D selection functionality here
+    // Pick the object under the cursor (or crosshair when locked) and select it.
+    // Uses the cached camera matrices via buildMouseRay rather than reading GL
+    // matrix state during update().
+    glm::vec3 rayO, rayDir;
+    if (!buildMouseRay(window, game, rayO, rayDir)) return;
+    game->setSelectedObject3D(pickNearestObject(targets, rayO, rayDir));
 }
 
 Tool::Type Tool::getType() const
@@ -1379,6 +1382,8 @@ std::string Tool::getIcon() const
     // Erasing Tools
     case Type::Eraser:
         return "🧽";
+    case Type::Delete:
+        return "⌫";
     case Type::MagicEraser:
         return "✨";
 
@@ -1511,6 +1516,7 @@ Tool::Category Tool::getCategory() const
         return Category::Drawing;
 
     case Type::Eraser:
+    case Type::Delete:
     case Type::MagicEraser:
         return Category::Erasing;
 

@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <string>
+#include <algorithm>
 #include <glm/glm.hpp>
 #include <cstdint>
 
@@ -57,6 +58,8 @@ public:
         BlendMode blendMode;
         std::vector<std::vector<StrokePoint>> strokeHistory;
         std::vector<std::vector<StrokePoint>> undoStack;
+        std::vector<std::vector<uint8_t>> pixelUndoStack;
+        std::vector<std::vector<uint8_t>> pixelRedoStack;
         bool visible;
     };
 
@@ -66,25 +69,25 @@ public:
 
     // Brush settings
     void setBrushType(BrushType type) { _currentBrushType = type; }
-    void setRadius(float radius) { _brushRadius = radius; }
-    void setSoftness(float softness) { _brushSoftness = softness; }
-    void setOpacity(float opacity) { _brushOpacity = opacity; }
-    void setFlow(float flow) { _brushFlow = flow; }
-    void setSpacing(float spacing) { _brushSpacing = spacing; }
-    void setDensity(float density) { _brushDensity = density; }
-    void setStrength(float strength) { _brushStrength = strength; }
+    void setRadius(float radius) { _brushRadius = std::clamp(radius, 0.001f, 2.0f); }
+    void setSoftness(float softness) { _brushSoftness = std::clamp(softness, 0.001f, 1.0f); }
+    void setOpacity(float opacity) { _brushOpacity = std::clamp(opacity, 0.0f, 1.0f); }
+    void setFlow(float flow) { _brushFlow = std::clamp(flow, 0.0f, 1.0f); }
+    void setSpacing(float spacing) { _brushSpacing = std::clamp(spacing, 0.001f, 2.0f); }
+    void setDensity(float density) { _brushDensity = std::clamp(density, 0.0f, 5.0f); }
+    void setStrength(float strength) { _brushStrength = std::clamp(strength, 0.0f, 5.0f); }
 
     // Pressure simulation
     void setPressureSimulation(bool enabled) { _usePressureSimulation = enabled; }
-    void setPressureSensitivity(float sensitivity) { _pressureSensitivity = sensitivity; }
-    void setCurrentPressure(float pressure) { _currentPressure = pressure; }
+    void setPressureSensitivity(float sensitivity) { _pressureSensitivity = std::clamp(sensitivity, 0.01f, 5.0f); }
+    void setCurrentPressure(float pressure) { _currentPressure = std::clamp(pressure, 0.1f, 1.0f); }
 
     // Stroke interpolation
     void setStrokeInterpolation(bool enabled) { _useStrokeInterpolation = enabled; }
 
     // Layer system
-    void setUseLayers(bool enabled) { _useLayers = enabled; }
-    void setActiveLayer(int layer) { _activeLayer = layer; }
+    void setUseLayers(bool enabled) { _useLayers = enabled; compositeLayers(); }
+    void setActiveLayer(int layer);
     void setLayerOpacity(float opacity);
     void setBlendMode(BlendMode mode);
     int addLayer();
@@ -92,6 +95,9 @@ public:
     int getActiveLayer() const { return _activeLayer; }
     int getLayerCount() const { return static_cast<int>(_layers.size()); }
     const std::vector<Layer>& getLayers() const { return _layers; }
+    float getLayerOpacity() const;
+    BlendMode getBlendMode() const;
+    void replaceLayers(const std::vector<Layer>& layers, int activeLayer, bool useLayers);
 
     // Clone tool
     void setCloneActive(bool active) { _cloneActive = active; }
@@ -107,6 +113,8 @@ public:
     // Core painting functions
     void paintDab(const glm::vec2& position, const glm::vec3& color, float pressure = 1.0f);
     void paintStroke(const glm::vec2& startPos, const glm::vec2& endPos, const glm::vec3& color);
+    void eraseDab(const glm::vec2& position, float radius);
+    bool sampleColor(const glm::vec2& position, glm::vec3& colorOut) const;
     
     // 2D specific painting (for Zone strokes)
     void paint2DStroke(const std::vector<glm::vec2>& points, const glm::vec3& color);
@@ -126,6 +134,9 @@ public:
     float getSpacing() const { return _brushSpacing; }
     float getDensity() const { return _brushDensity; }
     float getStrength() const { return _brushStrength; }
+    bool getPressureSimulation() const { return _usePressureSimulation; }
+    float getPressureSensitivity() const { return _pressureSensitivity; }
+    bool getStrokeInterpolation() const { return _useStrokeInterpolation; }
     bool getUseLayers() const { return _useLayers; }
     bool getCloneActive() const { return _cloneActive; }
 
@@ -166,6 +177,8 @@ private:
     
     // Composited texture
     std::vector<uint8_t> _compositedTexture;
+    int _compositeBatchDepth = 0;
+    bool _compositeDirty = false;
 
     // Clone tool
     bool _cloneActive = false;
@@ -186,7 +199,11 @@ private:
     
     glm::vec3 blendPixels(const glm::vec3& src, const glm::vec3& dst, BlendMode mode, float opacity);
     void compositeLayers();
+    void beginCompositeBatch();
+    void endCompositeBatch();
+    void requestComposite();
     float calculatePressure(const glm::vec2& currentPos, float currentTime);
+    glm::vec2 normalizePosition(const glm::vec2& pos) const;
     
     // Utility functions
     bool isValidPosition(const glm::vec2& pos) const;

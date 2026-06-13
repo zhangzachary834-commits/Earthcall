@@ -282,8 +282,7 @@ build/src/Core/GameToolbar.o: src/Core/GameToolbar.cpp src/Core/Game.hpp \
   src/Core/FacePaintSettings.hpp src/OurVerse/AdvancedFacePaint.hpp \
   src/Core/PlacementState.hpp src/Core/PolyhedronSettings.hpp \
   src/Core/PotteryTool.hpp src/Core/RotationSettings.hpp \
-  src/Core/SaveLoadState.hpp src/Core/Engine.hpp \
-  src/Rendering/RelationManagerWindow.hpp \
+  src/Core/SaveLoadState.hpp src/Rendering/RelationManagerWindow.hpp \
   src/ZonesOfEarth/Physics/Physics.hpp
 
 src/Core/Game.hpp:
@@ -893,8 +892,6 @@ src/Core/PotteryTool.hpp:
 src/Core/RotationSettings.hpp:
 
 src/Core/SaveLoadState.hpp:
-
-src/Core/Engine.hpp:
 
 src/Rendering/RelationManagerWindow.hpp:
 

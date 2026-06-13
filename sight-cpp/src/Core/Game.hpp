@@ -34,6 +34,7 @@
 #include "json.hpp"
 #include <array>
 #include <memory>
+#include <vector>
 
 class Object;
 
@@ -66,6 +67,15 @@ public:
     float getCursorY() const { return _mouseHandler.getCursorY(); }
     void setCursorX(float x) { _mouseHandler.setCursorX(x); }
     void setCursorY(float y) { _mouseHandler.setCursorY(y); }
+    bool isCursorLocked() const { return _mouseHandler.isCursorLocked(); }
+
+    // Rotate-tool drag state (owned here instead of function-local statics in
+    // Tool::Rotate3D, so it can't leak across tool/object switches).
+    bool   getRotateDragging() const { return _rotateDragging; }
+    void   setRotateDragging(bool v) { _rotateDragging = v; }
+    double getRotateLastCursorX() const { return _rotateLastCursorX; }
+    double getRotateLastCursorY() const { return _rotateLastCursorY; }
+    void   setRotateLastCursor(double x, double y) { _rotateLastCursorX = x; _rotateLastCursorY = y; }
 
     // Camera
     glm::vec3 getCameraPos()   const { return _camera.pos; }
@@ -114,6 +124,28 @@ public:
     // Mouse state
     bool getMouseLeftPressedLast() const;
     void setMouseLeftPressedLast(bool value);
+
+    // 2D tool drag state
+    void begin2DToolDrag(Tool::Type type, const glm::vec2& position) {
+        _toolDragActive = true;
+        _toolDragType = type;
+        _toolDragStart = position;
+        _toolDragCurrent = position;
+        _toolDragPoints.clear();
+        _toolDragPoints.push_back(position);
+    }
+    void update2DToolDrag(const glm::vec2& position) {
+        _toolDragCurrent = position;
+        if (_toolDragActive) {
+            _toolDragPoints.push_back(position);
+        }
+    }
+    void end2DToolDrag() { _toolDragActive = false; }
+    bool is2DToolDragging(Tool::Type type) const { return _toolDragActive && _toolDragType == type; }
+    Tool::Type get2DToolDragType() const { return _toolDragType; }
+    glm::vec2 get2DToolDragStart() const { return _toolDragStart; }
+    glm::vec2 get2DToolDragCurrent() const { return _toolDragCurrent; }
+    const std::vector<glm::vec2>& get2DToolDragPoints() const { return _toolDragPoints; }
 
     // Current color
     float getCurrentColor(int index) const { return _currentColor[index]; }
@@ -313,6 +345,7 @@ private:
     enum class PerspectiveMode { FirstPerson = 0, SecondPerson, ThirdPerson };
     enum class Mode3D { None = -1, FacePaint = 0, FaceBrush, BrushCreate, Pottery, Rotation, Selection };
     enum class ToolTarget3D { WorldObjects = 0, AvatarBodyParts };
+    enum class CreatorSection { Paint = 0, Create3D, World, Assets, Relations };
 
     using BrushType = Core::BrushType;
 
@@ -377,6 +410,11 @@ private:
     bool  _playerGrounded    = false; // resting on ground/support this frame
     bool  _jumpKeyDownLast   = false; // edge-trigger for jump
 
+    // Rotate-tool drag state (see accessors above)
+    bool   _rotateDragging    = false;
+    double _rotateLastCursorX = 0.0;
+    double _rotateLastCursorY = 0.0;
+
     // Forwarded GLFW callbacks (so ImGui still gets events)
     GLFWcursorposfun       _prevCursorPosCallback       = nullptr;
     GLFWwindowfocusfun     _prevFocusCallback           = nullptr;
@@ -390,6 +428,10 @@ private:
     float        _currentColor[3] = {1.0f, 0.9f, 0.2f};
     Mode3D       _current3DMode   = Mode3D::None;
     ToolTarget3D _current3DTarget = ToolTarget3D::WorldObjects;
+    CreatorSection _creatorSection = CreatorSection::Create3D;
+    bool _showRelationManager = false;
+    bool _use2DPressureSimulation = false;
+    bool _cursorToolsOpen = false;
 
     // 3D selection
     Object* _selectedObject3D = nullptr;
@@ -399,6 +441,15 @@ private:
     bool  _drawingStraightLine   = false;
     float _straightLineStartX    = 0.0f;
     float _straightLineStartY    = 0.0f;
+    float _straightLineEndX      = 0.0f;
+    float _straightLineEndY      = 0.0f;
+
+    // Shared 2D tool drag state
+    bool _toolDragActive = false;
+    Tool::Type _toolDragType = Tool::Type::Brush;
+    glm::vec2 _toolDragStart = glm::vec2(0.0f);
+    glm::vec2 _toolDragCurrent = glm::vec2(0.0f);
+    std::vector<glm::vec2> _toolDragPoints;
 
     // Layer system (unused externally; kept for future use)
     bool  _useLayers    = false;
@@ -409,6 +460,21 @@ private:
     // Internal handlers ---------------------------------------------------
     void onFramebufferSize(int width, int height);
     void renderCreatorToolbar();
+    void renderCreatorSectionTabs();
+    void renderPaintConsole(Zone& zone);
+    void render3DConsole();
+    void renderWorldConsole();
+    void renderAssetsConsole(Zone& zone);
+    void renderRelationsConsole(Zone& zone);
+    void renderCreatorStatusBar();
+    void renderSectionButton(CreatorSection section, const char* label);
+    void renderPaintToolButton(Zone& zone, Tool::Type type, const char* label);
+    void render3DModeButton(Mode3D mode, const char* label);
+    void renderPrimitiveButton(Object::GeometryType primitive, const char* label);
+    void renderPlacementInspector();
+    void renderSelectionInspector();
+    void setPaintTool(Zone& zone, Tool::Type type);
+    void set3DMode(Mode3D mode);
 };
 
 } // namespace Core
