@@ -23,6 +23,14 @@
 extern ZoneManager mgr;
 
 namespace {
+constexpr float kDefaultBrushRadius = 0.001f;
+constexpr float kPencilRadius = 0.001f;
+constexpr float kPenRadius = 0.0015f;
+constexpr float kMarkerRadius = 0.003f;
+
+float spacingForBrushRadius(float radius) {
+    return std::max(0.0005f, radius * 0.35f);
+}
 
 void sameLineEvery(int index, int perRow) {
     if ((index + 1) % perRow != 0) {
@@ -51,24 +59,24 @@ void configurePaintBrushPreset(Zone& zone, Tool::Type type) {
     switch (type) {
         case Tool::Type::Pencil:
             zone.setBrushType(BrushSystem::BrushType::Normal);
-            zone.setBrushRadius(0.035f);
+            zone.setBrushRadius(kPencilRadius);
             zone.setBrushOpacity(1.0f);
             zone.setBrushFlow(1.0f);
-            zone.setBrushSpacing(0.012f);
+            zone.setBrushSpacing(spacingForBrushRadius(kPencilRadius));
             break;
         case Tool::Type::Pen:
             zone.setBrushType(BrushSystem::BrushType::Normal);
-            zone.setBrushRadius(0.055f);
+            zone.setBrushRadius(kPenRadius);
             zone.setBrushOpacity(1.0f);
             zone.setBrushFlow(1.0f);
-            zone.setBrushSpacing(0.008f);
+            zone.setBrushSpacing(spacingForBrushRadius(kPenRadius));
             break;
         case Tool::Type::Marker:
             zone.setBrushType(BrushSystem::BrushType::Normal);
-            zone.setBrushRadius(0.13f);
+            zone.setBrushRadius(kMarkerRadius);
             zone.setBrushOpacity(0.55f);
             zone.setBrushFlow(0.75f);
-            zone.setBrushSpacing(0.02f);
+            zone.setBrushSpacing(spacingForBrushRadius(kMarkerRadius));
             break;
         case Tool::Type::Airbrush:
             zone.setBrushType(BrushSystem::BrushType::Airbrush);
@@ -88,6 +96,12 @@ void configurePaintBrushPreset(Zone& zone, Tool::Type type) {
             zone.setCloneOffset(glm::vec2(-0.08f, -0.08f));
             break;
         case Tool::Type::Brush:
+            zone.setBrushType(BrushSystem::BrushType::Normal);
+            zone.setBrushRadius(kDefaultBrushRadius);
+            zone.setBrushOpacity(1.0f);
+            zone.setBrushFlow(1.0f);
+            zone.setBrushSpacing(spacingForBrushRadius(kDefaultBrushRadius));
+            break;
         case Tool::Type::Eraser:
         case Tool::Type::Delete:
         case Tool::Type::MagicEraser:
@@ -109,7 +123,7 @@ void Game::renderCreatorToolbar() {
     }
 
     ImGui::SetNextWindowPos(ImVec2(12.0f, 12.0f), ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2(430.0f, 720.0f), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(540.0f, 720.0f), ImGuiCond_FirstUseEver);
     if (!ImGui::Begin("Earthcall Creator Console", &_showToolbar, ImGuiWindowFlags_NoCollapse)) {
         ImGui::End();
         drawLoadWindow();
@@ -127,6 +141,9 @@ void Game::renderCreatorToolbar() {
             break;
         case CreatorSection::Create3D:
             render3DConsole();
+            break;
+        case CreatorSection::Character:
+            renderCharacterConsole();
             break;
         case CreatorSection::World:
             renderWorldConsole();
@@ -155,6 +172,8 @@ void Game::renderCreatorSectionTabs() {
     renderSectionButton(CreatorSection::Paint, "Paint");
     ImGui::SameLine();
     renderSectionButton(CreatorSection::Create3D, "3D");
+    ImGui::SameLine();
+    renderSectionButton(CreatorSection::Character, "Avatar");
     ImGui::SameLine();
     renderSectionButton(CreatorSection::World, "World");
     ImGui::SameLine();
@@ -286,8 +305,9 @@ void Game::renderPaintConsole(Zone& zone) {
             }
 
             float radius = brushSystem->getRadius();
-            if (ImGui::SliderFloat("Radius", &radius, 0.01f, 2.0f, "%.3f")) {
+            if (ImGui::SliderFloat("Radius", &radius, 0.001f, 0.02f, "%.4f")) {
                 zone.setBrushRadius(radius);
+                zone.setBrushSpacing(spacingForBrushRadius(radius));
             }
 
             float opacity = brushSystem->getOpacity();
@@ -302,7 +322,7 @@ void Game::renderPaintConsole(Zone& zone) {
 
             if (ImGui::CollapsingHeader("Dynamics")) {
                 float spacing = brushSystem->getSpacing();
-                if (ImGui::SliderFloat("Spacing", &spacing, 0.01f, 2.0f, "%.3f")) {
+                if (ImGui::SliderFloat("Spacing", &spacing, 0.0005f, 0.02f, "%.4f")) {
                     zone.setBrushSpacing(spacing);
                 }
 
@@ -413,25 +433,20 @@ void Game::render3DModeButton(Mode3D mode, const char* label) {
     }
 }
 
-void Game::renderPrimitiveButton(Object::GeometryType primitive, const char* label) {
-    const bool active = _polyhedron.primitive == primitive;
+void Game::renderPrimitiveButton(Object::ShapeKind kind, const char* label) {
+    const bool active = _polyhedron.shapeKind == kind;
     pushActiveButtonStyle(active, ImVec4(0.30f, 0.50f, 0.31f, 1.0f),
                           ImVec4(0.36f, 0.62f, 0.38f, 1.0f));
     const bool pressed = ImGui::Button(label, ImVec2(118.0f, 0.0f));
     popActiveButtonStyle(active);
     if (pressed) {
-        _polyhedron.primitive = primitive;
+        _polyhedron.shapeKind = kind;
     }
 }
 
 void Game::render3DConsole() {
     struct Mode3DDef {
         Mode3D mode;
-        const char* label;
-    };
-
-    struct PrimitiveDef {
-        Object::GeometryType primitive;
         const char* label;
     };
 
@@ -443,14 +458,6 @@ void Game::render3DConsole() {
         {Mode3D::Pottery, "Pottery"},
         {Mode3D::Rotation, "Rotate"}
     };
-    static const PrimitiveDef primitiveDefs[] = {
-        {Object::GeometryType::Cube, "Cube"},
-        {Object::GeometryType::Sphere, "Sphere"},
-        {Object::GeometryType::Cylinder, "Cylinder"},
-        {Object::GeometryType::Cone, "Cone"},
-        {Object::GeometryType::Polyhedron, "Polyhedron"}
-    };
-
     ImGui::TextUnformatted("Mode");
     for (int i = 0; i < IM_ARRAYSIZE(modeDefs); ++i) {
         render3DModeButton(modeDefs[i].mode, modeDefs[i].label);
@@ -472,10 +479,20 @@ void Game::render3DConsole() {
 
     ImGui::Separator();
     ImGui::TextUnformatted("Shape");
-    for (int i = 0; i < IM_ARRAYSIZE(primitiveDefs); ++i) {
-        renderPrimitiveButton(primitiveDefs[i].primitive, primitiveDefs[i].label);
-        sameLineEvery(i, 3);
-    }
+    // Grouped by fundamental topological category, not by named primitive.
+    ImGui::TextDisabled("Polyhedra (flat-faced)");
+    renderPrimitiveButton(Object::ShapeKind::Cube, "Cube"); ImGui::SameLine();
+    renderPrimitiveButton(Object::ShapeKind::Polyhedron, "Polyhedron");
+    ImGui::TextDisabled("Smooth surfaces");
+    renderPrimitiveButton(Object::ShapeKind::Sphere, "Sphere"); ImGui::SameLine();
+    renderPrimitiveButton(Object::ShapeKind::Ellipsoid, "Ellipsoid"); ImGui::SameLine();
+    renderPrimitiveButton(Object::ShapeKind::Ovoid, "Ovoid");
+    renderPrimitiveButton(Object::ShapeKind::Paraboloid, "Paraboloid"); ImGui::SameLine();
+    renderPrimitiveButton(Object::ShapeKind::Torus, "Torus");
+    ImGui::TextDisabled("Complex (round + edges)");
+    renderPrimitiveButton(Object::ShapeKind::Cylinder, "Cylinder"); ImGui::SameLine();
+    renderPrimitiveButton(Object::ShapeKind::Cone, "Cone"); ImGui::SameLine();
+    renderPrimitiveButton(Object::ShapeKind::RoundedBox, "Rounded Box");
 
     ImGui::SliderFloat("Uniform Size", &_brush.size, 0.1f, 10.0f, "%.2f");
     ImGui::SliderFloat3("Scale", &_brush.scale.x, 0.1f, 8.0f, "%.2f");
@@ -487,7 +504,7 @@ void Game::render3DConsole() {
 
     renderPlacementInspector();
 
-    if (_polyhedron.primitive == Object::GeometryType::Polyhedron) {
+    if (_polyhedron.shapeKind == Object::ShapeKind::Polyhedron) {
         ImGui::Separator();
         ImGui::TextUnformatted("Polyhedron");
         if (ImGui::Button("Tetrahedron")) {
@@ -596,6 +613,264 @@ void Game::render3DConsole() {
     }
 
     renderSelectionInspector();
+}
+
+void Game::renderCharacterConsole() {
+    Body& body = _player.getBody();
+
+    if (_current3DTarget == ToolTarget3D::AvatarBodyParts) {
+        if (auto* pickedPart = dynamic_cast<BodyPart*>(_selectedObject3D)) {
+            _selectedCharacterPart = pickedPart;
+        }
+    }
+    if (!_selectedCharacterPart && !body.parts.empty()) {
+        _selectedCharacterPart = body.parts.front();
+    }
+
+    if (ImGui::Button("Edit Avatar Parts")) {
+        _current3DTarget = ToolTarget3D::AvatarBodyParts;
+        _current3DMode = Mode3D::Selection;
+        _currentPerspective = PerspectiveMode::ThirdPerson;
+    }
+    ImGui::SameLine();
+    ImGui::Checkbox("Design Lock", &_characterDesignLocked);
+
+    if (ImGui::BeginTabBar("CharacterTabs")) {
+        if (ImGui::BeginTabItem("Body Parts")) {
+            ImGui::TextUnformatted("Body Parts");
+            for (auto* part : body.parts) {
+                if (!part) continue;
+                const bool selected = part == _selectedCharacterPart;
+                if (ImGui::Selectable(part->getName().c_str(), selected)) {
+                    _selectedCharacterPart = part;
+                    _selectedObject3D = part;
+                    _current3DTarget = ToolTarget3D::AvatarBodyParts;
+                }
+            }
+
+            if (_selectedCharacterPart) {
+                ImGui::Separator();
+                ImGui::BeginDisabled(_characterDesignLocked);
+
+                ImGui::Text("Editing: %s", _selectedCharacterPart->getName().c_str());
+
+                const char* shapeNames[] = {"Cube", "Sphere", "Cylinder", "Cone", "Polyhedron"};
+                int currentShape = static_cast<int>(_selectedCharacterPart->getPrimaryShape());
+                if (ImGui::Combo("Shape", &currentShape, shapeNames, IM_ARRAYSIZE(shapeNames))) {
+                    _selectedCharacterPart->setPrimaryShape(static_cast<Object::GeometryType>(currentShape));
+                }
+
+                glm::vec3 dims = _selectedCharacterPart->getGeometry().getDimensions();
+                float dimArr[3] = {dims.x, dims.y, dims.z};
+                if (ImGui::SliderFloat3("Dimensions", dimArr, 0.05f, 1.0f, "%.2f")) {
+                    _selectedCharacterPart->getGeometry().setDimensions({dimArr[0], dimArr[1], dimArr[2]});
+                    _selectedCharacterPart->setTransform(_selectedCharacterPart->getTransform());
+                }
+
+                float color[3] = {
+                    _selectedCharacterPart->getColor()[0],
+                    _selectedCharacterPart->getColor()[1],
+                    _selectedCharacterPart->getColor()[2]
+                };
+                if (ImGui::ColorEdit3("Color", color)) {
+                    _selectedCharacterPart->setColor(color[0], color[1], color[2]);
+                }
+
+                ImGui::Separator();
+                ImGui::Text("Sub-Objects (%zu)", _selectedCharacterPart->getSubObjectCount());
+                for (size_t index = 0; index < _selectedCharacterPart->getSubObjectCount(); ++index) {
+                    Object* sub = _selectedCharacterPart->getSubObject(index);
+                    if (!sub) continue;
+
+                    ImGui::PushID(static_cast<int>(index));
+                    int subShape = static_cast<int>(sub->getGeometryType());
+                    ImGui::SetNextItemWidth(104.0f);
+                    if (ImGui::Combo("##SubShape", &subShape, shapeNames, IM_ARRAYSIZE(shapeNames))) {
+                        sub->setGeometryType(static_cast<Object::GeometryType>(subShape));
+                    }
+                    ImGui::SameLine();
+
+                    glm::mat4 localOffset = _selectedCharacterPart->getSubObjectLocalOffset(index);
+                    float offset[3] = {localOffset[3][0], localOffset[3][1], localOffset[3][2]};
+                    ImGui::SetNextItemWidth(210.0f);
+                    if (ImGui::SliderFloat3("Offset", offset, -1.0f, 1.0f, "%.2f")) {
+                        localOffset[3][0] = offset[0];
+                        localOffset[3][1] = offset[1];
+                        localOffset[3][2] = offset[2];
+                        _selectedCharacterPart->setSubObjectLocalOffset(index, localOffset);
+                    }
+                    ImGui::SameLine();
+                    if (ImGui::Button("X")) {
+                        _selectedCharacterPart->removeSubObject(index);
+                        ImGui::PopID();
+                        break;
+                    }
+                    ImGui::PopID();
+                }
+
+                if (ImGui::Button("Add Sub-Object")) {
+                    _selectedCharacterPart->addSubObject(Object::GeometryType::Cube, glm::mat4(1.0f));
+                }
+
+                ImGui::Separator();
+                ImGui::Text("Health: %.1f/%.1f", _selectedCharacterPart->getHealth(), _selectedCharacterPart->getMaxHealth());
+                if (ImGui::Button("Heal Part")) {
+                    _selectedCharacterPart->heal(20.0f);
+                }
+                ImGui::SameLine();
+                if (ImGui::Button("Damage Part")) {
+                    _selectedCharacterPart->takeDamage(10.0f);
+                }
+
+                ImGui::EndDisabled();
+            }
+            ImGui::EndTabItem();
+        }
+
+        if (ImGui::BeginTabItem("Avatar Stats")) {
+            ImGui::BeginDisabled(_characterDesignLocked);
+
+            ImGui::Text("Health: %.1f/%.1f", _player.state.health, _player.state.maxHealth);
+            ImGui::Text("Energy: %.1f/%.1f", _player.state.energy, _player.state.maxEnergy);
+            ImGui::Text("Mood: %.1f", _player.state.mood);
+            ImGui::Text("Level: %d (XP: %.1f)", _player.state.level, _player.state.experience);
+
+            ImGui::Separator();
+            ImGui::TextUnformatted("Skills");
+            for (const auto& skill : _player.state.skills) {
+                ImGui::Text("%s: %.1f", skill.first.c_str(), skill.second);
+            }
+
+            ImGui::Separator();
+            if (ImGui::Button("Add Experience")) {
+                _player.addExperience(50.0f);
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Heal Avatar")) {
+                _player.modifyHealth(50.0f);
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Restore Energy")) {
+                _player.modifyEnergy(50.0f);
+            }
+
+            ImGui::EndDisabled();
+            ImGui::EndTabItem();
+        }
+
+        if (ImGui::BeginTabItem("Appearance")) {
+            ImGui::BeginDisabled(_characterDesignLocked);
+
+            char hairStyle[64];
+            std::snprintf(hairStyle, sizeof(hairStyle), "%s", _player.state.hairStyle.c_str());
+            if (ImGui::InputText("Hair Style", hairStyle, sizeof(hairStyle))) {
+                _player.setHairStyle(hairStyle);
+            }
+
+            char eyeColor[32];
+            std::snprintf(eyeColor, sizeof(eyeColor), "%s", _player.state.eyeColor.c_str());
+            if (ImGui::InputText("Eye Color", eyeColor, sizeof(eyeColor))) {
+                _player.setEyeColor(eyeColor);
+            }
+
+            char skinTone[32];
+            std::snprintf(skinTone, sizeof(skinTone), "%s", _player.state.skinTone.c_str());
+            if (ImGui::InputText("Skin Tone", skinTone, sizeof(skinTone))) {
+                _player.setSkinTone(skinTone);
+            }
+
+            float height = body.height;
+            if (ImGui::SliderFloat("Height", &height, 0.5f, 2.5f, "%.2f m")) {
+                body.setHeight(height);
+                _player.state.height = height;
+                _player.updatePose();
+            }
+
+            float weight = body.weight;
+            if (ImGui::SliderFloat("Weight", &weight, 30.0f, 150.0f, "%.1f kg")) {
+                body.setWeight(weight);
+                _player.state.weight = weight;
+            }
+
+            int proportions = static_cast<int>(body.proportions);
+            const char* proportionNames[] = {"Child", "Teen", "Adult", "Elder"};
+            if (ImGui::Combo("Proportions", &proportions, proportionNames, IM_ARRAYSIZE(proportionNames))) {
+                body.setProportions(static_cast<Body::Proportions>(proportions));
+                _player.updatePose();
+            }
+
+            ImGui::EndDisabled();
+            ImGui::EndTabItem();
+        }
+
+        if (ImGui::BeginTabItem("Clothing")) {
+            ImGui::BeginDisabled(_characterDesignLocked);
+
+            ImGui::TextUnformatted("Equipped Clothing");
+            for (auto& item : body.clothing) {
+                bool equipped = item.second.isEquipped;
+                if (ImGui::Checkbox(item.first.c_str(), &equipped)) {
+                    if (equipped) {
+                        body.equipClothing(item.first);
+                    } else {
+                        body.unequipClothing(item.first);
+                    }
+                }
+                if (equipped) {
+                    ImGui::SameLine();
+                    ImGui::Text("(Protection: %.1f, Warmth: %.1f)",
+                                item.second.protection, item.second.warmth);
+                }
+            }
+
+            ImGui::Separator();
+            ImGui::Text("Total Protection: %.1f", body.getTotalProtection());
+            ImGui::Text("Total Warmth: %.1f", body.getTotalWarmth());
+
+            ImGui::EndDisabled();
+            ImGui::EndTabItem();
+        }
+
+        if (ImGui::BeginTabItem("Inventory")) {
+            ImGui::BeginDisabled(_characterDesignLocked);
+
+            ImGui::Text("Inventory (%zu/%d items)", _player.inventory.size(), _player.maxInventorySize);
+            for (size_t i = 0; i < _player.inventory.size(); ++i) {
+                ImGui::Text("%zu. %s", i + 1, _player.inventory[i].c_str());
+            }
+
+            ImGui::Separator();
+            static char newItem[64] = "";
+            if (ImGui::InputText("Add Item", newItem, sizeof(newItem), ImGuiInputTextFlags_EnterReturnsTrue)) {
+                if (_player.addToInventory(newItem)) {
+                    newItem[0] = '\0';
+                }
+            }
+
+            ImGui::EndDisabled();
+            ImGui::EndTabItem();
+        }
+
+        if (ImGui::BeginTabItem("Presets")) {
+            ImGui::BeginDisabled(_characterDesignLocked);
+
+            static char presetName[64] = "";
+            ImGui::InputText("Preset Name", presetName, sizeof(presetName));
+            if (ImGui::Button("Create Preset") && presetName[0] != '\0') {
+                _avatarManager.createPreset(presetName, &_player);
+                presetName[0] = '\0';
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Create Current")) {
+                _avatarManager.createPreset("Current", &_player);
+            }
+
+            ImGui::EndDisabled();
+            ImGui::EndTabItem();
+        }
+
+        ImGui::EndTabBar();
+    }
 }
 
 void Game::renderPlacementInspector() {

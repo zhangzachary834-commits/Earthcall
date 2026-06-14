@@ -10,6 +10,16 @@
 #include <utility>
 
 namespace {
+constexpr float kBrushRadiusToScreenPixels = 1000.0f;
+constexpr float kDefaultBrushRadius = 0.001f;
+constexpr float kPencilRadius = 0.001f;
+constexpr float kPenRadius = 0.0015f;
+constexpr float kMarkerRadius = 0.003f;
+
+float spacingForBrushRadius(float radius) {
+    return std::max(0.0005f, radius * 0.35f);
+}
+
 float distanceSqToSegment(const glm::vec2& point, const glm::vec2& a, const glm::vec2& b) {
     const glm::vec2 ab = b - a;
     const float lenSq = glm::dot(ab, ab);
@@ -23,7 +33,7 @@ float distanceSqToSegment(const glm::vec2& point, const glm::vec2& a, const glm:
 
 float activeEraserRadius(Zone& zone) {
     if (auto* brushSystem = zone.getBrushSystem()) {
-        return std::max(4.0f, brushSystem->getRadius() * 50.0f);
+        return std::max(4.0f, brushSystem->getRadius() * kBrushRadiusToScreenPixels);
     }
     return 16.0f;
 }
@@ -132,24 +142,24 @@ void configureStrokeTool(Zone& zone, Tool::Type type) {
     switch (type) {
     case Tool::Type::Pencil:
         zone.setBrushType(BrushSystem::BrushType::Normal);
-        zone.setBrushRadius(0.035f);
+        zone.setBrushRadius(kPencilRadius);
         zone.setBrushOpacity(1.0f);
         zone.setBrushFlow(1.0f);
-        zone.setBrushSpacing(0.012f);
+        zone.setBrushSpacing(spacingForBrushRadius(kPencilRadius));
         break;
     case Tool::Type::Pen:
         zone.setBrushType(BrushSystem::BrushType::Normal);
-        zone.setBrushRadius(0.055f);
+        zone.setBrushRadius(kPenRadius);
         zone.setBrushOpacity(1.0f);
         zone.setBrushFlow(1.0f);
-        zone.setBrushSpacing(0.008f);
+        zone.setBrushSpacing(spacingForBrushRadius(kPenRadius));
         break;
     case Tool::Type::Marker:
         zone.setBrushType(BrushSystem::BrushType::Normal);
-        zone.setBrushRadius(0.13f);
+        zone.setBrushRadius(kMarkerRadius);
         zone.setBrushOpacity(0.55f);
         zone.setBrushFlow(0.75f);
-        zone.setBrushSpacing(0.02f);
+        zone.setBrushSpacing(spacingForBrushRadius(kMarkerRadius));
         break;
     case Tool::Type::Airbrush:
         zone.setBrushType(BrushSystem::BrushType::Airbrush);
@@ -167,6 +177,13 @@ void configureStrokeTool(Zone& zone, Tool::Type type) {
         zone.setBrushType(BrushSystem::BrushType::Clone);
         zone.setCloneActive(true);
         zone.setCloneOffset(glm::vec2(-0.08f, -0.08f));
+        break;
+    case Tool::Type::Brush:
+        zone.setBrushType(BrushSystem::BrushType::Normal);
+        zone.setBrushRadius(kDefaultBrushRadius);
+        zone.setBrushOpacity(1.0f);
+        zone.setBrushFlow(1.0f);
+        zone.setBrushSpacing(spacingForBrushRadius(kDefaultBrushRadius));
         break;
     default:
         zone.setBrushType(BrushSystem::BrushType::Normal);
@@ -944,26 +961,26 @@ void Tool::ShapeGenerator3D(GLFWwindow *window, Core::Game *game, ZoneManager &m
             glm::mat4 partWorld = targetPart->getTransform();
             glm::mat4 localT = glm::inverse(partWorld) * t;
 
-            Object* sub = targetPart->addSubObject(game->getCurrentPrimitive(), localT);
-            if (sub && game->getCurrentPrimitive() == Object::GeometryType::Polyhedron) {
+            Object* sub = targetPart->addSubObject(game->getCurrentShapeKind(), localT);
+            if (sub && game->getCurrentShapeKind() == Object::ShapeKind::Polyhedron) {
                 sub->setPolyhedronData(game->buildCurrentPolyhedron());
             }
             if (sub) {
-                for (int f = 0; f < 6; ++f)
+                for (int f = 0; f < sub->getFaces(); ++f)
                     sub->setFaceColor(f, game->getCurrentColor(0), game->getCurrentColor(1), game->getCurrentColor(2));
             }
         } else {
             std::unique_ptr<Object> obj(new Object());
-            obj->setGeometryType(game->getCurrentPrimitive());
+            obj->setShape(game->getCurrentShapeKind());
 
-            if (game->getCurrentPrimitive() == Object::GeometryType::Polyhedron)
+            if (game->getCurrentShapeKind() == Object::ShapeKind::Polyhedron)
             {
                 obj->setPolyhedronData(game->buildCurrentPolyhedron());
             }
 
             obj->setTransform(t);
             obj->updateCollisionZone(t);
-            for (int f = 0; f < 6; ++f)
+            for (int f = 0; f < obj->getFaces(); ++f)
                 obj->setFaceColor(f, game->getCurrentColor(0), game->getCurrentColor(1), game->getCurrentColor(2));
             mgr.active().world().addObject(std::move(obj));
         }

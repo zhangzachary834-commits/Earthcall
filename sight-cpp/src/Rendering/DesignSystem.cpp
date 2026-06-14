@@ -1096,7 +1096,7 @@ DesignSystem::DesignSystem() {
     _effectsSystem = std::make_unique<EffectsSystem>();
     _selectionSystem = std::make_unique<SelectionSystem>();
     _transformSystem = std::make_unique<TransformSystem>();
-    _brushSystem = std::make_unique<BrushSystem>(64);
+    _brushSystem = std::make_unique<BrushSystem>(512);
     
     // Initialize default layer
     Layer defaultLayer;

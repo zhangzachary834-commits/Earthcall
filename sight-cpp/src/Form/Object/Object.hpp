@@ -2,7 +2,7 @@
 
 #include <vector>
 #include <cstdint>
-#include "Formation/Formations.hpp"
+#include "Formation/Formation.hpp"
 #include <GLFW/glfw3.h> // Include OpenGL headers for rendering
 #include <OpenGL/glu.h> // Include OpenGL utilities
 #include <glm/glm.hpp>
@@ -14,6 +14,8 @@
 #include "Object/PolyhedronData.hpp"
 #include "Object/FaceTexture.hpp"
 #include "Object/CollisionZone.hpp"
+#include "Geometry/SmoothSurface.hpp"
+#include "Geometry/ComplexShape.hpp"
 #include "Automation/Automation.hpp"
 #include <unordered_map>
 #include <memory>
@@ -30,8 +32,17 @@ struct ObjectHoverExitEvent;
 class Object : public Singular {
 
 public:
-    // Geometry type to allow different primitive shapes
+    // Geometry type to allow different primitive shapes (legacy axis; retained
+    // for save migration and the polyhedron path).
     enum class GeometryType { Cube = 0, Sphere, Cylinder, Cone, Polyhedron };
+
+    // Named shape within the topology framework. The identity is the SpatialKind
+    // category; ShapeKind is just which parameterization. Serialized as an int,
+    // so this enum is APPEND-ONLY.
+    enum class ShapeKind {
+        Cube = 0, Polyhedron = 1, Sphere = 2, Cylinder = 3, Cone = 4,  // legacy-aligned
+        Ellipsoid = 5, Ovoid = 6, Paraboloid = 7, Torus = 8, RoundedBox = 9
+    };
 
 
     std::string screenMode();
@@ -109,19 +120,31 @@ private:
     // Position in 3D space. The anchor point. Replace with glm::vec3 if using GLM for better math operations.
     float x, y, z;
 
-    // Formations that this Object is a part of
-    std::vector<Formations> highOFormations;
+    // Parent Formation instances that this Object is a part of
+    std::vector<Formation> parentFormationInstances;
 
-    // Formations Formations that are within this object
-    std::vector<Formations> lowOFormations;
+    // Child Formation instances that are within this object
+    std::vector<Formation> childFormationInstances;
 
     BodyPart* part = nullptr;
 
     // The primitive shape this Object represents. Default is Cube for compatibility.
     GeometryType geometryType = GeometryType::Cube;
-    
+
     // Polyhedron data for arbitrary polyhedrons
     PolyhedronData polyhedronData;
+
+    // Topology-based geometry model. When _hasComplex / _hasSmooth is set these
+    // supersede geometryType for rendering, raycast and collision; geometryType
+    // is retained for the polyhedron path and legacy save migration.
+    geom::SmoothSurfaceData smoothData;
+    geom::ComplexShapeData  complexData;
+    bool _hasSmooth  = false;
+    bool _hasComplex = false;
+    ShapeKind _shapeKind = ShapeKind::Cube;
+
+    void drawSmoothModel() const;
+    void drawComplexModel() const;
 
 public:
     // LEGACY flat colours kept for save/load compatibility (first 6 faces)
@@ -230,8 +253,8 @@ public:
     void drawHighlightOutline() const;
 
     // not implemented yet
-    void interactWith(Formations&);
-    void onInteraction(Formations&);
+    void interactWith(Formation&);
+    void onInteraction(Formation&);
 
     void drawSymbolicBody(); // or drawAsGeometry, drawPhysicalShell
 
@@ -299,13 +322,66 @@ public:
     bool getIsHovered() const { return _isHovered; }
     glm::vec3 getHoverPoint() const { return _hoverPoint; }
 
-    // Setter / getter so tools can pick the shape
+    // Setter / getter so tools can pick the shape.
+    // Reclassifies legacy primitives into the topology-based model:
+    //   Sphere   → SmoothSurface (quadric)
+    //   Cylinder → ComplexShape (round side + 2 flat caps, Hard rims)
+    //   Cone     → ComplexShape (round side + flat base, Hard rim)
+    //   Cube/Polyhedron keep the flat-faced path. This is also the legacy-save
+    //   migration point (from_json calls setGeometryType).
     void setGeometryType(GeometryType t) {
         geometryType = t;
-        initFaceTextures();
+        _hasSmooth = false;
+        _hasComplex = false;
+        switch (t) {
+            case GeometryType::Cube:       _shapeKind = ShapeKind::Cube;       initFaceTextures();                       break;
+            case GeometryType::Polyhedron: _shapeKind = ShapeKind::Polyhedron; initFaceTextures();                       break;
+            case GeometryType::Sphere:     _shapeKind = ShapeKind::Sphere;     setSmoothSurface(geom::makeSphere());     break;
+            case GeometryType::Cylinder:   _shapeKind = ShapeKind::Cylinder;   setComplexShape(geom::cappedCylinder());  break;
+            case GeometryType::Cone:       _shapeKind = ShapeKind::Cone;       setComplexShape(geom::cappedCone());       break;
+        }
     }
     GeometryType getGeometryType() const { return geometryType; }
-    
+
+    // Build any named shape in the framework (superset of setGeometryType).
+    void setShape(ShapeKind k) {
+        switch (k) {
+            case ShapeKind::Cube:       setGeometryType(GeometryType::Cube);       break;
+            case ShapeKind::Polyhedron: setGeometryType(GeometryType::Polyhedron); break;
+            case ShapeKind::Sphere:     setGeometryType(GeometryType::Sphere);     break;
+            case ShapeKind::Cylinder:   setGeometryType(GeometryType::Cylinder);   break;
+            case ShapeKind::Cone:       setGeometryType(GeometryType::Cone);       break;
+            case ShapeKind::Ellipsoid:  setSmoothSurface(geom::makeEllipsoid(0.5f, 0.32f, 0.5f)); break;
+            case ShapeKind::Ovoid:      setSmoothSurface(geom::makeOvoid());       break;
+            case ShapeKind::Paraboloid: setSmoothSurface(geom::makeParaboloid()); break;
+            case ShapeKind::Torus:      setSmoothSurface(geom::makeTorus());       break;
+            case ShapeKind::RoundedBox: setComplexShape(geom::roundedBox());       break;
+        }
+        _shapeKind = k; // assert after setGeometryType may have set a legacy value
+    }
+    ShapeKind getShapeKind() const { return _shapeKind; }
+
+    // --- Topology-based geometry model (smooth surfaces / complex shapes) ---
+    // The fundamental category of the object. Named primitives are merely
+    // parameterizations inside a category, never the identity itself.
+    enum class SpatialKind { Polyhedron, SmoothSurface, ComplexShape };
+    SpatialKind getSpatialKind() const {
+        if (_hasComplex) return SpatialKind::ComplexShape;
+        if (_hasSmooth)  return SpatialKind::SmoothSurface;
+        return SpatialKind::Polyhedron; // legacy cube/poly map here for now
+    }
+    bool hasSmoothSurface() const { return _hasSmooth; }
+    bool hasComplexShape()  const { return _hasComplex; }
+    const geom::SmoothSurfaceData& getSmoothData()  const { return smoothData; }
+    const geom::ComplexShapeData&  getComplexData() const { return complexData; }
+    void setSmoothSurface(const geom::SmoothSurfaceData& s) {
+        smoothData = s; _hasSmooth = true; _hasComplex = false; initFaceTextures();
+    }
+    void setComplexShape(const geom::ComplexShapeData& c) {
+        complexData = c; _hasComplex = true; _hasSmooth = false; initFaceTextures();
+    }
+    void clearTopologyModel() { _hasSmooth = false; _hasComplex = false; }
+
     // Polyhedron-specific methods
     void setPolyhedronData(const PolyhedronData& data);
     const PolyhedronData& getPolyhedronData() const { return polyhedronData; }

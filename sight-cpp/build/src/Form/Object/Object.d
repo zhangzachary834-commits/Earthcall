@@ -1,5 +1,5 @@
 build/src/Form/Object/Object.o: src/Form/Object/Object.cpp \
-  src/Form/Object/Object.hpp src/Form/Object/Formation/Formations.hpp \
+  src/Form/Object/Object.hpp src/Form/Object/Formation/Formation.hpp \
   src/Form/Form.hpp /opt/homebrew/include/glm/glm.hpp \
   /opt/homebrew/include/glm/detail/_fixes.hpp \
   /opt/homebrew/include/glm/detail/setup.hpp \
@@ -259,6 +259,8 @@ build/src/Form/Object/Object.o: src/Form/Object/Object.cpp \
   src/Form/Object/Object/../Contour.hpp \
   src/Form/Object/Object/FaceTexture.hpp \
   src/Form/Object/Object/CollisionZone.hpp \
+  src/Form/Object/Geometry/SmoothSurface.hpp \
+  src/Form/Object/Geometry/ComplexShape.hpp \
   src/Form/Object/Automation/Automation.hpp \
   src/Form/Object/Automation/AutomationEvents.hpp \
   /opt/homebrew/include/glm/gtc/quaternion.hpp \
@@ -266,7 +268,7 @@ build/src/Form/Object/Object.o: src/Form/Object/Object.cpp \
 
 src/Form/Object/Object.hpp:
 
-src/Form/Object/Formation/Formations.hpp:
+src/Form/Object/Formation/Formation.hpp:
 
 src/Form/Form.hpp:
 
@@ -795,6 +797,10 @@ src/Form/Object/Object/../Contour.hpp:
 src/Form/Object/Object/FaceTexture.hpp:
 
 src/Form/Object/Object/CollisionZone.hpp:
+
+src/Form/Object/Geometry/SmoothSurface.hpp:
+
+src/Form/Object/Geometry/ComplexShape.hpp:
 
 src/Form/Object/Automation/Automation.hpp:
 

@@ -3,7 +3,7 @@
 #include <vector>
 #include <unordered_map>
 #include "../World/World.hpp"
-#include "Form/Object/Formation/Formations.hpp"
+#include "Form/Object/Formation/Formation.hpp"
 #include <memory>
 #include "Form/Object/Object.hpp"
 #include "Rendering/BrushSystem.hpp"
@@ -52,9 +52,9 @@ public:
     bool isDrawing = false;   // Track if currently drawing a stroke
     
     // ------------------------------------------------------------
-    // Formations
-    Formations& getFormation() { return _formation; }
-    const Formations& getFormation() const { return _formation; }
+    // Formation
+    Formation& getFormation() { return _formation; }
+    const Formation& getFormation() const { return _formation; }
     void addToFormation(Singular* s) { _formation.addMember(s); }
     void removeFromFormation(Singular* s) { _formation.removeMember(s); }
     void addToFormation(const std::vector<Singular*>& members) { 
@@ -176,14 +176,14 @@ private:
     Qualities _qualities;
     Deletability _deletable;
     std::unique_ptr<World> _world; // per-zone world instance
-    Formations _formation;
+    Formation _formation;
     // Removed cache; formation members are rebuilt on copy
 
 public:
 // Bruh
 // USE POINTERS!!!!!
-    Formations& formation() { return _formation; }
-    const Formations& formation() const { return _formation; }
+    Formation& formation() { return _formation; }
+    const Formation& formation() const { return _formation; }
     void load();
     void unload();
     void syncFormationMembers(const std::vector<Singular*>& extraMembers = {});

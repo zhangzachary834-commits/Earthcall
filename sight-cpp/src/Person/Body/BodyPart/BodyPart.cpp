@@ -3,7 +3,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 BodyPart::BodyPart(const std::string& name, Type type, const Form& form)
-    : Object(), Formations(Form::ShapeType::Cube, {1.0f, 1.0f, 1.0f}), partName(name), partType(type), geometry(form)
+    : Object(), Formation(Form::ShapeType::Cube, {1.0f, 1.0f, 1.0f}), partName(name), partType(type), geometry(form)
 {
     isLiteral = true;
     isSymbolic = false;
@@ -273,6 +273,23 @@ bool BodyPart::hasCustomTextures() const {
 // -----------------------------------------------------------------
 // Composite sub-object management
 // -----------------------------------------------------------------
+Object* BodyPart::addSubObject(Object::ShapeKind kind, const glm::mat4& localOffset) {
+    auto obj = std::make_unique<Object>();
+    obj->setShape(kind);
+
+    obj->setOwnerBodyPart(this);
+    glm::mat4 worldT = getTransform() * localOffset;
+    obj->setTransform(worldT);
+    for (size_t f = 0; f < obj->faceTextures.size(); ++f) {
+        obj->fillFaceColor(static_cast<int>(f), color[0], color[1], color[2]);
+    }
+    Object* raw = obj.get();
+    _subObjects.push_back(std::move(obj));
+    _subObjectLocalOffsets.push_back(localOffset);
+    addMember(raw);
+    return raw;
+}
+
 Object* BodyPart::addSubObject(Object::GeometryType gt, const glm::mat4& localOffset) {
     auto obj = std::make_unique<Object>();
     obj->setGeometryType(gt);

@@ -14,7 +14,7 @@
 #include <string>
 
 // Forward declarations
-class Formations;
+class Formation;
 
 namespace Core {
 
@@ -125,7 +125,7 @@ public:
     // Formation and Relation Integration ---------------------------------
     // ------------------------------------------------------------------
     // Helper method to add event to formation relations
-    void addEventToFormationRelations(const std::string& eventType, const std::string& sourceId, const std::string& targetId, Formations* formation);
+    void addEventToFormationRelations(const std::string& eventType, const std::string& sourceId, const std::string& targetId, Formation* formation);
     
     // Helper method to determine event scope (local vs global)
     enum class EventScope { Local, Global };

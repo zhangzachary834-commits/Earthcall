@@ -4,9 +4,18 @@
 #include "Core/Game.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "Rendering/BrushSystem.hpp"
+#include <algorithm>
 #include <string>
 
 namespace {
+constexpr float kDefaultBrushRadius = 0.001f;
+constexpr float kPencilRadius = 0.001f;
+constexpr float kPenRadius = 0.0015f;
+constexpr float kMarkerRadius = 0.003f;
+
+float spacingForBrushRadius(float radius) {
+    return std::max(0.0005f, radius * 0.35f);
+}
 
 void activateDesignTool(Zone& zone, Tool::Type type) {
     zone.setDesignTool(type);
@@ -20,24 +29,24 @@ void activateDesignTool(Zone& zone, Tool::Type type) {
             break;
         case Tool::Type::Pencil:
             zone.setBrushType(BrushSystem::BrushType::Normal);
-            zone.setBrushRadius(0.035f);
+            zone.setBrushRadius(kPencilRadius);
             zone.setBrushOpacity(1.0f);
             zone.setBrushFlow(1.0f);
-            zone.setBrushSpacing(0.012f);
+            zone.setBrushSpacing(spacingForBrushRadius(kPencilRadius));
             break;
         case Tool::Type::Pen:
             zone.setBrushType(BrushSystem::BrushType::Normal);
-            zone.setBrushRadius(0.055f);
+            zone.setBrushRadius(kPenRadius);
             zone.setBrushOpacity(1.0f);
             zone.setBrushFlow(1.0f);
-            zone.setBrushSpacing(0.008f);
+            zone.setBrushSpacing(spacingForBrushRadius(kPenRadius));
             break;
         case Tool::Type::Marker:
             zone.setBrushType(BrushSystem::BrushType::Normal);
-            zone.setBrushRadius(0.13f);
+            zone.setBrushRadius(kMarkerRadius);
             zone.setBrushOpacity(0.55f);
             zone.setBrushFlow(0.75f);
-            zone.setBrushSpacing(0.02f);
+            zone.setBrushSpacing(spacingForBrushRadius(kMarkerRadius));
             break;
         case Tool::Type::Chalk:
             zone.setBrushType(BrushSystem::BrushType::Chalk);
@@ -54,6 +63,13 @@ void activateDesignTool(Zone& zone, Tool::Type type) {
             zone.setCloneOffset(glm::vec2(-0.08f, -0.08f));
             break;
         case Tool::Type::Brush:
+            zone.setBrushType(BrushSystem::BrushType::Normal);
+            zone.setBrushRadius(kDefaultBrushRadius);
+            zone.setBrushOpacity(1.0f);
+            zone.setBrushFlow(1.0f);
+            zone.setBrushSpacing(spacingForBrushRadius(kDefaultBrushRadius));
+            zone.setCloneActive(false);
+            break;
         case Tool::Type::Eraser:
         case Tool::Type::Delete:
         case Tool::Type::MagicEraser:

@@ -3,7 +3,7 @@
 #include <vector>
 #include <map>
 #include "Form/Object/Object.hpp"
-#include "Form/Object/Formation/Formations.hpp"
+#include "Form/Object/Formation/Formation.hpp"
 #include "Singular.hpp"
 #include "BodyPart/BodyPart.hpp"
 
@@ -61,7 +61,7 @@ public:
 
     // Collection of body parts (owned elsewhere)
     std::vector<BodyPart*> parts;
-    Formations           formation;  // group managing body parts as objects
+    Formation           formation;  // group managing body parts as objects
 
     // Clothing system
     std::map<std::string, Clothing> clothing;

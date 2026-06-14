@@ -9,19 +9,19 @@
 #include "Singular.hpp"
 
 
-class Formations : public Form, public Singular {
+class Formation : public Form, public Singular {
 
 public:
     // Constructor
-    Formations(const std::vector<Singular*>& members);
-    Formations(const std::vector<Singular*>& members, const glm::vec3& dims);
-    Formations(const std::vector<Singular*>& members, Form::ShapeType type, const glm::vec3& dims);
+    Formation(const std::vector<Singular*>& members);
+    Formation(const std::vector<Singular*>& members, const glm::vec3& dims);
+    Formation(const std::vector<Singular*>& members, Form::ShapeType type, const glm::vec3& dims);
 
     // Legacy constructor for fallback
-    Formations(Form::ShapeType type, const glm::vec3& dims = {1.0f,1.0f,1.0f}) : Form(type, dims) {}
+    Formation(Form::ShapeType type, const glm::vec3& dims = {1.0f,1.0f,1.0f}) : Form(type, dims) {}
     
     // Destructor
-    ~Formations() = default;
+    ~Formation() = default;
 
     // ------ Generic membership helpers (any Singular) ------------
     void addMember(Singular* s);
@@ -54,7 +54,7 @@ public:
     // in this formation (undirected, weight 1.0, type="member")
     void rebuildCompleteGraph();
     void applyAttachmentRelations();
-    const std::vector<std::shared_ptr<Formations>>& getSubformations() const { return subformations; }
+    const std::vector<std::shared_ptr<Formation>>& getSubformations() const { return subformations; }
     std::string getRelationTypeTag() const { return relationTypeTag; }
     void setRelationTypeTag(const std::string& type) { relationTypeTag = type; }
 
@@ -73,14 +73,14 @@ public:
     // Other methods can be added as needed for functionality
     
     // Implement the pure virtual method from Singular
-    std::string getIdentifier() const override { return "Formations"; }
+    std::string getIdentifier() const override { return "Formation"; }
 
 private:
     void integrateRelationTopology(const std::shared_ptr<Relation>& r);
-    std::shared_ptr<Formations> findOrCreateRelationFormation(const std::shared_ptr<Relation>& r);
+    std::shared_ptr<Formation> findOrCreateRelationFormation(const std::shared_ptr<Relation>& r);
 
     std::vector<Singular*> members;
     RelationManager relationMgr;
-    std::vector<std::shared_ptr<Formations>> subformations;
+    std::vector<std::shared_ptr<Formation>> subformations;
     std::string relationTypeTag;
 };

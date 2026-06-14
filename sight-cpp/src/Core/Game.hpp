@@ -218,6 +218,8 @@ public:
     // Polyhedron
     Object::GeometryType getCurrentPrimitive() const { return _polyhedron.primitive; }
     void setCurrentPrimitive(Object::GeometryType v) { _polyhedron.primitive = v; }
+    Object::ShapeKind getCurrentShapeKind() const { return _polyhedron.shapeKind; }
+    void setCurrentShapeKind(Object::ShapeKind v) { _polyhedron.shapeKind = v; }
 
     int getCurrentPolyhedronType() const { return _polyhedron.currentType; }
     void setCurrentPolyhedronType(int v) { _polyhedron.currentType = v; }
@@ -345,7 +347,7 @@ private:
     enum class PerspectiveMode { FirstPerson = 0, SecondPerson, ThirdPerson };
     enum class Mode3D { None = -1, FacePaint = 0, FaceBrush, BrushCreate, Pottery, Rotation, Selection };
     enum class ToolTarget3D { WorldObjects = 0, AvatarBodyParts };
-    enum class CreatorSection { Paint = 0, Create3D, World, Assets, Relations };
+    enum class CreatorSection { Paint = 0, Create3D, Character, World, Assets, Relations };
 
     using BrushType = Core::BrushType;
 
@@ -429,7 +431,9 @@ private:
     Mode3D       _current3DMode   = Mode3D::None;
     ToolTarget3D _current3DTarget = ToolTarget3D::WorldObjects;
     CreatorSection _creatorSection = CreatorSection::Create3D;
+    BodyPart* _selectedCharacterPart = nullptr;
     bool _showRelationManager = false;
+    bool _characterDesignLocked = false;
     bool _use2DPressureSimulation = false;
     bool _cursorToolsOpen = false;
 
@@ -463,6 +467,7 @@ private:
     void renderCreatorSectionTabs();
     void renderPaintConsole(Zone& zone);
     void render3DConsole();
+    void renderCharacterConsole();
     void renderWorldConsole();
     void renderAssetsConsole(Zone& zone);
     void renderRelationsConsole(Zone& zone);
@@ -470,7 +475,7 @@ private:
     void renderSectionButton(CreatorSection section, const char* label);
     void renderPaintToolButton(Zone& zone, Tool::Type type, const char* label);
     void render3DModeButton(Mode3D mode, const char* label);
-    void renderPrimitiveButton(Object::GeometryType primitive, const char* label);
+    void renderPrimitiveButton(Object::ShapeKind kind, const char* label);
     void renderPlacementInspector();
     void renderSelectionInspector();
     void setPaintTool(Zone& zone, Tool::Type type);

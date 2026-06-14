@@ -2,6 +2,8 @@
 #include <iostream>
 #include <algorithm>
 #include <cmath>
+#include <functional>
+#include <unordered_map>
 #include <GLFW/glfw3.h>
 #include <OpenGL/glu.h>
 #include "Form/Object/Formation/Menu/stb_easy_font.h"
@@ -215,16 +217,72 @@ void Person::drawNametag() const {
 // -----------------------------------------------------------------------------
 void Person::updatePose() {
     glm::mat4 base = glm::translate(glm::mat4(1.0f), position);
+
+    std::unordered_map<std::string, BodyPart*> partsByName;
+    partsByName.reserve(body.parts.size());
     for (auto* part : body.parts) {
-        if (!part) continue;
-        // Sample (pure) any automations on top of the authored local pose.
-        // updateBodyAutomations() does the once-per-frame time advance; this
-        // only reads, so updatePose stays safe to call several times a frame.
-        glm::mat4 local = part->hasAutomations()
-                              ? part->sampleAutomations(part->localTransform())
-                              : part->localTransform();
-        glm::mat4 worldT = base * local;
-        part->setTransform(worldT);
+        if (part) partsByName[part->getName()] = part;
+    }
+
+    // Temporary rig resolver: this hard-coded parent chain gives body parts
+    // immediate inherited motion, but the real "stickiness" of joints should
+    // eventually be expressed through Relation/Bonds. As SpatialKind grows from
+    // whole shapes into explicit points, edges, anchors, and surfaces, limbs
+    // should connect by relational constraints between those spatial features
+    // instead of by a separate bespoke skeleton system.
+    auto parentNameFor = [](const std::string& name) -> const char* {
+        if (name == "Head") return "Neck";
+        if (name == "Neck") return "Torso";
+        if (name == "Chest" || name == "Stomach") return "Torso";
+        if (name == "LowerTorso") return "Stomach";
+
+        if (name == "LeftShoulder" || name == "RightShoulder") return "Chest";
+        if (name == "LeftArm") return "LeftShoulder";
+        if (name == "RightArm") return "RightShoulder";
+        if (name == "LeftForeArm") return "LeftArm";
+        if (name == "RightForeArm") return "RightArm";
+        if (name == "LeftHand") return "LeftForeArm";
+        if (name == "RightHand") return "RightForeArm";
+
+        if (name == "LeftLeg" || name == "RightLeg") return "LowerTorso";
+        if (name == "LeftForeLeg") return "LeftLeg";
+        if (name == "RightForeLeg") return "RightLeg";
+        if (name == "LeftFoot") return "LeftForeLeg";
+        if (name == "RightFoot") return "RightForeLeg";
+
+        return nullptr;
+    };
+
+    std::unordered_map<BodyPart*, glm::mat4> resolvedWorld;
+    resolvedWorld.reserve(body.parts.size());
+
+    std::function<glm::mat4(BodyPart*)> resolvePart = [&](BodyPart* part) -> glm::mat4 {
+        if (!part) return base;
+        auto cached = resolvedWorld.find(part);
+        if (cached != resolvedWorld.end()) return cached->second;
+
+        const glm::mat4 restLocal = part->localTransform();
+        const glm::mat4 animatedLocal = part->hasAutomations()
+            ? part->sampleAutomations(restLocal)
+            : restLocal;
+
+        glm::mat4 worldT = base * animatedLocal;
+        if (const char* parentName = parentNameFor(part->getName())) {
+            auto parentIt = partsByName.find(parentName);
+            if (parentIt != partsByName.end() && parentIt->second && parentIt->second != part) {
+                BodyPart* parent = parentIt->second;
+                const glm::mat4 parentWorld = resolvePart(parent);
+                const glm::mat4 childFromParentRest = glm::inverse(parent->localTransform()) * animatedLocal;
+                worldT = parentWorld * childFromParentRest;
+            }
+        }
+
+        resolvedWorld[part] = worldT;
+        return worldT;
+    };
+
+    for (auto* part : body.parts) {
+        if (part) part->setTransform(resolvePart(part));
     }
 }
 

@@ -2,7 +2,7 @@
 #include <iostream>
 #include <algorithm>
 #include "BodyPart/BodyPart.hpp"
-#include "Form/Object/Formation/Formations.hpp"
+#include "Form/Object/Formation/Formation.hpp"
 #include "Form/Form.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include "BodyPart/Limb/Arm.hpp"
@@ -149,6 +149,9 @@ void Body::scaleBodyParts() {
             scale.x = measurements.armLength / 0.7f;
         } else if (part->getName().find("Leg") != std::string::npos) {
             scale.x = measurements.legLength / 0.9f;
+        } else if (part->getName().find("LowerTorso") != std::string::npos) {
+            scale.x = measurements.hips / 0.9f;
+            scale.z = measurements.hips / 0.9f;
         } else if (part->getName().find("Torso") != std::string::npos) {
             scale.x = measurements.chest / 0.9f;
             scale.z = measurements.chest / 0.9f;
@@ -321,6 +324,12 @@ Body Body::createCustomAvatar(const std::string& artStyle, BodyType type, Propor
     auto* stomach = new Stomach();
     stomach->setTransform(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.125f, 0.0f)));
     avatar.addPart(stomach);
+
+    // ----------------------- Lower Torso ----------------
+    auto* lowerTorso = new BodyPart("LowerTorso", BodyPart::Type::Torso,
+                                    Form(Form::ShapeType::Cube, {0.45f, 0.25f, 0.22f}));
+    lowerTorso->setTransform(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.15f, 0.0f)));
+    avatar.addPart(lowerTorso);
 
     // ----------------------- Neck ----------------------
     auto* neck = new Neck();

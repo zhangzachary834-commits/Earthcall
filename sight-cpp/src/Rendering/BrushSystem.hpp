@@ -64,16 +64,16 @@ public:
     };
 
     // Constructor
-    BrushSystem(int textureSize = 64);
+    BrushSystem(int textureSize = 512);
     ~BrushSystem();
 
     // Brush settings
     void setBrushType(BrushType type) { _currentBrushType = type; }
-    void setRadius(float radius) { _brushRadius = std::clamp(radius, 0.001f, 2.0f); }
+    void setRadius(float radius) { _brushRadius = std::clamp(radius, 0.001f, 0.08f); }
     void setSoftness(float softness) { _brushSoftness = std::clamp(softness, 0.001f, 1.0f); }
     void setOpacity(float opacity) { _brushOpacity = std::clamp(opacity, 0.0f, 1.0f); }
     void setFlow(float flow) { _brushFlow = std::clamp(flow, 0.0f, 1.0f); }
-    void setSpacing(float spacing) { _brushSpacing = std::clamp(spacing, 0.001f, 2.0f); }
+    void setSpacing(float spacing) { _brushSpacing = std::clamp(spacing, 0.0005f, 2.0f); }
     void setDensity(float density) { _brushDensity = std::clamp(density, 0.0f, 5.0f); }
     void setStrength(float strength) { _brushStrength = std::clamp(strength, 0.0f, 5.0f); }
 
@@ -151,11 +151,11 @@ public:
 private:
     // Brush settings
     BrushType _currentBrushType = BrushType::Normal;
-    float _brushRadius = 0.1f;
+    float _brushRadius = 0.001f;
     float _brushSoftness = 1.0f;
     float _brushOpacity = 1.0f;
     float _brushFlow = 1.0f;
-    float _brushSpacing = 0.1f;
+    float _brushSpacing = 0.0005f;
     float _brushDensity = 0.5f;
     float _brushStrength = 0.5f;
 

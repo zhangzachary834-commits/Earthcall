@@ -151,7 +151,7 @@ build/src/Integration/EarthcallAPI.o: src/Integration/EarthcallAPI.cpp \
   /opt/homebrew/include/glm/detail/func_integer.inl \
   src/Integration/../Person/AvatarManager.hpp \
   src/Integration/../Person/Person.hpp src/Person/Body/Body.hpp \
-  src/Form/Object/Object.hpp src/Form/Object/Formation/Formations.hpp \
+  src/Form/Object/Object.hpp src/Form/Object/Formation/Formation.hpp \
   src/Form/Form.hpp /opt/homebrew/Cellar/glfw/3.4/include/GLFW/glfw3.h \
   src/Relation/RelationManager.hpp src/Relation/Relation.hpp \
   src/json.hpp src/Form/Singular.hpp \
@@ -261,6 +261,8 @@ build/src/Integration/EarthcallAPI.o: src/Integration/EarthcallAPI.cpp \
   src/Form/Object/Object/../Contour.hpp \
   src/Form/Object/Object/FaceTexture.hpp \
   src/Form/Object/Object/CollisionZone.hpp \
+  src/Form/Object/Geometry/SmoothSurface.hpp \
+  src/Form/Object/Geometry/ComplexShape.hpp \
   src/Form/Object/Automation/Automation.hpp \
   src/Person/Body/BodyPart/BodyPart.hpp \
   src/Integration/../Person/Soul/Soul.hpp \
@@ -576,7 +578,7 @@ src/Person/Body/Body.hpp:
 
 src/Form/Object/Object.hpp:
 
-src/Form/Object/Formation/Formations.hpp:
+src/Form/Object/Formation/Formation.hpp:
 
 src/Form/Form.hpp:
 
@@ -805,6 +807,10 @@ src/Form/Object/Object/../Contour.hpp:
 src/Form/Object/Object/FaceTexture.hpp:
 
 src/Form/Object/Object/CollisionZone.hpp:
+
+src/Form/Object/Geometry/SmoothSurface.hpp:
+
+src/Form/Object/Geometry/ComplexShape.hpp:
 
 src/Form/Object/Automation/Automation.hpp:
 

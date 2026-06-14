@@ -3,7 +3,7 @@
 #include <vector>
 #include <ctime>
 #include "Form/Object/Object.hpp"
-#include "Form/Object/Formation/Formations.hpp"
+#include "Form/Object/Formation/Formation.hpp"
 #include "Person/Body/BodyPart/BodyPart.hpp"
 // Forward declarations to avoid circular dependencies
 namespace Core { class Game; }

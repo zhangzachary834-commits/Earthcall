@@ -17,6 +17,12 @@ static const char* scopeToString(Scope scope) {
     }
 }
 
+constexpr float kBrushRadiusToStrokeWidth = 1000.0f;
+
+static float strokeWidthForBrushRadius(float radius) {
+    return std::max(1.0f, radius * kBrushRadiusToStrokeWidth);
+}
+
 void Zone::load() {
     // Load the world and its objects
     _world->load();
@@ -163,7 +169,7 @@ void Zone::endStroke() {
     if (!currentStroke.points.empty()) {
         // Apply brush system settings to the completed stroke
         if (brushSystem) {
-            currentStroke.lineWidth = brushSystem->getRadius() * 50.0f; // Store the line width
+            currentStroke.lineWidth = strokeWidthForBrushRadius(brushSystem->getRadius());
         } else {
             currentStroke.lineWidth = 2.0f; // Default line width
         }
@@ -191,7 +197,7 @@ void Zone::setDrawColor(float r, float g, float b) {
 // Advanced brush system methods
 void Zone::initializeBrushSystem() {
     if (!brushSystem) {
-        brushSystem = std::make_unique<BrushSystem>(64); // 64x64 texture size
+        brushSystem = std::make_unique<BrushSystem>(512);
         printf("Brush System initialized for zone: %s\n", _name.c_str());
     } else {
         printf("Brush System already exists for zone: %s\n", _name.c_str());
@@ -424,7 +430,7 @@ void Zone::renderArt() const {
         // Draw current stroke in progress with brush system settings
         if (isDrawing && !currentStrokePoints.empty() && currentStrokePoints.size() >= 2) {
             // Apply brush system settings only to the current stroke
-            glLineWidth(brushSystem->getRadius() * 50.0f); // Scale radius to line width
+            glLineWidth(strokeWidthForBrushRadius(brushSystem->getRadius()));
             
             // Apply opacity if it's less than 1.0 (enable blending for transparency)
             if (brushSystem->getOpacity() < 1.0f) {

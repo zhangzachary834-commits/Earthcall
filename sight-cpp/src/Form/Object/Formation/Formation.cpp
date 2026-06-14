@@ -1,4 +1,4 @@
-#include "Formations.hpp"
+#include "Formation.hpp"
 #include "Form/Object/Object.hpp"
 #include <GLFW/glfw3.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -16,21 +16,21 @@ glm::vec3 extractScale(const glm::mat4& transform) {
 }
 }
 
-Formations::Formations(const std::vector<Singular*>& members) {
+Formation::Formation(const std::vector<Singular*>& members) {
     for(const auto& member : members) {
         addMember(member);
     }
 }
 
 
-Formations::Formations(const std::vector<Singular*>& members, const glm::vec3& dims) 
+Formation::Formation(const std::vector<Singular*>& members, const glm::vec3& dims) 
     : Form(Form::ShapeType::Cube, dims) {
     for(const auto& member : members) {
         addMember(member);
     }
 }
 
-Formations::Formations(const std::vector<Singular*>& members, Form::ShapeType type, const glm::vec3& dims) 
+Formation::Formation(const std::vector<Singular*>& members, Form::ShapeType type, const glm::vec3& dims) 
     : Form(type, dims) {
     for(const auto& member : members) {
         addMember(member);
@@ -39,25 +39,25 @@ Formations::Formations(const std::vector<Singular*>& members, Form::ShapeType ty
 
 
 
-void Formations::addElement(const Singular& s) {
+void Formation::addElement(const Singular& s) {
     addMember(const_cast<Singular*>(&s));
 }
 
-void Formations::removeElement(const Singular& s) {
+void Formation::removeElement(const Singular& s) {
     members.erase(std::remove(members.begin(), members.end(), const_cast<Singular*>(&s)), members.end());
 }
 
-void Formations::addMember(Singular* s) {
+void Formation::addMember(Singular* s) {
     if(!s) return;
     if (hasMember(s)) return;
     members.push_back(s);
 }
 
-bool Formations::hasMember(const Singular* s) const {
+bool Formation::hasMember(const Singular* s) const {
     return s && std::find(members.begin(), members.end(), s) != members.end();
 }
 
-Singular* Formations::findMemberByIdentifier(const std::string& identifier) const {
+Singular* Formation::findMemberByIdentifier(const std::string& identifier) const {
     if (identifier.empty()) return nullptr;
     for (auto* member : members) {
         if (member && member->getIdentifier() == identifier) {
@@ -73,18 +73,18 @@ Singular* Formations::findMemberByIdentifier(const std::string& identifier) cons
     return nullptr;
 }
 
-void Formations::removeMember(Singular* s) {
+void Formation::removeMember(Singular* s) {
     if(!s) return;
     members.erase(std::remove(members.begin(), members.end(), s), members.end());
 }
 
-void Formations::addRelation(const std::shared_ptr<Relation>& r) {
+void Formation::addRelation(const std::shared_ptr<Relation>& r) {
     if (!r) return;
     relationMgr.add(r);
     integrateRelationTopology(r);
 }
 
-bool Formations::removeRelation(const std::shared_ptr<Relation>& r) {
+bool Formation::removeRelation(const std::shared_ptr<Relation>& r) {
     bool removed = relationMgr.remove(r);
     for (auto it = subformations.begin(); it != subformations.end();) {
         if (!*it) {
@@ -102,7 +102,7 @@ bool Formations::removeRelation(const std::shared_ptr<Relation>& r) {
 }
 
 // Applies to physical Formation objects
-void Formations::draw() const {
+void Formation::draw() const {
 
     // Draw the physical members of the formation.
     // if hasprimaryform = true, draw the primary form
@@ -129,7 +129,7 @@ void Formations::draw() const {
 // -----------------------------------------------------------------------------
 // Build complete graph of membership relations between objects
 // -----------------------------------------------------------------------------
-void Formations::rebuildCompleteGraph() {
+void Formation::rebuildCompleteGraph() {
     relationMgr = RelationManager{}; // reset
     for (size_t i = 0; i < members.size(); ++i) {
         for (size_t j = i + 1; j < members.size(); ++j) {
@@ -141,7 +141,7 @@ void Formations::rebuildCompleteGraph() {
     }
 }
 
-std::shared_ptr<Formations> Formations::findOrCreateRelationFormation(const std::shared_ptr<Relation>& r) {
+std::shared_ptr<Formation> Formation::findOrCreateRelationFormation(const std::shared_ptr<Relation>& r) {
     if (!r) return nullptr;
 
     std::vector<size_t> matchingIndices;
@@ -155,7 +155,7 @@ std::shared_ptr<Formations> Formations::findOrCreateRelationFormation(const std:
     }
 
     if (matchingIndices.empty()) {
-        auto created = std::make_shared<Formations>(Form::ShapeType::Cube, glm::vec3(1.0f));
+        auto created = std::make_shared<Formation>(Form::ShapeType::Cube, glm::vec3(1.0f));
         created->relationTypeTag = r->type;
         subformations.push_back(created);
         return created;
@@ -183,7 +183,7 @@ std::shared_ptr<Formations> Formations::findOrCreateRelationFormation(const std:
     return primary;
 }
 
-void Formations::integrateRelationTopology(const std::shared_ptr<Relation>& r) {
+void Formation::integrateRelationTopology(const std::shared_ptr<Relation>& r) {
     if (!r) return;
 
     Singular* memberA = findMemberByIdentifier(r->entityA);
@@ -199,7 +199,7 @@ void Formations::integrateRelationTopology(const std::shared_ptr<Relation>& r) {
     groupedFormation->relationMgr.add(std::make_shared<Relation>(*r));
 }
 
-void Formations::applyAttachmentRelations() {
+void Formation::applyAttachmentRelations() {
     std::vector<std::shared_ptr<Relation>> attachments;
     std::unordered_set<std::string> seenRelations;
     for (const auto& rel : relationMgr.getAll()) {

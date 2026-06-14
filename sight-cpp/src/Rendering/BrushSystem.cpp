@@ -258,7 +258,7 @@ void BrushSystem::paintStroke(const glm::vec2& startPos, const glm::vec2& endPos
     }
     
     float distance = glm::length(endUv - startUv);
-    float spacing = std::max(0.001f, _brushSpacing);
+    float spacing = std::max(0.0005f, _brushSpacing);
     int steps = std::max(1, static_cast<int>(std::ceil(distance / spacing)));
     
     std::vector<StrokePoint> strokePoints;
@@ -401,11 +401,11 @@ void BrushSystem::initializeDefaultPresets() {
     BrushPreset softBrush;
     softBrush.name = "Soft Brush";
     softBrush.type = BrushType::Normal;
-    softBrush.radius = 0.15f;
+    softBrush.radius = 0.0025f;
     softBrush.softness = 0.3f;
     softBrush.opacity = 0.7f;
     softBrush.flow = 0.8f;
-    softBrush.spacing = 0.05f;
+    softBrush.spacing = 0.0008f;
     softBrush.density = 0.5f;
     softBrush.strength = 0.5f;
     _brushPresets.push_back(softBrush);
@@ -414,11 +414,11 @@ void BrushSystem::initializeDefaultPresets() {
     BrushPreset hardBrush;
     hardBrush.name = "Hard Brush";
     hardBrush.type = BrushType::Normal;
-    hardBrush.radius = 0.1f;
+    hardBrush.radius = 0.001f;
     hardBrush.softness = 1.0f;
     hardBrush.opacity = 1.0f;
     hardBrush.flow = 1.0f;
-    hardBrush.spacing = 0.02f;
+    hardBrush.spacing = 0.0005f;
     hardBrush.density = 0.5f;
     hardBrush.strength = 0.5f;
     _brushPresets.push_back(hardBrush);
@@ -427,11 +427,11 @@ void BrushSystem::initializeDefaultPresets() {
     BrushPreset airbrush;
     airbrush.name = "Airbrush";
     airbrush.type = BrushType::Airbrush;
-    airbrush.radius = 0.2f;
+    airbrush.radius = 0.004f;
     airbrush.softness = 0.5f;
     airbrush.opacity = 0.5f;
     airbrush.flow = 0.6f;
-    airbrush.spacing = 0.1f;
+    airbrush.spacing = 0.0015f;
     airbrush.density = 0.8f;
     airbrush.strength = 0.5f;
     _brushPresets.push_back(airbrush);
@@ -440,11 +440,11 @@ void BrushSystem::initializeDefaultPresets() {
     BrushPreset chalk;
     chalk.name = "Chalk";
     chalk.type = BrushType::Chalk;
-    chalk.radius = 0.12f;
+    chalk.radius = 0.002f;
     chalk.softness = 0.2f;
     chalk.opacity = 0.9f;
     chalk.flow = 0.7f;
-    chalk.spacing = 0.08f;
+    chalk.spacing = 0.0008f;
     chalk.density = 0.5f;
     chalk.strength = 0.5f;
     _brushPresets.push_back(chalk);
@@ -453,11 +453,11 @@ void BrushSystem::initializeDefaultPresets() {
     BrushPreset smudge;
     smudge.name = "Smudge";
     smudge.type = BrushType::Smudge;
-    smudge.radius = 0.18f;
+    smudge.radius = 0.003f;
     smudge.softness = 0.4f;
     smudge.opacity = 1.0f;
     smudge.flow = 1.0f;
-    smudge.spacing = 0.03f;
+    smudge.spacing = 0.001f;
     smudge.density = 0.5f;
     smudge.strength = 0.7f;
     _brushPresets.push_back(smudge);
@@ -466,11 +466,11 @@ void BrushSystem::initializeDefaultPresets() {
     BrushPreset clone;
     clone.name = "Clone";
     clone.type = BrushType::Clone;
-    clone.radius = 0.15f;
+    clone.radius = 0.0025f;
     clone.softness = 0.6f;
     clone.opacity = 0.8f;
     clone.flow = 1.0f;
-    clone.spacing = 0.05f;
+    clone.spacing = 0.0008f;
     clone.density = 0.5f;
     clone.strength = 0.5f;
     _brushPresets.push_back(clone);

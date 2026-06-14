@@ -4,11 +4,11 @@
 #include <memory>
 #include <ctime>
 #include "Form/Object/Object.hpp"
-#include "Form/Object/Formation/Formations.hpp"
+#include "Form/Object/Formation/Formation.hpp"
 #include "Form/Form.hpp"
 #include <glm/glm.hpp>
 
-class BodyPart : public Object, public Formations {
+class BodyPart : public Object, public Formation {
 
     public:
 
@@ -76,6 +76,8 @@ class BodyPart : public Object, public Formations {
     // kept in a parallel vector so they survive transform propagation.
     // -----------------------------------------------------------------
     Object* addSubObject(Object::GeometryType gt = Object::GeometryType::Cube,
+                         const glm::mat4& localOffset = glm::mat4(1.0f));
+    Object* addSubObject(Object::ShapeKind kind,
                          const glm::mat4& localOffset = glm::mat4(1.0f));
     void removeSubObject(size_t index);
     size_t getSubObjectCount() const { return _subObjects.size(); }

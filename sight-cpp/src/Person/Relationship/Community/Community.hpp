@@ -1,3 +1,3 @@
-class Community extends Formations {
+class Community extends Formation {
     
 }

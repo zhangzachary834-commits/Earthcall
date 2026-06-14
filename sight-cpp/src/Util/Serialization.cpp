@@ -105,7 +105,8 @@ static glm::mat4 vectorToMat4(const std::vector<float>& v){
 // ------------------------------------------------------------------
 void to_json(nlohmann::json& j, const Object& obj){
     j = nlohmann::json{};
-    j["geometryType"] = static_cast<int>(obj.getGeometryType());
+    j["geometryType"] = static_cast<int>(obj.getGeometryType()); // legacy axis
+    j["shapeKind"]    = static_cast<int>(obj.getShapeKind());    // topology framework
     j["objectID"] = obj.getIdentifier();
     j["transform"] = mat4ToVector(obj.getTransform());
     j["center"] = {obj.getCenter().x, obj.getCenter().y, obj.getCenter().z};
@@ -166,8 +167,14 @@ void to_json(nlohmann::json& j, const Object& obj){
 }
 
 void from_json(const nlohmann::json& j, Object& obj){
-    int gt = j.value("geometryType", 0);
-    obj.setGeometryType(static_cast<Object::GeometryType>(gt));
+    // Prefer the topology framework's shapeKind; fall back to the legacy
+    // geometryType int (which setGeometryType migrates into the new model).
+    if (j.contains("shapeKind")) {
+        obj.setShape(static_cast<Object::ShapeKind>(j["shapeKind"].get<int>()));
+    } else {
+        int gt = j.value("geometryType", 0);
+        obj.setGeometryType(static_cast<Object::GeometryType>(gt));
+    }
     if (j.contains("objectID") && j["objectID"].is_string()) {
         obj.setObjectID(j["objectID"].get<std::string>());
     }
@@ -413,8 +420,6 @@ void bodyPartFromJson(const nlohmann::json& j, BodyPart& part) {
             part.removeSubObject(part.getSubObjectCount() - 1);
         }
         for (const auto& sj : j["subObjects"]) {
-            auto gt = static_cast<Object::GeometryType>(sj.value("geometryType", 0));
-
             // Extract the local offset from the saved transform
             glm::mat4 localOffset(1.0f);
             std::vector<float> tvals = sj.value("transform", std::vector<float>{});
@@ -422,7 +427,9 @@ void bodyPartFromJson(const nlohmann::json& j, BodyPart& part) {
                 localOffset = vectorToMat4(tvals);
             }
 
-            Object* sub = part.addSubObject(gt, localOffset);
+            Object* sub = sj.contains("shapeKind")
+                ? part.addSubObject(static_cast<Object::ShapeKind>(sj["shapeKind"].get<int>()), localOffset)
+                : part.addSubObject(static_cast<Object::GeometryType>(sj.value("geometryType", 0)), localOffset);
             if (sub) {
                 // Load everything except transform (already set by addSubObject)
                 glm::mat4 savedWorld = sub->getTransform();

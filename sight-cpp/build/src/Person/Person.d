@@ -1,6 +1,6 @@
 build/src/Person/Person.o: src/Person/Person.cpp src/Person/Person.hpp \
   src/Person/Body/Body.hpp src/Form/Object/Object.hpp \
-  src/Form/Object/Formation/Formations.hpp src/Form/Form.hpp \
+  src/Form/Object/Formation/Formation.hpp src/Form/Form.hpp \
   /opt/homebrew/include/glm/glm.hpp \
   /opt/homebrew/include/glm/detail/_fixes.hpp \
   /opt/homebrew/include/glm/detail/setup.hpp \
@@ -260,6 +260,8 @@ build/src/Person/Person.o: src/Person/Person.cpp src/Person/Person.hpp \
   src/Form/Object/Object/../Contour.hpp \
   src/Form/Object/Object/FaceTexture.hpp \
   src/Form/Object/Object/CollisionZone.hpp \
+  src/Form/Object/Geometry/SmoothSurface.hpp \
+  src/Form/Object/Geometry/ComplexShape.hpp \
   src/Form/Object/Automation/Automation.hpp \
   src/Person/Body/BodyPart/BodyPart.hpp src/Person/Soul/Soul.hpp \
   src/Form/Object/Formation/Menu/stb_easy_font.h \
@@ -274,7 +276,7 @@ src/Person/Body/Body.hpp:
 
 src/Form/Object/Object.hpp:
 
-src/Form/Object/Formation/Formations.hpp:
+src/Form/Object/Formation/Formation.hpp:
 
 src/Form/Form.hpp:
 
@@ -803,6 +805,10 @@ src/Form/Object/Object/../Contour.hpp:
 src/Form/Object/Object/FaceTexture.hpp:
 
 src/Form/Object/Object/CollisionZone.hpp:
+
+src/Form/Object/Geometry/SmoothSurface.hpp:
+
+src/Form/Object/Geometry/ComplexShape.hpp:
 
 src/Form/Object/Automation/Automation.hpp:
 

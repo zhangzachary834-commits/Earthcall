@@ -10,6 +10,9 @@ struct PolyhedronSettings {
     // Base primitive selection (used by the brush)
     Object::GeometryType primitive = Object::GeometryType::Cube;
 
+    // Selected shape within the topology framework (superset of `primitive`).
+    Object::ShapeKind shapeKind = Object::ShapeKind::Cube;
+
     // Regular polyhedron
     int currentType = 4; // default tetrahedron
 

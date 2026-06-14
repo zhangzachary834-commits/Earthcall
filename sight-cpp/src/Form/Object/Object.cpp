@@ -90,6 +90,8 @@ void Object::setCorners(int c) {
 }
 
 int Object::getFaces() {
+    if (_hasComplex) return complexData.patchCount();
+    if (_hasSmooth)  return 1;
     if (geometryType == GeometryType::Polyhedron) {
         return polyhedronData.getFaceCount();
     }
@@ -188,11 +190,16 @@ std::string Object::screenMode() {
 
 void Object::initFaceTextures() {
     int n;
-    if (geometryType == GeometryType::Polyhedron) {
+    if (_hasComplex) {
+        n = complexData.patchCount();
+    } else if (_hasSmooth) {
+        n = 1;
+    } else if (geometryType == GeometryType::Polyhedron) {
         n = polyhedronData.getFaceCount();
     } else {
         n = numFacesForGeometry(geometryType);
     }
+    if (n < 1) n = 1;
     faceTextures.resize(n);
 
     // Default colour per face similar to previous defaults (RGB)
@@ -625,7 +632,42 @@ static void drawCylinderPrimitive(float topRadius) {
     gluDeleteQuadric(quad);
 }
 
+// Render a triangle-soup tessellation in immediate mode (legacy GL path).
+static void drawTessMesh(const geom::TessMesh& m) {
+    glBegin(GL_TRIANGLES);
+    for (const auto& v : m.tris) {
+        glNormal3f(v.normal.x, v.normal.y, v.normal.z);
+        glTexCoord2f(v.uv.x, v.uv.y);
+        glVertex3f(v.pos.x, v.pos.y, v.pos.z);
+    }
+    glEnd();
+}
+
+void Object::drawSmoothModel() const {
+    glEnable(GL_TEXTURE_2D);
+    if (!faceTextures.empty()) glBindTexture(GL_TEXTURE_2D, faceTextures[0].id);
+    glColor3f(1.0f, 1.0f, 1.0f);
+    drawTessMesh(geom::tessellateSmooth(smoothData));
+    glDisable(GL_TEXTURE_2D);
+}
+
+void Object::drawComplexModel() const {
+    glEnable(GL_TEXTURE_2D);
+    glColor3f(1.0f, 1.0f, 1.0f);
+    // Each patch is a real face — draw it with its own face texture so the
+    // round side and the flat caps can be painted independently.
+    for (int i = 0; i < complexData.patchCount(); ++i) {
+        if (i < static_cast<int>(faceTextures.size())) {
+            glBindTexture(GL_TEXTURE_2D, faceTextures[i].id);
+        }
+        drawTessMesh(geom::tessellatePatch(complexData.patches[i]));
+    }
+    glDisable(GL_TEXTURE_2D);
+}
+
 void Object::drawObject() const {
+    if (_hasComplex) { drawComplexModel(); return; }
+    if (_hasSmooth)  { drawSmoothModel();  return; }
     switch (geometryType) {
         case GeometryType::Cube:
             drawCube();
@@ -787,6 +829,16 @@ bool Object::raycastFace(const glm::vec3& rayOriginWorld, const glm::vec3& rayDi
     glm::mat4 inv = glm::inverse(getRaycastTransform());
     glm::vec3 oL = glm::vec3(inv * glm::vec4(rayOriginWorld, 1.0f));
     glm::vec3 dL = glm::normalize(glm::vec3(inv * glm::vec4(rayDirWorld, 0.0f)));
+
+    // Topology-based geometry takes precedence over the legacy primitive switch.
+    if (_hasComplex) {
+        return geom::raycastComplex(complexData, oL, dL, outT, outFaceIndex, outUV);
+    }
+    if (_hasSmooth) {
+        glm::vec3 n;
+        if (geom::raycastSmooth(smoothData, oL, dL, outT, n, outUV)) { outFaceIndex = 0; return true; }
+        return false;
+    }
 
     auto intersectAABBUnitCube = [&](float& tHit, int& faceIndex, glm::vec2& uv) -> bool {
         float tMin = -1e9f, tMax = 1e9f; int axis = -1; int sign = 0;
@@ -1290,6 +1342,27 @@ bool Object::isCollisionShapeConvex() const {
 bool Object::computeLocalPointPenetration(const glm::vec3& localPoint,
                                           glm::vec3& outSurfacePoint,
                                           glm::vec3& outLocalNormal) const {
+    // Topology-based geometry: inside when the implicit value is negative; push
+    // the point out along the surface gradient.
+    if (_hasSmooth || _hasComplex) {
+        float val = _hasComplex ? geom::implicitComplex(complexData, localPoint)
+                                : geom::implicitSmooth(smoothData, localPoint);
+        if (val >= 0.0f) return false; // outside
+        // Numeric gradient of the implicit field = outward normal direction.
+        const float e = 1e-3f;
+        auto f = [&](const glm::vec3& p) {
+            return _hasComplex ? geom::implicitComplex(complexData, p)
+                               : geom::implicitSmooth(smoothData, p);
+        };
+        glm::vec3 g(f(localPoint + glm::vec3(e,0,0)) - f(localPoint - glm::vec3(e,0,0)),
+                    f(localPoint + glm::vec3(0,e,0)) - f(localPoint - glm::vec3(0,e,0)),
+                    f(localPoint + glm::vec3(0,0,e)) - f(localPoint - glm::vec3(0,0,e)));
+        float glen = glm::length(g);
+        outLocalNormal = (glen > 1e-8f) ? g / glen : glm::vec3(0.0f, 1.0f, 0.0f);
+        outSurfacePoint = localPoint; // approximate: project handled by caller's correction
+        return true;
+    }
+
     switch (geometryType) {
         case GeometryType::Cube: {
             if (std::abs(localPoint.x) > 0.5f || std::abs(localPoint.y) > 0.5f || std::abs(localPoint.z) > 0.5f) {
@@ -1798,6 +1871,8 @@ void Object::drawPolyhedron() const {
 // Polyhedron-specific methods
 void Object::setPolyhedronData(const PolyhedronData& data) {
     polyhedronData = data;
+    _hasSmooth = false;   // a polyhedron is flat-faced, not a topology surface
+    _hasComplex = false;
     if (geometryType == GeometryType::Polyhedron) {
         initFaceTextures();
     }

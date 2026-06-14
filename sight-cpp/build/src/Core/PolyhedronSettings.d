@@ -149,7 +149,7 @@ build/src/Core/PolyhedronSettings.o: src/Core/PolyhedronSettings.cpp \
   /opt/homebrew/include/glm/vector_relational.hpp \
   /opt/homebrew/include/glm/integer.hpp \
   /opt/homebrew/include/glm/detail/func_integer.inl \
-  src/Form/Object/Object.hpp src/Form/Object/Formation/Formations.hpp \
+  src/Form/Object/Object.hpp src/Form/Object/Formation/Formation.hpp \
   src/Form/Form.hpp /opt/homebrew/Cellar/glfw/3.4/include/GLFW/glfw3.h \
   src/Relation/RelationManager.hpp src/Relation/Relation.hpp \
   src/json.hpp src/Form/Singular.hpp \
@@ -259,6 +259,8 @@ build/src/Core/PolyhedronSettings.o: src/Core/PolyhedronSettings.cpp \
   src/Form/Object/Object/../Contour.hpp \
   src/Form/Object/Object/FaceTexture.hpp \
   src/Form/Object/Object/CollisionZone.hpp \
+  src/Form/Object/Geometry/SmoothSurface.hpp \
+  src/Form/Object/Geometry/ComplexShape.hpp \
   src/Form/Object/Automation/Automation.hpp
 
 src/Core/PolyhedronSettings.hpp:
@@ -565,7 +567,7 @@ src/Core/PolyhedronSettings.hpp:
 
 src/Form/Object/Object.hpp:
 
-src/Form/Object/Formation/Formations.hpp:
+src/Form/Object/Formation/Formation.hpp:
 
 src/Form/Form.hpp:
 
@@ -794,5 +796,9 @@ src/Form/Object/Object/../Contour.hpp:
 src/Form/Object/Object/FaceTexture.hpp:
 
 src/Form/Object/Object/CollisionZone.hpp:
+
+src/Form/Object/Geometry/SmoothSurface.hpp:
+
+src/Form/Object/Geometry/ComplexShape.hpp:
 
 src/Form/Object/Automation/Automation.hpp:

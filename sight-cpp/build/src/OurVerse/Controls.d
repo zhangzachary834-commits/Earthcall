@@ -154,7 +154,7 @@ build/src/OurVerse/Controls.o: src/OurVerse/Controls.cpp \
   src/Form/Object/Formation/Menu/Menu.hpp \
   src/ZonesOfEarth/ZoneManager.hpp src/ZonesOfEarth/Zone/Zone.hpp \
   src/ZonesOfEarth/Zone/../World/World.hpp src/Form/Object/Object.hpp \
-  src/Form/Object/Formation/Formations.hpp src/Form/Form.hpp \
+  src/Form/Object/Formation/Formation.hpp src/Form/Form.hpp \
   src/Relation/RelationManager.hpp src/Relation/Relation.hpp \
   src/json.hpp src/Form/Singular.hpp \
   /opt/homebrew/include/glm/gtc/type_ptr.hpp \
@@ -263,6 +263,8 @@ build/src/OurVerse/Controls.o: src/OurVerse/Controls.cpp \
   src/Form/Object/Object/../Contour.hpp \
   src/Form/Object/Object/FaceTexture.hpp \
   src/Form/Object/Object/CollisionZone.hpp \
+  src/Form/Object/Geometry/SmoothSurface.hpp \
+  src/Form/Object/Geometry/ComplexShape.hpp \
   src/Form/Object/Automation/Automation.hpp \
   src/Rendering/BrushSystem.hpp src/Rendering/DesignSystem.hpp \
   src/OurVerse/Tool.hpp src/Person/Body/BodyPart/BodyPart.hpp \
@@ -601,7 +603,7 @@ src/ZonesOfEarth/Zone/../World/World.hpp:
 
 src/Form/Object/Object.hpp:
 
-src/Form/Object/Formation/Formations.hpp:
+src/Form/Object/Formation/Formation.hpp:
 
 src/Form/Form.hpp:
 
@@ -828,6 +830,10 @@ src/Form/Object/Object/../Contour.hpp:
 src/Form/Object/Object/FaceTexture.hpp:
 
 src/Form/Object/Object/CollisionZone.hpp:
+
+src/Form/Object/Geometry/SmoothSurface.hpp:
+
+src/Form/Object/Geometry/ComplexShape.hpp:
 
 src/Form/Object/Automation/Automation.hpp:
 

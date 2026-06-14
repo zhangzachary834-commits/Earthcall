@@ -51,7 +51,7 @@ void EventBus::shutdown()
     if (_worker.joinable()) _worker.join();
 }
 
-// The sum of all Queues should be conceptualized as a Formations instance.
+// The sum of all Queues should be conceptualized as a Formation instance.
 // Formation of relations should have Queues.
 // Before publishing an event, add the event to the relation, 
 // Relations should be the channel through which queues are connected.
@@ -73,7 +73,7 @@ void EventBus::processQueue()
 
 // Helper method to add event to formation relations
 // Note: This method creates a relation that can be added to any formation's relation manager
-void EventBus::addEventToFormationRelations(const std::string& eventType, const std::string& sourceId, const std::string& targetId, Formations* formation)
+void EventBus::addEventToFormationRelations(const std::string& eventType, const std::string& sourceId, const std::string& targetId, Formation* formation)
 {
     if (!formation) return;
     
