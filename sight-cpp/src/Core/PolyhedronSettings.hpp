@@ -13,6 +13,9 @@ struct PolyhedronSettings {
     // Selected shape within the topology framework (superset of `primitive`).
     Object::ShapeKind shapeKind = Object::ShapeKind::Cube;
 
+    // Parameters for the selected topology shape (radii, fillet, etc.).
+    Object::ShapeParams shapeParams;
+
     // Regular polyhedron
     int currentType = 4; // default tetrahedron
 

@@ -494,6 +494,41 @@ void Game::render3DConsole() {
     renderPrimitiveButton(Object::ShapeKind::Cone, "Cone"); ImGui::SameLine();
     renderPrimitiveButton(Object::ShapeKind::RoundedBox, "Rounded Box");
 
+    // Per-shape parameters for the selected topology shape.
+    {
+        Object::ShapeParams& sp = _polyhedron.shapeParams;
+        switch (_polyhedron.shapeKind) {
+            case Object::ShapeKind::Sphere:
+                ImGui::SliderFloat("Radius", &sp.r, 0.05f, 2.0f, "%.2f");
+                break;
+            case Object::ShapeKind::Ellipsoid:
+                ImGui::SliderFloat("Semi-axis X", &sp.r,  0.05f, 2.0f, "%.2f");
+                ImGui::SliderFloat("Semi-axis Y", &sp.ry, 0.05f, 2.0f, "%.2f");
+                ImGui::SliderFloat("Semi-axis Z", &sp.rz, 0.05f, 2.0f, "%.2f");
+                break;
+            case Object::ShapeKind::Ovoid:
+                ImGui::SliderFloat("Radius", &sp.r, 0.05f, 2.0f, "%.2f");
+                ImGui::SliderFloat("Asymmetry", &sp.ovoidAsym, 0.0f, 0.9f, "%.2f");
+                break;
+            case Object::ShapeKind::Paraboloid:
+                ImGui::SliderFloat("Steepness", &sp.paraboloidA, 0.5f, 6.0f, "%.2f");
+                break;
+            case Object::ShapeKind::Torus:
+                ImGui::SliderFloat("Major Radius", &sp.majorR, 0.1f, 1.0f, "%.2f");
+                ImGui::SliderFloat("Minor Radius", &sp.minorR, 0.02f, 0.5f, "%.2f");
+                break;
+            case Object::ShapeKind::Cylinder:
+            case Object::ShapeKind::Cone:
+                ImGui::SliderFloat("Radius", &sp.r, 0.05f, 2.0f, "%.2f");
+                ImGui::SliderFloat("Half-height", &sp.halfH, 0.05f, 2.0f, "%.2f");
+                break;
+            case Object::ShapeKind::RoundedBox:
+                ImGui::SliderFloat("Fillet", &sp.fillet, 0.01f, 0.49f, "%.2f");
+                break;
+            default: break;
+        }
+    }
+
     ImGui::SliderFloat("Uniform Size", &_brush.size, 0.1f, 10.0f, "%.2f");
     ImGui::SliderFloat3("Scale", &_brush.scale.x, 0.1f, 8.0f, "%.2f");
     ImGui::SliderFloat3("Rotation", &_brush.rotation.x, -180.0f, 180.0f, "%.1f");

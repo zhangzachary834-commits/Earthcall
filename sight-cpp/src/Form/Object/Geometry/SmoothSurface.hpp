@@ -78,6 +78,12 @@ bool raycastSmooth(const SmoothSurfaceData& s, const glm::vec3& o, const glm::ve
                    float& tHit, glm::vec3& nrm, glm::vec2& uv);
 // Signed implicit value, negative inside (meaningful for closed volumes).
 float implicitSmooth(const SmoothSurfaceData& s, const glm::vec3& p);
+// Whether the surface bounds a convex volume (everything but the torus here).
+bool isConvex(const SmoothSurfaceData& s);
+// Farthest local-space surface point along `dir` (GJK support); analytic for
+// sphere/ellipsoid, empty-return signalled via `ok=false` for shapes that need
+// the caller's vertex-cloud fallback.
+glm::vec3 supportPoint(const SmoothSurfaceData& s, const glm::vec3& dir, bool& ok);
 // Triangulate for GL (local space).
 TessMesh tessellateSmooth(const SmoothSurfaceData& s, int slices = 24, int stacks = 16);
 

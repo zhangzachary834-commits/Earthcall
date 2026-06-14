@@ -1262,9 +1262,35 @@ void Object::updateCollisionZone(const glm::mat4& transform) const {
     }
 }
 
+void Object::rebuildSupportCloud() {
+    _supportCloud.clear();
+    geom::TessMesh m;
+    if (_hasComplex)      m = geom::tessellateComplex(complexData, 16);
+    else if (_hasSmooth)  m = geom::tessellateSmooth(smoothData, 16, 10);
+    else return;
+    _supportCloud.reserve(m.tris.size());
+    for (const auto& v : m.tris) _supportCloud.push_back(v.pos);
+}
+
 glm::vec3 Object::getLocalSupportPoint(const glm::vec3& localDirection) const {
     glm::vec3 dir = localDirection;
     if (glm::dot(dir, dir) <= 1e-12f) dir = glm::vec3(1.0f, 0.0f, 0.0f);
+
+    // Topology model: analytic ellipsoid/sphere support, else cached cloud.
+    if (_hasSmooth) {
+        bool ok = false;
+        glm::vec3 sp = geom::supportPoint(smoothData, dir, ok);
+        if (ok) return sp;
+    }
+    if ((_hasSmooth || _hasComplex) && !_supportCloud.empty()) {
+        float best = -std::numeric_limits<float>::max();
+        glm::vec3 bestV = _supportCloud[0];
+        for (const auto& v : _supportCloud) {
+            float d = glm::dot(v, dir);
+            if (d > best) { best = d; bestV = v; }
+        }
+        return bestV;
+    }
 
     switch (geometryType) {
         case GeometryType::Cube:
@@ -1335,6 +1361,8 @@ glm::vec3 Object::getSupportPointWorld(const glm::vec3& worldDirection) const {
 }
 
 bool Object::isCollisionShapeConvex() const {
+    if (_hasSmooth)  return geom::isConvex(smoothData);
+    if (_hasComplex) return true; // capped cylinder/cone and rounded box are convex
     if (geometryType != GeometryType::Polyhedron) return true;
     return polyhedronData.getIsConvex();
 }

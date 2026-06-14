@@ -107,6 +107,11 @@ void to_json(nlohmann::json& j, const Object& obj){
     j = nlohmann::json{};
     j["geometryType"] = static_cast<int>(obj.getGeometryType()); // legacy axis
     j["shapeKind"]    = static_cast<int>(obj.getShapeKind());    // topology framework
+    {
+        const auto& sp = obj.getShapeParams();
+        j["shapeParams"] = { sp.r, sp.ry, sp.rz, sp.halfH, sp.majorR,
+                             sp.minorR, sp.paraboloidA, sp.ovoidAsym, sp.fillet };
+    }
     j["objectID"] = obj.getIdentifier();
     j["transform"] = mat4ToVector(obj.getTransform());
     j["center"] = {obj.getCenter().x, obj.getCenter().y, obj.getCenter().z};
@@ -166,11 +171,21 @@ void to_json(nlohmann::json& j, const Object& obj){
     }
 }
 
+static Object::ShapeParams parseShapeParams(const nlohmann::json& j) {
+    Object::ShapeParams sp;
+    if (j.contains("shapeParams") && j["shapeParams"].is_array() && j["shapeParams"].size() >= 9) {
+        const auto& a = j["shapeParams"];
+        sp.r = a[0]; sp.ry = a[1]; sp.rz = a[2]; sp.halfH = a[3]; sp.majorR = a[4];
+        sp.minorR = a[5]; sp.paraboloidA = a[6]; sp.ovoidAsym = a[7]; sp.fillet = a[8];
+    }
+    return sp;
+}
+
 void from_json(const nlohmann::json& j, Object& obj){
     // Prefer the topology framework's shapeKind; fall back to the legacy
     // geometryType int (which setGeometryType migrates into the new model).
     if (j.contains("shapeKind")) {
-        obj.setShape(static_cast<Object::ShapeKind>(j["shapeKind"].get<int>()));
+        obj.setShape(static_cast<Object::ShapeKind>(j["shapeKind"].get<int>()), parseShapeParams(j));
     } else {
         int gt = j.value("geometryType", 0);
         obj.setGeometryType(static_cast<Object::GeometryType>(gt));

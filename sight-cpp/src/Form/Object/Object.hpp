@@ -44,6 +44,21 @@ public:
         Ellipsoid = 5, Ovoid = 6, Paraboloid = 7, Torus = 8, RoundedBox = 9
     };
 
+    // Per-shape parameters (defaults match the geom factory defaults so an
+    // unparameterized setShape reproduces current behavior). Persisted so
+    // parameterized shapes round-trip through save/load.
+    struct ShapeParams {
+        float r           = 0.5f;   // sphere/ellipsoid-x, cylinder/cone radius
+        float ry          = 0.32f;  // ellipsoid y semi-axis
+        float rz          = 0.5f;   // ellipsoid z semi-axis
+        float halfH       = 0.5f;   // cylinder/cone half-height
+        float majorR      = 0.35f;  // torus major radius
+        float minorR      = 0.15f;  // torus minor radius
+        float paraboloidA = 2.0f;   // paraboloid steepness
+        float ovoidAsym   = 0.25f;  // ovoid taper
+        float fillet      = 0.12f;  // rounded-box fillet radius
+    };
+
 
     std::string screenMode();
 
@@ -142,9 +157,15 @@ private:
     bool _hasSmooth  = false;
     bool _hasComplex = false;
     ShapeKind _shapeKind = ShapeKind::Cube;
+    ShapeParams _shapeParams;
+
+    // Cached local-space surface vertices for GJK support queries on the new
+    // topology shapes (argmax dot(v,dir)). Rebuilt when the shape changes.
+    std::vector<glm::vec3> _supportCloud;
 
     void drawSmoothModel() const;
     void drawComplexModel() const;
+    void rebuildSupportCloud();
 
 public:
     // LEGACY flat colours kept for save/load compatibility (first 6 faces)
@@ -344,22 +365,25 @@ public:
     GeometryType getGeometryType() const { return geometryType; }
 
     // Build any named shape in the framework (superset of setGeometryType).
-    void setShape(ShapeKind k) {
+    void setShape(ShapeKind k) { setShape(k, ShapeParams{}); }
+    void setShape(ShapeKind k, const ShapeParams& p) {
         switch (k) {
             case ShapeKind::Cube:       setGeometryType(GeometryType::Cube);       break;
             case ShapeKind::Polyhedron: setGeometryType(GeometryType::Polyhedron); break;
-            case ShapeKind::Sphere:     setGeometryType(GeometryType::Sphere);     break;
-            case ShapeKind::Cylinder:   setGeometryType(GeometryType::Cylinder);   break;
-            case ShapeKind::Cone:       setGeometryType(GeometryType::Cone);       break;
-            case ShapeKind::Ellipsoid:  setSmoothSurface(geom::makeEllipsoid(0.5f, 0.32f, 0.5f)); break;
-            case ShapeKind::Ovoid:      setSmoothSurface(geom::makeOvoid());       break;
-            case ShapeKind::Paraboloid: setSmoothSurface(geom::makeParaboloid()); break;
-            case ShapeKind::Torus:      setSmoothSurface(geom::makeTorus());       break;
-            case ShapeKind::RoundedBox: setComplexShape(geom::roundedBox());       break;
+            case ShapeKind::Sphere:     setSmoothSurface(geom::makeSphere(p.r));   break;
+            case ShapeKind::Cylinder:   setComplexShape(geom::cappedCylinder(p.r, p.halfH)); break;
+            case ShapeKind::Cone:       setComplexShape(geom::cappedCone(p.r, p.halfH));      break;
+            case ShapeKind::Ellipsoid:  setSmoothSurface(geom::makeEllipsoid(p.r, p.ry, p.rz)); break;
+            case ShapeKind::Ovoid:      setSmoothSurface(geom::makeOvoid(p.r, p.ovoidAsym));    break;
+            case ShapeKind::Paraboloid: setSmoothSurface(geom::makeParaboloid(p.paraboloidA));  break;
+            case ShapeKind::Torus:      setSmoothSurface(geom::makeTorus(p.majorR, p.minorR));  break;
+            case ShapeKind::RoundedBox: setComplexShape(geom::roundedBox(0.5f, p.fillet));      break;
         }
-        _shapeKind = k; // assert after setGeometryType may have set a legacy value
+        _shapeKind = k;      // assert after setGeometryType may have set a legacy value
+        _shapeParams = p;
     }
     ShapeKind getShapeKind() const { return _shapeKind; }
+    const ShapeParams& getShapeParams() const { return _shapeParams; }
 
     // --- Topology-based geometry model (smooth surfaces / complex shapes) ---
     // The fundamental category of the object. Named primitives are merely
@@ -375,12 +399,12 @@ public:
     const geom::SmoothSurfaceData& getSmoothData()  const { return smoothData; }
     const geom::ComplexShapeData&  getComplexData() const { return complexData; }
     void setSmoothSurface(const geom::SmoothSurfaceData& s) {
-        smoothData = s; _hasSmooth = true; _hasComplex = false; initFaceTextures();
+        smoothData = s; _hasSmooth = true; _hasComplex = false; initFaceTextures(); rebuildSupportCloud();
     }
     void setComplexShape(const geom::ComplexShapeData& c) {
-        complexData = c; _hasComplex = true; _hasSmooth = false; initFaceTextures();
+        complexData = c; _hasComplex = true; _hasSmooth = false; initFaceTextures(); rebuildSupportCloud();
     }
-    void clearTopologyModel() { _hasSmooth = false; _hasComplex = false; }
+    void clearTopologyModel() { _hasSmooth = false; _hasComplex = false; _supportCloud.clear(); }
 
     // Polyhedron-specific methods
     void setPolyhedronData(const PolyhedronData& data);

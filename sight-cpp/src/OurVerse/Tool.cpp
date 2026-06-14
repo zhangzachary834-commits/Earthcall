@@ -962,6 +962,7 @@ void Tool::ShapeGenerator3D(GLFWwindow *window, Core::Game *game, ZoneManager &m
             glm::mat4 localT = glm::inverse(partWorld) * t;
 
             Object* sub = targetPart->addSubObject(game->getCurrentShapeKind(), localT);
+            if (sub) sub->setShape(game->getCurrentShapeKind(), game->getCurrentShapeParams());
             if (sub && game->getCurrentShapeKind() == Object::ShapeKind::Polyhedron) {
                 sub->setPolyhedronData(game->buildCurrentPolyhedron());
             }
@@ -971,7 +972,7 @@ void Tool::ShapeGenerator3D(GLFWwindow *window, Core::Game *game, ZoneManager &m
             }
         } else {
             std::unique_ptr<Object> obj(new Object());
-            obj->setShape(game->getCurrentShapeKind());
+            obj->setShape(game->getCurrentShapeKind(), game->getCurrentShapeParams());
 
             if (game->getCurrentShapeKind() == Object::ShapeKind::Polyhedron)
             {

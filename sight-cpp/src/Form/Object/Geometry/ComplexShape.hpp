@@ -21,7 +21,7 @@ namespace geom {
 enum class EdgeContinuity { Hard, Soft, Fairness };
 
 struct SurfacePatch {
-    enum class Type { Planar, Smooth };
+    enum class Type { Planar, Smooth, Mesh };
     Type type = Type::Planar;
 
     // Planar patch: a flat face given by a CCW boundary polygon (local space).
@@ -30,6 +30,12 @@ struct SurfacePatch {
 
     // Smooth patch: a (possibly trimmed) smooth surface.
     SmoothSurfaceData smooth;
+
+    // Mesh patch: explicit curved geometry (e.g. a fillet strip or corner
+    // octant) with real per-vertex normals. Still a genuine curved face — it is
+    // NOT a smoothed polyhedron face. `curved` marks it as nonzero-curvature.
+    TessMesh mesh;
+    bool curved = false;
 };
 
 struct ClassifiedEdge {

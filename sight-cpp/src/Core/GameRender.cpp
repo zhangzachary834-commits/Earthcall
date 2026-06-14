@@ -264,7 +264,7 @@ void Game::render() {
         glMultMatrixf(&previewT[0][0]);
         // Draw primitive outline using the selected shape
         Object temp;
-        temp.setShape(_polyhedron.shapeKind);
+        temp.setShape(_polyhedron.shapeKind, _polyhedron.shapeParams);
 
         // Initialize polyhedron data for preview using the unified builder
         if (_polyhedron.shapeKind == Object::ShapeKind::Polyhedron) {

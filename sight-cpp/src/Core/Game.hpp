@@ -220,6 +220,7 @@ public:
     void setCurrentPrimitive(Object::GeometryType v) { _polyhedron.primitive = v; }
     Object::ShapeKind getCurrentShapeKind() const { return _polyhedron.shapeKind; }
     void setCurrentShapeKind(Object::ShapeKind v) { _polyhedron.shapeKind = v; }
+    const Object::ShapeParams& getCurrentShapeParams() const { return _polyhedron.shapeParams; }
 
     int getCurrentPolyhedronType() const { return _polyhedron.currentType; }
     void setCurrentPolyhedronType(int v) { _polyhedron.currentType = v; }

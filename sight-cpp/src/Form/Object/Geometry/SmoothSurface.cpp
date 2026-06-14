@@ -269,6 +269,28 @@ bool raycastSmooth(const SmoothSurfaceData& s, const glm::vec3& o, const glm::ve
     return false;
 }
 
+bool isConvex(const SmoothSurfaceData& s) {
+    // Torus is the only non-convex smooth surface we model here.
+    return !(s.model == SmoothSurfaceData::Model::Parametric &&
+             s.pkind == SmoothSurfaceData::ParametricKind::Torus);
+}
+
+glm::vec3 supportPoint(const SmoothSurfaceData& s, const glm::vec3& dir, bool& ok) {
+    ok = false;
+    if (s.model == SmoothSurfaceData::Model::Quadric &&
+        (s.form == SmoothSurfaceData::QuadricForm::Sphere ||
+         s.form == SmoothSurfaceData::QuadricForm::Ellipsoid)) {
+        // Ellipsoid support: p = (a²dx, b²dy, c²dz) / ||(a dx, b dy, c dz)||.
+        glm::vec3 a = s.axes;
+        glm::vec3 num(a.x * a.x * dir.x, a.y * a.y * dir.y, a.z * a.z * dir.z);
+        float den = std::sqrt(a.x * a.x * dir.x * dir.x +
+                              a.y * a.y * dir.y * dir.y +
+                              a.z * a.z * dir.z * dir.z);
+        if (den > 1e-8f) { ok = true; return num / den; }
+    }
+    return glm::vec3(0.0f); // caller falls back to a vertex cloud
+}
+
 float implicitSmooth(const SmoothSurfaceData& s, const glm::vec3& p) {
     if (s.model == SmoothSurfaceData::Model::Parametric) {
         return parametricSDF(s, p);
