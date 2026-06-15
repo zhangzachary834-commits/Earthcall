@@ -10,6 +10,7 @@
 #endif
 
 #include <iostream>
+#include <chrono>
 
 namespace Core {
 
@@ -87,8 +88,22 @@ void Engine::run(Game& game) {
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
+        // TEMP frame profiler: prints avg update/render ms once per second.
+        using clk = std::chrono::high_resolution_clock;
+        static double accUpd = 0.0, accRen = 0.0, accSec = 0.0; static int frames = 0;
+        auto t0 = clk::now();
         game.update(dt);
+        auto t1 = clk::now();
         game.render();
+        auto t2 = clk::now();
+        accUpd += std::chrono::duration<double, std::milli>(t1 - t0).count();
+        accRen += std::chrono::duration<double, std::milli>(t2 - t1).count();
+        accSec += dt; ++frames;
+        if (accSec >= 1.0 && frames > 0) {
+            fprintf(stderr, "[PERF] %d fps | update %.2f ms | render %.2f ms\n",
+                    frames, accUpd / frames, accRen / frames);
+            accUpd = accRen = accSec = 0.0; frames = 0;
+        }
 
         // Render ImGui
         ImGui::Render();

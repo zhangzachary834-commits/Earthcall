@@ -129,6 +129,128 @@ void Game::render() {
         glPopMatrix();
     }
 
+    // Morph tool: draw draggable vertex handles over the selected polyhedron.
+    if (_current3DMode == Mode3D::Morph && _selectedObject3D &&
+        _selectedObject3D->getGeometryType() == Object::GeometryType::Polyhedron) {
+        Object* o = _selectedObject3D;
+        glDisable(GL_LIGHTING);
+        glDisable(GL_TEXTURE_2D);
+        for (int v = 0; v < o->getPolyhedronVertexCount(); ++v) {
+            glm::vec3 w = glm::vec3(o->getTransform() * glm::vec4(o->getPolyhedronVertexLocal(v), 1.0f));
+            bool sel = (v == _morphVertexIndex);
+            float s = sel ? 0.06f : 0.04f;
+            if (sel) glColor3f(1.0f, 0.85f, 0.2f); else glColor3f(0.2f, 0.8f, 1.0f);
+            glPushMatrix();
+            glTranslatef(w.x, w.y, w.z);
+            glScalef(s, s, s);
+            // small cube handle
+            glBegin(GL_QUADS);
+            const float h = 0.5f;
+            glVertex3f(-h,-h, h); glVertex3f( h,-h, h); glVertex3f( h, h, h); glVertex3f(-h, h, h);
+            glVertex3f(-h,-h,-h); glVertex3f(-h, h,-h); glVertex3f( h, h,-h); glVertex3f( h,-h,-h);
+            glVertex3f(-h, h,-h); glVertex3f(-h, h, h); glVertex3f( h, h, h); glVertex3f( h, h,-h);
+            glVertex3f(-h,-h,-h); glVertex3f( h,-h,-h); glVertex3f( h,-h, h); glVertex3f(-h,-h, h);
+            glVertex3f( h,-h,-h); glVertex3f( h, h,-h); glVertex3f( h, h, h); glVertex3f( h,-h, h);
+            glVertex3f(-h,-h,-h); glVertex3f(-h,-h, h); glVertex3f(-h, h, h); glVertex3f(-h, h,-h);
+            glEnd();
+            glPopMatrix();
+        }
+        glEnable(GL_LIGHTING);
+    }
+
+    // Morph tool on a blend/boolean field: ghost of operand B + its drag handle.
+    if (_current3DMode == Mode3D::Morph && _selectedObject3D &&
+        _selectedObject3D->isBinaryField()) {
+        Object* o = _selectedObject3D;
+        const glm::mat4& xf = o->getTransform();
+        const geom::SdfNode& f = o->getFieldData();
+        glDisable(GL_LIGHTING);
+        glDisable(GL_TEXTURE_2D);
+        glEnable(GL_BLEND);
+
+        // Translucent ghost of operand B (rendered in the field's local space).
+        if (f.children.size() == 2) {
+            geom::TessMesh ghost = geom::tessellateSdf(f.children[1], o->getFieldExtent(), 16);
+            glPushMatrix();
+            glMultMatrixf(&xf[0][0]);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE); // additive glow
+            glDepthMask(GL_FALSE);
+            glColor4f(0.35f, 0.85f, 1.0f, 0.16f);
+            glBegin(GL_TRIANGLES);
+            for (const auto& v : ghost.tris) glVertex3f(v.pos.x, v.pos.y, v.pos.z);
+            glEnd();
+            glDepthMask(GL_TRUE);
+            glPopMatrix();
+        }
+
+        // The draggable handle at operand B's offset (gold cube, world space).
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glm::vec3 hw = glm::vec3(xf * glm::vec4(o->getFieldOperandBOffset(), 1.0f));
+        glColor3f(1.0f, 0.85f, 0.2f);
+        glPushMatrix();
+        glTranslatef(hw.x, hw.y, hw.z);
+        glScalef(0.06f, 0.06f, 0.06f);
+        glBegin(GL_QUADS);
+        const float h = 0.5f;
+        glVertex3f(-h,-h, h); glVertex3f( h,-h, h); glVertex3f( h, h, h); glVertex3f(-h, h, h);
+        glVertex3f(-h,-h,-h); glVertex3f(-h, h,-h); glVertex3f( h, h,-h); glVertex3f( h,-h,-h);
+        glVertex3f(-h, h,-h); glVertex3f(-h, h, h); glVertex3f( h, h, h); glVertex3f( h, h,-h);
+        glVertex3f(-h,-h,-h); glVertex3f( h,-h,-h); glVertex3f( h,-h, h); glVertex3f(-h,-h, h);
+        glVertex3f( h,-h,-h); glVertex3f( h, h,-h); glVertex3f( h, h, h); glVertex3f( h,-h, h);
+        glVertex3f(-h,-h,-h); glVertex3f(-h,-h, h); glVertex3f(-h, h, h); glVertex3f(-h, h,-h);
+        glEnd();
+        glPopMatrix();
+        glEnable(GL_LIGHTING);
+    }
+
+    // Morph tool on a Bezier patch: control-net wireframe + draggable control points.
+    if (_current3DMode == Mode3D::Morph && _selectedObject3D && _selectedObject3D->isPatch()) {
+        Object* o = _selectedObject3D;
+        const glm::mat4& xf = o->getTransform();
+        const geom::BezierPatch& p = o->getPatchData();
+        glDisable(GL_LIGHTING);
+        glDisable(GL_TEXTURE_2D);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        auto cp = [&](int i, int j) {
+            return glm::vec3(xf * glm::vec4(p.at(i, j), 1.0f));
+        };
+        // Control net (lines between adjacent control points).
+        glColor4f(0.3f, 0.8f, 1.0f, 0.6f);
+        glLineWidth(1.5f);
+        glBegin(GL_LINES);
+        for (int j = 0; j < p.nv(); ++j)
+            for (int i = 0; i < p.nu(); ++i) {
+                glm::vec3 a = cp(i, j);
+                if (i + 1 < p.nu()) { glm::vec3 b = cp(i + 1, j); glVertex3f(a.x,a.y,a.z); glVertex3f(b.x,b.y,b.z); }
+                if (j + 1 < p.nv()) { glm::vec3 b = cp(i, j + 1); glVertex3f(a.x,a.y,a.z); glVertex3f(b.x,b.y,b.z); }
+            }
+        glEnd();
+
+        // Control-point handles.
+        for (int idx = 0; idx < o->getPatchControlCount(); ++idx) {
+            glm::vec3 w = glm::vec3(xf * glm::vec4(o->getPatchControlLocal(idx), 1.0f));
+            bool sel = (idx == _patchCtrlIndex);
+            float s = sel ? 0.05f : 0.035f;
+            if (sel) glColor3f(1.0f, 0.85f, 0.2f); else glColor3f(0.2f, 0.8f, 1.0f);
+            glPushMatrix();
+            glTranslatef(w.x, w.y, w.z);
+            glScalef(s, s, s);
+            glBegin(GL_QUADS);
+            const float h = 0.5f;
+            glVertex3f(-h,-h, h); glVertex3f( h,-h, h); glVertex3f( h, h, h); glVertex3f(-h, h, h);
+            glVertex3f(-h,-h,-h); glVertex3f(-h, h,-h); glVertex3f( h, h,-h); glVertex3f( h,-h,-h);
+            glVertex3f(-h, h,-h); glVertex3f(-h, h, h); glVertex3f( h, h, h); glVertex3f( h, h,-h);
+            glVertex3f(-h,-h,-h); glVertex3f( h,-h,-h); glVertex3f( h,-h, h); glVertex3f(-h,-h, h);
+            glVertex3f( h,-h,-h); glVertex3f( h, h,-h); glVertex3f( h, h, h); glVertex3f( h,-h, h);
+            glVertex3f(-h,-h,-h); glVertex3f(-h,-h, h); glVertex3f(-h, h, h); glVertex3f(-h, h,-h);
+            glEnd();
+            glPopMatrix();
+        }
+        glEnable(GL_LIGHTING);
+    }
+
     // Gravity field visualization (holographic arrows)
     if (Physics::getGravityVisualization()) {
         glPushAttrib(GL_ENABLE_BIT | GL_LINE_BIT | GL_COLOR_BUFFER_BIT | GL_CURRENT_BIT);

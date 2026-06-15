@@ -63,6 +63,7 @@ struct PolyhedronData {
 
     std::vector<AngleTools::DihedralAngle> dihedralAngles;
     std::vector<AngleTools::EdgeInfo>      edgeInfos;
+    std::vector<PolyhedronData> convexComponents;
 
     PolyhedronData() = default;
 
@@ -96,6 +97,7 @@ struct PolyhedronData {
     int getFaceCount() const { return static_cast<int>(faces.size()); }
     int getVertexCount() const { return static_cast<int>(vertices.size()); }
     bool getIsConvex() const { return isConvex; }
+    const std::vector<PolyhedronData>& getConvexComponents() const { return convexComponents; }
     bool getFaceConvexity(int faceIndex) const {
         return (faceIndex >= 0 && faceIndex < static_cast<int>(faceConvexity.size()))
                ? faceConvexity[faceIndex] : true;
@@ -114,5 +116,6 @@ struct PolyhedronData {
     void classifyContours();
     std::unique_ptr<Contour> buildContour(int faceIndex) const;
     void computeAngleData();
+    void rebuildConvexComponents();
     void recomputeAll();
 };

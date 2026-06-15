@@ -205,6 +205,7 @@ PolyhedronData PolyhedronData::createRegularPolyhedron(int numFaces, float radiu
     data.computeFaceAreas();
     data.computeVertexCurvatures();
     data.generateUVs();
+    data.rebuildConvexComponents();
     return data;
 }
 
@@ -218,6 +219,7 @@ PolyhedronData PolyhedronData::createCustomPolyhedron(const std::vector<glm::vec
     data.computeFaceAreas();
     data.computeVertexCurvatures();
     data.generateUVs();
+    data.rebuildConvexComponents();
     return data;
 }
 
@@ -226,14 +228,17 @@ PolyhedronData PolyhedronData::createConcavePolyhedron(int numFaces, float radiu
     
     // Start with a regular polyhedron
     data = createRegularPolyhedron(numFaces, radius);
-    
-    // Apply concavity by pushing vertices inward
-    for (auto& vertex : data.vertices) {
+
+    // Apply concavity by alternating inward and slightly outward radial vertices.
+    // Moving every vertex by the same factor only scales the convex hull; the
+    // alternating rhythm creates real recesses for collision and ray tests.
+    concavity = std::clamp(concavity, 0.0f, 0.9f);
+    for (size_t i = 0; i < data.vertices.size(); ++i) {
+        auto& vertex = data.vertices[i];
         glm::vec3 direction = glm::normalize(vertex);
         float distance = glm::length(vertex);
-        
-        // Push vertex inward based on concavity
-        float newDistance = distance * (1.0f - concavity);
+        float factor = (i % 2 == 0) ? (1.0f - concavity) : (1.0f + concavity * 0.15f);
+        float newDistance = distance * factor;
         vertex = direction * newDistance;
     }
     
@@ -243,6 +248,7 @@ PolyhedronData PolyhedronData::createConcavePolyhedron(int numFaces, float radiu
     data.computeFaceAreas();
     data.computeVertexCurvatures();
     data.generateUVs();
+    data.rebuildConvexComponents();
     
     return data;
 }
@@ -252,15 +258,36 @@ PolyhedronData PolyhedronData::createStarPolyhedron(int numFaces, float radius, 
     
     // Start with a regular polyhedron
     data = createRegularPolyhedron(numFaces, radius);
-    
-    // Create spikes by extending vertices outward
-    for (auto& vertex : data.vertices) {
-        glm::vec3 direction = glm::normalize(vertex);
-        float distance = glm::length(vertex);
-        
-        // Extend vertex outward to create spike
-        float newDistance = distance + spikeLength;
-        vertex = direction * newDistance;
+
+    // Replace each face with a shallow outward pyramid. This is the first real
+    // star foundation: the old version extended every vertex equally, which was
+    // just another convex scale. Face spikes create concave valleys between them.
+    std::vector<std::vector<int>> originalFaces = data.faces;
+    std::vector<glm::vec3> originalNormals = data.faceNormals;
+    data.faces.clear();
+    spikeLength = std::max(0.0f, spikeLength);
+
+    for (size_t faceIndex = 0; faceIndex < originalFaces.size(); ++faceIndex) {
+        const auto& face = originalFaces[faceIndex];
+        if (face.size() < 3) continue;
+
+        glm::vec3 center(0.0f);
+        for (int idx : face) center += data.vertices[idx];
+        center /= static_cast<float>(face.size());
+
+        glm::vec3 normal = (faceIndex < originalNormals.size())
+            ? originalNormals[faceIndex]
+            : computeNewellNormal(data.vertices, face);
+        if (glm::dot(normal, normal) <= 1e-10f) normal = glm::normalize(center);
+
+        int spikeIndex = static_cast<int>(data.vertices.size());
+        data.vertices.push_back(center + glm::normalize(normal) * spikeLength);
+
+        for (size_t i = 0; i < face.size(); ++i) {
+            int a = face[i];
+            int b = face[(i + 1) % face.size()];
+            data.faces.push_back({a, b, spikeIndex});
+        }
     }
     
     // Recompute all properties
@@ -269,6 +296,7 @@ PolyhedronData PolyhedronData::createStarPolyhedron(int numFaces, float radius, 
     data.computeFaceAreas();
     data.computeVertexCurvatures();
     data.generateUVs();
+    data.rebuildConvexComponents();
     
     return data;
 }
@@ -298,6 +326,7 @@ PolyhedronData PolyhedronData::createCraterPolyhedron(int numFaces, float radius
     data.computeFaceAreas();
     data.computeVertexCurvatures();
     data.generateUVs();
+    data.rebuildConvexComponents();
     
     return data;
 }
@@ -888,6 +917,50 @@ void PolyhedronData::recomputeAll() {
     generateUVs();
     classifyContours();
     computeAngleData();
+    rebuildConvexComponents();
+}
+
+void PolyhedronData::rebuildConvexComponents() {
+    convexComponents.clear();
+    if (vertices.empty() || faces.empty()) return;
+    if (isConvex) return;
+
+    glm::vec3 anchor(0.0f);
+    for (const auto& vertex : vertices) anchor += vertex;
+    anchor /= static_cast<float>(vertices.size());
+
+    auto tetraVolume = [](const glm::vec3& a, const glm::vec3& b,
+                          const glm::vec3& c, const glm::vec3& d) {
+        return std::abs(glm::dot(b - a, glm::cross(c - a, d - a))) / 6.0f;
+    };
+
+    for (const auto& face : faces) {
+        if (face.size() < 3) continue;
+        for (size_t i = 1; i + 1 < face.size(); ++i) {
+            const glm::vec3& a = vertices[face[0]];
+            const glm::vec3& b = vertices[face[i]];
+            const glm::vec3& c = vertices[face[i + 1]];
+            if (tetraVolume(anchor, a, b, c) <= 1e-8f) continue;
+
+            PolyhedronData component;
+            component.vertices = {anchor, a, b, c};
+            component.faces = {
+                {0, 2, 1},
+                {0, 1, 3},
+                {0, 3, 2},
+                {1, 2, 3}
+            };
+            component.ensureOutwardWinding();
+            component.computeNormals();
+            component.analyzeConvexity();
+            component.computeFaceAreas();
+            component.computeVertexCurvatures();
+            component.generateUVs();
+            component.classifyContours();
+            component.computeAngleData();
+            convexComponents.push_back(component);
+        }
+    }
 }
 
 
@@ -1041,6 +1114,7 @@ void PolyhedronData::addFace(const std::vector<int>& faceVertices) {
     analyzeConvexity();
     computeFaceAreas();
     computeVertexCurvatures();
+    rebuildConvexComponents();
 }
 
 bool PolyhedronData::validateTopology() const {

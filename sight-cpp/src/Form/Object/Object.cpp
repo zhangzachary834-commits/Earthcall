@@ -90,6 +90,8 @@ void Object::setCorners(int c) {
 }
 
 int Object::getFaces() {
+    if (_hasPatch)   return 1;
+    if (_hasField)   return 1;
     if (_hasComplex) return complexData.patchCount();
     if (_hasSmooth)  return 1;
     if (geometryType == GeometryType::Polyhedron) {
@@ -190,7 +192,11 @@ std::string Object::screenMode() {
 
 void Object::initFaceTextures() {
     int n;
-    if (_hasComplex) {
+    if (_hasPatch) {
+        n = 1;
+    } else if (_hasField) {
+        n = 1;
+    } else if (_hasComplex) {
         n = complexData.patchCount();
     } else if (_hasSmooth) {
         n = 1;
@@ -632,15 +638,49 @@ static void drawCylinderPrimitive(float topRadius) {
     gluDeleteQuadric(quad);
 }
 
+// Ray vs a triangle-soup tessellation (Möller–Trumbore); nearest hit.
+static bool raycastTessMesh(const geom::TessMesh& m, const glm::vec3& o, const glm::vec3& d, float& tHit) {
+    float nearest = 1e9f; bool found = false;
+    for (size_t i = 0; i + 2 < m.tris.size(); i += 3) {
+        const glm::vec3& a = m.tris[i].pos;
+        const glm::vec3& b = m.tris[i + 1].pos;
+        const glm::vec3& c = m.tris[i + 2].pos;
+        glm::vec3 e1 = b - a, e2 = c - a, pv = glm::cross(d, e2);
+        float det = glm::dot(e1, pv);
+        if (std::fabs(det) < 1e-8f) continue;
+        float inv = 1.0f / det;
+        glm::vec3 tv = o - a;
+        float u = glm::dot(tv, pv) * inv;
+        if (u < 0.0f || u > 1.0f) continue;
+        glm::vec3 qv = glm::cross(tv, e1);
+        float v = glm::dot(d, qv) * inv;
+        if (v < 0.0f || u + v > 1.0f) continue;
+        float t = glm::dot(e2, qv) * inv;
+        if (t > 1e-4f && t < nearest) { nearest = t; found = true; }
+    }
+    if (found) tHit = nearest;
+    return found;
+}
+
 // Render a triangle-soup tessellation in immediate mode (legacy GL path).
 static void drawTessMesh(const geom::TessMesh& m) {
-    glBegin(GL_TRIANGLES);
-    for (const auto& v : m.tris) {
-        glNormal3f(v.normal.x, v.normal.y, v.normal.z);
-        glTexCoord2f(v.uv.x, v.uv.y);
-        glVertex3f(v.pos.x, v.pos.y, v.pos.z);
-    }
-    glEnd();
+    if (m.tris.empty()) return;
+    // Client-side vertex arrays: one draw call instead of ~3 GL calls per vertex.
+    // TessVertex is interleaved {pos(3), normal(3), uv(2)}, so the strided
+    // pointers all walk the same buffer. This is the difference between a handful
+    // of GL calls and hundreds of thousands per frame for marching-tet / patch
+    // meshes — the cause of the multi-object lag.
+    const geom::TessVertex* base = m.tris.data();
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_NORMAL_ARRAY);
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    glVertexPointer(3, GL_FLOAT, sizeof(geom::TessVertex), &base->pos);
+    glNormalPointer(GL_FLOAT, sizeof(geom::TessVertex), &base->normal);
+    glTexCoordPointer(2, GL_FLOAT, sizeof(geom::TessVertex), &base->uv);
+    glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(m.tris.size()));
+    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+    glDisableClientState(GL_NORMAL_ARRAY);
+    glDisableClientState(GL_VERTEX_ARRAY);
 }
 
 void Object::drawSmoothModel() const {
@@ -665,7 +705,29 @@ void Object::drawComplexModel() const {
     glDisable(GL_TEXTURE_2D);
 }
 
+void Object::drawFieldModel() const {
+    glEnable(GL_TEXTURE_2D);
+    if (!faceTextures.empty()) glBindTexture(GL_TEXTURE_2D, faceTextures[0].id);
+    glColor3f(1.0f, 1.0f, 1.0f);
+    drawTessMesh(_fieldMesh); // cached: SDF tessellation is expensive, rebuilt on change
+    glDisable(GL_TEXTURE_2D);
+}
+
+void Object::drawPatchModel() const {
+    glEnable(GL_TEXTURE_2D);
+    if (!faceTextures.empty()) glBindTexture(GL_TEXTURE_2D, faceTextures[0].id);
+    glColor3f(1.0f, 1.0f, 1.0f);
+    // An open control-net surface has two visible sides — light both.
+    GLint twoSide = 0; glGetIntegerv(GL_LIGHT_MODEL_TWO_SIDE, &twoSide);
+    glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+    drawTessMesh(_patchMesh);
+    glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, twoSide);
+    glDisable(GL_TEXTURE_2D);
+}
+
 void Object::drawObject() const {
+    if (_hasPatch)   { drawPatchModel();   return; }
+    if (_hasField)   { drawFieldModel();   return; }
     if (_hasComplex) { drawComplexModel(); return; }
     if (_hasSmooth)  { drawSmoothModel();  return; }
     switch (geometryType) {
@@ -765,60 +827,68 @@ void Object::drawHighlightOutline() const {
     // after the object's model transform has already been applied via glMultMatrixf(...).
     // If we draw world-space corners here, they get transformed again (double-transform), causing the outline
     // to appear offset from the object. Convert to local space first.
-    glm::mat4 invModel = glm::inverse(getTransform());
-    glm::vec3 localCorner0 = glm::vec3(invModel * glm::vec4(collisionZone.corners[0], 1.0f));
-    glm::vec3 minCorner = localCorner0;
-    glm::vec3 maxCorner = localCorner0;
-    for (int i = 1; i < 8; ++i) {
-        glm::vec3 cLocal = glm::vec3(invModel * glm::vec4(collisionZone.corners[i], 1.0f));
-        minCorner = glm::min(minCorner, cLocal);
-        maxCorner = glm::max(maxCorner, cLocal);
-    }
-
-    // Compute center and half-extent
-    glm::vec3 center = (minCorner + maxCorner) * 0.5f;
-    glm::vec3 half   = (maxCorner - minCorner) * 0.5f;
-
     glPushAttrib(GL_ENABLE_BIT | GL_LINE_BIT | GL_COLOR_BUFFER_BIT | GL_CURRENT_BIT);
     glDisable(GL_LIGHTING);
+    glDisable(GL_TEXTURE_2D);
     glEnable(GL_LINE_SMOOTH);
     glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
     glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    // Multiple passes for thickness + soft glow
-    const int passes = 4;
-    for (int p = 0; p < passes; ++p) {
-        float t = (float)(p+1) / (float)passes;
-        float inflate = 0.02f * (p+1); // expand a bit each pass
-        float alpha = 0.5f * (1.0f - (float)p / (float)passes); // fade outer passes
-        glm::vec3 ext = half + glm::vec3(inflate);
-        glm::vec3 c = color * (0.8f + 0.2f * (1.0f - t));
-        glColor4f(c.r, c.g, c.b, alpha);
-        glLineWidth(2.5f + p * 1.2f);
-
-        // Draw 12 edges of the inflated AABB wireframe
-        auto drawEdge = [&](const glm::vec3& a, const glm::vec3& b){
+    // Trace the ACTUAL shape (local space — the model transform is already applied
+    // by the caller), not an AABB. Flat-faced shapes get a crisp edge wireframe;
+    // curved / field shapes get a translucent additive glow shell hugging them.
+    auto drawWireframe = [&](const std::vector<std::pair<glm::vec3, glm::vec3>>& edges) {
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        for (int p = 0; p < 2; ++p) {
+            glColor4f(color.r, color.g, color.b, 0.65f - 0.3f * p);
+            glLineWidth(2.0f + 2.5f * p);
             glBegin(GL_LINES);
-            glVertex3f(a.x, a.y, a.z);
-            glVertex3f(b.x, b.y, b.z);
+            for (const auto& e : edges) {
+                glVertex3f(e.first.x, e.first.y, e.first.z);
+                glVertex3f(e.second.x, e.second.y, e.second.z);
+            }
             glEnd();
+        }
+    };
+    auto drawShell = [&](const geom::TessMesh& m) {
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE); // additive glow
+        glDepthMask(GL_FALSE);
+        for (int p = 0; p < 2; ++p) {
+            float s = 1.0f + 0.02f * (p + 1);
+            glColor4f(color.r, color.g, color.b, 0.16f - 0.06f * p);
+            glBegin(GL_TRIANGLES);
+            for (const auto& v : m.tris) { glm::vec3 q = v.pos * s; glVertex3f(q.x, q.y, q.z); }
+            glEnd();
+        }
+        glDepthMask(GL_TRUE);
+    };
+
+    if (geometryType == GeometryType::Polyhedron && !polyhedronData.vertices.empty()) {
+        std::vector<std::pair<glm::vec3, glm::vec3>> edges;
+        for (const auto& face : polyhedronData.faces)
+            for (size_t k = 0; k < face.size(); ++k)
+                edges.emplace_back(polyhedronData.vertices[face[k]],
+                                   polyhedronData.vertices[face[(k + 1) % face.size()]]);
+        drawWireframe(edges);
+    } else if (_hasField) {
+        drawShell(_fieldMesh);
+    } else if (_hasSmooth) {
+        drawShell(geom::tessellateSmooth(smoothData, 20, 12));
+    } else if (_hasComplex) {
+        drawShell(geom::tessellateComplex(complexData, 16));
+    } else {
+        // Legacy unit cube wireframe.
+        const float h = 0.5f;
+        glm::vec3 v[8] = {
+            {-h,-h,-h},{ h,-h,-h},{ h, h,-h},{-h, h,-h},
+            {-h,-h, h},{ h,-h, h},{ h, h, h},{-h, h, h}
         };
-        glm::vec3 v[8];
-        v[0] = center + glm::vec3(-ext.x, -ext.y, -ext.z);
-        v[1] = center + glm::vec3( ext.x, -ext.y, -ext.z);
-        v[2] = center + glm::vec3( ext.x,  ext.y, -ext.z);
-        v[3] = center + glm::vec3(-ext.x,  ext.y, -ext.z);
-        v[4] = center + glm::vec3(-ext.x, -ext.y,  ext.z);
-        v[5] = center + glm::vec3( ext.x, -ext.y,  ext.z);
-        v[6] = center + glm::vec3( ext.x,  ext.y,  ext.z);
-        v[7] = center + glm::vec3(-ext.x,  ext.y,  ext.z);
-        // bottom rectangle
-        drawEdge(v[0], v[1]); drawEdge(v[1], v[2]); drawEdge(v[2], v[3]); drawEdge(v[3], v[0]);
-        // top rectangle
-        drawEdge(v[4], v[5]); drawEdge(v[5], v[6]); drawEdge(v[6], v[7]); drawEdge(v[7], v[4]);
-        // verticals
-        drawEdge(v[0], v[4]); drawEdge(v[1], v[5]); drawEdge(v[2], v[6]); drawEdge(v[3], v[7]);
+        std::vector<std::pair<glm::vec3, glm::vec3>> edges = {
+            {v[0],v[1]},{v[1],v[2]},{v[2],v[3]},{v[3],v[0]},
+            {v[4],v[5]},{v[5],v[6]},{v[6],v[7]},{v[7],v[4]},
+            {v[0],v[4]},{v[1],v[5]},{v[2],v[6]},{v[3],v[7]}
+        };
+        drawWireframe(edges);
     }
     glPopAttrib();
 }
@@ -831,6 +901,17 @@ bool Object::raycastFace(const glm::vec3& rayOriginWorld, const glm::vec3& rayDi
     glm::vec3 dL = glm::normalize(glm::vec3(inv * glm::vec4(rayDirWorld, 0.0f)));
 
     // Topology-based geometry takes precedence over the legacy primitive switch.
+    if (_hasPatch) {
+        if (raycastTessMesh(_patchMesh, oL, dL, outT)) { outFaceIndex = 0; outUV = glm::vec2(0.5f); return true; }
+        return false;
+    }
+    if (_hasField) {
+        // Pick against the cached mesh — robust for any field (morph/boolean/
+        // implicit), including non-SDF implicit expressions where sphere-tracing
+        // would be unreliable.
+        if (raycastTessMesh(_fieldMesh, oL, dL, outT)) { outFaceIndex = 0; outUV = glm::vec2(0.5f); return true; }
+        return false;
+    }
     if (_hasComplex) {
         return geom::raycastComplex(complexData, oL, dL, outT, outFaceIndex, outUV);
     }
@@ -1222,8 +1303,10 @@ float shortestAngleDelta(float current, float target) {
 } // namespace
 
 void Object::updateCollisionZone(const glm::mat4& transform) const {
-    if (geometryType == GeometryType::Polyhedron && !polyhedronData.vertices.empty()) {
-        // For polyhedrons, compute bounding box from all vertices
+    if (getSpatialKind() == SpatialKind::Polyhedron &&
+        geometryType == GeometryType::Polyhedron &&
+        !polyhedronData.vertices.empty()) {
+        // Custom polyhedra compute their broadphase box from the authored vertices.
         glm::vec3 minCorner = glm::vec3(std::numeric_limits<float>::max());
         glm::vec3 maxCorner = glm::vec3(-std::numeric_limits<float>::max());
         
@@ -1243,8 +1326,23 @@ void Object::updateCollisionZone(const glm::mat4& transform) const {
         collisionZone.corners[5] = glm::vec3(maxCorner.x, minCorner.y, maxCorner.z);
         collisionZone.corners[6] = glm::vec3(maxCorner.x, maxCorner.y, maxCorner.z);
         collisionZone.corners[7] = glm::vec3(minCorner.x, maxCorner.y, maxCorner.z);
+    } else if (getSpatialKind() != SpatialKind::Polyhedron && !_supportCloud.empty()) {
+        // [A/B TEST — temporarily the OLD O(cloud) behavior to confirm cost]
+        glm::vec3 minCorner = glm::vec3(std::numeric_limits<float>::max());
+        glm::vec3 maxCorner = glm::vec3(-std::numeric_limits<float>::max());
+        for (const auto& vertex : _supportCloud) {
+            glm::vec3 worldVertex = glm::vec3(transform * glm::vec4(vertex, 1.0f));
+            minCorner = glm::min(minCorner, worldVertex);
+            maxCorner = glm::max(maxCorner, worldVertex);
+        }
+        glm::vec3 lo = minCorner, hi = maxCorner;
+        glm::vec3 localCorners[8] = {
+            {lo.x, lo.y, lo.z}, {hi.x, lo.y, lo.z}, {hi.x, hi.y, lo.z}, {lo.x, hi.y, lo.z},
+            {lo.x, lo.y, hi.z}, {hi.x, lo.y, hi.z}, {hi.x, hi.y, hi.z}, {lo.x, hi.y, hi.z}
+        };
+        for (int i = 0; i < 8; ++i) collisionZone.corners[i] = localCorners[i];
     } else {
-        // Local-space corners of a unit cube centered at origin (legacy behavior)
+        // Unit cube fallback: cube objects and topology models without a mesh cloud.
         glm::vec3 localCorners[8] = {
             {-0.5f, -0.5f, -0.5f},
             { 0.5f, -0.5f, -0.5f},
@@ -1265,91 +1363,90 @@ void Object::updateCollisionZone(const glm::mat4& transform) const {
 void Object::rebuildSupportCloud() {
     _supportCloud.clear();
     geom::TessMesh m;
-    if (_hasComplex)      m = geom::tessellateComplex(complexData, 16);
+    if (_hasPatch) {
+        _patchMesh = geom::tessellateBezier(patchData);
+        m = _patchMesh;
+    }
+    else if (_hasField) {
+        _fieldMesh = geom::tessellateSdf(fieldData, _fieldExtent);
+        m = _fieldMesh;
+    }
+    else if (_hasComplex) m = geom::tessellateComplex(complexData, 16);
     else if (_hasSmooth)  m = geom::tessellateSmooth(smoothData, 16, 10);
-    else return;
+    else { _localMin = glm::vec3(-0.5f); _localMax = glm::vec3(0.5f); return; }
     _supportCloud.reserve(m.tris.size());
-    for (const auto& v : m.tris) _supportCloud.push_back(v.pos);
+    glm::vec3 lo(std::numeric_limits<float>::max()), hi(-std::numeric_limits<float>::max());
+    for (const auto& v : m.tris) {
+        _supportCloud.push_back(v.pos);
+        lo = glm::min(lo, v.pos);
+        hi = glm::max(hi, v.pos);
+    }
+    if (m.tris.empty()) { lo = glm::vec3(-0.5f); hi = glm::vec3(0.5f); }
+    _localMin = lo;
+    _localMax = hi;
 }
 
 glm::vec3 Object::getLocalSupportPoint(const glm::vec3& localDirection) const {
     glm::vec3 dir = localDirection;
     if (glm::dot(dir, dir) <= 1e-12f) dir = glm::vec3(1.0f, 0.0f, 0.0f);
 
-    // Topology model: analytic ellipsoid/sphere support, else cached cloud.
-    if (_hasSmooth) {
-        bool ok = false;
-        glm::vec3 sp = geom::supportPoint(smoothData, dir, ok);
-        if (ok) return sp;
-    }
-    if ((_hasSmooth || _hasComplex) && !_supportCloud.empty()) {
+    auto supportFromCloud = [&]() -> std::optional<glm::vec3> {
+        if (_supportCloud.empty()) return std::nullopt;
         float best = -std::numeric_limits<float>::max();
-        glm::vec3 bestV = _supportCloud[0];
-        for (const auto& v : _supportCloud) {
-            float d = glm::dot(v, dir);
-            if (d > best) { best = d; bestV = v; }
+        glm::vec3 bestVertex = _supportCloud[0];
+        for (const auto& vertex : _supportCloud) {
+            float candidate = glm::dot(vertex, dir);
+            if (candidate > best) {
+                best = candidate;
+                bestVertex = vertex;
+            }
         }
-        return bestV;
-    }
+        return bestVertex;
+    };
 
-    switch (geometryType) {
-        case GeometryType::Cube:
-            return glm::vec3(dir.x >= 0.0f ? 0.5f : -0.5f,
-                             dir.y >= 0.0f ? 0.5f : -0.5f,
-                             dir.z >= 0.0f ? 0.5f : -0.5f);
-        case GeometryType::Sphere: {
-            glm::vec3 n = glm::normalize(dir);
-            return n * 0.5f;
+    switch (getSpatialKind()) {
+        case SpatialKind::SmoothSurface: {
+            bool ok = false;
+            glm::vec3 sp = geom::supportPoint(smoothData, dir, ok);
+            if (ok) return sp;
+            if (auto cloudSupport = supportFromCloud()) return *cloudSupport;
+            break;
         }
-        case GeometryType::Cylinder: {
-            glm::vec2 radial(dir.x, dir.y);
-            float radialLen = glm::length(radial);
-            glm::vec3 support(0.0f, 0.0f, dir.z >= 0.0f ? 0.5f : -0.5f);
-            if (radialLen > 1e-6f) {
-                glm::vec2 radialDir = radial / radialLen;
-                support.x = radialDir.x * 0.5f;
-                support.y = radialDir.y * 0.5f;
-            }
-            return support;
+        case SpatialKind::ComplexShape:
+        case SpatialKind::Field:
+        case SpatialKind::Patch: {
+            if (auto cloudSupport = supportFromCloud()) return *cloudSupport;
+            break;
         }
-        case GeometryType::Cone: {
-            glm::vec2 radial(dir.x, dir.y);
-            float radialLen = glm::length(radial);
-            float apexScore = 0.5f * dir.z;
-            float baseScore = 0.5f * radialLen - 0.5f * dir.z;
-            if (apexScore >= baseScore) {
-                return glm::vec3(0.0f, 0.0f, 0.5f);
-            }
+        case SpatialKind::Polyhedron: {
+            switch (geometryType) {
+                case GeometryType::Polyhedron: {
+                    if (polyhedronData.vertices.empty()) break;
 
-            glm::vec3 support(0.0f, 0.0f, -0.5f);
-            if (radialLen > 1e-6f) {
-                glm::vec2 radialDir = radial / radialLen;
-                support.x = radialDir.x * 0.5f;
-                support.y = radialDir.y * 0.5f;
-            }
-            return support;
-        }
-        case GeometryType::Polyhedron: {
-            if (polyhedronData.vertices.empty()) {
-                return glm::vec3(dir.x >= 0.0f ? 0.5f : -0.5f,
-                                 dir.y >= 0.0f ? 0.5f : -0.5f,
-                                 dir.z >= 0.0f ? 0.5f : -0.5f);
-            }
-
-            float bestDot = -std::numeric_limits<float>::max();
-            glm::vec3 bestVertex = polyhedronData.vertices.front();
-            for (const auto& vertex : polyhedronData.vertices) {
-                float candidate = glm::dot(vertex, dir);
-                if (candidate > bestDot) {
-                    bestDot = candidate;
-                    bestVertex = vertex;
+                    float bestDot = -std::numeric_limits<float>::max();
+                    glm::vec3 bestVertex = polyhedronData.vertices.front();
+                    for (const auto& vertex : polyhedronData.vertices) {
+                        float candidate = glm::dot(vertex, dir);
+                        if (candidate > bestDot) {
+                            bestDot = candidate;
+                            bestVertex = vertex;
+                        }
+                    }
+                    return bestVertex;
                 }
+                case GeometryType::Cube:
+                default:
+                    return glm::vec3(dir.x >= 0.0f ? 0.5f : -0.5f,
+                                     dir.y >= 0.0f ? 0.5f : -0.5f,
+                                     dir.z >= 0.0f ? 0.5f : -0.5f);
             }
-            return bestVertex;
+            break;
         }
     }
 
-    return glm::vec3(0.0f);
+    return glm::vec3(dir.x >= 0.0f ? 0.5f : -0.5f,
+                     dir.y >= 0.0f ? 0.5f : -0.5f,
+                     dir.z >= 0.0f ? 0.5f : -0.5f);
 }
 
 glm::vec3 Object::getSupportPointWorld(const glm::vec3& worldDirection) const {
@@ -1361,34 +1458,52 @@ glm::vec3 Object::getSupportPointWorld(const glm::vec3& worldDirection) const {
 }
 
 bool Object::isCollisionShapeConvex() const {
-    if (_hasSmooth)  return geom::isConvex(smoothData);
-    if (_hasComplex) return true; // capped cylinder/cone and rounded box are convex
-    if (geometryType != GeometryType::Polyhedron) return true;
-    return polyhedronData.getIsConvex();
+    switch (getSpatialKind()) {
+        case SpatialKind::Patch:
+            return false; // open control surface, not a convex solid
+        case SpatialKind::Field:
+            return false; // SDF expressions (morph/boolean) may be non-convex
+        case SpatialKind::SmoothSurface:
+            return geom::isConvex(smoothData);
+        case SpatialKind::ComplexShape:
+            return true; // capped cylinder/cone and rounded box are convex
+        case SpatialKind::Polyhedron:
+            return geometryType == GeometryType::Polyhedron
+                ? polyhedronData.getIsConvex()
+                : true;
+    }
+    return false;
 }
 
 bool Object::computeLocalPointPenetration(const glm::vec3& localPoint,
                                           glm::vec3& outSurfacePoint,
                                           glm::vec3& outLocalNormal) const {
-    // Topology-based geometry: inside when the implicit value is negative; push
-    // the point out along the surface gradient.
-    if (_hasSmooth || _hasComplex) {
-        float val = _hasComplex ? geom::implicitComplex(complexData, localPoint)
-                                : geom::implicitSmooth(smoothData, localPoint);
-        if (val >= 0.0f) return false; // outside
-        // Numeric gradient of the implicit field = outward normal direction.
-        const float e = 1e-3f;
-        auto f = [&](const glm::vec3& p) {
-            return _hasComplex ? geom::implicitComplex(complexData, p)
-                               : geom::implicitSmooth(smoothData, p);
-        };
-        glm::vec3 g(f(localPoint + glm::vec3(e,0,0)) - f(localPoint - glm::vec3(e,0,0)),
-                    f(localPoint + glm::vec3(0,e,0)) - f(localPoint - glm::vec3(0,e,0)),
-                    f(localPoint + glm::vec3(0,0,e)) - f(localPoint - glm::vec3(0,0,e)));
-        float glen = glm::length(g);
-        outLocalNormal = (glen > 1e-8f) ? g / glen : glm::vec3(0.0f, 1.0f, 0.0f);
-        outSurfacePoint = localPoint; // approximate: project handled by caller's correction
-        return true;
+    SpatialKind spatialKind = getSpatialKind();
+    switch (spatialKind) {
+        case SpatialKind::Patch:
+            return false; // open control surface, not an enclosed collision volume
+        case SpatialKind::SmoothSurface:
+        case SpatialKind::ComplexShape:
+        case SpatialKind::Field: {
+            auto f = [&](const glm::vec3& p) {
+                if (spatialKind == SpatialKind::Field) return geom::evalSdf(fieldData, p);
+                if (spatialKind == SpatialKind::ComplexShape) return geom::implicitComplex(complexData, p);
+                return geom::implicitSmooth(smoothData, p);
+            };
+            float val = f(localPoint);
+            if (val >= 0.0f) return false; // outside
+            // Numeric gradient of the implicit field = outward normal direction.
+            const float e = 1e-3f;
+            glm::vec3 g(f(localPoint + glm::vec3(e,0,0)) - f(localPoint - glm::vec3(e,0,0)),
+                        f(localPoint + glm::vec3(0,e,0)) - f(localPoint - glm::vec3(0,e,0)),
+                        f(localPoint + glm::vec3(0,0,e)) - f(localPoint - glm::vec3(0,0,e)));
+            float glen = glm::length(g);
+            outLocalNormal = (glen > 1e-8f) ? g / glen : glm::vec3(0.0f, 1.0f, 0.0f);
+            outSurfacePoint = localPoint; // approximate: project handled by caller's correction
+            return true;
+        }
+        case SpatialKind::Polyhedron:
+            break;
     }
 
     switch (geometryType) {
@@ -1604,23 +1719,60 @@ bool Object::isPointInside(const glm::vec3& point) const {
 bool Object::isTouching(const Object& other) const {
     constexpr float EPS = 1e-5f;
 
-    if (geometryType != GeometryType::Polyhedron ||
-        other.geometryType != GeometryType::Polyhedron ||
-        polyhedronData.vertices.empty() || polyhedronData.faces.empty() ||
-        other.polyhedronData.vertices.empty() || other.polyhedronData.faces.empty()) {
+    if (getSpatialKind() != SpatialKind::Polyhedron ||
+        other.getSpatialKind() != SpatialKind::Polyhedron) {
         return false;
     }
 
-    auto toWorld = [](const glm::mat4& m, const std::vector<glm::vec3>& local) {
+    auto cubePolyhedron = []() -> const PolyhedronData& {
+        static const PolyhedronData cube = []() {
+            PolyhedronData data;
+            data.vertices = {
+                {-0.5f, -0.5f, -0.5f},
+                { 0.5f, -0.5f, -0.5f},
+                { 0.5f,  0.5f, -0.5f},
+                {-0.5f,  0.5f, -0.5f},
+                {-0.5f, -0.5f,  0.5f},
+                { 0.5f, -0.5f,  0.5f},
+                { 0.5f,  0.5f,  0.5f},
+                {-0.5f,  0.5f,  0.5f}
+            };
+            data.faces = {
+                {0, 3, 2, 1},
+                {4, 5, 6, 7},
+                {0, 1, 5, 4},
+                {3, 7, 6, 2},
+                {1, 2, 6, 5},
+                {0, 4, 7, 3}
+            };
+            data.recomputeAll();
+            return data;
+        }();
+        return cube;
+    };
+
+    auto polyhedronBodyFor = [&](const Object& object) -> const PolyhedronData* {
+        if (object.getSpatialKind() != SpatialKind::Polyhedron) return nullptr;
+        if (object.geometryType == GeometryType::Polyhedron &&
+            !object.polyhedronData.vertices.empty() &&
+            !object.polyhedronData.faces.empty()) {
+            return &object.polyhedronData;
+        }
+        return &cubePolyhedron();
+    };
+
+    const PolyhedronData* bodyA = polyhedronBodyFor(*this);
+    const PolyhedronData* bodyB = polyhedronBodyFor(other);
+    if (!bodyA || !bodyB) return false;
+
+    auto toWorld = [](const glm::mat4& m, const PolyhedronData& data) {
         std::vector<glm::vec3> world;
-        world.reserve(local.size());
-        for (const auto& v : local) {
+        world.reserve(data.vertices.size());
+        for (const auto& v : data.vertices) {
             world.push_back(glm::vec3(m * glm::vec4(v, 1.0f)));
         }
         return world;
     };
-    const std::vector<glm::vec3> worldA = toWorld(transform, polyhedronData.vertices);
-    const std::vector<glm::vec3> worldB = toWorld(other.transform, other.polyhedronData.vertices);
 
     auto project = [](const std::vector<glm::vec3>& verts, const glm::vec3& axis,
                       float& outMin, float& outMax) {
@@ -1633,23 +1785,6 @@ bool Object::isTouching(const Object& other) const {
         }
     };
 
-    auto isSeparating = [&](const glm::vec3& axis) {
-        if (glm::dot(axis, axis) < EPS * EPS) return false;
-        float minA, maxA, minB, maxB;
-        project(worldA, axis, minA, maxA);
-        project(worldB, axis, minB, maxB);
-        return (maxA < minB - EPS) || (maxB < minA - EPS);
-    };
-
-    for (const auto& face : polyhedronData.faces) {
-        if (face.size() < 3) continue;
-        if (isSeparating(PolyhedronData::computeNewellNormal(worldA, face))) return false;
-    }
-    for (const auto& face : other.polyhedronData.faces) {
-        if (face.size() < 3) continue;
-        if (isSeparating(PolyhedronData::computeNewellNormal(worldB, face))) return false;
-    }
-
     auto collectEdges = [](const std::vector<glm::vec3>& verts,
                            const std::vector<std::vector<int>>& faces) {
         std::vector<glm::vec3> dirs;
@@ -1661,18 +1796,68 @@ bool Object::isTouching(const Object& other) const {
         }
         return dirs;
     };
-    const std::vector<glm::vec3> edgesA = collectEdges(worldA, polyhedronData.faces);
-    const std::vector<glm::vec3> edgesB = collectEdges(worldB, other.polyhedronData.faces);
-    for (const auto& eA : edgesA) {
-        for (const auto& eB : edgesB) {
-            glm::vec3 axis = glm::cross(eA, eB);
-            if (glm::length(axis) > EPS) {
-                if (isSeparating(glm::normalize(axis))) return false;
+
+    auto satTouching = [&](const PolyhedronData& a, const glm::mat4& transformA,
+                           const PolyhedronData& b, const glm::mat4& transformB) {
+        if (a.vertices.empty() || a.faces.empty() || b.vertices.empty() || b.faces.empty()) {
+            return false;
+        }
+
+        const std::vector<glm::vec3> worldA = toWorld(transformA, a);
+        const std::vector<glm::vec3> worldB = toWorld(transformB, b);
+
+        auto isSeparating = [&](const glm::vec3& axis) {
+            if (glm::dot(axis, axis) < EPS * EPS) return false;
+            float minA, maxA, minB, maxB;
+            project(worldA, axis, minA, maxA);
+            project(worldB, axis, minB, maxB);
+            return (maxA < minB - EPS) || (maxB < minA - EPS);
+        };
+
+        for (const auto& face : a.faces) {
+            if (face.size() < 3) continue;
+            if (isSeparating(PolyhedronData::computeNewellNormal(worldA, face))) return false;
+        }
+        for (const auto& face : b.faces) {
+            if (face.size() < 3) continue;
+            if (isSeparating(PolyhedronData::computeNewellNormal(worldB, face))) return false;
+        }
+
+        const std::vector<glm::vec3> edgesA = collectEdges(worldA, a.faces);
+        const std::vector<glm::vec3> edgesB = collectEdges(worldB, b.faces);
+        for (const auto& eA : edgesA) {
+            for (const auto& eB : edgesB) {
+                glm::vec3 axis = glm::cross(eA, eB);
+                if (glm::length(axis) > EPS) {
+                    if (isSeparating(glm::normalize(axis))) return false;
+                }
             }
+        }
+
+        return true;
+    };
+
+    auto componentsFor = [](const PolyhedronData& data) -> std::vector<const PolyhedronData*> {
+        std::vector<const PolyhedronData*> parts;
+        const auto& components = data.getConvexComponents();
+        if (!data.getIsConvex() && !components.empty()) {
+            parts.reserve(components.size());
+            for (const auto& component : components) parts.push_back(&component);
+        } else {
+            parts.push_back(&data);
+        }
+        return parts;
+    };
+
+    const std::vector<const PolyhedronData*> partsA = componentsFor(*bodyA);
+    const std::vector<const PolyhedronData*> partsB = componentsFor(*bodyB);
+    for (const PolyhedronData* partA : partsA) {
+        for (const PolyhedronData* partB : partsB) {
+            if (satTouching(*partA, transform, *partB, other.transform)) return true;
         }
     }
 
-    return true;
+    return false;
 }
 
 void Object::setTransform(const glm::mat4& t) {
@@ -1898,12 +2083,15 @@ void Object::drawPolyhedron() const {
 
 // Polyhedron-specific methods
 void Object::setPolyhedronData(const PolyhedronData& data) {
+    geometryType = GeometryType::Polyhedron;
     polyhedronData = data;
+    polyhedronData.recomputeAll();
     _hasSmooth = false;   // a polyhedron is flat-faced, not a topology surface
     _hasComplex = false;
-    if (geometryType == GeometryType::Polyhedron) {
-        initFaceTextures();
-    }
+    _hasField = false;
+    _hasPatch = false;
+    _shapeKind = ShapeKind::Polyhedron;
+    initFaceTextures();
 }
 
 void Object::createTetrahedron() {

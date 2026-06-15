@@ -50,6 +50,47 @@ void popActiveButtonStyle(bool active) {
     }
 }
 
+// Lower a named shape (+params) into an SDF leaf for morph/boolean composition.
+geom::SdfNode shapeToSdfLeaf(Object::ShapeKind k, const Object::ShapeParams& p) {
+    using P = geom::SdfPrim;
+    using SN = geom::SdfNode;
+    switch (k) {
+        case Object::ShapeKind::Sphere:     return SN::leaf(P::Sphere, glm::vec3(p.r));
+        case Object::ShapeKind::Ellipsoid:  return SN::leaf(P::Ellipsoid, glm::vec3(p.r, p.ry, p.rz));
+        case Object::ShapeKind::Ovoid:      return SN::leaf(P::Ellipsoid, glm::vec3(p.r, p.r * (1.0f - 0.4f * p.ovoidAsym), p.r));
+        case Object::ShapeKind::Cylinder:   return SN::leaf(P::Cylinder, glm::vec3(p.r, p.halfH, 0.0f));
+        case Object::ShapeKind::Cone:       return SN::leaf(P::Cone, glm::vec3(p.r, p.halfH, 0.0f));
+        case Object::ShapeKind::Torus:      return SN::leaf(P::Torus, glm::vec3(p.majorR, p.minorR, 0.0f));
+        case Object::ShapeKind::RoundedBox: return SN::leaf(P::RoundBox, glm::vec3(0.5f), p.fillet);
+        case Object::ShapeKind::Paraboloid: return SN::leaf(P::Sphere, glm::vec3(p.r)); // no SDF prim yet
+        case Object::ShapeKind::Cube:
+        default:                            return SN::leaf(P::Box, glm::vec3(0.5f));
+    }
+}
+
+// Lower an EXISTING object into an SDF node so blend/boolean can take the actual
+// shape the user selected as an operand (not just a dropdown template). A field
+// object contributes its expression tree directly; everything else maps through
+// its shape kind + params.
+geom::SdfNode objectToSdfNode(const Object& o) {
+    if (o.hasField()) return o.getFieldData();
+    return shapeToSdfLeaf(o.getShapeKind(), o.getShapeParams());
+}
+
+struct ShapeKindDef { Object::ShapeKind k; const char* label; };
+
+void shapeKindCombo(const char* label, int& idx, const ShapeKindDef* kinds, int count) {
+    if (idx < 0 || idx >= count) idx = 0;
+    if (ImGui::BeginCombo(label, kinds[idx].label)) {
+        for (int i = 0; i < count; ++i) {
+            bool sel = (i == idx);
+            if (ImGui::Selectable(kinds[i].label, sel)) idx = i;
+            if (sel) ImGui::SetItemDefaultFocus();
+        }
+        ImGui::EndCombo();
+    }
+}
+
 void configurePaintBrushPreset(Zone& zone, Tool::Type type) {
     if (!zone.getBrushSystem()) {
         zone.initializeBrushSystem();
@@ -173,7 +214,7 @@ void Game::renderCreatorSectionTabs() {
     ImGui::SameLine();
     renderSectionButton(CreatorSection::Create3D, "3D");
     ImGui::SameLine();
-    renderSectionButton(CreatorSection::Character, "Avatar");
+    renderSectionButton(CreatorSection::Character, "Character");
     ImGui::SameLine();
     renderSectionButton(CreatorSection::World, "World");
     ImGui::SameLine();
@@ -456,7 +497,8 @@ void Game::render3DConsole() {
         {Mode3D::FaceBrush, "Face Brush"},
         {Mode3D::FacePaint, "Face Fill"},
         {Mode3D::Pottery, "Pottery"},
-        {Mode3D::Rotation, "Rotate"}
+        {Mode3D::Rotation, "Rotate"},
+        {Mode3D::Morph, "Morph"}
     };
     ImGui::TextUnformatted("Mode");
     for (int i = 0; i < IM_ARRAYSIZE(modeDefs); ++i) {
@@ -580,6 +622,267 @@ void Game::render3DConsole() {
                 }
             }
         }
+    }
+
+    // --- Morph (topology) ------------------------------------------------
+    // Direct + math editing of a selected polyhedron's vertices. Drag handles in
+    // the viewport (Morph mode), or type exact coordinates here. Two views of
+    // one model.
+    if (_current3DMode == Mode3D::Morph) {
+        ImGui::Separator();
+        ImGui::TextUnformatted("Morph (topology)");
+        Object* o = _selectedObject3D;
+        if (!o) {
+            ImGui::TextDisabled("Select a shape (Select mode) first.");
+        } else if (o->isBinaryField()) {
+            ImGui::TextDisabled("Drag the gold handle in the viewport to move operand B.");
+            glm::vec3 off = o->getFieldOperandBOffset();
+            if (ImGui::DragFloat3("Operand B pos", &off.x, 0.01f, -3.0f, 3.0f, "%.3f"))
+                o->setFieldOperandBOffset(off);
+            if (o->isMorphField()) {
+                float t = o->getMorphParam();
+                if (ImGui::SliderFloat("Blend t", &t, 0.0f, 1.0f, "%.2f")) o->setMorphParam(t);
+            }
+        } else if (o->isPatch()) {
+            ImGui::Text("Control net %dx%d (degree %d,%d)",
+                        o->getPatchDegreeU() + 1, o->getPatchDegreeV() + 1,
+                        o->getPatchDegreeU(), o->getPatchDegreeV());
+            ImGui::TextDisabled("Drag the control handles in the viewport.");
+            if (ImGui::Button("Raise degree U")) o->elevatePatchU();
+            ImGui::SameLine();
+            if (ImGui::Button("Raise degree V")) o->elevatePatchV();
+            if (_patchCtrlIndex >= 0 && _patchCtrlIndex < o->getPatchControlCount()) {
+                glm::vec3 c = o->getPatchControlLocal(_patchCtrlIndex);
+                if (ImGui::DragFloat3("Control point", &c.x, 0.01f, -5.0f, 5.0f, "%.3f"))
+                    o->setPatchControlLocal(_patchCtrlIndex, c);
+            }
+            // The same coin, algebra side: the surface's polynomial coefficients.
+            // Editing these rebuilds the control net; dragging handles updates these.
+            if (ImGui::CollapsingHeader("Polynomial coefficients (u^k v^l)")) {
+                ImGui::TextDisabled("S(u,v) = sum  a(k,l) * u^k * v^l  (geometry <-> algebra)");
+                const geom::BezierPatch& p = o->getPatchData();
+                std::vector<glm::vec3> coeff = geom::patchToMonomial(p);
+                int nu = p.nu();
+                int editedK = -1, editedL = -1; glm::vec3 editedVal(0.0f);
+                for (int l = 0; l < p.nv(); ++l)
+                    for (int k = 0; k < p.nu(); ++k) {
+                        glm::vec3 c = coeff[l * nu + k];
+                        char label[40];
+                        std::snprintf(label, sizeof(label), "a(u^%d v^%d)##coef", k, l);
+                        if (ImGui::DragFloat3(label, &c.x, 0.005f, -20.0f, 20.0f, "%.3f")) {
+                            editedK = k; editedL = l; editedVal = c;
+                        }
+                    }
+                if (editedK >= 0) {
+                    coeff[editedL * nu + editedK] = editedVal;
+                    o->setBezierPatch(geom::monomialToPatch(coeff, p.du, p.dv));
+                }
+            }
+        } else if (o->getGeometryType() != Object::GeometryType::Polyhedron) {
+            ImGui::TextDisabled("Vertex editing is for polyhedra (for now).");
+        } else {
+            ImGui::Text("Vertices: %d   Selected: %d",
+                        o->getPolyhedronVertexCount(), _morphVertexIndex);
+            ImGui::TextDisabled("Drag a handle in the viewport, or type below.");
+            if (_morphVertexIndex >= 0 && _morphVertexIndex < o->getPolyhedronVertexCount()) {
+                glm::vec3 v = o->getPolyhedronVertexLocal(_morphVertexIndex);
+                if (ImGui::DragFloat3("Vertex (local)", &v.x, 0.01f, -5.0f, 5.0f, "%.3f")) {
+                    o->setPolyhedronVertexLocal(_morphVertexIndex, v);
+                }
+                // Math readouts: incident edge lengths from the polyhedron faces.
+                const auto& pd = o->getPolyhedronData();
+                float minE = 1e9f, maxE = 0.0f; int count = 0;
+                for (const auto& face : pd.faces) {
+                    for (size_t k = 0; k < face.size(); ++k) {
+                        int a = face[k], b = face[(k + 1) % face.size()];
+                        if (a == _morphVertexIndex || b == _morphVertexIndex) {
+                            float len = glm::length(pd.vertices[a] - pd.vertices[b]);
+                            minE = std::min(minE, len); maxE = std::max(maxE, len); ++count;
+                        }
+                    }
+                }
+                if (count > 0) ImGui::Text("Incident edge length: %.3f - %.3f", minE, maxE);
+            }
+        }
+    }
+
+    // --- Blend (A -> B) --------------------------------------------------
+    // Binary: interpolate EXACTLY two shapes (lerp of their signed-distance
+    // fields). A is the selected shape or a template; B is a template. If A is
+    // the selected shape the result replaces it; otherwise a new shape is made.
+    {
+        ImGui::Separator();
+        ImGui::TextUnformatted("Blend  (A -> B)");
+        ImGui::TextDisabled("Interpolates two shapes. A and B are the only inputs.");
+        static const ShapeKindDef kinds[] = {
+            {Object::ShapeKind::Sphere, "Sphere"},   {Object::ShapeKind::Cube, "Box"},
+            {Object::ShapeKind::Ellipsoid, "Ellipsoid"}, {Object::ShapeKind::RoundedBox, "Rounded Box"},
+            {Object::ShapeKind::Cylinder, "Cylinder"}, {Object::ShapeKind::Cone, "Cone"},
+            {Object::ShapeKind::Torus, "Torus"},     {Object::ShapeKind::Ovoid, "Ovoid"},
+        };
+        const int kindCount = static_cast<int>(sizeof(kinds) / sizeof(kinds[0]));
+        static int aIdx = 0, bIdx = 1;
+        static float blendT = 0.5f;
+        static int aSource = 0; // 0 = selected shape, 1 = template
+        const bool haveSel = (_selectedObject3D != nullptr);
+
+        // Operand A — stable labels + int* overload so clicks register reliably.
+        ImGui::RadioButton("A = Selected", &aSource, 0);
+        ImGui::SameLine();
+        ImGui::RadioButton("A = Template", &aSource, 1);
+        if (!haveSel) aSource = 1; // no selection → fall back to template
+        if (aSource == 0 && haveSel) ImGui::Text("   A: %s", _selectedObject3D->getIdentifier().c_str());
+        else {
+            if (!haveSel) ImGui::TextDisabled("   (select a shape to use 'A = Selected')");
+            shapeKindCombo("A shape", aIdx, kinds, kindCount);
+        }
+
+        // Operand B
+        shapeKindCombo("B shape", bIdx, kinds, kindCount);
+        ImGui::SliderFloat("A  <->  B", &blendT, 0.0f, 1.0f, "%.2f");
+
+        const bool replace = (aSource == 0 && haveSel);
+        if (ImGui::Button(replace ? "Blend (replace selected)" : "Blend (create new)")) {
+            geom::SdfNode a = replace ? objectToSdfNode(*_selectedObject3D)
+                                      : shapeToSdfLeaf(kinds[aIdx].k, Object::ShapeParams{});
+            geom::SdfNode b = shapeToSdfLeaf(kinds[bIdx].k, Object::ShapeParams{});
+            geom::SdfNode node = geom::SdfNode::binary(geom::SdfOp::Morph, a, b, blendT);
+            if (replace) {
+                _selectedObject3D->setFieldShape(node, 1.4f);
+            } else {
+                auto obj = std::make_unique<Object>();
+                obj->setFieldShape(node, 1.3f);
+                glm::mat4 t = glm::translate(glm::mat4(1.0f), _camera.pos + _camera.front * 3.0f);
+                t = glm::scale(t, _brush.scale * _brush.size);
+                obj->setTransform(t);
+                obj->updateCollisionZone(t);
+                for (int f = 0; f < obj->getFaces(); ++f)
+                    obj->setFaceColor(f, _currentColor[0], _currentColor[1], _currentColor[2]);
+                mgr.active().world().addObject(std::move(obj));
+            }
+        }
+        if (_selectedObject3D && _selectedObject3D->isMorphField()) {
+            float t = _selectedObject3D->getMorphParam();
+            if (ImGui::SliderFloat("Edit blend (selected)", &t, 0.0f, 1.0f, "%.2f"))
+                _selectedObject3D->setMorphParam(t);
+        }
+    }
+
+    // --- Boolean (A op B) ------------------------------------------------
+    // Binary: combine EXACTLY two shapes by a set operation. A is the selected
+    // shape or a template; B is a template placed by its offset. A = selected →
+    // result replaces it; otherwise a new shape is made.
+    {
+        ImGui::Separator();
+        ImGui::TextUnformatted("Boolean  (A op B)");
+        ImGui::TextDisabled("Set op on two shapes. A and B are the only inputs.");
+        static const ShapeKindDef kinds[] = {
+            {Object::ShapeKind::Sphere, "Sphere"},   {Object::ShapeKind::Cube, "Box"},
+            {Object::ShapeKind::Ellipsoid, "Ellipsoid"}, {Object::ShapeKind::Cylinder, "Cylinder"},
+            {Object::ShapeKind::Cone, "Cone"},       {Object::ShapeKind::Torus, "Torus"},
+        };
+        const int kindCount = static_cast<int>(sizeof(kinds) / sizeof(kinds[0]));
+        static int aIdx = 1, bIdx = 0; // Box, Sphere
+        static int opIdx = 2;          // Subtract
+        static float off[3] = {0.3f, 0.3f, 0.3f};
+        static float smoothK = 0.1f;
+        static int aSource = 0;
+        const char* ops[] = {"Union (A + B)", "Intersect (A & B)", "Subtract (A - B)", "Smooth Union"};
+        const geom::SdfOp opMap[] = {geom::SdfOp::Union, geom::SdfOp::Intersect,
+                                     geom::SdfOp::Subtract, geom::SdfOp::SmoothUnion};
+        const bool haveSel = (_selectedObject3D != nullptr);
+
+        ImGui::RadioButton("A = Selected##b", &aSource, 0);
+        ImGui::SameLine();
+        ImGui::RadioButton("A = Template##b", &aSource, 1);
+        if (!haveSel) aSource = 1;
+        if (aSource == 0 && haveSel) ImGui::Text("   A: %s", _selectedObject3D->getIdentifier().c_str());
+        else {
+            if (!haveSel) ImGui::TextDisabled("   (select a shape to use 'A = Selected')");
+            shapeKindCombo("A shape##b", aIdx, kinds, kindCount);
+        }
+
+        shapeKindCombo("B shape##b", bIdx, kinds, kindCount);
+        ImGui::Combo("Operation", &opIdx, ops, IM_ARRAYSIZE(ops));
+        ImGui::DragFloat3("B offset", off, 0.01f, -1.5f, 1.5f, "%.2f");
+        if (opIdx == 3) ImGui::SliderFloat("Smoothness", &smoothK, 0.0f, 0.5f, "%.2f");
+
+        const bool replace = (aSource == 0 && haveSel);
+        if (ImGui::Button(replace ? "Boolean (replace selected)" : "Boolean (create new)")) {
+            geom::SdfNode a = replace ? objectToSdfNode(*_selectedObject3D)
+                                      : shapeToSdfLeaf(kinds[aIdx].k, Object::ShapeParams{});
+            geom::SdfNode b = shapeToSdfLeaf(kinds[bIdx].k, Object::ShapeParams{});
+            b.offset = glm::vec3(off[0], off[1], off[2]);
+            float blend = (opIdx == 3) ? smoothK : 0.5f;
+            geom::SdfNode node = geom::SdfNode::binary(opMap[opIdx], a, b, blend);
+            if (replace) {
+                _selectedObject3D->setFieldShape(node, 1.6f);
+            } else {
+                auto obj = std::make_unique<Object>();
+                obj->setFieldShape(node, 1.6f);
+                glm::mat4 t = glm::translate(glm::mat4(1.0f), _camera.pos + _camera.front * 3.0f);
+                t = glm::scale(t, _brush.scale * _brush.size);
+                obj->setTransform(t);
+                obj->updateCollisionZone(t);
+                for (int f = 0; f < obj->getFaces(); ++f)
+                    obj->setFaceColor(f, _currentColor[0], _currentColor[1], _currentColor[2]);
+                mgr.active().world().addObject(std::move(obj));
+            }
+        }
+    }
+
+    // --- Implicit (math) -------------------------------------------------
+    // Type an algebraic surface f(x,y,z) = 0 (Desmos-style). The 0 iso-surface
+    // is meshed by marching tetrahedra. Two sides of the same coin as the
+    // control-point editor that will come later.
+    {
+        ImGui::Separator();
+        ImGui::TextUnformatted("Implicit  f(x,y,z) = 0");
+        static char buf[256] = "x*x + y*y + z*z - 0.25";
+        ImGui::InputText("f(x,y,z)", buf, sizeof(buf));
+        ImGui::TextDisabled("ops + - * / ^   funcs sin cos tan sqrt abs exp log   consts pi e");
+        if (ImGui::SmallButton("Sphere")) std::snprintf(buf, sizeof(buf), "x*x + y*y + z*z - 0.25");
+        ImGui::SameLine();
+        if (ImGui::SmallButton("Gyroid")) std::snprintf(buf, sizeof(buf), "sin(8*x)*cos(8*y) + sin(8*y)*cos(8*z) + sin(8*z)*cos(8*x)");
+        ImGui::SameLine();
+        if (ImGui::SmallButton("Torus")) std::snprintf(buf, sizeof(buf), "(sqrt(x*x + y*y) - 0.3)^2 + z*z - 0.01");
+        ImGui::SameLine();
+        if (ImGui::SmallButton("Heart")) std::snprintf(buf, sizeof(buf), "(x*x + 2.25*z*z + y*y - 0.25)^3 - x*x*y*y*y - 0.1125*z*z*y*y*y");
+        if (ImGui::Button("Create Implicit")) {
+            geom::SdfNode node = geom::makeImplicit(buf);
+            auto obj = std::make_unique<Object>();
+            obj->setFieldShape(node, 1.1f);
+            glm::mat4 t = glm::translate(glm::mat4(1.0f), _camera.pos + _camera.front * 3.0f);
+            t = glm::scale(t, _brush.scale * _brush.size);
+            obj->setTransform(t);
+            obj->updateCollisionZone(t);
+            for (int f = 0; f < obj->getFaces(); ++f)
+                obj->setFaceColor(f, _currentColor[0], _currentColor[1], _currentColor[2]);
+            mgr.active().world().addObject(std::move(obj));
+        }
+    }
+
+    // --- Surface (control net) -------------------------------------------
+    // Bezier control-net surface: a grid of draggable control points. Create a
+    // sheet, then sculpt it in Morph mode (drag the gold/blue control handles).
+    {
+        ImGui::Separator();
+        ImGui::TextUnformatted("Surface (control net)");
+        static int du = 3, dv = 3;
+        ImGui::SliderInt("Degree U", &du, 1, 6);
+        ImGui::SliderInt("Degree V", &dv, 1, 6);
+        if (ImGui::Button("Create Surface")) {
+            auto obj = std::make_unique<Object>();
+            obj->setBezierPatch(geom::makeBezierGrid(du, dv, 0.5f));
+            glm::mat4 t = glm::translate(glm::mat4(1.0f), _camera.pos + _camera.front * 3.0f);
+            t = glm::scale(t, _brush.scale * _brush.size);
+            obj->setTransform(t);
+            obj->updateCollisionZone(t);
+            for (int f = 0; f < obj->getFaces(); ++f)
+                obj->setFaceColor(f, _currentColor[0], _currentColor[1], _currentColor[2]);
+            mgr.active().world().addObject(std::move(obj));
+        }
+        ImGui::TextDisabled("Then use Morph mode to drag the control points.");
     }
 
     if (_current3DMode == Mode3D::FaceBrush) {
@@ -793,26 +1096,8 @@ void Game::renderCharacterConsole() {
             ImGui::EndTabItem();
         }
 
-        if (ImGui::BeginTabItem("Appearance")) {
+        if (ImGui::BeginTabItem("Form")) {
             ImGui::BeginDisabled(_characterDesignLocked);
-
-            char hairStyle[64];
-            std::snprintf(hairStyle, sizeof(hairStyle), "%s", _player.state.hairStyle.c_str());
-            if (ImGui::InputText("Hair Style", hairStyle, sizeof(hairStyle))) {
-                _player.setHairStyle(hairStyle);
-            }
-
-            char eyeColor[32];
-            std::snprintf(eyeColor, sizeof(eyeColor), "%s", _player.state.eyeColor.c_str());
-            if (ImGui::InputText("Eye Color", eyeColor, sizeof(eyeColor))) {
-                _player.setEyeColor(eyeColor);
-            }
-
-            char skinTone[32];
-            std::snprintf(skinTone, sizeof(skinTone), "%s", _player.state.skinTone.c_str());
-            if (ImGui::InputText("Skin Tone", skinTone, sizeof(skinTone))) {
-                _player.setSkinTone(skinTone);
-            }
 
             float height = body.height;
             if (ImGui::SliderFloat("Height", &height, 0.5f, 2.5f, "%.2f m")) {

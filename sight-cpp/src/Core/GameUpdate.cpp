@@ -217,6 +217,106 @@ void Game::update(float dt) {
         } else if (_current3DMode == Mode3D::FaceBrush) {
             collect3DTargets(toolTargets);
             Tool::FaceBrush(_window, this, mgr, dt, toolTargets);
+        } else if (_current3DMode == Mode3D::Morph) {
+            // Direct topology editing: drag a polyhedron's vertices ("waterbending").
+            Object* obj = _selectedObject3D;
+            if (obj && obj->getGeometryType() == Object::GeometryType::Polyhedron &&
+                obj->getPolyhedronVertexCount() > 0) {
+                const GLdouble* mv = _camera.modelview;
+                const GLdouble* pr = _camera.projection;
+                const GLint*    vp = _camera.viewport;
+                glm::mat4 xf = obj->getTransform();
+                double winX = xpos * scaleX;
+                double winY = vp[3] - ypos * scaleY; // GL y-up
+
+                // On press: pick the nearest vertex in screen space.
+                if (mouseLeftNow && !_mouseLeftPressedLast) {
+                    int best = -1; double bestD = 1e18;
+                    for (int i = 0; i < obj->getPolyhedronVertexCount(); ++i) {
+                        glm::vec3 w = glm::vec3(xf * glm::vec4(obj->getPolyhedronVertexLocal(i), 1.0f));
+                        GLdouble sx, sy, sz;
+                        if (gluProject(w.x, w.y, w.z, mv, pr, vp, &sx, &sy, &sz)) {
+                            double d = (sx - winX) * (sx - winX) + (sy - winY) * (sy - winY);
+                            if (d < bestD) { bestD = d; best = i; }
+                        }
+                    }
+                    if (best >= 0 && bestD < 40.0 * 40.0) _morphVertexIndex = best;
+                }
+
+                // While held: drag the selected vertex to the cursor at its depth.
+                if (mouseLeftNow && _morphVertexIndex >= 0 &&
+                    _morphVertexIndex < obj->getPolyhedronVertexCount()) {
+                    glm::vec3 wv = glm::vec3(xf * glm::vec4(obj->getPolyhedronVertexLocal(_morphVertexIndex), 1.0f));
+                    GLdouble sx, sy, sz;
+                    if (gluProject(wv.x, wv.y, wv.z, mv, pr, vp, &sx, &sy, &sz)) {
+                        GLdouble nx, ny, nz;
+                        if (gluUnProject(winX, winY, sz, mv, pr, vp, &nx, &ny, &nz)) {
+                            glm::vec3 local = glm::vec3(glm::inverse(xf) *
+                                glm::vec4((float)nx, (float)ny, (float)nz, 1.0f));
+                            obj->setPolyhedronVertexLocal(_morphVertexIndex, local);
+                        }
+                    }
+                }
+            } else if (obj && obj->isBinaryField()) {
+                // Embodied editing: drag operand B's holographic handle to move
+                // the second shape; the blend/boolean result re-forms live.
+                const GLdouble* mv = _camera.modelview;
+                const GLdouble* pr = _camera.projection;
+                const GLint*    vp = _camera.viewport;
+                glm::mat4 xf = obj->getTransform();
+                double winX = xpos * scaleX;
+                double winY = vp[3] - ypos * scaleY;
+                glm::vec3 hw = glm::vec3(xf * glm::vec4(obj->getFieldOperandBOffset(), 1.0f));
+                GLdouble sx, sy, sz;
+                bool projected = gluProject(hw.x, hw.y, hw.z, mv, pr, vp, &sx, &sy, &sz);
+                if (mouseLeftNow && !_mouseLeftPressedLast && projected) {
+                    double d = (sx - winX) * (sx - winX) + (sy - winY) * (sy - winY);
+                    if (d < 45.0 * 45.0) _fieldHandleDragging = true;
+                }
+                if (!mouseLeftNow) _fieldHandleDragging = false;
+                if (mouseLeftNow && _fieldHandleDragging && projected) {
+                    GLdouble nx, ny, nz;
+                    if (gluUnProject(winX, winY, sz, mv, pr, vp, &nx, &ny, &nz)) {
+                        glm::vec3 local = glm::vec3(glm::inverse(xf) *
+                            glm::vec4((float)nx, (float)ny, (float)nz, 1.0f));
+                        obj->setFieldOperandBOffset(local);
+                    }
+                }
+            } else if (obj && obj->isPatch() && obj->getPatchControlCount() > 0) {
+                // Drag the control points of a Bezier surface (waterbending the
+                // control net; the surface re-forms live).
+                const GLdouble* mv = _camera.modelview;
+                const GLdouble* pr = _camera.projection;
+                const GLint*    vp = _camera.viewport;
+                glm::mat4 xf = obj->getTransform();
+                double winX = xpos * scaleX;
+                double winY = vp[3] - ypos * scaleY;
+                if (mouseLeftNow && !_mouseLeftPressedLast) {
+                    int best = -1; double bestD = 1e18;
+                    for (int i = 0; i < obj->getPatchControlCount(); ++i) {
+                        glm::vec3 w = glm::vec3(xf * glm::vec4(obj->getPatchControlLocal(i), 1.0f));
+                        GLdouble sx, sy, sz;
+                        if (gluProject(w.x, w.y, w.z, mv, pr, vp, &sx, &sy, &sz)) {
+                            double d = (sx - winX) * (sx - winX) + (sy - winY) * (sy - winY);
+                            if (d < bestD) { bestD = d; best = i; }
+                        }
+                    }
+                    if (best >= 0 && bestD < 40.0 * 40.0) _patchCtrlIndex = best;
+                }
+                if (mouseLeftNow && _patchCtrlIndex >= 0 &&
+                    _patchCtrlIndex < obj->getPatchControlCount()) {
+                    glm::vec3 wv = glm::vec3(xf * glm::vec4(obj->getPatchControlLocal(_patchCtrlIndex), 1.0f));
+                    GLdouble sx, sy, sz;
+                    if (gluProject(wv.x, wv.y, wv.z, mv, pr, vp, &sx, &sy, &sz)) {
+                        GLdouble nx, ny, nz;
+                        if (gluUnProject(winX, winY, sz, mv, pr, vp, &nx, &ny, &nz)) {
+                            glm::vec3 local = glm::vec3(glm::inverse(xf) *
+                                glm::vec4((float)nx, (float)ny, (float)nz, 1.0f));
+                            obj->setPatchControlLocal(_patchCtrlIndex, local);
+                        }
+                    }
+                }
+            }
         }
 
         _mouseLeftPressedLast = mouseLeftNow;

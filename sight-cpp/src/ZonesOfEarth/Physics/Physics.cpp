@@ -546,13 +546,12 @@ namespace Physics {
                 bool overlapZ = (minA.z <= maxB.z) && (maxA.z >= minB.z);
                 if(!(overlapX && overlapY && overlapZ)) continue;
 
-                // SAT touch gate for polyhedra — exact 1:1 with the rendered geometry.
-                // For non-polyhedra (cube/sphere/cylinder/cone) Object::isTouching returns
-                // false; fall back to the AABB overlap result we already have above.
-                const bool bothPolyhedra =
-                    a->getGeometryType() == Object::GeometryType::Polyhedron &&
-                    b->getGeometryType() == Object::GeometryType::Polyhedron;
-                if (bothPolyhedra && !a->isTouching(*b)) continue;
+                // SAT touch gate for flat-faced spatial bodies. Smooth, complex,
+                // field, and patch objects continue to the broader convex/AABB path.
+                const bool bothFlatFaced =
+                    a->getSpatialKind() == Object::SpatialKind::Polyhedron &&
+                    b->getSpatialKind() == Object::SpatialKind::Polyhedron;
+                if (bothFlatFaced && !a->isTouching(*b)) continue;
 
                 if (anyCollisionLaw) {
                     bool allowed = false;

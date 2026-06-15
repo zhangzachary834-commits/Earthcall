@@ -265,6 +265,7 @@ build/src/Person/Body/BodyPart/Limb/Foot.o: \
   src/Form/Object/Object/CollisionZone.hpp \
   src/Form/Object/Geometry/SmoothSurface.hpp \
   src/Form/Object/Geometry/ComplexShape.hpp \
+  src/Form/Object/Geometry/Sdf.hpp src/Form/Object/Geometry/Patch.hpp \
   src/Form/Object/Automation/Automation.hpp
 
 src/Person/Body/BodyPart/Limb/Foot.hpp:
@@ -808,5 +809,9 @@ src/Form/Object/Object/CollisionZone.hpp:
 src/Form/Object/Geometry/SmoothSurface.hpp:
 
 src/Form/Object/Geometry/ComplexShape.hpp:
+
+src/Form/Object/Geometry/Sdf.hpp:
+
+src/Form/Object/Geometry/Patch.hpp:
 
 src/Form/Object/Automation/Automation.hpp:

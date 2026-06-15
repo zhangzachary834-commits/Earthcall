@@ -263,6 +263,7 @@ build/src/Integration/EarthcallAPI.o: src/Integration/EarthcallAPI.cpp \
   src/Form/Object/Object/CollisionZone.hpp \
   src/Form/Object/Geometry/SmoothSurface.hpp \
   src/Form/Object/Geometry/ComplexShape.hpp \
+  src/Form/Object/Geometry/Sdf.hpp src/Form/Object/Geometry/Patch.hpp \
   src/Form/Object/Automation/Automation.hpp \
   src/Person/Body/BodyPart/BodyPart.hpp \
   src/Integration/../Person/Soul/Soul.hpp \
@@ -811,6 +812,10 @@ src/Form/Object/Object/CollisionZone.hpp:
 src/Form/Object/Geometry/SmoothSurface.hpp:
 
 src/Form/Object/Geometry/ComplexShape.hpp:
+
+src/Form/Object/Geometry/Sdf.hpp:
+
+src/Form/Object/Geometry/Patch.hpp:
 
 src/Form/Object/Automation/Automation.hpp:
 

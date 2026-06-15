@@ -346,7 +346,7 @@ public:
 
 private:
     enum class PerspectiveMode { FirstPerson = 0, SecondPerson, ThirdPerson };
-    enum class Mode3D { None = -1, FacePaint = 0, FaceBrush, BrushCreate, Pottery, Rotation, Selection };
+    enum class Mode3D { None = -1, FacePaint = 0, FaceBrush, BrushCreate, Pottery, Rotation, Selection, Morph };
     enum class ToolTarget3D { WorldObjects = 0, AvatarBodyParts };
     enum class CreatorSection { Paint = 0, Create3D, Character, World, Assets, Relations };
 
@@ -440,6 +440,9 @@ private:
 
     // 3D selection
     Object* _selectedObject3D = nullptr;
+    int _morphVertexIndex = -1;   // selected vertex for the polyhedron Morph tool
+    bool _fieldHandleDragging = false; // dragging a binary-field operand handle
+    int _patchCtrlIndex = -1;     // selected control point for the Bezier patch Morph tool
 
     // Straight line tool state
     bool  _straightLineMode      = false;

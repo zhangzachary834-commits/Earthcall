@@ -16,6 +16,8 @@
 #include "Object/CollisionZone.hpp"
 #include "Geometry/SmoothSurface.hpp"
 #include "Geometry/ComplexShape.hpp"
+#include "Geometry/Sdf.hpp"
+#include "Geometry/Patch.hpp"
 #include "Automation/Automation.hpp"
 #include <unordered_map>
 #include <memory>
@@ -41,7 +43,9 @@ public:
     // so this enum is APPEND-ONLY.
     enum class ShapeKind {
         Cube = 0, Polyhedron = 1, Sphere = 2, Cylinder = 3, Cone = 4,  // legacy-aligned
-        Ellipsoid = 5, Ovoid = 6, Paraboloid = 7, Torus = 8, RoundedBox = 9
+        Ellipsoid = 5, Ovoid = 6, Paraboloid = 7, Torus = 8, RoundedBox = 9,
+        Field = 10, // SDF expression (morph / boolean / implicit) — see fieldData
+        Patch = 11  // Bezier control-net surface — see patchData
     };
 
     // Per-shape parameters (defaults match the geom factory defaults so an
@@ -154,17 +158,30 @@ private:
     // is retained for the polyhedron path and legacy save migration.
     geom::SmoothSurfaceData smoothData;
     geom::ComplexShapeData  complexData;
+    geom::SdfNode           fieldData;     // SDF expression when _hasField
+    float                   _fieldExtent = 1.0f;
+    geom::TessMesh          _fieldMesh;    // cached field tessellation (rebuilt on change)
+    geom::BezierPatch       patchData;     // control-net surface when _hasPatch
+    geom::TessMesh          _patchMesh;    // cached patch tessellation
     bool _hasSmooth  = false;
     bool _hasComplex = false;
+    bool _hasField   = false;
+    bool _hasPatch   = false;
     ShapeKind _shapeKind = ShapeKind::Cube;
     ShapeParams _shapeParams;
 
     // Cached local-space surface vertices for GJK support queries on the new
     // topology shapes (argmax dot(v,dir)). Rebuilt when the shape changes.
     std::vector<glm::vec3> _supportCloud;
+    // Cached local-space AABB of the topology mesh, so updateCollisionZone only
+    // transforms 8 corners instead of the whole (huge) support cloud per call.
+    glm::vec3 _localMin{-0.5f};
+    glm::vec3 _localMax{ 0.5f};
 
     void drawSmoothModel() const;
     void drawComplexModel() const;
+    void drawFieldModel() const;
+    void drawPatchModel() const;
     void rebuildSupportCloud();
 
 public:
@@ -354,6 +371,8 @@ public:
         geometryType = t;
         _hasSmooth = false;
         _hasComplex = false;
+        _hasField = false;
+        _hasPatch = false;
         switch (t) {
             case GeometryType::Cube:       _shapeKind = ShapeKind::Cube;       initFaceTextures();                       break;
             case GeometryType::Polyhedron: _shapeKind = ShapeKind::Polyhedron; initFaceTextures();                       break;
@@ -388,27 +407,101 @@ public:
     // --- Topology-based geometry model (smooth surfaces / complex shapes) ---
     // The fundamental category of the object. Named primitives are merely
     // parameterizations inside a category, never the identity itself.
-    enum class SpatialKind { Polyhedron, SmoothSurface, ComplexShape };
+    enum class SpatialKind { Polyhedron, SmoothSurface, ComplexShape, Field, Patch };
     SpatialKind getSpatialKind() const {
+        if (_hasPatch)   return SpatialKind::Patch;
+        if (_hasField)   return SpatialKind::Field;
         if (_hasComplex) return SpatialKind::ComplexShape;
         if (_hasSmooth)  return SpatialKind::SmoothSurface;
         return SpatialKind::Polyhedron; // legacy cube/poly map here for now
     }
+
+    // --- Control-net (Bezier patch) editing -------------------------------
+    bool hasPatch() const { return _hasPatch; }
+    bool isPatch() const { return hasPatch(); }
+    const geom::BezierPatch& getPatchData() const { return patchData; }
+    void setBezierPatch(const geom::BezierPatch& p) {
+        patchData = p; _hasPatch = true;
+        _hasField = _hasSmooth = _hasComplex = false;
+        _shapeKind = ShapeKind::Patch;
+        initFaceTextures(); rebuildSupportCloud();
+    }
+    int getPatchControlCount() const { return _hasPatch ? static_cast<int>(patchData.ctrl.size()) : 0; }
+    glm::vec3 getPatchControlLocal(int i) const {
+        return (_hasPatch && i >= 0 && i < static_cast<int>(patchData.ctrl.size()))
+                   ? patchData.ctrl[i] : glm::vec3(0.0f);
+    }
+    void setPatchControlLocal(int i, const glm::vec3& v) {
+        if (_hasPatch && i >= 0 && i < static_cast<int>(patchData.ctrl.size())) {
+            patchData.ctrl[i] = v; rebuildSupportCloud();
+        }
+    }
+    int getPatchDegreeU() const { return _hasPatch ? patchData.du : 0; }
+    int getPatchDegreeV() const { return _hasPatch ? patchData.dv : 0; }
+    void elevatePatchU() { if (_hasPatch) { geom::elevateU(patchData); initFaceTextures(); rebuildSupportCloud(); } }
+    void elevatePatchV() { if (_hasPatch) { geom::elevateV(patchData); rebuildSupportCloud(); } }
     bool hasSmoothSurface() const { return _hasSmooth; }
     bool hasComplexShape()  const { return _hasComplex; }
+    bool hasField()         const { return _hasField; }
     const geom::SmoothSurfaceData& getSmoothData()  const { return smoothData; }
     const geom::ComplexShapeData&  getComplexData() const { return complexData; }
+    const geom::SdfNode&           getFieldData()   const { return fieldData; }
     void setSmoothSurface(const geom::SmoothSurfaceData& s) {
-        smoothData = s; _hasSmooth = true; _hasComplex = false; initFaceTextures(); rebuildSupportCloud();
+        smoothData = s; _hasSmooth = true; _hasComplex = false; _hasField = false; _hasPatch = false; initFaceTextures(); rebuildSupportCloud();
     }
     void setComplexShape(const geom::ComplexShapeData& c) {
-        complexData = c; _hasComplex = true; _hasSmooth = false; initFaceTextures(); rebuildSupportCloud();
+        complexData = c; _hasComplex = true; _hasSmooth = false; _hasField = false; _hasPatch = false; initFaceTextures(); rebuildSupportCloud();
     }
-    void clearTopologyModel() { _hasSmooth = false; _hasComplex = false; _supportCloud.clear(); }
+    // An SDF-defined shape (morph / boolean / implicit). `extent` is the half-size
+    // of the region the field is meshed/marched over.
+    void setFieldShape(const geom::SdfNode& f, float extent = 1.0f) {
+        fieldData = f; _fieldExtent = extent;
+        _hasField = true; _hasSmooth = false; _hasComplex = false; _hasPatch = false;
+        _shapeKind = ShapeKind::Field;
+        initFaceTextures(); rebuildSupportCloud();
+    }
+    float getFieldExtent() const { return _fieldExtent; }
+    // Live-edit the blend of a Morph/SmoothUnion field (re-tessellates).
+    bool isMorphField() const {
+        return _hasField && (fieldData.op == geom::SdfOp::Morph || fieldData.op == geom::SdfOp::SmoothUnion);
+    }
+    float getMorphParam() const { return fieldData.t; }
+    void setMorphParam(float t) {
+        if (!isMorphField()) return;
+        fieldData.t = glm::clamp(t, 0.0f, 1.0f);
+        rebuildSupportCloud(); // rebuilds the cached field mesh + support cloud
+    }
+
+    // A binary field (blend/boolean) — operand B can be moved in the scene.
+    bool isBinaryField() const { return _hasField && fieldData.children.size() == 2; }
+    glm::vec3 getFieldOperandBOffset() const {
+        return isBinaryField() ? fieldData.children[1].offset : glm::vec3(0.0f);
+    }
+    void setFieldOperandBOffset(const glm::vec3& off) {
+        if (!isBinaryField()) return;
+        fieldData.children[1].offset = off;
+        rebuildSupportCloud();
+    }
+    void clearTopologyModel() { _hasSmooth = false; _hasComplex = false; _hasField = false; _hasPatch = false; _supportCloud.clear(); }
 
     // Polyhedron-specific methods
     void setPolyhedronData(const PolyhedronData& data);
     const PolyhedronData& getPolyhedronData() const { return polyhedronData; }
+
+    // --- Direct topology editing (the Morph tool) -------------------------
+    int getPolyhedronVertexCount() const { return static_cast<int>(polyhedronData.vertices.size()); }
+    glm::vec3 getPolyhedronVertexLocal(int i) const {
+        return (i >= 0 && i < static_cast<int>(polyhedronData.vertices.size()))
+                   ? polyhedronData.vertices[i] : glm::vec3(0.0f);
+    }
+    // Move one vertex in local space and refresh derived data (normals, bounds).
+    void setPolyhedronVertexLocal(int i, const glm::vec3& v) {
+        if (i < 0 || i >= static_cast<int>(polyhedronData.vertices.size())) return;
+        polyhedronData.vertices[i] = v;
+        polyhedronData.computeNormals();
+        polyhedronData.computeFaceAreas();
+        updateCollisionZone(getTransform());
+    }
     
     // Create common polyhedrons
     void createTetrahedron();
