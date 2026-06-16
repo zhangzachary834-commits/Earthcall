@@ -28,8 +28,15 @@ void World::update(float dt){
         groundY = gT[3][1] + 0.5f*scaleY;
     }
 
-    // Sub-step large delta times to avoid physics explosions during blocking operations (e.g., saving)
-    const float maxStep = 0.02f; // 50 FPS equivalent per sub-step
+    // Sub-step large delta times to avoid physics explosions during blocking operations (e.g., saving).
+    // Anti-"spiral of death": never simulate more than maxFrameTime of physics in a single frame.
+    // Without this clamp, one slow frame -> larger dt -> more substeps -> even slower frame, runaway
+    // (measured: steps 1 -> 17 -> 105 as dt grew 0.0 -> 0.33 -> 2.08s, effectively freezing the app).
+    // Clamping dt drops the excess wall-clock time instead of trying to "catch up" all at once, so the
+    // substep count is bounded (here <= 0.1/0.02 = 5) and the sim recovers on the next frame.
+    const float maxStep = 0.02f;      // 50 FPS equivalent per sub-step
+    const float maxFrameTime = 0.1f;  // cap simulated time per frame (anti-spiral)
+    if (dt > maxFrameTime) dt = maxFrameTime;
     int steps = std::max(1, (int)std::ceil(dt / maxStep));
     float stepDt = dt / steps;
 

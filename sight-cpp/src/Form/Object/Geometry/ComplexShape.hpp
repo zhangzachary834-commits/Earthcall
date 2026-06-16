@@ -1,6 +1,7 @@
 #pragma once
 
 #include <glm/glm.hpp>
+#include <string>
 #include <vector>
 #include "SmoothSurface.hpp"
 
@@ -20,7 +21,16 @@ namespace geom {
 //   Fairness — G2: curvature continuous, its rate jumps (class-A seam)
 enum class EdgeContinuity { Hard, Soft, Fairness };
 
+enum class EdgeCurveModel { Unknown, Polyline, LineSegment, Circle };
+enum class ComplexConstituentKind { Patch, Edge };
+
+struct ComplexConstituentRef {
+    ComplexConstituentKind kind = ComplexConstituentKind::Patch;
+    int id = 0;
+};
+
 struct SurfacePatch {
+    int id = 0; // stable constituent id for laws/tools; vector index may change
     enum class Type { Planar, Smooth, Mesh };
     Type type = Type::Planar;
 
@@ -39,10 +49,21 @@ struct SurfacePatch {
 };
 
 struct ClassifiedEdge {
+    int id = 0; // stable constituent id for laws/tools; vector index may change
+
+    // Current adjacency still stores patch vector indices for fast local access.
+    // patchAId / patchBId preserve the stable graph identity for law targets.
     int patchA = -1;
     int patchB = -1;
+    int patchAId = 0;
+    int patchBId = 0;
     EdgeContinuity continuity = EdgeContinuity::Hard;
     float filletRadius = 0.0f;          // for Soft edges (rendered in a later stage)
+
+    EdgeCurveModel curveModel = EdgeCurveModel::Unknown;
+    glm::vec3 circleCenter{0.0f};
+    glm::vec3 circleNormal{0.0f, 0.0f, 1.0f};
+    float circleRadius = 0.0f;
     std::vector<glm::vec3> curve;       // edge curve as a local-space polyline
 };
 
@@ -51,6 +72,18 @@ struct ComplexShapeData {
     std::vector<ClassifiedEdge> edges;
 
     int patchCount() const { return static_cast<int>(patches.size()); }
+
+    int addPatch(const SurfacePatch& patch);
+    int addEdge(const ClassifiedEdge& edge);
+    SurfacePatch* findPatch(int id);
+    const SurfacePatch* findPatch(int id) const;
+    ClassifiedEdge* findEdge(int id);
+    const ClassifiedEdge* findEdge(int id) const;
+    bool validateTopology(std::string* reason = nullptr) const;
+
+private:
+    int nextPatchId = 1;
+    int nextEdgeId = 1;
 };
 
 // --- Builders (local space, ~[-0.5, 0.5]) ----------------------------------

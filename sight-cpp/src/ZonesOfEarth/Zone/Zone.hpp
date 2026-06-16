@@ -11,7 +11,7 @@
 
 class World; // forward decl
 
-class Zone : public Singular
+class Zone : public Object
 {
 public:
     struct Stroke {
@@ -171,6 +171,8 @@ public:
     const Deletability &deletability() const { return _deletable; }
 
 private:
+    void buildProperties() override {}
+
     std::string _name;
     Scope _scope;
     Qualities _qualities;

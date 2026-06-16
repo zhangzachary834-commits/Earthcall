@@ -8,9 +8,11 @@ public:
     Soul(std::string identity = "");
     ~Soul();
 
-    std::string getIdentifier() const;
+    std::string getIdentifier() const override;
 
 private: 
+    void buildProperties() override {}
+
     std::string _identity;
 };
 

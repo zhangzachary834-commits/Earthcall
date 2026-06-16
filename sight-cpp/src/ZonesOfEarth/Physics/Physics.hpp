@@ -169,6 +169,10 @@ namespace Physics {
         // Filter by geometry type flags
         bool limitByGeometry = false;
         std::vector<Object::GeometryType> geometryTypes;
+        // Preferred topology-level filter. When enabled, this is checked before
+        // legacy geometryTypes so laws can target the real spatial category.
+        bool limitBySpatialKind = false;
+        std::vector<Object::SpatialKind> spatialKinds;
         // Filter by object type string equality
         bool limitByObjectType = false;
         std::vector<std::string> objectTypes;

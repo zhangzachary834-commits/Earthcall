@@ -6,13 +6,19 @@
 #include "Form/Object/Formation/Formation.hpp"
 #include "Singular.hpp"
 
-class Law extends Object, Relation {
+// This class should eventually govern Physics. Physics should be extended from this class
+class Law : Object, Relation {
     private:
         Formation* authors;
     public:
         Law(const std::string& name);
         Law(const std::string& name, const std::string& a, const std::string& b, bool directed = false, float weight = 1.0f);
         ~Law();
+
+        Formation* Conditions() const;
+        void setConditions(Formation* conditions);
+
+        // Create algorithm to use ordinary tools to create conditions. 
 
         void describe() const;
         bool involves(const std::string& entity) const;

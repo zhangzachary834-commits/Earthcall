@@ -108,4 +108,7 @@ public:
     AttachmentData attachment;
 
     void addEvent(const RelationEvent& e) { events.push_back(e); }
+
+private:
+    void buildProperties() override {}
 };

@@ -8,6 +8,86 @@ namespace geom {
 
 static const float kPI = 3.14159265358979323846f;
 
+int ComplexShapeData::addPatch(const SurfacePatch& patch) {
+    SurfacePatch copy = patch;
+    if (copy.id <= 0) {
+        copy.id = nextPatchId++;
+    } else {
+        nextPatchId = std::max(nextPatchId, copy.id + 1);
+    }
+    patches.push_back(copy);
+    return static_cast<int>(patches.size()) - 1;
+}
+
+int ComplexShapeData::addEdge(const ClassifiedEdge& edge) {
+    ClassifiedEdge copy = edge;
+    if (copy.id <= 0) {
+        copy.id = nextEdgeId++;
+    } else {
+        nextEdgeId = std::max(nextEdgeId, copy.id + 1);
+    }
+    if (copy.patchA >= 0 && copy.patchA < static_cast<int>(patches.size())) {
+        copy.patchAId = patches[copy.patchA].id;
+    }
+    if (copy.patchB >= 0 && copy.patchB < static_cast<int>(patches.size())) {
+        copy.patchBId = patches[copy.patchB].id;
+    }
+    edges.push_back(copy);
+    return static_cast<int>(edges.size()) - 1;
+}
+
+SurfacePatch* ComplexShapeData::findPatch(int id) {
+    for (auto& patch : patches) if (patch.id == id) return &patch;
+    return nullptr;
+}
+
+const SurfacePatch* ComplexShapeData::findPatch(int id) const {
+    for (const auto& patch : patches) if (patch.id == id) return &patch;
+    return nullptr;
+}
+
+ClassifiedEdge* ComplexShapeData::findEdge(int id) {
+    for (auto& edge : edges) if (edge.id == id) return &edge;
+    return nullptr;
+}
+
+const ClassifiedEdge* ComplexShapeData::findEdge(int id) const {
+    for (const auto& edge : edges) if (edge.id == id) return &edge;
+    return nullptr;
+}
+
+bool ComplexShapeData::validateTopology(std::string* reason) const {
+    auto fail = [&](const std::string& message) {
+        if (reason) *reason = message;
+        return false;
+    };
+    for (size_t i = 0; i < patches.size(); ++i) {
+        if (patches[i].id <= 0) return fail("complex patch has no stable id");
+        for (size_t j = i + 1; j < patches.size(); ++j) {
+            if (patches[i].id == patches[j].id) return fail("duplicate complex patch id");
+        }
+    }
+    for (size_t i = 0; i < edges.size(); ++i) {
+        const ClassifiedEdge& edge = edges[i];
+        if (edge.id <= 0) return fail("complex edge has no stable id");
+        for (size_t j = i + 1; j < edges.size(); ++j) {
+            if (edge.id == edges[j].id) return fail("duplicate complex edge id");
+        }
+        if (edge.patchA < 0 || edge.patchA >= static_cast<int>(patches.size()) ||
+            edge.patchB < 0 || edge.patchB >= static_cast<int>(patches.size())) {
+            return fail("complex edge references an invalid patch");
+        }
+        if (edge.patchAId != 0 && edge.patchAId != patches[edge.patchA].id) {
+            return fail("complex edge patchA id does not match patch index");
+        }
+        if (edge.patchBId != 0 && edge.patchBId != patches[edge.patchB].id) {
+            return fail("complex edge patchB id does not match patch index");
+        }
+    }
+    if (reason) reason->clear();
+    return true;
+}
+
 // ---------------------------------------------------------------------------
 // Builders
 // ---------------------------------------------------------------------------
@@ -38,25 +118,31 @@ static SurfacePatch smoothPatch(const SmoothSurfaceData& s) {
 
 ComplexShapeData cappedCylinder(float r, float halfH) {
     ComplexShapeData c;
-    c.patches.push_back(smoothPatch(makeCylinderSide(r, halfH)));     // 0: round side
-    c.patches.push_back(planarDisk(r, +halfH, glm::vec3(0, 0, 1)));   // 1: top cap
-    c.patches.push_back(planarDisk(r, -halfH, glm::vec3(0, 0, -1)));  // 2: bottom cap
-    ClassifiedEdge top; top.patchA = 0; top.patchB = 1; top.continuity = EdgeContinuity::Hard;
+    int side = c.addPatch(smoothPatch(makeCylinderSide(r, halfH)));      // round side
+    int topCap = c.addPatch(planarDisk(r, +halfH, glm::vec3(0, 0, 1)));  // top cap
+    int botCap = c.addPatch(planarDisk(r, -halfH, glm::vec3(0, 0, -1))); // bottom cap
+    ClassifiedEdge top; top.patchA = side; top.patchB = topCap; top.continuity = EdgeContinuity::Hard;
+    top.curveModel = EdgeCurveModel::Circle; top.circleCenter = glm::vec3(0, 0, +halfH);
+    top.circleNormal = glm::vec3(0, 0, 1); top.circleRadius = r;
     top.curve = diskPolygon(r, +halfH, 32);
-    ClassifiedEdge bot; bot.patchA = 0; bot.patchB = 2; bot.continuity = EdgeContinuity::Hard;
+    ClassifiedEdge bot; bot.patchA = side; bot.patchB = botCap; bot.continuity = EdgeContinuity::Hard;
+    bot.curveModel = EdgeCurveModel::Circle; bot.circleCenter = glm::vec3(0, 0, -halfH);
+    bot.circleNormal = glm::vec3(0, 0, -1); bot.circleRadius = r;
     bot.curve = diskPolygon(r, -halfH, 32);
-    c.edges.push_back(top);
-    c.edges.push_back(bot);
+    c.addEdge(top);
+    c.addEdge(bot);
     return c;
 }
 
 ComplexShapeData cappedCone(float r, float halfH) {
     ComplexShapeData c;
-    c.patches.push_back(smoothPatch(makeConeSide(r, halfH)));         // 0: round side (apex +halfH)
-    c.patches.push_back(planarDisk(r, -halfH, glm::vec3(0, 0, -1)));  // 1: base cap
-    ClassifiedEdge base; base.patchA = 0; base.patchB = 1; base.continuity = EdgeContinuity::Hard;
+    int side = c.addPatch(smoothPatch(makeConeSide(r, halfH)));        // round side (apex +halfH)
+    int baseCap = c.addPatch(planarDisk(r, -halfH, glm::vec3(0, 0, -1))); // base cap
+    ClassifiedEdge base; base.patchA = side; base.patchB = baseCap; base.continuity = EdgeContinuity::Hard;
+    base.curveModel = EdgeCurveModel::Circle; base.circleCenter = glm::vec3(0, 0, -halfH);
+    base.circleNormal = glm::vec3(0, 0, -1); base.circleRadius = r;
     base.curve = diskPolygon(r, -halfH, 32);
-    c.edges.push_back(base);
+    c.addEdge(base);
     return c;
 }
 
@@ -137,7 +223,7 @@ ComplexShapeData roundedBox(float half, float fillet) {
             ctr + (-u - v) * inset, ctr + (u - v) * inset,
             ctr + (u + v) * inset,  ctr + (-u + v) * inset
         };
-        c.patches.push_back(p);
+        c.addPatch(p);
     }
 
     // 12 edge fillet strips (real curved patches). Record each as a Soft edge
@@ -149,21 +235,28 @@ ComplexShapeData roundedBox(float half, float fillet) {
         {{0,1,0},{0,0,1},2,4}, {{0,1,0},{0,0,-1},2,5}, {{0,-1,0},{0,0,1},3,4}, {{0,-1,0},{0,0,-1},3,5},
     };
     for (const auto& e : edges) {
-        int patchIdx = c.patchCount();
-        c.patches.push_back(filletStrip(e.nA, e.nB, inset, fillet));
+        int patchIdx = c.addPatch(filletStrip(e.nA, e.nB, inset, fillet));
+        glm::vec3 axis = glm::normalize(glm::cross(e.nA, e.nB));
+        glm::vec3 base = e.nA * inset + e.nB * inset;
+
         ClassifiedEdge ce; ce.patchA = e.faceA; ce.patchB = patchIdx;
         ce.continuity = EdgeContinuity::Soft; ce.filletRadius = fillet;
-        c.edges.push_back(ce);
+        ce.curveModel = EdgeCurveModel::LineSegment;
+        ce.curve = {base + e.nA * fillet - axis * inset, base + e.nA * fillet + axis * inset};
+        c.addEdge(ce);
+
         ClassifiedEdge ce2; ce2.patchA = e.faceB; ce2.patchB = patchIdx;
         ce2.continuity = EdgeContinuity::Soft; ce2.filletRadius = fillet;
-        c.edges.push_back(ce2);
+        ce2.curveModel = EdgeCurveModel::LineSegment;
+        ce2.curve = {base + e.nB * fillet - axis * inset, base + e.nB * fillet + axis * inset};
+        c.addEdge(ce2);
     }
 
     // 8 corner octant caps (real curved patches).
     for (int sx = -1; sx <= 1; sx += 2)
         for (int sy = -1; sy <= 1; sy += 2)
             for (int sz = -1; sz <= 1; sz += 2)
-                c.patches.push_back(cornerOctant(glm::vec3(sx, sy, sz), inset, fillet));
+                c.addPatch(cornerOctant(glm::vec3(sx, sy, sz), inset, fillet));
 
     return c;
 }

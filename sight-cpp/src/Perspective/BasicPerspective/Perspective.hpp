@@ -1,10 +1,20 @@
-class Perspective extends Singular {
-    private:
-    public:
-        Perspective();
-        ~Perspective();
+#pragma once
 
-        void update(float deltaTime);
-        void render();
-        void handleInput(GLFWwindow* window);
+#include <string>
+#include <GLFW/glfw3.h>
+#include "Singular.hpp"
+
+class Perspective : public Singular {
+public:
+    Perspective();
+    ~Perspective();
+
+    void update(float deltaTime);
+    void render();
+    void handleInput(GLFWwindow* window);
+
+    std::string getIdentifier() const override { return "Perspective"; }
+
+private:
+    void buildProperties() override {}
 };

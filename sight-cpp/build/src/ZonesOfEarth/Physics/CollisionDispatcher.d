@@ -1,6 +1,8 @@
-build/src/ZonesOfEarth/Physics/Physics.o: \
-  src/ZonesOfEarth/Physics/Physics.cpp \
-  src/ZonesOfEarth/Physics/Physics.hpp /opt/homebrew/include/glm/glm.hpp \
+build/src/ZonesOfEarth/Physics/CollisionDispatcher.o: \
+  src/ZonesOfEarth/Physics/CollisionDispatcher.cpp \
+  src/ZonesOfEarth/Physics/CollisionDispatcher.hpp \
+  src/Form/Object/Object.hpp src/Form/Object/Formation/Formation.hpp \
+  src/Form/Form.hpp /opt/homebrew/include/glm/glm.hpp \
   /opt/homebrew/include/glm/detail/_fixes.hpp \
   /opt/homebrew/include/glm/detail/setup.hpp \
   /opt/homebrew/include/glm/detail/../simd/platform.h \
@@ -150,8 +152,7 @@ build/src/ZonesOfEarth/Physics/Physics.o: \
   /opt/homebrew/include/glm/vector_relational.hpp \
   /opt/homebrew/include/glm/integer.hpp \
   /opt/homebrew/include/glm/detail/func_integer.inl \
-  src/Form/Object/Object.hpp src/Form/Object/Formation/Formation.hpp \
-  src/Form/Form.hpp /opt/homebrew/Cellar/glfw/3.4/include/GLFW/glfw3.h \
+  /opt/homebrew/Cellar/glfw/3.4/include/GLFW/glfw3.h \
   src/Relation/RelationManager.hpp src/Relation/Relation.hpp \
   src/json.hpp src/Form/Singular.hpp \
   /opt/homebrew/include/glm/gtc/type_ptr.hpp \
@@ -263,10 +264,15 @@ build/src/ZonesOfEarth/Physics/Physics.o: \
   src/Form/Object/Geometry/SmoothSurface.hpp \
   src/Form/Object/Geometry/ComplexShape.hpp \
   src/Form/Object/Geometry/Sdf.hpp src/Form/Object/Geometry/Patch.hpp \
-  src/Form/Object/Automation/Automation.hpp \
-  src/ZonesOfEarth/Physics/CollisionDispatcher.hpp
+  src/Form/Object/Automation/Automation.hpp
 
-src/ZonesOfEarth/Physics/Physics.hpp:
+src/ZonesOfEarth/Physics/CollisionDispatcher.hpp:
+
+src/Form/Object/Object.hpp:
+
+src/Form/Object/Formation/Formation.hpp:
+
+src/Form/Form.hpp:
 
 /opt/homebrew/include/glm/glm.hpp:
 
@@ -568,12 +574,6 @@ src/ZonesOfEarth/Physics/Physics.hpp:
 
 /opt/homebrew/include/glm/detail/func_integer.inl:
 
-src/Form/Object/Object.hpp:
-
-src/Form/Object/Formation/Formation.hpp:
-
-src/Form/Form.hpp:
-
 /opt/homebrew/Cellar/glfw/3.4/include/GLFW/glfw3.h:
 
 src/Relation/RelationManager.hpp:
@@ -809,5 +809,3 @@ src/Form/Object/Geometry/Sdf.hpp:
 src/Form/Object/Geometry/Patch.hpp:
 
 src/Form/Object/Automation/Automation.hpp:
-
-src/ZonesOfEarth/Physics/CollisionDispatcher.hpp:

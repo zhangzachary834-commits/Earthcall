@@ -584,35 +584,76 @@ void Game::render3DConsole() {
     if (_polyhedron.shapeKind == Object::ShapeKind::Polyhedron) {
         ImGui::Separator();
         ImGui::TextUnformatted("Polyhedron");
+        auto selectRegularPolyhedron = [&](int faces) {
+            _polyhedron.currentType = faces;
+            _polyhedron.irregularType = 0;
+            _polyhedron.useCustom = false;
+        };
         if (ImGui::Button("Tetrahedron")) {
-            _polyhedron.currentType = 4;
+            selectRegularPolyhedron(4);
         }
         ImGui::SameLine();
         if (ImGui::Button("Octahedron")) {
-            _polyhedron.currentType = 8;
+            selectRegularPolyhedron(8);
         }
         ImGui::SameLine();
         if (ImGui::Button("Dodecahedron")) {
-            _polyhedron.currentType = 12;
+            selectRegularPolyhedron(12);
         }
         ImGui::SameLine();
         if (ImGui::Button("Icosahedron")) {
-            _polyhedron.currentType = 20;
+            selectRegularPolyhedron(20);
         }
-        ImGui::SliderInt("Faces", &_polyhedron.currentType, 4, 50);
+        if (ImGui::SliderInt("Faces", &_polyhedron.currentType, 4, 50)) {
+            _polyhedron.irregularType = 0;
+            _polyhedron.useCustom = false;
+        }
 
-        const char* concaveTypes[] = {"Regular", "Concave", "Star", "Crater"};
-        ImGui::Combo("Variant", &_polyhedron.concaveType, concaveTypes, IM_ARRAYSIZE(concaveTypes));
-        if (_polyhedron.concaveType == 1) {
-            ImGui::SliderFloat("Concavity", &_polyhedron.concavityAmount, 0.1f, 0.8f, "%.2f");
-        } else if (_polyhedron.concaveType == 2) {
-            ImGui::SliderFloat("Spike Length", &_polyhedron.spikeLength, 0.1f, 1.0f, "%.2f");
-        } else if (_polyhedron.concaveType == 3) {
-            ImGui::SliderFloat("Crater Depth", &_polyhedron.craterDepth, 0.1f, 0.5f, "%.2f");
+        if (ImGui::CollapsingHeader("Irregular Polyhedron")) {
+            const char* irregularTypes[] = {"None", "Prism", "Antiprism", "Pyramid", "Bipyramid", "Frustum"};
+            if (ImGui::Combo("Irregular Type", &_polyhedron.irregularType, irregularTypes, IM_ARRAYSIZE(irregularTypes))) {
+                if (_polyhedron.irregularType > 0) {
+                    _polyhedron.useCustom = false;
+                    _polyhedron.concaveType = 0;
+                }
+            }
+            if (_polyhedron.irregularType > 0) {
+                ImGui::SliderInt("Base Sides", &_polyhedron.irregularBaseSides, 3, 24);
+                ImGui::SliderFloat("Height", &_polyhedron.irregularHeight, 0.1f, 3.0f, "%.2f");
+                if (_polyhedron.irregularType == 5) {
+                    ImGui::SliderFloat("Top Scale", &_polyhedron.frustumTopScale, 0.05f, 2.0f, "%.2f");
+                }
+            }
+        }
+
+        if (!_polyhedron.useCustom && _polyhedron.irregularType == 0) {
+            const char* concaveTypes[] = {"Regular", "Concave", "Star", "Crater"};
+            if (ImGui::Combo("Variant", &_polyhedron.concaveType, concaveTypes, IM_ARRAYSIZE(concaveTypes)) &&
+                _polyhedron.concaveType > 0) {
+                _polyhedron.useCustom = false;
+                _polyhedron.irregularType = 0;
+            }
+            if (_polyhedron.concaveType == 1) {
+                ImGui::SliderFloat("Concavity", &_polyhedron.concavityAmount, 0.1f, 0.8f, "%.2f");
+            } else if (_polyhedron.concaveType == 2) {
+                ImGui::SliderFloat("Spike Length", &_polyhedron.spikeLength, 0.1f, 1.0f, "%.2f");
+            } else if (_polyhedron.concaveType == 3) {
+                ImGui::SliderFloat("Crater Depth", &_polyhedron.craterDepth, 0.1f, 0.5f, "%.2f");
+            }
         }
 
         if (ImGui::CollapsingHeader("Custom Polyhedron")) {
-            ImGui::Checkbox("Use Custom", &_polyhedron.useCustom);
+            bool useCustom = _polyhedron.useCustom;
+            if (ImGui::Checkbox("Use Custom", &useCustom)) {
+                _polyhedron.useCustom = useCustom;
+                if (_polyhedron.useCustom) {
+                    _polyhedron.irregularType = 0;
+                    _polyhedron.concaveType = 0;
+                    if (_polyhedron.customVertices.empty()) {
+                        _polyhedron.generateCustom();
+                    }
+                }
+            }
             if (_polyhedron.useCustom) {
                 bool changed = false;
                 changed |= ImGui::SliderInt("Vertices", &_polyhedron.customVertexCount, 3, 20);

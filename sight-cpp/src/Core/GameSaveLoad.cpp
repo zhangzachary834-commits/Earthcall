@@ -73,12 +73,15 @@ nlohmann::json Game::buildSaveJson() const {
             json tj;
             tj["allObjects"] = t.allObjects;
             tj["limitByGeometry"] = t.limitByGeometry;
+            tj["limitBySpatialKind"] = t.limitBySpatialKind;
             tj["limitByObjectType"] = t.limitByObjectType;
             tj["limitByAttribute"] = t.limitByAttribute;
             tj["limitByTag"] = t.limitByTag;
             tj["limitByExplicitList"] = t.limitByExplicitList;
             tj["geometryTypes"] = json::array();
             for (auto g : t.geometryTypes) tj["geometryTypes"].push_back(static_cast<int>(g));
+            tj["spatialKinds"] = json::array();
+            for (auto kind : t.spatialKinds) tj["spatialKinds"].push_back(static_cast<int>(kind));
             tj["objectTypes"] = t.objectTypes;
             tj["attributeKey"] = t.attributeKey;
             tj["attributeValue"] = t.attributeValue;
@@ -219,6 +222,7 @@ void Game::loadState(const std::string& filename) {
                 const auto& tj = lj["target"];
                 law.target.allObjects = tj.value("allObjects", true);
                 law.target.limitByGeometry = tj.value("limitByGeometry", false);
+                law.target.limitBySpatialKind = tj.value("limitBySpatialKind", false);
                 law.target.limitByObjectType = tj.value("limitByObjectType", false);
                 law.target.limitByAttribute = tj.value("limitByAttribute", false);
                 law.target.limitByTag = tj.value("limitByTag", false);
@@ -227,6 +231,11 @@ void Game::loadState(const std::string& filename) {
                 if (tj.contains("geometryTypes")) {
                     for (const auto& gi : tj["geometryTypes"])
                         law.target.geometryTypes.push_back(static_cast<Object::GeometryType>(gi.get<int>()));
+                }
+                law.target.spatialKinds.clear();
+                if (tj.contains("spatialKinds")) {
+                    for (const auto& ki : tj["spatialKinds"])
+                        law.target.spatialKinds.push_back(static_cast<Object::SpatialKind>(ki.get<int>()));
                 }
                 law.target.objectTypes.clear();
                 if (tj.contains("objectTypes")) {

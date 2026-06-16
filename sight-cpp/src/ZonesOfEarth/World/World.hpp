@@ -49,6 +49,8 @@ public:
     std::string getIdentifier() const override { return "World"; }
 
 private:
+    void buildProperties() override {}
+
     std::vector<std::unique_ptr<Object>> _objects;
     glm::vec3* _cameraPos = nullptr;
     float _playerEyeHeight = 0.0f;

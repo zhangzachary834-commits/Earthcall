@@ -97,17 +97,6 @@ bool Game::init() {
         mgr.active().world().addObject(std::move(ground));
     }
 
-    // TEMP perf probe: spawn 3 SDF-field (morph) objects to measure frame cost.
-    for (int i = 0; i < 3; ++i) {
-        auto o = std::make_unique<Object>();
-        geom::SdfNode a = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(0.5f));
-        geom::SdfNode b = geom::SdfNode::leaf(geom::SdfPrim::Box, glm::vec3(0.5f));
-        o->setFieldShape(geom::SdfNode::binary(geom::SdfOp::Morph, a, b, 0.5f), 1.0f);
-        glm::mat4 t = glm::translate(glm::mat4(1.0f), glm::vec3(i * 2.0f, 1.0f, 4.0f));
-        o->setTransform(t); o->updateCollisionZone(t);
-        mgr.active().world().addObject(std::move(o));
-    }
-
     printf("[Init] Checkpoint C: baseline objects created\n");
 
     // Physics default true

@@ -76,6 +76,8 @@ public:
     std::string getIdentifier() const override { return "Formation"; }
 
 private:
+    void buildProperties() override {}
+
     void integrateRelationTopology(const std::shared_ptr<Relation>& r);
     std::shared_ptr<Formation> findOrCreateRelationFormation(const std::shared_ptr<Relation>& r);
 

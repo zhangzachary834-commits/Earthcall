@@ -59,6 +59,8 @@ public:
     std::string getIdentifier() const override { return "Ourverse"; }
 
 private:
+    void buildProperties() override {}
+
     glm::vec3* cameraPos = nullptr;
     std::vector<std::unique_ptr<Object>> ownedObjects;
 };

@@ -189,6 +189,8 @@ public:
     std::string getIdentifier() const override { return soulName; }
 
 private:
+    void buildProperties() override {}
+
     Soul& _soul;
     Body& body;  // Body member variable
 

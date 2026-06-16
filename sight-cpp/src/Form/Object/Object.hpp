@@ -63,8 +63,20 @@ public:
         float fillet      = 0.12f;  // rounded-box fillet radius
     };
 
-
     std::string screenMode();
+
+    /**
+    Recursive Object Creation:
+    1. 
+    2. 
+    3. 
+    4. 
+
+    another extra-spatial Object stores the concept of the object for later use.
+    
+    Needs to be deeply interconnected with the law systems. Law is process/change. Singular/Object is identity/being. When one cross into the bounds of hte other it should move fluidly etween  both.
+
+    */
 
     // Get the dimensions of the object.
     int getDimensions();
@@ -446,6 +458,7 @@ public:
     const geom::SmoothSurfaceData& getSmoothData()  const { return smoothData; }
     const geom::ComplexShapeData&  getComplexData() const { return complexData; }
     const geom::SdfNode&           getFieldData()   const { return fieldData; }
+    const std::vector<glm::vec3>& getSupportCloud() const { return _supportCloud; }
     void setSmoothSurface(const geom::SmoothSurfaceData& s) {
         smoothData = s; _hasSmooth = true; _hasComplex = false; _hasField = false; _hasPatch = false; initFaceTextures(); rebuildSupportCloud();
     }
@@ -533,6 +546,8 @@ public:
     const std::vector<std::string>& getTags() const { return tags; }
 
 private:
+    void buildProperties() override {}
+
     glm::vec3 getLocalSupportPoint(const glm::vec3& localDirection) const;
     bool computeLocalPointPenetration(const glm::vec3& localPoint,
                                       glm::vec3& outSurfacePoint,
