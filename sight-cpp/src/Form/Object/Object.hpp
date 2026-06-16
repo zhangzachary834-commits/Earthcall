@@ -1,5 +1,24 @@
 #pragma once
 
+// ============================================================================
+// Object — the core spatial entity. This is one class, but its implementation
+// is split across several translation units by responsibility (the declaration
+// lives here; definitions are grouped where noted):
+//
+//   Object.cpp            constructor, simple property accessors, screenMode,
+//                         polyhedron factories, hover state, attributes & tags
+//   ObjectPaint.cpp       per-face texture init + paint/stroke/smudge/clone/
+//                         airbrush + texture layers & stroke history
+//   ObjectRender.cpp      drawCube / smooth / complex / field / drawObject /
+//                         highlight outline / drawPolyhedron (+ GL helpers)
+//   ObjectRaycast.cpp     raycastFace per-geometry picking (+ tri-soup ray test)
+//   ObjectCollision.cpp   collision zone/AABB, support cloud & support points,
+//                         point penetration, isPointInside / isTouching
+//   ObjectMotion.cpp      setTransform, rotation state/advance, automation clips
+//
+// (PolyhedronData and FaceTexture have their own files under Object/.)
+// ============================================================================
+
 #include <vector>
 #include <cstdint>
 #include "Formation/Formation.hpp"
