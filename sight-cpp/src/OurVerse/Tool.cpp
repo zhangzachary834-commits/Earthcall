@@ -1368,6 +1368,16 @@ void Tool::Selection3D(GLFWwindow *window, Core::Game *game,
     game->setSelectedObject3D(pickNearestObject(targets, rayO, rayDir));
 }
 
+Object* Tool::PickObject3D(GLFWwindow *window, Core::Game *game,
+                           const std::vector<Object*>& targets)
+{
+    // Same ray/pick path as Selection3D, but returns the hit instead of
+    // mutating the current selection (so a tool can pick operands freely).
+    glm::vec3 rayO, rayDir;
+    if (!buildMouseRay(window, game, rayO, rayDir)) return nullptr;
+    return pickNearestObject(targets, rayO, rayDir);
+}
+
 Tool::Type Tool::getType() const
 {
     return type;

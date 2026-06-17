@@ -346,7 +346,7 @@ public:
 
 private:
     enum class PerspectiveMode { FirstPerson = 0, SecondPerson, ThirdPerson };
-    enum class Mode3D { None = -1, FacePaint = 0, FaceBrush, BrushCreate, Pottery, Rotation, Selection, Morph };
+    enum class Mode3D { None = -1, FacePaint = 0, FaceBrush, BrushCreate, Pottery, Rotation, Selection, Morph, Combine };
     enum class ToolTarget3D { WorldObjects = 0, AvatarBodyParts };
     enum class CreatorSection { Paint = 0, Create3D, Character, World, Assets, Relations };
 
@@ -443,6 +443,12 @@ private:
     int _morphVertexIndex = -1;   // selected vertex for the polyhedron Morph tool
     bool _fieldHandleDragging = false; // dragging a binary-field operand handle
     int _patchCtrlIndex = -1;     // selected control point for the Bezier patch Morph tool
+
+    // Combine tool (in-scene boolean/blend): pick shape A, then shape B; the
+    // result (A op B) replaces A in place and B is consumed into it.
+    Object* _combineOperandA = nullptr; // first-picked operand, awaiting B
+    int   _combineOp = 2;               // 0 Union, 1 Intersect, 2 Subtract, 3 SmoothUnion, 4 Blend(Morph)
+    float _combineBlend = 0.15f;        // smoothness (SmoothUnion) / t (Blend)
 
     // Straight line tool state
     bool  _straightLineMode      = false;

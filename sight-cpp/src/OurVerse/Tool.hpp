@@ -111,6 +111,11 @@ public:
                           const std::vector<Object*>& targets);
     static void Selection3D(GLFWwindow* window, Core::Game* game,
                             const std::vector<Object*>& targets);
+    // Pick the object under the cursor/crosshair and RETURN it (no side effects).
+    // Shares the same ray/pick path as Selection3D; used by tools that need to
+    // pick an operand without changing the current selection.
+    static Object* PickObject3D(GLFWwindow* window, Core::Game* game,
+                                const std::vector<Object*>& targets);
 
     Type getType() const;
     std::string getTypeName() const;

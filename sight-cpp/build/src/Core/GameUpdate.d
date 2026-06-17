@@ -285,7 +285,7 @@ build/src/Core/GameUpdate.o: src/Core/GameUpdate.cpp src/Core/Game.hpp \
   src/Core/FacePaintSettings.hpp src/OurVerse/AdvancedFacePaint.hpp \
   src/Core/PlacementState.hpp src/Core/PolyhedronSettings.hpp \
   src/Core/PotteryTool.hpp src/Core/RotationSettings.hpp \
-  src/Core/SaveLoadState.hpp src/Core/Engine.hpp \
+  src/Core/SaveLoadState.hpp src/Core/Engine.hpp src/Core/SdfBuild.hpp \
   src/Rendering/HighlightSystem.hpp src/ZonesOfEarth/Physics/Physics.hpp \
   src/Person/PersonEvents.hpp
 
@@ -906,6 +906,8 @@ src/Core/RotationSettings.hpp:
 src/Core/SaveLoadState.hpp:
 
 src/Core/Engine.hpp:
+
+src/Core/SdfBuild.hpp:
 
 src/Rendering/HighlightSystem.hpp:
 

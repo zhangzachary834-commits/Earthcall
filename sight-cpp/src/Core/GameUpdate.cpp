@@ -4,6 +4,7 @@
 #include "Game.hpp"
 #include "Core/Engine.hpp"
 #include "Form/Object/Object.hpp"
+#include "Core/SdfBuild.hpp"
 #include "OurVerse/Tool.hpp"
 #include "OurVerse/AdvancedFacePaint.hpp"
 #include "Rendering/BrushSystem.hpp"
@@ -314,6 +315,52 @@ void Game::update(float dt) {
                                 glm::vec4((float)nx, (float)ny, (float)nz, 1.0f));
                             obj->setPatchControlLocal(_patchCtrlIndex, local);
                         }
+                    }
+                }
+            }
+        }
+        else if (_current3DMode == Mode3D::Combine) {
+            // In-scene boolean/blend: click shape A, then shape B. The result
+            // (A op B) replaces A in place; B is consumed into it (it becomes the
+            // draggable operand-B ghost editable in Morph mode). Right-click clears A.
+            std::vector<Object*> targets;
+            for (const auto& up : mgr.active().world().getOwnedObjects())
+                if (up && !(up->hasAttribute("baseline") &&
+                            up->getAttribute("baseline") == std::string("ground")))
+                    targets.push_back(up.get());
+
+            if (glfwGetMouseButton(_window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
+                _combineOperandA = nullptr;
+
+            if (mouseLeftNow && !_mouseLeftPressedLast) {
+                Object* pick = Tool::PickObject3D(_window, this, targets);
+                if (pick) {
+                    if (!_combineOperandA) {
+                        _combineOperandA = pick;       // first pick = operand A
+                        _selectedObject3D = pick;
+                    } else if (pick != _combineOperandA) {
+                        Object* A = _combineOperandA;
+                        Object* B = pick;
+                        glm::mat4 Ta = A->getTransform();
+                        glm::mat4 Tb = B->getTransform();
+                        geom::SdfNode an = objectToSdfNode(*A);
+                        geom::SdfNode bn = objectToSdfNode(*B);
+                        // Put B's centre in A's local frame so the op happens where B sits.
+                        bn.offset = glm::vec3(glm::inverse(Ta) * glm::vec4(glm::vec3(Tb[3]), 1.0f));
+                        const geom::SdfOp ops[] = {
+                            geom::SdfOp::Union, geom::SdfOp::Intersect, geom::SdfOp::Subtract,
+                            geom::SdfOp::SmoothUnion, geom::SdfOp::Morph };
+                        int oi = _combineOp; if (oi < 0 || oi > 4) oi = 2;
+                        float blend = (oi >= 3) ? _combineBlend : 0.5f;
+                        geom::SdfNode node = geom::SdfNode::binary(ops[oi], an, bn, blend);
+                        A->setFieldShape(node, 1.6f);  // offset baked in -> Morph handle lands on B
+                        // Consume B: it now lives inside A's field tree.
+                        auto& owned = mgr.active().world().getOwnedObjectsMutable();
+                        owned.erase(std::remove_if(owned.begin(), owned.end(),
+                                    [B](const std::unique_ptr<Object>& p){ return p.get() == B; }),
+                                    owned.end());
+                        _selectedObject3D = A;
+                        _combineOperandA = A;          // chain: result becomes the next A
                     }
                 }
             }

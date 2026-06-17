@@ -131,7 +131,7 @@ void Object::updateCollisionZone(const glm::mat4& transform) const {
         collisionZone.corners[6] = glm::vec3(maxCorner.x, maxCorner.y, maxCorner.z);
         collisionZone.corners[7] = glm::vec3(minCorner.x, maxCorner.y, maxCorner.z);
     } else {
-        // Local-space corners of a unit cube centered at origin (legacy behavior)
+        // Localace corners of a unit cube centered at origin (legacy behavior)
         glm::vec3 localCorners[8] = {
             {-0.5f, -0.5f, -0.5f},
             { 0.5f, -0.5f, -0.5f},

@@ -2,6 +2,7 @@
 
 #include "Game.hpp"
 #include "Form/Object/Object.hpp"
+#include "Core/SdfBuild.hpp"
 #include "Rendering/BrushSystem.hpp"
 #include "Rendering/RelationManagerWindow.hpp"
 #include "OurVerse/Tool.hpp"
@@ -50,32 +51,8 @@ void popActiveButtonStyle(bool active) {
     }
 }
 
-// Lower a named shape (+params) into an SDF leaf for morph/boolean composition.
-geom::SdfNode shapeToSdfLeaf(Object::ShapeKind k, const Object::ShapeParams& p) {
-    using P = geom::SdfPrim;
-    using SN = geom::SdfNode;
-    switch (k) {
-        case Object::ShapeKind::Sphere:     return SN::leaf(P::Sphere, glm::vec3(p.r));
-        case Object::ShapeKind::Ellipsoid:  return SN::leaf(P::Ellipsoid, glm::vec3(p.r, p.ry, p.rz));
-        case Object::ShapeKind::Ovoid:      return SN::leaf(P::Ellipsoid, glm::vec3(p.r, p.r * (1.0f - 0.4f * p.ovoidAsym), p.r));
-        case Object::ShapeKind::Cylinder:   return SN::leaf(P::Cylinder, glm::vec3(p.r, p.halfH, 0.0f));
-        case Object::ShapeKind::Cone:       return SN::leaf(P::Cone, glm::vec3(p.r, p.halfH, 0.0f));
-        case Object::ShapeKind::Torus:      return SN::leaf(P::Torus, glm::vec3(p.majorR, p.minorR, 0.0f));
-        case Object::ShapeKind::RoundedBox: return SN::leaf(P::RoundBox, glm::vec3(0.5f), p.fillet);
-        case Object::ShapeKind::Paraboloid: return SN::leaf(P::Sphere, glm::vec3(p.r)); // no SDF prim yet
-        case Object::ShapeKind::Cube:
-        default:                            return SN::leaf(P::Box, glm::vec3(0.5f));
-    }
-}
-
-// Lower an EXISTING object into an SDF node so blend/boolean can take the actual
-// shape the user selected as an operand (not just a dropdown template). A field
-// object contributes its expression tree directly; everything else maps through
-// its shape kind + params.
-geom::SdfNode objectToSdfNode(const Object& o) {
-    if (o.hasField()) return o.getFieldData();
-    return shapeToSdfLeaf(o.getShapeKind(), o.getShapeParams());
-}
+// shapeToSdfLeaf / objectToSdfNode now live in Core/SdfBuild.hpp (shared with the
+// in-scene Combine tool). Included below at file scope.
 
 struct ShapeKindDef { Object::ShapeKind k; const char* label; };
 
@@ -456,6 +433,7 @@ void Game::renderPaintConsole(Zone& zone) {
 
 void Game::set3DMode(Mode3D mode) {
     _current3DMode = mode;
+    _combineOperandA = nullptr; // drop any pending Combine operand on mode switch
     if (mode == Mode3D::FacePaint) {
         _currentTool = Tool(Tool::Type::FacePaint);
     } else if (mode == Mode3D::FaceBrush) {
@@ -498,7 +476,8 @@ void Game::render3DConsole() {
         {Mode3D::FacePaint, "Face Fill"},
         {Mode3D::Pottery, "Pottery"},
         {Mode3D::Rotation, "Rotate"},
-        {Mode3D::Morph, "Morph"}
+        {Mode3D::Morph, "Morph"},
+        {Mode3D::Combine, "Combine"}
     };
     ImGui::TextUnformatted("Mode");
     for (int i = 0; i < IM_ARRAYSIZE(modeDefs); ++i) {
@@ -663,6 +642,38 @@ void Game::render3DConsole() {
                 }
             }
         }
+    }
+
+    // --- Combine (in-scene boolean / blend) ------------------------------
+    // Pick the verb here, then do the nouns IN THE SCENE: click shape A, then
+    // shape B. The result (A op B) replaces A in place and B is absorbed into it.
+    // This is the embodied replacement for the A/B dropdown + Create flow below.
+    if (_current3DMode == Mode3D::Combine) {
+        ImGui::Separator();
+        ImGui::TextUnformatted("Combine  (click A, then B)");
+        const char* ops[] = { "Union  (A + B)", "Intersect  (A & B)", "Subtract  (A - B)",
+                              "Smooth Union", "Blend  (A <-> B)" };
+        ImGui::TextUnformatted("Operation");
+        for (int i = 0; i < 5; ++i) {
+            bool sel = (_combineOp == i);
+            pushActiveButtonStyle(sel, ImVec4(0.20f, 0.55f, 0.95f, 1.0f),
+                                       ImVec4(0.30f, 0.65f, 1.00f, 1.0f));
+            if (ImGui::Button(ops[i])) _combineOp = i;
+            popActiveButtonStyle(sel);
+            if (i != 2 && i != 4) ImGui::SameLine();
+        }
+        if (_combineOp == 3 || _combineOp == 4)
+            ImGui::SliderFloat(_combineOp == 3 ? "Smoothness" : "Blend t",
+                               &_combineBlend, 0.0f, 1.0f, "%.2f");
+        ImGui::Separator();
+        if (!_combineOperandA)
+            ImGui::TextColored(ImVec4(0.6f,0.9f,1.0f,1.0f), "Click shape A in the scene.");
+        else {
+            ImGui::TextColored(ImVec4(1.0f,0.85f,0.2f,1.0f), "A: %s",
+                               _combineOperandA->getIdentifier().c_str());
+            ImGui::TextUnformatted("Now click shape B  (right-click cancels).");
+        }
+        ImGui::TextDisabled("B is absorbed into A; drag it later in Morph mode.");
     }
 
     // --- Morph (topology) ------------------------------------------------
