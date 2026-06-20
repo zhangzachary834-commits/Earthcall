@@ -24,6 +24,24 @@ MouseHandler::~MouseHandler() {
     // Destructor - cleanup is handled automatically
 }
 
+void MouseHandler::primeCursorBaseline(GLFWwindow* window) {
+    double xpos = _cameraRotation.lastX;
+    double ypos = _cameraRotation.lastY;
+    if (window) {
+        glfwGetCursorPos(window, &xpos, &ypos);
+    }
+
+    _currentState.position = {static_cast<float>(xpos), static_cast<float>(ypos)};
+    _previousState.position = _currentState.position;
+    _currentState.delta = {0.0f, 0.0f};
+    _previousState.delta = {0.0f, 0.0f};
+    _cursorX = static_cast<float>(xpos);
+    _cursorY = static_cast<float>(ypos);
+    _cameraRotation.lastX = xpos;
+    _cameraRotation.lastY = ypos;
+    _cameraRotation.firstMouse = true;
+}
+
 void MouseHandler::update() {
     if (!_isEnabled) {
         return;
@@ -194,27 +212,41 @@ bool MouseHandler::isActionTriggered(const std::string& action) const {
 
 void MouseHandler::captureMouse(GLFWwindow* window) {
     if (window && !_currentState.isCaptured) {
+        primeCursorBaseline(window);
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
         _currentState.isCaptured = true;
         _cursorLocked = true;
+        primeCursorBaseline(window);
     }
 }
 
 void MouseHandler::releaseMouse(GLFWwindow* window) {
     if (window && _currentState.isCaptured) {
+        primeCursorBaseline(window);
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
         _currentState.isCaptured = false;
         _cursorLocked = false;
+        primeCursorBaseline(window);
     }
 }
 
 void MouseHandler::toggleCursorLock(GLFWwindow* window) {
+    if (!window) {
+        _cursorLocked = !_cursorLocked;
+        _currentState.isCaptured = _cursorLocked;
+        _cameraRotation.firstMouse = true;
+        return;
+    }
+
+    primeCursorBaseline(window);
     _cursorLocked = !_cursorLocked;
     if (_cursorLocked) {
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     } else {
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     }
+    _currentState.isCaptured = _cursorLocked;
+    primeCursorBaseline(window);
 }
 
 glm::vec3 MouseHandler::calculateCameraFront() const {
@@ -245,7 +277,7 @@ void MouseHandler::onWindowFocus(int focused) {
         // Reset ImGui/GLFW mouse pressed state similar to legacy
         ImGuiIO& io = ImGui::GetIO();
         for (int i = 0; i < IM_ARRAYSIZE(io.MouseDown); ++i) io.MouseDown[i] = false;
-        _cameraRotation.firstMouse = true;
+        primeCursorBaseline(nullptr);
     }
 }
 

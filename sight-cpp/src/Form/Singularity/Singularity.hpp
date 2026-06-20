@@ -16,6 +16,31 @@ public:
         Output
     }
 
+    enum class Modality {
+        Screen,
+        Sound,
+        Physical,
+        Symbolic,
+        Joys
+
+    }
+
+    enum class Earthcall {
+        Singularity,
+        Singular,
+        Relation,
+        Formation,
+        Person,
+        Soul,
+        Relationship,
+        Community,
+        Object,
+        Law,
+        Zone,
+        Home, 
+
+    }
+
     enum class ElementInput {
         Mouse,
         Keyboard,

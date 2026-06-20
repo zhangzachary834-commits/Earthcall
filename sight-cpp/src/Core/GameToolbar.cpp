@@ -434,6 +434,14 @@ void Game::renderPaintConsole(Zone& zone) {
 void Game::set3DMode(Mode3D mode) {
     _current3DMode = mode;
     _combineOperandA = nullptr; // drop any pending Combine operand on mode switch
+    _clayGrabbed = nullptr;     // and any in-progress Clay grab
+    _clayTarget  = nullptr;
+    _graphHasSel = false;       // and any node-graph selection
+    _graphDragging = false;
+    _graphScrubbing = false;
+    _graphCtxPath.clear();
+    _graphManualOffset.clear();
+    _graphPanelPath.assign(1, -999); // force the node panel to re-anchor on next select
     if (mode == Mode3D::FacePaint) {
         _currentTool = Tool(Tool::Type::FacePaint);
     } else if (mode == Mode3D::FaceBrush) {
@@ -477,7 +485,9 @@ void Game::render3DConsole() {
         {Mode3D::Pottery, "Pottery"},
         {Mode3D::Rotation, "Rotate"},
         {Mode3D::Morph, "Morph"},
-        {Mode3D::Combine, "Combine"}
+        {Mode3D::Combine, "Combine"},
+        {Mode3D::Sculpt, "Clay"},
+        {Mode3D::Graph, "Graph"}
     };
     ImGui::TextUnformatted("Mode");
     for (int i = 0; i < IM_ARRAYSIZE(modeDefs); ++i) {
@@ -490,12 +500,12 @@ void Game::render3DConsole() {
     int targetIdx = static_cast<int>(_current3DTarget);
     if (ImGui::RadioButton("World Objects", targetIdx == static_cast<int>(ToolTarget3D::WorldObjects))) {
         _current3DTarget = ToolTarget3D::WorldObjects;
-        _selectedObject3D = nullptr;
+        clearSelection3D();
     }
     ImGui::SameLine();
     if (ImGui::RadioButton("Avatar Parts", targetIdx == static_cast<int>(ToolTarget3D::AvatarBodyParts))) {
         _current3DTarget = ToolTarget3D::AvatarBodyParts;
-        _selectedObject3D = nullptr;
+        clearSelection3D();
     }
 
     ImGui::Separator();
@@ -553,6 +563,10 @@ void Game::render3DConsole() {
     ImGui::SliderFloat("Uniform Size", &_brush.size, 0.1f, 10.0f, "%.2f");
     ImGui::SliderFloat3("Scale", &_brush.scale.x, 0.1f, 8.0f, "%.2f");
     ImGui::SliderFloat3("Rotation", &_brush.rotation.x, -180.0f, 180.0f, "%.1f");
+    ImGui::SameLine();
+    if (ImGui::Button("Reset##CreateRotation")) {
+        _brush.rotation = glm::vec3(0.0f);
+    }
     ImGui::Checkbox("Grid Snap", &_brush.gridSnap);
     if (_brush.gridSnap) {
         ImGui::SliderFloat("Grid Size", &_brush.gridSize, 0.1f, 5.0f, "%.2f");
@@ -644,13 +658,16 @@ void Game::render3DConsole() {
         }
     }
 
-    // --- Combine (in-scene boolean / blend) ------------------------------
-    // Pick the verb here, then do the nouns IN THE SCENE: click shape A, then
-    // shape B. The result (A op B) replaces A in place and B is absorbed into it.
-    // This is the embodied replacement for the A/B dropdown + Create flow below.
-    if (_current3DMode == Mode3D::Combine) {
+    // --- Combine / Clay (in-scene boolean / blend) -----------------------
+    // Pick the verb here, then do the nouns IN THE SCENE. Combine: click shape A,
+    // then shape B. Clay: drag one shape into another and release. Either way the
+    // result (target op other) replaces the target in place and the other shape is
+    // absorbed into it. The embodied replacement for the A/B dropdown + Create flow.
+    if (_current3DMode == Mode3D::Combine || _current3DMode == Mode3D::Sculpt) {
+        const bool clay = (_current3DMode == Mode3D::Sculpt);
         ImGui::Separator();
-        ImGui::TextUnformatted("Combine  (click A, then B)");
+        ImGui::TextUnformatted(clay ? "Clay  (drag a shape into another)"
+                                    : "Combine  (click A, then B)");
         const char* ops[] = { "Union  (A + B)", "Intersect  (A & B)", "Subtract  (A - B)",
                               "Smooth Union", "Blend  (A <-> B)" };
         ImGui::TextUnformatted("Operation");
@@ -666,14 +683,26 @@ void Game::render3DConsole() {
             ImGui::SliderFloat(_combineOp == 3 ? "Smoothness" : "Blend t",
                                &_combineBlend, 0.0f, 1.0f, "%.2f");
         ImGui::Separator();
-        if (!_combineOperandA)
-            ImGui::TextColored(ImVec4(0.6f,0.9f,1.0f,1.0f), "Click shape A in the scene.");
-        else {
-            ImGui::TextColored(ImVec4(1.0f,0.85f,0.2f,1.0f), "A: %s",
-                               _combineOperandA->getIdentifier().c_str());
-            ImGui::TextUnformatted("Now click shape B  (right-click cancels).");
+        if (clay) {
+            if (!_clayGrabbed)
+                ImGui::TextColored(ImVec4(0.6f,0.9f,1.0f,1.0f),
+                                   "Drag a shape onto another, then release to fuse.");
+            else if (_clayTarget)
+                ImGui::TextColored(ImVec4(1.0f,0.85f,0.2f,1.0f),
+                                   "Release to fuse into: %s", _clayTarget->getIdentifier().c_str());
+            else
+                ImGui::TextColored(ImVec4(0.8f,0.8f,0.8f,1.0f),
+                                   "Dragging... overlap a shape to fuse.");
+        } else {
+            if (!_combineOperandA)
+                ImGui::TextColored(ImVec4(0.6f,0.9f,1.0f,1.0f), "Click shape A in the scene.");
+            else {
+                ImGui::TextColored(ImVec4(1.0f,0.85f,0.2f,1.0f), "A: %s",
+                                   _combineOperandA->getIdentifier().c_str());
+                ImGui::TextUnformatted("Now click shape B  (right-click cancels).");
+            }
         }
-        ImGui::TextDisabled("B is absorbed into A; drag it later in Morph mode.");
+        ImGui::TextDisabled("The absorbed shape stays draggable in Morph mode.");
     }
 
     // --- Morph (topology) ------------------------------------------------
@@ -1033,7 +1062,7 @@ void Game::renderCharacterConsole() {
                 const bool selected = part == _selectedCharacterPart;
                 if (ImGui::Selectable(part->getName().c_str(), selected)) {
                     _selectedCharacterPart = part;
-                    _selectedObject3D = part;
+                    setSelectedObject3D(part);
                     _current3DTarget = ToolTarget3D::AvatarBodyParts;
                 }
             }
@@ -1269,7 +1298,10 @@ void Game::renderPlacementInspector() {
 void Game::renderSelectionInspector() {
     ImGui::Separator();
     ImGui::TextUnformatted("Selection");
+    const int selectedCount = static_cast<int>(_selectedFormation3D.getMembers().size());
+    const int selectedRelations = static_cast<int>(_selectedFormation3D.relations().getAll().size());
     if (_selectedObject3D) {
+        ImGui::Text("Formation: %d objects, %d relations", selectedCount, selectedRelations);
         ImGui::TextWrapped("%s", _selectedObject3D->getIdentifier().c_str());
         glm::vec3 center = _selectedObject3D->getCenter();
         if (ImGui::DragFloat3("Center", &center.x, 0.01f, -100.0f, 100.0f, "%.2f")) {
@@ -1284,7 +1316,7 @@ void Game::renderSelectionInspector() {
         }
         ImGui::SameLine();
         if (ImGui::Button("Clear Selection")) {
-            _selectedObject3D = nullptr;
+            clearSelection3D();
         }
     } else {
         ImGui::TextDisabled("No object selected.");

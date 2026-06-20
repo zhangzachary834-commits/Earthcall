@@ -10,7 +10,7 @@
 #include "Form/Object/Formation/Formation.hpp"
 #include "Person/Body/BodyPart/BodyPart.hpp"
 #include "../Physics/Physics.hpp"
-#include "Singular.hpp"
+#include "Form/Singular/Singular.hpp"
 
 class Ourverse : public Singular {
 public:

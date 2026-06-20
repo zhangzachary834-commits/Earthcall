@@ -1,5 +1,5 @@
 #include "Relation.hpp"
-#include "Singular.hpp"
+#include "Form/Singular/Singular.hpp"
 #include <iostream>
 #include <cstring>
 

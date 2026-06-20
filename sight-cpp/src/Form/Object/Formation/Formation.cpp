@@ -78,6 +78,23 @@ void Formation::removeMember(Singular* s) {
     members.erase(std::remove(members.begin(), members.end(), s), members.end());
 }
 
+void Formation::clearMembers() {
+    members.clear();
+    subformations.clear();
+}
+
+void Formation::clearRelations() {
+    relationMgr = RelationManager{};
+    subformations.clear();
+}
+
+void Formation::clear() {
+    members.clear();
+    relationMgr = RelationManager{};
+    subformations.clear();
+    relationTypeTag.clear();
+}
+
 void Formation::addRelation(const std::shared_ptr<Relation>& r) {
     if (!r) return;
     relationMgr.add(r);

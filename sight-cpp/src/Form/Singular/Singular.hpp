@@ -15,10 +15,11 @@ public:
     virtual ~Singular() = default;
     virtual std::string getIdentifier() const = 0;
 
-    Formation* properties() { return _properties; }
-    const Formation* properties() const { return _properties; }
+    Formation* singular_properties();
+    const Formation* singular_properties() const;
 
 protected:
-    Formation* _properties = nullptr;
+    std::vector<std::unique_ptr<Property>> _propertyRegistry;
+    Formation* _property_formation = nullptr;
     virtual void buildProperties() = 0;
 }; 

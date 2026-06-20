@@ -153,7 +153,7 @@ build/src/Person/Body/Body.o: src/Person/Body/Body.cpp \
   /opt/homebrew/include/glm/detail/func_integer.inl \
   /opt/homebrew/Cellar/glfw/3.4/include/GLFW/glfw3.h \
   src/Relation/RelationManager.hpp src/Relation/Relation.hpp \
-  src/json.hpp src/Form/Singular.hpp \
+  src/json.hpp src/Form/Singular/Singular.hpp \
   /opt/homebrew/include/glm/gtc/type_ptr.hpp \
   /opt/homebrew/include/glm/gtc/../gtc/quaternion.hpp \
   /opt/homebrew/include/glm/gtc/../gtc/constants.hpp \
@@ -594,7 +594,7 @@ src/Relation/Relation.hpp:
 
 src/json.hpp:
 
-src/Form/Singular.hpp:
+src/Form/Singular/Singular.hpp:
 
 /opt/homebrew/include/glm/gtc/type_ptr.hpp:
 

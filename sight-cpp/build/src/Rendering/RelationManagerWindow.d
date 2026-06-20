@@ -2,7 +2,8 @@ build/src/Rendering/RelationManagerWindow.o: \
   src/Rendering/RelationManagerWindow.cpp \
   src/Rendering/RelationManagerWindow.hpp \
   src/Relation/RelationManager.hpp src/Relation/Relation.hpp \
-  src/json.hpp src/Form/Singular.hpp /opt/homebrew/include/glm/glm.hpp \
+  src/json.hpp src/Form/Singular/Singular.hpp \
+  /opt/homebrew/include/glm/glm.hpp \
   /opt/homebrew/include/glm/detail/_fixes.hpp \
   /opt/homebrew/include/glm/detail/setup.hpp \
   /opt/homebrew/include/glm/detail/../simd/platform.h \
@@ -261,7 +262,7 @@ src/Relation/Relation.hpp:
 
 src/json.hpp:
 
-src/Form/Singular.hpp:
+src/Form/Singular/Singular.hpp:
 
 /opt/homebrew/include/glm/glm.hpp:
 

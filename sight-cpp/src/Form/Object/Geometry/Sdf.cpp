@@ -176,6 +176,15 @@ static float evalLeaf(const SdfNode& n, const glm::vec3& world) {
         case SdfPrim::Cone:      return sdCone(p, n.dims.x, n.dims.y);
         case SdfPrim::Torus:     return sdTorus(p, n.dims.x, n.dims.y);
         case SdfPrim::Expr:      return evalRpn(n.rpn, p.x, p.y, p.z);
+        case SdfPrim::Convex: {
+            // Convex polyhedron: intersection of face half-spaces -> max of plane
+            // distances. Exact inside/on-face; a valid 1-Lipschitz bound outside.
+            if (n.planes.empty()) return 1e9f; // no faces -> empty (ignored by unions)
+            float m = -1e9f;
+            for (const glm::vec4& pl : n.planes)
+                m = std::max(m, glm::dot(glm::vec3(pl), p) - pl.w);
+            return m;
+        }
     }
     return sdSphere(p, 0.5f);
 }
@@ -192,10 +201,11 @@ static float smin(float a, float b, float k) {
 float evalSdf(const SdfNode& n, const glm::vec3& p) {
     if (n.op == SdfOp::Leaf) return evalLeaf(n, p);
     if (n.children.size() < 2) {
-        return n.children.empty() ? 1.0f : evalSdf(n.children[0], p);
+        return (n.children.empty() || !n.children[0]) ? 1.0f : evalSdf(*n.children[0], p);
     }
-    float a = evalSdf(n.children[0], p);
-    float b = evalSdf(n.children[1], p);
+    if (!n.children[0] || !n.children[1]) return 1.0f;
+    float a = evalSdf(*n.children[0], p);
+    float b = evalSdf(*n.children[1], p);
     switch (n.op) {
         case SdfOp::Morph:       return glm::mix(a, b, glm::clamp(n.t, 0.0f, 1.0f));
         case SdfOp::Union:       return std::min(a, b);

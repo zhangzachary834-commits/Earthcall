@@ -67,6 +67,8 @@ private:
     CameraRotationState _cameraRotation;
     Core::Game* _gameInstance = nullptr;
 
+    void primeCursorBaseline(GLFWwindow* window);
+
 public:
     MouseHandler();
     ~MouseHandler();

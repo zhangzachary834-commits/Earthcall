@@ -175,7 +175,7 @@ build/src/Rendering/DesignSystem.o: src/Rendering/DesignSystem.cpp \
   src/Form/Object/Object.hpp src/Form/Object/Formation/Formation.hpp \
   src/Form/Form.hpp /opt/homebrew/Cellar/glfw/3.4/include/GLFW/glfw3.h \
   src/Relation/RelationManager.hpp src/Relation/Relation.hpp \
-  src/json.hpp src/Form/Singular.hpp \
+  src/json.hpp src/Form/Singular/Singular.hpp \
   /opt/homebrew/include/glm/gtc/type_ptr.hpp \
   /opt/homebrew/include/glm/gtc/../gtc/quaternion.hpp \
   /opt/homebrew/include/glm/gtc/../gtc/constants.hpp \
@@ -632,7 +632,7 @@ src/Relation/Relation.hpp:
 
 src/json.hpp:
 
-src/Form/Singular.hpp:
+src/Form/Singular/Singular.hpp:
 
 /opt/homebrew/include/glm/gtc/type_ptr.hpp:
 

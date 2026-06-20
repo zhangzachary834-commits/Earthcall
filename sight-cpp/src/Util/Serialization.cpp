@@ -3,6 +3,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <string>
 #include <vector>
+#include <memory>
 #include <algorithm>
 
 // ------------------------------------------------------------------
@@ -111,8 +112,12 @@ static nlohmann::json sdfToJson(const geom::SdfNode& n) {
     j["offset"] = { n.offset.x, n.offset.y, n.offset.z };
     j["p0"] = n.p0; j["p1"] = n.p1; j["t"] = n.t;
     if (!n.expr.empty()) j["expr"] = n.expr;
+    if (!n.planes.empty()) {
+        j["planes"] = nlohmann::json::array();
+        for (const auto& pl : n.planes) j["planes"].push_back({ pl.x, pl.y, pl.z, pl.w });
+    }
     j["children"] = nlohmann::json::array();
-    for (const auto& c : n.children) j["children"].push_back(sdfToJson(c));
+    for (const auto& c : n.children) if (c) j["children"].push_back(sdfToJson(*c));
     return j;
 }
 
@@ -128,7 +133,13 @@ static geom::SdfNode sdfFromJson(const nlohmann::json& j) {
     }
     n.p0 = j.value("p0", 0.0f); n.p1 = j.value("p1", 0.0f); n.t = j.value("t", 0.5f);
     if (j.contains("expr")) { n.expr = j["expr"].get<std::string>(); n.rpn = geom::compileExpr(n.expr); }
-    if (j.contains("children")) for (const auto& c : j["children"]) n.children.push_back(sdfFromJson(c));
+    if (j.contains("planes") && j["planes"].is_array()) {
+        for (const auto& pl : j["planes"])
+            if (pl.is_array() && pl.size() >= 4)
+                n.planes.push_back(glm::vec4(pl[0].get<float>(), pl[1].get<float>(),
+                                             pl[2].get<float>(), pl[3].get<float>()));
+    }
+    if (j.contains("children")) for (const auto& c : j["children"]) n.children.push_back(std::make_shared<geom::SdfNode>(sdfFromJson(c)));
     return n;
 }
 

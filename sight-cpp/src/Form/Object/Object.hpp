@@ -26,7 +26,7 @@
 #include <OpenGL/glu.h> // Include OpenGL utilities
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include "Singular.hpp"
+#include "Form/Singular/Singular.hpp"
 #include "Core/EventBus.hpp"
 #include "Contour.hpp"
 #include "AngleTools.hpp"
@@ -505,13 +505,13 @@ public:
     }
 
     // A binary field (blend/boolean) — operand B can be moved in the scene.
-    bool isBinaryField() const { return _hasField && fieldData.children.size() == 2; }
+    bool isBinaryField() const { return _hasField && fieldData.children.size() == 2 && fieldData.children[1]; }
     glm::vec3 getFieldOperandBOffset() const {
-        return isBinaryField() ? fieldData.children[1].offset : glm::vec3(0.0f);
+        return isBinaryField() ? fieldData.children[1]->offset : glm::vec3(0.0f);
     }
     void setFieldOperandBOffset(const glm::vec3& off) {
         if (!isBinaryField()) return;
-        fieldData.children[1].offset = off;
+        fieldData.children[1]->offset = off;
         rebuildSupportCloud();
     }
     void clearTopologyModel() { _hasSmooth = false; _hasComplex = false; _hasField = false; _hasPatch = false; _supportCloud.clear(); }

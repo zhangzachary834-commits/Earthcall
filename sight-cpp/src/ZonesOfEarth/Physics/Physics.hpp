@@ -4,7 +4,7 @@
 #include <memory>
 #include "Form/Object/Object.hpp"
 #include "Relation/RelationManager.hpp"
-#include "Singular.hpp"
+#include "Form/Singular/Singular.hpp"
 #include <string>
 #include <functional>
 

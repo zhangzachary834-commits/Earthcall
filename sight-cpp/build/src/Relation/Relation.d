@@ -1,5 +1,5 @@
 build/src/Relation/Relation.o: src/Relation/Relation.cpp \
-  src/Relation/Relation.hpp src/json.hpp src/Form/Singular.hpp \
+  src/Relation/Relation.hpp src/json.hpp src/Form/Singular/Singular.hpp \
   /opt/homebrew/include/glm/glm.hpp \
   /opt/homebrew/include/glm/detail/_fixes.hpp \
   /opt/homebrew/include/glm/detail/setup.hpp \
@@ -254,7 +254,7 @@ src/Relation/Relation.hpp:
 
 src/json.hpp:
 
-src/Form/Singular.hpp:
+src/Form/Singular/Singular.hpp:
 
 /opt/homebrew/include/glm/glm.hpp:
 

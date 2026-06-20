@@ -10,6 +10,7 @@ class HighlightSystem {
 public:
     static void setSelected(Object* obj);
     static Object* getSelected();
+    static void setSelectedIds(const std::unordered_set<std::string>& ids);
 
     static void setLawCandidateIds(const std::unordered_set<std::string>& ids);
     static bool isLawCandidate(const Object* obj);
@@ -17,9 +18,9 @@ public:
 
 private:
     static Object* s_selected;
+    static std::unordered_set<std::string> s_selectedIds;
     static std::unordered_set<std::string> s_lawIds;
 };
 
 } // namespace Rendering
-
 

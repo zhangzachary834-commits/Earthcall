@@ -34,7 +34,10 @@
 #include "json.hpp"
 #include <array>
 #include <memory>
+#include <string>
+#include <unordered_set>
 #include <vector>
+#include <map>
 
 class Object;
 
@@ -160,6 +163,8 @@ public:
 
     glm::vec3 getBrushRotation() const { return _brush.rotation; }
     void setBrushRotation(const glm::vec3& v) { _brush.rotation = v; }
+    glm::mat4 buildBrushCreateTransform(const glm::vec3& position) const;
+    float getBrushCreateSurfaceOffset(const glm::vec3& normal) const;
 
     bool getBrushGridSnap() const { return _brush.gridSnap; }
     void setBrushGridSnap(bool v) { _brush.gridSnap = v; }
@@ -329,7 +334,13 @@ public:
 
     // 3D selection
     Object* getSelectedObject3D() const { return _selectedObject3D; }
-    void setSelectedObject3D(Object* obj) { _selectedObject3D = obj; }
+    void setSelectedObject3D(Object* obj);
+    void selectObject3D(Object* obj, bool extendSelection = false);
+    void clearSelection3D();
+    Formation& getSelectedFormation3D() { return _selectedFormation3D; }
+    const Formation& getSelectedFormation3D() const { return _selectedFormation3D; }
+    std::unordered_set<std::string> getSelectedObjectIds3D() const;
+    void syncSelectedFormationRelations(const Zone& zone);
 
     // UI helpers
     bool isMenuOpen() const { return _mainMenu.isOpen(); }
@@ -346,7 +357,7 @@ public:
 
 private:
     enum class PerspectiveMode { FirstPerson = 0, SecondPerson, ThirdPerson };
-    enum class Mode3D { None = -1, FacePaint = 0, FaceBrush, BrushCreate, Pottery, Rotation, Selection, Morph, Combine };
+    enum class Mode3D { None = -1, FacePaint = 0, FaceBrush, BrushCreate, Pottery, Rotation, Selection, Morph, Combine, Sculpt, Graph };
     enum class ToolTarget3D { WorldObjects = 0, AvatarBodyParts };
     enum class CreatorSection { Paint = 0, Create3D, Character, World, Assets, Relations };
 
@@ -440,8 +451,10 @@ private:
 
     // 3D selection
     Object* _selectedObject3D = nullptr;
+    Formation _selectedFormation3D { Form::ShapeType::Cube, glm::vec3(1.0f) };
     int _morphVertexIndex = -1;   // selected vertex for the polyhedron Morph tool
     bool _fieldHandleDragging = false; // dragging a binary-field operand handle
+    bool _blendHandleDragging = false; // dragging the floating blend/smoothness bead
     int _patchCtrlIndex = -1;     // selected control point for the Bezier patch Morph tool
 
     // Combine tool (in-scene boolean/blend): pick shape A, then shape B; the
@@ -449,6 +462,40 @@ private:
     Object* _combineOperandA = nullptr; // first-picked operand, awaiting B
     int   _combineOp = 2;               // 0 Union, 1 Intersect, 2 Subtract, 3 SmoothUnion, 4 Blend(Morph)
     float _combineBlend = 0.15f;        // smoothness (SmoothUnion) / t (Blend)
+
+    // Clay (Sculpt) tool: grab a shape, drag it; release while overlapping
+    // another shape to fuse them (target op dragged), using _combineOp/_combineBlend.
+    Object* _clayGrabbed = nullptr;     // shape currently being dragged
+    Object* _clayTarget  = nullptr;     // overlap candidate to fuse into on release
+
+    // Fuse B into A in place (A becomes A op B as an SDF field), consuming B.
+    // Shared by the Combine (click A, click B) and Clay (drag-to-overlap) tools.
+    void fuseObjects(Object* A, Object* B);
+
+    // Floating blend/smoothness bead geometry for a binary field: a screen-aligned
+    // rail above the shape; the bead position along it encodes the blend t in [0,1].
+    void blendRail(const Object* o, glm::vec3& start, glm::vec3& dir, float& length) const;
+
+    // In-scene field-refinement gizmos for a binary field (operand-B drag handle +
+    // blend bead). Hit-tested/dragged here so Morph, Combine and Clay all share one
+    // path. Returns true if a handle captured this frame's left-drag (the caller
+    // should then NOT also pick/grab).
+    bool handleFieldGizmos(Object* o, bool pressEdge, bool mouseDown, double winX, double winY);
+
+    // Node-graph tool (Mode3D::Graph): the selected field's SdfNode tree rendered as
+    // floating cards beside it in the scene; click a node to select, edit/restructure
+    // it in the node panel. _graphSelPath is the child-index path from the root
+    // (empty = root). Defined in GameNodeGraph.cpp.
+    std::vector<int> _graphSelPath;     // path to the selected node (child indices)
+    bool _graphHasSel = false;          // whether a node is selected
+    bool _graphDragging = false;        // dragging a node to swap subtrees
+    glm::vec2 _graphSelScreen{0.0f};    // selected card's screen pos (for the node panel)
+    std::vector<int> _graphPanelPath;   // node the editor panel is currently placed for
+    bool _graphScrubbing = false;       // dragging a card's blend strip to set t
+    std::vector<int> _graphCtxPath;      // node the right-click context menu targets
+    std::map<std::vector<int>, glm::vec2> _graphManualOffset; // hand-dragged card offsets (path -> screen delta)
+    void renderNodeGraph();             // draws the floating graph + handles selection
+    void renderNodePanel();             // edit panel for the selected node
 
     // Straight line tool state
     bool  _straightLineMode      = false;

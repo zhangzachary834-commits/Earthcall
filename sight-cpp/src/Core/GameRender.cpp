@@ -158,8 +158,10 @@ void Game::render() {
         glEnable(GL_LIGHTING);
     }
 
-    // Morph tool on a blend/boolean field: ghost of operand B + its drag handle.
-    if (_current3DMode == Mode3D::Morph && _selectedObject3D &&
+    // Field-refinement gizmos (Morph / Combine / Clay): ghost of operand B + its
+    // drag handle, plus a floating blend bead for morph/smooth-union fields.
+    if ((_current3DMode == Mode3D::Morph || _current3DMode == Mode3D::Combine ||
+         _current3DMode == Mode3D::Sculpt) && _selectedObject3D &&
         _selectedObject3D->isBinaryField()) {
         Object* o = _selectedObject3D;
         const glm::mat4& xf = o->getTransform();
@@ -169,8 +171,8 @@ void Game::render() {
         glEnable(GL_BLEND);
 
         // Translucent ghost of operand B (rendered in the field's local space).
-        if (f.children.size() == 2) {
-            geom::TessMesh ghost = geom::tessellateSdf(f.children[1], o->getFieldExtent(), 16);
+        if (f.children.size() == 2 && f.children[1]) {
+            geom::TessMesh ghost = geom::tessellateSdf(*f.children[1], o->getFieldExtent(), 16);
             glPushMatrix();
             glMultMatrixf(&xf[0][0]);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE); // additive glow
@@ -200,6 +202,60 @@ void Game::render() {
         glVertex3f(-h,-h,-h); glVertex3f(-h,-h, h); glVertex3f(-h, h, h); glVertex3f(-h, h,-h);
         glEnd();
         glPopMatrix();
+
+        // Floating blend bead on a screen-aligned rail (replaces the t slider).
+        if (o->isMorphField()) {
+            glm::vec3 rs, rd; float rl = 1.0f;
+            blendRail(o, rs, rd, rl);
+            glm::vec3 bead = rs + rd * (o->getMorphParam() * rl);
+            glm::vec3 rEnd = rs + rd * rl;
+            glColor3f(0.55f, 0.55f, 0.6f);             // the rail
+            glLineWidth(2.0f);
+            glBegin(GL_LINES);
+            glVertex3f(rs.x, rs.y, rs.z); glVertex3f(rEnd.x, rEnd.y, rEnd.z);
+            glEnd();
+            glLineWidth(1.0f);
+            if (_blendHandleDragging) glColor3f(1.0f, 0.85f, 0.2f);
+            else                      glColor3f(0.3f, 0.85f, 1.0f);
+            glPushMatrix();
+            glTranslatef(bead.x, bead.y, bead.z);
+            glScalef(0.05f, 0.05f, 0.05f);
+            glBegin(GL_QUADS);
+            const float bh = 0.5f;
+            glVertex3f(-bh,-bh, bh); glVertex3f( bh,-bh, bh); glVertex3f( bh, bh, bh); glVertex3f(-bh, bh, bh);
+            glVertex3f(-bh,-bh,-bh); glVertex3f(-bh, bh,-bh); glVertex3f( bh, bh,-bh); glVertex3f( bh,-bh,-bh);
+            glVertex3f(-bh, bh,-bh); glVertex3f(-bh, bh, bh); glVertex3f( bh, bh, bh); glVertex3f( bh, bh,-bh);
+            glVertex3f(-bh,-bh,-bh); glVertex3f( bh,-bh,-bh); glVertex3f( bh,-bh, bh); glVertex3f(-bh,-bh, bh);
+            glVertex3f( bh,-bh,-bh); glVertex3f( bh, bh,-bh); glVertex3f( bh, bh, bh); glVertex3f( bh,-bh, bh);
+            glVertex3f(-bh,-bh,-bh); glVertex3f(-bh,-bh, bh); glVertex3f(-bh, bh, bh); glVertex3f(-bh, bh,-bh);
+            glEnd();
+            glPopMatrix();
+        }
+        glEnable(GL_LIGHTING);
+    }
+
+    // Clay tool: while dragging, outline the shape the dragged piece will fuse into.
+    if (_current3DMode == Mode3D::Sculpt && _clayTarget) {
+        Object* o = _clayTarget;
+        o->updateCollisionZone(o->getTransform());
+        glm::vec3 mn = o->collisionZone.corners[0], mx = mn;
+        for (int i = 1; i < 8; ++i) {
+            mn = glm::min(mn, o->collisionZone.corners[i]);
+            mx = glm::max(mx, o->collisionZone.corners[i]);
+        }
+        glDisable(GL_LIGHTING);
+        glDisable(GL_TEXTURE_2D);
+        glColor3f(1.0f, 0.85f, 0.2f); // gold = "release here to fuse"
+        glLineWidth(2.5f);
+        const glm::vec3 c[8] = {
+            {mn.x,mn.y,mn.z},{mx.x,mn.y,mn.z},{mx.x,mx.y,mn.z},{mn.x,mx.y,mn.z},
+            {mn.x,mn.y,mx.z},{mx.x,mn.y,mx.z},{mx.x,mx.y,mx.z},{mn.x,mx.y,mx.z} };
+        const int e[12][2] = {{0,1},{1,2},{2,3},{3,0},{4,5},{5,6},{6,7},{7,4},{0,4},{1,5},{2,6},{3,7}};
+        glBegin(GL_LINES);
+        for (auto& pr : e) { glVertex3f(c[pr[0]].x,c[pr[0]].y,c[pr[0]].z);
+                             glVertex3f(c[pr[1]].x,c[pr[1]].y,c[pr[1]].z); }
+        glEnd();
+        glLineWidth(1.0f);
         glEnable(GL_LIGHTING);
     }
 
@@ -354,9 +410,7 @@ void Game::render() {
                 glm::vec3 nWorld;
                 if(hitIsCube){glm::vec3 nLocal(0.0f); nLocal[hitAxis]=static_cast<float>(hitSign); nWorld=glm::normalize(glm::vec3(hitObj->getTransform()*glm::vec4(nLocal,0.0f)));}
                 else{glm::vec3 centerWorld=glm::vec3(hitObj->getTransform()*glm::vec4(0.0f,0.0f,0.0f,1.0f)); nWorld=glm::normalize(hitPoint-centerWorld);}
-                glm::vec3 half=glm::vec3(_brush.scale.x*_brush.size,_brush.scale.y*_brush.size,_brush.scale.z*_brush.size)*0.5f;
-                float offAmt=glm::dot(glm::abs(nWorld),half)+0.01f;
-                previewPos = hitPoint + nWorld*offAmt;
+                previewPos = hitPoint + nWorld * getBrushCreateSurfaceOffset(nWorld);
             } else previewPos = _camera.pos + _camera.front * 2.0f;
         }
 
@@ -367,12 +421,7 @@ void Game::render() {
             previewPos.z = std::round(previewPos.z / _brush.gridSize) * _brush.gridSize;
         }
 
-        // Build transform: translate -> scale
-        glm::mat4 previewT = glm::translate(glm::mat4(1.0f), previewPos);
-        glm::vec3 totalScale = glm::vec3(_brush.scale.x * _brush.size,
-                                         _brush.scale.y * _brush.size,
-                                         _brush.scale.z * _brush.size);
-        previewT = glm::scale(previewT, totalScale);
+        glm::mat4 previewT = buildBrushCreateTransform(previewPos);
 
         // Render as translucent wireframe so it does not occlude view
         glPushAttrib(GL_ENABLE_BIT | GL_POLYGON_BIT | GL_CURRENT_BIT);
@@ -562,6 +611,13 @@ void Game::render() {
             ImGui::BulletText("Shift: Down");
             ImGui::BulletText("V: Sprint");
             ImGui::BulletText("Alt: Slow");
+            ImGui::Separator();
+            ImGui::Text("Create");
+            ImGui::Separator();
+            ImGui::BulletText("[ / ]: Yaw hologram");
+            ImGui::BulletText("; / ': Pitch hologram");
+            ImGui::BulletText(", / .: Roll hologram");
+            ImGui::BulletText("Ctrl: Fine rotation  Shift: Fast rotation");
         }
         ImGui::End();
     }
@@ -573,6 +629,10 @@ void Game::render() {
     if (_showToolbar) {
         renderCreatorToolbar();
     }
+
+    // In-scene SDF node graph for the selected field (Mode3D::Graph). Drawn after
+    // the toolbar so its cards/panel overlay the scene.
+    renderNodeGraph();
 
     // Update cursor tools selection each frame
     _cursorTools.update(*this);

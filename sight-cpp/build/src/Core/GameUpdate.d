@@ -155,7 +155,7 @@ build/src/Core/GameUpdate.o: src/Core/GameUpdate.cpp src/Core/Game.hpp \
   src/ZonesOfEarth/Zone/../World/World.hpp src/Form/Object/Object.hpp \
   src/Form/Object/Formation/Formation.hpp src/Form/Form.hpp \
   src/Relation/RelationManager.hpp src/Relation/Relation.hpp \
-  src/json.hpp src/Form/Singular.hpp \
+  src/json.hpp src/Form/Singular/Singular.hpp \
   /opt/homebrew/include/glm/gtc/type_ptr.hpp \
   /opt/homebrew/include/glm/gtc/../gtc/quaternion.hpp \
   /opt/homebrew/include/glm/gtc/../gtc/constants.hpp \
@@ -613,7 +613,7 @@ src/Relation/Relation.hpp:
 
 src/json.hpp:
 
-src/Form/Singular.hpp:
+src/Form/Singular/Singular.hpp:
 
 /opt/homebrew/include/glm/gtc/type_ptr.hpp:
 

@@ -930,11 +930,7 @@ void Tool::ShapeGenerator3D(GLFWwindow *window, Core::Game *game, ZoneManager &m
             SurfaceHit hit;
             if (buildMouseRay(window, game, rayO, rayDir) && pickSurface(targets, rayO, rayDir, hit))
             {
-                glm::vec3 half = glm::vec3(game->getBrushScale().x * game->getBrushSize(),
-                                          game->getBrushScale().y * game->getBrushSize(),
-                                          game->getBrushScale().z * game->getBrushSize()) * 0.5f;
-                float offsetAmt = glm::dot(glm::abs(hit.normal), half) + 0.01f;
-                spawnPos = hit.point + hit.normal * offsetAmt;
+                spawnPos = hit.point + hit.normal * game->getBrushCreateSurfaceOffset(hit.normal);
             }
             else
             {
@@ -950,11 +946,7 @@ void Tool::ShapeGenerator3D(GLFWwindow *window, Core::Game *game, ZoneManager &m
             spawnPos.z = std::round(spawnPos.z / game->getBrushGridSize()) * game->getBrushGridSize();
         }
 
-        glm::mat4 t = glm::translate(glm::mat4(1.0f), spawnPos);
-        glm::vec3 totalScale = glm::vec3(game->getBrushScale().x * game->getBrushSize(),
-                                         game->getBrushScale().y * game->getBrushSize(),
-                                         game->getBrushScale().z * game->getBrushSize());
-        t = glm::scale(t, totalScale);
+        glm::mat4 t = game->buildBrushCreateTransform(spawnPos);
 
         if (targetPart) {
             // Convert world-space transform into body-part-local space

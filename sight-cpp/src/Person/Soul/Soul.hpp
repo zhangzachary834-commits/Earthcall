@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Form/Singular.hpp"
+#include "Form/Singular/Singular.hpp"
 #include <string>
 
 class Soul : public Singular {
