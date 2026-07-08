@@ -81,8 +81,23 @@ clean:
 run: $(TARGET)
 	./$(TARGET)
 
+# ---------------------------------------------------------------
+# Tests: link everything except the app entry point.
+TEST_OBJECTS = $(filter-out $(BUILD_DIR)/$(SRC_DIR)/entry.o,$(OBJECTS))
+
+$(BUILD_DIR)/tests/%.o: tests/%.cpp | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) $(DEPFLAGS) -c $< -o $@
+
+property_bridge_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/property_bridge_test.o
+	$(CXX) $^ $(LDFLAGS) -o $@
+
+test-property: property_bridge_test
+	./property_bridge_test
+
 # Pull in auto-generated header dependencies (.d files next to each .o)
 -include $(OBJECTS:.o=.d)
+-include $(wildcard $(BUILD_DIR)/tests/*.d)
 
 # Phony targets
-.PHONY: all clean run 
+.PHONY: all clean run test-property 

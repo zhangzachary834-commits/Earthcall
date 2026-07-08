@@ -32,6 +32,36 @@ public:
         _owner->*_member = value;
     }
 
+    PropertyValue value() const override {
+        if constexpr (is_property_value_alternative<T>) {
+            return PropertyValue(get());
+        } else {
+            return PropertyValue{};   // monostate: not legible as a value
+        }
+    }
+
+    bool setValue(const PropertyValue& v) override {
+        if constexpr (is_property_value_alternative<T>) {
+            if (const T* typed = std::get_if<T>(&v)) {
+                set(*typed);
+                return true;
+            }
+        }
+        (void)v;
+        return false;
+    }
+
+    Singular* asSingular() const override {
+        if constexpr (std::is_pointer_v<T> &&
+                      std::is_base_of_v<Singular, std::remove_pointer_t<T>>) {
+            return get();
+        } else if constexpr (std::is_base_of_v<Singular, T>) {
+            return const_cast<T*>(&get());
+        } else {
+            return nullptr;
+        }
+    }
+
 private:
     std::string _name;
     Owner* _owner;

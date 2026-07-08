@@ -2,6 +2,8 @@
 #include "Contour.hpp"
 #include "AngleTools.hpp"
 #include "Automation/AutomationEvents.hpp"
+#include "Form/Singular/Property/ComputedProperty.hpp"
+#include "Form/Singular/Property/PropertyRef.hpp"
 #include <GLFW/glfw3.h>
 #include <OpenGL/glu.h>
 #include <glm/gtc/quaternion.hpp>
@@ -224,6 +226,41 @@ Object::Object() {
     }
     initFaceTextures();
     syncRotationStateFromTransform(transform);
+}
+
+void Object::setPosition(const glm::vec3& p) {
+    glm::mat4 t = transform;
+    t[3] = glm::vec4(p, 1.0f);
+    setTransform(t);   // virtual: rotation-state sync + collision-zone update
+}
+
+// The first-mover property registry: what a Person (through PropertyPath, and
+// later through Laws) can address on an Object without touching C++. Names may
+// be dotted ("shape.r") — PropertyPath matches registered names longest-first.
+void Object::buildProperties() {
+    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Object, glm::vec3>>(
+        "position", this, &Object::getPosition, &Object::setPosition));
+    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Object, glm::vec3>>(
+        "rotation", this, &Object::getRotationEulerDegrees, &Object::setRotationEulerDegrees));
+    _propertyRegistry.push_back(std::make_unique<PropertyRef<Object, glm::vec3>>(
+        "center", this, &Object::center));
+
+    // Shape parameters, flat under dotted names. v1 is raw read/write;
+    // geometry regeneration on change follows through the setShape path
+    // (LAW_AND_CREATION_SYSTEM.md, Stage 2 follow-up).
+    auto addShapeParam = [this](const char* name, float ShapeParams::*member) {
+        _propertyRegistry.push_back(std::make_unique<PropertyRef<ShapeParams, float>>(
+            name, &_shapeParams, member));
+    };
+    addShapeParam("shape.r", &ShapeParams::r);
+    addShapeParam("shape.ry", &ShapeParams::ry);
+    addShapeParam("shape.rz", &ShapeParams::rz);
+    addShapeParam("shape.halfH", &ShapeParams::halfH);
+    addShapeParam("shape.majorR", &ShapeParams::majorR);
+    addShapeParam("shape.minorR", &ShapeParams::minorR);
+    addShapeParam("shape.paraboloidA", &ShapeParams::paraboloidA);
+    addShapeParam("shape.ovoidAsym", &ShapeParams::ovoidAsym);
+    addShapeParam("shape.fillet", &ShapeParams::fillet);
 }
 
 // Hover detection method implementations

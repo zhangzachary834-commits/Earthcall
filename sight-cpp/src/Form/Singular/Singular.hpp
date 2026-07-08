@@ -21,15 +21,28 @@ public:
     Singular& operator=(const Singular&) {
         _propertyRegistry.clear();
         _property_formation = nullptr;
+        _propertiesBuilt = false;
         return *this;
     }
-    Singular(Singular&&) noexcept = default;
-    Singular& operator=(Singular&&) noexcept = default;
+    // Moves do NOT carry the property registry: registered properties hold
+    // owner pointers into the source object. The registry is derived state
+    // and lazily rebuilds against the new address on next findProperty().
+    Singular(Singular&&) noexcept {}
+    Singular& operator=(Singular&&) noexcept {
+        _propertyRegistry.clear();
+        _property_formation = nullptr;
+        _propertiesBuilt = false;
+        return *this;
+    }
     virtual ~Singular() = default;
     virtual std::string getIdentifier() const = 0;
 
     Formation* singular_properties();
     const Formation* singular_properties() const;
+
+    // Registry lookup by registered name (may be dotted, e.g. "shape.r").
+    // Lazily calls buildProperties() on first access.
+    Property* findProperty(const std::string& name);
 
     // A Singular can flexibly own any kind of thing. That ownership IS the
     // property registry below: each owned value is wrapped as a Property
@@ -40,5 +53,6 @@ public:
 protected:
     std::vector<std::unique_ptr<Property>> _propertyRegistry;
     Formation* _property_formation = nullptr;
+    bool _propertiesBuilt = false;
     virtual void buildProperties() = 0;
 }; 

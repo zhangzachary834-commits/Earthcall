@@ -337,6 +337,12 @@ public:
     virtual glm::mat4 getTransform() const { return transform; }
     virtual glm::mat4 getRaycastTransform() const { return transform; }
 
+    // Property bridge: the anchor's world translation (column 3 of transform).
+    // setPosition routes through setTransform so rotation-state sync and the
+    // collision-zone update run — a law moving an object really moves it.
+    glm::vec3 getPosition() const { return glm::vec3(transform[3]); }
+    void setPosition(const glm::vec3& p);
+
     const glm::vec3& getCenter() const { return center; }
     void setCenter(const glm::vec3& c) { center = c; }
     glm::vec3 getWorldCenter() const { return glm::vec3(getTransform() * glm::vec4(center, 1.0f)); }
@@ -565,7 +571,10 @@ public:
     const std::vector<std::string>& getTags() const { return tags; }
 
 private:
-    void buildProperties() override {}
+    // Registers the first-mover properties (position/rotation/center/shape.*)
+    // that make this Object legible to PropertyPath and the Law system.
+    // Defined in Object.cpp.
+    void buildProperties() override;
 
     glm::vec3 getLocalSupportPoint(const glm::vec3& localDirection) const;
     bool computeLocalPointPenetration(const glm::vec3& localPoint,
