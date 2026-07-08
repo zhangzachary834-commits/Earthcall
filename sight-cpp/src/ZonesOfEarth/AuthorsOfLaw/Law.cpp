@@ -102,6 +102,11 @@ void Law::clearConditions() {
 bool Law::conditionsSatisfied(const Singular& target) const {
     if (_conditionPredicates.empty()) return true;
 
+    ECA::Event event;
+    event.type = "law-evaluate";
+    event.subject = const_cast<Singular*>(&target);
+    event.timestamp = std::time(nullptr);
+
     bool anySatisfied = false;
     for (const auto& condition : _conditionPredicates) {
         if (!condition.predicate) {
@@ -109,7 +114,7 @@ bool Law::conditionsSatisfied(const Singular& target) const {
             continue;
         }
 
-        const bool passed = condition.predicate(target);
+        const bool passed = condition.evaluate(event, target);
         anySatisfied = anySatisfied || passed;
 
         if (_conditionMode == ConditionMode::All && condition.required && !passed) {
@@ -123,8 +128,8 @@ bool Law::conditionsSatisfied(const Singular& target) const {
     return _conditionMode == ConditionMode::All ? true : anySatisfied;
 }
 
-void Law::addAction(const std::string& description, Action action) {
-    _actions.push_back(ActionStep{description, std::move(action)});
+void Law::addAction(const std::string& description, ECA::ActionExecutor action) {
+    _actions.push_back(Action{description, std::move(action)});
 }
 
 void Law::clearActions() {
@@ -143,8 +148,13 @@ Law::ApplicationResult Law::applyTo(Singular& target) {
     } else if (_actions.empty()) {
         result = ApplicationResult::NoAction;
     } else {
+        ECA::Event event;
+        event.type = "law-apply";
+        event.subject = &target;
+        event.timestamp = std::time(nullptr);
+
         for (const auto& action : _actions) {
-            if (action.action) action.action(target);
+            action.run(event, target);
         }
     }
 

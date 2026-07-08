@@ -1,12 +1,12 @@
-#include "Core/Engine.hpp"
-#include "Core/Game.hpp"
+#include "Singularity/Core/Engine.hpp"
+#include "Singularity/Core/Game.hpp"
 
-#include "../../imgui/imgui.h"
-#include "../../imgui/backends/imgui_impl_glfw.h"
+#include "../../../imgui/imgui.h"
+#include "../../../imgui/backends/imgui_impl_glfw.h"
 #ifdef USE_GL3_RENDERER
-#  include "../../imgui/backends/imgui_impl_opengl3.h"
+#  include "../../../imgui/backends/imgui_impl_opengl3.h"
 #else
-#  include "../../imgui/backends/imgui_impl_opengl2.h"
+#  include "../../../imgui/backends/imgui_impl_opengl2.h"
 #endif
 
 #include <iostream>

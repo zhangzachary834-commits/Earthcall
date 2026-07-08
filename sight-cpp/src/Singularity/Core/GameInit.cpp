@@ -2,8 +2,8 @@
 // Split from Game.cpp during refactor.
 
 #include "Game.hpp"
-#include "Core/Engine.hpp"
-#include "../../imgui/backends/imgui_impl_glfw.h"
+#include "Singularity/Core/Engine.hpp"
+#include "../../../imgui/backends/imgui_impl_glfw.h"
 #include "Form/Object/Object.hpp"
 #include "Rendering/BrushSystem.hpp"
 #include "Rendering/ShadingSystem.hpp"

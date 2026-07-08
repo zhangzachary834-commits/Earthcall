@@ -8,7 +8,7 @@
 #include "../Person/AvatarManager.hpp"
 #include "../ZonesOfEarth/World/World.hpp"
 #include "../ZonesOfEarth/ZoneManager.hpp"
-#include "../Core/Game.hpp"
+#include "../Singularity/Core/Game.hpp"
 
 #ifdef __APPLE__
 #if TARGET_OS_MAC

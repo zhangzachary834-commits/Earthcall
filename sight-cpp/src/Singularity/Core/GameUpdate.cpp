@@ -2,9 +2,9 @@
 // Split from Game.cpp during refactor.
 
 #include "Game.hpp"
-#include "Core/Engine.hpp"
+#include "Singularity/Core/Engine.hpp"
 #include "Form/Object/Object.hpp"
-#include "Core/SdfBuild.hpp"
+#include "Singularity/Core/SdfBuild.hpp"
 #include "OurVerse/Tool.hpp"
 #include "OurVerse/AdvancedFacePaint.hpp"
 #include "Rendering/BrushSystem.hpp"
@@ -14,7 +14,7 @@
 #include "ZonesOfEarth/Physics/Physics.hpp"
 #include "Person/Body/BodyPart/BodyPart.hpp"
 #include "Person/PersonEvents.hpp"
-#include "Core/EventBus.hpp"
+#include "Singularity/Core/EventBus.hpp"
 
 #include <GLFW/glfw3.h>
 #include <OpenGL/glu.h>

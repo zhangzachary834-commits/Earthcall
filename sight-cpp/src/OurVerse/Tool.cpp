@@ -1,5 +1,5 @@
 #include "Tool.hpp"
-#include "Core/Game.hpp"
+#include "Singularity/Core/Game.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "GLFW/glfw3.h"

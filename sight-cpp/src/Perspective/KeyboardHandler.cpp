@@ -1,5 +1,5 @@
 #include "KeyboardHandler.hpp"
-#include "Core/Game.hpp"
+#include "Singularity/Core/Game.hpp"
 #include <algorithm>
 #ifdef IMGUI_DISABLE
 // ImGui not available

@@ -68,8 +68,8 @@ Successfully upgraded the Object.hpp/cpp system to support polyhedrons while mai
 
 1. **src/Form/Object/Object.hpp** - Added polyhedron data structures and methods
 2. **src/Form/Object/Object.cpp** - Implemented polyhedron functionality
-3. **src/Core/Game.hpp** - Added polyhedron type selection
-4. **src/Core/Game.cpp** - Updated UI and object creation
+3. **src/Singularity/Core/Game.hpp** - Added polyhedron type selection
+4. **src/Singularity/Core/Game.cpp** - Updated UI and object creation
 5. **POLYHEDRON_GUIDE.md** - User documentation
 6. **POLYHEDRON_UPGRADE_SUMMARY.md** - This summary
 

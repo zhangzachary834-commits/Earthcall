@@ -2,7 +2,7 @@
 
 #include "Game.hpp"
 #include "Form/Object/Object.hpp"
-#include "Core/SdfBuild.hpp"
+#include "Singularity/Core/SdfBuild.hpp"
 #include "Rendering/BrushSystem.hpp"
 #include "Rendering/RelationManagerWindow.hpp"
 #include "OurVerse/Tool.hpp"
@@ -51,7 +51,7 @@ void popActiveButtonStyle(bool active) {
     }
 }
 
-// shapeToSdfLeaf / objectToSdfNode now live in Core/SdfBuild.hpp (shared with the
+// shapeToSdfLeaf / objectToSdfNode now live in Singularity/Core/SdfBuild.hpp (shared with the
 // in-scene Combine tool). Included below at file scope.
 
 struct ShapeKindDef { Object::ShapeKind k; const char* label; };

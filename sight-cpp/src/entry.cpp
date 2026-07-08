@@ -1,5 +1,5 @@
-#include "Core/Engine.hpp"
-#include "Core/Game.hpp"
+#include "Singularity/Core/Engine.hpp"
+#include "Singularity/Core/Game.hpp"
 
 int main(int argc, char** argv) {
     using namespace Core;

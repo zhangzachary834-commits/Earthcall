@@ -8,7 +8,7 @@
 #include <GLFW/glfw3.h>
 #include "Form/Singular/Singular.hpp"
 #include "Soul/Soul.hpp"
-#include "Core/EventBus.hpp"
+#include "Singularity/Core/EventBus.hpp"
 
 // Forward declarations for Person events
 struct PersonCreatedEvent;

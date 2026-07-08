@@ -1,8 +1,10 @@
 #pragma once
 
-#include "Property.h"
+#include "Property.hpp"
+
 #include <string>
 #include <typeinfo>
+#include <utility>
 
 template <typename Owner, typename T>
 class PropertyRef : public Property {

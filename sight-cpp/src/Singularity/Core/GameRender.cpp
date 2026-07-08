@@ -2,7 +2,7 @@
 // Split from Game.cpp during refactor.
 
 #include "Game.hpp"
-#include "Core/Engine.hpp"
+#include "Singularity/Core/Engine.hpp"
 #include "Form/Object/Object.hpp"
 #include "Rendering/ShadingSystem.hpp"
 #include "Rendering/BrushSystem.hpp"

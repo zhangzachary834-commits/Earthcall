@@ -23,7 +23,7 @@ The Unified Brush System is a powerful, professional-grade painting system that 
    - Uses BrushSystem for texture painting on 3D objects
    - Provides layer system and advanced effects
 
-4. **Game UI Integration** (`src/Core/Game.hpp/cpp`)
+4. **Game UI Integration** (`src/Singularity/Core/Game.hpp/cpp`)
    - Unified UI controls for both 2D and 3D brush systems
    - Advanced settings panels for professional brush control
    - Preset management and real-time parameter adjustment

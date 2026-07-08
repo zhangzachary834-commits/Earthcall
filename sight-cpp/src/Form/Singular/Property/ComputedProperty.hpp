@@ -1,3 +1,7 @@
+#pragma once
+
+#include "Property.hpp"
+
 template <typename Owner, typename T>
 class ComputedProperty : public Property {
 public:

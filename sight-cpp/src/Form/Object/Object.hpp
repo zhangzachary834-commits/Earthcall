@@ -27,7 +27,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include "Form/Singular/Singular.hpp"
-#include "Core/EventBus.hpp"
+#include "Singularity/Core/EventBus.hpp"
 #include "Contour.hpp"
 #include "AngleTools.hpp"
 #include "Object/PolyhedronData.hpp"

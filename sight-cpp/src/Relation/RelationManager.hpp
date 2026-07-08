@@ -6,7 +6,7 @@
 #include <ctime>
 #include "Relation.hpp"
 #include "json.hpp"
-#include "Core/EventBus.hpp"
+#include "Singularity/Core/EventBus.hpp"
 
 // Forward declaration for the event
 // struct RelationCreatedEvent;

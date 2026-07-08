@@ -1,11 +1,12 @@
 #pragma once
 
-#include "Core/EventBus.hpp"
+#include "Singularity/Core/EventBus.hpp"
 #include "Form/Object/Formation/Formation.hpp"
 #include "Form/Object/Object.hpp"
 #include "Relation/Relation.hpp"
 #include "Relation/RelationManager.hpp"
 #include "Form/Singular/Singular.hpp"
+#include "ECA.hpp"
 #include "json.hpp"
 
 #include <ctime>
@@ -16,9 +17,26 @@
 #include <utility>
 #include <vector>
 
+// This class should eventually govern Physics. Physics should be extended from
+// this class.
+//
+// Law is identity (an Object); its condition/action models are its essence; the
+// compiled ECA closures are its manifestation. Hard-coded closures are for first
+// movers only — Person-authored laws arrive as serializable models (see
+// LAW_AND_CREATION_SYSTEM.md, Stage 2). The relational aspect of a Law (its
+// provenance, its Formation of conditions) is carried by composition rather than
+// by also inheriting Relation: Object and Relation are both Singulars, and
+// Earthcall models Relation-Objects with member formations, not a diamond.
 class Law : public Object {
 public:
-    enum class ConditionMode { All, Any };
+    // Condition/action vocabulary is the shared ECA language (ECA.hpp), so a
+    // Law's pieces are interchangeable with any other event-condition-action
+    // carrier in the system.
+    using ConditionMode = ECA::ConditionMode;
+    using ConditionPredicate = ECA::ConditionPredicate;
+    using Condition = ECA::Condition;
+    using Action = ECA::Action;
+
     enum class ApplicationResult {
         Applied,
         Disabled,
@@ -26,20 +44,6 @@ public:
         NoTarget,
         ConditionsFailed,
         NoAction
-    };
-
-    using ConditionPredicate = std::function<bool(const Singular&)>;
-    using Action = std::function<void(Singular&)>;
-
-    struct Condition {
-        std::string description;
-        ConditionPredicate predicate;
-        bool required = true;
-    };
-
-    struct ActionStep {
-        std::string description;
-        Action action;
     };
 
     struct ApplicationRecord {
@@ -99,14 +103,25 @@ public:
                                                bool directed = true,
                                                float weight = 1.0f);
 
+    // First-mover lane: register a hard-coded condition/action closure directly.
+    // Person-authored laws will instead carry ConditionModel/ActionModel trees
+    // that compile into these same slots (Stage 2).
     void addCondition(const std::string& description,
                       ConditionPredicate predicate,
                       bool required = true);
     void clearConditions();
     bool conditionsSatisfied(const Singular& target) const;
 
-    void addAction(const std::string& description, Action action);
+    void addAction(const std::string& description, ECA::ActionExecutor action);
     void clearActions();
+
+    // Event-typed carrier for this law's ECA loop (which event kind wakes it).
+    // Wired to the bus/Rete loop in Stage 3.
+    const ECA::Loop& ecaLoop() const { return _ecaLoop; }
+    ECA::Loop& ecaLoop() { return _ecaLoop; }
+
+    // Create algorithm to use ordinary tools to create conditions (projection
+    // mode — the shape tools emit ConditionNodes instead of world objects).
 
     ApplicationResult applyTo(Singular& target);
     std::vector<ApplicationRecord> applyToTargets();
@@ -131,8 +146,9 @@ private:
     Formation _targets{Form::ShapeType::Cube, glm::vec3(1.0f)};
     RelationManager _provenance;
 
+    ECA::Loop _ecaLoop;
     std::vector<Condition> _conditionPredicates;
-    std::vector<ActionStep> _actions;
+    std::vector<Action> _actions;
     std::vector<ApplicationRecord> _applicationLog;
 };
 

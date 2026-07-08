@@ -14,7 +14,7 @@ public:
         Input,
         InnateComputational,
         Output
-    }
+    };
 
     enum class Modality {
         Screen,
@@ -23,7 +23,7 @@ public:
         Symbolic,
         Joys
 
-    }
+    };
 
     enum class Earthcall {
         Singularity,
@@ -37,9 +37,9 @@ public:
         Object,
         Law,
         Zone,
-        Home, 
+        Home,
 
-    }
+    };
 
     enum class ElementInput {
         Mouse,

@@ -44,7 +44,7 @@ The Person Events system automatically triggers events when important Person-rel
 ### 1. Subscribe to events
 
 ```cpp
-#include "Core/EventBus.hpp"
+#include "Singularity/Core/EventBus.hpp"
 #include "Person/Person.hpp"
 
 // Create handlers for each event type
@@ -151,7 +151,7 @@ void handleSessionTimeout(const PersonLogoutEvent& event) {
 To see all Person events in action, compile and run the example:
 
 ```bash
-g++ -o person_events_example examples/person_events_example.cpp src/Person/Person.cpp src/Person/AvatarManager.cpp src/Person/Body/Body.cpp src/Core/EventBus.cpp
+g++ -o person_events_example examples/person_events_example.cpp src/Person/Person.cpp src/Person/AvatarManager.cpp src/Person/Body/Body.cpp src/Singularity/Core/EventBus.cpp
 ./person_events_example
 ```
 

@@ -11,7 +11,7 @@ When a new Relation is created in the system, an event called `RelationCreatedEv
 ### 1. Subscribe to the event
 
 ```cpp
-#include "Core/EventBus.hpp"
+#include "Singularity/Core/EventBus.hpp"
 #include "Relation/RelationManager.hpp"
 #include <memory>
 
@@ -72,7 +72,7 @@ The Relation object contains:
 To see the event system in action, compile and run the example:
 
 ```bash
-g++ -o relation_event_example examples/relation_event_example.cpp src/Relation/RelationManager.cpp src/Relation/Relation.cpp src/Core/EventBus.cpp
+g++ -o relation_event_example examples/relation_event_example.cpp src/Relation/RelationManager.cpp src/Relation/Relation.cpp src/Singularity/Core/EventBus.cpp
 ./relation_event_example
 ```
 

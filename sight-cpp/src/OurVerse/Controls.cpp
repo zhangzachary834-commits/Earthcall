@@ -1,7 +1,7 @@
 #include "Controls.hpp"
 
 #include <GLFW/glfw3.h>
-#include "Core/Game.hpp"
+#include "Singularity/Core/Game.hpp"
 #include "imgui.h"
 
 using namespace ControlPanel;

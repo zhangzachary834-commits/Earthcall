@@ -10,7 +10,7 @@
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "PersonEvents.hpp"
-#include "Core/EventBus.hpp"
+#include "Singularity/Core/EventBus.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 
 // Forward-declare global ZoneManager defined in main.cpp
