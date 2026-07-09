@@ -1,5 +1,7 @@
 #include "Law.hpp"
 
+#include "Form/Singular/Property/ComputedProperty.hpp"
+
 #include <algorithm>
 #include <atomic>
 
@@ -171,6 +173,7 @@ std::shared_ptr<Law> Law::fromJson(const nlohmann::json& j) {
         law->setObjectID(law->_lawId);
     }
     law->setEnabled(j.value("enabled", true));
+    law->setAuthorityLevel(j.value("authority", 0));
     law->setConditionMode(j.value("conditionMode", std::string("all")) == "any"
                               ? ConditionMode::Any
                               : ConditionMode::All);
@@ -186,10 +189,18 @@ std::shared_ptr<Law> Law::fromJson(const nlohmann::json& j) {
 Law::ApplicationResult Law::applyTo(Singular& target) {
     ApplicationResult result = ApplicationResult::Applied;
 
+    // When the target is itself a Law, this application is a METALAW — and
+    // the Singularity-grounded ceiling applies: lower authority may not
+    // govern higher. This single check is what keeps the civic order from
+    // collapsing into either chaos or tyranny.
+    const Law* targetLaw = dynamic_cast<const Law*>(&target);
+
     if (!_enabled) {
         result = ApplicationResult::Disabled;
     } else if (!isAuthored()) {
         result = ApplicationResult::Unauthored;
+    } else if (targetLaw && _authorityLevel < targetLaw->authorityLevel()) {
+        result = ApplicationResult::AuthorityDenied;
     } else if (!conditionsSatisfied(target)) {
         result = ApplicationResult::ConditionsFailed;
     } else if (_actions.empty()) {
@@ -279,6 +290,7 @@ nlohmann::json Law::toJson() const {
         {"id", _lawId},
         {"name", _name},
         {"enabled", _enabled},
+        {"authority", _authorityLevel},
         {"conditionMode", _conditionMode == ConditionMode::All ? "all" : "any"},
         {"authors", formationMemberIds(_authors)},
         {"conditionSubjects", formationMemberIds(_conditions)},
@@ -303,8 +315,22 @@ const char* Law::resultName(ApplicationResult result) {
         case ApplicationResult::NoTarget: return "no-target";
         case ApplicationResult::ConditionsFailed: return "conditions-failed";
         case ApplicationResult::NoAction: return "no-action";
+        case ApplicationResult::AuthorityDenied: return "authority-denied";
     }
     return "unknown";
+}
+
+// A Law is a legible Singular: its own governable state addresses through
+// PropertyPath like anything else, so a law targeting a law IS a metalaw.
+// authorityLevel is deliberately absent — the ceiling is Singularity-granted,
+// never law-modifiable.
+void Law::buildProperties() {
+    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Law, bool>>(
+        "enabled", this, &Law::propEnabled, &Law::propSetEnabled));
+    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Law, int>>(
+        "conditionMode", this, &Law::propConditionMode, &Law::propSetConditionMode));
+    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Law, std::string>>(
+        "name", this, &Law::propName, &Law::propSetName));
 }
 
 std::string ReteNetwork::assertFact(ReteFact fact) {

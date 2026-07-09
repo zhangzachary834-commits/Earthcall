@@ -46,7 +46,8 @@ public:
         Unauthored,
         NoTarget,
         ConditionsFailed,
-        NoAction
+        NoAction,
+        AuthorityDenied   // metalaw ceiling: lower authority may not govern higher
     };
 
     struct ApplicationRecord {
@@ -77,6 +78,18 @@ public:
 
     bool isEnabled() const { return _enabled; }
     void setEnabled(bool enabled) { _enabled = enabled; }
+
+    // ------------------------------------------------------------------
+    // The Singularity-grounded hierarchy of authored authority. A law may
+    // govern (apply to) another law only when its authority is >= the
+    // target's. Deliberately NOT registered as a legible property: the
+    // ceiling is granted at the Singularity/first-mover level, never
+    // law-modifiable — that is the anti-tyranny (and anti-Babel) guarantee.
+    // Lower scopes may govern laws within their jurisdiction but cannot
+    // override higher-order metalaws, kernel laws, or substrate order.
+    // ------------------------------------------------------------------
+    int authorityLevel() const { return _authorityLevel; }
+    void setAuthorityLevel(int level) { _authorityLevel = level; }
 
     ConditionMode conditionMode() const { return _conditionMode; }
     void setConditionMode(ConditionMode mode) { _conditionMode = mode; }
@@ -162,9 +175,25 @@ private:
     ApplicationRecord makeRecord(Singular* target, ApplicationResult result) const;
     void publishAppliedEvent(Singular* target, ApplicationResult result) const;
 
+    // Metalaws need zero new machinery: registering the law's own governable
+    // state (enabled / conditionMode / name) makes a Law a legible Singular —
+    // a law whose TARGET is another law simply IS a metalaw. (Overrides
+    // Object::buildProperties: laws are extra-spatial, so the spatial
+    // properties are not registered.) Bridges adapt to Property signatures.
+    void buildProperties() override;
+    bool propEnabled() const { return _enabled; }
+    void propSetEnabled(const bool& v) { _enabled = v; }
+    int propConditionMode() const { return static_cast<int>(_conditionMode); }
+    void propSetConditionMode(const int& v) {
+        _conditionMode = v == 1 ? ConditionMode::Any : ConditionMode::All;
+    }
+    std::string propName() const { return _name; }
+    void propSetName(const std::string& v) { setName(v); }
+
     std::string _lawId;
     std::string _name;
     bool _enabled = true;
+    int _authorityLevel = 0;
     ConditionMode _conditionMode = ConditionMode::All;
 
     Formation _authors{Form::ShapeType::Cube, glm::vec3(1.0f)};
