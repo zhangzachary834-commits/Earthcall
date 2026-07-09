@@ -5,6 +5,7 @@
 #include "Singularity/Core/SdfBuild.hpp"
 #include "Rendering/BrushSystem.hpp"
 #include "Rendering/RelationManagerWindow.hpp"
+#include "Rendering/LawGraphWindow.hpp"
 #include "OurVerse/Tool.hpp"
 #include "OurVerse/AdvancedFacePaint.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
@@ -179,6 +180,10 @@ void Game::renderCreatorToolbar() {
 
     if (_showRelationManager) {
         Rendering::renderRelationManagerWindow(&_showRelationManager, Physics::registry());
+    }
+
+    if (_showLawAuthor) {
+        Rendering::renderLawGraphWindow(&_showLawAuthor, _lawManager, _player);
     }
 
     drawLoadWindow();
@@ -1442,6 +1447,9 @@ void Game::renderRelationsConsole(Zone& zone) {
     ImGui::Separator();
     if (ImGui::Button("Open Relation Manager")) {
         _showRelationManager = true;
+    }
+    if (ImGui::Button("Open Law Author")) {
+        _showLawAuthor = true;
     }
 }
 

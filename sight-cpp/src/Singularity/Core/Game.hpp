@@ -450,6 +450,7 @@ private:
     CreatorSection _creatorSection = CreatorSection::Create3D;
     BodyPart* _selectedCharacterPart = nullptr;
     bool _showRelationManager = false;
+    bool _showLawAuthor = false;
     bool _characterDesignLocked = false;
     bool _use2DPressureSimulation = false;
     bool _cursorToolsOpen = false;
