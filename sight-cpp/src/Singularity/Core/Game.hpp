@@ -14,6 +14,7 @@
 #include "Person/AvatarManager.hpp"
 #include "Person/Soul/Soul.hpp"
 #include "Person/Body/Body.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "Perspective/KeyboardHandler.hpp"
 #include "Perspective/MouseHandler.hpp"
 
@@ -394,6 +395,10 @@ private:
     Menu          _mainMenu;
     Ourverse      _world;
     Chat          _chat;
+    // Laws live at engine lifetime (the EventBus has no unsubscribe, so the
+    // connected manager must outlive all publishing). connectToEventBus() in
+    // init(), tick() at end of update() — laws hear the frame's events.
+    LawManager    _lawManager;
     Soul          _playerSoul {"Player"};
     Body          _playerBody = Body::createBasicAvatar("Voxel");
     Person        _player {_playerSoul, _playerBody};

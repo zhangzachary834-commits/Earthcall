@@ -559,6 +559,11 @@ void Game::update(float dt) {
     // Process menu hotkeys (must be after potential cursor unlock to allow selection)
     _mainMenu.processInput(_window);
     _mouseHandler.setMenuOpen(_mainMenu.isOpen());
+
+    // Laws hear the frame: everything published above (collisions, hover
+    // edges, finished clips, applied laws) has been asserted as facts; one
+    // tick evaluates the network and fires whatever the events woke.
+    _lawManager.tick();
 }
 
 // ---------------------------------------------------------------------------

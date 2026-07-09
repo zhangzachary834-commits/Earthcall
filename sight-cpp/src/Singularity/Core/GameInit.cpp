@@ -27,6 +27,10 @@ bool Game::init() {
     _window = Engine::instance().window();
     if (!_window) return false;
 
+    // Laws listen from the first frame: every ECA::Event published anywhere
+    // in the engine becomes a fact the law network can act on.
+    _lawManager.connectToEventBus();
+
     // Init GL state – depth test already enabled in ShadingSystem::init()
     ShadingSystem::init();
 
