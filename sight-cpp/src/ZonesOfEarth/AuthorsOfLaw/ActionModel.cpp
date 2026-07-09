@@ -1,7 +1,10 @@
 #include "ActionModel.hpp"
 
+#include "Form/Object/Creation/ObjectConcept.hpp"
 #include "Form/Singular/Property/PropertyValueJson.hpp"
+#include "ZonesOfEarth/World/World.hpp"
 
+#include <glm/gtc/matrix_transform.hpp>
 #include <utility>
 
 nlohmann::json ActionNode::toJson() const {
@@ -107,10 +110,30 @@ ECA::ActionExecutor ActionNode::compile() const {
             };
         }
         case Kind::Spawn: {
-            // Reserved: lands with ObjectConcept (LAW_AND_CREATION_SYSTEM.md §7).
-            // Until then a Spawn compiles to a no-op — creation must never be
-            // improvised from a half-wired pipeline.
-            return [](const ECA::Event&, Singular&) {};
+            // Creation IS a law application (LAW_AND_CREATION_SYSTEM.md §7c):
+            // the law's TARGET is the World that receives the newborns — the
+            // container is the womb. The event's subject seeds the mappings
+            // (a one-member source set) and, when spatial, the placement.
+            // Reaching this executor at all means the full applyTo gauntlet
+            // passed: unauthored laws cannot create.
+            const std::string id = conceptId;
+            return [id](const ECA::Event& event, Singular& target) {
+                auto* world = dynamic_cast<World*>(&target);
+                auto concept = ConceptRegistry::instance().find(id);
+                if (!world || !concept) return;
+
+                std::vector<Object*> sources;
+                glm::mat4 placement(1.0f);
+                if (auto* subject = dynamic_cast<Object*>(event.subject)) {
+                    sources.push_back(subject);
+                    placement = glm::translate(glm::mat4(1.0f), subject->getPosition());
+                }
+                auto newborns = concept->instantiate(
+                    placement, sources.empty() ? nullptr : &sources);
+                for (auto& newborn : newborns) {
+                    world->addObject(std::move(newborn));
+                }
+            };
         }
     }
     return [](const ECA::Event&, Singular&) {};

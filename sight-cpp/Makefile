@@ -101,6 +101,9 @@ law_loop_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/law_loop_test.o
 change_recorder_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/change_recorder_test.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
+object_concept_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/object_concept_test.o
+	$(CXX) $^ $(LDFLAGS) -o $@
+
 test-property: property_bridge_test
 	./property_bridge_test
 
@@ -113,11 +116,14 @@ test-loop: law_loop_test
 test-recorder: change_recorder_test
 	./change_recorder_test
 
-test: test-property test-law test-loop test-recorder
+test-concept: object_concept_test
+	./object_concept_test
+
+test: test-property test-law test-loop test-recorder test-concept
 
 # Pull in auto-generated header dependencies (.d files next to each .o)
 -include $(OBJECTS:.o=.d)
 -include $(wildcard $(BUILD_DIR)/tests/*.d)
 
 # Phony targets
-.PHONY: all clean run test test-property test-law test-loop test-recorder 
+.PHONY: all clean run test test-property test-law test-loop test-recorder test-concept 

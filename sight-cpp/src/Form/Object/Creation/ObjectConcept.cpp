@@ -1,0 +1,310 @@
+#include "Form/Object/Creation/ObjectConcept.hpp"
+
+#include "Form/Object/Geometry/SdfJson.hpp"
+#include "Singularity/Core/EventBus.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
+
+#include <glm/gtc/matrix_transform.hpp>
+#include <algorithm>
+#include <atomic>
+#include <cmath>
+#include <ctime>
+#include <limits>
+
+namespace {
+
+nlohmann::json mat4ToJson(const glm::mat4& m) {
+    nlohmann::json arr = nlohmann::json::array();
+    for (int c = 0; c < 4; ++c)
+        for (int r = 0; r < 4; ++r) arr.push_back(m[c][r]);
+    return arr;
+}
+
+glm::mat4 mat4FromJson(const nlohmann::json& j) {
+    glm::mat4 m(1.0f);
+    if (j.is_array() && j.size() == 16) {
+        int i = 0;
+        for (int c = 0; c < 4; ++c)
+            for (int r = 0; r < 4; ++r) m[c][r] = j[i++].get<float>();
+    }
+    return m;
+}
+
+} // namespace
+
+// ---------------------------------------------------------------------------
+// PropertyMapping
+// ---------------------------------------------------------------------------
+
+nlohmann::json PropertyMapping::toJson() const {
+    return nlohmann::json{
+        {"source", source.toString()},
+        {"transform", transform.toJson()},
+        {"target", target.toString()},
+        {"agg", static_cast<int>(agg)}
+    };
+}
+
+PropertyMapping PropertyMapping::fromJson(const nlohmann::json& j) {
+    PropertyMapping m;
+    m.source = PropertyPath::parse(j.value("source", std::string()));
+    if (j.contains("transform")) m.transform = CurveModel::fromJson(j["transform"]);
+    m.target = PropertyPath::parse(j.value("target", std::string()));
+    m.agg = static_cast<Aggregate>(j.value("agg", 0));
+    return m;
+}
+
+// ---------------------------------------------------------------------------
+// ObjectConcept::MemberTemplate
+// ---------------------------------------------------------------------------
+
+nlohmann::json ObjectConcept::MemberTemplate::toJson() const {
+    nlohmann::json j{
+        {"kind", static_cast<int>(kind)},
+        {"params", {params.r, params.ry, params.rz, params.halfH, params.majorR,
+                    params.minorR, params.paraboloidA, params.ovoidAsym, params.fillet}},
+        {"relativeTransform", mat4ToJson(relativeTransform)}
+    };
+    if (hasField) {
+        j["field"] = geom::sdfToJson(field);
+        j["fieldExtent"] = fieldExtent;
+    }
+    return j;
+}
+
+ObjectConcept::MemberTemplate ObjectConcept::MemberTemplate::fromJson(const nlohmann::json& j) {
+    MemberTemplate m;
+    m.kind = static_cast<Object::ShapeKind>(j.value("kind", 0));
+    if (j.contains("params") && j["params"].is_array() && j["params"].size() == 9) {
+        const auto& p = j["params"];
+        m.params.r = p[0].get<float>();
+        m.params.ry = p[1].get<float>();
+        m.params.rz = p[2].get<float>();
+        m.params.halfH = p[3].get<float>();
+        m.params.majorR = p[4].get<float>();
+        m.params.minorR = p[5].get<float>();
+        m.params.paraboloidA = p[6].get<float>();
+        m.params.ovoidAsym = p[7].get<float>();
+        m.params.fillet = p[8].get<float>();
+    }
+    if (j.contains("field")) {
+        m.hasField = true;
+        m.field = geom::sdfFromJson(j["field"]);
+        m.fieldExtent = j.value("fieldExtent", 1.0f);
+    }
+    if (j.contains("relativeTransform")) {
+        m.relativeTransform = mat4FromJson(j["relativeTransform"]);
+    }
+    return m;
+}
+
+// ---------------------------------------------------------------------------
+// ObjectConcept
+// ---------------------------------------------------------------------------
+
+ObjectConcept::ObjectConcept(const std::string& name)
+    : _name(name.empty() ? "Concept" : name) {
+    initializeConceptIdentity();
+}
+
+void ObjectConcept::initializeConceptIdentity() {
+    static std::atomic<unsigned long long> nextConceptId{1};
+    _conceptId = "concept-" + std::to_string(nextConceptId.fetch_add(1));
+    setObjectID(_conceptId);
+    setPhysicalObject(0);   // extra-spatial: the word for the thing, not the thing
+}
+
+std::shared_ptr<ObjectConcept> ObjectConcept::captureFrom(
+    const std::vector<Object*>& sourceSet,
+    const std::string& name,
+    Singular* author) {
+    auto concept = std::make_shared<ObjectConcept>(name);
+
+    glm::vec3 centroid(0.0f);
+    int counted = 0;
+    for (const auto* source : sourceSet) {
+        if (!source) continue;
+        centroid += source->getPosition();
+        ++counted;
+    }
+    if (counted > 0) centroid /= static_cast<float>(counted);
+    const glm::mat4 toCentroid = glm::translate(glm::mat4(1.0f), -centroid);
+
+    for (auto* source : sourceSet) {
+        if (!source) continue;
+        MemberTemplate member;
+        member.kind = source->getShapeKind();
+        member.params = source->getShapeParams();
+        member.hasField = source->hasField();
+        if (member.hasField) {
+            member.field = source->getFieldData();      // deep copy — its own being
+            member.fieldExtent = source->getFieldExtent();
+        }
+        member.relativeTransform = toCentroid * source->getTransform();
+        concept->_members.push_back(std::move(member));
+
+        concept->_provenance.add(std::make_shared<Relation>(
+            "abstracted-from", *concept, *source, true, 1.0f));
+    }
+    if (author) {
+        concept->_provenance.add(std::make_shared<Relation>(
+            "authored-by", *concept, *author, true, 1.0f));
+    }
+    return concept;
+}
+
+std::vector<std::unique_ptr<Object>> ObjectConcept::instantiate(
+    const glm::mat4& placement,
+    const std::vector<Object*>* sources) {
+    std::vector<std::unique_ptr<Object>> newborns;
+    newborns.reserve(_members.size());
+
+    for (std::size_t i = 0; i < _members.size(); ++i) {
+        const MemberTemplate& member = _members[i];
+        auto newborn = std::make_unique<Object>();
+        if (member.hasField) {
+            newborn->setFieldShape(member.field, member.fieldExtent);
+        } else {
+            newborn->setShape(member.kind, member.params);
+        }
+        newborn->setTransform(placement * member.relativeTransform);
+
+        // Derivation: carry structure across through the mappings.
+        if (sources && !sources->empty()) {
+            for (const auto& mapping : _mappings) {
+                double x = 0.0;
+                bool have = false;
+                if (mapping.agg == PropertyMapping::Aggregate::PerMember) {
+                    Object* src = (*sources)[i % sources->size()];
+                    PropertyValue v;
+                    have = src && mapping.source.getValue(*src, v) &&
+                           propertyValueToNumber(v, x);
+                } else {
+                    double acc = (mapping.agg == PropertyMapping::Aggregate::Max)
+                                     ? -std::numeric_limits<double>::infinity()
+                                     : 0.0;
+                    int count = 0;
+                    for (auto* src : *sources) {
+                        PropertyValue v;
+                        double xi = 0.0;
+                        if (src && mapping.source.getValue(*src, v) &&
+                            propertyValueToNumber(v, xi)) {
+                            ++count;
+                            if (mapping.agg == PropertyMapping::Aggregate::Max) {
+                                acc = std::max(acc, xi);
+                            } else {
+                                acc += xi;
+                            }
+                        }
+                    }
+                    if (count > 0) {
+                        have = true;
+                        x = (mapping.agg == PropertyMapping::Aggregate::Mean)
+                                ? acc / count
+                                : acc;
+                    }
+                }
+                if (have) {
+                    mapping.target.setValue(*newborn,
+                                            PropertyValue(mapping.transform.evaluate(x)));
+                }
+            }
+        }
+
+        // Provenance by identifier (Relations store names, not pointers —
+        // safe across the newborn's move into its container).
+        _provenance.add(std::make_shared<Relation>(
+            "generated-from", *newborn, *this, true, 1.0f));
+        newborns.push_back(std::move(newborn));
+    }
+    return newborns;
+}
+
+nlohmann::json ObjectConcept::toJson() const {
+    nlohmann::json membersJson = nlohmann::json::array();
+    for (const auto& m : _members) membersJson.push_back(m.toJson());
+    nlohmann::json mappingsJson = nlohmann::json::array();
+    for (const auto& m : _mappings) mappingsJson.push_back(m.toJson());
+    return nlohmann::json{
+        {"id", _conceptId},
+        {"name", _name},
+        {"members", membersJson},
+        {"mappings", mappingsJson},
+        {"provenance", _provenance.toJson()}
+    };
+}
+
+std::shared_ptr<ObjectConcept> ObjectConcept::fromJson(const nlohmann::json& j) {
+    auto concept = std::make_shared<ObjectConcept>(j.value("name", std::string("Concept")));
+    // Preserve saved identity (fresh-counter collision guarding is the world
+    // loader's concern, as with Law::fromJson).
+    if (j.contains("id")) {
+        concept->_conceptId = j["id"].get<std::string>();
+        concept->setObjectID(concept->_conceptId);
+    }
+    if (j.contains("members")) {
+        for (const auto& m : j["members"]) {
+            concept->_members.push_back(MemberTemplate::fromJson(m));
+        }
+    }
+    if (j.contains("mappings")) {
+        for (const auto& m : j["mappings"]) {
+            concept->_mappings.push_back(PropertyMapping::fromJson(m));
+        }
+    }
+    return concept;
+}
+
+// ---------------------------------------------------------------------------
+// ConceptRegistry
+// ---------------------------------------------------------------------------
+
+ConceptRegistry& ConceptRegistry::instance() {
+    static ConceptRegistry registry;
+    return registry;
+}
+
+void ConceptRegistry::add(const std::shared_ptr<ObjectConcept>& concept) {
+    if (!concept) return;
+    const std::string id = concept->getIdentifier();
+    auto existing = std::find_if(_concepts.begin(), _concepts.end(),
+                                 [&](const std::shared_ptr<ObjectConcept>& candidate) {
+                                     return candidate && candidate->getIdentifier() == id;
+                                 });
+    if (existing != _concepts.end()) return;
+
+    _concepts.push_back(concept);
+    _formation.addMember(concept.get());
+
+    ECA::Event echo;
+    echo.type = "concept-registered";
+    echo.subject = concept.get();
+    echo.timestamp = std::time(nullptr);
+    Core::EventBus::instance().publish(echo);
+}
+
+bool ConceptRegistry::remove(const std::string& conceptId) {
+    auto it = std::find_if(_concepts.begin(), _concepts.end(),
+                           [&](const std::shared_ptr<ObjectConcept>& concept) {
+                               return concept && concept->getIdentifier() == conceptId;
+                           });
+    if (it == _concepts.end()) return false;
+    _formation.removeMember(it->get());
+    _concepts.erase(it);
+    return true;
+}
+
+std::shared_ptr<ObjectConcept> ConceptRegistry::find(const std::string& conceptId) const {
+    for (const auto& concept : _concepts) {
+        if (concept && concept->getIdentifier() == conceptId) return concept;
+    }
+    return nullptr;
+}
+
+nlohmann::json ConceptRegistry::toJson() const {
+    nlohmann::json arr = nlohmann::json::array();
+    for (const auto& concept : _concepts) {
+        if (concept) arr.push_back(concept->toJson());
+    }
+    return nlohmann::json{{"concepts", arr}};
+}
