@@ -92,12 +92,20 @@ $(BUILD_DIR)/tests/%.o: tests/%.cpp | $(BUILD_DIR)
 property_bridge_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/property_bridge_test.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
+law_model_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/law_model_test.o
+	$(CXX) $^ $(LDFLAGS) -o $@
+
 test-property: property_bridge_test
 	./property_bridge_test
+
+test-law: law_model_test
+	./law_model_test
+
+test: test-property test-law
 
 # Pull in auto-generated header dependencies (.d files next to each .o)
 -include $(OBJECTS:.o=.d)
 -include $(wildcard $(BUILD_DIR)/tests/*.d)
 
 # Phony targets
-.PHONY: all clean run test-property 
+.PHONY: all clean run test test-property test-law 

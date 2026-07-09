@@ -9,19 +9,6 @@
 
 namespace {
 
-// Numeric view of any arithmetic alternative (int/float/double/bool/char/long).
-bool numericValue(const PropertyValue& v, double& out) {
-    return std::visit([&](auto&& x) {
-        using X = std::decay_t<decltype(x)>;
-        if constexpr (std::is_arithmetic_v<X>) {
-            out = static_cast<double>(x);
-            return true;
-        } else {
-            return false;
-        }
-    }, v);
-}
-
 // Re-express n in the same alternative `like` currently holds, so a float
 // arriving for a double slot (or an int for a float slot) still lands.
 bool coerceLike(const PropertyValue& like, double n, PropertyValue& out) {
@@ -140,7 +127,7 @@ bool PropertyPath::setValue(Singular& root, const PropertyValue& v) const {
         // Arithmetic coercion retry: match the alternative the slot holds.
         double n = 0.0;
         PropertyValue coerced;
-        if (numericValue(v, n) && coerceLike(property->value(), n, coerced)) {
+        if (propertyValueToNumber(v, n) && coerceLike(property->value(), n, coerced)) {
             return property->setValue(coerced);
         }
         return false;
@@ -149,7 +136,7 @@ bool PropertyPath::setValue(Singular& root, const PropertyValue& v) const {
     // Component write: read the whole vec3, mutate one lane, write back whole
     // (so setters like Object::setPosition run their full side effects).
     double n = 0.0;
-    if (!numericValue(v, n)) return false;
+    if (!propertyValueToNumber(v, n)) return false;
     PropertyValue whole = property->value();
     glm::vec3* vec = std::get_if<glm::vec3>(&whole);
     if (!vec) return false;

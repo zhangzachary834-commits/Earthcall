@@ -7,11 +7,14 @@
 #include "Relation/RelationManager.hpp"
 #include "Form/Singular/Singular.hpp"
 #include "ECA.hpp"
+#include "ConditionModel.hpp"
+#include "ActionModel.hpp"
 #include "json.hpp"
 
 #include <ctime>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -115,6 +118,29 @@ public:
     void addAction(const std::string& description, ECA::ActionExecutor action);
     void clearActions();
 
+    // ------------------------------------------------------------------
+    // The law's text (Stage 2): serializable condition/action models.
+    // When present, recompile() derives the executable ECA slots from them —
+    // the tree is primary, the closure is derived. This is what lets a
+    // Person-authored law survive save/load, be synthesized, and be governed.
+    // ------------------------------------------------------------------
+    bool hasConditionModel() const { return _conditionModel.has_value(); }
+    bool hasActionModel() const { return _actionModel.has_value(); }
+    const ConditionModel* conditionModel() const {
+        return _conditionModel ? &*_conditionModel : nullptr;
+    }
+    const ActionModel* actionModel() const {
+        return _actionModel ? &*_actionModel : nullptr;
+    }
+    void setConditionModel(ConditionModel model);
+    void setActionModel(ActionModel model);
+    void recompile();
+
+    // Restore identity + behavior from toJson() output. Authors and targets
+    // are world references (identities) — the loader reattaches them; a law
+    // without authors stays Unauthored and cannot fire.
+    static std::shared_ptr<Law> fromJson(const nlohmann::json& j);
+
     // Event-typed carrier for this law's ECA loop (which event kind wakes it).
     // Wired to the bus/Rete loop in Stage 3.
     const ECA::Loop& ecaLoop() const { return _ecaLoop; }
@@ -147,6 +173,8 @@ private:
     RelationManager _provenance;
 
     ECA::Loop _ecaLoop;
+    std::optional<ConditionModel> _conditionModel;
+    std::optional<ActionModel> _actionModel;
     std::vector<Condition> _conditionPredicates;
     std::vector<Action> _actions;
     std::vector<ApplicationRecord> _applicationLog;

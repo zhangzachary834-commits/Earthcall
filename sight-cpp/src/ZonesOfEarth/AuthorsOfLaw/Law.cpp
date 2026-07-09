@@ -136,6 +136,53 @@ void Law::clearActions() {
     _actions.clear();
 }
 
+void Law::setConditionModel(ConditionModel model) {
+    _conditionModel = std::move(model);
+    recompile();
+}
+
+void Law::setActionModel(ActionModel model) {
+    _actionModel = std::move(model);
+    recompile();
+}
+
+// Models are primary; the compiled ECA slots are derived. Only slots owned by
+// a model are cleared — first-mover closures registered directly through
+// addCondition/addAction survive untouched on model-less laws.
+void Law::recompile() {
+    if (_conditionModel) {
+        _conditionPredicates.clear();
+        addCondition(_conditionModel->describe(), _conditionModel->compile());
+    }
+    if (_actionModel) {
+        _actions.clear();
+        addAction(_actionModel->describe(), _actionModel->compile());
+    }
+}
+
+std::shared_ptr<Law> Law::fromJson(const nlohmann::json& j) {
+    auto law = std::make_shared<Law>(j.value("name", std::string("Law")));
+    // Preserve saved identity so provenance/Rete bindings keep meaning across
+    // loads. (Guarding the fresh-id counter against restored ids is the world
+    // loader's concern, as is reattaching authors/targets by identifier —
+    // until authors are reattached the law stays Unauthored and cannot fire.)
+    if (j.contains("id")) {
+        law->_lawId = j["id"].get<std::string>();
+        law->setObjectID(law->_lawId);
+    }
+    law->setEnabled(j.value("enabled", true));
+    law->setConditionMode(j.value("conditionMode", std::string("all")) == "any"
+                              ? ConditionMode::Any
+                              : ConditionMode::All);
+    if (j.contains("conditionModel")) {
+        law->setConditionModel(ConditionNode::fromJson(j["conditionModel"]));
+    }
+    if (j.contains("actionModel")) {
+        law->setActionModel(ActionNode::fromJson(j["actionModel"]));
+    }
+    return law;
+}
+
 Law::ApplicationResult Law::applyTo(Singular& target) {
     ApplicationResult result = ApplicationResult::Applied;
 
@@ -217,7 +264,7 @@ nlohmann::json Law::toJson() const {
         actionDescriptions.push_back(action.description);
     }
 
-    return nlohmann::json{
+    nlohmann::json j{
         {"id", _lawId},
         {"name", _name},
         {"enabled", _enabled},
@@ -230,6 +277,11 @@ nlohmann::json Law::toJson() const {
         {"actionDescriptions", actionDescriptions},
         {"applicationLog", log}
     };
+    // The law's text — the part that makes behavior (not just descriptions)
+    // survive save/load.
+    if (_conditionModel) j["conditionModel"] = _conditionModel->toJson();
+    if (_actionModel) j["actionModel"] = _actionModel->toJson();
+    return j;
 }
 
 const char* Law::resultName(ApplicationResult result) {

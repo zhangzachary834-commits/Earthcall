@@ -44,3 +44,17 @@ struct is_variant_alternative<T, std::variant<Ts...>>
 template <typename T>
 inline constexpr bool is_property_value_alternative =
     is_variant_alternative<T, PropertyValue>::value;
+
+// Numeric view of any arithmetic alternative (int/float/double/bool/char/long).
+// The shared currency for comparisons, coercion, and Drive-curve inputs.
+inline bool propertyValueToNumber(const PropertyValue& v, double& out) {
+    return std::visit([&](auto&& x) {
+        using X = std::decay_t<decltype(x)>;
+        if constexpr (std::is_arithmetic_v<X>) {
+            out = static_cast<double>(x);
+            return true;
+        } else {
+            return false;
+        }
+    }, v);
+}
