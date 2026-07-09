@@ -36,6 +36,11 @@ nlohmann::json ActionNode::toJson() const {
         case Kind::Spawn:
             j["conceptId"] = conceptId;
             break;
+        case Kind::Map:
+            j["path"] = path.toString();
+            j["function"] = mapFunction.toJson();
+            j["bindings"] = mathBindingsToJson(bindings);
+            break;
     }
     return j;
 }
@@ -49,6 +54,8 @@ ActionNode ActionNode::fromJson(const nlohmann::json& j) {
     if (j.contains("curve")) n.curve = CurveModel::fromJson(j["curve"]);
     if (j.contains("input")) n.input = PropertyPath::parse(j["input"].get<std::string>());
     n.conceptId = j.value("conceptId", std::string());
+    if (j.contains("function")) n.mapFunction = OntoMath::Piecewise::fromJson(j["function"]);
+    if (j.contains("bindings")) n.bindings = mathBindingsFromJson(j["bindings"]);
     if (j.contains("children")) {
         for (const auto& c : j["children"]) n.children.push_back(fromJson(c));
     }
@@ -135,6 +142,21 @@ ECA::ActionExecutor ActionNode::compile() const {
                 }
             };
         }
+        case Kind::Map: {
+            // path := f(bindings) — behavior governed by an authored,
+            // exact, piecewise mathematical function. Undefined math writes
+            // nothing: a law never manifests undefined values.
+            const PropertyPath target = path;
+            const OntoMath::Piecewise f = mapFunction;
+            const MathBindings binds = bindings;
+            return [target, f, binds](const ECA::Event&, Singular& subject) {
+                auto vars = readMathBindings(subject, binds);
+                if (!vars) return;
+                const auto value = f.evaluate(*vars);
+                if (!value) return;
+                target.setValue(subject, PropertyValue(*value));
+            };
+        }
     }
     return [](const ECA::Event&, Singular&) {};
 }
@@ -151,6 +173,7 @@ std::string ActionNode::describe() const {
         case Kind::Sequence: return "sequence(" + std::to_string(children.size()) + ")";
         case Kind::Parallel: return "parallel(" + std::to_string(children.size()) + ")";
         case Kind::Spawn: return "spawn(" + conceptId + ")";
+        case Kind::Map: return path.toString() + " := " + mapFunction.print();
     }
     return "action";
 }
@@ -186,6 +209,16 @@ ActionNode ActionNode::drive(const std::string& dottedPath, CurveModel curve,
     n.path = PropertyPath::parse(dottedPath);
     n.curve = std::move(curve);
     if (!inputPath.empty()) n.input = PropertyPath::parse(inputPath);
+    return n;
+}
+
+ActionNode ActionNode::map(const std::string& dottedPath, OntoMath::Piecewise function,
+                           MathBindings bindings) {
+    ActionNode n;
+    n.kind = Kind::Map;
+    n.path = PropertyPath::parse(dottedPath);
+    n.mapFunction = std::move(function);
+    n.bindings = std::move(bindings);
     return n;
 }
 

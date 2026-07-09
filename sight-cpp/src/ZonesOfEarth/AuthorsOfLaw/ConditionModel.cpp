@@ -54,6 +54,12 @@ nlohmann::json ConditionNode::toJson() const {
             j["children"] = kids;
             break;
         }
+        case Kind::Zone:
+            j["function"] = zoneFunction.toJson();
+            j["bindings"] = mathBindingsToJson(bindings);
+            if (!std::holds_alternative<std::monostate>(lo)) j["lo"] = propertyValueToJson(lo);
+            if (!std::holds_alternative<std::monostate>(hi)) j["hi"] = propertyValueToJson(hi);
+            break;
     }
     return j;
 }
@@ -72,6 +78,8 @@ ConditionNode ConditionNode::fromJson(const nlohmann::json& j) {
     if (j.contains("probe")) n.probe = PropertyPath::parse(j["probe"].get<std::string>());
     n.relationType = j.value("relationType", std::string());
     n.otherId = j.value("otherId", std::string());
+    if (j.contains("function")) n.zoneFunction = OntoMath::Piecewise::fromJson(j["function"]);
+    if (j.contains("bindings")) n.bindings = mathBindingsFromJson(j["bindings"]);
     if (j.contains("children")) {
         for (const auto& c : j["children"]) n.children.push_back(fromJson(c));
     }
@@ -131,6 +139,26 @@ ECA::ConditionPredicate ConditionNode::compile() const {
             // condition never passes — laws must not fire on unproven relations.
             return [](const ECA::Event&, const Singular&) { return false; };
         }
+        case Kind::Zone: {
+            // The satisfaction zone of an authored function: read every bound
+            // variable off the subject, evaluate the (piecewise, multivariate)
+            // expression exactly, and test the authored bounds. Undefined math
+            // — an unbound variable or a point outside every piece — is never
+            // satisfied.
+            const OntoMath::Piecewise f = zoneFunction;
+            const MathBindings binds = bindings;
+            const PropertyValue zlo = lo, zhi = hi;
+            return [f, binds, zlo, zhi](const ECA::Event&, const Singular& target) {
+                auto vars = readMathBindings(const_cast<Singular&>(target), binds);
+                if (!vars) return false;
+                const auto value = f.evaluate(*vars);
+                if (!value) return false;
+                double bound = 0.0;
+                if (propertyValueToNumber(zlo, bound) && *value < bound) return false;
+                if (propertyValueToNumber(zhi, bound) && *value > bound) return false;
+                return true;
+            };
+        }
         case Kind::All:
         case Kind::Any:
         case Kind::Not: {
@@ -175,6 +203,14 @@ std::string ConditionNode::describe() const {
         case Kind::All: return "all(" + std::to_string(children.size()) + ")";
         case Kind::Any: return "any(" + std::to_string(children.size()) + ")";
         case Kind::Not: return "not(...)";
+        case Kind::Zone: {
+            std::string range;
+            double bound = 0.0;
+            if (propertyValueToNumber(lo, bound)) range += std::to_string(bound);
+            range += "..";
+            if (propertyValueToNumber(hi, bound)) range += std::to_string(bound);
+            return "zone(" + zoneFunction.print() + " in [" + range + "])";
+        }
     }
     return "condition";
 }
@@ -203,6 +239,17 @@ ConditionNode ConditionNode::inRegion(geom::SdfNode region, const std::string& p
     n.kind = Kind::InRegion;
     n.region = std::move(region);
     n.probe = PropertyPath::parse(probePath);
+    return n;
+}
+
+ConditionNode ConditionNode::zone(OntoMath::Piecewise function, MathBindings bindings,
+                                  PropertyValue zoneLo, PropertyValue zoneHi) {
+    ConditionNode n;
+    n.kind = Kind::Zone;
+    n.zoneFunction = std::move(function);
+    n.bindings = std::move(bindings);
+    n.lo = std::move(zoneLo);
+    n.hi = std::move(zoneHi);
     return n;
 }
 

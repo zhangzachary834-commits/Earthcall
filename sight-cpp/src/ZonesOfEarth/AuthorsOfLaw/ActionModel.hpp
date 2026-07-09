@@ -2,7 +2,9 @@
 
 #include "ECA.hpp"
 #include "Form/Singular/Property/PropertyPath.hpp"
+#include "MathBinding.hpp"
 #include "Singularity/OntoMath/CurveModel.hpp"
+#include "Singularity/OntoMath/Expression.hpp"
 #include "json.hpp"
 
 #include <string>
@@ -27,7 +29,10 @@ struct ActionNode {
         Sequence = 5,  // children in order
         Parallel = 6,  // children conceptually simultaneous (same order today;
                        // the distinction matters when actions become async)
-        Spawn = 7      // reserved: instantiate from an ObjectConcept (commit 6)
+        Spawn = 7,     // instantiate from an ObjectConcept into a World
+        Map = 8        // path := f(bindings) — output governed by an authored
+                       // OntoMath function of authored inputs (Drive's
+                       // multivariate, piecewise, exact elder sibling)
     };
 
     Kind kind = Kind::Set;
@@ -40,6 +45,12 @@ struct ActionNode {
     PropertyPath input;              // Drive domain; empty => event timestamp (seconds)
 
     std::string conceptId;           // Spawn (reserved)
+
+    // Map payload: the authored function and where each of its variables
+    // lives on the subject. Undefined math (unbound variable, outside every
+    // piece) writes NOTHING — a law never manifests undefined values.
+    OntoMath::Piecewise mapFunction;
+    MathBindings bindings;
 
     std::vector<ActionNode> children;   // Sequence / Parallel
 
@@ -58,6 +69,8 @@ struct ActionNode {
     static ActionNode scale(const std::string& dottedPath, double factor);
     static ActionNode drive(const std::string& dottedPath, CurveModel curve,
                             const std::string& inputPath = "");
+    static ActionNode map(const std::string& dottedPath, OntoMath::Piecewise function,
+                          MathBindings bindings);
     static ActionNode sequence(std::vector<ActionNode> children);
 };
 

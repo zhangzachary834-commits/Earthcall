@@ -23,6 +23,8 @@ struct SessionState {
     char eventBuf[64] = "";
     char pathBuf[128] = "";
     char textBuf[128] = "";
+    char varBuf[32] = "";        // new math-binding variable name
+    char bindPathBuf[128] = "";  // new math-binding property path
     std::string lastEditLaw;
     int lastEditCard = -1;
 };
@@ -134,6 +136,123 @@ namespace {
 // through setConditionModel/setActionModel so the law recompiles.
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Authored-mathematics editors. Every foundational primitive — variables,
+// bindings, coefficients, exponents, piece bounds — is Person-modifiable,
+// during creation and after. Numbers edit in place; names/paths add and
+// remove as rows (delete + re-add to change).
+// ---------------------------------------------------------------------------
+
+bool editMathBindings(MathBindings& bindings) {
+    bool changed = false;
+    ImGui::TextDisabled("Bindings (variable <- property path)");
+    std::string removeKey;
+    for (const auto& entry : bindings) {
+        ImGui::PushID(entry.first.c_str());
+        ImGui::BulletText("%s <- %s", entry.first.c_str(), entry.second.toString().c_str());
+        ImGui::SameLine();
+        if (ImGui::SmallButton("x")) removeKey = entry.first;
+        ImGui::PopID();
+    }
+    if (!removeKey.empty()) {
+        bindings.erase(removeKey);
+        changed = true;
+    }
+    ImGui::SetNextItemWidth(60.0f);
+    ImGui::InputText("##bindvar", g.varBuf, sizeof(g.varBuf));
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(180.0f);
+    ImGui::InputText("##bindpath", g.bindPathBuf, sizeof(g.bindPathBuf));
+    ImGui::SameLine();
+    if (ImGui::Button("Add binding") && g.varBuf[0] != '\0' && g.bindPathBuf[0] != '\0') {
+        bindings[g.varBuf] = PropertyPath::parse(g.bindPathBuf);
+        g.varBuf[0] = '\0';
+        g.bindPathBuf[0] = '\0';
+        changed = true;
+    }
+    return changed;
+}
+
+bool editPiecewise(OntoMath::Piecewise& f, const MathBindings& bindings) {
+    bool changed = false;
+    ImGui::TextDisabled("f = %s", f.print().c_str());
+
+    for (std::size_t p = 0; p < f.pieces.size(); ++p) {
+        auto& piece = f.pieces[p];
+        ImGui::PushID(static_cast<int>(p));
+        if (f.pieces.size() > 1 || piece.hasLo || piece.hasHi) {
+            ImGui::Text("Piece %zu over %s:", p + 1, f.inputVariable.c_str());
+            if (ImGui::Checkbox("lo", &piece.hasLo)) changed = true;
+            if (piece.hasLo) {
+                ImGui::SameLine();
+                ImGui::SetNextItemWidth(80.0f);
+                double lo = piece.lo;
+                if (ImGui::InputDouble("##lo", &lo)) { piece.lo = lo; changed = true; }
+                ImGui::SameLine();
+                if (ImGui::Checkbox("incl##lo", &piece.includeLo)) changed = true;
+            }
+            ImGui::SameLine();
+            if (ImGui::Checkbox("hi", &piece.hasHi)) changed = true;
+            if (piece.hasHi) {
+                ImGui::SameLine();
+                ImGui::SetNextItemWidth(80.0f);
+                double hi = piece.hi;
+                if (ImGui::InputDouble("##hi", &hi)) { piece.hi = hi; changed = true; }
+                ImGui::SameLine();
+                if (ImGui::Checkbox("incl##hi", &piece.includeHi)) changed = true;
+            }
+        }
+
+        // Terms: coefficient and every exponent edit in place.
+        int removeTerm = -1;
+        for (std::size_t t = 0; t < piece.expression.terms.size(); ++t) {
+            auto& term = piece.expression.terms[t];
+            ImGui::PushID(static_cast<int>(t) + 100);
+            ImGui::SetNextItemWidth(80.0f);
+            double c = term.coefficient;
+            if (ImGui::InputDouble("coeff", &c)) { term.coefficient = c; changed = true; }
+            for (auto& factor : term.factors) {
+                ImGui::SameLine();
+                ImGui::SetNextItemWidth(56.0f);
+                double e = factor.second;
+                if (ImGui::InputDouble(factor.first.c_str(), &e)) {
+                    factor.second = e;
+                    changed = true;
+                }
+            }
+            // Multiply this term by a bound variable (exponent +1).
+            for (const auto& binding : bindings) {
+                if (term.factors.count(binding.first)) continue;
+                ImGui::SameLine();
+                if (ImGui::SmallButton(("*" + binding.first).c_str())) {
+                    term.factors[binding.first] = 1.0;
+                    changed = true;
+                }
+            }
+            ImGui::SameLine();
+            if (ImGui::SmallButton("x##rmterm")) removeTerm = static_cast<int>(t);
+            ImGui::PopID();
+        }
+        if (removeTerm >= 0) {
+            piece.expression.terms.erase(piece.expression.terms.begin() + removeTerm);
+            changed = true;
+        }
+        if (ImGui::SmallButton("+ term")) {
+            piece.expression.terms.emplace_back(1.0);
+            changed = true;
+        }
+        ImGui::PopID();
+        ImGui::Separator();
+    }
+    if (ImGui::SmallButton("+ piece")) {
+        OntoMath::Piecewise::Piece piece;
+        piece.expression = OntoMath::Expression::constant(0.0);
+        f.pieces.push_back(std::move(piece));
+        changed = true;
+    }
+    return changed;
+}
+
 bool editConditionNode(ConditionNode& node) {
     bool changed = false;
     switch (node.kind) {
@@ -204,7 +323,45 @@ bool editConditionNode(ConditionNode& node) {
                         "position.y", ConditionNode::Op::Lt, PropertyValue(0.0)));
                     changed = true;
                 }
+                ImGui::SameLine();
+                if (ImGui::Button("+ Zone child")) {
+                    node.children.push_back(ConditionNode::zone(
+                        OntoMath::Piecewise::continuous(
+                            OntoMath::Expression::variable("x")),
+                        MathBindings{{"x", PropertyPath::parse("position.x")}},
+                        PropertyValue{}, PropertyValue(0.0)));
+                    changed = true;
+                }
             }
+            break;
+        }
+        case ConditionNode::Kind::Zone: {
+            ImGui::TextDisabled("Satisfied when f(bindings) lies in the zone.");
+            bool hasLo = !std::holds_alternative<std::monostate>(node.lo);
+            if (ImGui::Checkbox("zone lo", &hasLo)) {
+                node.lo = hasLo ? PropertyValue(0.0) : PropertyValue{};
+                changed = true;
+            }
+            if (hasLo) {
+                ImGui::SameLine();
+                ImGui::SetNextItemWidth(90.0f);
+                double lo = numericOr(node.lo, 0.0);
+                if (ImGui::InputDouble("##zlo", &lo)) { node.lo = PropertyValue(lo); changed = true; }
+            }
+            ImGui::SameLine();
+            bool hasHi = !std::holds_alternative<std::monostate>(node.hi);
+            if (ImGui::Checkbox("zone hi", &hasHi)) {
+                node.hi = hasHi ? PropertyValue(0.0) : PropertyValue{};
+                changed = true;
+            }
+            if (hasHi) {
+                ImGui::SameLine();
+                ImGui::SetNextItemWidth(90.0f);
+                double hi = numericOr(node.hi, 0.0);
+                if (ImGui::InputDouble("##zhi", &hi)) { node.hi = PropertyValue(hi); changed = true; }
+            }
+            if (editMathBindings(node.bindings)) changed = true;
+            if (editPiecewise(node.zoneFunction, node.bindings)) changed = true;
             break;
         }
     }
@@ -281,6 +438,17 @@ bool editActionNode(ActionNode& node) {
                 node.children.push_back(ActionNode::set("position.y", PropertyValue(0.0)));
                 changed = true;
             }
+            break;
+        }
+        case ActionNode::Kind::Map: {
+            ImGui::TextDisabled("path := f(bindings) — authored mathematics governs the output.");
+            if (ImGui::InputText("Path", g.pathBuf, sizeof(g.pathBuf),
+                                 ImGuiInputTextFlags_EnterReturnsTrue)) {
+                node.path = PropertyPath::parse(g.pathBuf);
+                changed = true;
+            }
+            if (editMathBindings(node.bindings)) changed = true;
+            if (editPiecewise(node.mapFunction, node.bindings)) changed = true;
             break;
         }
         case ActionNode::Kind::Spawn: {

@@ -4,10 +4,11 @@
 #include <utility>
 #include <vector>
 
-// OntoMath symbolic function primitives. A Function is a sum of Terms; each
-// Term is coefficient * (product of variables) ^ exponent. This is the seed
-// that grows into CurveModel (Constant / Polynomial / Sinusoid) for Law Drive
-// actions — see LAW_AND_CREATION_SYSTEM.md §2c.
+// SUPERSEDED: this single-variable seed grew into the exact multivariate
+// symbolic core in Expression.hpp (OntoMath::Term / Expression / Piecewise —
+// algebra, calculus, piecewise bounds, JSON, wired into Zone conditions and
+// Map actions). New code should use Expression.hpp; this remains for the
+// simple single-variable term shape until callers migrate.
 class Function {
 public:
     struct Variable {

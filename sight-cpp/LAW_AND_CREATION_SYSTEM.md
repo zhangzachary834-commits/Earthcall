@@ -223,6 +223,34 @@ The sinusoid fields are **exactly `Automation::Track`'s fields** — not
 coincidence. Automation was the first pattern-of-change-as-data; `CurveModel` is
 its generalization off the transform channels onto arbitrary `PropertyPath`s.
 
+### 2e. OntoMath — authored mathematics (added after commit 8)
+
+Earthcall is driven by math in the program. `Singularity/OntoMath/Expression.hpp`
+is the exact symbolic core: `Term` (coefficient · Π varᵢ^expᵢ, real exponents),
+`Expression` (sum of terms; exact `plus`/`times`/`normalized` combine-like-terms,
+exact `derivative`/`antiderivative` by the power rule), and `Piecewise` (the
+manifesto's DiscreteFunctions: open/closed bounds per piece; **undefined outside
+every piece — nullopt, never silently zero**). `Operations::hyperop` is the
+arithmetic ladder (succession → addition → multiplication → exponentiation →
+tetration …).
+
+Two authorable kinds ride the ECA split:
+- **`ConditionNode::Kind::Zone`** — satisfied when `f(bindings)` lies in the
+  authored `[lo, hi]` zone (either side may be unbounded). *Condition functions
+  check if the input satisfies the designated zone inside the function.*
+- **`ActionNode::Kind::Map`** — `path := f(bindings)`. *Action functions govern
+  how behavior changes by making the output determined by a function on inputs.*
+
+`MathBindings` (variable name → PropertyPath) is the bridge: variables are
+Person-authored primitives naming where each value lives on the subject.
+Undefined math never fires a condition and never writes a value. All of it —
+variables, bindings, coefficients, exponents, piece bounds — is model data:
+serialized with the law, edited in the Law Author window.
+
+Growth path: expression-valued exponents (createTerm's recursive "term inside
+the exponential space"), transcendental factors, richer symbolic simplification,
+graph/relation-valued conditions.
+
 ### 2d. `Law` owns models
 
 ```cpp
