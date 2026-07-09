@@ -246,6 +246,17 @@ Law::ApplicationRecord Law::makeRecord(Singular* target, ApplicationResult resul
 void Law::publishAppliedEvent(Singular* target, ApplicationResult result) const {
     AppliedEvent event{this, target, result, std::time(nullptr)};
     Core::EventBus::instance().publish(event);
+
+    if (result == ApplicationResult::Applied) {
+        // String-typed echo: Person-authored laws bind to "law-applied"
+        // without needing a compile-time event type — laws chaining on laws.
+        // (Only successful applications echo; refusals are log-only.)
+        ECA::Event echo;
+        echo.type = "law-applied";
+        echo.subject = target;
+        echo.timestamp = std::time(nullptr);
+        Core::EventBus::instance().publish(echo);
+    }
 }
 
 nlohmann::json Law::toJson() const {
@@ -306,6 +317,14 @@ std::string ReteNetwork::assertFact(ReteFact fact) {
     }
     _facts.push_back(fact);
     return _facts.back().id;
+}
+
+void ReteNetwork::retractFirst(std::size_t count) {
+    if (count >= _facts.size()) {
+        _facts.clear();
+    } else {
+        _facts.erase(_facts.begin(), _facts.begin() + static_cast<std::ptrdiff_t>(count));
+    }
 }
 
 bool ReteNetwork::retractFact(const std::string& factId) {
@@ -504,6 +523,52 @@ void LawManager::add(const std::shared_ptr<Law>& law) {
 
     LawRegisteredEvent event{law, std::time(nullptr)};
     Core::EventBus::instance().publish(event);
+
+    ECA::Event echo;
+    echo.type = "law-registered";
+    echo.subject = law.get();
+    echo.timestamp = std::time(nullptr);
+    Core::EventBus::instance().publish(echo);
+}
+
+void LawManager::connectToEventBus() {
+    if (_connected) return;
+    _connected = true;
+    Core::EventBus::instance().subscribe<ECA::Event>([this](const ECA::Event& e) {
+        ReteFact fact;
+        fact.type = e.type;
+        fact.subject = e.subject;
+        fact.subjectId = e.subject ? e.subject->getIdentifier() : "";
+        _rete.assertFact(fact);
+        _dirty = true;
+    });
+}
+
+std::vector<Law::ApplicationRecord> LawManager::tick() {
+    std::vector<Law::ApplicationRecord> records;
+    for (int round = 0; round < kMaxChainRounds && _dirty; ++round) {
+        _dirty = false;
+        // Facts asserted before this round are consumed by it; facts asserted
+        // DURING it (laws firing events from applyTo) survive into the next
+        // round — that's how law chains resolve, bounded by kMaxChainRounds.
+        const std::size_t consumed = _rete.facts().size();
+        _rete.evaluate();
+        std::vector<ReteActivation> agenda = _rete.drainAgenda();
+        for (const auto& activation : agenda) {
+            Law* law = find(activation.lawId);
+            if (!law) continue;
+            Singular* subject = activation.token.facts.empty()
+                                    ? nullptr
+                                    : activation.token.facts.front().subject;
+            if (!subject) continue;
+            law->applyTo(*subject);
+            if (!law->applicationLog().empty()) {
+                records.push_back(law->applicationLog().back());
+            }
+        }
+        _rete.retractFirst(consumed);
+    }
+    return records;
 }
 
 bool LawManager::remove(const std::string& lawId) {

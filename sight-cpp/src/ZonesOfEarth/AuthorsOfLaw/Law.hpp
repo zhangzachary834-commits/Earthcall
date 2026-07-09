@@ -228,6 +228,10 @@ public:
 
     std::string assertFact(ReteFact fact);
     bool retractFact(const std::string& factId);
+    // Retract the oldest `count` facts — the consumption step of the tick
+    // loop: facts asserted before a round are consumed by it, facts asserted
+    // during it (laws firing events) survive into the next round.
+    void retractFirst(std::size_t count);
     void clearFacts();
     const std::vector<ReteFact>& facts() const { return _facts; }
 
@@ -281,10 +285,31 @@ public:
     const ReteNetwork& rete() const { return _rete; }
     const std::vector<ReteActivation>& evaluateRete() { return _rete.evaluate(); }
 
+    // ------------------------------------------------------------------
+    // Hearing (Stage 3): laws listen. connectToEventBus() turns every
+    // published ECA::Event into a ReteFact; tick() — once per frame —
+    // evaluates the network and drains the agenda into applyTo. Event facts
+    // are transient: consumed by the round that evaluates them.
+    //
+    // NOTE: the EventBus has no unsubscribe, so a connected LawManager must
+    // outlive all publishing (engine-lifetime object). Handlers run on the
+    // publishing thread; keep publishing on the main thread for now.
+    // ------------------------------------------------------------------
+    void connectToEventBus();
+    bool isConnected() const { return _connected; }
+    std::vector<Law::ApplicationRecord> tick();
+
+    // Bounded law chaining per tick: a law firing an event that wakes another
+    // law resolves within the same tick, but never unboundedly — the first
+    // Singularity-level anti-Babel ceiling in code.
+    static constexpr int kMaxChainRounds = 8;
+
     nlohmann::json toJson() const;
 
 private:
     std::vector<std::shared_ptr<Law>> _laws;
     Formation _lawFormation{Form::ShapeType::Cube, glm::vec3(1.0f)};
     ReteNetwork _rete;
+    bool _connected = false;
+    bool _dirty = false;
 };

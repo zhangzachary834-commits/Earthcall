@@ -84,10 +84,18 @@ public:
     template<typename Event>
     void publish(const Event& event, const Metadata& meta = {})
     {
-        std::lock_guard<std::mutex> lock(_mutex);
-        auto it = _listeners.find(typeid(Event));
-        if (it == _listeners.end()) return;
-        for (auto& entry : it->second) {
+        (void)meta;
+        // Copy the listener list under lock, dispatch unlocked: a listener may
+        // itself publish (laws chain by firing events from their actions), and
+        // dispatching while holding _mutex would deadlock on that re-entry.
+        std::vector<ListenerEntry> listenersCopy;
+        {
+            std::lock_guard<std::mutex> lock(_mutex);
+            auto it = _listeners.find(typeid(Event));
+            if (it == _listeners.end()) return;
+            listenersCopy = it->second;
+        }
+        for (auto& entry : listenersCopy) {
             entry.listener(&event);
         }
     }
@@ -98,6 +106,7 @@ public:
     template<typename Event>
     void publishAsync(const Event& event, const Metadata& meta = {})
     {
+        (void)meta;
         // Copy listeners snapshot under lock, then enqueue work item.
         std::vector<ListenerEntry> listenersCopy;
         {

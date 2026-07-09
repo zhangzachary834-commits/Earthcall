@@ -95,17 +95,23 @@ property_bridge_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/property_bridge_test.o
 law_model_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/law_model_test.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
+law_loop_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/law_loop_test.o
+	$(CXX) $^ $(LDFLAGS) -o $@
+
 test-property: property_bridge_test
 	./property_bridge_test
 
 test-law: law_model_test
 	./law_model_test
 
-test: test-property test-law
+test-loop: law_loop_test
+	./law_loop_test
+
+test: test-property test-law test-loop
 
 # Pull in auto-generated header dependencies (.d files next to each .o)
 -include $(OBJECTS:.o=.d)
 -include $(wildcard $(BUILD_DIR)/tests/*.d)
 
 # Phony targets
-.PHONY: all clean run test test-property test-law 
+.PHONY: all clean run test test-property test-law test-loop 

@@ -3,6 +3,7 @@
 #include "Form/Object/Object.hpp"
 #include "Relation/RelationManager.hpp"
 #include "Singularity/Core/EventBus.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
 #include <glm/glm.hpp>
 #include <iostream>
 #include <algorithm>
@@ -331,6 +332,9 @@ namespace Physics {
                 glm::vec3 collisionPoint = collision.point;
                 PhysicsCollisionEvent collisionEvent(a, b, collisionPoint, collisionNormal, impactForce);
                 Core::EventBus::instance().publish(collisionEvent);
+                // String-typed echo for Person-authored laws ("collision",
+                // subject = a, object = b).
+                Core::EventBus::instance().publish(ECA::Event{"collision", a, b, std::time(nullptr)});
 
                 // Update collision zones after correction for later pairs
                 a->updateCollisionZone(a->getTransform());

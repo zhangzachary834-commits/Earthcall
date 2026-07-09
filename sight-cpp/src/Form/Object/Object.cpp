@@ -4,6 +4,7 @@
 #include "Automation/AutomationEvents.hpp"
 #include "Form/Singular/Property/ComputedProperty.hpp"
 #include "Form/Singular/Property/PropertyRef.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
 #include <GLFW/glfw3.h>
 #include <OpenGL/glu.h>
 #include <glm/gtc/quaternion.hpp>
@@ -295,15 +296,20 @@ void Object::updateHoverState(bool isHovering) {
     _wasHoveredLastFrame = _isHovered;
     _isHovered = isHovering;
     
-    // Trigger events based on hover state changes
+    // Trigger events based on hover state changes. Enter/exit also echo as
+    // string-typed ECA::Events so Person-authored laws can bind to them; the
+    // continuous per-frame hover does not (only discrete edges travel as
+    // events — same rule as AutomationEvents.hpp).
     if (isHovering && !wasHovered) {
         // Mouse entered the object
         ObjectHoverEnterEvent event(*this, _hoverPoint, glm::vec2(0, 0)); // Screen pos would be passed in
         Core::EventBus::instance().publish(event);
+        Core::EventBus::instance().publish(ECA::Event{"object-hover-enter", this, nullptr, std::time(nullptr)});
     } else if (!isHovering && wasHovered) {
         // Mouse exited the object
         ObjectHoverExitEvent event(*this, _hoverPoint, glm::vec2(0, 0)); // Screen pos would be passed in
         Core::EventBus::instance().publish(event);
+        Core::EventBus::instance().publish(ECA::Event{"object-hover-exit", this, nullptr, std::time(nullptr)});
     } else if (isHovering) {
         // Mouse is hovering over the object
         ObjectHoverEvent event(*this, _hoverPoint, glm::vec2(0, 0)); // Screen pos would be passed in

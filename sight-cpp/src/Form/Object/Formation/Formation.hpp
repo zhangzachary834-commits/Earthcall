@@ -21,7 +21,28 @@ public:
 
     // Legacy constructor for fallback
     Formation(Form::ShapeType type, const glm::vec3& dims = {1.0f,1.0f,1.0f}) : Form(type, dims) {}
-    
+
+    // Every Formation is a discrete being: identity is unique per instance,
+    // and a COPY mints a fresh identity — a copied formation is a new being,
+    // not an alias (the SdfNode deep-copy rule applied to identity). Keep the
+    // member lists below in sync with the data members.
+    Formation(const Formation& o)
+        : Form(o), Singular(o), members(o.members), relationMgr(o.relationMgr),
+          subformations(o.subformations), relationTypeTag(o.relationTypeTag) {}
+    Formation& operator=(const Formation& o) {
+        if (this != &o) {
+            Form::operator=(o);
+            Singular::operator=(o);
+            members = o.members;
+            relationMgr = o.relationMgr;
+            subformations = o.subformations;
+            relationTypeTag = o.relationTypeTag;
+            // _formationId intentionally kept: assignment replaces content,
+            // not identity.
+        }
+        return *this;
+    }
+
     // Destructor
     ~Formation() = default;
 
@@ -77,10 +98,14 @@ public:
 
     // Other methods can be added as needed for functionality
     
-    // Implement the pure virtual method from Singular
-    std::string getIdentifier() const override { return "Formation"; }
+    // Implement the pure virtual method from Singular. Unique per instance —
+    // identity-keyed systems (Rete bindings, provenance) depend on it.
+    std::string getIdentifier() const override { return _formationId; }
 
 private:
+    static std::string nextFormationId();
+    std::string _formationId = nextFormationId();
+
     void buildProperties() override {}
 
     void integrateRelationTopology(const std::shared_ptr<Relation>& r);

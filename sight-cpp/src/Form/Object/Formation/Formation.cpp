@@ -2,7 +2,13 @@
 #include "Form/Object/Object.hpp"
 #include <GLFW/glfw3.h>
 #include <glm/gtc/matrix_transform.hpp>
+#include <atomic>
 #include <unordered_set>
+
+std::string Formation::nextFormationId() {
+    static std::atomic<unsigned long long> next{1};
+    return "formation-" + std::to_string(next.fetch_add(1));
+}
 
 namespace {
 glm::vec3 extractScale(const glm::mat4& transform) {

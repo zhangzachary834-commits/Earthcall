@@ -5,6 +5,7 @@
 #include "Contour.hpp"
 #include "AngleTools.hpp"
 #include "Automation/AutomationEvents.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
 #include <GLFW/glfw3.h>
 #include <OpenGL/glu.h>
 #include <glm/gtc/quaternion.hpp>
@@ -187,6 +188,7 @@ void Object::advanceAutomations(float dt) {
     Automation::advance(_automation, dt, &finished);
     for (const auto& name : finished) {
         Core::EventBus::instance().publish(Automation::ClipFinished{this, name});
+        Core::EventBus::instance().publish(ECA::Event{"automation-clip-finished", this, nullptr, std::time(nullptr)});
     }
 }
 
@@ -205,6 +207,7 @@ bool Object::updateAutomations(float dt) {
     setTransform(Automation::compose(_automation, transform));
     for (const auto& name : finished) {
         Core::EventBus::instance().publish(Automation::ClipFinished{this, name});
+        Core::EventBus::instance().publish(ECA::Event{"automation-clip-finished", this, nullptr, std::time(nullptr)});
     }
     return true;
 }
