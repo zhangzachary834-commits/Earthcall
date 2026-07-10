@@ -31,6 +31,7 @@ struct SessionState {
     char pathBuf[128] = "";
     std::string customPathTarget;    // which picker is in custom-entry mode
     char varBuf[32] = "";
+    char textBuf[128] = "";          // free-text scratch (exception ids, etc.)
 
     std::string lastEditLaw;
     int lastEditCard = -1;
@@ -517,19 +518,50 @@ void seedConditionKind(ConditionNode& node) {
         case ConditionNode::Kind::InRegion:
             if (node.probe.empty()) node.probe = PropertyPath::parse("position");
             break;
+        case ConditionNode::Kind::IsKind:
+        case ConditionNode::Kind::ForAny:
+        case ConditionNode::Kind::ForAll:
+            if (node.beingKind == ConditionNode::BeingKind::AnyBeing &&
+                node.kind != ConditionNode::Kind::IsKind) {
+                node.beingKind = ConditionNode::BeingKind::Object;
+            }
+            if ((node.kind == ConditionNode::Kind::ForAny ||
+                 node.kind == ConditionNode::Kind::ForAll) &&
+                node.children.empty()) {
+                ConditionNode inner;
+                inner.kind = ConditionNode::Kind::Compare;
+                seedConditionKind(inner);
+                node.children.push_back(std::move(inner));
+            }
+            break;
         default:
             break;
     }
+}
+
+const char* kBeingKindNames[] = {"any being", "Object", "Person", "Relation",
+                                 "Formation", "Law", "World"};
+
+bool beingKindCombo(ConditionNode& node) {
+    int kind = static_cast<int>(node.beingKind);
+    ImGui::SetNextItemWidth(130.0f);
+    if (ImGui::Combo("Being kind", &kind, kBeingKindNames, 7)) {
+        node.beingKind = static_cast<ConditionNode::BeingKind>(kind);
+        return true;
+    }
+    return false;
 }
 
 bool editConditionNode(ConditionNode& node) {
     bool changed = false;
 
     static const char* kinds[] = {"compare", "in shape region", "related (soon)",
-                                  "all of...", "any of...", "not", "math zone"};
+                                  "all of... (&&)", "any of... (||)", "not (!)",
+                                  "math zone", "is a (type)", "this specific being",
+                                  "for ANY being...", "for ALL beings..."};
     int kind = static_cast<int>(node.kind);
-    ImGui::SetNextItemWidth(160.0f);
-    if (ImGui::Combo("Condition type", &kind, kinds, 7)) {
+    ImGui::SetNextItemWidth(170.0f);
+    if (ImGui::Combo("Condition type", &kind, kinds, 11)) {
         node.kind = static_cast<ConditionNode::Kind>(kind);
         seedConditionKind(node);
         changed = true;
@@ -661,6 +693,55 @@ bool editConditionNode(ConditionNode& node) {
             }
             if (editMathBindings(node.bindings)) changed = true;
             if (editPiecewise(node.zoneFunction, node.bindings)) changed = true;
+            break;
+        }
+        case ConditionNode::Kind::IsKind: {
+            ImGui::TextDisabled("True when the subject IS this kind of being");
+            ImGui::TextDisabled("(runtime type check; a Law is also an Object).");
+            if (beingKindCombo(node)) changed = true;
+            break;
+        }
+        case ConditionNode::Kind::Identity: {
+            ImGui::TextDisabled("True only for one specific being, by identity.");
+            char idBuf[96];
+            copyToBuf(idBuf, sizeof(idBuf), node.otherId);
+            ImGui::SetNextItemWidth(180.0f);
+            if (ImGui::InputText("Being id", idBuf, sizeof(idBuf))) {
+                node.otherId = idBuf;
+                changed = true;
+            }
+            break;
+        }
+        case ConditionNode::Kind::ForAny:
+        case ConditionNode::Kind::ForAll: {
+            ImGui::TextDisabled(node.kind == ConditionNode::Kind::ForAny
+                                    ? "True when ANY being of the kind passes the inner test"
+                                    : "True when ALL beings of the kind pass the inner test");
+            ImGui::TextDisabled("(quantifies over the Universe; the inner test's subject");
+            ImGui::TextDisabled("is each INSTANCE, not the law's subject).");
+            if (beingKindCombo(node)) changed = true;
+            // Exceptions: "every instance ... with possible exceptions".
+            int removeIdx = -1;
+            for (std::size_t i = 0; i < node.exceptIds.size(); ++i) {
+                ImGui::PushID(static_cast<int>(i));
+                ImGui::BulletText("except %s", node.exceptIds[i].c_str());
+                ImGui::SameLine();
+                if (ImGui::SmallButton("x")) removeIdx = static_cast<int>(i);
+                ImGui::PopID();
+            }
+            if (removeIdx >= 0) {
+                node.exceptIds.erase(node.exceptIds.begin() + removeIdx);
+                changed = true;
+            }
+            ImGui::SetNextItemWidth(150.0f);
+            ImGui::InputText("##exceptid", g.textBuf, sizeof(g.textBuf));
+            ImGui::SameLine();
+            if (ImGui::Button("Add exception") && g.textBuf[0] != '\0') {
+                node.exceptIds.emplace_back(g.textBuf);
+                g.textBuf[0] = '\0';
+                changed = true;
+            }
+            ImGui::TextDisabled("The child card is the inner test each instance must pass.");
             break;
         }
     }
@@ -834,10 +915,15 @@ bool editActionNode(ActionNode& node) {
 // The whole law as one plain sentence — glanceable meaning, no card-reading
 // required.
 std::string lawSentence(const Law& law, const std::vector<std::string>* triggers) {
-    std::string sentence = "WHEN ";
-    if (!triggers || triggers->empty()) {
-        sentence += "applied directly";
+    std::string sentence;
+    if (law.activation() == Law::Activation::WhileTrue) {
+        sentence = "EVERY FRAME, watching its subjects";
+    } else if (law.activation() == Law::Activation::OnBecomeTrue) {
+        sentence = "WHENEVER the condition STARTS holding on a watched subject";
+    } else if (!triggers || triggers->empty()) {
+        sentence = "WHEN applied directly";
     } else {
+        sentence = "WHEN ";
         for (std::size_t i = 0; i < triggers->size(); ++i) {
             if (i) sentence += "\" or \"";
             else sentence += "\"";
@@ -1021,6 +1107,25 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player,
             const std::vector<std::string>* bound =
                 boundIt != g.triggers.end() ? &boundIt->second : nullptr;
             ImGui::TextWrapped("%s", lawSentence(*law, bound).c_str());
+        }
+
+        // Edge vs level: does the law wait for events, or watch continuously?
+        {
+            static const char* modes[] = {
+                "on event (fires when a bound trigger fires)",
+                "while true (watches every frame; fires each frame it holds)",
+                "on becoming true (watches every frame; fires once per onset)"};
+            int mode = static_cast<int>(law->activation());
+            ImGui::SetNextItemWidth(360.0f);
+            if (ImGui::Combo("Activation", &mode, modes, 3)) {
+                law->setActivation(static_cast<Law::Activation>(mode));
+            }
+            if (law->activation() != Law::Activation::OnEvent) {
+                ImGui::TextDisabled(
+                    "Continuous laws watch their targets, or the whole Universe of");
+                ImGui::TextDisabled(
+                    "beings when no targets are set. Triggers are not required.");
+            }
         }
 
         // Authored by whom.

@@ -1,8 +1,16 @@
 #include "ConditionModel.hpp"
 
 #include "Form/Object/Geometry/SdfJson.hpp"
+#include "Form/Object/Formation/Formation.hpp"
+#include "Form/Object/Object.hpp"
 #include "Form/Singular/Property/PropertyValueJson.hpp"
+#include "Law.hpp"
+#include "Person/Person.hpp"
+#include "Relation/Relation.hpp"
+#include "Universe.hpp"
+#include "ZonesOfEarth/World/World.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <utility>
 
@@ -18,6 +26,33 @@ const char* opName(ConditionNode::Op op) {
         case ConditionNode::Op::Ge: return ">=";
         case ConditionNode::Op::Near: return "near";
         case ConditionNode::Op::InRange: return "in-range";
+    }
+    return "?";
+}
+
+// Honest C++ instanceof — the ontology's kinds checked at runtime.
+bool matchesBeingKind(const Singular& being, ConditionNode::BeingKind kind) {
+    switch (kind) {
+        case ConditionNode::BeingKind::AnyBeing:  return true;
+        case ConditionNode::BeingKind::Object:    return dynamic_cast<const Object*>(&being) != nullptr;
+        case ConditionNode::BeingKind::Person:    return dynamic_cast<const Person*>(&being) != nullptr;
+        case ConditionNode::BeingKind::Relation:  return dynamic_cast<const Relation*>(&being) != nullptr;
+        case ConditionNode::BeingKind::Formation: return dynamic_cast<const Formation*>(&being) != nullptr;
+        case ConditionNode::BeingKind::Law:       return dynamic_cast<const Law*>(&being) != nullptr;
+        case ConditionNode::BeingKind::World:     return dynamic_cast<const World*>(&being) != nullptr;
+    }
+    return false;
+}
+
+const char* beingKindName(ConditionNode::BeingKind kind) {
+    switch (kind) {
+        case ConditionNode::BeingKind::AnyBeing:  return "being";
+        case ConditionNode::BeingKind::Object:    return "Object";
+        case ConditionNode::BeingKind::Person:    return "Person";
+        case ConditionNode::BeingKind::Relation:  return "Relation";
+        case ConditionNode::BeingKind::Formation: return "Formation";
+        case ConditionNode::BeingKind::Law:       return "Law";
+        case ConditionNode::BeingKind::World:     return "World";
     }
     return "?";
 }
@@ -60,6 +95,21 @@ nlohmann::json ConditionNode::toJson() const {
             if (!std::holds_alternative<std::monostate>(lo)) j["lo"] = propertyValueToJson(lo);
             if (!std::holds_alternative<std::monostate>(hi)) j["hi"] = propertyValueToJson(hi);
             break;
+        case Kind::IsKind:
+            j["beingKind"] = static_cast<int>(beingKind);
+            break;
+        case Kind::Identity:
+            j["otherId"] = otherId;
+            break;
+        case Kind::ForAny:
+        case Kind::ForAll: {
+            j["beingKind"] = static_cast<int>(beingKind);
+            if (!exceptIds.empty()) j["except"] = exceptIds;
+            nlohmann::json kids = nlohmann::json::array();
+            for (const auto& c : children) kids.push_back(c.toJson());
+            j["children"] = kids;
+            break;
+        }
     }
     return j;
 }
@@ -80,6 +130,8 @@ ConditionNode ConditionNode::fromJson(const nlohmann::json& j) {
     n.otherId = j.value("otherId", std::string());
     if (j.contains("function")) n.zoneFunction = OntoMath::Piecewise::fromJson(j["function"]);
     if (j.contains("bindings")) n.bindings = mathBindingsFromJson(j["bindings"]);
+    n.beingKind = static_cast<BeingKind>(j.value("beingKind", 0));
+    if (j.contains("except")) n.exceptIds = j["except"].get<std::vector<std::string>>();
     if (j.contains("children")) {
         for (const auto& c : j["children"]) n.children.push_back(fromJson(c));
     }
@@ -182,6 +234,46 @@ ECA::ConditionPredicate ConditionNode::compile() const {
                 return false;
             };
         }
+        case Kind::IsKind: {
+            // Runtime instanceof: is the subject this kind of being?
+            const BeingKind k = beingKind;
+            return [k](const ECA::Event&, const Singular& target) {
+                return matchesBeingKind(target, k);
+            };
+        }
+        case Kind::Identity: {
+            // This one specific being, and no other.
+            const std::string id = otherId;
+            return [id](const ECA::Event&, const Singular& target) {
+                return !id.empty() && target.getIdentifier() == id;
+            };
+        }
+        case Kind::ForAny:
+        case Kind::ForAll: {
+            // First-order quantification over the Universe: the inner
+            // condition runs with each INSTANCE as its subject, not the
+            // law's subject. Exceptions carve out named beings. ForAll over
+            // an empty domain is vacuously true (mathematics, honored);
+            // ForAny over it is false.
+            const BeingKind k = beingKind;
+            const std::vector<std::string> except = exceptIds;
+            const bool isAll = kind == Kind::ForAll;
+            ECA::ConditionPredicate inner =
+                children.empty() ? ECA::ConditionPredicate{} : children[0].compile();
+            return [k, except, isAll, inner](const ECA::Event& e, const Singular&) {
+                for (Singular* being : Universe::instance().beings()) {
+                    if (!being || !matchesBeingKind(*being, k)) continue;
+                    if (std::find(except.begin(), except.end(), being->getIdentifier()) !=
+                        except.end()) {
+                        continue;
+                    }
+                    const bool holds = !inner || inner(e, *being);
+                    if (isAll && !holds) return false;
+                    if (!isAll && holds) return true;
+                }
+                return isAll;
+            };
+        }
     }
     return [](const ECA::Event&, const Singular&) { return false; };
 }
@@ -210,6 +302,21 @@ std::string ConditionNode::describe() const {
             range += "..";
             if (propertyValueToNumber(hi, bound)) range += std::to_string(bound);
             return "zone(" + zoneFunction.print() + " in [" + range + "])";
+        }
+        case Kind::IsKind:
+            return std::string("is-a(") + beingKindName(beingKind) + ")";
+        case Kind::Identity:
+            return "is(" + (otherId.empty() ? std::string("?") : otherId) + ")";
+        case Kind::ForAny:
+        case Kind::ForAll: {
+            std::string out = kind == Kind::ForAny ? "for-any " : "for-all ";
+            out += beingKindName(beingKind);
+            if (!exceptIds.empty()) {
+                out += " except " + std::to_string(exceptIds.size());
+            }
+            out += ": ";
+            out += children.empty() ? "true" : children[0].describe();
+            return out;
         }
     }
     return "condition";
@@ -250,6 +357,40 @@ ConditionNode ConditionNode::zone(OntoMath::Piecewise function, MathBindings bin
     n.bindings = std::move(bindings);
     n.lo = std::move(zoneLo);
     n.hi = std::move(zoneHi);
+    return n;
+}
+
+ConditionNode ConditionNode::isKind(BeingKind kind) {
+    ConditionNode n;
+    n.kind = Kind::IsKind;
+    n.beingKind = kind;
+    return n;
+}
+
+ConditionNode ConditionNode::identity(const std::string& beingId) {
+    ConditionNode n;
+    n.kind = Kind::Identity;
+    n.otherId = beingId;
+    return n;
+}
+
+ConditionNode ConditionNode::forAny(BeingKind kind, ConditionNode inner,
+                                    std::vector<std::string> exceptions) {
+    ConditionNode n;
+    n.kind = Kind::ForAny;
+    n.beingKind = kind;
+    n.exceptIds = std::move(exceptions);
+    n.children.push_back(std::move(inner));
+    return n;
+}
+
+ConditionNode ConditionNode::forAll(BeingKind kind, ConditionNode inner,
+                                    std::vector<std::string> exceptions) {
+    ConditionNode n;
+    n.kind = Kind::ForAll;
+    n.beingKind = kind;
+    n.exceptIds = std::move(exceptions);
+    n.children.push_back(std::move(inner));
     return n;
 }
 

@@ -1,6 +1,7 @@
 #include "Law.hpp"
 
 #include "Form/Singular/Property/ComputedProperty.hpp"
+#include "Universe.hpp"
 
 #include <algorithm>
 #include <atomic>
@@ -174,6 +175,7 @@ std::shared_ptr<Law> Law::fromJson(const nlohmann::json& j) {
     }
     law->setEnabled(j.value("enabled", true));
     law->setAuthorityLevel(j.value("authority", 0));
+    law->setActivation(static_cast<Activation>(j.value("activation", 0)));
     law->setConditionMode(j.value("conditionMode", std::string("all")) == "any"
                               ? ConditionMode::Any
                               : ConditionMode::All);
@@ -291,6 +293,7 @@ nlohmann::json Law::toJson() const {
         {"name", _name},
         {"enabled", _enabled},
         {"authority", _authorityLevel},
+        {"activation", static_cast<int>(_activation)},
         {"conditionMode", _conditionMode == ConditionMode::All ? "all" : "any"},
         {"authors", formationMemberIds(_authors)},
         {"conditionSubjects", formationMemberIds(_conditions)},
@@ -604,6 +607,43 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
             }
         }
         _rete.retractFirst(consumed);
+    }
+
+    // ------------------------------------------------------------------
+    // Continuous pass: level-triggered laws don't wait for events — their
+    // condition phase monitors the program every tick. Subjects come from
+    // the law's targets Formation when present, otherwise from the whole
+    // Universe of beings. (Events a continuous application fires — the
+    // law-applied echo — become facts for the NEXT tick's event rounds.)
+    // ------------------------------------------------------------------
+    for (const auto& law : _laws) {
+        if (!law || law->activation() == Law::Activation::OnEvent) continue;
+        if (!law->isEnabled() || !law->isAuthored()) continue;
+
+        std::vector<Singular*> subjects;
+        const auto& targets = law->targets().getMembers();
+        if (!targets.empty()) {
+            subjects.assign(targets.begin(), targets.end());
+        } else {
+            subjects = Universe::instance().beings();
+        }
+
+        for (Singular* subject : subjects) {
+            if (!subject) continue;
+            const bool holds = law->conditionsSatisfied(*subject);
+            const std::string subjectId = subject->getIdentifier();
+            const bool wasHolding = law->lastConditionState(subjectId);
+            law->rememberConditionState(subjectId, holds);
+
+            const bool fire = law->activation() == Law::Activation::WhileTrue
+                                  ? holds
+                                  : (holds && !wasHolding);   // the false->true edge
+            if (!fire) continue;
+            law->applyTo(*subject);
+            if (!law->applicationLog().empty()) {
+                records.push_back(law->applicationLog().back());
+            }
+        }
     }
     return records;
 }

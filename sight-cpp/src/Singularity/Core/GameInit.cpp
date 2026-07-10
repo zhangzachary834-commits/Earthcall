@@ -11,6 +11,7 @@
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "Person/Body/BodyPart/BodyPart.hpp"
 
 #include <GLFW/glfw3.h>
@@ -30,6 +31,20 @@ bool Game::init() {
     // Laws listen from the first frame: every ECA::Event published anywhere
     // in the engine becomes a fact the law network can act on.
     _lawManager.connectToEventBus();
+
+    // The Universe: what continuous laws watch and quantified conditions
+    // (ForAny/ForAll) range over — the active world's objects, the laws
+    // themselves (so metalaws can quantify over laws), and the player.
+    // Evaluated lazily each tick, well after zones exist.
+    Universe::instance().setProvider([this](std::vector<Singular*>& beings) {
+        for (const auto& obj : mgr.active().world().getOwnedObjects()) {
+            if (obj) beings.push_back(obj.get());
+        }
+        for (const auto& law : _lawManager.getAll()) {
+            if (law) beings.push_back(law.get());
+        }
+        beings.push_back(&_player);
+    });
 
     // Init GL state – depth test already enabled in ShadingSystem::init()
     ShadingSystem::init();

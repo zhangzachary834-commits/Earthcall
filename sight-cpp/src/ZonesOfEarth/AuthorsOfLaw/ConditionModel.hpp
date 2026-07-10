@@ -15,10 +15,25 @@
 // into the ECA::ConditionPredicate slot. The SdfNode move applied to
 // predicates — the tree is the law's text; the closure is derived.
 struct ConditionNode {
-    // Serialized as ints — both enums are APPEND-ONLY.
+    // Serialized as ints — all enums here are APPEND-ONLY.
+    //
+    // The condition calculus, mapped to what C++ itself gives:
+    //   All / Any / Not  =  && / || / !   — and tree NESTING is
+    //   parenthesization: All(Any(a,b), Not(c)) is (a || b) && !c.
+    //   IsKind           =  runtime instanceof (dynamic_cast)
+    //   Identity         =  this one specific being
+    //   ForAny / ForAll  =  first-order quantifiers over the Universe of
+    //                       beings (with exceptions) — the inner condition is
+    //                       evaluated with each INSTANCE as its subject.
     enum class Kind { Compare = 0, InRegion = 1, Related = 2, All = 3, Any = 4, Not = 5,
-                      Zone = 6 };
+                      Zone = 6, IsKind = 7, Identity = 8, ForAny = 9, ForAll = 10 };
     enum class Op { Eq = 0, Ne = 1, Lt = 2, Le = 3, Gt = 4, Ge = 5, Near = 6, InRange = 7 };
+
+    // The ontology's kinds, checked by dynamic_cast — honest C++ instanceof.
+    // (Note: a Law IS an Object in this ontology — extra-spatial — so
+    // BeingKind::Object matches laws too; use BeingKind::Law for precision.)
+    enum class BeingKind { AnyBeing = 0, Object = 1, Person = 2, Relation = 3,
+                           Formation = 4, Law = 5, World = 6 };
 
     Kind kind = Kind::Compare;
 
@@ -51,7 +66,12 @@ struct ConditionNode {
     OntoMath::Piecewise zoneFunction;
     MathBindings bindings;
 
-    std::vector<ConditionNode> children;   // All / Any / Not
+    // IsKind payload + the quantifiers' domain filter.
+    BeingKind beingKind = BeingKind::AnyBeing;
+    // Quantifier exceptions: "every instance ... with possible exceptions".
+    std::vector<std::string> exceptIds;
+
+    std::vector<ConditionNode> children;   // All/Any/Not members; quantifier inner test
 
     nlohmann::json toJson() const;
     static ConditionNode fromJson(const nlohmann::json& j);
@@ -69,6 +89,12 @@ struct ConditionNode {
     static ConditionNode zone(OntoMath::Piecewise function, MathBindings bindings,
                               PropertyValue zoneLo = PropertyValue{},
                               PropertyValue zoneHi = PropertyValue{});
+    static ConditionNode isKind(BeingKind kind);
+    static ConditionNode identity(const std::string& beingId);
+    static ConditionNode forAny(BeingKind kind, ConditionNode inner,
+                                std::vector<std::string> exceptions = {});
+    static ConditionNode forAll(BeingKind kind, ConditionNode inner,
+                                std::vector<std::string> exceptions = {});
     static ConditionNode all(std::vector<ConditionNode> children);
     static ConditionNode any(std::vector<ConditionNode> children);
     static ConditionNode negate(ConditionNode child);

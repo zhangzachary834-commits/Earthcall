@@ -113,6 +113,9 @@ metalaw_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/metalaw_test.o
 ontomath_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/ontomath_test.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
+continuous_law_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/continuous_law_test.o
+	$(CXX) $^ $(LDFLAGS) -o $@
+
 test-property: property_bridge_test
 	./property_bridge_test
 
@@ -137,11 +140,14 @@ test-meta: metalaw_test
 test-math: ontomath_test
 	./ontomath_test
 
-test: test-property test-law test-loop test-recorder test-concept test-graph test-meta test-math
+test-continuous: continuous_law_test
+	./continuous_law_test
+
+test: test-property test-law test-loop test-recorder test-concept test-graph test-meta test-math test-continuous
 
 # Pull in auto-generated header dependencies (.d files next to each .o)
 -include $(OBJECTS:.o=.d)
 -include $(wildcard $(BUILD_DIR)/tests/*.d)
 
 # Phony targets
-.PHONY: all clean run test test-property test-law test-loop test-recorder test-concept test-graph test-meta test-math 
+.PHONY: all clean run test test-property test-law test-loop test-recorder test-concept test-graph test-meta test-math test-continuous 

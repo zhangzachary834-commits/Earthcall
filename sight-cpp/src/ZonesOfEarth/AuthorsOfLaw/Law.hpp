@@ -80,6 +80,29 @@ public:
     void setEnabled(bool enabled) { _enabled = enabled; }
 
     // ------------------------------------------------------------------
+    // Edge vs level. OnEvent laws hear discrete moments (the ECA loop).
+    // But some condition-phases must MONITOR the program at all times:
+    //   WhileTrue    — checked every tick; fires each tick it holds
+    //                  (continuously running actions);
+    //   OnBecomeTrue — checked every tick; fires once at the false->true
+    //                  transition and re-arms when it stops holding.
+    // Continuous laws watch their targets Formation when present, otherwise
+    // the whole Universe of beings. Serialized as int — APPEND-ONLY.
+    // ------------------------------------------------------------------
+    enum class Activation { OnEvent = 0, WhileTrue = 1, OnBecomeTrue = 2 };
+    Activation activation() const { return _activation; }
+    void setActivation(Activation a) { _activation = a; }
+
+    // Per-subject condition memory for edge detection (OnBecomeTrue).
+    bool lastConditionState(const std::string& subjectId) const {
+        auto it = _conditionMemory.find(subjectId);
+        return it != _conditionMemory.end() && it->second;
+    }
+    void rememberConditionState(const std::string& subjectId, bool state) {
+        _conditionMemory[subjectId] = state;
+    }
+
+    // ------------------------------------------------------------------
     // The Singularity-grounded hierarchy of authored authority. A law may
     // govern (apply to) another law only when its authority is >= the
     // target's. Deliberately NOT registered as a legible property: the
@@ -202,6 +225,8 @@ private:
     std::string _name;
     bool _enabled = true;
     int _authorityLevel = 0;
+    Activation _activation = Activation::OnEvent;
+    std::unordered_map<std::string, bool> _conditionMemory;   // edge detection
     ConditionMode _conditionMode = ConditionMode::All;
 
     Formation _authors{Form::ShapeType::Cube, glm::vec3(1.0f)};
