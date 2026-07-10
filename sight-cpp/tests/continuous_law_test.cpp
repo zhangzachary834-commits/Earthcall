@@ -174,8 +174,66 @@ int main() {
         assert(nearf(static_cast<float>(filletOf(beacon)), 1.0f));   // b is sunk -> alarm
 
         // ------------------------------------------------------------------
-        // 5. Activation and the calculus survive serialization.
+        // 5. Scope: the event is the OCCASION; the application sweeps every
+        //    being satisfying the IF — "set position.y of every object to 20"
+        //    the way the author meant it.
         // ------------------------------------------------------------------
+        mgr.connectToEventBus();
+        a.setPosition(glm::vec3(0.0f, 3.0f, 0.0f));
+        b.setPosition(glm::vec3(3.0f, 7.0f, 0.0f));
+
+        auto raiseAll = mgr.createLaw("raise-everyone", {&author});
+        raiseAll->setScope(Law::Scope::Everyone);
+        raiseAll->setConditionModel(ConditionNode::compare(
+            "position.y", ConditionNode::Op::Lt, PropertyValue(20.0)));
+        raiseAll->setActionModel(ActionNode::set("position.y", PropertyValue(20.0)));
+        const std::size_t alphaRaise = mgr.rete().addAlphaNode(
+            "type == raise-signal",
+            [](const ReteFact& f) { return f.type == "raise-signal"; });
+        mgr.rete().bindLawToAlpha(raiseAll->getIdentifier(), alphaRaise);
+
+        // ONE event whose subject is only `a` — yet BOTH rise: the sweep
+        // applies to every being satisfying the condition, not just the
+        // event's subject.
+        Core::EventBus::instance().publish(
+            ECA::Event{"raise-signal", &a, nullptr, std::time(nullptr)});
+        mgr.tick();
+        assert(nearf(a.getPosition().y, 20.0f));
+        assert(nearf(b.getPosition().y, 20.0f));
+        raiseAll->setEnabled(false);
+
+        // Scope survives serialization.
+        assert(Law::fromJson(raiseAll->toJson())->scope() == Law::Scope::Everyone);
+
+        // ------------------------------------------------------------------
+        // 6. @-qualified paths: address ONE named being's property while the
+        //    law ranges over others. "@<a>.position.y" resolves on `a` no
+        //    matter whose subject the law fires with.
+        // ------------------------------------------------------------------
+        auto pinAToTen = mgr.createLaw("pin-a", {&author});
+        pinAToTen->setActionModel(ActionNode::set(
+            "@" + a.getIdentifier() + ".position.y", PropertyValue(10.0)));
+        assert(pinAToTen->applyTo(b) == Law::ApplicationResult::Applied);   // subject: b
+        assert(nearf(a.getPosition().y, 10.0f));    // yet A moved —
+        assert(nearf(b.getPosition().y, 20.0f));    // and b did not
+
+        // Conditions too: "is A below 15?" evaluated with ANY subject.
+        auto aBelow15 = ConditionNode::compare(
+            "@" + a.getIdentifier() + ".position.y", ConditionNode::Op::Lt,
+            PropertyValue(15.0));
+        assert(aBelow15.compile()(probe, b));       // asked "of b", answered about a
+
+        // A named being that left the world yields no value: never satisfied.
+        auto ghost = ConditionNode::compare("@no-such-being.position.y",
+                                            ConditionNode::Op::Lt, PropertyValue(1e9));
+        assert(!ghost.compile()(probe, b));
+
+        // ------------------------------------------------------------------
+        // 7. Activation and the calculus survive serialization.
+        // ------------------------------------------------------------------
+        // (Sections 5-6 raised everyone; the alarm needs someone sunk again.)
+        b.setPosition(glm::vec3(3.0f, -2.0f, 0.0f));
+
         auto reborn = Law::fromJson(alarm->toJson());
         assert(reborn->activation() == Law::Activation::WhileTrue);
         assert(reborn->conditionModel()->kind == ConditionNode::Kind::ForAny);

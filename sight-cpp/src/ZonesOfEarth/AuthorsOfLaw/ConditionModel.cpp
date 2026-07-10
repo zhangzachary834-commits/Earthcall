@@ -151,9 +151,9 @@ ECA::ConditionPredicate ConditionNode::compile() const {
                        const ECA::Event&, const Singular& target) {
                 Singular& t = const_cast<Singular&>(target);
                 PropertyValue lhs;
-                if (!lhsPath.getValue(t, lhs)) return false;
+                if (!lawGetValue(t, lhsPath, lhs)) return false;
                 PropertyValue rhs = rhsLiteral;
-                if (!rhsPath.empty() && !rhsPath.getValue(t, rhs)) return false;
+                if (!rhsPath.empty() && !lawGetValue(t, rhsPath, rhs)) return false;
 
                 double a = 0.0, b = 0.0;
                 const bool numeric =
@@ -180,7 +180,7 @@ ECA::ConditionPredicate ConditionNode::compile() const {
             const PropertyPath pr = probe.empty() ? PropertyPath::parse("position") : probe;
             return [r, pr](const ECA::Event&, const Singular& target) {
                 PropertyValue v;
-                if (!pr.getValue(const_cast<Singular&>(target), v)) return false;
+                if (!lawGetValue(const_cast<Singular&>(target), pr, v)) return false;
                 const glm::vec3* point = std::get_if<glm::vec3>(&v);
                 return point && geom::evalSdf(r, *point) < 0.0f;
             };

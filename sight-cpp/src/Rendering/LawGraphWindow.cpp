@@ -33,10 +33,37 @@ struct SessionState {
     char varBuf[32] = "";
     char textBuf[128] = "";          // free-text scratch (exception ids, etc.)
 
+    std::string selectedSubjectId;   // the 3D selection, for path qualifying
+
+    // Live event feed: what the bus is actually saying — answers "did my
+    // trigger ever fire?" without guessing.
+    struct FeedEntry {
+        std::string type;
+        std::string subjectId;
+        int count = 1;               // consecutive repeats collapse
+    };
+    std::vector<FeedEntry> eventFeed;
+    bool feedSubscribed = false;
+
     std::string lastEditLaw;
     int lastEditCard = -1;
 };
 SessionState g;
+
+void subscribeEventFeed() {
+    if (g.feedSubscribed) return;
+    g.feedSubscribed = true;
+    Core::EventBus::instance().subscribe<ECA::Event>([](const ECA::Event& e) {
+        const std::string subjectId = e.subject ? e.subject->getIdentifier() : "";
+        if (!g.eventFeed.empty() && g.eventFeed.front().type == e.type &&
+            g.eventFeed.front().subjectId == subjectId) {
+            ++g.eventFeed.front().count;
+            return;
+        }
+        g.eventFeed.insert(g.eventFeed.begin(), {e.type, subjectId, 1});
+        if (g.eventFeed.size() > 8) g.eventFeed.pop_back();
+    });
+}
 
 const ImVec4 kHeaderColor(0.95f, 0.85f, 0.55f, 1.0f);
 
@@ -163,6 +190,26 @@ bool pathPicker(const char* label, PropertyPath& path) {
     }
     if (ImGui::IsItemHovered()) {
         ImGui::SetTooltip("type a custom path for properties of other Singulars");
+    }
+    // Qualify to ONE specific being: "@object-5.position.y" resolves on that
+    // named being instead of the law's subject.
+    if (!g.selectedSubjectId.empty() && !path.empty()) {
+        const bool qualified = !path.segments[0].empty() && path.segments[0][0] == '@';
+        ImGui::SameLine();
+        if (ImGui::SmallButton(qualified ? "of subject" : "of selected")) {
+            if (qualified) {
+                path.segments.erase(path.segments.begin());
+            } else {
+                path.segments.insert(path.segments.begin(), "@" + g.selectedSubjectId);
+            }
+            changed = true;
+        }
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip(qualified
+                                  ? "make this the SUBJECT's property again"
+                                  : "pin this to the selected object (%s) specifically",
+                              g.selectedSubjectId.c_str());
+        }
     }
     ImGui::PopID();
     if (g.customPathTarget == label) {
@@ -937,7 +984,14 @@ std::string lawSentence(const Law& law, const std::vector<std::string>* triggers
     sentence += "  ->  THEN ";
     sentence += law.hasActionModel() ? law.actionModel()->describe()
                                      : std::string("(no action)");
-    sentence += "  — on the event's subject.";
+    if (law.activation() == Law::Activation::OnEvent &&
+        law.scope() == Law::Scope::Everyone) {
+        sentence += "  — on EVERY being satisfying the IF.";
+    } else if (law.activation() == Law::Activation::OnEvent) {
+        sentence += "  — on the event's subject.";
+    } else {
+        sentence += "  — on each watched being.";
+    }
     return sentence;
 }
 
@@ -953,6 +1007,9 @@ void refreshEditBuffers() {
 
 void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player,
                           Singular* testSubject) {
+    subscribeEventFeed();
+    g.selectedSubjectId = testSubject ? testSubject->getIdentifier() : std::string();
+
     ImGui::SetNextWindowSize(ImVec2(920, 560), ImGuiCond_FirstUseEver);
     if (!ImGui::Begin("Law Author", open)) {
         ImGui::End();
@@ -1125,6 +1182,48 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player,
                     "Continuous laws watch their targets, or the whole Universe of");
                 ImGui::TextDisabled(
                     "beings when no targets are set. Triggers are not required.");
+                if (!g.triggers[law->getIdentifier()].empty()) {
+                    ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.2f, 1.0f),
+                                       "! Continuous activation IGNORES triggers — the "
+                                       "condition alone gates it.");
+                }
+            }
+        }
+
+        // WHOM an application reaches — the "whose position?" question.
+        if (law->activation() == Law::Activation::OnEvent) {
+            static const char* scopes[] = {
+                "the event's subject (the being the event is about)",
+                "EVERY being that satisfies the IF (the event is the occasion)"};
+            int scope = static_cast<int>(law->scope());
+            ImGui::SetNextItemWidth(360.0f);
+            if (ImGui::Combo("Applies to", &scope, scopes, 2)) {
+                law->setScope(static_cast<Law::Scope>(scope));
+            }
+        }
+
+        // Targets: scope a law to specific beings; empty = the Universe for
+        // Everyone/continuous laws.
+        {
+            ImGui::TextColored(kHeaderColor, "Targets");
+            const auto members = law->targets().getMembers();
+            if (members.empty()) {
+                ImGui::TextDisabled("None — Everyone/continuous laws range over the whole Universe.");
+            }
+            Singular* removeTarget = nullptr;
+            for (auto* member : members) {
+                if (!member) continue;
+                ImGui::PushID(member);
+                ImGui::BulletText("%s", member->getIdentifier().c_str());
+                ImGui::SameLine();
+                if (ImGui::SmallButton("remove")) removeTarget = member;
+                ImGui::PopID();
+            }
+            if (removeTarget) law->targets().removeMember(removeTarget);
+            if (testSubject) {
+                if (ImGui::SmallButton("+ add selected object as target")) {
+                    law->addTarget(*testSubject);
+                }
             }
         }
 
@@ -1263,7 +1362,24 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player,
         }
     }
 
+    // The bus, live: what events are ACTUALLY flowing. If a trigger never
+    // appears here, the world never produced it — the law is not at fault.
     ImGui::Separator();
+    if (ImGui::CollapsingHeader("Recent events (live)")) {
+        if (g.eventFeed.empty()) {
+            ImGui::TextDisabled("No events yet this session.");
+        }
+        for (const auto& entry : g.eventFeed) {
+            if (entry.count > 1) {
+                ImGui::BulletText("%s  (subject: %s)  x%d", entry.type.c_str(),
+                                  entry.subjectId.empty() ? "-" : entry.subjectId.c_str(),
+                                  entry.count);
+            } else {
+                ImGui::BulletText("%s  (subject: %s)", entry.type.c_str(),
+                                  entry.subjectId.empty() ? "-" : entry.subjectId.c_str());
+            }
+        }
+    }
     ImGui::TextDisabled("Laws live in this session; saving them with the world is coming.");
     ImGui::EndChild();
     ImGui::End();

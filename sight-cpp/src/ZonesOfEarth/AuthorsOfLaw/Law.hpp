@@ -93,6 +93,19 @@ public:
     Activation activation() const { return _activation; }
     void setActivation(Activation a) { _activation = a; }
 
+    // ------------------------------------------------------------------
+    // WHOM an event application reaches — the "whose position?" question.
+    //   Subject  — the event's subject only (the being the event is about);
+    //   Everyone — sweep the law's targets, or the whole Universe when
+    //              untargeted, applying to EVERY being that satisfies the
+    //              conditions. This is the "every instance of the category"
+    //              law; combine with IsKind/Identity conditions to carve
+    //              the category. Serialized as int — APPEND-ONLY.
+    // ------------------------------------------------------------------
+    enum class Scope { Subject = 0, Everyone = 1 };
+    Scope scope() const { return _scope; }
+    void setScope(Scope s) { _scope = s; }
+
     // Per-subject condition memory for edge detection (OnBecomeTrue).
     bool lastConditionState(const std::string& subjectId) const {
         auto it = _conditionMemory.find(subjectId);
@@ -226,6 +239,7 @@ private:
     bool _enabled = true;
     int _authorityLevel = 0;
     Activation _activation = Activation::OnEvent;
+    Scope _scope = Scope::Subject;
     std::unordered_map<std::string, bool> _conditionMemory;   // edge detection
     ConditionMode _conditionMode = ConditionMode::All;
 

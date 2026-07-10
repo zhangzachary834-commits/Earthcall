@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Form/Singular/Property/PropertyPath.hpp"
+#include "Form/Singular/Singular.hpp"
+#include "Universe.hpp"
 #include "json.hpp"
 
 #include <map>
@@ -17,13 +19,47 @@
 // whole read fails — a law must never evaluate mathematics on missing values.
 using MathBindings = std::map<std::string, PropertyPath>;
 
+// ---------------------------------------------------------------------------
+// Qualified paths: "@being-id.position.y" resolves on that NAMED being
+// (looked up in the Universe by identifier) instead of the law's subject.
+// This is how a condition or action addresses ONE specific object's property
+// while the law itself ranges over many. An unqualified path stays what it
+// always was: the subject's own property.
+// ---------------------------------------------------------------------------
+inline Singular* resolveLawRoot(Singular& subject, const PropertyPath& path,
+                                PropertyPath& remainder) {
+    if (path.segments.empty() || path.segments[0].empty() ||
+        path.segments[0][0] != '@') {
+        remainder = path;
+        return &subject;
+    }
+    const std::string beingId = path.segments[0].substr(1);
+    remainder.segments.assign(path.segments.begin() + 1, path.segments.end());
+    for (Singular* being : Universe::instance().beings()) {
+        if (being && being->getIdentifier() == beingId) return being;
+    }
+    return nullptr;   // the named being is not in the world: no value
+}
+
+inline bool lawGetValue(Singular& subject, const PropertyPath& path, PropertyValue& out) {
+    PropertyPath remainder;
+    Singular* root = resolveLawRoot(subject, path, remainder);
+    return root && remainder.getValue(*root, out);
+}
+
+inline bool lawSetValue(Singular& subject, const PropertyPath& path, const PropertyValue& v) {
+    PropertyPath remainder;
+    Singular* root = resolveLawRoot(subject, path, remainder);
+    return root && remainder.setValue(*root, v);
+}
+
 inline std::optional<std::map<std::string, double>> readMathBindings(
     Singular& subject, const MathBindings& bindings) {
     std::map<std::string, double> vars;
     for (const auto& entry : bindings) {
         PropertyValue value;
         double x = 0.0;
-        if (!entry.second.getValue(subject, value) || !propertyValueToNumber(value, x)) {
+        if (!lawGetValue(subject, entry.second, value) || !propertyValueToNumber(value, x)) {
             return std::nullopt;
         }
         vars[entry.first] = x;

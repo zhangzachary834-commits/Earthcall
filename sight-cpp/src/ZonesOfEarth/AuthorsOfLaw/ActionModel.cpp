@@ -67,7 +67,7 @@ ECA::ActionExecutor ActionNode::compile() const {
         case Kind::Set: {
             const PropertyPath p = path;
             const PropertyValue v = operand;
-            return [p, v](const ECA::Event&, Singular& target) { p.setValue(target, v); };
+            return [p, v](const ECA::Event&, Singular& target) { lawSetValue(target, p, v); };
         }
         case Kind::Add:
         case Kind::Scale:
@@ -79,13 +79,13 @@ ECA::ActionExecutor ActionNode::compile() const {
             return [p, rhs, f, k](const ECA::Event&, Singular& target) {
                 PropertyValue current;
                 double a = 0.0, b = 0.0;
-                if (!p.getValue(target, current)) return;
+                if (!lawGetValue(target, p, current)) return;
                 if (!propertyValueToNumber(current, a) || !propertyValueToNumber(rhs, b)) return;
                 double result = a;
                 if (k == Kind::Add) result = a + b;
                 else if (k == Kind::Scale) result = a * b;
                 else result = a + (b - a) * f;   // Lerp
-                p.setValue(target, PropertyValue(result));   // coercion matches the slot
+                lawSetValue(target, p, PropertyValue(result));   // coercion matches the slot
             };
         }
         case Kind::Drive: {
@@ -100,9 +100,9 @@ ECA::ActionExecutor ActionNode::compile() const {
                     x = static_cast<double>(event.timestamp);
                 } else {
                     PropertyValue v;
-                    if (!in.getValue(target, v) || !propertyValueToNumber(v, x)) return;
+                    if (!lawGetValue(target, in, v) || !propertyValueToNumber(v, x)) return;
                 }
-                p.setValue(target, PropertyValue(c.evaluate(x)));
+                lawSetValue(target, p, PropertyValue(c.evaluate(x)));
             };
         }
         case Kind::Sequence:
@@ -154,7 +154,7 @@ ECA::ActionExecutor ActionNode::compile() const {
                 if (!vars) return;
                 const auto value = f.evaluate(*vars);
                 if (!value) return;
-                target.setValue(subject, PropertyValue(*value));
+                lawSetValue(subject, target, PropertyValue(*value));
             };
         }
     }

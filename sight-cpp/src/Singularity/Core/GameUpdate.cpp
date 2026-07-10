@@ -560,6 +560,20 @@ void Game::update(float dt) {
     _mainMenu.processInput(_window);
     _mouseHandler.setMenuOpen(_mainMenu.isOpen());
 
+    // Hover events were dormant: nothing ever called updateHoverState. Pick
+    // the object under the cursor once per frame; the enter/exit EDGES
+    // publish the hover events (and their ECA echoes) laws bind to.
+    {
+        std::vector<Object*> hoverTargets;
+        for (const auto& obj : mgr.active().world().getOwnedObjects()) {
+            if (obj) hoverTargets.push_back(obj.get());
+        }
+        Object* hovered = Tool::PickObject3D(_window, this, hoverTargets);
+        for (Object* obj : hoverTargets) {
+            obj->updateHoverState(obj == hovered);
+        }
+    }
+
     // Laws hear the frame: everything published above (collisions, hover
     // edges, finished clips, applied laws) has been asserted as facts; one
     // tick evaluates the network and fires whatever the events woke.

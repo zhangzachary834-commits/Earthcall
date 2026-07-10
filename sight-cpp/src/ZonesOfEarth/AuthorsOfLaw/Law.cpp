@@ -176,6 +176,7 @@ std::shared_ptr<Law> Law::fromJson(const nlohmann::json& j) {
     law->setEnabled(j.value("enabled", true));
     law->setAuthorityLevel(j.value("authority", 0));
     law->setActivation(static_cast<Activation>(j.value("activation", 0)));
+    law->setScope(static_cast<Scope>(j.value("scope", 0)));
     law->setConditionMode(j.value("conditionMode", std::string("all")) == "any"
                               ? ConditionMode::Any
                               : ConditionMode::All);
@@ -294,6 +295,7 @@ nlohmann::json Law::toJson() const {
         {"enabled", _enabled},
         {"authority", _authorityLevel},
         {"activation", static_cast<int>(_activation)},
+        {"scope", static_cast<int>(_scope)},
         {"conditionMode", _conditionMode == ConditionMode::All ? "all" : "any"},
         {"authors", formationMemberIds(_authors)},
         {"conditionSubjects", formationMemberIds(_conditions)},
@@ -600,6 +602,25 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
             Singular* subject = activation.token.facts.empty()
                                     ? nullptr
                                     : activation.token.facts.front().subject;
+
+            if (law->scope() == Law::Scope::Everyone) {
+                // The event is the OCCASION; the application sweeps every
+                // being (targets, or the Universe) that satisfies the
+                // conditions — "every instance of the category".
+                std::vector<Singular*> subjects;
+                const auto& targets = law->targets().getMembers();
+                if (!targets.empty()) subjects.assign(targets.begin(), targets.end());
+                else subjects = Universe::instance().beings();
+                for (Singular* being : subjects) {
+                    if (!being || !law->conditionsSatisfied(*being)) continue;
+                    law->applyTo(*being);
+                    if (!law->applicationLog().empty()) {
+                        records.push_back(law->applicationLog().back());
+                    }
+                }
+                continue;
+            }
+
             if (!subject) continue;
             law->applyTo(*subject);
             if (!law->applicationLog().empty()) {
