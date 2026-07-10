@@ -176,6 +176,8 @@ build/src/Rendering/DesignSystem.o: src/Rendering/DesignSystem.cpp \
   src/Form/Form.hpp /opt/homebrew/Cellar/glfw/3.4/include/GLFW/glfw3.h \
   src/Relation/RelationManager.hpp src/Relation/Relation.hpp \
   src/json.hpp src/Form/Singular/Singular.hpp \
+  src/Form/Singular/Property/Property.hpp \
+  src/Form/Singular/Property/PropertyValue.hpp \
   /opt/homebrew/include/glm/gtc/type_ptr.hpp \
   /opt/homebrew/include/glm/gtc/../gtc/quaternion.hpp \
   /opt/homebrew/include/glm/gtc/../gtc/constants.hpp \
@@ -252,8 +254,9 @@ build/src/Rendering/DesignSystem.o: src/Rendering/DesignSystem.cpp \
   /opt/homebrew/include/glm/gtc/../mat3x4.hpp \
   /opt/homebrew/include/glm/gtc/../mat4x2.hpp \
   /opt/homebrew/include/glm/gtc/../mat4x3.hpp \
-  /opt/homebrew/include/glm/gtc/type_ptr.inl src/Core/EventBus.hpp \
-  src/Form/Object/Contour.hpp src/Form/Object/AngleTools.hpp \
+  /opt/homebrew/include/glm/gtc/type_ptr.inl \
+  src/Singularity/Core/EventBus.hpp src/Form/Object/Contour.hpp \
+  src/Form/Object/AngleTools.hpp \
   src/Form/Object/Object/PolyhedronData.hpp \
   src/Form/Object/Object/../AngleTools.hpp \
   src/Form/Object/Object/../Contour.hpp \
@@ -634,6 +637,10 @@ src/json.hpp:
 
 src/Form/Singular/Singular.hpp:
 
+src/Form/Singular/Property/Property.hpp:
+
+src/Form/Singular/Property/PropertyValue.hpp:
+
 /opt/homebrew/include/glm/gtc/type_ptr.hpp:
 
 /opt/homebrew/include/glm/gtc/../gtc/quaternion.hpp:
@@ -788,7 +795,7 @@ src/Form/Singular/Singular.hpp:
 
 /opt/homebrew/include/glm/gtc/type_ptr.inl:
 
-src/Core/EventBus.hpp:
+src/Singularity/Core/EventBus.hpp:
 
 src/Form/Object/Contour.hpp:
 

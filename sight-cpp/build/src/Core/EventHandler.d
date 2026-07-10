@@ -1,6 +1,6 @@
-build/src/Core/EventHandler.o: src/Core/EventHandler.cpp \
-  src/Core/EventHandler.hpp src/Core/EventBus.hpp
+build/src/Singularity/Core/EventHandler.o: src/Singularity/Core/EventHandler.cpp \
+  src/Singularity/Core/EventHandler.hpp src/Singularity/Core/EventBus.hpp
 
-src/Core/EventHandler.hpp:
+src/Singularity/Core/EventHandler.hpp:
 
-src/Core/EventBus.hpp:
+src/Singularity/Core/EventBus.hpp:

@@ -1,5 +1,5 @@
-#include "../src/Core/EventHandler.hpp"
-#include "../src/Core/EventBus.hpp"
+#include "../src/Singularity/Core/EventHandler.hpp"
+#include "../src/Singularity/Core/EventBus.hpp"
 #include <iostream>
 #include <string>
 

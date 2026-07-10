@@ -3,6 +3,8 @@ build/src/Rendering/RelationManagerWindow.o: \
   src/Rendering/RelationManagerWindow.hpp \
   src/Relation/RelationManager.hpp src/Relation/Relation.hpp \
   src/json.hpp src/Form/Singular/Singular.hpp \
+  src/Form/Singular/Property/Property.hpp \
+  src/Form/Singular/Property/PropertyValue.hpp \
   /opt/homebrew/include/glm/glm.hpp \
   /opt/homebrew/include/glm/detail/_fixes.hpp \
   /opt/homebrew/include/glm/detail/setup.hpp \
@@ -251,8 +253,8 @@ build/src/Rendering/RelationManagerWindow.o: \
   /opt/homebrew/include/glm/gtc/../mat3x4.hpp \
   /opt/homebrew/include/glm/gtc/../mat4x2.hpp \
   /opt/homebrew/include/glm/gtc/../mat4x3.hpp \
-  /opt/homebrew/include/glm/gtc/type_ptr.inl src/Core/EventBus.hpp \
-  ../imgui/imgui.h ../imgui/imconfig.h
+  /opt/homebrew/include/glm/gtc/type_ptr.inl \
+  src/Singularity/Core/EventBus.hpp ../imgui/imgui.h ../imgui/imconfig.h
 
 src/Rendering/RelationManagerWindow.hpp:
 
@@ -263,6 +265,10 @@ src/Relation/Relation.hpp:
 src/json.hpp:
 
 src/Form/Singular/Singular.hpp:
+
+src/Form/Singular/Property/Property.hpp:
+
+src/Form/Singular/Property/PropertyValue.hpp:
 
 /opt/homebrew/include/glm/glm.hpp:
 
@@ -762,7 +768,7 @@ src/Form/Singular/Singular.hpp:
 
 /opt/homebrew/include/glm/gtc/type_ptr.inl:
 
-src/Core/EventBus.hpp:
+src/Singularity/Core/EventBus.hpp:
 
 ../imgui/imgui.h:
 

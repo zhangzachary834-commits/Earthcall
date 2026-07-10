@@ -9,11 +9,13 @@ double Operations::hyperop(int level, double a, double b) {
         return 1;                                 // exp/tet/... base case
     }
 
-    // Pure-recursion modeling stub
+    // Pure-recursion modeling stub, commented out for now
+    /*
     for (int i = 0; i < level; i++) {
 
         // recursively call hyperop on the lower level to simulate how hyper operation works
     }
+    */
 
     return hyperop(level - 1, a, hyperop(level, a, b - 1));
 }

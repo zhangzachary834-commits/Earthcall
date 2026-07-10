@@ -1,2 +1,2 @@
-build/src/Form/Singularity/Singularity.o: \
-  src/Form/Singularity/Singularity.cpp
+build/src/Singularity/Singularity.o: \
+  src/Singularity/Singularity.cpp

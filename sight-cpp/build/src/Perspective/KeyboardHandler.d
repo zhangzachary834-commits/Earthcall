@@ -1,8 +1,8 @@
 build/src/Perspective/KeyboardHandler.o: \
   src/Perspective/KeyboardHandler.cpp \
   src/Perspective/KeyboardHandler.hpp \
-  /opt/homebrew/Cellar/glfw/3.4/include/GLFW/glfw3.h src/Core/Game.hpp \
-  /opt/homebrew/include/glm/glm.hpp \
+  /opt/homebrew/Cellar/glfw/3.4/include/GLFW/glfw3.h \
+  src/Singularity/Core/Game.hpp /opt/homebrew/include/glm/glm.hpp \
   /opt/homebrew/include/glm/detail/_fixes.hpp \
   /opt/homebrew/include/glm/detail/setup.hpp \
   /opt/homebrew/include/glm/detail/../simd/platform.h \
@@ -158,6 +158,8 @@ build/src/Perspective/KeyboardHandler.o: \
   src/Form/Object/Formation/Formation.hpp src/Form/Form.hpp \
   src/Relation/RelationManager.hpp src/Relation/Relation.hpp \
   src/json.hpp src/Form/Singular/Singular.hpp \
+  src/Form/Singular/Property/Property.hpp \
+  src/Form/Singular/Property/PropertyValue.hpp \
   /opt/homebrew/include/glm/gtc/type_ptr.hpp \
   /opt/homebrew/include/glm/gtc/../gtc/quaternion.hpp \
   /opt/homebrew/include/glm/gtc/../gtc/constants.hpp \
@@ -256,7 +258,8 @@ build/src/Perspective/KeyboardHandler.o: \
   /opt/homebrew/include/glm/gtc/../mat3x4.hpp \
   /opt/homebrew/include/glm/gtc/../mat4x2.hpp \
   /opt/homebrew/include/glm/gtc/../mat4x3.hpp \
-  /opt/homebrew/include/glm/gtc/type_ptr.inl src/Core/EventBus.hpp \
+  /opt/homebrew/include/glm/gtc/type_ptr.inl \
+  src/Singularity/Core/EventBus.hpp \
   /opt/homebrew/include/glm/gtc/matrix_transform.hpp \
   src/Form/Object/Contour.hpp src/Form/Object/AngleTools.hpp \
   src/Form/Object/Object/PolyhedronData.hpp \
@@ -281,18 +284,31 @@ build/src/Perspective/KeyboardHandler.o: \
   ../imgui/imgui.h ../imgui/imconfig.h \
   src/OurVerse/ElementalToolHandler.hpp src/OurVerse/CursorTools.hpp \
   src/Person/Person.hpp src/Person/AvatarManager.hpp \
-  src/Person/Soul/Soul.hpp src/Perspective/MouseHandler.hpp \
-  src/Core/BrushSettings.hpp src/Core/CameraState.hpp \
-  src/Core/CloneToolState.hpp src/Core/FacePaintSettings.hpp \
-  src/OurVerse/AdvancedFacePaint.hpp src/Core/PlacementState.hpp \
-  src/Core/PolyhedronSettings.hpp src/Core/PotteryTool.hpp \
-  src/Core/RotationSettings.hpp src/Core/SaveLoadState.hpp
+  src/Person/Soul/Soul.hpp src/ZonesOfEarth/AuthorsOfLaw/Law.hpp \
+  src/ZonesOfEarth/AuthorsOfLaw/ECA.hpp \
+  src/ZonesOfEarth/AuthorsOfLaw/ConditionModel.hpp \
+  src/Form/Singular/Property/PropertyPath.hpp \
+  src/ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp \
+  src/Singularity/OntoMath/Expression.hpp \
+  src/ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp \
+  src/Singularity/OntoMath/CurveModel.hpp \
+  src/Perspective/MouseHandler.hpp \
+  src/Singularity/Core/BrushSettings.hpp \
+  src/Singularity/Core/CameraState.hpp \
+  src/Singularity/Core/CloneToolState.hpp \
+  src/Singularity/Core/FacePaintSettings.hpp \
+  src/OurVerse/AdvancedFacePaint.hpp \
+  src/Singularity/Core/PlacementState.hpp \
+  src/Singularity/Core/PolyhedronSettings.hpp \
+  src/Singularity/Core/PotteryTool.hpp \
+  src/Singularity/Core/RotationSettings.hpp \
+  src/Singularity/Core/SaveLoadState.hpp
 
 src/Perspective/KeyboardHandler.hpp:
 
 /opt/homebrew/Cellar/glfw/3.4/include/GLFW/glfw3.h:
 
-src/Core/Game.hpp:
+src/Singularity/Core/Game.hpp:
 
 /opt/homebrew/include/glm/glm.hpp:
 
@@ -616,6 +632,10 @@ src/json.hpp:
 
 src/Form/Singular/Singular.hpp:
 
+src/Form/Singular/Property/Property.hpp:
+
+src/Form/Singular/Property/PropertyValue.hpp:
+
 /opt/homebrew/include/glm/gtc/type_ptr.hpp:
 
 /opt/homebrew/include/glm/gtc/../gtc/quaternion.hpp:
@@ -814,7 +834,7 @@ src/Form/Singular/Singular.hpp:
 
 /opt/homebrew/include/glm/gtc/type_ptr.inl:
 
-src/Core/EventBus.hpp:
+src/Singularity/Core/EventBus.hpp:
 
 /opt/homebrew/include/glm/gtc/matrix_transform.hpp:
 
@@ -882,24 +902,40 @@ src/Person/AvatarManager.hpp:
 
 src/Person/Soul/Soul.hpp:
 
+src/ZonesOfEarth/AuthorsOfLaw/Law.hpp:
+
+src/ZonesOfEarth/AuthorsOfLaw/ECA.hpp:
+
+src/ZonesOfEarth/AuthorsOfLaw/ConditionModel.hpp:
+
+src/Form/Singular/Property/PropertyPath.hpp:
+
+src/ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp:
+
+src/Singularity/OntoMath/Expression.hpp:
+
+src/ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp:
+
+src/Singularity/OntoMath/CurveModel.hpp:
+
 src/Perspective/MouseHandler.hpp:
 
-src/Core/BrushSettings.hpp:
+src/Singularity/Core/BrushSettings.hpp:
 
-src/Core/CameraState.hpp:
+src/Singularity/Core/CameraState.hpp:
 
-src/Core/CloneToolState.hpp:
+src/Singularity/Core/CloneToolState.hpp:
 
-src/Core/FacePaintSettings.hpp:
+src/Singularity/Core/FacePaintSettings.hpp:
 
 src/OurVerse/AdvancedFacePaint.hpp:
 
-src/Core/PlacementState.hpp:
+src/Singularity/Core/PlacementState.hpp:
 
-src/Core/PolyhedronSettings.hpp:
+src/Singularity/Core/PolyhedronSettings.hpp:
 
-src/Core/PotteryTool.hpp:
+src/Singularity/Core/PotteryTool.hpp:
 
-src/Core/RotationSettings.hpp:
+src/Singularity/Core/RotationSettings.hpp:
 
-src/Core/SaveLoadState.hpp:
+src/Singularity/Core/SaveLoadState.hpp:

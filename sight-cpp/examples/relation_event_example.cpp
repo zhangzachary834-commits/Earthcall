@@ -1,4 +1,4 @@
-#include "../src/Core/EventBus.hpp"
+#include "../src/Singularity/Core/EventBus.hpp"
 #include "../src/Relation/RelationManager.hpp"
 #include "../src/Relation/Relation.hpp"
 #include <iostream>

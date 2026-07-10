@@ -1,4 +1,4 @@
-#include "../src/Core/EventBus.hpp"
+#include "../src/Singularity/Core/EventBus.hpp"
 #include "../src/Person/Person.hpp"
 #include "../src/Person/AvatarManager.hpp"
 #include "../src/Person/Body/Body.hpp"

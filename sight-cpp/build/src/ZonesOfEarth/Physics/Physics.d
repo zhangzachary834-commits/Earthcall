@@ -154,6 +154,8 @@ build/src/ZonesOfEarth/Physics/Physics.o: \
   src/Form/Form.hpp /opt/homebrew/Cellar/glfw/3.4/include/GLFW/glfw3.h \
   src/Relation/RelationManager.hpp src/Relation/Relation.hpp \
   src/json.hpp src/Form/Singular/Singular.hpp \
+  src/Form/Singular/Property/Property.hpp \
+  src/Form/Singular/Property/PropertyValue.hpp \
   /opt/homebrew/include/glm/gtc/type_ptr.hpp \
   /opt/homebrew/include/glm/gtc/../gtc/quaternion.hpp \
   /opt/homebrew/include/glm/gtc/../gtc/constants.hpp \
@@ -252,7 +254,8 @@ build/src/ZonesOfEarth/Physics/Physics.o: \
   /opt/homebrew/include/glm/gtc/../mat3x4.hpp \
   /opt/homebrew/include/glm/gtc/../mat4x2.hpp \
   /opt/homebrew/include/glm/gtc/../mat4x3.hpp \
-  /opt/homebrew/include/glm/gtc/type_ptr.inl src/Core/EventBus.hpp \
+  /opt/homebrew/include/glm/gtc/type_ptr.inl \
+  src/Singularity/Core/EventBus.hpp \
   /opt/homebrew/include/glm/gtc/matrix_transform.hpp \
   src/Form/Object/Contour.hpp src/Form/Object/AngleTools.hpp \
   src/Form/Object/Object/PolyhedronData.hpp \
@@ -264,7 +267,8 @@ build/src/ZonesOfEarth/Physics/Physics.o: \
   src/Form/Object/Geometry/ComplexShape.hpp \
   src/Form/Object/Geometry/Sdf.hpp src/Form/Object/Geometry/Patch.hpp \
   src/Form/Object/Automation/Automation.hpp \
-  src/ZonesOfEarth/Physics/CollisionDispatcher.hpp
+  src/ZonesOfEarth/Physics/CollisionDispatcher.hpp \
+  src/ZonesOfEarth/AuthorsOfLaw/ECA.hpp
 
 src/ZonesOfEarth/Physics/Physics.hpp:
 
@@ -584,6 +588,10 @@ src/json.hpp:
 
 src/Form/Singular/Singular.hpp:
 
+src/Form/Singular/Property/Property.hpp:
+
+src/Form/Singular/Property/PropertyValue.hpp:
+
 /opt/homebrew/include/glm/gtc/type_ptr.hpp:
 
 /opt/homebrew/include/glm/gtc/../gtc/quaternion.hpp:
@@ -782,7 +790,7 @@ src/Form/Singular/Singular.hpp:
 
 /opt/homebrew/include/glm/gtc/type_ptr.inl:
 
-src/Core/EventBus.hpp:
+src/Singularity/Core/EventBus.hpp:
 
 /opt/homebrew/include/glm/gtc/matrix_transform.hpp:
 
@@ -811,3 +819,5 @@ src/Form/Object/Geometry/Patch.hpp:
 src/Form/Object/Automation/Automation.hpp:
 
 src/ZonesOfEarth/Physics/CollisionDispatcher.hpp:
+
+src/ZonesOfEarth/AuthorsOfLaw/ECA.hpp:

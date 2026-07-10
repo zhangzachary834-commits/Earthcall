@@ -1,5 +1,5 @@
-build/src/Core/GameSaveLoad.o: src/Core/GameSaveLoad.cpp \
-  src/Core/Game.hpp /opt/homebrew/Cellar/glfw/3.4/include/GLFW/glfw3.h \
+build/src/Singularity/Core/GameSaveLoad.o: src/Singularity/Core/GameSaveLoad.cpp \
+  src/Singularity/Core/Game.hpp /opt/homebrew/Cellar/glfw/3.4/include/GLFW/glfw3.h \
   /opt/homebrew/include/glm/glm.hpp \
   /opt/homebrew/include/glm/detail/_fixes.hpp \
   /opt/homebrew/include/glm/detail/setup.hpp \
@@ -156,6 +156,7 @@ build/src/Core/GameSaveLoad.o: src/Core/GameSaveLoad.cpp \
   src/Form/Object/Formation/Formation.hpp src/Form/Form.hpp \
   src/Relation/RelationManager.hpp src/Relation/Relation.hpp \
   src/json.hpp src/Form/Singular/Singular.hpp \
+  src/Form/Singular/Property/Property.hpp \
   /opt/homebrew/include/glm/gtc/type_ptr.hpp \
   /opt/homebrew/include/glm/gtc/../gtc/quaternion.hpp \
   /opt/homebrew/include/glm/gtc/../gtc/constants.hpp \
@@ -254,7 +255,7 @@ build/src/Core/GameSaveLoad.o: src/Core/GameSaveLoad.cpp \
   /opt/homebrew/include/glm/gtc/../mat3x4.hpp \
   /opt/homebrew/include/glm/gtc/../mat4x2.hpp \
   /opt/homebrew/include/glm/gtc/../mat4x3.hpp \
-  /opt/homebrew/include/glm/gtc/type_ptr.inl src/Core/EventBus.hpp \
+  /opt/homebrew/include/glm/gtc/type_ptr.inl src/Singularity/Core/EventBus.hpp \
   /opt/homebrew/include/glm/gtc/matrix_transform.hpp \
   src/Form/Object/Contour.hpp src/Form/Object/AngleTools.hpp \
   src/Form/Object/Object/PolyhedronData.hpp \
@@ -280,16 +281,16 @@ build/src/Core/GameSaveLoad.o: src/Core/GameSaveLoad.cpp \
   src/OurVerse/ElementalToolHandler.hpp src/OurVerse/CursorTools.hpp \
   src/Person/Person.hpp src/Person/AvatarManager.hpp \
   src/Person/Soul/Soul.hpp src/Perspective/KeyboardHandler.hpp \
-  src/Perspective/MouseHandler.hpp src/Core/BrushSettings.hpp \
-  src/Core/CameraState.hpp src/Core/CloneToolState.hpp \
-  src/Core/FacePaintSettings.hpp src/OurVerse/AdvancedFacePaint.hpp \
-  src/Core/PlacementState.hpp src/Core/PolyhedronSettings.hpp \
-  src/Core/PotteryTool.hpp src/Core/RotationSettings.hpp \
-  src/Core/SaveLoadState.hpp src/ZonesOfEarth/Physics/Physics.hpp \
+  src/Perspective/MouseHandler.hpp src/Singularity/Core/BrushSettings.hpp \
+  src/Singularity/Core/CameraState.hpp src/Singularity/Core/CloneToolState.hpp \
+  src/Singularity/Core/FacePaintSettings.hpp src/OurVerse/AdvancedFacePaint.hpp \
+  src/Singularity/Core/PlacementState.hpp src/Singularity/Core/PolyhedronSettings.hpp \
+  src/Singularity/Core/PotteryTool.hpp src/Singularity/Core/RotationSettings.hpp \
+  src/Singularity/Core/SaveLoadState.hpp src/ZonesOfEarth/Physics/Physics.hpp \
   src/Util/SaveSystem.hpp src/Util/Serialization.hpp \
   src/ZonesOfEarth/World/World.hpp
 
-src/Core/Game.hpp:
+src/Singularity/Core/Game.hpp:
 
 /opt/homebrew/Cellar/glfw/3.4/include/GLFW/glfw3.h:
 
@@ -615,6 +616,8 @@ src/json.hpp:
 
 src/Form/Singular/Singular.hpp:
 
+src/Form/Singular/Property/Property.hpp:
+
 /opt/homebrew/include/glm/gtc/type_ptr.hpp:
 
 /opt/homebrew/include/glm/gtc/../gtc/quaternion.hpp:
@@ -813,7 +816,7 @@ src/Form/Singular/Singular.hpp:
 
 /opt/homebrew/include/glm/gtc/type_ptr.inl:
 
-src/Core/EventBus.hpp:
+src/Singularity/Core/EventBus.hpp:
 
 /opt/homebrew/include/glm/gtc/matrix_transform.hpp:
 
@@ -885,25 +888,25 @@ src/Perspective/KeyboardHandler.hpp:
 
 src/Perspective/MouseHandler.hpp:
 
-src/Core/BrushSettings.hpp:
+src/Singularity/Core/BrushSettings.hpp:
 
-src/Core/CameraState.hpp:
+src/Singularity/Core/CameraState.hpp:
 
-src/Core/CloneToolState.hpp:
+src/Singularity/Core/CloneToolState.hpp:
 
-src/Core/FacePaintSettings.hpp:
+src/Singularity/Core/FacePaintSettings.hpp:
 
 src/OurVerse/AdvancedFacePaint.hpp:
 
-src/Core/PlacementState.hpp:
+src/Singularity/Core/PlacementState.hpp:
 
-src/Core/PolyhedronSettings.hpp:
+src/Singularity/Core/PolyhedronSettings.hpp:
 
-src/Core/PotteryTool.hpp:
+src/Singularity/Core/PotteryTool.hpp:
 
-src/Core/RotationSettings.hpp:
+src/Singularity/Core/RotationSettings.hpp:
 
-src/Core/SaveLoadState.hpp:
+src/Singularity/Core/SaveLoadState.hpp:
 
 src/ZonesOfEarth/Physics/Physics.hpp:
 

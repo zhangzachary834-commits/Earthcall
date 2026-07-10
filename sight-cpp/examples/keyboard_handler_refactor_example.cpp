@@ -1,4 +1,4 @@
-#include "../src/Core/Game.hpp"
+#include "../src/Singularity/Core/Game.hpp"
 #include "../src/Perspective/KeyboardHandler.hpp"
 #include <iostream>
 
