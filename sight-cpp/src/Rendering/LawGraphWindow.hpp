@@ -32,6 +32,9 @@ ActionNode* actionAt(ActionNode& root, const std::vector<int>& path);
 // The Law & Concept authoring window: law list + New Law (authored by
 // `player`), card-graph view of the selected law, per-node editors, trigger
 // binding into the Rete network, and the concept registry listing.
-void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player);
+// `testSubject` (usually the selected 3D object) enables the "apply now"
+// feedback loop — authoring without feedback is guessing.
+void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player,
+                          Singular* testSubject = nullptr);
 
 } // namespace Rendering

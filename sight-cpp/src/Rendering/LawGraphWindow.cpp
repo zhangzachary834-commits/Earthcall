@@ -82,42 +82,75 @@ constexpr EventOption kEngineEvents[] = {
 };
 constexpr int kEngineEventCount = sizeof(kEngineEvents) / sizeof(kEngineEvents[0]);
 
-// Every property path an Object actually registers (probed from the registry,
-// vec3 properties expanded into components) — plus the law-governance paths
-// for metalaws. Built once; the registry is the truth.
-const std::vector<std::string>& knownPaths() {
-    static std::vector<std::string> paths;
-    if (paths.empty()) {
-        static Object prototype;   // registry probe (window renders in-app: GL is live)
-        for (Property* property : prototype.listProperties()) {
-            paths.push_back(property->name());
-            if (std::holds_alternative<glm::vec3>(property->value())) {
-                paths.push_back(property->name() + ".x");
-                paths.push_back(property->name() + ".y");
-                paths.push_back(property->name() + ".z");
+// Every property path the substrate actually registers, probed live from the
+// registries and annotated with WHO owns it and WHAT it holds — the picker
+// tells you which Singular a path belongs to instead of leaving you to guess.
+struct PathOption {
+    std::string path;
+    const char* group;         // owning Singular + facet
+    const char* type;          // what the property holds
+    bool wholeVector = false;  // vec3 as a whole: numbers won't apply to it
+};
+
+const std::vector<PathOption>& knownPathOptions() {
+    static std::vector<PathOption> options;
+    if (options.empty()) {
+        static Object objectPrototype;   // registry probes (window renders in-app)
+        for (Property* property : objectPrototype.listProperties()) {
+            const bool isVec = std::holds_alternative<glm::vec3>(property->value());
+            const char* group = property->name().rfind("shape.", 0) == 0
+                                    ? "Object — shape"
+                                    : "Object — spatial";
+            options.push_back({property->name(), group,
+                               isVec ? "vector" : "number", isVec});
+            if (isVec) {
+                options.push_back({property->name() + ".x", group, "number", false});
+                options.push_back({property->name() + ".y", group, "number", false});
+                options.push_back({property->name() + ".z", group, "number", false});
             }
         }
-        // Law-governance paths: pick these when the law TARGETS another law.
-        paths.push_back("enabled");
-        paths.push_back("conditionMode");
-        paths.push_back("name");
+        static Law lawPrototype("prototype");
+        for (Property* property : lawPrototype.listProperties()) {
+            const char* type = "number";
+            if (std::holds_alternative<bool>(property->value())) type = "toggle";
+            else if (std::holds_alternative<std::string>(property->value())) type = "text";
+            options.push_back({property->name(), "Law — governance (metalaws)", type, false});
+        }
     }
-    return paths;
+    return options;
 }
 
-// A property picker: choose from the registry, or "..." for a custom path
-// (properties of Singulars beyond the Object prototype).
+const PathOption* findPathOption(const std::string& path) {
+    for (const auto& option : knownPathOptions()) {
+        if (option.path == path) return &option;
+    }
+    return nullptr;
+}
+
+// A property picker: grouped by owning Singular, typed, with a "..." custom
+// escape hatch for paths beyond the known registries. Paths resolve on the
+// law's SUBJECT — the being the law applies to when its trigger fires.
 bool pathPicker(const char* label, PropertyPath& path) {
     bool changed = false;
     const std::string current = path.empty() ? "(choose property)" : path.toString();
     ImGui::SetNextItemWidth(200.0f);
     if (ImGui::BeginCombo(label, current.c_str())) {
-        for (const auto& option : knownPaths()) {
-            if (ImGui::Selectable(option.c_str(), option == current)) {
-                path = PropertyPath::parse(option);
+        ImGui::TextDisabled("Resolved on the law's subject —");
+        ImGui::TextDisabled("the being the law applies to:");
+        const char* lastGroup = nullptr;
+        for (const auto& option : knownPathOptions()) {
+            if (!lastGroup || std::strcmp(lastGroup, option.group) != 0) {
+                lastGroup = option.group;
+                ImGui::Separator();
+                ImGui::TextDisabled("%s", option.group);
+            }
+            if (ImGui::Selectable(("  " + option.path).c_str(), option.path == current)) {
+                path = PropertyPath::parse(option.path);
                 g.customPathTarget.clear();
                 changed = true;
             }
+            ImGui::SameLine(230.0f);
+            ImGui::TextDisabled("%s", option.type);
         }
         ImGui::EndCombo();
     }
@@ -126,6 +159,9 @@ bool pathPicker(const char* label, PropertyPath& path) {
     if (ImGui::SmallButton("...")) {
         g.customPathTarget = label;
         copyToBuf(g.pathBuf, sizeof(g.pathBuf), path.toString());
+    }
+    if (ImGui::IsItemHovered()) {
+        ImGui::SetTooltip("type a custom path for properties of other Singulars");
     }
     ImGui::PopID();
     if (g.customPathTarget == label) {
@@ -138,6 +174,17 @@ bool pathPicker(const char* label, PropertyPath& path) {
         }
     }
     return changed;
+}
+
+// Orange nudge when a whole-vector property is about to receive a number.
+void warnIfWholeVector(const PropertyPath& path) {
+    const PathOption* option = findPathOption(path.toString());
+    if (option && option->wholeVector) {
+        ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.2f, 1.0f),
+                           "! \"%s\" is a whole vector — numbers won't apply. Pick a "
+                           "component (.x .y .z).",
+                           option->path.c_str());
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -339,6 +386,38 @@ bool editPiecewise(OntoMath::Piecewise& f, const MathBindings& bindings) {
     ImGui::TextColored(kHeaderColor, "Function");
     ImGui::TextDisabled("f = %s", f.print().c_str());
 
+    // A variable the function uses but nothing binds can never evaluate —
+    // say so before the author wonders why the law never fires.
+    for (const auto& piece : f.pieces) {
+        for (const auto& term : piece.expression.terms) {
+            for (const auto& factor : term.factors) {
+                if (!bindings.count(factor.first)) {
+                    ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.2f, 1.0f),
+                                       "! variable \"%s\" has no binding — the function "
+                                       "cannot evaluate",
+                                       factor.first.c_str());
+                }
+            }
+        }
+    }
+
+    // Which variable the piece bounds cut (only matters with bounded pieces).
+    bool anyBounded = f.pieces.size() > 1;
+    for (const auto& piece : f.pieces) anyBounded = anyBounded || piece.hasLo || piece.hasHi;
+    if (anyBounded && !bindings.empty()) {
+        ImGui::SetNextItemWidth(80.0f);
+        if (ImGui::BeginCombo("bounds cut", f.inputVariable.c_str())) {
+            for (const auto& binding : bindings) {
+                if (ImGui::Selectable(binding.first.c_str(),
+                                      binding.first == f.inputVariable)) {
+                    f.inputVariable = binding.first;
+                    changed = true;
+                }
+            }
+            ImGui::EndCombo();
+        }
+    }
+
     for (std::size_t p = 0; p < f.pieces.size(); ++p) {
         auto& piece = f.pieces[p];
         ImGui::PushID(static_cast<int>(p));
@@ -460,6 +539,7 @@ bool editConditionNode(ConditionNode& node) {
         case ConditionNode::Kind::Compare: {
             ImGui::TextDisabled("True when the property compares against the value.");
             if (pathPicker("Property", node.path)) changed = true;
+            warnIfWholeVector(node.path);
             static const char* ops[] = {"==", "!=", "<", "<=", ">", ">=", "near", "in-range"};
             int op = static_cast<int>(node.op);
             ImGui::SetNextItemWidth(90.0f);
@@ -634,6 +714,7 @@ bool editActionNode(ActionNode& node) {
                                    : "property blends toward value";
             ImGui::TextDisabled("%s. Component paths (position.y) take numbers.", what);
             if (pathPicker("Property", node.path)) changed = true;
+            warnIfWholeVector(node.path);
             double value = numericOr(node.operand, 0.0);
             ImGui::SetNextItemWidth(120.0f);
             if (ImGui::InputDouble("Value", &value)) {
@@ -693,6 +774,7 @@ bool editActionNode(ActionNode& node) {
             ImGui::TextDisabled("property := f(variables) — authored mathematics governs");
             ImGui::TextDisabled("the output. Undefined math (outside the domain) writes nothing.");
             if (pathPicker("Property", node.path)) changed = true;
+            warnIfWholeVector(node.path);
             if (editMathBindings(node.bindings)) changed = true;
             if (editPiecewise(node.mapFunction, node.bindings)) changed = true;
             break;
@@ -749,6 +831,30 @@ bool editActionNode(ActionNode& node) {
     return changed;
 }
 
+// The whole law as one plain sentence — glanceable meaning, no card-reading
+// required.
+std::string lawSentence(const Law& law, const std::vector<std::string>* triggers) {
+    std::string sentence = "WHEN ";
+    if (!triggers || triggers->empty()) {
+        sentence += "applied directly";
+    } else {
+        for (std::size_t i = 0; i < triggers->size(); ++i) {
+            if (i) sentence += "\" or \"";
+            else sentence += "\"";
+            sentence += (*triggers)[i];
+        }
+        sentence += "\" fires";
+    }
+    sentence += "  ->  IF ";
+    sentence += law.hasConditionModel() ? law.conditionModel()->describe()
+                                        : std::string("always");
+    sentence += "  ->  THEN ";
+    sentence += law.hasActionModel() ? law.actionModel()->describe()
+                                     : std::string("(no action)");
+    sentence += "  — on the event's subject.";
+    return sentence;
+}
+
 void refreshEditBuffers() {
     if (g.lastEditLaw == g.selectedLawId && g.lastEditCard == g.selectedCard) return;
     g.lastEditLaw = g.selectedLawId;
@@ -759,7 +865,8 @@ void refreshEditBuffers() {
 
 } // namespace
 
-void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player) {
+void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player,
+                          Singular* testSubject) {
     ImGui::SetNextWindowSize(ImVec2(920, 560), ImGuiCond_FirstUseEver);
     if (!ImGui::Begin("Law Author", open)) {
         ImGui::End();
@@ -873,7 +980,19 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player) {
         dl->AddText(ImVec2(a.x + 8.0f, a.y + (cardH - ImGui::GetFontSize()) * 0.5f),
                     IM_COL32(255, 255, 255, 255), cards[i].label.c_str());
         dl->PopClipRect();
-        if (hovered && ImGui::IsMouseClicked(0)) g.selectedCard = static_cast<int>(i);
+        // WHEN/IF/THEN orientation badges on the roots of each branch.
+        const char* badge = nullptr;
+        if (cards[i].kind == LawCard::Kind::Event) badge = "WHEN";
+        else if (cards[i].kind == LawCard::Kind::Condition && cards[i].modelPath.empty()) badge = "IF";
+        else if (cards[i].kind == LawCard::Kind::Action && cards[i].modelPath.empty()) badge = "THEN";
+        if (badge) {
+            dl->AddText(ImVec2(a.x + 2.0f, a.y - ImGui::GetFontSize() - 1.0f),
+                        IM_COL32(210, 210, 210, 200), badge);
+        }
+        if (hovered) {
+            ImGui::SetTooltip("%s", cards[i].label.c_str());
+            if (ImGui::IsMouseClicked(0)) g.selectedCard = static_cast<int>(i);
+        }
     }
     ImGui::Dummy(ImVec2(28.0f + (maxDepth + 1.0f) * colW, canvasH - 20.0f));
     ImGui::EndChild();
@@ -895,11 +1014,56 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player) {
         copyToBuf(nameBuf, sizeof(nameBuf), law->name());
         ImGui::SetNextItemWidth(240.0f);
         if (ImGui::InputText("Name", nameBuf, sizeof(nameBuf))) law->setName(nameBuf);
-        ImGui::Text("Authors: %d   Applications so far: %d",
-                    static_cast<int>(law->authors().getMembers().size()),
-                    static_cast<int>(law->applicationLog().size()));
+
+        // The law in one sentence.
+        {
+            auto boundIt = g.triggers.find(g.selectedLawId);
+            const std::vector<std::string>* bound =
+                boundIt != g.triggers.end() ? &boundIt->second : nullptr;
+            ImGui::TextWrapped("%s", lawSentence(*law, bound).c_str());
+        }
+
+        // Authored by whom.
+        {
+            std::string authors;
+            int count = 0;
+            for (auto* author : law->authors().getMembers()) {
+                if (!author) continue;
+                if (count++) authors += ", ";
+                if (count > 3) { authors += "..."; break; }
+                authors += author->getIdentifier();
+            }
+            ImGui::TextDisabled("Authored by: %s",
+                                authors.empty() ? "(nobody — cannot fire)" : authors.c_str());
+        }
 
         editTriggers(laws, *law);
+        ImGui::Separator();
+
+        // Feedback: what this law has actually done. Authoring without
+        // feedback is guessing.
+        ImGui::TextColored(kHeaderColor, "Recent applications");
+        const auto& log = law->applicationLog();
+        if (log.empty()) {
+            ImGui::TextDisabled("Never applied yet.");
+        } else {
+            const std::size_t shown = std::min<std::size_t>(3, log.size());
+            for (std::size_t i = 0; i < shown; ++i) {
+                const auto& record = log[log.size() - 1 - i];
+                ImGui::BulletText("%s -> %s", Law::resultName(record.result),
+                                  record.targetId.empty() ? "(no target)"
+                                                          : record.targetId.c_str());
+            }
+        }
+        if (testSubject) {
+            if (ImGui::Button("Apply now to selected object")) {
+                law->applyTo(*testSubject);
+            }
+            ImGui::SameLine();
+            ImGui::TextDisabled("subject: %s", testSubject->getIdentifier().c_str());
+        } else {
+            ImGui::TextDisabled("Select an object in the 3D world to test-apply this law.");
+        }
         ImGui::Separator();
 
         if (!law->hasConditionModel()) {
@@ -994,6 +1158,8 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player) {
         }
     }
 
+    ImGui::Separator();
+    ImGui::TextDisabled("Laws live in this session; saving them with the world is coming.");
     ImGui::EndChild();
     ImGui::End();
 }

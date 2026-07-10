@@ -183,7 +183,8 @@ void Game::renderCreatorToolbar() {
     }
 
     if (_showLawAuthor) {
-        Rendering::renderLawGraphWindow(&_showLawAuthor, _lawManager, _player);
+        Rendering::renderLawGraphWindow(&_showLawAuthor, _lawManager, _player,
+                                        _selectedObject3D);
     }
 
     drawLoadWindow();
