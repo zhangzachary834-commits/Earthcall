@@ -125,6 +125,35 @@ int main() {
         // Out-of-range navigation fails cleanly.
         ConditionModel model2 = *floorLaw.conditionModel();
         assert(Rendering::conditionAt(model2, {4}) == nullptr);
+
+        // ------------------------------------------------------------------
+        // 4. Discoverability: the substrate's vocabulary is enumerable, so
+        //    the authoring UI offers real property names instead of quizzing.
+        // ------------------------------------------------------------------
+        Object probe;
+        bool sawPosition = false, sawShapeParam = false;
+        for (Property* property : probe.listProperties()) {
+            if (property->name() == "position") sawPosition = true;
+            if (property->name() == "shape.majorR") sawShapeParam = true;
+        }
+        assert(sawPosition && sawShapeParam);
+
+        // Laws are legible the same way (metalaw targeting via picker).
+        bool sawEnabled = false;
+        for (Property* property : floorLaw.listProperties()) {
+            if (property->name() == "enabled") sawEnabled = true;
+        }
+        assert(sawEnabled);
+
+        // Clearing models is a real state (used by the editor's remove buttons).
+        Law bare("bare");
+        bare.addAuthor(author);
+        bare.setActionModel(ActionNode::set("position.y", PropertyValue(0.0)));
+        bare.clearActionModel();
+        assert(!bare.hasActionModel());
+        Object idle;
+        idle.setPosition(glm::vec3(0.0f, -1.0f, 0.0f));
+        assert(bare.applyTo(idle) == Law::ApplicationResult::NoAction);
     }
 
     glfwDestroyWindow(window);

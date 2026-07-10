@@ -147,6 +147,14 @@ public:
     }
     void setConditionModel(ConditionModel model);
     void setActionModel(ActionModel model);
+    void clearConditionModel() {
+        _conditionModel.reset();
+        _conditionPredicates.clear();
+    }
+    void clearActionModel() {
+        _actionModel.reset();
+        _actions.clear();
+    }
     void recompile();
 
     // Restore identity + behavior from toJson() output. Authors and targets
@@ -272,6 +280,9 @@ public:
 
     void bindLawToAlpha(const std::string& lawId, std::size_t alphaNodeId);
     void bindLawToBeta(const std::string& lawId, std::size_t betaNodeId);
+    // Remove every binding of this law from the network (the nodes remain;
+    // an unbound node is inert). Rebinding creates fresh bindings.
+    void unbindLaw(const std::string& lawId);
 
     const std::vector<ReteActivation>& evaluate();
     std::vector<ReteActivation> drainAgenda();

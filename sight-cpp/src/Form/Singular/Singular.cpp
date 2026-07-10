@@ -20,3 +20,16 @@ Property* Singular::findProperty(const std::string& name) {
     }
     return nullptr;
 }
+
+std::vector<Property*> Singular::listProperties() {
+    if (!_propertiesBuilt) {
+        _propertiesBuilt = true;
+        buildProperties();
+    }
+    std::vector<Property*> out;
+    out.reserve(_propertyRegistry.size());
+    for (auto& property : _propertyRegistry) {
+        if (property) out.push_back(property.get());
+    }
+    return out;
+}

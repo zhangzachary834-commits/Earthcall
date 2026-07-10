@@ -125,6 +125,20 @@ int main() {
         assert(PropertyPath::parse("shape.fillet").getValue(obj, fillet));
         assert(nearf(std::get<float>(fillet), 0.9f));  // gildLaw chained (round 2+)
         assert(static_cast<int>(records.size()) <= LawManager::kMaxChainRounds + 1);
+
+        // ------------------------------------------------------------------
+        // 6. Unbinding: a law released from its trigger goes silent (the
+        //    editor's "unbind" button is real, not cosmetic).
+        // ------------------------------------------------------------------
+        mgr.rete().unbindLaw(gildLaw->getIdentifier());
+        assert(PropertyPath::parse("shape.fillet").setValue(obj, PropertyValue(0.0f)));
+        obj.setPosition(glm::vec3(0.0f, -5.0f, 0.0f));
+        Core::EventBus::instance().publish(
+            ECA::Event{"enters-world", &obj, nullptr, std::time(nullptr)});
+        mgr.tick();
+        assert(nearf(obj.getPosition().y, 0.0f));      // floorLaw still bound
+        assert(PropertyPath::parse("shape.fillet").getValue(obj, fillet));
+        assert(nearf(std::get<float>(fillet), 0.0f));  // gildLaw no longer hears
     }
 
     glfwDestroyWindow(window);

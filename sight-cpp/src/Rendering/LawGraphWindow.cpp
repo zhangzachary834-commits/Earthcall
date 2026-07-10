@@ -2,6 +2,7 @@
 
 #include "Rendering/CardTreeLayout.hpp"
 #include "Form/Object/Creation/ObjectConcept.hpp"
+#include "Form/Object/Object.hpp"
 
 #include <imgui.h>
 
@@ -15,20 +16,28 @@ namespace Rendering {
 
 namespace {
 
-// UI session state only — the models remain the single truth.
+// ---------------------------------------------------------------------------
+// Session state — UI scratch only; the models remain the single truth.
+// ---------------------------------------------------------------------------
 struct SessionState {
     std::string selectedLawId;
     int selectedCard = -1;
-    std::unordered_map<std::string, std::string> eventBindings;   // lawId -> type
+
+    // lawId -> bound trigger event types (session view of the Rete bindings).
+    std::unordered_map<std::string, std::vector<std::string>> triggers;
+    int eventCombo = 0;
     char eventBuf[64] = "";
+
     char pathBuf[128] = "";
-    char textBuf[128] = "";
-    char varBuf[32] = "";        // new math-binding variable name
-    char bindPathBuf[128] = "";  // new math-binding property path
+    std::string customPathTarget;    // which picker is in custom-entry mode
+    char varBuf[32] = "";
+
     std::string lastEditLaw;
     int lastEditCard = -1;
 };
 SessionState g;
+
+const ImVec4 kHeaderColor(0.95f, 0.85f, 0.55f, 1.0f);
 
 ImU32 cardColor(LawCard::Kind kind) {
     switch (kind) {
@@ -40,6 +49,173 @@ ImU32 cardColor(LawCard::Kind kind) {
     return IM_COL32(96, 96, 96, 255);
 }
 
+void copyToBuf(char* buf, std::size_t size, const std::string& value) {
+    std::strncpy(buf, value.c_str(), size - 1);
+    buf[size - 1] = '\0';
+}
+
+double numericOr(const PropertyValue& v, double fallback) {
+    double out = fallback;
+    propertyValueToNumber(v, out);
+    return out;
+}
+
+// ---------------------------------------------------------------------------
+// The substrate's own vocabulary, offered instead of quizzed.
+// ---------------------------------------------------------------------------
+
+// The engine's string-typed events (the echoes wired in commit 4), with what
+// each one means. Custom names are equally legal — a Person may mint a new
+// event kind and fire it from their own laws.
+struct EventOption {
+    const char* type;
+    const char* meaning;
+};
+constexpr EventOption kEngineEvents[] = {
+    {"collision",                "two objects collide (subject: the first object)"},
+    {"object-hover-enter",       "the cursor enters an object (subject: the object)"},
+    {"object-hover-exit",        "the cursor leaves an object (subject: the object)"},
+    {"automation-clip-finished", "a non-looping automation clip ends (subject: the object)"},
+    {"law-applied",              "any law successfully applies (subject: its target)"},
+    {"law-registered",           "a new law is registered (subject: the law)"},
+    {"concept-registered",       "a new concept is captured (subject: the concept)"},
+};
+constexpr int kEngineEventCount = sizeof(kEngineEvents) / sizeof(kEngineEvents[0]);
+
+// Every property path an Object actually registers (probed from the registry,
+// vec3 properties expanded into components) — plus the law-governance paths
+// for metalaws. Built once; the registry is the truth.
+const std::vector<std::string>& knownPaths() {
+    static std::vector<std::string> paths;
+    if (paths.empty()) {
+        static Object prototype;   // registry probe (window renders in-app: GL is live)
+        for (Property* property : prototype.listProperties()) {
+            paths.push_back(property->name());
+            if (std::holds_alternative<glm::vec3>(property->value())) {
+                paths.push_back(property->name() + ".x");
+                paths.push_back(property->name() + ".y");
+                paths.push_back(property->name() + ".z");
+            }
+        }
+        // Law-governance paths: pick these when the law TARGETS another law.
+        paths.push_back("enabled");
+        paths.push_back("conditionMode");
+        paths.push_back("name");
+    }
+    return paths;
+}
+
+// A property picker: choose from the registry, or "..." for a custom path
+// (properties of Singulars beyond the Object prototype).
+bool pathPicker(const char* label, PropertyPath& path) {
+    bool changed = false;
+    const std::string current = path.empty() ? "(choose property)" : path.toString();
+    ImGui::SetNextItemWidth(200.0f);
+    if (ImGui::BeginCombo(label, current.c_str())) {
+        for (const auto& option : knownPaths()) {
+            if (ImGui::Selectable(option.c_str(), option == current)) {
+                path = PropertyPath::parse(option);
+                g.customPathTarget.clear();
+                changed = true;
+            }
+        }
+        ImGui::EndCombo();
+    }
+    ImGui::SameLine();
+    ImGui::PushID(label);
+    if (ImGui::SmallButton("...")) {
+        g.customPathTarget = label;
+        copyToBuf(g.pathBuf, sizeof(g.pathBuf), path.toString());
+    }
+    ImGui::PopID();
+    if (g.customPathTarget == label) {
+        ImGui::SetNextItemWidth(200.0f);
+        if (ImGui::InputText("custom path (enter)", g.pathBuf, sizeof(g.pathBuf),
+                             ImGuiInputTextFlags_EnterReturnsTrue)) {
+            path = PropertyPath::parse(g.pathBuf);
+            g.customPathTarget.clear();
+            changed = true;
+        }
+    }
+    return changed;
+}
+
+// ---------------------------------------------------------------------------
+// Triggers: what wakes the law. Shown on the law card and the event card.
+// ---------------------------------------------------------------------------
+void editTriggers(LawManager& laws, Law& law) {
+    auto& bound = g.triggers[law.getIdentifier()];
+
+    ImGui::TextColored(kHeaderColor, "Triggers — what wakes this law");
+    if (bound.empty()) {
+        ImGui::TextDisabled("No trigger bound: the law only runs when applied directly.");
+        ImGui::TextDisabled("Bind an event below so the law LISTENS for it.");
+    }
+    int removeIdx = -1;
+    for (std::size_t i = 0; i < bound.size(); ++i) {
+        ImGui::PushID(static_cast<int>(i));
+        ImGui::BulletText("on \"%s\"", bound[i].c_str());
+        ImGui::SameLine();
+        if (ImGui::SmallButton("unbind")) removeIdx = static_cast<int>(i);
+        ImGui::PopID();
+    }
+    if (removeIdx >= 0) {
+        bound.erase(bound.begin() + removeIdx);
+        // Rebind from scratch: drop every binding, re-create the remaining
+        // ones on fresh alpha nodes (unbound nodes stay inert).
+        laws.rete().unbindLaw(law.getIdentifier());
+        for (const auto& type : bound) {
+            const std::size_t alpha = laws.rete().addAlphaNode(
+                "type == " + type,
+                [type](const ReteFact& f) { return f.type == type; });
+            laws.rete().bindLawToAlpha(law.getIdentifier(), alpha);
+        }
+    }
+
+    // Add a trigger: pick an engine event (with its meaning shown), or the
+    // last entry to name a custom event.
+    const bool custom = g.eventCombo >= kEngineEventCount;
+    const char* preview = custom ? "(custom event...)" : kEngineEvents[g.eventCombo].type;
+    ImGui::SetNextItemWidth(220.0f);
+    if (ImGui::BeginCombo("##eventpick", preview)) {
+        for (int i = 0; i < kEngineEventCount; ++i) {
+            if (ImGui::Selectable(kEngineEvents[i].type, g.eventCombo == i)) g.eventCombo = i;
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", kEngineEvents[i].meaning);
+        }
+        if (ImGui::Selectable("(custom event...)", custom)) g.eventCombo = kEngineEventCount;
+        ImGui::EndCombo();
+    }
+    if (!custom) {
+        ImGui::SameLine();
+        ImGui::TextDisabled("?");
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", kEngineEvents[g.eventCombo].meaning);
+    }
+    if (custom) {
+        ImGui::SameLine();
+        ImGui::SetNextItemWidth(150.0f);
+        ImGui::InputText("##customevent", g.eventBuf, sizeof(g.eventBuf));
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Bind trigger")) {
+        const std::string type = custom ? std::string(g.eventBuf)
+                                        : std::string(kEngineEvents[g.eventCombo].type);
+        if (!type.empty() &&
+            std::find(bound.begin(), bound.end(), type) == bound.end()) {
+            const std::size_t alpha = laws.rete().addAlphaNode(
+                "type == " + type,
+                [type](const ReteFact& f) { return f.type == type; });
+            laws.rete().bindLawToAlpha(law.getIdentifier(), alpha);
+            bound.push_back(type);
+            g.eventBuf[0] = '\0';
+        }
+    }
+    ImGui::TextDisabled("When the event fires, the law applies to the event's SUBJECT");
+    ImGui::TextDisabled("if the conditions hold.");
+}
+
+// ---------------------------------------------------------------------------
+// Flatten helpers (public API used by tests — unchanged).
+// ---------------------------------------------------------------------------
 void flattenCondition(const ConditionNode& node, std::vector<LawCard>& cards,
                       int parent, std::vector<int> modelPath) {
     LawCard card;
@@ -72,17 +248,6 @@ void flattenAction(const ActionNode& node, std::vector<LawCard>& cards,
         path.push_back(static_cast<int>(i));
         flattenAction(node.children[i], cards, idx, std::move(path));
     }
-}
-
-void copyToBuf(char* buf, std::size_t size, const std::string& value) {
-    std::strncpy(buf, value.c_str(), size - 1);
-    buf[size - 1] = '\0';
-}
-
-double numericOr(const PropertyValue& v, double fallback) {
-    double out = fallback;
-    propertyValueToNumber(v, out);
-    return out;
 }
 
 } // namespace
@@ -132,42 +297,38 @@ ActionNode* actionAt(ActionNode& root, const std::vector<int>& path) {
 namespace {
 
 // ---------------------------------------------------------------------------
-// Per-node editors. Each mutates a COPY of the model; the caller commits it
-// through setConditionModel/setActionModel so the law recompiles.
-// ---------------------------------------------------------------------------
-
-// ---------------------------------------------------------------------------
-// Authored-mathematics editors. Every foundational primitive — variables,
-// bindings, coefficients, exponents, piece bounds — is Person-modifiable,
-// during creation and after. Numbers edit in place; names/paths add and
-// remove as rows (delete + re-add to change).
+// Authored-mathematics editors: every foundational primitive — variables,
+// bindings, coefficients, exponents, piece bounds — Person-modifiable in
+// place, during creation and after.
 // ---------------------------------------------------------------------------
 
 bool editMathBindings(MathBindings& bindings) {
     bool changed = false;
-    ImGui::TextDisabled("Bindings (variable <- property path)");
+    ImGui::TextColored(kHeaderColor, "Variables");
+    ImGui::TextDisabled("Each variable names WHERE its value lives on the subject.");
     std::string removeKey;
     for (const auto& entry : bindings) {
         ImGui::PushID(entry.first.c_str());
-        ImGui::BulletText("%s <- %s", entry.first.c_str(), entry.second.toString().c_str());
+        ImGui::BulletText("%s  <-  %s", entry.first.c_str(), entry.second.toString().c_str());
         ImGui::SameLine();
-        if (ImGui::SmallButton("x")) removeKey = entry.first;
+        if (ImGui::SmallButton("remove")) removeKey = entry.first;
         ImGui::PopID();
     }
     if (!removeKey.empty()) {
         bindings.erase(removeKey);
         changed = true;
     }
-    ImGui::SetNextItemWidth(60.0f);
+    ImGui::SetNextItemWidth(56.0f);
     ImGui::InputText("##bindvar", g.varBuf, sizeof(g.varBuf));
+    if (ImGui::IsItemHovered()) ImGui::SetTooltip("variable name, e.g. x");
     ImGui::SameLine();
-    ImGui::SetNextItemWidth(180.0f);
-    ImGui::InputText("##bindpath", g.bindPathBuf, sizeof(g.bindPathBuf));
+    static PropertyPath pendingBindPath;
+    pathPicker("##bindpath", pendingBindPath);
     ImGui::SameLine();
-    if (ImGui::Button("Add binding") && g.varBuf[0] != '\0' && g.bindPathBuf[0] != '\0') {
-        bindings[g.varBuf] = PropertyPath::parse(g.bindPathBuf);
+    if (ImGui::Button("Add variable") && g.varBuf[0] != '\0' && !pendingBindPath.empty()) {
+        bindings[g.varBuf] = pendingBindPath;
         g.varBuf[0] = '\0';
-        g.bindPathBuf[0] = '\0';
+        pendingBindPath = PropertyPath{};
         changed = true;
     }
     return changed;
@@ -175,6 +336,7 @@ bool editMathBindings(MathBindings& bindings) {
 
 bool editPiecewise(OntoMath::Piecewise& f, const MathBindings& bindings) {
     bool changed = false;
+    ImGui::TextColored(kHeaderColor, "Function");
     ImGui::TextDisabled("f = %s", f.print().c_str());
 
     for (std::size_t p = 0; p < f.pieces.size(); ++p) {
@@ -203,7 +365,6 @@ bool editPiecewise(OntoMath::Piecewise& f, const MathBindings& bindings) {
             }
         }
 
-        // Terms: coefficient and every exponent edit in place.
         int removeTerm = -1;
         for (std::size_t t = 0; t < piece.expression.terms.size(); ++t) {
             auto& term = piece.expression.terms[t];
@@ -220,7 +381,6 @@ bool editPiecewise(OntoMath::Piecewise& f, const MathBindings& bindings) {
                     changed = true;
                 }
             }
-            // Multiply this term by a bound variable (exponent +1).
             for (const auto& binding : bindings) {
                 if (term.factors.count(binding.first)) continue;
                 ImGui::SameLine();
@@ -253,28 +413,84 @@ bool editPiecewise(OntoMath::Piecewise& f, const MathBindings& bindings) {
     return changed;
 }
 
+// ---------------------------------------------------------------------------
+// Node editors. Each mutates a COPY of the model; the caller commits through
+// setConditionModel/setActionModel so the law recompiles.
+// ---------------------------------------------------------------------------
+
+void seedConditionKind(ConditionNode& node) {
+    switch (node.kind) {
+        case ConditionNode::Kind::Compare:
+            if (node.path.empty()) {
+                node.path = PropertyPath::parse("position.y");
+                node.op = ConditionNode::Op::Lt;
+                node.operand = PropertyValue(0.0);
+            }
+            break;
+        case ConditionNode::Kind::Zone:
+            if (node.zoneFunction.pieces.empty()) {
+                node.zoneFunction = OntoMath::Piecewise::continuous(
+                    OntoMath::Expression::variable("x"));
+                node.bindings = MathBindings{{"x", PropertyPath::parse("position.x")}};
+                node.hi = PropertyValue(0.0);
+            }
+            break;
+        case ConditionNode::Kind::InRegion:
+            if (node.probe.empty()) node.probe = PropertyPath::parse("position");
+            break;
+        default:
+            break;
+    }
+}
+
 bool editConditionNode(ConditionNode& node) {
     bool changed = false;
+
+    static const char* kinds[] = {"compare", "in shape region", "related (soon)",
+                                  "all of...", "any of...", "not", "math zone"};
+    int kind = static_cast<int>(node.kind);
+    ImGui::SetNextItemWidth(160.0f);
+    if (ImGui::Combo("Condition type", &kind, kinds, 7)) {
+        node.kind = static_cast<ConditionNode::Kind>(kind);
+        seedConditionKind(node);
+        changed = true;
+    }
+
     switch (node.kind) {
         case ConditionNode::Kind::Compare: {
-            if (ImGui::InputText("Path", g.pathBuf, sizeof(g.pathBuf),
-                                 ImGuiInputTextFlags_EnterReturnsTrue)) {
-                node.path = PropertyPath::parse(g.pathBuf);
-                changed = true;
-            }
+            ImGui::TextDisabled("True when the property compares against the value.");
+            if (pathPicker("Property", node.path)) changed = true;
             static const char* ops[] = {"==", "!=", "<", "<=", ">", ">=", "near", "in-range"};
             int op = static_cast<int>(node.op);
-            if (ImGui::Combo("Op", &op, ops, 8)) {
+            ImGui::SetNextItemWidth(90.0f);
+            if (ImGui::Combo("Compares", &op, ops, 8)) {
                 node.op = static_cast<ConditionNode::Op>(op);
                 changed = true;
             }
             double value = numericOr(node.operand, 0.0);
+            ImGui::SetNextItemWidth(120.0f);
             if (ImGui::InputDouble("Value", &value)) {
                 node.operand = PropertyValue(value);
                 changed = true;
             }
+            const bool comparesToPath = !node.operandPath.empty();
+            if (!comparesToPath) {
+                ImGui::SameLine();
+                if (ImGui::SmallButton("compare to a property instead")) {
+                    node.operandPath = PropertyPath::parse("position.y");
+                    changed = true;
+                }
+            } else {
+                if (pathPicker("Against", node.operandPath)) changed = true;
+                ImGui::SameLine();
+                if (ImGui::SmallButton("use a number instead")) {
+                    node.operandPath = PropertyPath{};
+                    changed = true;
+                }
+            }
             if (node.op == ConditionNode::Op::Near) {
                 double tol = node.tolerance;
+                ImGui::SetNextItemWidth(120.0f);
                 if (ImGui::InputDouble("Tolerance", &tol)) {
                     node.tolerance = tol;
                     changed = true;
@@ -282,21 +498,21 @@ bool editConditionNode(ConditionNode& node) {
             }
             if (node.op == ConditionNode::Op::InRange) {
                 double lo = numericOr(node.lo, 0.0), hi = numericOr(node.hi, 0.0);
+                ImGui::SetNextItemWidth(120.0f);
                 if (ImGui::InputDouble("Low", &lo)) { node.lo = PropertyValue(lo); changed = true; }
+                ImGui::SetNextItemWidth(120.0f);
                 if (ImGui::InputDouble("High", &hi)) { node.hi = PropertyValue(hi); changed = true; }
             }
             break;
         }
         case ConditionNode::Kind::InRegion: {
-            ImGui::TextDisabled("Region condition (sketched with the shape tools)");
-            if (ImGui::InputText("Probe path", g.pathBuf, sizeof(g.pathBuf),
-                                 ImGuiInputTextFlags_EnterReturnsTrue)) {
-                node.probe = PropertyPath::parse(g.pathBuf);
-                changed = true;
-            }
+            ImGui::TextDisabled("True when the probed point lies inside the shape region");
+            ImGui::TextDisabled("(regions are sketched with the shape tools in projection mode).");
+            if (pathPicker("Probe point", node.probe)) changed = true;
             if (node.region.op == geom::SdfOp::Leaf &&
                 node.region.prim == geom::SdfPrim::Sphere) {
                 float radius = node.region.dims.x;
+                ImGui::SetNextItemWidth(120.0f);
                 if (ImGui::DragFloat("Sphere radius", &radius, 0.02f, 0.01f, 100.0f)) {
                     node.region.dims.x = radius;
                     changed = true;
@@ -305,38 +521,41 @@ bool editConditionNode(ConditionNode& node) {
             break;
         }
         case ConditionNode::Kind::Related: {
-            ImGui::TextDisabled("Relation conditions resolve with the relation-graph work");
-            if (ImGui::InputText("Relation type", g.textBuf, sizeof(g.textBuf),
-                                 ImGuiInputTextFlags_EnterReturnsTrue)) {
-                node.relationType = g.textBuf;
-                changed = true;
-            }
+            ImGui::TextDisabled("Relation conditions resolve when the relation-graph work lands;");
+            ImGui::TextDisabled("until then this condition never passes (laws must not fire on");
+            ImGui::TextDisabled("unproven relations).");
             break;
         }
         case ConditionNode::Kind::All:
         case ConditionNode::Kind::Any:
         case ConditionNode::Kind::Not: {
-            ImGui::Text("%zu member condition(s)", node.children.size());
+            const char* what = node.kind == ConditionNode::Kind::All
+                                   ? "ALL members must hold"
+                                   : node.kind == ConditionNode::Kind::Any
+                                         ? "ANY one member suffices"
+                                         : "inverts its single member";
+            ImGui::TextDisabled("%s (%zu member(s)).", what, node.children.size());
             if (node.kind != ConditionNode::Kind::Not || node.children.empty()) {
-                if (ImGui::Button("+ Compare child")) {
-                    node.children.push_back(ConditionNode::compare(
-                        "position.y", ConditionNode::Op::Lt, PropertyValue(0.0)));
+                if (ImGui::Button("+ compare")) {
+                    ConditionNode child;
+                    child.kind = ConditionNode::Kind::Compare;
+                    seedConditionKind(child);
+                    node.children.push_back(std::move(child));
                     changed = true;
                 }
                 ImGui::SameLine();
-                if (ImGui::Button("+ Zone child")) {
-                    node.children.push_back(ConditionNode::zone(
-                        OntoMath::Piecewise::continuous(
-                            OntoMath::Expression::variable("x")),
-                        MathBindings{{"x", PropertyPath::parse("position.x")}},
-                        PropertyValue{}, PropertyValue(0.0)));
+                if (ImGui::Button("+ math zone")) {
+                    ConditionNode child;
+                    child.kind = ConditionNode::Kind::Zone;
+                    seedConditionKind(child);
+                    node.children.push_back(std::move(child));
                     changed = true;
                 }
             }
             break;
         }
         case ConditionNode::Kind::Zone: {
-            ImGui::TextDisabled("Satisfied when f(bindings) lies in the zone.");
+            ImGui::TextDisabled("True when f(variables) lies inside the zone bounds.");
             bool hasLo = !std::holds_alternative<std::monostate>(node.lo);
             if (ImGui::Checkbox("zone lo", &hasLo)) {
                 node.lo = hasLo ? PropertyValue(0.0) : PropertyValue{};
@@ -368,25 +587,62 @@ bool editConditionNode(ConditionNode& node) {
     return changed;
 }
 
+void seedActionKind(ActionNode& node) {
+    switch (node.kind) {
+        case ActionNode::Kind::Set:
+        case ActionNode::Kind::Add:
+        case ActionNode::Kind::Scale:
+        case ActionNode::Kind::Lerp:
+        case ActionNode::Kind::Drive:
+            if (node.path.empty()) node.path = PropertyPath::parse("position.y");
+            break;
+        case ActionNode::Kind::Map:
+            if (node.mapFunction.pieces.empty()) {
+                node.path = node.path.empty() ? PropertyPath::parse("position.y") : node.path;
+                node.mapFunction = OntoMath::Piecewise::continuous(
+                    OntoMath::Expression::variable("x"));
+                node.bindings = MathBindings{{"x", PropertyPath::parse("position.x")}};
+            }
+            break;
+        default:
+            break;
+    }
+}
+
 bool editActionNode(ActionNode& node) {
     bool changed = false;
+
+    static const char* kinds[] = {"set", "add", "scale", "lerp", "drive (curve)",
+                                  "sequence", "parallel", "spawn concept", "map (math)"};
+    int kind = static_cast<int>(node.kind);
+    ImGui::SetNextItemWidth(160.0f);
+    if (ImGui::Combo("Action type", &kind, kinds, 9)) {
+        node.kind = static_cast<ActionNode::Kind>(kind);
+        seedActionKind(node);
+        changed = true;
+    }
+
     switch (node.kind) {
         case ActionNode::Kind::Set:
         case ActionNode::Kind::Add:
         case ActionNode::Kind::Scale:
         case ActionNode::Kind::Lerp: {
-            if (ImGui::InputText("Path", g.pathBuf, sizeof(g.pathBuf),
-                                 ImGuiInputTextFlags_EnterReturnsTrue)) {
-                node.path = PropertyPath::parse(g.pathBuf);
-                changed = true;
-            }
+            const char* what = node.kind == ActionNode::Kind::Set   ? "property := value"
+                               : node.kind == ActionNode::Kind::Add ? "property += value"
+                               : node.kind == ActionNode::Kind::Scale
+                                   ? "property *= value"
+                                   : "property blends toward value";
+            ImGui::TextDisabled("%s. Component paths (position.y) take numbers.", what);
+            if (pathPicker("Property", node.path)) changed = true;
             double value = numericOr(node.operand, 0.0);
+            ImGui::SetNextItemWidth(120.0f);
             if (ImGui::InputDouble("Value", &value)) {
                 node.operand = PropertyValue(value);
                 changed = true;
             }
             if (node.kind == ActionNode::Kind::Lerp) {
                 double factor = node.factor;
+                ImGui::SetNextItemWidth(120.0f);
                 if (ImGui::InputDouble("Blend", &factor)) {
                     node.factor = factor;
                     changed = true;
@@ -395,18 +651,13 @@ bool editActionNode(ActionNode& node) {
             break;
         }
         case ActionNode::Kind::Drive: {
-            if (ImGui::InputText("Path", g.pathBuf, sizeof(g.pathBuf),
-                                 ImGuiInputTextFlags_EnterReturnsTrue)) {
-                node.path = PropertyPath::parse(g.pathBuf);
-                changed = true;
-            }
-            if (ImGui::InputText("Input path", g.textBuf, sizeof(g.textBuf),
-                                 ImGuiInputTextFlags_EnterReturnsTrue)) {
-                node.input = PropertyPath::parse(g.textBuf);
-                changed = true;
-            }
+            ImGui::TextDisabled("property := curve(input) — a single-input curve.");
+            ImGui::TextDisabled("For multivariate or piecewise math, use map.");
+            if (pathPicker("Property", node.path)) changed = true;
+            if (pathPicker("Input", node.input)) changed = true;
             static const char* forms[] = {"constant", "polynomial", "sinusoid"};
             int form = static_cast<int>(node.curve.form);
+            ImGui::SetNextItemWidth(120.0f);
             if (ImGui::Combo("Curve", &form, forms, 3)) {
                 node.curve.form = static_cast<CurveModel::Form>(form);
                 changed = true;
@@ -415,47 +666,71 @@ bool editActionNode(ActionNode& node) {
                 node.curve.form == CurveModel::Form::Polynomial) {
                 if (node.curve.coeffs.size() < 2) node.curve.coeffs.resize(2, 0.0);
                 double c0 = node.curve.coeffs[0], c1 = node.curve.coeffs[1];
+                ImGui::SetNextItemWidth(120.0f);
                 if (ImGui::InputDouble("c0", &c0)) { node.curve.coeffs[0] = c0; changed = true; }
-                if (node.curve.form == CurveModel::Form::Polynomial &&
-                    ImGui::InputDouble("c1 (slope)", &c1)) {
-                    node.curve.coeffs[1] = c1;
-                    changed = true;
+                if (node.curve.form == CurveModel::Form::Polynomial) {
+                    ImGui::SetNextItemWidth(120.0f);
+                    if (ImGui::InputDouble("c1 (slope)", &c1)) {
+                        node.curve.coeffs[1] = c1;
+                        changed = true;
+                    }
                 }
             } else {
                 double amp = node.curve.amplitude, freq = node.curve.frequency;
                 double phase = node.curve.phase, bias = node.curve.bias;
+                ImGui::SetNextItemWidth(120.0f);
                 if (ImGui::InputDouble("Amplitude", &amp)) { node.curve.amplitude = amp; changed = true; }
+                ImGui::SetNextItemWidth(120.0f);
                 if (ImGui::InputDouble("Frequency", &freq)) { node.curve.frequency = freq; changed = true; }
+                ImGui::SetNextItemWidth(120.0f);
                 if (ImGui::InputDouble("Phase", &phase)) { node.curve.phase = phase; changed = true; }
+                ImGui::SetNextItemWidth(120.0f);
                 if (ImGui::InputDouble("Bias", &bias)) { node.curve.bias = bias; changed = true; }
             }
             break;
         }
-        case ActionNode::Kind::Sequence:
-        case ActionNode::Kind::Parallel: {
-            ImGui::Text("%zu step(s)", node.children.size());
-            if (ImGui::Button("+ Set step")) {
-                node.children.push_back(ActionNode::set("position.y", PropertyValue(0.0)));
-                changed = true;
-            }
-            break;
-        }
         case ActionNode::Kind::Map: {
-            ImGui::TextDisabled("path := f(bindings) — authored mathematics governs the output.");
-            if (ImGui::InputText("Path", g.pathBuf, sizeof(g.pathBuf),
-                                 ImGuiInputTextFlags_EnterReturnsTrue)) {
-                node.path = PropertyPath::parse(g.pathBuf);
-                changed = true;
-            }
+            ImGui::TextDisabled("property := f(variables) — authored mathematics governs");
+            ImGui::TextDisabled("the output. Undefined math (outside the domain) writes nothing.");
+            if (pathPicker("Property", node.path)) changed = true;
             if (editMathBindings(node.bindings)) changed = true;
             if (editPiecewise(node.mapFunction, node.bindings)) changed = true;
             break;
         }
+        case ActionNode::Kind::Sequence:
+        case ActionNode::Kind::Parallel: {
+            ImGui::TextDisabled("Runs its %zu step(s) %s.", node.children.size(),
+                                node.kind == ActionNode::Kind::Sequence ? "in order"
+                                                                        : "together");
+            if (ImGui::Button("+ set step")) {
+                ActionNode child;
+                child.kind = ActionNode::Kind::Set;
+                seedActionKind(child);
+                child.operand = PropertyValue(0.0);
+                node.children.push_back(std::move(child));
+                changed = true;
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("+ map step")) {
+                ActionNode child;
+                child.kind = ActionNode::Kind::Map;
+                seedActionKind(child);
+                node.children.push_back(std::move(child));
+                changed = true;
+            }
+            break;
+        }
         case ActionNode::Kind::Spawn: {
+            ImGui::TextDisabled("Births the concept's objects into the law's target World.");
+            ImGui::TextDisabled("Bind the law to an event whose SUBJECT is the World.");
             const auto& concepts = ConceptRegistry::instance().getAll();
             const char* preview = node.conceptId.empty() ? "(choose concept)"
                                                          : node.conceptId.c_str();
+            ImGui::SetNextItemWidth(220.0f);
             if (ImGui::BeginCombo("Concept", preview)) {
+                if (concepts.empty()) {
+                    ImGui::TextDisabled("No concepts captured yet.");
+                }
                 for (const auto& concept : concepts) {
                     if (!concept) continue;
                     const std::string label =
@@ -468,68 +743,50 @@ bool editActionNode(ActionNode& node) {
                 }
                 ImGui::EndCombo();
             }
-            ImGui::TextDisabled("Target the law at a World: the container is the womb.");
             break;
         }
     }
     return changed;
 }
 
-// Refill the text buffers when the selection moves (buffers are per-selection
-// scratch; the model is the truth).
-void refreshEditBuffers(Law& law, const std::vector<LawCard>& cards, int selected) {
-    if (g.lastEditLaw == g.selectedLawId && g.lastEditCard == selected) return;
+void refreshEditBuffers() {
+    if (g.lastEditLaw == g.selectedLawId && g.lastEditCard == g.selectedCard) return;
     g.lastEditLaw = g.selectedLawId;
-    g.lastEditCard = selected;
+    g.lastEditCard = g.selectedCard;
+    g.customPathTarget.clear();
     g.pathBuf[0] = '\0';
-    g.textBuf[0] = '\0';
-    if (selected < 0 || selected >= static_cast<int>(cards.size())) return;
-    const LawCard& card = cards[selected];
-    if (card.kind == LawCard::Kind::Condition && law.hasConditionModel()) {
-        ConditionModel model = *law.conditionModel();
-        if (ConditionNode* node = conditionAt(model, card.modelPath)) {
-            copyToBuf(g.pathBuf, sizeof(g.pathBuf),
-                      node->kind == ConditionNode::Kind::InRegion ? node->probe.toString()
-                                                                  : node->path.toString());
-            copyToBuf(g.textBuf, sizeof(g.textBuf), node->relationType);
-        }
-    } else if (card.kind == LawCard::Kind::Action && law.hasActionModel()) {
-        ActionModel model = *law.actionModel();
-        if (ActionNode* node = actionAt(model, card.modelPath)) {
-            copyToBuf(g.pathBuf, sizeof(g.pathBuf), node->path.toString());
-            copyToBuf(g.textBuf, sizeof(g.textBuf), node->input.toString());
-        }
-    }
 }
 
 } // namespace
 
 void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player) {
-    ImGui::SetNextWindowSize(ImVec2(860, 520), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(920, 560), ImGuiCond_FirstUseEver);
     if (!ImGui::Begin("Law Author", open)) {
         ImGui::End();
         return;
     }
 
     // ------------------------------------------------------------------
-    // Left: the register of laws (and the concept registry below it).
+    // Left: the register of laws, and the concept registry.
     // ------------------------------------------------------------------
-    ImGui::BeginChild("law-list", ImVec2(230, 0), true);
+    ImGui::BeginChild("law-list", ImVec2(240, 0), true);
     if (ImGui::Button("+ New Law", ImVec2(-1, 0))) {
         auto law = laws.createLaw("New Law", {&player});
-        // A working template to edit — the ground-rest rule.
         law->setConditionModel(ConditionNode::compare(
             "position.y", ConditionNode::Op::Lt, PropertyValue(0.0)));
         law->setActionModel(ActionNode::set("position.y", PropertyValue(0.0)));
         g.selectedLawId = law->getIdentifier();
         g.selectedCard = 0;
     }
+    ImGui::TextDisabled("A law: WHEN an event fires,");
+    ImGui::TextDisabled("IF conditions hold, THEN act.");
     ImGui::Separator();
     for (const auto& law : laws.getAll()) {
         if (!law) continue;
         ImGui::PushID(law->getIdentifier().c_str());
         bool enabled = law->isEnabled();
         if (ImGui::Checkbox("##enabled", &enabled)) law->setEnabled(enabled);
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("enabled");
         ImGui::SameLine();
         if (ImGui::Selectable(law->name().c_str(),
                               law->getIdentifier() == g.selectedLawId)) {
@@ -539,31 +796,36 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player) {
         ImGui::PopID();
     }
     ImGui::Separator();
-    ImGui::TextDisabled("Concepts");
+    ImGui::TextDisabled("Concepts (captured sets)");
     for (const auto& concept : ConceptRegistry::instance().getAll()) {
         if (!concept) continue;
-        ImGui::BulletText("%s (%d members, %d mappings)", concept->name().c_str(),
-                          static_cast<int>(concept->members().size()),
-                          static_cast<int>(concept->mappings().size()));
+        ImGui::BulletText("%s (%d members)", concept->name().c_str(),
+                          static_cast<int>(concept->members().size()));
     }
     ImGui::EndChild();
     ImGui::SameLine();
 
     // ------------------------------------------------------------------
-    // Right: card graph of the selected law + the node editor.
+    // Right: card graph of the selected law + the editor for the
+    // selected card.
     // ------------------------------------------------------------------
     ImGui::BeginChild("law-detail", ImVec2(0, 0), false);
     Law* law = g.selectedLawId.empty() ? nullptr : laws.find(g.selectedLawId);
     if (!law) {
-        ImGui::TextDisabled("Select or create a law.");
+        ImGui::TextDisabled("Select a law on the left, or create one.");
         ImGui::EndChild();
         ImGui::End();
         return;
     }
 
-    const auto bindingIt = g.eventBindings.find(g.selectedLawId);
-    const std::string binding =
-        bindingIt != g.eventBindings.end() ? bindingIt->second : std::string();
+    std::string binding;
+    auto triggersIt = g.triggers.find(g.selectedLawId);
+    if (triggersIt != g.triggers.end()) {
+        for (std::size_t i = 0; i < triggersIt->second.size(); ++i) {
+            if (i) binding += ", ";
+            binding += triggersIt->second[i];
+        }
+    }
     std::vector<LawCard> cards = flattenLaw(*law, binding);
     auto slots = layoutCardTree(
         static_cast<int>(cards.size()), 0,
@@ -615,44 +877,119 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player) {
     }
     ImGui::Dummy(ImVec2(28.0f + (maxDepth + 1.0f) * colW, canvasH - 20.0f));
     ImGui::EndChild();
+    ImGui::TextDisabled("Click a card to edit it below.");
 
     // ------------------------------------------------------------------
     // Editor for the selected card.
     // ------------------------------------------------------------------
-    refreshEditBuffers(*law, cards, g.selectedCard);
+    refreshEditBuffers();
     ImGui::Separator();
+    if (g.selectedCard < 0 || g.selectedCard >= static_cast<int>(cards.size())) {
+        g.selectedCard = 0;
+    }
+    const LawCard& card = cards[g.selectedCard];
+    ImGui::TextColored(kHeaderColor, "Editing: %s", card.label.c_str());
+
     if (g.selectedCard == 0) {
         char nameBuf[96];
         copyToBuf(nameBuf, sizeof(nameBuf), law->name());
+        ImGui::SetNextItemWidth(240.0f);
         if (ImGui::InputText("Name", nameBuf, sizeof(nameBuf))) law->setName(nameBuf);
-        ImGui::Text("Authors: %d  |  Applications: %d",
+        ImGui::Text("Authors: %d   Applications so far: %d",
                     static_cast<int>(law->authors().getMembers().size()),
                     static_cast<int>(law->applicationLog().size()));
 
-        ImGui::InputText("Trigger event", g.eventBuf, sizeof(g.eventBuf));
-        ImGui::SameLine();
-        if (ImGui::Button("Bind") && g.eventBuf[0] != '\0') {
-            const std::string type = g.eventBuf;
-            const std::size_t alpha = laws.rete().addAlphaNode(
-                "type == " + type,
-                [type](const ReteFact& f) { return f.type == type; });
-            laws.rete().bindLawToAlpha(law->getIdentifier(), alpha);
-            g.eventBindings[g.selectedLawId] = type;
-        }
-        ImGui::TextDisabled("Bound laws fire when the event's subject satisfies the conditions.");
-    } else if (g.selectedCard > 0 && g.selectedCard < static_cast<int>(cards.size())) {
-        const LawCard& card = cards[g.selectedCard];
-        if (card.kind == LawCard::Kind::Event) {
-            ImGui::Text("Trigger: %s", card.label.c_str());
-        } else if (card.kind == LawCard::Kind::Condition && law->hasConditionModel()) {
-            ConditionModel model = *law->conditionModel();
-            if (ConditionNode* node = conditionAt(model, card.modelPath)) {
-                if (editConditionNode(*node)) law->setConditionModel(std::move(model));
+        editTriggers(laws, *law);
+        ImGui::Separator();
+
+        if (!law->hasConditionModel()) {
+            if (ImGui::Button("+ Add condition")) {
+                ConditionNode seed;
+                seed.kind = ConditionNode::Kind::Compare;
+                seedConditionKind(seed);
+                law->setConditionModel(std::move(seed));
             }
-        } else if (card.kind == LawCard::Kind::Action && law->hasActionModel()) {
-            ActionModel model = *law->actionModel();
-            if (ActionNode* node = actionAt(model, card.modelPath)) {
-                if (editActionNode(*node)) law->setActionModel(std::move(model));
+            ImGui::SameLine();
+            ImGui::TextDisabled("(no condition: the law fires on every trigger)");
+        }
+        if (!law->hasActionModel()) {
+            if (ImGui::Button("+ Add action")) {
+                ActionNode seed;
+                seed.kind = ActionNode::Kind::Set;
+                seedActionKind(seed);
+                seed.operand = PropertyValue(0.0);
+                law->setActionModel(std::move(seed));
+            }
+            ImGui::SameLine();
+            ImGui::TextDisabled("(no action: the law recognizes but does not act)");
+        }
+
+        if (ImGui::Button("Duplicate law")) {
+            nlohmann::json copy = law->toJson();
+            copy.erase("id");   // a duplicate is a NEW being, not an alias
+            auto twin = Law::fromJson(copy);
+            twin->setName(law->name() + " (copy)");
+            for (auto* author : law->authors().getMembers()) {
+                if (author) twin->addAuthor(*author);
+            }
+            laws.add(twin);
+            g.selectedLawId = twin->getIdentifier();
+            g.selectedCard = 0;
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Delete law")) {
+            laws.rete().unbindLaw(law->getIdentifier());
+            g.triggers.erase(law->getIdentifier());
+            laws.remove(law->getIdentifier());
+            g.selectedLawId.clear();
+            g.selectedCard = -1;
+        }
+    } else if (card.kind == LawCard::Kind::Event) {
+        editTriggers(laws, *law);
+    } else if (card.kind == LawCard::Kind::Condition && law->hasConditionModel()) {
+        ConditionModel model = *law->conditionModel();
+        if (ConditionNode* node = conditionAt(model, card.modelPath)) {
+            if (editConditionNode(*node)) law->setConditionModel(std::move(model));
+        }
+        if (!card.modelPath.empty()) {
+            ConditionModel again = *law->conditionModel();
+            std::vector<int> parentPath(card.modelPath.begin(), card.modelPath.end() - 1);
+            if (ConditionNode* parent = conditionAt(again, parentPath)) {
+                ImGui::Separator();
+                if (ImGui::Button("Delete this condition")) {
+                    parent->children.erase(parent->children.begin() + card.modelPath.back());
+                    law->setConditionModel(std::move(again));
+                    g.selectedCard = 0;
+                }
+            }
+        } else {
+            ImGui::Separator();
+            if (ImGui::Button("Remove condition (law fires on every trigger)")) {
+                law->clearConditionModel();
+                g.selectedCard = 0;
+            }
+        }
+    } else if (card.kind == LawCard::Kind::Action && law->hasActionModel()) {
+        ActionModel model = *law->actionModel();
+        if (ActionNode* node = actionAt(model, card.modelPath)) {
+            if (editActionNode(*node)) law->setActionModel(std::move(model));
+        }
+        if (!card.modelPath.empty()) {
+            ActionModel again = *law->actionModel();
+            std::vector<int> parentPath(card.modelPath.begin(), card.modelPath.end() - 1);
+            if (ActionNode* parent = actionAt(again, parentPath)) {
+                ImGui::Separator();
+                if (ImGui::Button("Delete this step")) {
+                    parent->children.erase(parent->children.begin() + card.modelPath.back());
+                    law->setActionModel(std::move(again));
+                    g.selectedCard = 0;
+                }
+            }
+        } else {
+            ImGui::Separator();
+            if (ImGui::Button("Remove action (law recognizes but does not act)")) {
+                law->clearActionModel();
+                g.selectedCard = 0;
             }
         }
     }

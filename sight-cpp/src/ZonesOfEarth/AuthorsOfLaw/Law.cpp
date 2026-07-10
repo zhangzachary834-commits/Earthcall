@@ -399,6 +399,17 @@ void ReteNetwork::bindLawToBeta(const std::string& lawId, std::size_t betaNodeId
     if (!lawId.empty()) _betaLawBindings[betaNodeId].push_back(lawId);
 }
 
+void ReteNetwork::unbindLaw(const std::string& lawId) {
+    for (auto& binding : _alphaLawBindings) {
+        auto& laws = binding.second;
+        laws.erase(std::remove(laws.begin(), laws.end(), lawId), laws.end());
+    }
+    for (auto& binding : _betaLawBindings) {
+        auto& laws = binding.second;
+        laws.erase(std::remove(laws.begin(), laws.end(), lawId), laws.end());
+    }
+}
+
 const std::vector<ReteActivation>& ReteNetwork::evaluate() {
     _agenda.clear();
 

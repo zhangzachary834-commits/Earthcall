@@ -44,6 +44,11 @@ public:
     // Lazily calls buildProperties() on first access.
     Property* findProperty(const std::string& name);
 
+    // Enumerate the registered properties (lazy-builds first). This is what
+    // makes a Singular's vocabulary DISCOVERABLE — authoring UIs offer these
+    // names instead of asking Persons to know the registry by heart.
+    std::vector<Property*> listProperties();
+
     // A Singular can flexibly own any kind of thing. That ownership IS the
     // property registry below: each owned value is wrapped as a Property
     // (PropertyRef over a member, ComputedProperty over getters) and typed
