@@ -299,6 +299,7 @@ struct ReteFact {
     std::string attribute;
     nlohmann::json value;
     Singular* subject{nullptr};
+    Singular* object{nullptr};   // the event's OTHER participant (collision has two)
 };
 
 struct ReteToken {
@@ -421,6 +422,12 @@ public:
         std::string lawId;
         std::string subjectId;
         double onset = 0.0;
+        // The launching event's participants, so "@event.subject" /
+        // "@event.object" stay addressable for the drive's whole life
+        // (resolved fresh each tick; a participant that left the world
+        // resolves to nothing).
+        std::string eventSubjectId;
+        std::string eventObjectId;
     };
     const std::vector<DriveSession>& driveSessions() const { return _driveSessions; }
     bool hasDriveSession(const std::string& lawId, const std::string& subjectId) const {

@@ -3,6 +3,7 @@
 #include "Rendering/CardTreeLayout.hpp"
 #include "Form/Object/Creation/ObjectConcept.hpp"
 #include "Form/Object/Object.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 
 #include <imgui.h>
 
@@ -164,16 +165,86 @@ const PathOption* findPathOption(const std::string& path) {
     return nullptr;
 }
 
+// The author's choice of REFERENT: whose property does this path name?
+// Reads/writes the path's qualifier — plain (the law's subject),
+// "@event.subject" / "@event.object" (the triggering event's participants),
+// or "@being-id" (one specific being in the world, listed live).
+bool whosePicker(PropertyPath& path) {
+    bool changed = false;
+    std::string qualifier;
+    int strip = 0;   // qualifier segments to replace
+    if (!path.segments.empty() && !path.segments[0].empty() &&
+        path.segments[0][0] == '@') {
+        if (path.segments[0] == "@event" && path.segments.size() >= 2) {
+            qualifier = "@event." + path.segments[1];
+            strip = 2;
+        } else {
+            qualifier = path.segments[0];
+            strip = 1;
+        }
+    }
+    const auto retarget = [&](const std::vector<std::string>& prefix) {
+        path.segments.erase(path.segments.begin(), path.segments.begin() + strip);
+        path.segments.insert(path.segments.begin(), prefix.begin(), prefix.end());
+        changed = true;
+    };
+
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(170.0f);
+    const std::string preview = qualifier.empty() ? "of the subject" : "of " + qualifier;
+    if (ImGui::BeginCombo("##whose", preview.c_str())) {
+        if (ImGui::Selectable("the law's subject", qualifier.empty())) retarget({});
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("whoever this law applies to (the event's subject,\n"
+                              "a watched being, or each being of an Everyone sweep)");
+        }
+        if (ImGui::Selectable("the event's subject", qualifier == "@event.subject")) {
+            retarget({"@event", "subject"});
+        }
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("the being the triggering event was about —\n"
+                              "even when the law applies to someone else");
+        }
+        if (ImGui::Selectable("the event's other object", qualifier == "@event.object")) {
+            retarget({"@event", "object"});
+        }
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("the event's second participant (a collision has two);\n"
+                              "undefined for events without one");
+        }
+        ImGui::Separator();
+        ImGui::TextDisabled("a specific being in the world:");
+        for (Singular* being : Universe::instance().beings()) {
+            if (!being) continue;
+            const std::string id = "@" + being->getIdentifier();
+            if (ImGui::Selectable(id.c_str(), qualifier == id)) retarget({id});
+        }
+        ImGui::EndCombo();
+    }
+    if (ImGui::IsItemHovered()) {
+        ImGui::SetTooltip("WHOSE property this is — the author's choice of referent");
+    }
+    return changed;
+}
+
 // A property picker: grouped by owning Singular, typed, with a "..." custom
-// escape hatch for paths beyond the known registries. Paths resolve on the
-// law's SUBJECT — the being the law applies to when its trigger fires.
+// escape hatch for paths beyond the known registries. Beside it, the
+// "whose" combo chooses the REFERENT the path resolves on.
 bool pathPicker(const char* label, PropertyPath& path) {
     bool changed = false;
     const std::string current = path.empty() ? "(choose property)" : path.toString();
+    // The referent qualifier survives re-picking WHAT the property is.
+    std::vector<std::string> qualifierPrefix;
+    if (!path.segments.empty() && !path.segments[0].empty() &&
+        path.segments[0][0] == '@') {
+        const std::size_t n =
+            (path.segments[0] == "@event" && path.segments.size() >= 2) ? 2 : 1;
+        qualifierPrefix.assign(path.segments.begin(), path.segments.begin() + n);
+    }
     ImGui::SetNextItemWidth(200.0f);
     if (ImGui::BeginCombo(label, current.c_str())) {
-        ImGui::TextDisabled("Resolved on the law's subject —");
-        ImGui::TextDisabled("the being the law applies to:");
+        ImGui::TextDisabled("WHAT the property is; choose WHOSE");
+        ImGui::TextDisabled("it is in the 'of ...' box beside this:");
         const char* lastGroup = nullptr;
         for (const auto& option : knownPathOptions()) {
             if (!lastGroup || std::strcmp(lastGroup, option.group) != 0) {
@@ -183,6 +254,8 @@ bool pathPicker(const char* label, PropertyPath& path) {
             }
             if (ImGui::Selectable(("  " + option.path).c_str(), option.path == current)) {
                 path = PropertyPath::parse(option.path);
+                path.segments.insert(path.segments.begin(), qualifierPrefix.begin(),
+                                     qualifierPrefix.end());
                 g.customPathTarget.clear();
                 changed = true;
             }
@@ -200,25 +273,9 @@ bool pathPicker(const char* label, PropertyPath& path) {
     if (ImGui::IsItemHovered()) {
         ImGui::SetTooltip("type a custom path for properties of other Singulars");
     }
-    // Qualify to ONE specific being: "@object-5.position.y" resolves on that
-    // named being instead of the law's subject.
-    if (!g.selectedSubjectId.empty() && !path.empty()) {
-        const bool qualified = !path.segments[0].empty() && path.segments[0][0] == '@';
-        ImGui::SameLine();
-        if (ImGui::SmallButton(qualified ? "of subject" : "of selected")) {
-            if (qualified) {
-                path.segments.erase(path.segments.begin());
-            } else {
-                path.segments.insert(path.segments.begin(), "@" + g.selectedSubjectId);
-            }
-            changed = true;
-        }
-        if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip(qualified
-                                  ? "make this the SUBJECT's property again"
-                                  : "pin this to the selected object (%s) specifically",
-                              g.selectedSubjectId.c_str());
-        }
+    // WHOSE property: subject / event participants / a specific being.
+    if (!path.empty()) {
+        if (whosePicker(path)) changed = true;
     }
     ImGui::PopID();
     if (g.customPathTarget == label) {
@@ -626,6 +683,8 @@ bool editConditionNode(ConditionNode& node) {
     switch (node.kind) {
         case ConditionNode::Kind::Compare: {
             ImGui::TextDisabled("True when the property compares against the value.");
+            ImGui::TextDisabled("For full authored mathematics (multivariate, piecewise,");
+            ImGui::TextDisabled("exact functions) switch Condition type to \"math zone\".");
             if (pathPicker("Property", node.path)) changed = true;
             warnIfWholeVector(node.path);
             static const char* ops[] = {"==", "!=", "<", "<=", ">", ">=", "near", "in-range"};
@@ -862,6 +921,8 @@ bool editActionNode(ActionNode& node) {
                                    ? "property *= value"
                                    : "property blends toward value";
             ImGui::TextDisabled("%s. Component paths (position.y) take numbers.", what);
+            ImGui::TextDisabled("For authored functions (OntoMath: multivariate, piecewise,");
+            ImGui::TextDisabled("calculus-exact) switch Action type to \"map\" or \"flow\".");
             if (pathPicker("Property", node.path)) changed = true;
             warnIfWholeVector(node.path);
             double value = numericOr(node.operand, 0.0);
@@ -1223,10 +1284,22 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player,
                 law->setActivation(static_cast<Law::Activation>(mode));
             }
             if (law->activation() != Law::Activation::OnEvent) {
-                ImGui::TextDisabled(
-                    "Continuous laws watch their targets, or the whole Universe of");
-                ImGui::TextDisabled(
-                    "beings when no targets are set. Triggers are not required.");
+                // The watched set is an explicit choice, same as OnEvent's
+                // "Applies to" — every being, or only named targets.
+                const bool hasTargets = !law->targets().getMembers().empty();
+                int watch = hasTargets ? 1 : 0;
+                static const char* watches[] = {
+                    "every being in the Universe",
+                    "only its targets (add them under Targets below)"};
+                ImGui::SetNextItemWidth(360.0f);
+                if (ImGui::Combo("Watches", &watch, watches, 2)) {
+                    if (watch == 0) law->clearTargets();
+                }
+                if (watch == 1 && !hasTargets) {
+                    ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.2f, 1.0f),
+                                       "! No targets yet — until one is added, the law "
+                                       "still watches everyone.");
+                }
                 if (!g.triggers[law->getIdentifier()].empty()) {
                     ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.2f, 1.0f),
                                        "! Continuous activation IGNORES triggers — the "
@@ -1410,6 +1483,36 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player,
             }
         } else {
             ImGui::Separator();
+            // Multiple conditions, like binding multiple triggers: wrap the
+            // root in All/Any and append — each member then edits and
+            // deletes as its own card.
+            if (law->hasConditionModel() &&
+                law->conditionModel()->kind != ConditionNode::Kind::All &&
+                law->conditionModel()->kind != ConditionNode::Kind::Any) {
+                if (ImGui::Button("+ AND another condition")) {
+                    ConditionNode wrapped;
+                    wrapped.kind = ConditionNode::Kind::All;
+                    wrapped.children.push_back(*law->conditionModel());
+                    ConditionNode extra;
+                    extra.kind = ConditionNode::Kind::Compare;
+                    seedConditionKind(extra);
+                    wrapped.children.push_back(std::move(extra));
+                    law->setConditionModel(std::move(wrapped));
+                }
+                ImGui::SameLine();
+                if (ImGui::Button("+ OR another condition")) {
+                    ConditionNode wrapped;
+                    wrapped.kind = ConditionNode::Kind::Any;
+                    wrapped.children.push_back(*law->conditionModel());
+                    ConditionNode extra;
+                    extra.kind = ConditionNode::Kind::Compare;
+                    seedConditionKind(extra);
+                    wrapped.children.push_back(std::move(extra));
+                    law->setConditionModel(std::move(wrapped));
+                }
+                ImGui::TextDisabled("(both conditions become cards — click each to edit; "
+                                    "nest all/any for grouping)");
+            }
             if (ImGui::Button("Remove condition (law fires on every trigger)")) {
                 law->clearConditionModel();
                 g.selectedCard = 0;
@@ -1433,6 +1536,25 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player,
             }
         } else {
             ImGui::Separator();
+            // Multiple actions, like binding multiple triggers: wrap the
+            // root in a Sequence and append another step.
+            if (law->hasActionModel() &&
+                law->actionModel()->kind != ActionNode::Kind::Sequence &&
+                law->actionModel()->kind != ActionNode::Kind::Parallel) {
+                if (ImGui::Button("+ then another action")) {
+                    ActionNode wrapped;
+                    wrapped.kind = ActionNode::Kind::Sequence;
+                    wrapped.children.push_back(*law->actionModel());
+                    ActionNode extra;
+                    extra.kind = ActionNode::Kind::Set;
+                    seedActionKind(extra);
+                    extra.operand = PropertyValue(0.0);
+                    wrapped.children.push_back(std::move(extra));
+                    law->setActionModel(std::move(wrapped));
+                }
+                ImGui::SameLine();
+                ImGui::TextDisabled("(each step becomes a card — click to edit)");
+            }
             if (ImGui::Button("Remove action (law recognizes but does not act)")) {
                 law->clearActionModel();
                 g.selectedCard = 0;

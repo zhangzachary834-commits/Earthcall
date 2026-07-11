@@ -326,6 +326,61 @@ int main() {
         assert(rebornLaw->hasActionModel());
         assert(rebornLaw->actionModel()->referencesSinceApplied());
 
+        // ------------------------------------------------------------------
+        // 8. The event's PARTICIPANTS are addressable BY CHOICE: a collision
+        //    has two, and the author may ask about or act on either — the
+        //    action phase names its own referents. A drive remembers its
+        //    launching participants for its whole life.
+        // ------------------------------------------------------------------
+        a.setPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+        b.setPosition(glm::vec3(3.0f, 0.0f, 0.0f));
+
+        auto onTheOther = mgr.createLaw("act-on-the-other", {&author});
+        onTheOther->setConditionModel(ConditionNode::compare(
+            "@event.subject.position.y", ConditionNode::Op::Lt, PropertyValue(1.0)));
+        onTheOther->setActionModel(ActionNode::set(
+            "@event.object.position.y", PropertyValue(33.0)));
+        const std::size_t alphaTouch = mgr.rete().addAlphaNode(
+            "type == touch", [](const ReteFact& f) { return f.type == "touch"; });
+        mgr.rete().bindLawToAlpha(onTheOther->getIdentifier(), alphaTouch);
+
+        Core::EventBus::instance().publish(
+            ECA::Event{"touch", &a, &b, std::time(nullptr)});   // a touches b
+        mgr.tick();
+        assert(nearf(b.getPosition().y, 33.0f));   // the OTHER participant moved
+        assert(nearf(a.getPosition().y, 0.0f));    // the subject did not
+        onTheOther->setEnabled(false);
+
+        // A drive on "@event.object": the participants stay addressable
+        // across event-less ticks, for as long as the drive lives.
+        driveFinished = false;
+        b.setPosition(glm::vec3(3.0f, 0.0f, 0.0f));
+        auto pursue = mgr.createLaw("lift-the-other-over-time", {&author});
+        pursue->setDrives(true);
+        pursue->setActionModel(ActionNode::map(
+            "@event.object.position.y",
+            boundedInT(OntoMath::Expression::variable("t", 1.0, 2.0), 0.0, 2.0),
+            tBinding));                                    // other.y := 2t, t in [0,2]
+        mgr.rete().bindLawToAlpha(pursue->getIdentifier(), alphaTouch);
+
+        Universe::instance().setClock(700.0, 0.1);
+        Core::EventBus::instance().publish(
+            ECA::Event{"touch", &a, &b, std::time(nullptr)});
+        mgr.tick();                                        // t = 0
+        assert(nearf(b.getPosition().y, 0.0f));
+        Universe::instance().setClock(701.0, 0.1);
+        mgr.tick();                                        // NO event — b still lifts
+        assert(nearf(b.getPosition().y, 2.0f));
+        Universe::instance().setClock(702.0, 0.1);
+        mgr.tick();
+        assert(nearf(b.getPosition().y, 4.0f));
+        Universe::instance().setClock(703.0, 0.1);
+        mgr.tick();                                        // bounds ended
+        assert(nearf(b.getPosition().y, 4.0f));
+        assert(driveFinished);
+        assert(mgr.driveSessions().empty());
+        pursue->setEnabled(false);
+
         Universe::instance().setProvider({});              // leave no dangling refs
     }
 

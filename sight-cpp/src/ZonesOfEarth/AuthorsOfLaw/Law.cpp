@@ -602,6 +602,7 @@ void LawManager::connectToEventBus() {
         fact.type = e.type;
         fact.subject = e.subject;
         fact.subjectId = e.subject ? e.subject->getIdentifier() : "";
+        fact.object = e.object;
         _rete.assertFact(fact);
         _dirty = true;
     });
@@ -623,6 +624,18 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
             Singular* subject = activation.token.facts.empty()
                                     ? nullptr
                                     : activation.token.facts.front().subject;
+            Singular* eventObject = activation.token.facts.empty()
+                                        ? nullptr
+                                        : activation.token.facts.front().object;
+
+            // The event's PARTICIPANTS stay addressable while the law
+            // responds — "@event.subject" / "@event.object" paths let the
+            // condition and action phases name them BY CHOICE, whoever the
+            // application's subject is. Guard clears on every exit path.
+            struct EventContextGuard {
+                ~EventContextGuard() { Universe::instance().clearApplicationEvent(); }
+            } eventGuard;
+            Universe::instance().setApplicationEvent(subject, eventObject);
 
             if (law->scope() == Law::Scope::Everyone) {
                 // The event is the OCCASION; the application sweeps every
@@ -741,7 +754,21 @@ void LawManager::maybeStartDriveSession(Law& law, Singular& subject) {
     }
     const double onset = Universe::instance().now();
     law.rememberOnset(subjectId, onset);
-    _driveSessions.push_back({law.getIdentifier(), subjectId, onset});
+    DriveSession session;
+    session.lawId = law.getIdentifier();
+    session.subjectId = subjectId;
+    session.onset = onset;
+    // Remember the launching event's participants (when there is one) so
+    // "@event.*" paths keep resolving for the drive's whole life.
+    if (Universe::instance().hasApplicationEvent()) {
+        if (Singular* s = Universe::instance().applicationEventSubject()) {
+            session.eventSubjectId = s->getIdentifier();
+        }
+        if (Singular* o = Universe::instance().applicationEventObject()) {
+            session.eventObjectId = o->getIdentifier();
+        }
+    }
+    _driveSessions.push_back(std::move(session));
 }
 
 void LawManager::runDriveSessions(std::vector<Law::ApplicationRecord>& records) {
@@ -750,23 +777,19 @@ void LawManager::runDriveSessions(std::vector<Law::ApplicationRecord>& records) 
 
     for (auto it = _driveSessions.begin(); it != _driveSessions.end();) {
         Law* law = find(it->lawId);
-        Singular* subject = nullptr;
-        if (law) {
+        const auto findBeing = [&](const std::string& id) -> Singular* {
+            if (id.empty()) return nullptr;
             for (Singular* being : Universe::instance().beings()) {
-                if (being && being->getIdentifier() == it->subjectId) {
-                    subject = being;
-                    break;
-                }
+                if (being && being->getIdentifier() == id) return being;
             }
-            if (!subject) {
+            if (law) {
                 for (Singular* target : law->targets().getMembers()) {
-                    if (target && target->getIdentifier() == it->subjectId) {
-                        subject = target;
-                        break;
-                    }
+                    if (target && target->getIdentifier() == id) return target;
                 }
             }
-        }
+            return nullptr;
+        };
+        Singular* subject = law ? findBeing(it->subjectId) : nullptr;
 
         // A law or being that left the world ends its sessions silently.
         if (!law || !subject || !law->isEnabled()) {
@@ -774,6 +797,15 @@ void LawManager::runDriveSessions(std::vector<Law::ApplicationRecord>& records) 
             it = _driveSessions.erase(it);
             continue;
         }
+
+        // The launching event's participants stay addressable ("@event.*")
+        // for the drive's whole life; a participant that left the world
+        // resolves to nothing. Guard clears on every exit path.
+        struct EventContextGuard {
+            ~EventContextGuard() { Universe::instance().clearApplicationEvent(); }
+        } eventGuard;
+        Universe::instance().setApplicationEvent(findBeing(it->eventSubjectId),
+                                                 findBeing(it->eventObjectId));
 
         // The authored bounds ARE the duration — and ANY bound variable may
         // cut them (time, another being's position, the subject's own

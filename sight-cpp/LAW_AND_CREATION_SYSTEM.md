@@ -260,6 +260,17 @@ function of time. Two forms:
   each tick. The authored model is `dp/dt`; OntoMath's exact
   `derivative`/`antiderivative` make Map and Flow exact counterparts.
 
+**Referents are the author's choice — the action phase names its own.** Every
+path carries a qualifier saying WHOSE property it is: plain (the law's
+subject), `@being-id.` (one specific being, Universe lookup),
+`@event.subject.` / `@event.object.` (the triggering event's participants —
+a collision has two; the LawManager arms an application-event context around
+event rounds, and drive sessions remember their launching participants by id
+for their whole life). The event's beings are thus available BY CHOICE among
+all others, never a dichotomy. In the Law Author every property picker pairs
+WHAT (the property) with an "of ..." combo choosing WHOSE (subject / event
+participants / any live being).
+
 **Driving is an authored choice, and any variable can be its domain.**
 `Law::drives()` (serialized; legible as the `drives` property → metalaws can
 govern it) says the law keeps applying after its trigger (OnEvent or

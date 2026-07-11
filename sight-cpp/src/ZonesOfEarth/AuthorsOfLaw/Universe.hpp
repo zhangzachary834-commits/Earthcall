@@ -67,6 +67,27 @@ public:
     bool hasApplicationOnset() const { return _onsetSet; }
     double applicationOnset() const { return _onset; }
 
+    // The event context: while laws respond to an event, this holds the
+    // event's PARTICIPANTS so the reserved roots "@event.subject" and
+    // "@event.object" resolve — the action phase names its own referents,
+    // and the beings involved in the triggering event are available BY
+    // CHOICE (a collision has two participants; the law may act on either,
+    // both, or someone else entirely). LawManager arms this around event
+    // rounds; outside an event response the roots are undefined.
+    void setApplicationEvent(Singular* subject, Singular* object) {
+        _eventSubject = subject;
+        _eventObject = object;
+        _eventSet = true;
+    }
+    void clearApplicationEvent() {
+        _eventSubject = nullptr;
+        _eventObject = nullptr;
+        _eventSet = false;
+    }
+    bool hasApplicationEvent() const { return _eventSet; }
+    Singular* applicationEventSubject() const { return _eventSubject; }
+    Singular* applicationEventObject() const { return _eventObject; }
+
 private:
     Universe() = default;
     Universe(const Universe&) = delete;
@@ -80,4 +101,8 @@ private:
 
     double _onset = 0.0;
     bool _onsetSet = false;
+
+    Singular* _eventSubject = nullptr;
+    Singular* _eventObject = nullptr;
+    bool _eventSet = false;
 };

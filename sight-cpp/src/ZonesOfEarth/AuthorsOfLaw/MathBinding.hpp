@@ -20,11 +20,17 @@
 using MathBindings = std::map<std::string, PropertyPath>;
 
 // ---------------------------------------------------------------------------
-// Qualified paths: "@being-id.position.y" resolves on that NAMED being
-// (looked up in the Universe by identifier) instead of the law's subject.
-// This is how a condition or action addresses ONE specific object's property
-// while the law itself ranges over many. An unqualified path stays what it
-// always was: the subject's own property.
+// Qualified paths: WHOSE property a path names is the author's choice.
+//   position.y                  the law's subject (whoever it applies to)
+//   @being-id.position.y        that NAMED being (Universe lookup), whoever
+//                               the subject is
+//   @event.subject.position.y   the triggering event's subject
+//   @event.object.position.y    the triggering event's OTHER participant
+//                               (a collision has two)
+// The event roots resolve through the application-event context the
+// LawManager arms while laws respond to an event; outside an event response
+// they are undefined — a condition never passes and an action never writes
+// on an unproven referent.
 // ---------------------------------------------------------------------------
 inline Singular* resolveLawRoot(Singular& subject, const PropertyPath& path,
                                 PropertyPath& remainder) {
@@ -32,6 +38,17 @@ inline Singular* resolveLawRoot(Singular& subject, const PropertyPath& path,
         path.segments[0][0] != '@') {
         remainder = path;
         return &subject;
+    }
+    if (path.segments[0] == "@event" && path.segments.size() >= 2) {
+        remainder.segments.assign(path.segments.begin() + 2, path.segments.end());
+        if (!Universe::instance().hasApplicationEvent()) return nullptr;
+        if (path.segments[1] == "subject") {
+            return Universe::instance().applicationEventSubject();
+        }
+        if (path.segments[1] == "object") {
+            return Universe::instance().applicationEventObject();
+        }
+        return nullptr;
     }
     const std::string beingId = path.segments[0].substr(1);
     remainder.segments.assign(path.segments.begin() + 1, path.segments.end());
