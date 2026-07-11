@@ -115,6 +115,22 @@ public:
         _conditionMemory[subjectId] = state;
     }
 
+    // Per-subject onset memory: the world time at which this law's condition
+    // last went false->true for that subject. This is the t=0 of
+    // "time.sinceApplied" — the authored change-over-time clock. Runtime
+    // state like _conditionMemory: never serialized; release re-arms it.
+    bool hasOnset(const std::string& subjectId) const {
+        return _onsetMemory.count(subjectId) != 0;
+    }
+    double onsetFor(const std::string& subjectId) const {
+        auto it = _onsetMemory.find(subjectId);
+        return it != _onsetMemory.end() ? it->second : 0.0;
+    }
+    void rememberOnset(const std::string& subjectId, double worldTime) {
+        _onsetMemory[subjectId] = worldTime;
+    }
+    void forgetOnset(const std::string& subjectId) { _onsetMemory.erase(subjectId); }
+
     // ------------------------------------------------------------------
     // The Singularity-grounded hierarchy of authored authority. A law may
     // govern (apply to) another law only when its authority is >= the
@@ -241,6 +257,7 @@ private:
     Activation _activation = Activation::OnEvent;
     Scope _scope = Scope::Subject;
     std::unordered_map<std::string, bool> _conditionMemory;   // edge detection
+    std::unordered_map<std::string, double> _onsetMemory;     // t=0 per subject
     ConditionMode _conditionMode = ConditionMode::All;
 
     Formation _authors{Form::ShapeType::Cube, glm::vec3(1.0f)};
@@ -378,6 +395,21 @@ public:
     bool isConnected() const { return _connected; }
     std::vector<Law::ApplicationRecord> tick();
 
+    // ------------------------------------------------------------------
+    // Drive sessions: change over time that outlives its event. When an
+    // OnEvent law whose action reads "time.sinceApplied" applies, a session
+    // begins; every tick re-applies the law to that subject with the
+    // session's onset as t=0, until the authored Piecewise bounds no longer
+    // contain t (the bounds ARE the duration) — then "law-drive-finished"
+    // is published. Runtime state only; never serialized.
+    // ------------------------------------------------------------------
+    struct DriveSession {
+        std::string lawId;
+        std::string subjectId;
+        double onset = 0.0;
+    };
+    const std::vector<DriveSession>& driveSessions() const { return _driveSessions; }
+
     // Bounded law chaining per tick: a law firing an event that wakes another
     // law resolves within the same tick, but never unboundedly — the first
     // Singularity-level anti-Babel ceiling in code.
@@ -386,9 +418,13 @@ public:
     nlohmann::json toJson() const;
 
 private:
+    void maybeStartDriveSession(Law& law, Singular& subject);
+    void runDriveSessions(std::vector<Law::ApplicationRecord>& records);
+
     std::vector<std::shared_ptr<Law>> _laws;
     Formation _lawFormation{Form::ShapeType::Cube, glm::vec3(1.0f)};
     ReteNetwork _rete;
+    std::vector<DriveSession> _driveSessions;
     bool _connected = false;
     bool _dirty = false;
 };

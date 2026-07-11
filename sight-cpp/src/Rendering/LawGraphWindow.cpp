@@ -34,6 +34,8 @@ struct SessionState {
     char textBuf[128] = "";          // free-text scratch (exception ids, etc.)
 
     std::string selectedSubjectId;   // the 3D selection, for path qualifying
+    Singular* testSubject = nullptr; // same selection, for live math readouts
+                                     // (valid for this frame only)
 
     // Live event feed: what the bus is actually saying — answers "did my
     // trigger ever fire?" without guessing.
@@ -107,6 +109,8 @@ constexpr EventOption kEngineEvents[] = {
     {"law-applied",              "any law successfully applies (subject: its target)"},
     {"law-registered",           "a new law is registered (subject: the law)"},
     {"concept-registered",       "a new concept is captured (subject: the concept)"},
+    {"law-drive-finished",       "a law's change-over-time reaches the end of its authored "
+                                 "bounds (subject: the driven being)"},
 };
 constexpr int kEngineEventCount = sizeof(kEngineEvents) / sizeof(kEngineEvents[0]);
 
@@ -144,6 +148,11 @@ const std::vector<PathOption>& knownPathOptions() {
             else if (std::holds_alternative<std::string>(property->value())) type = "text";
             options.push_back({property->name(), "Law — governance (metalaws)", type, false});
         }
+        // The world clock — Singularity owns time. Read-only; bind these as
+        // math variables to author change OVER TIME (position := f(t)).
+        options.push_back({"time", "Time — Universe (read-only)", "seconds", false});
+        options.push_back({"time.delta", "Time — Universe (read-only)", "seconds", false});
+        options.push_back({"time.sinceApplied", "Time — Universe (read-only)", "seconds", false});
     }
     return options;
 }
@@ -812,6 +821,17 @@ void seedActionKind(ActionNode& node) {
                 node.bindings = MathBindings{{"x", PropertyPath::parse("position.x")}};
             }
             break;
+        case ActionNode::Kind::Flow:
+            // Rate of change: seed t -> the change-over-time clock, so the
+            // authored f(t) is dp/dt from the moment the law takes hold.
+            if (node.mapFunction.pieces.empty()) {
+                node.path = node.path.empty() ? PropertyPath::parse("position.y") : node.path;
+                node.mapFunction = OntoMath::Piecewise::continuous(
+                    OntoMath::Expression::constant(1.0));
+                node.mapFunction.inputVariable = "t";
+                node.bindings = MathBindings{{"t", PropertyPath::parse("time.sinceApplied")}};
+            }
+            break;
         default:
             break;
     }
@@ -821,10 +841,11 @@ bool editActionNode(ActionNode& node) {
     bool changed = false;
 
     static const char* kinds[] = {"set", "add", "scale", "lerp", "drive (curve)",
-                                  "sequence", "parallel", "spawn concept", "map (math)"};
+                                  "sequence", "parallel", "spawn concept", "map (math)",
+                                  "flow (rate of change)"};
     int kind = static_cast<int>(node.kind);
     ImGui::SetNextItemWidth(160.0f);
-    if (ImGui::Combo("Action type", &kind, kinds, 9)) {
+    if (ImGui::Combo("Action type", &kind, kinds, 10)) {
         node.kind = static_cast<ActionNode::Kind>(kind);
         seedActionKind(node);
         changed = true;
@@ -898,13 +919,33 @@ bool editActionNode(ActionNode& node) {
             }
             break;
         }
-        case ActionNode::Kind::Map: {
-            ImGui::TextDisabled("property := f(variables) — authored mathematics governs");
-            ImGui::TextDisabled("the output. Undefined math (outside the domain) writes nothing.");
+        case ActionNode::Kind::Map:
+        case ActionNode::Kind::Flow: {
+            if (node.kind == ActionNode::Kind::Map) {
+                ImGui::TextDisabled("property := f(variables) — authored mathematics governs");
+                ImGui::TextDisabled("the output. Undefined math (outside the domain) writes nothing.");
+            } else {
+                ImGui::TextDisabled("property += f(variables) x dt each tick — f is the RATE");
+                ImGui::TextDisabled("of change (dp/dt). Undefined math flows nothing.");
+            }
             if (pathPicker("Property", node.path)) changed = true;
             warnIfWholeVector(node.path);
             if (editMathBindings(node.bindings)) changed = true;
             if (editPiecewise(node.mapFunction, node.bindings)) changed = true;
+            // Context everywhere: what f evaluates to RIGHT NOW against the
+            // selected object — undefined shown honestly.
+            if (g.testSubject) {
+                auto vars = readMathBindings(*g.testSubject, node.bindings);
+                const auto value = vars ? node.mapFunction.evaluate(*vars)
+                                        : std::optional<double>{};
+                if (value) {
+                    ImGui::TextDisabled("f = %.4f right now (on %s)", *value,
+                                        g.selectedSubjectId.c_str());
+                } else {
+                    ImGui::TextDisabled("f = undefined right now (on %s)",
+                                        g.selectedSubjectId.c_str());
+                }
+            }
             break;
         }
         case ActionNode::Kind::Sequence:
@@ -1009,6 +1050,7 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player,
                           Singular* testSubject) {
     subscribeEventFeed();
     g.selectedSubjectId = testSubject ? testSubject->getIdentifier() : std::string();
+    g.testSubject = testSubject;
 
     ImGui::SetNextWindowSize(ImVec2(920, 560), ImGuiCond_FirstUseEver);
     if (!ImGui::Begin("Law Author", open)) {
@@ -1188,6 +1230,19 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player,
                                        "condition alone gates it.");
                 }
             }
+        }
+
+        // Change over time: an OnEvent law that reads the sinceApplied clock
+        // becomes a DRIVE — it keeps applying after the event until the
+        // authored bounds end.
+        if (law->activation() == Law::Activation::OnEvent && law->hasActionModel() &&
+            law->actionModel()->referencesSinceApplied()) {
+            ImGui::TextColored(ImVec4(0.45f, 0.75f, 1.0f, 1.0f),
+                               "~ This law DRIVES: after its event it keeps applying every "
+                               "frame,");
+            ImGui::TextColored(ImVec4(0.45f, 0.75f, 1.0f, 1.0f),
+                               "  t = seconds since it took hold, until the authored bounds "
+                               "on t end.");
         }
 
         // WHOM an application reaches — the "whose position?" question.

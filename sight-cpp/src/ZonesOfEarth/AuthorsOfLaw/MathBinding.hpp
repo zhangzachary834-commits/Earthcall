@@ -41,13 +41,50 @@ inline Singular* resolveLawRoot(Singular& subject, const PropertyPath& path,
     return nullptr;   // the named being is not in the world: no value
 }
 
+// ---------------------------------------------------------------------------
+// Reserved time paths — the world clock made legible. These resolve on the
+// Universe (Singularity owns time), not on any being, and are read-only:
+//   time              seconds since the world began
+//   time.delta        the last frame's dt
+//   time.sinceApplied seconds since THIS law began holding for THIS subject
+//                     (defined only inside a law application; see
+//                     Universe::setApplicationOnset)
+// This is what lets an authored OntoMath model be a function OF TIME: bind
+// t -> time.sinceApplied and position.y := f(t) is change over time.
+// ---------------------------------------------------------------------------
+inline bool lawGetTime(const PropertyPath& path, PropertyValue& out) {
+    if (path.segments.empty() || path.segments[0] != "time") return false;
+    const Universe& u = Universe::instance();
+    if (!u.hasClock()) return false;
+    if (path.segments.size() == 1) {
+        out = PropertyValue(u.now());
+        return true;
+    }
+    if (path.segments.size() == 2 && path.segments[1] == "delta") {
+        out = PropertyValue(u.dt());
+        return true;
+    }
+    if (path.segments.size() == 2 && path.segments[1] == "sinceApplied") {
+        if (!u.hasApplicationOnset()) return false;
+        out = PropertyValue(u.now() - u.applicationOnset());
+        return true;
+    }
+    return false;
+}
+
+inline bool isTimePath(const PropertyPath& path) {
+    return !path.segments.empty() && path.segments[0] == "time";
+}
+
 inline bool lawGetValue(Singular& subject, const PropertyPath& path, PropertyValue& out) {
+    if (isTimePath(path)) return lawGetTime(path, out);
     PropertyPath remainder;
     Singular* root = resolveLawRoot(subject, path, remainder);
     return root && remainder.getValue(*root, out);
 }
 
 inline bool lawSetValue(Singular& subject, const PropertyPath& path, const PropertyValue& v) {
+    if (isTimePath(path)) return false;   // no law writes time
     PropertyPath remainder;
     Singular* root = resolveLawRoot(subject, path, remainder);
     return root && remainder.setValue(*root, v);

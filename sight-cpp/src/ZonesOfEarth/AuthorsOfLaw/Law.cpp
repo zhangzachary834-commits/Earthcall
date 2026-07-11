@@ -214,6 +214,23 @@ Law::ApplicationResult Law::applyTo(Singular& target) {
         event.subject = &target;
         event.timestamp = std::time(nullptr);
 
+        // time.sinceApplied context: t=0 is when this law began holding for
+        // this subject (continuous edge, or drive-session start); a plain
+        // one-shot application begins NOW. Guard clears on every exit path.
+        struct OnsetGuard {
+            bool armed = false;
+            ~OnsetGuard() {
+                if (armed) Universe::instance().clearApplicationOnset();
+            }
+        } guard;
+        if (Universe::instance().hasClock()) {
+            const std::string subjectId = target.getIdentifier();
+            const double onset = hasOnset(subjectId) ? onsetFor(subjectId)
+                                                     : Universe::instance().now();
+            Universe::instance().setApplicationOnset(onset);
+            guard.armed = true;
+        }
+
         for (const auto& action : _actions) {
             action.run(event, target);
         }
@@ -613,7 +630,9 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
                 else subjects = Universe::instance().beings();
                 for (Singular* being : subjects) {
                     if (!being || !law->conditionsSatisfied(*being)) continue;
-                    law->applyTo(*being);
+                    if (law->applyTo(*being) == Law::ApplicationResult::Applied) {
+                        maybeStartDriveSession(*law, *being);
+                    }
                     if (!law->applicationLog().empty()) {
                         records.push_back(law->applicationLog().back());
                     }
@@ -622,7 +641,9 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
             }
 
             if (!subject) continue;
-            law->applyTo(*subject);
+            if (law->applyTo(*subject) == Law::ApplicationResult::Applied) {
+                maybeStartDriveSession(*law, *subject);
+            }
             if (!law->applicationLog().empty()) {
                 records.push_back(law->applicationLog().back());
             }
@@ -656,6 +677,14 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
             const bool wasHolding = law->lastConditionState(subjectId);
             law->rememberConditionState(subjectId, holds);
 
+            // The false->true edge is t=0 for this subject's change-over-time
+            // clock (time.sinceApplied); release re-arms it.
+            if (holds && !wasHolding && Universe::instance().hasClock()) {
+                law->rememberOnset(subjectId, Universe::instance().now());
+            } else if (!holds && wasHolding) {
+                law->forgetOnset(subjectId);
+            }
+
             const bool fire = law->activation() == Law::Activation::WhileTrue
                                   ? holds
                                   : (holds && !wasHolding);   // the false->true edge
@@ -666,7 +695,80 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
             }
         }
     }
+
+    runDriveSessions(records);
     return records;
+}
+
+void LawManager::maybeStartDriveSession(Law& law, Singular& subject) {
+    // Only OnEvent laws need sessions — continuous laws re-fire on their own.
+    if (law.activation() != Law::Activation::OnEvent) return;
+    if (!Universe::instance().hasClock()) return;
+    if (!law.hasActionModel() || !law.actionModel()->referencesSinceApplied()) return;
+
+    const std::string subjectId = subject.getIdentifier();
+    for (const auto& session : _driveSessions) {
+        if (session.lawId == law.getIdentifier() && session.subjectId == subjectId) {
+            return;   // already driving this subject
+        }
+    }
+    const double onset = Universe::instance().now();
+    law.rememberOnset(subjectId, onset);
+    _driveSessions.push_back({law.getIdentifier(), subjectId, onset});
+}
+
+void LawManager::runDriveSessions(std::vector<Law::ApplicationRecord>& records) {
+    if (_driveSessions.empty() || !Universe::instance().hasClock()) return;
+    const double now = Universe::instance().now();
+
+    for (auto it = _driveSessions.begin(); it != _driveSessions.end();) {
+        Law* law = find(it->lawId);
+        Singular* subject = nullptr;
+        if (law) {
+            for (Singular* being : Universe::instance().beings()) {
+                if (being && being->getIdentifier() == it->subjectId) {
+                    subject = being;
+                    break;
+                }
+            }
+            if (!subject) {
+                for (Singular* target : law->targets().getMembers()) {
+                    if (target && target->getIdentifier() == it->subjectId) {
+                        subject = target;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // A law or being that left the world ends its sessions silently.
+        if (!law || !subject || !law->isEnabled()) {
+            if (law) law->forgetOnset(it->subjectId);
+            it = _driveSessions.erase(it);
+            continue;
+        }
+
+        // The authored Piecewise bounds ARE the duration: when every
+        // time-cut piece has ended, the drive is finished.
+        const double t = now - it->onset;
+        const bool alive = law->hasActionModel() && law->actionModel()->definedAtTime(t);
+        if (!alive && t > 0.0) {
+            law->forgetOnset(it->subjectId);
+            Core::EventBus::instance().publish(
+                ECA::Event{"law-drive-finished", subject, nullptr, std::time(nullptr)});
+            it = _driveSessions.erase(it);
+            continue;
+        }
+
+        // The starting tick already applied the law (t=0) in the event round.
+        if (now > it->onset) {
+            law->applyTo(*subject);
+            if (!law->applicationLog().empty()) {
+                records.push_back(law->applicationLog().back());
+            }
+        }
+        ++it;
+    }
 }
 
 bool LawManager::remove(const std::string& lawId) {

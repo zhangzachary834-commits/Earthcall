@@ -116,6 +116,9 @@ ontomath_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/ontomath_test.o
 continuous_law_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/continuous_law_test.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
+time_flow_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/time_flow_test.o
+	$(CXX) $^ $(LDFLAGS) -o $@
+
 test-property: property_bridge_test
 	./property_bridge_test
 
@@ -143,11 +146,14 @@ test-math: ontomath_test
 test-continuous: continuous_law_test
 	./continuous_law_test
 
-test: test-property test-law test-loop test-recorder test-concept test-graph test-meta test-math test-continuous
+test-timeflow: time_flow_test
+	./time_flow_test
+
+test: test-property test-law test-loop test-recorder test-concept test-graph test-meta test-math test-continuous test-timeflow
 
 # Pull in auto-generated header dependencies (.d files next to each .o)
 -include $(OBJECTS:.o=.d)
 -include $(wildcard $(BUILD_DIR)/tests/*.d)
 
 # Phony targets
-.PHONY: all clean run test test-property test-law test-loop test-recorder test-concept test-graph test-meta test-math test-continuous 
+.PHONY: all clean run test test-property test-law test-loop test-recorder test-concept test-graph test-meta test-math test-continuous test-timeflow

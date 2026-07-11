@@ -399,6 +399,9 @@ private:
     // connected manager must outlive all publishing). connectToEventBus() in
     // init(), tick() at end of update() — laws hear the frame's events.
     LawManager    _lawManager;
+    // Accumulated seconds since the world began — the world clock laws read
+    // via the reserved "time" paths (set on Universe each frame in update()).
+    double        _worldTime = 0.0;
     Soul          _playerSoul {"Player"};
     Body          _playerBody = Body::createBasicAvatar("Voxel");
     Person        _player {_playerSoul, _playerBody};

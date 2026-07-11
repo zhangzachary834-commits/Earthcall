@@ -37,6 +37,7 @@ nlohmann::json ActionNode::toJson() const {
             j["conceptId"] = conceptId;
             break;
         case Kind::Map:
+        case Kind::Flow:
             j["path"] = path.toString();
             j["function"] = mapFunction.toJson();
             j["bindings"] = mathBindingsToJson(bindings);
@@ -95,9 +96,12 @@ ECA::ActionExecutor ActionNode::compile() const {
             return [p, in, c](const ECA::Event& event, Singular& target) {
                 double x = 0.0;
                 if (in.empty()) {
-                    // No authored input: the event's moment is the domain.
-                    // (Frame-time domains arrive with the tick loop, commit 4.)
-                    x = static_cast<double>(event.timestamp);
+                    // No authored input: the world clock is the domain
+                    // (falling back to the event's coarse moment when no
+                    // engine has set the clock).
+                    x = Universe::instance().hasClock()
+                            ? Universe::instance().now()
+                            : static_cast<double>(event.timestamp);
                 } else {
                     PropertyValue v;
                     if (!lawGetValue(target, in, v) || !propertyValueToNumber(v, x)) return;
@@ -157,6 +161,27 @@ ECA::ActionExecutor ActionNode::compile() const {
                 lawSetValue(subject, target, PropertyValue(*value));
             };
         }
+        case Kind::Flow: {
+            // path := path + f(bindings) * dt — the authored model is the
+            // RATE of change, integrated one frame at a time. Needs the
+            // world clock (dt); undefined math flows nothing.
+            const PropertyPath target = path;
+            const OntoMath::Piecewise f = mapFunction;
+            const MathBindings binds = bindings;
+            return [target, f, binds](const ECA::Event&, Singular& subject) {
+                if (!Universe::instance().hasClock()) return;
+                auto vars = readMathBindings(subject, binds);
+                if (!vars) return;
+                const auto rate = f.evaluate(*vars);
+                if (!rate) return;
+                PropertyValue current;
+                double x = 0.0;
+                if (!lawGetValue(subject, target, current) ||
+                    !propertyValueToNumber(current, x)) return;
+                lawSetValue(subject, target,
+                            PropertyValue(x + *rate * Universe::instance().dt()));
+            };
+        }
     }
     return [](const ECA::Event&, Singular&) {};
 }
@@ -174,8 +199,56 @@ std::string ActionNode::describe() const {
         case Kind::Parallel: return "parallel(" + std::to_string(children.size()) + ")";
         case Kind::Spawn: return "spawn(" + conceptId + ")";
         case Kind::Map: return path.toString() + " := " + mapFunction.print();
+        case Kind::Flow: return "d(" + path.toString() + ")/dt = " + mapFunction.print();
     }
     return "action";
+}
+
+// ---------------------------------------------------------------------------
+// Drive-session scans.
+// ---------------------------------------------------------------------------
+namespace {
+bool isSinceAppliedPath(const PropertyPath& p) {
+    return p.segments.size() == 2 && p.segments[0] == "time" &&
+           p.segments[1] == "sinceApplied";
+}
+} // namespace
+
+bool ActionNode::referencesSinceApplied() const {
+    if (kind == Kind::Drive && isSinceAppliedPath(input)) return true;
+    if (kind == Kind::Map || kind == Kind::Flow) {
+        for (const auto& entry : bindings) {
+            if (isSinceAppliedPath(entry.second)) return true;
+        }
+    }
+    for (const auto& c : children) {
+        if (c.referencesSinceApplied()) return true;
+    }
+    return false;
+}
+
+bool ActionNode::definedAtTime(double t) const {
+    // A Drive on the sinceApplied clock evaluates a total curve: eternal.
+    if (kind == Kind::Drive && isSinceAppliedPath(input)) return true;
+    if (kind == Kind::Map || kind == Kind::Flow) {
+        bool referencesTime = false;
+        bool timeCutsDomain = false;
+        for (const auto& entry : bindings) {
+            if (!isSinceAppliedPath(entry.second)) continue;
+            referencesTime = true;
+            if (entry.first == mapFunction.inputVariable) timeCutsDomain = true;
+        }
+        if (referencesTime) {
+            if (!timeCutsDomain) return true;   // domain cut on another variable: eternal
+            for (const auto& piece : mapFunction.pieces) {
+                if (piece.contains(t)) return true;
+            }
+        }
+    }
+    for (const auto& c : children) {
+        if (c.definedAtTime(t)) return true;
+    }
+    return false;
 }
 
 ActionNode ActionNode::set(const std::string& dottedPath, PropertyValue v) {
@@ -216,6 +289,16 @@ ActionNode ActionNode::map(const std::string& dottedPath, OntoMath::Piecewise fu
                            MathBindings bindings) {
     ActionNode n;
     n.kind = Kind::Map;
+    n.path = PropertyPath::parse(dottedPath);
+    n.mapFunction = std::move(function);
+    n.bindings = std::move(bindings);
+    return n;
+}
+
+ActionNode ActionNode::flow(const std::string& dottedPath, OntoMath::Piecewise function,
+                            MathBindings bindings) {
+    ActionNode n;
+    n.kind = Kind::Flow;
     n.path = PropertyPath::parse(dottedPath);
     n.mapFunction = std::move(function);
     n.bindings = std::move(bindings);

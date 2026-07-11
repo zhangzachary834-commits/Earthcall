@@ -247,6 +247,27 @@ Undefined math never fires a condition and never writes a value. All of it —
 variables, bindings, coefficients, exponents, piece bounds — is model data:
 serialized with the law, edited in the Law Author window.
 
+**Change over time (landed):** Singularity owns a world clock —
+`Universe::setClock(now, dt)` set by `Game::update` each frame — legible through
+three reserved read-only paths: `time` (seconds since the world began),
+`time.delta` (the frame's dt), and `time.sinceApplied` (seconds since THIS law
+began holding for THIS subject; per-law-per-subject onset memory, release
+re-arms). Binding a math variable to a time path makes an authored expression a
+function of time. Two forms:
+
+- **Position form** — `Map` with `t → time.sinceApplied`: `position.y := f(t)`.
+- **Rate form** — **`ActionNode::Kind::Flow`**: `path := path + f(bindings)·dt`
+  each tick. The authored model is `dp/dt`; OntoMath's exact
+  `derivative`/`antiderivative` make Map and Flow exact counterparts.
+
+An **OnEvent** law whose action reads `time.sinceApplied` becomes a **drive**:
+after its event it keeps applying every tick (`LawManager` drive sessions), and
+**the authored Piecewise bounds ARE the duration** — when every time-cut piece
+has ended, the session ends and `"law-drive-finished"` is published (the law
+analogue of `automation-clip-finished`). Unbounded pieces are an eternal drive.
+Empty-input `Drive` now uses the world clock (the old "commit 4 frame-time"
+promise, closed).
+
 Growth path: expression-valued exponents (createTerm's recursive "term inside
 the exponential space"), transcendental factors, richer symbolic simplification,
 graph/relation-valued conditions.

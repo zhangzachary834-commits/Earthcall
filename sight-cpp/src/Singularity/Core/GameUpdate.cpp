@@ -15,6 +15,7 @@
 #include "Person/Body/BodyPart/BodyPart.hpp"
 #include "Person/PersonEvents.hpp"
 #include "Singularity/Core/EventBus.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 
 #include <GLFW/glfw3.h>
 #include <OpenGL/glu.h>
@@ -573,6 +574,12 @@ void Game::update(float dt) {
             obj->updateHoverState(obj == hovered);
         }
     }
+
+    // The world clock: Singularity owns time. Laws read it through the
+    // reserved paths "time" / "time.delta" / "time.sinceApplied" — this is
+    // what authored change-over-time (Map/Flow/Drive of t) stands on.
+    _worldTime += static_cast<double>(dt);
+    Universe::instance().setClock(_worldTime, static_cast<double>(dt));
 
     // Laws hear the frame: everything published above (collisions, hover
     // edges, finished clips, applied laws) has been asserted as facts; one
