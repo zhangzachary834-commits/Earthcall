@@ -155,7 +155,8 @@ build/tests/change_recorder_test.o: tests/change_recorder_test.cpp \
   /opt/homebrew/include/glm/integer.hpp \
   /opt/homebrew/include/glm/detail/func_integer.inl \
   src/Form/Singular/Property/PropertyPath.hpp \
-  src/ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp src/json.hpp \
+  src/ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp \
+  src/ZonesOfEarth/AuthorsOfLaw/Universe.hpp src/json.hpp \
   src/Singularity/OntoMath/CurveModel.hpp \
   src/Singularity/OntoMath/Expression.hpp \
   src/Form/Object/Automation/Automation.hpp src/Form/Object/Object.hpp \
@@ -588,6 +589,8 @@ src/Form/Singular/Property/PropertyValue.hpp:
 src/Form/Singular/Property/PropertyPath.hpp:
 
 src/ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp:
+
+src/ZonesOfEarth/AuthorsOfLaw/Universe.hpp:
 
 src/json.hpp:
 

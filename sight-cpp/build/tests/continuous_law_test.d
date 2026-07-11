@@ -271,10 +271,10 @@ build/tests/continuous_law_test.o: tests/continuous_law_test.cpp \
   src/ZonesOfEarth/AuthorsOfLaw/ConditionModel.hpp \
   src/Form/Singular/Property/PropertyPath.hpp \
   src/ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp \
+  src/ZonesOfEarth/AuthorsOfLaw/Universe.hpp \
   src/Singularity/OntoMath/Expression.hpp \
   src/ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp \
-  src/Singularity/OntoMath/CurveModel.hpp \
-  src/ZonesOfEarth/AuthorsOfLaw/Universe.hpp
+  src/Singularity/OntoMath/CurveModel.hpp
 
 src/ZonesOfEarth/AuthorsOfLaw/Law.hpp:
 
@@ -832,10 +832,10 @@ src/Form/Singular/Property/PropertyPath.hpp:
 
 src/ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp:
 
+src/ZonesOfEarth/AuthorsOfLaw/Universe.hpp:
+
 src/Singularity/OntoMath/Expression.hpp:
 
 src/ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp:
 
 src/Singularity/OntoMath/CurveModel.hpp:
-
-src/ZonesOfEarth/AuthorsOfLaw/Universe.hpp:

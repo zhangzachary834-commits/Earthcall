@@ -287,6 +287,7 @@ build/src/entry.o: src/entry.cpp src/Singularity/Core/Engine.hpp \
   src/ZonesOfEarth/AuthorsOfLaw/ConditionModel.hpp \
   src/Form/Singular/Property/PropertyPath.hpp \
   src/ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp \
+  src/ZonesOfEarth/AuthorsOfLaw/Universe.hpp \
   src/Singularity/OntoMath/Expression.hpp \
   src/ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp \
   src/Singularity/OntoMath/CurveModel.hpp \
@@ -909,6 +910,8 @@ src/ZonesOfEarth/AuthorsOfLaw/ConditionModel.hpp:
 src/Form/Singular/Property/PropertyPath.hpp:
 
 src/ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp:
+
+src/ZonesOfEarth/AuthorsOfLaw/Universe.hpp:
 
 src/Singularity/OntoMath/Expression.hpp:
 

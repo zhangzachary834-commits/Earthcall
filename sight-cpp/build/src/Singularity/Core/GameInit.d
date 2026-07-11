@@ -288,6 +288,7 @@ build/src/Singularity/Core/GameInit.o: src/Singularity/Core/GameInit.cpp \
   src/ZonesOfEarth/AuthorsOfLaw/ConditionModel.hpp \
   src/Form/Singular/Property/PropertyPath.hpp \
   src/ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp \
+  src/ZonesOfEarth/AuthorsOfLaw/Universe.hpp \
   src/Singularity/OntoMath/Expression.hpp \
   src/ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp \
   src/Singularity/OntoMath/CurveModel.hpp \
@@ -303,8 +304,7 @@ build/src/Singularity/Core/GameInit.o: src/Singularity/Core/GameInit.cpp \
   src/Singularity/Core/RotationSettings.hpp \
   src/Singularity/Core/SaveLoadState.hpp src/Singularity/Core/Engine.hpp \
   src/Form/../../../imgui/backends/imgui_impl_glfw.h \
-  src/Rendering/ShadingSystem.hpp src/ZonesOfEarth/Physics/Physics.hpp \
-  src/ZonesOfEarth/AuthorsOfLaw/Universe.hpp
+  src/Rendering/ShadingSystem.hpp src/ZonesOfEarth/Physics/Physics.hpp
 
 src/Singularity/Core/Game.hpp:
 
@@ -912,6 +912,8 @@ src/Form/Singular/Property/PropertyPath.hpp:
 
 src/ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp:
 
+src/ZonesOfEarth/AuthorsOfLaw/Universe.hpp:
+
 src/Singularity/OntoMath/Expression.hpp:
 
 src/ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp:
@@ -949,5 +951,3 @@ src/Form/../../../imgui/backends/imgui_impl_glfw.h:
 src/Rendering/ShadingSystem.hpp:
 
 src/ZonesOfEarth/Physics/Physics.hpp:
-
-src/ZonesOfEarth/AuthorsOfLaw/Universe.hpp:

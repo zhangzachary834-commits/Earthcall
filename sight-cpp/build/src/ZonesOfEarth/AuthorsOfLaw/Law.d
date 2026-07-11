@@ -272,11 +272,11 @@ build/src/ZonesOfEarth/AuthorsOfLaw/Law.o: \
   src/ZonesOfEarth/AuthorsOfLaw/ConditionModel.hpp \
   src/Form/Singular/Property/PropertyPath.hpp \
   src/ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp \
+  src/ZonesOfEarth/AuthorsOfLaw/Universe.hpp \
   src/Singularity/OntoMath/Expression.hpp \
   src/ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp \
   src/Singularity/OntoMath/CurveModel.hpp \
-  src/Form/Singular/Property/ComputedProperty.hpp \
-  src/ZonesOfEarth/AuthorsOfLaw/Universe.hpp
+  src/Form/Singular/Property/ComputedProperty.hpp
 
 src/ZonesOfEarth/AuthorsOfLaw/Law.hpp:
 
@@ -834,6 +834,8 @@ src/Form/Singular/Property/PropertyPath.hpp:
 
 src/ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp:
 
+src/ZonesOfEarth/AuthorsOfLaw/Universe.hpp:
+
 src/Singularity/OntoMath/Expression.hpp:
 
 src/ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp:
@@ -841,5 +843,3 @@ src/ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp:
 src/Singularity/OntoMath/CurveModel.hpp:
 
 src/Form/Singular/Property/ComputedProperty.hpp:
-
-src/ZonesOfEarth/AuthorsOfLaw/Universe.hpp:
