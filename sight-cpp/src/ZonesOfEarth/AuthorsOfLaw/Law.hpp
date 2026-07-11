@@ -423,6 +423,12 @@ public:
         double onset = 0.0;
     };
     const std::vector<DriveSession>& driveSessions() const { return _driveSessions; }
+    bool hasDriveSession(const std::string& lawId, const std::string& subjectId) const {
+        for (const auto& session : _driveSessions) {
+            if (session.lawId == lawId && session.subjectId == subjectId) return true;
+        }
+        return false;
+    }
 
     // Bounded law chaining per tick: a law firing an event that wakes another
     // law resolves within the same tick, but never unboundedly — the first

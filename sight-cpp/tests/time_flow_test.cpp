@@ -273,7 +273,40 @@ int main() {
         follow->setEnabled(false);
 
         // ------------------------------------------------------------------
-        // 6. The model survives serialization; sessions are runtime-only.
+        // 6. Re-triggering while a drive runs is ABSORBED: one process, one
+        //    clock, per law-and-subject. A constantly-publishing event (a
+        //    block resting in collision) can neither stack independent
+        //    copies of the process nor double-integrate a Flow.
+        // ------------------------------------------------------------------
+        b.setPosition(glm::vec3(3.0f, 0.0f, 0.0f));
+        auto climb = mgr.createLaw("climb-once", {&author});
+        climb->setDrives(true);
+        climb->setActionModel(ActionNode::flow(
+            "position.y", boundedInT(OntoMath::Expression::constant(1.0), 0.0, 10.0),
+            tBinding));                                    // dy/dt = 1 for t in [0,10]
+        mgr.rete().bindLawToAlpha(climb->getIdentifier(), alphaKick);
+
+        double clock6 = 600.0;
+        Universe::instance().setClock(clock6, 1.0);
+        Core::EventBus::instance().publish(
+            ECA::Event{"kick", &b, nullptr, std::time(nullptr)});
+        mgr.tick();                                        // launch: one step
+        for (int i = 0; i < 3; ++i) {
+            clock6 += 1.0;
+            Universe::instance().setClock(clock6, 1.0);
+            Core::EventBus::instance().publish(            // the event KEEPS firing
+                ECA::Event{"kick", &b, nullptr, std::time(nullptr)});
+            mgr.tick();                                    // absorbed: ONE step per tick
+        }
+        assert(nearf(b.getPosition().y, 4.0f));            // 4 single steps, never doubled
+        assert(mgr.driveSessions().size() == 1);           // and never a second process
+        climb->setEnabled(false);
+        Universe::instance().setClock(clock6 + 1.0, 1.0);
+        mgr.tick();
+        assert(mgr.driveSessions().empty());
+
+        // ------------------------------------------------------------------
+        // 7. The model survives serialization; sessions are runtime-only.
         // ------------------------------------------------------------------
         const auto j = ActionNode::flow(
             "position.y", boundedInT(OntoMath::Expression::variable("t"), 0.0, 5.0),

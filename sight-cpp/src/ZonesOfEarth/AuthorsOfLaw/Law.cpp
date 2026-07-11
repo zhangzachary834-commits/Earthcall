@@ -634,6 +634,15 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
                 else subjects = Universe::instance().beings();
                 for (Singular* being : subjects) {
                     if (!being || !law->conditionsSatisfied(*being)) continue;
+                    // A live drive session OWNS the process: a re-firing
+                    // event (a block resting in constant collision) is
+                    // absorbed, not stacked — one process, one clock, per
+                    // law-and-subject. Retrigger-restarts would be a future
+                    // authored choice, never an accident.
+                    if (law->drives() &&
+                        hasDriveSession(law->getIdentifier(), being->getIdentifier())) {
+                        continue;
+                    }
                     if (law->applyTo(*being) == Law::ApplicationResult::Applied) {
                         maybeStartDriveSession(*law, *being);
                     }
@@ -645,6 +654,10 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
             }
 
             if (!subject) continue;
+            if (law->drives() &&
+                hasDriveSession(law->getIdentifier(), subject->getIdentifier())) {
+                continue;   // the session owns the process (see above)
+            }
             if (law->applyTo(*subject) == Law::ApplicationResult::Applied) {
                 maybeStartDriveSession(*law, *subject);
             }
@@ -693,6 +706,11 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
                                   ? holds
                                   : (holds && !wasHolding);   // the false->true edge
             if (!fire) continue;
+            if (law->drives() &&
+                hasDriveSession(law->getIdentifier(), subjectId)) {
+                continue;   // a re-edge while the launched process still
+                            // runs is absorbed — the session owns it
+            }
             if (law->applyTo(*subject) == Law::ApplicationResult::Applied) {
                 // An OnBecomeTrue law that drives launches its process at
                 // the edge and runs it to the end of its authored bounds.
