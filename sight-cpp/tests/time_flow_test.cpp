@@ -181,6 +181,7 @@ int main() {
 
         a.setPosition(glm::vec3(5.0f, 9.0f, 0.0f));
         auto arc = mgr.createLaw("kick-arc", {&author});   // OnEvent (default)
+        arc->setDrives(true);                              // the AUTHORED choice
         arc->setActionModel(ActionNode::map(
             "position.y",
             boundedInT(OntoMath::Expression::variable("t", 1.0, 2.0), 0.0, 2.0),
@@ -224,7 +225,55 @@ int main() {
         assert(mgr.driveSessions().empty());
 
         // ------------------------------------------------------------------
-        // 5. The model survives serialization; sessions are runtime-only.
+        // 5. ANY variable can be the drive's domain — time is one input
+        //    among the rest. Here the drive follows ANOTHER BEING's x, and
+        //    ends when THAT leaves the authored bounds.
+        // ------------------------------------------------------------------
+        driveFinished = false;
+        a.setPosition(glm::vec3(2.0f, 0.0f, 0.0f));
+        b.setPosition(glm::vec3(3.0f, 0.0f, 0.0f));
+
+        OntoMath::Piecewise followF;                       // f(x) = x for x in [0,10]
+        followF.inputVariable = "x";
+        {
+            OntoMath::Piecewise::Piece piece;
+            piece.hasLo = true;
+            piece.lo = 0.0;
+            piece.hasHi = true;
+            piece.hi = 10.0;
+            piece.expression = OntoMath::Expression::variable("x");
+            followF.pieces.push_back(piece);
+        }
+        auto follow = mgr.createLaw("follow-the-other", {&author});
+        follow->setDrives(true);
+        follow->setActionModel(ActionNode::map(
+            "position.y", followF,
+            MathBindings{{"x", PropertyPath::parse(
+                "@" + a.getIdentifier() + ".position.x")}}));
+        mgr.rete().bindLawToAlpha(follow->getIdentifier(), alphaKick);
+
+        Universe::instance().setClock(400.0, 0.1);
+        Core::EventBus::instance().publish(
+            ECA::Event{"kick", &b, nullptr, std::time(nullptr)});
+        mgr.tick();
+        assert(nearf(b.getPosition().y, 2.0f));            // y := a.x at the event
+        assert(mgr.driveSessions().size() == 1);
+
+        a.setPosition(glm::vec3(7.0f, 0.0f, 0.0f));        // the INPUT moves
+        Universe::instance().setClock(401.0, 0.1);
+        mgr.tick();                                        // no event — still tracking
+        assert(nearf(b.getPosition().y, 7.0f));
+
+        a.setPosition(glm::vec3(20.0f, 0.0f, 0.0f));       // input leaves the bounds
+        Universe::instance().setClock(402.0, 0.1);
+        mgr.tick();
+        assert(nearf(b.getPosition().y, 7.0f));            // drive ENDED, value kept
+        assert(driveFinished);                             // announced, same as time
+        assert(mgr.driveSessions().empty());
+        follow->setEnabled(false);
+
+        // ------------------------------------------------------------------
+        // 6. The model survives serialization; sessions are runtime-only.
         // ------------------------------------------------------------------
         const auto j = ActionNode::flow(
             "position.y", boundedInT(OntoMath::Expression::variable("t"), 0.0, 5.0),
@@ -232,10 +281,15 @@ int main() {
         const ActionNode reborn = ActionNode::fromJson(j);
         assert(reborn.kind == ActionNode::Kind::Flow);
         assert(reborn.referencesSinceApplied());
-        assert(reborn.definedAtTime(5.0));
-        assert(!reborn.definedAtTime(5.1));
+        Universe::instance().setClock(500.0, 0.1);
+        Universe::instance().setApplicationOnset(495.0);   // t = 5: the last moment
+        assert(reborn.definedFor(a));
+        Universe::instance().setApplicationOnset(494.5);   // t = 5.5: beyond
+        assert(!reborn.definedFor(a));
+        Universe::instance().clearApplicationOnset();
 
         auto rebornLaw = Law::fromJson(arc->toJson());
+        assert(rebornLaw->drives());                       // the choice survives
         assert(rebornLaw->hasActionModel());
         assert(rebornLaw->actionModel()->referencesSinceApplied());
 

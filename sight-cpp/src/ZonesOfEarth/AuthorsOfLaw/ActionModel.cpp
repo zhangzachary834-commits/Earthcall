@@ -227,28 +227,34 @@ bool ActionNode::referencesSinceApplied() const {
     return false;
 }
 
-bool ActionNode::definedAtTime(double t) const {
-    // A Drive on the sinceApplied clock evaluates a total curve: eternal.
-    if (kind == Kind::Drive && isSinceAppliedPath(input)) return true;
-    if (kind == Kind::Map || kind == Kind::Flow) {
-        bool referencesTime = false;
-        bool timeCutsDomain = false;
-        for (const auto& entry : bindings) {
-            if (!isSinceAppliedPath(entry.second)) continue;
-            referencesTime = true;
-            if (entry.first == mapFunction.inputVariable) timeCutsDomain = true;
+bool ActionNode::definedFor(Singular& subject) const {
+    switch (kind) {
+        case Kind::Map:
+        case Kind::Flow: {
+            // Defined exactly when the function evaluates: every variable
+            // readable AND the values inside some authored piece — whichever
+            // variable the bounds cut.
+            auto vars = readMathBindings(subject, bindings);
+            return vars && mapFunction.evaluate(*vars).has_value();
         }
-        if (referencesTime) {
-            if (!timeCutsDomain) return true;   // domain cut on another variable: eternal
-            for (const auto& piece : mapFunction.pieces) {
-                if (piece.contains(t)) return true;
+        case Kind::Drive: {
+            // A curve is total: defined whenever its input is readable.
+            if (input.empty()) return Universe::instance().hasClock();
+            PropertyValue v;
+            return lawGetValue(subject, input, v);
+        }
+        case Kind::Sequence:
+        case Kind::Parallel: {
+            for (const auto& c : children) {
+                if (c.definedFor(subject)) return true;
             }
+            return children.empty();
         }
+        default:
+            // Set/Add/Scale/Lerp/Spawn carry no authored bounds — they can
+            // always act (an eternal drive unless a bounded function ends it).
+            return true;
     }
-    for (const auto& c : children) {
-        if (c.definedAtTime(t)) return true;
-    }
-    return false;
 }
 
 ActionNode ActionNode::set(const std::string& dottedPath, PropertyValue v) {

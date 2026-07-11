@@ -106,6 +106,17 @@ public:
     Scope scope() const { return _scope; }
     void setScope(Scope s) { _scope = s; }
 
+    // ------------------------------------------------------------------
+    // Drive: an AUTHORED choice that this law keeps applying after its
+    // trigger — every tick, with t=0 at the moment it took hold — until its
+    // function becomes undefined for the subject. The authored bounds end
+    // it, and ANY bound variable may cut those bounds: time, another
+    // being's position, the subject's own state. (Meaningful for OnEvent /
+    // OnBecomeTrue; WhileTrue already re-applies on its own.)
+    // ------------------------------------------------------------------
+    bool drives() const { return _drives; }
+    void setDrives(bool drives) { _drives = drives; }
+
     // Per-subject condition memory for edge detection (OnBecomeTrue).
     bool lastConditionState(const std::string& subjectId) const {
         auto it = _conditionMemory.find(subjectId);
@@ -249,6 +260,8 @@ private:
     }
     std::string propName() const { return _name; }
     void propSetName(const std::string& v) { setName(v); }
+    bool propDrives() const { return _drives; }
+    void propSetDrives(const bool& v) { _drives = v; }
 
     std::string _lawId;
     std::string _name;
@@ -256,6 +269,7 @@ private:
     int _authorityLevel = 0;
     Activation _activation = Activation::OnEvent;
     Scope _scope = Scope::Subject;
+    bool _drives = false;
     std::unordered_map<std::string, bool> _conditionMemory;   // edge detection
     std::unordered_map<std::string, double> _onsetMemory;     // t=0 per subject
     ConditionMode _conditionMode = ConditionMode::All;

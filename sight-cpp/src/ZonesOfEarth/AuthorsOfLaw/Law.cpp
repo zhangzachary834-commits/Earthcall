@@ -177,6 +177,7 @@ std::shared_ptr<Law> Law::fromJson(const nlohmann::json& j) {
     law->setAuthorityLevel(j.value("authority", 0));
     law->setActivation(static_cast<Activation>(j.value("activation", 0)));
     law->setScope(static_cast<Scope>(j.value("scope", 0)));
+    law->setDrives(j.value("drives", false));
     law->setConditionMode(j.value("conditionMode", std::string("all")) == "any"
                               ? ConditionMode::Any
                               : ConditionMode::All);
@@ -313,6 +314,7 @@ nlohmann::json Law::toJson() const {
         {"authority", _authorityLevel},
         {"activation", static_cast<int>(_activation)},
         {"scope", static_cast<int>(_scope)},
+        {"drives", _drives},
         {"conditionMode", _conditionMode == ConditionMode::All ? "all" : "any"},
         {"authors", formationMemberIds(_authors)},
         {"conditionSubjects", formationMemberIds(_conditions)},
@@ -353,6 +355,8 @@ void Law::buildProperties() {
         "conditionMode", this, &Law::propConditionMode, &Law::propSetConditionMode));
     _propertyRegistry.push_back(std::make_unique<ComputedProperty<Law, std::string>>(
         "name", this, &Law::propName, &Law::propSetName));
+    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Law, bool>>(
+        "drives", this, &Law::propDrives, &Law::propSetDrives));
 }
 
 std::string ReteNetwork::assertFact(ReteFact fact) {
@@ -689,7 +693,11 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
                                   ? holds
                                   : (holds && !wasHolding);   // the false->true edge
             if (!fire) continue;
-            law->applyTo(*subject);
+            if (law->applyTo(*subject) == Law::ApplicationResult::Applied) {
+                // An OnBecomeTrue law that drives launches its process at
+                // the edge and runs it to the end of its authored bounds.
+                maybeStartDriveSession(*law, *subject);
+            }
             if (!law->applicationLog().empty()) {
                 records.push_back(law->applicationLog().back());
             }
@@ -701,10 +709,11 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
 }
 
 void LawManager::maybeStartDriveSession(Law& law, Singular& subject) {
-    // Only OnEvent laws need sessions — continuous laws re-fire on their own.
-    if (law.activation() != Law::Activation::OnEvent) return;
+    // Driving is the law's AUTHORED choice, not an inference from what it
+    // reads. WhileTrue needs no session — it re-applies on its own.
+    if (!law.drives()) return;
+    if (law.activation() == Law::Activation::WhileTrue) return;
     if (!Universe::instance().hasClock()) return;
-    if (!law.hasActionModel() || !law.actionModel()->referencesSinceApplied()) return;
 
     const std::string subjectId = subject.getIdentifier();
     for (const auto& session : _driveSessions) {
@@ -748,11 +757,19 @@ void LawManager::runDriveSessions(std::vector<Law::ApplicationRecord>& records) 
             continue;
         }
 
-        // The authored Piecewise bounds ARE the duration: when every
-        // time-cut piece has ended, the drive is finished.
-        const double t = now - it->onset;
-        const bool alive = law->hasActionModel() && law->actionModel()->definedAtTime(t);
-        if (!alive && t > 0.0) {
+        // The authored bounds ARE the duration — and ANY bound variable may
+        // cut them (time, another being's position, the subject's own
+        // state). The drive lives while the function is still defined for
+        // the subject; checked in the law's application context so
+        // time.sinceApplied resolves like any other input variable. A law
+        // whose action has no bounded function drives until disabled.
+        bool alive = true;
+        if (law->hasActionModel()) {
+            Universe::instance().setApplicationOnset(it->onset);
+            alive = law->actionModel()->definedFor(*subject);
+            Universe::instance().clearApplicationOnset();
+        }
+        if (!alive && now > it->onset) {
             law->forgetOnset(it->subjectId);
             Core::EventBus::instance().publish(
                 ECA::Event{"law-drive-finished", subject, nullptr, std::time(nullptr)});
@@ -760,8 +777,11 @@ void LawManager::runDriveSessions(std::vector<Law::ApplicationRecord>& records) 
             continue;
         }
 
-        // The starting tick already applied the law (t=0) in the event round.
+        // The starting tick already applied the law (t=0) when it fired.
         if (now > it->onset) {
+            // The session owns this drive's t=0 — reassert it so applyTo's
+            // context matches even if the law's edge memory moved meanwhile.
+            law->rememberOnset(it->subjectId, it->onset);
             law->applyTo(*subject);
             if (!law->applicationLog().empty()) {
                 records.push_back(law->applicationLog().back());

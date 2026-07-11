@@ -1033,6 +1033,9 @@ std::string lawSentence(const Law& law, const std::vector<std::string>* triggers
     } else {
         sentence += "  — on each watched being.";
     }
+    if (law.drives() && law.activation() != Law::Activation::WhileTrue) {
+        sentence += "  KEEPS APPLYING until its function's bounds end.";
+    }
     return sentence;
 }
 
@@ -1232,17 +1235,37 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player,
             }
         }
 
-        // Change over time: an OnEvent law that reads the sinceApplied clock
-        // becomes a DRIVE — it keeps applying after the event until the
-        // authored bounds end.
-        if (law->activation() == Law::Activation::OnEvent && law->hasActionModel() &&
-            law->actionModel()->referencesSinceApplied()) {
-            ImGui::TextColored(ImVec4(0.45f, 0.75f, 1.0f, 1.0f),
-                               "~ This law DRIVES: after its event it keeps applying every "
-                               "frame,");
-            ImGui::TextColored(ImVec4(0.45f, 0.75f, 1.0f, 1.0f),
-                               "  t = seconds since it took hold, until the authored bounds "
-                               "on t end.");
+        // The drive: an authored choice — after its trigger, the law keeps
+        // applying every frame until its function's authored bounds end.
+        // ANY bound variable may cut the bounds: time is one input among
+        // the rest (positions, sizes, other beings' state).
+        if (law->activation() != Law::Activation::WhileTrue) {
+            bool drives = law->drives();
+            if (ImGui::Checkbox("Drive: keep applying after the trigger", &drives)) {
+                law->setDrives(drives);
+            }
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip(
+                    "The law keeps applying every frame until its function becomes\n"
+                    "undefined for the subject — the authored piece bounds are the\n"
+                    "duration, and any bound variable can cut them (time,\n"
+                    "another being's position, the subject's own state).\n"
+                    "Ends with a \"law-drive-finished\" event. With no bounded\n"
+                    "function it drives until disabled.");
+            }
+            if (drives) {
+                ImGui::TextColored(ImVec4(0.45f, 0.75f, 1.0f, 1.0f),
+                                   "~ Drives: after the trigger it keeps applying, until "
+                                   "the authored bounds end.");
+            } else if (law->hasActionModel() &&
+                       law->actionModel()->referencesSinceApplied()) {
+                ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.2f, 1.0f),
+                                   "! This action reads time.sinceApplied but the law does "
+                                   "not drive —");
+                ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.2f, 1.0f),
+                                   "  it will only see t = 0. Enable Drive to run it over "
+                                   "time.");
+            }
         }
 
         // WHOM an application reaches — the "whose position?" question.

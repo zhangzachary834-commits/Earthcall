@@ -260,13 +260,18 @@ function of time. Two forms:
   each tick. The authored model is `dp/dt`; OntoMath's exact
   `derivative`/`antiderivative` make Map and Flow exact counterparts.
 
-An **OnEvent** law whose action reads `time.sinceApplied` becomes a **drive**:
-after its event it keeps applying every tick (`LawManager` drive sessions), and
-**the authored Piecewise bounds ARE the duration** — when every time-cut piece
-has ended, the session ends and `"law-drive-finished"` is published (the law
-analogue of `automation-clip-finished`). Unbounded pieces are an eternal drive.
-Empty-input `Drive` now uses the world clock (the old "commit 4 frame-time"
-promise, closed).
+**Driving is an authored choice, and any variable can be its domain.**
+`Law::drives()` (serialized; legible as the `drives` property → metalaws can
+govern it) says the law keeps applying after its trigger (OnEvent or
+OnBecomeTrue; WhileTrue re-applies on its own). Each tick the session asks
+`ActionNode::definedFor(subject)`: is the function still defined at the
+CURRENT values of its bound variables? **The authored Piecewise bounds ARE the
+duration, and ANY bound variable may cut them** — time is one input among the
+rest (another being's position, the subject's own state). When the function
+becomes undefined, the session ends and `"law-drive-finished"` is published
+(the law analogue of `automation-clip-finished`). An action with no bounded
+function drives until disabled. Empty-input `Drive` now uses the world clock
+(the old "commit 4 frame-time" promise, closed).
 
 Growth path: expression-valued exponents (createTerm's recursive "term inside
 the exponential space"), transcendental factors, richer symbolic simplification,

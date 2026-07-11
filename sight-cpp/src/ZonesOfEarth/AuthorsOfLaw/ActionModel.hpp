@@ -69,18 +69,20 @@ struct ActionNode {
     std::string describe() const;
 
     // ------------------------------------------------------------------
-    // Drive-session scans (change over time that outlives its event).
-    // referencesSinceApplied: does any node in this tree read the
-    // "time.sinceApplied" clock (Drive input or a math binding)? Such an
-    // action, on an OnEvent law, keeps running after the event as a drive
-    // session. definedAtTime: is any time-driven piece of this tree still
-    // defined at t? The authored Piecewise bounds ARE the duration — when
-    // every time-cut piece has ended, the session ends. A time-referencing
-    // node whose domain is not cut by time (a total curve, or a piecewise
-    // cut on another variable) is defined forever: an eternal drive.
+    // Drive-session scans (a law that keeps applying after its trigger).
+    // definedFor: can this action still act on the subject RIGHT NOW —
+    // i.e. is any node's function defined at the current values of its
+    // bound variables? The authored bounds are the duration, and ANY bound
+    // variable may cut them: time, another being's position, the subject's
+    // own state. Function-free leaves (Set/Add/...) have no bounds and are
+    // always defined — an eternal drive unless the author bounds a function.
+    // Call within the law's application context so time.sinceApplied (one
+    // input variable among the rest) resolves.
+    // referencesSinceApplied: does any node read the sinceApplied clock?
+    // (a UI hint — such an action usually wants the law to drive).
     // ------------------------------------------------------------------
     bool referencesSinceApplied() const;
-    bool definedAtTime(double t) const;
+    bool definedFor(Singular& subject) const;
 
     // Factories.
     static ActionNode set(const std::string& dottedPath, PropertyValue v);
