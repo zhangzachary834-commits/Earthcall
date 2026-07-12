@@ -43,7 +43,20 @@ bool Game::init() {
         for (const auto& law : _lawManager.getAll()) {
             if (law) beings.push_back(law.get());
         }
+        // Relations are Singulars too: quantifiers (ForAny Relation...)
+        // range over them like any other being.
+        for (const auto& rel : mgr.active().formation().relations().getAll()) {
+            if (rel) beings.push_back(rel.get());
+        }
         beings.push_back(&_player);
+    });
+
+    // The relation GRAPH — the edge view Related conditions query
+    // ("is x related to y in type t?"): the active zone's Formation.
+    Universe::instance().setRelationProvider([](std::vector<Relation*>& relations) {
+        for (const auto& rel : mgr.active().formation().relations().getAll()) {
+            if (rel) relations.push_back(rel.get());
+        }
     });
 
     // Init GL state – depth test already enabled in ShadingSystem::init()

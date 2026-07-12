@@ -11,6 +11,7 @@
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "Form/Object/Object.hpp"
+#include "Relation/RelationManager.hpp"
 
 #include <GLFW/glfw3.h>
 #include <cassert>
@@ -242,6 +243,44 @@ int main() {
         reborn->addTarget(beacon2);
         assert(reborn->applyTo(beacon2) == Law::ApplicationResult::Applied);
         assert(nearf(static_cast<float>(filletOf(beacon2)), 1.0f));
+
+        // ------------------------------------------------------------------
+        // 8. Related — the graph-shaped condition, live against the world's
+        //    relation graph: "x has related to y in relation xy".
+        // ------------------------------------------------------------------
+        RelationManager graph;
+        graph.add(std::make_shared<Relation>("touching", a, b, false));  // undirected
+        graph.add(std::make_shared<Relation>("owns", a, beacon, true));  // a -> beacon
+        Universe::instance().setRelationProvider([&](std::vector<Relation*>& out) {
+            for (const auto& rel : graph.getAll()) {
+                if (rel) out.push_back(rel.get());
+            }
+        });
+
+        // Any relation at all; a named type; a named type to a named being.
+        assert(ConditionNode::related().compile()(probe, a));
+        assert(ConditionNode::related("touching").compile()(probe, b));   // both ends
+        assert(ConditionNode::related("touching", a.getIdentifier()).compile()(probe, b));
+
+        // Direction is honored: "a owns beacon" holds OF a, never of beacon.
+        assert(ConditionNode::related("owns", beacon.getIdentifier()).compile()(probe, a));
+        assert(!ConditionNode::related("owns").compile()(probe, beacon));
+        assert(!ConditionNode::related("owns", a.getIdentifier()).compile()(probe, beacon));
+
+        // An unproven relation never passes.
+        assert(!ConditionNode::related("marriage").compile()(probe, a));
+        assert(!ConditionNode::related("touching").compile()(probe, beacon));
+
+        // The graph-shaped condition survives serialization like all law text.
+        const auto rebornRelated = ConditionNode::fromJson(
+            ConditionNode::related("touching", b.getIdentifier()).toJson());
+        assert(rebornRelated.kind == ConditionNode::Kind::Related);
+        assert(rebornRelated.compile()(probe, a));
+
+        // No provider = no proven relations: never passes (laws must not
+        // fire on unproven relations).
+        Universe::instance().setRelationProvider({});
+        assert(!ConditionNode::related().compile()(probe, a));
 
         Universe::instance().setProvider({});             // leave no dangling refs
     }

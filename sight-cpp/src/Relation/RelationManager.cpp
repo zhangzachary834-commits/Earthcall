@@ -1,4 +1,5 @@
 #include "RelationManager.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
 #include <algorithm>
 
 // Event structure for when a new Relation is created
@@ -89,10 +90,19 @@ void RelationManager::add(const std::shared_ptr<Relation>& r) {
         RelationEvent ev{std::time(nullptr), input.type, input.weight};
         r->events.push_back(ev);
         relations.push_back(r);
-        
+
         // Trigger event for new relation creation
         RelationCreatedEvent event(r);
         Core::EventBus::instance().publish(event);
+
+        // ECA echo so LAWS can hear it (string-typed events are what the
+        // Rete network binds): subject is the newborn relation — itself a
+        // Singular whose endpoints laws can read.
+        ECA::Event echo;
+        echo.type = "relation-formed";
+        echo.subject = r.get();
+        echo.timestamp = std::time(nullptr);
+        Core::EventBus::instance().publish(echo);
     }
 }
 

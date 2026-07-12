@@ -5,6 +5,7 @@
 #include <vector>
 
 class Singular;
+class Relation;
 
 // The universe of beings that CONTINUOUS laws watch and quantified conditions
 // (ForAny / ForAll) range over.
@@ -35,6 +36,24 @@ public:
     std::vector<Singular*> beings() const {
         std::vector<Singular*> out;
         if (_provider) _provider(out);
+        return out;
+    }
+
+    // ------------------------------------------------------------------
+    // The relation graph. Relations are Singulars — discrete beings — but
+    // laws also need the EDGE view: "is x related to y (in type t)?".
+    // The engine supplies the provider (the active zone's Formation
+    // relations); Related conditions query it. No provider = no proven
+    // relations: a Related condition never passes.
+    // ------------------------------------------------------------------
+    using RelationProvider = std::function<void(std::vector<Relation*>&)>;
+
+    void setRelationProvider(RelationProvider provider) {
+        _relationProvider = std::move(provider);
+    }
+    std::vector<Relation*> relations() const {
+        std::vector<Relation*> out;
+        if (_relationProvider) _relationProvider(out);
         return out;
     }
 
@@ -94,6 +113,7 @@ private:
     Universe& operator=(const Universe&) = delete;
 
     Provider _provider;
+    RelationProvider _relationProvider;
 
     double _now = 0.0;
     double _dt = 0.0;

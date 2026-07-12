@@ -110,6 +110,8 @@ constexpr EventOption kEngineEvents[] = {
     {"concept-registered",       "a new concept is captured (subject: the concept)"},
     {"law-drive-finished",       "a law's change-over-time reaches the end of its authored "
                                  "bounds (subject: the driven being)"},
+    {"relation-formed",          "a new relation joins the world's graph (subject: the "
+                                 "relation being)"},
 };
 constexpr int kEngineEventCount = sizeof(kEngineEvents) / sizeof(kEngineEvents[0]);
 
@@ -654,7 +656,7 @@ bool beingKindCombo(ConditionNode& node) {
 bool editConditionNode(ConditionNode& node) {
     bool changed = false;
 
-    static const char* kinds[] = {"compare", "in shape region", "related (soon)",
+    static const char* kinds[] = {"compare", "in shape region", "related to...",
                                   "all of... (&&)", "any of... (||)", "not (!)",
                                   "math zone", "is a (type)", "this specific being",
                                   "for ANY being...", "for ALL beings..."};
@@ -734,9 +736,38 @@ bool editConditionNode(ConditionNode& node) {
             break;
         }
         case ConditionNode::Kind::Related: {
-            ImGui::TextDisabled("Relation conditions resolve when the relation-graph work lands;");
-            ImGui::TextDisabled("until then this condition never passes (laws must not fire on");
-            ImGui::TextDisabled("unproven relations).");
+            ImGui::TextDisabled("True when the subject participates in a relation from the");
+            ImGui::TextDisabled("world's relation graph. Directed relations satisfy only");
+            ImGui::TextDisabled("their source (\"a owns b\" holds OF a, not of b).");
+            char typeBuf[64];
+            copyToBuf(typeBuf, sizeof(typeBuf), node.relationType);
+            ImGui::SetNextItemWidth(150.0f);
+            if (ImGui::InputText("Relation type", typeBuf, sizeof(typeBuf))) {
+                node.relationType = typeBuf;
+                changed = true;
+            }
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("free-form: \"attachment\", \"friend\", \"owns\"...\n"
+                                  "leave empty to accept ANY relation kind");
+            }
+            const char* preview =
+                node.otherId.empty() ? "(anyone)" : node.otherId.c_str();
+            ImGui::SetNextItemWidth(200.0f);
+            if (ImGui::BeginCombo("Related to", preview)) {
+                if (ImGui::Selectable("(anyone)", node.otherId.empty())) {
+                    node.otherId.clear();
+                    changed = true;
+                }
+                for (Singular* being : Universe::instance().beings()) {
+                    if (!being) continue;
+                    const std::string id = being->getIdentifier();
+                    if (ImGui::Selectable(id.c_str(), node.otherId == id)) {
+                        node.otherId = id;
+                        changed = true;
+                    }
+                }
+                ImGui::EndCombo();
+            }
             break;
         }
         case ConditionNode::Kind::All:

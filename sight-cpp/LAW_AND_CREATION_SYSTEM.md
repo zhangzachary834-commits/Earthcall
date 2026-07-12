@@ -163,6 +163,16 @@ struct ConditionNode {
 `compile()` is a recursion; each node returns a lambda capturing its compiled
 children. `All`/`Any`/`Not` honor the existing `ECA::ConditionMode` semantics.
 
+**Related (landed):** the Universe carries a relation provider (the engine
+wires the active zone's Formation relations) and `Related` compiles against
+it: true when the subject participates in a matching relation — empty
+`relationType` accepts any kind, empty `otherId` means related to ANYONE, and
+direction is honored ("a owns b" holds OF a, never of b). No provider = no
+proven relations: the condition never passes. Relations also join
+`Universe::beings()`, so quantifiers range over them (`ForAny Relation ...`),
+and `RelationManager::add` now publishes a string-typed `"relation-formed"`
+ECA echo (subject: the newborn relation) that laws can bind as a trigger.
+
 **`InRegion` is projection mode made real.** When a Person wants "when something
 enters *here*", they raise the same `ShapeGenerator3D` used to make real objects,
 sketch the region, and the tool writes the resulting `SdfNode` into a

@@ -91,6 +91,9 @@ struct ConditionNode {
                               PropertyValue zoneHi = PropertyValue{});
     static ConditionNode isKind(BeingKind kind);
     static ConditionNode identity(const std::string& beingId);
+    // Empty type = any relation kind; empty otherId = related to anyone.
+    static ConditionNode related(const std::string& type = "",
+                                 const std::string& otherId = "");
     static ConditionNode forAny(BeingKind kind, ConditionNode inner,
                                 std::vector<std::string> exceptions = {});
     static ConditionNode forAll(BeingKind kind, ConditionNode inner,

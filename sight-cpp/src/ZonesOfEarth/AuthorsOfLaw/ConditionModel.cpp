@@ -186,10 +186,29 @@ ECA::ConditionPredicate ConditionNode::compile() const {
             };
         }
         case Kind::Related: {
-            // Recorded but not yet resolvable: relation-graph lookup arrives
-            // with the event/Rete wiring (commit 4). Until then a Related
-            // condition never passes — laws must not fire on unproven relations.
-            return [](const ECA::Event&, const Singular&) { return false; };
+            // The graph-shaped condition: true when the subject participates
+            // in a relation from the Universe's relation graph. Empty
+            // relationType = any type; empty otherId = related to ANYONE.
+            // Direction is honored: a directed relation satisfies only its
+            // source ("a owns b" makes related(owns, b) true OF a, not of b).
+            // No provider = no proven relations: never passes.
+            const std::string type = relationType;
+            const std::string other = otherId;
+            return [type, other](const ECA::Event&, const Singular& subject) {
+                const std::string id = subject.getIdentifier();
+                for (const Relation* rel : Universe::instance().relations()) {
+                    if (!rel) continue;
+                    if (!type.empty() && rel->type != type) continue;
+                    if (other.empty()) {
+                        if (rel->directed ? rel->entityA == id : rel->involves(id)) {
+                            return true;
+                        }
+                        continue;
+                    }
+                    if (rel->isBetween(id, other)) return true;
+                }
+                return false;
+            };
         }
         case Kind::Zone: {
             // The satisfaction zone of an authored function: read every bound
@@ -291,7 +310,8 @@ std::string ConditionNode::describe() const {
         case Kind::InRegion:
             return "in-region(" + (probe.empty() ? std::string("position") : probe.toString()) + ")";
         case Kind::Related:
-            return "related(" + relationType + ", " + otherId + ")";
+            return "related" + (relationType.empty() ? "" : "[" + relationType + "]") +
+                   " to " + (otherId.empty() ? "anyone" : otherId);
         case Kind::All: return "all(" + std::to_string(children.size()) + ")";
         case Kind::Any: return "any(" + std::to_string(children.size()) + ")";
         case Kind::Not: return "not(...)";
@@ -371,6 +391,14 @@ ConditionNode ConditionNode::identity(const std::string& beingId) {
     ConditionNode n;
     n.kind = Kind::Identity;
     n.otherId = beingId;
+    return n;
+}
+
+ConditionNode ConditionNode::related(const std::string& type, const std::string& otherId) {
+    ConditionNode n;
+    n.kind = Kind::Related;
+    n.relationType = type;
+    n.otherId = otherId;
     return n;
 }
 
