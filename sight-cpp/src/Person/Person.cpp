@@ -56,7 +56,11 @@ struct PersonLogoutEvent {
 // If its "logging in," a Person should be created in the memory via loading.
 // If its "singing up", new Person data should first be added to the new txt and json files, and only then should Person created.
 Person::Person(Soul& soul, Body& body) : _soul(soul), body(body) {
-
+    // The Person's identifier IS the soul's identity. Left unset it was the
+    // empty string — invisible in law authorship records and unmatchable
+    // when a saved world reattaches authors by identifier.
+    soulName = soul.getIdentifier();
+    if (soulName.empty()) soulName = "Person";
 }
 
 

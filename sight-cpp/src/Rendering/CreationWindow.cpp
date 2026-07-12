@@ -43,6 +43,23 @@ struct SessionState {
 };
 SessionState g;
 
+// WHAT a being is, at a glance — bare ids hid a 100x1x100 ground slab in a
+// source set once. Never again.
+std::string describeObject(Object& o) {
+    static const char* kindNames[] = {"Cube",      "Polyhedron", "Sphere",
+                                      "Cylinder",  "Cone",       "Ellipsoid",
+                                      "Ovoid",     "Paraboloid", "Torus",
+                                      "RoundedBox", "Field",     "Patch"};
+    const int k = static_cast<int>(o.getShapeKind());
+    std::string out = (k >= 0 && k < 12) ? kindNames[k] : "Shape";
+    const glm::mat4& t = o.getTransform();
+    char buf[64];
+    std::snprintf(buf, sizeof(buf), " ~%.1fx%.1fx%.1f", glm::length(glm::vec3(t[0])),
+                  glm::length(glm::vec3(t[1])), glm::length(glm::vec3(t[2])));
+    out += buf;
+    return out;
+}
+
 Object* findObject(const std::string& id) {
     for (Singular* being : Universe::instance().beings()) {
         if (being && being->getIdentifier() == id) {
@@ -144,8 +161,12 @@ void renderCreationWindow(bool* open, Singular& author, Object* selected, World&
     std::string removeId;
     for (const auto& id : g.sourceIds) {
         ImGui::PushID(id.c_str());
-        const bool alive = findObject(id) != nullptr;
-        ImGui::BulletText("%s%s", id.c_str(), alive ? "" : "  (left the world)");
+        Object* live = findObject(id);
+        if (live) {
+            ImGui::BulletText("%s — %s", id.c_str(), describeObject(*live).c_str());
+        } else {
+            ImGui::BulletText("%s  (left the world)", id.c_str());
+        }
         ImGui::SameLine();
         if (ImGui::SmallButton("remove")) removeId = id;
         ImGui::PopID();
@@ -157,8 +178,15 @@ void renderCreationWindow(bool* open, Singular& author, Object* selected, World&
     if (selected) {
         const std::string selId = selected->getIdentifier();
         if (std::find(g.sourceIds.begin(), g.sourceIds.end(), selId) == g.sourceIds.end()) {
-            if (ImGui::SmallButton(("+ add selected (" + selId + ")").c_str())) {
+            if (ImGui::SmallButton(("+ add selected: " + selId + " — " +
+                                    describeObject(*selected))
+                                       .c_str())) {
                 g.sourceIds.push_back(selId);
+            }
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("check this IS the object you mean — a click that "
+                                  "misses a small\nobject often selects the ground "
+                                  "behind it");
             }
         }
     } else {

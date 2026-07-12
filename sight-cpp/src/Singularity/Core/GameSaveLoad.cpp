@@ -15,6 +15,7 @@
 #include <imgui.h>
 #include <glm/glm.hpp>
 #include <fstream>
+#include <functional>
 #include <iostream>
 #include <ctime>
 #include <string>
@@ -146,10 +147,27 @@ void Game::saveStateWithLog(const std::string& customName) {
 // loadState
 // ------------------------------------------------------------------
 void Game::loadState(const std::string& filename) {
+    // Loading is LOUD: every stage reports, and one stage's failure never
+    // silently discards the stages after it (a swallowed exception between
+    // the world and the registers once cost a field-test law).
+    _saveLoad.lastLoadReport.clear();
+    std::string failures;
+    const auto stage = [&](const char* name, const std::function<void()>& body) {
+        try {
+            body();
+        } catch (const std::exception& e) {
+            failures += std::string(name) + ": " + e.what() + "  ";
+            std::cerr << "[load] stage '" << name << "' failed: " << e.what() << "\n";
+        }
+    };
     try {
         using json = nlohmann::json;
         std::ifstream in(filename);
-        if (!in) { std::cerr << "Could not open " << filename << "\n"; return; }
+        if (!in) {
+            _saveLoad.lastLoadReport = "COULD NOT OPEN: " + filename;
+            std::cerr << "Could not open " << filename << "\n";
+            return;
+        }
         json j; in >> j;
 
         // Reset physics registries to avoid stale velocities/bonds affecting freshly loaded objects
@@ -218,6 +236,7 @@ void Game::loadState(const std::string& filename) {
         Physics::setFlying(j.value("flying", false));
 
         // Load physics laws
+        stage("physics-laws", [&] {
         if (j.contains("physicsLaws")) {
             std::vector<int> ids;
             for (const auto& L : Physics::getLaws()) ids.push_back(L.id);
@@ -265,28 +284,60 @@ void Game::loadState(const std::string& filename) {
                 Physics::addLaw(law);
             }
         }
+        });
 
         // Player avatar body (includes per-face textures on each body part)
-        if (j.contains("playerBody")) {
-            bodyFromJson(j["playerBody"], _player.getBody());
-        }
+        stage("player-body", [&] {
+            if (j.contains("playerBody")) {
+                bodyFromJson(j["playerBody"], _player.getBody());
+            }
+        });
 
         // The authored register — AFTER the world, so the Universe can
         // resolve the saved identifiers when authors and targets reattach.
         // Restore the clock first: laws must never see time run backward.
-        _worldTime = j.value("worldTime", 0.0);
-        Universe::instance().setClock(_worldTime, 0.0);
-        if (j.contains("concepts")) {
-            ConceptRegistry::instance().loadFromJson(j["concepts"]);
+        stage("world-clock", [&] {
+            _worldTime = j.value("worldTime", 0.0);
+            Universe::instance().setClock(_worldTime, 0.0);
+        });
+        stage("concepts", [&] {
+            if (j.contains("concepts")) {
+                ConceptRegistry::instance().loadFromJson(j["concepts"]);
+            }
+        });
+        stage("transfer-policy", [&] {
+            if (j.contains("transferPolicy")) {
+                TransferPolicy::instance().loadFromJson(j["transferPolicy"]);
+            }
+        });
+        stage("authored-laws", [&] {
+            if (j.contains("authoredLaws")) {
+                _lawManager.loadFromJson(j["authoredLaws"]);
+            }
+        });
+
+        // Say what actually happened — the loader's testimony.
+        std::size_t objectCount = 0;
+        for (const auto& zone : mgr.zones()) {
+            objectCount += zone.world().getOwnedObjects().size();
         }
-        if (j.contains("transferPolicy")) {
-            TransferPolicy::instance().loadFromJson(j["transferPolicy"]);
+        std::size_t authoredCount = 0;
+        for (const auto& law : _lawManager.getAll()) {
+            if (law && law->isAuthored()) ++authoredCount;
         }
-        if (j.contains("authoredLaws")) {
-            _lawManager.loadFromJson(j["authoredLaws"]);
+        _saveLoad.lastLoadReport =
+            "Loaded: " + std::to_string(objectCount) + " object(s), " +
+            std::to_string(_lawManager.getAll().size()) + " law(s) (" +
+            std::to_string(authoredCount) + " authored), " +
+            std::to_string(ConceptRegistry::instance().getAll().size()) +
+            " concept(s), worldTime " + std::to_string(_worldTime);
+        if (!failures.empty()) {
+            _saveLoad.lastLoadReport += "  |  FAILED stages: " + failures;
         }
+        std::cerr << "[load] " << _saveLoad.lastLoadReport << "\n";
 
     } catch (const std::exception& e) {
+        _saveLoad.lastLoadReport = std::string("LOAD FAILED: ") + e.what();
         std::cerr << "Error loading state: " << e.what() << "\n";
     }
 }
@@ -314,6 +365,14 @@ void Game::drawLoadWindow() {
     ImGui::SetNextWindowSize(ImVec2(500, 400), ImGuiCond_FirstUseEver);
     if (ImGui::Begin("Load Game State", &_saveLoad.showLoadWindow, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize)) {
         ImGui::Text("Select a save file to load:");
+        if (!_saveLoad.lastLoadReport.empty()) {
+            const bool trouble =
+                _saveLoad.lastLoadReport.find("FAIL") != std::string::npos ||
+                _saveLoad.lastLoadReport.find("COULD NOT") != std::string::npos;
+            ImGui::TextColored(trouble ? ImVec4(1.0f, 0.5f, 0.4f, 1.0f)
+                                       : ImVec4(0.5f, 0.9f, 0.5f, 1.0f),
+                               "%s", _saveLoad.lastLoadReport.c_str());
+        }
         ImGui::Separator();
 
         // Get save metadata for better display

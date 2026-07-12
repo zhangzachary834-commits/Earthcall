@@ -175,6 +175,7 @@ std::vector<std::unique_ptr<Object>> ObjectConcept::instantiate(
             newborn->setShape(member.kind, member.params);
         }
         newborn->setTransform(placement * member.relativeTransform);
+        newborn->updateCollisionZone(newborn->getTransform());   // like every creation tool
 
         // Derivation: carry structure across through the mappings. Each
         // transfer passes the Singularity gate first — an object's

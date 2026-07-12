@@ -14,6 +14,10 @@ struct SaveLoadState {
     bool showSaveWindow = false;
     bool showManager    = false;
     char customName[256] = "";
+    // What the last load actually did — counts on success, the exact error
+    // on failure. Loading must be LOUD: a silently skipped stage costs
+    // authored laws.
+    std::string lastLoadReport;
 };
 
 } // namespace Core
