@@ -500,6 +500,14 @@ bool editPiecewise(OntoMath::Piecewise& f, const MathBindings& bindings) {
                                        factor.first.c_str());
                 }
             }
+            for (const auto& tf : term.trans) {
+                if (!bindings.count(tf.variable)) {
+                    ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.2f, 1.0f),
+                                       "! variable \"%s\" has no binding — the function "
+                                       "cannot evaluate",
+                                       tf.variable.c_str());
+                }
+            }
         }
     }
 
@@ -570,8 +578,69 @@ bool editPiecewise(OntoMath::Piecewise& f, const MathBindings& bindings) {
                     changed = true;
                 }
             }
+            // Transcendental factors: exact sin/cos/exp/ln of a bound
+            // variable — periodic and exponential change as law-text.
+            ImGui::SameLine();
+            if (ImGui::SmallButton("+f()")) ImGui::OpenPopup("addtrans");
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("multiply in an exact transcendental factor:\n"
+                                  "sin / cos / exp / ln of a bound variable");
+            }
+            if (ImGui::BeginPopup("addtrans")) {
+                static const char* transNames[] = {"sin", "cos", "exp", "ln"};
+                for (int k = 0; k < 4; ++k) {
+                    for (const auto& binding : bindings) {
+                        const std::string label =
+                            std::string(transNames[k]) + "(" + binding.first + ")";
+                        if (ImGui::MenuItem(label.c_str())) {
+                            term.addTrans(OntoMath::TransFactor(
+                                static_cast<OntoMath::TransFactor::Kind>(k),
+                                binding.first));
+                            changed = true;
+                        }
+                    }
+                }
+                ImGui::EndPopup();
+            }
             ImGui::SameLine();
             if (ImGui::SmallButton("x##rmterm")) removeTerm = static_cast<int>(t);
+
+            int removeTrans = -1;
+            for (std::size_t f = 0; f < term.trans.size(); ++f) {
+                auto& tf = term.trans[f];
+                ImGui::PushID(static_cast<int>(f) + 300);
+                static const char* transNames[] = {"sin", "cos", "exp", "ln"};
+                ImGui::Text("   × %s(", transNames[static_cast<int>(tf.kind)]);
+                ImGui::SameLine();
+                ImGui::SetNextItemWidth(56.0f);
+                double scale = tf.scale;
+                if (ImGui::InputDouble("##tscale", &scale)) {
+                    tf.scale = scale;
+                    changed = true;
+                }
+                ImGui::SameLine();
+                ImGui::Text("·%s", tf.variable.c_str());
+                if (tf.kind != OntoMath::TransFactor::Kind::Ln) {
+                    ImGui::SameLine();
+                    ImGui::Text("+");
+                    ImGui::SameLine();
+                    ImGui::SetNextItemWidth(56.0f);
+                    double shift = tf.shift;
+                    if (ImGui::InputDouble("##tshift", &shift)) {
+                        tf.shift = shift;
+                        changed = true;
+                    }
+                }
+                ImGui::SameLine();
+                ImGui::Text(")");
+                ImGui::SameLine();
+                if (ImGui::SmallButton("x##rmtrans")) removeTrans = static_cast<int>(f);
+                ImGui::PopID();
+            }
+            if (removeTrans >= 0) {
+                term.trans.erase(term.trans.begin() + removeTrans);
+                changed = true;
+            }
             ImGui::PopID();
         }
         if (removeTerm >= 0) {

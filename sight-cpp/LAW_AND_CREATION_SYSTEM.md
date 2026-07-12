@@ -294,9 +294,23 @@ becomes undefined, the session ends and `"law-drive-finished"` is published
 function drives until disabled. Empty-input `Drive` now uses the world clock
 (the old "commit 4 frame-time" promise, closed).
 
+**Transcendentals (landed):** a `Term` may carry exact `TransFactor`s —
+`sin/cos/exp(scale·var + shift)` and `ln(scale·var)` — so periodic,
+exponential, and logarithmic change are law-text, not curve approximations.
+The calculus stays exact and honest: full product/chain rule on
+differentiation (sin/cos/exp closed; `ln` carries no shift so its derivative
+`x⁻¹` stays inside the algebra); integration holds `∫x⁻¹ = ln x` (the old
+honest gap, closed; defined on x > 0 — ln outside its domain evaluates to
+nullopt, never a guess), single sin/cos/exp/ln factors, and
+`∫ln(ax) = x·ln(ax) − x`; products needing integration by parts refuse with
+nullopt. `Expression::sinusoid(A, f, φ, bias)` is `evalTrack`'s exact form,
+so recorded periodic change can retire into the exact core. The Law Author's
+term editor multiplies factors in via "+f()" (kind × bound variable) with
+scale/shift edited inline.
+
 Growth path: expression-valued exponents (createTerm's recursive "term inside
-the exponential space"), transcendental factors, richer symbolic simplification,
-graph/relation-valued conditions.
+the exponential space"), integration by parts, richer symbolic simplification
+(sin² + cos² = 1 and kin), graph/relation-valued conditions.
 
 ### 2d. `Law` owns models
 

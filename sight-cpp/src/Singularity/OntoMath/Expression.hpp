@@ -32,11 +32,46 @@
 // ============================================================================
 namespace OntoMath {
 
-// One product term: coefficient * Π var^exp. Factors are kept in a sorted
-// map so like-term comparison and printing are canonical.
+// A transcendental factor: kind(scale·var + shift). This is what carries the
+// algebra past signomials — periodic (sin/cos), exponential (exp), and
+// logarithmic (ln) change become EXACT law-text, not curve approximations.
+// Closure under the calculus is honest: sin/cos/exp differentiate into each
+// other; Ln is restricted to ln(scale·var) — shift forced to 0 — so its
+// derivative (1/x) stays inside the algebra. ln of a non-positive argument
+// is undefined (nullopt), never a guess.
+struct TransFactor {
+    // Serialized as ints — APPEND-ONLY.
+    enum class Kind { Sin = 0, Cos = 1, Exp = 2, Ln = 3 };
+
+    Kind kind = Kind::Sin;
+    std::string variable;
+    double scale = 1.0;
+    double shift = 0.0;   // forced to 0 for Ln
+
+    TransFactor() = default;
+    TransFactor(Kind k, std::string var, double sc = 1.0, double sh = 0.0)
+        : kind(k), variable(std::move(var)), scale(sc),
+          shift(k == Kind::Ln ? 0.0 : sh) {}
+
+    std::optional<double> evaluate(double x) const;
+    std::string print() const;
+    nlohmann::json toJson() const;
+    static TransFactor fromJson(const nlohmann::json& j);
+
+    bool operator==(const TransFactor& o) const {
+        return kind == o.kind && variable == o.variable && scale == o.scale &&
+               shift == o.shift;
+    }
+    bool operator<(const TransFactor& o) const;   // canonical ordering
+};
+
+// One product term: coefficient * Π var^exp * Π trans(scale·var + shift).
+// Power factors are kept in a sorted map and transcendental factors in a
+// sorted vector so like-term comparison and printing are canonical.
 struct Term {
     double coefficient = 0.0;
     std::map<std::string, double> factors;   // variable name -> real exponent
+    std::vector<TransFactor> trans;          // kept sorted (canonical form)
 
     Term() = default;
     Term(double c, std::map<std::string, double> f = {})
@@ -47,7 +82,11 @@ struct Term {
     std::optional<double> evaluate(const std::map<std::string, double>& vars) const;
 
     Term times(const Term& other) const;     // coefficients multiply, exponents add
-    bool sameShape(const Term& other) const { return factors == other.factors; }
+    bool sameShape(const Term& other) const {
+        return factors == other.factors && trans == other.trans;
+    }
+    void addTrans(TransFactor factor);       // insert + keep canonical order
+    bool mentions(const std::string& var) const;
 
     std::string print() const;
     nlohmann::json toJson() const;
@@ -62,6 +101,15 @@ struct Expression {
     static Expression constant(double c);
     static Expression variable(const std::string& name, double exponent = 1.0,
                                double coefficient = 1.0);
+    // coefficient · kind(scale·var + shift) as a one-term expression.
+    static Expression transcendental(TransFactor::Kind kind, const std::string& var,
+                                     double scale = 1.0, double shift = 0.0,
+                                     double coefficient = 1.0);
+    // bias + amplitude·sin(2π(frequency·var + phase)) — the exact form of
+    // Automation::evalTrack / CurveModel's sinusoid (phase in turns), so
+    // recorded periodic change can retire into the exact core.
+    static Expression sinusoid(double amplitude, double frequency, double phase = 0.0,
+                               double bias = 0.0, const std::string& var = "x");
 
     std::optional<double> evaluate(const std::map<std::string, double>& vars) const;
 
@@ -73,9 +121,12 @@ struct Expression {
     // degree, then factor signature).
     Expression normalized() const;
 
-    // Exact calculus by the power rule — every term in this representation
-    // is differentiable; integration fails only on the x^-1 term (its
-    // antiderivative, ln|x|, does not live in this algebra yet), reported
+    // Exact calculus — power rule plus the full product/chain rule over
+    // transcendental factors; every term in this representation is
+    // differentiable. Integration is exact where the algebra can hold the
+    // answer: powers (∫x⁻¹ = ln x now included, defined on x > 0), a single
+    // sin/cos/exp/ln factor per term (∫ln(ax) = x·ln(ax) − x). Products
+    // needing integration by parts (x·sin x, sin·cos, ...) are reported
     // honestly as nullopt rather than approximated.
     Expression derivative(const std::string& var) const;
     std::optional<Expression> antiderivative(const std::string& var) const;

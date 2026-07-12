@@ -43,6 +43,7 @@ int main() {
         using OntoMath::Expression;
         using OntoMath::Piecewise;
         using OntoMath::Term;
+        using OntoMath::TransFactor;
 
         // ------------------------------------------------------------------
         // 1. Exact evaluation: f(x,y) = 3x²y + 2x − 5.
@@ -83,8 +84,9 @@ int main() {
         // Fundamental round-trip: d/dx ∫ f = f.
         Expression back = integral->derivative("x");
         assert(neard(*back.evaluate({{"x", 5.0}}), *threeXsq.evaluate({{"x", 5.0}})));
-        // ∫ x⁻¹ is ln|x| — not in this algebra: honest refusal, not approximation.
-        assert(!Expression::variable("x", -1.0).antiderivative("x").has_value());
+        // ∫ x⁻¹ = ln(x) — the algebra holds it now (section 9 proves it);
+        // once refused honestly, today answered exactly.
+        assert(Expression::variable("x", -1.0).antiderivative("x").has_value());
 
         // ------------------------------------------------------------------
         // 4. The hyperoperation ladder (first movers of arithmetic).
@@ -193,6 +195,88 @@ int main() {
         turner.setPosition(glm::vec3(2.0f, 0.0f, 0.0f));
         assert(slopeLaw.applyTo(turner) == Law::ApplicationResult::Applied);
         assert(nearf(turner.getRotationEulerDegrees().y, 12.0f, 1e-2f));
+
+        // ------------------------------------------------------------------
+        // 9. Transcendentals: sin/cos/exp/ln as EXACT factors — periodic and
+        //    exponential change as law-text, closed under the calculus.
+        // ------------------------------------------------------------------
+        const double kPi = 3.14159265358979323846;
+
+        // Exact evaluation.
+        Expression wave = Expression::transcendental(
+            TransFactor::Kind::Sin, "t", 2.0, 0.0, 3.0);   // 3·sin(2t)
+        assert(neard(*wave.evaluate({{"t", kPi / 4.0}}), 3.0));   // sin(π/2) = 1
+        Expression growth = Expression::transcendental(
+            TransFactor::Kind::Exp, "t");
+        assert(neard(*growth.evaluate({{"t", 0.0}}), 1.0));
+        Expression logOf = Expression::transcendental(
+            TransFactor::Kind::Ln, "x", 3.0);              // ln(3x)
+        assert(neard(*logOf.evaluate({{"x", 1.0 / 3.0}}), 0.0));
+        assert(!logOf.evaluate({{"x", -1.0}}));            // outside domain: undefined
+        assert(!logOf.evaluate({{"x", 0.0}}));
+
+        // Chain rule: d/dt 3·sin(2t) = 6·cos(2t).
+        Expression dwave = wave.derivative("t");
+        assert(neard(*dwave.evaluate({{"t", 0.0}}), 6.0));
+        // Product rule: d/dx x·sin(x) = sin(x) + x·cos(x).
+        Expression xsin = Expression::variable("x").times(
+            Expression::transcendental(TransFactor::Kind::Sin, "x"));
+        Expression dxsin = xsin.derivative("x");
+        assert(dxsin.terms.size() == 2);
+        assert(neard(*dxsin.evaluate({{"x", kPi}}),
+                     std::sin(kPi) + kPi * std::cos(kPi)));
+        // d/dx ln(3x) = 1/x (the scale cancels — Ln carries no shift).
+        Expression dlog = logOf.derivative("x");
+        assert(neard(*dlog.evaluate({{"x", 4.0}}), 0.25));
+        // exp is its own derivative (times the inner scale).
+        Expression dgrowth = growth.derivative("t");
+        assert(neard(*dgrowth.evaluate({{"t", 1.5}}), std::exp(1.5)));
+
+        // ∫x⁻¹ dx = ln(x): the old honest gap CLOSES.
+        Expression inverse = Expression::variable("x", -1.0, 5.0);   // 5/x
+        auto lnIntegral = inverse.antiderivative("x");
+        assert(lnIntegral.has_value());
+        assert(neard(*lnIntegral->evaluate({{"x", 2.0}}), 5.0 * std::log(2.0)));
+        // ∫3·sin(2t) dt = -(3/2)·cos(2t); its derivative returns the wave.
+        auto waveIntegral = wave.antiderivative("t");
+        assert(waveIntegral.has_value());
+        assert(neard(*waveIntegral->evaluate({{"t", 0.0}}), -1.5));
+        Expression roundTrip = waveIntegral->derivative("t");
+        assert(neard(*roundTrip.evaluate({{"t", 0.7}}), *wave.evaluate({{"t", 0.7}})));
+        // ∫ln(3x) dx = x·ln(3x) − x, checked against the analytic value.
+        auto logIntegral = logOf.antiderivative("x");
+        assert(logIntegral.has_value());
+        assert(neard(*logIntegral->evaluate({{"x", 2.0}}),
+                     2.0 * std::log(6.0) - 2.0));
+        // x·sin(x) needs integration by parts: honestly not yet held.
+        assert(!xsin.antiderivative("x").has_value());
+
+        // Like terms combine across identical transcendental shapes.
+        Expression doubled = wave.plus(wave);
+        assert(doubled.terms.size() == 1);
+        assert(neard(doubled.terms[0].coefficient, 6.0));
+
+        // The exact sinusoid matches evalTrack's form: bias + A·sin(2π(f·t + φ)).
+        Expression track = Expression::sinusoid(2.0, 0.5, 0.25, 1.0, "t");
+        assert(neard(*track.evaluate({{"t", 0.0}}), 1.0 + 2.0 * std::sin(kPi / 2.0)));
+
+        // Law-text like everything else: survives serialization.
+        Expression rebornWave = Expression::fromJson(wave.toJson());
+        assert(rebornWave.terms.size() == 1 && rebornWave.terms[0].trans.size() == 1);
+        assert(neard(*rebornWave.evaluate({{"t", 0.3}}), *wave.evaluate({{"t", 0.3}})));
+
+        // And runs in the pipeline: position.y := sin(π/2 · x) on a subject.
+        Law waveLaw("crest");
+        waveLaw.addAuthor(author);
+        waveLaw.setActionModel(ActionNode::map(
+            "position.y",
+            Piecewise::continuous(Expression::transcendental(
+                TransFactor::Kind::Sin, "x", kPi / 2.0)),
+            MathBindings{{"x", PropertyPath::parse("position.x")}}));
+        Object surfer;
+        surfer.setPosition(glm::vec3(1.0f, 0.0f, 0.0f));
+        assert(waveLaw.applyTo(surfer) == Law::ApplicationResult::Applied);
+        assert(nearf(surfer.getPosition().y, 1.0f));         // sin(π/2) = 1
     }
 
     glfwDestroyWindow(window);
