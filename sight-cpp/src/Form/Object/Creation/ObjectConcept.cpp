@@ -2,6 +2,7 @@
 
 #include "Form/Object/Geometry/SdfJson.hpp"
 #include "Singularity/Core/EventBus.hpp"
+#include "Singularity/TransferPolicy.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
@@ -37,12 +38,14 @@ glm::mat4 mat4FromJson(const nlohmann::json& j) {
 // ---------------------------------------------------------------------------
 
 nlohmann::json PropertyMapping::toJson() const {
-    return nlohmann::json{
+    nlohmann::json j{
         {"source", source.toString()},
         {"transform", transform.toJson()},
         {"target", target.toString()},
         {"agg", static_cast<int>(agg)}
     };
+    if (hasExact) j["exact"] = exact.toJson();
+    return j;
 }
 
 PropertyMapping PropertyMapping::fromJson(const nlohmann::json& j) {
@@ -51,6 +54,10 @@ PropertyMapping PropertyMapping::fromJson(const nlohmann::json& j) {
     if (j.contains("transform")) m.transform = CurveModel::fromJson(j["transform"]);
     m.target = PropertyPath::parse(j.value("target", std::string()));
     m.agg = static_cast<Aggregate>(j.value("agg", 0));
+    if (j.contains("exact")) {
+        m.hasExact = true;
+        m.exact = OntoMath::Piecewise::fromJson(j["exact"]);
+    }
     return m;
 }
 
@@ -169,9 +176,13 @@ std::vector<std::unique_ptr<Object>> ObjectConcept::instantiate(
         }
         newborn->setTransform(placement * member.relativeTransform);
 
-        // Derivation: carry structure across through the mappings.
+        // Derivation: carry structure across through the mappings. Each
+        // transfer passes the Singularity gate first — an object's
+        // properties are accessible to set-to-set only where the
+        // TransferPolicy (itself law-governable) allows.
         if (sources && !sources->empty()) {
             for (const auto& mapping : _mappings) {
+                if (!TransferPolicy::instance().canTransfer(mapping.source)) continue;
                 double x = 0.0;
                 bool have = false;
                 if (mapping.agg == PropertyMapping::Aggregate::PerMember) {
@@ -205,8 +216,9 @@ std::vector<std::unique_ptr<Object>> ObjectConcept::instantiate(
                     }
                 }
                 if (have) {
-                    mapping.target.setValue(*newborn,
-                                            PropertyValue(mapping.transform.evaluate(x)));
+                    // Exact math when authored; undefined transfers nothing.
+                    const auto y = mapping.apply(x);
+                    if (y) mapping.target.setValue(*newborn, PropertyValue(*y));
                 }
             }
         }
@@ -216,6 +228,16 @@ std::vector<std::unique_ptr<Object>> ObjectConcept::instantiate(
         _provenance.add(std::make_shared<Relation>(
             "generated-from", *newborn, *this, true, 1.0f));
         newborns.push_back(std::move(newborn));
+    }
+
+    // A birth can wake laws: the echo announces WHICH concept just
+    // manifested (subject: the concept — the newborns' provenance names it).
+    if (!newborns.empty()) {
+        ECA::Event echo;
+        echo.type = "concept-instantiated";
+        echo.subject = this;
+        echo.timestamp = std::time(nullptr);
+        Core::EventBus::instance().publish(echo);
     }
     return newborns;
 }

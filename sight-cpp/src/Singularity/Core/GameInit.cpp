@@ -12,6 +12,7 @@
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
+#include "Singularity/TransferPolicy.hpp"
 #include "Person/Body/BodyPart/BodyPart.hpp"
 
 #include <GLFW/glfw3.h>
@@ -31,6 +32,7 @@ bool Game::init() {
     // Laws listen from the first frame: every ECA::Event published anywhere
     // in the engine becomes a fact the law network can act on.
     _lawManager.connectToEventBus();
+    (void)TransferPolicy::instance();   // the gate exists from the first frame
 
     // The Universe: what continuous laws watch and quantified conditions
     // (ForAny/ForAll) range over — the active world's objects, the laws
@@ -48,6 +50,9 @@ bool Game::init() {
         for (const auto& rel : mgr.active().formation().relations().getAll()) {
             if (rel) beings.push_back(rel.get());
         }
+        // The transfer gate is a legible being: laws govern set-to-set
+        // access by writing @transfer-policy.gate.* properties.
+        beings.push_back(&TransferPolicy::instance());
         beings.push_back(&_player);
     });
 

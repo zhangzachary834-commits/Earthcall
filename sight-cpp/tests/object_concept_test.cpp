@@ -8,7 +8,9 @@
 // and an unauthored law cannot create.
 
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "Form/Object/Creation/ObjectConcept.hpp"
+#include "Singularity/TransferPolicy.hpp"
 #include "ZonesOfEarth/World/World.hpp"
 
 #include <GLFW/glfw3.h>
@@ -135,6 +137,114 @@ int main() {
         assert(!records.empty() &&
                records.front().result == Law::ApplicationResult::Applied);
         assert(world.objects().size() == 2);
+
+        // ------------------------------------------------------------------
+        // 5. Exact mathematics in the derivation: the mapping transform is
+        //    the full OntoMath piecewise algebra — undefined transfers
+        //    NOTHING (bounded domains are honored, never zero-filled).
+        // ------------------------------------------------------------------
+        Object src;
+        src.setPosition(glm::vec3(0.0f, 3.0f, 0.0f));
+        std::vector<Object*> srcSet{&src};
+        auto squared = ObjectConcept::captureFrom(srcSet, "squared", &author);
+        {
+            PropertyMapping m;
+            m.source = PropertyPath::parse("position.y");
+            m.target = PropertyPath::parse("position.y");
+            m.hasExact = true;
+            OntoMath::Piecewise f;                        // y = x^2 for x in [0, 5]
+            f.inputVariable = "x";
+            OntoMath::Piecewise::Piece piece;
+            piece.hasLo = true;
+            piece.lo = 0.0;
+            piece.hasHi = true;
+            piece.hi = 5.0;
+            piece.expression = OntoMath::Expression::variable("x", 2.0);
+            f.pieces.push_back(std::move(piece));
+            m.exact = std::move(f);
+            squared->addMapping(std::move(m));
+        }
+        auto exactBorn = squared->instantiate(glm::mat4(1.0f), &srcSet);
+        assert(exactBorn.size() == 1);
+        assert(nearf(exactBorn[0]->getPosition().y, 9.0f));      // 3^2, exact
+
+        src.setPosition(glm::vec3(0.0f, 7.0f, 0.0f));            // outside [0,5]
+        auto outside = squared->instantiate(glm::mat4(1.0f), &srcSet);
+        assert(nearf(outside[0]->getPosition().y, 0.0f));        // untouched (template pose)
+
+        // The exact transform survives serialization like everything else.
+        auto rebornConcept = ObjectConcept::fromJson(squared->toJson());
+        assert(rebornConcept->mappings().size() == 1);
+        assert(rebornConcept->mappings()[0].hasExact);
+
+        // ------------------------------------------------------------------
+        // 6. Governed transfer: properties reach set-to-set only through
+        //    the Singularity gate — and the gate is itself a legible being
+        //    that ordinary LAWS govern.
+        // ------------------------------------------------------------------
+        src.setPosition(glm::vec3(0.0f, 3.0f, 0.0f));
+        auto& policy = TransferPolicy::instance();
+
+        assert(!policy.canTransfer(PropertyPath::parse("name")));       // gated
+        assert(policy.canTransfer(PropertyPath::parse("position.y"))); // kernel
+        assert(policy.canTransfer(PropertyPath::parse("shape.r")));    // governable-open
+
+        // A LAW closes the shape gate: transfer access is governed state.
+        // The policy must be reachable in the Universe for @-paths.
+        Universe::instance().setProvider([&](std::vector<Singular*>& beings) {
+            beings.push_back(&policy);
+        });
+        auto gateLaw = mgr.createLaw("close-the-shape-gate", {&author});
+        gateLaw->setActionModel(ActionNode::set(
+            "@transfer-policy.gate.shape", PropertyValue(false)));
+        assert(gateLaw->applyTo(src) == Law::ApplicationResult::Applied);
+        assert(!policy.canTransfer(PropertyPath::parse("shape.r")));   // closed by law
+
+        // A closed gate means the mapping is SKIPPED during instantiation.
+        src.setShape(Object::ShapeKind::Sphere, Object::ShapeParams{});
+        auto radiusTaker = ObjectConcept::captureFrom(srcSet, "radius-taker", &author);
+        {
+            PropertyMapping m;
+            m.source = PropertyPath::parse("shape.r");
+            m.target = PropertyPath::parse("shape.fillet");
+            m.transform = CurveModel::polynomial({0.0, 1.0});
+            radiusTaker->addMapping(std::move(m));
+        }
+        assert(PropertyPath::parse("shape.r").setValue(src, PropertyValue(0.9f)));
+        assert(PropertyPath::parse("shape.fillet").setValue(src, PropertyValue(0.0f)));
+        auto gatedBorn = radiusTaker->instantiate(glm::mat4(1.0f), &srcSet);
+        PropertyValue fv;
+        double filletValue = -1.0;
+        assert(PropertyPath::parse("shape.fillet").getValue(*gatedBorn[0], fv) &&
+               propertyValueToNumber(fv, filletValue));
+        assert(!nearf(static_cast<float>(filletValue), 0.9f));   // did NOT transfer
+
+        // ...and a law reopens it; now the same derivation carries.
+        auto openLaw = mgr.createLaw("open-the-shape-gate", {&author});
+        openLaw->setActionModel(ActionNode::set(
+            "@transfer-policy.gate.shape", PropertyValue(true)));
+        assert(openLaw->applyTo(src) == Law::ApplicationResult::Applied);
+        assert(policy.canTransfer(PropertyPath::parse("shape.r")));
+        auto openBorn = radiusTaker->instantiate(glm::mat4(1.0f), &srcSet);
+        assert(PropertyPath::parse("shape.fillet").getValue(*openBorn[0], fv) &&
+               propertyValueToNumber(fv, filletValue));
+        assert(nearf(static_cast<float>(filletValue), 0.9f));    // transferred
+
+        // The Kernel floor holds: no law closes position.
+        auto tyrant = mgr.createLaw("close-position", {&author});
+        tyrant->setActionModel(ActionNode::set(
+            "@transfer-policy.gate.position", PropertyValue(false)));
+        tyrant->applyTo(src);                                    // write refused inside
+        assert(policy.canTransfer(PropertyPath::parse("position.y")));
+        assert(!policy.setOpen("position", false));              // even directly
+
+        // Policy state round-trips with the world.
+        const auto policyJson = policy.toJson();
+        policy.setOpen("shape", false);
+        policy.loadFromJson(policyJson);
+        assert(policy.canTransfer(PropertyPath::parse("shape.r")));
+
+        Universe::instance().setProvider({});
     }
 
     glfwDestroyWindow(window);

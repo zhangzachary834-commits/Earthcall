@@ -534,6 +534,34 @@ generation." It elevates creation above copy-paste: *"each new column's height =
 new set is mathematically **derived** from the old — modal information
 transferred, not bytes duplicated.
 
+**Landed (2026-07-11):** mappings may carry an EXACT OntoMath `Piecewise`
+transform (`hasExact`/`exact` — bounded domains, transcendentals; undefined
+transfers nothing), and the whole experience is authorable in the **Creation
+Console** (`Rendering/CreationWindow`): assemble a source set from the 3D
+selection, pick and choose which properties carry over from the live set's own
+vocabulary, choose redistribution (per member / mean / sum / max) and
+transform (as-is / linear / exact f(x) via the shared MathEd editors), then
+"Capture concept" and/or "Create objects now" — with "use output as new source
+set" chaining set-to-set-to-set. `instantiate` publishes a
+`"concept-instantiated"` ECA echo (a birth can wake laws).
+
+**Governed transfer (landed):** every mapping passes the Singularity
+**TransferPolicy** gate (`Singularity/TransferPolicy` — permissions root at
+Singularity). Three tiers: *Kernel* (position/rotation/center — universally
+transferable, laws cannot close), *Governable* (open by default; a law may
+close/reopen), *Gated* (governance state like enabled/drives/name/weight —
+closed until a law opens it). The policy is itself a LEGIBLE Singular
+(identifier `transfer-policy`): each gate is a bool property, so ordinary laws
+govern access — `@transfer-policy.gate.shape := false` — with Kernel gates
+registered read-only (the anti-tyranny floor). State persists with the world.
+
+Still ahead (the user's layers 2/4/5): first-mover tools recorded mid-process
+(ChangeRecorder thread), cross-kind transference, and set-to-set over
+non-Object Singulars (Persons, BodyParts, Zones, Relations, Formations) —
+needs a Singular-kind-aware MemberTemplate; the property table and gates carry
+over unchanged. Law set-to-set arrives as the special case (Law extends
+Object) under Zone-level authorial permissions.
+
 ### 7c. `Spawn` — creation *is* a law application
 
 `World : public Singular` (`World.hpp`) makes the unification nearly free. The

@@ -2,7 +2,10 @@
 
 #include "Form/Singular/Property/PropertyPath.hpp"
 #include "Singularity/OntoMath/CurveModel.hpp"
+#include "Singularity/OntoMath/Expression.hpp"
 #include "json.hpp"
+
+#include <optional>
 
 // Set-to-set with structure carried across (LAW_AND_CREATION_SYSTEM.md §7b):
 // read `source` on a source-set member, pass it through `transform`, write
@@ -14,10 +17,25 @@ struct PropertyMapping {
     CurveModel transform;            // y = f(x); identity = polynomial {0, 1}
     PropertyPath target;             // written on the newborn
 
+    // When authored, the EXACT transform supersedes the curve: the full
+    // OntoMath piecewise algebra (bounded domains, transcendentals). The
+    // input variable is exact.inputVariable; undefined math (outside every
+    // piece) transfers NOTHING — a derivation never manifests undefined
+    // values.
+    bool hasExact = false;
+    OntoMath::Piecewise exact;
+
     // PerMember pairs newborn i with source i (mod source count); the
     // aggregates fold the whole source set into one domain value.
     enum class Aggregate { PerMember = 0, Mean = 1, Sum = 2, Max = 3 };
     Aggregate agg = Aggregate::PerMember;
+
+    // The transform applied: exact when authored (nullopt outside its
+    // domain), otherwise the curve (total).
+    std::optional<double> apply(double x) const {
+        if (hasExact) return exact.evaluate({{exact.inputVariable, x}});
+        return transform.evaluate(x);
+    }
 
     nlohmann::json toJson() const;
     static PropertyMapping fromJson(const nlohmann::json& j);

@@ -454,6 +454,7 @@ private:
     BodyPart* _selectedCharacterPart = nullptr;
     bool _showRelationManager = false;
     bool _showLawAuthor = false;
+    bool _showCreationConsole = false;
     bool _characterDesignLocked = false;
     bool _use2DPressureSimulation = false;
     bool _cursorToolsOpen = false;

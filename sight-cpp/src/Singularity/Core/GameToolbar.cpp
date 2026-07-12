@@ -6,6 +6,7 @@
 #include "Rendering/BrushSystem.hpp"
 #include "Rendering/RelationManagerWindow.hpp"
 #include "Rendering/LawGraphWindow.hpp"
+#include "Rendering/CreationWindow.hpp"
 #include "OurVerse/Tool.hpp"
 #include "OurVerse/AdvancedFacePaint.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
@@ -185,6 +186,11 @@ void Game::renderCreatorToolbar() {
     if (_showLawAuthor) {
         Rendering::renderLawGraphWindow(&_showLawAuthor, _lawManager, _player,
                                         _selectedObject3D);
+    }
+
+    if (_showCreationConsole) {
+        Rendering::renderCreationWindow(&_showCreationConsole, _player,
+                                        _selectedObject3D, mgr.active().world());
     }
 
     drawLoadWindow();
@@ -1451,6 +1457,9 @@ void Game::renderRelationsConsole(Zone& zone) {
     }
     if (ImGui::Button("Open Law Author")) {
         _showLawAuthor = true;
+    }
+    if (ImGui::Button("Open Creation Console")) {
+        _showCreationConsole = true;
     }
 }
 

@@ -4,6 +4,7 @@
 #include "Game.hpp"
 #include "Form/Object/Object.hpp"
 #include "Form/Object/Creation/ObjectConcept.hpp"
+#include "Singularity/TransferPolicy.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
@@ -105,6 +106,7 @@ nlohmann::json Game::buildSaveJson() const {
     // "time" doesn't restart at zero.
     j["authoredLaws"] = _lawManager.toJson();
     j["concepts"] = ConceptRegistry::instance().toJson();
+    j["transferPolicy"] = TransferPolicy::instance().toJson();
     j["worldTime"] = _worldTime;
 
     return j;
@@ -276,6 +278,9 @@ void Game::loadState(const std::string& filename) {
         Universe::instance().setClock(_worldTime, 0.0);
         if (j.contains("concepts")) {
             ConceptRegistry::instance().loadFromJson(j["concepts"]);
+        }
+        if (j.contains("transferPolicy")) {
+            TransferPolicy::instance().loadFromJson(j["transferPolicy"]);
         }
         if (j.contains("authoredLaws")) {
             _lawManager.loadFromJson(j["authoredLaws"]);
