@@ -244,6 +244,50 @@ int main() {
         policy.loadFromJson(policyJson);
         assert(policy.canTransfer(PropertyPath::parse("shape.r")));
 
+        // ------------------------------------------------------------------
+        // 7. The set's STRUCTURE is captured and reborn: an inter-member
+        //    relation ("pillar attached to beam") becomes a fresh relation
+        //    between the corresponding newborns, every instantiation.
+        // ------------------------------------------------------------------
+        Object pillar, beam;
+        pillar.setPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+        beam.setPosition(glm::vec3(2.0f, 0.0f, 0.0f));
+
+        RelationManager graph;
+        graph.add(std::make_shared<Relation>("attached-to", pillar, beam, true, 0.8f));
+        Universe::instance().setRelationProvider([&](std::vector<Relation*>& out) {
+            for (const auto& rel : graph.getAll()) {
+                if (rel) out.push_back(rel.get());
+            }
+        });
+        RelationManager rebornGraph;   // where newborn relations register
+        Universe::instance().setRelationRegistrar(
+            [&](std::shared_ptr<Relation> rel) { rebornGraph.add(std::move(rel)); });
+
+        std::vector<Object*> pairSet{&pillar, &beam};
+        auto structure = ObjectConcept::captureFrom(pairSet, "pillar-beam", &author);
+        assert(structure->relationTemplates().size() == 1);
+        assert(structure->relationTemplates()[0].type == "attached-to");
+        assert(structure->relationTemplates()[0].directed);
+
+        auto twins = structure->instantiate(
+            glm::translate(glm::mat4(1.0f), glm::vec3(10.0f, 0.0f, 0.0f)), &pairSet);
+        assert(twins.size() == 2);
+        assert(rebornGraph.getAll().size() == 1);
+        const Relation& rebornRel = *rebornGraph.getAll().front();
+        assert(rebornRel.type == "attached-to");
+        assert(rebornRel.directed);
+        assert(nearf(rebornRel.weight, 0.8f));
+        assert(rebornRel.entityA == twins[0]->getIdentifier());   // NEWBORN ids,
+        assert(rebornRel.entityB == twins[1]->getIdentifier());   // not the sources'
+
+        // The structure survives serialization like all concept text.
+        auto rebornStructure = ObjectConcept::fromJson(structure->toJson());
+        assert(rebornStructure->relationTemplates().size() == 1);
+        assert(rebornStructure->relationTemplates()[0].type == "attached-to");
+
+        Universe::instance().setRelationProvider({});
+        Universe::instance().setRelationRegistrar({});
         Universe::instance().setProvider({});
     }
 

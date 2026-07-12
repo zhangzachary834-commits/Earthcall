@@ -57,6 +57,21 @@ public:
         return out;
     }
 
+    // Registering a NEW relation into the world's graph — the write side.
+    // The engine wires this to the active zone's Formation; concept
+    // instantiation uses it so a captured set's inter-member relations are
+    // reborn between the newborns. No registrar = the relation is not made
+    // (structure is never silently dropped somewhere unfindable).
+    using RelationRegistrar = std::function<void(std::shared_ptr<Relation>)>;
+
+    void setRelationRegistrar(RelationRegistrar registrar) {
+        _relationRegistrar = std::move(registrar);
+    }
+    bool hasRelationRegistrar() const { return static_cast<bool>(_relationRegistrar); }
+    void addRelation(std::shared_ptr<Relation> relation) {
+        if (_relationRegistrar && relation) _relationRegistrar(std::move(relation));
+    }
+
     // ------------------------------------------------------------------
     // The world clock. Singularity owns time: the engine sets it once per
     // frame (accumulated seconds since the world began + that frame's dt),
@@ -114,6 +129,7 @@ private:
 
     Provider _provider;
     RelationProvider _relationProvider;
+    RelationRegistrar _relationRegistrar;
 
     double _now = 0.0;
     double _dt = 0.0;

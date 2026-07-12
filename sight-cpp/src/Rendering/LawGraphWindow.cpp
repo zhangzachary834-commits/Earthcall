@@ -1226,6 +1226,15 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player,
                 ImGui::TextColored(ImVec4(0.45f, 0.75f, 1.0f, 1.0f),
                                    "~ Drives: after the trigger it keeps applying, until "
                                    "the authored bounds end.");
+                static const char* retriggerModes[] = {
+                    "absorb it (the running process keeps its clock)",
+                    "restart (the new trigger is a new t = 0)"};
+                int retrigger = static_cast<int>(law->retrigger());
+                ImGui::SetNextItemWidth(360.0f);
+                if (ImGui::Combo("While driving, a re-trigger will", &retrigger,
+                                 retriggerModes, 2)) {
+                    law->setRetrigger(static_cast<Law::Retrigger>(retrigger));
+                }
             } else if (law->hasActionModel() &&
                        law->actionModel()->referencesSinceApplied()) {
                 ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.2f, 1.0f),

@@ -305,6 +305,39 @@ int main() {
         mgr.tick();
         assert(mgr.driveSessions().empty());
 
+        // Retrigger is AUTHORED vocabulary: with Restart, a re-kick mid-arc
+        // is a NEW t = 0 — re-kick, re-arc.
+        b.setPosition(glm::vec3(3.0f, 9.0f, 0.0f));
+        auto rearc = mgr.createLaw("re-kick-re-arc", {&author});
+        rearc->setDrives(true);
+        rearc->setRetrigger(Law::Retrigger::Restart);
+        rearc->setActionModel(ActionNode::map(
+            "position.y",
+            boundedInT(OntoMath::Expression::variable("t", 1.0, 2.0), 0.0, 5.0),
+            tBinding));                                    // y := 2t, t in [0,5]
+        mgr.rete().bindLawToAlpha(rearc->getIdentifier(), alphaKick);
+
+        Universe::instance().setClock(700.0, 1.0);
+        Core::EventBus::instance().publish(
+            ECA::Event{"kick", &b, nullptr, std::time(nullptr)});
+        mgr.tick();                                        // t = 0 -> y = 0
+        Universe::instance().setClock(702.0, 1.0);
+        mgr.tick();                                        // t = 2 -> y = 4
+        assert(nearf(b.getPosition().y, 4.0f));
+        Core::EventBus::instance().publish(                // re-kick MID-ARC
+            ECA::Event{"kick", &b, nullptr, std::time(nullptr)});
+        Universe::instance().setClock(703.0, 1.0);
+        mgr.tick();                                        // restarted: t = 0 -> y = 0
+        assert(nearf(b.getPosition().y, 0.0f));            // re-arc, not t = 3 -> 6
+        assert(mgr.driveSessions().size() == 1);           // same ONE process, new clock
+        rearc->setEnabled(false);
+        Universe::instance().setClock(704.0, 1.0);
+        mgr.tick();
+        assert(mgr.driveSessions().empty());
+
+        // The choice survives serialization.
+        assert(Law::fromJson(rearc->toJson())->retrigger() == Law::Retrigger::Restart);
+
         // ------------------------------------------------------------------
         // 7. The model survives serialization; sessions are runtime-only.
         // ------------------------------------------------------------------

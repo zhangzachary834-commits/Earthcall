@@ -17,9 +17,6 @@
 // instantiation is an independent being (SdfNode deep-copy semantics), derived
 // from its sources through PropertyMappings, with provenance recorded by
 // identifier (abstracted-from / authored-by / generated-from).
-//
-// Inter-member Relation capture (RelationTemplates) lands with the
-// relation-graph thread that Related conditions also wait on.
 class ObjectConcept : public Object {
 public:
     struct MemberTemplate {
@@ -34,6 +31,22 @@ public:
         static MemberTemplate fromJson(const nlohmann::json& j);
     };
 
+    // A relation BETWEEN members, remembered by member INDEX so it can be
+    // reborn between the corresponding newborns: capture "pillar-2 is
+    // attached to beam-0" once, and every instantiation gets its own
+    // attachment. Captured from the world's relation graph wherever both
+    // endpoints are inside the source set.
+    struct RelationTemplate {
+        int aIndex = 0;
+        int bIndex = 0;
+        std::string type;
+        bool directed = false;
+        float weight = 1.0f;
+
+        nlohmann::json toJson() const;
+        static RelationTemplate fromJson(const nlohmann::json& j);
+    };
+
     explicit ObjectConcept(const std::string& name = "Concept");
 
     std::string getIdentifier() const override { return _conceptId; }
@@ -46,6 +59,11 @@ public:
     std::vector<PropertyMapping>& mappings() { return _mappings; }
     const std::vector<PropertyMapping>& mappings() const { return _mappings; }
     void addMapping(PropertyMapping mapping) { _mappings.push_back(std::move(mapping)); }
+
+    std::vector<RelationTemplate>& relationTemplates() { return _relationTemplates; }
+    const std::vector<RelationTemplate>& relationTemplates() const {
+        return _relationTemplates;
+    }
 
     RelationManager& provenance() { return _provenance; }
     const RelationManager& provenance() const { return _provenance; }
@@ -76,6 +94,7 @@ private:
     std::string _name;
     std::vector<MemberTemplate> _members;
     std::vector<PropertyMapping> _mappings;
+    std::vector<RelationTemplate> _relationTemplates;
     RelationManager _provenance;
 };
 

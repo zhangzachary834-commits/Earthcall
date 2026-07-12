@@ -325,9 +325,10 @@ void renderCreationWindow(bool* open, Singular& author, Object* selected, World&
     for (const auto& concept : concepts) {
         if (!concept) continue;
         ImGui::PushID(concept->getIdentifier().c_str());
-        ImGui::BulletText("%s  [%s]  %zu member(s), %zu mapping(s)",
+        ImGui::BulletText("%s  [%s]  %zu member(s), %zu mapping(s), %zu relation(s)",
                           concept->name().c_str(), concept->getIdentifier().c_str(),
-                          concept->members().size(), concept->mappings().size());
+                          concept->members().size(), concept->mappings().size(),
+                          concept->relationTemplates().size());
         ImGui::SameLine();
         if (ImGui::SmallButton("instantiate")) {
             auto newborns = concept->instantiate(

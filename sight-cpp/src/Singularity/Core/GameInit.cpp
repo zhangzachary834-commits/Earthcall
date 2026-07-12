@@ -63,6 +63,11 @@ bool Game::init() {
             if (rel) relations.push_back(rel.get());
         }
     });
+    // ...and its write side: newborn relations (a concept's reborn
+    // inter-member structure) join the same Formation.
+    Universe::instance().setRelationRegistrar([](std::shared_ptr<Relation> relation) {
+        mgr.active().formation().relations().add(std::move(relation));
+    });
 
     // Init GL state – depth test already enabled in ShadingSystem::init()
     ShadingSystem::init();

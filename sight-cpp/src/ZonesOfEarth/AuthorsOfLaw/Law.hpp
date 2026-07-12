@@ -117,6 +117,16 @@ public:
     bool drives() const { return _drives; }
     void setDrives(bool drives) { _drives = drives; }
 
+    // What a re-trigger means while this law's drive is still running — an
+    // AUTHORED choice, never an accident (serialized as int, APPEND-ONLY):
+    //   Absorb  — the running process owns its clock; new triggers are
+    //             absorbed (a block resting in constant collision cannot
+    //             stack or reset the process)
+    //   Restart — the new trigger is a new t=0: re-kick mid-arc, re-arc
+    enum class Retrigger { Absorb = 0, Restart = 1 };
+    Retrigger retrigger() const { return _retrigger; }
+    void setRetrigger(Retrigger mode) { _retrigger = mode; }
+
     // Per-subject condition memory for edge detection (OnBecomeTrue).
     bool lastConditionState(const std::string& subjectId) const {
         auto it = _conditionMemory.find(subjectId);
@@ -270,6 +280,7 @@ private:
     Activation _activation = Activation::OnEvent;
     Scope _scope = Scope::Subject;
     bool _drives = false;
+    Retrigger _retrigger = Retrigger::Absorb;
     std::unordered_map<std::string, bool> _conditionMemory;   // edge detection
     std::unordered_map<std::string, double> _onsetMemory;     // t=0 per subject
     ConditionMode _conditionMode = ConditionMode::All;
@@ -462,6 +473,7 @@ public:
 
 private:
     void maybeStartDriveSession(Law& law, Singular& subject);
+    void restartDriveSession(Law& law, const std::string& subjectId);
     void runDriveSessions(std::vector<Law::ApplicationRecord>& records);
 
     std::vector<std::shared_ptr<Law>> _laws;

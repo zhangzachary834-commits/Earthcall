@@ -4,6 +4,7 @@
 #include "Singularity/Core/EventBus.hpp"
 #include "Singularity/TransferPolicy.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
@@ -106,6 +107,29 @@ ObjectConcept::MemberTemplate ObjectConcept::MemberTemplate::fromJson(const nloh
 }
 
 // ---------------------------------------------------------------------------
+// ObjectConcept::RelationTemplate
+// ---------------------------------------------------------------------------
+
+nlohmann::json ObjectConcept::RelationTemplate::toJson() const {
+    return nlohmann::json{{"a", aIndex},
+                          {"b", bIndex},
+                          {"type", type},
+                          {"directed", directed},
+                          {"weight", weight}};
+}
+
+ObjectConcept::RelationTemplate ObjectConcept::RelationTemplate::fromJson(
+    const nlohmann::json& j) {
+    RelationTemplate t;
+    t.aIndex = j.value("a", 0);
+    t.bIndex = j.value("b", 0);
+    t.type = j.value("type", std::string());
+    t.directed = j.value("directed", false);
+    t.weight = j.value("weight", 1.0f);
+    return t;
+}
+
+// ---------------------------------------------------------------------------
 // ObjectConcept
 // ---------------------------------------------------------------------------
 
@@ -156,6 +180,33 @@ std::shared_ptr<ObjectConcept> ObjectConcept::captureFrom(
     if (author) {
         concept->_provenance.add(std::make_shared<Relation>(
             "authored-by", *concept, *author, true, 1.0f));
+    }
+
+    // Inter-member relations: wherever the world's graph relates two members
+    // of the source set, remember the edge BY INDEX — the concept carries
+    // the set's structure, not just its members.
+    std::vector<std::string> memberIds;
+    for (auto* source : sourceSet) {
+        memberIds.push_back(source ? source->getIdentifier() : std::string());
+    }
+    const auto indexOf = [&](const std::string& id) -> int {
+        for (std::size_t i = 0; i < memberIds.size(); ++i) {
+            if (!memberIds[i].empty() && memberIds[i] == id) return static_cast<int>(i);
+        }
+        return -1;
+    };
+    for (const Relation* rel : Universe::instance().relations()) {
+        if (!rel) continue;
+        const int a = indexOf(rel->entityA);
+        const int b = indexOf(rel->entityB);
+        if (a < 0 || b < 0) continue;
+        RelationTemplate t;
+        t.aIndex = a;
+        t.bIndex = b;
+        t.type = rel->type;
+        t.directed = rel->directed;
+        t.weight = rel->weight;
+        concept->_relationTemplates.push_back(std::move(t));
     }
     return concept;
 }
@@ -231,6 +282,23 @@ std::vector<std::unique_ptr<Object>> ObjectConcept::instantiate(
         newborns.push_back(std::move(newborn));
     }
 
+    // The set's STRUCTURE is reborn too: every captured inter-member
+    // relation becomes a fresh relation between the corresponding newborns,
+    // registered into the world's graph through the Universe. Each
+    // registration publishes "relation-formed" like any other.
+    if (!_relationTemplates.empty() && Universe::instance().hasRelationRegistrar()) {
+        for (const auto& t : _relationTemplates) {
+            if (t.aIndex < 0 || t.bIndex < 0 ||
+                t.aIndex >= static_cast<int>(newborns.size()) ||
+                t.bIndex >= static_cast<int>(newborns.size())) {
+                continue;
+            }
+            Universe::instance().addRelation(std::make_shared<Relation>(
+                t.type, *newborns[static_cast<std::size_t>(t.aIndex)],
+                *newborns[static_cast<std::size_t>(t.bIndex)], t.directed, t.weight));
+        }
+    }
+
     // A birth can wake laws: the echo announces WHICH concept just
     // manifested (subject: the concept — the newborns' provenance names it).
     if (!newborns.empty()) {
@@ -248,11 +316,14 @@ nlohmann::json ObjectConcept::toJson() const {
     for (const auto& m : _members) membersJson.push_back(m.toJson());
     nlohmann::json mappingsJson = nlohmann::json::array();
     for (const auto& m : _mappings) mappingsJson.push_back(m.toJson());
+    nlohmann::json relationsJson = nlohmann::json::array();
+    for (const auto& t : _relationTemplates) relationsJson.push_back(t.toJson());
     return nlohmann::json{
         {"id", _conceptId},
         {"name", _name},
         {"members", membersJson},
         {"mappings", mappingsJson},
+        {"relationTemplates", relationsJson},
         {"provenance", _provenance.toJson()}
     };
 }
@@ -273,6 +344,11 @@ std::shared_ptr<ObjectConcept> ObjectConcept::fromJson(const nlohmann::json& j) 
     if (j.contains("mappings")) {
         for (const auto& m : j["mappings"]) {
             concept->_mappings.push_back(PropertyMapping::fromJson(m));
+        }
+    }
+    if (j.contains("relationTemplates")) {
+        for (const auto& t : j["relationTemplates"]) {
+            concept->_relationTemplates.push_back(RelationTemplate::fromJson(t));
         }
     }
     return concept;

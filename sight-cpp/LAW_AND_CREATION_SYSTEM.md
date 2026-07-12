@@ -555,6 +555,21 @@ closed until a law opens it). The policy is itself a LEGIBLE Singular
 govern access — `@transfer-policy.gate.shape := false` — with Kernel gates
 registered read-only (the anti-tyranny floor). State persists with the world.
 
+**RelationTemplates (landed):** a concept captures the set's STRUCTURE, not
+just its members — wherever the world's relation graph relates two source-set
+members, the edge is remembered BY INDEX (`RelationTemplate {aIndex, bIndex,
+type, directed, weight}`), serialized with the concept, and reborn between
+the corresponding newborns on every instantiation, registered into the
+world's graph through `Universe::addRelation` (the write side the engine
+wires to the active zone's Formation; each registration publishes
+`relation-formed`).
+
+**Retrigger (landed):** what a re-trigger means while a drive is running is
+authored vocabulary — `Law::Retrigger {Absorb, Restart}` (serialized,
+APPEND-ONLY): Absorb keeps the running process's clock (a block resting in
+constant collision cannot stack or reset it); Restart makes the new trigger
+a new t = 0 (re-kick mid-arc, re-arc). Edited beside the Drive checkbox.
+
 Still ahead (the user's layers 2/4/5): first-mover tools recorded mid-process
 (ChangeRecorder thread), cross-kind transference, and set-to-set over
 non-Object Singulars (Persons, BodyParts, Zones, Relations, Formations) —

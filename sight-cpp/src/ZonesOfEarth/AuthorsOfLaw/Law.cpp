@@ -178,6 +178,7 @@ std::shared_ptr<Law> Law::fromJson(const nlohmann::json& j) {
     law->setActivation(static_cast<Activation>(j.value("activation", 0)));
     law->setScope(static_cast<Scope>(j.value("scope", 0)));
     law->setDrives(j.value("drives", false));
+    law->setRetrigger(static_cast<Retrigger>(j.value("retrigger", 0)));
     law->setConditionMode(j.value("conditionMode", std::string("all")) == "any"
                               ? ConditionMode::Any
                               : ConditionMode::All);
@@ -315,6 +316,7 @@ nlohmann::json Law::toJson() const {
         {"activation", static_cast<int>(_activation)},
         {"scope", static_cast<int>(_scope)},
         {"drives", _drives},
+        {"retrigger", static_cast<int>(_retrigger)},
         {"conditionMode", _conditionMode == ConditionMode::All ? "all" : "any"},
         {"authors", formationMemberIds(_authors)},
         {"conditionSubjects", formationMemberIds(_conditions)},
@@ -647,14 +649,15 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
                 else subjects = Universe::instance().beings();
                 for (Singular* being : subjects) {
                     if (!being || !law->conditionsSatisfied(*being)) continue;
-                    // A live drive session OWNS the process: a re-firing
-                    // event (a block resting in constant collision) is
-                    // absorbed, not stacked — one process, one clock, per
-                    // law-and-subject. Retrigger-restarts would be a future
-                    // authored choice, never an accident.
+                    // A live drive session OWNS the process: one process,
+                    // one clock, per law-and-subject. What a re-firing
+                    // event means is the AUTHOR'S choice — Absorb (a block
+                    // resting in constant collision cannot stack or reset
+                    // the process) or Restart (the new trigger is a new t=0).
                     if (law->drives() &&
                         hasDriveSession(law->getIdentifier(), being->getIdentifier())) {
-                        continue;
+                        if (law->retrigger() == Law::Retrigger::Absorb) continue;
+                        restartDriveSession(*law, being->getIdentifier());
                     }
                     if (law->applyTo(*being) == Law::ApplicationResult::Applied) {
                         maybeStartDriveSession(*law, *being);
@@ -669,7 +672,10 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
             if (!subject) continue;
             if (law->drives() &&
                 hasDriveSession(law->getIdentifier(), subject->getIdentifier())) {
-                continue;   // the session owns the process (see above)
+                if (law->retrigger() == Law::Retrigger::Absorb) {
+                    continue;   // the session owns the process (see above)
+                }
+                restartDriveSession(*law, subject->getIdentifier());
             }
             if (law->applyTo(*subject) == Law::ApplicationResult::Applied) {
                 maybeStartDriveSession(*law, *subject);
@@ -721,8 +727,11 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
             if (!fire) continue;
             if (law->drives() &&
                 hasDriveSession(law->getIdentifier(), subjectId)) {
-                continue;   // a re-edge while the launched process still
-                            // runs is absorbed — the session owns it
+                if (law->retrigger() == Law::Retrigger::Absorb) {
+                    continue;   // a re-edge while the launched process still
+                                // runs is absorbed — the session owns it
+                }
+                restartDriveSession(*law, subjectId);   // a re-edge = new t=0
             }
             if (law->applyTo(*subject) == Law::ApplicationResult::Applied) {
                 // An OnBecomeTrue law that drives launches its process at
@@ -737,6 +746,31 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
 
     runDriveSessions(records);
     return records;
+}
+
+void LawManager::restartDriveSession(Law& law, const std::string& subjectId) {
+    // The retrigger IS a new t=0 (the author chose Restart): the session
+    // keeps its identity but its clock and event participants begin again.
+    if (!Universe::instance().hasClock()) return;
+    const double now = Universe::instance().now();
+    for (auto& session : _driveSessions) {
+        if (session.lawId != law.getIdentifier() || session.subjectId != subjectId) {
+            continue;
+        }
+        session.onset = now;
+        session.eventSubjectId.clear();
+        session.eventObjectId.clear();
+        if (Universe::instance().hasApplicationEvent()) {
+            if (Singular* s = Universe::instance().applicationEventSubject()) {
+                session.eventSubjectId = s->getIdentifier();
+            }
+            if (Singular* o = Universe::instance().applicationEventObject()) {
+                session.eventObjectId = o->getIdentifier();
+            }
+        }
+        law.rememberOnset(subjectId, now);
+        return;
+    }
 }
 
 void LawManager::maybeStartDriveSession(Law& law, Singular& subject) {
