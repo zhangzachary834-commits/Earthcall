@@ -1293,8 +1293,23 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player,
                 if (count > 3) { authors += "..."; break; }
                 authors += author->getIdentifier();
             }
-            ImGui::TextDisabled("Authored by: %s",
-                                authors.empty() ? "(nobody — cannot fire)" : authors.c_str());
+            if (authors.empty()) {
+                ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.2f, 1.0f),
+                                   "Authored by: nobody — the law CANNOT FIRE.");
+                ImGui::SameLine();
+                // Re-authoring is a Person's signature, not a load-time
+                // forgery — laws saved before authors had stable identities
+                // reload unauthored, and this is their lawful way back.
+                if (ImGui::SmallButton("sign as author")) {
+                    law->addAuthor(player);
+                }
+                if (ImGui::IsItemHovered()) {
+                    ImGui::SetTooltip("add yourself (%s) as this law's author",
+                                      player.getIdentifier().c_str());
+                }
+            } else {
+                ImGui::TextDisabled("Authored by: %s", authors.c_str());
+            }
         }
 
         editTriggers(laws, *law);
