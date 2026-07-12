@@ -24,8 +24,6 @@ struct SessionState {
     std::string selectedLawId;
     int selectedCard = -1;
 
-    // lawId -> bound trigger event types (session view of the Rete bindings).
-    std::unordered_map<std::string, std::vector<std::string>> triggers;
     int eventCombo = 0;
     char eventBuf[64] = "";
 
@@ -305,32 +303,25 @@ void warnIfWholeVector(const PropertyPath& path) {
 // Triggers: what wakes the law. Shown on the law card and the event card.
 // ---------------------------------------------------------------------------
 void editTriggers(LawManager& laws, Law& law) {
-    auto& bound = g.triggers[law.getIdentifier()];
+    // The manager owns the trigger truth (serialized with the world);
+    // the window merely edits it.
+    const auto& bound = laws.triggersOf(law.getIdentifier());
 
     ImGui::TextColored(kHeaderColor, "Triggers — what wakes this law");
     if (bound.empty()) {
         ImGui::TextDisabled("No trigger bound: the law only runs when applied directly.");
         ImGui::TextDisabled("Bind an event below so the law LISTENS for it.");
     }
-    int removeIdx = -1;
+    std::string removeType;
     for (std::size_t i = 0; i < bound.size(); ++i) {
         ImGui::PushID(static_cast<int>(i));
         ImGui::BulletText("on \"%s\"", bound[i].c_str());
         ImGui::SameLine();
-        if (ImGui::SmallButton("unbind")) removeIdx = static_cast<int>(i);
+        if (ImGui::SmallButton("unbind")) removeType = bound[i];
         ImGui::PopID();
     }
-    if (removeIdx >= 0) {
-        bound.erase(bound.begin() + removeIdx);
-        // Rebind from scratch: drop every binding, re-create the remaining
-        // ones on fresh alpha nodes (unbound nodes stay inert).
-        laws.rete().unbindLaw(law.getIdentifier());
-        for (const auto& type : bound) {
-            const std::size_t alpha = laws.rete().addAlphaNode(
-                "type == " + type,
-                [type](const ReteFact& f) { return f.type == type; });
-            laws.rete().bindLawToAlpha(law.getIdentifier(), alpha);
-        }
+    if (!removeType.empty()) {
+        laws.unbindTrigger(law.getIdentifier(), removeType);
     }
 
     // Add a trigger: pick an engine event (with its meaning shown), or the
@@ -360,13 +351,8 @@ void editTriggers(LawManager& laws, Law& law) {
     if (ImGui::Button("Bind trigger")) {
         const std::string type = custom ? std::string(g.eventBuf)
                                         : std::string(kEngineEvents[g.eventCombo].type);
-        if (!type.empty() &&
-            std::find(bound.begin(), bound.end(), type) == bound.end()) {
-            const std::size_t alpha = laws.rete().addAlphaNode(
-                "type == " + type,
-                [type](const ReteFact& f) { return f.type == type; });
-            laws.rete().bindLawToAlpha(law.getIdentifier(), alpha);
-            bound.push_back(type);
+        if (!type.empty()) {
+            laws.bindTrigger(law.getIdentifier(), type);
             g.eventBuf[0] = '\0';
         }
     }
@@ -1175,11 +1161,11 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player,
     }
 
     std::string binding;
-    auto triggersIt = g.triggers.find(g.selectedLawId);
-    if (triggersIt != g.triggers.end()) {
-        for (std::size_t i = 0; i < triggersIt->second.size(); ++i) {
+    {
+        const auto& types = laws.triggersOf(g.selectedLawId);
+        for (std::size_t i = 0; i < types.size(); ++i) {
             if (i) binding += ", ";
-            binding += triggersIt->second[i];
+            binding += types[i];
         }
     }
     std::vector<LawCard> cards = flattenLaw(*law, binding);
@@ -1266,10 +1252,8 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player,
 
         // The law in one sentence.
         {
-            auto boundIt = g.triggers.find(g.selectedLawId);
-            const std::vector<std::string>* bound =
-                boundIt != g.triggers.end() ? &boundIt->second : nullptr;
-            ImGui::TextWrapped("%s", lawSentence(*law, bound).c_str());
+            const auto& boundTypes = laws.triggersOf(g.selectedLawId);
+            ImGui::TextWrapped("%s", lawSentence(*law, &boundTypes).c_str());
         }
 
         // Edge vs level: does the law wait for events, or watch continuously?
@@ -1300,7 +1284,7 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player,
                                        "! No targets yet — until one is added, the law "
                                        "still watches everyone.");
                 }
-                if (!g.triggers[law->getIdentifier()].empty()) {
+                if (!laws.triggersOf(law->getIdentifier()).empty()) {
                     ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.2f, 1.0f),
                                        "! Continuous activation IGNORES triggers — the "
                                        "condition alone gates it.");
@@ -1457,9 +1441,7 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player,
         }
         ImGui::SameLine();
         if (ImGui::Button("Delete law")) {
-            laws.rete().unbindLaw(law->getIdentifier());
-            g.triggers.erase(law->getIdentifier());
-            laws.remove(law->getIdentifier());
+            laws.remove(law->getIdentifier());   // also drops triggers + Rete bindings
             g.selectedLawId.clear();
             g.selectedCard = -1;
         }
@@ -1580,7 +1562,7 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player,
             }
         }
     }
-    ImGui::TextDisabled("Laws live in this session; saving them with the world is coming.");
+    ImGui::TextDisabled("Laws, triggers, and concepts save and load with the world.");
     ImGui::EndChild();
     ImGui::End();
 }

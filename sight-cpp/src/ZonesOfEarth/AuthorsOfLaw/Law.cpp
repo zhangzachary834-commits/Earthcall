@@ -847,9 +847,95 @@ bool LawManager::remove(const std::string& lawId) {
     });
     if (it == _laws.end()) return false;
 
+    _rete.unbindLaw(lawId);
+    _triggers.erase(lawId);
     _lawFormation.removeMember(it->get());
     _laws.erase(it);
     return true;
+}
+
+void LawManager::bindTrigger(const std::string& lawId, const std::string& eventType) {
+    if (eventType.empty()) return;
+    auto& bound = _triggers[lawId];
+    if (std::find(bound.begin(), bound.end(), eventType) != bound.end()) return;
+    bound.push_back(eventType);
+    const std::size_t alpha = _rete.addAlphaNode(
+        "type == " + eventType,
+        [eventType](const ReteFact& f) { return f.type == eventType; });
+    _rete.bindLawToAlpha(lawId, alpha);
+}
+
+void LawManager::unbindTrigger(const std::string& lawId, const std::string& eventType) {
+    auto it = _triggers.find(lawId);
+    if (it == _triggers.end()) return;
+    auto& bound = it->second;
+    bound.erase(std::remove(bound.begin(), bound.end(), eventType), bound.end());
+    // Rebind from scratch: drop every binding, re-create the remaining ones
+    // on fresh alpha nodes (unbound nodes stay inert).
+    _rete.unbindLaw(lawId);
+    for (const auto& type : bound) {
+        const std::size_t alpha = _rete.addAlphaNode(
+            "type == " + type, [type](const ReteFact& f) { return f.type == type; });
+        _rete.bindLawToAlpha(lawId, alpha);
+    }
+    if (bound.empty()) _triggers.erase(it);
+}
+
+const std::vector<std::string>& LawManager::triggersOf(const std::string& lawId) const {
+    static const std::vector<std::string> kNone;
+    auto it = _triggers.find(lawId);
+    return it == _triggers.end() ? kNone : it->second;
+}
+
+void LawManager::loadFromJson(const nlohmann::json& j) {
+    // Replace-all, like the world loader: retire the current register.
+    for (const auto& law : _laws) {
+        if (law) _rete.unbindLaw(law->getIdentifier());
+    }
+    for (const auto& law : _laws) {
+        if (law) _lawFormation.removeMember(law.get());
+    }
+    _laws.clear();
+    _driveSessions.clear();
+    _triggers.clear();
+
+    const auto findBeing = [](const std::string& id) -> Singular* {
+        for (Singular* being : Universe::instance().beings()) {
+            if (being && being->getIdentifier() == id) return being;
+        }
+        return nullptr;
+    };
+
+    if (j.contains("laws")) {
+        for (const auto& lj : j["laws"]) {
+            auto law = Law::fromJson(lj);
+            // World references reattach BY IDENTIFIER. An author who is not
+            // in the world stays detached: the law remains Unauthored and
+            // cannot fire — visible in the Law Author, never silent.
+            if (lj.contains("authors")) {
+                for (const auto& idJson : lj["authors"]) {
+                    if (Singular* being = findBeing(idJson.get<std::string>())) {
+                        law->addAuthor(*being);
+                    }
+                }
+            }
+            if (lj.contains("targets")) {
+                for (const auto& idJson : lj["targets"]) {
+                    if (Singular* being = findBeing(idJson.get<std::string>())) {
+                        law->addTarget(*being);
+                    }
+                }
+            }
+            add(law);
+        }
+    }
+    if (j.contains("triggers")) {
+        for (auto it = j["triggers"].begin(); it != j["triggers"].end(); ++it) {
+            for (const auto& type : it.value()) {
+                bindTrigger(it.key(), type.get<std::string>());
+            }
+        }
+    }
 }
 
 Law* LawManager::find(const std::string& lawId) const {
@@ -900,8 +986,13 @@ nlohmann::json LawManager::toJson() const {
     for (const auto& law : _laws) {
         if (law) arr.push_back(law->toJson());
     }
+    nlohmann::json triggersJson = nlohmann::json::object();
+    for (const auto& entry : _triggers) {
+        triggersJson[entry.first] = entry.second;
+    }
     return nlohmann::json{
         {"laws", arr},
+        {"triggers", triggersJson},
         {"formationMembers", formationMemberIds(_lawFormation)},
         {"rete", _rete.toJson()}
     };

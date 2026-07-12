@@ -303,6 +303,14 @@ class Law : public Object {
   movers only**.
 - `toJson`/`fromJson` serialize the models. *This is the commit where saved worlds
   stop forgetting their laws.*
+- **World persistence (landed):** `GameSaveLoad` saves `LawManager::toJson()`
+  (laws + the trigger map — LawManager owns trigger truth; Rete alpha bindings
+  are derived from it), `ConceptRegistry::toJson()`, and the world clock.
+  On load — after the world, so identifiers resolve — `loadFromJson` restores
+  the register and reattaches authors/targets BY IDENTIFIER through the
+  Universe: an author absent from the world leaves the law Unauthored (it
+  cannot fire; authorship is a covenant, not a copy), and the clock never
+  runs backward.
 - The `Law : public Object, public Relation` sketch is **rejected** (Singular
   diamond; fights `Law.cpp`). The relational aspect is carried by `_provenance`
   and the conditions Formation — composition, the same move the manifesto makes

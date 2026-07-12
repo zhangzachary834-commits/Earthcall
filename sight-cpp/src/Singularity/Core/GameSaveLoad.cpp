@@ -3,6 +3,8 @@
 
 #include "Game.hpp"
 #include "Form/Object/Object.hpp"
+#include "Form/Object/Creation/ObjectConcept.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
@@ -96,6 +98,14 @@ nlohmann::json Game::buildSaveJson() const {
 
     // Player avatar body (includes per-face textures on each body part)
     j["playerBody"] = bodyToJson(_player.getBody());
+
+    // The authored register: laws (with their models, scope, drives, and
+    // trigger bindings) and captured concepts — a saved world keeps its
+    // covenant, not just its furniture. The world clock rides along so
+    // "time" doesn't restart at zero.
+    j["authoredLaws"] = _lawManager.toJson();
+    j["concepts"] = ConceptRegistry::instance().toJson();
+    j["worldTime"] = _worldTime;
 
     return j;
 }
@@ -257,6 +267,18 @@ void Game::loadState(const std::string& filename) {
         // Player avatar body (includes per-face textures on each body part)
         if (j.contains("playerBody")) {
             bodyFromJson(j["playerBody"], _player.getBody());
+        }
+
+        // The authored register — AFTER the world, so the Universe can
+        // resolve the saved identifiers when authors and targets reattach.
+        // Restore the clock first: laws must never see time run backward.
+        _worldTime = j.value("worldTime", 0.0);
+        Universe::instance().setClock(_worldTime, 0.0);
+        if (j.contains("concepts")) {
+            ConceptRegistry::instance().loadFromJson(j["concepts"]);
+        }
+        if (j.contains("authoredLaws")) {
+            _lawManager.loadFromJson(j["authoredLaws"]);
         }
 
     } catch (const std::exception& e) {

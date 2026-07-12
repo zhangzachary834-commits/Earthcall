@@ -308,3 +308,14 @@ nlohmann::json ConceptRegistry::toJson() const {
     }
     return nlohmann::json{{"concepts", arr}};
 }
+
+void ConceptRegistry::loadFromJson(const nlohmann::json& j) {
+    for (const auto& concept : _concepts) {
+        if (concept) _formation.removeMember(concept.get());
+    }
+    _concepts.clear();
+    if (!j.contains("concepts")) return;
+    for (const auto& cj : j["concepts"]) {
+        add(ObjectConcept::fromJson(cj));
+    }
+}

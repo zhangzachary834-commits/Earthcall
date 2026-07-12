@@ -411,6 +411,22 @@ public:
     std::vector<Law::ApplicationRecord> tick();
 
     // ------------------------------------------------------------------
+    // Triggers — the serializable truth of WHAT WAKES each law. The Rete
+    // alpha bindings are derived from this map (closures cannot serialize);
+    // bind/unbind through here so saved worlds keep their laws listening.
+    // ------------------------------------------------------------------
+    void bindTrigger(const std::string& lawId, const std::string& eventType);
+    void unbindTrigger(const std::string& lawId, const std::string& eventType);
+    const std::vector<std::string>& triggersOf(const std::string& lawId) const;
+
+    // Restore a saved register: replaces the current laws, reattaches
+    // authors/targets as world references BY IDENTIFIER (authorship is a
+    // covenant, not a copy — an author absent from the world leaves the law
+    // Unauthored and it cannot fire), and rebinds triggers. Call after the
+    // world is loaded so the Universe can resolve the identifiers.
+    void loadFromJson(const nlohmann::json& j);
+
+    // ------------------------------------------------------------------
     // Drive sessions: change over time that outlives its event. When an
     // OnEvent law whose action reads "time.sinceApplied" applies, a session
     // begins; every tick re-applies the law to that subject with the
@@ -452,6 +468,7 @@ private:
     Formation _lawFormation{Form::ShapeType::Cube, glm::vec3(1.0f)};
     ReteNetwork _rete;
     std::vector<DriveSession> _driveSessions;
+    std::unordered_map<std::string, std::vector<std::string>> _triggers;
     bool _connected = false;
     bool _dirty = false;
 };

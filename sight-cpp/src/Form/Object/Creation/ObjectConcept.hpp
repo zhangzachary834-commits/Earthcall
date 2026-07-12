@@ -97,6 +97,10 @@ public:
     const Formation& formation() const { return _formation; }
 
     nlohmann::json toJson() const;
+    // Restore a saved registry (replace-all) — Spawn actions resolve
+    // concepts by id at fire time, so a loaded world's birth laws work
+    // as soon as this runs.
+    void loadFromJson(const nlohmann::json& j);
 
 private:
     ConceptRegistry() = default;
