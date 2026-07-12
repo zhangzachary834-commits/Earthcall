@@ -110,5 +110,12 @@ public:
     void addEvent(const RelationEvent& e) { events.push_back(e); }
 
 private:
-    void buildProperties() override {}
+    // A Relation is a legible Singular like any being: its semantic tag,
+    // strength, direction, and endpoints address through PropertyPath —
+    // so conditions can ask "@rel-id.weight > 0.5" and metalaw-shaped laws
+    // can govern relations. Endpoints are read-only: a relation's identity
+    // IS its endpoints (getIdentifier derives from them).
+    void buildProperties() override;
+    std::string propEntityA() const { return entityA; }
+    std::string propEntityB() const { return entityB; }
 };

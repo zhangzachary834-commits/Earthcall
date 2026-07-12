@@ -827,6 +827,16 @@ bool editConditionNode(ConditionNode& node) {
                     node.otherId.clear();
                     changed = true;
                 }
+                if (ImGui::Selectable("the event's subject",
+                                      node.otherId == "@event.subject")) {
+                    node.otherId = "@event.subject";
+                    changed = true;
+                }
+                if (ImGui::Selectable("the event's other object",
+                                      node.otherId == "@event.object")) {
+                    node.otherId = "@event.object";
+                    changed = true;
+                }
                 for (Singular* being : Universe::instance().beings()) {
                     if (!being) continue;
                     const std::string id = being->getIdentifier();

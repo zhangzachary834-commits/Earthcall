@@ -188,13 +188,26 @@ ECA::ConditionPredicate ConditionNode::compile() const {
         case Kind::Related: {
             // The graph-shaped condition: true when the subject participates
             // in a relation from the Universe's relation graph. Empty
-            // relationType = any type; empty otherId = related to ANYONE.
+            // relationType = any type; empty otherId = related to ANYONE;
+            // otherId may also be "@event.subject" / "@event.object" — the
+            // triggering event's participants, resolved at evaluation time
+            // ("on collision, IF the subject is related to the one it hit").
             // Direction is honored: a directed relation satisfies only its
             // source ("a owns b" makes related(owns, b) true OF a, not of b).
             // No provider = no proven relations: never passes.
             const std::string type = relationType;
-            const std::string other = otherId;
-            return [type, other](const ECA::Event&, const Singular& subject) {
+            const std::string otherSpec = otherId;
+            return [type, otherSpec](const ECA::Event&, const Singular& subject) {
+                std::string other = otherSpec;
+                if (otherSpec == "@event.subject" || otherSpec == "@event.object") {
+                    if (!Universe::instance().hasApplicationEvent()) return false;
+                    Singular* participant =
+                        otherSpec == "@event.subject"
+                            ? Universe::instance().applicationEventSubject()
+                            : Universe::instance().applicationEventObject();
+                    if (!participant) return false;   // unproven referent
+                    other = participant->getIdentifier();
+                }
                 const std::string id = subject.getIdentifier();
                 for (const Relation* rel : Universe::instance().relations()) {
                     if (!rel) continue;

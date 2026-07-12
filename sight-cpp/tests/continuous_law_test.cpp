@@ -277,6 +277,31 @@ int main() {
         assert(rebornRelated.kind == ConditionNode::Kind::Related);
         assert(rebornRelated.compile()(probe, a));
 
+        // "Related to the one the event is about": the other side of the
+        // relation may be named by the event's participants, resolved at
+        // evaluation time.
+        Universe::instance().setApplicationEvent(&b, &beacon);
+        assert(ConditionNode::related("touching", "@event.subject").compile()(probe, a));
+        assert(ConditionNode::related("owns", "@event.object").compile()(probe, a));
+        assert(!ConditionNode::related("owns", "@event.subject").compile()(probe, a));
+        Universe::instance().clearApplicationEvent();
+        // Outside an event response the participant is unproven: never passes.
+        assert(!ConditionNode::related("touching", "@event.subject").compile()(probe, a));
+
+        // Relations are legible Singulars: their tag, strength, direction,
+        // and endpoints address through PropertyPath like any being's state.
+        Relation& touch = *graph.getAll().front();
+        PropertyValue relValue;
+        assert(PropertyPath::parse("type").getValue(touch, relValue));
+        assert(std::get<std::string>(relValue) == "touching");
+        assert(PropertyPath::parse("weight").getValue(touch, relValue));
+        assert(PropertyPath::parse("entityA").getValue(touch, relValue));
+        assert(std::get<std::string>(relValue) == a.getIdentifier());
+        assert(PropertyPath::parse("weight").setValue(touch, PropertyValue(0.25f)));
+        assert(nearf(touch.weight, 0.25f));
+        assert(!PropertyPath::parse("entityA").setValue(
+            touch, PropertyValue(std::string("someone-else"))));   // identity: read-only
+
         // No provider = no proven relations: never passes (laws must not
         // fire on unproven relations).
         Universe::instance().setRelationProvider({});

@@ -1,5 +1,7 @@
 #include "Relation.hpp"
 #include "Form/Singular/Singular.hpp"
+#include "Form/Singular/Property/ComputedProperty.hpp"
+#include "Form/Singular/Property/PropertyRef.hpp"
 #include <iostream>
 #include <cstring>
 
@@ -135,4 +137,19 @@ bool Relation::involves(const Singular& entity) const {
 
 bool Relation::isBetween(const Singular& aEntity, const Singular& bEntity) const {
     return isBetween(aEntity.getIdentifier(), bEntity.getIdentifier());
+}
+
+// A Relation is a legible Singular: type/weight/directed are governable
+// state; the endpoints are read-only (they ARE the relation's identity).
+void Relation::buildProperties() {
+    _propertyRegistry.push_back(std::make_unique<PropertyRef<Relation, std::string>>(
+        "type", this, &Relation::type));
+    _propertyRegistry.push_back(std::make_unique<PropertyRef<Relation, float>>(
+        "weight", this, &Relation::weight));
+    _propertyRegistry.push_back(std::make_unique<PropertyRef<Relation, bool>>(
+        "directed", this, &Relation::directed));
+    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Relation, std::string>>(
+        "entityA", this, &Relation::propEntityA));
+    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Relation, std::string>>(
+        "entityB", this, &Relation::propEntityB));
 }
