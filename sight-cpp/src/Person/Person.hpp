@@ -189,7 +189,11 @@ public:
     std::string getIdentifier() const override { return soulName; }
 
 private:
-    void buildProperties() override {}
+    // A Person is a legible Singular too: laws can ask about (and, where
+    // authorized, act on) a person's position; the name is read-only —
+    // identity is not a writable slot.
+    void buildProperties() override;
+    std::string propName() const { return soulName; }
 
     Soul& _soul;
     Body& body;  // Body member variable

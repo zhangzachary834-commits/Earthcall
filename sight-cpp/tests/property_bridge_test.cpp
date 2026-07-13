@@ -8,6 +8,11 @@
 
 #include "Form/Object/Object.hpp"
 #include "Form/Singular/Property/PropertyPath.hpp"
+#include "Person/Person.hpp"
+#include "Person/Soul/Soul.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/PhysicsLawBridge.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
+#include "ZonesOfEarth/Physics/Physics.hpp"
 
 #include <GLFW/glfw3.h>
 #include <cassert>
@@ -69,6 +74,90 @@ int main() {
         assert(!PropertyPath::parse("nonexistent").setValue(obj, PropertyValue(1)));
         PropertyValue unused;
         assert(!PropertyPath::parse("position.w").getValue(obj, unused));
+
+        // 5. Wider legibility: physical participation and color are
+        //    governable state like everything else.
+        assert(PropertyPath::parse("physical").getValue(obj, out));
+        assert(std::get<bool>(out) == true);
+        assert(PropertyPath::parse("physical").setValue(obj, PropertyValue(false)));
+        assert(PropertyPath::parse("physical").getValue(obj, out));
+        assert(std::get<bool>(out) == false);
+
+        assert(PropertyPath::parse("color").setValue(
+            obj, PropertyValue(glm::vec3(0.2f, 0.4f, 0.6f))));
+        assert(PropertyPath::parse("color.g").getValue(obj, out));
+        double g = 0.0;
+        assert(propertyValueToNumber(out, g) && std::fabs(g - 0.4) < 1e-5);
+        assert(PropertyPath::parse("color.b").setValue(obj, PropertyValue(0.9f)));
+        assert(std::fabs(obj.faceColors[0][2] - 0.9f) < 1e-5f);   // written through
+
+        // 6. Physics first movers are legible laws: the bridge's properties
+        //    read and write the ENGINE, and an ordinary law governs gravity.
+        Physics::PhysicsLaw gravity;
+        gravity.name = "Test Gravity";
+        gravity.type = Physics::LawType::Gravity;
+        gravity.strength = 9.81f;
+        const int gravityId = Physics::addLaw(gravity);
+
+        LawManager mgr;
+        PhysicsLawBridge::syncRegister(mgr);
+        Law* bridge = nullptr;
+        for (const auto& law : mgr.getAll()) {
+            auto* b = dynamic_cast<PhysicsLawBridge*>(law.get());
+            if (b && b->physicsLawName() == "Test Gravity") bridge = law.get();
+        }
+        assert(bridge != nullptr);
+        assert(bridge->isFirstMover());
+
+        assert(PropertyPath::parse("strength").getValue(*bridge, out));
+        double strength = 0.0;
+        assert(propertyValueToNumber(out, strength) && std::fabs(strength - 9.81) < 1e-4);
+
+        // Govern gravity through ordinary law-text.
+        Object author;
+        Universe::instance().setProvider([&](std::vector<Singular*>& beings) {
+            beings.push_back(bridge);
+        });
+        Law softer("soften-gravity");
+        softer.addAuthor(author);
+        softer.setActionModel(ActionNode::set(
+            "@" + bridge->getIdentifier() + ".strength", PropertyValue(3.0)));
+        assert(softer.applyTo(obj) == Law::ApplicationResult::Applied);
+        assert(std::fabs(Physics::getLawById(gravityId)->strength - 3.0f) < 1e-5f);
+
+        Law calmer("disable-gravity");
+        calmer.addAuthor(author);
+        calmer.setActionModel(ActionNode::set(
+            "@" + bridge->getIdentifier() + ".enabled", PropertyValue(false)));
+        assert(calmer.applyTo(obj) == Law::ApplicationResult::Applied);
+        assert(!Physics::getLawById(gravityId)->enabled);
+
+        // Bridges never serialize (their truth lives in the engine), and a
+        // world load preserves them.
+        const auto managerJson = mgr.toJson();
+        assert(managerJson["laws"].empty());
+        mgr.loadFromJson(managerJson);
+        bool stillBridged = false;
+        for (const auto& law : mgr.getAll()) {
+            auto* b = dynamic_cast<PhysicsLawBridge*>(law.get());
+            if (b && b->physicsLawName() == "Test Gravity") stillBridged = true;
+        }
+        assert(stillBridged);
+
+        Universe::instance().setProvider({});
+        Physics::removeLaw(gravityId);
+
+        // 7. A Person is legible: position by path; name read-only.
+        Soul soul("Witness");
+        Body avatar = Body::createBasicAvatar("Voxel");
+        Person person(soul, avatar);
+        assert(person.getIdentifier() == "Witness");
+        assert(PropertyPath::parse("position.y").setValue(person, PropertyValue(4.0f)));
+        assert(std::fabs(person.position.y - 4.0f) < 1e-5f);
+        assert(PropertyPath::parse("name").getValue(person, out));
+        assert(std::get<std::string>(out) == "Witness");
+        assert(!PropertyPath::parse("name").setValue(
+            person, PropertyValue(std::string("Usurper"))));   // identity is not a slot
     }
 
     glfwDestroyWindow(window);

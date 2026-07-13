@@ -10,6 +10,8 @@
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "PersonEvents.hpp"
+#include "Form/Singular/Property/ComputedProperty.hpp"
+#include "Form/Singular/Property/PropertyRef.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -55,6 +57,13 @@ struct PersonLogoutEvent {
 // Need to load and save Persons based on data saved in txt and json files.
 // If its "logging in," a Person should be created in the memory via loading.
 // If its "singing up", new Person data should first be added to the new txt and json files, and only then should Person created.
+void Person::buildProperties() {
+    _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, glm::vec3>>(
+        "position", this, &Person::position));
+    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Person, std::string>>(
+        "name", this, &Person::propName));   // read-only: identity is not a slot
+}
+
 Person::Person(Soul& soul, Body& body) : _soul(soul), body(body) {
     // The Person's identifier IS the soul's identity. Left unset it was the
     // empty string — invisible in law authorship records and unmatchable

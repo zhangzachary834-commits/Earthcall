@@ -262,6 +262,19 @@ void Object::buildProperties() {
     addShapeParam("shape.paraboloidA", &ShapeParams::paraboloidA);
     addShapeParam("shape.ovoidAsym", &ShapeParams::ovoidAsym);
     addShapeParam("shape.fillet", &ShapeParams::fillet);
+
+    // Whether the world's physics touches this being — governable state
+    // ("make this object immaterial while the ritual runs").
+    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Object, bool>>(
+        "physical", this, &Object::propPhysical, &Object::propSetPhysical));
+    // The object's tint (uniform across faces when written; face 0 when read).
+    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Object, glm::vec3>>(
+        "color", this, &Object::propColor, &Object::propSetColor));
+}
+
+void Object::propSetColor(const glm::vec3& c) {
+    const int faces = getFaces() > 0 ? getFaces() : 6;
+    for (int f = 0; f < faces; ++f) setFaceColor(f, c.x, c.y, c.z);
 }
 
 // Hover detection method implementations

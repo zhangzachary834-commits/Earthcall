@@ -152,6 +152,11 @@ public:
     }
     void forgetOnset(const std::string& subjectId) { _onsetMemory.erase(subjectId); }
 
+    // First movers (engine-backed bridge laws) live in the register for
+    // LEGIBILITY and GOVERNANCE, but their truth lives in the engine:
+    // serialization skips them and world loads preserve them.
+    virtual bool isFirstMover() const { return false; }
+
     // ------------------------------------------------------------------
     // The Singularity-grounded hierarchy of authored authority. A law may
     // govern (apply to) another law only when its authority is >= the

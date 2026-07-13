@@ -15,6 +15,7 @@
 #include "Person/Body/BodyPart/BodyPart.hpp"
 #include "Person/PersonEvents.hpp"
 #include "Singularity/Core/EventBus.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/PhysicsLawBridge.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 
 #include <GLFW/glfw3.h>
@@ -580,6 +581,10 @@ void Game::update(float dt) {
     // what authored change-over-time (Map/Flow/Drive of t) stands on.
     _worldTime += static_cast<double>(dt);
     Universe::instance().setClock(_worldTime, static_cast<double>(dt));
+
+    // First movers stay legible: every engine physics law has a bridge Law
+    // in the register, so gravity is governable text, not hidden machinery.
+    PhysicsLawBridge::syncRegister(_lawManager);
 
     // Laws hear the frame: everything published above (collisions, hover
     // edges, finished clips, applied laws) has been asserted as facts; one

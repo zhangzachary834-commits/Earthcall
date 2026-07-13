@@ -575,6 +575,14 @@ private:
     // that make this Object legible to PropertyPath and the Law system.
     // Defined in Object.cpp.
     void buildProperties() override;
+    // Property bridges: more of the object's being made legible, so laws
+    // can govern it and set-to-set creation can carry it.
+    bool propPhysical() const { return physicalObject; }
+    void propSetPhysical(const bool& v) { physicalObject = v; }
+    glm::vec3 propColor() const {
+        return glm::vec3(faceColors[0][0], faceColors[0][1], faceColors[0][2]);
+    }
+    void propSetColor(const glm::vec3& c);
 
     glm::vec3 getLocalSupportPoint(const glm::vec3& localDirection) const;
     bool computeLocalPointPenetration(const glm::vec3& localPoint,

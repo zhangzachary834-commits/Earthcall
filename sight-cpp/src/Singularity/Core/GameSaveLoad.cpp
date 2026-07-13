@@ -25,6 +25,20 @@ extern ZoneManager mgr;
 
 namespace Core {
 
+namespace {
+// Persistent testimony: every save/load appends one line here, so what
+// happened in a session is readable AFTER it — stderr dies with the
+// terminal, the log does not.
+void logIo(const std::string& line) {
+    std::ofstream log("saves/earthcall-io.log", std::ios::app);
+    if (!log) return;
+    std::time_t now = std::time(nullptr);
+    char stamp[32];
+    std::strftime(stamp, sizeof(stamp), "%Y-%m-%d %H:%M:%S", std::localtime(&now));
+    log << stamp << "  " << line << "\n";
+}
+} // namespace
+
 // ------------------------------------------------------------------
 // Shared JSON builder – used by both saveState and saveStateWithLog
 // to eliminate duplicated serialization code.
@@ -120,6 +134,9 @@ void Game::saveState(const std::string& filename) {
     nlohmann::json j = buildSaveJson();
     std::ofstream out(filename);
     out << j.dump(2);
+    logIo("SAVE " + filename + ": " +
+          std::to_string(_lawManager.getAll().size()) + " law(s), " +
+          std::to_string(ConceptRegistry::instance().getAll().size()) + " concept(s)");
 }
 
 // ------------------------------------------------------------------
@@ -141,6 +158,9 @@ void Game::saveStateWithLog(const std::string& customName) {
 
     // Use the new SaveSystem to write the file
     SaveSystem::writeJson(j, customName, SaveSystem::SaveType::GAME);
+    logIo("SAVE (log) '" + std::string(customName) + "': " +
+          std::to_string(_lawManager.getAll().size()) + " law(s), " +
+          std::to_string(ConceptRegistry::instance().getAll().size()) + " concept(s)");
 }
 
 // ------------------------------------------------------------------
@@ -151,6 +171,7 @@ void Game::loadState(const std::string& filename) {
     // silently discards the stages after it (a swallowed exception between
     // the world and the registers once cost a field-test law).
     _saveLoad.lastLoadReport.clear();
+    logIo("LOAD begin: " + filename);   // even a crash mid-load leaves this trace
     std::string failures;
     const auto stage = [&](const char* name, const std::function<void()>& body) {
         try {
@@ -335,10 +356,12 @@ void Game::loadState(const std::string& filename) {
             _saveLoad.lastLoadReport += "  |  FAILED stages: " + failures;
         }
         std::cerr << "[load] " << _saveLoad.lastLoadReport << "\n";
+        logIo("LOAD end:   " + _saveLoad.lastLoadReport);
 
     } catch (const std::exception& e) {
         _saveLoad.lastLoadReport = std::string("LOAD FAILED: ") + e.what();
         std::cerr << "Error loading state: " << e.what() << "\n";
+        logIo("LOAD end:   " + _saveLoad.lastLoadReport);
     }
 }
 

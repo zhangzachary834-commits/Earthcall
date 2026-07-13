@@ -327,6 +327,17 @@ class Law : public Object {
   movers only**.
 - `toJson`/`fromJson` serialize the models. *This is the commit where saved worlds
   stop forgetting their laws.*
+- **First movers retired into the register (landed):** every engine physics
+  law (gravity, air resistance, ...) is bridged by a `PhysicsLawBridge : Law`
+  whose legible properties (`enabled/strength/damping/direction`) read and
+  write the engine itself, resolved BY NAME (ids change on load). The
+  integrator keeps the work; governance moves into law-text —
+  `@<bridge>.strength := 3` softens gravity. Bridges are runtime beings:
+  `Law::isFirstMover()` excludes them from serialization and world loads
+  preserve them; `syncRegister` runs each frame so new physics laws are
+  bridged the frame they appear. Legibility widened alongside: Object gains
+  `physical` (bool) and `color` (vec3; `r/g/b` alias `x/y/z` in paths),
+  Person gains `position` and read-only `name` — identity is not a slot.
 - **World persistence (landed):** `GameSaveLoad` saves `LawManager::toJson()`
   (laws + the trigger map — LawManager owns trigger truth; Rete alpha bindings
   are derived from it), `ConceptRegistry::toJson()`, and the world clock.

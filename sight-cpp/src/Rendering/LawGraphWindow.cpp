@@ -1035,6 +1035,7 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player,
     ImGui::TextDisabled("A law: WHEN an event fires,");
     ImGui::TextDisabled("IF conditions hold, THEN act.");
     ImGui::Separator();
+    ImGui::TextColored(kHeaderColor, "The register (%zu law(s))", laws.getAll().size());
     for (const auto& law : laws.getAll()) {
         if (!law) continue;
         ImGui::PushID(law->getIdentifier().c_str());

@@ -24,10 +24,15 @@ bool coerceLike(const PropertyValue& like, double n, PropertyValue& out) {
 }
 
 float* componentOf(glm::vec3& v, const std::string& c) {
-    if (c == "x") return &v.x;
-    if (c == "y") return &v.y;
-    if (c == "z") return &v.z;
+    // r/g/b alias x/y/z so color-shaped vectors read naturally ("color.g").
+    if (c == "x" || c == "r") return &v.x;
+    if (c == "y" || c == "g") return &v.y;
+    if (c == "z" || c == "b") return &v.z;
     return nullptr;
+}
+
+bool isVec3Component(const std::string& c) {
+    return c == "x" || c == "y" || c == "z" || c == "r" || c == "g" || c == "b";
 }
 
 } // namespace
@@ -90,7 +95,7 @@ Property* PropertyPath::resolve(Singular& root, std::string* trailingComponent) 
         if (i == segments.size() - 1 && trailingComponent &&
             std::holds_alternative<glm::vec3>(found->value())) {
             const std::string& c = segments[i];
-            if (c == "x" || c == "y" || c == "z") {
+            if (isVec3Component(c)) {
                 *trailingComponent = c;
                 return found;
             }

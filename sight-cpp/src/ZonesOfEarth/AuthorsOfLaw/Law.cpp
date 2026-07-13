@@ -922,16 +922,21 @@ const std::vector<std::string>& LawManager::triggersOf(const std::string& lawId)
 }
 
 void LawManager::loadFromJson(const nlohmann::json& j) {
-    // Replace-all, like the world loader: retire the current register.
+    // Replace-all, like the world loader — EXCEPT first movers, whose truth
+    // lives in the engine and survives every load.
+    std::vector<std::shared_ptr<Law>> firstMovers;
     for (const auto& law : _laws) {
-        if (law) _rete.unbindLaw(law->getIdentifier());
+        if (!law) continue;
+        if (law->isFirstMover()) {
+            firstMovers.push_back(law);
+            continue;
+        }
+        _rete.unbindLaw(law->getIdentifier());
+        _lawFormation.removeMember(law.get());
+        _triggers.erase(law->getIdentifier());
     }
-    for (const auto& law : _laws) {
-        if (law) _lawFormation.removeMember(law.get());
-    }
-    _laws.clear();
+    _laws = std::move(firstMovers);
     _driveSessions.clear();
-    _triggers.clear();
 
     const auto findBeing = [](const std::string& id) -> Singular* {
         for (Singular* being : Universe::instance().beings()) {
@@ -1018,7 +1023,9 @@ std::vector<Law::ApplicationRecord> LawManager::applyAllToTargets() {
 nlohmann::json LawManager::toJson() const {
     nlohmann::json arr = nlohmann::json::array();
     for (const auto& law : _laws) {
-        if (law) arr.push_back(law->toJson());
+        // First movers' truth lives in the engine (physics laws persist in
+        // their own save section); serializing the bridge would forge it.
+        if (law && !law->isFirstMover()) arr.push_back(law->toJson());
     }
     nlohmann::json triggersJson = nlohmann::json::object();
     for (const auto& entry : _triggers) {
