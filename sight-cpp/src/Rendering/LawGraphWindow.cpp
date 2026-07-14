@@ -9,6 +9,8 @@
 #include <imgui.h>
 
 #include <algorithm>
+#include <cctype>
+#include <cstdio>
 #include <cstring>
 #include <string>
 #include <unordered_map>
@@ -27,6 +29,7 @@ struct SessionState {
 
     int eventCombo = 0;
     char eventBuf[64] = "";
+    char filterBuf[48] = "";
 
     char pathBuf[128] = "";
     std::string customPathTarget;    // which picker is in custom-entry mode
@@ -1012,6 +1015,14 @@ void refreshEditBuffers() {
 
 void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player,
                           Singular* testSubject) {
+    // A touch of finish: rounded frames throughout the window. RAII so the
+    // pops survive every early return.
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 6.0f);
+    struct StyleScope {
+        ~StyleScope() { ImGui::PopStyleVar(2); }
+    } styleScope;
+
     subscribeEventFeed();
     g.selectedSubjectId = testSubject ? testSubject->getIdentifier() : std::string();
     g.testSubject = testSubject;
@@ -1037,9 +1048,25 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player,
     ImGui::TextDisabled("A law: WHEN an event fires,");
     ImGui::TextDisabled("IF conditions hold, THEN act.");
     ImGui::Separator();
-    ImGui::TextColored(kHeaderColor, "The register (%zu law(s))", laws.getAll().size());
+
+    std::size_t authoredCount = 0, firstMoverCount = 0;
     for (const auto& law : laws.getAll()) {
         if (!law) continue;
+        (law->isFirstMover() ? firstMoverCount : authoredCount)++;
+    }
+
+    ImGui::TextColored(kHeaderColor, "The register (%zu)", laws.getAll().size());
+    ImGui::SetNextItemWidth(-1);
+    ImGui::InputTextWithHint("##lawfilter", "filter by name...", g.filterBuf,
+                             sizeof(g.filterBuf));
+    const auto passesFilter = [&](const Law& law) {
+        if (g.filterBuf[0] == '\0') return true;
+        std::string haystack = law.name(), needle = g.filterBuf;
+        std::transform(haystack.begin(), haystack.end(), haystack.begin(), ::tolower);
+        std::transform(needle.begin(), needle.end(), needle.begin(), ::tolower);
+        return haystack.find(needle) != std::string::npos;
+    };
+    const auto lawRow = [&](const std::shared_ptr<Law>& law) {
         ImGui::PushID(law->getIdentifier().c_str());
         bool enabled = law->isEnabled();
         if (ImGui::Checkbox("##enabled", &enabled)) law->setEnabled(enabled);
@@ -1050,7 +1077,40 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player,
             g.selectedLawId = law->getIdentifier();
             g.selectedCard = 0;
         }
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("%s", law->getIdentifier().c_str());
+        }
+        ImGui::SameLine();
+        if (!law->isAuthored() && !law->isFirstMover()) {
+            ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.2f, 1.0f), "!");
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("unauthored — cannot fire");
+        } else {
+            const char* tag = law->activation() == Law::Activation::WhileTrue ? "while"
+                              : law->activation() == Law::Activation::OnBecomeTrue
+                                  ? "edge"
+                                  : "event";
+            ImGui::TextDisabled("%s", tag);
+        }
         ImGui::PopID();
+    };
+    if (authoredCount == 0) {
+        ImGui::Spacing();
+        ImGui::TextDisabled("No authored laws yet. To make one:");
+        ImGui::TextDisabled(" 1. + New Law above");
+        ImGui::TextDisabled(" 2. bind a trigger (the WHEN)");
+        ImGui::TextDisabled(" 3. shape the IF and THEN cards");
+        ImGui::TextDisabled(" 4. watch it fire in Recent events");
+        ImGui::Spacing();
+    }
+    for (const auto& law : laws.getAll()) {
+        if (law && !law->isFirstMover() && passesFilter(*law)) lawRow(law);
+    }
+    if (firstMoverCount > 0) {
+        ImGui::Spacing();
+        ImGui::TextDisabled("First movers — the engine, legible:");
+        for (const auto& law : laws.getAll()) {
+            if (law && law->isFirstMover() && passesFilter(*law)) lawRow(law);
+        }
     }
     ImGui::Separator();
     ImGui::TextDisabled("Concepts (captured sets)");
@@ -1069,7 +1129,15 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player,
     ImGui::BeginChild("law-detail", ImVec2(0, 0), false);
     Law* law = g.selectedLawId.empty() ? nullptr : laws.find(g.selectedLawId);
     if (!law) {
-        ImGui::TextDisabled("Select a law on the left, or create one.");
+        ImGui::Spacing();
+        ImGui::TextColored(kHeaderColor, "The Law Author");
+        ImGui::TextWrapped(
+            "Laws are the ordered principles of this world: WHEN an event "
+            "fires, IF the conditions hold, THEN the action applies.");
+        ImGui::Spacing();
+        ImGui::TextDisabled("Select a law on the left, or press + New Law.");
+        ImGui::TextDisabled("Everything a law touches is authored: triggers, exact");
+        ImGui::TextDisabled("mathematics, scope, drives — and laws can govern laws.");
         ImGui::EndChild();
         ImGui::End();
         return;
@@ -1164,6 +1232,48 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player,
         copyToBuf(nameBuf, sizeof(nameBuf), law->name());
         ImGui::SetNextItemWidth(240.0f);
         if (ImGui::InputText("Name", nameBuf, sizeof(nameBuf))) law->setName(nameBuf);
+
+        // The law's health at a glance — one row of chips.
+        {
+            const ImVec4 kOk(0.45f, 0.85f, 0.5f, 1.0f);
+            const ImVec4 kInfo(0.55f, 0.75f, 1.0f, 1.0f);
+            const ImVec4 kWarn(1.0f, 0.6f, 0.2f, 1.0f);
+            const ImVec4 kMuted(0.62f, 0.62f, 0.62f, 1.0f);
+            const auto chip = [](const ImVec4& color, const std::string& text) {
+                ImGui::TextColored(color, "[%s]", text.c_str());
+                ImGui::SameLine();
+            };
+            chip(law->isEnabled() ? kOk : kWarn,
+                 law->isEnabled() ? "active" : "disabled");
+            chip(kInfo, law->activation() == Law::Activation::WhileTrue
+                            ? "while true"
+                        : law->activation() == Law::Activation::OnBecomeTrue
+                            ? "on edge"
+                            : "on event");
+            if (law->drives()) {
+                chip(kInfo, law->retrigger() == Law::Retrigger::Restart
+                                ? "drives, restarts"
+                                : "drives");
+            }
+            const std::size_t triggerCount = laws.triggersOf(g.selectedLawId).size();
+            if (law->activation() == Law::Activation::OnEvent) {
+                chip(triggerCount ? kMuted : kWarn,
+                     triggerCount ? std::to_string(triggerCount) + " trigger(s)"
+                                  : "no triggers");
+            }
+            if (!law->isFirstMover()) {
+                chip(law->isAuthored() ? kMuted : kWarn,
+                     law->isAuthored() ? "authored" : "UNAUTHORED");
+            } else {
+                chip(kMuted, "first mover");
+            }
+            std::size_t appliedCount = 0;
+            for (const auto& record : law->applicationLog()) {
+                if (record.result == Law::ApplicationResult::Applied) ++appliedCount;
+            }
+            chip(kMuted, "applied " + std::to_string(appliedCount) + "x");
+            ImGui::NewLine();
+        }
 
         // The law in one sentence.
         {
@@ -1383,10 +1493,33 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player,
             g.selectedCard = 0;
         }
         ImGui::SameLine();
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.55f, 0.16f, 0.16f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.75f, 0.20f, 0.20f, 1.0f));
         if (ImGui::Button("Delete law")) {
-            laws.remove(law->getIdentifier());   // also drops triggers + Rete bindings
-            g.selectedLawId.clear();
-            g.selectedCard = -1;
+            ImGui::OpenPopup("Delete law?");
+        }
+        ImGui::PopStyleColor(2);
+        if (ImGui::BeginPopupModal("Delete law?", nullptr,
+                                   ImGuiWindowFlags_AlwaysAutoResize)) {
+            ImGui::Text("Delete \"%s\" permanently?", law->name().c_str());
+            ImGui::TextDisabled("Its triggers and bindings go with it.");
+            ImGui::Separator();
+            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.55f, 0.16f, 0.16f, 1.0f));
+            if (ImGui::Button("Delete", ImVec2(120, 0))) {
+                laws.remove(law->getIdentifier());   // drops triggers + Rete bindings
+                g.selectedLawId.clear();
+                g.selectedCard = -1;
+                ImGui::PopStyleColor();
+                ImGui::CloseCurrentPopup();
+                ImGui::EndPopup();
+                ImGui::EndChild();
+                ImGui::End();
+                return;
+            }
+            ImGui::PopStyleColor();
+            ImGui::SameLine();
+            if (ImGui::Button("Cancel", ImVec2(120, 0))) ImGui::CloseCurrentPopup();
+            ImGui::EndPopup();
         }
     } else if (card.kind == LawCard::Kind::Event) {
         editTriggers(laws, *law);
@@ -1504,6 +1637,27 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player,
                                   entry.subjectId.empty() ? "-" : entry.subjectId.c_str());
             }
         }
+    }
+    // The world's pulse — visible progress, at a glance.
+    {
+        std::size_t authoredLaws = 0, engineLaws = 0;
+        for (const auto& registered : laws.getAll()) {
+            if (!registered) continue;
+            (registered->isFirstMover() ? engineLaws : authoredLaws)++;
+        }
+        std::string pulse = std::to_string(authoredLaws) + " authored law(s) | " +
+                            std::to_string(engineLaws) + " first mover(s) | " +
+                            std::to_string(ConceptRegistry::instance().getAll().size()) +
+                            " concept(s) | " +
+                            std::to_string(laws.driveSessions().size()) +
+                            " live drive(s)";
+        if (Universe::instance().hasClock()) {
+            char clock[32];
+            std::snprintf(clock, sizeof(clock), " | t = %.1fs",
+                          Universe::instance().now());
+            pulse += clock;
+        }
+        ImGui::TextDisabled("%s", pulse.c_str());
     }
     ImGui::TextDisabled("Laws, triggers, and concepts save and load with the world.");
     ImGui::EndChild();
