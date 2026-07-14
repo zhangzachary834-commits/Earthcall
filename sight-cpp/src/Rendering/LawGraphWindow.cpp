@@ -1038,12 +1038,62 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player,
     // ------------------------------------------------------------------
     ImGui::BeginChild("law-list", ImVec2(240, 0), true);
     if (ImGui::Button("+ New Law", ImVec2(-1, 0))) {
-        auto law = laws.createLaw("New Law", {&player});
-        law->setConditionModel(ConditionNode::compare(
-            "position.y", ConditionNode::Op::Lt, PropertyValue(0.0)));
-        law->setActionModel(ActionNode::set("position.y", PropertyValue(0.0)));
-        g.selectedLawId = law->getIdentifier();
-        g.selectedCard = 0;
+        ImGui::OpenPopup("new-law-templates");
+    }
+    if (ImGui::IsItemHovered()) {
+        ImGui::SetTooltip("start from a template — every part stays editable");
+    }
+    if (ImGui::BeginPopup("new-law-templates")) {
+        const auto select = [&](const std::shared_ptr<Law>& law) {
+            g.selectedLawId = law->getIdentifier();
+            g.selectedCard = 0;
+        };
+        if (ImGui::MenuItem("Blank — shape WHEN/IF/THEN yourself")) {
+            auto law = laws.createLaw("New Law", {&player});
+            law->setConditionModel(ConditionNode::compare(
+                "position.y", ConditionNode::Op::Lt, PropertyValue(0.0)));
+            law->setActionModel(ActionNode::set("position.y", PropertyValue(0.0)));
+            select(law);
+        }
+        if (ImGui::MenuItem("On collision -> act")) {
+            auto law = laws.createLaw("On collision", {&player});
+            law->setActionModel(ActionNode::set("position.y", PropertyValue(2.0)));
+            laws.bindTrigger(law->getIdentifier(), "collision");
+            select(law);
+        }
+        if (ImGui::MenuItem("While a condition holds -> keep acting")) {
+            auto law = laws.createLaw("While watching", {&player});
+            law->setActivation(Law::Activation::WhileTrue);
+            law->setConditionModel(ConditionNode::compare(
+                "position.y", ConditionNode::Op::Lt, PropertyValue(0.0)));
+            law->setActionModel(ActionNode::set("position.y", PropertyValue(0.0)));
+            select(law);
+        }
+        if (ImGui::MenuItem("On event -> change over time (drive)")) {
+            auto law = laws.createLaw("Drive over time", {&player});
+            law->setDrives(true);
+            OntoMath::Piecewise arc;              // y := 2t for t in [0, 2]
+            arc.inputVariable = "t";
+            OntoMath::Piecewise::Piece piece;
+            piece.hasLo = true;
+            piece.lo = 0.0;
+            piece.hasHi = true;
+            piece.hi = 2.0;
+            piece.expression = OntoMath::Expression::variable("t", 1.0, 2.0);
+            arc.pieces.push_back(std::move(piece));
+            law->setActionModel(ActionNode::map(
+                "position.y", std::move(arc),
+                MathBindings{{"t", PropertyPath::parse("time.sinceApplied")}}));
+            laws.bindTrigger(law->getIdentifier(), "collision");
+            select(law);
+        }
+        if (ImGui::MenuItem("Metalaw — govern another law")) {
+            auto law = laws.createLaw("Metalaw", {&player});
+            law->setActionModel(ActionNode::set("enabled", PropertyValue(false)));
+            laws.bindTrigger(law->getIdentifier(), "law-registered");
+            select(law);
+        }
+        ImGui::EndPopup();
     }
     ImGui::TextDisabled("A law: WHEN an event fires,");
     ImGui::TextDisabled("IF conditions hold, THEN act.");
@@ -1243,8 +1293,16 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player,
                 ImGui::TextColored(color, "[%s]", text.c_str());
                 ImGui::SameLine();
             };
-            chip(law->isEnabled() ? kOk : kWarn,
-                 law->isEnabled() ? "active" : "disabled");
+            // The first chip is a SWITCH: click to enable/disable the law.
+            ImGui::PushStyleColor(ImGuiCol_Button,
+                                  law->isEnabled() ? ImVec4(0.16f, 0.42f, 0.22f, 1.0f)
+                                                   : ImVec4(0.5f, 0.32f, 0.12f, 1.0f));
+            if (ImGui::SmallButton(law->isEnabled() ? "active" : "disabled")) {
+                law->setEnabled(!law->isEnabled());
+            }
+            ImGui::PopStyleColor();
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("click to toggle");
+            ImGui::SameLine();
             chip(kInfo, law->activation() == Law::Activation::WhileTrue
                             ? "while true"
                         : law->activation() == Law::Activation::OnBecomeTrue
@@ -1446,6 +1504,30 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player,
         if (testSubject) {
             if (ImGui::Button("Apply now to selected object")) {
                 law->applyTo(*testSubject);
+            }
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("runs the full IF/THEN gauntlet directly, "
+                                  "skipping the trigger");
+            }
+            // Fire the law's own trigger as a REAL event — the convenient
+            // way to test the whole pipeline without staging a collision.
+            const auto& testTriggers = laws.triggersOf(g.selectedLawId);
+            if (!testTriggers.empty()) {
+                ImGui::SameLine();
+                const std::string fireLabel =
+                    "Fire '" + testTriggers[0] + "' at selected";
+                if (ImGui::Button(fireLabel.c_str())) {
+                    Core::EventBus::instance().publish(ECA::Event{
+                        testTriggers[0], testSubject, nullptr, std::time(nullptr)});
+                }
+                if (ImGui::IsItemHovered()) {
+                    ImGui::SetTooltip(
+                        "publishes a real \"%s\" event (subject: %s) through the "
+                        "bus.\nEvery listening law hears it on the next tick — "
+                        "watch Recent events.",
+                        testTriggers[0].c_str(),
+                        testSubject->getIdentifier().c_str());
+                }
             }
             ImGui::SameLine();
             ImGui::TextDisabled("subject: %s", testSubject->getIdentifier().c_str());
