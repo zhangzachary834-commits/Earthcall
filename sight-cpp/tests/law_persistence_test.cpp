@@ -17,6 +17,7 @@
 #include <cassert>
 #include <cmath>
 #include <cstdio>
+#include <cstdlib>
 
 namespace {
 bool nearf(float a, float b, float eps = 1e-4f) { return std::fabs(a - b) < eps; }
@@ -132,6 +133,68 @@ int main() {
         assert(reborn->name() == "seed-cube");
 
         ConceptRegistry::instance().loadFromJson(nlohmann::json::object());
+
+        // ------------------------------------------------------------------
+        // 5. MULTIPLE laws round-trip without blurring: each keeps its own
+        //    name, text, and triggers.
+        // ------------------------------------------------------------------
+        LawManager multi;
+        auto first = multi.createLaw("first", {&author});
+        first->setActionModel(ActionNode::set("position.y", PropertyValue(1.0)));
+        multi.bindTrigger(first->getIdentifier(), "event-one");
+        auto second = multi.createLaw("second", {&author});
+        second->setActionModel(ActionNode::set("position.y", PropertyValue(2.0)));
+        second->setActivation(Law::Activation::WhileTrue);
+        multi.bindTrigger(second->getIdentifier(), "event-two");
+        multi.bindTrigger(second->getIdentifier(), "event-three");
+        auto third = multi.createLaw("third", {&author});
+        third->setConditionModel(ConditionNode::compare(
+            "position.y", ConditionNode::Op::Gt, PropertyValue(7.0)));
+
+        LawManager remulti;
+        remulti.loadFromJson(multi.toJson());
+        assert(remulti.getAll().size() == 3);
+        Law* re1 = remulti.find(first->getIdentifier());
+        Law* re2 = remulti.find(second->getIdentifier());
+        Law* re3 = remulti.find(third->getIdentifier());
+        assert(re1 && re2 && re3);
+        assert(re1->name() == "first" && re2->name() == "second" && re3->name() == "third");
+        assert(re2->activation() == Law::Activation::WhileTrue);
+        assert(re1->activation() == Law::Activation::OnEvent);
+        assert(remulti.triggersOf(re1->getIdentifier()).size() == 1);
+        assert(remulti.triggersOf(re2->getIdentifier()).size() == 2);
+        assert(remulti.triggersOf(re3->getIdentifier()).empty());
+        assert(!re1->hasConditionModel() && re3->hasConditionModel());
+
+        // ------------------------------------------------------------------
+        // 6. Fresh ids stay fresh after loads: a restored identity advances
+        //    the counter, so a new law can never collide with a loaded one
+        //    (collision = LawManager::add silently discards the newcomer).
+        // ------------------------------------------------------------------
+        nlohmann::json tallJson = first->toJson();
+        tallJson["id"] = "law-99999";
+        auto tall = Law::fromJson(tallJson);
+        assert(tall->getIdentifier() == "law-99999");
+        Law freshAfter("born-after-the-tall-id");
+        assert(freshAfter.getIdentifier() != "law-99999");
+        assert(std::strtoull(freshAfter.getIdentifier().c_str() + 4, nullptr, 10) >
+               99999ULL);
+
+        Object tallObject;
+        tallObject.setObjectID(std::string("object-88888"));
+        Object bornAfter;
+        assert(std::strtoull(bornAfter.getIdentifier().c_str() + 7, nullptr, 10) >
+               88888ULL);
+
+        // ------------------------------------------------------------------
+        // 7. The application log is a window, not an infinite ledger.
+        // ------------------------------------------------------------------
+        for (int i = 0; i < 400; ++i) {
+            re1->applyTo(a);
+        }
+        assert(re1->applicationLog().size() <= 256);
+        assert(re1->toJson()["applicationLog"].size() <= 16);
+
         Universe::instance().setProvider({});               // leave no dangling refs
     }
 

@@ -91,6 +91,30 @@ int main() {
         assert(PropertyPath::parse("color.b").setValue(obj, PropertyValue(0.9f)));
         assert(std::fabs(obj.faceColors[0][2] - 0.9f) < 1e-5f);   // written through
 
+        // 5b. The paintable skin, face by face: color per face, and the
+        //     layer structure legible (buffers/strokes stay code-only).
+        assert(PropertyPath::parse("face.2.color").setValue(
+            obj, PropertyValue(glm::vec3(1.0f, 0.0f, 0.5f))));
+        assert(std::fabs(obj.faceColors[2][2] - 0.5f) < 1e-5f);
+        assert(PropertyPath::parse("face.2.color.b").getValue(obj, out));
+        double fb = 0.0;
+        assert(propertyValueToNumber(out, fb) && std::fabs(fb - 0.5) < 1e-5);
+        assert(PropertyPath::parse("face.0.textureSize").getValue(obj, out));
+        double texSize = 0.0;
+        assert(propertyValueToNumber(out, texSize) && texSize > 0.0);
+        assert(!PropertyPath::parse("face.0.textureSize")
+                    .setValue(obj, PropertyValue(128)));   // structure: tools, not slots
+        assert(PropertyPath::parse("face.0.layerCount").getValue(obj, out));
+        // Layer controls engage once a face actually has layers.
+        obj.faceTextures[0].addLayer();
+        obj.faceTextures[0].addLayer();
+        assert(PropertyPath::parse("face.0.useLayers").setValue(obj, PropertyValue(true)));
+        assert(PropertyPath::parse("face.0.activeLayer").setValue(obj, PropertyValue(1)));
+        assert(PropertyPath::parse("face.0.layerOpacity").setValue(obj, PropertyValue(0.25f)));
+        assert(PropertyPath::parse("face.0.layerOpacity").getValue(obj, out));
+        double opacity = 0.0;
+        assert(propertyValueToNumber(out, opacity) && std::fabs(opacity - 0.25) < 1e-5);
+
         // 6. Physics first movers are legible laws: the bridge's properties
         //    read and write the ENGINE, and an ordinary law governs gravity.
         Physics::PhysicsLaw gravity;

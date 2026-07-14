@@ -38,9 +38,24 @@ Law::Law(const std::string& name, const std::vector<Singular*>& authors)
     setAuthors(authors);
 }
 
+namespace {
+std::atomic<unsigned long long> g_nextLawId{1};
+
+// A restored law id advances the fresh counter past itself — otherwise the
+// next authored law collides with a loaded one and LawManager::add silently
+// discards it (the register would "blur").
+void claimLawIdAtLeast(const std::string& id) {
+    const std::string prefix = "law-";
+    if (id.rfind(prefix, 0) != 0) return;
+    const unsigned long long n = std::strtoull(id.c_str() + prefix.size(), nullptr, 10);
+    unsigned long long current = g_nextLawId.load();
+    while (n + 1 > current && !g_nextLawId.compare_exchange_weak(current, n + 1)) {
+    }
+}
+} // namespace
+
 void Law::initializeLawIdentity() {
-    static std::atomic<unsigned long long> nextLawId{1};
-    _lawId = "law-" + std::to_string(nextLawId.fetch_add(1));
+    _lawId = "law-" + std::to_string(g_nextLawId.fetch_add(1));
     setObjectID(_lawId);
     setPhysicalObject(0);
 }
@@ -172,6 +187,7 @@ std::shared_ptr<Law> Law::fromJson(const nlohmann::json& j) {
     if (j.contains("id")) {
         law->_lawId = j["id"].get<std::string>();
         law->setObjectID(law->_lawId);
+        claimLawIdAtLeast(law->_lawId);   // fresh ids stay fresh after loads
     }
     law->setEnabled(j.value("enabled", true));
     law->setAuthorityLevel(j.value("authority", 0));
@@ -239,6 +255,13 @@ Law::ApplicationResult Law::applyTo(Singular& target) {
     }
 
     _applicationLog.push_back(makeRecord(&target, result));
+    // Bounded memory: a WhileTrue law applies every tick — the log is a
+    // window onto recent history, not an infinite ledger.
+    constexpr std::size_t kMaxLogEntries = 256;
+    if (_applicationLog.size() > kMaxLogEntries) {
+        _applicationLog.erase(_applicationLog.begin(),
+                              _applicationLog.end() - kMaxLogEntries);
+    }
     publishAppliedEvent(&target, result);
     return result;
 }
@@ -293,9 +316,15 @@ void Law::publishAppliedEvent(Singular* target, ApplicationResult result) const 
 }
 
 nlohmann::json Law::toJson() const {
+    // Only the recent tail persists — the law's TEXT is what must survive;
+    // its full history bloated saves by megabytes.
+    constexpr std::size_t kMaxSavedLogEntries = 16;
     nlohmann::json log = nlohmann::json::array();
-    for (const auto& record : _applicationLog) {
-        log.push_back(record.toJson());
+    const std::size_t start = _applicationLog.size() > kMaxSavedLogEntries
+                                  ? _applicationLog.size() - kMaxSavedLogEntries
+                                  : 0;
+    for (std::size_t i = start; i < _applicationLog.size(); ++i) {
+        log.push_back(_applicationLog[i].toJson());
     }
 
     std::vector<std::string> conditionDescriptions;

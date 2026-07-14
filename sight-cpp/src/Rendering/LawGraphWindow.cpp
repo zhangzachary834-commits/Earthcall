@@ -135,6 +135,8 @@ const std::vector<PathOption>& knownPathOptions() {
             const bool isVec = std::holds_alternative<glm::vec3>(property->value());
             const char* group = property->name().rfind("shape.", 0) == 0
                                     ? "Object — shape"
+                                : property->name().rfind("face.", 0) == 0
+                                    ? "Object — surface (faces)"
                                     : "Object — spatial";
             options.push_back({property->name(), group,
                                isVec ? "vector" : "number", isVec});
@@ -1373,6 +1375,10 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player,
                 if (author) twin->addAuthor(*author);
             }
             laws.add(twin);
+            // What wakes a law is part of its text: the twin listens too.
+            for (const auto& type : laws.triggersOf(law->getIdentifier())) {
+                laws.bindTrigger(twin->getIdentifier(), type);
+            }
             g.selectedLawId = twin->getIdentifier();
             g.selectedCard = 0;
         }

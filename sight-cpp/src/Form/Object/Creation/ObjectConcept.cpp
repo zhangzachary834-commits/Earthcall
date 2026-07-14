@@ -138,9 +138,24 @@ ObjectConcept::ObjectConcept(const std::string& name)
     initializeConceptIdentity();
 }
 
+namespace {
+std::atomic<unsigned long long> g_nextConceptId{1};
+
+// A restored concept id advances the fresh counter — same collision rule as
+// laws and objects: fresh ids must stay fresh after loads.
+void claimConceptIdAtLeast(const std::string& id) {
+    const std::string prefix = "concept-";
+    if (id.rfind(prefix, 0) != 0) return;
+    const unsigned long long n =
+        std::strtoull(id.c_str() + prefix.size(), nullptr, 10);
+    unsigned long long current = g_nextConceptId.load();
+    while (n + 1 > current && !g_nextConceptId.compare_exchange_weak(current, n + 1)) {
+    }
+}
+} // namespace
+
 void ObjectConcept::initializeConceptIdentity() {
-    static std::atomic<unsigned long long> nextConceptId{1};
-    _conceptId = "concept-" + std::to_string(nextConceptId.fetch_add(1));
+    _conceptId = "concept-" + std::to_string(g_nextConceptId.fetch_add(1));
     setObjectID(_conceptId);
     setPhysicalObject(0);   // extra-spatial: the word for the thing, not the thing
 }
@@ -335,6 +350,7 @@ std::shared_ptr<ObjectConcept> ObjectConcept::fromJson(const nlohmann::json& j) 
     if (j.contains("id")) {
         concept->_conceptId = j["id"].get<std::string>();
         concept->setObjectID(concept->_conceptId);
+        claimConceptIdAtLeast(concept->_conceptId);
     }
     if (j.contains("members")) {
         for (const auto& m : j["members"]) {

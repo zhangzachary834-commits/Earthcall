@@ -129,7 +129,11 @@ public:
     // Unique identifier for the object.
     std::string getObjectID();
     void setObjectID(int oi);
-    void setObjectID(const std::string& oi) { objectID = oi; }
+    void setObjectID(const std::string& oi) {
+        objectID = oi;
+        claimIdentifierAtLeast(oi);   // a restored id advances the counter
+    }
+    static void claimIdentifierAtLeast(const std::string& id);
 
     std::string getObjectType() const;
     void setObjectType(int ot);
