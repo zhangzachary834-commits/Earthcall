@@ -1087,6 +1087,14 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player,
             laws.bindTrigger(law->getIdentifier(), "collision");
             select(law);
         }
+        if (ImGui::MenuItem("On collision -> bounce (velocity is law now)")) {
+            auto law = laws.createLaw("Bounce", {&player});
+            // Collision RESPONSE as authored text: reflect the vertical
+            // velocity with restitution 0.8 — physics legislated, not coded.
+            law->setActionModel(ActionNode::scale("velocity.y", -0.8));
+            laws.bindTrigger(law->getIdentifier(), "collision");
+            select(law);
+        }
         if (ImGui::MenuItem("Metalaw — govern another law")) {
             auto law = laws.createLaw("Metalaw", {&player});
             law->setActionModel(ActionNode::set("enabled", PropertyValue(false)));

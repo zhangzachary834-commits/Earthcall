@@ -115,6 +115,44 @@ int main() {
         double opacity = 0.0;
         assert(propertyValueToNumber(out, opacity) && std::fabs(opacity - 0.25) < 1e-5);
 
+        // 5c. Shape writes REGENERATE geometry where the params are the
+        //     form's truth; the KIND itself is governable (transmutation).
+        Object orb;
+        Object::ShapeParams orbParams;
+        orbParams.r = 0.5f;
+        orb.setShape(Object::ShapeKind::Sphere, orbParams);
+        assert(orb.getSpatialKind() == Object::SpatialKind::SmoothSurface);
+        assert(PropertyPath::parse("shape.r").setValue(orb, PropertyValue(1.2f)));
+        assert(std::fabs(orb.getShapeParams().r - 1.2f) < 1e-5f);
+        assert(orb.getSpatialKind() == Object::SpatialKind::SmoothSurface);
+        assert(orb.getShapeKind() == Object::ShapeKind::Sphere);   // regen, not demote
+
+        // A cube's visible form is vertex data — param writes stay raw and
+        // do NOT rebuild (repainting would be wiped for nothing).
+        assert(PropertyPath::parse("shape.fillet").setValue(obj, PropertyValue(0.3f)));
+        assert(std::fabs(obj.getShapeParams().fillet - 0.3f) < 1e-5f);
+
+        // Transmutation by law-text: the cube becomes a sphere.
+        assert(PropertyPath::parse("shape.kind").setValue(
+            obj, PropertyValue(static_cast<int>(Object::ShapeKind::Sphere))));
+        assert(obj.getShapeKind() == Object::ShapeKind::Sphere);
+        assert(obj.getSpatialKind() == Object::SpatialKind::SmoothSurface);
+        assert(!PropertyPath::parse("shape.kind").setValue(
+            obj, PropertyValue(10)));   // Field needs a payload, not an int
+        assert(!PropertyPath::parse("shape.kind").setValue(obj, PropertyValue(-1)));
+
+        // 5d. Motion state is legible: velocity/mass read and write the
+        //     physics engine's rigid body — collision RESPONSE can be law.
+        assert(PropertyPath::parse("velocity").setValue(
+            obj, PropertyValue(glm::vec3(0.0f, 5.0f, 0.0f))));
+        assert(std::fabs(Physics::getBodyFor(&obj).velocity.y - 5.0f) < 1e-5f);
+        assert(PropertyPath::parse("velocity.y").setValue(obj, PropertyValue(-2.0f)));
+        assert(std::fabs(Physics::getBodyFor(&obj).velocity.y + 2.0f) < 1e-5f);
+        assert(PropertyPath::parse("mass").setValue(obj, PropertyValue(2.5f)));
+        assert(std::fabs(Physics::getBodyFor(&obj).mass - 2.5f) < 1e-5f);
+        assert(!PropertyPath::parse("mass").setValue(obj, PropertyValue(0.0)));
+        assert(!PropertyPath::parse("mass").setValue(obj, PropertyValue(-1.0)));
+
         // 6. Physics first movers are legible laws: the bridge's properties
         //    read and write the ENGINE, and an ordinary law governs gravity.
         Physics::PhysicsLaw gravity;

@@ -5,6 +5,7 @@
 #include "Form/Singular/Property/ComputedProperty.hpp"
 #include "Form/Singular/Property/PropertyRef.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
+#include "ZonesOfEarth/Physics/Physics.hpp"
 #include <GLFW/glfw3.h>
 #include <OpenGL/glu.h>
 #include <glm/gtc/quaternion.hpp>
@@ -255,6 +256,132 @@ void Object::setPosition(const glm::vec3& p) {
 // later through Laws) can address on an Object without touching C++. Names may
 // be dotted ("shape.r") — PropertyPath matches registered names longest-first.
 // ---------------------------------------------------------------------------
+// Shape parameters that REGENERATE geometry when written: a law that sets
+// shape.r on a sphere reshapes the sphere, not just a number. Kinds whose
+// visible form does not come from the params (cube/polyhedron: vertex data;
+// field/patch: sculpted payloads) take the raw write — regenerating would
+// wipe paint or sculpt for nothing.
+// ---------------------------------------------------------------------------
+namespace {
+
+bool paramsShapeGeometry(const Object& o) {
+    switch (o.getShapeKind()) {
+        case Object::ShapeKind::Sphere:
+        case Object::ShapeKind::Cylinder:
+        case Object::ShapeKind::Cone:
+        case Object::ShapeKind::Ellipsoid:
+        case Object::ShapeKind::Ovoid:
+        case Object::ShapeKind::Paraboloid:
+        case Object::ShapeKind::Torus:
+        case Object::ShapeKind::RoundedBox:
+            break;
+        default:
+            return false;
+    }
+    const auto spatial = o.getSpatialKind();
+    return spatial != Object::SpatialKind::Field &&
+           spatial != Object::SpatialKind::Patch;
+}
+
+class ShapeParamBridge : public Property {
+public:
+    ShapeParamBridge(std::string name, Object* owner,
+                     float Object::ShapeParams::*member)
+        : _name(std::move(name)), _owner(owner), _member(member) {}
+
+    std::string name() const override { return _name; }
+    std::string typeName() const override { return "float"; }
+
+    PropertyValue value() const override {
+        return PropertyValue(_owner->getShapeParams().*_member);
+    }
+    bool setValue(const PropertyValue& v) override {
+        double n = 0.0;
+        if (!propertyValueToNumber(v, n)) return false;
+        Object::ShapeParams params = _owner->getShapeParams();
+        params.*_member = static_cast<float>(n);
+        if (paramsShapeGeometry(*_owner)) {
+            _owner->setShape(_owner->getShapeKind(), params);   // regenerate
+        } else {
+            _owner->assignShapeParams(params);
+        }
+        return true;
+    }
+
+private:
+    std::string _name;
+    Object* _owner;
+    float Object::ShapeParams::*_member;
+};
+
+// The shape's KIND itself is governable: a law can transmute a cube into a
+// sphere. Field (10) and Patch (11) are refused as targets — those forms are
+// sculpted payloads, not an integer's worth of information.
+class ShapeKindBridge : public Property {
+public:
+    explicit ShapeKindBridge(Object* owner) : _owner(owner) {}
+    std::string name() const override { return "shape.kind"; }
+    std::string typeName() const override { return "int"; }
+    PropertyValue value() const override {
+        return PropertyValue(static_cast<int>(_owner->getShapeKind()));
+    }
+    bool setValue(const PropertyValue& v) override {
+        double n = 0.0;
+        if (!propertyValueToNumber(v, n)) return false;
+        const int kind = static_cast<int>(n);
+        if (kind < 0 || kind > static_cast<int>(Object::ShapeKind::RoundedBox)) {
+            return false;
+        }
+        _owner->setShape(static_cast<Object::ShapeKind>(kind),
+                         _owner->getShapeParams());
+        return true;
+    }
+
+private:
+    Object* _owner;
+};
+
+// Motion state made legible: velocity and mass live in the physics engine's
+// rigid-body registry; these bridges are what let collision RESPONSE migrate
+// into authored laws ("on collision, reflect @event.object's velocity").
+class RigidBodyBridge : public Property {
+public:
+    enum class Field { Velocity, Mass };
+    RigidBodyBridge(std::string name, Object* owner, Field field)
+        : _name(std::move(name)), _owner(owner), _field(field) {}
+
+    std::string name() const override { return _name; }
+    std::string typeName() const override {
+        return _field == Field::Velocity ? "vec3" : "float";
+    }
+    PropertyValue value() const override {
+        Physics::RigidBody& body = Physics::getBodyFor(_owner);
+        return _field == Field::Velocity ? PropertyValue(body.velocity)
+                                         : PropertyValue(body.mass);
+    }
+    bool setValue(const PropertyValue& v) override {
+        Physics::RigidBody& body = Physics::getBodyFor(_owner);
+        if (_field == Field::Velocity) {
+            const auto* vec = std::get_if<glm::vec3>(&v);
+            if (!vec) return false;
+            body.velocity = *vec;
+            return true;
+        }
+        double n = 0.0;
+        if (!propertyValueToNumber(v, n) || n <= 0.0) return false;   // massless
+        body.mass = static_cast<float>(n);                            // is a lie
+        return true;
+    }
+
+private:
+    std::string _name;
+    Object* _owner;
+    Field _field;
+};
+
+} // namespace
+
+// ---------------------------------------------------------------------------
 // The paintable skin made legible, face by face: color, layer structure,
 // opacity, blend mode. Pixel buffers and stroke history stay source-code-only
 // — buffers are not slots. One bridge class covers every face field.
@@ -396,9 +523,10 @@ void Object::buildProperties() {
     // geometry regeneration on change follows through the setShape path
     // (LAW_AND_CREATION_SYSTEM.md, Stage 2 follow-up).
     auto addShapeParam = [this](const char* name, float ShapeParams::*member) {
-        _propertyRegistry.push_back(std::make_unique<PropertyRef<ShapeParams, float>>(
-            name, &_shapeParams, member));
+        _propertyRegistry.push_back(
+            std::make_unique<ShapeParamBridge>(name, this, member));
     };
+    _propertyRegistry.push_back(std::make_unique<ShapeKindBridge>(this));
     addShapeParam("shape.r", &ShapeParams::r);
     addShapeParam("shape.ry", &ShapeParams::ry);
     addShapeParam("shape.rz", &ShapeParams::rz);
@@ -413,6 +541,12 @@ void Object::buildProperties() {
     // ("make this object immaterial while the ritual runs").
     _propertyRegistry.push_back(std::make_unique<ComputedProperty<Object, bool>>(
         "physical", this, &Object::propPhysical, &Object::propSetPhysical));
+    // Motion state: the rigid body's truth, addressable — collision RESPONSE
+    // becomes authorable law-text.
+    _propertyRegistry.push_back(std::make_unique<RigidBodyBridge>(
+        "velocity", this, RigidBodyBridge::Field::Velocity));
+    _propertyRegistry.push_back(std::make_unique<RigidBodyBridge>(
+        "mass", this, RigidBodyBridge::Field::Mass));
     // The object's tint (uniform across faces when written; face 0 when read).
     _propertyRegistry.push_back(std::make_unique<ComputedProperty<Object, glm::vec3>>(
         "color", this, &Object::propColor, &Object::propSetColor));

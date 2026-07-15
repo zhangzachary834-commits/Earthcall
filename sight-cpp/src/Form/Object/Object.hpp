@@ -444,6 +444,9 @@ public:
     }
     ShapeKind getShapeKind() const { return _shapeKind; }
     const ShapeParams& getShapeParams() const { return _shapeParams; }
+    // Raw assignment WITHOUT geometry regeneration — for kinds whose visible
+    // form does not come from the params (cube/polyhedron/field/patch).
+    void assignShapeParams(const ShapeParams& p) { _shapeParams = p; }
 
     // --- Topology-based geometry model (smooth surfaces / complex shapes) ---
     // The fundamental category of the object. Named primitives are merely
