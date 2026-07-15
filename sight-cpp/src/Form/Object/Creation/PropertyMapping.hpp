@@ -31,9 +31,12 @@ struct PropertyMapping {
     Aggregate agg = Aggregate::PerMember;
 
     // The transform applied: exact when authored (nullopt outside its
-    // domain), otherwise the curve (total).
-    std::optional<double> apply(double x) const {
-        if (hasExact) return exact.evaluate({{exact.inputVariable, x}});
+    // domain), otherwise the curve (total). The guard subject lets
+    // expression-guarded pieces testify (the source member, per-member).
+    std::optional<double> apply(double x, const Singular* guardSubject = nullptr) const {
+        if (hasExact) {
+            return exact.evaluate({{exact.inputVariable, x}}, guardSubject);
+        }
         return transform.evaluate(x);
     }
 

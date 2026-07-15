@@ -200,7 +200,7 @@ ECA::ActionExecutor ActionNode::compile() const {
             return [target, f, binds](const ECA::Event&, Singular& subject) {
                 auto vars = readMathBindings(subject, binds);
                 if (!vars) return;
-                const auto value = f.evaluate(*vars);
+                const auto value = f.evaluate(*vars, &subject);
                 if (!value) return;
                 lawSetValue(subject, target, PropertyValue(*value));
             };
@@ -216,7 +216,7 @@ ECA::ActionExecutor ActionNode::compile() const {
                 if (!Universe::instance().hasClock()) return;
                 auto vars = readMathBindings(subject, binds);
                 if (!vars) return;
-                const auto rate = f.evaluate(*vars);
+                const auto rate = f.evaluate(*vars, &subject);
                 if (!rate) return;
                 PropertyValue current;
                 double x = 0.0;
@@ -280,7 +280,7 @@ bool ActionNode::definedFor(Singular& subject) const {
             // readable AND the values inside some authored piece — whichever
             // variable the bounds cut.
             auto vars = readMathBindings(subject, bindings);
-            return vars && mapFunction.evaluate(*vars).has_value();
+            return vars && mapFunction.evaluate(*vars, &subject).has_value();
         }
         case Kind::Drive: {
             // A curve is total: defined whenever its input is readable.

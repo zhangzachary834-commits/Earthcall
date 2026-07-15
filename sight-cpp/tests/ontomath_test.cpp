@@ -277,6 +277,86 @@ int main() {
         surfer.setPosition(glm::vec3(1.0f, 0.0f, 0.0f));
         assert(waveLaw.applyTo(surfer) == Law::ApplicationResult::Applied);
         assert(nearf(surfer.getPosition().y, 1.0f));         // sin(π/2) = 1
+
+        // ------------------------------------------------------------------
+        // 10. EXPRESSION-GUARDED PIECES — the discrete-math fusion. A piece
+        //     may be gated by a CONDITION instead of interval bounds, so
+        //     min/max/abs become DEFINABLE and the SDF boolean algebra
+        //     follows. Guards testify about a subject; without one they are
+        //     unproven and skipped — never guessed.
+        // ------------------------------------------------------------------
+        Object witness;
+        const MathBindings xBind{{"x", PropertyPath::parse("position.x")}};
+        const auto guardLEZero = [&](Expression g) {
+            // "applies where g(vars) <= 0" — the min/max workhorse, built
+            // from the EXISTING Zone condition: zero new condition kinds.
+            return std::make_shared<ConditionNode>(ConditionNode::zone(
+                Piecewise::continuous(std::move(g)), xBind,
+                PropertyValue{}, PropertyValue(0.0)));
+        };
+
+        // abs(x): where -x <= 0 (i.e. x >= 0) use x; otherwise use -x.
+        Piecewise absF;
+        {
+            Piecewise::Piece positive;
+            positive.guard = guardLEZero(Expression::variable("x", 1.0, -1.0));
+            positive.expression = Expression::variable("x");
+            Piecewise::Piece negative;                       // bare catch-all
+            negative.expression = Expression::variable("x", 1.0, -1.0);
+            absF.pieces.push_back(std::move(positive));
+            absF.pieces.push_back(std::move(negative));
+        }
+        witness.setPosition(glm::vec3(-3.0f, 0.0f, 0.0f));
+        assert(neard(*absF.evaluate({{"x", -3.0}}, &witness), 3.0));
+        witness.setPosition(glm::vec3(4.0f, 0.0f, 0.0f));
+        assert(neard(*absF.evaluate({{"x", 4.0}}, &witness), 4.0));
+
+        // min(f, g) with f = x², g = 2x + 3: where f - g <= 0 use f, else g.
+        Piecewise minF;
+        {
+            Expression f = Expression::variable("x", 2.0);
+            Expression g = Expression::variable("x", 1.0, 2.0).plus(
+                Expression::constant(3.0));
+            Expression fMinusG = f.plus(g.scaled(-1.0));
+            Piecewise::Piece useF;
+            useF.guard = guardLEZero(fMinusG);
+            useF.expression = f;
+            Piecewise::Piece useG;                           // bare catch-all
+            useG.expression = g;
+            minF.pieces.push_back(std::move(useF));
+            minF.pieces.push_back(std::move(useG));
+        }
+        witness.setPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+        assert(neard(*minF.evaluate({{"x", 0.0}}, &witness), 0.0));   // f wins
+        witness.setPosition(glm::vec3(5.0f, 0.0f, 0.0f));
+        assert(neard(*minF.evaluate({{"x", 5.0}}, &witness), 13.0)); // g wins
+
+        // Without a subject, a guard is UNPROVEN: only unguarded pieces can
+        // testify; a fully guarded function is undefined, never guessed.
+        Piecewise onlyGuarded;
+        {
+            Piecewise::Piece lone;
+            lone.guard = guardLEZero(Expression::variable("x"));
+            lone.expression = Expression::constant(1.0);
+            onlyGuarded.pieces.push_back(std::move(lone));
+        }
+        assert(!onlyGuarded.evaluate({{"x", -5.0}}).has_value());
+        witness.setPosition(glm::vec3(-5.0f, 0.0f, 0.0f));
+        assert(onlyGuarded.evaluate({{"x", -5.0}}, &witness).has_value());
+
+        // Guards are law-text: they survive serialization with the function.
+        Piecewise rebornAbs = Piecewise::fromJson(absF.toJson());
+        witness.setPosition(glm::vec3(-7.0f, 0.0f, 0.0f));
+        assert(neard(*rebornAbs.evaluate({{"x", -7.0}}, &witness), 7.0));
+
+        // And they run inside a real law: y := |x| via a Map action.
+        Law absLaw("y-becomes-abs-x");
+        absLaw.addAuthor(author);
+        absLaw.setActionModel(ActionNode::map("position.y", absF, xBind));
+        Object dipper;
+        dipper.setPosition(glm::vec3(-6.0f, 0.0f, 0.0f));
+        assert(absLaw.applyTo(dipper) == Law::ApplicationResult::Applied);
+        assert(nearf(dipper.getPosition().y, 6.0f));         // |−6|, legislated
     }
 
     glfwDestroyWindow(window);

@@ -938,7 +938,7 @@ bool editActionNode(ActionNode& node) {
             // selected object — undefined shown honestly.
             if (g.testSubject) {
                 auto vars = readMathBindings(*g.testSubject, node.bindings);
-                const auto value = vars ? node.mapFunction.evaluate(*vars)
+                const auto value = vars ? node.mapFunction.evaluate(*vars, g.testSubject)
                                         : std::optional<double>{};
                 if (value) {
                     ImGui::TextDisabled("f = %.4f right now (on %s)", *value,

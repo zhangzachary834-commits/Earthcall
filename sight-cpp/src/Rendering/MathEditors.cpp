@@ -1,5 +1,7 @@
 #include "Rendering/MathEditors.hpp"
 
+#include "ZonesOfEarth/AuthorsOfLaw/ConditionModel.hpp"
+
 #include <imgui.h>
 
 #include <cstring>
@@ -94,7 +96,48 @@ bool editPiecewise(OntoMath::Piecewise& f, const MathBindings& bindings) {
     for (std::size_t p = 0; p < f.pieces.size(); ++p) {
         auto& piece = f.pieces[p];
         ImGui::PushID(static_cast<int>(p));
-        if (f.pieces.size() > 1 || piece.hasLo || piece.hasHi) {
+
+        // Expression-guarded piece: a CONDITION decides where this formula
+        // applies ("wherever g <= 0") — min/max/abs and the SDF boolean
+        // algebra live here. The guard supersedes interval bounds.
+        if (piece.guard) {
+            ImGui::TextColored(kHeaderColor, "Piece %zu — guarded:", p + 1);
+            ImGui::SameLine();
+            ImGui::TextDisabled("%s", piece.guard->describe().c_str());
+            ImGui::SameLine();
+            if (ImGui::SmallButton("remove guard")) {
+                piece.guard.reset();
+                piece.guardCompiled = nullptr;
+                changed = true;
+            }
+            if (piece.guard &&
+                piece.guard->kind == ConditionNode::Kind::Zone) {
+                ImGui::TextDisabled("  applies where g(variables) <= 0; g is:");
+                ImGui::PushID("guard-g");
+                ImGui::Indent();
+                if (editPiecewise(piece.guard->zoneFunction, bindings)) {
+                    piece.guardCompiled = nullptr;
+                    changed = true;
+                }
+                ImGui::Unindent();
+                ImGui::PopID();
+            }
+        } else if (ImGui::SmallButton("+ guard (applies where g <= 0)")) {
+            const std::string firstVar =
+                bindings.empty() ? std::string("x") : bindings.begin()->first;
+            piece.guard = std::make_shared<ConditionNode>(ConditionNode::zone(
+                OntoMath::Piecewise::continuous(OntoMath::Expression::variable(firstVar)),
+                bindings, PropertyValue{}, PropertyValue(0.0)));
+            piece.hasLo = piece.hasHi = false;   // the guard decides now
+            piece.guardCompiled = nullptr;
+            changed = true;
+        } else if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("gate this piece by a CONDITION instead of interval\n"
+                              "bounds — the discrete-math fusion: min/max/abs and\n"
+                              "ontology-branching mathematics live here");
+        }
+
+        if (!piece.guard && (f.pieces.size() > 1 || piece.hasLo || piece.hasHi)) {
             ImGui::Text("Piece %zu over %s:", p + 1, f.inputVariable.c_str());
             if (ImGui::Checkbox("lo", &piece.hasLo)) changed = true;
             if (piece.hasLo) {

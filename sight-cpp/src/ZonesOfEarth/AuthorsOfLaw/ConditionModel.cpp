@@ -272,7 +272,7 @@ ECA::ConditionPredicate ConditionNode::compile() const {
             return [f, binds, zlo, zhi](const ECA::Event&, const Singular& target) {
                 auto vars = readMathBindings(const_cast<Singular&>(target), binds);
                 if (!vars) return false;
-                const auto value = f.evaluate(*vars);
+                const auto value = f.evaluate(*vars, &target);
                 if (!value) return false;
                 double bound = 0.0;
                 if (propertyValueToNumber(zlo, bound) && *value < bound) return false;

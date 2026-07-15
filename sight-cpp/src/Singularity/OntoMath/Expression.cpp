@@ -1,5 +1,10 @@
 #include "Singularity/OntoMath/Expression.hpp"
 
+// The guard is the condition calculus itself — pieces gated by law-text.
+// (Include at the .cpp level only: ConditionModel.hpp includes this header.)
+#include "ZonesOfEarth/AuthorsOfLaw/ConditionModel.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
+
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -442,6 +447,30 @@ bool Piecewise::Piece::contains(double x) const {
     return true;
 }
 
+bool Piecewise::Piece::applies(const std::map<std::string, double>& vars,
+                               const std::string& inputVariable,
+                               const Singular* subject) const {
+    if (guard) {
+        // A guard testifies about the WORLD: without a subject it is
+        // unproven — the piece is skipped, never guessed.
+        if (!subject) return false;
+        if (!guardCompiled) {
+            const ECA::ConditionPredicate predicate = guard->compile();
+            guardCompiled = [predicate](const Singular& s) {
+                ECA::Event probe;
+                probe.type = "piece-guard";
+                return predicate(probe, s);
+            };
+        }
+        return guardCompiled(*subject);
+    }
+    if (hasLo || hasHi) {
+        auto it = vars.find(inputVariable);
+        return it != vars.end() && contains(it->second);
+    }
+    return true;   // everywhere-defined
+}
+
 nlohmann::json Piecewise::Piece::toJson() const {
     nlohmann::json j{{"expr", expression.toJson()}};
     if (hasLo) {
@@ -452,6 +481,7 @@ nlohmann::json Piecewise::Piece::toJson() const {
         j["hi"] = hi;
         j["includeHi"] = includeHi;
     }
+    if (guard) j["guard"] = guard->toJson();
     return j;
 }
 
@@ -468,6 +498,9 @@ Piecewise::Piece Piecewise::Piece::fromJson(const nlohmann::json& j) {
         p.hi = j["hi"].get<double>();
         p.includeHi = j.value("includeHi", true);
     }
+    if (j.contains("guard")) {
+        p.guard = std::make_shared<ConditionNode>(ConditionNode::fromJson(j["guard"]));
+    }
     return p;
 }
 
@@ -480,24 +513,30 @@ Piecewise Piecewise::continuous(Expression e) {
 }
 
 std::optional<double> Piecewise::evaluate(const std::map<std::string, double>& vars) const {
-    // Find the piece whose bounds contain the designated input; a piece with
-    // no bounds is everywhere-defined. First match wins (author's order).
+    return evaluate(vars, nullptr);
+}
+
+std::optional<double> Piecewise::evaluate(const std::map<std::string, double>& vars,
+                                          const Singular* subject) const {
+    // First applicable piece wins (author's order): guarded pieces ask
+    // their condition (about the subject); interval pieces ask their
+    // bounds; a bare piece is everywhere-defined.
     for (const auto& piece : pieces) {
-        if (piece.hasLo || piece.hasHi) {
-            auto it = vars.find(inputVariable);
-            if (it == vars.end()) return std::nullopt;
-            if (!piece.contains(it->second)) continue;
-        }
+        if (!piece.applies(vars, inputVariable, subject)) continue;
         return piece.expression.evaluate(vars);
     }
     return std::nullopt;   // outside every piece: undefined, not zero
 }
 
 std::string Piecewise::print() const {
-    if (pieces.size() == 1 && !pieces[0].hasLo && !pieces[0].hasHi) {
+    if (pieces.size() == 1 && !pieces[0].hasLo && !pieces[0].hasHi &&
+        !pieces[0].guard) {
         return pieces[0].expression.print();
     }
-    return "piecewise(" + std::to_string(pieces.size()) + " over " + inputVariable + ")";
+    bool anyGuard = false;
+    for (const auto& piece : pieces) anyGuard = anyGuard || piece.guard != nullptr;
+    return "piecewise(" + std::to_string(pieces.size()) +
+           (anyGuard ? " guarded" : " over " + inputVariable) + ")";
 }
 
 nlohmann::json Piecewise::toJson() const {

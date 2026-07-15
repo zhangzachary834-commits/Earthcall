@@ -2,10 +2,15 @@
 
 #include "json.hpp"
 
+#include <functional>
 #include <map>
+#include <memory>
 #include <optional>
 #include <string>
 #include <vector>
+
+class Singular;
+struct ConditionNode;   // guards: the condition calculus gates pieces
 
 // ============================================================================
 // OntoMath — the substrate's own mathematics.
@@ -142,6 +147,14 @@ struct Expression {
 // and may be open or closed on each side — mathematically precise piecewise
 // definition. Outside every piece the function is UNDEFINED (nullopt), never
 // silently zero: discontinuity is honored, not papered over.
+//
+// EXPRESSION-GUARDED pieces (the discrete-math fusion): a piece may carry a
+// full ConditionNode GUARD instead of interval bounds — "use this formula
+// wherever f - g <= 0" (Zone guards), or wherever any condition of the law
+// calculus holds (IsKind, Related, Overlaps...). min/max/abs and the SDF
+// boolean algebra become DEFINABLE, and mathematics can branch on ontology.
+// Guarded pieces need a SUBJECT to testify about the world; evaluated
+// without one they are unproven and skipped — never guessed.
 struct Piecewise {
     struct Piece {
         bool hasLo = false, hasHi = false;
@@ -149,18 +162,31 @@ struct Piecewise {
         bool includeLo = true, includeHi = true;
         Expression expression;
 
+        // When set, the guard DECIDES applicability (interval bounds are
+        // ignored). Shared across copies of the model — edits go through
+        // the usual copy-edit-commit flow.
+        std::shared_ptr<ConditionNode> guard;
+        // Compiled lazily on first evaluation (tree -> closure, once).
+        mutable std::function<bool(const Singular&)> guardCompiled;
+
         bool contains(double x) const;
+        bool applies(const std::map<std::string, double>& vars,
+                     const std::string& inputVariable, const Singular* subject) const;
         nlohmann::json toJson() const;
         static Piece fromJson(const nlohmann::json& j);
     };
 
-    std::string inputVariable = "x";   // the variable the bounds cut
+    std::string inputVariable = "x";   // the variable interval bounds cut
     std::vector<Piece> pieces;
 
     // A single everywhere-defined piece — the purely continuous case.
     static Piecewise continuous(Expression e);
 
+    // Without a subject, guarded pieces are unproven (skipped); interval
+    // pieces behave as always. Pass the subject wherever one exists.
     std::optional<double> evaluate(const std::map<std::string, double>& vars) const;
+    std::optional<double> evaluate(const std::map<std::string, double>& vars,
+                                   const Singular* subject) const;
 
     std::string print() const;
     nlohmann::json toJson() const;

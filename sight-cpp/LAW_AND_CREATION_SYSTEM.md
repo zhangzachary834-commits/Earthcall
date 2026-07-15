@@ -322,9 +322,26 @@ so recorded periodic change can retire into the exact core. The Law Author's
 term editor multiplies factors in via "+f()" (kind × bound variable) with
 scale/shift edited inline.
 
-Growth path: expression-valued exponents (createTerm's recursive "term inside
-the exponential space"), integration by parts, richer symbolic simplification
-(sin² + cos² = 1 and kin), graph/relation-valued conditions.
+**Expression-guarded pieces (landed) — the discrete-math fusion:** a
+`Piecewise::Piece` may carry a full `ConditionNode` GUARD instead of interval
+bounds — "use this formula wherever f − g ≤ 0" (a Zone guard: zero new
+condition kinds needed), or wherever ANY condition of the law calculus holds
+(IsKind, Related, Overlaps — mathematics that branches on ontology). The two
+calculi are now mutually recursive: conditions contain math (Zone) and math
+contains conditions (guards) — one fabric. min/max/abs/sign are DEFINABLE,
+and the SDF boolean algebra (union = min, intersection = max) follows.
+Honesty holds: guards testify about a SUBJECT; evaluated without one they
+are unproven and skipped, and a fully guarded function is undefined — never
+guessed. Evaluation is subject-aware end to end (Zone, Map, Flow,
+`definedFor`, mapping transforms, the live `f = ...` readout).
+
+Growth path: named function definitions with bounded recursion (createTerm's
+recursive "term inside the exponential space" — with guards, this reaches
+the manifesto's Mandelbrot ambition), folds over sets (Σ/min/max across a
+collection — shared machinery with pair quantification), vector-valued
+expressions, expression-valued exponents, integration by parts, richer
+symbolic simplification (sin² + cos² = 1 and kin), RPN compilation for
+engine-grade evaluation (the `geom::SdfNode` rpn precedent).
 
 ### 2d. `Law` owns models
 

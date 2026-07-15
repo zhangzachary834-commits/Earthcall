@@ -252,11 +252,13 @@ std::vector<std::unique_ptr<Object>> ObjectConcept::instantiate(
                 if (!TransferPolicy::instance().canTransfer(mapping.source)) continue;
                 double x = 0.0;
                 bool have = false;
+                const Singular* guardSubject = nullptr;
                 if (mapping.agg == PropertyMapping::Aggregate::PerMember) {
                     Object* src = (*sources)[i % sources->size()];
                     PropertyValue v;
                     have = src && mapping.source.getValue(*src, v) &&
                            propertyValueToNumber(v, x);
+                    guardSubject = src;
                 } else {
                     double acc = (mapping.agg == PropertyMapping::Aggregate::Max)
                                      ? -std::numeric_limits<double>::infinity()
@@ -284,7 +286,7 @@ std::vector<std::unique_ptr<Object>> ObjectConcept::instantiate(
                 }
                 if (have) {
                     // Exact math when authored; undefined transfers nothing.
-                    const auto y = mapping.apply(x);
+                    const auto y = mapping.apply(x, guardSubject);
                     if (y) mapping.target.setValue(*newborn, PropertyValue(*y));
                 }
             }
