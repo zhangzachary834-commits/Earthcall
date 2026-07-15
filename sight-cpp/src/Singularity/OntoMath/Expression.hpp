@@ -142,6 +142,20 @@ struct Expression {
     static Expression fromJson(const nlohmann::json& j);
 };
 
+// A CALL to a named, authored function (see FunctionRegistry below): the
+// arguments are full Expressions of the CALLER's variables, evaluated first
+// and bound to the definition's parameters — pure functions, composable and
+// recursive. Iteration is carried through the arguments ("f(x², n−1)"), so
+// primitive recursion — escape-time fractals included — is expressible,
+// bounded by an anti-Babel call-depth ceiling (divergence is honest nullopt).
+struct FunctionCall {
+    std::string function;              // name in the FunctionRegistry
+    std::vector<Expression> args;      // evaluated in the caller's variables
+
+    nlohmann::json toJson() const;
+    static FunctionCall fromJson(const nlohmann::json& j);
+};
+
 // The manifesto's DiscreteFunctions: discrete bounds within which a
 // continuous expression governs. Bounds are on one designated input variable
 // and may be open or closed on each side — mathematically precise piecewise
@@ -169,6 +183,10 @@ struct Piecewise {
         // Compiled lazily on first evaluation (tree -> closure, once).
         mutable std::function<bool(const Singular&)> guardCompiled;
 
+        // When set, the piece's VALUE is a call to a named function
+        // (the expression is ignored) — composition and recursion.
+        std::shared_ptr<FunctionCall> call;
+
         bool contains(double x) const;
         bool applies(const std::map<std::string, double>& vars,
                      const std::string& inputVariable, const Singular* subject) const;
@@ -184,13 +202,51 @@ struct Piecewise {
 
     // Without a subject, guarded pieces are unproven (skipped); interval
     // pieces behave as always. Pass the subject wherever one exists.
+    // `depth` is the recursion budget consumed by function calls.
     std::optional<double> evaluate(const std::map<std::string, double>& vars) const;
     std::optional<double> evaluate(const std::map<std::string, double>& vars,
-                                   const Singular* subject) const;
+                                   const Singular* subject, int depth = 0) const;
 
     std::string print() const;
     nlohmann::json toJson() const;
     static Piecewise fromJson(const nlohmann::json& j);
+};
+
+// ============================================================================
+// FunctionRegistry — the words of mathematics. A Person names a function
+// once (parameters + a piecewise body, guards and calls included) and every
+// expression may call it: createTerm's recursion made durable. Bodies are
+// PURE — they see only their parameters (plus the subject, for guards) —
+// so definitions compose and recurse safely. Self-reference is legal;
+// divergence is answered by the call-depth ceiling with an honest nullopt.
+// ============================================================================
+struct FunctionDef {
+    std::string name;
+    std::vector<std::string> params;
+    Piecewise body;
+
+    nlohmann::json toJson() const;
+    static FunctionDef fromJson(const nlohmann::json& j);
+};
+
+class FunctionRegistry {
+public:
+    static FunctionRegistry& instance();
+
+    // The anti-Babel ceiling on recursive calls.
+    static constexpr int kMaxCallDepth = 32;
+
+    void define(FunctionDef def);              // replaces an existing name
+    bool remove(const std::string& name);
+    const FunctionDef* find(const std::string& name) const;
+    const std::vector<FunctionDef>& getAll() const { return _functions; }
+
+    nlohmann::json toJson() const;
+    void loadFromJson(const nlohmann::json& j);   // replace-all
+
+private:
+    FunctionRegistry() = default;
+    std::vector<FunctionDef> _functions;
 };
 
 } // namespace OntoMath

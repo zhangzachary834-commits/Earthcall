@@ -335,10 +335,23 @@ are unproven and skipped, and a fully guarded function is undefined — never
 guessed. Evaluation is subject-aware end to end (Zone, Map, Flow,
 `definedFor`, mapping transforms, the live `f = ...` readout).
 
-Growth path: named function definitions with bounded recursion (createTerm's
-recursive "term inside the exponential space" — with guards, this reaches
-the manifesto's Mandelbrot ambition), folds over sets (Σ/min/max across a
-collection — shared machinery with pair quantification), vector-valued
+**Named functions (landed) — createTerm's recursion made durable:** the
+`FunctionRegistry` holds authored definitions (name + parameters + a
+piecewise body, guards and calls included); any piece's value may be a CALL
+whose arguments are full Expressions of the caller's variables. Bodies are
+PURE — they see only their parameters (plus the subject, for guards) — so
+definitions compose and recurse safely: iteration is carried through the
+arguments (`iter(x, n) = n ≤ 0 ? x : iter(2x, n−1)`), which is primitive
+recursion — escape-time fractals in reach. Divergence meets the
+`kMaxCallDepth` ceiling with an honest nullopt; unknown names and wrong
+arity refuse. The registry persists with the world and is edited in the Law
+Author's "Named functions (math)" section; any piece offers "call a
+function...". Known gap: guards read the SUBJECT's paths, not the local
+parameters — base cases over params use interval bounds (one variable) until
+pure guards-over-params land.
+
+Growth path: pure guards over parameters, folds over sets (Σ/min/max across
+a collection — shared machinery with pair quantification), vector-valued
 expressions, expression-valued exponents, integration by parts, richer
 symbolic simplification (sin² + cos² = 1 and kin), RPN compilation for
 engine-grade evaluation (the `geom::SdfNode` rpn precedent).

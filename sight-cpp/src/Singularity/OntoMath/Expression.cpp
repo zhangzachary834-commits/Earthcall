@@ -482,6 +482,7 @@ nlohmann::json Piecewise::Piece::toJson() const {
         j["includeHi"] = includeHi;
     }
     if (guard) j["guard"] = guard->toJson();
+    if (call) j["call"] = call->toJson();
     return j;
 }
 
@@ -501,6 +502,9 @@ Piecewise::Piece Piecewise::Piece::fromJson(const nlohmann::json& j) {
     if (j.contains("guard")) {
         p.guard = std::make_shared<ConditionNode>(ConditionNode::fromJson(j["guard"]));
     }
+    if (j.contains("call")) {
+        p.call = std::make_shared<FunctionCall>(FunctionCall::fromJson(j["call"]));
+    }
     return p;
 }
 
@@ -517,15 +521,111 @@ std::optional<double> Piecewise::evaluate(const std::map<std::string, double>& v
 }
 
 std::optional<double> Piecewise::evaluate(const std::map<std::string, double>& vars,
-                                          const Singular* subject) const {
+                                          const Singular* subject, int depth) const {
     // First applicable piece wins (author's order): guarded pieces ask
     // their condition (about the subject); interval pieces ask their
     // bounds; a bare piece is everywhere-defined.
     for (const auto& piece : pieces) {
         if (!piece.applies(vars, inputVariable, subject)) continue;
+        if (piece.call) {
+            // Composition/recursion: evaluate the args in the CALLER's
+            // variables, bind them to the definition's parameters, and
+            // evaluate the pure body. Divergence meets the ceiling.
+            if (depth >= FunctionRegistry::kMaxCallDepth) return std::nullopt;
+            const FunctionDef* def =
+                FunctionRegistry::instance().find(piece.call->function);
+            if (!def || def->params.size() != piece.call->args.size()) {
+                return std::nullopt;   // unknown word or wrong arity: honest
+            }
+            std::map<std::string, double> bound;
+            for (std::size_t i = 0; i < def->params.size(); ++i) {
+                const auto value = piece.call->args[i].evaluate(vars);
+                if (!value) return std::nullopt;
+                bound[def->params[i]] = *value;
+            }
+            return def->body.evaluate(bound, subject, depth + 1);
+        }
         return piece.expression.evaluate(vars);
     }
     return std::nullopt;   // outside every piece: undefined, not zero
+}
+
+// ---------------------------------------------------------------------------
+// FunctionCall / FunctionDef / FunctionRegistry
+// ---------------------------------------------------------------------------
+
+nlohmann::json FunctionCall::toJson() const {
+    nlohmann::json argsJson = nlohmann::json::array();
+    for (const auto& arg : args) argsJson.push_back(arg.toJson());
+    return nlohmann::json{{"fn", function}, {"args", argsJson}};
+}
+
+FunctionCall FunctionCall::fromJson(const nlohmann::json& j) {
+    FunctionCall c;
+    c.function = j.value("fn", std::string());
+    if (j.contains("args")) {
+        for (const auto& a : j["args"]) c.args.push_back(Expression::fromJson(a));
+    }
+    return c;
+}
+
+nlohmann::json FunctionDef::toJson() const {
+    return nlohmann::json{{"name", name}, {"params", params}, {"body", body.toJson()}};
+}
+
+FunctionDef FunctionDef::fromJson(const nlohmann::json& j) {
+    FunctionDef def;
+    def.name = j.value("name", std::string());
+    if (j.contains("params")) {
+        def.params = j["params"].get<std::vector<std::string>>();
+    }
+    if (j.contains("body")) def.body = Piecewise::fromJson(j["body"]);
+    return def;
+}
+
+FunctionRegistry& FunctionRegistry::instance() {
+    static FunctionRegistry registry;
+    return registry;
+}
+
+void FunctionRegistry::define(FunctionDef def) {
+    if (def.name.empty()) return;
+    for (auto& existing : _functions) {
+        if (existing.name == def.name) {
+            existing = std::move(def);   // redefinition: the word is renewed
+            return;
+        }
+    }
+    _functions.push_back(std::move(def));
+}
+
+bool FunctionRegistry::remove(const std::string& name) {
+    const auto before = _functions.size();
+    _functions.erase(std::remove_if(_functions.begin(), _functions.end(),
+                                    [&](const FunctionDef& def) {
+                                        return def.name == name;
+                                    }),
+                     _functions.end());
+    return _functions.size() != before;
+}
+
+const FunctionDef* FunctionRegistry::find(const std::string& name) const {
+    for (const auto& def : _functions) {
+        if (def.name == name) return &def;
+    }
+    return nullptr;
+}
+
+nlohmann::json FunctionRegistry::toJson() const {
+    nlohmann::json arr = nlohmann::json::array();
+    for (const auto& def : _functions) arr.push_back(def.toJson());
+    return nlohmann::json{{"functions", arr}};
+}
+
+void FunctionRegistry::loadFromJson(const nlohmann::json& j) {
+    _functions.clear();
+    if (!j.contains("functions")) return;
+    for (const auto& d : j["functions"]) define(FunctionDef::fromJson(d));
 }
 
 std::string Piecewise::print() const {

@@ -4,6 +4,7 @@
 #include "Game.hpp"
 #include "Form/Object/Object.hpp"
 #include "Form/Object/Creation/ObjectConcept.hpp"
+#include "Singularity/OntoMath/Expression.hpp"
 #include "Singularity/TransferPolicy.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
@@ -122,6 +123,7 @@ nlohmann::json Game::buildSaveJson() const {
     j["authoredLaws"] = _lawManager.toJson();
     j["concepts"] = ConceptRegistry::instance().toJson();
     j["transferPolicy"] = TransferPolicy::instance().toJson();
+    j["mathFunctions"] = OntoMath::FunctionRegistry::instance().toJson();
     j["worldTime"] = _worldTime;
 
     return j;
@@ -329,6 +331,11 @@ void Game::loadState(const std::string& filename) {
         stage("transfer-policy", [&] {
             if (j.contains("transferPolicy")) {
                 TransferPolicy::instance().loadFromJson(j["transferPolicy"]);
+            }
+        });
+        stage("math-functions", [&] {
+            if (j.contains("mathFunctions")) {
+                OntoMath::FunctionRegistry::instance().loadFromJson(j["mathFunctions"]);
             }
         });
         stage("authored-laws", [&] {

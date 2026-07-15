@@ -357,6 +357,131 @@ int main() {
         dipper.setPosition(glm::vec3(-6.0f, 0.0f, 0.0f));
         assert(absLaw.applyTo(dipper) == Law::ApplicationResult::Applied);
         assert(nearf(dipper.getPosition().y, 6.0f));         // |−6|, legislated
+
+        // ------------------------------------------------------------------
+        // 11. NAMED FUNCTIONS — createTerm's recursion made durable. Define
+        //     once, call from any piece; iteration is carried through the
+        //     ARGUMENTS, so primitive recursion is expressible; divergence
+        //     meets the call-depth ceiling with an honest nullopt.
+        // ------------------------------------------------------------------
+        using OntoMath::FunctionCall;
+        using OntoMath::FunctionDef;
+        using OntoMath::FunctionRegistry;
+        auto& registry = FunctionRegistry::instance();
+
+        // double(x) = 2x — and a caller composing double(x² + 1).
+        FunctionDef doubler;
+        doubler.name = "double";
+        doubler.params = {"x"};
+        doubler.body = Piecewise::continuous(Expression::variable("x", 1.0, 2.0));
+        registry.define(doubler);
+
+        Piecewise composed;
+        {
+            Piecewise::Piece piece;
+            piece.call = std::make_shared<FunctionCall>();
+            piece.call->function = "double";
+            piece.call->args = {Expression::variable("x", 2.0).plus(
+                Expression::constant(1.0))};                 // x² + 1
+            composed.pieces.push_back(std::move(piece));
+        }
+        assert(neard(*composed.evaluate({{"x", 3.0}}), 20.0));   // 2·(9+1)
+
+        // iter(x, n): n <= 0 -> x; else iter(2x, n - 1) — recursion with
+        // the state carried through the arguments: iter(3, 4) = 3·2⁴ = 48.
+        FunctionDef iter;
+        iter.name = "iter";
+        iter.params = {"x", "n"};
+        iter.body.inputVariable = "n";
+        {
+            Piecewise::Piece base;                            // n <= 0 -> x
+            base.hasHi = true;
+            base.hi = 0.0;
+            base.includeHi = true;
+            base.expression = Expression::variable("x");
+            Piecewise::Piece step;                            // else recurse
+            step.call = std::make_shared<FunctionCall>();
+            step.call->function = "iter";
+            step.call->args = {Expression::variable("x", 1.0, 2.0),      // 2x
+                               Expression::variable("n").plus(
+                                   Expression::constant(-1.0))};         // n-1
+            iter.body.pieces.push_back(std::move(base));
+            iter.body.pieces.push_back(std::move(step));
+        }
+        registry.define(iter);
+
+        Piecewise callIter;
+        {
+            Piecewise::Piece piece;
+            piece.call = std::make_shared<FunctionCall>();
+            piece.call->function = "iter";
+            piece.call->args = {Expression::variable("x"), Expression::constant(4.0)};
+            callIter.pieces.push_back(std::move(piece));
+        }
+        assert(neard(*callIter.evaluate({{"x", 3.0}}), 48.0));
+
+        // Divergence is honest: a function with no base case hits the
+        // anti-Babel depth ceiling and answers NOTHING.
+        FunctionDef forever;
+        forever.name = "forever";
+        forever.params = {"x"};
+        {
+            Piecewise::Piece loop;
+            loop.call = std::make_shared<FunctionCall>();
+            loop.call->function = "forever";
+            loop.call->args = {Expression::variable("x")};
+            forever.body.pieces.push_back(std::move(loop));
+        }
+        registry.define(forever);
+        Piecewise callForever;
+        {
+            Piecewise::Piece piece;
+            piece.call = std::make_shared<FunctionCall>();
+            piece.call->function = "forever";
+            piece.call->args = {Expression::variable("x")};
+            callForever.pieces.push_back(std::move(piece));
+        }
+        assert(!callForever.evaluate({{"x", 1.0}}).has_value());
+
+        // Unknown words and wrong arity are refusals, not guesses.
+        Piecewise callGhost;
+        {
+            Piecewise::Piece piece;
+            piece.call = std::make_shared<FunctionCall>();
+            piece.call->function = "no-such-function";
+            piece.call->args = {Expression::variable("x")};
+            callGhost.pieces.push_back(std::move(piece));
+        }
+        assert(!callGhost.evaluate({{"x", 1.0}}).has_value());
+        Piecewise wrongArity;
+        {
+            Piecewise::Piece piece;
+            piece.call = std::make_shared<FunctionCall>();
+            piece.call->function = "iter";
+            piece.call->args = {Expression::variable("x")};   // iter wants 2
+            wrongArity.pieces.push_back(std::move(piece));
+        }
+        assert(!wrongArity.evaluate({{"x", 1.0}}).has_value());
+
+        // The whole vocabulary survives serialization: registry AND call.
+        const auto registryJson = registry.toJson();
+        registry.loadFromJson(nlohmann::json::object());
+        assert(registry.getAll().empty());
+        registry.loadFromJson(registryJson);
+        assert(registry.find("iter") != nullptr);
+        Piecewise rebornCall = Piecewise::fromJson(callIter.toJson());
+        assert(neard(*rebornCall.evaluate({{"x", 3.0}}), 48.0));
+
+        // And in a real law: y := iter(x, 4).
+        Law iterLaw("y-becomes-iterated-x");
+        iterLaw.addAuthor(author);
+        iterLaw.setActionModel(ActionNode::map("position.y", callIter, xBind));
+        Object grower;
+        grower.setPosition(glm::vec3(2.0f, 0.0f, 0.0f));
+        assert(iterLaw.applyTo(grower) == Law::ApplicationResult::Applied);
+        assert(nearf(grower.getPosition().y, 32.0f));         // 2·2⁴, legislated
+
+        registry.loadFromJson(nlohmann::json::object());      // leave it clean
     }
 
     glfwDestroyWindow(window);

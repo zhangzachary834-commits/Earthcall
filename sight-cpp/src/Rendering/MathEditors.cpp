@@ -48,6 +48,107 @@ bool editMathBindings(MathBindings& bindings, const PathPickerFn& pathPicker) {
     return changed;
 }
 
+bool editExpression(OntoMath::Expression& e, const MathBindings& bindings) {
+    bool changed = false;
+    int removeTerm = -1;
+    for (std::size_t t = 0; t < e.terms.size(); ++t) {
+        auto& term = e.terms[t];
+        ImGui::PushID(static_cast<int>(t) + 100);
+        ImGui::SetNextItemWidth(80.0f);
+        double c = term.coefficient;
+        if (ImGui::InputDouble("coeff", &c)) { term.coefficient = c; changed = true; }
+        for (auto& factor : term.factors) {
+            ImGui::SameLine();
+            ImGui::SetNextItemWidth(56.0f);
+            double exp = factor.second;
+            if (ImGui::InputDouble(factor.first.c_str(), &exp)) {
+                factor.second = exp;
+                changed = true;
+            }
+        }
+        for (const auto& binding : bindings) {
+            if (term.factors.count(binding.first)) continue;
+            ImGui::SameLine();
+            if (ImGui::SmallButton(("*" + binding.first).c_str())) {
+                term.factors[binding.first] = 1.0;
+                changed = true;
+            }
+        }
+        // Transcendental factors: exact sin/cos/exp/ln of a bound variable.
+        ImGui::SameLine();
+        if (ImGui::SmallButton("+f()")) ImGui::OpenPopup("addtrans");
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("multiply in an exact transcendental factor:\n"
+                              "sin / cos / exp / ln of a bound variable");
+        }
+        if (ImGui::BeginPopup("addtrans")) {
+            static const char* transNames[] = {"sin", "cos", "exp", "ln"};
+            for (int k = 0; k < 4; ++k) {
+                for (const auto& binding : bindings) {
+                    const std::string label =
+                        std::string(transNames[k]) + "(" + binding.first + ")";
+                    if (ImGui::MenuItem(label.c_str())) {
+                        term.addTrans(OntoMath::TransFactor(
+                            static_cast<OntoMath::TransFactor::Kind>(k),
+                            binding.first));
+                        changed = true;
+                    }
+                }
+            }
+            ImGui::EndPopup();
+        }
+        ImGui::SameLine();
+        if (ImGui::SmallButton("x##rmterm")) removeTerm = static_cast<int>(t);
+
+        int removeTrans = -1;
+        for (std::size_t tfIndex = 0; tfIndex < term.trans.size(); ++tfIndex) {
+            auto& tf = term.trans[tfIndex];
+            ImGui::PushID(static_cast<int>(tfIndex) + 300);
+            static const char* transNames[] = {"sin", "cos", "exp", "ln"};
+            ImGui::Text("   × %s(", transNames[static_cast<int>(tf.kind)]);
+            ImGui::SameLine();
+            ImGui::SetNextItemWidth(56.0f);
+            double scale = tf.scale;
+            if (ImGui::InputDouble("##tscale", &scale)) {
+                tf.scale = scale;
+                changed = true;
+            }
+            ImGui::SameLine();
+            ImGui::Text("·%s", tf.variable.c_str());
+            if (tf.kind != OntoMath::TransFactor::Kind::Ln) {
+                ImGui::SameLine();
+                ImGui::Text("+");
+                ImGui::SameLine();
+                ImGui::SetNextItemWidth(56.0f);
+                double shift = tf.shift;
+                if (ImGui::InputDouble("##tshift", &shift)) {
+                    tf.shift = shift;
+                    changed = true;
+                }
+            }
+            ImGui::SameLine();
+            ImGui::Text(")");
+            ImGui::SameLine();
+            if (ImGui::SmallButton("x##rmtrans")) removeTrans = static_cast<int>(tfIndex);
+            ImGui::PopID();
+        }
+        if (removeTrans >= 0) {
+            term.trans.erase(term.trans.begin() + removeTrans);
+            changed = true;
+        }
+        ImGui::PopID();
+    }
+    if (removeTerm >= 0) {
+        e.terms.erase(e.terms.begin() + removeTerm);
+        changed = true;
+    }
+    if (ImGui::SmallButton("+ term")) {
+        e.terms.emplace_back(1.0);
+        changed = true;
+    }
+    return changed;
+}
+
 bool editPiecewise(OntoMath::Piecewise& f, const MathBindings& bindings) {
     bool changed = false;
     ImGui::TextColored(kHeaderColor, "Function");
@@ -160,102 +261,58 @@ bool editPiecewise(OntoMath::Piecewise& f, const MathBindings& bindings) {
             }
         }
 
-        int removeTerm = -1;
-        for (std::size_t t = 0; t < piece.expression.terms.size(); ++t) {
-            auto& term = piece.expression.terms[t];
-            ImGui::PushID(static_cast<int>(t) + 100);
-            ImGui::SetNextItemWidth(80.0f);
-            double c = term.coefficient;
-            if (ImGui::InputDouble("coeff", &c)) { term.coefficient = c; changed = true; }
-            for (auto& factor : term.factors) {
-                ImGui::SameLine();
-                ImGui::SetNextItemWidth(56.0f);
-                double e = factor.second;
-                if (ImGui::InputDouble(factor.first.c_str(), &e)) {
-                    factor.second = e;
-                    changed = true;
-                }
-            }
-            for (const auto& binding : bindings) {
-                if (term.factors.count(binding.first)) continue;
-                ImGui::SameLine();
-                if (ImGui::SmallButton(("*" + binding.first).c_str())) {
-                    term.factors[binding.first] = 1.0;
-                    changed = true;
-                }
-            }
-            // Transcendental factors: exact sin/cos/exp/ln of a bound
-            // variable — periodic and exponential change as law-text.
+        // The piece's VALUE: a call to a named function, or an expression.
+        if (piece.call) {
+            const OntoMath::FunctionDef* def =
+                OntoMath::FunctionRegistry::instance().find(piece.call->function);
+            ImGui::TextColored(kHeaderColor, "  calls %s(%s)",
+                               piece.call->function.c_str(),
+                               def ? std::to_string(def->params.size()).c_str() : "?");
             ImGui::SameLine();
-            if (ImGui::SmallButton("+f()")) ImGui::OpenPopup("addtrans");
-            if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("multiply in an exact transcendental factor:\n"
-                                  "sin / cos / exp / ln of a bound variable");
-            }
-            if (ImGui::BeginPopup("addtrans")) {
-                static const char* transNames[] = {"sin", "cos", "exp", "ln"};
-                for (int k = 0; k < 4; ++k) {
-                    for (const auto& binding : bindings) {
-                        const std::string label =
-                            std::string(transNames[k]) + "(" + binding.first + ")";
-                        if (ImGui::MenuItem(label.c_str())) {
-                            term.addTrans(OntoMath::TransFactor(
-                                static_cast<OntoMath::TransFactor::Kind>(k),
-                                binding.first));
-                            changed = true;
-                        }
-                    }
-                }
-                ImGui::EndPopup();
-            }
-            ImGui::SameLine();
-            if (ImGui::SmallButton("x##rmterm")) removeTerm = static_cast<int>(t);
-
-            int removeTrans = -1;
-            for (std::size_t tfIndex = 0; tfIndex < term.trans.size(); ++tfIndex) {
-                auto& tf = term.trans[tfIndex];
-                ImGui::PushID(static_cast<int>(tfIndex) + 300);
-                static const char* transNames[] = {"sin", "cos", "exp", "ln"};
-                ImGui::Text("   × %s(", transNames[static_cast<int>(tf.kind)]);
-                ImGui::SameLine();
-                ImGui::SetNextItemWidth(56.0f);
-                double scale = tf.scale;
-                if (ImGui::InputDouble("##tscale", &scale)) {
-                    tf.scale = scale;
-                    changed = true;
-                }
-                ImGui::SameLine();
-                ImGui::Text("·%s", tf.variable.c_str());
-                if (tf.kind != OntoMath::TransFactor::Kind::Ln) {
-                    ImGui::SameLine();
-                    ImGui::Text("+");
-                    ImGui::SameLine();
-                    ImGui::SetNextItemWidth(56.0f);
-                    double shift = tf.shift;
-                    if (ImGui::InputDouble("##tshift", &shift)) {
-                        tf.shift = shift;
-                        changed = true;
-                    }
-                }
-                ImGui::SameLine();
-                ImGui::Text(")");
-                ImGui::SameLine();
-                if (ImGui::SmallButton("x##rmtrans")) removeTrans = static_cast<int>(tfIndex);
-                ImGui::PopID();
-            }
-            if (removeTrans >= 0) {
-                term.trans.erase(term.trans.begin() + removeTrans);
+            if (ImGui::SmallButton("remove call")) {
+                piece.call.reset();
                 changed = true;
             }
-            ImGui::PopID();
-        }
-        if (removeTerm >= 0) {
-            piece.expression.terms.erase(piece.expression.terms.begin() + removeTerm);
-            changed = true;
-        }
-        if (ImGui::SmallButton("+ term")) {
-            piece.expression.terms.emplace_back(1.0);
-            changed = true;
+            if (!def) {
+                ImGui::TextColored(kWarnColor,
+                                   "  ! no function named \"%s\" is defined",
+                                   piece.call->function.c_str());
+            } else {
+                if (piece.call->args.size() != def->params.size()) {
+                    piece.call->args.resize(def->params.size(),
+                                            OntoMath::Expression::constant(0.0));
+                    changed = true;
+                }
+                for (std::size_t a = 0; a < piece.call->args.size(); ++a) {
+                    ImGui::PushID(static_cast<int>(a) + 700);
+                    ImGui::TextDisabled("  %s =", def->params[a].c_str());
+                    ImGui::Indent();
+                    if (editExpression(piece.call->args[a], bindings)) changed = true;
+                    ImGui::Unindent();
+                    ImGui::PopID();
+                }
+            }
+        } else {
+            if (editExpression(piece.expression, bindings)) changed = true;
+            if (!OntoMath::FunctionRegistry::instance().getAll().empty()) {
+                ImGui::SameLine();
+                if (ImGui::SmallButton("call a function...")) {
+                    const auto& def =
+                        OntoMath::FunctionRegistry::instance().getAll().front();
+                    auto call = std::make_shared<OntoMath::FunctionCall>();
+                    call->function = def.name;
+                    call->args.assign(def.params.size(),
+                                      OntoMath::Expression::variable(
+                                          bindings.empty() ? "x"
+                                                           : bindings.begin()->first));
+                    piece.call = std::move(call);
+                    changed = true;
+                }
+                if (ImGui::IsItemHovered()) {
+                    ImGui::SetTooltip("the piece's value becomes a NAMED function call\n"
+                                      "(composition and recursion; see Named functions)");
+                }
+            }
         }
         ImGui::PopID();
         ImGui::Separator();
@@ -267,6 +324,82 @@ bool editPiecewise(OntoMath::Piecewise& f, const MathBindings& bindings) {
         changed = true;
     }
     return changed;
+}
+
+void editFunctionRegistry() {
+    auto& registry = OntoMath::FunctionRegistry::instance();
+    ImGui::TextDisabled("Define a function once; call it from any piece —");
+    ImGui::TextDisabled("composition and recursion (depth-capped at %d).",
+                        OntoMath::FunctionRegistry::kMaxCallDepth);
+
+    static int selected = -1;
+    std::string removeName;
+    const auto& defs = registry.getAll();
+    for (std::size_t i = 0; i < defs.size(); ++i) {
+        ImGui::PushID(static_cast<int>(i));
+        std::string signature = defs[i].name + "(";
+        for (std::size_t p = 0; p < defs[i].params.size(); ++p) {
+            if (p) signature += ", ";
+            signature += defs[i].params[p];
+        }
+        signature += ")";
+        if (ImGui::Selectable(signature.c_str(), static_cast<int>(i) == selected)) {
+            selected = static_cast<int>(i);
+        }
+        ImGui::SameLine();
+        if (ImGui::SmallButton("delete")) removeName = defs[i].name;
+        ImGui::PopID();
+    }
+    if (!removeName.empty()) {
+        registry.remove(removeName);
+        selected = -1;
+    }
+
+    static char nameBuf[48] = "";
+    static char paramsBuf[96] = "x";
+    ImGui::SetNextItemWidth(120.0f);
+    ImGui::InputText("##fnname", nameBuf, sizeof(nameBuf));
+    if (ImGui::IsItemHovered()) ImGui::SetTooltip("function name");
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(120.0f);
+    ImGui::InputText("##fnparams", paramsBuf, sizeof(paramsBuf));
+    if (ImGui::IsItemHovered()) ImGui::SetTooltip("parameters, comma-separated: x, n");
+    ImGui::SameLine();
+    if (ImGui::Button("Define") && nameBuf[0] != '\0') {
+        OntoMath::FunctionDef def;
+        def.name = nameBuf;
+        std::string token;
+        for (const char* c = paramsBuf;; ++c) {
+            if (*c == ',' || *c == '\0' || *c == ' ') {
+                if (!token.empty()) def.params.push_back(token);
+                token.clear();
+                if (*c == '\0') break;
+            } else {
+                token += *c;
+            }
+        }
+        if (def.params.empty()) def.params.push_back("x");
+        def.body = OntoMath::Piecewise::continuous(
+            OntoMath::Expression::variable(def.params.front()));
+        def.body.inputVariable = def.params.front();
+        registry.define(std::move(def));
+        selected = static_cast<int>(registry.getAll().size()) - 1;
+        nameBuf[0] = '\0';
+    }
+
+    if (selected >= 0 && selected < static_cast<int>(registry.getAll().size())) {
+        // Edit the selected definition's body. Its "bindings" are its own
+        // parameters — pure functions see nothing else.
+        auto def = registry.getAll()[static_cast<std::size_t>(selected)];
+        MathBindings paramBindings;
+        for (const auto& p : def.params) paramBindings[p] = PropertyPath{};
+        ImGui::Separator();
+        ImGui::TextColored(kHeaderColor, "Body of %s:", def.name.c_str());
+        ImGui::PushID("fnbody");
+        const bool bodyChanged = editPiecewise(def.body, paramBindings);
+        ImGui::PopID();
+        if (bodyChanged) registry.define(std::move(def));
+    }
 }
 
 } // namespace MathEd

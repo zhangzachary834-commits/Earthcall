@@ -1807,6 +1807,13 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player,
         }
     }
 
+    // The words of mathematics: named functions, defined once, called from
+    // any piece — composition and bounded recursion.
+    ImGui::Separator();
+    if (ImGui::CollapsingHeader("Named functions (math)")) {
+        MathEd::editFunctionRegistry();
+    }
+
     // The bus, live: what events are ACTUALLY flowing. If a trigger never
     // appears here, the world never produced it — the law is not at fault.
     ImGui::Separator();
