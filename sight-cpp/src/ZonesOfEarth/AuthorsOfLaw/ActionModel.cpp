@@ -2,7 +2,10 @@
 
 #include "Form/Object/Creation/ObjectConcept.hpp"
 #include "Form/Singular/Property/PropertyValueJson.hpp"
+#include "Singularity/Core/EventBus.hpp"
 #include "ZonesOfEarth/World/World.hpp"
+
+#include <ctime>
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <utility>
@@ -42,6 +45,11 @@ nlohmann::json ActionNode::toJson() const {
             j["function"] = mapFunction.toJson();
             j["bindings"] = mathBindingsToJson(bindings);
             break;
+        case Kind::Publish:
+            j["eventType"] = eventType;
+            if (!publishSubject.empty()) j["publishSubject"] = publishSubject;
+            if (!publishObject.empty()) j["publishObject"] = publishObject;
+            break;
     }
     return j;
 }
@@ -55,6 +63,9 @@ ActionNode ActionNode::fromJson(const nlohmann::json& j) {
     if (j.contains("curve")) n.curve = CurveModel::fromJson(j["curve"]);
     if (j.contains("input")) n.input = PropertyPath::parse(j["input"].get<std::string>());
     n.conceptId = j.value("conceptId", std::string());
+    n.eventType = j.value("eventType", std::string());
+    n.publishSubject = j.value("publishSubject", std::string());
+    n.publishObject = j.value("publishObject", std::string());
     if (j.contains("function")) n.mapFunction = OntoMath::Piecewise::fromJson(j["function"]);
     if (j.contains("bindings")) n.bindings = mathBindingsFromJson(j["bindings"]);
     if (j.contains("children")) {
@@ -146,6 +157,39 @@ ECA::ActionExecutor ActionNode::compile() const {
                 }
             };
         }
+        case Kind::Publish: {
+            // MINT an event: the law contributes to the world's event
+            // vocabulary instead of only consuming it. Participants resolve
+            // at fire time; an unproven SUBJECT publishes nothing (a law
+            // never testifies about a being the world cannot produce).
+            // Cascades resolve within the tick, bounded by kMaxChainRounds.
+            const std::string type = eventType;
+            const std::string subjectToken = publishSubject;
+            const std::string objectToken = publishObject;
+            const auto resolveToken = [](const std::string& token) -> Singular* {
+                if (token == "@event.subject" || token == "@event.object") {
+                    if (!Universe::instance().hasApplicationEvent()) return nullptr;
+                    return token == "@event.subject"
+                               ? Universe::instance().applicationEventSubject()
+                               : Universe::instance().applicationEventObject();
+                }
+                for (Singular* being : Universe::instance().beings()) {
+                    if (being && being->getIdentifier() == token) return being;
+                }
+                return nullptr;
+            };
+            return [type, subjectToken, objectToken, resolveToken](
+                       const ECA::Event&, Singular& lawSubject) {
+                if (type.empty()) return;
+                Singular* eventSubject =
+                    subjectToken.empty() ? &lawSubject : resolveToken(subjectToken);
+                if (!eventSubject) return;   // unproven: no testimony
+                Singular* eventObject =
+                    objectToken.empty() ? nullptr : resolveToken(objectToken);
+                Core::EventBus::instance().publish(
+                    ECA::Event{type, eventSubject, eventObject, std::time(nullptr)});
+            };
+        }
         case Kind::Map: {
             // path := f(bindings) — behavior governed by an authored,
             // exact, piecewise mathematical function. Undefined math writes
@@ -200,6 +244,7 @@ std::string ActionNode::describe() const {
         case Kind::Spawn: return "spawn(" + conceptId + ")";
         case Kind::Map: return path.toString() + " := " + mapFunction.print();
         case Kind::Flow: return "d(" + path.toString() + ")/dt = " + mapFunction.print();
+        case Kind::Publish: return "publish '" + eventType + "'";
     }
     return "action";
 }
@@ -308,6 +353,16 @@ ActionNode ActionNode::flow(const std::string& dottedPath, OntoMath::Piecewise f
     n.path = PropertyPath::parse(dottedPath);
     n.mapFunction = std::move(function);
     n.bindings = std::move(bindings);
+    return n;
+}
+
+ActionNode ActionNode::publish(const std::string& type, const std::string& subjectToken,
+                               const std::string& objectToken) {
+    ActionNode n;
+    n.kind = Kind::Publish;
+    n.eventType = type;
+    n.publishSubject = subjectToken;
+    n.publishObject = objectToken;
     return n;
 }
 

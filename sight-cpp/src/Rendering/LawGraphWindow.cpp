@@ -495,6 +495,9 @@ void seedConditionKind(ConditionNode& node) {
         case ConditionNode::Kind::InRegion:
             if (node.probe.empty()) node.probe = PropertyPath::parse("position");
             break;
+        case ConditionNode::Kind::Overlaps:
+            if (node.otherId.empty()) node.otherId = "@event.object";
+            break;
         case ConditionNode::Kind::IsKind:
         case ConditionNode::Kind::ForAny:
         case ConditionNode::Kind::ForAll:
@@ -535,10 +538,11 @@ bool editConditionNode(ConditionNode& node) {
     static const char* kinds[] = {"compare", "in shape region", "related to...",
                                   "all of... (&&)", "any of... (||)", "not (!)",
                                   "math zone", "is a (type)", "this specific being",
-                                  "for ANY being...", "for ALL beings..."};
+                                  "for ANY being...", "for ALL beings...",
+                                  "overlaps (touching)"};
     int kind = static_cast<int>(node.kind);
     ImGui::SetNextItemWidth(170.0f);
-    if (ImGui::Combo("Condition type", &kind, kinds, 11)) {
+    if (ImGui::Combo("Condition type", &kind, kinds, 12)) {
         node.kind = static_cast<ConditionNode::Kind>(kind);
         seedConditionKind(node);
         changed = true;
@@ -608,6 +612,37 @@ bool editConditionNode(ConditionNode& node) {
                     node.region.dims.x = radius;
                     changed = true;
                 }
+            }
+            break;
+        }
+        case ConditionNode::Kind::Overlaps: {
+            ImGui::TextDisabled("True while the subject GEOMETRICALLY TOUCHES the other —");
+            ImGui::TextDisabled("the engine's collision test, as an ordinary condition.");
+            ImGui::TextDisabled("Perception is authorable: pair with a 'publish event'");
+            ImGui::TextDisabled("action and you have written a perception law.");
+            const char* preview = node.otherId.empty() ? "(choose the other)"
+                                                       : node.otherId.c_str();
+            ImGui::SetNextItemWidth(200.0f);
+            if (ImGui::BeginCombo("Touching", preview)) {
+                if (ImGui::Selectable("the event's subject",
+                                      node.otherId == "@event.subject")) {
+                    node.otherId = "@event.subject";
+                    changed = true;
+                }
+                if (ImGui::Selectable("the event's other object",
+                                      node.otherId == "@event.object")) {
+                    node.otherId = "@event.object";
+                    changed = true;
+                }
+                for (Singular* being : Universe::instance().beings()) {
+                    if (!being) continue;
+                    const std::string id = being->getIdentifier();
+                    if (ImGui::Selectable(id.c_str(), node.otherId == id)) {
+                        node.otherId = id;
+                        changed = true;
+                    }
+                }
+                ImGui::EndCombo();
             }
             break;
         }
@@ -783,6 +818,9 @@ void seedActionKind(ActionNode& node) {
                 node.bindings = MathBindings{{"x", PropertyPath::parse("position.x")}};
             }
             break;
+        case ActionNode::Kind::Publish:
+            if (node.eventType.empty()) node.eventType = "custom-signal";
+            break;
         case ActionNode::Kind::Flow:
             // Rate of change: seed t -> the change-over-time clock, so the
             // authored f(t) is dp/dt from the moment the law takes hold.
@@ -804,10 +842,10 @@ bool editActionNode(ActionNode& node) {
 
     static const char* kinds[] = {"set", "add", "scale", "lerp", "drive (curve)",
                                   "sequence", "parallel", "spawn concept", "map (math)",
-                                  "flow (rate of change)"};
+                                  "flow (rate of change)", "publish event"};
     int kind = static_cast<int>(node.kind);
     ImGui::SetNextItemWidth(160.0f);
-    if (ImGui::Combo("Action type", &kind, kinds, 10)) {
+    if (ImGui::Combo("Action type", &kind, kinds, 11)) {
         node.kind = static_cast<ActionNode::Kind>(kind);
         seedActionKind(node);
         changed = true;
@@ -910,6 +948,58 @@ bool editActionNode(ActionNode& node) {
                                         g.selectedSubjectId.c_str());
                 }
             }
+            break;
+        }
+        case ActionNode::Kind::Publish: {
+            ImGui::TextDisabled("MINT an event: the law authors vocabulary instead of");
+            ImGui::TextDisabled("only consuming it. Other laws can bind this as their");
+            ImGui::TextDisabled("trigger. Cascades stay under the anti-Babel ceiling.");
+            char typeBuf[64];
+            copyToBuf(typeBuf, sizeof(typeBuf), node.eventType);
+            ImGui::SetNextItemWidth(180.0f);
+            if (ImGui::InputText("Event type", typeBuf, sizeof(typeBuf))) {
+                node.eventType = typeBuf;
+                changed = true;
+            }
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("any name — new event kinds are minted by naming them");
+            }
+            const auto participantCombo = [&](const char* label, std::string& token,
+                                              bool allowLawSubject) {
+                const char* preview =
+                    token.empty() ? (allowLawSubject ? "the law's subject" : "(none)")
+                                  : token.c_str();
+                ImGui::SetNextItemWidth(200.0f);
+                if (ImGui::BeginCombo(label, preview)) {
+                    if (ImGui::Selectable(allowLawSubject ? "the law's subject"
+                                                          : "(none)",
+                                          token.empty())) {
+                        token.clear();
+                        changed = true;
+                    }
+                    if (ImGui::Selectable("the event's subject",
+                                          token == "@event.subject")) {
+                        token = "@event.subject";
+                        changed = true;
+                    }
+                    if (ImGui::Selectable("the event's other object",
+                                          token == "@event.object")) {
+                        token = "@event.object";
+                        changed = true;
+                    }
+                    for (Singular* being : Universe::instance().beings()) {
+                        if (!being) continue;
+                        const std::string id = being->getIdentifier();
+                        if (ImGui::Selectable(id.c_str(), token == id)) {
+                            token = id;
+                            changed = true;
+                        }
+                    }
+                    ImGui::EndCombo();
+                }
+            };
+            participantCombo("Its subject", node.publishSubject, true);
+            participantCombo("Its object", node.publishObject, false);
             break;
         }
         case ActionNode::Kind::Sequence:
@@ -1085,6 +1175,13 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player,
                 "position.y", std::move(arc),
                 MathBindings{{"t", PropertyPath::parse("time.sinceApplied")}}));
             laws.bindTrigger(law->getIdentifier(), "collision");
+            select(law);
+        }
+        if (ImGui::MenuItem("Perception law — announce contact (mints an event)")) {
+            auto law = laws.createLaw("Perceive contact", {&player});
+            law->setActivation(Law::Activation::WhileTrue);
+            law->setConditionModel(ConditionNode::overlaps(""));   // pick the other
+            law->setActionModel(ActionNode::publish("contact-perceived"));
             select(law);
         }
         if (ImGui::MenuItem("On collision -> bounce (velocity is law now)")) {

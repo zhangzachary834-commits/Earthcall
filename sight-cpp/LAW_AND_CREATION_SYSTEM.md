@@ -163,6 +163,20 @@ struct ConditionNode {
 `compile()` is a recursion; each node returns a lambda capturing its compiled
 children. `All`/`Any`/`Not` honor the existing `ECA::ConditionMode` semantics.
 
+**Perception is authorable (landed):** two language upgrades from the
+collision-migration stress test. `ConditionNode::Overlaps` — geometric
+contact between the subject and a named other (a being id or
+`@event.subject`/`@event.object`), answered by `Physics::dispatchCollision`:
+the collision first mover shrunk to a pure PREDICATE. `ActionNode::Publish` —
+a law MINTS an event (type + participant tokens; an unproven subject
+publishes nothing), so laws author the event vocabulary instead of only
+consuming it; cascades stay under `kMaxChainRounds`. Together they close the
+loop: a WhileTrue perception law announces `contact-perceived(a, b)` and a
+response law acts on `@event.object` — collision, legislated end to end.
+Remaining from the same analysis: pair/role quantification (first-order
+conditions over the Universe) and Rete-incremental + spatial-index
+evaluation for engine-grade cost.
+
 **Related (landed):** the Universe carries a relation provider (the engine
 wires the active zone's Formation relations) and `Related` compiles against
 it: true when the subject participates in a matching relation — empty

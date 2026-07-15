@@ -8,6 +8,7 @@
 #include "Person/Person.hpp"
 #include "Relation/Relation.hpp"
 #include "Universe.hpp"
+#include "ZonesOfEarth/Physics/CollisionDispatcher.hpp"
 #include "ZonesOfEarth/World/World.hpp"
 
 #include <algorithm>
@@ -57,6 +58,24 @@ const char* beingKindName(ConditionNode::BeingKind kind) {
     return "?";
 }
 
+// A participant token names a being: "@event.subject" / "@event.object"
+// resolve through the application-event context; anything else is a being id
+// looked up in the Universe. Unproven = nullptr — a condition never passes
+// and an action never acts on a referent the world cannot produce.
+Singular* resolveParticipantToken(const std::string& token) {
+    if (token.empty()) return nullptr;
+    if (token == "@event.subject" || token == "@event.object") {
+        if (!Universe::instance().hasApplicationEvent()) return nullptr;
+        return token == "@event.subject"
+                   ? Universe::instance().applicationEventSubject()
+                   : Universe::instance().applicationEventObject();
+    }
+    for (Singular* being : Universe::instance().beings()) {
+        if (being && being->getIdentifier() == token) return being;
+    }
+    return nullptr;
+}
+
 } // namespace
 
 nlohmann::json ConditionNode::toJson() const {
@@ -79,6 +98,9 @@ nlohmann::json ConditionNode::toJson() const {
             break;
         case Kind::Related:
             j["relationType"] = relationType;
+            j["otherId"] = otherId;
+            break;
+        case Kind::Overlaps:
             j["otherId"] = otherId;
             break;
         case Kind::All:
@@ -223,6 +245,21 @@ ECA::ConditionPredicate ConditionNode::compile() const {
                 return false;
             };
         }
+        case Kind::Overlaps: {
+            // Geometric contact, answered by the engine's collision test —
+            // a first mover shrunk to a pure predicate. Both participants
+            // must be spatial Objects and PROVEN (an absent other never
+            // touches anything).
+            const std::string other = otherId;
+            return [other](const ECA::Event&, const Singular& subject) {
+                Singular* resolved = resolveParticipantToken(other);
+                if (!resolved || resolved == &subject) return false;
+                const auto* a = dynamic_cast<const Object*>(&subject);
+                const auto* b = dynamic_cast<const Object*>(resolved);
+                if (!a || !b) return false;
+                return Physics::dispatchCollision(*a, *b).hit;
+            };
+        }
         case Kind::Zone: {
             // The satisfaction zone of an authored function: read every bound
             // variable off the subject, evaluate the (piecewise, multivariate)
@@ -325,6 +362,8 @@ std::string ConditionNode::describe() const {
         case Kind::Related:
             return "related" + (relationType.empty() ? "" : "[" + relationType + "]") +
                    " to " + (otherId.empty() ? "anyone" : otherId);
+        case Kind::Overlaps:
+            return "overlaps " + (otherId.empty() ? std::string("?") : otherId);
         case Kind::All: return "all(" + std::to_string(children.size()) + ")";
         case Kind::Any: return "any(" + std::to_string(children.size()) + ")";
         case Kind::Not: return "not(...)";
@@ -412,6 +451,13 @@ ConditionNode ConditionNode::related(const std::string& type, const std::string&
     n.kind = Kind::Related;
     n.relationType = type;
     n.otherId = otherId;
+    return n;
+}
+
+ConditionNode ConditionNode::overlaps(const std::string& otherToken) {
+    ConditionNode n;
+    n.kind = Kind::Overlaps;
+    n.otherId = otherToken;
     return n;
 }
 

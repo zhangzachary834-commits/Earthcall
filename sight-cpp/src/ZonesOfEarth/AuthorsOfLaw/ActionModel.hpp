@@ -33,11 +33,16 @@ struct ActionNode {
         Map = 8,       // path := f(bindings) — output governed by an authored
                        // OntoMath function of authored inputs (Drive's
                        // multivariate, piecewise, exact elder sibling)
-        Flow = 9       // path := path + f(bindings) * dt — the RATE form:
+        Flow = 9,      // path := path + f(bindings) * dt — the RATE form:
                        // the authored model is dp/dt, integrated each tick.
                        // Map authors the position F(t); Flow authors its
                        // derivative F'(t) — OntoMath's exact derivative/
                        // antiderivative make them exact counterparts.
+        Publish = 10   // MINT an event: laws stop merely consuming the event
+                       // vocabulary and start authoring it — perception laws
+                       // ("publish contact-perceived(a, b) whenever they
+                       // overlap") become ordinary text. Cascades stay under
+                       // the anti-Babel ceiling (kMaxChainRounds).
     };
 
     Kind kind = Kind::Set;
@@ -50,6 +55,14 @@ struct ActionNode {
     PropertyPath input;              // Drive domain; empty => event timestamp (seconds)
 
     std::string conceptId;           // Spawn (reserved)
+
+    // Publish payload. Participant tokens: "" = the law's subject (for the
+    // event's subject) / none (for its object); "@event.subject" and
+    // "@event.object" = the TRIGGERING event's participants; anything else
+    // = a being id. An unproven SUBJECT token publishes nothing.
+    std::string eventType;
+    std::string publishSubject;
+    std::string publishObject;
 
     // Map payload: the authored function and where each of its variables
     // lives on the subject. Undefined math (unbound variable, outside every
@@ -94,6 +107,9 @@ struct ActionNode {
                           MathBindings bindings);
     static ActionNode flow(const std::string& dottedPath, OntoMath::Piecewise function,
                            MathBindings bindings);
+    static ActionNode publish(const std::string& type,
+                              const std::string& subjectToken = "",
+                              const std::string& objectToken = "");
     static ActionNode sequence(std::vector<ActionNode> children);
 };
 

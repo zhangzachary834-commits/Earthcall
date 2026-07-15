@@ -307,6 +307,83 @@ int main() {
         Universe::instance().setRelationProvider({});
         assert(!ConditionNode::related().compile()(probe, a));
 
+        // ------------------------------------------------------------------
+        // 9. PERCEPTION IS AUTHORABLE. Overlaps = geometric truth as a
+        //    condition; Publish = the law MINTS an event. Together: a
+        //    perception law that announces contact, and a response law that
+        //    acts on the announced participants — collision, legislated
+        //    end to end, with the engine shrunk to a pure predicate.
+        // ------------------------------------------------------------------
+        a.setPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+        b.setPosition(glm::vec3(50.0f, 0.0f, 0.0f));      // far apart
+        a.updateCollisionZone(a.getTransform());
+        b.updateCollisionZone(b.getTransform());
+
+        // The predicate itself.
+        auto touchingB = ConditionNode::overlaps(b.getIdentifier());
+        assert(!touchingB.compile()(probe, a));           // apart: no contact
+        b.setPosition(glm::vec3(0.2f, 0.0f, 0.0f));       // overlapping cubes
+        b.updateCollisionZone(b.getTransform());
+        assert(touchingB.compile()(probe, a));            // geometric truth
+        assert(!ConditionNode::overlaps("no-such-being").compile()(probe, a));
+        assert(!ConditionNode::overlaps(a.getIdentifier()).compile()(probe, a));
+
+        // The perception law: WHILE a touches b, announce it (subject: a,
+        // object: b) — a law-authored event kind.
+        auto perceive = mgr.createLaw("perceive-contact", {&author});
+        perceive->setActivation(Law::Activation::WhileTrue);
+        perceive->addTarget(a);
+        perceive->setConditionModel(touchingB);
+        perceive->setActionModel(ActionNode::publish(
+            "contact-perceived", "", b.getIdentifier()));
+
+        // The response law: on the MINTED event, act on its object.
+        auto respond = mgr.createLaw("respond-to-contact", {&author});
+        respond->setActionModel(ActionNode::set(
+            "@event.object.position.y", PropertyValue(21.0)));
+        const std::size_t alphaContact = mgr.rete().addAlphaNode(
+            "type == contact-perceived",
+            [](const ReteFact& f) { return f.type == "contact-perceived"; });
+        mgr.rete().bindLawToAlpha(respond->getIdentifier(), alphaContact);
+
+        mgr.tick();     // perception fires; its testimony becomes a fact
+        mgr.tick();     // the response law hears it and acts on b
+        assert(nearf(b.getPosition().y, 21.0f));          // legislated collision
+
+        // Separate them: perception falls silent (no stale testimony).
+        b.setPosition(glm::vec3(50.0f, 21.0f, 0.0f));
+        b.updateCollisionZone(b.getTransform());
+        mgr.tick();   // drains the final in-flight announcement
+        const float quietY = 5.0f;
+        b.setPosition(glm::vec3(50.0f, quietY, 0.0f));
+        b.updateCollisionZone(b.getTransform());
+        mgr.tick();
+        mgr.tick();
+        assert(nearf(b.getPosition().y, quietY));         // nothing announced
+        perceive->setEnabled(false);
+        respond->setEnabled(false);
+
+        // An unproven subject token publishes NOTHING.
+        bool ghostHeard = false;
+        Core::EventBus::instance().subscribe<ECA::Event>([&](const ECA::Event& e) {
+            if (e.type == "ghost-signal") ghostHeard = true;
+        });
+        Law ghostCrier("ghost-crier");
+        ghostCrier.addAuthor(author);
+        ghostCrier.setActionModel(ActionNode::publish("ghost-signal", "no-such-being"));
+        assert(ghostCrier.applyTo(a) == Law::ApplicationResult::Applied);
+        assert(!ghostHeard);                              // no testimony minted
+
+        // The new vocabulary survives serialization like all law text.
+        const auto rebornPerceive = ConditionNode::fromJson(touchingB.toJson());
+        assert(rebornPerceive.kind == ConditionNode::Kind::Overlaps);
+        assert(rebornPerceive.compile()(probe, a) ==
+               touchingB.compile()(probe, a));
+        const auto rebornPublish = ActionNode::fromJson(
+            ActionNode::publish("contact-perceived", "", b.getIdentifier()).toJson());
+        assert(rebornPublish.kind == ActionNode::Kind::Publish);
+        assert(rebornPublish.eventType == "contact-perceived");
+
         Universe::instance().setProvider({});             // leave no dangling refs
     }
 

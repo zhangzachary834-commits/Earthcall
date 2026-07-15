@@ -26,7 +26,12 @@ struct ConditionNode {
     //                       beings (with exceptions) — the inner condition is
     //                       evaluated with each INSTANCE as its subject.
     enum class Kind { Compare = 0, InRegion = 1, Related = 2, All = 3, Any = 4, Not = 5,
-                      Zone = 6, IsKind = 7, Identity = 8, ForAny = 9, ForAll = 10 };
+                      Zone = 6, IsKind = 7, Identity = 8, ForAny = 9, ForAll = 10,
+                      // Overlaps — geometric contact between the subject and a
+                      // named other, answered by the engine's collision test
+                      // (a first mover shrunk to a pure PREDICATE): perception
+                      // as an ordinary condition.
+                      Overlaps = 11 };
     enum class Op { Eq = 0, Ne = 1, Lt = 2, Le = 3, Gt = 4, Ge = 5, Near = 6, InRange = 7 };
 
     // The ontology's kinds, checked by dynamic_cast — honest C++ instanceof.
@@ -94,6 +99,8 @@ struct ConditionNode {
     // Empty type = any relation kind; empty otherId = related to anyone.
     static ConditionNode related(const std::string& type = "",
                                  const std::string& otherId = "");
+    // otherToken: a being id, or "@event.subject" / "@event.object".
+    static ConditionNode overlaps(const std::string& otherToken);
     static ConditionNode forAny(BeingKind kind, ConditionNode inner,
                                 std::vector<std::string> exceptions = {});
     static ConditionNode forAll(BeingKind kind, ConditionNode inner,
