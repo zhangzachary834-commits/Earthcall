@@ -34,6 +34,14 @@ class Object;
 
 namespace Core {
 
+// Event structures for save/load and tool-selection events (see Core/EventTypes.hpp
+// for the central registry). Defined in GameSaveLoad.cpp / GameToolbar.cpp.
+struct SaveStartedEvent;
+struct SaveCompletedEvent;
+struct LoadStartedEvent;
+struct LoadCompletedEvent;
+struct ToolSelectedEvent;
+
 class Game {
 public:
     Game();
@@ -432,6 +440,8 @@ private:
 
     void renderCreatorToolbar();
     // void renderRelationManagerWindow(bool* open);
+    // Sets _currentTool and publishes ToolSelectedEvent on Core::EventBus.
+    void setCurrentTool(Tool::Type type);
 
     // Advanced primitive brush settings (subset)
     Object::GeometryType _currentPrimitive = Object::GeometryType::Cube;

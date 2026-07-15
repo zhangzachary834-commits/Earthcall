@@ -1,5 +1,6 @@
 #include "Integration/SecurityManager.hpp"
 #include "Util/SaveSystem.hpp"
+#include "Core/EventBus.hpp"
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -398,7 +399,9 @@ void SecurityManager::logEvent(SecurityEventType type, const std::string& descri
     
     _securityLog.push_back(event);
     _sourceActivityCount[source]++;
-    
+
+    Core::EventBus::instance().publish(event);
+
     // Keep log size manageable
     if (_securityLog.size() > 10000) {
         _securityLog.erase(_securityLog.begin(), _securityLog.begin() + 1000);

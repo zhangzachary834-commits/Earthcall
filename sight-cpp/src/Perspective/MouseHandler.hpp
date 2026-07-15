@@ -3,10 +3,28 @@
 #include <functional>
 #include <map>
 #include <string>
+#include <ctime>
 #include <GLFW/glfw3.h>
 
 // Forward declarations
 namespace Core { class Game; }
+
+// Event structures for mouse input (see Core/EventTypes.hpp).
+// Defined in MouseHandler.cpp.
+struct MouseMovedEvent {
+    glm::vec2 position;
+    glm::vec2 delta;
+    std::time_t timestamp;
+    MouseMovedEvent(const glm::vec2& pos, const glm::vec2& d) : position(pos), delta(d), timestamp(std::time(nullptr)) {}
+};
+
+struct MouseClickedEvent {
+    int button;
+    bool pressed; // true = just pressed, false = released
+    glm::vec2 position;
+    std::time_t timestamp;
+    MouseClickedEvent(int b, bool p, const glm::vec2& pos) : button(b), pressed(p), position(pos), timestamp(std::time(nullptr)) {}
+};
 
 class MouseHandler {
 public:

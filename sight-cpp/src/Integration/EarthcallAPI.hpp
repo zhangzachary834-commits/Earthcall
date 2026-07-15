@@ -4,6 +4,7 @@
 #include <vector>
 #include <functional>
 #include <memory>
+#include <ctime>
 #include <glm/glm.hpp>
 #include "../Person/AvatarManager.hpp"
 
@@ -16,6 +17,16 @@ namespace Rendering {
 class AvatarManager;
 
 namespace Integration {
+
+// Event structure for completed API calls (see Core/EventTypes.hpp).
+// Defined in EarthcallAPI.cpp.
+struct APICallCompletedEvent {
+    std::string eventType;
+    std::string data;
+    std::time_t timestamp;
+    APICallCompletedEvent(const std::string& type, const std::string& d)
+        : eventType(type), data(d), timestamp(std::time(nullptr)) {}
+};
 
 // API for external applications to access Earthcall's creative features
 class EarthcallAPI {

@@ -1,5 +1,6 @@
 #include "Integration/EarthcallAPI.hpp"
 #include "Integration/SecurityManager.hpp"
+#include "Core/EventBus.hpp"
 #include <iostream>
 
 namespace Integration {
@@ -309,6 +310,7 @@ void EarthcallAPI::_notifyEvent(const std::string& event_type, const std::string
     if (it != _callbacks.end()) {
         it->second(data);
     }
+    Core::EventBus::instance().publish(APICallCompletedEvent(event_type, data));
 }
 
 // Global API instance

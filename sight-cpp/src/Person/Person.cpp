@@ -52,7 +52,8 @@ struct PersonLogoutEvent {
 // If its "logging in," a Person should be created in the memory via loading.
 // If its "singing up", new Person data should first be added to the new txt and json files, and only then should Person created.
 Person::Person(Soul& soul, Body& body) : _soul(soul), body(body) {
-
+    PersonCreatedEvent event(*this);
+    Core::EventBus::instance().publish(event);
 }
 
 

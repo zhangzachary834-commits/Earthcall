@@ -1,4 +1,5 @@
 #include "MouseHandler.hpp"
+#include "Core/EventBus.hpp"
 #include <algorithm>
 #include <imgui.h>
 
@@ -61,7 +62,9 @@ void MouseHandler::handleMouseMove(double xpos, double ypos) {
     
     // Apply sensitivity
     _currentState.delta *= _sensitivity;
-    
+
+    Core::EventBus::instance().publish(MouseMovedEvent(_currentState.position, _currentState.delta));
+
     // Update cursor position
     _cursorX = static_cast<float>(xpos);
     _cursorY = static_cast<float>(ypos);
@@ -107,7 +110,9 @@ void MouseHandler::handleMouseButton(int button, int action, int mods) {
     
     if (action == GLFW_PRESS) {
         _currentState.buttonStates[mouseButton] = ButtonState::JustPressed;
-        
+
+        Core::EventBus::instance().publish(MouseClickedEvent(button, true, _currentState.position));
+
         // Trigger callback if bound
         auto it = _buttonBindings.find(mouseButton);
         if (it != _buttonBindings.end() && it->second.isEnabled && it->second.callback) {
@@ -115,6 +120,8 @@ void MouseHandler::handleMouseButton(int button, int action, int mods) {
         }
     } else if (action == GLFW_RELEASE) {
         _currentState.buttonStates[mouseButton] = ButtonState::Released;
+
+        Core::EventBus::instance().publish(MouseClickedEvent(button, false, _currentState.position));
     }
 }
 

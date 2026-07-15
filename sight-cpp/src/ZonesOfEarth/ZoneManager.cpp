@@ -1,4 +1,5 @@
 #include "ZoneManager.hpp"
+#include "Core/EventBus.hpp"
 #include <iostream>
 
 void ZoneManager::addZone(Zone&& zone) noexcept
@@ -16,10 +17,19 @@ void ZoneManager::switchTo(size_t index)
 {
     if (index < _zones.size())
     {
+        if (!_zones.empty() && _currentIndex < _zones.size() && _currentIndex != index) {
+            Core::EventBus::instance().publish(ZoneExitedEvent(_currentIndex, _zones[_currentIndex].name()));
+        }
+
         _currentIndex = index;
         std::cout << "🔀 Switching to zone [" << index << "]..." << std::endl;
-        try { _zones[_currentIndex].load(); } catch (...) { std::cerr << "⚠️  Zone load failed." << std::endl; }
+        try {
+            _zones[_currentIndex].load();
+            Core::EventBus::instance().publish(ZoneLoadedEvent(_currentIndex, _zones[_currentIndex].name()));
+        } catch (...) { std::cerr << "⚠️  Zone load failed." << std::endl; }
         describeCurrent();
+
+        Core::EventBus::instance().publish(ZoneEnteredEvent(_currentIndex, _zones[_currentIndex].name()));
     }
     else
     {

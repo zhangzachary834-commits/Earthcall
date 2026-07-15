@@ -1,5 +1,6 @@
 #include "Integration/WebIntegration.hpp"
 #include "Util/SaveSystem.hpp"
+#include "Core/EventBus.hpp"
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -201,6 +202,7 @@ void WebView::shutdown() {
 
 void WebView::navigate(const std::string& url) {
     _impl->navigate(url);
+    Core::EventBus::instance().publish(WebPageLoadedEvent(url));
 }
 
 void WebView::executeJavaScript(const std::string& script) {

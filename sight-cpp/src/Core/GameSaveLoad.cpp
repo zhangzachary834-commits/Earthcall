@@ -8,6 +8,7 @@
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "Util/SaveSystem.hpp"
 #include "Util/Serialization.hpp"
+#include "Core/EventBus.hpp"
 
 #include <imgui.h>
 #include <glm/glm.hpp>
@@ -20,6 +21,33 @@
 extern ZoneManager mgr;
 
 namespace Core {
+
+// Event structures for save/load events (see Core/EventTypes.hpp)
+struct SaveStartedEvent {
+    std::string filename;
+    std::time_t timestamp;
+    SaveStartedEvent(const std::string& f) : filename(f), timestamp(std::time(nullptr)) {}
+};
+
+struct SaveCompletedEvent {
+    std::string filename;
+    bool success;
+    std::time_t timestamp;
+    SaveCompletedEvent(const std::string& f, bool ok) : filename(f), success(ok), timestamp(std::time(nullptr)) {}
+};
+
+struct LoadStartedEvent {
+    std::string filename;
+    std::time_t timestamp;
+    LoadStartedEvent(const std::string& f) : filename(f), timestamp(std::time(nullptr)) {}
+};
+
+struct LoadCompletedEvent {
+    std::string filename;
+    bool success;
+    std::time_t timestamp;
+    LoadCompletedEvent(const std::string& f, bool ok) : filename(f), success(ok), timestamp(std::time(nullptr)) {}
+};
 
 // ------------------------------------------------------------------
 // Shared JSON builder – used by both saveState and saveStateWithLog
@@ -101,15 +129,18 @@ nlohmann::json Game::buildSaveJson() const {
 // saveState – write JSON to an explicit filename
 // ------------------------------------------------------------------
 void Game::saveState(const std::string& filename) {
+    Core::EventBus::instance().publish(SaveStartedEvent(filename));
     nlohmann::json j = buildSaveJson();
     std::ofstream out(filename);
     out << j.dump(2);
+    Core::EventBus::instance().publish(SaveCompletedEvent(filename, static_cast<bool>(out)));
 }
 
 // ------------------------------------------------------------------
 // saveStateWithLog – write JSON via SaveSystem (timestamped file)
 // ------------------------------------------------------------------
 void Game::saveStateWithLog(const std::string& customName) {
+    Core::EventBus::instance().publish(SaveStartedEvent(customName));
     nlohmann::json j = buildSaveJson();
 
     // Dynamic objects (skip baseline 0 & 1) – only added by the "log" variant
@@ -124,17 +155,23 @@ void Game::saveStateWithLog(const std::string& customName) {
     j["objects"] = objArr;
 
     // Use the new SaveSystem to write the file
-    SaveSystem::writeJson(j, customName, SaveSystem::SaveType::GAME);
+    std::string savedPath = SaveSystem::writeJson(j, customName, SaveSystem::SaveType::GAME);
+    Core::EventBus::instance().publish(SaveCompletedEvent(savedPath, !savedPath.empty()));
 }
 
 // ------------------------------------------------------------------
 // loadState
 // ------------------------------------------------------------------
 void Game::loadState(const std::string& filename) {
+    Core::EventBus::instance().publish(LoadStartedEvent(filename));
     try {
         using json = nlohmann::json;
         std::ifstream in(filename);
-        if (!in) { std::cerr << "Could not open " << filename << "\n"; return; }
+        if (!in) {
+            std::cerr << "Could not open " << filename << "\n";
+            Core::EventBus::instance().publish(LoadCompletedEvent(filename, false));
+            return;
+        }
         json j; in >> j;
 
         // Reset physics registries to avoid stale velocities/bonds affecting freshly loaded objects
@@ -250,8 +287,10 @@ void Game::loadState(const std::string& filename) {
             bodyFromJson(j["playerBody"], _player.getBody());
         }
 
+        Core::EventBus::instance().publish(LoadCompletedEvent(filename, true));
     } catch (const std::exception& e) {
         std::cerr << "Error loading state: " << e.what() << "\n";
+        Core::EventBus::instance().publish(LoadCompletedEvent(filename, false));
     }
 }
 

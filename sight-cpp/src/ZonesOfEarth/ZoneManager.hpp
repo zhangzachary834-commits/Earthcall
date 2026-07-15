@@ -1,7 +1,31 @@
 #pragma once
 #include <vector>
 #include <string>
+#include <ctime>
 #include "Zone/Zone.hpp"
+
+// Event structures for zone transitions (see Core/EventTypes.hpp).
+// Defined in ZoneManager.cpp.
+struct ZoneExitedEvent {
+    size_t index;
+    std::string name;
+    std::time_t timestamp;
+    ZoneExitedEvent(size_t idx, const std::string& n) : index(idx), name(n), timestamp(std::time(nullptr)) {}
+};
+
+struct ZoneEnteredEvent {
+    size_t index;
+    std::string name;
+    std::time_t timestamp;
+    ZoneEnteredEvent(size_t idx, const std::string& n) : index(idx), name(n), timestamp(std::time(nullptr)) {}
+};
+
+struct ZoneLoadedEvent {
+    size_t index;
+    std::string name;
+    std::time_t timestamp;
+    ZoneLoadedEvent(size_t idx, const std::string& n) : index(idx), name(n), timestamp(std::time(nullptr)) {}
+};
 
 class ZoneManager {
     std::vector<Zone> _zones;

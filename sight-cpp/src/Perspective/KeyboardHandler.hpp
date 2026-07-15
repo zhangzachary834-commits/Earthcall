@@ -2,10 +2,20 @@
 #include <map>
 #include <functional>
 #include <string>
+#include <ctime>
 #include <GLFW/glfw3.h>
 
 // Forward declarations
 namespace Core { class Game; }
+
+// Event structure for key-press events (see Core/EventTypes.hpp).
+// Defined in KeyboardHandler.cpp. Published for any key with a registered
+// binding, whether or not that binding is currently enabled.
+struct KeyPressedEvent {
+    int key;
+    std::time_t timestamp;
+    KeyPressedEvent(int k) : key(k), timestamp(std::time(nullptr)) {}
+};
 
 class KeyboardHandler {
 public:

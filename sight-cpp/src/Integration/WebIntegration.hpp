@@ -5,12 +5,21 @@
 #include <map>
 #include <memory>
 #include <vector>
+#include <ctime>
 #include "../json.hpp"
 
 namespace Integration {
 
 // Forward declarations
 class WebBridge;
+
+// Event structure for web page navigation (see Core/EventTypes.hpp).
+// Defined in WebIntegration.cpp.
+struct WebPageLoadedEvent {
+    std::string url;
+    std::time_t timestamp;
+    WebPageLoadedEvent(const std::string& u) : url(u), timestamp(std::time(nullptr)) {}
+};
 
 // WebView class definition
 class WebView {

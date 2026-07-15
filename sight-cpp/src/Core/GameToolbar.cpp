@@ -3,6 +3,7 @@
 
 #include "Game.hpp"
 #include "Core/Engine.hpp"
+#include "Core/EventBus.hpp"
 #include "Form/Object/Object.hpp"
 #include "Form/Object/AngleTools.hpp"
 #include "Form/Object/Contour.hpp"
@@ -32,6 +33,18 @@ extern ZoneManager mgr;
 #endif
 
 namespace Core {
+
+// Event structure for tool-selection events (see Core/EventTypes.hpp)
+struct ToolSelectedEvent {
+    Tool::Type type;
+    std::time_t timestamp;
+    ToolSelectedEvent(Tool::Type t) : type(t), timestamp(std::time(nullptr)) {}
+};
+
+void Game::setCurrentTool(Tool::Type type) {
+    _currentTool = Tool(type);
+    Core::EventBus::instance().publish(ToolSelectedEvent(type));
+}
 
 void Game::renderCreatorToolbar() {
     // ------------------------------------------------------------------
@@ -95,49 +108,49 @@ void Game::renderCreatorToolbar() {
                     ImGui::BeginGroup();
 
                     if (ImGui::Button(u8"\xF0\x9F\x96\x8C Brush")) {
-                        _currentTool = Tool(Tool::Type::Brush);
+                        setCurrentTool(Tool::Type::Brush);
                         zone.setDesignTool(Tool::Type::Brush);
                         _current3DMode = Mode3D::None;
                     }
             ImGui::SameLine();
                     if (ImGui::Button(u8"\xE2\x9C\x8F\xEF\xB8\x8F Pencil")) {
-                        _currentTool = Tool(Tool::Type::Pencil);
+                        setCurrentTool(Tool::Type::Pencil);
                         zone.setDesignTool(Tool::Type::Pencil);
                         _current3DMode = Mode3D::None;
                     }
             ImGui::SameLine();
                     if (ImGui::Button(u8"\xF0\x9F\x96\x8A Pen")) {
-                        _currentTool = Tool(Tool::Type::Pen);
+                        setCurrentTool(Tool::Type::Pen);
                         zone.setDesignTool(Tool::Type::Pen);
                         _current3DMode = Mode3D::None;
                     }
 
                     if (ImGui::Button(u8"\xF0\x9F\x92\xA8 Airbrush")) {
-                        _currentTool = Tool(Tool::Type::Airbrush);
+                        setCurrentTool(Tool::Type::Airbrush);
                         zone.setDesignTool(Tool::Type::Airbrush);
                         _current3DMode = Mode3D::None;
                     }
             ImGui::SameLine();
                     if (ImGui::Button(u8"\xF0\x9F\x96\xBC Chalk")) {
-                        _currentTool = Tool(Tool::Type::Chalk);
+                        setCurrentTool(Tool::Type::Chalk);
                         zone.setDesignTool(Tool::Type::Chalk);
                         _current3DMode = Mode3D::None;
                     }
                     ImGui::SameLine();
                     if (ImGui::Button(u8"\xF0\x9F\x8E\xA8 Spray")) {
-                        _currentTool = Tool(Tool::Type::Spray);
+                        setCurrentTool(Tool::Type::Spray);
                         zone.setDesignTool(Tool::Type::Spray);
                         _current3DMode = Mode3D::None;
                     }
 
                     if (ImGui::Button(u8"\xF0\x9F\x91\x86 Smudge")) {
-                        _currentTool = Tool(Tool::Type::Smudge);
+                        setCurrentTool(Tool::Type::Smudge);
                         zone.setDesignTool(Tool::Type::Smudge);
                         _current3DMode = Mode3D::None;
                     }
                     ImGui::SameLine();
                     if (ImGui::Button(u8"\xF0\x9F\x93\x8B Clone")) {
-                        _currentTool = Tool(Tool::Type::Clone);
+                        setCurrentTool(Tool::Type::Clone);
                         zone.setDesignTool(Tool::Type::Clone);
                         _current3DMode = Mode3D::None;
                     }
@@ -151,13 +164,13 @@ void Game::renderCreatorToolbar() {
                     ImGui::BeginGroup();
 
                     if (ImGui::Button(u8"\xF0\x9F\xA7\xBD Eraser")) {
-                        _currentTool = Tool(Tool::Type::Eraser);
+                        setCurrentTool(Tool::Type::Eraser);
                         zone.setDesignTool(Tool::Type::Eraser);
                         _current3DMode = Mode3D::None;
                     }
                     ImGui::SameLine();
                     if (ImGui::Button(u8"\xE2\x9C\xA8 Magic Eraser")) {
-                        _currentTool = Tool(Tool::Type::MagicEraser);
+                        setCurrentTool(Tool::Type::MagicEraser);
                         zone.setDesignTool(Tool::Type::MagicEraser);
                         _current3DMode = Mode3D::None;
                     }
@@ -171,25 +184,25 @@ void Game::renderCreatorToolbar() {
                     ImGui::BeginGroup();
 
                     if (ImGui::Button(u8"\xE2\xAC\x9C Selection")) {
-                        _currentTool = Tool(Tool::Type::Selection);
+                        setCurrentTool(Tool::Type::Selection);
                         zone.setDesignTool(Tool::Type::Selection);
                         _current3DMode = Mode3D::None;
                     }
                     ImGui::SameLine();
                     if (ImGui::Button(u8"\xF0\x9F\x94\x97 Lasso")) {
-                        _currentTool = Tool(Tool::Type::Lasso);
+                        setCurrentTool(Tool::Type::Lasso);
                         zone.setDesignTool(Tool::Type::Lasso);
                         _current3DMode = Mode3D::None;
                     }
 
                     if (ImGui::Button(u8"\xF0\x9F\xAA\x84 Magic Wand")) {
-                        _currentTool = Tool(Tool::Type::MagicWand);
+                        setCurrentTool(Tool::Type::MagicWand);
                         zone.setDesignTool(Tool::Type::MagicWand);
                         _current3DMode = Mode3D::None;
                     }
                     ImGui::SameLine();
                     if (ImGui::Button(u8"\xF0\x9F\x93\xA6 Marquee")) {
-                        _currentTool = Tool(Tool::Type::Marquee);
+                        setCurrentTool(Tool::Type::Marquee);
                         zone.setDesignTool(Tool::Type::Marquee);
                         _current3DMode = Mode3D::None;
                     }
@@ -203,49 +216,49 @@ void Game::renderCreatorToolbar() {
                     ImGui::BeginGroup();
 
                     if (ImGui::Button(u8"\xE2\xAC\x9C Rectangle")) {
-                        _currentTool = Tool(Tool::Type::Rectangle);
+                        setCurrentTool(Tool::Type::Rectangle);
                         zone.setDesignTool(Tool::Type::Rectangle);
                         _current3DMode = Mode3D::None;
                     }
                     ImGui::SameLine();
                     if (ImGui::Button(u8"\xE2\xAD\x95 Ellipse")) {
-                        _currentTool = Tool(Tool::Type::Ellipse);
+                        setCurrentTool(Tool::Type::Ellipse);
                         zone.setDesignTool(Tool::Type::Ellipse);
                         _current3DMode = Mode3D::None;
                     }
                     ImGui::SameLine();
                     if (ImGui::Button(u8"\xF0\x9F\x94\xB7 Polygon")) {
-                        _currentTool = Tool(Tool::Type::Polygon);
+                        setCurrentTool(Tool::Type::Polygon);
                         zone.setDesignTool(Tool::Type::Polygon);
                         _current3DMode = Mode3D::None;
                     }
 
                     if (ImGui::Button(u8"\xE2\x9E\x96 Line")) {
-                        _currentTool = Tool(Tool::Type::Line);
+                        setCurrentTool(Tool::Type::Line);
                         zone.setDesignTool(Tool::Type::Line);
                         _current3DMode = Mode3D::None;
                     }
                     ImGui::SameLine();
                     if (ImGui::Button(u8"\xE2\x9E\xA1\xEF\xB8\x8F Arrow")) {
-                        _currentTool = Tool(Tool::Type::Arrow);
+                        setCurrentTool(Tool::Type::Arrow);
                         zone.setDesignTool(Tool::Type::Arrow);
                         _current3DMode = Mode3D::None;
                     }
                     ImGui::SameLine();
                     if (ImGui::Button(u8"\xE2\xAD\x90 Star")) {
-                        _currentTool = Tool(Tool::Type::Star);
+                        setCurrentTool(Tool::Type::Star);
                         zone.setDesignTool(Tool::Type::Star);
                         _current3DMode = Mode3D::None;
                     }
 
                     if (ImGui::Button(u8"\xE2\x9D\xA4\xEF\xB8\x8F Heart")) {
-                        _currentTool = Tool(Tool::Type::Heart);
+                        setCurrentTool(Tool::Type::Heart);
                         zone.setDesignTool(Tool::Type::Heart);
                         _current3DMode = Mode3D::None;
                     }
                     ImGui::SameLine();
                     if (ImGui::Button(u8"\xF0\x9F\x94\xB6 Custom")) {
-                        _currentTool = Tool(Tool::Type::CustomShape);
+                        setCurrentTool(Tool::Type::CustomShape);
                         zone.setDesignTool(Tool::Type::CustomShape);
                         _current3DMode = Mode3D::None;
                     }
@@ -259,19 +272,19 @@ void Game::renderCreatorToolbar() {
                     ImGui::BeginGroup();
 
                     if (ImGui::Button(u8"T Text")) {
-                        _currentTool = Tool(Tool::Type::Text);
+                        setCurrentTool(Tool::Type::Text);
                         zone.setDesignTool(Tool::Type::Text);
                         _current3DMode = Mode3D::None;
                     }
                     ImGui::SameLine();
                     if (ImGui::Button(u8"T\xE2\x86\x95\xEF\xB8\x8F Vertical")) {
-                        _currentTool = Tool(Tool::Type::TextVertical);
+                        setCurrentTool(Tool::Type::TextVertical);
                         zone.setDesignTool(Tool::Type::TextVertical);
                         _current3DMode = Mode3D::None;
                     }
                     ImGui::SameLine();
                     if (ImGui::Button(u8"T\xE3\x80\xB0\xEF\xB8\x8F Path")) {
-                        _currentTool = Tool(Tool::Type::TextPath);
+                        setCurrentTool(Tool::Type::TextPath);
                         zone.setDesignTool(Tool::Type::TextPath);
                         _current3DMode = Mode3D::None;
                     }
@@ -285,37 +298,37 @@ void Game::renderCreatorToolbar() {
                     ImGui::BeginGroup();
 
                     if (ImGui::Button(u8"\xE2\x9C\x8B Move")) {
-                        _currentTool = Tool(Tool::Type::Move);
+                        setCurrentTool(Tool::Type::Move);
                         zone.setDesignTool(Tool::Type::Move);
                         _current3DMode = Mode3D::None;
                     }
                     ImGui::SameLine();
                     if (ImGui::Button(u8"\xF0\x9F\x94\x8D Scale")) {
-                        _currentTool = Tool(Tool::Type::Scale);
+                        setCurrentTool(Tool::Type::Scale);
                         zone.setDesignTool(Tool::Type::Scale);
                         _current3DMode = Mode3D::None;
                     }
                     ImGui::SameLine();
                     if (ImGui::Button(u8"\xF0\x9F\x94\x84 Rotate")) {
-                        _currentTool = Tool(Tool::Type::Rotate);
+                        setCurrentTool(Tool::Type::Rotate);
                         zone.setDesignTool(Tool::Type::Rotate);
                         _current3DMode = Mode3D::None;
                     }
 
                     if (ImGui::Button(u8"\xF0\x9F\x93\x90 Skew")) {
-                        _currentTool = Tool(Tool::Type::Skew);
+                        setCurrentTool(Tool::Type::Skew);
                         zone.setDesignTool(Tool::Type::Skew);
                         _current3DMode = Mode3D::None;
                     }
                     ImGui::SameLine();
                     if (ImGui::Button(u8"\xF0\x9F\x94\x80 Distort")) {
-                        _currentTool = Tool(Tool::Type::Distort);
+                        setCurrentTool(Tool::Type::Distort);
                         zone.setDesignTool(Tool::Type::Distort);
                         _current3DMode = Mode3D::None;
                     }
                     ImGui::SameLine();
                     if (ImGui::Button(u8"\xF0\x9F\x8F\x97\xEF\xB8\x8F Perspective")) {
-                        _currentTool = Tool(Tool::Type::Perspective);
+                        setCurrentTool(Tool::Type::Perspective);
                         zone.setDesignTool(Tool::Type::Perspective);
                         _current3DMode = Mode3D::None;
                     }
@@ -329,49 +342,49 @@ void Game::renderCreatorToolbar() {
                     ImGui::BeginGroup();
 
                     if (ImGui::Button(u8"\xF0\x9F\x8C\xAB\xEF\xB8\x8F Blur")) {
-                        _currentTool = Tool(Tool::Type::Blur);
+                        setCurrentTool(Tool::Type::Blur);
                         zone.setDesignTool(Tool::Type::Blur);
                         _current3DMode = Mode3D::None;
                     }
                     ImGui::SameLine();
                     if (ImGui::Button(u8"\xF0\x9F\x94\xAA Sharpen")) {
-                        _currentTool = Tool(Tool::Type::Sharpen);
+                        setCurrentTool(Tool::Type::Sharpen);
                         zone.setDesignTool(Tool::Type::Sharpen);
                         _current3DMode = Mode3D::None;
                     }
                     ImGui::SameLine();
                     if (ImGui::Button(u8"\xF0\x9F\x93\xBB Noise")) {
-                        _currentTool = Tool(Tool::Type::Noise);
+                        setCurrentTool(Tool::Type::Noise);
                         zone.setDesignTool(Tool::Type::Noise);
                         _current3DMode = Mode3D::None;
                     }
 
                     if (ImGui::Button(u8"\xF0\x9F\x8F\x9B\xEF\xB8\x8F Emboss")) {
-                        _currentTool = Tool(Tool::Type::Emboss);
+                        setCurrentTool(Tool::Type::Emboss);
                         zone.setDesignTool(Tool::Type::Emboss);
                         _current3DMode = Mode3D::None;
                     }
                     ImGui::SameLine();
                     if (ImGui::Button(u8"\xF0\x9F\x92\xA1 Glow")) {
-                        _currentTool = Tool(Tool::Type::Glow);
+                        setCurrentTool(Tool::Type::Glow);
                         zone.setDesignTool(Tool::Type::Glow);
                         _current3DMode = Mode3D::None;
                     }
                     ImGui::SameLine();
                     if (ImGui::Button(u8"\xF0\x9F\x91\xA4 Shadow")) {
-                        _currentTool = Tool(Tool::Type::Shadow);
+                        setCurrentTool(Tool::Type::Shadow);
                         zone.setDesignTool(Tool::Type::Shadow);
                         _current3DMode = Mode3D::None;
                     }
 
                     if (ImGui::Button(u8"\xF0\x9F\x8C\x88 Gradient")) {
-                        _currentTool = Tool(Tool::Type::Gradient);
+                        setCurrentTool(Tool::Type::Gradient);
                         zone.setDesignTool(Tool::Type::Gradient);
                         _current3DMode = Mode3D::None;
                     }
                     ImGui::SameLine();
                     if (ImGui::Button(u8"\xF0\x9F\x94\xB2 Pattern")) {
-                        _currentTool = Tool(Tool::Type::Pattern);
+                        setCurrentTool(Tool::Type::Pattern);
                         zone.setDesignTool(Tool::Type::Pattern);
                         _current3DMode = Mode3D::None;
                     }
@@ -385,37 +398,37 @@ void Game::renderCreatorToolbar() {
                     ImGui::BeginGroup();
 
                     if (ImGui::Button(u8"\xF0\x9F\x8E\xAF Color Picker")) {
-                        _currentTool = Tool(Tool::Type::ColorPicker);
+                        setCurrentTool(Tool::Type::ColorPicker);
                         zone.setDesignTool(Tool::Type::ColorPicker);
                         _current3DMode = Mode3D::None;
                     }
                     ImGui::SameLine();
                     if (ImGui::Button(u8"\xF0\x9F\x92\x89 Eyedropper")) {
-                        _currentTool = Tool(Tool::Type::Eyedropper);
+                        setCurrentTool(Tool::Type::Eyedropper);
                         zone.setDesignTool(Tool::Type::Eyedropper);
                         _current3DMode = Mode3D::None;
                     }
                     ImGui::SameLine();
                     if (ImGui::Button(u8"\xE2\x9C\x8B Hand")) {
-                        _currentTool = Tool(Tool::Type::Hand);
+                        setCurrentTool(Tool::Type::Hand);
                         zone.setDesignTool(Tool::Type::Hand);
                         _current3DMode = Mode3D::None;
                     }
 
                     if (ImGui::Button(u8"\xF0\x9F\x94\x8D Zoom")) {
-                        _currentTool = Tool(Tool::Type::Zoom);
+                        setCurrentTool(Tool::Type::Zoom);
                         zone.setDesignTool(Tool::Type::Zoom);
                         _current3DMode = Mode3D::None;
                     }
                     ImGui::SameLine();
                     if (ImGui::Button(u8"\xE2\x9C\x82\xEF\xB8\x8F Crop")) {
-                        _currentTool = Tool(Tool::Type::Crop);
+                        setCurrentTool(Tool::Type::Crop);
                         zone.setDesignTool(Tool::Type::Crop);
                         _current3DMode = Mode3D::None;
                     }
                     ImGui::SameLine();
                     if (ImGui::Button(u8"\xF0\x9F\x94\xAA Slice")) {
-                        _currentTool = Tool(Tool::Type::Slice);
+                        setCurrentTool(Tool::Type::Slice);
                         zone.setDesignTool(Tool::Type::Slice);
                         _current3DMode = Mode3D::None;
                     }

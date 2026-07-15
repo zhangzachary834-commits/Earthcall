@@ -1,5 +1,6 @@
 #include "KeyboardHandler.hpp"
 #include "Core/Game.hpp"
+#include "Core/EventBus.hpp"
 #include <algorithm>
 #ifdef IMGUI_DISABLE
 // ImGui not available
@@ -38,7 +39,9 @@ void KeyboardHandler::handleKeyPress(int key) {
     if (!_isEnabled) {
         return;
     }
-    
+
+    Core::EventBus::instance().publish(KeyPressedEvent(key));
+
     auto it = _keyBindings.find(key);
     if (it != _keyBindings.end() && it->second.isEnabled) {
         KeyBinding& binding = it->second;

@@ -1,4 +1,5 @@
 #include "Menu.hpp"
+#include "Core/EventBus.hpp"
 #include <GLFW/glfw3.h>
 #include <iostream>
 
@@ -50,9 +51,13 @@ void Menu::addOption(const std::string& label, int key, std::function<void()> ac
     fflush(stdout);
 }
 
-void Menu::open() { openState = true; }
-void Menu::close() { openState = false; }
-void Menu::toggle() { openState = !openState; }
+void Menu::open() { openState = true; Core::EventBus::instance().publish(MenuOpenedEvent()); }
+void Menu::close() { openState = false; Core::EventBus::instance().publish(MenuClosedEvent()); }
+void Menu::toggle() {
+    openState = !openState;
+    if (openState) Core::EventBus::instance().publish(MenuOpenedEvent());
+    else Core::EventBus::instance().publish(MenuClosedEvent());
+}
 bool Menu::isOpen() const { return openState; }
 
 void Menu::draw() const {

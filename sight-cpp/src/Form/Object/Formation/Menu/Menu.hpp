@@ -3,7 +3,20 @@
 #include <string>
 #include <functional>
 #include <map>
+#include <ctime>
 #include <GLFW/glfw3.h>
+
+// Event structures for menu open/close (see Core/EventTypes.hpp).
+// Defined in Menu.cpp.
+struct MenuOpenedEvent {
+    std::time_t timestamp;
+    MenuOpenedEvent() : timestamp(std::time(nullptr)) {}
+};
+
+struct MenuClosedEvent {
+    std::time_t timestamp;
+    MenuClosedEvent() : timestamp(std::time(nullptr)) {}
+};
 
 class Menu {
 public:
