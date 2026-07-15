@@ -43,9 +43,22 @@ struct PersonLogoutEvent {
     const Person& person;
     std::string sessionId;
     std::time_t timestamp;
-    
-    PersonLogoutEvent(const Person& p, const std::string& session = "") 
+
+    PersonLogoutEvent(const Person& p, const std::string& session = "")
         : person(p), sessionId(session), timestamp(std::time(nullptr)) {}
+};
+
+// Carries every Person-defined custom event kind (see Person::defineEvent /
+// Person::raiseEvent in Person.hpp). `name` is what listeners switch on
+// since there's no separate C++ struct per custom event kind.
+struct PersonCustomEvent {
+    const Person& person;
+    std::string name;
+    nlohmann::json data;
+    std::time_t timestamp;
+
+    PersonCustomEvent(const Person& p, const std::string& n, const nlohmann::json& d)
+        : person(p), name(n), data(d), timestamp(std::time(nullptr)) {}
 };
 
 // Need to load and save Persons based on data saved in txt and json files.
@@ -226,6 +239,44 @@ void Person::update(float deltaTime) {
     updateAnimation(deltaTime);
     updatePhysics(deltaTime);
     updatePose();
+    checkCustomEventConditions();
+}
+
+// ------------------------------------------------------------------
+// Custom Events
+// ------------------------------------------------------------------
+void Person::defineEvent(const std::string& name, EventCondition condition) {
+    auto it = std::find_if(_customEvents.begin(), _customEvents.end(),
+        [&name](const CustomEventDefinition& def) { return def.name == name; });
+    if (it != _customEvents.end()) {
+        it->condition = std::move(condition);
+        return;
+    }
+    _customEvents.push_back(CustomEventDefinition{name, std::move(condition), false});
+}
+
+void Person::undefineEvent(const std::string& name) {
+    _customEvents.erase(
+        std::remove_if(_customEvents.begin(), _customEvents.end(),
+            [&name](const CustomEventDefinition& def) { return def.name == name; }),
+        _customEvents.end());
+}
+
+void Person::raiseEvent(const std::string& name, const nlohmann::json& data) {
+    PersonCustomEvent event(*this, name, data);
+    Core::EventBus::instance().publish(event);
+}
+
+void Person::checkCustomEventConditions() {
+    for (auto& def : _customEvents) {
+        if (!def.condition) continue; // manual-only event, nothing to poll
+
+        bool isTrue = def.condition(*this);
+        if (isTrue && !def.wasTrue) {
+            raiseEvent(def.name);
+        }
+        def.wasTrue = isTrue;
+    }
 }
 
 void Person::updateState(float deltaTime) {

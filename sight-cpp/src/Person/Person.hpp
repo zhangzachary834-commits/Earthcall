@@ -3,18 +3,21 @@
 #include <map>
 #include <vector>
 #include <memory>
+#include <functional>
 #include "Body.hpp"
 #include <glm/glm.hpp>
 #include <GLFW/glfw3.h>
 #include "Singular.hpp"
 #include "Soul/Soul.hpp"
 #include "Core/EventBus.hpp"
+#include "json.hpp"
 
 // Forward declarations for Person events
 struct PersonCreatedEvent;
 struct PersonJoinedEvent;
 struct PersonLoginEvent;
 struct PersonLogoutEvent;
+struct PersonCustomEvent;
 
 class Person : public Singular {
 public:
@@ -161,6 +164,43 @@ public:
     const std::string& getCurrentSession() const { return _currentSession; }
     const std::vector<std::string>& getJoinedZones() const { return _joinedZones; }
 
+    // ------------------------------------------------------------------
+    // Custom Events
+    // ------------------------------------------------------------------
+    // Lets a Person (or whatever's driving it - script, quest system,
+    // UI) define event *kinds* that don't exist as their own struct in
+    // the codebase, without adding a new C++ type per event. All custom
+    // events funnel through the single PersonCustomEvent struct on
+    // Core::EventBus and are distinguished by `name` at the listener
+    // side (compare against event.name).
+    //
+    // A condition, if given, is a plain predicate over the Person's own
+    // state - no separate ConditionNode type. re-checked once per
+    // update() and edge-triggered (fires on the false->true transition,
+    // not every tick the condition holds). Composing multiple
+    // conditions (AND/OR/NOT) is just composing lambdas:
+    //   auto both = [a, b](const Person& p) { return a(p) && b(p); };
+    // If that composition needs to be introspectable or built/edited at
+    // runtime (a quest editor UI, save/load of condition trees), THEN a
+    // small ConditionNode hierarchy earns its keep - but EventCondition
+    // stays std::function<bool(const Person&)> either way, so it's a
+    // drop-in swap later, not a redesign now.
+    using EventCondition = std::function<bool(const Person&)>;
+
+    // Registers a named event kind for this Person. `condition` is
+    // optional - omit it (or pass nullptr) to define an event that's
+    // only ever fired manually via raiseEvent().
+    void defineEvent(const std::string& name, EventCondition condition = nullptr);
+
+    // Stops watching a defined event's condition (manual raiseEvent()
+    // calls for that name still work).
+    void undefineEvent(const std::string& name);
+
+    // Publishes a PersonCustomEvent immediately, bypassing any
+    // registered condition. `name` doesn't need to have been
+    // defineEvent()'d first - ad hoc one-off events are fine.
+    void raiseEvent(const std::string& name, const nlohmann::json& data = {});
+
     // Singular interface implementation
     std::string getIdentifier() const override { return soulName; }
 
@@ -170,11 +210,21 @@ private:
 
     // Helper method for creating default animations
     void createDefaultAnimations();
-    
+
     // Session and zone state
     bool _isLoggedIn = false;
     std::string _currentSession;
     std::vector<std::string> _joinedZones;
-    
 
+    // Custom event state
+    struct CustomEventDefinition {
+        std::string name;
+        EventCondition condition; // may be null (manual-only event)
+        bool wasTrue = false;     // edge-detection state
+    };
+    std::vector<CustomEventDefinition> _customEvents;
+
+    // Re-evaluates registered conditions and raises events on the
+    // false->true edge. Called once per update().
+    void checkCustomEventConditions();
 };

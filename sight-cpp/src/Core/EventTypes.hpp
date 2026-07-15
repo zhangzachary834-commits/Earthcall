@@ -20,6 +20,7 @@ enum class EventType {
     PersonJoined,       // PersonJoinedEvent
     PersonLogin,        // PersonLoginEvent
     PersonLogout,       // PersonLogoutEvent
+    PersonCustom,       // PersonCustomEvent - carries any Person::defineEvent()/raiseEvent() kind, distinguished by its `name` field
 
     // Form/Object/ (src/Form/Object/Object.cpp)
     ObjectHover,        // ObjectHoverEvent
@@ -78,6 +79,7 @@ inline constexpr std::string_view eventTypeName(EventType type) {
         case EventType::PersonJoined:       return "PersonJoined";
         case EventType::PersonLogin:        return "PersonLogin";
         case EventType::PersonLogout:       return "PersonLogout";
+        case EventType::PersonCustom:       return "PersonCustom";
         case EventType::ObjectHover:        return "ObjectHover";
         case EventType::ObjectHoverEnter:   return "ObjectHoverEnter";
         case EventType::ObjectHoverExit:    return "ObjectHoverExit";
