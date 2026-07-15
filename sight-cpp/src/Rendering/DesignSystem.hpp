@@ -8,6 +8,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include "OurVerse/Tool.hpp"
 #include "BrushSystem.hpp"
+#include "json.hpp"
 
 // Forward declarations
 class Zone;
@@ -65,7 +66,11 @@ public:
     
     // Text rendering
     void renderTexts() const;
-    
+
+    // Serialization
+    nlohmann::json toJson() const;
+    void fromJson(const nlohmann::json& j);
+
     // Text effects
     void applyTextEffect(const std::string& id, const std::string& effectType, float intensity = 1.0f);
     
@@ -145,7 +150,11 @@ public:
     
     // Shape rendering
     void renderShapes() const;
-    
+
+    // Serialization
+    nlohmann::json toJson() const;
+    void fromJson(const nlohmann::json& j);
+
     // Shape effects
     void applyShapeEffect(const std::string& id, const std::string& effectType, float intensity = 1.0f);
     
@@ -214,7 +223,11 @@ public:
     
     // Effect rendering
     void applyEffects(std::vector<uint8_t>& pixels, int width, int height) const;
-    
+
+    // Serialization
+    nlohmann::json toJson() const;
+    void fromJson(const nlohmann::json& j);
+
     // Preset effects
     void applyPresetEffect(const std::string& presetName);
     
@@ -404,6 +417,10 @@ public:
     // Save/Load
     void saveDesign(const std::string& filename) const;
     void loadDesign(const std::string& filename);
+
+    // In-memory serialization (for embedding design state in Zone/game saves)
+    nlohmann::json toJson() const;
+    void fromJson(const nlohmann::json& j);
     
 
 

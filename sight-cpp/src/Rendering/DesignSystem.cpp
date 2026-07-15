@@ -8,6 +8,40 @@
 #include <cstring>
 #include <iostream>
 #include <fstream>
+#include <glm/gtc/type_ptr.hpp>
+
+// ============================================================================
+// Serialization helpers (glm <-> json)
+// ============================================================================
+namespace {
+    nlohmann::json vec2ToJson(const glm::vec2& v) { return nlohmann::json::array({v.x, v.y}); }
+    nlohmann::json vec3ToJson(const glm::vec3& v) { return nlohmann::json::array({v.x, v.y, v.z}); }
+
+    nlohmann::json mat4ToJson(const glm::mat4& m) {
+        nlohmann::json arr = nlohmann::json::array();
+        const float* p = glm::value_ptr(m);
+        for (int i = 0; i < 16; ++i) arr.push_back(p[i]);
+        return arr;
+    }
+
+    glm::vec2 jsonToVec2(const nlohmann::json& j, const glm::vec2& fallback = glm::vec2(0.0f)) {
+        if (j.is_array() && j.size() >= 2) return glm::vec2(j[0].get<float>(), j[1].get<float>());
+        return fallback;
+    }
+    glm::vec3 jsonToVec3(const nlohmann::json& j, const glm::vec3& fallback = glm::vec3(0.0f)) {
+        if (j.is_array() && j.size() >= 3) return glm::vec3(j[0].get<float>(), j[1].get<float>(), j[2].get<float>());
+        return fallback;
+    }
+    glm::mat4 jsonToMat4(const nlohmann::json& j) {
+        glm::mat4 m(1.0f);
+        if (j.is_array() && j.size() == 16) {
+            float tmp[16];
+            for (int i = 0; i < 16; ++i) tmp[i] = j[i].get<float>();
+            std::memcpy(glm::value_ptr(m), tmp, sizeof(float) * 16);
+        }
+        return m;
+    }
+} // namespace
 
 // ============================================================================
 // TextSystem Implementation
@@ -105,6 +139,74 @@ void TextSystem::deselectAll() {
 
 std::vector<std::string> TextSystem::getSelectedTexts() const {
     return _selectedTexts;
+}
+
+nlohmann::json TextSystem::toJson() const {
+    nlohmann::json j;
+    j["nextTextId"] = _nextTextId;
+    nlohmann::json elems = nlohmann::json::array();
+    for (const auto& e : _textElements) {
+        nlohmann::json ej;
+        ej["id"] = e.id;
+        ej["text"] = e.text;
+        ej["position"] = vec2ToJson(e.position);
+        ej["transform"] = mat4ToJson(e.transform);
+        ej["visible"] = e.visible;
+        nlohmann::json sj;
+        sj["fontFamily"] = e.style.fontFamily;
+        sj["fontSize"] = e.style.fontSize;
+        sj["bold"] = e.style.bold;
+        sj["italic"] = e.style.italic;
+        sj["underline"] = e.style.underline;
+        sj["strikethrough"] = e.style.strikethrough;
+        sj["color"] = vec3ToJson(e.style.color);
+        sj["opacity"] = e.style.opacity;
+        sj["alignment"] = vec2ToJson(e.style.alignment);
+        sj["lineSpacing"] = e.style.lineSpacing;
+        sj["letterSpacing"] = e.style.letterSpacing;
+        sj["wordWrap"] = e.style.wordWrap;
+        sj["maxLines"] = e.style.maxLines;
+        ej["style"] = sj;
+        elems.push_back(ej);
+    }
+    j["elements"] = elems;
+    return j;
+}
+
+void TextSystem::fromJson(const nlohmann::json& j) {
+    _textElements.clear();
+    _textIndexMap.clear();
+    _selectedTexts.clear();
+    _nextTextId = j.value("nextTextId", 1);
+    if (j.contains("elements")) {
+        for (const auto& ej : j["elements"]) {
+            TextElement e;
+            e.id = ej.value("id", "");
+            e.text = ej.value("text", "");
+            e.position = jsonToVec2(ej.value("position", nlohmann::json::array()));
+            e.transform = jsonToMat4(ej.value("transform", nlohmann::json::array()));
+            e.visible = ej.value("visible", true);
+            e.selected = false;
+            if (ej.contains("style")) {
+                const auto& sj = ej["style"];
+                e.style.fontFamily = sj.value("fontFamily", "Arial");
+                e.style.fontSize = sj.value("fontSize", 24.0f);
+                e.style.bold = sj.value("bold", false);
+                e.style.italic = sj.value("italic", false);
+                e.style.underline = sj.value("underline", false);
+                e.style.strikethrough = sj.value("strikethrough", false);
+                e.style.color = jsonToVec3(sj.value("color", nlohmann::json::array()), glm::vec3(0.0f));
+                e.style.opacity = sj.value("opacity", 1.0f);
+                e.style.alignment = jsonToVec2(sj.value("alignment", nlohmann::json::array()));
+                e.style.lineSpacing = sj.value("lineSpacing", 1.2f);
+                e.style.letterSpacing = sj.value("letterSpacing", 0.0f);
+                e.style.wordWrap = sj.value("wordWrap", true);
+                e.style.maxLines = sj.value("maxLines", 0);
+            }
+            _textIndexMap[e.id] = _textElements.size();
+            _textElements.push_back(std::move(e));
+        }
+    }
 }
 
 void TextSystem::renderTexts() const {
@@ -266,6 +368,80 @@ void ShapeSystem::deselectAll() {
 
 std::vector<std::string> ShapeSystem::getSelectedShapes() const {
     return _selectedShapes;
+}
+
+nlohmann::json ShapeSystem::toJson() const {
+    nlohmann::json j;
+    j["nextShapeId"] = _nextShapeId;
+    nlohmann::json elems = nlohmann::json::array();
+    for (const auto& e : _shapeElements) {
+        nlohmann::json ej;
+        ej["id"] = e.id;
+        ej["type"] = static_cast<int>(e.type);
+        ej["position"] = vec2ToJson(e.position);
+        ej["size"] = vec2ToJson(e.size);
+        ej["rotation"] = e.rotation;
+        ej["transform"] = mat4ToJson(e.transform);
+        ej["visible"] = e.visible;
+        nlohmann::json pts = nlohmann::json::array();
+        for (const auto& p : e.customPoints) pts.push_back(vec2ToJson(p));
+        ej["customPoints"] = pts;
+        nlohmann::json sj;
+        sj["fillColor"] = vec3ToJson(e.style.fillColor);
+        sj["strokeColor"] = vec3ToJson(e.style.strokeColor);
+        sj["fillOpacity"] = e.style.fillOpacity;
+        sj["strokeOpacity"] = e.style.strokeOpacity;
+        sj["strokeWidth"] = e.style.strokeWidth;
+        sj["fillEnabled"] = e.style.fillEnabled;
+        sj["strokeEnabled"] = e.style.strokeEnabled;
+        sj["strokeStyle"] = e.style.strokeStyle;
+        sj["cornerRadius"] = e.style.cornerRadius;
+        sj["sides"] = e.style.sides;
+        sj["starPoints"] = e.style.starPoints;
+        ej["style"] = sj;
+        elems.push_back(ej);
+    }
+    j["elements"] = elems;
+    return j;
+}
+
+void ShapeSystem::fromJson(const nlohmann::json& j) {
+    _shapeElements.clear();
+    _shapeIndexMap.clear();
+    _selectedShapes.clear();
+    _nextShapeId = j.value("nextShapeId", 1);
+    if (j.contains("elements")) {
+        for (const auto& ej : j["elements"]) {
+            ShapeElement e;
+            e.id = ej.value("id", "");
+            e.type = static_cast<ShapeType>(ej.value("type", 0));
+            e.position = jsonToVec2(ej.value("position", nlohmann::json::array()));
+            e.size = jsonToVec2(ej.value("size", nlohmann::json::array()), glm::vec2(1.0f));
+            e.rotation = ej.value("rotation", 0.0f);
+            e.transform = jsonToMat4(ej.value("transform", nlohmann::json::array()));
+            e.visible = ej.value("visible", true);
+            e.selected = false;
+            if (ej.contains("customPoints")) {
+                for (const auto& pj : ej["customPoints"]) e.customPoints.push_back(jsonToVec2(pj));
+            }
+            if (ej.contains("style")) {
+                const auto& sj = ej["style"];
+                e.style.fillColor = jsonToVec3(sj.value("fillColor", nlohmann::json::array()), glm::vec3(1.0f));
+                e.style.strokeColor = jsonToVec3(sj.value("strokeColor", nlohmann::json::array()), glm::vec3(0.0f));
+                e.style.fillOpacity = sj.value("fillOpacity", 1.0f);
+                e.style.strokeOpacity = sj.value("strokeOpacity", 1.0f);
+                e.style.strokeWidth = sj.value("strokeWidth", 2.0f);
+                e.style.fillEnabled = sj.value("fillEnabled", true);
+                e.style.strokeEnabled = sj.value("strokeEnabled", true);
+                e.style.strokeStyle = sj.value("strokeStyle", "solid");
+                e.style.cornerRadius = sj.value("cornerRadius", 0.0f);
+                e.style.sides = sj.value("sides", 6);
+                e.style.starPoints = sj.value("starPoints", 5.0f);
+            }
+            _shapeIndexMap[e.id] = _shapeElements.size();
+            _shapeElements.push_back(std::move(e));
+        }
+    }
 }
 
 void ShapeSystem::renderShapes() const {
@@ -588,6 +764,45 @@ EffectsSystem::Effect* EffectsSystem::getEffect(const std::string& id) {
         return &_effects[it->second];
     }
     return nullptr;
+}
+
+nlohmann::json EffectsSystem::toJson() const {
+    nlohmann::json j;
+    j["nextEffectId"] = _nextEffectId;
+    nlohmann::json arr = nlohmann::json::array();
+    for (const auto& e : _effects) {
+        nlohmann::json ej;
+        ej["id"] = e.id;
+        ej["type"] = static_cast<int>(e.type);
+        ej["intensity"] = e.intensity;
+        ej["color"] = vec3ToJson(e.color);
+        ej["offset"] = vec2ToJson(e.offset);
+        ej["radius"] = e.radius;
+        ej["enabled"] = e.enabled;
+        arr.push_back(ej);
+    }
+    j["effects"] = arr;
+    return j;
+}
+
+void EffectsSystem::fromJson(const nlohmann::json& j) {
+    _effects.clear();
+    _effectIndexMap.clear();
+    _nextEffectId = j.value("nextEffectId", 1);
+    if (j.contains("effects")) {
+        for (const auto& ej : j["effects"]) {
+            Effect e;
+            e.id = ej.value("id", "");
+            e.type = static_cast<EffectType>(ej.value("type", 0));
+            e.intensity = ej.value("intensity", 1.0f);
+            e.color = jsonToVec3(ej.value("color", nlohmann::json::array()), glm::vec3(1.0f));
+            e.offset = jsonToVec2(ej.value("offset", nlohmann::json::array()));
+            e.radius = ej.value("radius", 10.0f);
+            e.enabled = ej.value("enabled", true);
+            _effectIndexMap[e.id] = _effects.size();
+            _effects.push_back(std::move(e));
+        }
+    }
 }
 
 void EffectsSystem::applyBlur(std::vector<uint8_t>& pixels, int width, int height, float intensity) const {
@@ -1165,10 +1380,15 @@ void DesignSystem::clearHistory() {
     printf("History cleared\n");
 }
 
-void DesignSystem::saveDesign(const std::string& filename) const {
+nlohmann::json DesignSystem::toJson() const {
     nlohmann::json j;
-    
-    // Save layers
+
+    // Design content (the actual elements the user created)
+    if (_textSystem)   j["text"]   = _textSystem->toJson();
+    if (_shapeSystem)  j["shapes"] = _shapeSystem->toJson();
+    if (_effectsSystem) j["effects"] = _effectsSystem->toJson();
+
+    // Layers
     nlohmann::json layersArray = nlohmann::json::array();
     for (const auto& layer : _layers) {
         nlohmann::json layerJson;
@@ -1176,12 +1396,13 @@ void DesignSystem::saveDesign(const std::string& filename) const {
         layerJson["visible"] = layer.visible;
         layerJson["opacity"] = layer.opacity;
         layerJson["locked"] = layer.locked;
+        layerJson["elements"] = layer.elements;
         layersArray.push_back(layerJson);
     }
     j["layers"] = layersArray;
     j["activeLayer"] = _activeLayer;
-    
-    // Save history
+
+    // History
     nlohmann::json historyArray = nlohmann::json::array();
     for (const auto& entry : _history) {
         nlohmann::json entryJson;
@@ -1192,10 +1413,56 @@ void DesignSystem::saveDesign(const std::string& filename) const {
     }
     j["history"] = historyArray;
     j["historyIndex"] = _historyIndex;
-    
-    // Save current tool
+
+    // Current tool
     j["currentTool"] = static_cast<int>(_currentTool);
-    
+
+    return j;
+}
+
+void DesignSystem::fromJson(const nlohmann::json& j) {
+    // Design content
+    if (j.contains("text") && _textSystem)     _textSystem->fromJson(j["text"]);
+    if (j.contains("shapes") && _shapeSystem)   _shapeSystem->fromJson(j["shapes"]);
+    if (j.contains("effects") && _effectsSystem) _effectsSystem->fromJson(j["effects"]);
+
+    // Layers
+    if (j.contains("layers")) {
+        _layers.clear();
+        for (const auto& layerJson : j["layers"]) {
+            Layer layer;
+            layer.name = layerJson.value("name", "Layer");
+            layer.visible = layerJson.value("visible", true);
+            layer.opacity = layerJson.value("opacity", 1.0f);
+            layer.locked = layerJson.value("locked", false);
+            if (layerJson.contains("elements"))
+                layer.elements = layerJson["elements"].get<std::vector<std::string>>();
+            _layers.push_back(layer);
+        }
+    }
+    _activeLayer = j.value("activeLayer", 0);
+
+    // History
+    if (j.contains("history")) {
+        _history.clear();
+        for (const auto& entryJson : j["history"]) {
+            HistoryEntry entry;
+            entry.action = entryJson.value("action", "");
+            entry.data = entryJson.value("data", "");
+            entry.timestamp = entryJson.value("timestamp", 0.0f);
+            _history.push_back(entry);
+        }
+    }
+    _historyIndex = j.value("historyIndex", 0);
+
+    // Current tool
+    if (j.contains("currentTool"))
+        _currentTool = static_cast<Tool::Type>(j["currentTool"].get<int>());
+}
+
+void DesignSystem::saveDesign(const std::string& filename) const {
+    nlohmann::json j = toJson();
+
     // Use SaveSystem to write the file
     SaveSystem::writeJson(j, filename, SaveSystem::SaveType::DESIGN);
     printf("Saved design to: %s\n", filename.c_str());
@@ -1207,43 +1474,7 @@ void DesignSystem::loadDesign(const std::string& filename) {
         if (file.is_open()) {
             nlohmann::json j;
             file >> j;
-            
-            // Load layers
-            if (j.contains("layers")) {
-                _layers.clear();
-                const auto& layersArray = j["layers"];
-                for (const auto& layerJson : layersArray) {
-                    Layer layer;
-                    layer.name = layerJson.value("name", "Layer");
-                    layer.visible = layerJson.value("visible", true);
-                    layer.opacity = layerJson.value("opacity", 1.0f);
-                    layer.locked = layerJson.value("locked", false);
-                    _layers.push_back(layer);
-                }
-            }
-            
-            _activeLayer = j.value("activeLayer", 0);
-            
-            // Load history
-            if (j.contains("history")) {
-                _history.clear();
-                const auto& historyArray = j["history"];
-                for (const auto& entryJson : historyArray) {
-                    HistoryEntry entry;
-                    entry.action = entryJson.value("action", "");
-                    entry.data = entryJson.value("data", "");
-                    entry.timestamp = entryJson.value("timestamp", 0.0f);
-                    _history.push_back(entry);
-                }
-            }
-            
-            _historyIndex = j.value("historyIndex", 0);
-            
-            // Load current tool
-            if (j.contains("currentTool")) {
-                _currentTool = static_cast<Tool::Type>(j["currentTool"].get<int>());
-            }
-            
+            fromJson(j);
             file.close();
             printf("Loaded design from: %s\n", filename.c_str());
         }

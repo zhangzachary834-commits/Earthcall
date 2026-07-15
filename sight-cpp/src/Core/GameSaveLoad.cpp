@@ -43,6 +43,10 @@ nlohmann::json Game::buildSaveJson() const {
         // Serialize the 3-D world owned by this zone
         zj["world"] = z.world();
         zj["formationRelations"] = z.formation().relations().toJson();
+        // Serialize the 2-D design system (shapes, text, effects) so it persists
+        if (const DesignSystem* ds = z.getDesignSystem()) {
+            zj["design"] = ds->toJson();
+        }
         zonesJson.push_back(zj);
     }
     j["zones"] = zonesJson;
@@ -144,6 +148,10 @@ void Game::loadState(const std::string& filename) {
         size_t currentZoneIdx = j.value("currentZone", 0);
         auto& zonesVec = mgr.zones(); zonesVec.clear();
         if (j.contains("zones")) {
+            // Reserve up front so the vector never reallocates while we push zones.
+            // A reallocation would move already-stored Zones, leaving each Zone's
+            // design-system back-pointer (_zone) dangling.
+            zonesVec.reserve(j["zones"].size());
             for (const auto& zj : j["zones"]) {
                 std::string name = zj.value("name", "Untitled Zone");
                 Zone z(name);
@@ -169,6 +177,15 @@ void Game::loadState(const std::string& filename) {
                     }
                 }
                 zonesVec.push_back(std::move(z));
+                // Restore the 2-D design system (shapes, text, effects) after the zone
+                // is in its final location, so the design system's back-pointer stays valid.
+                if (zj.contains("design")) {
+                    Zone& stored = zonesVec.back();
+                    stored.initializeDesignSystem();
+                    if (DesignSystem* ds = stored.getDesignSystem()) {
+                        ds->fromJson(zj["design"]);
+                    }
+                }
             }
         }
 
@@ -509,7 +526,14 @@ void Game::drawSaveManager() {
                         displayText += " (" + std::string(timeStr) + ", " + sizeStr + ")";
 
                         if (ImGui::Selectable(displayText.c_str())) {
-                            // TODO: Load design save
+                            // Load the design save into the active zone's design system
+                            Zone& activeZone = mgr.active();
+                            if (!activeZone.getDesignSystem()) {
+                                activeZone.initializeDesignSystem();
+                            }
+                            if (DesignSystem* ds = activeZone.getDesignSystem()) {
+                                ds->loadDesign(meta.fullPath);
+                            }
                         }
 
                         if (ImGui::IsItemHovered()) {
