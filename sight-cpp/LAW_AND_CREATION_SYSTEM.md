@@ -346,11 +346,17 @@ recursion — escape-time fractals in reach. Divergence meets the
 `kMaxCallDepth` ceiling with an honest nullopt; unknown names and wrong
 arity refuse. The registry persists with the world and is edited in the Law
 Author's "Named functions (math)" section; any piece offers "call a
-function...". Known gap: guards read the SUBJECT's paths, not the local
-parameters — base cases over params use interval bounds (one variable) until
-pure guards-over-params land.
+function...".
 
-Growth path: pure guards over parameters, folds over sets (Σ/min/max across
+**Pure guards (landed):** a piece may also be gated by the VARIABLES alone —
+`whereLEZero`: "applies where g(variables) ≤ 0", no subject needed (when both
+a pure and a world guard are set, both must hold). This closes the
+guards-over-parameters gap: recursion base cases over any parameter, and
+with it the manifesto's Mandelbrot ambition — the escape-time recurrence
+`mand(x, c, n) = x ≥ 2 ? n : n ≤ 0 ? 0 : mand(x² + c, c, n−1)` is authored
+math that runs (real slice; the complex plane awaits vector values).
+
+Growth path: folds over sets (Σ/min/max across
 a collection — shared machinery with pair quantification), vector-valued
 expressions, expression-valued exponents, integration by parts, richer
 symbolic simplification (sin² + cos² = 1 and kin), RPN compilation for

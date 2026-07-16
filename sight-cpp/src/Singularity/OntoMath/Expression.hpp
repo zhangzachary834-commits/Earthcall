@@ -183,6 +183,13 @@ struct Piecewise {
         // Compiled lazily on first evaluation (tree -> closure, once).
         mutable std::function<bool(const Singular&)> guardCompiled;
 
+        // The PURE guard: applies where whereLEZero(variables) <= 0 —
+        // evaluated against the LOCAL variables alone, no subject needed.
+        // This is what recursion base cases over parameters use ("where
+        // x - 2 > 0, escape"), and it composes with the world guard above
+        // (when both are set, both must hold). Undefined g = unproven.
+        std::shared_ptr<Expression> whereLEZero;
+
         // When set, the piece's VALUE is a call to a named function
         // (the expression is ignored) — composition and recursion.
         std::shared_ptr<FunctionCall> call;

@@ -450,8 +450,14 @@ bool Piecewise::Piece::contains(double x) const {
 bool Piecewise::Piece::applies(const std::map<std::string, double>& vars,
                                const std::string& inputVariable,
                                const Singular* subject) const {
+    // The PURE guard first: local mathematics gating local mathematics.
+    // Undefined g is unproven — skipped, never guessed.
+    if (whereLEZero) {
+        const auto g = whereLEZero->evaluate(vars);
+        if (!g || *g > 0.0) return false;
+    }
     if (guard) {
-        // A guard testifies about the WORLD: without a subject it is
+        // A world guard testifies about the SUBJECT: without one it is
         // unproven — the piece is skipped, never guessed.
         if (!subject) return false;
         if (!guardCompiled) {
@@ -464,6 +470,7 @@ bool Piecewise::Piece::applies(const std::map<std::string, double>& vars,
         }
         return guardCompiled(*subject);
     }
+    if (whereLEZero) return true;   // the pure guard already decided
     if (hasLo || hasHi) {
         auto it = vars.find(inputVariable);
         return it != vars.end() && contains(it->second);
@@ -482,6 +489,7 @@ nlohmann::json Piecewise::Piece::toJson() const {
         j["includeHi"] = includeHi;
     }
     if (guard) j["guard"] = guard->toJson();
+    if (whereLEZero) j["where"] = whereLEZero->toJson();
     if (call) j["call"] = call->toJson();
     return j;
 }
@@ -501,6 +509,9 @@ Piecewise::Piece Piecewise::Piece::fromJson(const nlohmann::json& j) {
     }
     if (j.contains("guard")) {
         p.guard = std::make_shared<ConditionNode>(ConditionNode::fromJson(j["guard"]));
+    }
+    if (j.contains("where")) {
+        p.whereLEZero = std::make_shared<Expression>(Expression::fromJson(j["where"]));
     }
     if (j.contains("call")) {
         p.call = std::make_shared<FunctionCall>(FunctionCall::fromJson(j["call"]));

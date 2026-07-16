@@ -481,6 +481,79 @@ int main() {
         assert(iterLaw.applyTo(grower) == Law::ApplicationResult::Applied);
         assert(nearf(grower.getPosition().y, 32.0f));         // 2·2⁴, legislated
 
+        // ------------------------------------------------------------------
+        // 12. PURE GUARDS — local mathematics gating local mathematics:
+        //     "applies where g(variables) <= 0", no subject needed. This
+        //     closes the known gap: recursion base cases over PARAMETERS,
+        //     and with it the manifesto's Mandelbrot ambition (real slice).
+        // ------------------------------------------------------------------
+        // abs(x), subjectless this time: where -x <= 0 use x; where x <= 0
+        // use -x. No world, no witness — just the variables.
+        Piecewise pureAbs;
+        {
+            Piecewise::Piece positive;
+            positive.whereLEZero = std::make_shared<Expression>(
+                Expression::variable("x", 1.0, -1.0));            // -x <= 0
+            positive.expression = Expression::variable("x");
+            Piecewise::Piece negative;
+            negative.whereLEZero = std::make_shared<Expression>(
+                Expression::variable("x"));                       // x <= 0
+            negative.expression = Expression::variable("x", 1.0, -1.0);
+            pureAbs.pieces.push_back(std::move(positive));
+            pureAbs.pieces.push_back(std::move(negative));
+        }
+        assert(neard(*pureAbs.evaluate({{"x", -9.0}}), 9.0));     // NO subject
+        assert(neard(*pureAbs.evaluate({{"x", 2.5}}), 2.5));
+
+        // Escape-time on the real axis of the Mandelbrot recurrence
+        // x <- x² + c:  mand(x, c, n) =
+        //   where 2 - x <= 0        -> n   (escaped; remaining budget)
+        //   where n <= 0            -> 0   (never escaped: in the set)
+        //   otherwise               -> mand(x² + c, c, n - 1)
+        FunctionDef mand;
+        mand.name = "mand";
+        mand.params = {"x", "c", "n"};
+        {
+            Piecewise::Piece escaped;
+            escaped.whereLEZero = std::make_shared<Expression>(
+                Expression::constant(2.0).plus(
+                    Expression::variable("x", 1.0, -1.0)));       // 2 - x <= 0
+            escaped.expression = Expression::variable("n");
+            Piecewise::Piece inTheSet;
+            inTheSet.whereLEZero = std::make_shared<Expression>(
+                Expression::variable("n"));                       // n <= 0
+            inTheSet.expression = Expression::constant(0.0);
+            Piecewise::Piece iterate;
+            iterate.call = std::make_shared<FunctionCall>();
+            iterate.call->function = "mand";
+            iterate.call->args = {
+                Expression::variable("x", 2.0).plus(Expression::variable("c")),
+                Expression::variable("c"),
+                Expression::variable("n").plus(Expression::constant(-1.0))};
+            mand.body.pieces.push_back(std::move(escaped));
+            mand.body.pieces.push_back(std::move(inTheSet));
+            mand.body.pieces.push_back(std::move(iterate));
+        }
+        registry.define(mand);
+
+        Piecewise orbit;
+        {
+            Piecewise::Piece seed;
+            seed.call = std::make_shared<FunctionCall>();
+            seed.call->function = "mand";
+            seed.call->args = {Expression::constant(0.0), Expression::variable("c"),
+                               Expression::constant(8.0)};
+            orbit.pieces.push_back(std::move(seed));
+        }
+        // c = 1: 0 -> 1 -> 2, escapes with 6 of 8 iterations unspent.
+        assert(neard(*orbit.evaluate({{"c", 1.0}}), 6.0));
+        // c = -0.5: the orbit stays bounded — in the set, honestly 0.
+        assert(neard(*orbit.evaluate({{"c", -0.5}}), 0.0));
+
+        // The pure guard survives serialization with the function.
+        Piecewise rebornPureAbs = Piecewise::fromJson(pureAbs.toJson());
+        assert(neard(*rebornPureAbs.evaluate({{"x", -4.0}}), 4.0));
+
         registry.loadFromJson(nlohmann::json::object());      // leave it clean
     }
 

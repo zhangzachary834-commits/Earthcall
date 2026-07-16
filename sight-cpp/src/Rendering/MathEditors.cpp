@@ -223,7 +223,7 @@ bool editPiecewise(OntoMath::Piecewise& f, const MathBindings& bindings) {
                 ImGui::Unindent();
                 ImGui::PopID();
             }
-        } else if (ImGui::SmallButton("+ guard (applies where g <= 0)")) {
+        } else if (ImGui::SmallButton("+ guard (world condition)")) {
             const std::string firstVar =
                 bindings.empty() ? std::string("x") : bindings.begin()->first;
             piece.guard = std::make_shared<ConditionNode>(ConditionNode::zone(
@@ -233,9 +233,41 @@ bool editPiecewise(OntoMath::Piecewise& f, const MathBindings& bindings) {
             piece.guardCompiled = nullptr;
             changed = true;
         } else if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("gate this piece by a CONDITION instead of interval\n"
-                              "bounds — the discrete-math fusion: min/max/abs and\n"
-                              "ontology-branching mathematics live here");
+            ImGui::SetTooltip("gate this piece by a CONDITION about the subject —\n"
+                              "IsKind / Related / Overlaps: mathematics that\n"
+                              "branches on ontology");
+        }
+
+        // The PURE guard: local mathematics gating local mathematics —
+        // "applies where g(variables) <= 0", no subject needed. This is
+        // what recursion base cases over parameters use.
+        if (piece.whereLEZero) {
+            ImGui::TextColored(kHeaderColor, "  where g <= 0; g is:");
+            ImGui::SameLine();
+            if (ImGui::SmallButton("remove##rmwhere")) {
+                piece.whereLEZero.reset();
+                changed = true;
+            }
+            if (piece.whereLEZero) {
+                ImGui::PushID("where-g");
+                ImGui::Indent();
+                if (editExpression(*piece.whereLEZero, bindings)) changed = true;
+                ImGui::Unindent();
+                ImGui::PopID();
+            }
+        } else {
+            if (!piece.guard) ImGui::SameLine();
+            if (ImGui::SmallButton("+ where g <= 0 (of the variables)")) {
+                piece.whereLEZero = std::make_shared<OntoMath::Expression>(
+                    OntoMath::Expression::variable(
+                        bindings.empty() ? "x" : bindings.begin()->first));
+                piece.hasLo = piece.hasHi = false;
+                changed = true;
+            }
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("gate this piece by the VARIABLES alone — min/max/abs\n"
+                                  "and recursion base cases (no subject needed)");
+            }
         }
 
         if (!piece.guard && (f.pieces.size() > 1 || piece.hasLo || piece.hasHi)) {
