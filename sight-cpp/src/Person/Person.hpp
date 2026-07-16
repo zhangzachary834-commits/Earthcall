@@ -10,9 +10,9 @@
 #include "Soul/Soul.hpp"
 #include "Singularity/Core/EventBus.hpp"
 
-// Forward declarations for Person events
-struct PersonCreatedEvent;
+// Forward declarations for Person events (defined in PersonEvents.hpp)
 struct PersonJoinedEvent;
+struct PersonLeftZoneEvent;
 struct PersonLoginEvent;
 struct PersonLogoutEvent;
 

@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <unordered_map>
 #include <unordered_set>
+#include <set>
 #include <cfloat>
 #include <atomic>
 #include <cmath>
@@ -31,6 +32,11 @@ namespace Physics {
 
     // Map Object* to RigidBody
     static std::unordered_map<Object*, RigidBody> g_objectBodies;
+    // Pairs touching as of the last resolved frame. There's no symmetric
+    // physics callback for "stopped touching" the way there is for a fresh
+    // collision, so we diff this set frame-to-frame to synthesize the edge
+    // (see the "contact-ended" echo below).
+    static std::set<std::pair<Object*, Object*>> g_touchingPairs;
     // Global gravity field parameters
     static float g_gravityConstant = 1.0f;      // Tunable G for gameplay scale
     static float g_softeningEps    = 0.25f;     // Softening to avoid singularities in 1/r^2
@@ -266,6 +272,7 @@ namespace Physics {
         // If necesary its better to keep the AABB thing as an algorithm to check if another collision algorithm is necesary to be used
         // If at least one Collision law exists, only resolve collisions for objects matching any Collision law target
         bool anyCollisionLaw = false; for (const auto& law : laws) { if (law.enabled && law.type == LawType::Collision) { anyCollisionLaw = true; break; } }
+        std::set<std::pair<Object*, Object*>> currentTouching;
         for(size_t i = 0; i < objCount; ++i){
             if(!objects[i]) continue;
             // Skip the ground placeholder at index 1 (handled separately by groundY plane)
@@ -335,12 +342,33 @@ namespace Physics {
                 // String-typed echo for Person-authored laws ("collision",
                 // subject = a, object = b).
                 Core::EventBus::instance().publish(ECA::Event{"collision", a, b, std::time(nullptr)});
+                currentTouching.insert(a < b ? std::make_pair(a, b) : std::make_pair(b, a));
 
                 // Update collision zones after correction for later pairs
                 a->updateCollisionZone(a->getTransform());
                 b->updateCollisionZone(b->getTransform());
             }
         }
+
+        // Any pair touching last frame but absent from this frame's set has
+        // separated. Echo it so laws can express "while touching" (paired
+        // with the Overlaps predicate) instead of polling every tick.
+        // BOTH participants must still be alive this frame: an object
+        // deleted mid-contact (the Combine tool consumes its operand) must
+        // not be resurrected as a dangling event subject.
+        {
+            std::unordered_set<Object*> alive;
+            for (size_t i = 0; i < objCount; ++i) {
+                if (objects[i]) alive.insert(objects[i].get());
+            }
+            for (const auto& pair : g_touchingPairs) {
+                if (currentTouching.count(pair)) continue;
+                if (!alive.count(pair.first) || !alive.count(pair.second)) continue;
+                Core::EventBus::instance().publish(ECA::Event{
+                    "contact-ended", pair.first, pair.second, std::time(nullptr)});
+            }
+        }
+        g_touchingPairs = std::move(currentTouching);
     }
 
     RigidBody& getBodyFor(Object* obj, float defaultMass) {
@@ -355,6 +383,7 @@ namespace Physics {
     // Reset registry of rigid bodies (e.g., after loading a scene)
     void resetRigidBodies() {
         g_objectBodies.clear();
+        g_touchingPairs.clear();
     }
 
     // Clear all bonds

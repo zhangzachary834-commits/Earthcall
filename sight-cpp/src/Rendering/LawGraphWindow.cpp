@@ -117,6 +117,17 @@ constexpr EventOption kEngineEvents[] = {
     {"relation-formed",          "a new relation joins the world's graph (subject: the "
                                  "relation being)"},
     {"concept-instantiated",     "a concept manifests new beings (subject: the concept)"},
+    {"contact-ended",            "two colliding objects stop touching (subject: the first "
+                                 "object, object: the second)"},
+    {"locomotion-started",       "a person begins moving (subject: the person)"},
+    {"locomotion-stopped",       "a person comes to rest (subject: the person)"},
+    {"jump-started",             "a person launches into a jump (subject: the person)"},
+    {"landed",                   "a person's feet return to a support surface after being "
+                                 "airborne (subject: the person)"},
+    {"person-logged-in",         "a person logs in (subject: the person)"},
+    {"person-logged-out",        "a person logs out (subject: the person)"},
+    {"person-joined-zone",       "a person joins a zone (subject: the person)"},
+    {"person-left-zone",         "a person leaves a zone (subject: the person)"},
 };
 constexpr int kEngineEventCount = sizeof(kEngineEvents) / sizeof(kEngineEvents[0]);
 

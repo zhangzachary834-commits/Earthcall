@@ -13,46 +13,15 @@
 #include "Form/Singular/Property/ComputedProperty.hpp"
 #include "Form/Singular/Property/PropertyRef.hpp"
 #include "Singularity/Core/EventBus.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 
 // Forward-declare global ZoneManager defined in main.cpp
 extern ZoneManager mgr;
 
-// Event structures for Person events
-struct PersonCreatedEvent {
-    const Person& person;
-    std::time_t timestamp;
-    
-    PersonCreatedEvent(const Person& p) 
-        : person(p), timestamp(std::time(nullptr)) {}
-};
-
-struct PersonJoinedEvent {
-    const Person& person;
-    std::string zoneName;
-    std::time_t timestamp;
-    
-    PersonJoinedEvent(const Person& p, const std::string& zone) 
-        : person(p), zoneName(zone), timestamp(std::time(nullptr)) {}
-};
-
-struct PersonLoginEvent {
-    const Person& person;
-    std::string sessionId;
-    std::time_t timestamp;
-    
-    PersonLoginEvent(const Person& p, const std::string& session = "") 
-        : person(p), sessionId(session), timestamp(std::time(nullptr)) {}
-};
-
-struct PersonLogoutEvent {
-    const Person& person;
-    std::string sessionId;
-    std::time_t timestamp;
-    
-    PersonLogoutEvent(const Person& p, const std::string& session = "") 
-        : person(p), sessionId(session), timestamp(std::time(nullptr)) {}
-};
+// PersonJoinedEvent/PersonLeftZoneEvent/PersonLoginEvent/PersonLogoutEvent
+// are defined in PersonEvents.hpp (not here), so external code can
+// subscribe<>() to them.
 
 // Need to load and save Persons based on data saved in txt and json files.
 // If its "logging in," a Person should be created in the memory via loading.
@@ -496,7 +465,8 @@ void Person::login(const std::string& sessionId) {
         // Trigger PersonLoginEvent
         PersonLoginEvent event(*this, _currentSession);
         Core::EventBus::instance().publish(event);
-        
+        Core::EventBus::instance().publish(ECA::Event{"person-logged-in", this, nullptr, std::time(nullptr)});
+
         std::cout << "👤 " << soulName << " logged in (Session: " << _currentSession << ")" << std::endl;
     }
 }
@@ -508,7 +478,8 @@ void Person::logout(const std::string& sessionId) {
         // Trigger PersonLogoutEvent
         PersonLogoutEvent event(*this, session);
         Core::EventBus::instance().publish(event);
-        
+        Core::EventBus::instance().publish(ECA::Event{"person-logged-out", this, nullptr, std::time(nullptr)});
+
         _isLoggedIn = false;
         _currentSession.clear();
         
@@ -525,7 +496,8 @@ void Person::joinZone(const std::string& zoneName) {
         // Trigger PersonJoinedEvent
         PersonJoinedEvent event(*this, zoneName);
         Core::EventBus::instance().publish(event);
-        
+        Core::EventBus::instance().publish(ECA::Event{"person-joined-zone", this, nullptr, std::time(nullptr)});
+
         std::cout << "👤 " << soulName << " joined zone: " << zoneName << std::endl;
     }
 }
@@ -534,6 +506,12 @@ void Person::leaveZone(const std::string& zoneName) {
     auto it = std::find(_joinedZones.begin(), _joinedZones.end(), zoneName);
     if (it != _joinedZones.end()) {
         _joinedZones.erase(it);
+
+        // Trigger PersonLeftZoneEvent
+        PersonLeftZoneEvent event(*this, zoneName);
+        Core::EventBus::instance().publish(event);
+        Core::EventBus::instance().publish(ECA::Event{"person-left-zone", this, nullptr, std::time(nullptr)});
+
         std::cout << "👤 " << soulName << " left zone: " << zoneName << std::endl;
     }
 }

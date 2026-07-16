@@ -17,6 +17,7 @@
 #include "Singularity/Core/EventBus.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/PhysicsLawBridge.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
 
 #include <GLFW/glfw3.h>
 #include <OpenGL/glu.h>
@@ -613,6 +614,7 @@ void Game::stepMovement(float dt) {
     const auto& objects = mgr.active().world().getOwnedObjects();
     const float eyeH = _player.getBody().getEyeHeight();
     const glm::vec3 posBefore = _camera.pos;
+    const bool wasGrounded = _playerGrounded; // captured before this frame's resolve, for the landed edge
 
     float actualSpeed = _camera.speed;
     if (glfwGetKey(_window, GLFW_KEY_V) == GLFW_PRESS) actualSpeed *= 2.5f;       // sprint
@@ -691,6 +693,7 @@ void Game::stepMovement(float dt) {
         if (jumpKeyDown && !_jumpKeyDownLast && _playerGrounded) {
             _playerVelY = JUMP_SPEED;   // jump impulse
             _playerGrounded = false;
+            Core::EventBus::instance().publish(ECA::Event{"jump-started", &_player, nullptr, std::time(nullptr)});
         }
         _playerVelY -= GRAVITY * dt;     // integrate gravity
         _camera.pos.y += _playerVelY * dt;
@@ -705,6 +708,9 @@ void Game::stepMovement(float dt) {
     } else {
         _playerGrounded = !flying && (_camera.pos.y - minEyeY) <= 1e-3f;
     }
+    if (_playerGrounded && !wasGrounded) {
+        Core::EventBus::instance().publish(ECA::Event{"landed", &_player, nullptr, std::time(nullptr)});
+    }
 
     // 5. Locomotion event + animation clocks, then a single pose from the camera.
     glm::vec3 horizDelta = _camera.pos - posBefore;
@@ -713,6 +719,12 @@ void Game::stepMovement(float dt) {
     const bool moving = distance > 1e-5f;
     const float speedPerSec = (moving && dt > 1e-5f) ? distance / dt : 0.0f;
     Core::EventBus::instance().publish(LocomotionChanged{&_player, moving, speedPerSec});
+    if (moving && !_playerWasMoving) {
+        Core::EventBus::instance().publish(ECA::Event{"locomotion-started", &_player, nullptr, std::time(nullptr)});
+    } else if (!moving && _playerWasMoving) {
+        Core::EventBus::instance().publish(ECA::Event{"locomotion-stopped", &_player, nullptr, std::time(nullptr)});
+    }
+    _playerWasMoving = moving;
     _player.updateBodyAutomations(dt);
 
     _player.position = _camera.pos - glm::vec3(0.0f, eyeH, 0.0f);

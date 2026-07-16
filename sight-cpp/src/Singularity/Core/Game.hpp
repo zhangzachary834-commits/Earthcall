@@ -431,6 +431,7 @@ private:
     float _playerVelY        = 0.0f;  // vertical velocity (world units/sec)
     bool  _playerGrounded    = false; // resting on ground/support this frame
     bool  _jumpKeyDownLast   = false; // edge-trigger for jump
+    bool  _playerWasMoving   = false; // previous frame's locomotion state, for the locomotion-started/-stopped edge
 
     // Rotate-tool drag state (see accessors above)
     bool   _rotateDragging    = false;

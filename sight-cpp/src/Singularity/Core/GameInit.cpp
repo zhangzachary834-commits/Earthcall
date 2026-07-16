@@ -34,6 +34,11 @@ bool Game::init() {
     _lawManager.connectToEventBus();
     (void)TransferPolicy::instance();   // the gate exists from the first frame
 
+    // Collisions feed the relation graph (recordCollision) as well as the
+    // ECA echo above; without this, PhysicsCollisionEvent had no listener
+    // and collision history never reached the relation registry.
+    Physics::setupPhysicsEventListeners();
+
     // The Universe: what continuous laws watch and quantified conditions
     // (ForAny/ForAll) range over — the active world's objects, the laws
     // themselves (so metalaws can quantify over laws), and the player.

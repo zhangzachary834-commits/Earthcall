@@ -135,7 +135,7 @@ public:
     // ------------------------------------------------------------------
     // Helper method to add event to formation relations
     void addEventToFormationRelations(const std::string& eventType, const std::string& sourceId, const std::string& targetId, Formation* formation);
-    
+
     // Helper method to determine event scope (local vs global)
     enum class EventScope { Local, Global };
     EventScope determineEventScope(const std::string& eventType, const std::string& sourceId);

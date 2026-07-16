@@ -53,7 +53,7 @@ void EventBus::shutdown()
 
 // The sum of all Queues should be conceptualized as a Formation instance.
 // Formation of relations should have Queues.
-// Before publishing an event, add the event to the relation, 
+// Before publishing an event, add the event to the relation,
 // Relations should be the channel through which queues are connected.
 void EventBus::processQueue()
 {
@@ -63,7 +63,7 @@ void EventBus::processQueue()
             std::unique_lock<std::mutex> lock(_queueMutex);
             _cv.wait(lock, [this]{ return !_queue.empty() || !_running; });
             if (!_running && _queue.empty()) return;
-            job = std::move(_queue.front()); 
+            job = std::move(_queue.front());
             _queue.pop();
         }
         // Execute job without holding queue lock
@@ -76,23 +76,23 @@ void EventBus::processQueue()
 void EventBus::addEventToFormationRelations(const std::string& eventType, const std::string& sourceId, const std::string& targetId, Formation* formation)
 {
     if (!formation) return;
-    
+
     // Create a relation representing this event
     // The event becomes a relation between the source and target entities
     // This allows tracking event history and relationships within formations
-    
+
     // Create a RelationEvent to capture the event details
     struct RelationEvent {
         std::time_t timestamp{0};
         std::string description;
         float deltaWeight{0.0f};
     };
-    
+
     RelationEvent eventRecord;
     eventRecord.timestamp = std::time(nullptr);
     eventRecord.description = eventType;
     eventRecord.deltaWeight = 1.0f; // Default weight for events
-    
+
     // Create a relation that represents this event interaction
     // The relation type is the event type, connecting source to target
     struct EventRelation {
@@ -102,27 +102,27 @@ void EventBus::addEventToFormationRelations(const std::string& eventType, const 
         bool directed;
         float weight;
         std::vector<RelationEvent> events;
-        
+
         EventRelation(const std::string& t, const std::string& a, const std::string& b, bool dir = true, float w = 1.0f)
             : type(t), entityA(a), entityB(b), directed(dir), weight(w) {}
-        
+
         void addEvent(const RelationEvent& e) { events.push_back(e); }
     };
-    
+
     EventRelation eventRelation(eventType, sourceId, targetId, true, 1.0f);
     eventRelation.addEvent(eventRecord);
-    
+
     // The formation can add this relation to its relation manager
     // This creates a connection between the event and the formation's relation graph
     // formation->addRelation(eventRelation); // This would be called by the formation
-    
+
     // The formation's relation manager now contains the event as a relation
     // which can be used to track event history and relationships
-    // 
+    //
     // Implementation note: The actual Relation creation is commented out to avoid
     // compilation dependencies, but the method structure is in place for when
     // the dependencies are resolved.
-    
+
     // For now, we can store the event information in a way that can be
     // later converted to proper Relation objects when the dependencies are available
     {
@@ -139,16 +139,16 @@ EventBus::EventScope EventBus::determineEventScope(const std::string& eventType,
         "system_startup", "system_shutdown", "user_login", "user_logout",
         "zone_created", "zone_destroyed", "formation_created", "formation_destroyed"
     };
-    
+
     // Check if this is a global event type
     for (const auto& globalType : globalEventTypes) {
         if (eventType == globalType) {
             return EventScope::Global;
         }
     }
-    
+
     // Local events are typically within a specific formation or zone
     return EventScope::Local;
 }
 
-} // namespace Core 
+} // namespace Core
