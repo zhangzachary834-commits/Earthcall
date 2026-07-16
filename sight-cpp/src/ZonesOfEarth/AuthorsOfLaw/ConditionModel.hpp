@@ -31,7 +31,17 @@ struct ConditionNode {
                       // named other, answered by the engine's collision test
                       // (a first mover shrunk to a pure PREDICATE): perception
                       // as an ordinary condition.
-                      Overlaps = 11 };
+                      Overlaps = 11,
+                      // Pair quantifiers — first-order conditions over TWO
+                      // bound beings: "some pair (x, y) of kinds (A, B)
+                      // satisfies the inner condition" / "every ordered pair
+                      // does" (vacuously true when empty). Inside the inner
+                      // condition, plain paths address the FIRST of the pair
+                      // (it is the subject) and "@event.object" addresses the
+                      // SECOND — so Overlaps("@event.object") inside
+                      // ForAnyPair(Object, Object, ...) IS authored collision
+                      // detection. Pairs are ORDERED and distinct.
+                      ForAnyPair = 12, ForAllPair = 13 };
     enum class Op { Eq = 0, Ne = 1, Lt = 2, Le = 3, Gt = 4, Ge = 5, Near = 6, InRange = 7 };
 
     // The ontology's kinds, checked by dynamic_cast — honest C++ instanceof.
@@ -73,6 +83,7 @@ struct ConditionNode {
 
     // IsKind payload + the quantifiers' domain filter.
     BeingKind beingKind = BeingKind::AnyBeing;
+    BeingKind beingKindB = BeingKind::AnyBeing;   // the pair's SECOND role
     // Quantifier exceptions: "every instance ... with possible exceptions".
     std::vector<std::string> exceptIds;
 
@@ -105,6 +116,15 @@ struct ConditionNode {
     // Honest C++ instanceof, shared with everything that ranges over the
     // Universe by kind (quantifiers, folds).
     static bool matchesKind(const Singular& being, BeingKind kind);
+
+    // Pair quantifiers: inner's subject = the pair's FIRST; "@event.object"
+    // = the pair's SECOND. exceptIds exempt beings from either role.
+    static ConditionNode forAnyPair(BeingKind kindA, BeingKind kindB,
+                                    ConditionNode inner,
+                                    std::vector<std::string> exceptIds = {});
+    static ConditionNode forAllPairs(BeingKind kindA, BeingKind kindB,
+                                     ConditionNode inner,
+                                     std::vector<std::string> exceptIds = {});
     static ConditionNode forAny(BeingKind kind, ConditionNode inner,
                                 std::vector<std::string> exceptions = {});
     static ConditionNode forAll(BeingKind kind, ConditionNode inner,

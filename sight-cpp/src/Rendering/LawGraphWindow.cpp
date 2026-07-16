@@ -509,6 +509,17 @@ void seedConditionKind(ConditionNode& node) {
         case ConditionNode::Kind::Overlaps:
             if (node.otherId.empty()) node.otherId = "@event.object";
             break;
+        case ConditionNode::Kind::ForAnyPair:
+        case ConditionNode::Kind::ForAllPair:
+            if (node.beingKind == ConditionNode::BeingKind::AnyBeing) {
+                node.beingKind = ConditionNode::BeingKind::Object;
+                node.beingKindB = ConditionNode::BeingKind::Object;
+            }
+            if (node.children.empty()) {
+                // The classic pair claim: authored collision detection.
+                node.children.push_back(ConditionNode::overlaps("@event.object"));
+            }
+            break;
         case ConditionNode::Kind::IsKind:
         case ConditionNode::Kind::ForAny:
         case ConditionNode::Kind::ForAll:
@@ -550,10 +561,11 @@ bool editConditionNode(ConditionNode& node) {
                                   "all of... (&&)", "any of... (||)", "not (!)",
                                   "math zone", "is a (type)", "this specific being",
                                   "for ANY being...", "for ALL beings...",
-                                  "overlaps (touching)"};
+                                  "overlaps (touching)", "for ANY PAIR...",
+                                  "for ALL PAIRS..."};
     int kind = static_cast<int>(node.kind);
     ImGui::SetNextItemWidth(170.0f);
-    if (ImGui::Combo("Condition type", &kind, kinds, 12)) {
+    if (ImGui::Combo("Condition type", &kind, kinds, 14)) {
         node.kind = static_cast<ConditionNode::Kind>(kind);
         seedConditionKind(node);
         changed = true;
@@ -774,6 +786,25 @@ bool editConditionNode(ConditionNode& node) {
                 node.otherId = idBuf;
                 changed = true;
             }
+            break;
+        }
+        case ConditionNode::Kind::ForAnyPair:
+        case ConditionNode::Kind::ForAllPair: {
+            ImGui::TextDisabled(
+                node.kind == ConditionNode::Kind::ForAnyPair
+                    ? "True when SOME ordered pair (x, y) passes the inner test"
+                    : "True when EVERY ordered pair (x, y) passes the inner test");
+            ImGui::TextDisabled("Inside the inner test: plain paths are x (the pair's");
+            ImGui::TextDisabled("FIRST); '@event.object' paths are y (the SECOND).");
+            ImGui::TextDisabled("With Overlaps inside, this IS collision detection.");
+            if (beingKindCombo(node)) changed = true;
+            int kindB = static_cast<int>(node.beingKindB);
+            ImGui::SetNextItemWidth(130.0f);
+            if (ImGui::Combo("Paired with", &kindB, kBeingKindNames, 7)) {
+                node.beingKindB = static_cast<ConditionNode::BeingKind>(kindB);
+                changed = true;
+            }
+            ImGui::TextDisabled("The child card is the claim each pair must answer.");
             break;
         }
         case ConditionNode::Kind::ForAny:

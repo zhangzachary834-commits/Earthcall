@@ -132,6 +132,16 @@ nlohmann::json ConditionNode::toJson() const {
             j["children"] = kids;
             break;
         }
+        case Kind::ForAnyPair:
+        case Kind::ForAllPair: {
+            j["beingKind"] = static_cast<int>(beingKind);
+            j["beingKindB"] = static_cast<int>(beingKindB);
+            if (!exceptIds.empty()) j["except"] = exceptIds;
+            nlohmann::json kids = nlohmann::json::array();
+            for (const auto& c : children) kids.push_back(c.toJson());
+            j["children"] = kids;
+            break;
+        }
     }
     return j;
 }
@@ -153,6 +163,7 @@ ConditionNode ConditionNode::fromJson(const nlohmann::json& j) {
     if (j.contains("function")) n.zoneFunction = OntoMath::Piecewise::fromJson(j["function"]);
     if (j.contains("bindings")) n.bindings = mathBindingsFromJson(j["bindings"]);
     n.beingKind = static_cast<BeingKind>(j.value("beingKind", 0));
+    n.beingKindB = static_cast<BeingKind>(j.value("beingKindB", 0));
     if (j.contains("except")) n.exceptIds = j["except"].get<std::vector<std::string>>();
     if (j.contains("children")) {
         for (const auto& c : j["children"]) n.children.push_back(fromJson(c));
@@ -347,6 +358,58 @@ ECA::ConditionPredicate ConditionNode::compile() const {
                 return isAll;
             };
         }
+        case Kind::ForAnyPair:
+        case Kind::ForAllPair: {
+            // First-order quantification over ORDERED, DISTINCT pairs. The
+            // inner condition runs with the pair's FIRST as its subject and
+            // the pair's SECOND installed as "@event.object" (the ambient
+            // event context is saved and restored — the pair only borrows
+            // the vocabulary). ForAllPair over an empty domain is vacuously
+            // true; ForAnyPair is false. No inner condition = no claim.
+            const BeingKind ka = beingKind;
+            const BeingKind kb = beingKindB;
+            const std::vector<std::string> except = exceptIds;
+            const bool isAll = kind == Kind::ForAllPair;
+            ECA::ConditionPredicate inner =
+                children.empty() ? ECA::ConditionPredicate{} : children[0].compile();
+            return [ka, kb, except, isAll, inner](const ECA::Event& e, const Singular&) {
+                if (!inner) return isAll;   // no claim to test
+                auto& universe = Universe::instance();
+                const bool hadContext = universe.hasApplicationEvent();
+                Singular* savedSubject =
+                    hadContext ? universe.applicationEventSubject() : nullptr;
+                Singular* savedObject =
+                    hadContext ? universe.applicationEventObject() : nullptr;
+
+                const auto beings = universe.beings();
+                const auto exempt = [&](Singular* being) {
+                    return std::find(except.begin(), except.end(),
+                                     being->getIdentifier()) != except.end();
+                };
+                const auto scan = [&]() -> bool {
+                    for (Singular* x : beings) {
+                        if (!x || !ConditionNode::matchesKind(*x, ka) || exempt(x)) {
+                            continue;
+                        }
+                        for (Singular* y : beings) {
+                            if (!y || y == x || !ConditionNode::matchesKind(*y, kb) ||
+                                exempt(y)) {
+                                continue;
+                            }
+                            universe.setApplicationEvent(x, y);
+                            const bool holds = inner(e, *x);
+                            if (isAll && !holds) return false;
+                            if (!isAll && holds) return true;
+                        }
+                    }
+                    return isAll;
+                };
+                const bool result = scan();
+                if (hadContext) universe.setApplicationEvent(savedSubject, savedObject);
+                else universe.clearApplicationEvent();
+                return result;
+            };
+        }
     }
     return [](const ECA::Event&, const Singular&) { return false; };
 }
@@ -387,6 +450,21 @@ std::string ConditionNode::describe() const {
         case Kind::ForAll: {
             std::string out = kind == Kind::ForAny ? "for-any " : "for-all ";
             out += beingKindName(beingKind);
+            if (!exceptIds.empty()) {
+                out += " except " + std::to_string(exceptIds.size());
+            }
+            out += ": ";
+            out += children.empty() ? "true" : children[0].describe();
+            return out;
+        }
+        case Kind::ForAnyPair:
+        case Kind::ForAllPair: {
+            std::string out =
+                kind == Kind::ForAnyPair ? "for-any pair (" : "for-all pairs (";
+            out += beingKindName(beingKind);
+            out += ", ";
+            out += beingKindName(beingKindB);
+            out += ")";
             if (!exceptIds.empty()) {
                 out += " except " + std::to_string(exceptIds.size());
             }
@@ -481,6 +559,30 @@ ConditionNode ConditionNode::forAll(BeingKind kind, ConditionNode inner,
     n.kind = Kind::ForAll;
     n.beingKind = kind;
     n.exceptIds = std::move(exceptions);
+    n.children.push_back(std::move(inner));
+    return n;
+}
+
+ConditionNode ConditionNode::forAnyPair(BeingKind kindA, BeingKind kindB,
+                                        ConditionNode inner,
+                                        std::vector<std::string> exceptIds) {
+    ConditionNode n;
+    n.kind = Kind::ForAnyPair;
+    n.beingKind = kindA;
+    n.beingKindB = kindB;
+    n.exceptIds = std::move(exceptIds);
+    n.children.push_back(std::move(inner));
+    return n;
+}
+
+ConditionNode ConditionNode::forAllPairs(BeingKind kindA, BeingKind kindB,
+                                         ConditionNode inner,
+                                         std::vector<std::string> exceptIds) {
+    ConditionNode n;
+    n.kind = Kind::ForAllPair;
+    n.beingKind = kindA;
+    n.beingKindB = kindB;
+    n.exceptIds = std::move(exceptIds);
     n.children.push_back(std::move(inner));
     return n;
 }
