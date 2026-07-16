@@ -270,6 +270,7 @@ build/src/Form/Object/Object.o: src/Form/Object/Object.cpp \
   src/Form/Singular/Property/ComputedProperty.hpp \
   src/Form/Singular/Property/PropertyRef.hpp \
   src/ZonesOfEarth/AuthorsOfLaw/ECA.hpp \
+  src/ZonesOfEarth/Physics/Physics.hpp \
   /opt/homebrew/include/glm/gtc/quaternion.hpp \
   src/Rendering/HighlightSystem.hpp
 
@@ -826,6 +827,8 @@ src/Form/Singular/Property/ComputedProperty.hpp:
 src/Form/Singular/Property/PropertyRef.hpp:
 
 src/ZonesOfEarth/AuthorsOfLaw/ECA.hpp:
+
+src/ZonesOfEarth/Physics/Physics.hpp:
 
 /opt/homebrew/include/glm/gtc/quaternion.hpp:
 

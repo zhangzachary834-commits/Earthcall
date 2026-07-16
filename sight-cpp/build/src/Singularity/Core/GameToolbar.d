@@ -305,7 +305,8 @@ build/src/Singularity/Core/GameToolbar.o: \
   src/Singularity/Core/SaveLoadState.hpp \
   src/Singularity/Core/SdfBuild.hpp \
   src/Rendering/RelationManagerWindow.hpp \
-  src/Rendering/LawGraphWindow.hpp src/ZonesOfEarth/Physics/Physics.hpp
+  src/Rendering/LawGraphWindow.hpp src/Rendering/CreationWindow.hpp \
+  src/ZonesOfEarth/Physics/Physics.hpp
 
 src/Singularity/Core/Game.hpp:
 
@@ -950,5 +951,7 @@ src/Singularity/Core/SdfBuild.hpp:
 src/Rendering/RelationManagerWindow.hpp:
 
 src/Rendering/LawGraphWindow.hpp:
+
+src/Rendering/CreationWindow.hpp:
 
 src/ZonesOfEarth/Physics/Physics.hpp:

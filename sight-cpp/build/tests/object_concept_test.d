@@ -277,7 +277,7 @@ build/tests/object_concept_test.o: tests/object_concept_test.cpp \
   src/Singularity/OntoMath/CurveModel.hpp \
   src/Form/Object/Creation/ObjectConcept.hpp \
   src/Form/Object/Creation/PropertyMapping.hpp \
-  src/ZonesOfEarth/World/World.hpp
+  src/Singularity/TransferPolicy.hpp src/ZonesOfEarth/World/World.hpp
 
 src/ZonesOfEarth/AuthorsOfLaw/Law.hpp:
 
@@ -846,5 +846,7 @@ src/Singularity/OntoMath/CurveModel.hpp:
 src/Form/Object/Creation/ObjectConcept.hpp:
 
 src/Form/Object/Creation/PropertyMapping.hpp:
+
+src/Singularity/TransferPolicy.hpp:
 
 src/ZonesOfEarth/World/World.hpp:

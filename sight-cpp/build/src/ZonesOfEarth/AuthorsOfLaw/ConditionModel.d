@@ -279,7 +279,9 @@ build/src/ZonesOfEarth/AuthorsOfLaw/ConditionModel.o: \
   src/ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp \
   src/Singularity/OntoMath/CurveModel.hpp src/Person/Person.hpp \
   src/Person/Body/Body.hpp src/Person/Body/BodyPart/BodyPart.hpp \
-  src/Person/Soul/Soul.hpp src/ZonesOfEarth/World/World.hpp
+  src/Person/Soul/Soul.hpp \
+  src/ZonesOfEarth/Physics/CollisionDispatcher.hpp \
+  src/ZonesOfEarth/World/World.hpp
 
 src/ZonesOfEarth/AuthorsOfLaw/ConditionModel.hpp:
 
@@ -856,5 +858,7 @@ src/Person/Body/Body.hpp:
 src/Person/Body/BodyPart/BodyPart.hpp:
 
 src/Person/Soul/Soul.hpp:
+
+src/ZonesOfEarth/Physics/CollisionDispatcher.hpp:
 
 src/ZonesOfEarth/World/World.hpp:

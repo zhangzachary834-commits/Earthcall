@@ -252,7 +252,8 @@ build/src/Relation/RelationManager.o: src/Relation/RelationManager.cpp \
   /opt/homebrew/include/glm/gtc/../mat4x2.hpp \
   /opt/homebrew/include/glm/gtc/../mat4x3.hpp \
   /opt/homebrew/include/glm/gtc/type_ptr.inl \
-  src/Singularity/Core/EventBus.hpp
+  src/Singularity/Core/EventBus.hpp \
+  src/ZonesOfEarth/AuthorsOfLaw/ECA.hpp
 
 src/Relation/RelationManager.hpp:
 
@@ -765,3 +766,5 @@ src/Form/Singular/Property/PropertyValue.hpp:
 /opt/homebrew/include/glm/gtc/type_ptr.inl:
 
 src/Singularity/Core/EventBus.hpp:
+
+src/ZonesOfEarth/AuthorsOfLaw/ECA.hpp:

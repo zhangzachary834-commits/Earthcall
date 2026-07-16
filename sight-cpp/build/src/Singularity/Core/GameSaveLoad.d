@@ -303,6 +303,9 @@ build/src/Singularity/Core/GameSaveLoad.o: \
   src/Singularity/Core/PotteryTool.hpp \
   src/Singularity/Core/RotationSettings.hpp \
   src/Singularity/Core/SaveLoadState.hpp \
+  src/Form/Object/Creation/ObjectConcept.hpp \
+  src/Form/Object/Creation/PropertyMapping.hpp \
+  src/Singularity/TransferPolicy.hpp \
   src/ZonesOfEarth/Physics/Physics.hpp src/Util/SaveSystem.hpp \
   src/Util/Serialization.hpp src/ZonesOfEarth/World/World.hpp
 
@@ -943,6 +946,12 @@ src/Singularity/Core/PotteryTool.hpp:
 src/Singularity/Core/RotationSettings.hpp:
 
 src/Singularity/Core/SaveLoadState.hpp:
+
+src/Form/Object/Creation/ObjectConcept.hpp:
+
+src/Form/Object/Creation/PropertyMapping.hpp:
+
+src/Singularity/TransferPolicy.hpp:
 
 src/ZonesOfEarth/Physics/Physics.hpp:
 

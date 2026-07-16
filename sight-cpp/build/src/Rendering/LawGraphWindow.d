@@ -275,7 +275,7 @@ build/src/Rendering/LawGraphWindow.o: src/Rendering/LawGraphWindow.cpp \
   src/Singularity/OntoMath/Expression.hpp \
   src/ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp \
   src/Singularity/OntoMath/CurveModel.hpp \
-  src/Rendering/CardTreeLayout.hpp \
+  src/Rendering/CardTreeLayout.hpp src/Rendering/MathEditors.hpp \
   src/Form/Object/Creation/ObjectConcept.hpp \
   src/Form/Object/Creation/PropertyMapping.hpp ../imgui/imgui.h \
   ../imgui/imconfig.h
@@ -847,6 +847,8 @@ src/ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp:
 src/Singularity/OntoMath/CurveModel.hpp:
 
 src/Rendering/CardTreeLayout.hpp:
+
+src/Rendering/MathEditors.hpp:
 
 src/Form/Object/Creation/ObjectConcept.hpp:
 

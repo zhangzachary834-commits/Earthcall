@@ -266,7 +266,19 @@ build/tests/property_bridge_test.o: tests/property_bridge_test.cpp \
   src/Form/Object/Geometry/ComplexShape.hpp \
   src/Form/Object/Geometry/Sdf.hpp src/Form/Object/Geometry/Patch.hpp \
   src/Form/Object/Automation/Automation.hpp \
-  src/Form/Singular/Property/PropertyPath.hpp
+  src/Form/Singular/Property/PropertyPath.hpp src/Person/Person.hpp \
+  src/Person/Body/Body.hpp src/Person/Body/BodyPart/BodyPart.hpp \
+  src/Person/Soul/Soul.hpp \
+  src/ZonesOfEarth/AuthorsOfLaw/PhysicsLawBridge.hpp \
+  src/ZonesOfEarth/AuthorsOfLaw/Law.hpp \
+  src/ZonesOfEarth/AuthorsOfLaw/ECA.hpp \
+  src/ZonesOfEarth/AuthorsOfLaw/ConditionModel.hpp \
+  src/ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp \
+  src/ZonesOfEarth/AuthorsOfLaw/Universe.hpp \
+  src/Singularity/OntoMath/Expression.hpp \
+  src/ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp \
+  src/Singularity/OntoMath/CurveModel.hpp \
+  src/ZonesOfEarth/Physics/Physics.hpp
 
 src/Form/Object/Object.hpp:
 
@@ -815,3 +827,31 @@ src/Form/Object/Geometry/Patch.hpp:
 src/Form/Object/Automation/Automation.hpp:
 
 src/Form/Singular/Property/PropertyPath.hpp:
+
+src/Person/Person.hpp:
+
+src/Person/Body/Body.hpp:
+
+src/Person/Body/BodyPart/BodyPart.hpp:
+
+src/Person/Soul/Soul.hpp:
+
+src/ZonesOfEarth/AuthorsOfLaw/PhysicsLawBridge.hpp:
+
+src/ZonesOfEarth/AuthorsOfLaw/Law.hpp:
+
+src/ZonesOfEarth/AuthorsOfLaw/ECA.hpp:
+
+src/ZonesOfEarth/AuthorsOfLaw/ConditionModel.hpp:
+
+src/ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp:
+
+src/ZonesOfEarth/AuthorsOfLaw/Universe.hpp:
+
+src/Singularity/OntoMath/Expression.hpp:
+
+src/ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp:
+
+src/Singularity/OntoMath/CurveModel.hpp:
+
+src/ZonesOfEarth/Physics/Physics.hpp:

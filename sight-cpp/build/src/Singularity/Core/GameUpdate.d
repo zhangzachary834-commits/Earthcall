@@ -304,7 +304,8 @@ build/src/Singularity/Core/GameUpdate.o: \
   src/Singularity/Core/RotationSettings.hpp \
   src/Singularity/Core/SaveLoadState.hpp src/Singularity/Core/Engine.hpp \
   src/Singularity/Core/SdfBuild.hpp src/Rendering/HighlightSystem.hpp \
-  src/ZonesOfEarth/Physics/Physics.hpp src/Person/PersonEvents.hpp
+  src/ZonesOfEarth/Physics/Physics.hpp src/Person/PersonEvents.hpp \
+  src/ZonesOfEarth/AuthorsOfLaw/PhysicsLawBridge.hpp
 
 src/Singularity/Core/Game.hpp:
 
@@ -953,3 +954,5 @@ src/Rendering/HighlightSystem.hpp:
 src/ZonesOfEarth/Physics/Physics.hpp:
 
 src/Person/PersonEvents.hpp:
+
+src/ZonesOfEarth/AuthorsOfLaw/PhysicsLawBridge.hpp:

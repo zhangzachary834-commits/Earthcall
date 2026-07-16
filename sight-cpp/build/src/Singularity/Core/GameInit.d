@@ -304,7 +304,8 @@ build/src/Singularity/Core/GameInit.o: src/Singularity/Core/GameInit.cpp \
   src/Singularity/Core/RotationSettings.hpp \
   src/Singularity/Core/SaveLoadState.hpp src/Singularity/Core/Engine.hpp \
   src/Form/../../../imgui/backends/imgui_impl_glfw.h \
-  src/Rendering/ShadingSystem.hpp src/ZonesOfEarth/Physics/Physics.hpp
+  src/Rendering/ShadingSystem.hpp src/ZonesOfEarth/Physics/Physics.hpp \
+  src/Singularity/TransferPolicy.hpp
 
 src/Singularity/Core/Game.hpp:
 
@@ -951,3 +952,5 @@ src/Form/../../../imgui/backends/imgui_impl_glfw.h:
 src/Rendering/ShadingSystem.hpp:
 
 src/ZonesOfEarth/Physics/Physics.hpp:
+
+src/Singularity/TransferPolicy.hpp:

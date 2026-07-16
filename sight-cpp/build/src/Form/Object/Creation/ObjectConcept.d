@@ -271,8 +271,11 @@ build/src/Form/Object/Creation/ObjectConcept.o: \
   src/Form/Object/Creation/PropertyMapping.hpp \
   src/Form/Singular/Property/PropertyPath.hpp \
   src/Singularity/OntoMath/CurveModel.hpp \
+  src/Singularity/OntoMath/Expression.hpp \
   src/Form/Object/Geometry/SdfJson.hpp \
-  src/ZonesOfEarth/AuthorsOfLaw/ECA.hpp
+  src/Singularity/TransferPolicy.hpp \
+  src/ZonesOfEarth/AuthorsOfLaw/ECA.hpp \
+  src/ZonesOfEarth/AuthorsOfLaw/Universe.hpp
 
 src/Form/Object/Creation/ObjectConcept.hpp:
 
@@ -828,6 +831,12 @@ src/Form/Singular/Property/PropertyPath.hpp:
 
 src/Singularity/OntoMath/CurveModel.hpp:
 
+src/Singularity/OntoMath/Expression.hpp:
+
 src/Form/Object/Geometry/SdfJson.hpp:
 
+src/Singularity/TransferPolicy.hpp:
+
 src/ZonesOfEarth/AuthorsOfLaw/ECA.hpp:
+
+src/ZonesOfEarth/AuthorsOfLaw/Universe.hpp:

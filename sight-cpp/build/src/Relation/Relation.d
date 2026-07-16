@@ -250,7 +250,9 @@ build/src/Relation/Relation.o: src/Relation/Relation.cpp \
   /opt/homebrew/include/glm/gtc/../mat3x4.hpp \
   /opt/homebrew/include/glm/gtc/../mat4x2.hpp \
   /opt/homebrew/include/glm/gtc/../mat4x3.hpp \
-  /opt/homebrew/include/glm/gtc/type_ptr.inl
+  /opt/homebrew/include/glm/gtc/type_ptr.inl \
+  src/Form/Singular/Property/ComputedProperty.hpp \
+  src/Form/Singular/Property/PropertyRef.hpp
 
 src/Relation/Relation.hpp:
 
@@ -759,3 +761,7 @@ src/Form/Singular/Property/PropertyValue.hpp:
 /opt/homebrew/include/glm/gtc/../mat4x3.hpp:
 
 /opt/homebrew/include/glm/gtc/type_ptr.inl:
+
+src/Form/Singular/Property/ComputedProperty.hpp:
+
+src/Form/Singular/Property/PropertyRef.hpp:
