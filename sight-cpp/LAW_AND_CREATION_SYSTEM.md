@@ -356,7 +356,15 @@ with it the manifesto's Mandelbrot ambition — the escape-time recurrence
 `mand(x, c, n) = x ≥ 2 ? n : n ≤ 0 ? 0 : mand(x² + c, c, n−1)` is authored
 math that runs (real slice; the complex plane awaits vector values).
 
-Growth path: folds over sets (Σ/min/max across
+**Folds (landed) — the discrete Σ over the world:** a piece's value may be
+an AGGREGATE across every being of a kind — sum, mean, min, max, count, with
+possible exceptions — read through the property bridge ("y := the mean height
+of every Object"). Empty sum and count are their honest identities (0);
+empty mean/min/max are undefined. This is the aggregation half of pair
+quantification, and it shares `ConditionNode::matchesKind` with the
+quantifiers.
+
+Growth path: folds inside expressions (Σ as a term factor, across
 a collection — shared machinery with pair quantification), vector-valued
 expressions, expression-valued exponents, integration by parts, richer
 symbolic simplification (sin² + cos² = 1 and kin), RPN compilation for

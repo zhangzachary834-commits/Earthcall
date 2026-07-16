@@ -13,6 +13,11 @@ namespace MathEd {
 namespace {
 const ImVec4 kHeaderColor(0.95f, 0.85f, 0.55f, 1.0f);
 const ImVec4 kWarnColor(1.0f, 0.6f, 0.2f, 1.0f);
+
+void copyToBuf(char* buf, std::size_t size, const std::string& value) {
+    std::strncpy(buf, value.c_str(), size - 1);
+    buf[size - 1] = '\0';
+}
 } // namespace
 
 bool editMathBindings(MathBindings& bindings, const PathPickerFn& pathPicker) {
@@ -324,8 +329,59 @@ bool editPiecewise(OntoMath::Piecewise& f, const MathBindings& bindings) {
                     ImGui::PopID();
                 }
             }
+        } else if (piece.fold) {
+            static const char* foldOps[] = {"sum", "mean", "min", "max", "count"};
+            static const char* foldKinds[] = {"any being", "Object",    "Person",
+                                              "Relation",  "Formation", "Law",
+                                              "World"};
+            ImGui::TextColored(kHeaderColor, "  folds over the world:");
+            ImGui::SameLine();
+            if (ImGui::SmallButton("remove fold")) {
+                piece.fold.reset();
+                changed = true;
+            }
+            if (piece.fold) {
+                int op = static_cast<int>(piece.fold->op);
+                ImGui::SetNextItemWidth(90.0f);
+                if (ImGui::Combo("##foldop", &op, foldOps, 5)) {
+                    piece.fold->op = static_cast<OntoMath::Fold::Op>(op);
+                    changed = true;
+                }
+                ImGui::SameLine();
+                ImGui::TextDisabled("of");
+                ImGui::SameLine();
+                char pathBuf[96];
+                copyToBuf(pathBuf, sizeof(pathBuf), piece.fold->path);
+                ImGui::SetNextItemWidth(140.0f);
+                if (ImGui::InputText("##foldpath", pathBuf, sizeof(pathBuf))) {
+                    piece.fold->path = pathBuf;
+                    changed = true;
+                }
+                if (ImGui::IsItemHovered()) {
+                    ImGui::SetTooltip("property read on each being (e.g. position.y);\n"
+                                      "leave empty with 'count' to count beings");
+                }
+                ImGui::SameLine();
+                ImGui::TextDisabled("across every");
+                ImGui::SameLine();
+                ImGui::SetNextItemWidth(110.0f);
+                if (ImGui::Combo("##foldkind", &piece.fold->beingKind, foldKinds, 7)) {
+                    changed = true;
+                }
+            }
         } else {
             if (editExpression(piece.expression, bindings)) changed = true;
+            ImGui::SameLine();
+            if (ImGui::SmallButton("fold over the world...")) {
+                piece.fold = std::make_shared<OntoMath::Fold>();
+                piece.fold->op = OntoMath::Fold::Op::Mean;
+                piece.fold->path = "position.y";
+                changed = true;
+            }
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("the piece's value becomes an AGGREGATE across\n"
+                                  "the world's beings: sum / mean / min / max / count");
+            }
             if (!OntoMath::FunctionRegistry::instance().getAll().empty()) {
                 ImGui::SameLine();
                 if (ImGui::SmallButton("call a function...")) {

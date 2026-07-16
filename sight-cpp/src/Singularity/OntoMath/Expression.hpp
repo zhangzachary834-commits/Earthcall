@@ -156,6 +156,24 @@ struct FunctionCall {
     static FunctionCall fromJson(const nlohmann::json& j);
 };
 
+// A FOLD over the world: aggregate one property across every being of a
+// kind — the discrete-math Σ/mean/min/max/count, as a piece's value.
+// "y := the mean height of all Objects" is one fold. Empty sums are 0 and
+// empty counts are 0 (honest identities); empty mean/min/max are undefined
+// (nullopt). This is the aggregation half of pair quantification.
+struct Fold {
+    // Serialized as ints — APPEND-ONLY.
+    enum class Op { Sum = 0, Mean = 1, Min = 2, Max = 3, Count = 4 };
+
+    Op op = Op::Sum;
+    int beingKind = 1;                  // ConditionNode::BeingKind (1 = Object)
+    std::string path;                   // property read on each being
+    std::vector<std::string> exceptIds; // "...with possible exceptions"
+
+    nlohmann::json toJson() const;
+    static Fold fromJson(const nlohmann::json& j);
+};
+
 // The manifesto's DiscreteFunctions: discrete bounds within which a
 // continuous expression governs. Bounds are on one designated input variable
 // and may be open or closed on each side — mathematically precise piecewise
@@ -193,6 +211,10 @@ struct Piecewise {
         // When set, the piece's VALUE is a call to a named function
         // (the expression is ignored) — composition and recursion.
         std::shared_ptr<FunctionCall> call;
+
+        // When set (and no call), the piece's VALUE is a fold over the
+        // world's beings — Σ/mean/min/max/count of a property by kind.
+        std::shared_ptr<Fold> fold;
 
         bool contains(double x) const;
         bool applies(const std::map<std::string, double>& vars,

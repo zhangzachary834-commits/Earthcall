@@ -491,6 +491,7 @@ nlohmann::json Piecewise::Piece::toJson() const {
     if (guard) j["guard"] = guard->toJson();
     if (whereLEZero) j["where"] = whereLEZero->toJson();
     if (call) j["call"] = call->toJson();
+    if (fold) j["fold"] = fold->toJson();
     return j;
 }
 
@@ -515,6 +516,9 @@ Piecewise::Piece Piecewise::Piece::fromJson(const nlohmann::json& j) {
     }
     if (j.contains("call")) {
         p.call = std::make_shared<FunctionCall>(FunctionCall::fromJson(j["call"]));
+    }
+    if (j.contains("fold")) {
+        p.fold = std::make_shared<Fold>(Fold::fromJson(j["fold"]));
     }
     return p;
 }
@@ -556,9 +560,85 @@ std::optional<double> Piecewise::evaluate(const std::map<std::string, double>& v
             }
             return def->body.evaluate(bound, subject, depth + 1);
         }
+        if (piece.fold) {
+            // The discrete Σ: aggregate one property across every being of
+            // the kind, with possible exceptions. Empty sum/count are their
+            // honest identities; empty mean/min/max are undefined.
+            const Fold& fold = *piece.fold;
+            const PropertyPath foldPath = PropertyPath::parse(fold.path);
+            double sum = 0.0;
+            double mn = 0.0, mx = 0.0;
+            int counted = 0;
+            for (Singular* being : Universe::instance().beings()) {
+                if (!being) continue;
+                if (!ConditionNode::matchesKind(
+                        *being, static_cast<ConditionNode::BeingKind>(fold.beingKind))) {
+                    continue;
+                }
+                if (std::find(fold.exceptIds.begin(), fold.exceptIds.end(),
+                              being->getIdentifier()) != fold.exceptIds.end()) {
+                    continue;
+                }
+                if (fold.op == Fold::Op::Count && fold.path.empty()) {
+                    ++counted;   // counting BEINGS, no property needed
+                    continue;
+                }
+                PropertyValue value;
+                double x = 0.0;
+                if (!lawGetValue(*being, foldPath, value) ||
+                    !propertyValueToNumber(value, x)) {
+                    continue;   // this being cannot testify to the property
+                }
+                if (counted == 0) {
+                    mn = mx = x;
+                } else {
+                    mn = std::min(mn, x);
+                    mx = std::max(mx, x);
+                }
+                sum += x;
+                ++counted;
+            }
+            switch (fold.op) {
+                case Fold::Op::Sum: return sum;                     // empty Σ = 0
+                case Fold::Op::Count: return static_cast<double>(counted);
+                case Fold::Op::Mean:
+                    if (counted == 0) return std::nullopt;
+                    return sum / counted;
+                case Fold::Op::Min:
+                    if (counted == 0) return std::nullopt;
+                    return mn;
+                case Fold::Op::Max:
+                    if (counted == 0) return std::nullopt;
+                    return mx;
+            }
+            return std::nullopt;
+        }
         return piece.expression.evaluate(vars);
     }
     return std::nullopt;   // outside every piece: undefined, not zero
+}
+
+// ---------------------------------------------------------------------------
+// Fold
+// ---------------------------------------------------------------------------
+
+nlohmann::json Fold::toJson() const {
+    nlohmann::json j{{"op", static_cast<int>(op)},
+                     {"kind", beingKind},
+                     {"path", path}};
+    if (!exceptIds.empty()) j["except"] = exceptIds;
+    return j;
+}
+
+Fold Fold::fromJson(const nlohmann::json& j) {
+    Fold f;
+    f.op = static_cast<Op>(j.value("op", 0));
+    f.beingKind = j.value("kind", 1);
+    f.path = j.value("path", std::string());
+    if (j.contains("except")) {
+        f.exceptIds = j["except"].get<std::vector<std::string>>();
+    }
+    return f;
 }
 
 // ---------------------------------------------------------------------------

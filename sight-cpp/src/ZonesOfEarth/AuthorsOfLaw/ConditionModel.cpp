@@ -32,7 +32,7 @@ const char* opName(ConditionNode::Op op) {
 }
 
 // Honest C++ instanceof — the ontology's kinds checked at runtime.
-bool matchesBeingKind(const Singular& being, ConditionNode::BeingKind kind) {
+bool matchesKindImpl(const Singular& being, ConditionNode::BeingKind kind) {
     switch (kind) {
         case ConditionNode::BeingKind::AnyBeing:  return true;
         case ConditionNode::BeingKind::Object:    return dynamic_cast<const Object*>(&being) != nullptr;
@@ -158,6 +158,10 @@ ConditionNode ConditionNode::fromJson(const nlohmann::json& j) {
         for (const auto& c : j["children"]) n.children.push_back(fromJson(c));
     }
     return n;
+}
+
+bool ConditionNode::matchesKind(const Singular& being, BeingKind kind) {
+    return matchesKindImpl(being, kind);
 }
 
 ECA::ConditionPredicate ConditionNode::compile() const {
@@ -307,7 +311,7 @@ ECA::ConditionPredicate ConditionNode::compile() const {
             // Runtime instanceof: is the subject this kind of being?
             const BeingKind k = beingKind;
             return [k](const ECA::Event&, const Singular& target) {
-                return matchesBeingKind(target, k);
+                return ConditionNode::matchesKind(target, k);
             };
         }
         case Kind::Identity: {
@@ -331,7 +335,7 @@ ECA::ConditionPredicate ConditionNode::compile() const {
                 children.empty() ? ECA::ConditionPredicate{} : children[0].compile();
             return [k, except, isAll, inner](const ECA::Event& e, const Singular&) {
                 for (Singular* being : Universe::instance().beings()) {
-                    if (!being || !matchesBeingKind(*being, k)) continue;
+                    if (!being || !ConditionNode::matchesKind(*being, k)) continue;
                     if (std::find(except.begin(), except.end(), being->getIdentifier()) !=
                         except.end()) {
                         continue;

@@ -101,6 +101,10 @@ struct ConditionNode {
                                  const std::string& otherId = "");
     // otherToken: a being id, or "@event.subject" / "@event.object".
     static ConditionNode overlaps(const std::string& otherToken);
+
+    // Honest C++ instanceof, shared with everything that ranges over the
+    // Universe by kind (quantifiers, folds).
+    static bool matchesKind(const Singular& being, BeingKind kind);
     static ConditionNode forAny(BeingKind kind, ConditionNode inner,
                                 std::vector<std::string> exceptions = {});
     static ConditionNode forAll(BeingKind kind, ConditionNode inner,

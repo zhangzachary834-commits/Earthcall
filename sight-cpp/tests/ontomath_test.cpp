@@ -554,6 +554,71 @@ int main() {
         Piecewise rebornPureAbs = Piecewise::fromJson(pureAbs.toJson());
         assert(neard(*rebornPureAbs.evaluate({{"x", -4.0}}), 4.0));
 
+        // ------------------------------------------------------------------
+        // 13. FOLDS — the discrete Σ over the world: aggregate a property
+        //     across every being of a kind (with exceptions). Empty sum and
+        //     count are their honest identities; empty mean/min/max are
+        //     undefined, never guessed.
+        // ------------------------------------------------------------------
+        using OntoMath::Fold;
+        Object low, mid, high;
+        low.setPosition(glm::vec3(0.0f, 1.0f, 0.0f));
+        mid.setPosition(glm::vec3(0.0f, 4.0f, 0.0f));
+        high.setPosition(glm::vec3(0.0f, 10.0f, 0.0f));
+        Universe::instance().setProvider([&](std::vector<Singular*>& beings) {
+            beings.push_back(&low);
+            beings.push_back(&mid);
+            beings.push_back(&high);
+        });
+
+        const auto foldOf = [](Fold::Op op, const std::string& path,
+                               std::vector<std::string> except = {}) {
+            Piecewise f;
+            Piecewise::Piece piece;
+            piece.fold = std::make_shared<Fold>();
+            piece.fold->op = op;
+            piece.fold->path = path;
+            piece.fold->exceptIds = std::move(except);
+            f.pieces.push_back(std::move(piece));
+            return f;
+        };
+        assert(neard(*foldOf(Fold::Op::Sum, "position.y").evaluate({}), 15.0));
+        assert(neard(*foldOf(Fold::Op::Mean, "position.y").evaluate({}), 5.0));
+        assert(neard(*foldOf(Fold::Op::Min, "position.y").evaluate({}), 1.0));
+        assert(neard(*foldOf(Fold::Op::Max, "position.y").evaluate({}), 10.0));
+        assert(neard(*foldOf(Fold::Op::Count, "").evaluate({}), 3.0));
+        // "...with possible exceptions": exclude the tallest.
+        assert(neard(*foldOf(Fold::Op::Max, "position.y",
+                             {high.getIdentifier()}).evaluate({}), 4.0));
+
+        // Empty world honesty.
+        Universe::instance().setProvider({});
+        assert(neard(*foldOf(Fold::Op::Sum, "position.y").evaluate({}), 0.0));
+        assert(neard(*foldOf(Fold::Op::Count, "").evaluate({}), 0.0));
+        assert(!foldOf(Fold::Op::Mean, "position.y").evaluate({}).has_value());
+        assert(!foldOf(Fold::Op::Min, "position.y").evaluate({}).has_value());
+
+        // Folds are law-text: survive serialization, and run in a law —
+        // "y := the mean height of every Object".
+        Universe::instance().setProvider([&](std::vector<Singular*>& beings) {
+            beings.push_back(&low);
+            beings.push_back(&mid);
+            beings.push_back(&high);
+        });
+        Piecewise rebornFold =
+            Piecewise::fromJson(foldOf(Fold::Op::Mean, "position.y").toJson());
+        assert(neard(*rebornFold.evaluate({}), 5.0));
+
+        Law levelLaw("y-becomes-the-mean");
+        levelLaw.addAuthor(author);
+        levelLaw.setActionModel(ActionNode::map(
+            "position.y", foldOf(Fold::Op::Mean, "position.y"), MathBindings{}));
+        Object leveler;
+        leveler.setPosition(glm::vec3(7.0f, 0.0f, 0.0f));
+        assert(levelLaw.applyTo(leveler) == Law::ApplicationResult::Applied);
+        assert(nearf(leveler.getPosition().y, 5.0f));         // the world's mean
+
+        Universe::instance().setProvider({});
         registry.loadFromJson(nlohmann::json::object());      // leave it clean
     }
 
