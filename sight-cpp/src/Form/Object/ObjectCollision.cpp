@@ -149,15 +149,31 @@ void Object::updateCollisionZone(const glm::mat4& transform) const {
     }
 }
 
-void Object::rebuildSupportCloud() {
+// Rebuilds everything derived from the shape: the cached render tessellations and
+// the GJK support cloud. Called from every geometry mutation point, so the draw
+// path never has to tessellate. Collision keeps its own coarser tessellation —
+// the cloud is decimated to `maxPts` anyway, and matching render resolution here
+// would change which points GJK sees for no benefit.
+void Object::rebuildGeometryCaches() {
     _supportCloud.clear();
-    geom::TessMesh m;
+    _smoothMesh = geom::TessMesh{};
+    _complexMeshes.clear();
+
+    geom::TessMesh m; // collision source — decimated into _supportCloud below
     if (_hasField) {
         _fieldMesh = geom::tessellateSdf(fieldData, _fieldExtent);
-        m = _fieldMesh;
+        m = _fieldMesh; // render and collision share it: marching tets are too costly to repeat
     }
-    else if (_hasComplex) m = geom::tessellateComplex(complexData, 16);
-    else if (_hasSmooth)  m = geom::tessellateSmooth(smoothData, 16, 10);
+    else if (_hasComplex) {
+        _complexMeshes.reserve(complexData.patches.size());
+        for (const auto& patch : complexData.patches)
+            _complexMeshes.push_back(geom::tessellatePatch(patch));
+        m = geom::tessellateComplex(complexData, 16);
+    }
+    else if (_hasSmooth) {
+        _smoothMesh = geom::tessellateSmooth(smoothData);
+        m = geom::tessellateSmooth(smoothData, 16, 10);
+    }
     else return;
     // Decimate to a capped, well-spread subset. The support cloud is argmax-scanned
     // (O(cloud)) up to ~14x per object per collision pair; keeping the full marching-tet

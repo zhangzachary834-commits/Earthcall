@@ -16,7 +16,9 @@ LDFLAGS = -L/opt/homebrew/Cellar/lib \
           -lglfw \
           -framework OpenGL \
           -framework WebKit \
-          -framework Cocoa
+          -framework Cocoa \
+          -framework CoreAudio \
+          -framework AudioToolbox
 
 # Directories
 SRC_DIR = src
@@ -122,6 +124,9 @@ time_flow_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/time_flow_test.o
 law_persistence_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/law_persistence_test.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
+geometry_cache_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/geometry_cache_test.o
+	$(CXX) $^ $(LDFLAGS) -o $@
+
 test-property: property_bridge_test
 	./property_bridge_test
 
@@ -155,11 +160,14 @@ test-timeflow: time_flow_test
 test-persist: law_persistence_test
 	./law_persistence_test
 
-test: test-property test-law test-loop test-recorder test-concept test-graph test-meta test-math test-continuous test-timeflow test-persist
+test-geomcache: geometry_cache_test
+	./geometry_cache_test
+
+test: test-property test-law test-loop test-recorder test-concept test-graph test-meta test-math test-continuous test-timeflow test-persist test-geomcache
 
 # Pull in auto-generated header dependencies (.d files next to each .o)
 -include $(OBJECTS:.o=.d)
 -include $(wildcard $(BUILD_DIR)/tests/*.d)
 
 # Phony targets
-.PHONY: all clean run test test-property test-law test-loop test-recorder test-concept test-graph test-meta test-math test-continuous test-timeflow test-persist
+.PHONY: all clean run test test-property test-law test-loop test-recorder test-concept test-graph test-meta test-math test-continuous test-timeflow test-persist test-geomcache

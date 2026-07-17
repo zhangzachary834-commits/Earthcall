@@ -195,7 +195,15 @@ private:
     geom::ComplexShapeData  complexData;
     geom::SdfNode           fieldData;     // SDF expression when _hasField
     float                   _fieldExtent = 1.0f;
+    // Cached render tessellations. Tessellating is O(slices*stacks) and allocates;
+    // doing it in the draw path rebuilt every surface in the world every frame for
+    // geometry that changes only when a Person edits it. Built once per change by
+    // rebuildGeometryCaches(), which every mutation point already calls.
     geom::TessMesh          _fieldMesh;    // cached field tessellation (rebuilt on change)
+    geom::TessMesh          _smoothMesh;   // cached smooth-surface tessellation
+    // One mesh per patch, not one merged mesh: each patch is a real face and binds
+    // its own face texture, so the render path must keep them separable.
+    std::vector<geom::TessMesh> _complexMeshes;
     geom::BezierPatch       patchData;     // control-net surface when _hasPatch
     geom::TessMesh          _patchMesh;    // cached patch tessellation
     bool _hasSmooth  = false;
@@ -217,7 +225,7 @@ private:
     void drawComplexModel() const;
     void drawFieldModel() const;
     void drawPatchModel() const;
-    void rebuildSupportCloud();
+    void rebuildGeometryCaches();
 
 public:
     // LEGACY flat colours kept for save/load compatibility (first 6 faces)
@@ -468,7 +476,7 @@ public:
         patchData = p; _hasPatch = true;
         _hasField = _hasSmooth = _hasComplex = false;
         _shapeKind = ShapeKind::Patch;
-        initFaceTextures(); rebuildSupportCloud();
+        initFaceTextures(); rebuildGeometryCaches();
     }
     int getPatchControlCount() const { return _hasPatch ? static_cast<int>(patchData.ctrl.size()) : 0; }
     glm::vec3 getPatchControlLocal(int i) const {
@@ -477,13 +485,13 @@ public:
     }
     void setPatchControlLocal(int i, const glm::vec3& v) {
         if (_hasPatch && i >= 0 && i < static_cast<int>(patchData.ctrl.size())) {
-            patchData.ctrl[i] = v; rebuildSupportCloud();
+            patchData.ctrl[i] = v; rebuildGeometryCaches();
         }
     }
     int getPatchDegreeU() const { return _hasPatch ? patchData.du : 0; }
     int getPatchDegreeV() const { return _hasPatch ? patchData.dv : 0; }
-    void elevatePatchU() { if (_hasPatch) { geom::elevateU(patchData); initFaceTextures(); rebuildSupportCloud(); } }
-    void elevatePatchV() { if (_hasPatch) { geom::elevateV(patchData); rebuildSupportCloud(); } }
+    void elevatePatchU() { if (_hasPatch) { geom::elevateU(patchData); initFaceTextures(); rebuildGeometryCaches(); } }
+    void elevatePatchV() { if (_hasPatch) { geom::elevateV(patchData); rebuildGeometryCaches(); } }
     bool hasSmoothSurface() const { return _hasSmooth; }
     bool hasComplexShape()  const { return _hasComplex; }
     bool hasField()         const { return _hasField; }
@@ -492,10 +500,10 @@ public:
     const geom::SdfNode&           getFieldData()   const { return fieldData; }
     const std::vector<glm::vec3>& getSupportCloud() const { return _supportCloud; }
     void setSmoothSurface(const geom::SmoothSurfaceData& s) {
-        smoothData = s; _hasSmooth = true; _hasComplex = false; _hasField = false; _hasPatch = false; initFaceTextures(); rebuildSupportCloud();
+        smoothData = s; _hasSmooth = true; _hasComplex = false; _hasField = false; _hasPatch = false; initFaceTextures(); rebuildGeometryCaches();
     }
     void setComplexShape(const geom::ComplexShapeData& c) {
-        complexData = c; _hasComplex = true; _hasSmooth = false; _hasField = false; _hasPatch = false; initFaceTextures(); rebuildSupportCloud();
+        complexData = c; _hasComplex = true; _hasSmooth = false; _hasField = false; _hasPatch = false; initFaceTextures(); rebuildGeometryCaches();
     }
     // An SDF-defined shape (morph / boolean / implicit). `extent` is the half-size
     // of the region the field is meshed/marched over.
@@ -503,7 +511,7 @@ public:
         fieldData = f; _fieldExtent = extent;
         _hasField = true; _hasSmooth = false; _hasComplex = false; _hasPatch = false;
         _shapeKind = ShapeKind::Field;
-        initFaceTextures(); rebuildSupportCloud();
+        initFaceTextures(); rebuildGeometryCaches();
     }
     float getFieldExtent() const { return _fieldExtent; }
     // Live-edit the blend of a Morph/SmoothUnion field (re-tessellates).
@@ -514,7 +522,7 @@ public:
     void setMorphParam(float t) {
         if (!isMorphField()) return;
         fieldData.t = glm::clamp(t, 0.0f, 1.0f);
-        rebuildSupportCloud(); // rebuilds the cached field mesh + support cloud
+        rebuildGeometryCaches(); // re-tessellates the field and rebuilds the support cloud
     }
 
     // A binary field (blend/boolean) — operand B can be moved in the scene.
@@ -525,7 +533,7 @@ public:
     void setFieldOperandBOffset(const glm::vec3& off) {
         if (!isBinaryField()) return;
         fieldData.children[1]->offset = off;
-        rebuildSupportCloud();
+        rebuildGeometryCaches();
     }
     void clearTopologyModel() { _hasSmooth = false; _hasComplex = false; _hasField = false; _hasPatch = false; _supportCloud.clear(); }
 

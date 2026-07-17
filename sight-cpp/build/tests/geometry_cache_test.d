@@ -1,7 +1,6 @@
-build/src/Singularity/Core/Engine.o: src/Singularity/Core/Engine.cpp \
-  src/Singularity/Core/Engine.hpp \
-  /opt/homebrew/Cellar/glfw/3.4/include/GLFW/glfw3.h \
-  src/Singularity/Core/Game.hpp /opt/homebrew/include/glm/glm.hpp \
+build/tests/geometry_cache_test.o: tests/geometry_cache_test.cpp \
+  src/Form/Object/Object.hpp src/Form/Object/Formation/Formation.hpp \
+  src/Form/Form.hpp /opt/homebrew/include/glm/glm.hpp \
   /opt/homebrew/include/glm/detail/_fixes.hpp \
   /opt/homebrew/include/glm/detail/setup.hpp \
   /opt/homebrew/include/glm/detail/../simd/platform.h \
@@ -151,10 +150,7 @@ build/src/Singularity/Core/Engine.o: src/Singularity/Core/Engine.cpp \
   /opt/homebrew/include/glm/vector_relational.hpp \
   /opt/homebrew/include/glm/integer.hpp \
   /opt/homebrew/include/glm/detail/func_integer.inl \
-  src/Form/Object/Formation/Menu/Menu.hpp \
-  src/ZonesOfEarth/ZoneManager.hpp src/ZonesOfEarth/Zone/Zone.hpp \
-  src/ZonesOfEarth/Zone/../World/World.hpp src/Form/Object/Object.hpp \
-  src/Form/Object/Formation/Formation.hpp src/Form/Form.hpp \
+  /opt/homebrew/Cellar/glfw/3.4/include/GLFW/glfw3.h \
   src/Relation/RelationManager.hpp src/Relation/Relation.hpp \
   src/json.hpp src/Form/Singular/Singular.hpp \
   src/Form/Singular/Property/Property.hpp \
@@ -269,49 +265,13 @@ build/src/Singularity/Core/Engine.o: src/Singularity/Core/Engine.cpp \
   src/Form/Object/Geometry/SmoothSurface.hpp \
   src/Form/Object/Geometry/ComplexShape.hpp \
   src/Form/Object/Geometry/Sdf.hpp src/Form/Object/Geometry/Patch.hpp \
-  src/Form/Object/Automation/Automation.hpp \
-  src/Rendering/BrushSystem.hpp src/Rendering/DesignSystem.hpp \
-  src/OurVerse/Tool.hpp src/Person/Body/BodyPart/BodyPart.hpp \
-  src/ZonesOfEarth/Ourverse/Ourverse.hpp \
-  src/ZonesOfEarth/Ourverse/../Zone/Zone.hpp \
-  src/ZonesOfEarth/Ourverse/../HomesOfEarth/Home.hpp \
-  src/ZonesOfEarth/Ourverse/../HomesOfEarth/../Zone/Zone.hpp \
-  src/ZonesOfEarth/Ourverse/../HomesOfEarth/../../Person/Person.hpp \
-  src/Person/Body/Body.hpp \
-  src/ZonesOfEarth/Ourverse/../HomesOfEarth/../../Person/Soul/Soul.hpp \
-  src/ZonesOfEarth/Ourverse/../Physics/Physics.hpp src/OurVerse/Chat.hpp \
-  ../imgui/imgui.h ../imgui/imconfig.h \
-  src/OurVerse/ElementalToolHandler.hpp src/OurVerse/CursorTools.hpp \
-  src/Person/Person.hpp src/Person/AvatarManager.hpp \
-  src/Person/Soul/Soul.hpp src/ZonesOfEarth/AuthorsOfLaw/Law.hpp \
-  src/ZonesOfEarth/AuthorsOfLaw/ECA.hpp \
-  src/ZonesOfEarth/AuthorsOfLaw/ConditionModel.hpp \
-  src/Form/Singular/Property/PropertyPath.hpp \
-  src/ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp \
-  src/ZonesOfEarth/AuthorsOfLaw/Universe.hpp \
-  src/Singularity/OntoMath/Expression.hpp \
-  src/ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp \
-  src/Singularity/OntoMath/CurveModel.hpp \
-  src/Perspective/KeyboardHandler.hpp src/Perspective/MouseHandler.hpp \
-  src/Singularity/Core/BrushSettings.hpp \
-  src/Singularity/Core/CameraState.hpp \
-  src/Singularity/Core/CloneToolState.hpp \
-  src/Singularity/Core/FacePaintSettings.hpp \
-  src/OurVerse/AdvancedFacePaint.hpp \
-  src/Singularity/Core/PlacementState.hpp \
-  src/Singularity/Core/PolyhedronSettings.hpp \
-  src/Singularity/Core/PotteryTool.hpp \
-  src/Singularity/Core/RotationSettings.hpp \
-  src/Singularity/Core/SaveLoadState.hpp src/Form/../../../imgui/imgui.h \
-  src/Form/../../../imgui/backends/imgui_impl_glfw.h \
-  src/Form/../../../imgui/backends/imgui_impl_opengl2.h \
-  src/Singularity/Audio/AudioSystem.hpp
+  src/Form/Object/Automation/Automation.hpp
 
-src/Singularity/Core/Engine.hpp:
+src/Form/Object/Object.hpp:
 
-/opt/homebrew/Cellar/glfw/3.4/include/GLFW/glfw3.h:
+src/Form/Object/Formation/Formation.hpp:
 
-src/Singularity/Core/Game.hpp:
+src/Form/Form.hpp:
 
 /opt/homebrew/include/glm/glm.hpp:
 
@@ -613,19 +573,7 @@ src/Singularity/Core/Game.hpp:
 
 /opt/homebrew/include/glm/detail/func_integer.inl:
 
-src/Form/Object/Formation/Menu/Menu.hpp:
-
-src/ZonesOfEarth/ZoneManager.hpp:
-
-src/ZonesOfEarth/Zone/Zone.hpp:
-
-src/ZonesOfEarth/Zone/../World/World.hpp:
-
-src/Form/Object/Object.hpp:
-
-src/Form/Object/Formation/Formation.hpp:
-
-src/Form/Form.hpp:
+/opt/homebrew/Cellar/glfw/3.4/include/GLFW/glfw3.h:
 
 src/Relation/RelationManager.hpp:
 
@@ -864,93 +812,3 @@ src/Form/Object/Geometry/Sdf.hpp:
 src/Form/Object/Geometry/Patch.hpp:
 
 src/Form/Object/Automation/Automation.hpp:
-
-src/Rendering/BrushSystem.hpp:
-
-src/Rendering/DesignSystem.hpp:
-
-src/OurVerse/Tool.hpp:
-
-src/Person/Body/BodyPart/BodyPart.hpp:
-
-src/ZonesOfEarth/Ourverse/Ourverse.hpp:
-
-src/ZonesOfEarth/Ourverse/../Zone/Zone.hpp:
-
-src/ZonesOfEarth/Ourverse/../HomesOfEarth/Home.hpp:
-
-src/ZonesOfEarth/Ourverse/../HomesOfEarth/../Zone/Zone.hpp:
-
-src/ZonesOfEarth/Ourverse/../HomesOfEarth/../../Person/Person.hpp:
-
-src/Person/Body/Body.hpp:
-
-src/ZonesOfEarth/Ourverse/../HomesOfEarth/../../Person/Soul/Soul.hpp:
-
-src/ZonesOfEarth/Ourverse/../Physics/Physics.hpp:
-
-src/OurVerse/Chat.hpp:
-
-../imgui/imgui.h:
-
-../imgui/imconfig.h:
-
-src/OurVerse/ElementalToolHandler.hpp:
-
-src/OurVerse/CursorTools.hpp:
-
-src/Person/Person.hpp:
-
-src/Person/AvatarManager.hpp:
-
-src/Person/Soul/Soul.hpp:
-
-src/ZonesOfEarth/AuthorsOfLaw/Law.hpp:
-
-src/ZonesOfEarth/AuthorsOfLaw/ECA.hpp:
-
-src/ZonesOfEarth/AuthorsOfLaw/ConditionModel.hpp:
-
-src/Form/Singular/Property/PropertyPath.hpp:
-
-src/ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp:
-
-src/ZonesOfEarth/AuthorsOfLaw/Universe.hpp:
-
-src/Singularity/OntoMath/Expression.hpp:
-
-src/ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp:
-
-src/Singularity/OntoMath/CurveModel.hpp:
-
-src/Perspective/KeyboardHandler.hpp:
-
-src/Perspective/MouseHandler.hpp:
-
-src/Singularity/Core/BrushSettings.hpp:
-
-src/Singularity/Core/CameraState.hpp:
-
-src/Singularity/Core/CloneToolState.hpp:
-
-src/Singularity/Core/FacePaintSettings.hpp:
-
-src/OurVerse/AdvancedFacePaint.hpp:
-
-src/Singularity/Core/PlacementState.hpp:
-
-src/Singularity/Core/PolyhedronSettings.hpp:
-
-src/Singularity/Core/PotteryTool.hpp:
-
-src/Singularity/Core/RotationSettings.hpp:
-
-src/Singularity/Core/SaveLoadState.hpp:
-
-src/Form/../../../imgui/imgui.h:
-
-src/Form/../../../imgui/backends/imgui_impl_glfw.h:
-
-src/Form/../../../imgui/backends/imgui_impl_opengl2.h:
-
-src/Singularity/Audio/AudioSystem.hpp:

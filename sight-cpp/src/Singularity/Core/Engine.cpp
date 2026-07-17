@@ -9,6 +9,8 @@
 #  include "../../../imgui/backends/imgui_impl_opengl2.h"
 #endif
 
+#include "Singularity/Audio/AudioSystem.hpp"
+
 #include <iostream>
 
 namespace Core {
@@ -65,6 +67,10 @@ bool Engine::init(int /*argc*/, char** /*argv*/) {
 
     // TODO: move OpenGL / ImGui initialisation here later.
     std::cout << "🌟 Engine initialised." << std::endl;
+
+    // Initialize audio system
+    Core::Audio::AudioSystem::instance().init();
+
     return true;
 }
 
@@ -119,6 +125,10 @@ void Engine::shutdown() {
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
     glfwTerminate();
+
+    // Shutdown audio system
+    Core::Audio::AudioSystem::instance().shutdown();
+
     _running = false;
     std::cout << "👋 Engine shut down." << std::endl;
 }

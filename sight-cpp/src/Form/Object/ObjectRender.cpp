@@ -97,7 +97,7 @@ void Object::drawSmoothModel() const {
     glEnable(GL_TEXTURE_2D);
     if (!faceTextures.empty()) glBindTexture(GL_TEXTURE_2D, faceTextures[0].id);
     glColor3f(1.0f, 1.0f, 1.0f);
-    drawTessMesh(geom::tessellateSmooth(smoothData));
+    drawTessMesh(_smoothMesh); // cached: rebuilt on change, not on draw
     glDisable(GL_TEXTURE_2D);
 }
 
@@ -106,11 +106,11 @@ void Object::drawComplexModel() const {
     glColor3f(1.0f, 1.0f, 1.0f);
     // Each patch is a real face — draw it with its own face texture so the
     // round side and the flat caps can be painted independently.
-    for (int i = 0; i < complexData.patchCount(); ++i) {
-        if (i < static_cast<int>(faceTextures.size())) {
+    for (size_t i = 0; i < _complexMeshes.size(); ++i) {
+        if (i < faceTextures.size()) {
             glBindTexture(GL_TEXTURE_2D, faceTextures[i].id);
         }
-        drawTessMesh(geom::tessellatePatch(complexData.patches[i]));
+        drawTessMesh(_complexMeshes[i]); // cached: rebuilt on change, not on draw
     }
     glDisable(GL_TEXTURE_2D);
 }
@@ -270,9 +270,11 @@ void Object::drawHighlightOutline() const {
     } else if (_hasField) {
         drawShell(_fieldMesh);
     } else if (_hasSmooth) {
-        drawShell(geom::tessellateSmooth(smoothData, 20, 12));
+        drawShell(_smoothMesh);
     } else if (_hasComplex) {
-        drawShell(geom::tessellateComplex(complexData, 16));
+        // Additive blending sums the same triangles regardless of grouping, so
+        // shelling per patch matches the old single merged mesh.
+        for (const auto& pm : _complexMeshes) drawShell(pm);
     } else {
         // Legacy unit cube wireframe.
         const float h = 0.5f;
