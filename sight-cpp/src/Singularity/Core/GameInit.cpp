@@ -59,6 +59,12 @@ bool Game::init() {
         // access by writing @transfer-policy.gate.* properties.
         beings.push_back(&TransferPolicy::instance());
         beings.push_back(&_player);
+        // ALL zones, not just the active one: zones are the governance
+        // geography — laws quantify over them (ForAny Zone ...) and address
+        // them by name (@Home.owner) even while unloaded.
+        for (auto& zone : mgr.zones()) {
+            beings.push_back(&zone);
+        }
     });
 
     // The relation GRAPH — the edge view Related conditions query
@@ -86,6 +92,7 @@ bool Game::init() {
     mgr.addZone(Zone("Temple of Echoes"));
     mgr.addZone(Zone("Cavern of Light"));
     mgr.addZone(Zone("Character Architect Forge"));
+    ensureHomeZone();
 
     // Initialize elemental tool handler with zone manager
     _elementalToolHandler = ElementalToolHandler(&mgr);
@@ -384,6 +391,36 @@ void Game::sWindowFocusCallback(GLFWwindow* win, int focused) {
         self->_prevFocusCallback(win, focused);
     }
     if (self) self->_mouseHandler.onWindowFocus(focused);
+}
+
+// --------------------------------------------------------------
+// Manifesto: "Every Person has a Home they fully own." Idempotent:
+// if the player already owns ANY zone (fresh boot or a loaded save),
+// nothing happens; otherwise a Home zone is born, owned by them.
+// Named plainly "Home" so laws address it as @Home.* without spaces.
+// --------------------------------------------------------------
+void Game::ensureHomeZone() {
+    const std::string playerId = _player.getIdentifier();
+    if (playerId.empty()) return;   // an unnamed person cannot hold title
+
+    for (const auto& zone : mgr.zones()) {
+        if (zone.owner() == playerId) return;   // already homed
+    }
+    // A save from before ownership existed may hold an unowned "Home" —
+    // claim it instead of minting a name-twin (identifiers must stay unique).
+    for (auto& zone : mgr.zones()) {
+        if (zone.name() == "Home" && zone.owner().empty()) {
+            zone.setOwner(playerId);
+            return;
+        }
+    }
+
+    Zone home("Home", 0.08f, 0.06f, 0.12f);
+    home.setOwner(playerId);
+    home.setQuality("kind", "home");
+    mgr.addZone(std::move(home));
+    printf("[Init] Home established for '%s' (zone count now %zu)\n",
+           playerId.c_str(), mgr.zones().size());
 }
 
 void Game::sFramebufferSizeCallback(GLFWwindow* win, int width, int height) {

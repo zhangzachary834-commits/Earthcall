@@ -1,4 +1,7 @@
 #include "ZoneManager.hpp"
+#include "Singularity/Core/EventBus.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
+#include <ctime>
 #include <iostream>
 
 void ZoneManager::addZone(Zone&& zone) noexcept
@@ -20,6 +23,9 @@ void ZoneManager::switchTo(size_t index)
         std::cout << "🔀 Switching to zone [" << index << "]..." << std::endl;
         try { _zones[_currentIndex].load(); } catch (...) { std::cerr << "⚠️  Zone load failed." << std::endl; }
         describeCurrent();
+        // The zone is a being: laws hear arrival (subject: the zone itself).
+        Core::EventBus::instance().publish(
+            ECA::Event{"zone-entered", &_zones[_currentIndex], nullptr, std::time(nullptr)});
     }
     else
     {

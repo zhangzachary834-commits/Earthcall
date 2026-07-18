@@ -350,6 +350,9 @@ public:
     // Save / load
     void saveState(const std::string& filename);
     void loadState(const std::string& filename);
+    // Manifesto: "Every Person has a Home they fully own." Idempotent —
+    // creates the player's Home zone only if no zone they own exists yet.
+    void ensureHomeZone();
     void saveStateWithLog(const std::string& customName = "");
     void updateSaveFiles();
     void drawLoadWindow();

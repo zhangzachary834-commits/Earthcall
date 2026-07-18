@@ -699,6 +699,50 @@ lives in the Ourverse Manifesto; this is only its enforcement surface.)
 
 ---
 
+## 7b. Zones as Beings — governance made spatial (stages 1–2 landed)
+
+The manifesto's Zone pillar begins here: *"Zone is a name for a space that is
+its own, self-defined object"* and *"Every Person has a Home they fully own."*
+
+**Stage 1 — legibility.** `Zone : public Object` was always true in the type
+system; now it is true in the ontology:
+
+- `Zone::buildProperties()` registers the zone's TRUTHFUL surface — `name`
+  (ro), `color` (rw background tint, `.r/.g/.b` legible), `drawColor` (rw),
+  `scope` (ro), `owner` (ro). Deliberately *not* Object's spatial surface:
+  a zone is extra-spatial, so position/shape/mass would be fictions.
+- ALL zones join the Universe (GameInit provider) — not just the active one.
+  Zones are the governance geography; laws quantify over them
+  (`ForAny Zone (owner == …)`), folds count them, and @-paths address them
+  by name (`@Home.color.r`) even while unloaded.
+- `BeingKind::Zone = 7` (append-only) with the usual precision note: a Zone
+  IS an Object, so `BeingKind::Object` matches zones too.
+- Events: `zone-entered` (subject: the zone) on every `ZoneManager::switchTo`;
+  `person-joined-zone` / `person-left-zone` now carry the zone being as the
+  event OBJECT — a law can ask *whose ground was stepped on* via
+  `@event.object.owner`.
+
+**Stage 2 — ownership and Home.** Ownership is recorded as the owner's
+identifier on the zone (`owner` property, read-only: transferring a zone is a
+covenant between Persons, not a property write). `Game::ensureHomeZone()` is
+idempotent and runs at boot and after every load: if the player owns no zone,
+a `Home` zone is born owned by them (pre-ownership saves with an unowned
+"Home" get claimed rather than name-twinned). Ownership persists in the save
+(`zones[].owner`) and implies deletability by the owner.
+
+**Next stages (design with the author):** 3 — jurisdiction (laws acquire a
+zone scope; the owner's word runs deeper in their own zone); 4 — priority/
+ordering authored under Zone-level authorial permissions (the user's stated
+direction); 5 — the kernel exit guarantee (*"nobody can be forced to stay"*
+as a Singularity-tier protection, like the TransferPolicy Kernel gates).
+
+Test: `tests/zone_being_test.cpp` (`make test-zone`) — property surface,
+ro refusals, copy-preserves-owner, kind precision, ForAny/ForAll over zones,
+`@Home.*` addressing, and a law that greets only those who enter zack's Home
+by testing `@event.object.owner`.
+
+---
+
 ## 8. Build Order (each step compiles; each has a one-line test)
 
 | # | Commit | Test |

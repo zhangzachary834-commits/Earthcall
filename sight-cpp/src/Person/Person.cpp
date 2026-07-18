@@ -31,6 +31,22 @@ void Person::buildProperties() {
         "position", this, &Person::position));
     _propertyRegistry.push_back(std::make_unique<ComputedProperty<Person, std::string>>(
         "name", this, &Person::propName));   // read-only: identity is not a slot
+        
+    // --- Law System Perception Properties ---
+    _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, std::string>>(
+        "activeTool", this, &Person::activeTool));
+    _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, glm::vec3>>(
+        "cursorHitPos", this, &Person::cursorHitPos));
+    _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, glm::vec3>>(
+        "cursorHitNormal", this, &Person::cursorHitNormal));
+    _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, glm::vec3>>(
+        "cameraPos", this, &Person::cameraPos));
+    _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, glm::vec3>>(
+        "cameraForward", this, &Person::cameraForward));
+    _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, int>>(
+        "activeShapeKind", this, &Person::activeShapeKind));
+    _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, glm::vec3>>(
+        "activeColor", this, &Person::activeColor));
 }
 
 Person::Person(Soul& soul, Body& body) : _soul(soul), body(body) {
@@ -487,16 +503,25 @@ void Person::logout(const std::string& sessionId) {
     }
 }
 
+// The zone is a being now: resolve the name so join/leave events can carry
+// it as the event OBJECT — "@event.object.owner" etc. testify in laws.
+static Zone* zoneByName(const std::string& zoneName) {
+    for (auto& z : mgr.zones()) {
+        if (z.name() == zoneName) return &z;
+    }
+    return nullptr;
+}
+
 void Person::joinZone(const std::string& zoneName) {
     // Check if already in this zone
     auto it = std::find(_joinedZones.begin(), _joinedZones.end(), zoneName);
     if (it == _joinedZones.end()) {
         _joinedZones.push_back(zoneName);
-        
+
         // Trigger PersonJoinedEvent
         PersonJoinedEvent event(*this, zoneName);
         Core::EventBus::instance().publish(event);
-        Core::EventBus::instance().publish(ECA::Event{"person-joined-zone", this, nullptr, std::time(nullptr)});
+        Core::EventBus::instance().publish(ECA::Event{"person-joined-zone", this, zoneByName(zoneName), std::time(nullptr)});
 
         std::cout << "👤 " << soulName << " joined zone: " << zoneName << std::endl;
     }
@@ -510,7 +535,7 @@ void Person::leaveZone(const std::string& zoneName) {
         // Trigger PersonLeftZoneEvent
         PersonLeftZoneEvent event(*this, zoneName);
         Core::EventBus::instance().publish(event);
-        Core::EventBus::instance().publish(ECA::Event{"person-left-zone", this, nullptr, std::time(nullptr)});
+        Core::EventBus::instance().publish(ECA::Event{"person-left-zone", this, zoneByName(zoneName), std::time(nullptr)});
 
         std::cout << "👤 " << soulName << " left zone: " << zoneName << std::endl;
     }

@@ -127,6 +127,9 @@ law_persistence_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/law_persistence_test.o
 geometry_cache_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/geometry_cache_test.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
+zone_being_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/zone_being_test.o
+	$(CXX) $^ $(LDFLAGS) -o $@
+
 test-property: property_bridge_test
 	./property_bridge_test
 
@@ -163,11 +166,14 @@ test-persist: law_persistence_test
 test-geomcache: geometry_cache_test
 	./geometry_cache_test
 
-test: test-property test-law test-loop test-recorder test-concept test-graph test-meta test-math test-continuous test-timeflow test-persist test-geomcache
+test-zone: zone_being_test
+	./zone_being_test
+
+test: test-property test-law test-loop test-recorder test-concept test-graph test-meta test-math test-continuous test-timeflow test-persist test-geomcache test-zone
 
 # Pull in auto-generated header dependencies (.d files next to each .o)
 -include $(OBJECTS:.o=.d)
 -include $(wildcard $(BUILD_DIR)/tests/*.d)
 
 # Phony targets
-.PHONY: all clean run test test-property test-law test-loop test-recorder test-concept test-graph test-meta test-math test-continuous test-timeflow test-persist test-geomcache
+.PHONY: all clean run test test-property test-law test-loop test-recorder test-concept test-graph test-meta test-math test-continuous test-timeflow test-persist test-geomcache test-zone

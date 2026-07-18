@@ -1,5 +1,6 @@
 #include "Zone.hpp"
 #include "../World/World.hpp"
+#include "Form/Singular/Property/ComputedProperty.hpp"
 #include <iostream>
 #include <algorithm>
 #include "GLFW/glfw3.h"
@@ -15,6 +16,27 @@ static const char* scopeToString(Scope scope) {
         case Scope::UI:       return "UI";
         default:              return "Unknown";
     }
+}
+
+std::string Zone::scopeName() const { return scopeToString(_scope); }
+
+// A Zone's truthful surface — what laws may read and (where honest) write.
+// Deliberately NOT Object::buildProperties(): a zone is extra-spatial, so
+// position/shape/mass would be fictions here.
+void Zone::buildProperties() {
+    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Zone, std::string>>(
+        "name", this, &Zone::propName));            // read-only: identity is not a slot
+    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Zone, glm::vec3>>(
+        "color", this, &Zone::tint, &Zone::setTint));       // background tint (r/g/b legible)
+    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Zone, glm::vec3>>(
+        "drawColor", this, &Zone::getCurrentColor, &Zone::setDrawColorV));
+    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Zone, std::string>>(
+        "scope", this, &Zone::scopeName));          // read-only for now
+    // Read-only: ownership transfer is a covenant between Persons, not a
+    // property write. The GOVERNANCE meaning of ownership (jurisdiction,
+    // priority ceilings) is the next stage; the record comes first.
+    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Zone, std::string>>(
+        "owner", this, &Zone::propOwner));
 }
 
 constexpr float kBrushRadiusToStrokeWidth = 1000.0f;
@@ -65,7 +87,7 @@ Zone::Zone(const std::string& name, float rF, float gF, float bF, Scope scope)
 }
 
 Zone::Zone(const Zone& other)
-    : _name(other._name), _scope(other._scope), _qualities(other._qualities), _deletable(other._deletable), _world(std::make_unique<World>()), _formation(Form::ShapeType::Cube, {1.0f, 1.0f, 1.0f})
+    : _name(other._name), _scope(other._scope), _qualities(other._qualities), _deletable(other._deletable), _ownerId(other._ownerId), _world(std::make_unique<World>()), _formation(Form::ShapeType::Cube, {1.0f, 1.0f, 1.0f})
 {
     r = other.r; g = other.g; b = other.b;
     strokes = other.strokes;
@@ -82,6 +104,7 @@ Zone& Zone::operator=(const Zone& other)
     std::swap(_scope, tmp._scope);
     std::swap(_qualities, tmp._qualities);
     std::swap(_deletable, tmp._deletable);
+    std::swap(_ownerId, tmp._ownerId);
     std::swap(r, tmp.r);
     std::swap(g, tmp.g);
     std::swap(b, tmp.b);

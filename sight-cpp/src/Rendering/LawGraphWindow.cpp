@@ -126,8 +126,11 @@ constexpr EventOption kEngineEvents[] = {
                                  "airborne (subject: the person)"},
     {"person-logged-in",         "a person logs in (subject: the person)"},
     {"person-logged-out",        "a person logs out (subject: the person)"},
-    {"person-joined-zone",       "a person joins a zone (subject: the person)"},
-    {"person-left-zone",         "a person leaves a zone (subject: the person)"},
+    {"person-joined-zone",       "a person joins a zone (subject: the person, object: the "
+                                 "zone being)"},
+    {"person-left-zone",         "a person leaves a zone (subject: the person, object: the "
+                                 "zone being)"},
+    {"zone-entered",             "a zone becomes the active world (subject: the zone being)"},
 };
 constexpr int kEngineEventCount = sizeof(kEngineEvents) / sizeof(kEngineEvents[0]);
 
@@ -542,12 +545,12 @@ void seedConditionKind(ConditionNode& node) {
 }
 
 const char* kBeingKindNames[] = {"any being", "Object", "Person", "Relation",
-                                 "Formation", "Law", "World"};
+                                 "Formation", "Law", "World", "Zone"};
 
 bool beingKindCombo(ConditionNode& node) {
     int kind = static_cast<int>(node.beingKind);
     ImGui::SetNextItemWidth(130.0f);
-    if (ImGui::Combo("Being kind", &kind, kBeingKindNames, 7)) {
+    if (ImGui::Combo("Being kind", &kind, kBeingKindNames, 8)) {
         node.beingKind = static_cast<ConditionNode::BeingKind>(kind);
         return true;
     }
@@ -800,7 +803,7 @@ bool editConditionNode(ConditionNode& node) {
             if (beingKindCombo(node)) changed = true;
             int kindB = static_cast<int>(node.beingKindB);
             ImGui::SetNextItemWidth(130.0f);
-            if (ImGui::Combo("Paired with", &kindB, kBeingKindNames, 7)) {
+            if (ImGui::Combo("Paired with", &kindB, kBeingKindNames, 8)) {
                 node.beingKindB = static_cast<ConditionNode::BeingKind>(kindB);
                 changed = true;
             }

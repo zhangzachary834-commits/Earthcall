@@ -53,6 +53,7 @@ nlohmann::json Game::buildSaveJson() const {
     for (const auto& z : mgr.zones()) {
         json zj; zj["name"] = z.name();
         zj["r"] = z.r; zj["g"] = z.g; zj["b"] = z.b;
+        zj["owner"] = z.owner();   // ownership is covenant: it persists
         json strokesJ = json::array();
         for (const auto& s : z.strokes) {
             json sj; sj["color"] = {s.r, s.g, s.b}; sj["points"] = s.points;
@@ -206,6 +207,7 @@ void Game::loadState(const std::string& filename) {
                 z.r = zj.value("r", 0.05f);
                 z.g = zj.value("g", 0.05f);
                 z.b = zj.value("b", 0.1f);
+                z.setOwner(zj.value("owner", std::string{}));
                 if (zj.contains("strokes")) {
                     for (const auto& sj : zj["strokes"]) {
                         Zone::Stroke s;
@@ -231,6 +233,10 @@ void Game::loadState(const std::string& filename) {
         if (zonesVec.empty()) {
             zonesVec.push_back(Zone("Default Zone"));
         }
+        // Home survives every load (and pre-ownership saves get one).
+        // Must run BEFORE switchTo: addZone may reallocate the zone vector,
+        // and switchTo publishes a pointer-carrying zone-entered event.
+        ensureHomeZone();
         mgr.switchTo(std::min(currentZoneIdx, zonesVec.size() - 1));
 
         // Load camera and player view

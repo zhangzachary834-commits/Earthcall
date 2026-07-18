@@ -150,6 +150,26 @@ public:
     const Qualities& getQualities() const { return _qualities; }
     const Deletability& getDeletability() const { return _deletable; }
 
+    // ------------------------------------------------------------------
+    // Legibility (manifesto: a Zone is an extra-spatial Object — a being).
+    // ComputedProperty getters/setters for buildProperties; by-value
+    // returns because the underlying storage is loose floats.
+    std::string propName() const { return _name; }
+    std::string scopeName() const;
+    glm::vec3 tint() const { return glm::vec3(r, g, b); }
+    void setTint(const glm::vec3& c) { r = c.x; g = c.y; b = c.z; }
+    void setDrawColorV(const glm::vec3& c) { setDrawColor(c.x, c.y, c.z); }
+
+    // Ownership (manifesto: "Every Person has a Home they fully own").
+    // Recorded as the owner's identifier; empty = unowned commons. Exposed
+    // read-only — transferring a zone is a governance act, not a Set.
+    const std::string& owner() const { return _ownerId; }
+    std::string propOwner() const { return _ownerId; }   // by-value for ComputedProperty
+    void setOwner(const std::string& personId) {
+        _ownerId = personId;
+        if (!personId.empty()) _deletable[personId] = true;
+    }
+
     // Access the 3-D world belonging to this zone
     World& world() { return *_world; }
     const World& world() const { return *_world; }
@@ -171,12 +191,16 @@ public:
     const Deletability &deletability() const { return _deletable; }
 
 private:
-    void buildProperties() override {}
+    // Zone-specific surface, NOT Object's: a zone is extra-spatial, so
+    // registering position/shape/mass here would be a lie. What a zone
+    // truthfully has: identity, colors, scope, owner.
+    void buildProperties() override;
 
     std::string _name;
     Scope _scope;
     Qualities _qualities;
     Deletability _deletable;
+    std::string _ownerId;   // owning Person's identifier ("" = commons)
     std::unique_ptr<World> _world; // per-zone world instance
     Formation _formation;
     // Removed cache; formation members are rebuilt on copy

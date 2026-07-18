@@ -10,6 +10,7 @@
 #include "Universe.hpp"
 #include "ZonesOfEarth/Physics/CollisionDispatcher.hpp"
 #include "ZonesOfEarth/World/World.hpp"
+#include "ZonesOfEarth/Zone/Zone.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -41,6 +42,7 @@ bool matchesKindImpl(const Singular& being, ConditionNode::BeingKind kind) {
         case ConditionNode::BeingKind::Formation: return dynamic_cast<const Formation*>(&being) != nullptr;
         case ConditionNode::BeingKind::Law:       return dynamic_cast<const Law*>(&being) != nullptr;
         case ConditionNode::BeingKind::World:     return dynamic_cast<const World*>(&being) != nullptr;
+        case ConditionNode::BeingKind::Zone:      return dynamic_cast<const Zone*>(&being) != nullptr;
     }
     return false;
 }
@@ -54,6 +56,7 @@ const char* beingKindName(ConditionNode::BeingKind kind) {
         case ConditionNode::BeingKind::Formation: return "Formation";
         case ConditionNode::BeingKind::Law:       return "Law";
         case ConditionNode::BeingKind::World:     return "World";
+        case ConditionNode::BeingKind::Zone:      return "Zone";
     }
     return "?";
 }

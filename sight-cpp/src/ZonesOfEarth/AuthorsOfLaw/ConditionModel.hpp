@@ -47,8 +47,10 @@ struct ConditionNode {
     // The ontology's kinds, checked by dynamic_cast — honest C++ instanceof.
     // (Note: a Law IS an Object in this ontology — extra-spatial — so
     // BeingKind::Object matches laws too; use BeingKind::Law for precision.)
+    // (Zone is likewise an Object — extra-spatial, per the manifesto — so
+    // BeingKind::Object matches zones too; use BeingKind::Zone for precision.)
     enum class BeingKind { AnyBeing = 0, Object = 1, Person = 2, Relation = 3,
-                           Formation = 4, Law = 5, World = 6 };
+                           Formation = 4, Law = 5, World = 6, Zone = 7 };
 
     Kind kind = Kind::Compare;
 
