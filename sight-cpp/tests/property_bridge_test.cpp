@@ -69,10 +69,20 @@ int main() {
         assert(PropertyPath::parse("center.z").setValue(obj, PropertyValue(0.25f)));
         assert(std::fabs(obj.getCenter().z - 0.25f) < 1e-6f);
 
-        // 4. Unknown paths fail cleanly — no crash, nullptr/false.
+        // Material reference: an object points at a Material being by identifier,
+        // and a Law can reassign it by name. Defaults to material.default.
+        assert(PropertyPath::parse("material").getValue(obj, out));
+        assert(std::get<std::string>(out) == "material.default");
+        assert(PropertyPath::parse("material").setValue(obj, PropertyValue(std::string("material.clay"))));
+        assert(obj.materialId() == "material.clay");
+
+        // 4. Unknown multi-segment paths fail cleanly — no crash, nullptr/false.
         assert(PropertyPath::parse("nonexistent.thing").resolve(obj) == nullptr);
-        assert(!PropertyPath::parse("nonexistent").setValue(obj, PropertyValue(1)));
+        // Setting a single-segment nonexistent property creates a dynamic property
+        assert(PropertyPath::parse("nonexistent").setValue(obj, PropertyValue(1)));
         PropertyValue unused;
+        assert(PropertyPath::parse("nonexistent").getValue(obj, unused));
+        assert(std::get<int>(unused) == 1);
         assert(!PropertyPath::parse("position.w").getValue(obj, unused));
 
         // 5. Wider legibility: physical participation and color are
@@ -212,7 +222,7 @@ int main() {
         // 7. A Person is legible: position by path; name read-only.
         Soul soul("Witness");
         Body avatar = Body::createBasicAvatar("Voxel");
-        Person person(soul, avatar);
+        Person person(soul, std::move(avatar));
         assert(person.getIdentifier() == "Witness");
         assert(PropertyPath::parse("position.y").setValue(person, PropertyValue(4.0f)));
         assert(std::fabs(person.position.y - 4.0f) < 1e-5f);

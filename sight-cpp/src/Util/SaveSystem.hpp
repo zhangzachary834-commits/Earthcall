@@ -9,6 +9,7 @@ namespace SaveSystem {
 enum class SaveType {
     GAME,       // Game state saves
     AVATAR,     // Avatar saves
+    PERSON,     // Registered Persons / user profiles
     DESIGN,     // Design system saves
     BACKUP,     // Automatic backups
     CUSTOM,     // Custom saves
@@ -21,6 +22,9 @@ std::string ensureSaveTypeFolder(SaveType type);
 
 // Build filename with timestamp or custom label stored in organized folders
 std::string makeFilename(const std::string& customLabel = "", SaveType type = SaveType::GAME);
+
+// Get a formatted timestamp string
+std::string timestamp();
 
 // Append new entry to appropriate save log
 void addToLog(const std::string& filepath, SaveType type = SaveType::GAME);

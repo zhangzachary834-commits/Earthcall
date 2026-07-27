@@ -27,6 +27,7 @@ using PropertyValue = std::variant<
     long,
     std::string,
     glm::vec3,
+    glm::mat4,
     Singular*,
     Object*,
     Relation*,

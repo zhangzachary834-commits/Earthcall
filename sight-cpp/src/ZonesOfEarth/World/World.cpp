@@ -1,6 +1,5 @@
 #include "World.hpp"
 #include <GLFW/glfw3.h>
-#include <OpenGL/glu.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include "glm/glm.hpp"
@@ -9,6 +8,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 #include "Rendering/HighlightSystem.hpp"
+#include "Rendering/Renderer.hpp"
 
 void World::update(float dt){
     // NOTE: the player/camera is no longer simulated here. All player movement,
@@ -61,22 +61,36 @@ void World::update(float dt){
 void World::drawGround(){
     // Draw ground quad separately (simple green plane)
     // --------------------------------------------------------------
-    glPushMatrix();
-    glNormal3f(0.0f, 1.0f, 0.0f);
-    glColor3f(0.4f, 0.7f, 0.5f);
-    float groundSize = 100.0f;
+    // Unlike the gizmos, this quad carries a normal and IS lit, so it goes through
+    // drawMesh with a material rather than the unlit drawSolid path.
+    static const geom::TessMesh mesh = [] {
+        const float s = 100.0f;
+        // The ground placeholder cube has a height of 1.0 after scaling. Its top
+        // surface sits at +0.5 in world space. Render the quad at this height so it
+        // visually matches the physics collision plane.
+        const float y = 0.5f;
+        const glm::vec3 corners[4] = {
+            {-s, y, -s}, { s, y, -s}, { s, y,  s}, {-s, y,  s}};
+        // Quad -> two triangles, same winding GL_QUADS used.
+        const int order[6] = {0, 1, 2, 0, 2, 3};
+        geom::TessMesh m;
+        for (int i : order) {
+            geom::TessVertex v;
+            v.pos = corners[i];
+            v.normal = glm::vec3(0.0f, 1.0f, 0.0f);
+            // UVs so a future ground texture tiles rather than stretching.
+            v.uv = glm::vec2((corners[i].x / s + 1.0f) * 0.5f,
+                             (corners[i].z / s + 1.0f) * 0.5f);
+            m.tris.push_back(v);
+        }
+        return m;
+    }();
 
-    // The ground placeholder cube has a height of 1.0 after scaling. Its top surface sits at +0.5 in world space.
-    // Render the quad at this height so it visually matches the physics collision plane.
-    float groundY = 0.5f;
-    glBegin(GL_QUADS);
-    glVertex3f(-groundSize, groundY, -groundSize);
-    glVertex3f( groundSize, groundY, -groundSize);
-    glVertex3f( groundSize, groundY,  groundSize);
-    glVertex3f(-groundSize, groundY,  groundSize);
-    glEnd();
-    glPopMatrix();
+    RenderMaterial mat;
+    mat.baseColor = glm::vec3(0.4f, 0.7f, 0.5f);
 
+    currentRenderer().setModel(glm::mat4(1.0f));
+    currentRenderer().drawMesh(mesh, mat);
 }
 
 void World::load() {

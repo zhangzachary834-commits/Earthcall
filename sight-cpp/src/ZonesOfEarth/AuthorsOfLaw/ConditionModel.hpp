@@ -4,7 +4,7 @@
 #include "Form/Object/Geometry/Sdf.hpp"
 #include "Form/Singular/Property/PropertyPath.hpp"
 #include "MathBinding.hpp"
-#include "Singularity/OntoMath/Expression.hpp"
+#include "Singularity/OntoMath/ScalarForm.hpp"
 #include "json.hpp"
 
 #include <string>

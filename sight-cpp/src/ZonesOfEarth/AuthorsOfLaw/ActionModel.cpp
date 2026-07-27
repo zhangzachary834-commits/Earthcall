@@ -4,11 +4,31 @@
 #include "Form/Singular/Property/PropertyValueJson.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "ZonesOfEarth/World/World.hpp"
+#include "Person/Body/BodyPart/BodyPart.hpp"
 
 #include <ctime>
 
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include <utility>
+#include <iostream>
+
+const char* ActionNode::kindName(Kind k) {
+    switch (k) {
+        case Kind::Set: return "Set";
+        case Kind::Add: return "Add";
+        case Kind::Scale: return "Scale";
+        case Kind::Lerp: return "Lerp";
+        case Kind::Drive: return "Drive";
+        case Kind::Sequence: return "Sequence";
+        case Kind::Parallel: return "Parallel";
+        case Kind::Spawn: return "Spawn";
+        case Kind::Map: return "Map";
+        case Kind::Flow: return "Flow";
+        case Kind::Publish: return "Publish";
+    }
+    return "Unknown";
+}
 
 nlohmann::json ActionNode::toJson() const {
     nlohmann::json j{{"kind", static_cast<int>(kind)}};
@@ -36,9 +56,17 @@ nlohmann::json ActionNode::toJson() const {
             j["children"] = kids;
             break;
         }
-        case Kind::Spawn:
+        case Kind::Spawn: {
             j["conceptId"] = conceptId;
+            if (!spawnParentPath.empty()) j["spawnParentPath"] = spawnParentPath.toString();
+            if (!spawnPlacementPath.empty()) j["spawnPlacementPath"] = spawnPlacementPath.toString();
+            if (!children.empty()) {
+                nlohmann::json kids = nlohmann::json::array();
+                for (const auto& c : children) kids.push_back(c.toJson());
+                j["children"] = kids;
+            }
             break;
+        }
         case Kind::Map:
         case Kind::Flow:
             j["path"] = path.toString();
@@ -62,7 +90,9 @@ ActionNode ActionNode::fromJson(const nlohmann::json& j) {
     n.factor = j.value("factor", 1.0);
     if (j.contains("curve")) n.curve = CurveModel::fromJson(j["curve"]);
     if (j.contains("input")) n.input = PropertyPath::parse(j["input"].get<std::string>());
-    n.conceptId = j.value("conceptId", std::string());
+    if (j.contains("conceptId")) n.conceptId = j["conceptId"].get<std::string>();
+    if (j.contains("spawnParentPath")) n.spawnParentPath = PropertyPath::parse(j["spawnParentPath"].get<std::string>());
+    if (j.contains("spawnPlacementPath")) n.spawnPlacementPath = PropertyPath::parse(j["spawnPlacementPath"].get<std::string>());
     n.eventType = j.value("eventType", std::string());
     n.publishSubject = j.value("publishSubject", std::string());
     n.publishObject = j.value("publishObject", std::string());
@@ -79,7 +109,12 @@ ECA::ActionExecutor ActionNode::compile() const {
         case Kind::Set: {
             const PropertyPath p = path;
             const PropertyValue v = operand;
-            return [p, v](const ECA::Event&, Singular& target) { lawSetValue(target, p, v); };
+            return [p, v](const ECA::Event&, Singular& target) { 
+                if (lawSetValue(target, p, v)) {
+                    std::cout << "[Action Fired] Set evaluated successfully on " << target.getIdentifier() << std::endl;
+                    Core::EventBus::instance().publish(ActionNode::ExecutedEvent{"Set", &target, std::time(nullptr)});
+                }
+            };
         }
         case Kind::Add:
         case Kind::Scale:
@@ -90,14 +125,39 @@ ECA::ActionExecutor ActionNode::compile() const {
             const Kind k = kind;
             return [p, rhs, f, k](const ECA::Event&, Singular& target) {
                 PropertyValue current;
-                double a = 0.0, b = 0.0;
                 if (!lawGetValue(target, p, current)) return;
-                if (!propertyValueToNumber(current, a) || !propertyValueToNumber(rhs, b)) return;
-                double result = a;
-                if (k == Kind::Add) result = a + b;
-                else if (k == Kind::Scale) result = a * b;
-                else result = a + (b - a) * f;   // Lerp
-                lawSetValue(target, p, PropertyValue(result));   // coercion matches the slot
+                
+                PropertyValue result = current;
+                double a_num = 0.0, b_num = 0.0;
+                bool isNum = propertyValueToNumber(current, a_num) && propertyValueToNumber(rhs, b_num);
+                
+                if (isNum) {
+                    double r = a_num;
+                    if (k == Kind::Add) r = a_num + b_num;
+                    else if (k == Kind::Scale) r = a_num * b_num;
+                    else r = a_num + (b_num - a_num) * f;
+                    result = PropertyValue(r);
+                } else if (std::holds_alternative<glm::vec3>(current)) {
+                    glm::vec3 a = std::get<glm::vec3>(current);
+                    if (std::holds_alternative<glm::vec3>(rhs)) {
+                        glm::vec3 b = std::get<glm::vec3>(rhs);
+                        if (k == Kind::Add) result = PropertyValue(a + b);
+                        else if (k == Kind::Scale) result = PropertyValue(a * b);
+                        else result = PropertyValue(a + (b - a) * static_cast<float>(f));
+                    } else if (propertyValueToNumber(rhs, b_num)) {
+                        float b = static_cast<float>(b_num);
+                        if (k == Kind::Add) result = PropertyValue(a + glm::vec3(b));
+                        else if (k == Kind::Scale) result = PropertyValue(a * b);
+                        else result = PropertyValue(a + (glm::vec3(b) - a) * static_cast<float>(f));
+                    } else return;
+                } else {
+                    return;
+                }
+                
+                if (lawSetValue(target, p, result)) {   // coercion matches the slot
+                    std::cout << "[Action Fired] " << kindName(k) << " evaluated successfully on " << target.getIdentifier() << std::endl;
+                    Core::EventBus::instance().publish(ActionNode::ExecutedEvent{kindName(k), &target, std::time(nullptr)});
+                }
             };
         }
         case Kind::Drive: {
@@ -117,7 +177,10 @@ ECA::ActionExecutor ActionNode::compile() const {
                     PropertyValue v;
                     if (!lawGetValue(target, in, v) || !propertyValueToNumber(v, x)) return;
                 }
-                lawSetValue(target, p, PropertyValue(c.evaluate(x)));
+                if (lawSetValue(target, p, PropertyValue(c.evaluate(x)))) {
+                    std::cout << "[Action Fired] Drive evaluated successfully on " << target.getIdentifier() << std::endl;
+                    Core::EventBus::instance().publish(ActionNode::ExecutedEvent{"Drive", &target, std::time(nullptr)});
+                }
             };
         }
         case Kind::Sequence:
@@ -125,22 +188,35 @@ ECA::ActionExecutor ActionNode::compile() const {
             std::vector<ECA::ActionExecutor> compiled;
             compiled.reserve(children.size());
             for (const auto& c : children) compiled.push_back(c.compile());
-            return [compiled](const ECA::Event& e, Singular& target) {
+            return [compiled, k=kind](const ECA::Event& e, Singular& target) {
                 for (const auto& run : compiled) {
                     if (run) run(e, target);
                 }
+                std::cout << "[Action Fired] " << kindName(k) << " executed successfully on " << target.getIdentifier() << std::endl;
+                Core::EventBus::instance().publish(ActionNode::ExecutedEvent{kindName(k), &target, std::time(nullptr)});
             };
         }
         case Kind::Spawn: {
-            // Creation IS a law application (LAW_AND_CREATION_SYSTEM.md §7c):
-            // the law's TARGET is the World that receives the newborns — the
-            // container is the womb. The event's subject seeds the mappings
-            // (a one-member source set) and, when spatial, the placement.
-            // Reaching this executor at all means the full applyTo gauntlet
-            // passed: unauthored laws cannot create.
             const std::string id = conceptId;
-            return [id](const ECA::Event& event, Singular& target) {
-                auto* world = dynamic_cast<World*>(&target);
+            const PropertyPath pPath = spawnParentPath;
+            const PropertyPath placementPath = spawnPlacementPath;
+            std::vector<ECA::ActionExecutor> compiledChildren;
+            compiledChildren.reserve(children.size());
+            for (const auto& c : children) compiledChildren.push_back(c.compile());
+
+            return [id, pPath, placementPath, compiledChildren](const ECA::Event& event, Singular& target) {
+                World* world = nullptr;
+                if (auto* tWorld = dynamic_cast<World*>(&target)) {
+                    world = tWorld;
+                }
+                if (!world) {
+                    for (auto* being : Universe::instance().beings()) {
+                        if (auto* w = dynamic_cast<World*>(being)) {
+                            world = w;
+                            break;
+                        }
+                    }
+                }
                 auto concept = ConceptRegistry::instance().find(id);
                 if (!world || !concept) return;
 
@@ -148,12 +224,62 @@ ECA::ActionExecutor ActionNode::compile() const {
                 glm::mat4 placement(1.0f);
                 if (auto* subject = dynamic_cast<Object*>(event.subject)) {
                     sources.push_back(subject);
-                    placement = glm::translate(glm::mat4(1.0f), subject->getPosition());
+                    bool placementSet = false;
+                    if (!placementPath.empty()) {
+                        PropertyValue pv;
+                        if (lawGetValue(*subject, placementPath, pv)) {
+                            if (std::holds_alternative<glm::mat4>(pv)) {
+                                placement = std::get<glm::mat4>(pv);
+                                placementSet = true;
+                            } else if (std::holds_alternative<glm::vec3>(pv)) {
+                                placement = glm::translate(glm::mat4(1.0f), std::get<glm::vec3>(pv));
+                                placementSet = true;
+                            }
+                        }
+                    }
+                    if (!placementSet) {
+                        placement = glm::translate(glm::mat4(1.0f), subject->getPosition());
+                    }
                 }
                 auto newborns = concept->instantiate(
                     placement, sources.empty() ? nullptr : &sources);
+                
+                Object* parent = nullptr;
+                if (!pPath.empty() && event.subject) {
+                    PropertyValue pv;
+                    if (lawGetValue(*event.subject, pPath, pv)) {
+                        if (std::holds_alternative<std::string>(pv)) {
+                            std::string parentId = std::get<std::string>(pv);
+                            for (const auto& obj : world->getOwnedObjects()) {
+                                if (obj && obj->getIdentifier() == parentId) {
+                                    parent = obj.get();
+                                    break;
+                                }
+                            }
+                        } else if (std::holds_alternative<Object*>(pv)) {
+                            parent = std::get<Object*>(pv);
+                        }
+                    }
+                }
+
                 for (auto& newborn : newborns) {
-                    world->addObject(std::move(newborn));
+                    for (const auto& run : compiledChildren) {
+                        if (run) run(event, *newborn);
+                    }
+                    if (parent) {
+                        // Cast to BodyPart since only BodyParts can have sub-objects currently
+                        if (auto* bp = dynamic_cast<BodyPart*>(parent)) {
+                            bp->addSubObject(std::move(newborn));
+                        } else {
+                            world->addObject(std::move(newborn));
+                        }
+                    } else {
+                        world->addObject(std::move(newborn));
+                    }
+                }
+                if (!newborns.empty()) {
+                    std::cout << "[Action Fired] Spawn executed successfully on " << target.getIdentifier() << std::endl;
+                    Core::EventBus::instance().publish(ActionNode::ExecutedEvent{"Spawn", &target, std::time(nullptr)});
                 }
             };
         }
@@ -188,6 +314,8 @@ ECA::ActionExecutor ActionNode::compile() const {
                     objectToken.empty() ? nullptr : resolveToken(objectToken);
                 Core::EventBus::instance().publish(
                     ECA::Event{type, eventSubject, eventObject, std::time(nullptr)});
+                std::cout << "[Action Fired] Publish executed successfully on " << lawSubject.getIdentifier() << std::endl;
+                Core::EventBus::instance().publish(ActionNode::ExecutedEvent{"Publish", &lawSubject, std::time(nullptr)});
             };
         }
         case Kind::Map: {
@@ -200,9 +328,11 @@ ECA::ActionExecutor ActionNode::compile() const {
             return [target, f, binds](const ECA::Event&, Singular& subject) {
                 auto vars = readMathBindings(subject, binds);
                 if (!vars) return;
-                const auto value = f.evaluate(*vars, &subject);
-                if (!value) return;
-                lawSetValue(subject, target, PropertyValue(*value));
+                std::map<std::string, PropertyValue> pVars;
+                for (const auto& [k, v] : *vars) pVars[k] = PropertyValue(v);
+                const auto valProp = f.evaluate(pVars, &subject);
+                if (!valProp) return;
+                lawSetValue(subject, target, *valProp);
             };
         }
         case Kind::Flow: {
@@ -216,14 +346,26 @@ ECA::ActionExecutor ActionNode::compile() const {
                 if (!Universe::instance().hasClock()) return;
                 auto vars = readMathBindings(subject, binds);
                 if (!vars) return;
-                const auto rate = f.evaluate(*vars, &subject);
-                if (!rate) return;
+                std::map<std::string, PropertyValue> pVars;
+                for (const auto& [k, v] : *vars) pVars[k] = PropertyValue(v);
+                const auto valProp = f.evaluate(pVars, &subject);
+                if (!valProp) return;
+                
                 PropertyValue current;
-                double x = 0.0;
-                if (!lawGetValue(subject, target, current) ||
-                    !propertyValueToNumber(current, x)) return;
-                lawSetValue(subject, target,
-                            PropertyValue(x + *rate * Universe::instance().dt()));
+                if (!lawGetValue(subject, target, current)) return;
+                
+                double dt = Universe::instance().dt();
+                PropertyValue next = current;
+                
+                if (std::holds_alternative<double>(current) && std::holds_alternative<double>(*valProp)) {
+                    next = PropertyValue(std::get<double>(current) + std::get<double>(*valProp) * dt);
+                } else if (std::holds_alternative<glm::vec3>(current) && std::holds_alternative<glm::vec3>(*valProp)) {
+                    next = PropertyValue(std::get<glm::vec3>(current) + std::get<glm::vec3>(*valProp) * static_cast<float>(dt));
+                } else {
+                    return;
+                }
+                
+                lawSetValue(subject, target, next);
             };
         }
     }
@@ -280,7 +422,10 @@ bool ActionNode::definedFor(Singular& subject) const {
             // readable AND the values inside some authored piece — whichever
             // variable the bounds cut.
             auto vars = readMathBindings(subject, bindings);
-            return vars && mapFunction.evaluate(*vars, &subject).has_value();
+            if (!vars) return false;
+            std::map<std::string, PropertyValue> pVars;
+            for (const auto& [k, v] : *vars) pVars[k] = PropertyValue(v);
+            return mapFunction.evaluate(pVars, &subject).has_value();
         }
         case Kind::Drive: {
             // A curve is total: defined whenever its input is readable.
@@ -370,5 +515,22 @@ ActionNode ActionNode::sequence(std::vector<ActionNode> children) {
     ActionNode n;
     n.kind = Kind::Sequence;
     n.children = std::move(children);
+    return n;
+}
+
+ActionNode ActionNode::parallel(std::vector<ActionNode> children) {
+    ActionNode n;
+    n.kind = Kind::Parallel;
+    n.children = std::move(children);
+    return n;
+}
+
+ActionNode ActionNode::spawn(const std::string& conceptId, const std::string& spawnParentPath) {
+    ActionNode n;
+    n.kind = Kind::Spawn;
+    n.conceptId = conceptId;
+    if (!spawnParentPath.empty()) {
+        n.spawnParentPath = PropertyPath::parse(spawnParentPath);
+    }
     return n;
 }

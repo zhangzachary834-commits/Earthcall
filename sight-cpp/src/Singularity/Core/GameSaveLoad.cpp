@@ -4,19 +4,27 @@
 #include "Game.hpp"
 #include "Form/Object/Object.hpp"
 #include "Form/Object/Creation/ObjectConcept.hpp"
-#include "Singularity/OntoMath/Expression.hpp"
+#include "Singularity/OntoMath/ScalarForm.hpp"
 #include "Singularity/TransferPolicy.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
+#include "Form/Material/MaterialManager.hpp"
 #include "Util/SaveSystem.hpp"
 #include "Util/Serialization.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/LawAuditLogger.hpp"
+
+extern MaterialManager materials; // global Material beings (globals.cpp)
 
 #include <imgui.h>
 #include <glm/glm.hpp>
+#include <filesystem>
 #include <fstream>
 #include <functional>
+#include <iostream>
+#include <ctime>
+#include <cstring>
 #include <iostream>
 #include <ctime>
 #include <string>
@@ -66,6 +74,10 @@ nlohmann::json Game::buildSaveJson() const {
         zonesJson.push_back(zj);
     }
     j["zones"] = zonesJson;
+
+    // Material beings are global (shared across zones), so they save once here,
+    // not inside any zone. Objects carry only the identifier string.
+    j["materials"] = materials.toJson();
 
     // Camera and player view
     j["cameraPos"]   = {_camera.pos.x, _camera.pos.y, _camera.pos.z};
@@ -160,8 +172,17 @@ void Game::saveStateWithLog(const std::string& customName) {
     j["objects"] = objArr;
 
     // Use the new SaveSystem to write the file
-    SaveSystem::writeJson(j, customName, SaveSystem::SaveType::GAME);
-    logIo("SAVE (log) '" + std::string(customName) + "': " +
+    std::string actualName = customName;
+    if (actualName.empty()) {
+        if (!_saveLoad.loadedSaveName.empty()) {
+            actualName = SaveSystem::timestamp() + "_" + _saveLoad.loadedSaveName;
+        } else {
+            actualName = SaveSystem::timestamp() + "_QuickSave";
+        }
+    }
+    SaveSystem::writeJson(j, actualName, SaveSystem::SaveType::GAME);
+    ECA::LawAuditLogger::instance().setActiveWorld(actualName);
+    logIo("SAVE (log) '" + actualName + "': " +
           std::to_string(_lawManager.getAll().size()) + " law(s), " +
           std::to_string(ConceptRegistry::instance().getAll().size()) + " concept(s)");
 }
@@ -170,6 +191,27 @@ void Game::saveStateWithLog(const std::string& customName) {
 // loadState
 // ------------------------------------------------------------------
 void Game::loadState(const std::string& filename) {
+    ECA::LawAuditLogger::instance().setActiveWorld(filename);
+    
+    std::filesystem::path path(filename);
+    std::string name = path.filename().string();
+    if (name.length() > 5 && name.substr(name.length() - 5) == ".json") {
+        name = name.substr(0, name.length() - 5);
+    }
+    if (name.length() >= 15 && name[8] == '_') {
+        if (name.length() > 16) {
+            _saveLoad.loadedSaveName = name.substr(16);
+        } else {
+            _saveLoad.loadedSaveName = "";
+        }
+    } else {
+        _saveLoad.loadedSaveName = name;
+    }
+    if (!_saveLoad.loadedSaveName.empty()) {
+        std::strncpy(_saveLoad.customName, _saveLoad.loadedSaveName.c_str(), sizeof(_saveLoad.customName) - 1);
+        _saveLoad.customName[sizeof(_saveLoad.customName) - 1] = '\0';
+    }
+
     // Loading is LOUD: every stage reports, and one stage's failure never
     // silently discards the stages after it (a swallowed exception between
     // the world and the registers once cost a field-test law).
@@ -197,6 +239,10 @@ void Game::loadState(const std::string& filename) {
         // Reset physics registries to avoid stale velocities/bonds affecting freshly loaded objects
         Physics::resetRigidBodies();
         Physics::clearBonds();
+
+        // Load material beings before objects that reference them (older saves
+        // without a "materials" key keep the current set + material.default).
+        if (j.contains("materials")) materials.loadFromJson(j["materials"]);
 
         size_t currentZoneIdx = j.value("currentZone", 0);
         auto& zonesVec = mgr.zones(); zonesVec.clear();

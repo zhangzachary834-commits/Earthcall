@@ -48,6 +48,22 @@ struct SessionState {
         int count = 1;               // consecutive repeats collapse
     };
     std::vector<FeedEntry> eventFeed;
+
+    struct ActionEntry {
+        std::string lawId;
+        std::string targetId;
+        Law::ApplicationResult result;
+        int count = 1;
+    };
+    std::vector<ActionEntry> actionFeed;
+    
+    struct ActionNodeEntry {
+        std::string actionName;
+        std::string targetId;
+        int count = 1;
+    };
+    std::vector<ActionNodeEntry> actionNodeFeed;
+    
     bool feedSubscribed = false;
 
     std::string lastEditLaw;
@@ -67,6 +83,27 @@ void subscribeEventFeed() {
         }
         g.eventFeed.insert(g.eventFeed.begin(), {e.type, subjectId, 1});
         if (g.eventFeed.size() > 8) g.eventFeed.pop_back();
+    });
+    Core::EventBus::instance().subscribe<Law::AppliedEvent>([](const Law::AppliedEvent& e) {
+        const std::string lawId = e.law ? e.law->getIdentifier() : "";
+        const std::string targetId = e.target ? e.target->getIdentifier() : "";
+        if (!g.actionFeed.empty() && g.actionFeed.front().lawId == lawId &&
+            g.actionFeed.front().targetId == targetId && g.actionFeed.front().result == e.result) {
+            ++g.actionFeed.front().count;
+            return;
+        }
+        g.actionFeed.insert(g.actionFeed.begin(), {lawId, targetId, e.result, 1});
+        if (g.actionFeed.size() > 8) g.actionFeed.pop_back();
+    });
+    Core::EventBus::instance().subscribe<ActionNode::ExecutedEvent>([](const ActionNode::ExecutedEvent& e) {
+        const std::string targetId = e.target ? e.target->getIdentifier() : "";
+        if (!g.actionNodeFeed.empty() && g.actionNodeFeed.front().actionName == e.actionName &&
+            g.actionNodeFeed.front().targetId == targetId) {
+            ++g.actionNodeFeed.front().count;
+            return;
+        }
+        g.actionNodeFeed.insert(g.actionNodeFeed.begin(), {e.actionName, targetId, 1});
+        if (g.actionNodeFeed.size() > 8) g.actionNodeFeed.pop_back();
     });
 }
 
@@ -106,6 +143,7 @@ struct EventOption {
 };
 constexpr EventOption kEngineEvents[] = {
     {"collision",                "two objects collide (subject: the first object)"},
+    {"onMouseClicked",           "the primary mouse button is clicked (subject: the person)"},
     {"object-hover-enter",       "the cursor enters an object (subject: the object)"},
     {"object-hover-exit",        "the cursor leaves an object (subject: the object)"},
     {"automation-clip-finished", "a non-looping automation clip ends (subject: the object)"},
@@ -175,6 +213,24 @@ const std::vector<PathOption>& knownPathOptions() {
         options.push_back({"time", "Time — Universe (read-only)", "seconds", false});
         options.push_back({"time.delta", "Time — Universe (read-only)", "seconds", false});
         options.push_back({"time.sinceApplied", "Time — Universe (read-only)", "seconds", false});
+
+        // Person / Avatar properties
+        options.push_back({"position", "Person — avatar", "vector", true});
+        options.push_back({"position.x", "Person — avatar", "number", false});
+        options.push_back({"position.y", "Person — avatar", "number", false});
+        options.push_back({"position.z", "Person — avatar", "number", false});
+        options.push_back({"name", "Person — identity", "text", false});
+        options.push_back({"activeTool", "Person — perception", "text", false});
+        options.push_back({"cursorHitPos", "Person — perception", "vector", true});
+        options.push_back({"cursorHitPos.x", "Person — perception", "number", false});
+        options.push_back({"cursorHitPos.y", "Person — perception", "number", false});
+        options.push_back({"cursorHitPos.z", "Person — perception", "number", false});
+        options.push_back({"cursorHitNormal", "Person — perception", "vector", true});
+        options.push_back({"cursorHitNormal.x", "Person — perception", "number", false});
+        options.push_back({"cursorHitNormal.y", "Person — perception", "number", false});
+        options.push_back({"cursorHitNormal.z", "Person — perception", "number", false});
+        options.push_back({"cursorHoveredBodyPart", "Person — perception", "text", false});
+        options.push_back({"activeShapeKind", "Person — perception", "number", false});
     }
     return options;
 }
@@ -253,7 +309,6 @@ bool whosePicker(PropertyPath& path) {
 // "whose" combo chooses the REFERENT the path resolves on.
 bool pathPicker(const char* label, PropertyPath& path) {
     bool changed = false;
-    const std::string current = path.empty() ? "(choose property)" : path.toString();
     // The referent qualifier survives re-picking WHAT the property is.
     std::vector<std::string> qualifierPrefix;
     if (!path.segments.empty() && !path.segments[0].empty() &&
@@ -262,6 +317,14 @@ bool pathPicker(const char* label, PropertyPath& path) {
             (path.segments[0] == "@event" && path.segments.size() >= 2) ? 2 : 1;
         qualifierPrefix.assign(path.segments.begin(), path.segments.begin() + n);
     }
+    
+    PropertyPath tempPath = path;
+    if (!qualifierPrefix.empty()) {
+        tempPath.segments.erase(tempPath.segments.begin(), tempPath.segments.begin() + qualifierPrefix.size());
+    }
+    const std::string unqualifiedCurrent = tempPath.empty() ? "(choose property)" : tempPath.toString();
+    const std::string current = path.empty() ? "(choose property)" : path.toString();
+
     ImGui::SetNextItemWidth(200.0f);
     if (ImGui::BeginCombo(label, current.c_str())) {
         ImGui::TextDisabled("WHAT the property is; choose WHOSE");
@@ -273,7 +336,7 @@ bool pathPicker(const char* label, PropertyPath& path) {
                 ImGui::Separator();
                 ImGui::TextDisabled("%s", option.group);
             }
-            if (ImGui::Selectable(("  " + option.path).c_str(), option.path == current)) {
+            if (ImGui::Selectable(("  " + option.path).c_str(), option.path == unqualifiedCurrent)) {
                 path = PropertyPath::parse(option.path);
                 path.segments.insert(path.segments.begin(), qualifierPrefix.begin(),
                                      qualifierPrefix.end());
@@ -501,7 +564,7 @@ void seedConditionKind(ConditionNode& node) {
         case ConditionNode::Kind::Zone:
             if (node.zoneFunction.pieces.empty()) {
                 node.zoneFunction = OntoMath::Piecewise::continuous(
-                    OntoMath::Expression::variable("x"));
+                    OntoMath::MathNode::fromLegacyExpression(OntoMath::ScalarForm::variable("x")));
                 node.bindings = MathBindings{{"x", PropertyPath::parse("position.x")}};
                 node.hi = PropertyValue(0.0);
             }
@@ -588,14 +651,62 @@ bool editConditionNode(ConditionNode& node) {
                 node.op = static_cast<ConditionNode::Op>(op);
                 changed = true;
             }
-            double value = numericOr(node.operand, 0.0);
-            ImGui::SetNextItemWidth(120.0f);
-            if (ImGui::InputDouble("Value", &value)) {
-                node.operand = PropertyValue(value);
-                changed = true;
-            }
             const bool comparesToPath = !node.operandPath.empty();
+            
             if (!comparesToPath) {
+                const char* typeNames[] = {"Number (Decimal)", "Number (Integer)", "String", "Boolean", "Vector3"};
+                int typeIdx = 0;
+                if (std::holds_alternative<std::string>(node.operand)) typeIdx = 2;
+                else if (std::holds_alternative<bool>(node.operand)) typeIdx = 3;
+                else if (std::holds_alternative<glm::vec3>(node.operand)) typeIdx = 4;
+                else if (std::holds_alternative<int>(node.operand) || std::holds_alternative<long>(node.operand)) typeIdx = 1;
+                else typeIdx = 0;
+
+                ImGui::SetNextItemWidth(140.0f);
+                if (ImGui::Combo("Type", &typeIdx, typeNames, 5)) {
+                    if (typeIdx == 0) node.operand = PropertyValue(0.0);
+                    else if (typeIdx == 1) node.operand = PropertyValue(0);
+                    else if (typeIdx == 2) node.operand = PropertyValue(std::string(""));
+                    else if (typeIdx == 3) node.operand = PropertyValue(false);
+                    else if (typeIdx == 4) node.operand = PropertyValue(glm::vec3(0.0f));
+                    changed = true;
+                }
+
+                ImGui::SetNextItemWidth(120.0f);
+                if (typeIdx == 2) { // String
+                    const std::string* strVal = std::get_if<std::string>(&node.operand);
+                    char buf[256];
+                    std::strncpy(buf, strVal ? strVal->c_str() : "", sizeof(buf));
+                    buf[sizeof(buf) - 1] = '\0';
+                    if (ImGui::InputText("Value", buf, sizeof(buf))) {
+                        node.operand = PropertyValue(std::string(buf));
+                        changed = true;
+                    }
+                } else if (typeIdx == 3) { // Boolean
+                    bool b = std::holds_alternative<bool>(node.operand) ? std::get<bool>(node.operand) : false;
+                    if (ImGui::Checkbox("Value", &b)) {
+                        node.operand = PropertyValue(b);
+                        changed = true;
+                    }
+                } else if (typeIdx == 4) { // Vector3
+                    glm::vec3 v = std::holds_alternative<glm::vec3>(node.operand) ? std::get<glm::vec3>(node.operand) : glm::vec3(0.0f);
+                    if (ImGui::DragFloat3("Value", &v.x, 0.1f)) {
+                        node.operand = PropertyValue(v);
+                        changed = true;
+                    }
+                } else if (typeIdx == 1) { // Integer
+                    int i = std::holds_alternative<int>(node.operand) ? std::get<int>(node.operand) : (std::holds_alternative<long>(node.operand) ? static_cast<int>(std::get<long>(node.operand)) : 0);
+                    if (ImGui::InputInt("Value", &i)) {
+                        node.operand = PropertyValue(i);
+                        changed = true;
+                    }
+                } else { // Decimal
+                    double value = numericOr(node.operand, 0.0);
+                    if (ImGui::InputDouble("Value", &value)) {
+                        node.operand = PropertyValue(value);
+                        changed = true;
+                    }
+                }
                 ImGui::SameLine();
                 if (ImGui::SmallButton("compare to a property instead")) {
                     node.operandPath = PropertyPath::parse("position.y");
@@ -859,7 +970,7 @@ void seedActionKind(ActionNode& node) {
             if (node.mapFunction.pieces.empty()) {
                 node.path = node.path.empty() ? PropertyPath::parse("position.y") : node.path;
                 node.mapFunction = OntoMath::Piecewise::continuous(
-                    OntoMath::Expression::variable("x"));
+                    OntoMath::MathNode::fromLegacyExpression(OntoMath::ScalarForm::variable("x")));
                 node.bindings = MathBindings{{"x", PropertyPath::parse("position.x")}};
             }
             break;
@@ -872,7 +983,7 @@ void seedActionKind(ActionNode& node) {
             if (node.mapFunction.pieces.empty()) {
                 node.path = node.path.empty() ? PropertyPath::parse("position.y") : node.path;
                 node.mapFunction = OntoMath::Piecewise::continuous(
-                    OntoMath::Expression::constant(1.0));
+                    OntoMath::MathNode::fromLegacyExpression(OntoMath::ScalarForm::constant(1.0)));
                 node.mapFunction.inputVariable = "t";
                 node.bindings = MathBindings{{"t", PropertyPath::parse("time.sinceApplied")}};
             }
@@ -897,6 +1008,7 @@ bool editActionNode(ActionNode& node) {
     }
 
     switch (node.kind) {
+
         case ActionNode::Kind::Set:
         case ActionNode::Kind::Add:
         case ActionNode::Kind::Scale:
@@ -983,8 +1095,13 @@ bool editActionNode(ActionNode& node) {
             // selected object — undefined shown honestly.
             if (g.testSubject) {
                 auto vars = readMathBindings(*g.testSubject, node.bindings);
-                const auto value = vars ? node.mapFunction.evaluate(*vars, g.testSubject)
-                                        : std::optional<double>{};
+                std::optional<double> value;
+                if (vars) {
+                    std::map<std::string, PropertyValue> pVars;
+                    for (const auto& [k, v] : *vars) pVars[k] = PropertyValue(v);
+                    const auto valProp = node.mapFunction.evaluate(pVars, g.testSubject);
+                    if (valProp && std::holds_alternative<double>(*valProp)) value = std::get<double>(*valProp);
+                }
                 if (value) {
                     ImGui::TextDisabled("f = %.4f right now (on %s)", *value,
                                         g.selectedSubjectId.c_str());
@@ -1092,6 +1209,9 @@ bool editActionNode(ActionNode& node) {
                     }
                 }
                 ImGui::EndCombo();
+            }
+            if (pathPicker("Parent Path", node.spawnParentPath)) {
+                changed = true;
             }
             break;
         }
@@ -1214,7 +1334,7 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player,
             piece.lo = 0.0;
             piece.hasHi = true;
             piece.hi = 2.0;
-            piece.expression = OntoMath::Expression::variable("t", 1.0, 2.0);
+            piece.mathNode = OntoMath::MathNode::fromLegacyExpression(OntoMath::ScalarForm::variable("t", 1.0, 2.0));
             arc.pieces.push_back(std::move(piece));
             law->setActionModel(ActionNode::map(
                 "position.y", std::move(arc),
@@ -1435,7 +1555,7 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player,
 
         // The law's health at a glance — one row of chips.
         {
-            const ImVec4 kOk(0.45f, 0.85f, 0.5f, 1.0f);
+            // const ImVec4 kOk(0.45f, 0.85f, 0.5f, 1.0f);
             const ImVec4 kInfo(0.55f, 0.75f, 1.0f, 1.0f);
             const ImVec4 kWarn(1.0f, 0.6f, 0.2f, 1.0f);
             const ImVec4 kMuted(0.62f, 0.62f, 0.62f, 1.0f);
@@ -1874,6 +1994,38 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player,
             } else {
                 ImGui::BulletText("%s  (subject: %s)", entry.type.c_str(),
                                   entry.subjectId.empty() ? "-" : entry.subjectId.c_str());
+            }
+        }
+    }
+    ImGui::Separator();
+    if (ImGui::CollapsingHeader("Recent Actions (live)")) {
+        if (g.actionFeed.empty()) {
+            ImGui::TextDisabled("No actions applied yet this session.");
+        }
+        for (const auto& entry : g.actionFeed) {
+            if (entry.count > 1) {
+                ImGui::BulletText("[%s] %s -> %s  x%d", entry.lawId.c_str(), Law::resultName(entry.result),
+                                  entry.targetId.empty() ? "(no target)" : entry.targetId.c_str(),
+                                  entry.count);
+            } else {
+                ImGui::BulletText("[%s] %s -> %s", entry.lawId.c_str(), Law::resultName(entry.result),
+                                  entry.targetId.empty() ? "(no target)" : entry.targetId.c_str());
+            }
+        }
+    }
+    ImGui::Separator();
+    if (ImGui::CollapsingHeader("Recent Action Nodes Fired")) {
+        if (g.actionNodeFeed.empty()) {
+            ImGui::TextDisabled("No ActionNodes successfully fired yet.");
+        }
+        for (const auto& entry : g.actionNodeFeed) {
+            if (entry.count > 1) {
+                ImGui::BulletText("%s executed on %s  x%d", entry.actionName.c_str(),
+                                  entry.targetId.empty() ? "(no target)" : entry.targetId.c_str(),
+                                  entry.count);
+            } else {
+                ImGui::BulletText("%s executed on %s", entry.actionName.c_str(),
+                                  entry.targetId.empty() ? "(no target)" : entry.targetId.c_str());
             }
         }
     }

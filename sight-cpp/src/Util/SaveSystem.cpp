@@ -13,6 +13,7 @@ std::string getSaveTypeFolderName(SaveType type) {
     switch (type) {
         case SaveType::GAME: return "games";
         case SaveType::AVATAR: return "avatars";
+        case SaveType::PERSON: return "persons";
         case SaveType::DESIGN: return "designs";
         case SaveType::BACKUP: return "backups";
         case SaveType::CUSTOM: return "custom";
@@ -25,6 +26,7 @@ std::string getSaveTypeLogName(SaveType type) {
     switch (type) {
         case SaveType::GAME: return "game_save_log.txt";
         case SaveType::AVATAR: return "avatar_save_log.txt";
+        case SaveType::PERSON: return "person_save_log.txt";
         case SaveType::DESIGN: return "design_save_log.txt";
         case SaveType::BACKUP: return "backup_save_log.txt";
         case SaveType::CUSTOM: return "custom_save_log.txt";

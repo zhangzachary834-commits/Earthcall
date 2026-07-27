@@ -44,6 +44,9 @@ bool Game::init() {
     // themselves (so metalaws can quantify over laws), and the player.
     // Evaluated lazily each tick, well after zones exist.
     Universe::instance().setProvider([this](std::vector<Singular*>& beings) {
+        // Provide the active World itself so laws can target it or spawn into it
+        beings.push_back(&mgr.active().world());
+        
         for (const auto& obj : mgr.active().world().getOwnedObjects()) {
             if (obj) beings.push_back(obj.get());
         }
@@ -431,8 +434,10 @@ void Game::sFramebufferSizeCallback(GLFWwindow* win, int width, int height) {
     if (self) self->onFramebufferSize(width, height);
 }
 
-void Game::onFramebufferSize(int width, int height) {
-    glViewport(0, 0, width, height);
+void Game::onFramebufferSize(int /*width*/, int /*height*/) {
+    // Nothing to do: render() passes the current framebuffer size to
+    // beginFrame every frame, and the backend sets its own viewport from it.
+    // (WebGPU additionally has to reconfigure its surface, which it does there.)
 }
 
 } // namespace Core

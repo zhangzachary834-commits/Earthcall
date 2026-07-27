@@ -158,7 +158,7 @@ build/tests/change_recorder_test.o: tests/change_recorder_test.cpp \
   src/ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp \
   src/ZonesOfEarth/AuthorsOfLaw/Universe.hpp src/json.hpp \
   src/Singularity/OntoMath/CurveModel.hpp \
-  src/Singularity/OntoMath/Expression.hpp \
+  src/Singularity/OntoMath/ScalarForm.hpp \
   src/Form/Object/Automation/Automation.hpp src/Form/Object/Object.hpp \
   src/Form/Object/Formation/Formation.hpp src/Form/Form.hpp \
   /opt/homebrew/Cellar/glfw/3.4/include/GLFW/glfw3.h \
@@ -268,9 +268,10 @@ build/tests/change_recorder_test.o: tests/change_recorder_test.cpp \
   src/Form/Object/Object/PolyhedronData.hpp \
   src/Form/Object/Object/../AngleTools.hpp \
   src/Form/Object/Object/../Contour.hpp \
-  src/Form/Object/Object/FaceTexture.hpp \
-  src/Form/Object/Object/CollisionZone.hpp \
+  src/Form/Object/Object/FaceTexture.hpp src/Rendering/Renderer.hpp \
+  src/Rendering/RenderMaterial.hpp \
   src/Form/Object/Geometry/SmoothSurface.hpp \
+  src/Form/Object/Object/CollisionZone.hpp \
   src/Form/Object/Geometry/ComplexShape.hpp \
   src/Form/Object/Geometry/Sdf.hpp src/Form/Object/Geometry/Patch.hpp
 
@@ -596,7 +597,7 @@ src/json.hpp:
 
 src/Singularity/OntoMath/CurveModel.hpp:
 
-src/Singularity/OntoMath/Expression.hpp:
+src/Singularity/OntoMath/ScalarForm.hpp:
 
 src/Form/Object/Automation/Automation.hpp:
 
@@ -826,9 +827,13 @@ src/Form/Object/Object/../Contour.hpp:
 
 src/Form/Object/Object/FaceTexture.hpp:
 
-src/Form/Object/Object/CollisionZone.hpp:
+src/Rendering/Renderer.hpp:
+
+src/Rendering/RenderMaterial.hpp:
 
 src/Form/Object/Geometry/SmoothSurface.hpp:
+
+src/Form/Object/Object/CollisionZone.hpp:
 
 src/Form/Object/Geometry/ComplexShape.hpp:
 

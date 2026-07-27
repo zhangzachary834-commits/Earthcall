@@ -1,8 +1,6 @@
 build/src/Rendering/MathEditors.o: src/Rendering/MathEditors.cpp \
-  src/Rendering/MathEditors.hpp src/Singularity/OntoMath/Expression.hpp \
-  src/json.hpp src/ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp \
-  src/Form/Singular/Property/PropertyPath.hpp \
-  src/Form/Singular/Property/PropertyValue.hpp \
+  src/Rendering/MathEditors.hpp src/Singularity/OntoMath/ScalarForm.hpp \
+  src/json.hpp src/Form/Singular/Property/PropertyValue.hpp \
   /opt/homebrew/include/glm/glm.hpp \
   /opt/homebrew/include/glm/detail/_fixes.hpp \
   /opt/homebrew/include/glm/detail/setup.hpp \
@@ -153,6 +151,8 @@ build/src/Rendering/MathEditors.o: src/Rendering/MathEditors.cpp \
   /opt/homebrew/include/glm/vector_relational.hpp \
   /opt/homebrew/include/glm/integer.hpp \
   /opt/homebrew/include/glm/detail/func_integer.inl \
+  src/ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp \
+  src/Form/Singular/Property/PropertyPath.hpp \
   src/Form/Singular/Singular.hpp src/Form/Singular/Property/Property.hpp \
   src/ZonesOfEarth/AuthorsOfLaw/Universe.hpp \
   src/ZonesOfEarth/AuthorsOfLaw/ConditionModel.hpp \
@@ -162,13 +162,9 @@ build/src/Rendering/MathEditors.o: src/Rendering/MathEditors.cpp \
 
 src/Rendering/MathEditors.hpp:
 
-src/Singularity/OntoMath/Expression.hpp:
+src/Singularity/OntoMath/ScalarForm.hpp:
 
 src/json.hpp:
-
-src/ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp:
-
-src/Form/Singular/Property/PropertyPath.hpp:
 
 src/Form/Singular/Property/PropertyValue.hpp:
 
@@ -471,6 +467,10 @@ src/Form/Singular/Property/PropertyValue.hpp:
 /opt/homebrew/include/glm/integer.hpp:
 
 /opt/homebrew/include/glm/detail/func_integer.inl:
+
+src/ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp:
+
+src/Form/Singular/Property/PropertyPath.hpp:
 
 src/Form/Singular/Singular.hpp:
 

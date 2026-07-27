@@ -6,7 +6,6 @@
 #include "AngleTools.hpp"
 #include "Automation/AutomationEvents.hpp"
 #include <GLFW/glfw3.h>
-#include <OpenGL/glu.h>
 #include <glm/gtc/quaternion.hpp>
 #include <algorithm>
 #include <cstring>
@@ -46,6 +45,8 @@ void Object::initFaceTextures() {
         n = complexData.patchCount();
     } else if (_hasSmooth) {
         n = 1;
+    } else if (_hasPatch) {
+        n = 1; // one surface, drawn with faceTextures[0]
     } else if (geometryType == GeometryType::Polyhedron) {
         n = polyhedronData.getFaceCount();
     } else {

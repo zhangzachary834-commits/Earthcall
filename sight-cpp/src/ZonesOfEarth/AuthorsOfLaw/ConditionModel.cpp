@@ -5,6 +5,7 @@
 #include "Form/Object/Object.hpp"
 #include "Form/Singular/Property/PropertyValueJson.hpp"
 #include "Law.hpp"
+#include "LawAuditLogger.hpp"
 #include "Person/Person.hpp"
 #include "Relation/Relation.hpp"
 #include "Universe.hpp"
@@ -187,32 +188,58 @@ ECA::ConditionPredicate ConditionNode::compile() const {
             const PropertyPath rhsPath = operandPath;
             const double tol = tolerance;
             const PropertyValue vlo = lo, vhi = hi;
-            return [lhsPath, o, rhsLiteral, rhsPath, tol, vlo, vhi](
+            const std::string desc = this->describe();
+            return [lhsPath, o, rhsLiteral, rhsPath, tol, vlo, vhi, desc](
                        const ECA::Event&, const Singular& target) {
                 Singular& t = const_cast<Singular&>(target);
                 PropertyValue lhs;
-                if (!lawGetValue(t, lhsPath, lhs)) return false;
+                if (!lawGetValue(t, lhsPath, lhs)) {
+                    ECA::LawAuditLogger::instance().log("CONDITION", "Condition Evaluated [FAIL - Property Not Found]: " + desc, {
+                        {"targetId", t.getIdentifier()}, {"result", false}
+                    });
+                    return false;
+                }
                 PropertyValue rhs = rhsLiteral;
-                if (!rhsPath.empty() && !lawGetValue(t, rhsPath, rhs)) return false;
+                if (!rhsPath.empty() && !lawGetValue(t, rhsPath, rhs)) {
+                    ECA::LawAuditLogger::instance().log("CONDITION", "Condition Evaluated [FAIL - RHS Property Not Found]: " + desc, {
+                        {"targetId", t.getIdentifier()}, {"result", false}
+                    });
+                    return false;
+                }
+                
+                std::string lhsStr = "(unknown)";
+                if (const std::string* s = std::get_if<std::string>(&lhs)) lhsStr = *s;
+                else if (const double* d = std::get_if<double>(&lhs)) lhsStr = std::to_string(*d);
 
                 double a = 0.0, b = 0.0;
                 const bool numeric =
                     propertyValueToNumber(lhs, a) && propertyValueToNumber(rhs, b);
+                
+                bool res = false;
                 switch (o) {
-                    case Op::Eq: return numeric ? a == b : lhs == rhs;
-                    case Op::Ne: return numeric ? a != b : !(lhs == rhs);
-                    case Op::Lt: return numeric && a < b;
-                    case Op::Le: return numeric && a <= b;
-                    case Op::Gt: return numeric && a > b;
-                    case Op::Ge: return numeric && a >= b;
-                    case Op::Near: return numeric && std::fabs(a - b) <= tol;
+                    case Op::Eq: res = (numeric ? a == b : lhs == rhs); break;
+                    case Op::Ne: res = (numeric ? a != b : !(lhs == rhs)); break;
+                    case Op::Lt: res = (numeric && a < b); break;
+                    case Op::Le: res = (numeric && a <= b); break;
+                    case Op::Gt: res = (numeric && a > b); break;
+                    case Op::Ge: res = (numeric && a >= b); break;
+                    case Op::Near: res = (numeric && std::fabs(a - b) <= tol); break;
                     case Op::InRange: {
                         double l = 0.0, h = 0.0;
-                        return numeric && propertyValueToNumber(vlo, l) &&
-                               propertyValueToNumber(vhi, h) && a >= l && a <= h;
+                        res = (numeric && propertyValueToNumber(vlo, l) &&
+                               propertyValueToNumber(vhi, h) && a >= l && a <= h);
+                        break;
                     }
                 }
-                return false;
+                std::string logMsg = "Condition Evaluated [" + std::string(res ? "PASS" : "FAIL") + "]: " + desc;
+                if (!res) {
+                    logMsg += " (LHS was: " + lhsStr + ")";
+                }
+                
+                ECA::LawAuditLogger::instance().log("CONDITION", logMsg, {
+                    {"targetId", t.getIdentifier()}, {"result", res}
+                });
+                return res;
             };
         }
         case Kind::InRegion: {
@@ -290,7 +317,11 @@ ECA::ConditionPredicate ConditionNode::compile() const {
             return [f, binds, zlo, zhi](const ECA::Event&, const Singular& target) {
                 auto vars = readMathBindings(const_cast<Singular&>(target), binds);
                 if (!vars) return false;
-                const auto value = f.evaluate(*vars, &target);
+                std::map<std::string, PropertyValue> pVars;
+                for (const auto& [k, v] : *vars) pVars[k] = PropertyValue(v);
+                const auto valProp = f.evaluate(pVars, &target);
+                std::optional<double> value;
+                if (valProp && std::holds_alternative<double>(*valProp)) value = std::get<double>(*valProp);
                 if (!value) return false;
                 double bound = 0.0;
                 if (propertyValueToNumber(zlo, bound) && *value < bound) return false;
@@ -305,20 +336,25 @@ ECA::ConditionPredicate ConditionNode::compile() const {
             compiled.reserve(children.size());
             for (const auto& c : children) compiled.push_back(c.compile());
             const Kind k = kind;
-            return [compiled, k](const ECA::Event& e, const Singular& target) {
+            const std::string desc = this->describe();
+            return [compiled, k, desc](const ECA::Event& e, const Singular& target) {
+                bool res = false;
                 if (k == Kind::Not) {
-                    return !compiled.empty() && !compiled[0](e, target);
-                }
-                if (k == Kind::All) {
+                    res = !compiled.empty() && !compiled[0](e, target);
+                } else if (k == Kind::All) {
+                    res = true;
                     for (const auto& p : compiled) {
-                        if (!p || !p(e, target)) return false;
+                        if (!p || !p(e, target)) { res = false; break; }
                     }
-                    return true;
+                } else {
+                    for (const auto& p : compiled) {           // Any
+                        if (p && p(e, target)) { res = true; break; }
+                    }
                 }
-                for (const auto& p : compiled) {           // Any
-                    if (p && p(e, target)) return true;
-                }
-                return false;
+                ECA::LawAuditLogger::instance().log("CONDITION", "Logic Node Evaluated [" + std::string(res ? "PASS" : "FAIL") + "]: " + desc, {
+                    {"targetId", target.getIdentifier()}, {"result", res}
+                });
+                return res;
             };
         }
         case Kind::IsKind: {
@@ -421,9 +457,19 @@ std::string ConditionNode::describe() const {
     switch (kind) {
         case Kind::Compare: {
             std::string rhs = operandPath.empty() ? std::string("value") : operandPath.toString();
-            double n = 0.0;
-            if (operandPath.empty() && propertyValueToNumber(operand, n)) {
-                rhs = std::to_string(n);
+            if (operandPath.empty()) {
+                if (std::holds_alternative<std::string>(operand)) {
+                    rhs = "\"" + std::get<std::string>(operand) + "\"";
+                } else if (std::holds_alternative<bool>(operand)) {
+                    rhs = std::get<bool>(operand) ? "true" : "false";
+                } else {
+                    double n = 0.0;
+                    if (propertyValueToNumber(operand, n)) {
+                        rhs = std::to_string(n);
+                        rhs.erase(rhs.find_last_not_of('0') + 1, std::string::npos);
+                        if (rhs.back() == '.') rhs.pop_back();
+                    }
+                }
             }
             return path.toString() + " " + opName(op) + " " + rhs;
         }

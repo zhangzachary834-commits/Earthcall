@@ -92,10 +92,6 @@ namespace AdvancedFacePaint {
         glm::vec4 calculateGradientColor(const glm::vec2& uv, const GradientSettings& settings);
         glm::vec4 calculateSmudgeColor(const glm::vec2& uv, const SmudgeSettings& settings, const glm::vec4& baseColor);
         
-        // OpenGL rendering functions
-        void renderGradientPreview(const GradientSettings& settings);
-        void renderSmudgePreview(const SmudgeSettings& settings);
-        
         // Settings management
         void setGradientSettings(const GradientSettings& settings) { _gradientSettings = settings; }
         void setSmudgeSettings(const SmudgeSettings& settings) { _smudgeSettings = settings; }
@@ -104,29 +100,11 @@ namespace AdvancedFacePaint {
         const SmudgeSettings& getSmudgeSettings() const { return _smudgeSettings; }
 
     private:
-        // OpenGL resources
-        unsigned int _shaderProgram = 0;
-        unsigned int _vertexArrayObject = 0;
-        unsigned int _vertexBufferObject = 0;
-        unsigned int _textureBuffer = 0;
-        
-        // Shader locations
-        int _uniformProjection = -1;
-        int _uniformModelView = -1;
-        int _uniformGradientType = -1;
-        int _uniformGradientColors = -1;
-        int _uniformGradientParams = -1;
-        int _uniformSmudgeType = -1;
-        int _uniformSmudgeParams = -1;
-        
         // Current settings
         GradientSettings _gradientSettings;
         SmudgeSettings _smudgeSettings;
         
         // Internal helper functions
-        bool compileShaders();
-        bool createBuffers();
-        void setupShaders();
         glm::vec4 sampleTexture(Object* obj, int faceIndex, const glm::vec2& uv);
         void updateTexture(Object* obj, int faceIndex, const glm::vec2& uv, const glm::vec4& color);
     };

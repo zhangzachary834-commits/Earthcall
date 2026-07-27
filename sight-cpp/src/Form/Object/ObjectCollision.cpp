@@ -6,7 +6,6 @@
 #include "AngleTools.hpp"
 #include "Automation/AutomationEvents.hpp"
 #include <GLFW/glfw3.h>
-#include <OpenGL/glu.h>
 #include <glm/gtc/quaternion.hpp>
 #include <algorithm>
 #include <cstring>
@@ -158,6 +157,7 @@ void Object::rebuildGeometryCaches() {
     _supportCloud.clear();
     _smoothMesh = geom::TessMesh{};
     _complexMeshes.clear();
+    _patchMesh = geom::TessMesh{};
 
     geom::TessMesh m; // collision source — decimated into _supportCloud below
     if (_hasField) {
@@ -173,6 +173,10 @@ void Object::rebuildGeometryCaches() {
     else if (_hasSmooth) {
         _smoothMesh = geom::tessellateSmooth(smoothData);
         m = geom::tessellateSmooth(smoothData, 16, 10);
+    }
+    else if (_hasPatch) {
+        _patchMesh = geom::tessellateBezier(patchData);
+        m = _patchMesh; // render and collision share the one tessellation
     }
     else return;
     // Decimate to a capped, well-spread subset. The support cloud is argmax-scanned
@@ -196,7 +200,7 @@ glm::vec3 Object::getLocalSupportPoint(const glm::vec3& localDirection) const {
         glm::vec3 sp = geom::supportPoint(smoothData, dir, ok);
         if (ok) return sp;
     }
-    if ((_hasSmooth || _hasComplex || _hasField) && !_supportCloud.empty()) {
+    if ((_hasSmooth || _hasComplex || _hasField || _hasPatch) && !_supportCloud.empty()) {
         float best = -std::numeric_limits<float>::max();
         glm::vec3 bestV = _supportCloud[0];
         for (const auto& v : _supportCloud) {

@@ -165,6 +165,7 @@ void to_json(nlohmann::json& j, const Object& obj){
         j["patch"] = std::move(pj);
     }
     j["objectID"] = obj.getIdentifier();
+    j["materialId"] = obj.materialId(); // reference to a Material being, by identifier
     j["transform"] = mat4ToVector(obj.getTransform());
     j["center"] = {obj.getCenter().x, obj.getCenter().y, obj.getCenter().z};
     j["authoritativeAxis"] = {obj.getAuthoritativeAxis().x,
@@ -255,6 +256,8 @@ void from_json(const nlohmann::json& j, Object& obj){
     if (j.contains("objectID") && j["objectID"].is_string()) {
         obj.setObjectID(j["objectID"].get<std::string>());
     }
+    // Older saves predate materials; they resolve to material.default on load.
+    obj.setMaterialId(j.value("materialId", std::string("material.default")));
     std::vector<float> tvals = j.value("transform", std::vector<float>{});
     if(tvals.size()==16){ obj.setTransform(vectorToMat4(tvals)); }
     if (j.contains("center") && j["center"].is_array() && j["center"].size() >= 3) {

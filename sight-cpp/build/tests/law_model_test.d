@@ -261,9 +261,10 @@ build/tests/law_model_test.o: tests/law_model_test.cpp \
   src/Form/Object/Object/PolyhedronData.hpp \
   src/Form/Object/Object/../AngleTools.hpp \
   src/Form/Object/Object/../Contour.hpp \
-  src/Form/Object/Object/FaceTexture.hpp \
-  src/Form/Object/Object/CollisionZone.hpp \
+  src/Form/Object/Object/FaceTexture.hpp src/Rendering/Renderer.hpp \
+  src/Rendering/RenderMaterial.hpp \
   src/Form/Object/Geometry/SmoothSurface.hpp \
+  src/Form/Object/Object/CollisionZone.hpp \
   src/Form/Object/Geometry/ComplexShape.hpp \
   src/Form/Object/Geometry/Sdf.hpp src/Form/Object/Geometry/Patch.hpp \
   src/Form/Object/Automation/Automation.hpp \
@@ -272,9 +273,13 @@ build/tests/law_model_test.o: tests/law_model_test.cpp \
   src/Form/Singular/Property/PropertyPath.hpp \
   src/ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp \
   src/ZonesOfEarth/AuthorsOfLaw/Universe.hpp \
-  src/Singularity/OntoMath/Expression.hpp \
+  src/Singularity/OntoMath/ScalarForm.hpp \
   src/ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp \
-  src/Singularity/OntoMath/CurveModel.hpp
+  src/Singularity/OntoMath/CurveModel.hpp src/Person/Person.hpp \
+  src/Person/Body/Body.hpp src/Person/Body/BodyPart/BodyPart.hpp \
+  src/Person/Soul/Soul.hpp src/Form/Object/Creation/ObjectConcept.hpp \
+  src/Form/Object/Creation/PropertyMapping.hpp \
+  src/ZonesOfEarth/World/World.hpp
 
 src/ZonesOfEarth/AuthorsOfLaw/Law.hpp:
 
@@ -812,9 +817,13 @@ src/Form/Object/Object/../Contour.hpp:
 
 src/Form/Object/Object/FaceTexture.hpp:
 
-src/Form/Object/Object/CollisionZone.hpp:
+src/Rendering/Renderer.hpp:
+
+src/Rendering/RenderMaterial.hpp:
 
 src/Form/Object/Geometry/SmoothSurface.hpp:
+
+src/Form/Object/Object/CollisionZone.hpp:
 
 src/Form/Object/Geometry/ComplexShape.hpp:
 
@@ -834,8 +843,22 @@ src/ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp:
 
 src/ZonesOfEarth/AuthorsOfLaw/Universe.hpp:
 
-src/Singularity/OntoMath/Expression.hpp:
+src/Singularity/OntoMath/ScalarForm.hpp:
 
 src/ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp:
 
 src/Singularity/OntoMath/CurveModel.hpp:
+
+src/Person/Person.hpp:
+
+src/Person/Body/Body.hpp:
+
+src/Person/Body/BodyPart/BodyPart.hpp:
+
+src/Person/Soul/Soul.hpp:
+
+src/Form/Object/Creation/ObjectConcept.hpp:
+
+src/Form/Object/Creation/PropertyMapping.hpp:
+
+src/ZonesOfEarth/World/World.hpp:

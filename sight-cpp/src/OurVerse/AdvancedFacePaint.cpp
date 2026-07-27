@@ -1,16 +1,12 @@
 #include "AdvancedFacePaint.hpp"
 #include "Form/Object/Object.hpp"
 #ifdef __APPLE__
-#include <OpenGL/gl.h>
-#include <OpenGL/glu.h>
 #include <OpenGL/glext.h>
 // Define aliases for Apple OpenGL functions
 #define glGenVertexArrays glGenVertexArraysAPPLE
 #define glBindVertexArray glBindVertexArrayAPPLE
 #define glDeleteVertexArrays glDeleteVertexArraysAPPLE
 #else
-#include <GL/gl.h>
-#include <GL/glu.h>
 #include <GL/glext.h>
 #endif
 #include <iostream>
@@ -180,147 +176,16 @@ namespace AdvancedFacePaint {
         cleanup();
     }
 
-    // Initialize OpenGL resources
+    // Nothing to bring up. This class paints into FaceTexture's CPU pixel buffers;
+    // it owns no GPU state. It previously compiled a GL 3.x shader + VAO/VBO here,
+    // but those existed solely for renderGradientPreview/renderSmudgePreview, which
+    // nothing ever called. Keeping them would have meant a hard dependency on a GL
+    // context at startup — impossible once the window is WebGPU-backed.
     bool AdvancedFacePainter::initialize() {
-        if (!compileShaders()) {
-            std::cerr << "Failed to compile shaders for AdvancedFacePainter" << std::endl;
-            return false;
-        }
-        
-        if (!createBuffers()) {
-            std::cerr << "Failed to create buffers for AdvancedFacePainter" << std::endl;
-            return false;
-        }
-        
-        setupShaders();
         return true;
     }
 
-    // Cleanup OpenGL resources
-    void AdvancedFacePainter::cleanup() {
-        if (_shaderProgram) {
-            glDeleteProgram(_shaderProgram);
-            _shaderProgram = 0;
-        }
-        
-        if (_vertexArrayObject) {
-            glDeleteVertexArrays(1, &_vertexArrayObject);
-            _vertexArrayObject = 0;
-        }
-        
-        if (_vertexBufferObject) {
-            glDeleteBuffers(1, &_vertexBufferObject);
-            _vertexBufferObject = 0;
-        }
-        
-        if (_textureBuffer) {
-            glDeleteTextures(1, &_textureBuffer);
-            _textureBuffer = 0;
-        }
-    }
-
-    // Compile shaders
-    bool AdvancedFacePainter::compileShaders() {
-        // Create vertex shader
-        unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
-        glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-        glCompileShader(vertexShader);
-        
-        // Check for shader compile errors
-        int success;
-        char infoLog[512];
-        glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-        if (!success) {
-            glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-            std::cerr << "Vertex shader compilation failed: " << infoLog << std::endl;
-            return false;
-        }
-        
-        // Create fragment shader
-        unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-        glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-        glCompileShader(fragmentShader);
-        
-        // Check for shader compile errors
-        glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-        if (!success) {
-            glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-            std::cerr << "Fragment shader compilation failed: " << infoLog << std::endl;
-            return false;
-        }
-        
-        // Create shader program
-        _shaderProgram = glCreateProgram();
-        glAttachShader(_shaderProgram, vertexShader);
-        glAttachShader(_shaderProgram, fragmentShader);
-        glLinkProgram(_shaderProgram);
-        
-        // Check for linking errors
-        glGetProgramiv(_shaderProgram, GL_LINK_STATUS, &success);
-        if (!success) {
-            glGetProgramInfoLog(_shaderProgram, 512, NULL, infoLog);
-            std::cerr << "Shader program linking failed: " << infoLog << std::endl;
-            return false;
-        }
-        
-        // Clean up individual shaders
-        glDeleteShader(vertexShader);
-        glDeleteShader(fragmentShader);
-        
-        return true;
-    }
-
-    // Create OpenGL buffers
-    bool AdvancedFacePainter::createBuffers() {
-        // Create vertex array object
-        glGenVertexArrays(1, &_vertexArrayObject);
-        glBindVertexArray(_vertexArrayObject);
-        
-        // Create vertex buffer object
-        glGenBuffers(1, &_vertexBufferObject);
-        glBindBuffer(GL_ARRAY_BUFFER, _vertexBufferObject);
-        
-        // Define quad vertices (position + texture coordinates)
-        float vertices[] = {
-            // positions        // texture coords
-            -1.0f, -1.0f, 0.0f,  0.0f, 0.0f,
-             1.0f, -1.0f, 0.0f,  1.0f, 0.0f,
-             1.0f,  1.0f, 0.0f,  1.0f, 1.0f,
-            -1.0f,  1.0f, 0.0f,  0.0f, 1.0f
-        };
-        
-        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-        
-        // Set vertex attributes
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-        glEnableVertexAttribArray(1);
-        
-        // Create texture buffer
-        glGenTextures(1, &_textureBuffer);
-        glBindTexture(GL_TEXTURE_2D, _textureBuffer);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        
-        return true;
-    }
-
-    // Setup shader uniforms
-    void AdvancedFacePainter::setupShaders() {
-        glUseProgram(_shaderProgram);
-        
-        // Get uniform locations
-        _uniformProjection = glGetUniformLocation(_shaderProgram, "projection");
-        _uniformModelView = glGetUniformLocation(_shaderProgram, "modelView");
-        _uniformGradientType = glGetUniformLocation(_shaderProgram, "gradientType");
-        _uniformGradientColors = glGetUniformLocation(_shaderProgram, "startColor");
-        _uniformGradientParams = glGetUniformLocation(_shaderProgram, "startPoint");
-        _uniformSmudgeType = glGetUniformLocation(_shaderProgram, "smudgeType");
-        _uniformSmudgeParams = glGetUniformLocation(_shaderProgram, "smudgeStrength");
-    }
+    void AdvancedFacePainter::cleanup() {}
 
     // Paint face with gradient
     PaintResult AdvancedFacePainter::paintFaceWithGradient(Object* obj, int faceIndex, const GradientSettings& settings) {
@@ -497,40 +362,6 @@ namespace AdvancedFacePaint {
     void AdvancedFacePainter::updateTexture(Object* obj, int faceIndex, const glm::vec2& uv, const glm::vec4& color) {
         // For now, do nothing
         // In a full implementation, this would update the actual texture
-    }
-
-    // Render gradient preview
-    void AdvancedFacePainter::renderGradientPreview(const GradientSettings& settings) {
-        if (!_shaderProgram) return;
-        
-        glUseProgram(_shaderProgram);
-        glBindVertexArray(_vertexArrayObject);
-        
-        // Set gradient uniforms
-        glUniform1i(_uniformGradientType, static_cast<int>(settings.type));
-        glUniform4f(_uniformGradientColors, 
-                    settings.startColor.r, settings.startColor.g, 
-                    settings.startColor.b, settings.startColor.a);
-        glUniform2f(_uniformGradientParams, 
-                    settings.startPoint.x, settings.startPoint.y);
-        
-        // Render quad
-        glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-    }
-
-    // Render smudge preview
-    void AdvancedFacePainter::renderSmudgePreview(const SmudgeSettings& settings) {
-        if (!_shaderProgram) return;
-        
-        glUseProgram(_shaderProgram);
-        glBindVertexArray(_vertexArrayObject);
-        
-        // Set smudge uniforms
-        glUniform1i(_uniformSmudgeType, static_cast<int>(settings.type));
-        glUniform1f(_uniformSmudgeParams, settings.strength);
-        
-        // Render quad
-        glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
     }
 
     // Initialize global advanced painter

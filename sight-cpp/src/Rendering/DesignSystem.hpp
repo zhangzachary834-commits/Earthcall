@@ -164,14 +164,22 @@ private:
     int _nextShapeId = 1;
     
     // Shape rendering helper methods
-    void renderRectangle(float width, float height, float cornerRadius) const;
-    void renderEllipse(float width, float height) const;
-    void renderLine(float width, float height) const;
-    void renderPolygon(float width, float height, int sides) const;
-    void renderStar(float width, float height, float points) const;
-    void renderHeart(float width, float height) const;
-    void renderArrow(float width, float height) const;
-    void renderCustomShape(const std::vector<glm::vec2>& points) const;
+    // A shape expressed as the primitive loops fixed-function GL would have
+    // emitted: each entry is one GL_QUADS quad or one GL_POLYGON ring, in the
+    // shape's local space. Filling fans each loop; stroking draws each loop's
+    // edges — including the internal ones, which is exactly what
+    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE) used to produce.
+    using ShapeLoops = std::vector<std::vector<glm::vec2>>;
+
+    static ShapeLoops buildRectangle(float width, float height, float cornerRadius);
+    static ShapeLoops buildEllipse(float width, float height);
+    static ShapeLoops buildLine(float width, float height);
+    static ShapeLoops buildPolygon(float width, float height, int sides);
+    static ShapeLoops buildStar(float width, float height, float points);
+    static ShapeLoops buildHeart(float width, float height);
+    static ShapeLoops buildArrow(float width, float height);
+    static ShapeLoops buildCustomShape(const std::vector<glm::vec2>& points);
+    static ShapeLoops buildShape(const ShapeElement& element);
     void renderShapeElement(const ShapeElement& element, float layerOpacity) const;
 };
 

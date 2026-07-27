@@ -1,0 +1,7 @@
+
+# wgpu-native: we static-link the .a (committed); the .dylib is unused.
+third_party/wgpu/lib/libwgpu_native.dylib
+webgpu_smoke
+webgpu_mesh
+webgpu_renderer
+webgpu_window

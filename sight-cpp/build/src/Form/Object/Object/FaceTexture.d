@@ -1,8 +1,7 @@
 build/src/Form/Object/Object/FaceTexture.o: \
   src/Form/Object/Object/FaceTexture.cpp \
-  src/Form/Object/Object/FaceTexture.hpp \
-  /opt/homebrew/Cellar/glfw/3.4/include/GLFW/glfw3.h \
-  /opt/homebrew/include/glm/glm.hpp \
+  src/Form/Object/Object/FaceTexture.hpp src/Rendering/Renderer.hpp \
+  src/Rendering/RenderMaterial.hpp /opt/homebrew/include/glm/glm.hpp \
   /opt/homebrew/include/glm/detail/_fixes.hpp \
   /opt/homebrew/include/glm/detail/setup.hpp \
   /opt/homebrew/include/glm/detail/../simd/platform.h \
@@ -151,11 +150,14 @@ build/src/Form/Object/Object/FaceTexture.o: \
   /opt/homebrew/include/glm/matrix.hpp \
   /opt/homebrew/include/glm/vector_relational.hpp \
   /opt/homebrew/include/glm/integer.hpp \
-  /opt/homebrew/include/glm/detail/func_integer.inl
+  /opt/homebrew/include/glm/detail/func_integer.inl \
+  src/Form/Object/Geometry/SmoothSurface.hpp
 
 src/Form/Object/Object/FaceTexture.hpp:
 
-/opt/homebrew/Cellar/glfw/3.4/include/GLFW/glfw3.h:
+src/Rendering/Renderer.hpp:
+
+src/Rendering/RenderMaterial.hpp:
 
 /opt/homebrew/include/glm/glm.hpp:
 
@@ -456,3 +458,5 @@ src/Form/Object/Object/FaceTexture.hpp:
 /opt/homebrew/include/glm/integer.hpp:
 
 /opt/homebrew/include/glm/detail/func_integer.inl:
+
+src/Form/Object/Geometry/SmoothSurface.hpp:

@@ -1,7 +1,8 @@
 #include "FaceTexture.hpp"
 
+#include "Rendering/Renderer.hpp"
+
 #include <algorithm>
-#include <OpenGL/glu.h>
 
 void FaceTexture::create(uint32_t initColorRGBA) {
     pixels.resize(size * size * 4);
@@ -17,7 +18,6 @@ void FaceTexture::create(uint32_t initColorRGBA) {
 
     addLayer();
 
-    if (id == 0) glGenTextures(1, &id);
     uploadToGPU();
 }
 
@@ -58,21 +58,12 @@ void FaceTexture::setBlendMode(int layerIndex, int mode) {
 }
 
 void FaceTexture::uploadToGPU() const {
-    glBindTexture(GL_TEXTURE_2D, id);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size, size, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
-
-    using GenerateMipmapFunc = void (*)(GLenum);
-    auto generateMipmap = reinterpret_cast<GenerateMipmapFunc>(glfwGetProcAddress("glGenerateMipmap"));
-    if (generateMipmap) {
-        generateMipmap(GL_TEXTURE_2D);
-    } else {
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    }
+    // The backend owns the texture object and the sampler/mipmap policy; this only
+    // says "these pixels are the paint now". A backend that reads the CPU pixels
+    // straight off RenderMaterial::albedoPixels returns 0 and keeps no handle.
+    id = currentRenderer().uploadTexture(id, pixels.data(),
+                                         static_cast<uint32_t>(size),
+                                         static_cast<uint32_t>(size));
 }
 
 void FaceTexture::updateWholeGPU() const {

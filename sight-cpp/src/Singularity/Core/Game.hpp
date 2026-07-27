@@ -28,10 +28,6 @@
 #include "RotationSettings.hpp"
 #include "SaveLoadState.hpp"
 
-#ifdef USE_GL3_RENDERER
-#include "Rendering/GL/GL3Renderer.hpp"
-#endif
-
 #include "json.hpp"
 #include <array>
 #include <memory>
@@ -373,11 +369,6 @@ private:
     // Window handle (cached for input & dimensions)
     GLFWwindow* _window = nullptr;
 
-#ifdef USE_GL3_RENDERER
-    GL3Renderer _gl3Renderer;
-    bool _gl3Initialized = false;
-#endif
-
     // Subsystems / components --------------------------------------------
     CameraState         _camera;
     BrushSettings       _brush;
@@ -405,9 +396,7 @@ private:
     // Accumulated seconds since the world began — the world clock laws read
     // via the reserved "time" paths (set on Universe each frame in update()).
     double        _worldTime = 0.0;
-    Soul          _playerSoul {"Player"};
-    Body          _playerBody = Body::createBasicAvatar("Voxel");
-    Person        _player {_playerSoul, _playerBody};
+    Person        _player {Soul{"Player"}, Body::createBasicAvatar("Voxel")};
     AvatarManager _avatarManager;
     KeyboardHandler _keyboardHandler;
     MouseHandler  _mouseHandler;
@@ -420,6 +409,7 @@ private:
     bool _showAvatarDemo    = false;
     bool _showKeymapWindow  = false;
     bool _showToolbar       = true;
+    bool _showDebugCoordinates = false;
 
     // Animation
     float _cubeAngle = 0.0f;

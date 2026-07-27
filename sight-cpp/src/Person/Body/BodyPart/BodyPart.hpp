@@ -79,6 +79,8 @@ class BodyPart : public Object, public Formation {
                          const glm::mat4& localOffset = glm::mat4(1.0f));
     Object* addSubObject(Object::ShapeKind kind,
                          const glm::mat4& localOffset = glm::mat4(1.0f));
+    Object* addSubObject(std::unique_ptr<Object> obj,
+                         const glm::mat4& localOffset = glm::mat4(1.0f));
     void removeSubObject(size_t index);
     size_t getSubObjectCount() const { return _subObjects.size(); }
     Object* getSubObject(size_t index);

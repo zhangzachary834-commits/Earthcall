@@ -5,9 +5,12 @@
 #include "Contour.hpp"
 #include "AngleTools.hpp"
 #include "Automation/AutomationEvents.hpp"
+#include "Rendering/Renderer.hpp"
+#include "Rendering/RenderMaterial.hpp"
 #include <GLFW/glfw3.h>
-#include <OpenGL/glu.h>
 #include <glm/gtc/quaternion.hpp>
+#include <glm/gtc/matrix_transform.hpp> // glm::translate / glm::rotate for cap placement
+#include <vector>
 #include <algorithm>
 #include <cstring>
 #include <cstdlib> // for rand()
@@ -27,181 +30,218 @@
 // Modified drawCube to bind per-face texture
 // ---------------------------------------------------------------------
 
-void Object::drawCube() const {
-    static const struct { GLfloat nx, ny, nz; GLfloat vx[4][3]; } faceData[6] = {
-        { 1,0,0,  { {0.5,-0.5,-0.5}, {0.5,0.5,-0.5}, {0.5,0.5,0.5}, {0.5,-0.5,0.5} } }, // +X
-        {-1,0,0,  { {-0.5,-0.5,-0.5}, {-0.5,-0.5,0.5}, {-0.5,0.5,0.5}, {-0.5,0.5,-0.5} } }, // -X
-        { 0,1,0,  { {-0.5,0.5,-0.5}, {-0.5,0.5,0.5}, {0.5,0.5,0.5}, {0.5,0.5,-0.5} } }, // +Y
-        { 0,-1,0, { {-0.5,-0.5,-0.5}, {0.5,-0.5,-0.5}, {0.5,-0.5,0.5}, {-0.5,-0.5,0.5} } }, // -Y
-        { 0,0,1,  { {-0.5,-0.5,0.5}, {0.5,-0.5,0.5}, {0.5,0.5,0.5}, {-0.5,0.5,0.5} } }, // +Z
-        { 0,0,-1, { {-0.5,-0.5,-0.5}, {-0.5,0.5,-0.5}, {0.5,0.5,-0.5}, {0.5,-0.5,-0.5} } }  // -Z
-    };
+// --- Legacy primitive meshes (Milestone 2: behind the renderer boundary) ----
+// The legacy GeometryType::Sphere/Cylinder/Cone/Cube paths used to emit immediate-
+// mode GL here. They are now built as TessMeshes and drawn through the Renderer
+// like every other surface. These are UNIT shapes (radius 0.5, height 1) — the
+// object's size comes from its transform — so each mesh is constant and built
+// exactly once, then shared. The vertex math (axis +Z, outward normals, GLU-style
+// texture coords) is preserved from the gluSphere/gluCylinder/gluDisk conventions.
+//
+// Winding note: there is no backface culling anywhere in the app, so triangulating
+// the old quad strips in any consistent order is safe — per-vertex normals carry
+// the lighting, and they are preserved exactly.
+namespace {
 
-    glEnable(GL_TEXTURE_2D);
-    glColor3f(1.0f,1.0f,1.0f);
-    for (int f = 0; f < 6 && f < static_cast<int>(faceTextures.size()); ++f) {
-        const FaceTexture& tex = faceTextures[f];
-        glBindTexture(GL_TEXTURE_2D, tex.id);
-    glBegin(GL_QUADS);
-        glNormal3f(faceData[f].nx, faceData[f].ny, faceData[f].nz);
-        glTexCoord2f(0,0); glVertex3fv(faceData[f].vx[0]);
-        glTexCoord2f(1,0); glVertex3fv(faceData[f].vx[1]);
-        glTexCoord2f(1,1); glVertex3fv(faceData[f].vx[2]);
-        glTexCoord2f(0,1); glVertex3fv(faceData[f].vx[3]);
-    glEnd();
+geom::TessVertex vtx(const glm::vec3& p, const glm::vec3& n, const glm::vec2& uv) {
+    geom::TessVertex v; v.pos = p; v.normal = n; v.uv = uv; return v;
+}
+
+// A row of quad-strip vertices [a0,b0,a1,b1,...] → triangles, appended to m.
+void appendQuadStrip(geom::TessMesh& m, const std::vector<geom::TessVertex>& s) {
+    for (size_t i = 0; i + 3 < s.size(); i += 2) {
+        m.tris.push_back(s[i]);   m.tris.push_back(s[i + 1]); m.tris.push_back(s[i + 2]);
+        m.tris.push_back(s[i + 1]); m.tris.push_back(s[i + 3]); m.tris.push_back(s[i + 2]);
     }
-    glDisable(GL_TEXTURE_2D);
 }
 
-// Helper to draw a smooth shaded sphere
-static void drawSpherePrimitive() {
-    GLUquadric* quad = gluNewQuadric();
-    gluQuadricNormals(quad, GLU_SMOOTH);
-    gluQuadricTexture(quad, GL_TRUE);
-    gluSphere(quad, 0.5f, 16, 16);
-    gluDeleteQuadric(quad);
+// Bake a transform into a copy of a mesh (positions by xf, normals by its inverse-
+// transpose). Lets the cylinder/cone caps be positioned once instead of via the GL
+// matrix stack at draw time.
+geom::TessMesh transformedMesh(const geom::TessMesh& src, const glm::mat4& xf) {
+    glm::mat3 nrm = glm::mat3(glm::transpose(glm::inverse(xf)));
+    geom::TessMesh m = src;
+    for (auto& v : m.tris) {
+        v.pos    = glm::vec3(xf * glm::vec4(v.pos, 1.0f));
+        v.normal = glm::normalize(nrm * v.normal);
+    }
+    return m;
 }
 
-// Helper to draw a cylinder primitive of height 1 (centered at origin)
-static void drawCylinderPrimitive(float topRadius) {
-    GLUquadric* quad = gluNewQuadric();
-    gluQuadricNormals(quad, GLU_SMOOTH);
-    gluQuadricTexture(quad, GL_TRUE);
-    gluCylinder(quad, 0.5f, topRadius, 1.0f, 16, 4);
-    gluDeleteQuadric(quad);
+// gluSphere(radius, slices, stacks): lat/long sphere about the Z axis.
+geom::TessMesh buildSphereMesh(float radius, int slices, int stacks) {
+    geom::TessMesh m;
+    std::vector<geom::TessVertex> row;
+    for (int i = 0; i < stacks; ++i) {
+        float phi0 = M_PI * float(i) / stacks, phi1 = M_PI * float(i + 1) / stacks;
+        float z0 = radius * cosf(phi0), r0 = radius * sinf(phi0);
+        float z1 = radius * cosf(phi1), r1 = radius * sinf(phi1);
+        float t0 = 1.0f - float(i) / stacks, t1 = 1.0f - float(i + 1) / stacks;
+        row.clear();
+        for (int j = 0; j <= slices; ++j) {
+            float theta = 2.0f * M_PI * float(j) / slices, ct = cosf(theta), st = sinf(theta);
+            float s = float(j) / slices;
+            row.push_back(vtx({r0 * ct, r0 * st, z0}, {r0 * ct / radius, r0 * st / radius, z0 / radius}, {s, t0}));
+            row.push_back(vtx({r1 * ct, r1 * st, z1}, {r1 * ct / radius, r1 * st / radius, z1 / radius}, {s, t1}));
+        }
+        appendQuadStrip(m, row);
+    }
+    return m;
+}
+
+// gluCylinder(base, top, height, slices, stacks): open side surface along +Z from
+// z=0 (radius base) to z=height (radius top). top=0 gives a cone.
+geom::TessMesh buildCylinderSideMesh(float baseR, float topR, float height, int slices, int stacks) {
+    float dr = topR - baseR;
+    float invLen = 1.0f / sqrtf(height * height + dr * dr);
+    float nr = height * invLen, nz = -dr * invLen;
+    geom::TessMesh m;
+    std::vector<geom::TessVertex> row;
+    for (int k = 0; k < stacks; ++k) {
+        float f0 = float(k) / stacks, f1 = float(k + 1) / stacks;
+        float z0 = height * f0, r0 = baseR + dr * f0;
+        float z1 = height * f1, r1 = baseR + dr * f1;
+        row.clear();
+        for (int j = 0; j <= slices; ++j) {
+            float theta = 2.0f * M_PI * float(j) / slices, ct = cosf(theta), st = sinf(theta);
+            float s = float(j) / slices;
+            row.push_back(vtx({r0 * ct, r0 * st, z0}, {nr * ct, nr * st, nz}, {s, f0}));
+            row.push_back(vtx({r1 * ct, r1 * st, z1}, {nr * ct, nr * st, nz}, {s, f1}));
+        }
+        appendQuadStrip(m, row);
+    }
+    return m;
+}
+
+// gluDisk(inner, outer, slices, loops): flat disk in the z=0 plane, +Z normal.
+geom::TessMesh buildDiskMesh(float innerR, float outerR, int slices, int loops) {
+    geom::TessMesh m;
+    std::vector<geom::TessVertex> row;
+    for (int l = 0; l < loops; ++l) {
+        float r0 = innerR + (outerR - innerR) * float(l) / loops;
+        float r1 = innerR + (outerR - innerR) * float(l + 1) / loops;
+        row.clear();
+        for (int j = 0; j <= slices; ++j) {
+            float theta = 2.0f * M_PI * float(j) / slices, ct = cosf(theta), st = sinf(theta);
+            row.push_back(vtx({r0 * ct, r0 * st, 0.0f}, {0, 0, 1},
+                              {r0 * ct / (2 * outerR) + 0.5f, r0 * st / (2 * outerR) + 0.5f}));
+            row.push_back(vtx({r1 * ct, r1 * st, 0.0f}, {0, 0, 1},
+                              {r1 * ct / (2 * outerR) + 0.5f, r1 * st / (2 * outerR) + 0.5f}));
+        }
+        appendQuadStrip(m, row);
+    }
+    return m;
+}
+
+// One cube face (2 triangles) with an outward normal and full [0,1] UVs.
+geom::TessMesh buildCubeFaceMesh(int f) {
+    static const struct { float nx, ny, nz; float vx[4][3]; } faceData[6] = {
+        { 1,0,0,  { {0.5f,-0.5f,-0.5f}, {0.5f,0.5f,-0.5f}, {0.5f,0.5f,0.5f}, {0.5f,-0.5f,0.5f} } },
+        {-1,0,0,  { {-0.5f,-0.5f,-0.5f}, {-0.5f,-0.5f,0.5f}, {-0.5f,0.5f,0.5f}, {-0.5f,0.5f,-0.5f} } },
+        { 0,1,0,  { {-0.5f,0.5f,-0.5f}, {-0.5f,0.5f,0.5f}, {0.5f,0.5f,0.5f}, {0.5f,0.5f,-0.5f} } },
+        { 0,-1,0, { {-0.5f,-0.5f,-0.5f}, {0.5f,-0.5f,-0.5f}, {0.5f,-0.5f,0.5f}, {-0.5f,-0.5f,0.5f} } },
+        { 0,0,1,  { {-0.5f,-0.5f,0.5f}, {0.5f,-0.5f,0.5f}, {0.5f,0.5f,0.5f}, {-0.5f,0.5f,0.5f} } },
+        { 0,0,-1, { {-0.5f,-0.5f,-0.5f}, {-0.5f,0.5f,-0.5f}, {0.5f,0.5f,-0.5f}, {0.5f,-0.5f,-0.5f} } }
+    };
+    const auto& fd = faceData[f];
+    glm::vec3 n(fd.nx, fd.ny, fd.nz);
+    geom::TessVertex a = vtx({fd.vx[0][0], fd.vx[0][1], fd.vx[0][2]}, n, {0, 0});
+    geom::TessVertex b = vtx({fd.vx[1][0], fd.vx[1][1], fd.vx[1][2]}, n, {1, 0});
+    geom::TessVertex c = vtx({fd.vx[2][0], fd.vx[2][1], fd.vx[2][2]}, n, {1, 1});
+    geom::TessVertex d = vtx({fd.vx[3][0], fd.vx[3][1], fd.vx[3][2]}, n, {0, 1});
+    geom::TessMesh m;
+    m.tris = {a, b, c, a, c, d};
+    return m;
+}
+
+// Cached unit meshes, built on first use (pure CPU — no GL context needed). The
+// cylinder/cone are centred on Z in [-0.5, 0.5] to match the old draw transforms.
+const geom::TessMesh& cubeFace(int f)          { static geom::TessMesh m[6]; static bool init=false; if(!init){for(int i=0;i<6;++i)m[i]=buildCubeFaceMesh(i);init=true;} return m[f]; }
+const geom::TessMesh& sphereUnitMesh()         { static geom::TessMesh m = buildSphereMesh(0.5f, 16, 16); return m; }
+const geom::TessMesh& cylinderSideMesh()       { static geom::TessMesh m = transformedMesh(buildCylinderSideMesh(0.5f, 0.5f, 1.0f, 16, 4), glm::translate(glm::mat4(1.0f), {0,0,-0.5f})); return m; }
+const geom::TessMesh& coneSideMesh()           { static geom::TessMesh m = transformedMesh(buildCylinderSideMesh(0.5f, 0.0f, 1.0f, 16, 4), glm::translate(glm::mat4(1.0f), {0,0,-0.5f})); return m; }
+// Bottom/base cap: at local z=-0.5, flipped to face -Z (as the old glRotatef 180 did).
+const geom::TessMesh& capBottomMesh()          { static geom::TessMesh m = transformedMesh(buildDiskMesh(0.0f, 0.5f, 32, 1), glm::translate(glm::mat4(1.0f), {0,0,-0.5f}) * glm::rotate(glm::mat4(1.0f), float(M_PI), {1,0,0})); return m; }
+// Top cap: at local z=+0.5, facing +Z.
+const geom::TessMesh& capTopMesh()             { static geom::TessMesh m = transformedMesh(buildDiskMesh(0.0f, 0.5f, 32, 1), glm::translate(glm::mat4(1.0f), {0,0,0.5f})); return m; }
+
+} // namespace
+
+void Object::drawCube() const {
+    // Each of the 6 faces carries its own painted texture, so each is a separate
+    // drawMesh with that face's material/texture — like drawComplexModel's patches.
+    for (int f = 0; f < 6; ++f)
+        currentRenderer().drawMesh(cubeFace(f), resolveRenderMaterial(_materialId, faceTextureId(f)));
 }
 
 
 // Render a triangle-soup tessellation in immediate mode (legacy GL path).
-static void drawTessMesh(const geom::TessMesh& m) {
-    if (m.tris.empty()) return;
-    // Client-side vertex arrays: one draw call instead of ~3 GL calls per vertex.
-    // TessVertex is interleaved {pos(3), normal(3), uv(2)}, so the strided
-    // pointers all walk the same buffer. This is the difference between a handful
-    // of GL calls and hundreds of thousands per frame for marching-tet / patch
-    // meshes — the cause of the multi-object lag.
-    const geom::TessVertex* base = m.tris.data();
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_NORMAL_ARRAY);
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    glVertexPointer(3, GL_FLOAT, sizeof(geom::TessVertex), &base->pos);
-    glNormalPointer(GL_FLOAT, sizeof(geom::TessVertex), &base->normal);
-    glTexCoordPointer(2, GL_FLOAT, sizeof(geom::TessVertex), &base->uv);
-    glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(m.tris.size()));
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-    glDisableClientState(GL_NORMAL_ARRAY);
-    glDisableClientState(GL_VERTEX_ARRAY);
+// The four topology draw paths now go through the Renderer boundary
+// (OPENGL_MIGRATION_PLAN.md, Milestone 2): resolve this object's Material being
+// into a RenderMaterial (stamped with the per-face albedo texture) and hand the
+// cached mesh to currentRenderer().drawMesh. No raw GL here anymore — the backend
+// (OpenGLRenderer today, WebGpuRenderer at M5) owns it. faceTextures is the paint;
+// the material is the tint + light response; drawMesh composes them.
+
+// Per-face albedo texture id, or 0 when this object has none.
+unsigned int Object::faceTextureId(size_t face) const {
+    return face < faceTextures.size() ? faceTextures[face].id : 0u;
 }
 
 void Object::drawSmoothModel() const {
-    glEnable(GL_TEXTURE_2D);
-    if (!faceTextures.empty()) glBindTexture(GL_TEXTURE_2D, faceTextures[0].id);
-    glColor3f(1.0f, 1.0f, 1.0f);
-    drawTessMesh(_smoothMesh); // cached: rebuilt on change, not on draw
-    glDisable(GL_TEXTURE_2D);
+    currentRenderer().drawMesh(_smoothMesh, resolveRenderMaterial(_materialId, faceTextureId(0)));
 }
 
 void Object::drawComplexModel() const {
-    glEnable(GL_TEXTURE_2D);
-    glColor3f(1.0f, 1.0f, 1.0f);
-    // Each patch is a real face — draw it with its own face texture so the
-    // round side and the flat caps can be painted independently.
-    for (size_t i = 0; i < _complexMeshes.size(); ++i) {
-        if (i < faceTextures.size()) {
-            glBindTexture(GL_TEXTURE_2D, faceTextures[i].id);
-        }
-        drawTessMesh(_complexMeshes[i]); // cached: rebuilt on change, not on draw
-    }
-    glDisable(GL_TEXTURE_2D);
+    // Each patch is a real face, drawn with its own face texture so the round side
+    // and the flat caps can be painted independently.
+    for (size_t i = 0; i < _complexMeshes.size(); ++i)
+        currentRenderer().drawMesh(_complexMeshes[i],
+                                   resolveRenderMaterial(_materialId, faceTextureId(i)));
 }
 
 void Object::drawFieldModel() const {
-    glEnable(GL_TEXTURE_2D);
-    if (!faceTextures.empty()) glBindTexture(GL_TEXTURE_2D, faceTextures[0].id);
-    glColor3f(1.0f, 1.0f, 1.0f);
-    drawTessMesh(_fieldMesh); // cached: SDF tessellation is expensive, rebuilt on change
-    glDisable(GL_TEXTURE_2D);
+    currentRenderer().drawMesh(_fieldMesh, resolveRenderMaterial(_materialId, faceTextureId(0)));
+}
+
+void Object::drawPatchModel() const {
+    // A Bezier patch is an OPEN surface, not a closed volume — its back is visible.
+    // doubleSided tells the renderer to light both faces (GL two-sided model today,
+    // cull-none in WebGPU), so the underside isn't dark.
+    RenderMaterial mat = resolveRenderMaterial(_materialId, faceTextureId(0));
+    mat.doubleSided = true;
+    currentRenderer().drawMesh(_patchMesh, mat);
 }
 
 void Object::drawObject() const {
     if (_hasField)   { drawFieldModel();   return; }
     if (_hasComplex) { drawComplexModel(); return; }
     if (_hasSmooth)  { drawSmoothModel();  return; }
+    if (_hasPatch)   { drawPatchModel();   return; }
     switch (geometryType) {
         case GeometryType::Cube:
             drawCube();
             break;
         case GeometryType::Sphere:
-        {
-            glEnable(GL_TEXTURE_2D);
-            if (!faceTextures.empty()) {
-                glBindTexture(GL_TEXTURE_2D, faceTextures[0].id);
-            }
-            glColor3f(1.0f, 1.0f, 1.0f);
-            drawSpherePrimitive();
-            glDisable(GL_TEXTURE_2D);
+            currentRenderer().drawMesh(sphereUnitMesh(),
+                resolveRenderMaterial(_materialId, faceTextureId(0)));
             break;
-        }
         case GeometryType::Cylinder:
-        {
-            glEnable(GL_TEXTURE_2D);
-            glColor3f(1.0f, 1.0f, 1.0f);
-            glPushMatrix();
-            // Center cylinder along Z in [-0.5, 0.5]
-            glTranslatef(0.0f, 0.0f, -0.5f);
-
-            // Draw side
-            if (faceTextures.size() >= 1) glBindTexture(GL_TEXTURE_2D, faceTextures[0].id);
-            drawCylinderPrimitive(0.5f);
-
-            // Draw caps with second face texture if available
-            GLUquadric* disk = gluNewQuadric();
-            gluQuadricTexture(disk, GL_TRUE);
-            if (faceTextures.size() >= 2) glBindTexture(GL_TEXTURE_2D, faceTextures[1].id);
-            // Bottom cap at z = 0 (world z = -0.5) - outward normal should be -Z
-            glPushMatrix();
-            glRotatef(180.0f, 1.0f, 0.0f, 0.0f); // flip to face -Z
-            gluDisk(disk, 0.0f, 0.5f, 32, 1);
-            glPopMatrix();
-            // Top cap at z = 1 (world z = +0.5) - outward normal +Z
-            glPushMatrix();
-            glTranslatef(0.0f, 0.0f, 1.0f);
-            gluDisk(disk, 0.0f, 0.5f, 32, 1);
-            glPopMatrix();
-            gluDeleteQuadric(disk);
-
-            glPopMatrix();
-            glDisable(GL_TEXTURE_2D);
+            // Side (face 0) then both caps (face 1) — geometry pre-centred on Z.
+            currentRenderer().drawMesh(cylinderSideMesh(),
+                resolveRenderMaterial(_materialId, faceTextureId(0)));
+            currentRenderer().drawMesh(capBottomMesh(),
+                resolveRenderMaterial(_materialId, faceTextureId(1)));
+            currentRenderer().drawMesh(capTopMesh(),
+                resolveRenderMaterial(_materialId, faceTextureId(1)));
             break;
-        }
         case GeometryType::Cone:
-        {
-            glEnable(GL_TEXTURE_2D);
-            glColor3f(1.0f, 1.0f, 1.0f);
-            glPushMatrix();
-            // Center cone along Z in [-0.5, 0.5] (base at -0.5, apex at +0.5)
-            glTranslatef(0.0f, 0.0f, -0.5f);
-
-            // Draw side
-            if (faceTextures.size() >= 1) glBindTexture(GL_TEXTURE_2D, faceTextures[0].id);
-            drawCylinderPrimitive(0.0f); // top radius 0 = cone
-
-            // Draw base disk with second face texture if available
-            if (faceTextures.size() >= 2) glBindTexture(GL_TEXTURE_2D, faceTextures[1].id);
-            GLUquadric* disk = gluNewQuadric();
-            gluQuadricTexture(disk, GL_TRUE);
-            glPushMatrix();
-            // Base is at local z=0 (world z = -0.5). Outward normal should be -Z → flip the disk.
-            // This fixes the cap appearing on the wrong side.
-            glRotatef(180.0f, 1.0f, 0.0f, 0.0f);
-            gluDisk(disk, 0.0f, 0.5f, 32, 1);
-            glPopMatrix();
-            gluDeleteQuadric(disk);
-
-            glPopMatrix();
-            glDisable(GL_TEXTURE_2D);
+            // Side (face 0) then base cap (face 1).
+            currentRenderer().drawMesh(coneSideMesh(),
+                resolveRenderMaterial(_materialId, faceTextureId(0)));
+            currentRenderer().drawMesh(capBottomMesh(),
+                resolveRenderMaterial(_materialId, faceTextureId(1)));
             break;
-        }
         case GeometryType::Polyhedron:
             drawPolyhedron();
             break;
@@ -218,46 +258,20 @@ void Object::drawHighlightOutline() const {
     // Choose color: yellow for selection, red for law-candidate
     glm::vec3 color = sel ? glm::vec3(1.0f, 0.9f, 0.2f) : glm::vec3(1.0f, 0.2f, 0.2f);
 
-    // Draw 3-4 inflated shells of collision AABB as wireframes for a soft glow effect
-    // Tailored to the object shape via its collisionZone corners (AABB). For more complex shapes, this can be extended.
-    // IMPORTANT: collisionZone.corners are stored in world space, but this function is typically called
-    // after the object's model transform has already been applied via glMultMatrixf(...).
-    // If we draw world-space corners here, they get transformed again (double-transform), causing the outline
-    // to appear offset from the object. Convert to local space first.
-    glPushAttrib(GL_ENABLE_BIT | GL_LINE_BIT | GL_COLOR_BUFFER_BIT | GL_CURRENT_BIT);
-    glDisable(GL_LIGHTING);
-    glDisable(GL_TEXTURE_2D);
-    glEnable(GL_LINE_SMOOTH);
-    glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
-    glEnable(GL_BLEND);
-
     // Trace the ACTUAL shape (local space — the model transform is already applied
     // by the caller), not an AABB. Flat-faced shapes get a crisp edge wireframe;
     // curved / field shapes get a translucent additive glow shell hugging them.
-    auto drawWireframe = [&](const std::vector<std::pair<glm::vec3, glm::vec3>>& edges) {
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        for (int p = 0; p < 2; ++p) {
-            glColor4f(color.r, color.g, color.b, 0.65f - 0.3f * p);
-            glLineWidth(2.0f + 2.5f * p);
-            glBegin(GL_LINES);
-            for (const auto& e : edges) {
-                glVertex3f(e.first.x, e.first.y, e.first.z);
-                glVertex3f(e.second.x, e.second.y, e.second.z);
-            }
-            glEnd();
-        }
+    // Two passes each: the outer pass is fainter and wider/larger for a soft glow.
+    // All GL now lives in the renderer's drawLines/drawOverlay; here we only decide
+    // the shape, colour, and pass falloff.
+    Renderer& r = currentRenderer();
+    auto wire = [&](const std::vector<std::pair<glm::vec3, glm::vec3>>& edges) {
+        for (int p = 0; p < 2; ++p)
+            r.drawLines(edges, glm::vec4(color, 0.65f - 0.3f * p), 2.0f + 2.5f * p, Blend::Alpha);
     };
-    auto drawShell = [&](const geom::TessMesh& m) {
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE); // additive glow
-        glDepthMask(GL_FALSE);
-        for (int p = 0; p < 2; ++p) {
-            float s = 1.0f + 0.02f * (p + 1);
-            glColor4f(color.r, color.g, color.b, 0.16f - 0.06f * p);
-            glBegin(GL_TRIANGLES);
-            for (const auto& v : m.tris) { glm::vec3 q = v.pos * s; glVertex3f(q.x, q.y, q.z); }
-            glEnd();
-        }
-        glDepthMask(GL_TRUE);
+    auto shell = [&](const geom::TessMesh& m) {
+        for (int p = 0; p < 2; ++p)
+            r.drawOverlay(m, glm::vec4(color, 0.16f - 0.06f * p), 1.0f + 0.02f * (p + 1), true);
     };
 
     if (geometryType == GeometryType::Polyhedron && !polyhedronData.vertices.empty()) {
@@ -266,15 +280,17 @@ void Object::drawHighlightOutline() const {
             for (size_t k = 0; k < face.size(); ++k)
                 edges.emplace_back(polyhedronData.vertices[face[k]],
                                    polyhedronData.vertices[face[(k + 1) % face.size()]]);
-        drawWireframe(edges);
+        wire(edges);
     } else if (_hasField) {
-        drawShell(_fieldMesh);
+        shell(_fieldMesh);
     } else if (_hasSmooth) {
-        drawShell(_smoothMesh);
+        shell(_smoothMesh);
+    } else if (_hasPatch) {
+        shell(_patchMesh);
     } else if (_hasComplex) {
         // Additive blending sums the same triangles regardless of grouping, so
         // shelling per patch matches the old single merged mesh.
-        for (const auto& pm : _complexMeshes) drawShell(pm);
+        for (const auto& pm : _complexMeshes) shell(pm);
     } else {
         // Legacy unit cube wireframe.
         const float h = 0.5f;
@@ -287,31 +303,23 @@ void Object::drawHighlightOutline() const {
             {v[4],v[5]},{v[5],v[6]},{v[6],v[7]},{v[7],v[4]},
             {v[0],v[4]},{v[1],v[5]},{v[2],v[6]},{v[3],v[7]}
         };
-        drawWireframe(edges);
+        wire(edges);
     }
-    glPopAttrib();
 }
 
-void Object::drawPolyhedron() const {
-    if (polyhedronData.vertices.empty() || polyhedronData.faces.empty()) {
-        return; // No polyhedron data to draw
-    }
-    
-    glEnable(GL_TEXTURE_2D);
-    glColor3f(1.0f, 1.0f, 1.0f);
-    
-    // Draw each face of the polyhedron
-    for (size_t faceIndex = 0; faceIndex < polyhedronData.faces.size(); ++faceIndex) {
-        const auto& face = polyhedronData.faces[faceIndex];
-        if (face.size() < 3) continue; // Skip invalid faces
-        
-        // Bind texture for this face if available
-        if (faceIndex < faceTextures.size()) {
-            const FaceTexture& tex = faceTextures[faceIndex];
-            glBindTexture(GL_TEXTURE_2D, tex.id);
-        }
-        
-        // Compute per-face tangent space and UVs consistent with raycast mapping, and use Newell normal
+// Build one TessMesh per polyhedron face (centroid fan, Newell normal, per-face
+// projected UVs — identical to what drawPolyhedron used to emit immediately).
+// Cached: rebuilt only when polyhedronData changes (drawPolyhedron sets the dirty
+// flag), never per frame — the same invariant the topology caches hold.
+void Object::rebuildPolyhedronMeshes() const {
+    _polyhedronDirty = false;
+    _polyhedronFaceMeshes.clear();
+    if (polyhedronData.vertices.empty() || polyhedronData.faces.empty()) return;
+
+    for (const auto& face : polyhedronData.faces) {
+        geom::TessMesh mesh;
+        if (face.size() < 3) { _polyhedronFaceMeshes.push_back(std::move(mesh)); continue; }
+
         glm::vec3 v0 = polyhedronData.vertices[face[0]];
         glm::vec3 normal = PolyhedronData::computeNewellNormal(polyhedronData.vertices, face);
         glm::vec3 tangent = glm::normalize(glm::cross(fabs(normal.y) < 0.99f ? glm::vec3(0,1,0) : glm::vec3(1,0,0), normal));
@@ -329,7 +337,6 @@ void Object::drawPolyhedron() const {
             minV = std::min(minV, vv); maxV = std::max(maxV, vv);
         }
 
-        // Triangulate face with a fan around centroid to avoid GL_POLYGON issues
         glm::vec3 centroid(0.0f);
         for (int idx : face) centroid += polyhedronData.vertices[idx];
         centroid /= static_cast<float>(face.size());
@@ -338,8 +345,6 @@ void Object::drawPolyhedron() const {
         float cU = (glm::dot(centroid - v0, tangent) - minU) / du;
         float cV = (glm::dot(centroid - v0, bitangent) - minV) / dv;
 
-        glBegin(GL_TRIANGLES);
-        glNormal3f(normal.x, normal.y, normal.z);
         for (size_t i = 0; i < face.size(); ++i) {
             size_t i0 = i;
             size_t i1 = (i + 1) % face.size();
@@ -349,18 +354,22 @@ void Object::drawPolyhedron() const {
             if (vi1 < 0 || vi1 >= static_cast<int>(polyhedronData.vertices.size())) continue;
             const glm::vec3& p0 = polyhedronData.vertices[vi0];
             const glm::vec3& p1 = polyhedronData.vertices[vi1];
+            float u0 = (projected[i0].x - minU) / du; float v0uv = (projected[i0].y - minV) / dv;
+            float u1 = (projected[i1].x - minU) / du; float v1uv = (projected[i1].y - minV) / dv;
 
-            glm::vec2 proj0 = projected[i0];
-            glm::vec2 proj1 = projected[i1];
-            float u0 = (proj0.x - minU) / du; float v0uv = (proj0.y - minV) / dv;
-            float u1 = (proj1.x - minU) / du; float v1uv = (proj1.y - minV) / dv;
-
-            glTexCoord2f(cU, cV); glVertex3f(centroid.x, centroid.y, centroid.z);
-            glTexCoord2f(u0, v0uv); glVertex3f(p0.x, p0.y, p0.z);
-            glTexCoord2f(u1, v1uv); glVertex3f(p1.x, p1.y, p1.z);
+            mesh.tris.push_back(vtx(centroid, normal, {cU, cV}));
+            mesh.tris.push_back(vtx(p0, normal, {u0, v0uv}));
+            mesh.tris.push_back(vtx(p1, normal, {u1, v1uv}));
         }
-        glEnd();
+        _polyhedronFaceMeshes.push_back(std::move(mesh));
     }
-    
-    glDisable(GL_TEXTURE_2D);
+}
+
+void Object::drawPolyhedron() const {
+    if (_polyhedronDirty) rebuildPolyhedronMeshes();
+    // Each face is a separate mesh so it binds its own painted texture, exactly
+    // as the immediate-mode version did — now through the renderer boundary.
+    for (size_t f = 0; f < _polyhedronFaceMeshes.size(); ++f)
+        currentRenderer().drawMesh(_polyhedronFaceMeshes[f],
+                                   resolveRenderMaterial(_materialId, faceTextureId(f)));
 }

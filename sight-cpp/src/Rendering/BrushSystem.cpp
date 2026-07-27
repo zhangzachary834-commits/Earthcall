@@ -7,6 +7,7 @@
 #include <iostream>
 #include <limits>
 #include <utility>
+#include "Rendering/Renderer.hpp"
 
 BrushSystem::BrushSystem(int textureSize) : _textureSize(textureSize) {
     printf("Creating BrushSystem with texture size: %d\n", textureSize);
@@ -672,10 +673,11 @@ glm::vec2 BrushSystem::normalizePosition(const glm::vec2& pos) const {
         return pos;
     }
 
-    GLint viewport[4] = {0, 0, 0, 0};
-    glGetIntegerv(GL_VIEWPORT, viewport);
-    const float width = static_cast<float>(viewport[2]);
-    const float height = static_cast<float>(viewport[3]);
+    // Framebuffer size as recorded by the renderer's beginFrame, rather than read
+    // back out of GL — same number, but available under either backend.
+    const glm::ivec4& viewport = currentRenderer().viewport();
+    const float width = static_cast<float>(viewport.z);
+    const float height = static_cast<float>(viewport.w);
     if (width <= 0.0f || height <= 0.0f) {
         return pos;
     }

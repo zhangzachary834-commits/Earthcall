@@ -262,9 +262,10 @@ build/src/Person/AvatarDemo.o: src/Person/AvatarDemo.cpp \
   src/Form/Object/Object/PolyhedronData.hpp \
   src/Form/Object/Object/../AngleTools.hpp \
   src/Form/Object/Object/../Contour.hpp \
-  src/Form/Object/Object/FaceTexture.hpp \
-  src/Form/Object/Object/CollisionZone.hpp \
+  src/Form/Object/Object/FaceTexture.hpp src/Rendering/Renderer.hpp \
+  src/Rendering/RenderMaterial.hpp \
   src/Form/Object/Geometry/SmoothSurface.hpp \
+  src/Form/Object/Object/CollisionZone.hpp \
   src/Form/Object/Geometry/ComplexShape.hpp \
   src/Form/Object/Geometry/Sdf.hpp src/Form/Object/Geometry/Patch.hpp \
   src/Form/Object/Automation/Automation.hpp \
@@ -810,9 +811,13 @@ src/Form/Object/Object/../Contour.hpp:
 
 src/Form/Object/Object/FaceTexture.hpp:
 
-src/Form/Object/Object/CollisionZone.hpp:
+src/Rendering/Renderer.hpp:
+
+src/Rendering/RenderMaterial.hpp:
 
 src/Form/Object/Geometry/SmoothSurface.hpp:
+
+src/Form/Object/Object/CollisionZone.hpp:
 
 src/Form/Object/Geometry/ComplexShape.hpp:
 

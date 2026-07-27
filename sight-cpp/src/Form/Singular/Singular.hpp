@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <map>
 
 class Formation;
 
@@ -55,8 +56,13 @@ public:
     // through PropertyValue, so it stays legible to the Law system instead of
     // sitting as a raw untyped member no law can address.
 
+    // Dynamic properties to allow Laws to attach state to objects
+    bool getDynamicProperty(const std::string& name, PropertyValue& out) const;
+    void setDynamicProperty(const std::string& name, const PropertyValue& v);
+
 protected:
     std::vector<std::unique_ptr<Property>> _propertyRegistry;
+    std::map<std::string, PropertyValue> _dynamicProperties;
     Formation* _property_formation = nullptr;
     bool _propertiesBuilt = false;
     virtual void buildProperties() = 0;

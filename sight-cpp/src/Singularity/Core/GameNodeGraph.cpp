@@ -11,7 +11,7 @@
 #include "Form/Object/Object.hpp"
 
 #include <imgui.h>
-#include <OpenGL/glu.h>
+#include "Rendering/GL/GluCompat.hpp"
 #include <glm/glm.hpp>
 #include <algorithm>
 #include <cstdio>
@@ -149,7 +149,7 @@ void Game::renderNodeGraph() {
     const float vpH = static_cast<float>(_camera.viewport[3]);
     auto project = [&](const glm::vec3& w, ImVec2& out) -> bool {
         GLdouble px, py, pz;
-        if (!gluProject(w.x, w.y, w.z, _camera.modelview, _camera.projection, _camera.viewport, &px, &py, &pz))
+        if (!ecgl::project(w.x, w.y, w.z, _camera.modelview, _camera.projection, _camera.viewport, &px, &py, &pz))
             return false;
         if (pz < 0.0 || pz > 1.0) return false; // behind the camera
         out = ImVec2(static_cast<float>(px) / scaleX, (vpH - static_cast<float>(py)) / scaleY);

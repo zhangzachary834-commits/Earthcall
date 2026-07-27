@@ -7,7 +7,6 @@
 #include "Automation/AutomationEvents.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
 #include <GLFW/glfw3.h>
-#include <OpenGL/glu.h>
 #include <glm/gtc/quaternion.hpp>
 #include <algorithm>
 #include <cstring>

@@ -11,6 +11,7 @@
 #include <fstream>
 #include <unordered_map>
 #include <utility>
+#include "Rendering/Renderer.hpp"
 
 namespace {
 
@@ -258,32 +259,20 @@ void TextSystem::renderTextElement(const TextElement& element, float layerOpacit
         return;
     }
 
-    glPushMatrix();
-    glLoadIdentity();
-    glTranslatef(element.position.x, element.position.y, 0.0f);
-
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glColor4f(element.style.color.x,
-              element.style.color.y,
-              element.style.color.z,
-              std::clamp(element.style.opacity * layerOpacity, 0.0f, 1.0f));
-    glScalef(std::max(0.25f, element.style.fontSize / 16.0f),
-             std::max(0.25f, element.style.fontSize / 16.0f),
-             1.0f);
-
     std::string text = element.text.empty() ? "Text" : element.text;
     char vertexBuffer[24000];
     int quads = stb_easy_font_print(0.0f, 0.0f, const_cast<char*>(text.c_str()), nullptr, vertexBuffer, sizeof(vertexBuffer));
-    if (quads > 0) {
-        glEnableClientState(GL_VERTEX_ARRAY);
-        glVertexPointer(2, GL_FLOAT, 16, vertexBuffer);
-        glDrawArrays(GL_QUADS, 0, quads * 4);
-        glDisableClientState(GL_VERTEX_ARRAY);
-    }
+    if (quads <= 0) return;
 
-    glDisable(GL_BLEND);
-    glPopMatrix();
+    // stb_easy_font draws at a fixed 16px cell, so font size is a scale — applied
+    // to the glyph points here rather than via the retired matrix stack.
+    const float scale = std::max(0.25f, element.style.fontSize / 16.0f);
+    std::vector<glm::vec2> tris = draw::easyFontToTris(vertexBuffer, quads);
+    for (glm::vec2& p : tris) p = element.position + p * scale;
+
+    currentRenderer().drawTris2D(
+        tris, glm::vec4(element.style.color,
+                        std::clamp(element.style.opacity * layerOpacity, 0.0f, 1.0f)));
 }
 
 void TextSystem::applyTextEffect(const std::string& id, const std::string& effectType, float intensity) {
@@ -435,55 +424,38 @@ void ShapeSystem::renderShapeElement(const ShapeElement& element, float layerOpa
         return;
     }
 
-    glPushMatrix();
-    glLoadIdentity();
-    glTranslatef(element.position.x, element.position.y, 0.0f);
-    glRotatef(element.rotation, 0.0f, 0.0f, 1.0f);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    // Local space -> screen space. The GL version pushed a translate+rotate onto
+    // the matrix stack; with no stack under WebGPU, the transform is applied to
+    // the points as they are built. A Line is the one shape with an open loop.
+    const float rad = glm::radians(element.rotation);
+    const float c = std::cos(rad), s = std::sin(rad);
+    auto place = [&](const std::vector<glm::vec2>& loop) {
+        std::vector<glm::vec2> out;
+        out.reserve(loop.size());
+        for (const glm::vec2& p : loop)
+            out.push_back({element.position.x + p.x * c - p.y * s,
+                           element.position.y + p.x * s + p.y * c});
+        return out;
+    };
 
-    if (element.style.fillEnabled) {
-        glColor4f(element.style.fillColor.x,
-                  element.style.fillColor.y,
-                  element.style.fillColor.z,
-                  std::clamp(element.style.fillOpacity * layerOpacity, 0.0f, 1.0f));
+    const ShapeLoops loops = buildShape(element);
+    const bool openLoop = (element.type == ShapeType::Line);
+    Renderer& r = currentRenderer();
 
-        switch (element.type) {
-            case ShapeType::Rectangle: renderRectangle(element.size.x, element.size.y, element.style.cornerRadius); break;
-            case ShapeType::Ellipse: renderEllipse(element.size.x, element.size.y); break;
-            case ShapeType::Line: renderLine(element.size.x, element.size.y); break;
-            case ShapeType::Polygon: renderPolygon(element.size.x, element.size.y, element.style.sides); break;
-            case ShapeType::Star: renderStar(element.size.x, element.size.y, element.style.starPoints); break;
-            case ShapeType::Heart: renderHeart(element.size.x, element.size.y); break;
-            case ShapeType::Arrow: renderArrow(element.size.x, element.size.y); break;
-            case ShapeType::Custom: renderCustomShape(element.customPoints); break;
-        }
+    if (element.style.fillEnabled && !openLoop) {
+        const glm::vec4 color(element.style.fillColor,
+                              std::clamp(element.style.fillOpacity * layerOpacity, 0.0f, 1.0f));
+        for (const auto& loop : loops)
+            r.drawTris2D(draw::fanToTris(place(loop)), color);
     }
 
-    if (element.style.strokeEnabled) {
-        glColor4f(element.style.strokeColor.x,
-                  element.style.strokeColor.y,
-                  element.style.strokeColor.z,
-                  std::clamp(element.style.strokeOpacity * layerOpacity, 0.0f, 1.0f));
-        glLineWidth(element.style.strokeWidth);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-        switch (element.type) {
-            case ShapeType::Rectangle: renderRectangle(element.size.x, element.size.y, element.style.cornerRadius); break;
-            case ShapeType::Ellipse: renderEllipse(element.size.x, element.size.y); break;
-            case ShapeType::Line: renderLine(element.size.x, element.size.y); break;
-            case ShapeType::Polygon: renderPolygon(element.size.x, element.size.y, element.style.sides); break;
-            case ShapeType::Star: renderStar(element.size.x, element.size.y, element.style.starPoints); break;
-            case ShapeType::Heart: renderHeart(element.size.x, element.size.y); break;
-            case ShapeType::Arrow: renderArrow(element.size.x, element.size.y); break;
-            case ShapeType::Custom: renderCustomShape(element.customPoints); break;
-        }
-
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    if (element.style.strokeEnabled || openLoop) {
+        const glm::vec4 color(element.style.strokeColor,
+                              std::clamp(element.style.strokeOpacity * layerOpacity, 0.0f, 1.0f));
+        for (const auto& loop : loops)
+            r.drawLines2D(draw::stripToSegments(place(loop), !openLoop),
+                          color, element.style.strokeWidth);
     }
-
-    glDisable(GL_BLEND);
-    glPopMatrix();
 }
 
 void ShapeSystem::applyShapeEffect(const std::string& id, const std::string& effectType, float intensity) {
@@ -502,124 +474,110 @@ ShapeSystem::ShapeElement* ShapeSystem::getShapeElement(const std::string& id) {
     return nullptr;
 }
 
-// Shape rendering helper methods
-void ShapeSystem::renderRectangle(float width, float height, float cornerRadius) const {
+// Shape geometry builders. These used to emit GL directly and were invoked twice
+// per element — once filled, once under glPolygonMode(GL_LINE) for the stroke.
+// Returning the geometry instead lets both passes share one construction, and
+// keeps the exact primitive decomposition GL had.
+ShapeSystem::ShapeLoops ShapeSystem::buildRectangle(float width, float height, float cornerRadius) {
     if (cornerRadius <= 0.0f) {
         // Simple rectangle
-        glBegin(GL_QUADS);
-        glVertex2f(-width/2, -height/2);
-        glVertex2f(width/2, -height/2);
-        glVertex2f(width/2, height/2);
-        glVertex2f(-width/2, height/2);
-        glEnd();
-    } else {
-        // Rounded rectangle (simplified)
-        glBegin(GL_QUADS);
-        glVertex2f(-width/2 + cornerRadius, -height/2);
-        glVertex2f(width/2 - cornerRadius, -height/2);
-        glVertex2f(width/2 - cornerRadius, height/2);
-        glVertex2f(-width/2 + cornerRadius, height/2);
-        glEnd();
-        
-        glBegin(GL_QUADS);
-        glVertex2f(-width/2, -height/2 + cornerRadius);
-        glVertex2f(-width/2 + cornerRadius, -height/2 + cornerRadius);
-        glVertex2f(-width/2 + cornerRadius, height/2 - cornerRadius);
-        glVertex2f(-width/2, height/2 - cornerRadius);
-        glEnd();
-        
-        glBegin(GL_QUADS);
-        glVertex2f(width/2 - cornerRadius, -height/2 + cornerRadius);
-        glVertex2f(width/2, -height/2 + cornerRadius);
-        glVertex2f(width/2, height/2 - cornerRadius);
-        glVertex2f(width/2 - cornerRadius, height/2 - cornerRadius);
-        glEnd();
+        return {{{-width/2, -height/2}, {width/2, -height/2},
+                 {width/2, height/2},   {-width/2, height/2}}};
     }
+    // Rounded rectangle (simplified): a centre band plus a left and right band.
+    // Three separate quads, as before — so a stroked one still shows the seams.
+    return {
+        {{-width/2 + cornerRadius, -height/2}, {width/2 - cornerRadius, -height/2},
+         {width/2 - cornerRadius,  height/2},  {-width/2 + cornerRadius, height/2}},
+        {{-width/2, -height/2 + cornerRadius}, {-width/2 + cornerRadius, -height/2 + cornerRadius},
+         {-width/2 + cornerRadius, height/2 - cornerRadius}, {-width/2, height/2 - cornerRadius}},
+        {{width/2 - cornerRadius, -height/2 + cornerRadius}, {width/2, -height/2 + cornerRadius},
+         {width/2, height/2 - cornerRadius}, {width/2 - cornerRadius, height/2 - cornerRadius}},
+    };
 }
 
-void ShapeSystem::renderEllipse(float width, float height) const {
+ShapeSystem::ShapeLoops ShapeSystem::buildEllipse(float width, float height) {
     const int segments = 32;
-    glBegin(GL_POLYGON);
+    std::vector<glm::vec2> ring;
+    ring.reserve(segments);
     for (int i = 0; i < segments; ++i) {
         float angle = 2.0f * M_PI * i / segments;
-        float x = (width/2) * cos(angle);
-        float y = (height/2) * sin(angle);
-        glVertex2f(x, y);
+        ring.push_back({(width/2) * std::cos(angle), (height/2) * std::sin(angle)});
     }
-    glEnd();
+    return {ring};
 }
 
-void ShapeSystem::renderLine(float width, float height) const {
-    glBegin(GL_LINES);
-    glVertex2f(-width/2, -height/2);
-    glVertex2f(width/2, height/2);
-    glEnd();
+ShapeSystem::ShapeLoops ShapeSystem::buildLine(float width, float height) {
+    return {{{-width/2, -height/2}, {width/2, height/2}}};
 }
 
-void ShapeSystem::renderPolygon(float width, float height, int sides) const {
+ShapeSystem::ShapeLoops ShapeSystem::buildPolygon(float width, float height, int sides) {
     if (sides < 3) sides = 3;
     if (sides > 20) sides = 20;
-    
-    glBegin(GL_POLYGON);
+    std::vector<glm::vec2> ring;
+    ring.reserve(sides);
     for (int i = 0; i < sides; ++i) {
         float angle = 2.0f * M_PI * i / sides;
-        float x = (width/2) * cos(angle);
-        float y = (height/2) * sin(angle);
-        glVertex2f(x, y);
+        ring.push_back({(width/2) * std::cos(angle), (height/2) * std::sin(angle)});
     }
-    glEnd();
+    return {ring};
 }
 
-void ShapeSystem::renderStar(float width, float height, float points) const {
+ShapeSystem::ShapeLoops ShapeSystem::buildStar(float width, float height, float points) {
     if (points < 3) points = 3;
     if (points > 20) points = 20;
     const float outerRadius = std::min(width, height) * 0.5f;
-    
-    glBegin(GL_POLYGON);
-    for (int i = 0; i < points * 2; ++i) {
-        float angle = 2.0f * M_PI * i / (points * 2);
+    const int n = static_cast<int>(points) * 2;
+    std::vector<glm::vec2> ring;
+    ring.reserve(n);
+    for (int i = 0; i < n; ++i) {
+        float angle = 2.0f * M_PI * i / n;
         float radius = (i % 2 == 0) ? outerRadius : outerRadius * 0.5f;
-        float x = radius * cos(angle);
-        float y = radius * sin(angle);
-        glVertex2f(x, y);
+        ring.push_back({radius * std::cos(angle), radius * std::sin(angle)});
     }
-    glEnd();
+    return {ring};
 }
 
-void ShapeSystem::renderHeart(float width, float height) const {
+ShapeSystem::ShapeLoops ShapeSystem::buildHeart(float width, float height) {
     const int segments = 32;
-    glBegin(GL_POLYGON);
+    std::vector<glm::vec2> ring;
+    ring.reserve(segments);
     for (int i = 0; i < segments; ++i) {
         float t = 2.0f * M_PI * i / segments;
-        float x = (width/2) * 16 * pow(sin(t), 3);
-        float y = (height/2) * -(13 * cos(t) - 5 * cos(2*t) - 2 * cos(3*t) - cos(4*t));
-        glVertex2f(x, y);
+        ring.push_back({(width/2) * 16 * std::pow(std::sin(t), 3),
+                        (height/2) * -(13 * std::cos(t) - 5 * std::cos(2*t)
+                                       - 2 * std::cos(3*t) - std::cos(4*t))});
     }
-    glEnd();
+    return {ring};
 }
 
-void ShapeSystem::renderArrow(float width, float height) const {
-    glBegin(GL_POLYGON);
-    // Arrow shaft
-    glVertex2f(-width/2, -height/6);
-    glVertex2f(width/3, -height/6);
-    glVertex2f(width/3, height/6);
-    glVertex2f(-width/2, height/6);
-    // Arrow head
-    glVertex2f(width/3, -height/2);
-    glVertex2f(width/2, 0);
-    glVertex2f(width/3, height/2);
-    glEnd();
+ShapeSystem::ShapeLoops ShapeSystem::buildArrow(float width, float height) {
+    return {{
+        // Arrow shaft
+        {-width/2, -height/6}, {width/3, -height/6},
+        {width/3, height/6},   {-width/2, height/6},
+        // Arrow head
+        {width/3, -height/2},  {width/2, 0}, {width/3, height/2},
+    }};
 }
 
-void ShapeSystem::renderCustomShape(const std::vector<glm::vec2>& points) const {
-    if (points.size() < 3) return;
-    
-    glBegin(GL_POLYGON);
-    for (const auto& point : points) {
-        glVertex2f(point.x, point.y);
+ShapeSystem::ShapeLoops ShapeSystem::buildCustomShape(const std::vector<glm::vec2>& points) {
+    if (points.size() < 3) return {};
+    return {points};
+}
+
+ShapeSystem::ShapeLoops ShapeSystem::buildShape(const ShapeElement& e) {
+    switch (e.type) {
+        case ShapeType::Rectangle: return buildRectangle(e.size.x, e.size.y, e.style.cornerRadius);
+        case ShapeType::Ellipse:   return buildEllipse(e.size.x, e.size.y);
+        case ShapeType::Line:      return buildLine(e.size.x, e.size.y);
+        case ShapeType::Polygon:   return buildPolygon(e.size.x, e.size.y, e.style.sides);
+        case ShapeType::Star:      return buildStar(e.size.x, e.size.y, e.style.starPoints);
+        case ShapeType::Heart:     return buildHeart(e.size.x, e.size.y);
+        case ShapeType::Arrow:     return buildArrow(e.size.x, e.size.y);
+        case ShapeType::Custom:    return buildCustomShape(e.customPoints);
     }
-    glEnd();
+    return {};
 }
 
 // ============================================================================
@@ -937,18 +895,13 @@ void SelectionSystem::featherSelection(float amount) {
 void SelectionSystem::renderSelections() const {
     for (const auto& selection : _selections) {
         if (selection.active) {
-            glColor3f(0.0f, 0.5f, 1.0f); // Blue selection color
-            glLineWidth(2.0f);
-            glLineStipple(1, 0x00FF); // Dashed line
-            glEnable(GL_LINE_STIPPLE);
-            
-            glBegin(GL_LINE_LOOP);
-            for (const auto& point : selection.points) {
-                glVertex2f(point.x, point.y);
-            }
-            glEnd();
-            
-            glDisable(GL_LINE_STIPPLE);
+            // The marching-ants outline. GL_LINE_STIPPLE with pattern 0x00FF was 8
+            // pixels on, 8 off; that state does not exist outside fixed-function GL,
+            // so the dashes are cut into the segment list instead.
+            const auto loop = draw::stripToSegments(selection.points, /*closed=*/true);
+            currentRenderer().drawLines2D(draw::dashSegments(loop, 8.0f, 8.0f),
+                                          glm::vec4(0.0f, 0.5f, 1.0f, 1.0f), // Blue selection color
+                                          2.0f);
         }
     }
 }
@@ -1053,24 +1006,18 @@ void TransformSystem::resetTransform(const std::string& id) {
 void TransformSystem::renderTransforms() const {
     for (const auto& transform : _transforms) {
         if (transform.active) {
-            // Render transform handles
-            glColor3f(1.0f, 1.0f, 0.0f); // Yellow handles
-            glPointSize(8.0f);
-            
-            glBegin(GL_POINTS);
-            glVertex2f(transform.position.x, transform.position.y);
-            glEnd();
-            
+            Renderer& r = currentRenderer();
+
+            // Render transform handles. GL_POINTS + glPointSize(8) has no WebGPU
+            // equivalent, so an 8px point becomes an 8px filled square.
+            r.drawTris2D(draw::pointsToTris({transform.position}, 8.0f),
+                         glm::vec4(1.0f, 1.0f, 0.0f, 1.0f)); // Yellow handles
+
             // Render bounding box
-            glColor3f(1.0f, 0.5f, 0.0f); // Orange bounding box
-            glLineWidth(1.0f);
-            
-            glBegin(GL_LINE_LOOP);
-            glVertex2f(transform.position.x - 20, transform.position.y - 20);
-            glVertex2f(transform.position.x + 20, transform.position.y - 20);
-            glVertex2f(transform.position.x + 20, transform.position.y + 20);
-            glVertex2f(transform.position.x - 20, transform.position.y + 20);
-            glEnd();
+            r.drawLines2D(draw::rectOutline({transform.position.x - 20, transform.position.y - 20,
+                                             transform.position.x + 20, transform.position.y + 20}),
+                          glm::vec4(1.0f, 0.5f, 0.0f, 1.0f), // Orange bounding box
+                          1.0f);
         }
     }
 }

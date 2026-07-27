@@ -4,6 +4,7 @@
 
 #define STB_EASY_FONT_IMPLEMENTATION   // only in this translation unit
 #include "stb_easy_font.h"             // header‑only bitmap font
+#include "Rendering/Renderer.hpp"
 
 Menu::Menu() {
     // Pre-reserve a small number of options to avoid early reallocations
@@ -58,32 +59,17 @@ bool Menu::isOpen() const { return openState; }
 void Menu::draw() const {
     if (!openState) return;
 
-    // --- Save current OpenGL state that we will change -------------------
-    glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT);
-    glDisable(GL_DEPTH_TEST);     // always draw on top
-    glDisable(GL_LIGHTING);
-    glEnable(GL_BLEND);           // enable transparency for overlay/panel accents
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    // --- Switch to 2‑D orthographic projection ---------------------------
+    // --- Switch to 2-D screen space (depth off, alpha blending on) --------
     int winW, winH;
     glfwGetFramebufferSize(glfwGetCurrentContext(), &winW, &winH);
 
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    glOrtho(0, winW, winH, 0, -1, 1);          // (0,0) == top‑left
-
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
+    Renderer& r = currentRenderer();
+    r.begin2D(static_cast<uint32_t>(winW), static_cast<uint32_t>(winH));
 
     // ---------------------------------------------------------------------
     // Backdrop: semi-transparent dark overlay to focus attention
-    glColor4f(0.0f, 0.0f, 0.0f, 0.45f);
-    glBegin(GL_QUADS);
-    glVertex2f(0.f, 0.f); glVertex2f((float)winW, 0.f); glVertex2f((float)winW, (float)winH); glVertex2f(0.f, (float)winH);
-    glEnd();
+    r.drawTris2D(draw::rectTris({0.f, 0.f, (float)winW, (float)winH}),
+                 glm::vec4(0.0f, 0.0f, 0.0f, 0.45f));
 
     // Panel dimensions
     const float panelW = std::min(520.0f, (float)winW - 40.0f);
@@ -92,20 +78,9 @@ void Menu::draw() const {
     const float panelY = ((float)winH - panelH) * 0.5f;
 
     // Panel background with subtle border
-    glColor4f(0.08f, 0.08f, 0.10f, 0.92f);
-    glBegin(GL_QUADS);
-    glVertex2f(panelX, panelY);
-    glVertex2f(panelX + panelW, panelY);
-    glVertex2f(panelX + panelW, panelY + panelH);
-    glVertex2f(panelX, panelY + panelH);
-    glEnd();
-    glColor4f(1.0f, 1.0f, 1.0f, 0.10f);
-    glBegin(GL_LINE_LOOP);
-    glVertex2f(panelX, panelY);
-    glVertex2f(panelX + panelW, panelY);
-    glVertex2f(panelX + panelW, panelY + panelH);
-    glVertex2f(panelX, panelY + panelH);
-    glEnd();
+    const glm::vec4 panel(panelX, panelY, panelX + panelW, panelY + panelH);
+    r.drawTris2D(draw::rectTris(panel), glm::vec4(0.08f, 0.08f, 0.10f, 0.92f));
+    r.drawLines2D(draw::rectOutline(panel), glm::vec4(1.0f, 1.0f, 1.0f, 0.10f), 1.0f);
 
     // Title
     const float titleX = panelX + 24.0f;
@@ -113,11 +88,7 @@ void Menu::draw() const {
     {
         char buf[8000];
         int quads = stb_easy_font_print(titleX, titleY, const_cast<char*>("EARTHCALL"), nullptr, buf, sizeof(buf));
-        glColor3f(1.0f, 0.95f, 0.6f);
-        glEnableClientState(GL_VERTEX_ARRAY);
-        glVertexPointer(2, GL_FLOAT, 16, buf);
-        glDrawArrays(GL_QUADS, 0, quads * 4);
-        glDisableClientState(GL_VERTEX_ARRAY);
+        r.drawTris2D(draw::easyFontToTris(buf, quads), glm::vec4(1.0f, 0.95f, 0.6f, 1.0f));
     }
 
     // Options list
@@ -149,33 +120,17 @@ void Menu::draw() const {
 
         // Highlight selected row
         if ((int)i == clampedSelected) {
-            glColor4f(0.90f, 0.85f, 0.40f, 0.18f);
-            glBegin(GL_QUADS);
-            glVertex2f(listX - 8.0f, y - 6.0f);
-            glVertex2f(panelX + panelW - 24.0f, y - 6.0f);
-            glVertex2f(panelX + panelW - 24.0f, y + 18.0f);
-            glVertex2f(listX - 8.0f, y + 18.0f);
-            glEnd();
+            r.drawTris2D(draw::rectTris({listX - 8.0f, y - 6.0f,
+                                         panelX + panelW - 24.0f, y + 18.0f}),
+                         glm::vec4(0.90f, 0.85f, 0.40f, 0.18f));
         }
 
         // Render text
         int quads = stb_easy_font_print(listX, y, const_cast<char*>(line.c_str()), nullptr, buf, sizeof(buf));
-        glColor3f(0.98f, 0.98f, 0.90f);
-        glEnableClientState(GL_VERTEX_ARRAY);
-        glVertexPointer(2, GL_FLOAT, 16, buf);
-        glDrawArrays(GL_QUADS, 0, quads * 4);
-        glDisableClientState(GL_VERTEX_ARRAY);
+        r.drawTris2D(draw::easyFontToTris(buf, quads), glm::vec4(0.98f, 0.98f, 0.90f, 1.0f));
     }
 
-    // ---------------------------------------------------------------------
-    // Restore previous matrices and state
-    glPopMatrix();                // MODELVIEW
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-    glMatrixMode(GL_MODELVIEW);
-
-    glDisable(GL_BLEND);
-    glPopAttrib();                // depth / lighting / color
+    r.end2D();
 }
 
 void Menu::processInput(GLFWwindow* win) {

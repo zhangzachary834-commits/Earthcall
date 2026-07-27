@@ -1,6 +1,7 @@
 #include "BodyPart.hpp"
 #include <algorithm>
 #include <glm/gtc/matrix_transform.hpp>
+#include "Rendering/Renderer.hpp"
 
 BodyPart::BodyPart(const std::string& name, Type type, const Form& form)
     : Object(), Formation(Form::ShapeType::Cube, {1.0f, 1.0f, 1.0f}), partName(name), partType(type), geometry(form)
@@ -70,26 +71,25 @@ BodyPart::BodyPart(const std::string& name, Type type, const Form& form, const g
 }
 
 void BodyPart::draw() const {
+    Renderer& r = currentRenderer();
+
     // Draw primary shape under body part's world transform
-    glPushMatrix();
-    glMultMatrixf(&transform[0][0]);
     glm::vec3 dims = geometry.getDimensions();
-    glPushMatrix();
-    glScalef(dims.x, dims.y, dims.z);
+    r.pushModel(transform);
+    r.pushModel(glm::scale(glm::mat4(1.0f), dims));
     drawObject();
     drawHighlightOutline();
-    glPopMatrix();
-    glPopMatrix();
+    r.popModel();
+    r.popModel();
 
     // Sub-objects already carry world transforms (set by setTransform),
     // so draw them independently — no nesting under the body part matrix.
     for (const auto& sub : _subObjects) {
         if (!sub) continue;
-        glPushMatrix();
-        glMultMatrixf(&sub->getTransform()[0][0]);
+        r.pushModel(sub->getTransform());
         sub->drawObject();
         sub->drawHighlightOutline();
-        glPopMatrix();
+        r.popModel();
     }
 }
 
@@ -283,6 +283,18 @@ Object* BodyPart::addSubObject(Object::ShapeKind kind, const glm::mat4& localOff
     for (size_t f = 0; f < obj->faceTextures.size(); ++f) {
         obj->fillFaceColor(static_cast<int>(f), color[0], color[1], color[2]);
     }
+    Object* raw = obj.get();
+    _subObjects.push_back(std::move(obj));
+    _subObjectLocalOffsets.push_back(localOffset);
+    addMember(raw);
+    return raw;
+}
+
+Object* BodyPart::addSubObject(std::unique_ptr<Object> obj, const glm::mat4& localOffset) {
+    if (!obj) return nullptr;
+    obj->setOwnerBodyPart(this);
+    glm::mat4 worldT = getTransform() * localOffset;
+    obj->setTransform(worldT);
     Object* raw = obj.get();
     _subObjects.push_back(std::move(obj));
     _subObjectLocalOffsets.push_back(localOffset);

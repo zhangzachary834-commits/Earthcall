@@ -23,7 +23,7 @@ namespace {
 
 bool nearf(float a, float b, float eps = 1e-4f) { return std::fabs(a - b) < eps; }
 
-OntoMath::Piecewise boundedInT(OntoMath::Expression e, double lo, double hi) {
+OntoMath::Piecewise boundedInT(OntoMath::ScalarForm e, double lo, double hi) {
     OntoMath::Piecewise f;
     f.inputVariable = "t";
     OntoMath::Piecewise::Piece piece;
@@ -31,13 +31,13 @@ OntoMath::Piecewise boundedInT(OntoMath::Expression e, double lo, double hi) {
     piece.lo = lo;
     piece.hasHi = true;
     piece.hi = hi;
-    piece.expression = std::move(e);
+    piece.mathNode = OntoMath::MathNode::fromLegacyExpression(std::move(e));
     f.pieces.push_back(piece);
     return f;
 }
 
-OntoMath::Piecewise everywhereInT(OntoMath::Expression e) {
-    OntoMath::Piecewise f = OntoMath::Piecewise::continuous(std::move(e));
+OntoMath::Piecewise everywhereInT(OntoMath::ScalarForm e) {
+    OntoMath::Piecewise f = OntoMath::Piecewise::continuous(OntoMath::MathNode::fromLegacyExpression(std::move(e)));
     f.inputVariable = "t";
     return f;
 }
@@ -97,7 +97,7 @@ int main() {
         parabola->setConditionModel(ConditionNode::compare(
             "position.x", ConditionNode::Op::Gt, PropertyValue(1.0)));
         parabola->setActionModel(ActionNode::map(
-            "position.y", everywhereInT(OntoMath::Expression::variable("t", 2.0)),
+            "position.y", everywhereInT(OntoMath::ScalarForm::variable("t", 2.0)),
             tBinding));
 
         Universe::instance().setClock(10.0, 0.1);
@@ -133,7 +133,7 @@ int main() {
         steady->setConditionModel(ConditionNode::compare(
             "position.y", ConditionNode::Op::Lt, PropertyValue(1e9)));
         steady->setActionModel(ActionNode::flow(
-            "position.y", everywhereInT(OntoMath::Expression::constant(3.0)),
+            "position.y", everywhereInT(OntoMath::ScalarForm::constant(3.0)),
             tBinding));
 
         double now = 20.0;
@@ -153,7 +153,7 @@ int main() {
         quadratic->setConditionModel(ConditionNode::compare(
             "position.y", ConditionNode::Op::Lt, PropertyValue(1e9)));
         quadratic->setActionModel(ActionNode::flow(
-            "position.y", everywhereInT(OntoMath::Expression::variable("t", 1.0, 2.0)),
+            "position.y", everywhereInT(OntoMath::ScalarForm::variable("t", 1.0, 2.0)),
             tBinding));
 
         now = 100.0;
@@ -184,7 +184,7 @@ int main() {
         arc->setDrives(true);                              // the AUTHORED choice
         arc->setActionModel(ActionNode::map(
             "position.y",
-            boundedInT(OntoMath::Expression::variable("t", 1.0, 2.0), 0.0, 2.0),
+            boundedInT(OntoMath::ScalarForm::variable("t", 1.0, 2.0), 0.0, 2.0),
             tBinding));                                    // y := 2t for t in [0,2]
         const std::size_t alphaKick = mgr.rete().addAlphaNode(
             "type == kick", [](const ReteFact& f) { return f.type == "kick"; });
@@ -241,7 +241,7 @@ int main() {
             piece.lo = 0.0;
             piece.hasHi = true;
             piece.hi = 10.0;
-            piece.expression = OntoMath::Expression::variable("x");
+            piece.mathNode = OntoMath::MathNode::fromLegacyExpression(OntoMath::ScalarForm::variable("x"));
             followF.pieces.push_back(piece);
         }
         auto follow = mgr.createLaw("follow-the-other", {&author});
@@ -282,7 +282,7 @@ int main() {
         auto climb = mgr.createLaw("climb-once", {&author});
         climb->setDrives(true);
         climb->setActionModel(ActionNode::flow(
-            "position.y", boundedInT(OntoMath::Expression::constant(1.0), 0.0, 10.0),
+            "position.y", boundedInT(OntoMath::ScalarForm::constant(1.0), 0.0, 10.0),
             tBinding));                                    // dy/dt = 1 for t in [0,10]
         mgr.rete().bindLawToAlpha(climb->getIdentifier(), alphaKick);
 
@@ -313,7 +313,7 @@ int main() {
         rearc->setRetrigger(Law::Retrigger::Restart);
         rearc->setActionModel(ActionNode::map(
             "position.y",
-            boundedInT(OntoMath::Expression::variable("t", 1.0, 2.0), 0.0, 5.0),
+            boundedInT(OntoMath::ScalarForm::variable("t", 1.0, 2.0), 0.0, 5.0),
             tBinding));                                    // y := 2t, t in [0,5]
         mgr.rete().bindLawToAlpha(rearc->getIdentifier(), alphaKick);
 
@@ -342,7 +342,7 @@ int main() {
         // 7. The model survives serialization; sessions are runtime-only.
         // ------------------------------------------------------------------
         const auto j = ActionNode::flow(
-            "position.y", boundedInT(OntoMath::Expression::variable("t"), 0.0, 5.0),
+            "position.y", boundedInT(OntoMath::ScalarForm::variable("t"), 0.0, 5.0),
             tBinding).toJson();
         const ActionNode reborn = ActionNode::fromJson(j);
         assert(reborn.kind == ActionNode::Kind::Flow);
@@ -392,7 +392,7 @@ int main() {
         pursue->setDrives(true);
         pursue->setActionModel(ActionNode::map(
             "@event.object.position.y",
-            boundedInT(OntoMath::Expression::variable("t", 1.0, 2.0), 0.0, 2.0),
+            boundedInT(OntoMath::ScalarForm::variable("t", 1.0, 2.0), 0.0, 2.0),
             tBinding));                                    // other.y := 2t, t in [0,2]
         mgr.rete().bindLawToAlpha(pursue->getIdentifier(), alphaTouch);
 

@@ -53,7 +53,7 @@ bool editMathBindings(MathBindings& bindings, const PathPickerFn& pathPicker) {
     return changed;
 }
 
-bool editExpression(OntoMath::Expression& e, const MathBindings& bindings) {
+bool editExpression(OntoMath::ScalarForm& e, const MathBindings& bindings) {
     bool changed = false;
     int removeTerm = -1;
     for (std::size_t t = 0; t < e.terms.size(); ++t) {
@@ -162,7 +162,7 @@ bool editPiecewise(OntoMath::Piecewise& f, const MathBindings& bindings) {
     // A variable the function uses but nothing binds can never evaluate —
     // say so before the author wonders why the law never fires.
     for (const auto& piece : f.pieces) {
-        for (const auto& term : piece.expression.terms) {
+        for (const auto& term : piece.mathNode->scalarForm.terms) {
             for (const auto& factor : term.factors) {
                 if (!bindings.count(factor.first)) {
                     ImGui::TextColored(kWarnColor,
@@ -203,7 +203,7 @@ bool editPiecewise(OntoMath::Piecewise& f, const MathBindings& bindings) {
         auto& piece = f.pieces[p];
         ImGui::PushID(static_cast<int>(p));
 
-        // Expression-guarded piece: a CONDITION decides where this formula
+        // ScalarForm-guarded piece: a CONDITION decides where this formula
         // applies ("wherever g <= 0") — min/max/abs and the SDF boolean
         // algebra live here. The guard supersedes interval bounds.
         if (piece.guard) {
@@ -232,7 +232,7 @@ bool editPiecewise(OntoMath::Piecewise& f, const MathBindings& bindings) {
             const std::string firstVar =
                 bindings.empty() ? std::string("x") : bindings.begin()->first;
             piece.guard = std::make_shared<ConditionNode>(ConditionNode::zone(
-                OntoMath::Piecewise::continuous(OntoMath::Expression::variable(firstVar)),
+                OntoMath::Piecewise::continuous(OntoMath::MathNode::fromLegacyExpression(OntoMath::ScalarForm::variable(firstVar))),
                 bindings, PropertyValue{}, PropertyValue(0.0)));
             piece.hasLo = piece.hasHi = false;   // the guard decides now
             piece.guardCompiled = nullptr;
@@ -256,15 +256,15 @@ bool editPiecewise(OntoMath::Piecewise& f, const MathBindings& bindings) {
             if (piece.whereLEZero) {
                 ImGui::PushID("where-g");
                 ImGui::Indent();
-                if (editExpression(*piece.whereLEZero, bindings)) changed = true;
+                if (editExpression(piece.whereLEZero->scalarForm, bindings)) changed = true;
                 ImGui::Unindent();
                 ImGui::PopID();
             }
         } else {
             if (!piece.guard) ImGui::SameLine();
             if (ImGui::SmallButton("+ where g <= 0 (of the variables)")) {
-                piece.whereLEZero = std::make_shared<OntoMath::Expression>(
-                    OntoMath::Expression::variable(
+                piece.whereLEZero = OntoMath::MathNode::fromLegacyExpression(
+                    OntoMath::ScalarForm::variable(
                         bindings.empty() ? "x" : bindings.begin()->first));
                 piece.hasLo = piece.hasHi = false;
                 changed = true;
@@ -317,7 +317,7 @@ bool editPiecewise(OntoMath::Piecewise& f, const MathBindings& bindings) {
             } else {
                 if (piece.call->args.size() != def->params.size()) {
                     piece.call->args.resize(def->params.size(),
-                                            OntoMath::Expression::constant(0.0));
+                                            OntoMath::ScalarForm::constant(0.0));
                     changed = true;
                 }
                 for (std::size_t a = 0; a < piece.call->args.size(); ++a) {
@@ -370,7 +370,8 @@ bool editPiecewise(OntoMath::Piecewise& f, const MathBindings& bindings) {
                 }
             }
         } else {
-            if (editExpression(piece.expression, bindings)) changed = true;
+            // TODO: MathNode editor 
+            /* if (editExpression(piece.expression, bindings)) changed = true; */
             ImGui::SameLine();
             if (ImGui::SmallButton("fold over the world...")) {
                 piece.fold = std::make_shared<OntoMath::Fold>();
@@ -390,7 +391,7 @@ bool editPiecewise(OntoMath::Piecewise& f, const MathBindings& bindings) {
                     auto call = std::make_shared<OntoMath::FunctionCall>();
                     call->function = def.name;
                     call->args.assign(def.params.size(),
-                                      OntoMath::Expression::variable(
+                                      OntoMath::ScalarForm::variable(
                                           bindings.empty() ? "x"
                                                            : bindings.begin()->first));
                     piece.call = std::move(call);
@@ -407,7 +408,7 @@ bool editPiecewise(OntoMath::Piecewise& f, const MathBindings& bindings) {
     }
     if (ImGui::SmallButton("+ piece")) {
         OntoMath::Piecewise::Piece piece;
-        piece.expression = OntoMath::Expression::constant(0.0);
+        piece.mathNode = OntoMath::MathNode::fromLegacyExpression(OntoMath::ScalarForm::constant(0.0));
         f.pieces.push_back(std::move(piece));
         changed = true;
     }
@@ -467,8 +468,7 @@ void editFunctionRegistry() {
             }
         }
         if (def.params.empty()) def.params.push_back("x");
-        def.body = OntoMath::Piecewise::continuous(
-            OntoMath::Expression::variable(def.params.front()));
+        def.body = OntoMath::Piecewise::continuous(OntoMath::MathNode::fromLegacyExpression(OntoMath::ScalarForm::variable(def.params.front())));
         def.body.inputVariable = def.params.front();
         registry.define(std::move(def));
         selected = static_cast<int>(registry.getAll().size()) - 1;

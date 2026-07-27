@@ -11,12 +11,9 @@
 #include "ZonesOfEarth/Physics/Physics.hpp"
 #include "Person/Body/BodyPart/BodyPart.hpp"
 
-#ifdef USE_GL3_RENDERER
-#include "Rendering/GL/GL3Renderer.hpp"
-#endif
-
 #include <GLFW/glfw3.h>
-#include <OpenGL/glu.h>
+#include "Rendering/GL/GluCompat.hpp"
+#include "Rendering/Renderer.hpp"
 #include <imgui.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -33,17 +30,43 @@ extern ZoneManager mgr;
 
 using glm::vec3;
 
+namespace {
+
+// The unit cube, as a triangle list. Every drag grip in this file — morph vertex
+// handles, the field operand-B handle, the blend bead, patch control points — was
+// the same 24 hand-written glVertex3f calls around this shape.
+const std::vector<glm::vec3>& unitCubeTris() {
+    static const std::vector<glm::vec3> tris = draw::quadsToTris(std::vector<glm::vec3>{
+        {-0.5f,-0.5f, 0.5f}, { 0.5f,-0.5f, 0.5f}, { 0.5f, 0.5f, 0.5f}, {-0.5f, 0.5f, 0.5f},
+        {-0.5f,-0.5f,-0.5f}, {-0.5f, 0.5f,-0.5f}, { 0.5f, 0.5f,-0.5f}, { 0.5f,-0.5f,-0.5f},
+        {-0.5f, 0.5f,-0.5f}, {-0.5f, 0.5f, 0.5f}, { 0.5f, 0.5f, 0.5f}, { 0.5f, 0.5f,-0.5f},
+        {-0.5f,-0.5f,-0.5f}, { 0.5f,-0.5f,-0.5f}, { 0.5f,-0.5f, 0.5f}, {-0.5f,-0.5f, 0.5f},
+        { 0.5f,-0.5f,-0.5f}, { 0.5f, 0.5f,-0.5f}, { 0.5f, 0.5f, 0.5f}, { 0.5f,-0.5f, 0.5f},
+        {-0.5f,-0.5f,-0.5f}, {-0.5f,-0.5f, 0.5f}, {-0.5f, 0.5f, 0.5f}, {-0.5f, 0.5f,-0.5f},
+    });
+    return tris;
+}
+
+// A cube grip centred on a world position. Sets the model transform the way the
+// old glTranslatef/glScalef pair did, then restores world space so the next draw
+// is not silently scaled by it.
+void drawHandle(const glm::vec3& worldPos, float size, const glm::vec4& color,
+                Blend blend = Blend::Opaque) {
+    Renderer& r = currentRenderer();
+    r.setModel(glm::scale(glm::translate(glm::mat4(1.0f), worldPos), glm::vec3(size)));
+    r.drawSolid(unitCubeTris(), color, blend, true);
+    r.setModel(glm::mat4(1.0f));
+}
+
+// Line segments for the boundary's drawLines verb, which wants explicit pairs.
+using Seg = std::pair<glm::vec3, glm::vec3>;
+
+} // namespace
+
 namespace Core {
 
 void Game::render() {
     if (!_window) return;
-
-#ifdef USE_GL3_RENDERER
-    // Initialize the GL3 renderer lazily once we have a window/context
-    if (!_gl3Initialized) {
-        _gl3Initialized = _gl3Renderer.init(_window, "#version 330 core");
-    }
-#endif
 
     // Apply active zone theme colour
     mgr.active().applyTheme();
@@ -52,8 +75,6 @@ void Game::render() {
     glfwGetFramebufferSize(_window, &fbW, &fbH);
     if (fbH == 0) fbH = 1;
     float aspect = static_cast<float>(fbW) / fbH;
-
-    glViewport(0, 0, fbW, fbH);
 
     // Current active zone's 3-D world (accessible throughout render)
     auto& zoneWorld = mgr.active().world();
@@ -71,16 +92,13 @@ void Game::render() {
     float right  = top * aspect;
     float left   = -right;
 
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glFrustum(left, right, bottom, top, nearZ, farZ);
+    // glm::frustum reproduces glFrustum exactly (same [-1,1] clip depth, since the
+    // app is not built with GLM_FORCE_DEPTH_ZERO_TO_ONE).
+    glm::mat4 proj = glm::frustum(left, right, bottom, top, nearZ, farZ);
 
     // ------------------------------------------------------------------
     // Model-view (camera)
     // ------------------------------------------------------------------
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-
     vec3 eyePos   = _camera.pos;
     vec3 lookDir  = _camera.front;
     const float CAMERA_DISTANCE = 4.0f;
@@ -92,14 +110,36 @@ void Game::render() {
     }
 
     vec3 lookTarget = _camera.pos + lookDir;
-    gluLookAt(eyePos.x, eyePos.y, eyePos.z,
-              lookTarget.x, lookTarget.y, lookTarget.z,
-              _camera.up.x, _camera.up.y, _camera.up.z);
+    glm::mat4 view = glm::lookAt(eyePos, lookTarget, _camera.up);
+
+    // Hand the camera to the active backend. OpenGL loads the fixed-function
+    // stacks (what glFrustum + gluLookAt did here until now); WebGPU keeps
+    // view*proj as a uniform. Must precede ShadingSystem::update — fixed-function
+    // light positions are transformed by whatever MODELVIEW is in force when set.
+    currentRenderer().setCamera(view, proj, eyePos);
+
+    // The picking matrices, which ecgl::project/unProject consume as GLdouble[16].
+    // Computed straight from the camera instead of read back from the GL stack, so
+    // they no longer depend on a GL context — or on nothing having disturbed the
+    // stack between here and the end of render(), which the old readback did.
+    for (int i = 0; i < 16; ++i) {
+        _camera.modelview[i]  = static_cast<GLdouble>(glm::value_ptr(view)[i]);
+        _camera.projection[i] = static_cast<GLdouble>(glm::value_ptr(proj)[i]);
+    }
+    _camera.viewport[0] = 0;    _camera.viewport[1] = 0;
+    _camera.viewport[2] = fbW;  _camera.viewport[3] = fbH;
 
     // Update lighting position to follow camera
     ShadingSystem::update(_camera.pos);
 
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // Open the frame on the active renderer: sets the viewport and clears to the
+    // active zone's colour. Under WebGPU this also acquires the surface and begins
+    // the render pass. Bracketed by endFrame() at the bottom of render().
+    {
+        const Zone& _z = mgr.active();
+        currentRenderer().beginFrame(static_cast<uint32_t>(fbW), static_cast<uint32_t>(fbH),
+                                     glm::vec4(_z.r, _z.g, _z.b, 1.0f));
+    }
 
     // --------------------------------------------------------------
     // Update transforms for demo cube + ground (only if tags still indicate baseline)
@@ -122,40 +162,23 @@ void Game::render() {
     const auto& objects = zoneWorld.getOwnedObjects();
     for (size_t i = 0; i < objects.size(); ++i) {
         if (i == 1) continue; // skip ground placeholder
-        glPushMatrix();
-        glMultMatrixf(&objects[i]->getTransform()[0][0]);
+        currentRenderer().setModel(objects[i]->getTransform());
         objects[i]->drawObject();
         objects[i]->drawHighlightOutline();
-        glPopMatrix();
     }
+    currentRenderer().setModel(glm::mat4(1.0f)); // back to world space
 
     // Morph tool: draw draggable vertex handles over the selected polyhedron.
     if (_current3DMode == Mode3D::Morph && _selectedObject3D &&
         _selectedObject3D->getGeometryType() == Object::GeometryType::Polyhedron) {
         Object* o = _selectedObject3D;
-        glDisable(GL_LIGHTING);
-        glDisable(GL_TEXTURE_2D);
         for (int v = 0; v < o->getPolyhedronVertexCount(); ++v) {
             glm::vec3 w = glm::vec3(o->getTransform() * glm::vec4(o->getPolyhedronVertexLocal(v), 1.0f));
             bool sel = (v == _morphVertexIndex);
-            float s = sel ? 0.06f : 0.04f;
-            if (sel) glColor3f(1.0f, 0.85f, 0.2f); else glColor3f(0.2f, 0.8f, 1.0f);
-            glPushMatrix();
-            glTranslatef(w.x, w.y, w.z);
-            glScalef(s, s, s);
-            // small cube handle
-            glBegin(GL_QUADS);
-            const float h = 0.5f;
-            glVertex3f(-h,-h, h); glVertex3f( h,-h, h); glVertex3f( h, h, h); glVertex3f(-h, h, h);
-            glVertex3f(-h,-h,-h); glVertex3f(-h, h,-h); glVertex3f( h, h,-h); glVertex3f( h,-h,-h);
-            glVertex3f(-h, h,-h); glVertex3f(-h, h, h); glVertex3f( h, h, h); glVertex3f( h, h,-h);
-            glVertex3f(-h,-h,-h); glVertex3f( h,-h,-h); glVertex3f( h,-h, h); glVertex3f(-h,-h, h);
-            glVertex3f( h,-h,-h); glVertex3f( h, h,-h); glVertex3f( h, h, h); glVertex3f( h,-h, h);
-            glVertex3f(-h,-h,-h); glVertex3f(-h,-h, h); glVertex3f(-h, h, h); glVertex3f(-h, h,-h);
-            glEnd();
-            glPopMatrix();
+            drawHandle(w, sel ? 0.06f : 0.04f,
+                       sel ? glm::vec4(1.0f, 0.85f, 0.2f, 1.0f)
+                           : glm::vec4(0.2f, 0.8f, 1.0f, 1.0f));
         }
-        glEnable(GL_LIGHTING);
     }
 
     // Field-refinement gizmos (Morph / Combine / Clay): ghost of operand B + its
@@ -166,42 +189,19 @@ void Game::render() {
         Object* o = _selectedObject3D;
         const glm::mat4& xf = o->getTransform();
         const geom::SdfNode& f = o->getFieldData();
-        glDisable(GL_LIGHTING);
-        glDisable(GL_TEXTURE_2D);
-        glEnable(GL_BLEND);
 
         // Translucent ghost of operand B (rendered in the field's local space).
         if (f.children.size() == 2 && f.children[1]) {
             geom::TessMesh ghost = geom::tessellateSdf(*f.children[1], o->getFieldExtent(), 16);
-            glPushMatrix();
-            glMultMatrixf(&xf[0][0]);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE); // additive glow
-            glDepthMask(GL_FALSE);
-            glColor4f(0.35f, 0.85f, 1.0f, 0.16f);
-            glBegin(GL_TRIANGLES);
-            for (const auto& v : ghost.tris) glVertex3f(v.pos.x, v.pos.y, v.pos.z);
-            glEnd();
-            glDepthMask(GL_TRUE);
-            glPopMatrix();
+            currentRenderer().setModel(xf);
+            currentRenderer().drawOverlay(ghost, glm::vec4(0.35f, 0.85f, 1.0f, 0.16f),
+                                          1.0f, /*additive=*/true);
+            currentRenderer().setModel(glm::mat4(1.0f));
         }
 
         // The draggable handle at operand B's offset (gold cube, world space).
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glm::vec3 hw = glm::vec3(xf * glm::vec4(o->getFieldOperandBOffset(), 1.0f));
-        glColor3f(1.0f, 0.85f, 0.2f);
-        glPushMatrix();
-        glTranslatef(hw.x, hw.y, hw.z);
-        glScalef(0.06f, 0.06f, 0.06f);
-        glBegin(GL_QUADS);
-        const float h = 0.5f;
-        glVertex3f(-h,-h, h); glVertex3f( h,-h, h); glVertex3f( h, h, h); glVertex3f(-h, h, h);
-        glVertex3f(-h,-h,-h); glVertex3f(-h, h,-h); glVertex3f( h, h,-h); glVertex3f( h,-h,-h);
-        glVertex3f(-h, h,-h); glVertex3f(-h, h, h); glVertex3f( h, h, h); glVertex3f( h, h,-h);
-        glVertex3f(-h,-h,-h); glVertex3f( h,-h,-h); glVertex3f( h,-h, h); glVertex3f(-h,-h, h);
-        glVertex3f( h,-h,-h); glVertex3f( h, h,-h); glVertex3f( h, h, h); glVertex3f( h,-h, h);
-        glVertex3f(-h,-h,-h); glVertex3f(-h,-h, h); glVertex3f(-h, h, h); glVertex3f(-h, h,-h);
-        glEnd();
-        glPopMatrix();
+        drawHandle(hw, 0.06f, glm::vec4(1.0f, 0.85f, 0.2f, 1.0f), Blend::Alpha);
 
         // Floating blend bead on a screen-aligned rail (replaces the t slider).
         if (o->isMorphField()) {
@@ -209,29 +209,14 @@ void Game::render() {
             blendRail(o, rs, rd, rl);
             glm::vec3 bead = rs + rd * (o->getMorphParam() * rl);
             glm::vec3 rEnd = rs + rd * rl;
-            glColor3f(0.55f, 0.55f, 0.6f);             // the rail
-            glLineWidth(2.0f);
-            glBegin(GL_LINES);
-            glVertex3f(rs.x, rs.y, rs.z); glVertex3f(rEnd.x, rEnd.y, rEnd.z);
-            glEnd();
-            glLineWidth(1.0f);
-            if (_blendHandleDragging) glColor3f(1.0f, 0.85f, 0.2f);
-            else                      glColor3f(0.3f, 0.85f, 1.0f);
-            glPushMatrix();
-            glTranslatef(bead.x, bead.y, bead.z);
-            glScalef(0.05f, 0.05f, 0.05f);
-            glBegin(GL_QUADS);
-            const float bh = 0.5f;
-            glVertex3f(-bh,-bh, bh); glVertex3f( bh,-bh, bh); glVertex3f( bh, bh, bh); glVertex3f(-bh, bh, bh);
-            glVertex3f(-bh,-bh,-bh); glVertex3f(-bh, bh,-bh); glVertex3f( bh, bh,-bh); glVertex3f( bh,-bh,-bh);
-            glVertex3f(-bh, bh,-bh); glVertex3f(-bh, bh, bh); glVertex3f( bh, bh, bh); glVertex3f( bh, bh,-bh);
-            glVertex3f(-bh,-bh,-bh); glVertex3f( bh,-bh,-bh); glVertex3f( bh,-bh, bh); glVertex3f(-bh,-bh, bh);
-            glVertex3f( bh,-bh,-bh); glVertex3f( bh, bh,-bh); glVertex3f( bh, bh, bh); glVertex3f( bh,-bh, bh);
-            glVertex3f(-bh,-bh,-bh); glVertex3f(-bh,-bh, bh); glVertex3f(-bh, bh, bh); glVertex3f(-bh, bh,-bh);
-            glEnd();
-            glPopMatrix();
+            currentRenderer().drawLines({Seg{rs, rEnd}},
+                                        glm::vec4(0.55f, 0.55f, 0.6f, 1.0f), 2.0f,
+                                        Blend::Alpha);
+            drawHandle(bead, 0.05f,
+                       _blendHandleDragging ? glm::vec4(1.0f, 0.85f, 0.2f, 1.0f)
+                                            : glm::vec4(0.3f, 0.85f, 1.0f, 1.0f),
+                       Blend::Alpha);
         }
-        glEnable(GL_LIGHTING);
     }
 
     // Clay tool: while dragging, outline the shape the dragged piece will fuse into.
@@ -243,20 +228,15 @@ void Game::render() {
             mn = glm::min(mn, o->collisionZone.corners[i]);
             mx = glm::max(mx, o->collisionZone.corners[i]);
         }
-        glDisable(GL_LIGHTING);
-        glDisable(GL_TEXTURE_2D);
-        glColor3f(1.0f, 0.85f, 0.2f); // gold = "release here to fuse"
-        glLineWidth(2.5f);
         const glm::vec3 c[8] = {
             {mn.x,mn.y,mn.z},{mx.x,mn.y,mn.z},{mx.x,mx.y,mn.z},{mn.x,mx.y,mn.z},
             {mn.x,mn.y,mx.z},{mx.x,mn.y,mx.z},{mx.x,mx.y,mx.z},{mn.x,mx.y,mx.z} };
         const int e[12][2] = {{0,1},{1,2},{2,3},{3,0},{4,5},{5,6},{6,7},{7,4},{0,4},{1,5},{2,6},{3,7}};
-        glBegin(GL_LINES);
-        for (auto& pr : e) { glVertex3f(c[pr[0]].x,c[pr[0]].y,c[pr[0]].z);
-                             glVertex3f(c[pr[1]].x,c[pr[1]].y,c[pr[1]].z); }
-        glEnd();
-        glLineWidth(1.0f);
-        glEnable(GL_LIGHTING);
+        std::vector<Seg> edges;
+        edges.reserve(12);
+        for (auto& pr : e) edges.push_back(Seg{c[pr[0]], c[pr[1]]});
+        // gold = "release here to fuse"
+        currentRenderer().drawLines(edges, glm::vec4(1.0f, 0.85f, 0.2f, 1.0f), 2.5f, Blend::Alpha);
     }
 
     // Morph tool on a Bezier patch: control-net wireframe + draggable control points.
@@ -264,57 +244,33 @@ void Game::render() {
         Object* o = _selectedObject3D;
         const glm::mat4& xf = o->getTransform();
         const geom::BezierPatch& p = o->getPatchData();
-        glDisable(GL_LIGHTING);
-        glDisable(GL_TEXTURE_2D);
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         auto cp = [&](int i, int j) {
             return glm::vec3(xf * glm::vec4(p.at(i, j), 1.0f));
         };
         // Control net (lines between adjacent control points).
-        glColor4f(0.3f, 0.8f, 1.0f, 0.6f);
-        glLineWidth(1.5f);
-        glBegin(GL_LINES);
+        std::vector<Seg> net;
         for (int j = 0; j < p.nv(); ++j)
             for (int i = 0; i < p.nu(); ++i) {
                 glm::vec3 a = cp(i, j);
-                if (i + 1 < p.nu()) { glm::vec3 b = cp(i + 1, j); glVertex3f(a.x,a.y,a.z); glVertex3f(b.x,b.y,b.z); }
-                if (j + 1 < p.nv()) { glm::vec3 b = cp(i, j + 1); glVertex3f(a.x,a.y,a.z); glVertex3f(b.x,b.y,b.z); }
+                if (i + 1 < p.nu()) net.push_back(Seg{a, cp(i + 1, j)});
+                if (j + 1 < p.nv()) net.push_back(Seg{a, cp(i, j + 1)});
             }
-        glEnd();
+        currentRenderer().drawLines(net, glm::vec4(0.3f, 0.8f, 1.0f, 0.6f), 1.5f, Blend::Alpha);
 
         // Control-point handles.
         for (int idx = 0; idx < o->getPatchControlCount(); ++idx) {
             glm::vec3 w = glm::vec3(xf * glm::vec4(o->getPatchControlLocal(idx), 1.0f));
             bool sel = (idx == _patchCtrlIndex);
-            float s = sel ? 0.05f : 0.035f;
-            if (sel) glColor3f(1.0f, 0.85f, 0.2f); else glColor3f(0.2f, 0.8f, 1.0f);
-            glPushMatrix();
-            glTranslatef(w.x, w.y, w.z);
-            glScalef(s, s, s);
-            glBegin(GL_QUADS);
-            const float h = 0.5f;
-            glVertex3f(-h,-h, h); glVertex3f( h,-h, h); glVertex3f( h, h, h); glVertex3f(-h, h, h);
-            glVertex3f(-h,-h,-h); glVertex3f(-h, h,-h); glVertex3f( h, h,-h); glVertex3f( h,-h,-h);
-            glVertex3f(-h, h,-h); glVertex3f(-h, h, h); glVertex3f( h, h, h); glVertex3f( h, h,-h);
-            glVertex3f(-h,-h,-h); glVertex3f( h,-h,-h); glVertex3f( h,-h, h); glVertex3f(-h,-h, h);
-            glVertex3f( h,-h,-h); glVertex3f( h, h,-h); glVertex3f( h, h, h); glVertex3f( h,-h, h);
-            glVertex3f(-h,-h,-h); glVertex3f(-h,-h, h); glVertex3f(-h, h, h); glVertex3f(-h, h,-h);
-            glEnd();
-            glPopMatrix();
+            drawHandle(w, sel ? 0.05f : 0.035f,
+                       sel ? glm::vec4(1.0f, 0.85f, 0.2f, 1.0f)
+                           : glm::vec4(0.2f, 0.8f, 1.0f, 1.0f),
+                       Blend::Alpha);
         }
-        glEnable(GL_LIGHTING);
     }
 
     // Gravity field visualization (holographic arrows)
     if (Physics::getGravityVisualization()) {
-        glPushAttrib(GL_ENABLE_BIT | GL_LINE_BIT | GL_COLOR_BUFFER_BIT | GL_CURRENT_BIT);
-        glDisable(GL_LIGHTING);
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-        glLineWidth(1.5f);
-
         // Build a small sample grid around the camera
         int N = Physics::getGravityVisualizationDensity();
         float span = 6.0f; // world units across the grid
@@ -336,15 +292,14 @@ void Game::render() {
                     // Color by magnitude (teal to purple)
                     float t = glm::clamp(mag / 5.0f, 0.0f, 1.0f);
                     glm::vec3 col = glm::mix(glm::vec3(0.2f, 1.0f, 0.9f), glm::vec3(0.8f, 0.2f, 1.0f), t);
-                    glColor4f(col.r, col.g, col.b, 0.5f);
-                    glBegin(GL_LINES);
-                    glVertex3f(p.x, p.y, p.z);
-                    glVertex3f(q.x, q.y, q.z);
-                    glEnd();
+                    // One call per arrow: the colour varies per sample, and a single
+                    // drawLines carries one colour. Same granularity as the glBegin/
+                    // glEnd pair this replaces.
+                    currentRenderer().drawLines({Seg{p, q}}, glm::vec4(col, 0.5f), 1.5f,
+                                                Blend::Additive);
                 }
             }
         }
-        glPopAttrib();
     }
 
     // ------------------------------------------------------------------
@@ -373,8 +328,8 @@ void Game::render() {
             double winX = mx*sx; double winY = my*sy;
             winY = _camera.viewport[3] - winY;
             GLdouble nx,ny,nz,fx,fy,fz;
-            gluUnProject(winX,winY,0.0,_camera.modelview,_camera.projection,_camera.viewport,&nx,&ny,&nz);
-            gluUnProject(winX,winY,1.0,_camera.modelview,_camera.projection,_camera.viewport,&fx,&fy,&fz);
+            ecgl::unProject(winX,winY,0.0,_camera.modelview,_camera.projection,_camera.viewport,&nx,&ny,&nz);
+            ecgl::unProject(winX,winY,1.0,_camera.modelview,_camera.projection,_camera.viewport,&fx,&fy,&fz);
             glm::vec3 rayO(nx,ny,nz);
             glm::vec3 rayDir = glm::normalize(glm::vec3(fx,fy,fz)-rayO);
             float nearestT=1e9f; int hitAxis=-1; int hitSign=1; Object* hitObj=nullptr;
@@ -424,15 +379,8 @@ void Game::render() {
         glm::mat4 previewT = buildBrushCreateTransform(previewPos);
 
         // Render as translucent wireframe so it does not occlude view
-        glPushAttrib(GL_ENABLE_BIT | GL_POLYGON_BIT | GL_CURRENT_BIT);
-        glDisable(GL_LIGHTING);
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
-
-        glPushMatrix();
-        glMultMatrixf(&previewT[0][0]);
+        currentRenderer().setWireframe(true);
+        currentRenderer().setModel(previewT);
         // Draw primitive outline using the selected shape
         Object temp;
         temp.setShape(_polyhedron.shapeKind, _polyhedron.shapeParams);
@@ -444,9 +392,9 @@ void Game::render() {
 
         temp.drawObject();
         temp.drawHighlightOutline();
-        glPopMatrix();
 
-        glPopAttrib();
+        currentRenderer().setModel(glm::mat4(1.0f));
+        currentRenderer().setWireframe(false);
     }
 
     // Draw player avatar and nametag when not in first-person
@@ -464,17 +412,7 @@ void Game::render() {
     }
 
     // 2-D overlays ---------------------------------------------------------
-    glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT);
-    glDisable(GL_DEPTH_TEST);
-
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    glOrtho(0, fbW, fbH, 0, -1, 1);
-
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
+    currentRenderer().begin2D(static_cast<uint32_t>(fbW), static_cast<uint32_t>(fbH));
 
     mgr.active().renderArt();
 
@@ -483,103 +421,59 @@ void Game::render() {
         const float previewOpacity = brushSystem ? std::clamp(brushSystem->getOpacity(), 0.25f, 0.95f) : 0.85f;
         const float previewWidth = brushSystem ? std::max(1.0f, brushSystem->getRadius() * 1000.0f) : 2.0f;
 
-        glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_LINE_BIT | GL_CURRENT_BIT);
-        glDisable(GL_LIGHTING);
-        glDisable(GL_DEPTH_TEST);
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glLineWidth(previewWidth);
-        glColor4f(_currentColor[0], _currentColor[1], _currentColor[2], previewOpacity);
-        glBegin(GL_LINES);
-        glVertex2f(_straightLineStartX, _straightLineStartY);
-        glVertex2f(_straightLineEndX, _straightLineEndY);
-        glEnd();
+        currentRenderer().drawLines2D(
+            {{_straightLineStartX, _straightLineStartY}, {_straightLineEndX, _straightLineEndY}},
+            glm::vec4(_currentColor[0], _currentColor[1], _currentColor[2], previewOpacity),
+            previewWidth);
 
-        glLineWidth(1.0f);
-        glColor4f(1.0f, 1.0f, 1.0f, 0.65f);
-        glBegin(GL_LINE_LOOP);
         constexpr int handleSegments = 16;
         constexpr float handleRadius = 4.0f;
+        std::vector<glm::vec2> handle;
+        handle.reserve(handleSegments);
         for (int i = 0; i < handleSegments; ++i) {
             const float angle = 2.0f * static_cast<float>(M_PI) * static_cast<float>(i) / static_cast<float>(handleSegments);
-            glVertex2f(_straightLineEndX + std::cos(angle) * handleRadius,
-                       _straightLineEndY + std::sin(angle) * handleRadius);
+            handle.push_back({_straightLineEndX + std::cos(angle) * handleRadius,
+                              _straightLineEndY + std::sin(angle) * handleRadius});
         }
-        glEnd();
-        glPopAttrib();
+        currentRenderer().drawLines2D(draw::stripToSegments(handle, /*closed=*/true),
+                                      glm::vec4(1.0f, 1.0f, 1.0f, 0.65f), 1.0f);
     }
 
-    glPopMatrix();
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-    glMatrixMode(GL_MODELVIEW);
-    glPopAttrib();
-
-#ifdef USE_GL3_RENDERER
-    _gl3Renderer.render(fbW, fbH);
-#endif
+    currentRenderer().end2D();
 
     // Brush cursor rendering for Face Brush tool
     if (_current3DMode == Mode3D::FaceBrush && _brush.showCursor && _brush.cursorVisible) {
-        glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT);
-        glDisable(GL_DEPTH_TEST);
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-        glMatrixMode(GL_PROJECTION);
-        glPushMatrix();
-        glLoadIdentity();
-        glOrtho(0, fbW, fbH, 0, -1, 1);
-
-        glMatrixMode(GL_MODELVIEW);
-        glPushMatrix();
-        glLoadIdentity();
+        currentRenderer().begin2D(static_cast<uint32_t>(fbW), static_cast<uint32_t>(fbH));
 
         float screenX = getCursorX();
         float screenY = getCursorY();
         float cursorSize = _faceBrush.radius * 100.0f * _brush.previewSize;
 
+        auto circle = [&](float radius) {
+            std::vector<glm::vec2> pts;
+            pts.reserve(32);
+            for (int i = 0; i < 32; ++i) {
+                float angle = 2.0f * static_cast<float>(M_PI) * i / 32.0f;
+                pts.push_back({screenX + std::cos(angle) * radius,
+                               screenY + std::sin(angle) * radius});
+            }
+            return draw::stripToSegments(pts, /*closed=*/true);
+        };
+
         // Draw brush cursor circle
-        glColor4f(1.0f, 1.0f, 1.0f, 0.8f);
-        glLineWidth(2.0f);
-        glBegin(GL_LINE_LOOP);
-        for (int i = 0; i < 32; ++i) {
-            float angle = 2.0f * M_PI * i / 32.0f;
-            float x = screenX + cos(angle) * cursorSize;
-            float y = screenY + sin(angle) * cursorSize;
-            glVertex2f(x, y);
-        }
-        glEnd();
+        currentRenderer().drawLines2D(circle(cursorSize), glm::vec4(1.0f, 1.0f, 1.0f, 0.8f), 2.0f);
 
         // Draw inner circle for softness indication
-        if (_faceBrush.softness < 1.0f) {
-            glColor4f(1.0f, 1.0f, 1.0f, 0.4f);
-            float innerSize = cursorSize * _faceBrush.softness;
-            glBegin(GL_LINE_LOOP);
-            for (int i = 0; i < 32; ++i) {
-                float angle = 2.0f * M_PI * i / 32.0f;
-                float x = screenX + cos(angle) * innerSize;
-                float y = screenY + sin(angle) * innerSize;
-                glVertex2f(x, y);
-            }
-            glEnd();
-        }
+        if (_faceBrush.softness < 1.0f)
+            currentRenderer().drawLines2D(circle(cursorSize * _faceBrush.softness),
+                                          glm::vec4(1.0f, 1.0f, 1.0f, 0.4f), 1.0f);
 
         // Draw crosshair at center
-        glColor4f(1.0f, 1.0f, 1.0f, 0.6f);
-        glLineWidth(1.0f);
-        glBegin(GL_LINES);
-        glVertex2f(screenX - 5.0f, screenY);
-        glVertex2f(screenX + 5.0f, screenY);
-        glVertex2f(screenX, screenY - 5.0f);
-        glVertex2f(screenX, screenY + 5.0f);
-        glEnd();
+        currentRenderer().drawLines2D({{screenX - 5.0f, screenY}, {screenX + 5.0f, screenY},
+                                       {screenX, screenY - 5.0f}, {screenX, screenY + 5.0f}},
+                                      glm::vec4(1.0f, 1.0f, 1.0f, 0.6f), 1.0f);
 
-        glPopMatrix();
-        glMatrixMode(GL_PROJECTION);
-        glPopMatrix();
-        glMatrixMode(GL_MODELVIEW);
-        glPopAttrib();
+        currentRenderer().end2D();
     }
 
     _mainMenu.draw();
@@ -618,6 +512,24 @@ void Game::render() {
             ImGui::BulletText("; / ': Pitch hologram");
             ImGui::BulletText(", / .: Roll hologram");
             ImGui::BulletText("Ctrl: Fine rotation  Shift: Fast rotation");
+        }
+        ImGui::End();
+    }
+
+    // Dynamic Debug Coordinates overlay (Top Right)
+    if (_showDebugCoordinates) {
+        ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoMove;
+        ImGuiIO& io = ImGui::GetIO();
+        const float PAD = 10.0f;
+        ImVec2 window_pos = ImVec2(io.DisplaySize.x - PAD, PAD);
+        ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always, ImVec2(1.0f, 0.0f));
+        ImGui::SetNextWindowBgAlpha(0.35f);
+        if (ImGui::Begin("Debug Coordinates", &_showDebugCoordinates, window_flags)) {
+            ImGui::Text("Player Position:");
+            ImGui::Separator();
+            ImGui::Text("X: %.2f", _player.position.x);
+            ImGui::Text("Y: %.2f", _player.position.y);
+            ImGui::Text("Z: %.2f", _player.position.z);
         }
         ImGui::End();
     }
@@ -682,10 +594,9 @@ void Game::render() {
         ImGui::End();
     }
 
-    // update camera matrices after gluLookAt in render() right after setting view:
-    glGetIntegerv(GL_VIEWPORT, _camera.viewport);
-    glGetDoublev(GL_MODELVIEW_MATRIX, _camera.modelview);
-    glGetDoublev(GL_PROJECTION_MATRIX, _camera.projection);
+    // Close the frame: no-op under OpenGL (already drawn immediately); under
+    // WebGPU this ends the render pass, submits, and presents the surface.
+    currentRenderer().endFrame();
 }
 
 } // namespace Core

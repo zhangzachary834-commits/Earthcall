@@ -12,6 +12,9 @@
 
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "Form/Object/Object.hpp"
+#include "Person/Person.hpp"
+#include "Form/Object/Creation/ObjectConcept.hpp"
+#include "ZonesOfEarth/World/World.hpp"
 
 #include <GLFW/glfw3.h>
 #include <cassert>
@@ -159,6 +162,166 @@ int main() {
         for (double x : {0.0, 0.3, 1.7, -2.2}) {
             assert(std::fabs(wave.evaluate(x) - waveBack.evaluate(x)) < 1e-12);
         }
+        // ------------------------------------------------------------------
+        // 7. ConditionNode Description Formatting
+        // ------------------------------------------------------------------
+        auto condBool = ConditionNode::compare("state.enabled", ConditionNode::Op::Eq, PropertyValue(true));
+        assert(condBool.describe() == "state.enabled == true");
+
+        auto condBoolFalse = ConditionNode::compare("state.enabled", ConditionNode::Op::Eq, PropertyValue(false));
+        assert(condBoolFalse.describe() == "state.enabled == false");
+
+        auto condString = ConditionNode::compare("player.activeTool", ConditionNode::Op::Eq, PropertyValue(std::string("3DShapeGenerator")));
+        assert(condString.describe() == "player.activeTool == \"3DShapeGenerator\"");
+
+        auto condDouble = ConditionNode::compare("position.y", ConditionNode::Op::Gt, PropertyValue(3.14));
+        assert(condDouble.describe() == "position.y > 3.14");
+
+        auto condDoubleTrunc = ConditionNode::compare("position.y", ConditionNode::Op::Eq, PropertyValue(5.0));
+        assert(condDoubleTrunc.describe() == "position.y == 5");
+
+        auto condPath = ConditionNode::comparePaths("position.y", ConditionNode::Op::Lt, "target.position.y");
+        assert(condPath.describe() == "position.y < target.position.y");
+
+        // ------------------------------------------------------------------
+        // 8. Evaluation of Condition Data Types & Console Feed Execution
+        // ------------------------------------------------------------------
+        // We ensure that string conditions are properly evaluated and actions correctly affect the world
+        // (logging that they fired via the Law's ApplicationResult logic).
+        Law strLaw("tool-checker");
+        strLaw.addAuthor(author);
+        strLaw.setConditionModel(ConditionNode::compare("activeTool", ConditionNode::Op::Eq, PropertyValue(std::string("3DShapeGenerator"))));
+        strLaw.setActionModel(ActionNode::set("position.y", PropertyValue(100.0f)));
+
+        Soul pSoul("TestSubject");
+        Body pAvatar = Body::createBasicAvatar("TestVoxel");
+        Person person(pSoul, std::move(pAvatar));
+        
+        // Ensure property can be accessed
+        PropertyValue valOut;
+        PropertyPath::parse("activeTool").setValue(person, PropertyValue(std::string("None")));
+
+        // Condition fails
+        assert(strLaw.applyTo(person) == Law::ApplicationResult::ConditionsFailed);
+        assert(person.position.y == 0.0f); 
+
+        PropertyPath::parse("activeTool").setValue(person, PropertyValue(std::string("3DShapeGenerator")));
+        
+        assert(strLaw.applyTo(person) == Law::ApplicationResult::Applied);
+        
+        // ------------------------------------------------------------------
+        // 9. Spawning Action Behavior
+        // ------------------------------------------------------------------
+        {
+            // Create a test concept (a simple cube)
+            Object sourceObj;
+            sourceObj.setShape(Object::ShapeKind::Cube);
+            std::vector<Object*> sources = { &sourceObj };
+            auto cubeConcept = ObjectConcept::captureFrom(sources, "TestCubeShape");
+            
+            // Register it
+            ConceptRegistry::instance().add(cubeConcept);
+            std::string conceptId = cubeConcept->getIdentifier();
+            
+            // Create a world
+            World testWorld;
+            size_t initialSize = testWorld.getOwnedObjects().size();
+            
+            // Spawn action: target is the world
+            ActionNode spawnAction = ActionNode::spawn(conceptId, "");
+            
+            ECA::Event spawnEvent;
+            spawnEvent.type = "testSpawn";
+            // Run action
+            spawnAction.compile()(spawnEvent, testWorld);
+            
+            assert(testWorld.getOwnedObjects().size() == initialSize + 1);
+            Object* spawnedObj = testWorld.getOwnedObjects().back().get();
+            assert(spawnedObj->getShapeKind() == Object::ShapeKind::Cube);
+        }
+
+        printf("All core Law model tests passed.\n");
+
+        // Now test a float mismatch (near)
+        Law floatLaw("height-checker");
+        floatLaw.addAuthor(author);
+        floatLaw.setConditionModel(ConditionNode::compare("position.y", ConditionNode::Op::Near, PropertyValue(100.0f)));
+        floatLaw.setActionModel(ActionNode::set("activeTool", PropertyValue(std::string("FloatSatisfied"))));
+
+        assert(floatLaw.applyTo(person) == Law::ApplicationResult::Applied);
+        PropertyPath::parse("activeTool").getValue(person, valOut);
+        assert(std::get<std::string>(valOut) == "FloatSatisfied");
+        // ------------------------------------------------------------------
+        // 10. Multiple-Condition and Multiple-Action Laws
+        // ------------------------------------------------------------------
+        {
+            Law multiLaw("multi-law");
+            multiLaw.addAuthor(author);
+            
+            // Multiple conditions: activeTool == "FloatSatisfied" AND position.y > 50.0
+            std::vector<ConditionNode> conditions;
+            conditions.push_back(ConditionNode::compare("position.y", ConditionNode::Op::Gt, PropertyValue(50.0f)));
+            conditions.push_back(ConditionNode::compare("activeTool", ConditionNode::Op::Eq, PropertyValue(std::string("FloatSatisfied"))));
+            multiLaw.setConditionModel(ConditionNode::all(std::move(conditions)));
+
+            // Multiple actions: sequence of Sets
+            std::vector<ActionNode> actions;
+            actions.push_back(ActionNode::set("position.x", PropertyValue(42.0f)));
+            actions.push_back(ActionNode::set("position.z", PropertyValue(42.0f)));
+            multiLaw.setActionModel(ActionNode::sequence(std::move(actions)));
+
+            // Before applying, x and z should be 0 (from defaults) and y is ~100 (from previous test)
+            assert(multiLaw.applyTo(person) == Law::ApplicationResult::Applied);
+            assert(nearf(person.position.x, 42.0f));
+            assert(nearf(person.position.z, 42.0f));
+            
+            // Verify failure condition (AND fails if one is false)
+            PropertyPath::parse("activeTool").setValue(person, PropertyValue(std::string("WrongTool")));
+            assert(multiLaw.applyTo(person) == Law::ApplicationResult::ConditionsFailed);
+        }
+        // ------------------------------------------------------------------
+        // 5. Verification of multiple-condition (All, Any) and multiple-action (Sequence) laws
+        // ------------------------------------------------------------------
+        {
+            Law multiLaw("multi-test");
+            multiLaw.addAuthor(author);
+
+            // Condition: (y < 0) AND (x > 10)
+            auto c1 = ConditionNode::compare("position.y", ConditionNode::Op::Lt, PropertyValue(0.0));
+            auto c2 = ConditionNode::compare("position.x", ConditionNode::Op::Gt, PropertyValue(10.0));
+            multiLaw.setConditionModel(ConditionNode::all({c1, c2}));
+
+            // Action: Sequence( set y=0, set x=10 )
+            auto a1 = ActionNode::set("position.y", PropertyValue(0.0f));
+            auto a2 = ActionNode::set("position.x", PropertyValue(10.0f));
+            multiLaw.setActionModel(ActionNode::sequence({a1, a2}));
+
+            Object testObj;
+            
+            // Fails x condition
+            testObj.setPosition(glm::vec3(5.0f, -5.0f, 0.0f));
+            assert(multiLaw.applyTo(testObj) == Law::ApplicationResult::ConditionsFailed);
+            
+            // Fails y condition
+            testObj.setPosition(glm::vec3(15.0f, 5.0f, 0.0f));
+            assert(multiLaw.applyTo(testObj) == Law::ApplicationResult::ConditionsFailed);
+            
+            // Passes both
+            testObj.setPosition(glm::vec3(15.0f, -5.0f, 0.0f));
+            assert(multiLaw.applyTo(testObj) == Law::ApplicationResult::Applied);
+            assert(nearf(testObj.getPosition().y, 0.0f));
+            assert(nearf(testObj.getPosition().x, 10.0f));
+
+            // Test Any
+            multiLaw.setConditionModel(ConditionNode::any({c1, c2}));
+            
+            // Passes y condition only
+            testObj.setPosition(glm::vec3(5.0f, -5.0f, 0.0f));
+            assert(multiLaw.applyTo(testObj) == Law::ApplicationResult::Applied);
+            assert(nearf(testObj.getPosition().y, 0.0f));
+            assert(nearf(testObj.getPosition().x, 10.0f));
+        }
+
     }
 
     glfwDestroyWindow(window);

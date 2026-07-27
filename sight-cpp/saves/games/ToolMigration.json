@@ -1,0 +1,88 @@
+{
+    "concepts": {
+        "concepts": [
+            {
+                "id": "concept-shape-3d",
+                "name": "Shape3D",
+                "members": [
+                    {
+                        "attributes": {},
+                        "color": [1.0, 1.0, 1.0],
+                        "position": [0.0, 0.0, 0.0],
+                        "shapeKind": 0,
+                        "type": "Object"
+                    }
+                ],
+                "mappings": [
+                    {
+                        "agg": 0,
+                        "bindings": {},
+                        "hasExact": false,
+                        "source": "@subject.cursorSpawnTransform",
+                        "target": "transform",
+                        "transform": {
+                            "kind": 0,
+                            "points": [ [0.0, 0.0], [1.0, 1.0] ]
+                        }
+                    },
+                    {
+                        "agg": 0,
+                        "bindings": {},
+                        "hasExact": false,
+                        "source": "@subject.activeColor",
+                        "target": "color",
+                        "transform": {
+                            "kind": 0,
+                            "points": [ [0.0, 0.0], [1.0, 1.0] ]
+                        }
+                    },
+                    {
+                        "agg": 0,
+                        "bindings": {},
+                        "hasExact": false,
+                        "source": "@subject.activeShapeKind",
+                        "target": "shapeKind",
+                        "transform": {
+                            "kind": 0,
+                            "points": [ [0.0, 0.0], [1.0, 1.0] ]
+                        }
+                    }
+                ],
+                "relationTemplates": [],
+                "provenance": { "formationMembers": [] }
+            }
+        ]
+    },
+    "authoredLaws": {
+        "laws": [
+            {
+                "id": "law-shape-3d",
+                "name": "Tool: Shape Generator 3D",
+                "conditionModel": {
+                    "kind": 0,
+                    "op": 0,
+                    "path": "@subject.activeTool",
+                    "operand": { "t": "string", "v": "ShapeGenerator3D" }
+                },
+                "actionModel": {
+                    "kind": 7,
+                    "conceptId": "concept-shape-3d",
+                    "spawnParentPath": "@subject.cursorHoveredBodyPart"
+                },
+                "conditionMode": "all",
+                "activation": 0,
+                "authority": 0,
+                "authors": ["System"],
+                "drives": false,
+                "enabled": true,
+                "actionDescriptions": ["Spawn 1 of Concept Shape3D"],
+                "conditionDescriptions": ["@subject.activeTool == 'ShapeGenerator3D'"],
+                "provenance": []
+            }
+        ],
+        "formationMembers": ["law-shape-3d"],
+        "triggers": {
+            "law-shape-3d": ["onMouseClicked"]
+        }
+    }
+}

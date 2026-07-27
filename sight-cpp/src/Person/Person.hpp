@@ -9,6 +9,7 @@
 #include "Form/Singular/Singular.hpp"
 #include "Soul/Soul.hpp"
 #include "Singularity/Core/EventBus.hpp"
+#include <json.hpp>
 
 // Forward declarations for Person events (defined in PersonEvents.hpp)
 struct PersonJoinedEvent;
@@ -77,7 +78,18 @@ public:
     glm::vec3 position{0.0f, 0.0f, 0.0f};
     glm::vec3 velocity{0.0f, 0.0f, 0.0f};
     glm::vec3 acceleration{0.0f, 0.0f, 0.0f};
-    
+    // --- Law System Perception Properties --- 
+    std::string activeTool;
+    std::string active3DMode;
+    int activeShapeKind = 0;
+    glm::vec3 cursorHitPos{0.0f, 0.0f, 0.0f};
+    glm::vec3 cursorHitNormal{0.0f, 1.0f, 0.0f};
+    glm::mat4 cursorSpawnTransform{1.0f};
+    std::string cursorHoveredBodyPart;
+    glm::vec3 cameraPos{0.0f, 0.0f, 0.0f};
+    glm::vec3 cameraForward{0.0f, 0.0f, -1.0f};
+    glm::vec3 activeColor{1.0f, 1.0f, 1.0f};
+
     // Enhanced avatar system
     AvatarState state;
     std::vector<Animation> animations;
@@ -93,8 +105,14 @@ public:
     std::vector<std::string> inventory;
     int maxInventorySize = 20;
 
+    std::vector<std::string> nicknames;
+    
+    // Serialization
+    nlohmann::json serialize() const;
+    void deserialize(const nlohmann::json& j);
+
     // Constructors
-    Person(Soul& soul, Body& body);
+    Person(Soul soul, Body body);
     // Person(std::string soulName, Body&& body, glm::vec3 pos = {0.0f,0.0f,0.0f});  // Commented out - needs Soul reference
     void express() const;
     void draw() const;
@@ -195,8 +213,8 @@ private:
     void buildProperties() override;
     std::string propName() const { return soulName; }
 
-    Soul& _soul;
-    Body& body;  // Body member variable
+    Soul _soul;
+    Body body;  // Body member variable
 
     // Helper method for creating default animations
     void createDefaultAnimations();

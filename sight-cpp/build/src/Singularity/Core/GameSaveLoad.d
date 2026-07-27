@@ -264,9 +264,10 @@ build/src/Singularity/Core/GameSaveLoad.o: \
   src/Form/Object/Object/PolyhedronData.hpp \
   src/Form/Object/Object/../AngleTools.hpp \
   src/Form/Object/Object/../Contour.hpp \
-  src/Form/Object/Object/FaceTexture.hpp \
-  src/Form/Object/Object/CollisionZone.hpp \
+  src/Form/Object/Object/FaceTexture.hpp src/Rendering/Renderer.hpp \
+  src/Rendering/RenderMaterial.hpp \
   src/Form/Object/Geometry/SmoothSurface.hpp \
+  src/Form/Object/Object/CollisionZone.hpp \
   src/Form/Object/Geometry/ComplexShape.hpp \
   src/Form/Object/Geometry/Sdf.hpp src/Form/Object/Geometry/Patch.hpp \
   src/Form/Object/Automation/Automation.hpp \
@@ -289,7 +290,7 @@ build/src/Singularity/Core/GameSaveLoad.o: \
   src/Form/Singular/Property/PropertyPath.hpp \
   src/ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp \
   src/ZonesOfEarth/AuthorsOfLaw/Universe.hpp \
-  src/Singularity/OntoMath/Expression.hpp \
+  src/Singularity/OntoMath/ScalarForm.hpp \
   src/ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp \
   src/Singularity/OntoMath/CurveModel.hpp \
   src/Perspective/KeyboardHandler.hpp src/Perspective/MouseHandler.hpp \
@@ -306,8 +307,11 @@ build/src/Singularity/Core/GameSaveLoad.o: \
   src/Form/Object/Creation/ObjectConcept.hpp \
   src/Form/Object/Creation/PropertyMapping.hpp \
   src/Singularity/TransferPolicy.hpp \
-  src/ZonesOfEarth/Physics/Physics.hpp src/Util/SaveSystem.hpp \
-  src/Util/Serialization.hpp src/ZonesOfEarth/World/World.hpp
+  src/ZonesOfEarth/Physics/Physics.hpp \
+  src/Form/Material/MaterialManager.hpp src/Form/Material/Material.hpp \
+  src/Util/SaveSystem.hpp src/Util/Serialization.hpp \
+  src/ZonesOfEarth/World/World.hpp \
+  src/ZonesOfEarth/AuthorsOfLaw/LawAuditLogger.hpp
 
 src/Singularity/Core/Game.hpp:
 
@@ -853,9 +857,13 @@ src/Form/Object/Object/../Contour.hpp:
 
 src/Form/Object/Object/FaceTexture.hpp:
 
-src/Form/Object/Object/CollisionZone.hpp:
+src/Rendering/Renderer.hpp:
+
+src/Rendering/RenderMaterial.hpp:
 
 src/Form/Object/Geometry/SmoothSurface.hpp:
+
+src/Form/Object/Object/CollisionZone.hpp:
 
 src/Form/Object/Geometry/ComplexShape.hpp:
 
@@ -917,7 +925,7 @@ src/ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp:
 
 src/ZonesOfEarth/AuthorsOfLaw/Universe.hpp:
 
-src/Singularity/OntoMath/Expression.hpp:
+src/Singularity/OntoMath/ScalarForm.hpp:
 
 src/ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp:
 
@@ -955,8 +963,14 @@ src/Singularity/TransferPolicy.hpp:
 
 src/ZonesOfEarth/Physics/Physics.hpp:
 
+src/Form/Material/MaterialManager.hpp:
+
+src/Form/Material/Material.hpp:
+
 src/Util/SaveSystem.hpp:
 
 src/Util/Serialization.hpp:
 
 src/ZonesOfEarth/World/World.hpp:
+
+src/ZonesOfEarth/AuthorsOfLaw/LawAuditLogger.hpp:

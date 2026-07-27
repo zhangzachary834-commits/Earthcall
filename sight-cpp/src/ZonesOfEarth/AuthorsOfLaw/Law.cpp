@@ -2,9 +2,11 @@
 
 #include "Form/Singular/Property/ComputedProperty.hpp"
 #include "Universe.hpp"
+#include "LawAuditLogger.hpp"
 
 #include <algorithm>
 #include <atomic>
+#include <cstdio>
 
 namespace {
 std::vector<std::string> formationMemberIds(const Formation& formation) {
@@ -224,8 +226,18 @@ Law::ApplicationResult Law::applyTo(Singular& target) {
         result = ApplicationResult::AuthorityDenied;
     } else if (!conditionsSatisfied(target)) {
         result = ApplicationResult::ConditionsFailed;
+        ECA::LawAuditLogger::instance().log("LAW", "Law \"" + getIdentifier() + "\" applied to \"" + target.getIdentifier() + "\" - CONDITIONS FAILED", {
+            {"lawId", getIdentifier()},
+            {"targetId", target.getIdentifier()},
+            {"result", "ConditionsFailed"}
+        });
     } else if (_actions.empty()) {
         result = ApplicationResult::NoAction;
+        ECA::LawAuditLogger::instance().log("LAW", "Law \"" + getIdentifier() + "\" applied to \"" + target.getIdentifier() + "\" - NO ACTIONS", {
+            {"lawId", getIdentifier()},
+            {"targetId", target.getIdentifier()},
+            {"result", "NoAction"}
+        });
     } else {
         ECA::Event event;
         event.type = "law-apply";
@@ -252,6 +264,11 @@ Law::ApplicationResult Law::applyTo(Singular& target) {
         for (const auto& action : _actions) {
             action.run(event, target);
         }
+        ECA::LawAuditLogger::instance().log("LAW", "Law \"" + getIdentifier() + "\" applied to \"" + target.getIdentifier() + "\" - SUCCESS", {
+            {"lawId", getIdentifier()},
+            {"targetId", target.getIdentifier()},
+            {"result", "Applied"}
+        });
     }
 
     _applicationLog.push_back(makeRecord(&target, result));
@@ -304,6 +321,10 @@ void Law::publishAppliedEvent(Singular* target, ApplicationResult result) const 
     Core::EventBus::instance().publish(event);
 
     if (result == ApplicationResult::Applied) {
+        printf("[LAW] Action fired for Law: %s on target: %s\n", 
+               _lawId.c_str(), 
+               target ? target->getIdentifier().c_str() : "null");
+
         // String-typed echo: Person-authored laws bind to "law-applied"
         // without needing a compile-time event type — laws chaining on laws.
         // (Only successful applications echo; refusals are log-only.)
@@ -629,13 +650,32 @@ void LawManager::connectToEventBus() {
     if (_connected) return;
     _connected = true;
     Core::EventBus::instance().subscribe<ECA::Event>([this](const ECA::Event& e) {
+        std::string subjectId = e.subject ? e.subject->getIdentifier() : "null";
+        std::string objectId = e.object ? e.object->getIdentifier() : "null";
+        
+        ECA::LawAuditLogger::instance().log("EVENT", "Event \"" + e.type + "\" triggered (Subject: " + subjectId + ", Object: " + objectId + ")", {
+            {"eventType", e.type},
+            {"subjectId", subjectId},
+            {"objectId", objectId},
+            {"timestamp", e.timestamp}
+        });
+
         ReteFact fact;
         fact.type = e.type;
         fact.subject = e.subject;
-        fact.subjectId = e.subject ? e.subject->getIdentifier() : "";
+        fact.subjectId = subjectId;
         fact.object = e.object;
         _rete.assertFact(fact);
         _dirty = true;
+    });
+    
+    // Also subscribe to ActionNode::ExecutedEvent to log actions globally
+    Core::EventBus::instance().subscribe<ActionNode::ExecutedEvent>([](const ActionNode::ExecutedEvent& e) {
+        std::string tId = e.target ? e.target->getIdentifier() : "null";
+        ECA::LawAuditLogger::instance().log("ACTION", "Action executed: " + e.actionName + " on " + tId, {
+            {"actionName", e.actionName},
+            {"targetId", tId}
+        });
     });
 }
 

@@ -23,7 +23,7 @@
 #include <cstdint>
 #include "Formation/Formation.hpp"
 #include <GLFW/glfw3.h> // Include OpenGL headers for rendering
-#include <OpenGL/glu.h> // Include OpenGL utilities
+#include <OpenGL/gl.h> // GL types/enums used in this header (GLU retired, Milestone 3)
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include "Form/Singular/Singular.hpp"
@@ -206,12 +206,24 @@ private:
     std::vector<geom::TessMesh> _complexMeshes;
     geom::BezierPatch       patchData;     // control-net surface when _hasPatch
     geom::TessMesh          _patchMesh;    // cached patch tessellation
+    // Polyhedron face meshes, one per face so each binds its own face texture.
+    // drawPolyhedron is const, so these are mutable and lazily rebuilt from
+    // polyhedronData when _polyhedronDirty is set (at every mutation point).
+    mutable std::vector<geom::TessMesh> _polyhedronFaceMeshes;
+    mutable bool _polyhedronDirty = true;
     bool _hasSmooth  = false;
     bool _hasComplex = false;
     bool _hasField   = false;
     bool _hasPatch   = false;
     ShapeKind _shapeKind = ShapeKind::Cube;
     ShapeParams _shapeParams;
+
+    // Which Material being paints this object, referenced BY IDENTIFIER (the same
+    // by-name model Relation uses for its endpoints) — never an owning pointer, so
+    // materials stay shared and the reference survives save/load. Resolved against
+    // the global MaterialManager at draw time. Defaults to the always-present
+    // material.default, so an object with no material assigned still renders.
+    std::string _materialId = "material.default";
 
     // Cached local-space surface vertices for GJK support queries on the new
     // topology shapes (argmax dot(v,dir)). Rebuilt when the shape changes.
@@ -225,6 +237,8 @@ private:
     void drawComplexModel() const;
     void drawFieldModel() const;
     void drawPatchModel() const;
+    unsigned int faceTextureId(size_t face) const; // per-face albedo id, 0 if none
+    void rebuildPolyhedronMeshes() const;          // rebuild _polyhedronFaceMeshes
     void rebuildGeometryCaches();
 
 public:
@@ -446,6 +460,11 @@ public:
             case ShapeKind::Paraboloid: setSmoothSurface(geom::makeParaboloid(p.paraboloidA));  break;
             case ShapeKind::Torus:      setSmoothSurface(geom::makeTorus(p.majorR, p.minorR));  break;
             case ShapeKind::RoundedBox: setComplexShape(geom::roundedBox(0.5f, p.fillet));      break;
+            case ShapeKind::Field:
+            case ShapeKind::Patch:
+                // Not built from ShapeParams: fields come from setField(), Bezier
+                // patches from setBezierPatch(). Named-shape path is a no-op for them.
+                break;
         }
         _shapeKind = k;      // assert after setGeometryType may have set a legacy value
         _shapeParams = p;
@@ -495,6 +514,12 @@ public:
     bool hasSmoothSurface() const { return _hasSmooth; }
     bool hasComplexShape()  const { return _hasComplex; }
     bool hasField()         const { return _hasField; }
+
+    // Material reference (by identifier — resolved against the global
+    // MaterialManager at draw time). Also registered as the Law-addressable
+    // property "material", so a Law can reassign an object's material by name.
+    const std::string& materialId() const { return _materialId; }
+    void setMaterialId(std::string id) { _materialId = std::move(id); }
     const geom::SmoothSurfaceData& getSmoothData()  const { return smoothData; }
     const geom::ComplexShapeData&  getComplexData() const { return complexData; }
     const geom::SdfNode&           getFieldData()   const { return fieldData; }

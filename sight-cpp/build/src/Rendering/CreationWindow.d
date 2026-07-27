@@ -1,8 +1,6 @@
 build/src/Rendering/CreationWindow.o: src/Rendering/CreationWindow.cpp \
   src/Rendering/CreationWindow.hpp src/Rendering/MathEditors.hpp \
-  src/Singularity/OntoMath/Expression.hpp src/json.hpp \
-  src/ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp \
-  src/Form/Singular/Property/PropertyPath.hpp \
+  src/Singularity/OntoMath/ScalarForm.hpp src/json.hpp \
   src/Form/Singular/Property/PropertyValue.hpp \
   /opt/homebrew/include/glm/glm.hpp \
   /opt/homebrew/include/glm/detail/_fixes.hpp \
@@ -154,6 +152,8 @@ build/src/Rendering/CreationWindow.o: src/Rendering/CreationWindow.cpp \
   /opt/homebrew/include/glm/vector_relational.hpp \
   /opt/homebrew/include/glm/integer.hpp \
   /opt/homebrew/include/glm/detail/func_integer.inl \
+  src/ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp \
+  src/Form/Singular/Property/PropertyPath.hpp \
   src/Form/Singular/Singular.hpp src/Form/Singular/Property/Property.hpp \
   src/ZonesOfEarth/AuthorsOfLaw/Universe.hpp \
   src/Form/Object/Creation/ObjectConcept.hpp src/Form/Object/Object.hpp \
@@ -265,9 +265,10 @@ build/src/Rendering/CreationWindow.o: src/Rendering/CreationWindow.cpp \
   src/Form/Object/Object/PolyhedronData.hpp \
   src/Form/Object/Object/../AngleTools.hpp \
   src/Form/Object/Object/../Contour.hpp \
-  src/Form/Object/Object/FaceTexture.hpp \
-  src/Form/Object/Object/CollisionZone.hpp \
+  src/Form/Object/Object/FaceTexture.hpp src/Rendering/Renderer.hpp \
+  src/Rendering/RenderMaterial.hpp \
   src/Form/Object/Geometry/SmoothSurface.hpp \
+  src/Form/Object/Object/CollisionZone.hpp \
   src/Form/Object/Geometry/ComplexShape.hpp \
   src/Form/Object/Geometry/Sdf.hpp src/Form/Object/Geometry/Patch.hpp \
   src/Form/Object/Automation/Automation.hpp \
@@ -280,13 +281,9 @@ src/Rendering/CreationWindow.hpp:
 
 src/Rendering/MathEditors.hpp:
 
-src/Singularity/OntoMath/Expression.hpp:
+src/Singularity/OntoMath/ScalarForm.hpp:
 
 src/json.hpp:
-
-src/ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp:
-
-src/Form/Singular/Property/PropertyPath.hpp:
 
 src/Form/Singular/Property/PropertyValue.hpp:
 
@@ -590,6 +587,10 @@ src/Form/Singular/Property/PropertyValue.hpp:
 
 /opt/homebrew/include/glm/detail/func_integer.inl:
 
+src/ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp:
+
+src/Form/Singular/Property/PropertyPath.hpp:
+
 src/Form/Singular/Singular.hpp:
 
 src/Form/Singular/Property/Property.hpp:
@@ -824,9 +825,13 @@ src/Form/Object/Object/../Contour.hpp:
 
 src/Form/Object/Object/FaceTexture.hpp:
 
-src/Form/Object/Object/CollisionZone.hpp:
+src/Rendering/Renderer.hpp:
+
+src/Rendering/RenderMaterial.hpp:
 
 src/Form/Object/Geometry/SmoothSurface.hpp:
+
+src/Form/Object/Object/CollisionZone.hpp:
 
 src/Form/Object/Geometry/ComplexShape.hpp:
 

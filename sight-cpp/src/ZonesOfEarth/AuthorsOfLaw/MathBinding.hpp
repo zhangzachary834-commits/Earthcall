@@ -5,6 +5,7 @@
 #include "Universe.hpp"
 #include "json.hpp"
 
+#include <iostream>
 #include <map>
 #include <optional>
 #include <string>
@@ -101,10 +102,23 @@ inline bool lawGetValue(Singular& subject, const PropertyPath& path, PropertyVal
 }
 
 inline bool lawSetValue(Singular& subject, const PropertyPath& path, const PropertyValue& v) {
-    if (isTimePath(path)) return false;   // no law writes time
+    std::cout << "[lawSetValue DEBUG] Path: " << path.toString() << std::endl;
+    if (isTimePath(path)) {
+        std::cout << "[lawSetValue DEBUG] Failed: isTimePath" << std::endl;
+        return false;
+    }
     PropertyPath remainder;
     Singular* root = resolveLawRoot(subject, path, remainder);
-    return root && remainder.setValue(*root, v);
+    if (!root) {
+        std::cout << "[lawSetValue DEBUG] Failed: resolveLawRoot returned nullptr" << std::endl;
+        return false;
+    }
+    std::cout << "[lawSetValue DEBUG] root resolved to: " << root->getIdentifier() << ", remainder: " << remainder.toString() << std::endl;
+    bool res = remainder.setValue(*root, v);
+    if (!res) {
+        std::cout << "[lawSetValue DEBUG] Failed: remainder.setValue returned false" << std::endl;
+    }
+    return res;
 }
 
 inline std::optional<std::map<std::string, double>> readMathBindings(

@@ -3,6 +3,7 @@
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "GLFW/glfw3.h"
+#include "Rendering/GL/GluCompat.hpp"
 #include "AdvancedFacePaint.hpp"
 #include <algorithm>
 #include <cmath>
@@ -221,6 +222,8 @@ void applyToolTransform(Object* obj, const glm::mat4& worldTransform, const glm:
     obj->setTransform(worldTransform);
 }
 
+} // namespace
+
 // Build a picking ray in world space. When the cursor is LOCKED (first-person
 // look mode) the OS cursor position is an unbounded drifting value, so instead
 // we shoot through the screen centre — a crosshair pick along the look
@@ -252,9 +255,9 @@ bool buildMouseRay(GLFWwindow* window, Core::Game* game, glm::vec3& rayOrigin, g
 
     GLdouble nearX = 0.0, nearY = 0.0, nearZ = 0.0;
     GLdouble farX = 0.0, farY = 0.0, farZ = 0.0;
-    gluUnProject(winX, winY, 0.0, game->getCameraModelview(), game->getCameraProjection(),
+    ecgl::unProject(winX, winY, 0.0, game->getCameraModelview(), game->getCameraProjection(),
                  game->getCameraViewport(), &nearX, &nearY, &nearZ);
-    gluUnProject(winX, winY, 1.0, game->getCameraModelview(), game->getCameraProjection(),
+    ecgl::unProject(winX, winY, 1.0, game->getCameraModelview(), game->getCameraProjection(),
                  game->getCameraViewport(), &farX, &farY, &farZ);
 
     rayOrigin = glm::vec3(nearX, nearY, nearZ);
@@ -266,16 +269,6 @@ bool buildMouseRay(GLFWwindow* window, Core::Game* game, glm::vec3& rayOrigin, g
 // placement, pottery). Uses the real per-face raycast (Object::raycastFace) for
 // every geometry type instead of a bounding AABB/sphere approximation, so all
 // 3D tools agree on what the ray hit.
-struct SurfaceHit {
-    Object* obj = nullptr;
-    float   t = 0.0f;
-    int     face = -1;
-    glm::vec3 point{0.0f};
-    glm::vec3 normal{0.0f, 1.0f, 0.0f};
-    bool    isCube = false;
-    int     axis = -1; // cube only: 0=X,1=Y,2=Z
-    int     sign = 1;  // cube only: +1/-1 (outward face direction)
-};
 
 bool pickSurface(const std::vector<Object*>& targets,
                  const glm::vec3& rayOrigin, const glm::vec3& rayDir,
@@ -366,7 +359,6 @@ Object* pickNearestObject(const std::vector<Object*>& targets,
 //     outT = tMin;
 //     return outT >= 0.0f;
 // }
-} // namespace
 
 // Tool class methods are already implemented inline in the header file
 // This file can be used for additional tool functionality in the future
@@ -513,6 +505,8 @@ std::string Tool::getTypeName() const
         return "Ruler";
     case Type::Measure:
         return "Measure";
+    case Type::Identity:
+        return "Identity";
 
     default:
         return "Unknown";
@@ -891,94 +885,6 @@ void Tool::use(GLFWwindow *window, ZoneManager &mgr, Zone &zone, Type type, Core
     }
 }
 
-void Tool::ShapeGenerator3D(GLFWwindow *window, Core::Game *game, ZoneManager &mgr,
-                            BodyPart* targetPart)
-{
-    // In the future, refactor mouse to be handled by Zone system and Perspective system, not Tool.
-    bool mouseLeftNow = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
-
-    // Implement 3D face brush functionality here
-    if (mouseLeftNow && !game->getMouseLeftPressedLast())
-    {
-        glm::vec3 spawnPos;
-
-        if (game->getPlacementMode() == Core::Game::BrushPlacementMode::InFront)
-        {
-            spawnPos = game->getCameraPos() + game->getCameraFront() * 2.0f;
-        }
-        else if (game->getPlacementMode() == Core::Game::BrushPlacementMode::ManualDistance)
-        {
-            if (!game->getManualAnchorValid())
-            {
-                game->setManualAnchorPos(game->getCameraPos() + game->getCameraFront() * 2.0f);
-                game->setManualAnchorRight(glm::normalize(glm::cross(game->getCameraFront(), game->getCameraUp())));
-                game->setManualAnchorUp(game->getCameraUp());
-                game->setManualAnchorForward(game->getCameraFront());
-                game->setManualAnchorValid(true);
-            }
-            spawnPos = game->getManualAnchorPos() + game->getManualAnchorRight() * game->getManualOffset().x + game->getManualAnchorUp() * game->getManualOffset().y + game->getManualAnchorForward() * game->getManualOffset().z;
-        }
-        else
-        { // CursorSnap — place the new shape adjacent to the surface under the
-          // cursor (or the crosshair when the cursor is locked).
-            glm::vec3 rayO, rayDir;
-            std::vector<Object*> targets;
-            const auto &objects = mgr.active().world().getOwnedObjects();
-            targets.reserve(objects.size());
-            for (const auto &uptr : objects) if (uptr) targets.push_back(uptr.get());
-
-            SurfaceHit hit;
-            if (buildMouseRay(window, game, rayO, rayDir) && pickSurface(targets, rayO, rayDir, hit))
-            {
-                spawnPos = hit.point + hit.normal * game->getBrushCreateSurfaceOffset(hit.normal);
-            }
-            else
-            {
-                spawnPos = game->getCameraPos() + game->getCameraFront() * 2.0f;
-            }
-        }
-
-        // Optional grid snapping for precision placement
-        if (game->getBrushGridSnap() && game->getBrushGridSize() > 1e-6f)
-        {
-            spawnPos.x = std::round(spawnPos.x / game->getBrushGridSize()) * game->getBrushGridSize();
-            spawnPos.y = std::round(spawnPos.y / game->getBrushGridSize()) * game->getBrushGridSize();
-            spawnPos.z = std::round(spawnPos.z / game->getBrushGridSize()) * game->getBrushGridSize();
-        }
-
-        glm::mat4 t = game->buildBrushCreateTransform(spawnPos);
-
-        if (targetPart) {
-            // Convert world-space transform into body-part-local space
-            glm::mat4 partWorld = targetPart->getTransform();
-            glm::mat4 localT = glm::inverse(partWorld) * t;
-
-            Object* sub = targetPart->addSubObject(game->getCurrentShapeKind(), localT);
-            if (sub) sub->setShape(game->getCurrentShapeKind(), game->getCurrentShapeParams());
-            if (sub && game->getCurrentShapeKind() == Object::ShapeKind::Polyhedron) {
-                sub->setPolyhedronData(game->buildCurrentPolyhedron());
-            }
-            if (sub) {
-                for (int f = 0; f < sub->getFaces(); ++f)
-                    sub->setFaceColor(f, game->getCurrentColor(0), game->getCurrentColor(1), game->getCurrentColor(2));
-            }
-        } else {
-            std::unique_ptr<Object> obj(new Object());
-            obj->setShape(game->getCurrentShapeKind(), game->getCurrentShapeParams());
-
-            if (game->getCurrentShapeKind() == Object::ShapeKind::Polyhedron)
-            {
-                obj->setPolyhedronData(game->buildCurrentPolyhedron());
-            }
-
-            obj->setTransform(t);
-            obj->updateCollisionZone(t);
-            for (int f = 0; f < obj->getFaces(); ++f)
-                obj->setFaceColor(f, game->getCurrentColor(0), game->getCurrentColor(1), game->getCurrentColor(2));
-            mgr.active().world().addObject(std::move(obj));
-        }
-    }
-}
 
 void Tool::Pottery3D(GLFWwindow *window, Core::Game *game, ZoneManager &mgr, float dt,
                      const std::vector<Object*>& targets, const glm::mat4* avatarRoot)

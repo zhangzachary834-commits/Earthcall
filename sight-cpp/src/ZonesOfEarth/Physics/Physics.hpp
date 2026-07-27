@@ -8,6 +8,7 @@
 #include <string>
 #include <functional>
 
+// This should be retired into a legacy system and physics should become purely runtime-created Law Formations.
 namespace Physics {
 
     // Use Person's GameMode enum instead of storing it in Physics

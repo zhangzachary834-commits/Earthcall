@@ -45,6 +45,7 @@ nlohmann::json PropertyMapping::toJson() const {
         {"target", target.toString()},
         {"agg", static_cast<int>(agg)}
     };
+    if (!bindings.empty()) j["bindings"] = mathBindingsToJson(bindings);
     if (hasExact) j["exact"] = exact.toJson();
     return j;
 }
@@ -52,6 +53,7 @@ nlohmann::json PropertyMapping::toJson() const {
 PropertyMapping PropertyMapping::fromJson(const nlohmann::json& j) {
     PropertyMapping m;
     m.source = PropertyPath::parse(j.value("source", std::string()));
+    if (j.contains("bindings")) m.bindings = mathBindingsFromJson(j["bindings"]);
     if (j.contains("transform")) m.transform = CurveModel::fromJson(j["transform"]);
     m.target = PropertyPath::parse(j.value("target", std::string()));
     m.agg = static_cast<Aggregate>(j.value("agg", 0));
@@ -250,44 +252,115 @@ std::vector<std::unique_ptr<Object>> ObjectConcept::instantiate(
         if (sources && !sources->empty()) {
             for (const auto& mapping : _mappings) {
                 if (!TransferPolicy::instance().canTransfer(mapping.source)) continue;
-                double x = 0.0;
-                bool have = false;
+                std::map<std::string, double> evalVars;
+                bool allValid = true;
                 const Singular* guardSubject = nullptr;
-                if (mapping.agg == PropertyMapping::Aggregate::PerMember) {
-                    Object* src = (*sources)[i % sources->size()];
-                    PropertyValue v;
-                    have = src && mapping.source.getValue(*src, v) &&
-                           propertyValueToNumber(v, x);
-                    guardSubject = src;
-                } else {
-                    double acc = (mapping.agg == PropertyMapping::Aggregate::Max)
-                                     ? -std::numeric_limits<double>::infinity()
-                                     : 0.0;
-                    int count = 0;
-                    for (auto* src : *sources) {
+
+                if (mapping.bindings.empty() && !mapping.hasExact && !mapping.source.empty()) {
+                    // Legacy single source - try direct transfer first if non-numeric
+                    if (mapping.agg == PropertyMapping::Aggregate::PerMember) {
+                        Object* src = (*sources)[i % sources->size()];
                         PropertyValue v;
-                        double xi = 0.0;
-                        if (src && mapping.source.getValue(*src, v) &&
-                            propertyValueToNumber(v, xi)) {
-                            ++count;
-                            if (mapping.agg == PropertyMapping::Aggregate::Max) {
-                                acc = std::max(acc, xi);
+                        if (src && mapping.source.getValue(*src, v)) {
+                            double x = 0.0;
+                            if (propertyValueToNumber(v, x)) {
+                                auto y = mapping.transform.evaluate(x);
+                                mapping.target.setValue(*newborn, PropertyValue(y));
                             } else {
-                                acc += xi;
+                                // Non-numeric (vec3, string, etc) direct transfer
+                                mapping.target.setValue(*newborn, v);
                             }
                         }
+                    } else {
+                        // Aggregations must be numeric
+                        double acc = (mapping.agg == PropertyMapping::Aggregate::Max)
+                                         ? -std::numeric_limits<double>::infinity()
+                                         : 0.0;
+                        int count = 0;
+                        for (auto* src : *sources) {
+                            PropertyValue v;
+                            double xi = 0.0;
+                            if (src && mapping.source.getValue(*src, v) &&
+                                propertyValueToNumber(v, xi)) {
+                                ++count;
+                                if (mapping.agg == PropertyMapping::Aggregate::Max) {
+                                    acc = std::max(acc, xi);
+                                } else {
+                                    acc += xi;
+                                }
+                            }
+                        }
+                        if (count > 0) {
+                            double val = (mapping.agg == PropertyMapping::Aggregate::Mean)
+                                    ? acc / count : acc;
+                            auto y = mapping.transform.evaluate(val);
+                            mapping.target.setValue(*newborn, PropertyValue(y));
+                        }
                     }
-                    if (count > 0) {
-                        have = true;
-                        x = (mapping.agg == PropertyMapping::Aggregate::Mean)
-                                ? acc / count
-                                : acc;
+                } else {
+                    // Multivariate or exact math mode
+                    auto bindings = mapping.bindings;
+                    if (bindings.empty() && !mapping.source.empty()) {
+                        bindings["x"] = mapping.source;
                     }
-                }
-                if (have) {
-                    // Exact math when authored; undefined transfers nothing.
-                    const auto y = mapping.apply(x, guardSubject);
-                    if (y) mapping.target.setValue(*newborn, PropertyValue(*y));
+
+                    for (const auto& bindingPair : bindings) {
+                        const std::string& varName = bindingPair.first;
+                        const PropertyPath& path = bindingPair.second;
+                        
+                        if (!TransferPolicy::instance().canTransfer(path)) {
+                            allValid = false;
+                            break;
+                        }
+                        double val = 0.0;
+                        bool have = false;
+
+                        if (mapping.agg == PropertyMapping::Aggregate::PerMember) {
+                            Object* src = (*sources)[i % sources->size()];
+                            PropertyValue v;
+                            have = src && path.getValue(*src, v) &&
+                                   propertyValueToNumber(v, val);
+                            if (!guardSubject) guardSubject = src;
+                        } else {
+                            double acc = (mapping.agg == PropertyMapping::Aggregate::Max)
+                                             ? -std::numeric_limits<double>::infinity()
+                                             : 0.0;
+                            int count = 0;
+                            for (auto* src : *sources) {
+                                PropertyValue v;
+                                double xi = 0.0;
+                                if (src && path.getValue(*src, v) &&
+                                    propertyValueToNumber(v, xi)) {
+                                    ++count;
+                                    if (mapping.agg == PropertyMapping::Aggregate::Max) {
+                                        acc = std::max(acc, xi);
+                                    } else {
+                                        acc += xi;
+                                    }
+                                }
+                            }
+                            if (count > 0) {
+                                have = true;
+                                val = (mapping.agg == PropertyMapping::Aggregate::Mean)
+                                        ? acc / count
+                                        : acc;
+                            }
+                        }
+
+                        if (have) {
+                            evalVars[varName] = val;
+                        } else {
+                            allValid = false;
+                            break;
+                        }
+                    }
+
+                    if (allValid && !bindings.empty()) {
+                        // Exact math when authored; undefined transfers nothing.
+                        double x = evalVars.count("x") ? evalVars["x"] : (evalVars.empty() ? 0.0 : evalVars.begin()->second);
+                        const auto y = mapping.apply(x, evalVars, guardSubject);
+                        if (y) mapping.target.setValue(*newborn, PropertyValue(*y));
+                    }
                 }
             }
         }

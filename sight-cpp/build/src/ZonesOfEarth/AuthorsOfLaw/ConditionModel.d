@@ -159,7 +159,7 @@ build/src/ZonesOfEarth/AuthorsOfLaw/ConditionModel.o: \
   src/Form/Singular/Property/PropertyPath.hpp \
   src/ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp \
   src/ZonesOfEarth/AuthorsOfLaw/Universe.hpp src/json.hpp \
-  src/Singularity/OntoMath/Expression.hpp \
+  src/Singularity/OntoMath/ScalarForm.hpp \
   src/Form/Object/Geometry/SdfJson.hpp \
   src/Form/Object/Formation/Formation.hpp src/Form/Form.hpp \
   /opt/homebrew/Cellar/glfw/3.4/include/GLFW/glfw3.h \
@@ -269,7 +269,8 @@ build/src/ZonesOfEarth/AuthorsOfLaw/ConditionModel.o: \
   src/Form/Object/Object/PolyhedronData.hpp \
   src/Form/Object/Object/../AngleTools.hpp \
   src/Form/Object/Object/../Contour.hpp \
-  src/Form/Object/Object/FaceTexture.hpp \
+  src/Form/Object/Object/FaceTexture.hpp src/Rendering/Renderer.hpp \
+  src/Rendering/RenderMaterial.hpp \
   src/Form/Object/Object/CollisionZone.hpp \
   src/Form/Object/Geometry/ComplexShape.hpp \
   src/Form/Object/Geometry/Patch.hpp \
@@ -277,11 +278,14 @@ build/src/ZonesOfEarth/AuthorsOfLaw/ConditionModel.o: \
   src/Form/Singular/Property/PropertyValueJson.hpp \
   src/ZonesOfEarth/AuthorsOfLaw/Law.hpp \
   src/ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp \
-  src/Singularity/OntoMath/CurveModel.hpp src/Person/Person.hpp \
+  src/Singularity/OntoMath/CurveModel.hpp \
+  src/ZonesOfEarth/AuthorsOfLaw/LawAuditLogger.hpp src/Person/Person.hpp \
   src/Person/Body/Body.hpp src/Person/Body/BodyPart/BodyPart.hpp \
   src/Person/Soul/Soul.hpp \
   src/ZonesOfEarth/Physics/CollisionDispatcher.hpp \
-  src/ZonesOfEarth/World/World.hpp
+  src/ZonesOfEarth/World/World.hpp src/ZonesOfEarth/Zone/Zone.hpp \
+  src/ZonesOfEarth/Zone/../World/World.hpp src/Rendering/BrushSystem.hpp \
+  src/Rendering/DesignSystem.hpp src/OurVerse/Tool.hpp
 
 src/ZonesOfEarth/AuthorsOfLaw/ConditionModel.hpp:
 
@@ -605,7 +609,7 @@ src/ZonesOfEarth/AuthorsOfLaw/Universe.hpp:
 
 src/json.hpp:
 
-src/Singularity/OntoMath/Expression.hpp:
+src/Singularity/OntoMath/ScalarForm.hpp:
 
 src/Form/Object/Geometry/SdfJson.hpp:
 
@@ -835,6 +839,10 @@ src/Form/Object/Object/../Contour.hpp:
 
 src/Form/Object/Object/FaceTexture.hpp:
 
+src/Rendering/Renderer.hpp:
+
+src/Rendering/RenderMaterial.hpp:
+
 src/Form/Object/Object/CollisionZone.hpp:
 
 src/Form/Object/Geometry/ComplexShape.hpp:
@@ -851,6 +859,8 @@ src/ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp:
 
 src/Singularity/OntoMath/CurveModel.hpp:
 
+src/ZonesOfEarth/AuthorsOfLaw/LawAuditLogger.hpp:
+
 src/Person/Person.hpp:
 
 src/Person/Body/Body.hpp:
@@ -862,3 +872,13 @@ src/Person/Soul/Soul.hpp:
 src/ZonesOfEarth/Physics/CollisionDispatcher.hpp:
 
 src/ZonesOfEarth/World/World.hpp:
+
+src/ZonesOfEarth/Zone/Zone.hpp:
+
+src/ZonesOfEarth/Zone/../World/World.hpp:
+
+src/Rendering/BrushSystem.hpp:
+
+src/Rendering/DesignSystem.hpp:
+
+src/OurVerse/Tool.hpp:

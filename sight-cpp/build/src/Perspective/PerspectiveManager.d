@@ -1,7 +1,8 @@
 build/src/Perspective/PerspectiveManager.o: \
   src/Perspective/PerspectiveManager.cpp \
   src/Perspective/PerspectiveManager.hpp \
-  src/Perspective/UserPerspective.hpp /opt/homebrew/include/glm/glm.hpp \
+  src/Perspective/PersonPerspective.hpp \
+  /opt/homebrew/include/glm/glm.hpp \
   /opt/homebrew/include/glm/detail/_fixes.hpp \
   /opt/homebrew/include/glm/detail/setup.hpp \
   /opt/homebrew/include/glm/detail/../simd/platform.h \
@@ -155,7 +156,7 @@ build/src/Perspective/PerspectiveManager.o: \
 
 src/Perspective/PerspectiveManager.hpp:
 
-src/Perspective/UserPerspective.hpp:
+src/Perspective/PersonPerspective.hpp:
 
 /opt/homebrew/include/glm/glm.hpp:
 

@@ -2,8 +2,10 @@
 #include "Form/Object/Object.hpp"
 #include <GLFW/glfw3.h>
 #include <glm/gtc/matrix_transform.hpp>
+#include <algorithm>
 #include <atomic>
 #include <unordered_set>
+#include "Rendering/Renderer.hpp"
 
 std::string Formation::nextFormationId() {
     static std::atomic<unsigned long long> next{1};
@@ -140,11 +142,10 @@ void Formation::draw() const {
         if (!member) continue;
         // Only draw if it's an Object
         if (const auto* obj = dynamic_cast<const Object*>(member)) {
-            glPushMatrix();
-            glMultMatrixf(&obj->getTransform()[0][0]);
+            currentRenderer().pushModel(obj->getTransform());
             obj->drawObject();
             obj->drawHighlightOutline();
-            glPopMatrix();
+            currentRenderer().popModel();
         }
     }
 }
@@ -185,23 +186,34 @@ std::shared_ptr<Formation> Formation::findOrCreateRelationFormation(const std::s
     }
 
     auto primary = subformations[matchingIndices.front()];
-    for (size_t i = 1; i < matchingIndices.size(); ++i) {
-        auto secondary = subformations[matchingIndices[i]];
-        if (!secondary || secondary == primary) continue;
 
+    // Take owning handles to every match before touching the vector. Merging
+    // by index meant each erase shifted the ones after it, and an unrelated
+    // subformation could slide into a slot the loop still had to visit —
+    // absorbing a set that never matched the relation at all.
+    std::vector<std::shared_ptr<Formation>> absorbed;
+    for (size_t i = 1; i < matchingIndices.size(); ++i) {
+        const auto& secondary = subformations[matchingIndices[i]];
+        if (!secondary || secondary == primary) continue;
+        absorbed.push_back(secondary);
+    }
+
+    for (const auto& secondary : absorbed) {
         for (auto* member : secondary->getMembers()) {
             primary->addMember(member);
         }
         for (const auto& rel : secondary->relations().getAll()) {
             primary->relations().add(rel);
         }
-        subformations.erase(subformations.begin() + static_cast<long>(matchingIndices[i]));
-        --i;
-        for (size_t j = i + 1; j < matchingIndices.size(); ++j) {
-            if (matchingIndices[j] > matchingIndices[i]) {
-                --matchingIndices[j];
-            }
-        }
+    }
+
+    if (!absorbed.empty()) {
+        subformations.erase(
+            std::remove_if(subformations.begin(), subformations.end(),
+                           [&absorbed](const std::shared_ptr<Formation>& sub) {
+                               return std::find(absorbed.begin(), absorbed.end(), sub) != absorbed.end();
+                           }),
+            subformations.end());
     }
     return primary;
 }
@@ -219,7 +231,10 @@ void Formation::integrateRelationTopology(const std::shared_ptr<Relation>& r) {
 
     if (memberA) groupedFormation->addMember(memberA);
     if (memberB) groupedFormation->addMember(memberB);
-    groupedFormation->relationMgr.add(std::make_shared<Relation>(*r));
+    // Share the relation rather than copying it: a subformation is a view onto
+    // the same bond, not a second bond. Copies drifted whenever the original's
+    // attachment was re-measured, and merges then carried stale duplicates.
+    groupedFormation->relationMgr.add(r);
 }
 
 void Formation::applyAttachmentRelations() {

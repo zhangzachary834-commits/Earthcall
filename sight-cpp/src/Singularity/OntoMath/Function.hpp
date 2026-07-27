@@ -5,9 +5,9 @@
 #include <vector>
 
 // SUPERSEDED: this single-variable seed grew into the exact multivariate
-// symbolic core in Expression.hpp (OntoMath::Term / Expression / Piecewise —
+// symbolic core in ScalarForm.hpp (OntoMath::Term / ScalarForm / Piecewise —
 // algebra, calculus, piecewise bounds, JSON, wired into Zone conditions and
-// Map actions). New code should use Expression.hpp; this remains for the
+// Map actions). New code should use ScalarForm.hpp; this remains for the
 // simple single-variable term shape until callers migrate.
 class Function {
 public:

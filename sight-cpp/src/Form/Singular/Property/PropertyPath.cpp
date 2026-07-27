@@ -108,7 +108,12 @@ Property* PropertyPath::resolve(Singular& root, std::string* trailingComponent) 
 bool PropertyPath::getValue(Singular& root, PropertyValue& out) const {
     std::string component;
     Property* property = resolve(root, &component);
-    if (!property) return false;
+    if (!property) {
+        if (segments.size() == 1) {
+            return root.getDynamicProperty(segments[0], out);
+        }
+        return false;
+    }
 
     PropertyValue v = property->value();
     if (component.empty()) {
@@ -125,7 +130,13 @@ bool PropertyPath::getValue(Singular& root, PropertyValue& out) const {
 bool PropertyPath::setValue(Singular& root, const PropertyValue& v) const {
     std::string component;
     Property* property = resolve(root, &component);
-    if (!property) return false;
+    if (!property) {
+        if (segments.size() == 1) {
+            root.setDynamicProperty(segments[0], v);
+            return true;
+        }
+        return false;
+    }
 
     if (component.empty()) {
         if (property->setValue(v)) return true;

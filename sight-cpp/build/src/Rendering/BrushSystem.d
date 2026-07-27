@@ -149,7 +149,9 @@ build/src/Rendering/BrushSystem.o: src/Rendering/BrushSystem.cpp \
   /opt/homebrew/include/glm/vector_relational.hpp \
   /opt/homebrew/include/glm/integer.hpp \
   /opt/homebrew/include/glm/detail/func_integer.inl \
-  /opt/homebrew/Cellar/glfw/3.4/include/GLFW/glfw3.h
+  /opt/homebrew/Cellar/glfw/3.4/include/GLFW/glfw3.h \
+  src/Rendering/Renderer.hpp src/Rendering/RenderMaterial.hpp \
+  src/Form/Object/Geometry/SmoothSurface.hpp
 
 src/Rendering/BrushSystem.hpp:
 
@@ -454,3 +456,9 @@ src/Rendering/BrushSystem.hpp:
 /opt/homebrew/include/glm/detail/func_integer.inl:
 
 /opt/homebrew/Cellar/glfw/3.4/include/GLFW/glfw3.h:
+
+src/Rendering/Renderer.hpp:
+
+src/Rendering/RenderMaterial.hpp:
+
+src/Form/Object/Geometry/SmoothSurface.hpp:

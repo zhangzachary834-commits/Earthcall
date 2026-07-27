@@ -4,6 +4,7 @@
 #include <iostream>
 #include <algorithm>
 #include "GLFW/glfw3.h"
+#include "Rendering/Renderer.hpp"
 
 using Scope = Zone::Scope;
 
@@ -137,7 +138,10 @@ void Zone::describe() const {
     }
 }
 
-void Zone::applyTheme() const { glClearColor(r, g, b, 1.f); }
+// The zone's tint reaches the screen as the clear colour passed to
+// Renderer::beginFrame (see Game::render), so there is no separate GL state to
+// set here. Kept as a hook because callers still express "apply this zone".
+void Zone::applyTheme() const {}
 
 void Zone::startStroke(float x, float y) { 
     isDrawing = true;
@@ -382,12 +386,23 @@ void Zone::clearHistory() {
 }
 
 void Zone::renderArt() const {
-        // Ensure proper OpenGL state for 2D rendering
-        glDisable(GL_LIGHTING);
-        glDisable(GL_DEPTH_TEST);
-        glDisable(GL_BLEND);
-        glColor3f(1.0f, 1.0f, 1.0f); // Reset color to white
-        
+    // Called from inside GameRender's begin2D scope, so screen-space projection,
+    // depth-test-off and alpha blending are already established. Each draw below
+    // carries its own colour, so there is nothing left to reset by hand.
+    //
+    // Blending is now always on where it used to be toggled per stroke; with an
+    // alpha of 1.0 the blend equation reduces to a plain overwrite, so opaque
+    // strokes land on exactly the same pixels as before.
+    Renderer& r = currentRenderer();
+
+    // Flat [x0,y0,x1,y1,...] point arrays -> the boundary's segment list.
+    auto polyline = [](const std::vector<float>& pts) {
+        std::vector<glm::vec2> v;
+        v.reserve(pts.size() / 2);
+        for (size_t i = 0; i + 1 < pts.size(); i += 2) v.push_back({pts[i], pts[i + 1]});
+        return draw::stripToSegments(v, /*closed=*/false);
+    };
+
     // Professional Design System (primary)
     if (designSystem) {
         designSystem->render();
@@ -404,35 +419,14 @@ void Zone::renderArt() const {
             });
 
         if (brushCanvasVisible) {
-            GLint viewport[4] = {0, 0, 0, 0};
-            glGetIntegerv(GL_VIEWPORT, viewport);
-
-            static GLuint brushCanvasTexture = 0;
-            if (brushCanvasTexture == 0) {
-                glGenTextures(1, &brushCanvasTexture);
-            }
-
-            glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_TEXTURE_BIT);
-            glEnable(GL_BLEND);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            glEnable(GL_TEXTURE_2D);
-            glBindTexture(GL_TEXTURE_2D, brushCanvasTexture);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, textureSize, textureSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
-
-            glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-            glBegin(GL_QUADS);
-            glTexCoord2f(0.0f, 0.0f); glVertex2f(0.0f, 0.0f);
-            glTexCoord2f(1.0f, 0.0f); glVertex2f(static_cast<float>(viewport[2]), 0.0f);
-            glTexCoord2f(1.0f, 1.0f); glVertex2f(static_cast<float>(viewport[2]), static_cast<float>(viewport[3]));
-            glTexCoord2f(0.0f, 1.0f); glVertex2f(0.0f, static_cast<float>(viewport[3]));
-            glEnd();
-
-            glBindTexture(GL_TEXTURE_2D, 0);
-            glPopAttrib();
+            // The painted canvas, stretched over the whole framebuffer. The texture
+            // upload and the quad both live behind drawImage2D now — the pixels are
+            // regenerated every frame, so there is nothing worth caching here.
+            const glm::ivec4& vp = r.viewport();
+            r.drawImage2D(pixels.data(),
+                          static_cast<uint32_t>(textureSize), static_cast<uint32_t>(textureSize),
+                          glm::vec4(0.0f, 0.0f, static_cast<float>(vp.z), static_cast<float>(vp.w)),
+                          glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
         }
     }
 
@@ -441,65 +435,33 @@ void Zone::renderArt() const {
         // Draw completed stroke paths only when there is no pixel canvas yet.
         for (const auto& stroke : strokes) {
             if (stroke.points.size() < 4) continue; // Need at least 2 points
-            glLineWidth(stroke.lineWidth); // Use stored line width
-            glColor3f(stroke.r, stroke.g, stroke.b); // Use original stroke colors
-            glBegin(GL_LINE_STRIP);
-            for (size_t i = 0; i < stroke.points.size(); i += 2) {
-                glVertex2f(stroke.points[i], stroke.points[i + 1]);
-            }
-            glEnd();
+            r.drawLines2D(polyline(stroke.points),
+                          glm::vec4(stroke.r, stroke.g, stroke.b, 1.0f),
+                          stroke.lineWidth); // Use stored line width
         }
-        
+
         // Draw current stroke in progress with brush system settings
         if (isDrawing && !currentStrokePoints.empty() && currentStrokePoints.size() >= 2) {
-            // Apply brush system settings only to the current stroke
-            glLineWidth(strokeWidthForBrushRadius(brushSystem->getRadius()));
-            
-            // Apply opacity if it's less than 1.0 (enable blending for transparency)
-            if (brushSystem->getOpacity() < 1.0f) {
-                glEnable(GL_BLEND);
-                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                glColor4f(drawR, drawG, drawB, brushSystem->getOpacity());
-            } else {
-                glColor3f(drawR, drawG, drawB);
-            }
-            
-            glBegin(GL_LINE_STRIP);
-            for (const auto& point : currentStrokePoints) {
-                glVertex2f(point.x, point.y);
-            }
-            glEnd();
-            
-            // Reset blending state
-            if (brushSystem->getOpacity() < 1.0f) {
-                glDisable(GL_BLEND);
-            }
+            std::vector<glm::vec2> pts(currentStrokePoints.begin(), currentStrokePoints.end());
+            r.drawLines2D(draw::stripToSegments(pts, /*closed=*/false),
+                          glm::vec4(drawR, drawG, drawB, brushSystem->getOpacity()),
+                          strokeWidthForBrushRadius(brushSystem->getRadius()));
         }
     }
     
     // Stroke path fallback only if no brush system or design system exists.
     if (!brushSystem && !designSystem) {
-        glLineWidth(2.0f);
-        
         // Draw legacy strokes
         for (const auto& stroke : strokes) {
             if (stroke.points.size() < 4) continue; // Need at least 2 points
-            glColor3f(stroke.r, stroke.g, stroke.b);
-            glBegin(GL_LINE_STRIP);
-            for (size_t i = 0; i < stroke.points.size(); i += 2) {
-                glVertex2f(stroke.points[i], stroke.points[i + 1]);
-            }
-            glEnd();
+            r.drawLines2D(polyline(stroke.points),
+                          glm::vec4(stroke.r, stroke.g, stroke.b, 1.0f), 2.0f);
         }
-        
+
         // Draw the current stroke in progress (legacy)
         if (!currentStroke.points.empty()) {
-            glColor3f(currentStroke.r, currentStroke.g, currentStroke.b);
-            glBegin(GL_LINE_STRIP);
-            for (size_t i = 0; i < currentStroke.points.size(); i += 2) {
-                glVertex2f(currentStroke.points[i], currentStroke.points[i + 1]);
-            }
-            glEnd();
+            r.drawLines2D(polyline(currentStroke.points),
+                          glm::vec4(currentStroke.r, currentStroke.g, currentStroke.b, 1.0f), 2.0f);
         }
     }
 }

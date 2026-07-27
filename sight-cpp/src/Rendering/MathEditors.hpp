@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Singularity/OntoMath/Expression.hpp"
+#include "Singularity/OntoMath/ScalarForm.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp"
 
 #include <functional>
@@ -18,7 +18,7 @@ namespace MathEd {
 using PathPickerFn = std::function<bool(const char* label, PropertyPath& path)>;
 
 bool editMathBindings(MathBindings& bindings, const PathPickerFn& pathPicker);
-bool editExpression(OntoMath::Expression& e, const MathBindings& bindings);
+bool editExpression(OntoMath::ScalarForm& e, const MathBindings& bindings);
 bool editPiecewise(OntoMath::Piecewise& f, const MathBindings& bindings);
 
 // The registry of NAMED functions — define once, call anywhere (recursion

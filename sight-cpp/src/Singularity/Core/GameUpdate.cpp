@@ -20,7 +20,7 @@
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
 
 #include <GLFW/glfw3.h>
-#include <OpenGL/glu.h>
+#include "Rendering/GL/GluCompat.hpp"
 #include <imgui.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -85,7 +85,7 @@ bool Game::handleFieldGizmos(Object* o, bool pressEdge, bool mouseDown, double w
 
     // Operand-B drag handle (gold cube at operand B's offset).
     const glm::vec3 hbW = glm::vec3(xf * glm::vec4(o->getFieldOperandBOffset(), 1.0f));
-    GLdouble bx, by, bz; const bool bProj = gluProject(hbW.x, hbW.y, hbW.z, mv, pr, vp, &bx, &by, &bz);
+    GLdouble bx, by, bz; const bool bProj = ecgl::project(hbW.x, hbW.y, hbW.z, mv, pr, vp, &bx, &by, &bz);
 
     // Blend bead (only meaningful for Morph / SmoothUnion fields).
     const bool blendable = o->isMorphField();
@@ -94,7 +94,7 @@ bool Game::handleFieldGizmos(Object* o, bool pressEdge, bool mouseDown, double w
     if (blendable) {
         blendRail(o, rs, rd, rl);
         const glm::vec3 beadW = rs + rd * (o->getMorphParam() * rl);
-        cProj = gluProject(beadW.x, beadW.y, beadW.z, mv, pr, vp, &cx, &cy, &cz);
+        cProj = ecgl::project(beadW.x, beadW.y, beadW.z, mv, pr, vp, &cx, &cy, &cz);
     }
 
     if (!mouseDown) { _blendHandleDragging = false; _fieldHandleDragging = false; }
@@ -109,7 +109,7 @@ bool Game::handleFieldGizmos(Object* o, bool pressEdge, bool mouseDown, double w
 
     if (mouseDown && _blendHandleDragging && blendable) {
         GLdouble nx, ny, nz;
-        if (gluUnProject(winX, winY, cz, mv, pr, vp, &nx, &ny, &nz)) {
+        if (ecgl::unProject(winX, winY, cz, mv, pr, vp, &nx, &ny, &nz)) {
             const glm::vec3 P((float)nx, (float)ny, (float)nz);
             const float t = glm::clamp(glm::dot(P - rs, rd) / (rl > 1e-6f ? rl : 1.0f), 0.0f, 1.0f);
             o->setMorphParam(t);
@@ -118,7 +118,7 @@ bool Game::handleFieldGizmos(Object* o, bool pressEdge, bool mouseDown, double w
     }
     if (mouseDown && _fieldHandleDragging && bProj) {
         GLdouble nx, ny, nz;
-        if (gluUnProject(winX, winY, bz, mv, pr, vp, &nx, &ny, &nz)) {
+        if (ecgl::unProject(winX, winY, bz, mv, pr, vp, &nx, &ny, &nz)) {
             const glm::vec3 local = glm::vec3(glm::inverse(xf) * glm::vec4((float)nx, (float)ny, (float)nz, 1.0f));
             o->setFieldOperandBOffset(local);
         }
@@ -138,6 +138,22 @@ void Game::update(float dt) {
 
     // Check if any text input is active (ImGui)
     bool anyTextInputActive = ImGui::IsAnyItemActive() || ImGui::IsWindowFocused();
+
+    // Debug Coordinates Toggle (Cmd+Shift+S)
+    if (!anyTextInputActive) {
+        static bool s_cmdShiftS_wasDown = false;
+        bool cmdDown = glfwGetKey(_window, GLFW_KEY_LEFT_SUPER) == GLFW_PRESS || 
+                       glfwGetKey(_window, GLFW_KEY_RIGHT_SUPER) == GLFW_PRESS;
+        bool shiftDown = glfwGetKey(_window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS || 
+                         glfwGetKey(_window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS;
+        bool sDown = glfwGetKey(_window, GLFW_KEY_S) == GLFW_PRESS;
+        
+        bool currentDown = cmdDown && shiftDown && sDown;
+        if (currentDown && !s_cmdShiftS_wasDown) {
+            _showDebugCoordinates = !_showDebugCoordinates;
+        }
+        s_cmdShiftS_wasDown = currentDown;
+    }
 
     // ----------------------------------------------------------------------------
     // Player movement: a single authoritative resolve owns _camera.pos.
@@ -213,6 +229,11 @@ void Game::update(float dt) {
 
         setCursorX(mx);
         setCursorY(my);
+
+        if (mouseLeftNow && !_mouseLeftPressedLast) {
+            Core::EventBus::instance().publish(
+                ECA::Event{"onMouseClicked", &_player, nullptr, static_cast<std::time_t>(_worldTime)});
+        }
 
         bool useAvatarTargets = (_current3DTarget == ToolTarget3D::AvatarBodyParts);
         auto collect3DTargets = [&](std::vector<Object*>& targets) {
@@ -307,7 +328,8 @@ void Game::update(float dt) {
             if (useAvatarTargets) {
                 shapePart = dynamic_cast<BodyPart*>(_selectedObject3D);
             }
-            Tool::ShapeGenerator3D(_window, this, mgr, shapePart);
+            // Note: C++ hardcoded Tool::ShapeGenerator3D was removed here.
+            // The tool is now implemented dynamically via Law and triggers on the "onMouseClicked" event.
         } else if (_current3DMode == Mode3D::Pottery) {
             collect3DTargets(toolTargets);
             glm::mat4 avatarRoot = glm::translate(glm::mat4(1.0f), _player.position);
@@ -363,7 +385,7 @@ void Game::update(float dt) {
                     for (int i = 0; i < obj->getPolyhedronVertexCount(); ++i) {
                         glm::vec3 w = glm::vec3(xf * glm::vec4(obj->getPolyhedronVertexLocal(i), 1.0f));
                         GLdouble sx, sy, sz;
-                        if (gluProject(w.x, w.y, w.z, mv, pr, vp, &sx, &sy, &sz)) {
+                        if (ecgl::project(w.x, w.y, w.z, mv, pr, vp, &sx, &sy, &sz)) {
                             double d = (sx - winX) * (sx - winX) + (sy - winY) * (sy - winY);
                             if (d < bestD) { bestD = d; best = i; }
                         }
@@ -376,9 +398,9 @@ void Game::update(float dt) {
                     _morphVertexIndex < obj->getPolyhedronVertexCount()) {
                     glm::vec3 wv = glm::vec3(xf * glm::vec4(obj->getPolyhedronVertexLocal(_morphVertexIndex), 1.0f));
                     GLdouble sx, sy, sz;
-                    if (gluProject(wv.x, wv.y, wv.z, mv, pr, vp, &sx, &sy, &sz)) {
+                    if (ecgl::project(wv.x, wv.y, wv.z, mv, pr, vp, &sx, &sy, &sz)) {
                         GLdouble nx, ny, nz;
-                        if (gluUnProject(winX, winY, sz, mv, pr, vp, &nx, &ny, &nz)) {
+                        if (ecgl::unProject(winX, winY, sz, mv, pr, vp, &nx, &ny, &nz)) {
                             glm::vec3 local = glm::vec3(glm::inverse(xf) *
                                 glm::vec4((float)nx, (float)ny, (float)nz, 1.0f));
                             obj->setPolyhedronVertexLocal(_morphVertexIndex, local);
@@ -406,7 +428,7 @@ void Game::update(float dt) {
                     for (int i = 0; i < obj->getPatchControlCount(); ++i) {
                         glm::vec3 w = glm::vec3(xf * glm::vec4(obj->getPatchControlLocal(i), 1.0f));
                         GLdouble sx, sy, sz;
-                        if (gluProject(w.x, w.y, w.z, mv, pr, vp, &sx, &sy, &sz)) {
+                        if (ecgl::project(w.x, w.y, w.z, mv, pr, vp, &sx, &sy, &sz)) {
                             double d = (sx - winX) * (sx - winX) + (sy - winY) * (sy - winY);
                             if (d < bestD) { bestD = d; best = i; }
                         }
@@ -417,9 +439,9 @@ void Game::update(float dt) {
                     _patchCtrlIndex < obj->getPatchControlCount()) {
                     glm::vec3 wv = glm::vec3(xf * glm::vec4(obj->getPatchControlLocal(_patchCtrlIndex), 1.0f));
                     GLdouble sx, sy, sz;
-                    if (gluProject(wv.x, wv.y, wv.z, mv, pr, vp, &sx, &sy, &sz)) {
+                    if (ecgl::project(wv.x, wv.y, wv.z, mv, pr, vp, &sx, &sy, &sz)) {
                         GLdouble nx, ny, nz;
-                        if (gluUnProject(winX, winY, sz, mv, pr, vp, &nx, &ny, &nz)) {
+                        if (ecgl::unProject(winX, winY, sz, mv, pr, vp, &nx, &ny, &nz)) {
                             glm::vec3 local = glm::vec3(glm::inverse(xf) *
                                 glm::vec4((float)nx, (float)ny, (float)nz, 1.0f));
                             obj->setPatchControlLocal(_patchCtrlIndex, local);
@@ -493,9 +515,9 @@ void Game::update(float dt) {
                 glm::mat4 xf = _clayGrabbed->getTransform();
                 glm::vec3 c = glm::vec3(xf[3]);
                 GLdouble sx, sy, sz;
-                if (gluProject(c.x, c.y, c.z, mv, pr, vp, &sx, &sy, &sz)) {
+                if (ecgl::project(c.x, c.y, c.z, mv, pr, vp, &sx, &sy, &sz)) {
                     GLdouble nx, ny, nz;
-                    if (gluUnProject(winX, winY, sz, mv, pr, vp, &nx, &ny, &nz)) {
+                    if (ecgl::unProject(winX, winY, sz, mv, pr, vp, &nx, &ny, &nz)) {
                         xf[3] = glm::vec4((float)nx, (float)ny, (float)nz, 1.0f);
                         _clayGrabbed->setTransform(xf);
                     }
@@ -571,10 +593,74 @@ void Game::update(float dt) {
         for (const auto& obj : mgr.active().world().getOwnedObjects()) {
             if (obj) hoverTargets.push_back(obj.get());
         }
-        Object* hovered = Tool::PickObject3D(_window, this, hoverTargets);
-        for (Object* obj : hoverTargets) {
-            obj->updateHoverState(obj == hovered);
+        
+        // Use the generic pickSurface instead of PickObject3D so we also get the hit point/normal
+        // for the Law system's cursorHitPos/cursorHitNormal.
+        glm::vec3 rayO, rayD;
+        if (buildMouseRay(_window, this, rayO, rayD)) {
+            SurfaceHit hit;
+            if (pickSurface(hoverTargets, rayO, rayD, hit)) {
+                for (Object* obj : hoverTargets) {
+                    obj->updateHoverState(obj == hit.obj);
+                }
+                _player.cursorHitPos = hit.point;
+                _player.cursorHitNormal = hit.normal;
+                _player.cursorHoveredBodyPart = hit.obj ? hit.obj->getIdentifier() : "";
+            } else {
+                for (Object* obj : hoverTargets) {
+                    obj->updateHoverState(false);
+                }
+                // When looking at sky, hit point could be projected far out
+                _player.cursorHitPos = rayO + rayD * 1000.0f;
+                _player.cursorHitNormal = -rayD;
+                _player.cursorHoveredBodyPart = "";
+            }
+
+            // Calculate cursorSpawnTransform exactly like the original Tool/preview logic
+            glm::vec3 spawnPos;
+            if (_placement.mode == BrushPlacementMode::CursorSnap) {
+                if (hit.obj) {
+                    spawnPos = hit.point + hit.normal * getBrushCreateSurfaceOffset(hit.normal);
+                } else {
+                    spawnPos = _camera.pos + _camera.front * 2.0f;
+                }
+            } else if (_placement.mode == BrushPlacementMode::InFront) {
+                spawnPos = _camera.pos + _camera.front * 2.0f;
+            } else {
+                spawnPos = _placement.anchorPos + _placement.anchorRight * _placement.manualOffset.x + _placement.anchorUp * _placement.manualOffset.y + _placement.anchorForward * _placement.manualOffset.z;
+            }
+
+            // Apply optional grid-snap
+            if (_brush.gridSnap && _brush.gridSize > 1e-6f) {
+                spawnPos.x = std::round(spawnPos.x / _brush.gridSize) * _brush.gridSize;
+                spawnPos.y = std::round(spawnPos.y / _brush.gridSize) * _brush.gridSize;
+                spawnPos.z = std::round(spawnPos.z / _brush.gridSize) * _brush.gridSize;
+            }
+
+            _player.cursorSpawnTransform = buildBrushCreateTransform(spawnPos);
         }
+    }
+
+    // Law System Perception properties on the Person
+    _player.cameraPos = _camera.pos;
+    _player.cameraForward = _camera.front;
+    _player.activeShapeKind = static_cast<int>(_polyhedron.shapeKind);
+    _player.activeColor = glm::vec3(_currentColor[0], _currentColor[1], _currentColor[2]);
+    _player.activeTool = _currentTool.getTypeName();
+    
+    switch (_current3DMode) {
+        case Mode3D::BrushCreate: _player.active3DMode = "Create"; break;
+        case Mode3D::Selection:   _player.active3DMode = "Select"; break;
+        case Mode3D::FaceBrush:   _player.active3DMode = "Face Brush"; break;
+        case Mode3D::FacePaint:   _player.active3DMode = "Face Fill"; break;
+        case Mode3D::Pottery:     _player.active3DMode = "Pottery"; break;
+        case Mode3D::Rotation:    _player.active3DMode = "Rotate"; break;
+        case Mode3D::Morph:       _player.active3DMode = "Morph"; break;
+        case Mode3D::Combine:     _player.active3DMode = "Combine"; break;
+        case Mode3D::Sculpt:      _player.active3DMode = "Clay"; break;
+        case Mode3D::Graph:       _player.active3DMode = "Graph"; break;
+        case Mode3D::None:        _player.active3DMode = "None"; break;
+        default:                  _player.active3DMode = "Unknown"; break;
     }
 
     // The world clock: Singularity owns time. Laws read it through the
@@ -613,6 +699,15 @@ void Game::stepMovement(float dt) {
 
     const auto& objects = mgr.active().world().getOwnedObjects();
     const float eyeH = _player.getBody().getEyeHeight();
+
+    // Check if the player position was explicitly teleported (e.g. by a Law).
+    // At the end of the last stepMovement, _player.position was exactly _camera.pos - eyeH.
+    // If it's different now, we adopt the new position before resolving this frame's movement.
+    glm::vec3 expectedPlayerPos = _camera.pos - glm::vec3(0.0f, eyeH, 0.0f);
+    if (glm::distance(_player.position, expectedPlayerPos) > 1e-4f) {
+        _camera.pos = _player.position + glm::vec3(0.0f, eyeH, 0.0f);
+        _playerVelY = 0.0f; // kill falling momentum on teleport
+    }
     const glm::vec3 posBefore = _camera.pos;
     const bool wasGrounded = _playerGrounded; // captured before this frame's resolve, for the landed edge
 

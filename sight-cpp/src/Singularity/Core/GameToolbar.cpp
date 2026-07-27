@@ -1282,6 +1282,46 @@ void Game::renderCharacterConsole() {
             ImGui::EndTabItem();
         }
 
+        if (ImGui::BeginTabItem("Identity")) {
+            ImGui::BeginDisabled(_characterDesignLocked);
+
+            static char nameBuf[128] = "";
+            if (nameBuf[0] == '\0' && !_player.soulName.empty()) {
+                std::snprintf(nameBuf, sizeof(nameBuf), "%s", _player.soulName.c_str());
+            }
+            if (ImGui::InputText("Soul Name", nameBuf, sizeof(nameBuf))) {
+                _player.soulName = nameBuf;
+            }
+            
+            ImGui::Separator();
+            ImGui::Text("Nicknames");
+            static char newNickname[64] = "";
+            ImGui::InputText("New Nickname", newNickname, sizeof(newNickname));
+            ImGui::SameLine();
+            if (ImGui::Button("Add") && newNickname[0] != '\0') {
+                _player.nicknames.push_back(newNickname);
+                newNickname[0] = '\0';
+            }
+            
+            if (ImGui::BeginListBox("##NicknamesList")) {
+                for (size_t i = 0; i < _player.nicknames.size(); ++i) {
+                    ImGui::PushID(static_cast<int>(i));
+                    ImGui::TextUnformatted(_player.nicknames[i].c_str());
+                    ImGui::SameLine();
+                    if (ImGui::Button("Remove")) {
+                        _player.nicknames.erase(_player.nicknames.begin() + i);
+                        ImGui::PopID();
+                        break;
+                    }
+                    ImGui::PopID();
+                }
+                ImGui::EndListBox();
+            }
+
+            ImGui::EndDisabled();
+            ImGui::EndTabItem();
+        }
+
         ImGui::EndTabBar();
     }
 }

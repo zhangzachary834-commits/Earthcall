@@ -5,12 +5,28 @@
 #include "Form/Object/Object.hpp"
 #include "Form/Object/Formation/Formation.hpp"
 #include "Person/Body/BodyPart/BodyPart.hpp"
+#include <glm/glm.hpp>
+
 // Forward declarations to avoid circular dependencies
 namespace Core { class Game; }
 class ZoneManager;
 class Zone;
 struct GLFWwindow;
-#include <glm/glm.hpp>
+
+// Rich surface pick used by tools that need the hit point / normal.
+struct SurfaceHit {
+    Object* obj = nullptr;
+    float   t = 0.0f;
+    int     face = -1;
+    glm::vec3 point{0.0f};
+    glm::vec3 normal{0.0f, 1.0f, 0.0f};
+    bool    isCube = false;
+    int     axis = -1; // cube only: 0=X,1=Y,2=Z
+    int     sign = 1;  // cube only: +1/-1 (outward face direction)
+};
+
+bool buildMouseRay(GLFWwindow* window, Core::Game* game, glm::vec3& rayOrigin, glm::vec3& rayDir);
+bool pickSurface(const std::vector<Object*>& targets, const glm::vec3& rayOrigin, const glm::vec3& rayDir, SurfaceHit& out);
 
 class Tool {
 public:
@@ -92,15 +108,15 @@ public:
         Mirror,
         Grid,
         Ruler,
-        Measure
+        Measure,
+        Identity
     };
 
     Tool(Type type) : type(type) {}
 
     static void use(GLFWwindow* window, ZoneManager& mgr, Zone& zone, Type type, Core::Game& game);
 
-    static void ShapeGenerator3D(GLFWwindow* window, Core::Game* game, ZoneManager& mgr,
-                                 BodyPart* targetPart = nullptr);
+
     static void Pottery3D(GLFWwindow* window, Core::Game* game, ZoneManager& mgr, float dt,
                           const std::vector<Object*>& targets, const glm::mat4* avatarRoot);
     static void Rotate3D(GLFWwindow* window, Core::Game* game, ZoneManager& mgr, float dt,

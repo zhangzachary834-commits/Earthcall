@@ -4,11 +4,12 @@
 #include "Form/Singular/Property/PropertyPath.hpp"
 #include "MathBinding.hpp"
 #include "Singularity/OntoMath/CurveModel.hpp"
-#include "Singularity/OntoMath/Expression.hpp"
+#include "Singularity/OntoMath/ScalarForm.hpp"
 #include "json.hpp"
 
 #include <string>
 #include <vector>
+#include <ctime>
 
 // The law's action as data (LAW_AND_CREATION_SYSTEM.md §2b): a mutation tree
 // over PropertyPaths, serializable and Person-authorable, compiled once into
@@ -45,6 +46,14 @@ struct ActionNode {
                        // the anti-Babel ceiling (kMaxChainRounds).
     };
 
+    struct ExecutedEvent {
+        std::string actionName;
+        Singular* target;
+        std::time_t timestamp;
+    };
+
+    static const char* kindName(Kind k);
+
     Kind kind = Kind::Set;
 
     PropertyPath path;               // what changes
@@ -55,6 +64,8 @@ struct ActionNode {
     PropertyPath input;              // Drive domain; empty => event timestamp (seconds)
 
     std::string conceptId;           // Spawn (reserved)
+    PropertyPath spawnParentPath;    // Spawn (optional parent object)
+    PropertyPath spawnPlacementPath; // Spawn (optional placement coordinate)
 
     // Publish payload. Participant tokens: "" = the law's subject (for the
     // event's subject) / none (for its object); "@event.subject" and
@@ -107,10 +118,12 @@ struct ActionNode {
                           MathBindings bindings);
     static ActionNode flow(const std::string& dottedPath, OntoMath::Piecewise function,
                            MathBindings bindings);
+    static ActionNode sequence(std::vector<ActionNode> children);
+    static ActionNode parallel(std::vector<ActionNode> children);
+    static ActionNode spawn(const std::string& conceptId, const std::string& spawnParentPath = "");
     static ActionNode publish(const std::string& type,
                               const std::string& subjectToken = "",
                               const std::string& objectToken = "");
-    static ActionNode sequence(std::vector<ActionNode> children);
 };
 
 // A law's action model is the root of one such tree.

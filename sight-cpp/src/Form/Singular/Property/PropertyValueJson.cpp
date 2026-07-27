@@ -36,6 +36,14 @@ nlohmann::json propertyValueToJson(const PropertyValue& v) {
             return nlohmann::json{{"t", "string"}, {"v", x}};
         } else if constexpr (std::is_same_v<X, glm::vec3>) {
             return nlohmann::json{{"t", "vec3"}, {"x", x.x}, {"y", x.y}, {"z", x.z}};
+        } else if constexpr (std::is_same_v<X, glm::mat4>) {
+            nlohmann::json m = nlohmann::json::array();
+            for (int c = 0; c < 4; ++c) {
+                for (int r = 0; r < 4; ++r) {
+                    m.push_back(x[c][r]);
+                }
+            }
+            return nlohmann::json{{"t", "mat4"}, {"m", m}};
         } else {
             // Singular*/Object*/Relation*/Formation* — identity, not value.
             return refJson(static_cast<const Singular*>(x));
@@ -54,6 +62,18 @@ PropertyValue propertyValueFromJson(const nlohmann::json& j) {
     if (t == "string") return PropertyValue(j.value("v", std::string()));
     if (t == "vec3") {
         return PropertyValue(glm::vec3(j.value("x", 0.0f), j.value("y", 0.0f), j.value("z", 0.0f)));
+    }
+    if (t == "mat4") {
+        glm::mat4 m(1.0f);
+        if (j.contains("m") && j["m"].is_array() && j["m"].size() == 16) {
+            int i = 0;
+            for (int c = 0; c < 4; ++c) {
+                for (int r = 0; r < 4; ++r) {
+                    m[c][r] = j["m"][i++].get<float>();
+                }
+            }
+        }
+        return PropertyValue(m);
     }
     // "none" and "ref" (world references resolve through the loader).
     return PropertyValue{};

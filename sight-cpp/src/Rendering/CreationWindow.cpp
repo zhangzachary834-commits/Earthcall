@@ -257,8 +257,7 @@ void renderCreationWindow(bool* open, Singular& author, Object* selected, World&
                     ImGui::InputDouble("c1", &row.c1);
                 } else if (row.mode == 2) {
                     if (!row.exactSeeded) {
-                        row.exact = OntoMath::Piecewise::continuous(
-                            OntoMath::Expression::variable("x"));
+                        row.exact = OntoMath::Piecewise::continuous(OntoMath::MathNode::fromLegacyExpression(OntoMath::ScalarForm::variable("x")));
                         row.exactSeeded = true;
                     }
                     // x = the source value; the full exact editor (pieces,

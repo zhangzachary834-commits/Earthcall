@@ -1,14 +1,18 @@
 #pragma once
 
+#include "Rendering/Renderer.hpp" // TextureHandle
+
 #include <cstdint>
 #include <vector>
-#include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 
 // Per-face paintable texture with multi-layer compositing and stroke history.
 // Pulled out of Object to keep paint/blend code separate from object semantics.
 struct FaceTexture {
-    GLuint id = 0;
+    // Backend-owned handle, assigned by uploadToGPU. Mutable because uploading is
+    // const from the caller's view — the paint is the same, only its GPU copy
+    // changes. 0 while unuploaded, or under a backend that keeps no handles.
+    mutable TextureHandle id = 0;
     mutable std::vector<uint8_t> pixels;     // RGBA8 buffer, size×size×4
     int size = 64;
 

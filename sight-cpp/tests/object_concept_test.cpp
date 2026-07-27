@@ -159,7 +159,7 @@ int main() {
             piece.lo = 0.0;
             piece.hasHi = true;
             piece.hi = 5.0;
-            piece.expression = OntoMath::Expression::variable("x", 2.0);
+            piece.mathNode = OntoMath::MathNode::fromLegacyExpression(OntoMath::ScalarForm::variable("x", 2.0));
             f.pieces.push_back(std::move(piece));
             m.exact = std::move(f);
             squared->addMapping(std::move(m));

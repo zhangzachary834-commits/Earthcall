@@ -10,7 +10,7 @@ PerspectiveManager::~PerspectiveManager() {
     // Destructor - cleanup is handled by unique_ptr
 }
 
-void PerspectiveManager::addPerspective(std::unique_ptr<UserPerspective> perspective) {
+void PerspectiveManager::addPerspective(std::unique_ptr<PersonPerspective> perspective) {
     if (!perspective) {
         return;
     }
@@ -111,14 +111,14 @@ void PerspectiveManager::render() {
     }
 }
 
-UserPerspective* PerspectiveManager::current() const {
+PersonPerspective* PerspectiveManager::current() const {
     if (_currentIndex < _perspectives.size()) {
         return _perspectives[_currentIndex].get();
     }
     return nullptr;
 }
 
-UserPerspective* PerspectiveManager::get(size_t index) const {
+PersonPerspective* PerspectiveManager::get(size_t index) const {
     if (index < _perspectives.size()) {
         return _perspectives[index].get();
     }

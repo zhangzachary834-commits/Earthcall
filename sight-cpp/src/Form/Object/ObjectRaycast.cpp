@@ -6,7 +6,6 @@
 #include "AngleTools.hpp"
 #include "Automation/AutomationEvents.hpp"
 #include <GLFW/glfw3.h>
-#include <OpenGL/glu.h>
 #include <glm/gtc/quaternion.hpp>
 #include <algorithm>
 #include <cstring>
@@ -68,6 +67,11 @@ bool Object::raycastFace(const glm::vec3& rayOriginWorld, const glm::vec3& rayDi
     if (_hasSmooth) {
         glm::vec3 n;
         if (geom::raycastSmooth(smoothData, oL, dL, outT, n, outUV)) { outFaceIndex = 0; return true; }
+        return false;
+    }
+    if (_hasPatch) {
+        // Pick against the cached patch tessellation — same approach as fields.
+        if (raycastTessMesh(_patchMesh, oL, dL, outT)) { outFaceIndex = 0; outUV = glm::vec2(0.5f); return true; }
         return false;
     }
 

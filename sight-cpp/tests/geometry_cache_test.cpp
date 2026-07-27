@@ -96,6 +96,27 @@ int main() {
         std::printf("  field:   built on set (%zu pts)\n", cloud.size());
     }
 
+    // --- Bezier patch: it must build a cache like the other topology kinds ----
+    // Regression lock: setBezierPatch set _hasPatch and SpatialKind::Patch, but
+    // rebuildGeometryCaches had no patch branch and returned early, so the support
+    // cloud was empty and drawObject fell through to the primitive switch — a patch
+    // rendered as a cube and could not be picked. An empty cloud here is that bug.
+    {
+        Object o;
+        o.setBezierPatch(geom::makeBezierGrid(3, 3, 0.5f));
+        assert(o.hasPatch());
+        assert(o.getSpatialKind() == Object::SpatialKind::Patch);
+        std::vector<glm::vec3> small = o.getSupportCloud();
+        assert(!small.empty()); // the patch tessellation reached the cache
+
+        o.setBezierPatch(geom::makeBezierGrid(3, 3, 1.0f));
+        std::vector<glm::vec3> big = o.getSupportCloud();
+        assert(!big.empty());
+        assert(!sameCloud(small, big)); // and it tracks the edited control net
+        std::printf("  patch:   rebuilt on control-net edit (%zu -> %zu pts)\n",
+                    small.size(), big.size());
+    }
+
     // --- Switching kind must not leave the old kind's cache in play ----------
     {
         Object o;

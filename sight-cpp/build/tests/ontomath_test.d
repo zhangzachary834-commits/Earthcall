@@ -1,7 +1,6 @@
 build/tests/ontomath_test.o: tests/ontomath_test.cpp \
-  src/ZonesOfEarth/AuthorsOfLaw/Law.hpp \
-  src/Singularity/Core/EventBus.hpp \
-  src/Form/Object/Formation/Formation.hpp src/Form/Form.hpp \
+  src/Form/Singular/Property/PropertyPath.hpp \
+  src/Form/Singular/Property/PropertyValue.hpp \
   /opt/homebrew/include/glm/glm.hpp \
   /opt/homebrew/include/glm/detail/_fixes.hpp \
   /opt/homebrew/include/glm/detail/setup.hpp \
@@ -152,11 +151,13 @@ build/tests/ontomath_test.o: tests/ontomath_test.cpp \
   /opt/homebrew/include/glm/vector_relational.hpp \
   /opt/homebrew/include/glm/integer.hpp \
   /opt/homebrew/include/glm/detail/func_integer.inl \
+  src/ZonesOfEarth/AuthorsOfLaw/Law.hpp \
+  src/Singularity/Core/EventBus.hpp \
+  src/Form/Object/Formation/Formation.hpp src/Form/Form.hpp \
   /opt/homebrew/Cellar/glfw/3.4/include/GLFW/glfw3.h \
   src/Relation/RelationManager.hpp src/Relation/Relation.hpp \
   src/json.hpp src/Form/Singular/Singular.hpp \
   src/Form/Singular/Property/Property.hpp \
-  src/Form/Singular/Property/PropertyValue.hpp \
   /opt/homebrew/include/glm/gtc/type_ptr.hpp \
   /opt/homebrew/include/glm/gtc/../gtc/quaternion.hpp \
   /opt/homebrew/include/glm/gtc/../gtc/constants.hpp \
@@ -261,29 +262,25 @@ build/tests/ontomath_test.o: tests/ontomath_test.cpp \
   src/Form/Object/Object/PolyhedronData.hpp \
   src/Form/Object/Object/../AngleTools.hpp \
   src/Form/Object/Object/../Contour.hpp \
-  src/Form/Object/Object/FaceTexture.hpp \
-  src/Form/Object/Object/CollisionZone.hpp \
+  src/Form/Object/Object/FaceTexture.hpp src/Rendering/Renderer.hpp \
+  src/Rendering/RenderMaterial.hpp \
   src/Form/Object/Geometry/SmoothSurface.hpp \
+  src/Form/Object/Object/CollisionZone.hpp \
   src/Form/Object/Geometry/ComplexShape.hpp \
   src/Form/Object/Geometry/Sdf.hpp src/Form/Object/Geometry/Patch.hpp \
   src/Form/Object/Automation/Automation.hpp \
   src/ZonesOfEarth/AuthorsOfLaw/ECA.hpp \
   src/ZonesOfEarth/AuthorsOfLaw/ConditionModel.hpp \
-  src/Form/Singular/Property/PropertyPath.hpp \
   src/ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp \
   src/ZonesOfEarth/AuthorsOfLaw/Universe.hpp \
-  src/Singularity/OntoMath/Expression.hpp \
+  src/Singularity/OntoMath/ScalarForm.hpp \
   src/ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp \
   src/Singularity/OntoMath/CurveModel.hpp \
   src/Singularity/OntoMath/Operations.hpp
 
-src/ZonesOfEarth/AuthorsOfLaw/Law.hpp:
+src/Form/Singular/Property/PropertyPath.hpp:
 
-src/Singularity/Core/EventBus.hpp:
-
-src/Form/Object/Formation/Formation.hpp:
-
-src/Form/Form.hpp:
+src/Form/Singular/Property/PropertyValue.hpp:
 
 /opt/homebrew/include/glm/glm.hpp:
 
@@ -585,6 +582,14 @@ src/Form/Form.hpp:
 
 /opt/homebrew/include/glm/detail/func_integer.inl:
 
+src/ZonesOfEarth/AuthorsOfLaw/Law.hpp:
+
+src/Singularity/Core/EventBus.hpp:
+
+src/Form/Object/Formation/Formation.hpp:
+
+src/Form/Form.hpp:
+
 /opt/homebrew/Cellar/glfw/3.4/include/GLFW/glfw3.h:
 
 src/Relation/RelationManager.hpp:
@@ -596,8 +601,6 @@ src/json.hpp:
 src/Form/Singular/Singular.hpp:
 
 src/Form/Singular/Property/Property.hpp:
-
-src/Form/Singular/Property/PropertyValue.hpp:
 
 /opt/homebrew/include/glm/gtc/type_ptr.hpp:
 
@@ -813,9 +816,13 @@ src/Form/Object/Object/../Contour.hpp:
 
 src/Form/Object/Object/FaceTexture.hpp:
 
-src/Form/Object/Object/CollisionZone.hpp:
+src/Rendering/Renderer.hpp:
+
+src/Rendering/RenderMaterial.hpp:
 
 src/Form/Object/Geometry/SmoothSurface.hpp:
+
+src/Form/Object/Object/CollisionZone.hpp:
 
 src/Form/Object/Geometry/ComplexShape.hpp:
 
@@ -829,13 +836,11 @@ src/ZonesOfEarth/AuthorsOfLaw/ECA.hpp:
 
 src/ZonesOfEarth/AuthorsOfLaw/ConditionModel.hpp:
 
-src/Form/Singular/Property/PropertyPath.hpp:
-
 src/ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp:
 
 src/ZonesOfEarth/AuthorsOfLaw/Universe.hpp:
 
-src/Singularity/OntoMath/Expression.hpp:
+src/Singularity/OntoMath/ScalarForm.hpp:
 
 src/ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp:
 

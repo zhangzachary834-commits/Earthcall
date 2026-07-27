@@ -159,7 +159,7 @@ build/src/ZonesOfEarth/AuthorsOfLaw/ChangeRecorder.o: \
   src/ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp \
   src/ZonesOfEarth/AuthorsOfLaw/Universe.hpp src/json.hpp \
   src/Singularity/OntoMath/CurveModel.hpp \
-  src/Singularity/OntoMath/Expression.hpp \
+  src/Singularity/OntoMath/ScalarForm.hpp \
   src/Form/Object/Automation/Automation.hpp
 
 src/ZonesOfEarth/AuthorsOfLaw/ChangeRecorder.hpp:
@@ -484,6 +484,6 @@ src/json.hpp:
 
 src/Singularity/OntoMath/CurveModel.hpp:
 
-src/Singularity/OntoMath/Expression.hpp:
+src/Singularity/OntoMath/ScalarForm.hpp:
 
 src/Form/Object/Automation/Automation.hpp:

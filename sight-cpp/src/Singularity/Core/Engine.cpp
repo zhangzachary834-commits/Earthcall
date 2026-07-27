@@ -3,11 +3,7 @@
 
 #include "../../../imgui/imgui.h"
 #include "../../../imgui/backends/imgui_impl_glfw.h"
-#ifdef USE_GL3_RENDERER
-#  include "../../../imgui/backends/imgui_impl_opengl3.h"
-#else
-#  include "../../../imgui/backends/imgui_impl_opengl2.h"
-#endif
+#include "../../../imgui/backends/imgui_impl_opengl2.h"
 
 #include "Singularity/Audio/AudioSystem.hpp"
 
@@ -25,16 +21,6 @@ bool Engine::init(int /*argc*/, char** /*argv*/) {
         std::cerr << "⚠️  Failed to initialise GLFW!" << std::endl;
         return false;
     }
-
-    // Request a modern OpenGL 3.3 core profile when GL3 renderer is enabled
-#ifdef USE_GL3_RENDERER
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-#  if defined(__APPLE__)
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#  endif
-#endif
 
     _window = glfwCreateWindow(1280, 720, "Earthcall", nullptr, nullptr);
     if (!_window) {
@@ -58,11 +44,7 @@ bool Engine::init(int /*argc*/, char** /*argv*/) {
 #endif
 
     ImGui_ImplGlfw_InitForOpenGL(_window, true);
-#ifdef USE_GL3_RENDERER
-    ImGui_ImplOpenGL3_Init("#version 330 core");
-#else
     ImGui_ImplOpenGL2_Init();
-#endif
     _running = true;
 
     // TODO: move OpenGL / ImGui initialisation here later.
@@ -85,11 +67,7 @@ void Engine::run(Game& game) {
         glfwPollEvents();
 
         // Start a new ImGui frame
-#ifdef USE_GL3_RENDERER
-        ImGui_ImplOpenGL3_NewFrame();
-#else
         ImGui_ImplOpenGL2_NewFrame();
-#endif
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
@@ -98,11 +76,7 @@ void Engine::run(Game& game) {
 
         // Render ImGui
         ImGui::Render();
-#ifdef USE_GL3_RENDERER
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-#else
         ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
-#endif
 
         glfwSwapBuffers(_window);
     }
@@ -117,11 +91,7 @@ void Engine::shutdown() {
         _window = nullptr;
     }
     // Shutdown ImGui after window destruction but before GLFW termination
-#ifdef USE_GL3_RENDERER
-    ImGui_ImplOpenGL3_Shutdown();
-#else
     ImGui_ImplOpenGL2_Shutdown();
-#endif
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
     glfwTerminate();

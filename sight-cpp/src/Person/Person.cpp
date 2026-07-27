@@ -5,7 +5,8 @@
 #include <functional>
 #include <unordered_map>
 #include <GLFW/glfw3.h>
-#include <OpenGL/glu.h>
+#include "Rendering/GL/GluCompat.hpp"
+#include "Rendering/Renderer.hpp"
 #include "Form/Object/Formation/Menu/stb_easy_font.h"
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
@@ -15,6 +16,7 @@
 #include "Singularity/Core/EventBus.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 // Forward-declare global ZoneManager defined in main.cpp
 extern ZoneManager mgr;
@@ -35,10 +37,14 @@ void Person::buildProperties() {
     // --- Law System Perception Properties ---
     _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, std::string>>(
         "activeTool", this, &Person::activeTool));
+    _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, std::string>>(
+        "active3DMode", this, &Person::active3DMode));
     _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, glm::vec3>>(
         "cursorHitPos", this, &Person::cursorHitPos));
     _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, glm::vec3>>(
         "cursorHitNormal", this, &Person::cursorHitNormal));
+    _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, glm::mat4>>(
+        "cursorSpawnTransform", this, &Person::cursorSpawnTransform));
     _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, glm::vec3>>(
         "cameraPos", this, &Person::cameraPos));
     _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, glm::vec3>>(
@@ -49,12 +55,24 @@ void Person::buildProperties() {
         "activeColor", this, &Person::activeColor));
 }
 
-Person::Person(Soul& soul, Body& body) : _soul(soul), body(body) {
+Person::Person(Soul soul, Body body) : _soul(std::move(soul)), body(std::move(body)) {
     // The Person's identifier IS the soul's identity. Left unset it was the
     // empty string — invisible in law authorship records and unmatchable
     // when a saved world reattaches authors by identifier.
-    soulName = soul.getIdentifier();
+    soulName = _soul.getIdentifier();
     if (soulName.empty()) soulName = "Person";
+}
+
+nlohmann::json Person::serialize() const {
+    nlohmann::json j;
+    j["soulName"] = soulName;
+    j["nicknames"] = nicknames;
+    return j;
+}
+
+void Person::deserialize(const nlohmann::json& j) {
+    if (j.contains("soulName")) soulName = j["soulName"];
+    if (j.contains("nicknames")) nicknames = j["nicknames"].get<std::vector<std::string>>();
 }
 
 
@@ -110,41 +128,6 @@ void Person::express() const {
     body.describe();
 }
 
-// TODO: Replace this with the Object system.
-static void drawUnitCube() {
-    glBegin(GL_QUADS);
-    // Front
-    glVertex3f(-0.5f, -0.5f,  0.5f);
-    glVertex3f( 0.5f, -0.5f,  0.5f);
-    glVertex3f( 0.5f,  0.5f,  0.5f);
-    glVertex3f(-0.5f,  0.5f,  0.5f);
-    // Back
-    glVertex3f(-0.5f, -0.5f, -0.5f);
-    glVertex3f(-0.5f,  0.5f, -0.5f);
-    glVertex3f( 0.5f,  0.5f, -0.5f);
-    glVertex3f( 0.5f, -0.5f, -0.5f);
-    // Left
-    glVertex3f(-0.5f, -0.5f, -0.5f);
-    glVertex3f(-0.5f, -0.5f,  0.5f);
-    glVertex3f(-0.5f,  0.5f,  0.5f);
-    glVertex3f(-0.5f,  0.5f, -0.5f);
-    // Right
-    glVertex3f(0.5f, -0.5f, -0.5f);
-    glVertex3f(0.5f,  0.5f, -0.5f);
-    glVertex3f(0.5f,  0.5f,  0.5f);
-    glVertex3f(0.5f, -0.5f,  0.5f);
-    // Top
-    glVertex3f(-0.5f, 0.5f, -0.5f);
-    glVertex3f(-0.5f, 0.5f,  0.5f);
-    glVertex3f( 0.5f, 0.5f,  0.5f);
-    glVertex3f( 0.5f, 0.5f, -0.5f);
-    // Bottom
-    glVertex3f(-0.5f, -0.5f, -0.5f);
-    glVertex3f( 0.5f, -0.5f, -0.5f);
-    glVertex3f( 0.5f, -0.5f,  0.5f);
-    glVertex3f(-0.5f, -0.5f,  0.5f);
-    glEnd();
-}
 
 void Person::draw() const {
     // Body parts already carry their absolute transforms (updated via updatePose),
@@ -160,17 +143,21 @@ void Person::drawNametag() const {
     // Offset above the head where the nametag should appear (world space)
     const float tagHeight = body.getNametagHeight();
 
-    // Fetch current matrices and viewport
-    GLdouble model[16], proj[16];
-    GLint viewport[4];
-    glGetDoublev(GL_MODELVIEW_MATRIX, model);
-    glGetDoublev(GL_PROJECTION_MATRIX, proj);
-    glGetIntegerv(GL_VIEWPORT, viewport);
+    // Read the camera off the renderer rather than out of the GL matrix stack —
+    // portable, and independent of what the stack happens to hold right now.
+    const Renderer& r = currentRenderer();
+    const glm::ivec4& vp = r.viewport();
+    double model[16], proj[16];
+    int viewport[4] = {vp.x, vp.y, vp.z, vp.w};
+    for (int i = 0; i < 16; ++i) {
+        model[i] = static_cast<double>(glm::value_ptr(r.view())[i]);
+        proj[i]  = static_cast<double>(glm::value_ptr(r.proj())[i]);
+    }
 
     // Project 3D position (above head) to 2D window coordinates
-    GLdouble winX, winY, winZ;
-    gluProject(position.x, position.y + tagHeight, position.z,
-               model, proj, viewport, &winX, &winY, &winZ);
+    double winX, winY, winZ;
+    ecgl::project(position.x, position.y + tagHeight, position.z,
+                  model, proj, viewport, &winX, &winY, &winZ);
 
     // Skip if projected behind camera
     if (winZ < 0.0 || winZ > 1.0) return;
@@ -186,30 +173,10 @@ void Person::drawNametag() const {
                                     buf, sizeof(buf));
 
     // Render in 2D overlay
-    glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT);
-    glDisable(GL_DEPTH_TEST);
-
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    glOrtho(0, viewport[2], viewport[3], 0, -1, 1);
-
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
-
-    glColor3f(1.0f, 1.0f, 1.0f);
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glVertexPointer(2, GL_FLOAT, 16, buf);
-    glDrawArrays(GL_QUADS, 0, quads * 4);
-    glDisableClientState(GL_VERTEX_ARRAY);
-
-    // Restore matrices and state
-    glPopMatrix();
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-    glMatrixMode(GL_MODELVIEW);
-    glPopAttrib();
+    Renderer& rw = currentRenderer();
+    rw.begin2D(static_cast<uint32_t>(viewport[2]), static_cast<uint32_t>(viewport[3]));
+    rw.drawTris2D(draw::easyFontToTris(buf, quads), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+    rw.end2D();
 }
 
 // -----------------------------------------------------------------------------

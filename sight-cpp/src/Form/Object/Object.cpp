@@ -7,7 +7,6 @@
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
 #include <GLFW/glfw3.h>
-#include <OpenGL/glu.h>
 #include <glm/gtc/quaternion.hpp>
 #include <algorithm>
 #include <cstring>
@@ -83,6 +82,7 @@ int Object::getFaces() {
     if (_hasField)   return 1;
     if (_hasComplex) return complexData.patchCount();
     if (_hasSmooth)  return 1;
+    if (_hasPatch)   return 1; // a Bezier patch is one surface with one face texture
     if (geometryType == GeometryType::Polyhedron) {
         return polyhedronData.getFaceCount();
     }
@@ -183,6 +183,7 @@ std::string Object::screenMode() {
 // Polyhedron-specific methods
 void Object::setPolyhedronData(const PolyhedronData& data) {
     polyhedronData = data;
+    _polyhedronDirty = true; // render mesh cache must follow the geometry
     _hasSmooth = false;   // a polyhedron is flat-faced, not a topology surface
     _hasComplex = false;
     if (geometryType == GeometryType::Polyhedron) {
@@ -193,24 +194,28 @@ void Object::setPolyhedronData(const PolyhedronData& data) {
 void Object::createTetrahedron() {
     geometryType = GeometryType::Polyhedron;
     polyhedronData = PolyhedronData::createRegularPolyhedron(4);
+    _polyhedronDirty = true;
     initFaceTextures();
 }
 
 void Object::createOctahedron() {
     geometryType = GeometryType::Polyhedron;
     polyhedronData = PolyhedronData::createRegularPolyhedron(8);
+    _polyhedronDirty = true;
     initFaceTextures();
 }
 
 void Object::createDodecahedron() {
     geometryType = GeometryType::Polyhedron;
     polyhedronData = PolyhedronData::createRegularPolyhedron(12);
+    _polyhedronDirty = true;
     initFaceTextures();
 }
 
 void Object::createIcosahedron() {
     geometryType = GeometryType::Polyhedron;
     polyhedronData = PolyhedronData::createRegularPolyhedron(20);
+    _polyhedronDirty = true;
     initFaceTextures();
 }
 
@@ -218,6 +223,7 @@ void Object::createCustomPolyhedron(const std::vector<glm::vec3>& vertices,
                                    const std::vector<std::vector<int>>& faces) {
     geometryType = GeometryType::Polyhedron;
     polyhedronData = PolyhedronData::createCustomPolyhedron(vertices, faces);
+    _polyhedronDirty = true;
     initFaceTextures();
 }
 
@@ -516,8 +522,13 @@ void Object::buildProperties() {
         "position", this, &Object::getPosition, &Object::setPosition));
     _propertyRegistry.push_back(std::make_unique<ComputedProperty<Object, glm::vec3>>(
         "rotation", this, &Object::getRotationEulerDegrees, &Object::setRotationEulerDegrees));
+    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Object, glm::mat4>>(
+        "transform", this, &Object::getTransform, &Object::setTransform));
     _propertyRegistry.push_back(std::make_unique<PropertyRef<Object, glm::vec3>>(
         "center", this, &Object::center));
+    // A Law can reassign which Material being paints this object, by identifier.
+    _propertyRegistry.push_back(std::make_unique<PropertyRef<Object, std::string>>(
+        "material", this, &Object::_materialId));
 
     // Shape parameters, flat under dotted names. v1 is raw read/write;
     // geometry regeneration on change follows through the setShape path

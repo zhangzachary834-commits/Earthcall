@@ -85,6 +85,14 @@ void RelationManager::add(const std::shared_ptr<Relation>& r) {
 
         // Optional: update aggregate weight (could use running average, etc.)
         (*it)->weight += input.weight;
+
+        // Re-binding an existing pair carries fresh attachment geometry: the
+        // caller measured localOffset from the beings' current transforms, so
+        // the incoming pose supersedes the stored one. Dropping it left the
+        // stale offset silently in force.
+        if (input.isAttachment()) {
+            (*it)->attachment = input.attachment;
+        }
     } else {
         // New relation – create initial event
         RelationEvent ev{std::time(nullptr), input.type, input.weight};

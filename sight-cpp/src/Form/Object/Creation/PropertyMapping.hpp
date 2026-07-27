@@ -2,8 +2,11 @@
 
 #include "Form/Singular/Property/PropertyPath.hpp"
 #include "Singularity/OntoMath/CurveModel.hpp"
-#include "Singularity/OntoMath/Expression.hpp"
+#include "Singularity/OntoMath/ScalarForm.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp"
 #include "json.hpp"
+#include <map>
+#include <string>
 
 #include <optional>
 
@@ -13,7 +16,8 @@
 // old — modal information transferred, not bytes cloned. "Each new column's
 // height = 1.5x its source's; radius = mean of the whole source set."
 struct PropertyMapping {
-    PropertyPath source;             // read from source-set member(s)
+    PropertyPath source;             // legacy single variable (often 'x')
+    MathBindings bindings;           // multivariable bindings
     CurveModel transform;            // y = f(x); identity = polynomial {0, 1}
     PropertyPath target;             // written on the newborn
 
@@ -33,9 +37,18 @@ struct PropertyMapping {
     // The transform applied: exact when authored (nullopt outside its
     // domain), otherwise the curve (total). The guard subject lets
     // expression-guarded pieces testify (the source member, per-member).
-    std::optional<double> apply(double x, const Singular* guardSubject = nullptr) const {
+    std::optional<double> apply(double x, const std::map<std::string, double>& vars, const Singular* guardSubject = nullptr) const {
         if (hasExact) {
-            return exact.evaluate({{exact.inputVariable, x}}, guardSubject);
+            std::map<std::string, PropertyValue> evalVars;
+            for (const auto& [k, v] : vars) {
+                evalVars[k] = PropertyValue(v);
+            }
+            evalVars[exact.inputVariable] = PropertyValue(x); // Ensure legacy input variable is set
+            auto res = exact.evaluate(evalVars, guardSubject);
+            if (res && std::holds_alternative<double>(*res)) {
+                return std::get<double>(*res);
+            }
+            return std::nullopt;
         }
         return transform.evaluate(x);
     }
