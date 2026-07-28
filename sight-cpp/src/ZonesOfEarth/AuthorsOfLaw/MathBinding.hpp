@@ -5,6 +5,7 @@
 #include "Universe.hpp"
 #include "json.hpp"
 
+#include <cstdlib>
 #include <iostream>
 #include <map>
 #include <optional>
@@ -101,21 +102,35 @@ inline bool lawGetValue(Singular& subject, const PropertyPath& path, PropertyVal
     return root && remainder.getValue(*root, out);
 }
 
+// Every law that writes anything goes through here, once per target per tick —
+// so an unconditional trace is several lines per property per frame, which both
+// floods the console and puts a synchronized std::endl flush in the hot path.
+// The trace stays available (it earned its keep chasing path-resolution bugs);
+// it just has to be asked for, via EARTHCALL_TRACE_LAWSET=1 in the environment.
+inline bool lawSetTraceEnabled() {
+    static const bool enabled = [] {
+        const char* v = std::getenv("EARTHCALL_TRACE_LAWSET");
+        return v && v[0] == '1';
+    }();
+    return enabled;
+}
+
 inline bool lawSetValue(Singular& subject, const PropertyPath& path, const PropertyValue& v) {
-    std::cout << "[lawSetValue DEBUG] Path: " << path.toString() << std::endl;
+    const bool trace = lawSetTraceEnabled();
+    if (trace) std::cout << "[lawSetValue DEBUG] Path: " << path.toString() << std::endl;
     if (isTimePath(path)) {
-        std::cout << "[lawSetValue DEBUG] Failed: isTimePath" << std::endl;
+        if (trace) std::cout << "[lawSetValue DEBUG] Failed: isTimePath" << std::endl;
         return false;
     }
     PropertyPath remainder;
     Singular* root = resolveLawRoot(subject, path, remainder);
     if (!root) {
-        std::cout << "[lawSetValue DEBUG] Failed: resolveLawRoot returned nullptr" << std::endl;
+        if (trace) std::cout << "[lawSetValue DEBUG] Failed: resolveLawRoot returned nullptr" << std::endl;
         return false;
     }
-    std::cout << "[lawSetValue DEBUG] root resolved to: " << root->getIdentifier() << ", remainder: " << remainder.toString() << std::endl;
+    if (trace) std::cout << "[lawSetValue DEBUG] root resolved to: " << root->getIdentifier() << ", remainder: " << remainder.toString() << std::endl;
     bool res = remainder.setValue(*root, v);
-    if (!res) {
+    if (!res && trace) {
         std::cout << "[lawSetValue DEBUG] Failed: remainder.setValue returned false" << std::endl;
     }
     return res;

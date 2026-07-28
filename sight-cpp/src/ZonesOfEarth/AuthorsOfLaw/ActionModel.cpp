@@ -446,9 +446,15 @@ ECA::ActionExecutor ActionNode::compile() const {
                 
                 double dt = Universe::instance().dt();
                 PropertyValue next = current;
-                
-                if (std::holds_alternative<double>(current) && std::holds_alternative<double>(*valProp)) {
-                    next = PropertyValue(std::get<double>(current) + std::get<double>(*valProp) * dt);
+
+                // Read the slot NUMERICALLY, the way Add/Scale/Lerp do. Most of
+                // the world's scalar properties (position.y, scale, mass, …) are
+                // registered as float, so demanding the `double` alternative here
+                // made every Flow law over them a silent no-op. lawSetValue
+                // coerces the result back to whatever the slot actually holds.
+                double curNum = 0.0, rateNum = 0.0;
+                if (propertyValueToNumber(current, curNum) && propertyValueToNumber(*valProp, rateNum)) {
+                    next = PropertyValue(curNum + rateNum * dt);
                 } else if (std::holds_alternative<glm::vec3>(current) && std::holds_alternative<glm::vec3>(*valProp)) {
                     next = PropertyValue(std::get<glm::vec3>(current) + std::get<glm::vec3>(*valProp) * static_cast<float>(dt));
                 } else {

@@ -1,0 +1,21 @@
+# macOS Finder metadata — never belongs in a repository.
+.DS_Store
+
+# Python virtualenvs are machine-specific: recreate them, don't track them.
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+
+# Compiled objects, dependency files, and precompiled headers. A committed
+# .gch is especially harmful: the compiler prefers it over the .hpp beside it,
+# so a stale one silently builds the whole project against old declarations.
+*.o
+*.a
+*.d
+*.gch
+*.so
+*.dylib
+
+# Debug symbol bundles.
+*.dSYM/

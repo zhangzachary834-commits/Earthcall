@@ -1,0 +1,10 @@
+# Web server (app.py). Versions match the virtualenv this repo was developed
+# against; the venv itself is no longer tracked — recreate it with:
+#   python3 -m venv venv && venv/bin/pip install -r backend-python/requirements.txt
+flask==3.1.0
+
+# Desktop-driving agent (agent/earthcall_agent.py). These were never present in
+# the tracked virtualenv, so that script could not run as committed.
+playwright
+pyautogui
+pygetwindow

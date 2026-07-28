@@ -225,6 +225,12 @@ serialization_compat_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/serialization_comp
 law_creation_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/law_creation_test.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
+frontier_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/frontier_test.o
+	$(CXX) $^ $(LDFLAGS) -o $@
+
+security_url_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/security_url_test.o
+	$(CXX) $^ $(LDFLAGS) -o $@
+
 test-property: property_bridge_test
 	./property_bridge_test
 
@@ -285,11 +291,20 @@ test-action-spawn: action_spawn_test
 test-serialization: serialization_compat_test
 	./serialization_compat_test
 
-test: test-property test-law test-creation test-loop test-recorder test-concept test-graph test-meta test-math test-continuous test-timeflow test-persist test-geomcache test-glucompat test-zone test-material test-material-render test-primitive-render test-action-spawn test-serialization
+test-formation-merge: formation_merge_test
+	./formation_merge_test
+
+test-frontier: frontier_test
+	./frontier_test
+
+test-security-url: security_url_test
+	./security_url_test
+
+test: test-property test-law test-creation test-loop test-recorder test-concept test-graph test-meta test-math test-continuous test-timeflow test-persist test-geomcache test-glucompat test-zone test-material test-material-render test-primitive-render test-action-spawn test-serialization test-formation-merge test-frontier test-security-url
 
 # Pull in auto-generated header dependencies (.d files next to each .o)
 -include $(OBJECTS:.o=.d)
 -include $(wildcard $(BUILD_DIR)/tests/*.d)
 
 # Phony targets
-.PHONY: all clean run webgpu-smoke webgpu-mesh webgpu-renderer webgpu-window test test-property test-law test-loop test-recorder test-concept test-graph test-meta test-math test-continuous test-timeflow test-persist test-geomcache test-glucompat test-zone test-material test-material-render test-primitive-render
+.PHONY: all clean run webgpu-smoke webgpu-mesh webgpu-renderer webgpu-window test test-property test-law test-creation test-loop test-recorder test-concept test-graph test-meta test-math test-continuous test-timeflow test-persist test-geomcache test-glucompat test-zone test-material test-material-render test-primitive-render test-action-spawn test-serialization test-formation-merge test-frontier test-security-url

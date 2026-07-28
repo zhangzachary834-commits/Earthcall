@@ -25,10 +25,14 @@ int main() {
     World world;
     Object player;
     
-    // 3. Create a Spawn ActionNode
+    // 3. Create a Spawn ActionNode.
+    //    Spawn resolves through ConceptRegistry::find, which keys on the
+    //    concept's IDENTIFIER ("concept-N", minted in the constructor) — not on
+    //    the display name passed to ObjectConcept(). Asking for the name here is
+    //    what made this test spawn nothing.
     ActionNode node;
     node.kind = ActionNode::Kind::Spawn;
-    node.conceptId = "test-concept";
+    node.conceptId = concept->getIdentifier();
     
     // Compile it
     auto executor = node.compile();

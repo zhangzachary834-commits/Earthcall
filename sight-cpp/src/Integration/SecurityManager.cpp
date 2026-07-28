@@ -4,6 +4,7 @@
 #include <fstream>
 #include <sstream>
 #include <algorithm>
+#include <cctype>
 #include <ctime>
 #include <iomanip>
 
@@ -185,14 +186,51 @@ URLValidationResult SecurityManager::validateURL(const std::string& url) {
     return result;
 }
 
+// The host of an "scheme://host/path" URL, lowercased, with any userinfo and
+// port stripped. Empty when the string has no authority component.
+static std::string urlHost(const std::string& url) {
+    const size_t schemeEnd = url.find("://");
+    if (schemeEnd == std::string::npos) return std::string();
+    const size_t hostStart = schemeEnd + 3;
+    // The authority ends at the first '/', '?' or '#'.
+    size_t hostEnd = url.find_first_of("/?#", hostStart);
+    if (hostEnd == std::string::npos) hostEnd = url.size();
+    std::string host = url.substr(hostStart, hostEnd - hostStart);
+    // Drop userinfo — "https://trusted.example.com@evil.test/" is evil.test.
+    const size_t at = host.rfind('@');
+    if (at != std::string::npos) host = host.substr(at + 1);
+    const size_t colon = host.rfind(':');
+    if (colon != std::string::npos) host = host.substr(0, colon);
+    std::transform(host.begin(), host.end(), host.begin(),
+                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    return host;
+}
+
 bool SecurityManager::isURLWhitelisted(const std::string& url) {
     if (_config.whitelistedDomains.empty()) {
         return true; // No whitelist means all allowed
     }
-    
+
+    // Match on the HOST, not on a raw string prefix. A prefix test lets
+    // "https://trusted.example.com.attacker.test/" pass a whitelist entry of
+    // "https://trusted.example.com", which is the whole bypass. An entry
+    // matches its exact host or any subdomain of it.
+    const std::string host = urlHost(url);
+    if (host.empty()) return false;
+
     for (const auto& domain : _config.whitelistedDomains) {
-        if (url.find(domain) == 0) {
-            return true;
+        std::string allowed = urlHost(domain);
+        if (allowed.empty()) {                     // bare domain, no scheme
+            allowed = domain;
+            std::transform(allowed.begin(), allowed.end(), allowed.begin(),
+                           [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+        }
+        if (allowed.empty()) continue;
+        if (host == allowed) return true;
+        if (host.size() > allowed.size() &&
+            host.compare(host.size() - allowed.size(), allowed.size(), allowed) == 0 &&
+            host[host.size() - allowed.size() - 1] == '.') {
+            return true;                           // genuine subdomain
         }
     }
     return false;
@@ -334,11 +372,11 @@ MessageValidationResult SecurityManager::validateMessage(const std::string& mess
         return result;
     }
     
-    // Basic JSON validation (if it's supposed to be JSON)
+    // Basic JSON validation (if it's supposed to be JSON). accept() answers the
+    // question we are actually asking — "is this well-formed?" — without
+    // building a DOM we throw away, and without discarding a [[nodiscard]].
     if (message.find('{') != std::string::npos || message.find('[') != std::string::npos) {
-        try {
-            nlohmann::json::parse(message);
-        } catch (const std::exception& e) {
+        if (!nlohmann::json::accept(message)) {
             result.reason = "Invalid JSON format";
             logEvent(SecurityEventType::INVALID_MESSAGE, "Invalid JSON message", source, message, true);
             return result;
