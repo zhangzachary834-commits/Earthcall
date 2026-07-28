@@ -41,10 +41,13 @@ Property* Singular::findProperty(const std::string& name) {
     }
     
     // Dynamic property fallback
-    auto bridge = std::make_unique<DynamicPropertyBridge>(name, this);
-    Property* p = bridge.get();
-    _propertyRegistry.push_back(std::move(bridge));
-    return p;
+    if (_dynamicProperties.find(name) != _dynamicProperties.end()) {
+        auto bridge = std::make_unique<DynamicPropertyBridge>(name, this);
+        Property* p = bridge.get();
+        _propertyRegistry.push_back(std::move(bridge));
+        return p;
+    }
+    return nullptr;
 }
 
 std::vector<Property*> Singular::listProperties() {

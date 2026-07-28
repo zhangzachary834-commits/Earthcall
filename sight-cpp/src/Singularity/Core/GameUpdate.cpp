@@ -616,28 +616,9 @@ void Game::update(float dt) {
                 _player.cursorHoveredBodyPart = "";
             }
 
-            // Calculate cursorSpawnTransform exactly like the original Tool/preview logic
-            glm::vec3 spawnPos;
-            if (_placement.mode == BrushPlacementMode::CursorSnap) {
-                if (hit.obj) {
-                    spawnPos = hit.point + hit.normal * getBrushCreateSurfaceOffset(hit.normal);
-                } else {
-                    spawnPos = _camera.pos + _camera.front * 2.0f;
-                }
-            } else if (_placement.mode == BrushPlacementMode::InFront) {
-                spawnPos = _camera.pos + _camera.front * 2.0f;
-            } else {
-                spawnPos = _placement.anchorPos + _placement.anchorRight * _placement.manualOffset.x + _placement.anchorUp * _placement.manualOffset.y + _placement.anchorForward * _placement.manualOffset.z;
-            }
-
-            // Apply optional grid-snap
-            if (_brush.gridSnap && _brush.gridSize > 1e-6f) {
-                spawnPos.x = std::round(spawnPos.x / _brush.gridSize) * _brush.gridSize;
-                spawnPos.y = std::round(spawnPos.y / _brush.gridSize) * _brush.gridSize;
-                spawnPos.z = std::round(spawnPos.z / _brush.gridSize) * _brush.gridSize;
-            }
-
-            _player.cursorSpawnTransform = buildBrushCreateTransform(spawnPos);
+            // Law System authors are now responsible for reading `cursorHitPos`/`cameraPos`
+            // and mapping them to `cursorSpawnPos`, `cursorSpawnRot`, and `cursorSpawnScale`
+            // based on dynamic `placementMode` strings!
         }
     }
 

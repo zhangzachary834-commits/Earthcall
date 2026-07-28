@@ -56,6 +56,7 @@ void PhysicsLawBridge::buildProperties() {
 }
 
 void PhysicsLawBridge::syncRegister(LawManager& laws) {
+    if (!Physics::getLegacyEngineEnabled()) return;
     for (const auto& physicsLaw : Physics::getLaws()) {
         bool bridged = false;
         for (const auto& law : laws.getAll()) {

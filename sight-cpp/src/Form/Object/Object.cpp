@@ -111,6 +111,27 @@ void Object::setElements(int e) {
     elements = e;
 }
 
+// ---------------------------------------------------------------------------
+// Elements: composition as membership. A law that creates beings and adds them
+// to another being is doing what the creation tools do with their hands — and
+// because the container is a Formation, the relations among the elements are
+// held with them rather than beside them.
+// ---------------------------------------------------------------------------
+void Object::addElement(Singular* s) {
+    if (!s || s == this) return;   // nothing composes itself
+    _elementFormation.addMember(s);
+}
+
+bool Object::removeElement(Singular* s) {
+    if (!s || !_elementFormation.hasMember(s)) return false;
+    _elementFormation.removeMember(s);
+    return true;
+}
+
+bool Object::hasElement(const Singular* s) const {
+    return s && _elementFormation.hasMember(s);
+}
+
 int Object::getRelationships() {
     return relationships;
 }

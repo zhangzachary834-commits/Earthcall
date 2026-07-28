@@ -159,9 +159,91 @@ int main() {
     printf("scene 5 (lines) drew %d non-black pixels\n", linePixels);
     bool linesOK = linePixels > 0;
 
-    bool ok = depthOK && texOK && specOK && overlayOK && linesOK;
-    printf(ok ? "OK: mesh + depth + albedo + specular + overlay + lines through WebGpuRenderer\n"
-              : "FAIL: depth=%d tex=%d spec=%d overlay=%d lines=%d\n",
-              depthOK, texOK, specOK, overlayOK, linesOK);
+    // --- Scene 6: drawSolid (unlit world-space triangles) -----------------------
+    // Same quad as the mesh scenes, but flat-shaded: the readback must be the
+    // uniform colour exactly, with no lighting term applied.
+    {
+        std::vector<glm::vec3> tris;
+        for (const auto& tv : quadAt(0.0f).tris) tris.push_back(tv.pos);
+        r.setModel(glm::mat4(1.0f));
+        r.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        r.drawSolid(tris, glm::vec4(0.0f, 0.0f, 1.0f, 1.0f), Blend::Opaque, /*depthWrite=*/true);
+        r.endFrame();
+    }
+    unsigned char p6[4]; readCenter(p6);
+    printf("scene 6 (solid) centre = (%d,%d,%d,%d)\n", p6[0],p6[1],p6[2],p6[3]);
+    bool solidOK = p6[2] > 250 && p6[0] < 5 && p6[1] < 5; // pure blue, unlit
+
+    // --- Scene 7: 2D triangles in screen space ----------------------------------
+    // begin2D puts (0,0) at the top-left and (W,H) bottom-right, so a rect covering
+    // the whole framebuffer must fill it regardless of the 3D camera.
+    {
+        r.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        r.begin2D(W, H);
+        r.drawTris2D(draw::rectTris(glm::vec4(0.0f, 0.0f, float(W), float(H))),
+                     glm::vec4(1.0f, 0.0f, 1.0f, 1.0f));
+        r.end2D();
+        r.endFrame();
+    }
+    unsigned char p7[4]; readCenter(p7);
+    printf("scene 7 (2D tris) centre = (%d,%d,%d,%d)\n", p7[0],p7[1],p7[2],p7[3]);
+    bool tris2DOK = p7[0] > 250 && p7[2] > 250 && p7[1] < 5; // magenta fills the frame
+
+    // --- Scene 8: 2D lines ------------------------------------------------------
+    {
+        r.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        r.begin2D(W, H);
+        r.drawLines2D(draw::rectOutline(glm::vec4(1.0f, 1.0f, float(W) - 1, float(H) - 1)),
+                      glm::vec4(0.0f, 1.0f, 1.0f, 1.0f), 1.0f);
+        r.end2D();
+        r.endFrame();
+    }
+    int line2DPixels = countNonBlack();
+    printf("scene 8 (2D lines) drew %d non-black pixels\n", line2DPixels);
+    bool lines2DOK = line2DPixels > 0;
+
+    // --- Scene 9: drawImage2D (the brush-canvas blit) ---------------------------
+    // A 2x2 all-red RGBA8 image stretched over the frame: the centre must read red,
+    // which proves upload + sampler + UV orientation + the tint multiply.
+    {
+        std::vector<uint8_t> px(2 * 2 * 4);
+        for (int i = 0; i < 4; ++i) {
+            px[i*4+0] = 255; px[i*4+1] = 0; px[i*4+2] = 0; px[i*4+3] = 255;
+        }
+        r.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        r.begin2D(W, H);
+        r.drawImage2D(px.data(), 2, 2, glm::vec4(0.0f, 0.0f, float(W), float(H)),
+                      glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+        r.end2D();
+        r.endFrame();
+    }
+    unsigned char p9[4]; readCenter(p9);
+    printf("scene 9 (image2D) centre = (%d,%d,%d,%d)\n", p9[0],p9[1],p9[2],p9[3]);
+    bool imageOK = p9[0] > 250 && p9[1] < 5 && p9[2] < 5;
+
+    // --- Scene 10: setWireframe -------------------------------------------------
+    // The same solid quad that fills the centre in scene 6 must NOT fill it as a
+    // wireframe — only its edges are drawn, and the centre stays background.
+    {
+        r.setWireframe(true);
+        RenderMaterial wm; wm.baseColor = glm::vec3(1.0f, 1.0f, 1.0f);
+        r.setModel(glm::mat4(1.0f));
+        r.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        r.drawMesh(quadAt(0.0f), wm);
+        r.endFrame();
+        r.setWireframe(false);
+    }
+    unsigned char p10[4]; readCenter(p10);
+    int wirePixels = countNonBlack();
+    printf("scene 10 (wireframe) centre = (%d,%d,%d,%d), %d non-black px\n",
+           p10[0],p10[1],p10[2],p10[3], wirePixels);
+    bool wireOK = wirePixels > 0 && p10[0] < 20; // edges drawn, centre hollow
+
+    bool ok = depthOK && texOK && specOK && overlayOK && linesOK
+              && solidOK && tris2DOK && lines2DOK && imageOK && wireOK;
+    printf(ok ? "OK: mesh+depth+albedo+specular+overlay+lines+solid+2D+image+wireframe\n"
+              : "FAIL: depth=%d tex=%d spec=%d overlay=%d lines=%d solid=%d tris2D=%d lines2D=%d image=%d wire=%d\n",
+              depthOK, texOK, specOK, overlayOK, linesOK,
+              solidOK, tris2DOK, lines2DOK, imageOK, wireOK);
     return ok ? 0 : 1;
 }

@@ -110,8 +110,38 @@ public:
     int getMassQuantity();
     void setMassQuantity(int m);
 
+    // The legacy descriptive count (vestigial: set by hand, read by nobody).
+    // The TRUTH of what this object is made of is the element Formation below.
     int getElements();
     void setElements(int e);
+
+    // ------------------------------------------------------------------
+    // Elements — the beings this object is composed of. "Recursive Object
+    // Creation" above, made real: any Singular may be an element of an
+    // Object, so a law can build a composite out of beings it created
+    // (ActionNode::Create + ActionNode::AddElement) without the engine
+    // knowing what it is building. Membership is a FORMATION, not a
+    // vector<Object*>: elements are beings held in relation, so the
+    // structure among them (Formation::relations) rides along, and
+    // Formation's own identity makes the composition addressable.
+    //
+    // Ownership: the formation holds NON-OWNING pointers, exactly like every
+    // other Formation. A newborn created by a law is owned by the World; its
+    // element membership is a second, relational fact about it.
+    // ------------------------------------------------------------------
+    Formation& elementFormation() { return _elementFormation; }
+    const Formation& elementFormation() const { return _elementFormation; }
+    void addElement(Singular* s);
+    bool removeElement(Singular* s);
+    bool hasElement(const Singular* s) const;
+    int elementCount() const {
+        return static_cast<int>(_elementFormation.getMembers().size());
+    }
+
+    // Transient load state: element identifiers read from a save, waiting for
+    // the rest of the world to exist before they can be re-linked into the
+    // element Formation (World's from_json does the pass, then clears this).
+    std::vector<std::string> pendingElementIds;
 
     int getRelationships();
     void setRelationships(int r);
@@ -137,6 +167,10 @@ public:
 
     std::string getObjectType() const;
     void setObjectType(int ot);
+    // A law naming what it made needs a WORD, not a number. Physics law
+    // targeting already filters on this string (LawTarget::limitByObjectType),
+    // so an authored kind is selectable by the engine's own laws.
+    void setObjectType(const std::string& ot) { objectType = ot; }
 
     // Position in 2D/3D space. The anchor point. Replace with glm::vec3 if using GLM for better math operations.
     int getX(); // x coordinate
@@ -630,6 +664,9 @@ private:
                                       glm::vec3& outLocalNormal) const;
     glm::mat4 composeTransformWithRotation(const glm::mat4& sourceTransform,
                                            const glm::vec3& rotationDegrees) const;
+
+    // What this object is composed of (see elementFormation()).
+    Formation _elementFormation{Form::ShapeType::Cube, glm::vec3(1.0f)};
 
     // Hover state tracking
     mutable bool _isHovered = false;

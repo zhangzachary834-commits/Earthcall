@@ -123,6 +123,14 @@ public:
     virtual void drawLines(const std::vector<std::pair<glm::vec3, glm::vec3>>& segments,
                            const glm::vec4& color, float width, Blend blend) = 0;
 
+    // WebGPU's clip space has z in [0,1]; OpenGL's is [-1,1]. A projection matrix
+    // built for one is wrong for the other — geometry silently clips or z-fights.
+    // The backend declares which convention it needs so callers can pick
+    // glm::frustumZO vs glm::frustumNO, rather than the whole program having to
+    // agree on a GLM_FORCE_DEPTH_ZERO_TO_ONE macro (which cannot vary per backend
+    // inside one binary anyway).
+    virtual bool zeroToOneDepth() const { return false; }
+
     // Draw subsequent meshes as edges instead of filled triangles. This wraps an
     // arbitrary draw — the BrushCreate hologram sets it, then calls the ordinary
     // Object draw path — which is why it is render STATE rather than a draw verb.

@@ -81,3 +81,43 @@ std::shared_ptr<Law> synthesizeByDemonstration(
 }
 
 } // namespace LawSynthesis
+
+std::shared_ptr<Law> fromAutomationClip(const std::string& name, const Automation::Clip& clip) {
+    auto law = std::make_shared<Law>(name);
+    law->setActivation(Law::Activation::WhileTrue);
+    law->setScope(Law::Scope::Everyone);
+
+    std::vector<ActionNode> drives;
+    for (const auto& track : clip.tracks) {
+        std::string propertyName;
+        switch (track.channel) {
+            case Automation::Channel::PosX: propertyName = "position.x"; break;
+            case Automation::Channel::PosY: propertyName = "position.y"; break;
+            case Automation::Channel::PosZ: propertyName = "position.z"; break;
+            case Automation::Channel::RotX: propertyName = "rotation.x"; break;
+            case Automation::Channel::RotY: propertyName = "rotation.y"; break;
+            case Automation::Channel::RotZ: propertyName = "rotation.z"; break;
+            case Automation::Channel::SclX: propertyName = "scale.x"; break;
+            case Automation::Channel::SclY: propertyName = "scale.y"; break;
+            case Automation::Channel::SclZ: propertyName = "scale.z"; break;
+        }
+
+        // CurveModel::sinusoid phase is in radians. Track phase is in turns [0, 1).
+        double phaseRadians = track.phase * 6.28318530717958647692;
+        CurveModel curve = CurveModel::sinusoid(track.amplitude, track.frequency, phaseRadians, track.bias);
+
+        drives.push_back(ActionNode::drive(propertyName, curve, "time.sinceApplied"));
+    }
+
+    if (drives.empty()) {
+        law->setActionModel(ActionNode::sequence({}));
+    } else if (drives.size() == 1) {
+        law->setActionModel(drives.front());
+    } else {
+        law->setActionModel(ActionNode::parallel(std::move(drives)));
+    }
+
+    return law;
+}
+
+

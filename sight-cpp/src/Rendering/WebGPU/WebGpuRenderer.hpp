@@ -15,6 +15,9 @@
 
 #include <webgpu/webgpu.h>
 #include <glm/glm.hpp>
+#include <functional>
+#include <map>
+#include <tuple>
 #include <vector>
 
 namespace wgpu { struct Device; }
@@ -34,6 +37,24 @@ public:
     // view (used by tests and any render-to-texture). endFrame ends + submits it.
     void beginFrameOffscreen(WGPUTextureView target, uint32_t width, uint32_t height,
                              const glm::vec4& clearColor);
+
+    // Attach the window surface. Once set, the Renderer-interface beginFrame path
+    // acquires a texture from it each frame instead of doing nothing. Passing the
+    // instance too because resizing has to reconfigure the surface.
+    void attachSurface(WGPUSurface surface, WGPUInstance instance) {
+        _surface = surface; _instance = instance;
+    }
+
+    // Draw on top of the frame just finished, WITHOUT clearing it — this is how
+    // Dear ImGui gets composited. Must be called after endFrame() and before
+    // present(): endFrame closes the scene pass, but the acquired surface texture
+    // is deliberately still held so a second pass can load-and-draw over it.
+    // `record` receives the overlay pass encoder.
+    void overlayPass(const std::function<void(WGPURenderPassEncoder)>& record);
+
+    // Present the acquired surface texture and release it. Ends the live frame.
+    // No-op for offscreen frames (there is no surface to present).
+    void present();
 
     // Renderer interface frame lifecycle. Live (on-screen) begin acquires the
     // window surface — TODO in the CAMetalLayer phase; a no-op until a surface is
@@ -56,9 +77,7 @@ public:
     void drawOverlay(const geom::TessMesh& mesh, const glm::vec4& color,
                      float scale, bool additive) override;
 
-    // Flat-colour primitives. STUBS until Milestone 5's 2D pipeline lands — they
-    // warn once rather than drawing, so the webgpu-* targets keep building while
-    // the OpenGL call sites migrate onto the boundary ahead of them.
+    // Flat-colour primitives.
     void drawSolid(const std::vector<glm::vec3>& tris, const glm::vec4& color,
                    Blend blend, bool depthWrite) override;
     void begin2D(uint32_t width, uint32_t height) override;
@@ -68,6 +87,8 @@ public:
                      const glm::vec4& color, float width) override;
     void drawImage2D(const uint8_t* rgba, uint32_t width, uint32_t height,
                      const glm::vec4& rect, const glm::vec4& tint) override;
+    void setWireframe(bool on) override { _wireframe = on; }
+    bool zeroToOneDepth() const override { return true; }
 
     // This backend uploads RenderMaterial::albedoPixels per draw instead of
     // holding persistent textures, so it keeps no handles: upload returns 0 and
@@ -97,11 +118,42 @@ private:
     WGPURenderPipeline _meshPipeline = nullptr;
     WGPUBindGroupLayout _bgl = nullptr;
 
-    // Flat-colour pipelines for the selection overlay/wireframe (unlit, blended).
+    // ---- Flat-colour pipelines (unlit: overlays, gizmos, wireframe, all 2D) ----
+    // OpenGL could change blend and depth state between draws; WebGPU bakes them
+    // into the pipeline, so every (topology, blend, depth) combination the app uses
+    // is a distinct object. They are built on first use and cached rather than
+    // enumerated up front — the full cross product is 18, of which the app uses ~7.
+    enum class DepthMode {
+        TestWrite,  // ordinary solid geometry
+        TestOnly,   // translucent shells: read depth, never occlude each other
+        None,       // screen space: no depth interaction at all
+    };
+    struct FlatKey {
+        WGPUPrimitiveTopology topo;
+        Blend blend;
+        DepthMode depth;
+        bool operator<(const FlatKey& o) const {
+            return std::tie(topo, blend, depth) < std::tie(o.topo, o.blend, o.depth);
+        }
+    };
     WGPUBindGroupLayout _flatBgl = nullptr;
-    WGPURenderPipeline _overlayAddPipe   = nullptr; // additive triangles, depth-write off
-    WGPURenderPipeline _overlayAlphaPipe = nullptr; // alpha triangles, depth-write off
-    WGPURenderPipeline _linesPipe        = nullptr; // alpha line-list (WebGPU lines are 1px)
+    WGPUShaderModule    _flatShader = nullptr;  // kept alive for lazy pipeline builds
+    WGPUPipelineLayout  _flatLayout = nullptr;
+    std::map<FlatKey, WGPURenderPipeline> _flatPipes;
+    WGPURenderPipeline flatPipeline(WGPUPrimitiveTopology topo, Blend blend, DepthMode depth);
+
+    // Textured screen-space quad (the brush canvas blit).
+    WGPUBindGroupLayout _imageBgl    = nullptr;
+    WGPUPipelineLayout  _imageLayout = nullptr;
+    WGPUShaderModule    _imageShader = nullptr;
+    WGPURenderPipeline  _imagePipe   = nullptr;
+
+    // Screen-space state, established by begin2D.
+    bool      _in2D = false;
+    glm::mat4 _ortho2D{1.0f};
+
+    // setWireframe: meshes draw as edges instead of filled triangles.
+    bool _wireframe = false;
 
     // Depth buffer, recreated when the target size changes.
     WGPUTexture     _depthTex  = nullptr;
@@ -114,6 +166,14 @@ private:
     WGPUSampler     _sampler   = nullptr;
     WGPUTexture     _whiteTex  = nullptr;
     WGPUTextureView _whiteView = nullptr;
+
+    // Window surface, when running live (null for offscreen/tests).
+    WGPUSurface  _surface  = nullptr;
+    WGPUInstance _instance = nullptr;
+    // The surface texture acquired for THIS frame. Held from beginFrame until
+    // present() so an overlay pass can run between them.
+    WGPUTexture     _surfaceTex  = nullptr;
+    WGPUTextureView _surfaceView = nullptr;
 
     // Current frame state.
     WGPUCommandEncoder   _encoder = nullptr;

@@ -2,6 +2,7 @@
 
 #include "Law.hpp"
 #include "ChangeRecorder.hpp"
+#include "Form/Object/Automation/Automation.hpp"
 
 #include <memory>
 #include <string>
@@ -35,5 +36,9 @@ std::shared_ptr<Law> synthesizeByDemonstration(
     const std::vector<std::string>& watchPaths,
     int steps, float dt,
     const std::vector<Singular*>& authors);
+
+// Translate an Automation Clip into a Law with Drive actions.
+// Used for migrating legacy animation clips into the native Law system.
+std::shared_ptr<Law> fromAutomationClip(const std::string& name, const Automation::Clip& clip);
 
 } // namespace LawSynthesis

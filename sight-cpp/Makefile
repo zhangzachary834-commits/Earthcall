@@ -137,7 +137,8 @@ webgpu-mesh:
 # setModel/drawMesh/endFrame) rendering a lit TessMesh offscreen, verified by readback.
 webgpu-renderer:
 	$(CXX) -std=c++17 -I./src -I./src/Form $(WGPU_INC) -I/opt/homebrew/include \
-	  src/Rendering/WebGPU/WebGpuRenderer.cpp src/Rendering/WebGPU/smoke_renderer.cpp \
+	  src/Rendering/WebGPU/WebGpuRenderer.cpp src/Rendering/DrawAdapters.cpp \
+	  src/Rendering/WebGPU/smoke_renderer.cpp \
 	  $(WGPU_LIB) $(WGPU_FRAMEWORKS) -o webgpu_renderer
 	./webgpu_renderer
 
@@ -148,7 +149,8 @@ webgpu-renderer:
 webgpu-window:
 	$(CXX) -std=c++17 -I./src -I./src/Form $(WGPU_INC) -I/opt/homebrew/include \
 	  -I/opt/homebrew/Cellar/glfw/3.4/include \
-	  src/Rendering/WebGPU/WebGpuRenderer.cpp src/Rendering/WebGPU/smoke_window.mm \
+	  src/Rendering/WebGPU/WebGpuRenderer.cpp src/Rendering/DrawAdapters.cpp \
+	  src/Rendering/WebGPU/smoke_window.mm \
 	  $(WGPU_LIB) $(WGPU_FRAMEWORKS) -L/opt/homebrew/lib -lglfw -o webgpu_window
 	@echo "Built ./webgpu_window — run it on your Mac to see the window."
 
@@ -217,6 +219,9 @@ primitive_render_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/primitive_render_test.
 action_spawn_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/action_spawn_test.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
+law_creation_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/law_creation_test.o
+	$(CXX) $^ $(LDFLAGS) -o $@
+
 test-property: property_bridge_test
 	./property_bridge_test
 
@@ -259,6 +264,9 @@ test-glucompat: glu_compat_test
 test-zone: zone_being_test
 	./zone_being_test
 
+test-creation: law_creation_test
+	./law_creation_test
+
 test-material: material_being_test
 	./material_being_test
 
@@ -271,7 +279,7 @@ test-primitive-render: primitive_render_test
 test-action-spawn: action_spawn_test
 	./action_spawn_test
 
-test: test-property test-law test-loop test-recorder test-concept test-graph test-meta test-math test-continuous test-timeflow test-persist test-geomcache test-glucompat test-zone test-material test-material-render test-primitive-render test-action-spawn
+test: test-property test-law test-creation test-loop test-recorder test-concept test-graph test-meta test-math test-continuous test-timeflow test-persist test-geomcache test-glucompat test-zone test-material test-material-render test-primitive-render test-action-spawn
 
 # Pull in auto-generated header dependencies (.d files next to each .o)
 -include $(OBJECTS:.o=.d)

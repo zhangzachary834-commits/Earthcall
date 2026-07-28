@@ -26,9 +26,65 @@ const char* ActionNode::kindName(Kind k) {
         case Kind::Map: return "Map";
         case Kind::Flow: return "Flow";
         case Kind::Publish: return "Publish";
+        case Kind::Create: return "Create";
+        case Kind::AddProperty: return "AddProperty";
+        case Kind::AddElement: return "AddElement";
+        case Kind::RemoveProperty: return "RemoveProperty";
+        case Kind::RemoveElement: return "RemoveElement";
+        case Kind::Destroy: return "Destroy";
     }
     return "Unknown";
 }
+
+// ---------------------------------------------------------------------------
+// Participant tokens — the same vocabulary Publish speaks, resolved to a live
+// being: "" = the law's subject, "@event.subject" / "@event.object" = the
+// triggering event's participants, anything else = a being id looked up in the
+// Universe. An unresolvable token yields nothing, and every node that takes one
+// does nothing rather than guessing whom the author meant.
+// ---------------------------------------------------------------------------
+namespace {
+
+Singular* resolveBeingToken(const std::string& token, Singular& subject) {
+    if (token.empty()) return &subject;
+    if (token == "@event.subject") {
+        return Universe::instance().hasApplicationEvent()
+                   ? Universe::instance().applicationEventSubject() : nullptr;
+    }
+    if (token == "@event.object") {
+        return Universe::instance().hasApplicationEvent()
+                   ? Universe::instance().applicationEventObject() : nullptr;
+    }
+    const std::string id = (token[0] == '@') ? token.substr(1) : token;
+    for (Singular* being : Universe::instance().beings()) {
+        if (being && being->getIdentifier() == id) return being;
+    }
+    return nullptr;
+}
+
+// The World a creation law writes into: the law's target when it IS a world
+// (the container is the womb), otherwise the first World in the Universe.
+World* resolveWorld(Singular& target) {
+    if (auto* asWorld = dynamic_cast<World*>(&target)) return asWorld;
+    for (Singular* being : Universe::instance().beings()) {
+        if (auto* w = dynamic_cast<World*>(being)) return w;
+    }
+    return nullptr;
+}
+
+// The empty value of whatever a first-mover slot currently holds. Used by
+// RemoveProperty, which cannot erase a C++ member and so clears it instead.
+PropertyValue emptyLike(const PropertyValue& current) {
+    if (std::holds_alternative<bool>(current)) return PropertyValue(false);
+    if (std::holds_alternative<int>(current)) return PropertyValue(0);
+    if (std::holds_alternative<float>(current)) return PropertyValue(0.0f);
+    if (std::holds_alternative<double>(current)) return PropertyValue(0.0);
+    if (std::holds_alternative<std::string>(current)) return PropertyValue(std::string());
+    if (std::holds_alternative<glm::vec3>(current)) return PropertyValue(glm::vec3(0.0f));
+    return PropertyValue{};   // monostate: the nearest thing to nullptr we have
+}
+
+} // namespace
 
 nlohmann::json ActionNode::toJson() const {
     nlohmann::json j{{"kind", static_cast<int>(kind)}};
@@ -78,6 +134,35 @@ nlohmann::json ActionNode::toJson() const {
             if (!publishSubject.empty()) j["publishSubject"] = publishSubject;
             if (!publishObject.empty()) j["publishObject"] = publishObject;
             break;
+        case Kind::Create: {
+            j["shapeKind"] = createShapeKind;
+            if (!createType.empty()) j["createType"] = createType;
+            if (!spawnParentPath.empty()) j["spawnParentPath"] = spawnParentPath.toString();
+            if (!spawnPlacementPath.empty()) j["spawnPlacementPath"] = spawnPlacementPath.toString();
+            if (!children.empty()) {
+                nlohmann::json kids = nlohmann::json::array();
+                for (const auto& c : children) kids.push_back(c.toJson());
+                j["children"] = kids;
+            }
+            break;
+        }
+        case Kind::AddProperty:
+            if (!path.empty()) j["path"] = path.toString();
+            j["propertyName"] = propertyName;
+            j["operand"] = propertyValueToJson(operand);
+            break;
+        case Kind::RemoveProperty:
+            if (!path.empty()) j["path"] = path.toString();
+            j["propertyName"] = propertyName;
+            break;
+        case Kind::AddElement:
+        case Kind::RemoveElement:
+            j["containerToken"] = containerToken;
+            j["elementToken"] = elementToken;
+            break;
+        case Kind::Destroy:
+            j["elementToken"] = elementToken;
+            break;
     }
     return j;
 }
@@ -96,6 +181,11 @@ ActionNode ActionNode::fromJson(const nlohmann::json& j) {
     n.eventType = j.value("eventType", std::string());
     n.publishSubject = j.value("publishSubject", std::string());
     n.publishObject = j.value("publishObject", std::string());
+    n.createShapeKind = j.value("shapeKind", 0);
+    n.createType = j.value("createType", std::string());
+    n.propertyName = j.value("propertyName", std::string());
+    n.containerToken = j.value("containerToken", std::string());
+    n.elementToken = j.value("elementToken", std::string());
     if (j.contains("function")) n.mapFunction = OntoMath::Piecewise::fromJson(j["function"]);
     if (j.contains("bindings")) n.bindings = mathBindingsFromJson(j["bindings"]);
     if (j.contains("children")) {
@@ -368,6 +458,155 @@ ECA::ActionExecutor ActionNode::compile() const {
                 lawSetValue(subject, target, next);
             };
         }
+
+        // ------------------------------------------------------------------
+        // Creation from nothing. Spawn needs a concept — a thing the world was
+        // already shown. Create needs only a shape kind: a law may author a
+        // being nobody captured for it.
+        // ------------------------------------------------------------------
+        case Kind::Create: {
+            const int shapeKind = createShapeKind;
+            const std::string type = createType;
+            const PropertyPath parentPath = spawnParentPath;
+            const PropertyPath placementPath = spawnPlacementPath;
+            std::vector<ECA::ActionExecutor> compiledChildren;
+            compiledChildren.reserve(children.size());
+            for (const auto& c : children) compiledChildren.push_back(c.compile());
+
+            return [shapeKind, type, parentPath, placementPath, compiledChildren](
+                       const ECA::Event& event, Singular& target) {
+                World* world = resolveWorld(target);
+                if (!world) return;   // nowhere to be born: nothing happens
+
+                auto newborn = std::make_unique<Object>();
+                newborn->setShape(static_cast<Object::ShapeKind>(shapeKind), Object::ShapeParams{});
+                if (!type.empty()) newborn->setObjectType(type);
+
+                // Where. An authored placement path wins; otherwise the
+                // newborn appears where its law's subject stands.
+                glm::vec3 position(0.0f);
+                if (!placementPath.empty()) {
+                    PropertyValue pv;
+                    if (lawGetValue(target, placementPath, pv)) {
+                        if (std::holds_alternative<glm::vec3>(pv)) {
+                            position = std::get<glm::vec3>(pv);
+                        } else if (std::holds_alternative<glm::mat4>(pv)) {
+                            position = glm::vec3(std::get<glm::mat4>(pv)[3]);
+                        }
+                    }
+                } else if (auto* asObject = dynamic_cast<Object*>(&target)) {
+                    position = asObject->getPosition();
+                }
+                newborn->setTransform(glm::translate(glm::mat4(1.0f), position));
+                newborn->updateCollisionZone(newborn->getTransform());
+
+                // The newborn is the SUBJECT of this node's children, so the
+                // whole action vocabulary shapes it: Set its color, Map its
+                // radius from the subject's, AddProperty, AddElement.
+                Object* born = newborn.get();
+                for (const auto& run : compiledChildren) {
+                    if (run) run(event, *born);
+                }
+
+                // An authored parent takes it as an element; otherwise the
+                // World does. Either way something owns it.
+                Object* parent = nullptr;
+                if (!parentPath.empty()) {
+                    PropertyValue pv;
+                    if (lawGetValue(target, parentPath, pv) &&
+                        std::holds_alternative<std::string>(pv)) {
+                        const std::string parentId = std::get<std::string>(pv);
+                        for (const auto& obj : world->getOwnedObjects()) {
+                            if (obj && obj->getIdentifier() == parentId) {
+                                parent = obj.get();
+                                break;
+                            }
+                        }
+                    }
+                }
+                world->addObject(std::move(newborn));
+                if (parent) parent->addElement(born);
+
+                Core::EventBus::instance().publish(
+                    ECA::Event{"object-created", born, &target, std::time(nullptr)});
+            };
+        }
+
+        // ------------------------------------------------------------------
+        // Vocabulary a Person adds to a being. The first-mover registry is
+        // what the engine granted; this is what a law grants — and it is
+        // refused where it would SHADOW a registered name, because a silent
+        // shadow means a path that reads one value and writes another.
+        // ------------------------------------------------------------------
+        case Kind::AddProperty: {
+            const PropertyPath owner = path;
+            const std::string name = propertyName;
+            const PropertyValue initial = operand;
+            return [owner, name, initial](const ECA::Event&, Singular& subject) {
+                if (name.empty()) return;
+                PropertyPath remainder;
+                Singular* being = resolveLawRoot(subject, owner, remainder);
+                if (!being) return;
+                if (being->findProperty(name)) return;   // never shadow a first mover
+                being->setDynamicProperty(name, initial);
+            };
+        }
+
+        case Kind::RemoveProperty: {
+            const PropertyPath owner = path;
+            const std::string name = propertyName;
+            return [owner, name](const ECA::Event&, Singular& subject) {
+                if (name.empty()) return;
+                PropertyPath remainder;
+                Singular* being = resolveLawRoot(subject, owner, remainder);
+                if (!being) return;
+                // An authored property is erased outright — it was granted by
+                // law and law may take it back.
+                if (being->removeDynamicProperty(name)) return;
+                // A first-mover property is a C++ member: the slot cannot be
+                // erased, so it is CLEARED. Honest, and never silent about it.
+                if (Property* property = being->findProperty(name)) {
+                    const PropertyValue empty = emptyLike(property->value());
+                    property->setValue(empty);
+                }
+            };
+        }
+
+        // ------------------------------------------------------------------
+        // Composition: what a being is MADE OF, authorable.
+        // ------------------------------------------------------------------
+        case Kind::AddElement:
+        case Kind::RemoveElement: {
+            const bool adding = (kind == Kind::AddElement);
+            const std::string container = containerToken;
+            const std::string element = elementToken;
+            return [adding, container, element](const ECA::Event&, Singular& subject) {
+                Singular* containerBeing = resolveBeingToken(container, subject);
+                Singular* elementBeing = resolveBeingToken(element, subject);
+                if (!containerBeing || !elementBeing) return;
+                auto* asObject = dynamic_cast<Object*>(containerBeing);
+                if (!asObject) return;   // only Objects hold elements today
+                if (adding) asObject->addElement(elementBeing);
+                else asObject->removeElement(elementBeing);
+            };
+        }
+
+        // ------------------------------------------------------------------
+        // Unmaking. The delete tool as law-text: "when this is touched by
+        // fire, it is gone." World::removeObject releases every element
+        // membership first, so nothing is left pointing at a dead being.
+        // ------------------------------------------------------------------
+        case Kind::Destroy: {
+            const std::string victimToken = elementToken;
+            return [victimToken](const ECA::Event&, Singular& subject) {
+                Singular* victim = resolveBeingToken(victimToken, subject);
+                auto* asObject = dynamic_cast<Object*>(victim);
+                if (!asObject) return;
+                World* world = resolveWorld(subject);
+                if (!world) return;
+                world->removeObject(asObject);   // publishes object-destroyed
+            };
+        }
     }
     return [](const ECA::Event&, Singular&) {};
 }
@@ -387,6 +626,21 @@ std::string ActionNode::describe() const {
         case Kind::Map: return path.toString() + " := " + mapFunction.print();
         case Kind::Flow: return "d(" + path.toString() + ")/dt = " + mapFunction.print();
         case Kind::Publish: return "publish '" + eventType + "'";
+        case Kind::Create:
+            return "create object" + (createType.empty() ? std::string()
+                                                         : " '" + createType + "'");
+        case Kind::AddProperty: return "grant property '" + propertyName + "'";
+        case Kind::RemoveProperty: return "remove property '" + propertyName + "'";
+        case Kind::AddElement:
+            return "add " + (elementToken.empty() ? std::string("subject") : elementToken) +
+                   " as element of " +
+                   (containerToken.empty() ? std::string("subject") : containerToken);
+        case Kind::RemoveElement:
+            return "remove " + (elementToken.empty() ? std::string("subject") : elementToken) +
+                   " from " +
+                   (containerToken.empty() ? std::string("subject") : containerToken);
+        case Kind::Destroy:
+            return "destroy " + (elementToken.empty() ? std::string("subject") : elementToken);
     }
     return "action";
 }
@@ -441,8 +695,11 @@ bool ActionNode::definedFor(Singular& subject) const {
             return children.empty();
         }
         default:
-            // Set/Add/Scale/Lerp/Spawn carry no authored bounds — they can
-            // always act (an eternal drive unless a bounded function ends it).
+            // Set/Add/Scale/Lerp/Spawn and the creation family carry no
+            // authored bounds — they can always act (an eternal drive unless a
+            // bounded function ends it). Create's children are deliberately
+            // NOT consulted: they are defined against the newborn, who does
+            // not exist yet, never against this subject.
             return true;
     }
 }
@@ -532,5 +789,60 @@ ActionNode ActionNode::spawn(const std::string& conceptId, const std::string& sp
     if (!spawnParentPath.empty()) {
         n.spawnParentPath = PropertyPath::parse(spawnParentPath);
     }
+    return n;
+}
+
+ActionNode ActionNode::create(int shapeKind, const std::string& createType,
+                              std::vector<ActionNode> children) {
+    ActionNode n;
+    n.kind = Kind::Create;
+    n.createShapeKind = shapeKind;
+    n.createType = createType;
+    n.children = std::move(children);
+    return n;
+}
+
+ActionNode ActionNode::addProperty(const std::string& ownerPath,
+                                   const std::string& propertyName,
+                                   PropertyValue initial) {
+    ActionNode n;
+    n.kind = Kind::AddProperty;
+    if (!ownerPath.empty()) n.path = PropertyPath::parse(ownerPath);
+    n.propertyName = propertyName;
+    n.operand = std::move(initial);
+    return n;
+}
+
+ActionNode ActionNode::removeProperty(const std::string& ownerPath,
+                                      const std::string& propertyName) {
+    ActionNode n;
+    n.kind = Kind::RemoveProperty;
+    if (!ownerPath.empty()) n.path = PropertyPath::parse(ownerPath);
+    n.propertyName = propertyName;
+    return n;
+}
+
+ActionNode ActionNode::addElement(const std::string& containerToken,
+                                  const std::string& elementToken) {
+    ActionNode n;
+    n.kind = Kind::AddElement;
+    n.containerToken = containerToken;
+    n.elementToken = elementToken;
+    return n;
+}
+
+ActionNode ActionNode::removeElement(const std::string& containerToken,
+                                     const std::string& elementToken) {
+    ActionNode n;
+    n.kind = Kind::RemoveElement;
+    n.containerToken = containerToken;
+    n.elementToken = elementToken;
+    return n;
+}
+
+ActionNode ActionNode::destroy(const std::string& targetToken) {
+    ActionNode n;
+    n.kind = Kind::Destroy;
+    n.elementToken = targetToken;
     return n;
 }

@@ -19,7 +19,7 @@ struct U {
     model:     mat4x4<f32>,
     normalMat: mat4x4<f32>,
     baseColor: vec4<f32>,
-    lightDir:  vec4<f32>,
+    lightPos:  vec4<f32>,   // world-space POSITION (GL_LIGHT0 is positional)
     params:    vec4<f32>,   // x=ambient, y=diffuse, z=specular, w=shininess
     eyePos:    vec4<f32>,
 };
@@ -50,7 +50,7 @@ fn vs_main(@location(0) pos: vec3<f32>, @location(1) normal: vec3<f32>,
 fn fs_main(in: VSOut, @builtin(front_facing) front: bool) -> @location(0) vec4<f32> {
     var N = normalize(in.worldNormal);
     if (!front) { N = -N; }
-    let L = normalize(u.lightDir.xyz);
+    let L = normalize(u.lightPos.xyz - in.worldPos);
     let V = normalize(u.eyePos.xyz - in.worldPos);
     let H = normalize(L + V);
     let diff = max(dot(N, L), 0.0);
@@ -70,7 +70,7 @@ struct MeshUniforms {
     glm::mat4 model;
     glm::mat4 normalMat;
     glm::vec4 baseColor;
-    glm::vec4 lightDir;
+    glm::vec4 lightPos;
     glm::vec4 params;
     glm::vec4 eyePos;
 };
@@ -86,12 +86,33 @@ struct FU { mvp: mat4x4<f32>, color: vec4<f32> };
 )";
 struct FlatUniforms { glm::mat4 mvp; glm::vec4 color; };
 
-// A flat pipeline: position-only vertex, one uniform, chosen topology + blend,
-// depth tested but NOT written (overlays must not occlude each other).
+// Textured screen-space quad: the brush-canvas blit. Same {mvp, color} uniform as
+// the flat shader (colour is the tint), plus an albedo texture + sampler.
+const char* kImageWGSL = R"(
+struct IU { mvp: mat4x4<f32>, tint: vec4<f32> };
+@group(0) @binding(0) var<uniform> iu: IU;
+@group(0) @binding(1) var img: texture_2d<f32>;
+@group(0) @binding(2) var smp: sampler;
+struct VOut { @builtin(position) clip: vec4<f32>, @location(0) uv: vec2<f32> };
+@vertex fn vs(@location(0) pos: vec3<f32>, @location(1) uv: vec2<f32>) -> VOut {
+    var o: VOut;
+    o.clip = iu.mvp * vec4<f32>(pos, 1.0);
+    o.uv = uv;
+    return o;
+}
+@fragment fn fs(in: VOut) -> @location(0) vec4<f32> {
+    return textureSample(img, smp, in.uv) * iu.tint;
+}
+)";
+struct ImageVertex { glm::vec3 pos; glm::vec2 uv; };
+
+// A flat pipeline: position-only vertex, one uniform, chosen topology + blend +
+// depth behaviour. In GL these last two were mutable state; here they are baked in.
 WGPURenderPipeline makeFlatPipeline(WGPUDevice dev, WGPUPipelineLayout layout,
                                     WGPUShaderModule shader, WGPUPrimitiveTopology topo,
                                     WGPUBlendFactor srcF, WGPUBlendFactor dstF,
-                                    WGPUTextureFormat colorFormat) {
+                                    WGPUTextureFormat colorFormat,
+                                    bool depthWrite, bool depthTest) {
     WGPUVertexAttribute attr = {};
     attr.format = WGPUVertexFormat_Float32x3; attr.offset = 0; attr.shaderLocation = 0;
     WGPUVertexBufferLayout vbl = {};
@@ -106,10 +127,12 @@ WGPURenderPipeline makeFlatPipeline(WGPUDevice dev, WGPUPipelineLayout layout,
     WGPUFragmentState frag = {};
     frag.module = shader; frag.entryPoint = wgpu::Device::str("fs"); frag.targetCount = 1; frag.targets = &ct;
 
+    // The pass always has a depth attachment, so "no depth test" is expressed as
+    // compare=Always + write off rather than by detaching it.
     WGPUDepthStencilState ds = {};
     ds.format = WGPUTextureFormat_Depth24Plus;
-    ds.depthWriteEnabled = WGPUOptionalBool_False; // read depth, don't write
-    ds.depthCompare = WGPUCompareFunction_Less;
+    ds.depthWriteEnabled = depthWrite ? WGPUOptionalBool_True : WGPUOptionalBool_False;
+    ds.depthCompare = depthTest ? WGPUCompareFunction_Less : WGPUCompareFunction_Always;
 
     WGPURenderPipelineDescriptor pd = {};
     pd.layout = layout;
@@ -254,16 +277,95 @@ bool WebGpuRenderer::init(const wgpu::Device& gpu, WGPUTextureFormat colorFormat
     fpld.bindGroupLayoutCount = 1; fpld.bindGroupLayouts = &_flatBgl;
     WGPUPipelineLayout flatLayout = wgpuDeviceCreatePipelineLayout(_device, &fpld);
 
-    _overlayAddPipe = makeFlatPipeline(_device, flatLayout, flatShader,
-        WGPUPrimitiveTopology_TriangleList, WGPUBlendFactor_SrcAlpha, WGPUBlendFactor_One, _colorFormat);
-    _overlayAlphaPipe = makeFlatPipeline(_device, flatLayout, flatShader,
-        WGPUPrimitiveTopology_TriangleList, WGPUBlendFactor_SrcAlpha, WGPUBlendFactor_OneMinusSrcAlpha, _colorFormat);
-    _linesPipe = makeFlatPipeline(_device, flatLayout, flatShader,
-        WGPUPrimitiveTopology_LineList, WGPUBlendFactor_SrcAlpha, WGPUBlendFactor_OneMinusSrcAlpha, _colorFormat);
-    wgpuPipelineLayoutRelease(flatLayout);
-    wgpuShaderModuleRelease(flatShader);
+    // Shader and layout are retained: flatPipeline() builds variants on demand.
+    _flatShader = flatShader;
+    _flatLayout = flatLayout;
 
-    return _sampler && _whiteView && _overlayAddPipe && _overlayAlphaPipe && _linesPipe;
+    // ---- Textured screen-space pipeline (drawImage2D) ----
+    WGPUShaderSourceWGSL isrc = {};
+    isrc.chain.sType = WGPUSType_ShaderSourceWGSL;
+    isrc.code = wgpu::Device::str(kImageWGSL);
+    WGPUShaderModuleDescriptor ismDesc = {};
+    ismDesc.nextInChain = &isrc.chain;
+    _imageShader = wgpuDeviceCreateShaderModule(_device, &ismDesc);
+
+    WGPUBindGroupLayoutEntry ibe[3] = {};
+    ibe[0].binding = 0;
+    ibe[0].visibility = WGPUShaderStage_Vertex | WGPUShaderStage_Fragment;
+    ibe[0].buffer.type = WGPUBufferBindingType_Uniform;
+    ibe[0].buffer.minBindingSize = sizeof(FlatUniforms);
+    ibe[1].binding = 1;
+    ibe[1].visibility = WGPUShaderStage_Fragment;
+    ibe[1].texture.sampleType = WGPUTextureSampleType_Float;
+    ibe[1].texture.viewDimension = WGPUTextureViewDimension_2D;
+    ibe[2].binding = 2;
+    ibe[2].visibility = WGPUShaderStage_Fragment;
+    ibe[2].sampler.type = WGPUSamplerBindingType_Filtering;
+    WGPUBindGroupLayoutDescriptor ibgd = {};
+    ibgd.entryCount = 3; ibgd.entries = ibe;
+    _imageBgl = wgpuDeviceCreateBindGroupLayout(_device, &ibgd);
+    WGPUPipelineLayoutDescriptor ipld = {};
+    ipld.bindGroupLayoutCount = 1; ipld.bindGroupLayouts = &_imageBgl;
+    _imageLayout = wgpuDeviceCreatePipelineLayout(_device, &ipld);
+
+    WGPUVertexAttribute iattrs[2] = {};
+    iattrs[0].format = WGPUVertexFormat_Float32x3; iattrs[0].offset = 0;  iattrs[0].shaderLocation = 0;
+    iattrs[1].format = WGPUVertexFormat_Float32x2; iattrs[1].offset = 12; iattrs[1].shaderLocation = 1;
+    WGPUVertexBufferLayout ivbl = {};
+    ivbl.stepMode = WGPUVertexStepMode_Vertex;
+    ivbl.arrayStride = sizeof(ImageVertex);
+    ivbl.attributeCount = 2; ivbl.attributes = iattrs;
+
+    WGPUBlendState iblend = {};
+    iblend.color.operation = WGPUBlendOperation_Add;
+    iblend.color.srcFactor = WGPUBlendFactor_SrcAlpha;
+    iblend.color.dstFactor = WGPUBlendFactor_OneMinusSrcAlpha;
+    iblend.alpha.operation = WGPUBlendOperation_Add;
+    iblend.alpha.srcFactor = WGPUBlendFactor_One;
+    iblend.alpha.dstFactor = WGPUBlendFactor_One;
+    WGPUColorTargetState ict = {};
+    ict.format = _colorFormat; ict.writeMask = WGPUColorWriteMask_All; ict.blend = &iblend;
+    WGPUFragmentState ifrag = {};
+    ifrag.module = _imageShader; ifrag.entryPoint = wgpu::Device::str("fs");
+    ifrag.targetCount = 1; ifrag.targets = &ict;
+
+    WGPUDepthStencilState ids = {};
+    ids.format = WGPUTextureFormat_Depth24Plus;
+    ids.depthWriteEnabled = WGPUOptionalBool_False;
+    ids.depthCompare = WGPUCompareFunction_Always; // screen space: ignore depth
+    WGPURenderPipelineDescriptor ipd = {};
+    ipd.layout = _imageLayout;
+    ipd.vertex.module = _imageShader; ipd.vertex.entryPoint = wgpu::Device::str("vs");
+    ipd.vertex.bufferCount = 1; ipd.vertex.buffers = &ivbl;
+    ipd.primitive.topology = WGPUPrimitiveTopology_TriangleList;
+    ipd.primitive.cullMode = WGPUCullMode_None;
+    ipd.depthStencil = &ids;
+    ipd.multisample.count = 1; ipd.multisample.mask = 0xFFFFFFFFu;
+    ipd.fragment = &ifrag;
+    _imagePipe = wgpuDeviceCreateRenderPipeline(_device, &ipd);
+
+    return _sampler && _whiteView && _flatShader && _flatLayout && _imagePipe;
+}
+
+// Build-on-first-use so only the combinations the app actually draws exist.
+WGPURenderPipeline WebGpuRenderer::flatPipeline(WGPUPrimitiveTopology topo, Blend blend,
+                                                DepthMode depth) {
+    const FlatKey key{topo, blend, depth};
+    auto it = _flatPipes.find(key);
+    if (it != _flatPipes.end()) return it->second;
+
+    WGPUBlendFactor src = WGPUBlendFactor_SrcAlpha, dst = WGPUBlendFactor_OneMinusSrcAlpha;
+    switch (blend) {
+        case Blend::Opaque:   src = WGPUBlendFactor_One;      dst = WGPUBlendFactor_Zero; break;
+        case Blend::Alpha:    src = WGPUBlendFactor_SrcAlpha; dst = WGPUBlendFactor_OneMinusSrcAlpha; break;
+        case Blend::Additive: src = WGPUBlendFactor_SrcAlpha; dst = WGPUBlendFactor_One; break;
+    }
+    WGPURenderPipeline pipe = makeFlatPipeline(
+        _device, _flatLayout, _flatShader, topo, src, dst, _colorFormat,
+        /*depthWrite=*/depth == DepthMode::TestWrite,
+        /*depthTest =*/depth != DepthMode::None);
+    _flatPipes[key] = pipe;
+    return pipe;
 }
 
 void WebGpuRenderer::shutdown() {
@@ -274,10 +376,15 @@ void WebGpuRenderer::shutdown() {
     if (_whiteView) { wgpuTextureViewRelease(_whiteView); _whiteView = nullptr; }
     if (_whiteTex)  { wgpuTextureRelease(_whiteTex); _whiteTex = nullptr; }
     if (_sampler)   { wgpuSamplerRelease(_sampler); _sampler = nullptr; }
-    if (_overlayAddPipe)   { wgpuRenderPipelineRelease(_overlayAddPipe); _overlayAddPipe = nullptr; }
-    if (_overlayAlphaPipe) { wgpuRenderPipelineRelease(_overlayAlphaPipe); _overlayAlphaPipe = nullptr; }
-    if (_linesPipe)        { wgpuRenderPipelineRelease(_linesPipe); _linesPipe = nullptr; }
-    if (_flatBgl) { wgpuBindGroupLayoutRelease(_flatBgl); _flatBgl = nullptr; }
+    for (auto& kv : _flatPipes) wgpuRenderPipelineRelease(kv.second);
+    _flatPipes.clear();
+    if (_flatLayout)  { wgpuPipelineLayoutRelease(_flatLayout); _flatLayout = nullptr; }
+    if (_flatShader)  { wgpuShaderModuleRelease(_flatShader); _flatShader = nullptr; }
+    if (_flatBgl)     { wgpuBindGroupLayoutRelease(_flatBgl); _flatBgl = nullptr; }
+    if (_imagePipe)   { wgpuRenderPipelineRelease(_imagePipe); _imagePipe = nullptr; }
+    if (_imageLayout) { wgpuPipelineLayoutRelease(_imageLayout); _imageLayout = nullptr; }
+    if (_imageShader) { wgpuShaderModuleRelease(_imageShader); _imageShader = nullptr; }
+    if (_imageBgl)    { wgpuBindGroupLayoutRelease(_imageBgl); _imageBgl = nullptr; }
     if (_meshPipeline) { wgpuRenderPipelineRelease(_meshPipeline); _meshPipeline = nullptr; }
     if (_bgl) { wgpuBindGroupLayoutRelease(_bgl); _bgl = nullptr; }
 }
@@ -297,11 +404,60 @@ void WebGpuRenderer::ensureDepth(uint32_t w, uint32_t h) {
     _depthW = w; _depthH = h;
 }
 
-void WebGpuRenderer::applyBeginFrame(uint32_t /*width*/, uint32_t /*height*/, const glm::vec4& /*clear*/) {
-    // Live/on-screen frames need the window surface texture, configured in the
-    // CAMetalLayer phase. Until then this is a no-op so the interface is complete
-    // and GameRender can call it harmlessly; offscreen rendering uses
-    // beginFrameOffscreen with an explicit target.
+void WebGpuRenderer::applyBeginFrame(uint32_t width, uint32_t height, const glm::vec4& clear) {
+    // Offscreen users call beginFrameOffscreen with an explicit target, so with no
+    // surface attached there is nothing to open — and every draw verb no-ops on a
+    // null pass, so the frame is simply skipped rather than being an error.
+    if (!_surface || width == 0 || height == 0) return;
+
+    WGPUSurfaceTexture st = {};
+    wgpuSurfaceGetCurrentTexture(_surface, &st);
+    if (st.status != WGPUSurfaceGetCurrentTextureStatus_SuccessOptimal &&
+        st.status != WGPUSurfaceGetCurrentTextureStatus_SuccessSuboptimal) {
+        // Lost/outdated (usually a resize that raced this frame). Drop the frame;
+        // the caller reconfigures and the next one succeeds.
+        return;
+    }
+    _surfaceTex  = st.texture;
+    _surfaceView = wgpuTextureCreateView(st.texture, nullptr);
+
+    // Same pass setup as the offscreen path, against the acquired view.
+    beginFrameOffscreen(_surfaceView, width, height, clear);
+}
+
+void WebGpuRenderer::overlayPass(const std::function<void(WGPURenderPassEncoder)>& record) {
+    if (!_surfaceView || !record) return;
+
+    // LoadOp_Load, not Clear: this pass draws ON TOP of the scene. No depth
+    // attachment at all — the overlay is 2D and must never be occluded by world
+    // geometry, and imgui's pipelines are built without a depth-stencil state.
+    WGPUCommandEncoder enc = wgpuDeviceCreateCommandEncoder(_device, nullptr);
+    WGPURenderPassColorAttachment ca = {};
+    ca.view = _surfaceView;
+    ca.depthSlice = WGPU_DEPTH_SLICE_UNDEFINED;
+    ca.loadOp = WGPULoadOp_Load;
+    ca.storeOp = WGPUStoreOp_Store;
+    WGPURenderPassDescriptor rp = {};
+    rp.colorAttachmentCount = 1;
+    rp.colorAttachments = &ca;
+    WGPURenderPassEncoder pass = wgpuCommandEncoderBeginRenderPass(enc, &rp);
+
+    record(pass);
+
+    wgpuRenderPassEncoderEnd(pass);
+    wgpuRenderPassEncoderRelease(pass);
+    WGPUCommandBuffer cmd = wgpuCommandEncoderFinish(enc, nullptr);
+    wgpuQueueSubmit(_queue, 1, &cmd);
+    wgpuCommandBufferRelease(cmd);
+    wgpuCommandEncoderRelease(enc);
+}
+
+void WebGpuRenderer::present() {
+    if (!_surface || !_surfaceView) return;
+    wgpuSurfacePresent(_surface);
+    wgpuTextureViewRelease(_surfaceView);
+    _surfaceView = nullptr;
+    _surfaceTex = nullptr; // owned by the surface; not ours to release
 }
 
 void WebGpuRenderer::beginFrameOffscreen(WGPUTextureView target, uint32_t width, uint32_t height,
@@ -330,6 +486,26 @@ void WebGpuRenderer::beginFrameOffscreen(WGPUTextureView target, uint32_t width,
 
 void WebGpuRenderer::drawMesh(const geom::TessMesh& mesh, const RenderMaterial& mat) {
     if (!_pass || mesh.tris.empty()) return;
+
+    // setWireframe: GL had glPolygonMode to draw the same triangles as edges.
+    // WebGPU has no such state, and reinterpreting a triangle list as a line list
+    // would connect the wrong vertices — so the edges are built explicitly.
+    if (_wireframe) {
+        std::vector<glm::vec3> edges;
+        edges.reserve(mesh.tris.size() * 2);
+        for (size_t i = 0; i + 2 < mesh.tris.size(); i += 3) {
+            const glm::vec3& a = mesh.tris[i].pos;
+            const glm::vec3& b = mesh.tris[i + 1].pos;
+            const glm::vec3& c = mesh.tris[i + 2].pos;
+            edges.push_back(a); edges.push_back(b);
+            edges.push_back(b); edges.push_back(c);
+            edges.push_back(c); edges.push_back(a);
+        }
+        drawFlat(flatPipeline(WGPUPrimitiveTopology_LineList, Blend::Alpha, DepthMode::TestOnly),
+                 edges, _viewProj * _model,
+                 glm::vec4(mat.baseColor, mat.opacity));
+        return;
+    }
     wgpuRenderPassEncoderSetPipeline(_pass, _meshPipeline);
 
     const size_t vbytes = mesh.tris.size() * sizeof(geom::TessVertex);
@@ -344,7 +520,15 @@ void WebGpuRenderer::drawMesh(const geom::TessMesh& mesh, const RenderMaterial& 
     u.model     = _model;
     u.normalMat = glm::transpose(glm::inverse(_model));
     u.baseColor = glm::vec4(mat.baseColor, mat.opacity);
-    u.lightDir  = glm::vec4(glm::normalize(glm::vec3(2.0f, 5.0f, 2.0f)), 0.0f); // matches ShadingSystem offset
+    // The scene's light, as recorded by Renderer::setLight. Previously a hardcoded
+    // DIRECTIONAL vector, which diverged from OpenGL's GL_LIGHT0 — that light is
+    // positional and follows the camera, so lighting drifted apart as you moved.
+    // NOTE: params.x/y still carry the MATERIAL's ambient/diffuse coefficients,
+    // whose defaults (0.2/0.8) happen to equal the light's. Under GL_COLOR_MATERIAL
+    // the light's coefficients are what actually apply, so a material overriding
+    // ambient/diffuse will shade differently here than under OpenGL. Unifying that
+    // is a shading-model decision, not a migration step.
+    u.lightPos  = glm::vec4(lightPos(), 1.0f);
     u.params    = glm::vec4(mat.ambient, mat.diffuse, mat.specular, mat.shininess);
     u.eyePos    = glm::vec4(_eyePos, 1.0f);
 
@@ -433,15 +617,14 @@ void WebGpuRenderer::drawFlat(WGPURenderPipeline pipe, const std::vector<glm::ve
 
 void WebGpuRenderer::drawLines(const std::vector<std::pair<glm::vec3, glm::vec3>>& segments,
                                const glm::vec4& color, float /*width*/,
-                               Blend /*blend*/) {
+                               Blend blend) {
     // WebGPU line primitives are always 1px — the OpenGL multi-pass width/glow does
     // not translate; the wireframe still reads clearly. Each segment is two points.
-    // TODO(M5): `blend` is ignored — _linesPipe is alpha-only, so additive line
-    // draws (the gravity-field arrows) render alpha until a second pipeline exists.
     std::vector<glm::vec3> verts;
     verts.reserve(segments.size() * 2);
     for (const auto& s : segments) { verts.push_back(s.first); verts.push_back(s.second); }
-    drawFlat(_linesPipe, verts, _viewProj * _model, color);
+    drawFlat(flatPipeline(WGPUPrimitiveTopology_LineList, blend, DepthMode::TestOnly),
+             verts, _viewProj * _model, color);
 }
 
 void WebGpuRenderer::drawOverlay(const geom::TessMesh& mesh, const glm::vec4& color,
@@ -450,7 +633,9 @@ void WebGpuRenderer::drawOverlay(const geom::TessMesh& mesh, const glm::vec4& co
     verts.reserve(mesh.tris.size());
     for (const auto& v : mesh.tris) verts.push_back(v.pos);
     glm::mat4 mvp = _viewProj * _model * glm::scale(glm::mat4(1.0f), glm::vec3(scale));
-    drawFlat(additive ? _overlayAddPipe : _overlayAlphaPipe, verts, mvp, color);
+    drawFlat(flatPipeline(WGPUPrimitiveTopology_TriangleList,
+                          additive ? Blend::Additive : Blend::Alpha, DepthMode::TestOnly),
+             verts, mvp, color);
 }
 
 void WebGpuRenderer::endFrame() {
@@ -481,34 +666,117 @@ void WebGpuRenderer::releaseFrameResources() {
 }
 
 // ---------------------------------------------------------------------------
-// Flat-colour primitives — NOT YET IMPLEMENTED (Milestone 5, 2D pipeline).
-//
-// They exist so the OpenGL call sites can migrate onto the boundary ahead of this
-// backend without breaking the webgpu-* targets. Each warns once instead of
-// silently drawing nothing, so a half-finished backend is loud rather than
-// mysterious. Replacing these with a real ortho pipeline is the next step.
+// Flat-colour primitives.
 // ---------------------------------------------------------------------------
 
-namespace {
-void warnOnce(const char* verb) {
-    static std::set<std::string> seen;
-    if (seen.insert(verb).second)
-        std::fprintf(stderr, "[WebGpuRenderer] %s is not implemented yet — nothing drawn.\n", verb);
+void WebGpuRenderer::drawSolid(const std::vector<glm::vec3>& tris, const glm::vec4& color,
+                               Blend blend, bool depthWrite) {
+    if (!_pass || tris.empty()) return;
+    // In 2D scope the model transform is meaningless; otherwise these are world-space
+    // triangles under the current model, exactly like drawMesh.
+    const glm::mat4 mvp = _in2D ? _ortho2D : _viewProj * _model;
+    drawFlat(flatPipeline(WGPUPrimitiveTopology_TriangleList, blend,
+                          depthWrite ? DepthMode::TestWrite : DepthMode::TestOnly),
+             tris, mvp, color);
 }
-} // namespace
 
-void WebGpuRenderer::drawSolid(const std::vector<glm::vec3>&, const glm::vec4&, Blend, bool) {
-    warnOnce("drawSolid");
+void WebGpuRenderer::begin2D(uint32_t width, uint32_t height) {
+    // (0,0) at the TOP-LEFT, matching the boundary contract and glOrtho(0,w,h,0,-1,1).
+    // Built with the [0,1] clip depth WebGPU requires; depth is ignored anyway since
+    // the 2D pipelines compare Always.
+    _in2D = true;
+    _ortho2D = glm::orthoZO(0.0f, static_cast<float>(width),
+                            static_cast<float>(height), 0.0f, -1.0f, 1.0f);
 }
-void WebGpuRenderer::begin2D(uint32_t, uint32_t) { warnOnce("begin2D"); }
-void WebGpuRenderer::end2D() {}
-void WebGpuRenderer::drawTris2D(const std::vector<glm::vec2>&, const glm::vec4&) {
-    warnOnce("drawTris2D");
+
+void WebGpuRenderer::end2D() {
+    _in2D = false;
 }
-void WebGpuRenderer::drawLines2D(const std::vector<glm::vec2>&, const glm::vec4&, float) {
-    warnOnce("drawLines2D");
+
+void WebGpuRenderer::drawTris2D(const std::vector<glm::vec2>& tris, const glm::vec4& color) {
+    if (!_pass || tris.empty()) return;
+    std::vector<glm::vec3> verts;
+    verts.reserve(tris.size());
+    for (const glm::vec2& p : tris) verts.push_back(glm::vec3(p, 0.0f));
+    drawFlat(flatPipeline(WGPUPrimitiveTopology_TriangleList, Blend::Alpha, DepthMode::None),
+             verts, _ortho2D, color);
 }
-void WebGpuRenderer::drawImage2D(const uint8_t*, uint32_t, uint32_t,
-                                 const glm::vec4&, const glm::vec4&) {
-    warnOnce("drawImage2D");
+
+void WebGpuRenderer::drawLines2D(const std::vector<glm::vec2>& segments,
+                                 const glm::vec4& color, float /*width*/) {
+    if (!_pass || segments.empty()) return;
+    // Width is unrepresentable: native WebGPU lines are 1px. Thick 2D strokes would
+    // have to be expanded into quads — deliberately not done here, so that when the
+    // UI looks thin the cause is visible rather than buried in a silent emulation.
+    std::vector<glm::vec3> verts;
+    verts.reserve(segments.size());
+    for (const glm::vec2& p : segments) verts.push_back(glm::vec3(p, 0.0f));
+    drawFlat(flatPipeline(WGPUPrimitiveTopology_LineList, Blend::Alpha, DepthMode::None),
+             verts, _ortho2D, color);
+}
+
+void WebGpuRenderer::drawImage2D(const uint8_t* rgba, uint32_t width, uint32_t height,
+                                 const glm::vec4& rect, const glm::vec4& tint) {
+    if (!_pass || !rgba || width == 0 || height == 0) return;
+
+    // Upload the pixels. Callers regenerate these every frame (the brush canvas),
+    // so this is a per-draw texture, released with the rest of the frame.
+    WGPUTextureDescriptor td = {};
+    td.dimension = WGPUTextureDimension_2D;
+    td.size = { width, height, 1 };
+    td.format = WGPUTextureFormat_RGBA8Unorm;
+    td.mipLevelCount = 1; td.sampleCount = 1;
+    td.usage = WGPUTextureUsage_TextureBinding | WGPUTextureUsage_CopyDst;
+    WGPUTexture tex = wgpuDeviceCreateTexture(_device, &td);
+    WGPUTextureView view = wgpuTextureCreateView(tex, nullptr);
+    _frameTextures.push_back(tex);
+    _frameTextureViews.push_back(view);
+
+    WGPUTexelCopyTextureInfo dst = {};
+    dst.texture = tex; dst.mipLevel = 0; dst.aspect = WGPUTextureAspect_All;
+    WGPUTexelCopyBufferLayout lay = {};
+    lay.bytesPerRow = width * 4; lay.rowsPerImage = height;
+    WGPUExtent3D ext = { width, height, 1 };
+    wgpuQueueWriteTexture(_queue, &dst, rgba, size_t(width) * height * 4, &lay, &ext);
+
+    // Two triangles over `rect`, with v increasing downward to match the
+    // top-left-origin ortho (the GL path relied on glTexCoord doing the same).
+    const ImageVertex quad[6] = {
+        {{rect.x, rect.y, 0.0f}, {0.0f, 0.0f}},
+        {{rect.z, rect.y, 0.0f}, {1.0f, 0.0f}},
+        {{rect.z, rect.w, 0.0f}, {1.0f, 1.0f}},
+        {{rect.x, rect.y, 0.0f}, {0.0f, 0.0f}},
+        {{rect.z, rect.w, 0.0f}, {1.0f, 1.0f}},
+        {{rect.x, rect.w, 0.0f}, {0.0f, 1.0f}},
+    };
+    WGPUBufferDescriptor vbd = {};
+    vbd.usage = WGPUBufferUsage_Vertex | WGPUBufferUsage_CopyDst;
+    vbd.size = sizeof(quad);
+    WGPUBuffer vbuf = wgpuDeviceCreateBuffer(_device, &vbd);
+    wgpuQueueWriteBuffer(_queue, vbuf, 0, quad, sizeof(quad));
+    _frameBuffers.push_back(vbuf);
+
+    FlatUniforms u{};
+    u.mvp = _ortho2D;
+    u.color = tint;
+    WGPUBufferDescriptor ubd = {};
+    ubd.usage = WGPUBufferUsage_Uniform | WGPUBufferUsage_CopyDst;
+    ubd.size = sizeof(u);
+    WGPUBuffer ubuf = wgpuDeviceCreateBuffer(_device, &ubd);
+    wgpuQueueWriteBuffer(_queue, ubuf, 0, &u, sizeof(u));
+    _frameBuffers.push_back(ubuf);
+
+    WGPUBindGroupEntry bge[3] = {};
+    bge[0].binding = 0; bge[0].buffer = ubuf; bge[0].size = sizeof(u);
+    bge[1].binding = 1; bge[1].textureView = view;
+    bge[2].binding = 2; bge[2].sampler = _sampler;
+    WGPUBindGroupDescriptor bgd = {};
+    bgd.layout = _imageBgl; bgd.entryCount = 3; bgd.entries = bge;
+    WGPUBindGroup bg = wgpuDeviceCreateBindGroup(_device, &bgd);
+    _frameBindGroups.push_back(bg);
+
+    wgpuRenderPassEncoderSetPipeline(_pass, _imagePipe);
+    wgpuRenderPassEncoderSetBindGroup(_pass, 0, bg, 0, nullptr);
+    wgpuRenderPassEncoderSetVertexBuffer(_pass, 0, vbuf, 0, sizeof(quad));
+    wgpuRenderPassEncoderDraw(_pass, 6, 1, 0, 0);
 }

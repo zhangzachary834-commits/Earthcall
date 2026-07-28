@@ -1,4 +1,5 @@
 #include "Util/Serialization.hpp"
+#include "Form/Singular/Property/PropertyValueJson.hpp"
 #include <cstring>
 #include <glm/gtc/type_ptr.hpp>
 #include <string>
@@ -206,6 +207,29 @@ void to_json(nlohmann::json& j, const Object& obj){
         j["mass"] = obj.getAttribute("mass");
     }
 
+    // Properties a LAW granted this being (ActionNode::AddProperty). The
+    // registered vocabulary above is what the engine gave and is implied by
+    // the type; this is what a Person added, and it exists only here — a
+    // granted property that vanished on save was never really granted.
+    if (!obj.dynamicProperties().empty()) {
+        nlohmann::json dyn = nlohmann::json::object();
+        for (const auto& entry : obj.dynamicProperties()) {
+            dyn[entry.first] = propertyValueToJson(entry.second);
+        }
+        j["authoredProperties"] = std::move(dyn);
+    }
+
+    // Elements: what this object is composed of, remembered BY IDENTIFIER.
+    // Composition is a relation between beings, not ownership of them — the
+    // World owns every object; the loader re-links these once all are present.
+    if (obj.elementCount() > 0) {
+        nlohmann::json els = nlohmann::json::array();
+        for (const Singular* member : obj.elementFormation().getMembers()) {
+            if (member) els.push_back(member->getIdentifier());
+        }
+        j["elements"] = std::move(els);
+    }
+
     // Per-face textures (composited RGBA8, Base64-encoded)
     if (!obj.faceTextures.empty()) {
         nlohmann::json texArr = nlohmann::json::array();
@@ -290,6 +314,20 @@ void from_json(const nlohmann::json& j, Object& obj){
                 obj.setAttribute("mass", j["mass"].get<std::string>());
             }
         } catch (...) {}
+    }
+
+    // Properties a law granted this being; and the composition it was part of,
+    // held by identifier until World::from_json can re-link it.
+    if (j.contains("authoredProperties") && j["authoredProperties"].is_object()) {
+        for (auto it = j["authoredProperties"].begin();
+             it != j["authoredProperties"].end(); ++it) {
+            obj.setDynamicProperty(it.key(), propertyValueFromJson(it.value()));
+        }
+    }
+    if (j.contains("elements") && j["elements"].is_array()) {
+        for (const auto& id : j["elements"]) {
+            if (id.is_string()) obj.pendingElementIds.push_back(id.get<std::string>());
+        }
     }
     if(j.contains("faceColors")){
         const auto& faces = j["faceColors"];
@@ -592,4 +630,23 @@ void from_json(const nlohmann::json& j, World& world){
         from_json(oj, *obj);
         world.addObject(std::move(obj));
     }
-} 
+
+    // Re-link composition once every object exists. Elements are remembered by
+    // identifier, so this pass is order-independent; an element that is not in
+    // the world is simply not re-linked (composition is a covenant between
+    // beings that are present, never a pointer to something absent).
+    auto& owned = world.getOwnedObjectsMutable();
+    for (auto& holder : owned) {
+        if (!holder || holder->pendingElementIds.empty()) continue;
+        for (const auto& id : holder->pendingElementIds) {
+            for (auto& candidate : owned) {
+                if (candidate && candidate.get() != holder.get() &&
+                    candidate->getIdentifier() == id) {
+                    holder->addElement(candidate.get());
+                    break;
+                }
+            }
+        }
+        holder->pendingElementIds.clear();
+    }
+}

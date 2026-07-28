@@ -326,27 +326,29 @@ void Ourverse::onUpdate(float deltaTime) {
         groundY = gT[3][1] + 0.5f * scaleY; // translation Y + half the total height
     }
 
-    Physics::applyGravity(*cameraPos,
-                          physicsEnabled,
-                          static_cast<Physics::GameMode>(mode),
-                          deltaTime,
-                          groundY);
-    // Disallow flying in Survival
-    if (mode == GameMode::Survival && Physics::getFlying()) {
-        Physics::setFlying(false);
-    }
-    if (physicsEnabled) {
-        // Ensure every owned object has a physics body (zone-level toggle is true by default)
-        for (const auto& upObj : ownedObjects) {
-            if (upObj) {
-                Physics::getBodyFor(upObj.get());
-            }
+    if (Physics::getLegacyEngineEnabled()) {
+        Physics::applyGravity(*cameraPos,
+                              physicsEnabled,
+                              static_cast<Physics::GameMode>(mode),
+                              deltaTime,
+                              groundY);
+        // Disallow flying in Survival
+        if (mode == GameMode::Survival && Physics::getFlying()) {
+            Physics::setFlying(false);
         }
+        if (physicsEnabled) {
+            // Ensure every owned object has a physics body (zone-level toggle is true by default)
+            for (const auto& upObj : ownedObjects) {
+                if (upObj) {
+                    Physics::getBodyFor(upObj.get());
+                }
+            }
 
-        // Step physics for all object bodies and bonds
-        Physics::updateBodies(ownedObjects, deltaTime, /*gravityAccel*/ 9.81f, /*airResistance*/ 0.1f, groundY);
+            // Step physics for all object bodies and bonds
+            Physics::updateBodies(ownedObjects, deltaTime, /*gravityAccel*/ 9.81f, /*airResistance*/ 0.1f, groundY);
 
-        Physics::enforceCollisions(*cameraPos, ownedObjects);
+            Physics::enforceCollisions(*cameraPos, ownedObjects);
+        }
     }
 }
 

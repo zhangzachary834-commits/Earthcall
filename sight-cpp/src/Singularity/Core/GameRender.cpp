@@ -92,9 +92,12 @@ void Game::render() {
     float right  = top * aspect;
     float left   = -right;
 
-    // glm::frustum reproduces glFrustum exactly (same [-1,1] clip depth, since the
-    // app is not built with GLM_FORCE_DEPTH_ZERO_TO_ONE).
-    glm::mat4 proj = glm::frustum(left, right, bottom, top, nearZ, farZ);
+    // frustumNO reproduces glFrustum exactly ([-1,1] clip depth); frustumZO is the
+    // [0,1] form WebGPU requires. Asking the backend keeps this correct even though
+    // both can be linked into one binary.
+    glm::mat4 proj = currentRenderer().zeroToOneDepth()
+        ? glm::frustumZO(left, right, bottom, top, nearZ, farZ)
+        : glm::frustumNO(left, right, bottom, top, nearZ, farZ);
 
     // ------------------------------------------------------------------
     // Model-view (camera)
@@ -306,77 +309,8 @@ void Game::render() {
     // Live preview ("hologram") for BrushCreate mode
     // ------------------------------------------------------------------
     if (_current3DMode == Mode3D::BrushCreate) {
-        glm::vec3 previewPos;
-        if (_placement.mode == BrushPlacementMode::InFront) {
-            previewPos = _camera.pos + _camera.front * 2.0f;
-        } else if (_placement.mode == BrushPlacementMode::ManualDistance) {
-            if(!_placement.anchorValid){
-                _placement.anchorPos      = _camera.pos + _camera.front * 2.0f;
-                _placement.anchorRight    = glm::normalize(glm::cross(_camera.front, _camera.up));
-                _placement.anchorUp       = _camera.up;
-                _placement.anchorForward  = _camera.front;
-                _placement.anchorValid    = true;
-            }
-            previewPos = _placement.anchorPos + _placement.anchorRight * _placement.manualOffset.x + _placement.anchorUp * _placement.manualOffset.y + _placement.anchorForward * _placement.manualOffset.z;
-        } else {
-            // CursorSnap – approximate using same raycast as spawn (without altering state)
-            double mx,my; glfwGetCursorPos(_window,&mx,&my);
-            int winW,winH; glfwGetWindowSize(_window,&winW,&winH);
-            int fW,fH; glfwGetFramebufferSize(_window,&fW,&fH);
-            float sx = static_cast<float>(fW)/winW;
-            float sy = static_cast<float>(fH)/winH;
-            double winX = mx*sx; double winY = my*sy;
-            winY = _camera.viewport[3] - winY;
-            GLdouble nx,ny,nz,fx,fy,fz;
-            ecgl::unProject(winX,winY,0.0,_camera.modelview,_camera.projection,_camera.viewport,&nx,&ny,&nz);
-            ecgl::unProject(winX,winY,1.0,_camera.modelview,_camera.projection,_camera.viewport,&fx,&fy,&fz);
-            glm::vec3 rayO(nx,ny,nz);
-            glm::vec3 rayDir = glm::normalize(glm::vec3(fx,fy,fz)-rayO);
-            float nearestT=1e9f; int hitAxis=-1; int hitSign=1; Object* hitObj=nullptr;
-            bool hitIsCube=false;
-            const auto& objs=zoneWorld.getOwnedObjects();
-            for(const auto& up:objs){
-                Object* obj=up.get();
-                if(obj->getGeometryType()==Object::GeometryType::Cube){
-                    glm::mat4 inv=glm::inverse(obj->getTransform());
-                    glm::vec3 oL=glm::vec3(inv*glm::vec4(rayO,1.0f));
-                    glm::vec3 dL=glm::normalize(glm::vec3(inv*glm::vec4(rayDir,0.0f)));
-                    float tMin=-1e9f,tMax=1e9f; int axis=-1; int sign=1;
-                    for(int a=0;a<3;++a){float o=oL[a],d=dL[a];float t1,t2;if(fabs(d)<1e-6f){if(o<-0.5f||o>0.5f){tMin=1e9f;break;}t1=-1e9f;t2=1e9f;}else{t1=(-0.5f-o)/d; t2=(0.5f-o)/d;} if(t1>t2) std::swap(t1,t2); if(t1>tMin){tMin=t1; axis=a; sign=(d>0?-1:1);} if(t2<tMax) tMax=t2; if(tMin>tMax){tMin=1e9f;break;}}
-                    if(tMin<nearestT && tMin>0 && tMin<1e8f){nearestT=tMin; hitAxis=axis; hitSign=sign; hitObj=obj; hitIsCube=true;}
-                }else{
-                    glm::vec3 centerWorld=glm::vec3(obj->getTransform()*glm::vec4(0.0f,0.0f,0.0f,1.0f));
-                    glm::vec3 colX=glm::vec3(obj->getTransform()[0]);
-                    glm::vec3 colY=glm::vec3(obj->getTransform()[1]);
-                    glm::vec3 colZ=glm::vec3(obj->getTransform()[2]);
-                    float scaleX=glm::length(colX);
-                    float scaleY=glm::length(colY);
-                    float scaleZ=glm::length(colZ);
-                    float radius=0.5f*std::max(scaleX,std::max(scaleY,scaleZ));
-                    glm::vec3 oc=rayO-centerWorld;
-                    float b=glm::dot(oc,rayDir);
-                    float c=glm::dot(oc,oc)-radius*radius;
-                    float h=b*b-c;
-                    if(h>=0.0f){h=std::sqrt(h); float t=-b-h; if(t<0.0f) t=-b+h; if(t>0.0f && t<nearestT){nearestT=t; hitObj=obj; hitIsCube=false;}}
-                }
-            }
-            if(nearestT<1e8f && hitObj){
-                glm::vec3 hitPoint=rayO + rayDir*nearestT;
-                glm::vec3 nWorld;
-                if(hitIsCube){glm::vec3 nLocal(0.0f); nLocal[hitAxis]=static_cast<float>(hitSign); nWorld=glm::normalize(glm::vec3(hitObj->getTransform()*glm::vec4(nLocal,0.0f)));}
-                else{glm::vec3 centerWorld=glm::vec3(hitObj->getTransform()*glm::vec4(0.0f,0.0f,0.0f,1.0f)); nWorld=glm::normalize(hitPoint-centerWorld);}
-                previewPos = hitPoint + nWorld * getBrushCreateSurfaceOffset(nWorld);
-            } else previewPos = _camera.pos + _camera.front * 2.0f;
-        }
-
-        // Apply optional grid-snap just like the actual spawn logic
-        if (_brush.gridSnap && _brush.gridSize > 1e-6f) {
-            previewPos.x = std::round(previewPos.x / _brush.gridSize) * _brush.gridSize;
-            previewPos.y = std::round(previewPos.y / _brush.gridSize) * _brush.gridSize;
-            previewPos.z = std::round(previewPos.z / _brush.gridSize) * _brush.gridSize;
-        }
-
-        glm::mat4 previewT = buildBrushCreateTransform(previewPos);
+        // Use the Law system's evaluated spawn transform for the preview
+        glm::mat4 previewT = _player.getCursorSpawnTransform();
 
         // Render as translucent wireframe so it does not occlude view
         currentRenderer().setWireframe(true);

@@ -11,6 +11,7 @@
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
+#include "ZonesOfEarth/Physics/DefaultPhysicsLaws.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "Singularity/TransferPolicy.hpp"
 #include "Person/Body/BodyPart/BodyPart.hpp"
@@ -38,6 +39,12 @@ bool Game::init() {
     // ECA echo above; without this, PhysicsCollisionEvent had no listener
     // and collision history never reached the relation registry.
     Physics::setupPhysicsEventListeners();
+
+    // Inject default physics laws (gravity and kinematics)
+    for (const auto& law : Physics::createDefaultPhysicsLaws()) {
+        law->setEnabled(!Physics::getLegacyEngineEnabled());
+        _lawManager.add(law);
+    }
 
     // The Universe: what continuous laws watch and quantified conditions
     // (ForAny/ForAll) range over — the active world's objects, the laws
@@ -125,6 +132,15 @@ bool Game::init() {
     _mainMenu.addOption("Toggle Chat", GLFW_KEY_H, [this]() { _showChatWindow = !_showChatWindow; });
     _mainMenu.addOption("Toggle Toolbar", GLFW_KEY_T, [this]() { _showToolbar = !_showToolbar; });
     _mainMenu.addOption("Toggle Physics", GLFW_KEY_P, [this]() { _world.togglePhysics(); });
+    _mainMenu.addOption("Toggle Legacy Engine", GLFW_KEY_E, [this]() {
+        bool newState = !Physics::getLegacyEngineEnabled();
+        Physics::setLegacyEngineEnabled(newState);
+        for (const auto& law : _lawManager.getAll()) {
+            if (law->name() == "physics: gravity" || law->name() == "physics: kinematics") {
+                law->setEnabled(!newState);
+            }
+        }
+    });
     _mainMenu.addOption("Controls / Keymap", GLFW_KEY_K, [this]() { _showKeymapWindow = true; });
     _mainMenu.addOption("Character Architect Forge", GLFW_KEY_C, [this]() {
         const auto& zones = mgr.zones();

@@ -10,6 +10,9 @@
 
 // This should be retired into a legacy system and physics should become purely runtime-created Law Formations.
 namespace Physics {
+    // Legacy engine toggle
+    bool getLegacyEngineEnabled();
+    void setLegacyEngineEnabled(bool enabled);
 
     // Use Person's GameMode enum instead of storing it in Physics
     enum class GameMode {

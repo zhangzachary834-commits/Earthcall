@@ -21,6 +21,16 @@ public:
 
     // Scene graph -------------------------------------------------------
     void addObject(std::unique_ptr<Object> obj);
+
+    // Unmaking, which the world needs as much as making: the delete tool's
+    // engine side, and what ActionNode::Destroy compiles to. Before the
+    // object is freed, every element Formation in this world releases it —
+    // Formations hold NON-OWNING pointers, so a destroyed being left inside
+    // one is a dangling pointer waiting for the next quantifier sweep.
+    // Returns false when the object is not ours (nothing is freed).
+    bool removeObject(Object* obj);
+    bool removeObjectById(const std::string& identifier);
+
     ~World();
     const std::vector<std::unique_ptr<Object>>& objects() const { return _objects; }
     // Access owned objects (read-only / mutable)

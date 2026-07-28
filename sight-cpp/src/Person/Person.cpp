@@ -43,8 +43,14 @@ void Person::buildProperties() {
         "cursorHitPos", this, &Person::cursorHitPos));
     _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, glm::vec3>>(
         "cursorHitNormal", this, &Person::cursorHitNormal));
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, glm::mat4>>(
-        "cursorSpawnTransform", this, &Person::cursorSpawnTransform));
+    _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, glm::vec3>>(
+        "cursorSpawnPos", this, &Person::cursorSpawnPos));
+    _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, glm::vec3>>(
+        "cursorSpawnRot", this, &Person::cursorSpawnRot));
+    _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, glm::vec3>>(
+        "cursorSpawnScale", this, &Person::cursorSpawnScale));
+    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Person, glm::mat4>>(
+        "cursorSpawnTransform", this, &Person::getCursorSpawnTransform, &Person::setCursorSpawnTransform));
     _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, glm::vec3>>(
         "cameraPos", this, &Person::cameraPos));
     _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, glm::vec3>>(
@@ -53,6 +59,15 @@ void Person::buildProperties() {
         "activeShapeKind", this, &Person::activeShapeKind));
     _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, glm::vec3>>(
         "activeColor", this, &Person::activeColor));
+}
+
+glm::mat4 Person::getCursorSpawnTransform() const {
+    glm::mat4 t = glm::translate(glm::mat4(1.0f), cursorSpawnPos);
+    t = glm::rotate(t, glm::radians(cursorSpawnRot.x), glm::vec3(1.0f, 0.0f, 0.0f));
+    t = glm::rotate(t, glm::radians(cursorSpawnRot.y), glm::vec3(0.0f, 1.0f, 0.0f));
+    t = glm::rotate(t, glm::radians(cursorSpawnRot.z), glm::vec3(0.0f, 0.0f, 1.0f));
+    t = glm::scale(t, cursorSpawnScale);
+    return t;
 }
 
 Person::Person(Soul soul, Body body) : _soul(std::move(soul)), body(std::move(body)) {

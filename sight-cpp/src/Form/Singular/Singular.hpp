@@ -60,6 +60,20 @@ public:
     bool getDynamicProperty(const std::string& name, PropertyValue& out) const;
     void setDynamicProperty(const std::string& name, const PropertyValue& v);
 
+    // A law-added property is a real part of the being, so it has to be
+    // ENUMERABLE (the authoring UI offers it beside the registered vocabulary)
+    // and PERSISTABLE (a property that vanishes on save was never granted).
+    // The registry above is the first-mover vocabulary; this is the authored one.
+    bool hasDynamicProperty(const std::string& name) const {
+        return _dynamicProperties.find(name) != _dynamicProperties.end();
+    }
+    const std::map<std::string, PropertyValue>& dynamicProperties() const {
+        return _dynamicProperties;
+    }
+    bool removeDynamicProperty(const std::string& name) {
+        return _dynamicProperties.erase(name) > 0;
+    }
+
 protected:
     std::vector<std::unique_ptr<Property>> _propertyRegistry;
     std::map<std::string, PropertyValue> _dynamicProperties;

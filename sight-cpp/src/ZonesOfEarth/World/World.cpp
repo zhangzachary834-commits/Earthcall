@@ -9,6 +9,10 @@
 #include <iostream>
 #include "Rendering/HighlightSystem.hpp"
 #include "Rendering/Renderer.hpp"
+#include "Singularity/Core/EventBus.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
+#include <algorithm>
+#include <ctime>
 
 void World::update(float dt){
     // NOTE: the player/camera is no longer simulated here. All player movement,
@@ -51,7 +55,7 @@ void World::update(float dt){
                 up->updateAutomations(stepDt);
             }
         }
-        if(physicsEnabled){
+        if(physicsEnabled && Physics::getLegacyEngineEnabled()){
             for(const auto& up: _objects) if(up) Physics::getBodyFor(up.get());
             Physics::updateBodies(_objects, stepDt, 9.81f, 0.1f, groundY);
         }
@@ -128,4 +132,31 @@ void World::render() const{}
 
 void World::addObject(std::unique_ptr<Object> obj){ _objects.push_back(std::move(obj)); }
 
-World::~World() = default; 
+bool World::removeObject(Object* obj) {
+    if (!obj) return false;
+    auto it = std::find_if(_objects.begin(), _objects.end(),
+                           [obj](const std::unique_ptr<Object>& p) { return p.get() == obj; });
+    if (it == _objects.end()) return false;   // not ours: free nothing
+
+    // Announce the unmaking while the being still exists, so a law that
+    // responds to "object-destroyed" can still read who it was.
+    Core::EventBus::instance().publish(
+        ECA::Event{"object-destroyed", obj, nullptr, std::time(nullptr)});
+
+    // Release it from every composition that held it. Element formations
+    // carry non-owning pointers; a destroyed member left inside one dangles.
+    for (const auto& other : _objects) {
+        if (other && other.get() != obj) other->removeElement(obj);
+    }
+    _objects.erase(it);
+    return true;
+}
+
+bool World::removeObjectById(const std::string& identifier) {
+    for (const auto& obj : _objects) {
+        if (obj && obj->getIdentifier() == identifier) return removeObject(obj.get());
+    }
+    return false;
+}
+
+World::~World() = default;
