@@ -70,12 +70,12 @@ std::string timestamp() {
     return buf;
 }
 
-std::string makeFilename(const std::string& customLabel, SaveType type) {
+std::string makeFilename(const std::string& customLabel, SaveType type, const std::string& ext) {
     std::string folder = ensureSaveTypeFolder(type);
     if (folder.empty()) return "";
     
     std::string stem = customLabel.empty() ? timestamp() : customLabel;
-    return folder + "/" + stem + ".json";
+    return folder + "/" + stem + ext;
 }
 
 void addToLog(const std::string& filepath, SaveType type) {
@@ -130,7 +130,7 @@ std::vector<std::string> listFiles(SaveType type) {
 }
 
 std::string writeJson(const nlohmann::json& j, const std::string& customLabel, SaveType type) {
-    std::string filename = makeFilename(customLabel, type);
+    std::string filename = makeFilename(customLabel, type, ".json");
     if (filename.empty()) return "";
     
     std::ofstream out(filename);
@@ -143,7 +143,52 @@ std::string writeJson(const nlohmann::json& j, const std::string& customLabel, S
     out.close();
     
     addToLog(filename, type);
+    
+    // Parallel write for dry-run verification of the Frontier substrate
+    writeBinary(j, customLabel, type);
+    
     return filename;
+}
+
+std::string writeBinary(const nlohmann::json& j, const std::string& customLabel, SaveType type) {
+    std::string filename = makeFilename(customLabel, type, ".ecsave");
+    if (filename.empty()) return "";
+    
+    std::ofstream out(filename, std::ios::binary);
+    if (!out.is_open()) {
+        std::cerr << "[SaveSystem] Failed to open binary file for writing: " << filename << "\n";
+        return "";
+    }
+    
+    std::vector<uint8_t> v = nlohmann::json::to_msgpack(j);
+    out.write(reinterpret_cast<const char*>(v.data()), v.size());
+    out.close();
+    
+    // Also log the binary file, but don't duplicate it in the normal log if not necessary,
+    // actually, let's keep it clean and just write it to disk. 
+    // We won't add to log so it doesn't mess up listFiles which expects .json currently.
+    // addToLog(filename, type); 
+    
+    return filename;
+}
+
+nlohmann::json readSaveData(const std::string& filepath) {
+    std::ifstream in(filepath, std::ios::binary);
+    if (!in.is_open()) {
+        std::cerr << "[SaveSystem] Failed to open file for reading: " << filepath << "\n";
+        return nlohmann::json();
+    }
+    
+    // Check magic bytes or extension to determine if it's msgpack
+    if (filepath.length() > 7 && filepath.substr(filepath.length() - 7) == ".ecsave") {
+        std::vector<uint8_t> bytes((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+        return nlohmann::json::from_msgpack(bytes);
+    } else {
+        // Fallback to plain JSON
+        nlohmann::json j;
+        in >> j;
+        return j;
+    }
 }
 
 std::string createBackup(const std::string& originalFile, SaveType type) {

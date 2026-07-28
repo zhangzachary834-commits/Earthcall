@@ -219,6 +219,9 @@ primitive_render_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/primitive_render_test.
 action_spawn_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/action_spawn_test.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
+serialization_compat_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/serialization_compat_test.o
+	$(CXX) $^ $(LDFLAGS) -o $@
+
 law_creation_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/law_creation_test.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
@@ -279,7 +282,10 @@ test-primitive-render: primitive_render_test
 test-action-spawn: action_spawn_test
 	./action_spawn_test
 
-test: test-property test-law test-creation test-loop test-recorder test-concept test-graph test-meta test-math test-continuous test-timeflow test-persist test-geomcache test-glucompat test-zone test-material test-material-render test-primitive-render test-action-spawn
+test-serialization: serialization_compat_test
+	./serialization_compat_test
+
+test: test-property test-law test-creation test-loop test-recorder test-concept test-graph test-meta test-math test-continuous test-timeflow test-persist test-geomcache test-glucompat test-zone test-material test-material-render test-primitive-render test-action-spawn test-serialization
 
 # Pull in auto-generated header dependencies (.d files next to each .o)
 -include $(OBJECTS:.o=.d)

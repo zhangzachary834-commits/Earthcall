@@ -21,7 +21,7 @@ std::string ensureSaveFolder();
 std::string ensureSaveTypeFolder(SaveType type);
 
 // Build filename with timestamp or custom label stored in organized folders
-std::string makeFilename(const std::string& customLabel = "", SaveType type = SaveType::GAME);
+std::string makeFilename(const std::string& customLabel = "", SaveType type = SaveType::GAME, const std::string& ext = ".json");
 
 // Get a formatted timestamp string
 std::string timestamp();
@@ -33,7 +33,14 @@ void addToLog(const std::string& filepath, SaveType type = SaveType::GAME);
 std::vector<std::string> listFiles(SaveType type = SaveType::GAME);
 
 // Write JSON to disk via generated filename and log it; returns full path
+// For dry-run/parallel testing, this will also write a binary .ecsave alongside it.
 std::string writeJson(const nlohmann::json& j, const std::string& customLabel = "", SaveType type = SaveType::GAME);
+
+// Write JSON as MessagePack binary to disk. Returns full path.
+std::string writeBinary(const nlohmann::json& j, const std::string& customLabel = "", SaveType type = SaveType::GAME);
+
+// Unified read function: detects whether the file is binary MessagePack or plain JSON and loads it.
+nlohmann::json readSaveData(const std::string& filepath);
 
 // Get save type folder name
 std::string getSaveTypeFolderName(SaveType type);

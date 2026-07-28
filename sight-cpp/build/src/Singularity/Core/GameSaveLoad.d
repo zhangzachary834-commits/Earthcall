@@ -310,7 +310,7 @@ build/src/Singularity/Core/GameSaveLoad.o: \
   src/ZonesOfEarth/Physics/Physics.hpp \
   src/Form/Material/MaterialManager.hpp src/Form/Material/Material.hpp \
   src/Util/SaveSystem.hpp src/Util/Serialization.hpp \
-  src/ZonesOfEarth/World/World.hpp \
+  src/ZonesOfEarth/World/World.hpp src/Util/Frontier.hpp \
   src/ZonesOfEarth/AuthorsOfLaw/LawAuditLogger.hpp
 
 src/Singularity/Core/Game.hpp:
@@ -972,5 +972,7 @@ src/Util/SaveSystem.hpp:
 src/Util/Serialization.hpp:
 
 src/ZonesOfEarth/World/World.hpp:
+
+src/Util/Frontier.hpp:
 
 src/ZonesOfEarth/AuthorsOfLaw/LawAuditLogger.hpp:

@@ -1,5 +1,6 @@
-build/src/Util/Serialization.o: src/Util/Serialization.cpp \
-  src/Util/Serialization.hpp src/json.hpp src/Form/Object/Object.hpp \
+build/tests/serialization_compat_test.o: \
+  tests/serialization_compat_test.cpp src/Util/SaveSystem.hpp \
+  src/json.hpp src/Util/Serialization.hpp src/Form/Object/Object.hpp \
   src/Form/Object/Formation/Formation.hpp src/Form/Form.hpp \
   /opt/homebrew/include/glm/glm.hpp \
   /opt/homebrew/include/glm/detail/_fixes.hpp \
@@ -268,12 +269,13 @@ build/src/Util/Serialization.o: src/Util/Serialization.cpp \
   src/Form/Object/Geometry/Sdf.hpp src/Form/Object/Geometry/Patch.hpp \
   src/Form/Object/Automation/Automation.hpp \
   src/ZonesOfEarth/World/World.hpp src/Person/Body/BodyPart/BodyPart.hpp \
-  src/Person/Body/Body.hpp src/Util/Frontier.hpp \
-  src/Form/Singular/Property/PropertyValueJson.hpp
+  src/Person/Body/Body.hpp src/Util/Frontier.hpp
 
-src/Util/Serialization.hpp:
+src/Util/SaveSystem.hpp:
 
 src/json.hpp:
+
+src/Util/Serialization.hpp:
 
 src/Form/Object/Object.hpp:
 
@@ -830,5 +832,3 @@ src/Person/Body/BodyPart/BodyPart.hpp:
 src/Person/Body/Body.hpp:
 
 src/Util/Frontier.hpp:
-
-src/Form/Singular/Property/PropertyValueJson.hpp:

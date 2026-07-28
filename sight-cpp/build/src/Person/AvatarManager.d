@@ -271,7 +271,7 @@ build/src/Person/AvatarManager.o: src/Person/AvatarManager.cpp \
   src/Form/Object/Automation/Automation.hpp \
   src/Person/Body/BodyPart/BodyPart.hpp src/Person/Soul/Soul.hpp \
   src/Util/SaveSystem.hpp src/Util/Serialization.hpp \
-  src/ZonesOfEarth/World/World.hpp
+  src/ZonesOfEarth/World/World.hpp src/Util/Frontier.hpp
 
 src/Person/AvatarManager.hpp:
 
@@ -838,3 +838,5 @@ src/Util/SaveSystem.hpp:
 src/Util/Serialization.hpp:
 
 src/ZonesOfEarth/World/World.hpp:
+
+src/Util/Frontier.hpp:

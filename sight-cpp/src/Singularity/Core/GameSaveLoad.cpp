@@ -228,13 +228,12 @@ void Game::loadState(const std::string& filename) {
     };
     try {
         using json = nlohmann::json;
-        std::ifstream in(filename);
-        if (!in) {
-            _saveLoad.lastLoadReport = "COULD NOT OPEN: " + filename;
-            std::cerr << "Could not open " << filename << "\n";
+        json j = SaveSystem::readSaveData(filename);
+        if (j.is_null()) {
+            _saveLoad.lastLoadReport = "COULD NOT OPEN OR READ: " + filename;
+            std::cerr << "Could not open or read " << filename << "\n";
             return;
         }
-        json j; in >> j;
 
         // Reset physics registries to avoid stale velocities/bonds affecting freshly loaded objects
         Physics::resetRigidBodies();
