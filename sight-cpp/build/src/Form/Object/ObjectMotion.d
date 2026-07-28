@@ -270,7 +270,7 @@ build/src/Form/Object/ObjectMotion.o: src/Form/Object/ObjectMotion.cpp \
   src/Form/Object/Automation/AutomationEvents.hpp \
   src/ZonesOfEarth/AuthorsOfLaw/ECA.hpp \
   /opt/homebrew/include/glm/gtc/quaternion.hpp \
-  src/Rendering/HighlightSystem.hpp
+  src/Rendering/HighlightSystem.hpp src/ZonesOfEarth/Physics/Physics.hpp
 
 src/Form/Object/Object.hpp:
 
@@ -829,3 +829,5 @@ src/ZonesOfEarth/AuthorsOfLaw/ECA.hpp:
 /opt/homebrew/include/glm/gtc/quaternion.hpp:
 
 src/Rendering/HighlightSystem.hpp:
+
+src/ZonesOfEarth/Physics/Physics.hpp:

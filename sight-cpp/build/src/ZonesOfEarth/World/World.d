@@ -268,7 +268,8 @@ build/src/ZonesOfEarth/World/World.o: src/ZonesOfEarth/World/World.cpp \
   src/Form/Object/Geometry/ComplexShape.hpp \
   src/Form/Object/Geometry/Sdf.hpp src/Form/Object/Geometry/Patch.hpp \
   src/Form/Object/Automation/Automation.hpp \
-  src/ZonesOfEarth/Physics/Physics.hpp src/Rendering/HighlightSystem.hpp
+  src/ZonesOfEarth/Physics/Physics.hpp src/Rendering/HighlightSystem.hpp \
+  src/ZonesOfEarth/AuthorsOfLaw/ECA.hpp
 
 src/ZonesOfEarth/World/World.hpp:
 
@@ -825,3 +826,5 @@ src/Form/Object/Automation/Automation.hpp:
 src/ZonesOfEarth/Physics/Physics.hpp:
 
 src/Rendering/HighlightSystem.hpp:
+
+src/ZonesOfEarth/AuthorsOfLaw/ECA.hpp:

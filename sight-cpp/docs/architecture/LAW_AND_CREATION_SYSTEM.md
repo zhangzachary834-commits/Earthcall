@@ -211,7 +211,10 @@ from it — manifesto requirement satisfied structurally).
 
 ```cpp
 struct ActionNode {
-    enum class Kind { Set, Add, Scale, Lerp, Drive, Sequence, Parallel, Spawn };
+    enum class Kind { Set, Add, Scale, Lerp, Drive, Sequence, Parallel, Spawn,
+                      Map, Flow, Publish,
+                      Create, AddProperty, AddElement,           // landed
+                      RemoveProperty, RemoveElement, Destroy };  // landed
     Kind kind = Kind::Set;
 
     PropertyPath path;                             // what changes
@@ -232,6 +235,54 @@ struct ActionNode {
     ECA::ActionExecutor compile() const;
 };
 ```
+
+**Creation from nothing (landed).** `Spawn` instantiates a *remembered* thing — an
+`ObjectConcept` captured from a selection, so a law could only ever make what someone
+had already shown it. Six kinds close that gap, and close the world's other asymmetry:
+it could grow but never shrink.
+
+- **`Create`** — mint a generic `Object` of an authored `ShapeKind` into the World
+  (the law's target when it IS a world, otherwise the world in the Universe), placed by
+  an authored path or, absent one, where the law's subject stands, and labelled with an
+  authored `objectType` that `Physics::LawTarget::limitByObjectType` already selects on.
+  Its **children run with the newborn as their subject**, so the whole action
+  vocabulary shapes it at birth: `Set` its position, `Map` its radius from another
+  being's, grant it properties, compose it. Publishes `object-created`.
+- **`AddProperty` / `RemoveProperty`** — the vocabulary a *Person* adds, beside the
+  registry the engine gave. Granting is refused where it would SHADOW a registered name
+  (a path that read one value and wrote another is a trap). Revoking erases an authored
+  property outright; a first-mover property is a C++ member whose slot cannot be erased,
+  so it is **cleared** to its empty value instead — honest either way, and the two cases
+  are distinguishable. Authored properties persist with the being
+  (`authoredProperties` in the save): a granted property that vanished on save was
+  never really granted.
+- **`AddElement` / `RemoveElement`** — what a being is MADE OF. `Object` now carries an
+  element `Formation` (the vestigial `elements` int's evident intent, made real), so
+  composition is membership among beings held in relation rather than a
+  `vector<Object*>` — the structure among the elements rides along, and the composition
+  has an identity of its own. Elements persist by identifier and re-link after load, so
+  composition is a covenant between beings that are present, never a pointer to
+  something absent.
+- **`Destroy`** — the delete tool as law-text. `World::removeObject` publishes
+  `object-destroyed` **while the being still exists** (a law responding to an unmaking
+  can still read who it was), then releases it from every element Formation that held
+  it before freeing. Formations hold non-owning pointers: a destroyed member left inside
+  one is a dangling pointer waiting for the next quantifier sweep.
+
+Container, element, and victim are named with the same participant tokens `Publish`
+uses — `""` = the law's subject, `@event.subject` / `@event.object`, or a being id — so
+"destroy whatever I collided with" is `Destroy("@event.object")`.
+
+Test: `tests/law_creation_test.cpp` (`make test-creation`) — 37 checks over birth,
+child-shaped newborns, grant/refuse-to-shadow/revoke/clear, compose/decompose,
+unmaking with the dangling-pointer guarantee, and JSON round-trip.
+
+Known limits, recorded rather than papered over: only `Object` holds elements (a
+Formation-of-anything container is the general case); `@`-paths address beings by
+literal identifier, so a *later* law cannot say "the object the previous law just
+made" — the newborn is reachable only as its creating node's children-subject; and
+`Destroy` sweeps element formations but not a Law's `targets` Formation, which is
+the next place a dangling pointer could hide.
 
 `Drive` replaces the fixed IF→THEN with a continuous mapping: "glow brighter *as*
 the person approaches," not "glow when near." Discrete actions are the degenerate

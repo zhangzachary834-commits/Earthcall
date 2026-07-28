@@ -1321,3 +1321,18 @@ Recorded here so migrations report them instead of routing around them with clos
 - **No consent primitive anywhere in the codebase** — `Law::_authors` is the nearest
   precedent (a Formation of Persons, gating whether a law may fire). Concord
   ratification should copy its shape rather than invent a second notion of agreement.
+- **Newborns are not addressable across laws** — `ActionNode::Create` (see
+  `LAW_AND_CREATION_SYSTEM.md` §2b) lets a law mint a generic Object and shape it
+  through the node's children, but `@`-paths resolve a *literal* identifier, so a
+  later law cannot name "the object the previous law just made." Migrating anything
+  whose decision is *build this, then govern it* hits this. A binding slot
+  (`Create` writing the newborn's id into a named property, and `@`-paths resolving one
+  level of indirection) is the smallest fix.
+- **Only `Object` holds elements** — composition landed as an element `Formation` on
+  `Object`. A Person, Zone, or Law cannot yet be composed of parts the same way, which
+  matters for the set-to-set-over-non-Objects work already listed in §7b of the
+  companion doc.
+- **`Destroy` sweeps element formations, not every Formation** — a destroyed being is
+  released from element containers, but a Law's `targets` Formation could still hold
+  it. Any migration that lets laws destroy what other laws target should close this
+  first.
