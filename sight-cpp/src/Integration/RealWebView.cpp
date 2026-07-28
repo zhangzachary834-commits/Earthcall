@@ -403,16 +403,22 @@ void RealWebView::executeJavaScript(const std::string& script) {
 #ifdef __APPLE__
 #if TARGET_OS_MAC
     if (_webView) {
-        // Validate JavaScript through security manager
+        // Screen the script. Note this is a tripwire over our OWN injected
+        // scripts, not a defence against hostile JavaScript — see the note on
+        // SecurityManager::validateJavaScript.
         auto& security = SecurityManager::instance();
         if (!security.validateJavaScript(script, _currentURL)) {
             std::cout << "❌ JavaScript blocked by security" << std::endl;
             return;
         }
-        
-        // Sanitize JavaScript
-        std::string safeScript = security.sanitizeJavaScript(script);
-        NSString* nsScript = [NSString stringWithUTF8String:safeScript.c_str()];
+
+        // The script is injected AS WRITTEN. There used to be a
+        // sanitizeJavaScript() pass here that rewrote "setTimeout(" and
+        // friends into "// BLOCKED: setTimeout(" — commenting out the rest of
+        // the line and silently corrupting perfectly legitimate first-party
+        // scripts, while stopping no attacker able to build the same call from
+        // two string halves. It was removed.
+        NSString* nsScript = [NSString stringWithUTF8String:script.c_str()];
         [_webView evaluateJavaScript:nsScript completionHandler:^(id result, NSError* error) {
             if (error) {
                 std::cout << "🌐 JavaScript error: " << [error.localizedDescription UTF8String] << std::endl;

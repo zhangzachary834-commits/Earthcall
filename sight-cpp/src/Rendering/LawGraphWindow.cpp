@@ -957,6 +957,52 @@ bool editConditionNode(ConditionNode& node) {
     return changed;
 }
 
+// A participant token in the vocabulary Publish, AddElement, RemoveElement and
+// Destroy all share: "" = the law's subject, "@event.subject"/"@event.object" =
+// the triggering event's participants, anything else = a being id. Hoisted out
+// of the Publish case so every kind that speaks this vocabulary reads the same.
+bool participantPicker(const char* label, std::string& token, bool allowLawSubject) {
+    bool changed = false;
+    const char* fallback = allowLawSubject ? "the law's subject" : "(none)";
+    const char* preview = token.empty() ? fallback : token.c_str();
+    ImGui::SetNextItemWidth(200.0f);
+    if (ImGui::BeginCombo(label, preview)) {
+        if (ImGui::Selectable(fallback, token.empty())) {
+            token.clear();
+            changed = true;
+        }
+        if (ImGui::Selectable("the event's subject", token == "@event.subject")) {
+            token = "@event.subject";
+            changed = true;
+        }
+        if (ImGui::Selectable("the event's other object", token == "@event.object")) {
+            token = "@event.object";
+            changed = true;
+        }
+        for (Singular* being : Universe::instance().beings()) {
+            if (!being) continue;
+            const std::string id = being->getIdentifier();
+            if (ImGui::Selectable(id.c_str(), token == id)) {
+                token = id;
+                changed = true;
+            }
+        }
+        ImGui::EndCombo();
+    }
+    return changed;
+}
+
+// Object::ShapeKind, in declaration order — the shape a Create action gives its
+// newborn. Object::ShapeKind is append-only, so a new shape means one more entry
+// here; the static_assert below fails until it is added.
+const char* const kShapeKinds[] = {
+    "cube", "polyhedron", "sphere", "cylinder", "cone", "ellipsoid",
+    "ovoid", "paraboloid", "torus", "rounded box", "field (SDF)", "patch (Bezier)"
+};
+constexpr int kShapeKindCount = static_cast<int>(sizeof(kShapeKinds) / sizeof(kShapeKinds[0]));
+static_assert(static_cast<int>(Object::ShapeKind::Patch) + 1 == kShapeKindCount,
+              "Object::ShapeKind gained a value — add its label to kShapeKinds[].");
+
 void seedActionKind(ActionNode& node) {
     switch (node.kind) {
         case ActionNode::Kind::Set:
@@ -988,20 +1034,61 @@ void seedActionKind(ActionNode& node) {
                 node.bindings = MathBindings{{"t", PropertyPath::parse("time.sinceApplied")}};
             }
             break;
-        default:
+        case ActionNode::Kind::AddProperty:
+            // A property granted without a value is a name with nothing behind
+            // it, so seed both.
+            if (node.propertyName.empty()) node.propertyName = "charge";
+            if (std::holds_alternative<std::monostate>(node.operand)) {
+                node.operand = PropertyValue(0.0);
+            }
             break;
+        case ActionNode::Kind::RemoveProperty:
+            if (node.propertyName.empty()) node.propertyName = "charge";
+            break;
+        case ActionNode::Kind::Create:
+        case ActionNode::Kind::AddElement:
+        case ActionNode::Kind::RemoveElement:
+        case ActionNode::Kind::Destroy:
+            // Every slot these use is meaningful when empty: an empty
+            // participant token IS the law's subject, and shape kind 0 is a
+            // cube. Nothing to seed.
+            break;
+        case ActionNode::Kind::Sequence:
+        case ActionNode::Kind::Parallel:
+        case ActionNode::Kind::Spawn:
+            // Nothing to seed: children start empty, and Spawn's concept is
+            // chosen from the registry.
+            break;
+        // No default: every Kind is listed, so adding one to the enum makes
+        // -Wswitch point straight here. That warning is exactly what went
+        // unheeded when the creation kinds landed without an editor.
     }
 }
 
 bool editActionNode(ActionNode& node) {
     bool changed = false;
 
-    static const char* kinds[] = {"set", "add", "scale", "lerp", "drive (curve)",
-                                  "sequence", "parallel", "spawn concept", "map (math)",
-                                  "flow (rate of change)", "publish event"};
+    // MUST list every ActionNode::Kind, in enum order. This array stopped at
+    // "publish event" while the enum went on to Create/AddProperty/AddElement/
+    // RemoveProperty/RemoveElement/Destroy, so six implemented, serialized,
+    // tested action kinds had no way to be authored — and a law that used one
+    // (loaded from a save) drew a blank dropdown and no editor at all. The
+    // static_assert makes that drift a build failure instead of a silent hole.
+    static const char* const kinds[] = {
+        "set", "add", "scale", "lerp", "drive (curve)",
+        "sequence", "parallel", "spawn concept", "map (math)",
+        "flow (rate of change)", "publish event",
+        "create being", "grant property", "add element",
+        "remove property", "remove element", "destroy being"
+    };
+    constexpr int kKindCount = static_cast<int>(sizeof(kinds) / sizeof(kinds[0]));
+    static_assert(static_cast<int>(ActionNode::Kind::Destroy) + 1 == kKindCount,
+                  "ActionNode::Kind gained a value — add its label to kinds[] above "
+                  "and give it a case in the switch below.");
+
     int kind = static_cast<int>(node.kind);
     ImGui::SetNextItemWidth(160.0f);
-    if (ImGui::Combo("Action type", &kind, kinds, 11)) {
+    if (ImGui::Combo("Action type", &kind, kinds, kKindCount)) {
         node.kind = static_cast<ActionNode::Kind>(kind);
         seedActionKind(node);
         changed = true;
@@ -1126,42 +1213,8 @@ bool editActionNode(ActionNode& node) {
             if (ImGui::IsItemHovered()) {
                 ImGui::SetTooltip("any name — new event kinds are minted by naming them");
             }
-            const auto participantCombo = [&](const char* label, std::string& token,
-                                              bool allowLawSubject) {
-                const char* preview =
-                    token.empty() ? (allowLawSubject ? "the law's subject" : "(none)")
-                                  : token.c_str();
-                ImGui::SetNextItemWidth(200.0f);
-                if (ImGui::BeginCombo(label, preview)) {
-                    if (ImGui::Selectable(allowLawSubject ? "the law's subject"
-                                                          : "(none)",
-                                          token.empty())) {
-                        token.clear();
-                        changed = true;
-                    }
-                    if (ImGui::Selectable("the event's subject",
-                                          token == "@event.subject")) {
-                        token = "@event.subject";
-                        changed = true;
-                    }
-                    if (ImGui::Selectable("the event's other object",
-                                          token == "@event.object")) {
-                        token = "@event.object";
-                        changed = true;
-                    }
-                    for (Singular* being : Universe::instance().beings()) {
-                        if (!being) continue;
-                        const std::string id = being->getIdentifier();
-                        if (ImGui::Selectable(id.c_str(), token == id)) {
-                            token = id;
-                            changed = true;
-                        }
-                    }
-                    ImGui::EndCombo();
-                }
-            };
-            participantCombo("Its subject", node.publishSubject, true);
-            participantCombo("Its object", node.publishObject, false);
+            if (participantPicker("Its subject", node.publishSubject, true)) changed = true;
+            if (participantPicker("Its object", node.publishObject, false)) changed = true;
             break;
         }
         case ActionNode::Kind::Sequence:
@@ -1213,6 +1266,89 @@ bool editActionNode(ActionNode& node) {
             if (pathPicker("Parent Path", node.spawnParentPath)) {
                 changed = true;
             }
+            break;
+        }
+
+        // ---- Creation and destruction -------------------------------------
+        // These six were implemented, serialized and tested, but never reached
+        // this switch, so none of them could be authored. See kinds[] above.
+
+        case ActionNode::Kind::Create: {
+            ImGui::TextDisabled("Makes a NEW being from nothing — no captured concept");
+            ImGui::TextDisabled("required. Placed where the placement path points, or on");
+            ImGui::TextDisabled("the subject itself when that is left empty.");
+            ImGui::SetNextItemWidth(160.0f);
+            if (ImGui::Combo("Shape", &node.createShapeKind, kShapeKinds, kShapeKindCount)) {
+                node.createShapeKind =
+                    std::max(0, std::min(node.createShapeKind, kShapeKindCount - 1));
+                changed = true;
+            }
+            char typeBuf[64];
+            copyToBuf(typeBuf, sizeof(typeBuf), node.createType);
+            ImGui::SetNextItemWidth(180.0f);
+            if (ImGui::InputText("Type name", typeBuf, sizeof(typeBuf))) {
+                node.createType = typeBuf;
+                changed = true;
+            }
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("labels the newborn so conditions can select "
+                                  "the kind of thing this law makes");
+            }
+            if (pathPicker("Placement", node.spawnPlacementPath)) changed = true;
+            if (pathPicker("Parent Path", node.spawnParentPath)) changed = true;
+            ImGui::TextDisabled("%zu step(s) run on the newborn.", node.children.size());
+            break;
+        }
+
+        case ActionNode::Kind::AddProperty:
+        case ActionNode::Kind::RemoveProperty: {
+            const bool granting = node.kind == ActionNode::Kind::AddProperty;
+            ImGui::TextDisabled(granting
+                ? "GRANTS a named property, with an opening value — a property"
+                : "TAKES BACK a named property.");
+            ImGui::TextDisabled(granting
+                ? "without a value is a name with nothing behind it."
+                : "The being keeps everything else it has.");
+            if (pathPicker("On being", node.path)) changed = true;
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("whose property: empty = the law's subject, "
+                                  "or @event.subject / @event.object / a being id");
+            }
+            char nameBuf[64];
+            copyToBuf(nameBuf, sizeof(nameBuf), node.propertyName);
+            ImGui::SetNextItemWidth(180.0f);
+            if (ImGui::InputText("Property name", nameBuf, sizeof(nameBuf))) {
+                node.propertyName = nameBuf;
+                changed = true;
+            }
+            if (granting) {
+                double value = numericOr(node.operand, 0.0);
+                ImGui::SetNextItemWidth(120.0f);
+                if (ImGui::InputDouble("Opening value", &value)) {
+                    node.operand = PropertyValue(value);
+                    changed = true;
+                }
+            }
+            break;
+        }
+
+        case ActionNode::Kind::AddElement:
+        case ActionNode::Kind::RemoveElement: {
+            const bool joining = node.kind == ActionNode::Kind::AddElement;
+            ImGui::TextDisabled(joining
+                ? "COMPOSES: the element becomes part of the container."
+                : "SEPARATES: the element stops being part of the container.");
+            ImGui::TextDisabled("The container must be an Object — only Objects hold");
+            ImGui::TextDisabled("elements today. The element may be any being.");
+            if (participantPicker("Container", node.containerToken, true)) changed = true;
+            if (participantPicker("Element", node.elementToken, true)) changed = true;
+            break;
+        }
+
+        case ActionNode::Kind::Destroy: {
+            ImGui::TextDisabled("UNMAKES a being. \"Destroy whatever I collided with\"");
+            ImGui::TextDisabled("is this action with the event's other object as victim.");
+            if (participantPicker("Victim", node.elementToken, true)) changed = true;
             break;
         }
     }

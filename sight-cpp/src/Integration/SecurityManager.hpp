@@ -81,7 +81,15 @@ struct SecurityConfig {
     bool enableSandboxing = true;
     bool logAllEvents = true;
     bool requireUserConfirmation = true;
-    
+
+    // Suspicious-activity thresholds. These are policy, so they live with the
+    // rest of the policy rather than as constants compiled into the detector.
+    // The window is what makes "events per minute" mean that: without it the
+    // count was cumulative and every busy source was eventually condemned.
+    int activityWindowSeconds = 60;
+    int maxEventsPerWindow = 100;
+    int maxBlockedEvents = 10;
+
     nlohmann::json serialize() const;
     void deserialize(const nlohmann::json& j);
 };
@@ -134,9 +142,25 @@ public:
     bool validateAPICall(const std::string& api, const std::string& source);
     bool isAPICallAllowed(const std::string& api, const std::string& source);
     
-    // JavaScript security
+    // JavaScript screening.
+    //
+    // READ THIS BEFORE RELYING ON IT. This is a tripwire over the scripts
+    // Earthcall injects into its own WebView, not a boundary against hostile
+    // JavaScript. Pattern-matching cannot contain a language that can spell
+    // eval() as window['ev'+'al'](); anyone treating a `true` here as "this
+    // script is safe" will be wrong. The defences that actually hold are the
+    // URL allowlist (validateURL) and the page's CSP.
+    //
+    // Returns false for constructs first-party script has no business
+    // containing, and logs — the point is to notice when something upstream
+    // starts building scripts it should not be.
     bool validateJavaScript(const std::string& script, const std::string& source);
-    std::string sanitizeJavaScript(const std::string& script);
+    // sanitizeJavaScript() was REMOVED, not renamed. It spliced "// BLOCKED: "
+    // into the middle of expressions, which corrupted legitimate first-party
+    // scripts (any script containing setTimeout( came out broken) while
+    // stopping no attacker who could concatenate two strings. There is no
+    // replacement because sanitising JavaScript by substring rewriting does
+    // not work; screen with validateJavaScript and rely on CSP.
     
     // Save/Load
     void saveSecurityData();
@@ -161,8 +185,24 @@ private:
     std::map<std::string, std::set<PermissionType>> _grantedPermissions;
     std::set<std::string> _blockedSources;
     std::vector<SecurityEvent> _securityLog;
+
+    // Activity is counted inside a ROLLING WINDOW, not for the process
+    // lifetime. _activityWindowStart[src] is when the current window opened;
+    // _sourceActivityCount[src] is how many events have landed inside it.
+    // Without the window this was a monotonic counter, so every long-lived
+    // source eventually crossed the threshold and could never come back.
     std::map<std::string, int> _sourceActivityCount;
-    
+    std::map<std::string, std::time_t> _activityWindowStart;
+
+    // Running tally of blocked events per source, kept in step with
+    // _securityLog (including when the log is trimmed). detectSuspiciousActivity
+    // used to rescan the whole 10,000-entry log on EVERY logEvent call, which
+    // made logging quadratic in the number of events.
+    std::map<std::string, int> _blockedEventCount;
+
+    static constexpr std::size_t kMaxLogEntries = 10000;
+    static constexpr std::size_t kLogTrimCount = 1000;
+
     std::function<bool(PermissionType, const std::string&)> _permissionCallback;
     std::function<void(const SecurityEvent&)> _securityAlertCallback;
     
@@ -170,12 +210,25 @@ private:
     bool _isValidURLFormat(const std::string& url);
     bool _isSecureProtocol(const std::string& url);
     bool _isLocalFile(const std::string& url);
+    // Host of an absolute URL, lowercased, userinfo and port stripped.
+    // "" when the string has no scheme separator.
+    static std::string _extractHost(const std::string& url);
+    // Does `host` fall under `domain`? Matches only on a label boundary, so
+    // "earthcall.com" covers "app.earthcall.com" but never
+    // "earthcall.com.attacker.example". `domain` may be a bare host or a full
+    // URL — configs written before this existed stored the latter.
+    static bool _hostMatchesDomain(const std::string& host, const std::string& domain);
     bool _containsSuspiciousContent(const std::string& content);
     bool _isRateLimited(const std::string& source);
     
-    // Pattern matching
+    // Pattern matching. The first pair is markup, matched against message
+    // bodies; the second is JavaScript, matched against injected scripts.
+    // They used to be the same two vectors, which is why validateJavaScript
+    // was scanning JavaScript for "<iframe".
     std::vector<std::regex> _suspiciousPatterns;
     std::vector<std::regex> _maliciousPatterns;
+    std::vector<std::regex> _jsHighRiskPatterns;
+    std::vector<std::regex> _jsNoteworthyPatterns;
     void _initializePatterns();
     
     // Rate limiting

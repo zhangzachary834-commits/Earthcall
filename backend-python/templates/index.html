@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dimension of Thought</title>
-    <link rel="stylesheet" href="style.css" type="text/css">
+    <!-- url_for, like the script tag below: a bare "style.css" is not a path
+         Flask serves, so the stylesheet 404'd. -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" type="text/css">
 </head>
 <body>
     <h1>Welcome to Dimension of Thought</h1>

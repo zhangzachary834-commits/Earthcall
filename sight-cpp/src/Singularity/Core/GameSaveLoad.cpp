@@ -160,16 +160,13 @@ void Game::saveState(const std::string& filename) {
 void Game::saveStateWithLog(const std::string& customName) {
     nlohmann::json j = buildSaveJson();
 
-    // Dynamic objects (skip baseline 0 & 1) – only added by the "log" variant
-    auto& zoneWorld = mgr.active().world();
-    nlohmann::json objArr = nlohmann::json::array();
-    const auto& objs = zoneWorld.getOwnedObjects();
-    for (size_t i = 2; i < objs.size(); ++i) {
-        const auto& o = objs[i];
-        nlohmann::json oj = *o;
-        objArr.push_back(std::move(oj));
-    }
-    j["objects"] = objArr;
+    // NOTE: this used to append a top-level "objects" array here — a second
+    // copy of the active zone's objects, on top of the copy buildSaveJson
+    // already wrote under zones[*].world. loadState reads zones[*].world and
+    // has never read a top-level "objects" key, so the duplicate was pure
+    // write-only weight: on a 290-object world it was 38 MB of an 80 MB save.
+    // Removed. If a flat object list is ever wanted for tooling, derive it on
+    // read from the zones rather than storing it twice.
 
     // Use the new SaveSystem to write the file
     std::string actualName = customName;

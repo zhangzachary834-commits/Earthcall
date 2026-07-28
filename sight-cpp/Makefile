@@ -23,18 +23,36 @@ else
     OPTFLAGS = -O2 -g
 endif
 
-CXXFLAGS = -std=c++17 -Wall -Wextra $(OPTFLAGS) \
+# GLFW discovery. This used to be hard-coded to
+# -I/opt/homebrew/Cellar/glfw/3.4/include, which pinned the build to Apple
+# Silicon Homebrew AND to that exact point release — upgrading GLFW to 3.5
+# silently broke the include path. pkg-config answers both questions correctly
+# on Intel macs (/usr/local), Apple Silicon (/opt/homebrew) and Linux. The
+# hard-coded paths remain only as a fallback for a machine without pkg-config.
+GLFW_CFLAGS := $(shell pkg-config --cflags glfw3 2>/dev/null)
+GLFW_LIBS   := $(shell pkg-config --libs   glfw3 2>/dev/null)
+ifeq ($(strip $(GLFW_LIBS)),)
+    GLFW_CFLAGS := -I/opt/homebrew/include
+    GLFW_LIBS   := -L/opt/homebrew/lib -lglfw
+endif
+
+# Extra flags appended to every compile. CI uses `make CXXFLAGS_EXTRA=-Werror`
+# to keep the tree warning-clean; leave it empty for local builds.
+CXXFLAGS_EXTRA ?=
+
+CXXFLAGS = -std=c++17 -Wall -Wextra $(OPTFLAGS) $(CXXFLAGS_EXTRA) \
            -I./src \
            -I./src/Form \
            -I./src/ZonesOfEarth \
            -I./src/Person/Body \
            -I../imgui \
-           -I/opt/homebrew/Cellar/glfw/3.4/include \
+           $(GLFW_CFLAGS) \
            -I/opt/homebrew/include \
            -DGL_SILENCE_DEPRECATION
-LDFLAGS = -L/opt/homebrew/Cellar/lib \
-          -L/opt/homebrew/lib \
-          -lglfw \
+# NOTE: -L/opt/homebrew/Cellar/lib used to lead this list. No such directory
+# exists — Homebrew's Cellar holds one subdirectory per formula — so the flag
+# was dead, and the link only worked because of the path that followed it.
+LDFLAGS = $(GLFW_LIBS) \
           -framework OpenGL \
           -framework WebKit \
           -framework Cocoa \
@@ -225,6 +243,14 @@ serialization_compat_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/serialization_comp
 law_creation_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/law_creation_test.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
+security_manager_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/security_manager_test.o
+	$(CXX) $^ $(LDFLAGS) -o $@
+
+# frontier_test.cpp existed with no target and no place in `make test`, so its
+# 8 assertions had never run. Wired up.
+frontier_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/frontier_test.o
+	$(CXX) $^ $(LDFLAGS) -o $@
+
 test-property: property_bridge_test
 	./property_bridge_test
 
@@ -285,11 +311,17 @@ test-action-spawn: action_spawn_test
 test-serialization: serialization_compat_test
 	./serialization_compat_test
 
-test: test-property test-law test-creation test-loop test-recorder test-concept test-graph test-meta test-math test-continuous test-timeflow test-persist test-geomcache test-glucompat test-zone test-material test-material-render test-primitive-render test-action-spawn test-serialization
+test-security: security_manager_test
+	./security_manager_test
+
+test-frontier: frontier_test
+	./frontier_test
+
+test: test-property test-law test-creation test-loop test-recorder test-concept test-graph test-meta test-math test-continuous test-timeflow test-persist test-geomcache test-glucompat test-zone test-material test-material-render test-primitive-render test-action-spawn test-serialization test-security test-frontier
 
 # Pull in auto-generated header dependencies (.d files next to each .o)
 -include $(OBJECTS:.o=.d)
 -include $(wildcard $(BUILD_DIR)/tests/*.d)
 
 # Phony targets
-.PHONY: all clean run webgpu-smoke webgpu-mesh webgpu-renderer webgpu-window test test-property test-law test-loop test-recorder test-concept test-graph test-meta test-math test-continuous test-timeflow test-persist test-geomcache test-glucompat test-zone test-material test-material-render test-primitive-render
+.PHONY: all clean run webgpu-smoke webgpu-mesh webgpu-renderer webgpu-window test test-property test-law test-creation test-loop test-recorder test-concept test-graph test-meta test-math test-continuous test-timeflow test-persist test-geomcache test-glucompat test-zone test-material test-material-render test-primitive-render test-action-spawn test-serialization test-security test-frontier

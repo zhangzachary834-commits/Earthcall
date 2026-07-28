@@ -43,6 +43,41 @@ namespace {
         return out;
     }
 
+    // ---- Flat-fill face textures ------------------------------------------
+    // A face that has never been painted holds exactly what FaceTexture::create
+    // put there: one RGBA colour repeated size*size times. Writing that out as
+    // base64 costs 21,848 characters to say "this face is red".
+    //
+    // Measured on saves/games/20260727_200003_QuickSave.json — a 290-object
+    // world — ALL 1,740 stored face textures were uniform, and there were three
+    // distinct colours between them. That was 38 MB of an 80 MB save.
+    //
+    // So: uniform textures serialize as "fillRGBA", everything else still goes
+    // out as pixels. Lossless either way, and it needs no dirty tracking, which
+    // means it keeps working across load/save round-trips.
+    bool uniformFillRGBA(const std::vector<uint8_t>& px, uint32_t& fill) {
+        if (px.size() < 4 || px.size() % 4 != 0) return false;
+        const uint8_t r = px[0], g = px[1], b = px[2], a = px[3];
+        for (size_t i = 4; i < px.size(); i += 4) {
+            if (px[i] != r || px[i + 1] != g || px[i + 2] != b || px[i + 3] != a) return false;
+        }
+        fill = (static_cast<uint32_t>(r) << 24) | (static_cast<uint32_t>(g) << 16) |
+               (static_cast<uint32_t>(b) << 8)  |  static_cast<uint32_t>(a);
+        return true;
+    }
+
+    std::vector<uint8_t> expandFillRGBA(uint32_t fill, int size) {
+        std::vector<uint8_t> px(static_cast<size_t>(size) * static_cast<size_t>(size) * 4);
+        const uint8_t r = static_cast<uint8_t>((fill >> 24) & 0xFF);
+        const uint8_t g = static_cast<uint8_t>((fill >> 16) & 0xFF);
+        const uint8_t b = static_cast<uint8_t>((fill >> 8)  & 0xFF);
+        const uint8_t a = static_cast<uint8_t>( fill        & 0xFF);
+        for (size_t i = 0; i < px.size(); i += 4) {
+            px[i] = r; px[i + 1] = g; px[i + 2] = b; px[i + 3] = a;
+        }
+        return px;
+    }
+
     inline uint8_t b64Val(char c) {
         if (c >= 'A' && c <= 'Z') return static_cast<uint8_t>(c - 'A');
         if (c >= 'a' && c <= 'z') return static_cast<uint8_t>(c - 'a' + 26);
@@ -62,10 +97,14 @@ namespace {
 
         size_t len = s.size();
         if (len % 4 != 0) return {};
+        // Padding is a SUFFIX: "==" only counts as two when the '=' before the
+        // last one is really trailing. Testing the two positions independently
+        // scored malformed input like "AB=C" as one pad and produced a wrong
+        // output length.
         size_t pad = 0;
-        if (len >= 2) {
-            if (s[len - 1] == '=') pad++;
-            if (s[len - 2] == '=') pad++;
+        if (len >= 2 && s[len - 1] == '=') {
+            pad = 1;
+            if (s[len - 2] == '=') pad = 2;
         }
         size_t outLen = (len / 4) * 3 - pad;
         std::vector<uint8_t> out; out.reserve(outLen);
@@ -240,10 +279,18 @@ void to_json(nlohmann::json& j, const Object& obj){
             }
             nlohmann::json ftj;
             ftj["size"] = ft.size;
-            ftj["pixelsB64"] = base64Encode(ft.pixels);
+            uint32_t fill = 0;
+            if (uniformFillRGBA(ft.pixels, fill)) {
+                ftj["fillRGBA"] = fill;          // flat colour — see uniformFillRGBA
+            } else {
+                ftj["pixelsB64"] = base64Encode(ft.pixels);
+            }
             texArr.push_back(std::move(ftj));
         }
-        j["textureVersion"] = 1;
+        // v2 adds "fillRGBA" as an alternative to "pixelsB64". The loader reads
+        // both and does not consult this number; it is here so a human reading
+        // a save can tell which writer produced it.
+        j["textureVersion"] = 2;
         j["faceTextures"] = std::move(texArr);
     }
 }
@@ -369,15 +416,22 @@ void from_json(const nlohmann::json& j, Object& obj){
         for (int i = 0; i < limit; ++i) {
             const auto& ftj = arr[i];
             int size = ftj.value("size", (i < static_cast<int>(obj.faceTextures.size()) ? obj.faceTextures[i].size : 64));
-            std::string b64 = ftj.value("pixelsB64", std::string());
-            if (!b64.empty()) {
-                std::vector<uint8_t> data = base64Decode(b64);
-                if (size > 0 && static_cast<int>(data.size()) == size * size * 4 && i < static_cast<int>(obj.faceTextures.size())) {
-                    auto& ft = obj.faceTextures[i];
-                    ft.size = size;
-                    ft.pixels = std::move(data);
-                    ft.updateWholeGPU();
-                }
+            // v2 writes a flat face as "fillRGBA"; v1 and painted faces carry
+            // "pixelsB64". Both spellings are read, so old saves load unchanged.
+            std::vector<uint8_t> data;
+            if (ftj.contains("fillRGBA") && size > 0) {
+                data = expandFillRGBA(ftj.value("fillRGBA", 0u), size);
+            } else {
+                std::string b64 = ftj.value("pixelsB64", std::string());
+                if (!b64.empty()) data = base64Decode(b64);
+            }
+            if (!data.empty() && size > 0 &&
+                static_cast<int>(data.size()) == size * size * 4 &&
+                i < static_cast<int>(obj.faceTextures.size())) {
+                auto& ft = obj.faceTextures[i];
+                ft.size = size;
+                ft.pixels = std::move(data);
+                ft.updateWholeGPU();
             }
         }
     }
@@ -423,10 +477,18 @@ nlohmann::json bodyPartToJson(const BodyPart& part) {
             }
             nlohmann::json ftj;
             ftj["size"] = ft.size;
-            ftj["pixelsB64"] = base64Encode(ft.pixels);
+            uint32_t fill = 0;
+            if (uniformFillRGBA(ft.pixels, fill)) {
+                ftj["fillRGBA"] = fill;          // flat colour — see uniformFillRGBA
+            } else {
+                ftj["pixelsB64"] = base64Encode(ft.pixels);
+            }
             texArr.push_back(std::move(ftj));
         }
-        j["textureVersion"] = 1;
+        // v2 adds "fillRGBA" as an alternative to "pixelsB64". The loader reads
+        // both and does not consult this number; it is here so a human reading
+        // a save can tell which writer produced it.
+        j["textureVersion"] = 2;
         j["faceTextures"] = std::move(texArr);
     }
 
@@ -518,16 +580,21 @@ void bodyPartFromJson(const nlohmann::json& j, BodyPart& part) {
         for (int i = 0; i < limit; ++i) {
             const auto& ftj = arr[i];
             int size = ftj.value("size", (i < static_cast<int>(part.faceTextures.size()) ? part.faceTextures[i].size : 64));
-            std::string b64 = ftj.value("pixelsB64", std::string());
-            if (!b64.empty()) {
-                std::vector<uint8_t> data = base64Decode(b64);
-                if (size > 0 && static_cast<int>(data.size()) == size * size * 4 &&
-                    i < static_cast<int>(part.faceTextures.size())) {
-                    auto& ft = part.faceTextures[i];
-                    ft.size = size;
-                    ft.pixels = std::move(data);
-                    ft.updateWholeGPU();
-                }
+            // Same two spellings as the Object path above.
+            std::vector<uint8_t> data;
+            if (ftj.contains("fillRGBA") && size > 0) {
+                data = expandFillRGBA(ftj.value("fillRGBA", 0u), size);
+            } else {
+                std::string b64 = ftj.value("pixelsB64", std::string());
+                if (!b64.empty()) data = base64Decode(b64);
+            }
+            if (!data.empty() && size > 0 &&
+                static_cast<int>(data.size()) == size * size * 4 &&
+                i < static_cast<int>(part.faceTextures.size())) {
+                auto& ft = part.faceTextures[i];
+                ft.size = size;
+                ft.pixels = std::move(data);
+                ft.updateWholeGPU();
             }
         }
     }

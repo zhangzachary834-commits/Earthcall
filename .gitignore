@@ -1,0 +1,58 @@
+# Earthcall — ignore rules.
+#
+# Before this file existed the repository tracked 2,481 MB, of which 7.7 MB was
+# hand-written source. The rest was build output, compiled binaries, debug
+# bundles, a committed virtualenv, and 1.9 GB of runtime save data. Everything
+# listed here is REGENERATED from the sources, or is user data that was never
+# source in the first place.
+
+# --- macOS -------------------------------------------------------------------
+.DS_Store
+._*
+
+# --- C++ build output --------------------------------------------------------
+build/
+*.o
+*.d
+*.dSYM/
+*.gch
+*.pch
+
+# Compiled binaries. The app and every test target land in sight-cpp/ next to
+# the Makefile; 32 of them were tracked, at ~6.5 MB each.
+sight-cpp/earthcall
+sight-cpp/src/earthcall
+sight-cpp/*_test
+sight-cpp/test_parse
+sight-cpp/test_parse2
+sight-cpp/webgpu_smoke
+sight-cpp/webgpu_mesh
+sight-cpp/webgpu_renderer
+sight-cpp/webgpu_window
+sight-cpp/tests/*_test
+TestLabAI/testlab_ai
+# ...but keep the sources that build them.
+!*.cpp
+!*.hpp
+!*.h
+
+# wgpu-native: the static .a is committed on purpose; the .dylib is unused.
+sight-cpp/third_party/wgpu/lib/libwgpu_native.dylib
+
+# --- Runtime output ----------------------------------------------------------
+# Save games are USER DATA produced by running the program, not source. They
+# were the single largest thing in the repository (1.9 GB across 330 files,
+# with two individual saves over 100 MB each). Test fixtures belong in
+# sight-cpp/tests/fixtures/, which is deliberately not ignored.
+sight-cpp/saves/
+sight-cpp/save.json
+sight-cpp/debug_log.txt
+sight-cpp/run.log
+sight-cpp/imgui.ini
+sight-cpp/scratch/
+
+# --- Python ------------------------------------------------------------------
+venv/
+.venv/
+__pycache__/
+*.py[cod]

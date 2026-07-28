@@ -4,6 +4,7 @@
 #include <fstream>
 #include <sstream>
 #include <algorithm>
+#include <cctype>
 #include <ctime>
 #include <iomanip>
 
@@ -40,7 +41,10 @@ nlohmann::json SecurityConfig::serialize() const {
     j["enableSandboxing"] = enableSandboxing;
     j["logAllEvents"] = logAllEvents;
     j["requireUserConfirmation"] = requireUserConfirmation;
-    
+    j["activityWindowSeconds"] = activityWindowSeconds;
+    j["maxEventsPerWindow"] = maxEventsPerWindow;
+    j["maxBlockedEvents"] = maxBlockedEvents;
+
     // Serialize default permissions
     j["defaultPermissions"] = nlohmann::json::array();
     for (const auto& perm : defaultPermissions) {
@@ -58,7 +62,11 @@ void SecurityConfig::deserialize(const nlohmann::json& j) {
     enableSandboxing = j.value("enableSandboxing", true);
     logAllEvents = j.value("logAllEvents", true);
     requireUserConfirmation = j.value("requireUserConfirmation", true);
-    
+    // Saves predating these fields get the standard policy.
+    activityWindowSeconds = j.value("activityWindowSeconds", 60);
+    maxEventsPerWindow = j.value("maxEventsPerWindow", 100);
+    maxBlockedEvents = j.value("maxBlockedEvents", 10);
+
     // Deserialize default permissions
     defaultPermissions.clear();
     if (j.contains("defaultPermissions") && j["defaultPermissions"].is_array()) {
@@ -189,9 +197,16 @@ bool SecurityManager::isURLWhitelisted(const std::string& url) {
     if (_config.whitelistedDomains.empty()) {
         return true; // No whitelist means all allowed
     }
-    
+
+    // Compare HOSTS, never raw URL text. A prefix test on the whole URL let
+    // "https://trusted.example.attacker.test/" pass a whitelist of
+    // "https://trusted.example" — the attacker picks a domain that starts
+    // with yours and walks straight through.
+    const std::string host = _extractHost(url);
+    if (host.empty()) return false;
+
     for (const auto& domain : _config.whitelistedDomains) {
-        if (url.find(domain) == 0) {
+        if (_hostMatchesDomain(host, domain)) {
             return true;
         }
     }
@@ -199,8 +214,14 @@ bool SecurityManager::isURLWhitelisted(const std::string& url) {
 }
 
 bool SecurityManager::isURLBlacklisted(const std::string& url) {
+    // Host comparison here too: a substring test blocked innocent URLs that
+    // merely mentioned a blacklisted domain (in a query parameter, say) while
+    // a trailing dot was enough to evade it.
+    const std::string host = _extractHost(url);
+    if (host.empty()) return false;
+
     for (const auto& domain : _config.blacklistedDomains) {
-        if (url.find(domain) != std::string::npos) {
+        if (_hostMatchesDomain(host, domain)) {
             return true;
         }
     }
@@ -334,11 +355,11 @@ MessageValidationResult SecurityManager::validateMessage(const std::string& mess
         return result;
     }
     
-    // Basic JSON validation (if it's supposed to be JSON)
+    // Basic JSON validation (if it's supposed to be JSON). accept() reports
+    // well-formedness without building the document or throwing — we only ever
+    // wanted the verdict, and parse() forced us to discard a whole DOM to get it.
     if (message.find('{') != std::string::npos || message.find('[') != std::string::npos) {
-        try {
-            nlohmann::json::parse(message);
-        } catch (const std::exception& e) {
+        if (!nlohmann::json::accept(message)) {
             result.reason = "Invalid JSON format";
             logEvent(SecurityEventType::INVALID_MESSAGE, "Invalid JSON message", source, message, true);
             return result;
@@ -358,13 +379,19 @@ bool SecurityManager::isMessageAllowed(const std::string& message, const std::st
     return validateMessage(message, source).isValid;
 }
 
-std::string SecurityManager::generateCSP(const std::string& source) {
+std::string SecurityManager::generateCSP(const std::string& /*source*/) {
+    // The policy is the same for every source today; the parameter is kept so
+    // per-origin policies can land without touching every call site.
     if (!_config.enableCSP) {
         return "";
     }
     
+    // No 'unsafe-inline' in script-src. It used to be here, and it re-permits
+    // exactly the inline-script injection the policy exists to stop — with it
+    // present the directive bought almost nothing. Inline STYLE is left
+    // permitted: it is a far smaller exposure and the embedded pages rely on it.
     std::string csp = "default-src 'self'; ";
-    csp += "script-src 'self' 'unsafe-inline'; ";
+    csp += "script-src 'self'; ";
     csp += "style-src 'self' 'unsafe-inline'; ";
     csp += "img-src 'self' data: https:; ";
     csp += "connect-src 'self' https:; ";
@@ -383,7 +410,13 @@ std::string SecurityManager::generateSandboxPolicy() {
         return "";
     }
     
-    return "allow-scripts allow-same-origin allow-forms allow-popups";
+    // allow-same-origin is deliberately absent. Paired with allow-scripts it
+    // is self-defeating: a frame granted both can reach into its parent's
+    // origin and strip its own sandbox attribute, so the pair sandboxes
+    // nothing. allow-popups goes too — a popup escapes the sandbox entirely
+    // unless allow-popups-to-escape-sandbox is withheld, and we have no need
+    // to open one.
+    return "allow-scripts allow-forms";
 }
 
 void SecurityManager::logEvent(SecurityEventType type, const std::string& description, 
@@ -397,21 +430,48 @@ void SecurityManager::logEvent(SecurityEventType type, const std::string& descri
     event.blocked = blocked;
     
     _securityLog.push_back(event);
-    _sourceActivityCount[source]++;
-    
-    // Keep log size manageable
-    if (_securityLog.size() > 10000) {
-        _securityLog.erase(_securityLog.begin(), _securityLog.begin() + 1000);
+    if (blocked) _blockedEventCount[source]++;
+
+    // Roll the activity window forward before counting this event, so the
+    // threshold means "maxEventsPerWindow events in activityWindowSeconds"
+    // — which is what the policy has always claimed.
+    // ">=", not ">": an event landing exactly activityWindowSeconds after the
+    // window opened is outside a window of that length. std::time_t is whole
+    // seconds, so the distinction is real at small window sizes.
+    std::time_t& windowStart = _activityWindowStart[source];
+    if (windowStart == 0 ||
+        event.timestamp - windowStart >= static_cast<std::time_t>(_config.activityWindowSeconds)) {
+        windowStart = event.timestamp;
+        _sourceActivityCount[source] = 0;
     }
-    
-    // Check for suspicious activity
-    if (detectSuspiciousActivity(source)) {
+    _sourceActivityCount[source]++;
+
+    // Keep log size manageable. The per-source blocked tallies are maintained
+    // incrementally, so anything dropped here has to be subtracted back out.
+    if (_securityLog.size() > kMaxLogEntries) {
+        auto last = _securityLog.begin() + static_cast<std::ptrdiff_t>(kLogTrimCount);
+        for (auto it = _securityLog.begin(); it != last; ++it) {
+            if (!it->blocked) continue;
+            auto tally = _blockedEventCount.find(it->source);
+            if (tally != _blockedEventCount.end() && --tally->second <= 0) {
+                _blockedEventCount.erase(tally);
+            }
+        }
+        _securityLog.erase(_securityLog.begin(), last);
+    }
+
+    // Check for suspicious activity. blockSource() logs, and logging lands
+    // back here — it is only safe to call because blockSource returns without
+    // logging when the source is already blocked. Do not remove that guard:
+    // nothing in this cycle lowers the activity count, so re-entry would
+    // recurse until the stack is exhausted.
+    if (!isSourceBlocked(source) && detectSuspiciousActivity(source)) {
         blockSource(source);
         if (_securityAlertCallback) {
             _securityAlertCallback(event);
         }
     }
-    
+
     // Output to console for debugging
     std::cout << "🔒 Security: " << description << " from " << source;
     if (blocked) {
@@ -423,6 +483,8 @@ void SecurityManager::logEvent(SecurityEventType type, const std::string& descri
 void SecurityManager::clearSecurityLog() {
     _securityLog.clear();
     _sourceActivityCount.clear();
+    _activityWindowStart.clear();
+    _blockedEventCount.clear();
 }
 
 void SecurityManager::exportSecurityLog(const std::string& filename) {
@@ -454,33 +516,35 @@ void SecurityManager::exportSecurityLog(const std::string& filename) {
 }
 
 bool SecurityManager::detectSuspiciousActivity(const std::string& source) {
+    // Too many events inside the current rolling window.
     auto it = _sourceActivityCount.find(source);
-    if (it != _sourceActivityCount.end()) {
-        // Block if more than 100 events in 1 minute
-        if (it->second > 100) {
-            return true;
-        }
+    if (it != _sourceActivityCount.end() && it->second > _config.maxEventsPerWindow) {
+        return true;
     }
-    
-    // Check for blocked events
-    int blockedCount = 0;
-    for (const auto& event : _securityLog) {
-        if (event.source == source && event.blocked) {
-            blockedCount++;
-        }
-    }
-    
-    // Block if more than 10 blocked events
-    return blockedCount > 10;
+
+    // Or too many events we actually refused. Read from the running tally
+    // rather than rescanning the log.
+    auto blocked = _blockedEventCount.find(source);
+    return blocked != _blockedEventCount.end() && blocked->second > _config.maxBlockedEvents;
 }
 
 void SecurityManager::blockSource(const std::string& source) {
-    _blockedSources.insert(source);
+    // Already blocked: return WITHOUT logging. logEvent calls back into
+    // blockSource when a source looks suspicious, and nothing in that cycle
+    // lowers the activity count — so re-logging here recurses forever and
+    // exhausts the stack. This early return is what terminates it.
+    if (!_blockedSources.insert(source).second) return;
     logEvent(SecurityEventType::SUSPICIOUS_ACTIVITY, "Source blocked due to suspicious activity", source);
 }
 
 void SecurityManager::unblockSource(const std::string& source) {
-    _blockedSources.erase(source);
+    if (_blockedSources.erase(source) == 0) return;
+    // Clear what got it blocked. Otherwise the very next logEvent — including
+    // the one below — sees the old counts, decides the source is still
+    // suspicious, and blocks it straight back, making unblocking a no-op.
+    _sourceActivityCount.erase(source);
+    _activityWindowStart.erase(source);
+    _blockedEventCount.erase(source);
     logEvent(SecurityEventType::SUSPICIOUS_ACTIVITY, "Source unblocked", source);
 }
 
@@ -515,42 +579,23 @@ bool SecurityManager::isAPICallAllowed(const std::string& api, const std::string
 }
 
 bool SecurityManager::validateJavaScript(const std::string& script, const std::string& source) {
-    // Check for malicious patterns
-    for (const auto& pattern : _maliciousPatterns) {
+    // Tripwire, not a boundary — see the note on the declaration. The scripts
+    // reaching here are the ones Earthcall itself injects, so a hit means
+    // something upstream is building a script it should not be.
+    for (const auto& pattern : _jsHighRiskPatterns) {
         if (std::regex_search(script, pattern)) {
-            logEvent(SecurityEventType::JAVASCRIPT_EXECUTION, "Malicious JavaScript detected", source, script, true);
+            logEvent(SecurityEventType::JAVASCRIPT_EXECUTION, "High-risk JavaScript blocked", source, script, true);
             return false;
         }
     }
-    
-    // Check for suspicious patterns
-    for (const auto& pattern : _suspiciousPatterns) {
-        if (std::regex_search(script, pattern)) {
-            logEvent(SecurityEventType::SUSPICIOUS_ACTIVITY, "Suspicious JavaScript detected", source, script);
-        }
-    }
-    
-    return true;
-}
 
-std::string SecurityManager::sanitizeJavaScript(const std::string& script) {
-    std::string sanitized = script;
-    
-    // Remove potentially dangerous functions
-    std::vector<std::string> dangerousFunctions = {
-        "eval(", "Function(", "setTimeout(", "setInterval(", 
-        "document.write(", "document.writeln(", "innerHTML ="
-    };
-    
-    for (const auto& func : dangerousFunctions) {
-        size_t pos = 0;
-        while ((pos = sanitized.find(func, pos)) != std::string::npos) {
-            sanitized.replace(pos, func.length(), "// BLOCKED: " + func);
-            pos += 15; // Length of "// BLOCKED: "
+    for (const auto& pattern : _jsNoteworthyPatterns) {
+        if (std::regex_search(script, pattern)) {
+            logEvent(SecurityEventType::SUSPICIOUS_ACTIVITY, "Noteworthy JavaScript construct", source, script);
         }
     }
-    
-    return sanitized;
+
+    return true;
 }
 
 void SecurityManager::saveSecurityData() {
@@ -688,6 +733,60 @@ bool SecurityManager::_isLocalFile(const std::string& url) {
     return url.find("file://") == 0 || url.find("data:") == 0;
 }
 
+std::string SecurityManager::_extractHost(const std::string& url) {
+    const std::size_t schemeEnd = url.find("://");
+    if (schemeEnd == std::string::npos) return "";
+
+    // The authority runs from after "://" to the first '/', '?' or '#'.
+    const std::size_t authStart = schemeEnd + 3;
+    std::size_t authEnd = url.size();
+    for (std::size_t i = authStart; i < url.size(); ++i) {
+        if (url[i] == '/' || url[i] == '?' || url[i] == '#') { authEnd = i; break; }
+    }
+    std::string authority = url.substr(authStart, authEnd - authStart);
+
+    // Drop "user:pass@". The LAST '@' wins: "https://good.example@evil.test/"
+    // is a request to evil.test, and taking the first '@' would read it as
+    // good.example — the classic userinfo confusion.
+    const std::size_t at = authority.rfind('@');
+    if (at != std::string::npos) authority = authority.substr(at + 1);
+
+    // Drop ":port". Guard against IPv6 literals, whose brackets contain colons.
+    if (!authority.empty() && authority.front() == '[') {
+        const std::size_t close = authority.find(']');
+        if (close != std::string::npos) authority = authority.substr(0, close + 1);
+    } else {
+        const std::size_t colon = authority.find(':');
+        if (colon != std::string::npos) authority = authority.substr(0, colon);
+    }
+
+    // A trailing dot is a fully-qualified name and still resolves, so
+    // "evil.test." and "evil.test" must compare equal.
+    while (!authority.empty() && authority.back() == '.') authority.pop_back();
+
+    std::transform(authority.begin(), authority.end(), authority.begin(),
+                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    return authority;
+}
+
+bool SecurityManager::_hostMatchesDomain(const std::string& host, const std::string& domain) {
+    // Configs predating host matching stored whole URLs
+    // ("https://trusted.earthcall.com"); accept both spellings.
+    std::string d = domain.find("://") != std::string::npos ? _extractHost(domain) : domain;
+    while (!d.empty() && d.back() == '.') d.pop_back();
+    std::transform(d.begin(), d.end(), d.begin(),
+                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    if (d.empty() || host.empty()) return false;
+
+    if (host == d) return true;
+    // Subdomains only, and only on a label boundary: "app.earthcall.com" is
+    // under "earthcall.com"; "notearthcall.com" and
+    // "earthcall.com.attacker.test" are not.
+    return host.size() > d.size() &&
+           host.compare(host.size() - d.size(), d.size(), d) == 0 &&
+           host[host.size() - d.size() - 1] == '.';
+}
+
 bool SecurityManager::_containsSuspiciousContent(const std::string& content) {
     for (const auto& pattern : _suspiciousPatterns) {
         if (std::regex_search(content, pattern)) {
@@ -704,20 +803,41 @@ bool SecurityManager::_isRateLimited(const std::string& source) {
 void SecurityManager::_initializePatterns() {
     _suspiciousPatterns.clear();
     _maliciousPatterns.clear();
-    
-    // Suspicious patterns
+    _jsHighRiskPatterns.clear();
+    _jsNoteworthyPatterns.clear();
+
+    // ---- HTML/markup patterns, for message bodies -------------------------
+    // Note [\s\S] rather than '.': in std::regex's ECMAScript grammar '.' does
+    // not match a newline, so ".*?" could not span a multi-line <script> block
+    // and the check was trivially sidestepped by pressing Enter.
     _suspiciousPatterns.push_back(std::regex(R"(<script)", std::regex::icase));
     _suspiciousPatterns.push_back(std::regex(R"(javascript:)", std::regex::icase));
     _suspiciousPatterns.push_back(std::regex(R"(on\w+\s*=)", std::regex::icase));
     _suspiciousPatterns.push_back(std::regex(R"(eval\s*\()", std::regex::icase));
     _suspiciousPatterns.push_back(std::regex(R"(document\.write)", std::regex::icase));
-    
-    // Malicious patterns
-    _maliciousPatterns.push_back(std::regex(R"(<script[^>]*>.*?</script>)", std::regex::icase));
+
+    _maliciousPatterns.push_back(std::regex(R"(<script[^>]*>[\s\S]*?</script>)", std::regex::icase));
     _maliciousPatterns.push_back(std::regex(R"(javascript:[^;]*;)", std::regex::icase));
     _maliciousPatterns.push_back(std::regex(R"(onload\s*=)", std::regex::icase));
     _maliciousPatterns.push_back(std::regex(R"(onerror\s*=)", std::regex::icase));
     _maliciousPatterns.push_back(std::regex(R"(<iframe)", std::regex::icase));
+
+    // ---- JavaScript patterns, for validateJavaScript -----------------------
+    // The old code fed the HTML patterns above to validateJavaScript, so it was
+    // scanning JavaScript source for "<script>" and "<iframe" tags and passing
+    // essentially every real payload. These are at least about the language.
+    // They still only catch the literal spelling — see the header note.
+    _jsHighRiskPatterns.push_back(std::regex(R"(\beval\s*\()", std::regex::icase));
+    _jsHighRiskPatterns.push_back(std::regex(R"(\bnew\s+Function\s*\()", std::regex::icase));
+    _jsHighRiskPatterns.push_back(std::regex(R"(\bdocument\s*\.\s*cookie\b)", std::regex::icase));
+    _jsHighRiskPatterns.push_back(std::regex(R"(\b(localStorage|sessionStorage|indexedDB)\b)", std::regex::icase));
+    _jsHighRiskPatterns.push_back(std::regex(R"(\bdocument\s*\.\s*write(ln)?\s*\()", std::regex::icase));
+    _jsHighRiskPatterns.push_back(std::regex(R"(\bwindow\s*\.\s*(open|top|parent|opener)\b)", std::regex::icase));
+
+    _jsNoteworthyPatterns.push_back(std::regex(R"(\b(fetch|XMLHttpRequest|WebSocket|sendBeacon)\b)", std::regex::icase));
+    _jsNoteworthyPatterns.push_back(std::regex(R"(\b(setTimeout|setInterval)\s*\(\s*['"])", std::regex::icase));
+    _jsNoteworthyPatterns.push_back(std::regex(R"(\.innerHTML\s*=)", std::regex::icase));
+    _jsNoteworthyPatterns.push_back(std::regex(R"(\bimport\s*\()", std::regex::icase));
 }
 
 bool SecurityManager::_checkRateLimit(const std::string& source) {

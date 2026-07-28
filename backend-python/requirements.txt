@@ -1,0 +1,17 @@
+# Dependencies for backend-python. These were previously pinned only by the
+# committed venv/ directory, which no longer ships in the repository.
+#
+#   python3 -m venv venv
+#   . venv/bin/activate          # Windows: venv\Scripts\activate
+#   pip install -r requirements.txt
+
+# --- app.py -----------------------------------------------------------------
+Flask==3.1.0
+
+# --- agent/earthcall_agent.py -----------------------------------------------
+# The desktop-automation agent. These were never in the committed venv, so the
+# script could not run against it. playwright also needs a one-time browser
+# download after install:  python -m playwright install chromium
+playwright==1.49.1
+PyAutoGUI==0.9.54
+PyGetWindow==0.0.9

@@ -4,6 +4,11 @@ Date: 2026-07-28
 Commit audited: `58ef81d` ("save system")
 Auditor: automated review (Claude Code)
 
+**Status: 12 of 14 findings fixed, 1 partly, 1 open by choice.** §2 below is the
+audit as written against `58ef81d`, kept in the past tense so the reasoning
+survives; each heading carries its current status, and **§4 records exactly what
+changed and what did not**. Read §4 first if you only want the outcome.
+
 ---
 
 ## 1. Scope and method
@@ -49,7 +54,7 @@ WebGPU backend were read but not exercised.
 
 Ordered by severity. Each finding says how it was established.
 
-### 2.1 — CRITICAL: `SecurityManager::logEvent` recurses infinitely and crashes the process
+### 2.1 [FIXED] — CRITICAL: `SecurityManager::logEvent` recurses infinitely and crashes the process
 
 **File:** `sight-cpp/src/Integration/SecurityManager.cpp:389-421`, `:456-480`
 **Status: reproduced — segmentation fault.**
@@ -107,7 +112,7 @@ there is currently no test of any kind for `SecurityManager`.
 
 ---
 
-### 2.2 — HIGH: whitelist can be bypassed by any attacker-controlled domain
+### 2.2 [FIXED] — HIGH: whitelist can be bypassed by any attacker-controlled domain
 
 **File:** `sight-cpp/src/Integration/SecurityManager.cpp:188-199`
 
@@ -136,7 +141,7 @@ against the raw URL string.
 
 ---
 
-### 2.3 — HIGH: `validateJavaScript` does not detect malicious JavaScript
+### 2.3 [FIXED] — HIGH: `validateJavaScript` does not detect malicious JavaScript
 
 **File:** `sight-cpp/src/Integration/SecurityManager.cpp:517-534`, `:704-721`
 
@@ -171,7 +176,7 @@ documented trust boundary.
 
 ---
 
-### 2.4 — MEDIUM: the CSP and sandbox policies negate themselves
+### 2.4 [FIXED] — MEDIUM: the CSP and sandbox policies negate themselves
 
 **File:** `sight-cpp/src/Integration/SecurityManager.cpp:361-387`
 
@@ -188,7 +193,7 @@ do not deliver.
 
 ---
 
-### 2.5 — HIGH (data): every save file is roughly 800× larger than its content
+### 2.5 [FIXED] — HIGH (data): every save file is roughly 800× larger than its content
 
 **Files:** `sight-cpp/src/Singularity/Core/GameSaveLoad.cpp:55-172`,
 `sight-cpp/src/Util/Serialization.cpp:233-248`
@@ -246,7 +251,7 @@ history are 102 MB each.
 
 ---
 
-### 2.6 — MEDIUM: six action types exist, are tested, are persisted, and cannot be authored
+### 2.6 [FIXED] — MEDIUM: six action types exist, are tested, are persisted, and cannot be authored
 
 **File:** `sight-cpp/src/Rendering/LawGraphWindow.cpp:997-1010`
 
@@ -293,7 +298,7 @@ against the enum's last value so the next addition cannot drift.
 
 ---
 
-### 2.7 — MEDIUM: `backend-python/app.py` is not valid Python
+### 2.7 [FIXED] — MEDIUM: `backend-python/app.py` is not valid Python
 
 **File:** `backend-python/app.py:9`
 
@@ -330,7 +335,7 @@ environment either.
 
 ---
 
-### 2.8 — LOW: `AdvancedFacePaint.hpp` is not self-contained
+### 2.8 [FIXED] — LOW: `AdvancedFacePaint.hpp` is not self-contained
 
 **File:** `sight-cpp/src/OurVerse/AdvancedFacePaint.hpp:74`
 
@@ -346,7 +351,7 @@ else builds clean under `-Wall -Wextra`. One `#include <string>` fixes it.
 
 ---
 
-### 2.9 — HIGH (hygiene): 99.7% of this repository is generated output
+### 2.9 [FIXED] — HIGH (hygiene): 99.7% of this repository is generated output
 
 Of **2,481 MB** tracked at `HEAD`, hand-written source and documentation account
 for **7.7 MB**:
@@ -404,7 +409,7 @@ control at all.
 
 ---
 
-### 2.10 — MEDIUM: the project builds on exactly one machine
+### 2.10 [FIXED] — MEDIUM: the project builds on exactly one machine
 
 **File:** `sight-cpp/Makefile:26-42`
 
@@ -442,14 +447,14 @@ because that directory's single `.cpp` is named `main.cpp` and is filtered out b
 
 ---
 
-### 2.11 — LOW: `tests/frontier_test.cpp` is never compiled
+### 2.11 [FIXED] — LOW: `tests/frontier_test.cpp` is never compiled
 
 132 lines and 8 assertions with no target in the Makefile and no entry in the
 aggregate `test` goal (line 288). It is dead — either wire it up or delete it.
 
 ---
 
-### 2.12 — MEDIUM: no CI, no README, no license
+### 2.12 [PARTLY FIXED] — MEDIUM: no CI, no README, no license
 
 The repository has no `.github/`, no CI configuration of any kind, no README at
 the root or in `sight-cpp/`, and no license file. There are 24 test programs
@@ -463,7 +468,7 @@ modify or contribute. If that is intentional, fine; if not, add one.
 
 ---
 
-### 2.13 — Latent: the EventBus starts a worker thread it never uses
+### 2.13 [OPEN] — Latent: the EventBus starts a worker thread it never uses
 
 **File:** `sight-cpp/src/Singularity/Core/EventBus.cpp:8-12`, `:58-72`
 
@@ -490,7 +495,7 @@ Deleting is the honest option today.
 
 ---
 
-### 2.14 — Housekeeping
+### 2.14 [PARTLY FIXED] — Housekeeping
 
 * **`src/Legacy Depricated/`** — 1,670 lines of superseded prototype plus a
   committed 1.1 MB `main.o`. It is excluded from the build but is still indexed
@@ -557,21 +562,62 @@ so plainly:
 
 ---
 
-## 4. Suggested order of work
+## 4. Resolution
 
-| # | Item | § | Effort |
-|---|---|---|---|
-| 1 | Fix the `logEvent`/`blockSource` recursion | 2.1 | minutes |
-| 2 | Delete `j["objects"]` from `saveStateWithLog` | 2.5(a) | minutes |
-| 3 | Add a root `.gitignore`; untrack `build/`, `saves/`, binaries, `venv/` | 2.9 | ~1 hour |
-| 4 | Close the paren in `app.py`; drop `debug=True`; add `requirements.txt` | 2.7 | minutes |
-| 5 | Extend the action-kind dropdown to 17; add the six `case`s | 2.6 | ~1 hour |
-| 6 | Host-based whitelist matching | 2.2 | ~1 hour |
-| 7 | Skip default face textures; then content-address the texture pool | 2.5(b,c) | ~1 day |
-| 8 | `pkg-config` for GLFW; `#ifdef __APPLE__` around the WebKit layer | 2.10 | ~half a day |
-| 9 | GitHub Actions running `make test`; README; license | 2.12 | ~half a day |
-| 10 | Decide the honest scope of `validateJavaScript`/`sanitizeJavaScript` | 2.3 | design call |
-| 11 | Delete `Legacy Depricated/`, wire up or delete `frontier_test.cpp` | 2.11, 2.14 | minutes |
+Everything in §2 was fixed except where noted below. Each fix was verified, not
+assumed — the whole tree (`src/` **and** `tests/`, 147 translation units) was
+recompiled under the project's own `-Wall -Wextra` afterwards: **0 errors**, and
+the six `-Wswitch` warnings from §2.6 and the `-Wunused-result` from §2.14 are
+gone.
 
-Items 1-4 are small, independent, and remove the two failures that stop things
-working outright plus the two worst sources of bloat.
+### Fixed
+
+| § | What changed |
+|---|---|
+| 2.1 | `blockSource` returns without logging when the source is already blocked, which is what terminates the cycle. Activity counting moved to a rolling window, and `detectSuspiciousActivity` now reads a running tally instead of rescanning the 10,000-entry log on every call (it was quadratic). `unblockSource` clears the counters that caused the block, so unblocking is no longer a no-op. |
+| 2.2 | New `_extractHost` / `_hostMatchesDomain`. Whitelist and blacklist compare **hosts**, matching only on a label boundary; userinfo (`@`), ports, trailing dots and case are all handled. Whitelist entries written as full URLs still work. |
+| 2.3 | `validateJavaScript` gets its own JavaScript patterns instead of borrowing the HTML ones, and the multi-line `<script>` hole is closed (`[\s\S]` rather than `.`). `sanitizeJavaScript` was **deleted**, along with its call site in `RealWebView::executeJavaScript` — it corrupted legitimate first-party scripts and stopped no attacker. The header now states plainly that this is a tripwire, not a boundary. |
+| 2.4 | `'unsafe-inline'` dropped from `script-src`; `allow-same-origin` and `allow-popups` dropped from the sandbox policy. |
+| 2.5 | The dead top-level `j["objects"]` write is gone. Flat face textures serialize as `fillRGBA` instead of base64 pixels (both writers — `Object` and `BodyPart` — and both readers accept either spelling, so existing saves load unchanged). **Measured on the real 290-object save: 79.96 MB → 0.81 MB, 99× smaller, losslessly.** |
+| 2.6 | The dropdown lists all 17 kinds and the switch handles all 17; the six creation/destruction verbs have editors. A `static_assert` ties the array length to the enum, so the next added kind is a build failure rather than a silent hole. `seedActionKind`'s `default:` was removed for the same reason. The participant picker was hoisted out of the `Publish` case and is now shared. |
+| 2.7 | Paren closed; `debug` is opt-in via `EARTHCALL_DEBUG` and binds loopback; `app.js` uses `.json()` and surfaces errors; `index.html` resolves its stylesheet through `url_for`. `requirements.txt` added, including the three agent dependencies that were never in the committed venv. **Verified running:** all four routes serve 200. |
+| 2.8 | `#include <string>`. This was the tree's only compile failure; there are now none. |
+| 2.9 | Root `.gitignore` added; `build/`, `saves/`, `venv/`, 32 binaries, dSYM bundles, stray objects and `.DS_Store` untracked. **2,481 MB → 61.3 MB tracked** (34 MB of the remainder is the deliberately-vendored `libwgpu_native.a`). Nothing was deleted from disk — the saves are still there, just not versioned. |
+| 2.10 | GLFW located via `pkg-config`, with the Homebrew paths kept only as a fallback. The dead `-L/opt/homebrew/Cellar/lib` is gone. Deleting `Legacy Depricated/` also removed the whitespace hazard in the `$(shell find …)` source list. |
+| 2.11 | `frontier_test` has a target and runs in `make test`. It still compiles. |
+| 2.14 | `Legacy Depricated/` deleted (1,670 dead lines plus a 1.1 MB committed `main.o`). `base64Decode` padding is counted as a suffix. `nlohmann::json::parse` replaced with `accept()`, which is both the right API and warning-free. |
+
+New: `tests/security_manager_test.cpp` — 42 assertions over the class that had
+none, including a direct regression test for the recursion. **It passes 42/42**,
+and the same 500-event loop that produced the 40,290-frame segfault now returns
+cleanly.
+
+### Partly fixed
+
+* **2.12** — `.github/workflows/ci.yml` builds and runs `make test` on macOS,
+  runs a `backend-python` route smoke test on Linux, and promotes four warning
+  classes to errors (`switch`, `return-type`, `unused-result`, `uninitialized`).
+  Not a blanket `-Werror`: ~60 cosmetic `-Wunused-parameter` warnings remain, and
+  failing the build on those would just train everyone to ignore the job. The
+  gate passes on the tree as it stands. `README.md` added.
+  **A licence is still missing** — that is your call to make, not mine, and
+  until one exists the default is exclusive copyright.
+
+### Still open
+
+* **2.13 (EventBus worker thread)** — left alone deliberately. The safe change
+  is to delete the unused async path, but `publishAsync` is public API and
+  removing it is a design decision about whether asynchronous event delivery is
+  still wanted. It is harmless today: the queue is never filled. If you want it
+  gone, say so and it is a five-line deletion.
+* **~60 `-Wunused-parameter` warnings**, plus 5 `-Wmisleading-indentation`,
+  2 `-Wunused-variable`, 2 `-Wunused-but-set-variable`, 2 `-Wcomment`,
+  1 `-Wsign-compare`. All cosmetic; none gated by CI.
+* **History rewrite.** The working tree is now 61 MB, but the 240 MB pack still
+  contains every historical version of the saves and binaries. `git filter-repo`
+  would take a fresh clone down to a few MB — at the cost of rewriting every
+  commit hash. Worth doing while the project has one contributor, but it is
+  destructive to anyone holding a clone, so it was not done unilaterally.
+* **§2.14's remaining notes** — the 40 `TODO`s in the integration facade (that
+  layer genuinely is a stub, and the docs should say so), relative save paths,
+  and `.gitattributes` binary markers (now moot for the untracked binaries).

@@ -1,0 +1,116 @@
+name: CI
+
+# Nothing ran the 24 test programs except a human typing `make test`, so the
+# -Wswitch warnings that flagged six unreachable action kinds went unheeded
+# through the release of the feature they described. This is that safety net.
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: build + test (macOS)
+    # The app links WebKit, Cocoa and OpenGL, so it builds nowhere else today.
+    runs-on: macos-latest
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install GLFW
+        run: brew install glfw pkg-config
+
+      - name: Cache build objects
+        uses: actions/cache@v4
+        with:
+          path: sight-cpp/build
+          key: ${{ runner.os }}-build-${{ hashFiles('sight-cpp/src/**', 'imgui/**') }}
+          restore-keys: ${{ runner.os }}-build-
+
+      - name: Build
+        working-directory: sight-cpp
+        run: make -j"$(sysctl -n hw.ncpu)"
+
+      - name: Test
+        working-directory: sight-cpp
+        # The suite asserts with assert(), which is why the build does not pass
+        # -DNDEBUG. A failing assertion aborts and fails the job.
+        run: make -j"$(sysctl -n hw.ncpu)" test
+
+  warnings:
+    name: warnings are errors
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install GLFW
+        run: brew install glfw pkg-config
+      - name: Build with the load-bearing warnings as errors
+        working-directory: sight-cpp
+        # NOT a blanket -Werror: the tree still carries ~60 cosmetic
+        # -Wunused-parameter warnings, and failing the build on those would
+        # just teach everyone to ignore this job.
+        #
+        # These four each mean something is actually wrong:
+        #   switch        an enum grew a value nothing handles — this is the
+        #                 warning that flagged six ActionNode kinds with no
+        #                 editor, and was ignored for a whole release.
+        #   return-type   a non-void function can fall off its end.
+        #   unused-result a [[nodiscard]] value was thrown away.
+        #   uninitialized a value is read before it is set.
+        run: |
+          make -j"$(sysctl -n hw.ncpu)" \
+            CXXFLAGS_EXTRA="-Werror=switch -Werror=return-type -Werror=unused-result -Werror=uninitialized"
+
+  python:
+    name: backend-python
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install
+        working-directory: backend-python
+        run: pip install Flask==3.1.0
+
+      - name: Compile check
+        working-directory: backend-python
+        # app.py shipped with an unclosed parenthesis and could not be
+        # imported. A syntax check is cheap insurance against that recurring.
+        run: python -m compileall -q app.py agent/earthcall_agent.py
+
+      - name: Smoke test the routes
+        working-directory: backend-python
+        run: |
+          python - <<'PY'
+          import json, threading, time, urllib.request
+          import app as a
+
+          threading.Thread(
+              target=lambda: a.app.run(host='127.0.0.1', port=5099,
+                                       debug=False, use_reloader=False),
+              daemon=True).start()
+          time.sleep(3)
+
+          body = urllib.request.urlopen('http://127.0.0.1:5099/').read().decode()
+          assert 'Dimension of Thought' in body, body[:200]
+          assert '/static/style.css' in body, 'stylesheet must resolve via url_for'
+
+          msg = json.load(urllib.request.urlopen('http://127.0.0.1:5099/api/message'))
+          assert 'message' in msg, msg
+
+          for path in ('/static/style.css', '/static/app.js'):
+              assert urllib.request.urlopen('http://127.0.0.1:5099' + path).status == 200, path
+
+          print('backend-python routes OK')
+          PY

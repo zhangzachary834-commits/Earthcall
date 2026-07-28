@@ -1,8 +1,9 @@
 #pragma once
 
 #include <glm/glm.hpp>
-#include <vector>
 #include <memory>
+#include <string>   // PaintResult::message — this header did not compile alone without it
+#include <vector>
 
 // Forward declarations
 class Object;
