@@ -171,7 +171,7 @@ void Object::drawCube() const {
     // Each of the 6 faces carries its own painted texture, so each is a separate
     // drawMesh with that face's material/texture — like drawComplexModel's patches.
     for (int f = 0; f < 6; ++f)
-        currentRenderer().drawMesh(cubeFace(f), resolveRenderMaterial(_materialId, faceTextureId(f)));
+        currentRenderer().drawMesh(cubeFace(f), resolveRenderMaterial(_materialId, faceAlbedo(f)));
 }
 
 
@@ -183,13 +183,22 @@ void Object::drawCube() const {
 // (OpenGLRenderer today, WebGpuRenderer at M5) owns it. faceTextures is the paint;
 // the material is the tint + light response; drawMesh composes them.
 
-// Per-face albedo texture id, or 0 when this object has none.
-unsigned int Object::faceTextureId(size_t face) const {
-    return face < faceTextures.size() ? faceTextures[face].id : 0u;
+// One face's albedo, in both the handle and CPU-pixel forms — see FaceAlbedo.
+// Empty when this object has no paint for that face, which leaves the surface
+// showing its material baseColor alone.
+FaceAlbedo Object::faceAlbedo(size_t face) const {
+    if (face >= faceTextures.size()) return {};
+    const FaceTexture& ft = faceTextures[face];
+    // A backend uploading from `pixels` trusts `size` to describe it. If the two
+    // ever disagree it would read past the end of the buffer, so treat a mismatch
+    // as "no paint" rather than handing out an overrun.
+    const size_t expected = static_cast<size_t>(ft.size) * ft.size * 4;
+    if (ft.size <= 0 || ft.pixels.size() != expected) return {};
+    return FaceAlbedo{ft.id, ft.pixels.data(), ft.size};
 }
 
 void Object::drawSmoothModel() const {
-    currentRenderer().drawMesh(_smoothMesh, resolveRenderMaterial(_materialId, faceTextureId(0)));
+    currentRenderer().drawMesh(_smoothMesh, resolveRenderMaterial(_materialId, faceAlbedo(0)));
 }
 
 void Object::drawComplexModel() const {
@@ -197,18 +206,18 @@ void Object::drawComplexModel() const {
     // and the flat caps can be painted independently.
     for (size_t i = 0; i < _complexMeshes.size(); ++i)
         currentRenderer().drawMesh(_complexMeshes[i],
-                                   resolveRenderMaterial(_materialId, faceTextureId(i)));
+                                   resolveRenderMaterial(_materialId, faceAlbedo(i)));
 }
 
 void Object::drawFieldModel() const {
-    currentRenderer().drawMesh(_fieldMesh, resolveRenderMaterial(_materialId, faceTextureId(0)));
+    currentRenderer().drawMesh(_fieldMesh, resolveRenderMaterial(_materialId, faceAlbedo(0)));
 }
 
 void Object::drawPatchModel() const {
     // A Bezier patch is an OPEN surface, not a closed volume — its back is visible.
     // doubleSided tells the renderer to light both faces (GL two-sided model today,
     // cull-none in WebGPU), so the underside isn't dark.
-    RenderMaterial mat = resolveRenderMaterial(_materialId, faceTextureId(0));
+    RenderMaterial mat = resolveRenderMaterial(_materialId, faceAlbedo(0));
     mat.doubleSided = true;
     currentRenderer().drawMesh(_patchMesh, mat);
 }
@@ -224,23 +233,23 @@ void Object::drawObject() const {
             break;
         case GeometryType::Sphere:
             currentRenderer().drawMesh(sphereUnitMesh(),
-                resolveRenderMaterial(_materialId, faceTextureId(0)));
+                resolveRenderMaterial(_materialId, faceAlbedo(0)));
             break;
         case GeometryType::Cylinder:
             // Side (face 0) then both caps (face 1) — geometry pre-centred on Z.
             currentRenderer().drawMesh(cylinderSideMesh(),
-                resolveRenderMaterial(_materialId, faceTextureId(0)));
+                resolveRenderMaterial(_materialId, faceAlbedo(0)));
             currentRenderer().drawMesh(capBottomMesh(),
-                resolveRenderMaterial(_materialId, faceTextureId(1)));
+                resolveRenderMaterial(_materialId, faceAlbedo(1)));
             currentRenderer().drawMesh(capTopMesh(),
-                resolveRenderMaterial(_materialId, faceTextureId(1)));
+                resolveRenderMaterial(_materialId, faceAlbedo(1)));
             break;
         case GeometryType::Cone:
             // Side (face 0) then base cap (face 1).
             currentRenderer().drawMesh(coneSideMesh(),
-                resolveRenderMaterial(_materialId, faceTextureId(0)));
+                resolveRenderMaterial(_materialId, faceAlbedo(0)));
             currentRenderer().drawMesh(capBottomMesh(),
-                resolveRenderMaterial(_materialId, faceTextureId(1)));
+                resolveRenderMaterial(_materialId, faceAlbedo(1)));
             break;
         case GeometryType::Polyhedron:
             drawPolyhedron();
@@ -371,5 +380,5 @@ void Object::drawPolyhedron() const {
     // as the immediate-mode version did — now through the renderer boundary.
     for (size_t f = 0; f < _polyhedronFaceMeshes.size(); ++f)
         currentRenderer().drawMesh(_polyhedronFaceMeshes[f],
-                                   resolveRenderMaterial(_materialId, faceTextureId(f)));
+                                   resolveRenderMaterial(_materialId, faceAlbedo(f)));
 }

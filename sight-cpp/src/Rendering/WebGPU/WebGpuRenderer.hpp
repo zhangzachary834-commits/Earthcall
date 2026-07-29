@@ -67,6 +67,10 @@ public:
     void setCamera(const glm::mat4& viewProj, const glm::vec3& eyePos) {
         _viewProj = viewProj; _eyePos = eyePos;
     }
+    // Declaring the 2-arg overload above would otherwise HIDE the boundary's
+    // 3-arg setCamera(view, proj, eye) for anyone holding a WebGpuRenderer by its
+    // concrete type — a silent "too many arguments" at the call site.
+    using Renderer::setCamera;
 
     // Renderer interface.
     void drawMesh(const geom::TessMesh& mesh, const RenderMaterial& material) override;
@@ -90,14 +94,12 @@ public:
     void setWireframe(bool on) override { _wireframe = on; }
     bool zeroToOneDepth() const override { return true; }
 
-    // This backend uploads RenderMaterial::albedoPixels per draw instead of
-    // holding persistent textures, so it keeps no handles: upload returns 0 and
-    // release is a no-op. Giving it real GPU-side textures is a Milestone 5
-    // caching refinement, not a correctness gap.
-    TextureHandle uploadTexture(TextureHandle, const uint8_t*, uint32_t, uint32_t) override {
-        return 0;
-    }
-    void releaseTexture(TextureHandle) override {}
+    // Persistent GPU textures for face paint. FaceTexture calls this only when the
+    // paint actually changes, so holding the texture means a repainted surface
+    // costs one upload instead of one per face per frame.
+    TextureHandle uploadTexture(TextureHandle handle, const uint8_t* rgba,
+                                uint32_t width, uint32_t height) override;
+    void releaseTexture(TextureHandle handle) override;
 
 protected:
     void applyBeginFrame(uint32_t width, uint32_t height,
@@ -160,6 +162,13 @@ private:
     WGPUTextureView _depthView = nullptr;
     uint32_t _depthW = 0, _depthH = 0;
     void ensureDepth(uint32_t width, uint32_t height);
+
+    // Textures this backend owns, keyed by the handle it hands out. Handles are
+    // dense counters rather than pointers so a stale one is inert (a failed
+    // lookup) instead of a dangling dereference.
+    struct OwnedTexture { WGPUTexture tex = nullptr; WGPUTextureView view = nullptr; uint32_t size = 0; };
+    std::map<TextureHandle, OwnedTexture> _textures;
+    TextureHandle _nextTexture = 1; // 0 means "none"
 
     // Albedo sampling: one shared sampler + a 1×1 white fallback for untextured
     // materials (so the bind group layout is always satisfied).

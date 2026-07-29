@@ -4,7 +4,7 @@
 
 extern MaterialManager materials; // global Material beings (globals.cpp)
 
-RenderMaterial resolveRenderMaterial(const std::string& materialId, unsigned int textureId) {
+RenderMaterial resolveRenderMaterial(const std::string& materialId, const FaceAlbedo& albedo) {
     RenderMaterial rm;
     if (auto m = materials.resolveOrDefault(materialId)) {
         rm.baseColor = m->baseColor;
@@ -14,6 +14,8 @@ RenderMaterial resolveRenderMaterial(const std::string& materialId, unsigned int
         rm.ambient   = m->ambient;
         rm.diffuse   = m->diffuse;
     }
-    rm.textureId = textureId;
+    rm.textureId    = albedo.handle;
+    rm.albedoPixels = albedo.pixels;
+    rm.albedoSize   = albedo.size;
     return rm;
 }

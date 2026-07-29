@@ -193,9 +193,22 @@ bool WebGpuRenderer::init(const wgpu::Device& gpu, WGPUTextureFormat colorFormat
     vbl.attributeCount = 3;
     vbl.attributes = attrs;
 
+    // Alpha blending so RenderMaterial::opacity actually means something. With the
+    // default opacity of 1.0 this is a no-op — src*1 + dst*0 is exactly what an
+    // unblended write does — so it costs nothing for opaque surfaces while making
+    // a translucent material render translucent instead of silently solid.
+    WGPUBlendState meshBlend = {};
+    meshBlend.color.operation = WGPUBlendOperation_Add;
+    meshBlend.color.srcFactor = WGPUBlendFactor_SrcAlpha;
+    meshBlend.color.dstFactor = WGPUBlendFactor_OneMinusSrcAlpha;
+    meshBlend.alpha.operation = WGPUBlendOperation_Add;
+    meshBlend.alpha.srcFactor = WGPUBlendFactor_One;
+    meshBlend.alpha.dstFactor = WGPUBlendFactor_OneMinusSrcAlpha;
+
     WGPUColorTargetState colorTarget = {};
     colorTarget.format = _colorFormat;
     colorTarget.writeMask = WGPUColorWriteMask_All;
+    colorTarget.blend = &meshBlend;
     WGPUFragmentState frag = {};
     frag.module = shader;
     frag.entryPoint = wgpu::Device::str("fs_main");
@@ -376,6 +389,11 @@ void WebGpuRenderer::shutdown() {
     if (_whiteView) { wgpuTextureViewRelease(_whiteView); _whiteView = nullptr; }
     if (_whiteTex)  { wgpuTextureRelease(_whiteTex); _whiteTex = nullptr; }
     if (_sampler)   { wgpuSamplerRelease(_sampler); _sampler = nullptr; }
+    for (auto& kv : _textures) {
+        wgpuTextureViewRelease(kv.second.view);
+        wgpuTextureRelease(kv.second.tex);
+    }
+    _textures.clear();
     for (auto& kv : _flatPipes) wgpuRenderPipelineRelease(kv.second);
     _flatPipes.clear();
     if (_flatLayout)  { wgpuPipelineLayoutRelease(_flatLayout); _flatLayout = nullptr; }
@@ -540,7 +558,13 @@ void WebGpuRenderer::drawMesh(const geom::TessMesh& mesh, const RenderMaterial& 
 
     // Albedo: upload the material's pixels to a WGPU texture, or fall back to white.
     WGPUTextureView albedoView = _whiteView;
-    if (mat.albedoPixels && mat.albedoSize > 0) {
+    // Prefer a texture this backend already owns: FaceTexture re-uploads only when
+    // the paint changes, so a static surface costs nothing per frame. The
+    // albedoPixels path below is the fallback for callers that hold no handle.
+    auto owned = _textures.find(mat.textureId);
+    if (mat.textureId != 0 && owned != _textures.end()) {
+        albedoView = owned->second.view;
+    } else if (mat.albedoPixels && mat.albedoSize > 0) {
         const uint32_t s = static_cast<uint32_t>(mat.albedoSize);
         WGPUTextureDescriptor atd = {};
         atd.usage = WGPUTextureUsage_TextureBinding | WGPUTextureUsage_CopyDst;
@@ -779,4 +803,55 @@ void WebGpuRenderer::drawImage2D(const uint8_t* rgba, uint32_t width, uint32_t h
     wgpuRenderPassEncoderSetBindGroup(_pass, 0, bg, 0, nullptr);
     wgpuRenderPassEncoderSetVertexBuffer(_pass, 0, vbuf, 0, sizeof(quad));
     wgpuRenderPassEncoderDraw(_pass, 6, 1, 0, 0);
+}
+
+// ---------------------------------------------------------------------------
+// Persistent textures. The handle is a dense counter, not a pointer: a stale
+// handle then fails a lookup harmlessly instead of dereferencing freed memory.
+// ---------------------------------------------------------------------------
+
+TextureHandle WebGpuRenderer::uploadTexture(TextureHandle handle, const uint8_t* rgba,
+                                            uint32_t width, uint32_t height) {
+    if (!_device || !rgba || width == 0 || height == 0) return handle;
+
+    auto it = _textures.find(handle);
+    // A resize cannot be done in place — drop the old texture and build again.
+    if (it != _textures.end() && it->second.size != width) {
+        wgpuTextureViewRelease(it->second.view);
+        wgpuTextureRelease(it->second.tex);
+        _textures.erase(it);
+        it = _textures.end();
+    }
+
+    if (it == _textures.end()) {
+        WGPUTextureDescriptor td = {};
+        td.usage = WGPUTextureUsage_TextureBinding | WGPUTextureUsage_CopyDst;
+        td.dimension = WGPUTextureDimension_2D;
+        td.size = { width, height, 1 };
+        td.format = WGPUTextureFormat_RGBA8Unorm;
+        td.mipLevelCount = 1; td.sampleCount = 1;
+        OwnedTexture ot;
+        ot.tex  = wgpuDeviceCreateTexture(_device, &td);
+        if (!ot.tex) return 0;
+        ot.view = wgpuTextureCreateView(ot.tex, nullptr);
+        ot.size = width;
+        if (handle == 0) handle = _nextTexture++;
+        it = _textures.emplace(handle, ot).first;
+    }
+
+    WGPUTexelCopyTextureInfo dst = {};
+    dst.texture = it->second.tex; dst.aspect = WGPUTextureAspect_All; dst.origin = { 0, 0, 0 };
+    WGPUTexelCopyBufferLayout lay = {};
+    lay.bytesPerRow = width * 4; lay.rowsPerImage = height;
+    WGPUExtent3D ext = { width, height, 1 };
+    wgpuQueueWriteTexture(_queue, &dst, rgba, size_t(width) * height * 4, &lay, &ext);
+    return handle;
+}
+
+void WebGpuRenderer::releaseTexture(TextureHandle handle) {
+    auto it = _textures.find(handle);
+    if (it == _textures.end()) return;
+    wgpuTextureViewRelease(it->second.view);
+    wgpuTextureRelease(it->second.tex);
+    _textures.erase(it);
 }

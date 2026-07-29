@@ -99,6 +99,45 @@ Backends implement `applyModel` / `applyCamera` / `applyBeginFrame` / `applyLigh
   `initialize()` ran at startup, so it would have demanded a GL context under
   `GLFW_NO_API`. The real painting is CPU-side and untouched.
 
+## Live on WebGPU (session 3)
+
+`make webgpu-app` -> `./earthcall_webgpu`. `make` -> `./earthcall` (OpenGL, unchanged).
+Backend choice is COMPILE-TIME: a window is created either with a GL context or
+`GLFW_NO_API`, and that cannot change afterwards. User confirmed on screen: imgui
+renders over the scene correctly.
+
+**Bug found on first real run, now fixed — the lesson matters more than the fix.**
+Every surface rendered WHITE. `RenderMaterial::albedoPixels` was read correctly by
+`WebGpuRenderer` *and* set correctly by the offscreen test fixture, while NOTHING
+in the app ever populated it — `resolveRenderMaterial` only took a GL texture id.
+Under OpenGL that id *was* the paint, so the gap was invisible. **A verb tested
+only through a hand-fed fixture passes while the production path feeding it does
+not exist.** Fixed by `Object::faceTextureId` -> `faceAlbedo`, returning a
+`FaceAlbedo{handle, pixels, size}` so each backend takes the form it can use.
+`tests/webgpu_object_test.cpp` now drives the REAL Object path and would have
+caught it (`make test-webgpu-object`).
+
+**Also done this session**
+- `WebGpuRenderer` now owns persistent textures (`uploadTexture`/`releaseTexture`)
+  instead of re-uploading every face every frame. `FaceTexture` only re-uploads
+  when paint changes, so a static surface costs nothing per frame.
+- Mesh pipeline gained alpha blending, so `RenderMaterial::opacity` means
+  something. Default opacity 1.0 makes it mathematically identical to no blending.
+- `OpenGLRenderer::uploadTexture` returns 0 when there is no GL context, so
+  Objects can be constructed headlessly. This turned `action_spawn_test`'s
+  segfault into a legible assertion failure (that test's own logic still fails —
+  it belongs to the law/spawn work, not rendering).
+- `using Renderer::setCamera;` in WebGpuRenderer — its 2-arg overload was HIDING
+  the boundary's 3-arg one for anyone holding the concrete type.
+
+**OPEN — process-teardown abort (not yet root-caused).** Bringing up a wgpu-native
+device in a process that also links this app's global objects aborts (SIGABRT)
+during STATIC DESTRUCTION, after main. Reproduces with no Objects created and with
+the texture cache disabled; `smoke_renderer` (same bring-up, no app globals) exits
+0; `earthcall_webgpu` itself shuts down cleanly. `webgpu_object_test` works around
+it with `std::_Exit(0)` after its assertions — that is a WORKAROUND, not a fix.
+Suspect an ordering conflict between wgpu/Metal teardown and a global destructor.
+
 ## Known gaps to close in Phase D
 - `WebGpuRenderer` stubs `drawSolid`/`begin2D`/`end2D`/`drawTris2D`/`drawLines2D`/
   `drawImage2D` — they `warnOnce` to stderr instead of drawing.

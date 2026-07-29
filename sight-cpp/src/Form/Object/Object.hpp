@@ -64,7 +64,9 @@ public:
         Cube = 0, Polyhedron = 1, Sphere = 2, Cylinder = 3, Cone = 4,  // legacy-aligned
         Ellipsoid = 5, Ovoid = 6, Paraboloid = 7, Torus = 8, RoundedBox = 9,
         Field = 10, // SDF expression (morph / boolean / implicit) — see fieldData
-        Patch = 11  // Bezier control-net surface — see patchData
+        Patch = 11, // Bezier control-net surface — see patchData
+        Shape2D = 12,
+        Text2D = 13
     };
 
     // Per-shape parameters (defaults match the geom factory defaults so an
@@ -80,6 +82,13 @@ public:
         float paraboloidA = 2.0f;   // paraboloid steepness
         float ovoidAsym   = 0.25f;  // ovoid taper
         float fillet      = 0.12f;  // rounded-box fillet radius
+        float width2D     = 100.0f; // 2D shape width
+        float height2D    = 100.0f; // 2D shape height
+        // Note: For std::string or complex types, PropertyBridge doesn't directly
+        // support pointers to members easily, so we typically use attributes/tags,
+        // but we'll add text properties here as floats or just handle text string 
+        // separately via Object attributes.
+
     };
 
     std::string screenMode();
@@ -202,6 +211,9 @@ private:
 
     bool physicalObject = true;
 
+    std::string _name;
+    std::string _textString;
+    std::string _entityName;
     std::string objectType;
     std::string objectID;
 
@@ -271,7 +283,7 @@ private:
     void drawComplexModel() const;
     void drawFieldModel() const;
     void drawPatchModel() const;
-    unsigned int faceTextureId(size_t face) const; // per-face albedo id, 0 if none
+    FaceAlbedo faceAlbedo(size_t face) const; // per-face albedo (handle + CPU pixels)
     void rebuildPolyhedronMeshes() const;          // rebuild _polyhedronFaceMeshes
     void rebuildGeometryCaches();
 
@@ -494,10 +506,13 @@ public:
             case ShapeKind::Paraboloid: setSmoothSurface(geom::makeParaboloid(p.paraboloidA));  break;
             case ShapeKind::Torus:      setSmoothSurface(geom::makeTorus(p.majorR, p.minorR));  break;
             case ShapeKind::RoundedBox: setComplexShape(geom::roundedBox(0.5f, p.fillet));      break;
+            case ShapeKind::Shape2D:
+            case ShapeKind::Text2D:
+                // No 3D geometry generated for 2D UI elements.
+                break;
             case ShapeKind::Field:
             case ShapeKind::Patch:
-                // Not built from ShapeParams: fields come from setField(), Bezier
-                // patches from setBezierPatch(). Named-shape path is a no-op for them.
+                // Generated externally (VoxelSystem / Bezier patches)
                 break;
         }
         _shapeKind = k;      // assert after setGeometryType may have set a legacy value
@@ -643,6 +658,12 @@ public:
     void removeTag(const std::string& tag);
     bool hasTag(const std::string& tag) const;
     const std::vector<std::string>& getTags() const { return tags; }
+    void setName(const std::string& name) { _name = name; }
+    
+    std::string getTextString() const { return _textString; }
+    void setTextString(const std::string& text) { _textString = text; }
+
+    const std::string& getEntityName() const { return _entityName; }
 
 private:
     // Registers the first-mover properties (position/rotation/center/shape.*)
@@ -685,6 +706,13 @@ private:
     bool preserveRotationTargetOnTransformSet = false;
 
     Automation::State _automation;
+    
+    // Delta save tracking
+    bool _isDirty = true;
+public:
+    bool getIsDirty() const { return _isDirty; }
+    void clearDirty() { _isDirty = false; }
+    void markDirty() { _isDirty = true; }
 };
 
 // Out-of-line definition: by this point Object is a complete type, so

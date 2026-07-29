@@ -265,7 +265,17 @@ static void SafeRelease(FrameResources& res)
     SafeRelease(res.VertexBufferHost);
 }
 
-static WGPUProgrammableStageDescriptor ImGui_ImplWGPU_CreateShaderModule(const char* wgsl_source)
+// [EARTHCALL PATCH] wgpu-native v29 removed WGPUProgrammableStageDescriptor —
+// it was a Dawn-era type, and a v29 pipeline takes module + entryPoint inline.
+// This local stand-in keeps the rest of the file unchanged. Re-apply after any
+// Dear ImGui update; see docs/rendering/WEBGPU_HANDOFF.md.
+#if defined(IMGUI_IMPL_WEBGPU_BACKEND_WGPU)
+struct ImGui_ImplWGPU_StageDesc { WGPUShaderModule module; WGPUStringView entryPoint; };
+#else
+typedef WGPUProgrammableStageDescriptor ImGui_ImplWGPU_StageDesc;
+#endif
+
+static ImGui_ImplWGPU_StageDesc ImGui_ImplWGPU_CreateShaderModule(const char* wgsl_source)
 {
     ImGui_ImplWGPU_Data* bd = ImGui_ImplWGPU_GetBackendData();
 
@@ -282,7 +292,7 @@ static WGPUProgrammableStageDescriptor ImGui_ImplWGPU_CreateShaderModule(const c
     WGPUShaderModuleDescriptor desc = {};
     desc.nextInChain = reinterpret_cast<WGPUChainedStruct*>(&wgsl_desc);
 
-    WGPUProgrammableStageDescriptor stage_desc = {};
+    ImGui_ImplWGPU_StageDesc stage_desc = {};
     stage_desc.module = wgpuDeviceCreateShaderModule(bd->wgpuDevice, &desc);
 
 #if defined(IMGUI_IMPL_WEBGPU_BACKEND_DAWN) || defined(IMGUI_IMPL_WEBGPU_BACKEND_WGPU)
@@ -682,14 +692,16 @@ bool ImGui_ImplWGPU_CreateDeviceObjects()
     graphics_pipeline_desc.layout = wgpuDeviceCreatePipelineLayout(bd->wgpuDevice, &layout_desc);
 
     // Create the vertex shader
-    WGPUProgrammableStageDescriptor vertex_shader_desc = ImGui_ImplWGPU_CreateShaderModule(__shader_vert_wgsl);
+    ImGui_ImplWGPU_StageDesc vertex_shader_desc = ImGui_ImplWGPU_CreateShaderModule(__shader_vert_wgsl);
     graphics_pipeline_desc.vertex.module = vertex_shader_desc.module;
     graphics_pipeline_desc.vertex.entryPoint = vertex_shader_desc.entryPoint;
 
     // Vertex input configuration
     WGPUVertexAttribute attribute_desc[] =
     {
-#ifdef IMGUI_IMPL_WEBGPU_BACKEND_DAWN
+// [EARTHCALL PATCH] wgpu-native v29's WGPUVertexAttribute leads with
+// nextInChain too, so it needs the same initialiser shape as Dawn.
+#if defined(IMGUI_IMPL_WEBGPU_BACKEND_DAWN) || defined(IMGUI_IMPL_WEBGPU_BACKEND_WGPU)
         { nullptr, WGPUVertexFormat_Float32x2, (uint64_t)offsetof(ImDrawVert, pos), 0 },
         { nullptr, WGPUVertexFormat_Float32x2, (uint64_t)offsetof(ImDrawVert, uv),  1 },
         { nullptr, WGPUVertexFormat_Unorm8x4,  (uint64_t)offsetof(ImDrawVert, col), 2 },
@@ -710,7 +722,7 @@ bool ImGui_ImplWGPU_CreateDeviceObjects()
     graphics_pipeline_desc.vertex.buffers = buffer_layouts;
 
     // Create the pixel shader
-    WGPUProgrammableStageDescriptor pixel_shader_desc = ImGui_ImplWGPU_CreateShaderModule(__shader_frag_wgsl);
+    ImGui_ImplWGPU_StageDesc pixel_shader_desc = ImGui_ImplWGPU_CreateShaderModule(__shader_frag_wgsl);
 
     // Create the blending setup
     WGPUBlendState blend_state = {};

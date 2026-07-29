@@ -34,12 +34,15 @@ CXXFLAGS = -std=c++17 -Wall -Wextra $(OPTFLAGS) \
            -DGL_SILENCE_DEPRECATION
 LDFLAGS = -L/opt/homebrew/Cellar/lib \
           -L/opt/homebrew/lib \
+          -L/opt/homebrew/opt/openssl/lib \
           -lglfw \
           -framework OpenGL \
           -framework WebKit \
           -framework Cocoa \
           -framework CoreAudio \
-          -framework AudioToolbox
+          -framework AudioToolbox \
+          -framework Security \
+          -lz -lssl -lcrypto
 
 # Directories
 SRC_DIR = src
@@ -59,7 +62,9 @@ WGPU_FRAMEWORKS = -framework Metal -framework QuartzCore -framework CoreFoundati
 
 # Source files. WebGPU sources are excluded here (opt-in via the webgpu-* targets)
 # so the default OpenGL build never needs the wgpu library.
-SOURCES = $(shell find $(SRC_DIR) -name "*.cpp" \! -name "main.cpp" \! -path "*/WebGPU/*") \
+# MigrateSaves.cpp is a standalone utility with its own main() (see the
+# migrate-saves target below); linking it into the app is a duplicate _main.
+SOURCES = $(shell find $(SRC_DIR) -name "*.cpp" \! -name "main.cpp" \! -name "MigrateSaves.cpp" \! -path "*/WebGPU/*") \
           $(IMGUI_DIR)/imgui.cpp \
           $(IMGUI_DIR)/imgui_demo.cpp \
           $(IMGUI_DIR)/imgui_draw.cpp \
@@ -110,11 +115,83 @@ $(TARGET): $(OBJECTS)
 
 # Clean build files
 clean:
-	rm -rf $(BUILD_DIR) $(TARGET)
+	rm -rf $(BUILD_DIR) $(TARGET) $(WEBGPU_BUILD_DIR) $(WEBGPU_TARGET)
 
 # Run the program
 run: $(TARGET)
 	./$(TARGET)
+
+
+# --- The same app, built on WebGPU -------------------------------------------
+# A SEPARATE binary rather than a rebuilt one, for two reasons: libwgpu_native.a
+# is 33 MB, so linking it into the default build would bloat every compile; and
+# the OpenGL binary is the known-good reference this migration is measured
+# against, so it must stay reachable without a rebuild. Run ./earthcall and
+# ./earthcall_webgpu side by side to compare.
+#
+# Objects go in their own directory: make tracks timestamps, not flags, so
+# sharing build/ with the OpenGL build would silently mix -DEARTHCALL_WEBGPU and
+# non-WebGPU objects — exactly the trap the BUILD=debug note at the top warns of.
+WEBGPU_BUILD_DIR = build-webgpu
+WEBGPU_TARGET    = earthcall_webgpu
+
+# Same sources as the app, plus the WebGPU backend, minus the standalone smoke
+# programs (each has its own main()).
+WEBGPU_APP_SOURCES = $(shell find $(SRC_DIR) -name "*.cpp" \! -name "main.cpp" \! -name "MigrateSaves.cpp" \! -name "smoke_*.cpp") \
+          $(IMGUI_DIR)/imgui.cpp \
+          $(IMGUI_DIR)/imgui_demo.cpp \
+          $(IMGUI_DIR)/imgui_draw.cpp \
+          $(IMGUI_DIR)/imgui_tables.cpp \
+          $(IMGUI_DIR)/imgui_widgets.cpp \
+          $(IMGUI_DIR)/backends/imgui_impl_glfw.cpp \
+          $(IMGUI_DIR)/backends/imgui_impl_wgpu.cpp
+
+WEBGPU_APP_OBJECTS = $(WEBGPU_APP_SOURCES:%.cpp=$(WEBGPU_BUILD_DIR)/%.o) \
+                     $(WEBGPU_BUILD_DIR)/src/Rendering/WebGPU/WebGpuContext.o
+
+# IMGUI_IMPL_WEBGPU_BACKEND_WGPU picks imgui's wgpu-native path (vs Dawn).
+WEBGPU_CXXFLAGS = $(CXXFLAGS) $(WGPU_INC) -DEARTHCALL_WEBGPU -DIMGUI_IMPL_WEBGPU_BACKEND_WGPU
+
+$(WEBGPU_BUILD_DIR)/%.o: %.cpp
+	@mkdir -p $(dir $@)
+	$(CXX) $(WEBGPU_CXXFLAGS) $(DEPFLAGS) -c $< -o $@
+
+# Objective-C++ units: the Cocoa/CAMetalLayer surface, and the WebKit integration
+# the app already had.
+$(WEBGPU_BUILD_DIR)/src/Rendering/WebGPU/WebGpuContext.o: src/Rendering/WebGPU/WebGpuContext.mm
+	@mkdir -p $(dir $@)
+	$(CXX) $(WEBGPU_CXXFLAGS) $(DEPFLAGS) -ObjC++ -c $< -o $@
+
+$(WEBGPU_BUILD_DIR)/src/Integration/RealWebView.o: src/Integration/RealWebView.cpp
+	@mkdir -p $(dir $@)
+	$(CXX) $(WEBGPU_CXXFLAGS) $(DEPFLAGS) -ObjC++ -c $< -o $@
+
+$(WEBGPU_BUILD_DIR)/src/Integration/WebIntegration.o: src/Integration/WebIntegration.cpp
+	@mkdir -p $(dir $@)
+	$(CXX) $(WEBGPU_CXXFLAGS) $(DEPFLAGS) -ObjC++ -c $< -o $@
+
+webgpu-app: $(WEBGPU_TARGET)
+
+$(WEBGPU_TARGET): $(WEBGPU_APP_OBJECTS)
+	$(CXX) $(WEBGPU_APP_OBJECTS) $(WGPU_LIB) $(LDFLAGS) $(WGPU_FRAMEWORKS) -o $@
+	@echo "Built ./$(WEBGPU_TARGET) — the app on WebGPU. ./earthcall is still OpenGL."
+
+run-webgpu: $(WEBGPU_TARGET)
+	./$(WEBGPU_TARGET)
+
+# Headless WebGPU test over the REAL Object draw path (not a hand-fed fixture).
+# Links the app's objects, minus the entry point, against the WebGPU backend.
+WEBGPU_TEST_OBJECTS = $(filter-out $(WEBGPU_BUILD_DIR)/$(SRC_DIR)/entry.o,$(WEBGPU_APP_OBJECTS))
+
+$(WEBGPU_BUILD_DIR)/tests/%.o: tests/%.cpp
+	@mkdir -p $(dir $@)
+	$(CXX) $(WEBGPU_CXXFLAGS) $(DEPFLAGS) -c $< -o $@
+
+webgpu_object_test: $(WEBGPU_TEST_OBJECTS) $(WEBGPU_BUILD_DIR)/tests/webgpu_object_test.o
+	$(CXX) $^ $(WGPU_LIB) $(LDFLAGS) $(WGPU_FRAMEWORKS) -o $@
+
+test-webgpu-object: webgpu_object_test
+	./webgpu_object_test
 
 # --- WebGPU verification (Milestone 5) --------------------------------------
 # Standalone: brings up a wgpu-native device, clears an offscreen frame, and reads
@@ -282,10 +359,22 @@ test-primitive-render: primitive_render_test
 test-action-spawn: action_spawn_test
 	./action_spawn_test
 
+binary_packing_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/binary_packing_test.o
+	$(CXX) $^ $(LDFLAGS) -o $@
+
+migrate-saves: $(BUILD_DIR)/src/Util/SaveSystem.o $(BUILD_DIR)/src/Util/CloudStorage.o $(BUILD_DIR)/src/Util/MigrateSaves.o
+	$(CXX) $^ $(LDFLAGS) -o migrate_saves
+
+read-laws: $(BUILD_DIR)/src/Util/SaveSystem.o $(BUILD_DIR)/src/Util/CloudStorage.o scratch/read_laws.cpp
+	$(CXX) scratch/read_laws.cpp $(BUILD_DIR)/src/Util/SaveSystem.o $(BUILD_DIR)/src/Util/CloudStorage.o -I./src -I./src/Form -I./src/ZonesOfEarth -I./src/Person/Body -I../imgui $(LDFLAGS) -o read_laws
+
 test-serialization: serialization_compat_test
 	./serialization_compat_test
 
-test: test-property test-law test-creation test-loop test-recorder test-concept test-graph test-meta test-math test-continuous test-timeflow test-persist test-geomcache test-glucompat test-zone test-material test-material-render test-primitive-render test-action-spawn test-serialization
+test-binary-packing: binary_packing_test
+	./binary_packing_test
+
+test: test-property test-law test-creation test-loop test-recorder test-concept test-graph test-meta test-math test-continuous test-timeflow test-persist test-geomcache test-glucompat test-zone test-material test-material-render test-primitive-render test-action-spawn test-serialization test-binary-packing
 
 # Pull in auto-generated header dependencies (.d files next to each .o)
 -include $(OBJECTS:.o=.d)

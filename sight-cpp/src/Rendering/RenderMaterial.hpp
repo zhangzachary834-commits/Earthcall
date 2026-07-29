@@ -31,7 +31,20 @@ struct RenderMaterial {
                                 // GL → two-sided light model; WebGPU → cull none.
 };
 
+// One face's albedo — the paint the Face Brush writes — described BOTH ways,
+// because the two backends consume it differently and neither form is portable:
+//   handle — a backend-owned texture (under OpenGL, the GL texture name).
+//   pixels — the CPU-side RGBA8 buffer it was uploaded from.
+// A backend that holds GPU textures samples `handle`; one that re-uploads per
+// draw reads `pixels`. Passing only the handle is what left every WebGPU surface
+// white: WebGPU keeps no handles, so it had nothing to sample.
+struct FaceAlbedo {
+    unsigned int         handle = 0;
+    const unsigned char* pixels = nullptr;
+    int                  size   = 0; // width == height (square RGBA8)
+};
+
 // Resolve an Object's material identifier against the global MaterialManager and
-// flatten it to a RenderMaterial, stamping in the given per-face albedo texture.
+// flatten it to a RenderMaterial, stamping in the given per-face albedo.
 // A dangling identifier resolves to material.default, so this never fails.
-RenderMaterial resolveRenderMaterial(const std::string& materialId, unsigned int textureId);
+RenderMaterial resolveRenderMaterial(const std::string& materialId, const FaceAlbedo& albedo);

@@ -271,6 +271,13 @@ TextureHandle OpenGLRenderer::uploadTexture(TextureHandle handle, const uint8_t*
                                             uint32_t width, uint32_t height) {
     if (!rgba || width == 0 || height == 0) return handle;
 
+    // Headless callers — tests, the save-migration tool — construct Objects with
+    // no GL context at all, and Object construction paints its face textures. A GL
+    // call there is a segfault, not a diagnosable error. With no context there is
+    // genuinely no texture to make, so report no handle and let the CPU pixels
+    // (RenderMaterial::albedoPixels) carry the paint for anyone who wants it.
+    if (!glfwGetCurrentContext()) return 0;
+
     GLuint id = handle;
     if (id == 0) glGenTextures(1, &id);
 
