@@ -379,6 +379,14 @@ test: test-property test-law test-creation test-loop test-recorder test-concept 
 # Pull in auto-generated header dependencies (.d files next to each .o)
 -include $(OBJECTS:.o=.d)
 -include $(wildcard $(BUILD_DIR)/tests/*.d)
+# The WebGPU build needs these just as much. Without them, editing a header does
+# NOT recompile the objects that include it, so a binary can be linked from units
+# compiled against DIFFERENT versions of the same class — mismatched member
+# offsets, reads landing at the wrong address, and crashes that vanish on a clean
+# rebuild. That is not hypothetical: it is what made ./earthcall_webgpu segfault
+# inside WebGpuRenderer::uploadTexture.
+-include $(WEBGPU_APP_OBJECTS:.o=.d)
+-include $(wildcard $(WEBGPU_BUILD_DIR)/tests/*.d)
 
 # Phony targets
 .PHONY: all clean run webgpu-smoke webgpu-mesh webgpu-renderer webgpu-window test test-property test-law test-loop test-recorder test-concept test-graph test-meta test-math test-continuous test-timeflow test-persist test-geomcache test-glucompat test-zone test-material test-material-render test-primitive-render
