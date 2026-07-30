@@ -12,6 +12,7 @@
 // backend first means Object construction never calls into OpenGL.
 
 #include "Form/Object/Object.hpp"
+#include "Form/Object/Geometry/Sdf.hpp"
 #include "Rendering/Renderer.hpp"
 #include "Rendering/WebGPU/WebGpuRenderer.hpp"
 #include "Rendering/WebGPU/WgpuDevice.hpp"
@@ -69,7 +70,7 @@ int main() {
     rbd.size = 256 * H;
     WGPUBuffer readback = wgpuDeviceCreateBuffer(gpu.device, &rbd);
 
-    auto readCentre = [&](unsigned char out[4]) {
+    auto readAt = [&](uint32_t px_, uint32_t py_, unsigned char out[4]) {
         WGPUCommandEncoder enc = wgpuDeviceCreateCommandEncoder(gpu.device, nullptr);
         WGPUTexelCopyTextureInfo src = {};
         src.texture = target; src.aspect = WGPUTextureAspect_All; src.origin = {0,0,0};
@@ -90,10 +91,11 @@ int main() {
         while (!m.done) wgpuInstanceProcessEvents(gpu.instance);
         const auto* px = static_cast<const unsigned char*>(
             wgpuBufferGetConstMappedRange(readback, 0, 256 * H));
-        const size_t centre = size_t(H / 2) * 256 + size_t(W / 2) * 4;
-        for (int i = 0; i < 4; ++i) out[i] = px[centre + i];
+        const size_t at = size_t(py_) * 256 + size_t(px_) * 4;
+        for (int i = 0; i < 4; ++i) out[i] = px[at + i];
         wgpuBufferUnmap(readback);
     };
+    auto readCentre = [&](unsigned char out[4]) { readAt(W / 2, H / 2, out); };
 
     // Camera: straight down -Z at a unit cube, so its +Z face fills the frame.
     // frustum/perspective must be the [0,1]-depth form for WebGPU.
@@ -168,6 +170,41 @@ int main() {
     // Unhook before the renderer (a stack object) goes out of scope: globals such
     // as ZoneManager are destroyed after main returns and can still reach for the
     // active backend, which by then would be a dangling pointer.
+    // --- A FIELD object: raymarched, not tessellated (Milestone 6) -------------
+    // The point of routing through the real Object path: drawFieldModel asks the
+    // backend whether it renders implicits exactly, and only WebGPU says yes. If
+    // that wiring breaks, this silently falls back to the mesh and still looks
+    // plausible — so assert the SHAPE, which the bounding box would not produce.
+    {
+        geom::SdfNode sphere;
+        sphere.op   = geom::SdfOp::Leaf;
+        sphere.prim = geom::SdfPrim::Sphere;
+        sphere.dims = glm::vec3(0.55f);
+
+        Object field;
+        field.setFieldShape(sphere, 1.0f);
+
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        field.drawObject();
+        renderer.endFrame();
+    }
+    unsigned char f0[4], fcorner[4];
+    readCentre(f0);
+    readAt(0, 0, fcorner);
+    std::printf("field centre        = (%d,%d,%d,%d)  corner = (%d,%d,%d,%d)\n",
+                f0[0], f0[1], f0[2], f0[3], fcorner[0], fcorner[1], fcorner[2], fcorner[3]);
+    assert(f0[0] > 30 && "raymarched field produced no surface at the centre");
+    // A field's default face-0 paint is RED, and tessellateSdf samples one texel,
+    // so the raymarched surface must be red too — not white. This is the check
+    // that catches a field silently changing colour with the backend.
+    assert(f0[0] > f0[1] + 30 && f0[0] > f0[2] + 30 &&
+           "field ignored its face paint — raymarch and mesh paths disagree on colour");
+    assert(fcorner[0] < 12 && fcorner[1] < 12 && fcorner[2] < 12 &&
+           "corner is lit — the bounding box was painted instead of the sphere traced");
+    assert(currentRenderer().rendersImplicitExactly() &&
+           "WebGPU should report exact implicit rendering");
+
     setCurrentRenderer(nullptr);
     renderer.shutdown();
     std::printf("webgpu_object_test: ALL OK\n");

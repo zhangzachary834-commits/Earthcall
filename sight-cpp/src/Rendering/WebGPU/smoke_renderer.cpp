@@ -9,6 +9,7 @@
 #include "WgpuDevice.hpp"
 #include "Form/Object/Geometry/SmoothSurface.hpp" // geom::TessMesh / TessVertex
 #include "Rendering/RenderMaterial.hpp"
+#include "Form/Object/Geometry/Sdf.hpp"
 
 #include <webgpu/wgpu.h>
 #include <glm/glm.hpp>
@@ -68,6 +69,28 @@ int main() {
         while (!mr.done) wgpuDevicePoll(gpu.device, true, nullptr);
         const unsigned char* px = (const unsigned char*)wgpuBufferGetConstMappedRange(readback, 0, 256 * H);
         const unsigned char* c4 = px + (4 * 256) + (4 * 4);
+        out[0]=c4[0]; out[1]=c4[1]; out[2]=c4[2]; out[3]=c4[3];
+        wgpuBufferUnmap(readback);
+    };
+
+    // Same readback, but any pixel — used to check that a raymarched shape MISSES
+    // where it should, which the centre pixel alone cannot tell you.
+    auto readPixel = [&](uint32_t x, uint32_t y, unsigned char out[4]) {
+        WGPUCommandEncoder enc = wgpuDeviceCreateCommandEncoder(gpu.device, nullptr);
+        WGPUTexelCopyTextureInfo src = {};
+        src.texture = tex; src.aspect = WGPUTextureAspect_All; src.origin = {0,0,0};
+        WGPUTexelCopyBufferInfo dst = {};
+        dst.buffer = readback; dst.layout.bytesPerRow = 256; dst.layout.rowsPerImage = H;
+        WGPUExtent3D cs = { W, H, 1 };
+        wgpuCommandEncoderCopyTextureToBuffer(enc, &src, &dst, &cs);
+        WGPUCommandBuffer cmd = wgpuCommandEncoderFinish(enc, nullptr);
+        wgpuQueueSubmit(gpu.queue, 1, &cmd);
+        MapR mr; WGPUBufferMapCallbackInfo mcb = {};
+        mcb.mode = WGPUCallbackMode_AllowProcessEvents; mcb.callback = onMap; mcb.userdata1 = &mr;
+        wgpuBufferMapAsync(readback, WGPUMapMode_Read, 0, 256 * H, mcb);
+        while (!mr.done) wgpuDevicePoll(gpu.device, true, nullptr);
+        const unsigned char* px = (const unsigned char*)wgpuBufferGetConstMappedRange(readback, 0, 256 * H);
+        const unsigned char* c4 = px + (y * 256) + (x * 4);
         out[0]=c4[0]; out[1]=c4[1]; out[2]=c4[2]; out[3]=c4[3];
         wgpuBufferUnmap(readback);
     };
@@ -239,11 +262,42 @@ int main() {
            p10[0],p10[1],p10[2],p10[3], wirePixels);
     bool wireOK = wirePixels > 0 && p10[0] < 20; // edges drawn, centre hollow
 
+    // --- Scene 11: drawImplicit — a RAYMARCHED sphere field (Milestone 6) --------
+    // Not tessellated: the SDF is compiled to WGSL and sphere-traced. The centre
+    // must be lit surface, and a corner must miss (proving it is a sphere and not
+    // just the bounding box painted in).
+    unsigned char p11c[4], p11corner[4];
+    {
+        geom::SdfNode sphere;
+        sphere.op = geom::SdfOp::Leaf;
+        sphere.prim = geom::SdfPrim::Sphere;
+        sphere.dims = glm::vec3(0.6f);
+
+        RenderMaterial fm;
+        fm.baseColor = glm::vec3(0.0f, 0.0f, 1.0f);
+
+        glm::mat4 proj = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 100.0f);
+        glm::vec3 eye(0.0f, 0.0f, 2.2f);
+        r.setCamera(proj * glm::lookAt(eye, glm::vec3(0), glm::vec3(0, 1, 0)), eye);
+        r.setModel(glm::mat4(1.0f));
+        r.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        r.drawImplicit(sphere, 1.0f, fm);
+        r.endFrame();
+        readCenter(p11c);
+        readPixel(0, 0, p11corner);
+    }
+    printf("scene 11 (raymarched sphere) centre = (%d,%d,%d,%d) corner = (%d,%d,%d,%d)\n",
+           p11c[0],p11c[1],p11c[2],p11c[3], p11corner[0],p11corner[1],p11corner[2],p11corner[3]);
+    // Blue material, lit: blue channel dominates at the centre; the corner is
+    // background because the ray missed the sphere (discard), not the box.
+    bool sdfOK = p11c[2] > 40 && p11c[2] > p11c[0] + 20
+                 && p11corner[0] < 10 && p11corner[1] < 10 && p11corner[2] < 10;
+
     bool ok = depthOK && texOK && specOK && overlayOK && linesOK
-              && solidOK && tris2DOK && lines2DOK && imageOK && wireOK;
-    printf(ok ? "OK: mesh+depth+albedo+specular+overlay+lines+solid+2D+image+wireframe\n"
-              : "FAIL: depth=%d tex=%d spec=%d overlay=%d lines=%d solid=%d tris2D=%d lines2D=%d image=%d wire=%d\n",
+              && solidOK && tris2DOK && lines2DOK && imageOK && wireOK && sdfOK;
+    printf(ok ? "OK: mesh+depth+albedo+specular+overlay+lines+solid+2D+image+wireframe+raymarch\n"
+              : "FAIL: depth=%d tex=%d spec=%d overlay=%d lines=%d solid=%d tris2D=%d lines2D=%d image=%d wire=%d sdf=%d\n",
               depthOK, texOK, specOK, overlayOK, linesOK,
-              solidOK, tris2DOK, lines2DOK, imageOK, wireOK);
+              solidOK, tris2DOK, lines2DOK, imageOK, wireOK, sdfOK);
     return ok ? 0 : 1;
 }

@@ -1,5 +1,7 @@
 #include "Rendering/WebGPU/WebGpuRenderer.hpp"
 #include "Rendering/WebGPU/WgpuDevice.hpp"
+#include "Rendering/WebGPU/SdfWgsl.hpp"
+#include "Form/Object/Geometry/Sdf.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <cstdio>
@@ -389,6 +391,12 @@ void WebGpuRenderer::shutdown() {
     if (_whiteView) { wgpuTextureViewRelease(_whiteView); _whiteView = nullptr; }
     if (_whiteTex)  { wgpuTextureRelease(_whiteTex); _whiteTex = nullptr; }
     if (_sampler)   { wgpuSamplerRelease(_sampler); _sampler = nullptr; }
+    for (auto& kv : _sdfPipes) {
+        if (kv.second.pipe) wgpuRenderPipelineRelease(kv.second.pipe);
+        if (kv.second.bgl)  wgpuBindGroupLayoutRelease(kv.second.bgl);
+    }
+    _sdfPipes.clear();
+    if (_sdfCubeVerts) { wgpuBufferRelease(_sdfCubeVerts); _sdfCubeVerts = nullptr; }
     for (auto& kv : _textures) {
         wgpuTextureViewRelease(kv.second.view);
         wgpuTextureRelease(kv.second.tex);
@@ -601,10 +609,189 @@ void WebGpuRenderer::drawMesh(const geom::TessMesh& mesh, const RenderMaterial& 
     _frameBindGroups.push_back(bindGroup);
 }
 
-void WebGpuRenderer::drawImplicit(const geom::SdfNode&, float, const RenderMaterial&) {
-    // Stub: ObjectRender caches _fieldMesh and calls drawMesh directly, so this is
-    // unused today. Milestone 6 implements the raymarcher here (exact SDF render).
-    // Kept dependency-free (no tessellateSdf link) until then.
+namespace {
+// Uniform block for the raymarcher; must match struct RU in the generated WGSL.
+struct SdfUniforms {
+    glm::mat4 viewProj;
+    glm::mat4 model;
+    glm::mat4 invModel;
+    glm::vec4 baseColor;
+    glm::vec4 lightPos;
+    glm::vec4 shading;  // ambient, diffuse, specular, shininess
+    glm::vec4 eyePos;
+    glm::vec4 misc;     // extent, surfaceEps, maxDist, exprDamping
+};
+} // namespace
+
+// Build (or fetch) the pipeline for one field SHAPE. The generated WGSL is the
+// cache key: two spheres of different radii generate identical source and share
+// this pipeline, differing only in their parameter buffer.
+const WebGpuRenderer::SdfPipeline* WebGpuRenderer::sdfPipeline(const std::string& wgsl) {
+    auto it = _sdfPipes.find(wgsl);
+    if (it != _sdfPipes.end()) return &it->second;
+
+    WGPUShaderSourceWGSL src = {};
+    src.chain.sType = WGPUSType_ShaderSourceWGSL;
+    src.code = wgpu::Device::str(wgsl.c_str());
+    WGPUShaderModuleDescriptor smd = {};
+    smd.nextInChain = &src.chain;
+    WGPUShaderModule shader = wgpuDeviceCreateShaderModule(_device, &smd);
+    if (!shader) {
+        std::fprintf(stderr, "[WebGpuRenderer] SDF shader failed to compile\n");
+        return nullptr;
+    }
+
+    WGPUBindGroupLayoutEntry be[2] = {};
+    be[0].binding = 0;
+    be[0].visibility = WGPUShaderStage_Vertex | WGPUShaderStage_Fragment;
+    be[0].buffer.type = WGPUBufferBindingType_Uniform;
+    be[0].buffer.minBindingSize = sizeof(SdfUniforms);
+    be[1].binding = 1;
+    be[1].visibility = WGPUShaderStage_Fragment;
+    be[1].buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
+    WGPUBindGroupLayoutDescriptor bgld = {};
+    bgld.entryCount = 2; bgld.entries = be;
+
+    SdfPipeline out;
+    out.bgl = wgpuDeviceCreateBindGroupLayout(_device, &bgld);
+    WGPUPipelineLayoutDescriptor pld = {};
+    pld.bindGroupLayoutCount = 1; pld.bindGroupLayouts = &out.bgl;
+    WGPUPipelineLayout layout = wgpuDeviceCreatePipelineLayout(_device, &pld);
+
+    WGPUVertexAttribute attr = {};
+    attr.format = WGPUVertexFormat_Float32x3; attr.offset = 0; attr.shaderLocation = 0;
+    WGPUVertexBufferLayout vbl = {};
+    vbl.stepMode = WGPUVertexStepMode_Vertex; vbl.arrayStride = 12;
+    vbl.attributeCount = 1; vbl.attributes = &attr;
+
+    WGPUBlendState blend = {};
+    blend.color.operation = WGPUBlendOperation_Add;
+    blend.color.srcFactor = WGPUBlendFactor_SrcAlpha;
+    blend.color.dstFactor = WGPUBlendFactor_OneMinusSrcAlpha;
+    blend.alpha.operation = WGPUBlendOperation_Add;
+    blend.alpha.srcFactor = WGPUBlendFactor_One;
+    blend.alpha.dstFactor = WGPUBlendFactor_OneMinusSrcAlpha;
+    WGPUColorTargetState ct = {};
+    ct.format = _colorFormat; ct.writeMask = WGPUColorWriteMask_All; ct.blend = &blend;
+    WGPUFragmentState frag = {};
+    frag.module = shader; frag.entryPoint = wgpu::Device::str("fs");
+    frag.targetCount = 1; frag.targets = &ct;
+
+    // Depth WRITE is on and the fragment shader supplies frag_depth from the true
+    // hit, so a field interleaves with meshes correctly rather than by its box.
+    WGPUDepthStencilState ds = {};
+    ds.format = WGPUTextureFormat_Depth24Plus;
+    ds.depthWriteEnabled = WGPUOptionalBool_True;
+    ds.depthCompare = WGPUCompareFunction_Less;
+
+    WGPURenderPipelineDescriptor pd = {};
+    pd.layout = layout;
+    pd.vertex.module = shader; pd.vertex.entryPoint = wgpu::Device::str("vs");
+    pd.vertex.bufferCount = 1; pd.vertex.buffers = &vbl;
+    // Culling off: the marcher traces the true eye ray, so it does not matter
+    // which face of the bounding box produced the fragment — and with culling on,
+    // a camera inside the box would get no fragments at all.
+    pd.primitive.topology = WGPUPrimitiveTopology_TriangleList;
+    pd.primitive.cullMode = WGPUCullMode_None;
+    pd.depthStencil = &ds;
+    pd.multisample.count = 1; pd.multisample.mask = 0xFFFFFFFFu;
+    pd.fragment = &frag;
+    out.pipe = wgpuDeviceCreateRenderPipeline(_device, &pd);
+
+    wgpuPipelineLayoutRelease(layout);
+    wgpuShaderModuleRelease(shader);
+    if (!out.pipe) {
+        wgpuBindGroupLayoutRelease(out.bgl);
+        return nullptr;
+    }
+    return &(_sdfPipes[wgsl] = out);
+}
+
+void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, float extent,
+                                  const RenderMaterial& mat) {
+    if (!_pass) return;
+
+    // Compile the tree. Structure -> WGSL (cached), numbers -> a buffer.
+    const sdfwgsl::Program prog = sdfwgsl::compile(field);
+    const SdfPipeline* sp = sdfPipeline(prog.wgsl);
+    if (!sp) return;
+
+    // The bounding cube, shared by every field: the vertex shader scales it by the
+    // field extent, so one buffer serves all of them.
+    if (!_sdfCubeVerts) {
+        const float h = 1.0f;
+        const glm::vec3 c[8] = {
+            {-h,-h,-h},{ h,-h,-h},{ h, h,-h},{-h, h,-h},
+            {-h,-h, h},{ h,-h, h},{ h, h, h},{-h, h, h}};
+        const int idx[36] = {
+            0,1,2, 0,2,3,  4,6,5, 4,7,6,  0,4,5, 0,5,1,
+            3,2,6, 3,6,7,  0,3,7, 0,7,4,  1,5,6, 1,6,2};
+        std::vector<glm::vec3> tris;
+        tris.reserve(36);
+        for (int i : idx) tris.push_back(c[i]);
+        WGPUBufferDescriptor bd = {};
+        bd.usage = WGPUBufferUsage_Vertex | WGPUBufferUsage_CopyDst;
+        bd.size = tris.size() * sizeof(glm::vec3);
+        _sdfCubeVerts = wgpuDeviceCreateBuffer(_device, &bd);
+        wgpuQueueWriteBuffer(_queue, _sdfCubeVerts, 0, tris.data(), bd.size);
+    }
+
+    SdfUniforms u{};
+    u.viewProj  = _viewProj;
+    u.model     = _model;
+    u.invModel  = glm::inverse(_model);
+    // Face paint on a field, matching the mesh path EXACTLY. tessellateSdf gives
+    // every vertex uv = (0.5, 0.5), so a meshed field samples a single texel — its
+    // paint is one flat colour. That means no texture binding is needed here at
+    // all: read the same texel on the CPU and fold it into baseColor. Skipping
+    // this made fields render white under WebGPU while the mesh path tinted them
+    // (a default field's face 0 is red), i.e. a shape changing colour with the
+    // backend.
+    glm::vec3 albedo(1.0f);
+    if (mat.albedoPixels && mat.albedoSize > 0) {
+        const int   half = mat.albedoSize / 2;
+        const size_t idx = (size_t(half) * mat.albedoSize + half) * 4;
+        albedo = glm::vec3(mat.albedoPixels[idx + 0] / 255.0f,
+                           mat.albedoPixels[idx + 1] / 255.0f,
+                           mat.albedoPixels[idx + 2] / 255.0f);
+    }
+    u.baseColor = glm::vec4(mat.baseColor * albedo, mat.opacity);
+    u.lightPos  = glm::vec4(lightPos(), 1.0f);
+    u.shading   = glm::vec4(mat.ambient, mat.diffuse, mat.specular, mat.shininess);
+    u.eyePos    = glm::vec4(_eyePos, 1.0f);
+    // The box is grown slightly past the extent so a surface sitting exactly on the
+    // boundary still gets fragments. surfaceEps/maxDist mirror the CPU raycaster's
+    // 1e-4 hit threshold; damping < 1 keeps implicit (non-distance) fields from
+    // tunnelling through their own surface.
+    const float kExprDamping = 0.5f;
+    u.misc = glm::vec4(extent * 1.05f, 1e-4f, extent * 8.0f, kExprDamping);
+
+    WGPUBufferDescriptor ubd = {};
+    ubd.usage = WGPUBufferUsage_Uniform | WGPUBufferUsage_CopyDst;
+    ubd.size = sizeof(SdfUniforms);
+    WGPUBuffer ubuf = wgpuDeviceCreateBuffer(_device, &ubd);
+    wgpuQueueWriteBuffer(_queue, ubuf, 0, &u, sizeof(u));
+    _frameBuffers.push_back(ubuf);
+
+    WGPUBufferDescriptor pbd = {};
+    pbd.usage = WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst;
+    pbd.size = prog.params.size() * sizeof(float);
+    WGPUBuffer pbuf = wgpuDeviceCreateBuffer(_device, &pbd);
+    wgpuQueueWriteBuffer(_queue, pbuf, 0, prog.params.data(), pbd.size);
+    _frameBuffers.push_back(pbuf);
+
+    WGPUBindGroupEntry bge[2] = {};
+    bge[0].binding = 0; bge[0].buffer = ubuf; bge[0].size = sizeof(u);
+    bge[1].binding = 1; bge[1].buffer = pbuf; bge[1].size = pbd.size;
+    WGPUBindGroupDescriptor bgd = {};
+    bgd.layout = sp->bgl; bgd.entryCount = 2; bgd.entries = bge;
+    WGPUBindGroup bg = wgpuDeviceCreateBindGroup(_device, &bgd);
+    _frameBindGroups.push_back(bg);
+
+    wgpuRenderPassEncoderSetPipeline(_pass, sp->pipe);
+    wgpuRenderPassEncoderSetBindGroup(_pass, 0, bg, 0, nullptr);
+    wgpuRenderPassEncoderSetVertexBuffer(_pass, 0, _sdfCubeVerts, 0, 36 * sizeof(glm::vec3));
+    wgpuRenderPassEncoderDraw(_pass, 36, 1, 0, 0);
 }
 
 void WebGpuRenderer::drawFlat(WGPURenderPipeline pipe, const std::vector<glm::vec3>& verts,

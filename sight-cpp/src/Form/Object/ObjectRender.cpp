@@ -210,7 +210,20 @@ void Object::drawComplexModel() const {
 }
 
 void Object::drawFieldModel() const {
-    currentRenderer().drawMesh(_fieldMesh, resolveRenderMaterial(_materialId, faceAlbedo(0)));
+    Renderer& r = currentRenderer();
+    const RenderMaterial mat = resolveRenderMaterial(_materialId, faceAlbedo(0));
+
+    // A field IS its distance function; the mesh is only ever an approximation of
+    // it at some resolution. Where the backend can evaluate the function directly
+    // (WebGPU raymarches it), hand over the function and skip the mesh entirely —
+    // no tessellation seams, and the surface is exact at any zoom. Backends that
+    // cannot fall back to the cached mesh, which is why this asks rather than
+    // always calling drawImplicit.
+    if (r.rendersImplicitExactly()) {
+        r.drawImplicit(getFieldData(), getFieldExtent(), mat);
+        return;
+    }
+    r.drawMesh(_fieldMesh, mat);
 }
 
 void Object::drawPatchModel() const {

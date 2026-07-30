@@ -131,6 +131,14 @@ public:
     // inside one binary anyway).
     virtual bool zeroToOneDepth() const { return false; }
 
+    // Whether drawImplicit renders a field EXACTLY (raymarching it) rather than by
+    // tessellating. Callers that hold a cached mesh use this to decide which is
+    // better: WebGPU marches the field itself, so the mesh is a needless
+    // approximation there — while the OpenGL implementation of drawImplicit
+    // tessellates on EVERY call, so routing a cached-mesh caller through it would
+    // be a large regression. Hence a query rather than always preferring one.
+    virtual bool rendersImplicitExactly() const { return false; }
+
     // Draw subsequent meshes as edges instead of filled triangles. This wraps an
     // arbitrary draw — the BrushCreate hologram sets it, then calls the ordinary
     // Object draw path — which is why it is render STATE rather than a draw verb.

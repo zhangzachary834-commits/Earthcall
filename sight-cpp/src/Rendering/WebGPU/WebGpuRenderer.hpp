@@ -16,6 +16,7 @@
 #include <webgpu/webgpu.h>
 #include <glm/glm.hpp>
 #include <functional>
+#include <string>
 #include <map>
 #include <tuple>
 #include <vector>
@@ -93,6 +94,7 @@ public:
                      const glm::vec4& rect, const glm::vec4& tint) override;
     void setWireframe(bool on) override { _wireframe = on; }
     bool zeroToOneDepth() const override { return true; }
+    bool rendersImplicitExactly() const override { return true; }
 
     // Persistent GPU textures for face paint. FaceTexture calls this only when the
     // paint actually changes, so holding the texture means a repainted surface
@@ -153,6 +155,18 @@ private:
     // Screen-space state, established by begin2D.
     bool      _in2D = false;
     glm::mat4 _ortho2D{1.0f};
+
+    // ---- Raymarched SDF fields (Milestone 6) ----
+    // One pipeline per TREE SHAPE, keyed on the generated WGSL. Numeric parameters
+    // live in a buffer, so changing a radius or a blend reuses the pipeline and a
+    // slider drag costs no shader compiles.
+    struct SdfPipeline {
+        WGPURenderPipeline pipe = nullptr;
+        WGPUBindGroupLayout bgl = nullptr;
+    };
+    std::map<std::string, SdfPipeline> _sdfPipes;
+    WGPUBuffer _sdfCubeVerts = nullptr; // unit bounding cube, shared by every field
+    const SdfPipeline* sdfPipeline(const std::string& wgsl);
 
     // setWireframe: meshes draw as edges instead of filled triangles.
     bool _wireframe = false;

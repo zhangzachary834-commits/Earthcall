@@ -215,6 +215,7 @@ webgpu-mesh:
 webgpu-renderer:
 	$(CXX) -std=c++17 -I./src -I./src/Form $(WGPU_INC) -I/opt/homebrew/include \
 	  src/Rendering/WebGPU/WebGpuRenderer.cpp src/Rendering/DrawAdapters.cpp \
+	  src/Rendering/WebGPU/SdfWgsl.cpp src/Form/Object/Geometry/Sdf.cpp \
 	  src/Rendering/WebGPU/smoke_renderer.cpp \
 	  $(WGPU_LIB) $(WGPU_FRAMEWORKS) -o webgpu_renderer
 	./webgpu_renderer
@@ -227,6 +228,7 @@ webgpu-window:
 	$(CXX) -std=c++17 -I./src -I./src/Form $(WGPU_INC) -I/opt/homebrew/include \
 	  -I/opt/homebrew/Cellar/glfw/3.4/include \
 	  src/Rendering/WebGPU/WebGpuRenderer.cpp src/Rendering/DrawAdapters.cpp \
+	  src/Rendering/WebGPU/SdfWgsl.cpp src/Form/Object/Geometry/Sdf.cpp \
 	  src/Rendering/WebGPU/smoke_window.mm \
 	  $(WGPU_LIB) $(WGPU_FRAMEWORKS) -L/opt/homebrew/lib -lglfw -o webgpu_window
 	@echo "Built ./webgpu_window — run it on your Mac to see the window."

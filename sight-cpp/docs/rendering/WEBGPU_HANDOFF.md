@@ -179,6 +179,58 @@ object selected (`GameRender.cpp` lines ~175-330):
 These exercise `drawSolid`, `drawLines` w/ Blend, `drawOverlay` and `setWireframe`
 against real content. Reach them via the toolbar (`T`) plus an object selection.
 
+## M6 DONE — SDF fields are raymarched, not tessellated (2026-07-29)
+
+The first thing this migration UNLOCKS rather than preserves. `drawImplicit` was
+an unused stub; it now compiles a `geom::SdfNode` tree to WGSL and sphere-traces
+it, so a field is exact at any zoom instead of being a mesh at some resolution.
+
+**`src/Rendering/WebGPU/SdfWgsl.{hpp,cpp}` — the codegen.** The key split, and the
+reason this is not string concatenation:
+- **Tree STRUCTURE becomes generated code** (which primitives, which operators).
+- **Numeric PARAMETERS become entries in a storage buffer.**
+So the generated WGSL is a complete pipeline cache key, and two spheres of
+different radii SHARE one pipeline. Baking numbers into the source would recompile
+a shader on every frame of a slider drag. This is also the groundwork for M7.
+
+Every primitive in `kPrimitives` is a line-by-line transcription of its
+counterpart in `Sdf.cpp` — same formulas, same epsilons, same degenerate
+branches. **If you edit a formula in Sdf.cpp, edit it there too**, or the
+raymarched and tessellated surfaces stop being the same surface.
+
+Implementation notes worth keeping:
+- WGSL has **no forward declarations**: emit order is primitives, then the
+  generated `sdfEval`, then the marcher that calls both.
+- WGSL `select(falseVal, trueVal, cond)` is the REVERSE of a C ternary — an easy
+  way to silently invert a sign (see `sdCone`).
+- WGSL has no recursion, so the RPN of an implicit `f(x,y,z)` expression is
+  unwound at CODEGEN time into straight-line code.
+- The marcher rasterises the field's bounding cube but traces the **true eye ray**
+  from the eye, not from the rasterised face: culling is off, so which face
+  produced a fragment is unknowable, and starting at the far face marches
+  backwards. It writes `frag_depth` from the real hit, so fields interleave with
+  meshes correctly rather than by their bounding box.
+- Implicit `Expr` fields are iso-surface values, NOT distances, so steps are
+  damped (`kExprDamping`) or a full step tunnels through the surface.
+
+**`Renderer::rendersImplicitExactly()`** decides the route. `Object::drawFieldModel`
+asks, and only WebGPU says yes. It is a query rather than "always call
+drawImplicit" because the OpenGL implementation tessellates on EVERY call while
+`Object` caches `_fieldMesh` — routing the cached-mesh caller through it would be
+a large regression.
+
+**Fidelity trap caught during this work:** the raymarcher initially ignored face
+paint, so fields rendered WHITE under WebGPU while the mesh path tinted them (a
+default field's face 0 is red) — a shape changing colour with the backend.
+`tessellateSdf` assigns every vertex `uv = (0.5, 0.5)`, so a meshed field samples
+exactly ONE texel; the fix reads that same texel on the CPU and folds it into
+baseColor, needing no texture binding at all. `webgpu_object_test` now asserts the
+field is red, which is what would catch a regression here.
+
+Verification: `make webgpu-renderer` scene 11 (centre is lit surface, CORNER MISSES
+— proving a traced sphere rather than a painted bounding box) and
+`make test-webgpu-object` (a real field `Object` through `drawObject()`).
+
 ## Known gaps to close in Phase D
 - `WebGpuRenderer` stubs `drawSolid`/`begin2D`/`end2D`/`drawTris2D`/`drawLines2D`/
   `drawImage2D` — they `warnOnce` to stderr instead of drawing.
