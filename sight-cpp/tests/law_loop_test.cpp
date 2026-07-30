@@ -122,7 +122,7 @@ int main() {
 
         assert(nearf(obj.getPosition().y, 0.0f));      // floorLaw fired (round 1)
         PropertyValue fillet;
-        assert(PropertyPath::parse("shape.fillet").getValue(obj, fillet));
+        assert(PropertyPath::parse("shape.fillet").getValue(obj, fillet) == PropertyPath::PathResult::Ok);
         assert(nearf(std::get<float>(fillet), 0.9f));  // gildLaw chained (round 2+)
         assert(static_cast<int>(records.size()) <= LawManager::kMaxChainRounds + 1);
 
@@ -131,13 +131,13 @@ int main() {
         //    editor's "unbind" button is real, not cosmetic).
         // ------------------------------------------------------------------
         mgr.rete().unbindLaw(gildLaw->getIdentifier());
-        assert(PropertyPath::parse("shape.fillet").setValue(obj, PropertyValue(0.0f)));
+        assert(PropertyPath::parse("shape.fillet").setValue(obj, PropertyValue(0.0f)) == PropertyPath::PathResult::Ok);
         obj.setPosition(glm::vec3(0.0f, -5.0f, 0.0f));
         Core::EventBus::instance().publish(
             ECA::Event{"enters-world", &obj, nullptr, std::time(nullptr)});
         mgr.tick();
         assert(nearf(obj.getPosition().y, 0.0f));      // floorLaw still bound
-        assert(PropertyPath::parse("shape.fillet").getValue(obj, fillet));
+        assert(PropertyPath::parse("shape.fillet").getValue(obj, fillet) == PropertyPath::PathResult::Ok);
         assert(nearf(std::get<float>(fillet), 0.0f));  // gildLaw no longer hears
     }
 

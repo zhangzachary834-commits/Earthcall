@@ -100,6 +100,14 @@ struct ConditionNode {
     // One-line human summary for ApplicationRecord logs.
     std::string describe() const;
 
+    // Every property this condition addresses ON ITS OWN SUBJECT — the
+    // vocabulary a being must have for the condition to be about it at all.
+    // Quantifiers are deliberately NOT descended into: their inner condition
+    // is evaluated against each INSTANCE it ranges over, not against the
+    // law's subject, so folding those paths in would filter out exactly the
+    // beings a quantified law is meant to sweep.
+    void collectPaths(std::vector<PropertyPath>& out) const;
+
     // Factories (mirror SdfNode::leaf/binary).
     static ConditionNode compare(const std::string& dottedPath, Op op, PropertyValue rhs);
     static ConditionNode comparePaths(const std::string& dottedPath, Op op, const std::string& rhsPath);

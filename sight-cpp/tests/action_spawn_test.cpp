@@ -28,7 +28,9 @@ int main() {
     // 3. Create a Spawn ActionNode
     ActionNode node;
     node.kind = ActionNode::Kind::Spawn;
-    node.conceptId = "test-concept";
+    // The registry keys by IDENTIFIER ("concept-N"), not by the display
+    // name passed to the constructor — Spawn resolves the same way.
+    node.conceptId = concept->getIdentifier();
     
     // Compile it
     auto executor = node.compile();

@@ -137,7 +137,7 @@ int main() {
         // A granted property is reachable through the ordinary path vocabulary,
         // which is what makes it a real part of the being.
         PropertyValue readBack;
-        check(PropertyPath::parse("warmth").getValue(subject, readBack),
+        check(PropertyPath::parse("warmth").getValue(subject, readBack) == PropertyPath::PathResult::Ok,
               "the granted property reads through PropertyPath");
 
         // Shadowing a first-mover property is refused: a path that read one
@@ -203,6 +203,20 @@ int main() {
 
         const std::size_t before = world.getOwnedObjects().size();
         ActionNode::destroy(beacon->getIdentifier()).compile()(event, subject);
+
+        // Unmaking is DEFERRED: the action asks, and the reaper frees once no
+        // pointer to the victim is still live. Destroying a being mid-action
+        // used to free it under its own law's feet — applyTo goes on to write
+        // the record and publish the applied event through that reference.
+        check(world.getOwnedObjects().size() == before,
+              "the ask alone frees nothing — the caller's pointers stay valid");
+        check(Universe::instance().isUnmade(beacon),
+              "...but it is already gone as far as law is concerned");
+        for (Singular* being : Universe::instance().beings()) {
+            check(being != beacon, "no sweep can reach a being awaiting the reaper");
+        }
+
+        reapUnmadeBeings();   // LawManager::tick() does this at the end of a tick
 
         check(world.getOwnedObjects().size() == before - 1, "the object is gone");
         check(findByType(world, "beacon") == nullptr, "...by identity");

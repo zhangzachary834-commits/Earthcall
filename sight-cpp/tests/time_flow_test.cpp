@@ -81,7 +81,9 @@ int main() {
         assert(propertyValueToNumber(v, x) && nearf(static_cast<float>(x), 42.5f));
         assert(lawGetValue(a, PropertyPath::parse("time.delta"), v));
         assert(propertyValueToNumber(v, x) && nearf(static_cast<float>(x), 0.25f));
-        assert(!lawSetValue(a, PropertyPath::parse("time"), PropertyValue(0.0)));
+        // The clock is read-only, and now SAYS SO rather than just failing.
+        assert(lawSetValue(a, PropertyPath::parse("time"), PropertyValue(0.0)) ==
+               PropertyPath::PathResult::ReadOnly);
         // sinceApplied is defined only INSIDE a law application.
         assert(!lawGetValue(a, PropertyPath::parse("time.sinceApplied"), v));
 

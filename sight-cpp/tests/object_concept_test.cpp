@@ -210,12 +210,12 @@ int main() {
             m.transform = CurveModel::polynomial({0.0, 1.0});
             radiusTaker->addMapping(std::move(m));
         }
-        assert(PropertyPath::parse("shape.r").setValue(src, PropertyValue(0.9f)));
-        assert(PropertyPath::parse("shape.fillet").setValue(src, PropertyValue(0.0f)));
+        assert(PropertyPath::parse("shape.r").setValue(src, PropertyValue(0.9f)) == PropertyPath::PathResult::Ok);
+        assert(PropertyPath::parse("shape.fillet").setValue(src, PropertyValue(0.0f)) == PropertyPath::PathResult::Ok);
         auto gatedBorn = radiusTaker->instantiate(glm::mat4(1.0f), &srcSet);
         PropertyValue fv;
         double filletValue = -1.0;
-        assert(PropertyPath::parse("shape.fillet").getValue(*gatedBorn[0], fv) &&
+        assert(PropertyPath::parse("shape.fillet").getValue(*gatedBorn[0], fv) == PropertyPath::PathResult::Ok &&
                propertyValueToNumber(fv, filletValue));
         assert(!nearf(static_cast<float>(filletValue), 0.9f));   // did NOT transfer
 
@@ -226,7 +226,7 @@ int main() {
         assert(openLaw->applyTo(src) == Law::ApplicationResult::Applied);
         assert(policy.canTransfer(PropertyPath::parse("shape.r")));
         auto openBorn = radiusTaker->instantiate(glm::mat4(1.0f), &srcSet);
-        assert(PropertyPath::parse("shape.fillet").getValue(*openBorn[0], fv) &&
+        assert(PropertyPath::parse("shape.fillet").getValue(*openBorn[0], fv) == PropertyPath::PathResult::Ok &&
                propertyValueToNumber(fv, filletValue));
         assert(nearf(static_cast<float>(filletValue), 0.9f));    // transferred
 

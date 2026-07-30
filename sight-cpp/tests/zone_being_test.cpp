@@ -47,26 +47,26 @@ int main() {
         home.setOwner("zack");
 
         PropertyValue v;
-        assert(PropertyPath::parse("name").getValue(home, v));
+        assert(PropertyPath::parse("name").getValue(home, v) == PropertyPath::PathResult::Ok);
         assert(std::get<std::string>(v) == "Home");
-        assert(PropertyPath::parse("owner").getValue(home, v));
+        assert(PropertyPath::parse("owner").getValue(home, v) == PropertyPath::PathResult::Ok);
         assert(std::get<std::string>(v) == "zack");
-        assert(PropertyPath::parse("scope").getValue(home, v));
+        assert(PropertyPath::parse("scope").getValue(home, v) == PropertyPath::PathResult::Ok);
         assert(std::get<std::string>(v) == "Local");
 
         // Background tint is writable — and r/g/b components resolve.
         assert(PropertyPath::parse("color").setValue(
-            home, PropertyValue(glm::vec3(0.5f, 0.25f, 0.75f))));
+            home, PropertyValue(glm::vec3(0.5f, 0.25f, 0.75f))) == PropertyPath::PathResult::Ok);
         assert(nearf(home.r, 0.5f) && nearf(home.g, 0.25f) && nearf(home.b, 0.75f));
-        assert(PropertyPath::parse("color.g").getValue(home, v));
+        assert(PropertyPath::parse("color.g").getValue(home, v) == PropertyPath::PathResult::Ok);
         double num = 0.0;
         assert(propertyValueToNumber(v, num) && nearf(static_cast<float>(num), 0.25f));
-        assert(PropertyPath::parse("drawColor.r").setValue(home, PropertyValue(0.9f)));
+        assert(PropertyPath::parse("drawColor.r").setValue(home, PropertyValue(0.9f)) == PropertyPath::PathResult::Ok);
         assert(nearf(home.drawR, 0.9f));
 
         // Identity and title are NOT slots: writes refuse.
-        assert(!PropertyPath::parse("name").setValue(home, PropertyValue(std::string("X"))));
-        assert(!PropertyPath::parse("owner").setValue(home, PropertyValue(std::string("thief"))));
+        assert(PropertyPath::parse("name").setValue(home, PropertyValue(std::string("X"))) != PropertyPath::PathResult::Ok);
+        assert(PropertyPath::parse("owner").setValue(home, PropertyValue(std::string("thief"))) != PropertyPath::PathResult::Ok);
         assert(home.owner() == "zack");
 
         // Ownership implies deletability by the owner, and survives copy.

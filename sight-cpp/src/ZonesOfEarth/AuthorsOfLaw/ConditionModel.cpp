@@ -453,6 +453,37 @@ ECA::ConditionPredicate ConditionNode::compile() const {
     return [](const ECA::Event&, const Singular&) { return false; };
 }
 
+void ConditionNode::collectPaths(std::vector<PropertyPath>& out) const {
+    const auto add = [&out](const PropertyPath& p) {
+        if (!p.empty()) out.push_back(p);
+    };
+    switch (kind) {
+        case Kind::Compare:
+            add(path);
+            add(operandPath);
+            break;
+        case Kind::InRegion:
+            // An empty probe defaults to "position" at compile time; name it
+            // explicitly here so the filter sees what the closure will read.
+            out.push_back(probe.empty() ? PropertyPath::parse("position") : probe);
+            break;
+        case Kind::Zone:
+            for (const auto& b : bindings) add(b.second);
+            break;
+        case Kind::ForAny:
+        case Kind::ForAll:
+        case Kind::ForAnyPair:
+        case Kind::ForAllPair:
+            // The inner condition is about the INSTANCES, not the subject.
+            return;
+        default:
+            // IsKind / Identity / Related / Overlaps ask about the being
+            // itself, not about any property it carries.
+            break;
+    }
+    for (const auto& c : children) c.collectPaths(out);
+}
+
 std::string ConditionNode::describe() const {
     switch (kind) {
         case Kind::Compare: {

@@ -99,7 +99,7 @@ int main() {
         inside.setPosition(glm::vec3(0.0f, 0.0f, 0.0f));
         assert(regionLaw.applyTo(inside) == Law::ApplicationResult::Applied);
         PropertyValue fillet;
-        assert(PropertyPath::parse("shape.fillet").getValue(inside, fillet));
+        assert(PropertyPath::parse("shape.fillet").getValue(inside, fillet) == PropertyPath::PathResult::Ok);
         assert(nearf(std::get<float>(fillet), 0.9f));
 
         Object outside;
@@ -249,7 +249,7 @@ int main() {
         floatLaw.setActionModel(ActionNode::set("activeTool", PropertyValue(std::string("FloatSatisfied"))));
 
         assert(floatLaw.applyTo(person) == Law::ApplicationResult::Applied);
-        PropertyPath::parse("activeTool").getValue(person, valOut);
+        (void)PropertyPath::parse("activeTool").getValue(person, valOut);
         assert(std::get<std::string>(valOut) == "FloatSatisfied");
         // ------------------------------------------------------------------
         // 10. Multiple-Condition and Multiple-Action Laws

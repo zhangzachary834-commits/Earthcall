@@ -7,18 +7,34 @@
 
 namespace ECA {
 
+// Append, unless the file has already outgrown a session's worth of history —
+// then start clean. Appending forever meant every run inherited every run
+// before it, and the file only ever grew.
+std::ios_base::openmode LawAuditLogger::openModeFor(const std::string& path) const {
+    std::error_code ec;
+    const std::uintmax_t size = std::filesystem::file_size(path, ec);
+    if (!ec && size > kMaxFileBytes) return std::ios::trunc;
+    return std::ios::app;
+}
+
 LawAuditLogger::LawAuditLogger() {
     std::filesystem::create_directories("logs");
-    
-    // Open in append mode
-    _logFile.open("logs/law_audit.log", std::ios::app);
-    _jsonlFile.open("logs/law_audit.jsonl", std::ios::app);
-    
+
+    _logFile.open("logs/law_audit.log", openModeFor("logs/law_audit.log"));
+    _jsonlFile.open("logs/law_audit.jsonl", openModeFor("logs/law_audit.jsonl"));
+
     if (!_logFile.is_open() || !_jsonlFile.is_open()) {
         std::cerr << "[LawAuditLogger] Warning: Could not open audit log files in logs/\n";
     }
-    
+
     _worker = std::thread(&LawAuditLogger::backgroundWorker, this);
+}
+
+bool LawAuditLogger::wouldLog(const std::string& type) const {
+    const Level level = _level.load();
+    if (level == Level::Off) return false;
+    if (level == Level::Verbose) return true;
+    return type != "CONDITION" && type != "ACTION";
 }
 
 LawAuditLogger::~LawAuditLogger() {
@@ -62,6 +78,11 @@ std::string LawAuditLogger::currentTimestamp() {
 }
 
 void LawAuditLogger::log(const std::string& type, const std::string& message, const nlohmann::json& details) {
+    // Checked before the entry is even built: at Summary the CONDITION and
+    // ACTION categories are the hot path, and formatting a string plus a
+    // JSON payload per condition evaluation costs more than the write.
+    if (!wouldLog(type)) return;
+
     LogEntry entry;
     entry.timestamp = currentTimestamp();
     entry.type = type;
@@ -95,6 +116,20 @@ void LawAuditLogger::backgroundWorker() {
         }
         
         for (const auto& entry : batch) {
+            if (_linesWritten >= kMaxLinesPerRun) {
+                if (!_budgetNoticeWritten) {
+                    _budgetNoticeWritten = true;
+                    if (_logFile.is_open()) {
+                        _logFile << "[" << entry.timestamp
+                                 << "] [SYSTEM] audit budget reached ("
+                                 << kMaxLinesPerRun
+                                 << " lines); further entries dropped this run\n";
+                        _logFile.flush();
+                    }
+                }
+                break;
+            }
+            ++_linesWritten;
             if (_logFile.is_open()) {
                 _logFile << "[" << entry.timestamp << "] [" << entry.type << "] " << entry.message << "\n";
             }

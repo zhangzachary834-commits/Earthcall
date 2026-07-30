@@ -3,10 +3,13 @@
 #include "Form/Singular/Property/ComputedProperty.hpp"
 #include "Universe.hpp"
 #include "LawAuditLogger.hpp"
+#include "ZonesOfEarth/World/World.hpp"
 
 #include <algorithm>
 #include <atomic>
 #include <cstdio>
+#include <iterator>
+#include <optional>
 
 namespace {
 std::vector<std::string> formationMemberIds(const Formation& formation) {
@@ -19,13 +22,30 @@ std::vector<std::string> formationMemberIds(const Formation& formation) {
 }
 
 nlohmann::json Law::ApplicationRecord::toJson() const {
+    // The node trace travels with the record: "Applied" says the branch was
+    // reached, and this says what came of it. A reader that sees Applied with
+    // every node's `wrote` false is looking at a law that did nothing, and
+    // now it can tell.
+    nlohmann::json nodes = nlohmann::json::array();
+    for (const auto& node : trace.nodes) {
+        nlohmann::json entry{{"action", node.actionName}, {"wrote", node.wrote}};
+        if (!node.path.empty()) entry["path"] = node.path;
+        if (!node.wrote) {
+            entry["reason"] = node.note.empty()
+                                  ? std::string(ActionNode::reasonName(node.reason))
+                                  : node.note;
+        }
+        nodes.push_back(std::move(entry));
+    }
     return nlohmann::json{
         {"timestamp", timestamp},
         {"lawId", lawId},
         {"targetId", targetId},
         {"result", Law::resultName(result)},
+        {"changed", changedSomething()},
         {"conditions", conditionDescriptions},
-        {"actions", actionDescriptions}
+        {"actions", actionDescriptions},
+        {"nodes", nodes}
     };
 }
 
@@ -178,6 +198,45 @@ void Law::recompile() {
         _actions.clear();
         addAction(_actionModel->describe(), _actionModel->compile());
     }
+    rebuildRequiredProperties();
+}
+
+// The law's text names the vocabulary it needs; this reads it off once, at
+// the same moment the closures are derived, so the per-tick sweep never pays
+// to re-derive it.
+void Law::rebuildRequiredProperties() {
+    _requiredProperties.clear();
+
+    std::vector<PropertyPath> paths;
+    if (_conditionModel) _conditionModel->collectPaths(paths);
+    if (_actionModel) _actionModel->collectPaths(paths);
+
+    for (const auto& path : paths) {
+        if (path.segments.empty()) continue;
+        const std::string& root = path.segments.front();
+        // Qualified roots address someone else; reserved time paths address
+        // the clock. Neither is a claim about the subject.
+        if (root.empty() || root[0] == '@' || root == "time") continue;
+        if (std::find(_requiredProperties.begin(), _requiredProperties.end(), root) ==
+            _requiredProperties.end()) {
+            _requiredProperties.push_back(root);
+        }
+    }
+}
+
+bool Law::couldApplyTo(Singular& being) const {
+    // No stated requirements = no filter. A law of pure kind-tests or pure
+    // quantification really is about every being, and must keep sweeping.
+    for (const std::string& name : _requiredProperties) {
+        if (being.findProperty(name)) continue;
+        // Authored properties are as real as first-mover ones: a law that
+        // reads a granted `warmth` must still reach the beings a previous
+        // law granted it to.
+        PropertyValue ignored;
+        if (being.getDynamicProperty(name, ignored)) continue;
+        return false;
+    }
+    return true;
 }
 
 std::shared_ptr<Law> Law::fromJson(const nlohmann::json& j) {
@@ -192,6 +251,11 @@ std::shared_ptr<Law> Law::fromJson(const nlohmann::json& j) {
         claimLawIdAtLeast(law->_lawId);   // fresh ids stay fresh after loads
     }
     law->setEnabled(j.value("enabled", true));
+    // CLAMPED, deliberately. A save file is authored text like any other, and
+    // the authority ceiling is the one thing authored text may never raise —
+    // otherwise the anti-tyranny guarantee is a single hand-edited integer
+    // away from meaningless. First movers receive their level through
+    // grantAuthority at construction, in code, and never through here.
     law->setAuthorityLevel(j.value("authority", 0));
     law->setActivation(static_cast<Activation>(j.value("activation", 0)));
     law->setScope(static_cast<Scope>(j.value("scope", 0)));
@@ -211,6 +275,7 @@ std::shared_ptr<Law> Law::fromJson(const nlohmann::json& j) {
 
 Law::ApplicationResult Law::applyTo(Singular& target) {
     ApplicationResult result = ApplicationResult::Applied;
+    ActionNode::Trace trace;
 
     // When the target is itself a Law, this application is a METALAW — and
     // the Singularity-grounded ceiling applies: lower authority may not
@@ -246,32 +311,71 @@ Law::ApplicationResult Law::applyTo(Singular& target) {
 
         // time.sinceApplied context: t=0 is when this law began holding for
         // this subject (continuous edge, or drive-session start); a plain
-        // one-shot application begins NOW. Guard clears on every exit path.
-        struct OnsetGuard {
-            bool armed = false;
-            ~OnsetGuard() {
-                if (armed) Universe::instance().clearApplicationOnset();
-            }
-        } guard;
+        // one-shot application begins NOW. The scope RESTORES rather than
+        // clears, so a law applied from within another law's action hands
+        // back the outer onset instead of erasing it.
+        std::optional<Universe::OnsetScope> onsetScope;
         if (Universe::instance().hasClock()) {
             const std::string subjectId = target.getIdentifier();
-            const double onset = hasOnset(subjectId) ? onsetFor(subjectId)
-                                                     : Universe::instance().now();
-            Universe::instance().setApplicationOnset(onset);
-            guard.armed = true;
+            onsetScope.emplace(hasOnset(subjectId) ? onsetFor(subjectId)
+                                                   : Universe::instance().now());
         }
 
+        // Arm the trace: every action node reports into it, and the record
+        // carries it out. This is where "did anything actually happen" is
+        // answered — the application result only says the branch was reached.
+        ActionNode::TraceScope traceScope;
         for (const auto& action : _actions) {
             action.run(event, target);
         }
-        ECA::LawAuditLogger::instance().log("LAW", "Law \"" + getIdentifier() + "\" applied to \"" + target.getIdentifier() + "\" - SUCCESS", {
-            {"lawId", getIdentifier()},
-            {"targetId", target.getIdentifier()},
-            {"result", "Applied"}
-        });
+        trace = traceScope.trace();
+
+        // A law whose actions are hard-coded CLOSURES (the first-mover lane,
+        // registered through addAction rather than compiled from a model) has
+        // nothing to report into the trace — the closure is opaque. Silence
+        // from an unobservable action is not evidence it did nothing, so it
+        // is recorded as fired-and-effective. Only model-derived actions can
+        // honestly claim to have written nothing.
+        if (!_actionModel && !_actions.empty() && trace.nodes.empty()) {
+            trace.nodes.push_back(ActionNode::NodeOutcome{
+                "FirstMover", {}, true, PropertyPath::PathResult::Ok, {}});
+        }
     }
 
     _applicationLog.push_back(makeRecord(&target, result));
+    _applicationLog.back().trace = trace;
+
+    if (result == ApplicationResult::Applied) {
+        // Report what the NODES did, not merely that we got here. A law whose
+        // every write failed used to log SUCCESS; now it says so, names the
+        // first reason, and the record carries the rest.
+        const bool wrote = trace.anyWrote();
+        std::string message = "Law \"" + getIdentifier() + "\" applied to \"" +
+                              target.getIdentifier() + "\" - " +
+                              (trace.fired() ? (wrote ? "SUCCESS" : "NO EFFECT") : "NO NODES");
+        if (!wrote && trace.fired()) {
+            const auto& first = trace.nodes.front();
+            message += " (" + first.actionName + ": " +
+                       (first.note.empty() ? std::string(ActionNode::reasonName(first.reason))
+                                           : first.note) + ")";
+        }
+        nlohmann::json nodesJson = nlohmann::json::array();
+        for (const auto& node : trace.nodes) {
+            nodesJson.push_back({{"action", node.actionName},
+                                 {"path", node.path},
+                                 {"wrote", node.wrote},
+                                 {"reason", node.wrote ? "" : (node.note.empty()
+                                     ? std::string(ActionNode::reasonName(node.reason))
+                                     : node.note)}});
+        }
+        ECA::LawAuditLogger::instance().log("LAW", message, {
+            {"lawId", getIdentifier()},
+            {"targetId", target.getIdentifier()},
+            {"result", "Applied"},
+            {"changed", wrote},
+            {"nodes", nodesJson}
+        });
+    }
     // Bounded memory: a WhileTrue law applies every tick — the log is a
     // window onto recent history, not an infinite ledger.
     constexpr std::size_t kMaxLogEntries = 256;
@@ -320,14 +424,17 @@ void Law::publishAppliedEvent(Singular* target, ApplicationResult result) const 
     AppliedEvent event{this, target, result, std::time(nullptr)};
     Core::EventBus::instance().publish(event);
 
-    if (result == ApplicationResult::Applied) {
-        printf("[LAW] Action fired for Law: %s on target: %s\n", 
-               _lawId.c_str(), 
-               target ? target->getIdentifier().c_str() : "null");
-
-        // String-typed echo: Person-authored laws bind to "law-applied"
-        // without needing a compile-time event type — laws chaining on laws.
-        // (Only successful applications echo; refusals are log-only.)
+    // String-typed echo: Person-authored laws bind to "law-applied" without
+    // needing a compile-time event type — laws chaining on laws. (Only
+    // successful applications echo; refusals are log-only.)
+    //
+    // Published ONLY when a law is actually bound to it. Every echo becomes a
+    // fact, and every fact marks the network dirty — so an unheard echo cost
+    // a whole extra evaluation round per tick, over every alpha node, for
+    // nobody. Silence when nobody is listening is not a lost signal; it is
+    // the absence of one.
+    if (result == ApplicationResult::Applied &&
+        Universe::instance().anyoneHears("law-applied")) {
         ECA::Event echo;
         echo.type = "law-applied";
         echo.subject = target;
@@ -439,6 +546,33 @@ bool ReteNetwork::retractFact(const std::string& factId) {
     return _facts.size() != oldSize;
 }
 
+void ReteNetwork::retractFactsAbout(const Singular* being) {
+    if (!being) return;
+    _facts.erase(std::remove_if(_facts.begin(), _facts.end(),
+                                [being](const ReteFact& fact) {
+                                    return fact.subject == being || fact.object == being;
+                                }),
+                 _facts.end());
+    for (auto& alpha : _alphaNodes) {
+        alpha.memory.erase(std::remove_if(alpha.memory.begin(), alpha.memory.end(),
+                                          [being](const ReteFact& fact) {
+                                              return fact.subject == being ||
+                                                     fact.object == being;
+                                          }),
+                           alpha.memory.end());
+    }
+    _agenda.erase(std::remove_if(_agenda.begin(), _agenda.end(),
+                                 [being](const ReteActivation& activation) {
+                                     for (const auto& fact : activation.token.facts) {
+                                         if (fact.subject == being || fact.object == being) {
+                                             return true;
+                                         }
+                                     }
+                                     return false;
+                                 }),
+                  _agenda.end());
+}
+
 void ReteNetwork::clearFacts() {
     _facts.clear();
     _agenda.clear();
@@ -486,6 +620,89 @@ void ReteNetwork::unbindLaw(const std::string& lawId) {
         auto& laws = binding.second;
         laws.erase(std::remove(laws.begin(), laws.end(), lawId), laws.end());
     }
+    dropUnboundAlphaNodes();
+}
+
+void ReteNetwork::unbindLawFromAlpha(const std::string& lawId, std::size_t alphaNodeId) {
+    auto it = _alphaLawBindings.find(alphaNodeId);
+    if (it == _alphaLawBindings.end()) return;
+    auto& laws = it->second;
+    laws.erase(std::remove(laws.begin(), laws.end(), lawId), laws.end());
+    dropUnboundAlphaNodes();
+}
+
+std::size_t ReteNetwork::internTypeAlpha(const std::string& eventType) {
+    auto existing = _typeAlphaIndex.find(eventType);
+    if (existing != _typeAlphaIndex.end() && findAlpha(existing->second)) {
+        return existing->second;
+    }
+    const std::size_t id = addAlphaNode(
+        "type == " + eventType,
+        [eventType](const ReteFact& f) { return f.type == eventType; });
+    _typeAlphaIndex[eventType] = id;
+    return id;
+}
+
+bool ReteNetwork::hearsType(const std::string& eventType) const {
+    auto interned = _typeAlphaIndex.find(eventType);
+    if (interned == _typeAlphaIndex.end()) return false;
+    auto binding = _alphaLawBindings.find(interned->second);
+    if (binding != _alphaLawBindings.end() && !binding->second.empty()) return true;
+    for (const auto& beta : _betaNodes) {
+        if (beta.leftAlphaId == interned->second || beta.rightAlphaId == interned->second) {
+            auto betaBinding = _betaLawBindings.find(beta.id);
+            if (betaBinding != _betaLawBindings.end() && !betaBinding->second.empty()) return true;
+        }
+    }
+    return false;
+}
+
+bool ReteNetwork::hasOpaqueBoundAlpha() const {
+    for (const auto& binding : _alphaLawBindings) {
+        if (binding.second.empty()) continue;
+        bool interned = false;
+        for (const auto& entry : _typeAlphaIndex) {
+            if (entry.second == binding.first) { interned = true; break; }
+        }
+        if (!interned) return true;   // an unreadable predicate: assume it listens
+    }
+    return false;
+}
+
+// A node nobody is bound to can never produce an activation, but evaluate()
+// still pays for it against every fact. Reclaim them rather than letting a
+// session's worth of rebinds and world loads pile up.
+void ReteNetwork::dropUnboundAlphaNodes() {
+    std::vector<std::size_t> doomed;
+    for (const auto& alpha : _alphaNodes) {
+        auto binding = _alphaLawBindings.find(alpha.id);
+        const bool boundToLaw = binding != _alphaLawBindings.end() && !binding->second.empty();
+        if (boundToLaw) continue;
+        // A beta node reading this alpha still needs it alive.
+        bool feedsBeta = false;
+        for (const auto& beta : _betaNodes) {
+            if (beta.leftAlphaId == alpha.id || beta.rightAlphaId == alpha.id) {
+                feedsBeta = true;
+                break;
+            }
+        }
+        if (!feedsBeta) doomed.push_back(alpha.id);
+    }
+    if (doomed.empty()) return;
+
+    for (std::size_t id : doomed) {
+        _alphaLawBindings.erase(id);
+        for (auto it = _typeAlphaIndex.begin(); it != _typeAlphaIndex.end();) {
+            it = it->second == id ? _typeAlphaIndex.erase(it) : std::next(it);
+        }
+    }
+    _alphaNodes.erase(
+        std::remove_if(_alphaNodes.begin(), _alphaNodes.end(),
+                       [&doomed](const AlphaNode& alpha) {
+                           return std::find(doomed.begin(), doomed.end(), alpha.id) !=
+                                  doomed.end();
+                       }),
+        _alphaNodes.end());
 }
 
 const std::vector<ReteActivation>& ReteNetwork::evaluate() {
@@ -493,14 +710,28 @@ const std::vector<ReteActivation>& ReteNetwork::evaluate() {
 
     for (auto& alpha : _alphaNodes) {
         alpha.memory.clear();
+
+        // Does anything downstream read this node? Ask BEFORE scanning: the
+        // predicate test runs once per fact, and paying it for a node with
+        // no law bound and no beta reading it is pure waste.
+        auto bindingIt = _alphaLawBindings.find(alpha.id);
+        const bool boundToLaw = bindingIt != _alphaLawBindings.end() && !bindingIt->second.empty();
+        bool feedsBeta = false;
+        for (const auto& beta : _betaNodes) {
+            if (beta.leftAlphaId == alpha.id || beta.rightAlphaId == alpha.id) {
+                feedsBeta = true;
+                break;
+            }
+        }
+        if (!boundToLaw && !feedsBeta) continue;
+
         for (const auto& fact : _facts) {
             if (!alpha.predicate || alpha.predicate(fact)) {
                 alpha.memory.push_back(fact);
             }
         }
 
-        auto bindingIt = _alphaLawBindings.find(alpha.id);
-        if (bindingIt == _alphaLawBindings.end()) continue;
+        if (!boundToLaw) continue;
         for (const auto& lawId : bindingIt->second) {
             for (const auto& fact : alpha.memory) {
                 ReteToken token;
@@ -649,16 +880,37 @@ void LawManager::add(const std::shared_ptr<Law>& law) {
 void LawManager::connectToEventBus() {
     if (_connected) return;
     _connected = true;
+
+    // "Is anyone listening for this?" — which lets a law skip publishing an
+    // echo nobody hears (see Law::publishAppliedEvent). Asked of the NETWORK
+    // rather than the trigger table, because laws can be bound to alpha
+    // nodes directly (the graph editor does, and so do tests); a trigger-only
+    // answer would call those laws deaf and silently stop feeding them.
+    // Captured by `this`: the LawManager is an engine-lifetime object, the
+    // same contract as the bus subscriptions below.
+    Universe::instance().setEventInterest([this](const std::string& type) {
+        return _rete.hearsType(type) || _rete.hasOpaqueBoundAlpha();
+    });
+
     Core::EventBus::instance().subscribe<ECA::Event>([this](const ECA::Event& e) {
         std::string subjectId = e.subject ? e.subject->getIdentifier() : "null";
         std::string objectId = e.object ? e.object->getIdentifier() : "null";
-        
+
         ECA::LawAuditLogger::instance().log("EVENT", "Event \"" + e.type + "\" triggered (Subject: " + subjectId + ", Object: " + objectId + ")", {
             {"eventType", e.type},
             {"subjectId", subjectId},
             {"objectId", objectId},
             {"timestamp", e.timestamp}
         });
+
+        // A being that has just left the world is released from every law
+        // that named it. Formations hold RAW pointers and nothing else
+        // releases them, so without this a law targeting a deleted object
+        // dereferences freed memory every tick for the rest of the session.
+        // This covers beings unmade by the delete tool as well as by law.
+        if (e.type == "object-destroyed" && e.subject) {
+            releaseFromLaws(e.subject);
+        }
 
         ReteFact fact;
         fact.type = e.type;
@@ -668,15 +920,11 @@ void LawManager::connectToEventBus() {
         _rete.assertFact(fact);
         _dirty = true;
     });
-    
-    // Also subscribe to ActionNode::ExecutedEvent to log actions globally
-    Core::EventBus::instance().subscribe<ActionNode::ExecutedEvent>([](const ActionNode::ExecutedEvent& e) {
-        std::string tId = e.target ? e.target->getIdentifier() : "null";
-        ECA::LawAuditLogger::instance().log("ACTION", "Action executed: " + e.actionName + " on " + tId, {
-            {"actionName", e.actionName},
-            {"targetId", tId}
-        });
-    });
+
+    // Per-node action outcomes reach the audit log through the application
+    // record (Law::applyTo), which knows the law, the subject, AND whether
+    // the write landed. A second, thinner line per successful node here was
+    // duplicate noise on the hot path.
 }
 
 std::vector<Law::ApplicationRecord> LawManager::tick() {
@@ -702,22 +950,18 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
             // The event's PARTICIPANTS stay addressable while the law
             // responds — "@event.subject" / "@event.object" paths let the
             // condition and action phases name them BY CHOICE, whoever the
-            // application's subject is. Guard clears on every exit path.
-            struct EventContextGuard {
-                ~EventContextGuard() { Universe::instance().clearApplicationEvent(); }
-            } eventGuard;
-            Universe::instance().setApplicationEvent(subject, eventObject);
+            // application's subject is. Restores on every exit path.
+            Universe::EventScope eventScope(subject, eventObject);
 
             if (law->scope() == Law::Scope::Everyone) {
                 // The event is the OCCASION; the application sweeps every
-                // being (targets, or the Universe) that satisfies the
-                // conditions — "every instance of the category".
-                std::vector<Singular*> subjects;
-                const auto& targets = law->targets().getMembers();
-                if (!targets.empty()) subjects.assign(targets.begin(), targets.end());
-                else subjects = Universe::instance().beings();
+                // being (targets, or the Universe) that CARRIES THE LAW'S
+                // VOCABULARY and satisfies the conditions — "every instance
+                // of the category".
+                std::vector<Singular*> subjects = sweepSubjects(*law);
                 for (Singular* being : subjects) {
-                    if (!being || !law->conditionsSatisfied(*being)) continue;
+                    if (!being || Universe::instance().isUnmade(being)) continue;
+                    if (!law->conditionsSatisfied(*being)) continue;
                     // A live drive session OWNS the process: one process,
                     // one clock, per law-and-subject. What a re-firing
                     // event means is the AUTHOR'S choice — Absorb (a block
@@ -728,17 +972,12 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
                         if (law->retrigger() == Law::Retrigger::Absorb) continue;
                         restartDriveSession(*law, being->getIdentifier());
                     }
-                    if (law->applyTo(*being) == Law::ApplicationResult::Applied) {
-                        maybeStartDriveSession(*law, *being);
-                    }
-                    if (!law->applicationLog().empty()) {
-                        records.push_back(law->applicationLog().back());
-                    }
+                    applyAndMaybeDrive(*law, *being, records);
                 }
                 continue;
             }
 
-            if (!subject) continue;
+            if (!subject || Universe::instance().isUnmade(subject)) continue;
             if (law->drives() &&
                 hasDriveSession(law->getIdentifier(), subject->getIdentifier())) {
                 if (law->retrigger() == Law::Retrigger::Absorb) {
@@ -746,12 +985,7 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
                 }
                 restartDriveSession(*law, subject->getIdentifier());
             }
-            if (law->applyTo(*subject) == Law::ApplicationResult::Applied) {
-                maybeStartDriveSession(*law, *subject);
-            }
-            if (!law->applicationLog().empty()) {
-                records.push_back(law->applicationLog().back());
-            }
+            applyAndMaybeDrive(*law, *subject, records);
         }
         _rete.retractFirst(consumed);
     }
@@ -759,24 +993,22 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
     // ------------------------------------------------------------------
     // Continuous pass: level-triggered laws don't wait for events — their
     // condition phase monitors the program every tick. Subjects come from
-    // the law's targets Formation when present, otherwise from the whole
-    // Universe of beings. (Events a continuous application fires — the
-    // law-applied echo — become facts for the NEXT tick's event rounds.)
+    // the law's targets Formation when present, otherwise from the beings
+    // that carry its vocabulary. (Events a continuous application fires —
+    // the law-applied echo — become facts for the NEXT tick's event rounds.)
+    //
+    // Iterating a COPY of the register: a law may create or destroy laws,
+    // and mutating _laws under the loop would invalidate the iterator.
     // ------------------------------------------------------------------
-    for (const auto& law : _laws) {
+    const std::vector<std::shared_ptr<Law>> continuousLaws = _laws;
+    for (const auto& law : continuousLaws) {
         if (!law || law->activation() == Law::Activation::OnEvent) continue;
         if (!law->isEnabled() || !law->isAuthored()) continue;
 
-        std::vector<Singular*> subjects;
-        const auto& targets = law->targets().getMembers();
-        if (!targets.empty()) {
-            subjects.assign(targets.begin(), targets.end());
-        } else {
-            subjects = Universe::instance().beings();
-        }
+        std::vector<Singular*> subjects = sweepSubjects(*law);
 
         for (Singular* subject : subjects) {
-            if (!subject) continue;
+            if (!subject || Universe::instance().isUnmade(subject)) continue;
             const bool holds = law->conditionsSatisfied(*subject);
             const std::string subjectId = subject->getIdentifier();
             const bool wasHolding = law->lastConditionState(subjectId);
@@ -802,19 +1034,137 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
                 }
                 restartDriveSession(*law, subjectId);   // a re-edge = new t=0
             }
-            if (law->applyTo(*subject) == Law::ApplicationResult::Applied) {
-                // An OnBecomeTrue law that drives launches its process at
-                // the edge and runs it to the end of its authored bounds.
-                maybeStartDriveSession(*law, *subject);
-            }
-            if (!law->applicationLog().empty()) {
-                records.push_back(law->applicationLog().back());
-            }
+            // An OnBecomeTrue law that drives launches its process at the
+            // edge and runs it to the end of its authored bounds.
+            applyAndMaybeDrive(*law, *subject, records);
         }
     }
 
     runDriveSessions(records);
+    reapUnmade();
     return records;
+}
+
+// ---------------------------------------------------------------------------
+// One place decides whether an application earns a drive session, because
+// there were three and they all asked the wrong question.
+//
+// The old test was `applyTo(...) == Applied` — which only says the action
+// branch was reached. A law whose every write failed passed that test, got
+// handed a process, and re-applied itself forever, failing every tick. The
+// question a drive session answers is "did this law DO something", and the
+// node trace is what knows.
+// ---------------------------------------------------------------------------
+void LawManager::applyAndMaybeDrive(Law& law, Singular& subject,
+                                    std::vector<Law::ApplicationRecord>& records) {
+    const Law::ApplicationResult result = law.applyTo(subject);
+    if (law.applicationLog().empty()) return;
+    const Law::ApplicationRecord& record = law.applicationLog().back();
+    records.push_back(record);
+
+    if (result != Law::ApplicationResult::Applied) return;
+    if (!record.changedSomething()) return;   // nothing happened: nothing to drive
+    maybeStartDriveSession(law, subject);
+}
+
+// Who a law sweeps when it has no targets Formation: not everyone, but
+// everyone who CARRIES ITS VOCABULARY (see Law::requiredProperties).
+std::vector<Singular*> LawManager::sweepSubjects(const Law& law) const {
+    const auto& targets = law.targets().getMembers();
+    if (!targets.empty()) {
+        // An explicit targets Formation is the author's own answer to "whom",
+        // and it overrides the derived filter — but a target that has since
+        // been unmade is still no one.
+        std::vector<Singular*> chosen;
+        chosen.reserve(targets.size());
+        for (Singular* target : targets) {
+            if (target && !Universe::instance().isUnmade(target)) chosen.push_back(target);
+        }
+        return chosen;
+    }
+
+    std::vector<Singular*> beings = Universe::instance().beings();
+    if (law.requiredProperties().empty()) return beings;   // truly about everyone
+    beings.erase(std::remove_if(beings.begin(), beings.end(),
+                                [&law](Singular* being) {
+                                    return !being || !law.couldApplyTo(*being);
+                                }),
+                 beings.end());
+    return beings;
+}
+
+// ---------------------------------------------------------------------------
+// The reaper. Every pass of the tick is done; no snapshot vector, no agenda
+// activation, and no applyTo stack frame still holds a pointer to a victim.
+// Only now is it safe to free — and before freeing, every Formation that
+// names the victim must let go, because Formations hold RAW pointers and
+// World::removeObject only releases the ones held by other Objects. A law
+// targeting a destroyed object used to dereference freed memory every tick
+// for the rest of the session.
+// ---------------------------------------------------------------------------
+void LawManager::reapUnmade() {
+    if (!Universe::instance().hasUnmakings()) return;
+    // Snapshot the victims for the fact purge below; reapUnmadeBeings consumes
+    // the queue and does the freeing.
+    const std::vector<Singular*> victims = Universe::instance().unmakings();
+
+    // Release from OUR laws directly rather than waiting for the
+    // "object-destroyed" announcement to come back around. The subscription
+    // still exists — it is what catches beings the delete tool unmakes — but
+    // a LawManager's own bookkeeping must not depend on having been connected
+    // to a global bus that cannot be unsubscribed from.
+    for (Singular* victim : victims) {
+        releaseFromLaws(victim);
+    }
+    reapUnmadeBeings();
+    // The unmaking announcement became a fact carrying a pointer that is now
+    // dangling, and facts outlive the round that asserted them. Purge them:
+    // a law that responds to unmaking hears it live, through the bus, while
+    // the being still exists — it must not be handed the corpse next tick.
+    for (Singular* victim : victims) {
+        _rete.retractFactsAbout(victim);
+    }
+}
+
+// The freeing itself, callable without a LawManager: a compiled Destroy node
+// fired by a tool or a test defers exactly the same way, and something has to
+// finish what it started.
+void reapUnmadeBeings() {
+    if (!Universe::instance().hasUnmakings()) return;
+    std::vector<Singular*> victims = Universe::instance().takeUnmakings();
+
+    // Collect the worlds BEFORE any removal: beings() rebuilds from the
+    // provider each call, and a World is not what we are freeing anyway.
+    std::vector<World*> worlds;
+    for (Singular* being : Universe::instance().beings()) {
+        if (auto* world = dynamic_cast<World*>(being)) worlds.push_back(world);
+    }
+
+    for (Singular* victim : victims) {
+        auto* asObject = dynamic_cast<Object*>(victim);
+        if (!asObject) continue;
+        for (World* world : worlds) {
+            if (world->removeObject(asObject)) break;   // publishes object-destroyed
+        }
+    }
+}
+
+// A being that leaves the world leaves every law that named it. Called by the
+// reaper and by the "object-destroyed" subscriber, so beings unmade by the
+// delete tool are released too — not only the ones a law unmade.
+void LawManager::releaseFromLaws(Singular* being) {
+    if (!being) return;
+    for (const auto& law : _laws) {
+        if (!law) continue;
+        law->targets().removeMember(being);
+        law->conditions().removeMember(being);
+        law->authors().removeMember(being);
+    }
+    const std::string id = being->getIdentifier();
+    _driveSessions.erase(
+        std::remove_if(_driveSessions.begin(), _driveSessions.end(),
+                       [&id](const DriveSession& s) { return s.subjectId == id; }),
+        _driveSessions.end());
 }
 
 void LawManager::restartDriveSession(Law& law, const std::string& subjectId) {
@@ -878,16 +1228,23 @@ void LawManager::runDriveSessions(std::vector<Law::ApplicationRecord>& records) 
     if (_driveSessions.empty() || !Universe::instance().hasClock()) return;
     const double now = Universe::instance().now();
 
+    // ONE snapshot for the whole pass. Universe::beings() rebuilds the vector
+    // from the provider on every call — every object, law, relation, and zone
+    // in the world — and this used to happen three times per session per tick
+    // (subject, event subject, event object).
+    const std::vector<Singular*> beings = Universe::instance().beings();
+
     for (auto it = _driveSessions.begin(); it != _driveSessions.end();) {
         Law* law = find(it->lawId);
         const auto findBeing = [&](const std::string& id) -> Singular* {
             if (id.empty()) return nullptr;
-            for (Singular* being : Universe::instance().beings()) {
+            for (Singular* being : beings) {
                 if (being && being->getIdentifier() == id) return being;
             }
             if (law) {
                 for (Singular* target : law->targets().getMembers()) {
-                    if (target && target->getIdentifier() == id) return target;
+                    if (!target || Universe::instance().isUnmade(target)) continue;
+                    if (target->getIdentifier() == id) return target;
                 }
             }
             return nullptr;
@@ -903,12 +1260,9 @@ void LawManager::runDriveSessions(std::vector<Law::ApplicationRecord>& records) 
 
         // The launching event's participants stay addressable ("@event.*")
         // for the drive's whole life; a participant that left the world
-        // resolves to nothing. Guard clears on every exit path.
-        struct EventContextGuard {
-            ~EventContextGuard() { Universe::instance().clearApplicationEvent(); }
-        } eventGuard;
-        Universe::instance().setApplicationEvent(findBeing(it->eventSubjectId),
-                                                 findBeing(it->eventObjectId));
+        // resolves to nothing. Restores on every exit path.
+        Universe::EventScope eventScope(findBeing(it->eventSubjectId),
+                                        findBeing(it->eventObjectId));
 
         // The authored bounds ARE the duration — and ANY bound variable may
         // cut them (time, another being's position, the subject's own
@@ -918,9 +1272,8 @@ void LawManager::runDriveSessions(std::vector<Law::ApplicationRecord>& records) 
         // whose action has no bounded function drives until disabled.
         bool alive = true;
         if (law->hasActionModel()) {
-            Universe::instance().setApplicationOnset(it->onset);
+            Universe::OnsetScope onsetScope(it->onset);
             alive = law->actionModel()->definedFor(*subject);
-            Universe::instance().clearApplicationOnset();
         }
         if (!alive && now > it->onset) {
             law->forgetOnset(it->subjectId);
@@ -962,24 +1315,21 @@ void LawManager::bindTrigger(const std::string& lawId, const std::string& eventT
     auto& bound = _triggers[lawId];
     if (std::find(bound.begin(), bound.end(), eventType) != bound.end()) return;
     bound.push_back(eventType);
-    const std::size_t alpha = _rete.addAlphaNode(
-        "type == " + eventType,
-        [eventType](const ReteFact& f) { return f.type == eventType; });
-    _rete.bindLawToAlpha(lawId, alpha);
+    _rete.bindLawToAlpha(lawId, _rete.internTypeAlpha(eventType));
 }
 
 void LawManager::unbindTrigger(const std::string& lawId, const std::string& eventType) {
     auto it = _triggers.find(lawId);
     if (it == _triggers.end()) return;
     auto& bound = it->second;
+    const bool had = std::find(bound.begin(), bound.end(), eventType) != bound.end();
     bound.erase(std::remove(bound.begin(), bound.end(), eventType), bound.end());
-    // Rebind from scratch: drop every binding, re-create the remaining ones
-    // on fresh alpha nodes (unbound nodes stay inert).
-    _rete.unbindLaw(lawId);
-    for (const auto& type : bound) {
-        const std::size_t alpha = _rete.addAlphaNode(
-            "type == " + type, [type](const ReteFact& f) { return f.type == type; });
-        _rete.bindLawToAlpha(lawId, alpha);
+    // Surgical: unbind this law from THAT type's shared node. The old code
+    // tore down every binding and rebuilt the survivors on brand-new nodes,
+    // which leaked a node per call and left the other laws bound to nodes
+    // that were about to be orphaned.
+    if (had) {
+        _rete.unbindLawFromAlpha(lawId, _rete.internTypeAlpha(eventType));
     }
     if (bound.empty()) _triggers.erase(it);
 }
@@ -1039,6 +1389,11 @@ void LawManager::loadFromJson(const nlohmann::json& j) {
     }
     if (j.contains("triggers")) {
         for (auto it = j["triggers"].begin(); it != j["triggers"].end(); ++it) {
+            // A trigger for a law that is not in the register binds nothing
+            // real: it creates a live binding on an alpha node whose
+            // activations resolve to null every tick, forever. Saved worlds
+            // accumulate these as laws come and go.
+            if (!find(it.key())) continue;
             for (const auto& type : it.value()) {
                 bindTrigger(it.key(), type.get<std::string>());
             }

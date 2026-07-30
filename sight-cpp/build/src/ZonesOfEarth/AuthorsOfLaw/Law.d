@@ -278,7 +278,8 @@ build/src/ZonesOfEarth/AuthorsOfLaw/Law.o: \
   src/ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp \
   src/Singularity/OntoMath/CurveModel.hpp \
   src/Form/Singular/Property/ComputedProperty.hpp \
-  src/ZonesOfEarth/AuthorsOfLaw/LawAuditLogger.hpp
+  src/ZonesOfEarth/AuthorsOfLaw/LawAuditLogger.hpp \
+  src/ZonesOfEarth/World/World.hpp
 
 src/ZonesOfEarth/AuthorsOfLaw/Law.hpp:
 
@@ -851,3 +852,5 @@ src/Singularity/OntoMath/CurveModel.hpp:
 src/Form/Singular/Property/ComputedProperty.hpp:
 
 src/ZonesOfEarth/AuthorsOfLaw/LawAuditLogger.hpp:
+
+src/ZonesOfEarth/World/World.hpp:

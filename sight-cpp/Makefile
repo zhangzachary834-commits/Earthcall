@@ -304,11 +304,17 @@ serialization_compat_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/serialization_comp
 law_creation_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/law_creation_test.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
+law_audit_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/law_audit_test.o
+	$(CXX) $^ $(LDFLAGS) -o $@
+
 test-property: property_bridge_test
 	./property_bridge_test
 
 test-law: law_model_test
 	./law_model_test
+
+test-law-audit: law_audit_test
+	./law_audit_test
 
 test-loop: law_loop_test
 	./law_loop_test

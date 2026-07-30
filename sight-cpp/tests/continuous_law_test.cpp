@@ -24,7 +24,7 @@ bool nearf(float a, float b, float eps = 1e-4f) { return std::fabs(a - b) < eps;
 
 double filletOf(Object& obj) {
     PropertyValue v;
-    if (!PropertyPath::parse("shape.fillet").getValue(obj, v)) return -1.0;
+    if (PropertyPath::parse("shape.fillet").getValue(obj, v) != PropertyPath::PathResult::Ok) return -1.0;
     double out = -1.0;
     propertyValueToNumber(v, out);
     return out;
@@ -94,7 +94,7 @@ int main() {
         onsetLaw->addTarget(b);                           // watches ONE being
 
         // fillet defaults to 0.12 — zero it so the onset increments read clean.
-        assert(PropertyPath::parse("shape.fillet").setValue(b, PropertyValue(0.0f)));
+        assert(PropertyPath::parse("shape.fillet").setValue(b, PropertyValue(0.0f)) == PropertyPath::PathResult::Ok);
 
         b.setPosition(glm::vec3(3.0f, -1.0f, 0.0f));
         mgr.tick();
@@ -292,15 +292,15 @@ int main() {
         // and endpoints address through PropertyPath like any being's state.
         Relation& touch = *graph.getAll().front();
         PropertyValue relValue;
-        assert(PropertyPath::parse("type").getValue(touch, relValue));
+        assert(PropertyPath::parse("type").getValue(touch, relValue) == PropertyPath::PathResult::Ok);
         assert(std::get<std::string>(relValue) == "touching");
-        assert(PropertyPath::parse("weight").getValue(touch, relValue));
-        assert(PropertyPath::parse("entityA").getValue(touch, relValue));
+        assert(PropertyPath::parse("weight").getValue(touch, relValue) == PropertyPath::PathResult::Ok);
+        assert(PropertyPath::parse("entityA").getValue(touch, relValue) == PropertyPath::PathResult::Ok);
         assert(std::get<std::string>(relValue) == a.getIdentifier());
-        assert(PropertyPath::parse("weight").setValue(touch, PropertyValue(0.25f)));
+        assert(PropertyPath::parse("weight").setValue(touch, PropertyValue(0.25f)) == PropertyPath::PathResult::Ok);
         assert(nearf(touch.weight, 0.25f));
-        assert(!PropertyPath::parse("entityA").setValue(
-            touch, PropertyValue(std::string("someone-else"))));   // identity: read-only
+        assert(PropertyPath::parse("entityA").setValue(
+            touch, PropertyValue(std::string("someone-else"))) != PropertyPath::PathResult::Ok);   // identity: read-only
 
         // No provider = no proven relations: never passes (laws must not
         // fire on unproven relations).

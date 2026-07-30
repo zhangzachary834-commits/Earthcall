@@ -33,15 +33,15 @@ int main() {
 
         // A "Law" reads a field.
         PropertyValue out;
-        assert(PropertyPath::parse("shininess").getValue(m, out));
+        assert(PropertyPath::parse("shininess").getValue(m, out) == PropertyPath::PathResult::Ok);
         assert(nearf(std::get<float>(out), 32.0f));
 
         // A "Law" drives a field — the payoff of material-as-being.
-        assert(PropertyPath::parse("shininess").setValue(m, PropertyValue(8.0f)));
+        assert(PropertyPath::parse("shininess").setValue(m, PropertyValue(8.0f)) == PropertyPath::PathResult::Ok);
         assert(nearf(m.shininess, 8.0f));
 
         assert(PropertyPath::parse("baseColor").setValue(
-            m, PropertyValue(glm::vec3(0.6f, 0.3f, 0.1f))));
+            m, PropertyValue(glm::vec3(0.6f, 0.3f, 0.1f))) == PropertyPath::PathResult::Ok);
         assert(nearf(m.baseColor.r, 0.6f) && nearf(m.baseColor.g, 0.3f) && nearf(m.baseColor.b, 0.1f));
         std::printf("  being:   material.clay is law-addressable (shininess, baseColor driven)\n");
     }

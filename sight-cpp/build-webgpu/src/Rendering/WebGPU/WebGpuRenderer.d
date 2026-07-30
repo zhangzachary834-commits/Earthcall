@@ -153,7 +153,8 @@ build-webgpu/src/Rendering/WebGPU/WebGpuRenderer.o: \
   /opt/homebrew/include/glm/detail/func_integer.inl \
   src/Form/Object/Geometry/SmoothSurface.hpp \
   third_party/wgpu/include/webgpu/webgpu.h \
-  src/Rendering/WebGPU/WgpuDevice.hpp \
+  src/Rendering/WebGPU/WgpuDevice.hpp src/Rendering/WebGPU/SdfWgsl.hpp \
+  src/Form/Object/Geometry/Sdf.hpp \
   /opt/homebrew/include/glm/gtc/matrix_transform.hpp \
   /opt/homebrew/include/glm/gtc/../mat4x4.hpp \
   /opt/homebrew/include/glm/gtc/../vec2.hpp \
@@ -489,6 +490,10 @@ src/Form/Object/Geometry/SmoothSurface.hpp:
 third_party/wgpu/include/webgpu/webgpu.h:
 
 src/Rendering/WebGPU/WgpuDevice.hpp:
+
+src/Rendering/WebGPU/SdfWgsl.hpp:
+
+src/Form/Object/Geometry/Sdf.hpp:
 
 /opt/homebrew/include/glm/gtc/matrix_transform.hpp:
 

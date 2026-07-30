@@ -40,6 +40,12 @@ public:
     using Condition = ECA::Condition;
     using Action = ECA::Action;
 
+    // WHETHER THE ACTION BRANCH WAS REACHED — nothing more. `Applied` means
+    // control got past the gates (enabled, authored, authority, conditions)
+    // and began traversing the action tree. It does NOT claim the actions
+    // landed: that is a finer truth, it lives per-node, and it is carried in
+    // the record's `trace`. Conflating the two is what let a law whose every
+    // write failed report SUCCESS and open a drive session that never ended.
     enum class ApplicationResult {
         Applied,
         Disabled,
@@ -57,6 +63,16 @@ public:
         ApplicationResult result{ApplicationResult::NoTarget};
         std::vector<std::string> conditionDescriptions;
         std::vector<std::string> actionDescriptions;
+
+        // Which action nodes fired, and which of them actually wrote. Empty
+        // whenever the action branch was never reached.
+        ActionNode::Trace trace;
+
+        // Did anything at all change? This — not `result` — is the question
+        // "did the law do something", and it is what gates a drive session:
+        // a law that wrote nothing must not be handed a process that
+        // re-applies it forever.
+        bool changedSomething() const { return trace.anyWrote(); }
 
         nlohmann::json toJson() const;
     };
@@ -165,9 +181,28 @@ public:
     // law-modifiable — that is the anti-tyranny (and anti-Babel) guarantee.
     // Lower scopes may govern laws within their jurisdiction but cannot
     // override higher-order metalaws, kernel laws, or substrate order.
+    //
+    // Keeping it out of the property registry sealed one door and left
+    // another wide open: authority came straight off the save file, so
+    // hand-editing one integer let an authored law outrank every kernel
+    // metalaw. Authority is GRANTED, never claimed —
+    //
+    //   setAuthorityLevel  the ordinary path. Clamped to kAuthoredCeiling:
+    //                      this is what loading, the UI, and any authored
+    //                      route may ask for.
+    //   grantAuthority     the first-mover path, unclamped. Today the only
+    //                      legitimate caller is the engine's own dev tooling
+    //                      (the ImGui panels), which is the first-mover
+    //                      surface in intention but not yet an explicit
+    //                      framework — when that framework arrives, this is
+    //                      the seam it plugs into.
     // ------------------------------------------------------------------
+    static constexpr int kAuthoredCeiling = 0;
     int authorityLevel() const { return _authorityLevel; }
-    void setAuthorityLevel(int level) { _authorityLevel = level; }
+    void setAuthorityLevel(int level) {
+        _authorityLevel = level < kAuthoredCeiling ? level : kAuthoredCeiling;
+    }
+    void grantAuthority(int level) { _authorityLevel = level; }
 
     ConditionMode conditionMode() const { return _conditionMode; }
     void setConditionMode(ConditionMode mode) { _conditionMode = mode; }
@@ -223,6 +258,27 @@ public:
     const ActionModel* actionModel() const {
         return _actionModel ? &*_actionModel : nullptr;
     }
+    // ------------------------------------------------------------------
+    // What a subject must HAVE for this law to be about it.
+    //
+    // "Apply to everyone" was never the intent — a law that writes
+    // `position.y` has nothing to say to a Relation, a Zone, or another Law,
+    // and sweeping them cost a full condition evaluation, an application
+    // record, and an audit line each, per being, per tick. The honest scope
+    // is "everything WITH THIS PROPERTY": the law's own text already names
+    // the vocabulary it needs, so the sweep reads that vocabulary off the
+    // text and never visits a being that could not possibly satisfy it.
+    //
+    // These are ROOT names (the first segment of each authored path), which
+    // is the granularity a registry lookup answers in one step. Paths rooted
+    // on someone else (@being-id, @event.*) and the reserved time paths are
+    // excluded: they say nothing about the subject. A law whose every path
+    // is qualified that way has no requirements and sweeps everything, which
+    // is correct — it really is about all of them.
+    // ------------------------------------------------------------------
+    const std::vector<std::string>& requiredProperties() const { return _requiredProperties; }
+    bool couldApplyTo(Singular& being) const;
+
     void setConditionModel(ConditionModel model);
     void setActionModel(ActionModel model);
     void clearConditionModel() {
@@ -267,6 +323,7 @@ private:
     // Object::buildProperties: laws are extra-spatial, so the spatial
     // properties are not registered.) Bridges adapt to Property signatures.
     void buildProperties() override;
+    void rebuildRequiredProperties();
     bool propEnabled() const { return _enabled; }
     void propSetEnabled(const bool& v) { _enabled = v; }
     int propConditionMode() const { return static_cast<int>(_conditionMode); }
@@ -301,6 +358,7 @@ private:
     std::vector<Condition> _conditionPredicates;
     std::vector<Action> _actions;
     std::vector<ApplicationRecord> _applicationLog;
+    std::vector<std::string> _requiredProperties;   // derived at recompile()
 };
 
 struct LawRegisteredEvent {
@@ -352,6 +410,11 @@ public:
 
     std::string assertFact(ReteFact fact);
     bool retractFact(const std::string& factId);
+    // Drop every fact naming this being. Called when it is actually freed:
+    // facts hold raw participant pointers and outlive the round that
+    // asserted them, so a fact about a dead being is a dangling read waiting
+    // for the next tick.
+    void retractFactsAbout(const Singular* being);
     // Retract the oldest `count` facts — the consumption step of the tick
     // loop: facts asserted before a round are consumed by it, facts asserted
     // during it (laws firing events) survive into the next round.
@@ -367,9 +430,33 @@ public:
 
     void bindLawToAlpha(const std::string& lawId, std::size_t alphaNodeId);
     void bindLawToBeta(const std::string& lawId, std::size_t betaNodeId);
-    // Remove every binding of this law from the network (the nodes remain;
-    // an unbound node is inert). Rebinding creates fresh bindings.
+    // Remove every binding of this law from the network. Nodes left with no
+    // bindings are DROPPED, not kept: "an unbound node is inert" was wrong
+    // about the cost — evaluate() predicate-tests every node against every
+    // fact before it ever looks at the bindings, so an accumulating pile of
+    // dead nodes is a per-frame tax that grows forever. Every trigger
+    // rebind, and every world load, used to add another pile.
     void unbindLaw(const std::string& lawId);
+    void unbindLawFromAlpha(const std::string& lawId, std::size_t alphaNodeId);
+
+    // One alpha node per event type, shared by every law that listens for it.
+    // Fifty laws on "collision" is one predicate over the fact stream, not
+    // fifty identical ones.
+    std::size_t internTypeAlpha(const std::string& eventType);
+    std::size_t alphaNodeCount() const { return _alphaNodes.size(); }
+
+    // ------------------------------------------------------------------
+    // "Would anything act on a fact of this type?" — asked before an event
+    // is published, so an echo nobody hears costs nothing.
+    //
+    // Interned type nodes answer exactly. Nodes added through addAlphaNode
+    // carry an ARBITRARY predicate closure, which cannot be introspected —
+    // so if any such node is bound, the honest answer is "possibly", and we
+    // publish. Guessing "no" about a predicate we cannot read would silently
+    // drop events a law really was listening for.
+    // ------------------------------------------------------------------
+    bool hearsType(const std::string& eventType) const;
+    bool hasOpaqueBoundAlpha() const;
 
     const std::vector<ReteActivation>& evaluate();
     std::vector<ReteActivation> drainAgenda();
@@ -385,8 +472,11 @@ private:
     std::vector<AlphaNode> _alphaNodes;
     std::vector<BetaNode> _betaNodes;
     std::vector<ReteActivation> _agenda;
+    void dropUnboundAlphaNodes();
+
     std::unordered_map<std::size_t, std::vector<std::string>> _alphaLawBindings;
     std::unordered_map<std::size_t, std::vector<std::string>> _betaLawBindings;
+    std::unordered_map<std::string, std::size_t> _typeAlphaIndex;   // event type -> node
     std::size_t _nextAlphaId{1};
     std::size_t _nextBetaId{1};
 };
@@ -480,6 +570,15 @@ private:
     void maybeStartDriveSession(Law& law, Singular& subject);
     void restartDriveSession(Law& law, const std::string& subjectId);
     void runDriveSessions(std::vector<Law::ApplicationRecord>& records);
+    // Apply, record, and start a drive session only if the law CHANGED
+    // something (not merely if the action branch was reached).
+    void applyAndMaybeDrive(Law& law, Singular& subject,
+                            std::vector<Law::ApplicationRecord>& records);
+    // Whom an untargeted law sweeps: the beings carrying its vocabulary.
+    std::vector<Singular*> sweepSubjects(const Law& law) const;
+    // End-of-tick unmaking, once no pointer to a victim is still live.
+    void reapUnmade();
+    void releaseFromLaws(Singular* being);
 
     std::vector<std::shared_ptr<Law>> _laws;
     Formation _lawFormation{Form::ShapeType::Cube, glm::vec3(1.0f)};

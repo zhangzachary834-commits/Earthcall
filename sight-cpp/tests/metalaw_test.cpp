@@ -50,9 +50,9 @@ int main() {
         citizen.setActionModel(ActionNode::set("position.y", PropertyValue(0.0)));
 
         PropertyValue v;
-        assert(PropertyPath::parse("enabled").getValue(citizen, v));
+        assert(PropertyPath::parse("enabled").getValue(citizen, v) == PropertyPath::PathResult::Ok);
         assert(std::get<bool>(v) == true);
-        assert(PropertyPath::parse("name").getValue(citizen, v));
+        assert(PropertyPath::parse("name").getValue(citizen, v) == PropertyPath::PathResult::Ok);
         assert(std::get<std::string>(v) == "ground-rest");
         assert(citizen.findProperty("authorityLevel") == nullptr);   // the ceiling is not legible
 
@@ -83,7 +83,7 @@ int main() {
         // ------------------------------------------------------------------
         Law kernel("personhood-integrity");
         kernel.addAuthor(author);
-        kernel.setAuthorityLevel(10);                       // Singularity-granted
+        kernel.grantAuthority(10);                       // Singularity-granted
         kernel.setActionModel(ActionNode::set("position.y", PropertyValue(0.0)));
 
         assert(metalaw.applyTo(kernel) == Law::ApplicationResult::AuthorityDenied);
@@ -92,7 +92,7 @@ int main() {
         // A peer (or higher) authority may govern.
         Law council("council");
         council.addAuthor(author);
-        council.setAuthorityLevel(10);
+        council.grantAuthority(10);
         council.setActionModel(ActionNode::set("enabled", PropertyValue(false)));
         assert(council.applyTo(kernel) == Law::ApplicationResult::Applied);
         assert(!kernel.isEnabled());
@@ -119,7 +119,7 @@ int main() {
         subject.setPosition(glm::vec3(0.0f, -2.0f, 0.0f));
         assert(higher->applyTo(subject) == Law::ApplicationResult::Applied);
         assert(nearf(subject.getPosition().y, 0.0f));       // citizen's effect
-        assert(PropertyPath::parse("shape.fillet").getValue(subject, v));
+        assert(PropertyPath::parse("shape.fillet").getValue(subject, v) == PropertyPath::PathResult::Ok);
         assert(nearf(std::get<float>(v), 0.9f));            // gild's effect
 
         // The higher law survives serialization like any law.

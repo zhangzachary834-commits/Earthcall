@@ -15,27 +15,81 @@
 #include <tuple>
 #include <map>
 
+// ---------------------------------------------------------------------------
+// The ambient trace. A Law arms one around its action loop; every compiled
+// node reports into it. Nothing here is thread-safe because law application
+// is single-threaded (the tick runs on the main thread, and the EventBus
+// dispatches on the publishing thread by design — see LawManager's note).
+// ---------------------------------------------------------------------------
 namespace {
+ActionNode::Trace* g_activeTrace = nullptr;
+}
+
+ActionNode::TraceScope::TraceScope() {
+    _saved = g_activeTrace;
+    g_activeTrace = &_trace;
+}
+
+ActionNode::TraceScope::~TraceScope() { g_activeTrace = _saved; }
+
+ActionNode::Trace* ActionNode::activeTrace() { return g_activeTrace; }
+
+void ActionNode::record(NodeOutcome outcome) {
+    if (g_activeTrace) g_activeTrace->nodes.push_back(std::move(outcome));
+}
+
+const char* ActionNode::reasonName(PropertyPath::PathResult reason) {
+    switch (reason) {
+        case PropertyPath::PathResult::Ok: return "Ok";
+        case PropertyPath::PathResult::NoSuchProperty: return "No Such Property";
+        case PropertyPath::PathResult::TypeMismatch: return "Type Mismatch";
+        case PropertyPath::PathResult::ReadOnly: return "Read Only";
+        case PropertyPath::PathResult::BadComponent: return "Bad Component";
+    }
+    return "Unknown";
+}
+
+namespace {
+    // A node that addresses a property reports what its write did.
     void emitResult(Singular& target, const std::string& actionName, PropertyPath::PathResult res, const PropertyPath& path) {
-        if (res == PropertyPath::PathResult::Ok) {
+        const bool wrote = res == PropertyPath::PathResult::Ok;
+        ActionNode::record(ActionNode::NodeOutcome{actionName, path.toString(), wrote, res, {}});
+
+        if (wrote) {
             Core::EventBus::instance().publish(ActionNode::ExecutedEvent{actionName, &target, std::time(nullptr)});
-        } else {
-            static std::map<std::tuple<Singular*, std::string, PropertyPath::PathResult, std::string>, std::time_t> lastFailureTime;
-            auto key = std::make_tuple(&target, actionName, res, path.toString());
-            std::time_t now = std::time(nullptr);
-            if (now - lastFailureTime[key] > 2) {
-                lastFailureTime[key] = now;
-                std::string reasonStr = "Unknown";
-                if (res == PropertyPath::PathResult::NoSuchProperty) reasonStr = "No Such Property";
-                else if (res == PropertyPath::PathResult::TypeMismatch) reasonStr = "Type Mismatch";
-                else if (res == PropertyPath::PathResult::ReadOnly) reasonStr = "Read Only";
-                else if (res == PropertyPath::PathResult::BadComponent) reasonStr = "Bad Component";
-                
-                std::cerr << "[Law Error] " << actionName << " failed on " << target.getIdentifier() 
-                          << " for path " << path.toString() << " (" << reasonStr << ")" << std::endl;
-                Core::EventBus::instance().publish(ActionNode::FailedEvent{actionName, &target, res, now});
-            }
+            return;
         }
+
+        // Console de-duplication. Keyed by IDENTIFIER, never by address: a
+        // freed being's slot gets recycled, and a pointer-keyed memo would
+        // hand a newborn the corpse's timestamp and swallow its first real
+        // error. Bounded, because a law failing on ten thousand subjects
+        // must not grow a ten-thousand-entry memo that outlives them.
+        static std::map<std::tuple<std::string, std::string, PropertyPath::PathResult, std::string>, std::time_t> lastFailureTime;
+        constexpr std::size_t kMaxMemoEntries = 512;
+        auto key = std::make_tuple(target.getIdentifier(), actionName, res, path.toString());
+        std::time_t now = std::time(nullptr);
+        if (now - lastFailureTime[key] > 2) {
+            if (lastFailureTime.size() > kMaxMemoEntries) {
+                const std::time_t saved = lastFailureTime[key];
+                lastFailureTime.clear();
+                lastFailureTime[key] = saved;
+            }
+            lastFailureTime[key] = now;
+            std::cerr << "[Law Error] " << actionName << " failed on " << target.getIdentifier()
+                      << " for path " << path.toString() << " ("
+                      << ActionNode::reasonName(res) << ")" << std::endl;
+            Core::EventBus::instance().publish(ActionNode::FailedEvent{actionName, &target, res, now});
+        }
+    }
+
+    // A node whose effect is not a property write (Publish, Create, Spawn,
+    // Destroy, the composition family) reports the same way: what it was,
+    // whether it landed, and — when it didn't — why, in words, because no
+    // PathResult describes "there was no World to be born into".
+    void emitEffect(const std::string& actionName, bool landed, const std::string& note = {}) {
+        ActionNode::record(ActionNode::NodeOutcome{
+            actionName, {}, landed, PropertyPath::PathResult::Ok, landed ? std::string() : note});
     }
 }
 
@@ -299,11 +353,26 @@ ECA::ActionExecutor ActionNode::compile() const {
             compiled.reserve(children.size());
             for (const auto& c : children) compiled.push_back(c.compile());
             return [compiled, k=kind](const ECA::Event& e, Singular& target) {
+                // A composite does not report for itself: its children each
+                // record their own outcome, and the trace already says
+                // whether anything landed. Claiming success here on top of
+                // three failed children is exactly the lie we removed.
+                const std::size_t before =
+                    ActionNode::activeTrace() ? ActionNode::activeTrace()->nodes.size() : 0;
                 for (const auto& run : compiled) {
                     if (run) run(e, target);
                 }
-                std::cout << "[Action Fired] " << kindName(k) << " executed successfully on " << target.getIdentifier() << std::endl;
-                Core::EventBus::instance().publish(ActionNode::ExecutedEvent{kindName(k), &target, std::time(nullptr)});
+                bool anyChildWrote = false;
+                if (auto* trace = ActionNode::activeTrace()) {
+                    for (std::size_t i = before; i < trace->nodes.size(); ++i) {
+                        if (trace->nodes[i].wrote) { anyChildWrote = true; break; }
+                    }
+                } else {
+                    anyChildWrote = !compiled.empty();
+                }
+                if (anyChildWrote) {
+                    Core::EventBus::instance().publish(ActionNode::ExecutedEvent{kindName(k), &target, std::time(nullptr)});
+                }
             };
         }
         case Kind::Spawn: {
@@ -328,7 +397,14 @@ ECA::ActionExecutor ActionNode::compile() const {
                     }
                 }
                 auto concept = ConceptRegistry::instance().find(id);
-                if (!world || !concept) return;
+                if (!world) {
+                    emitEffect("Spawn", false, "no World to be born into");
+                    return;
+                }
+                if (!concept) {
+                    emitEffect("Spawn", false, "no such concept: " + id);
+                    return;
+                }
 
                 std::vector<Object*> sources;
                 glm::mat4 placement(1.0f);
@@ -346,9 +422,15 @@ ECA::ActionExecutor ActionNode::compile() const {
                                 placementSet = true;
                             }
                         }
-                        // Claude Code feedback: If an authored placementPath fails to read or has wrong type,
-                        // we MUST strictly abort the spawn instead of guessing a fallback, otherwise cubes pile up at origin.
-                        if (!placementSet) return;
+                        // An authored placement that fails to read must ABORT
+                        // the spawn, never guess a fallback: a silent fallback
+                        // to the subject's own position is what stacked cubes
+                        // into the sky. Refusing is loud; guessing is not.
+                        if (!placementSet) {
+                            emitEffect("Spawn", false,
+                                       "placement path unreadable: " + placementPath.toString());
+                            return;
+                        }
                     } else {
                         placement = glm::translate(glm::mat4(1.0f), subject->getPosition());
                     }
@@ -389,10 +471,12 @@ ECA::ActionExecutor ActionNode::compile() const {
                         world->addObject(std::move(newborn));
                     }
                 }
-                if (!newborns.empty()) {
-                    std::cout << "[Action Fired] Spawn executed successfully on " << target.getIdentifier() << std::endl;
-                    Core::EventBus::instance().publish(ActionNode::ExecutedEvent{"Spawn", &target, std::time(nullptr)});
+                if (newborns.empty()) {
+                    emitEffect("Spawn", false, "concept instantiated nothing");
+                    return;
                 }
+                emitEffect("Spawn", true);
+                Core::EventBus::instance().publish(ActionNode::ExecutedEvent{"Spawn", &target, std::time(nullptr)});
             };
         }
         case Kind::Publish: {
@@ -418,15 +502,21 @@ ECA::ActionExecutor ActionNode::compile() const {
             };
             return [type, subjectToken, objectToken, resolveToken](
                        const ECA::Event&, Singular& lawSubject) {
-                if (type.empty()) return;
+                if (type.empty()) {
+                    emitEffect("Publish", false, "no event type authored");
+                    return;
+                }
                 Singular* eventSubject =
                     subjectToken.empty() ? &lawSubject : resolveToken(subjectToken);
-                if (!eventSubject) return;   // unproven: no testimony
+                if (!eventSubject) {   // unproven: no testimony
+                    emitEffect("Publish", false, "unproven subject: " + subjectToken);
+                    return;
+                }
                 Singular* eventObject =
                     objectToken.empty() ? nullptr : resolveToken(objectToken);
                 Core::EventBus::instance().publish(
                     ECA::Event{type, eventSubject, eventObject, std::time(nullptr)});
-                std::cout << "[Action Fired] Publish executed successfully on " << lawSubject.getIdentifier() << std::endl;
+                emitEffect("Publish", true);
                 Core::EventBus::instance().publish(ActionNode::ExecutedEvent{"Publish", &lawSubject, std::time(nullptr)});
             };
         }
@@ -439,11 +529,17 @@ ECA::ActionExecutor ActionNode::compile() const {
             const MathBindings binds = bindings;
             return [target, f, binds](const ECA::Event&, Singular& subject) {
                 auto vars = readMathBindings(subject, binds);
-                if (!vars) return;
+                if (!vars) {
+                    emitEffect("Map", false, "a bound variable does not read on this subject");
+                    return;
+                }
                 std::map<std::string, PropertyValue> pVars;
                 for (const auto& [k, v] : *vars) pVars[k] = PropertyValue(v);
                 const auto valProp = f.evaluate(pVars, &subject);
-                if (!valProp) return;
+                if (!valProp) {
+                    emitEffect("Map", false, "outside the authored bounds");
+                    return;
+                }
                 auto res = lawSetValue(subject, target, *valProp);
                 emitResult(subject, "Map", res, target);
             };
@@ -456,28 +552,54 @@ ECA::ActionExecutor ActionNode::compile() const {
             const OntoMath::Piecewise f = mapFunction;
             const MathBindings binds = bindings;
             return [target, f, binds](const ECA::Event&, Singular& subject) {
-                if (!Universe::instance().hasClock()) return;
+                if (!Universe::instance().hasClock()) {
+                    emitEffect("Flow", false, "no world clock: nothing to integrate over");
+                    return;
+                }
                 auto vars = readMathBindings(subject, binds);
-                if (!vars) return;
+                if (!vars) {
+                    emitEffect("Flow", false, "a bound variable does not read on this subject");
+                    return;
+                }
                 std::map<std::string, PropertyValue> pVars;
                 for (const auto& [k, v] : *vars) pVars[k] = PropertyValue(v);
                 const auto valProp = f.evaluate(pVars, &subject);
-                if (!valProp) return;
-                
-                PropertyValue current;
-                if (!lawGetValue(subject, target, current)) return;
-                
-                double dt = Universe::instance().dt();
-                PropertyValue next = current;
-                
-                if (std::holds_alternative<double>(current) && std::holds_alternative<double>(*valProp)) {
-                    next = PropertyValue(std::get<double>(current) + std::get<double>(*valProp) * dt);
-                } else if (std::holds_alternative<glm::vec3>(current) && std::holds_alternative<glm::vec3>(*valProp)) {
-                    next = PropertyValue(std::get<glm::vec3>(current) + std::get<glm::vec3>(*valProp) * static_cast<float>(dt));
-                } else {
+                // Undefined math flows NOTHING — outside the authored bounds
+                // is the law ending, not the law failing. Recorded as a
+                // non-write so a drive session sees it and lets go.
+                if (!valProp) {
+                    emitEffect("Flow", false, "outside the authored bounds");
                     return;
                 }
-                
+
+                PropertyValue current;
+                if (!lawGetValue(subject, target, current)) {
+                    emitEffect("Flow", false, "cannot read " + target.toString());
+                    return;
+                }
+
+                const double dt = Universe::instance().dt();
+                PropertyValue next = current;
+
+                // Numbers are matched by VALUE, not by variant alternative.
+                // The old test asked for `double` on both sides, but a
+                // component read ("position.y") yields a FLOAT — so every
+                // Flow authored against a vector lane silently integrated
+                // nothing, forever, with no trace that it had not run.
+                double currentNum = 0.0, rateNum = 0.0;
+                if (propertyValueToNumber(current, currentNum) &&
+                    propertyValueToNumber(*valProp, rateNum)) {
+                    next = PropertyValue(currentNum + rateNum * dt);
+                } else if (std::holds_alternative<glm::vec3>(current) &&
+                           std::holds_alternative<glm::vec3>(*valProp)) {
+                    next = PropertyValue(std::get<glm::vec3>(current) +
+                                         std::get<glm::vec3>(*valProp) * static_cast<float>(dt));
+                } else {
+                    emitEffect("Flow", false,
+                               "cannot integrate " + target.toString() + ": rate and value disagree");
+                    return;
+                }
+
                 auto res = lawSetValue(subject, target, next);
                 emitResult(subject, "Flow", res, target);
             };
@@ -500,7 +622,10 @@ ECA::ActionExecutor ActionNode::compile() const {
             return [shapeKind, type, parentPath, placementPath, compiledChildren](
                        const ECA::Event& event, Singular& target) {
                 World* world = resolveWorld(target);
-                if (!world) return;   // nowhere to be born: nothing happens
+                if (!world) {   // nowhere to be born: nothing happens
+                    emitEffect("Create", false, "no World to be born into");
+                    return;
+                }
 
                 auto newborn = std::make_unique<Object>();
                 newborn->setShape(static_cast<Object::ShapeKind>(shapeKind), Object::ShapeParams{});
@@ -521,7 +646,11 @@ ECA::ActionExecutor ActionNode::compile() const {
                             placementSet = true;
                         }
                     }
-                    if (!placementSet) return;
+                    if (!placementSet) {
+                        emitEffect("Create", false,
+                                   "placement path unreadable: " + placementPath.toString());
+                        return;
+                    }
                 } else if (auto* asObject = dynamic_cast<Object*>(&target)) {
                     position = asObject->getPosition();
                 }
@@ -555,6 +684,7 @@ ECA::ActionExecutor ActionNode::compile() const {
                 world->addObject(std::move(newborn));
                 if (parent) parent->addElement(born);
 
+                emitEffect("Create", true);
                 Core::EventBus::instance().publish(
                     ECA::Event{"object-created", born, &target, std::time(nullptr)});
             };
@@ -571,12 +701,22 @@ ECA::ActionExecutor ActionNode::compile() const {
             const std::string name = propertyName;
             const PropertyValue initial = operand;
             return [owner, name, initial](const ECA::Event&, Singular& subject) {
-                if (name.empty()) return;
+                if (name.empty()) {
+                    emitEffect("AddProperty", false, "no property name authored");
+                    return;
+                }
                 PropertyPath remainder;
                 Singular* being = resolveLawRoot(subject, owner, remainder);
-                if (!being) return;
-                if (being->findProperty(name)) return;   // never shadow a first mover
+                if (!being) {
+                    emitEffect("AddProperty", false, "unproven owner: " + owner.toString());
+                    return;
+                }
+                if (being->findProperty(name)) {   // never shadow a first mover
+                    emitEffect("AddProperty", false, "would shadow first-mover '" + name + "'");
+                    return;
+                }
                 being->setDynamicProperty(name, initial);
+                emitEffect("AddProperty", true);
             };
         }
 
@@ -584,19 +724,32 @@ ECA::ActionExecutor ActionNode::compile() const {
             const PropertyPath owner = path;
             const std::string name = propertyName;
             return [owner, name](const ECA::Event&, Singular& subject) {
-                if (name.empty()) return;
+                if (name.empty()) {
+                    emitEffect("RemoveProperty", false, "no property name authored");
+                    return;
+                }
                 PropertyPath remainder;
                 Singular* being = resolveLawRoot(subject, owner, remainder);
-                if (!being) return;
+                if (!being) {
+                    emitEffect("RemoveProperty", false, "unproven owner: " + owner.toString());
+                    return;
+                }
                 // An authored property is erased outright — it was granted by
                 // law and law may take it back.
-                if (being->removeDynamicProperty(name)) return;
+                if (being->removeDynamicProperty(name)) {
+                    emitEffect("RemoveProperty", true);
+                    return;
+                }
                 // A first-mover property is a C++ member: the slot cannot be
                 // erased, so it is CLEARED. Honest, and never silent about it.
                 if (Property* property = being->findProperty(name)) {
                     const PropertyValue empty = emptyLike(property->value());
-                    property->setValue(empty);
+                    const bool cleared = property->setValue(empty);
+                    emitEffect("RemoveProperty", cleared,
+                               cleared ? std::string() : "first-mover slot refused clearing");
+                    return;
                 }
+                emitEffect("RemoveProperty", false, "no such property: " + name);
             };
         }
 
@@ -609,30 +762,56 @@ ECA::ActionExecutor ActionNode::compile() const {
             const std::string container = containerToken;
             const std::string element = elementToken;
             return [adding, container, element](const ECA::Event&, Singular& subject) {
+                const char* name = adding ? "AddElement" : "RemoveElement";
                 Singular* containerBeing = resolveBeingToken(container, subject);
                 Singular* elementBeing = resolveBeingToken(element, subject);
-                if (!containerBeing || !elementBeing) return;
+                if (!containerBeing) {
+                    emitEffect(name, false, "unproven container: " + container);
+                    return;
+                }
+                if (!elementBeing) {
+                    emitEffect(name, false, "unproven element: " + element);
+                    return;
+                }
                 auto* asObject = dynamic_cast<Object*>(containerBeing);
-                if (!asObject) return;   // only Objects hold elements today
+                if (!asObject) {   // only Objects hold elements today
+                    emitEffect(name, false, "container is not an Object");
+                    return;
+                }
                 if (adding) asObject->addElement(elementBeing);
                 else asObject->removeElement(elementBeing);
+                emitEffect(name, true);
             };
         }
 
         // ------------------------------------------------------------------
         // Unmaking. The delete tool as law-text: "when this is touched by
-        // fire, it is gone." World::removeObject releases every element
-        // membership first, so nothing is left pointing at a dead being.
+        // fire, it is gone."
+        //
+        // The being is ASKED for, not taken. Freeing it here would pull the
+        // ground out from under the caller: this action returns into
+        // Law::applyTo, which still has to write the record, log the
+        // outcome, and publish the applied event — all through a reference
+        // to the subject. Destroying your own subject is the most obvious
+        // law anyone writes, and it read freed memory three times before
+        // returning. The LawManager reaps at the end of the tick, once no
+        // pointer to the victim is still live; until then Universe::beings()
+        // hides it, so no law acts on a corpse.
         // ------------------------------------------------------------------
         case Kind::Destroy: {
             const std::string victimToken = elementToken;
             return [victimToken](const ECA::Event&, Singular& subject) {
                 Singular* victim = resolveBeingToken(victimToken, subject);
-                auto* asObject = dynamic_cast<Object*>(victim);
-                if (!asObject) return;
-                World* world = resolveWorld(subject);
-                if (!world) return;
-                world->removeObject(asObject);   // publishes object-destroyed
+                if (!victim) {
+                    emitEffect("Destroy", false, "unproven victim: " + victimToken);
+                    return;
+                }
+                if (!dynamic_cast<Object*>(victim)) {
+                    emitEffect("Destroy", false, "only Objects can be unmade today");
+                    return;
+                }
+                Universe::instance().requestUnmaking(victim);
+                emitEffect("Destroy", true);
             };
         }
     }
@@ -717,10 +896,24 @@ bool ActionNode::definedFor(Singular& subject) const {
         }
         case Kind::Sequence:
         case Kind::Parallel: {
+            if (children.empty()) return true;
+            // ONLY BOUNDED CHILDREN VOTE. A plain `any` fold over every child
+            // makes authored bounds unwritable: Sequence[bounded arc, Set]
+            // stays defined forever because the Set always answers yes, and
+            // the arc's bounds — the whole point of authoring them — can
+            // never end the drive. So if this composite contains any node
+            // whose domain the author wrote, the composite lives exactly as
+            // long as one of THOSE is still defined. A composite with no
+            // bounded child anywhere is unbounded, as before.
+            bool anyBounded = false;
             for (const auto& c : children) {
-                if (c.definedFor(subject)) return true;
+                if (c.hasAuthoredBounds()) { anyBounded = true; break; }
             }
-            return children.empty();
+            if (!anyBounded) return true;
+            for (const auto& c : children) {
+                if (c.hasAuthoredBounds() && c.definedFor(subject)) return true;
+            }
+            return false;
         }
         default:
             // Set/Add/Scale/Lerp/Spawn and the creation family carry no
@@ -730,6 +923,55 @@ bool ActionNode::definedFor(Singular& subject) const {
             // not exist yet, never against this subject.
             return true;
     }
+}
+
+bool ActionNode::hasAuthoredBounds() const {
+    // Map and Flow are the authored functions: their Piecewise carries a
+    // domain, and outside it the law writes nothing. Drive's curve is total
+    // — it has an input but no bounds — so it never ends a drive on its own.
+    if (kind == Kind::Map || kind == Kind::Flow) return true;
+    if (kind == Kind::Sequence || kind == Kind::Parallel) {
+        for (const auto& c : children) {
+            if (c.hasAuthoredBounds()) return true;
+        }
+    }
+    return false;
+}
+
+void ActionNode::collectPaths(std::vector<PropertyPath>& out) const {
+    const auto add = [&out](const PropertyPath& p) {
+        if (!p.empty()) out.push_back(p);
+    };
+    switch (kind) {
+        case Kind::Set:
+        case Kind::Add:
+        case Kind::Scale:
+        case Kind::Lerp:
+        case Kind::Map:
+        case Kind::Flow:
+            add(path);
+            break;
+        case Kind::Drive:
+            add(path);
+            add(input);
+            break;
+        case Kind::Spawn:
+            add(spawnParentPath);
+            add(spawnPlacementPath);
+            break;
+        case Kind::Create:
+            // The newborn's own paths are addressed against the NEWBORN, not
+            // against this subject, so its children are deliberately skipped:
+            // filtering a sweep by them would exclude every being that could
+            // legitimately create.
+            add(spawnParentPath);
+            add(spawnPlacementPath);
+            return;
+        default:
+            break;
+    }
+    for (const auto& b : bindings) add(b.second);
+    for (const auto& c : children) c.collectPaths(out);
 }
 
 ActionNode ActionNode::set(const std::string& dottedPath, PropertyValue v) {

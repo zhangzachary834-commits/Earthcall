@@ -99,7 +99,74 @@ struct ActionNode {
         std::time_t timestamp;
     };
 
+    // ------------------------------------------------------------------
+    // What actually happened, node by node.
+    //
+    // "The law applied" and "the law changed something" are different
+    // claims, and conflating them is what let a law whose every write
+    // silently failed report SUCCESS and open a drive session that ran
+    // forever. Application is about the ACTION BRANCH: did control reach it
+    // and begin traversing? That is what ApplicationResult::Applied means.
+    // Whether each node then landed its mutation is a finer-grained truth,
+    // and it belongs where the nodes are — here.
+    //
+    // Every compiled node reports its outcome into the trace the Law arms
+    // around its action loop. The trace is what the audit log, the UI, and
+    // the drive-session decision all read: one record of which nodes fired
+    // and which of them wrote.
+    // ------------------------------------------------------------------
+    struct NodeOutcome {
+        std::string actionName;              // the Kind that fired
+        std::string path;                    // what it addressed (may be empty)
+        bool wrote = false;                  // did it land its effect?
+        PropertyPath::PathResult reason = PropertyPath::PathResult::Ok;
+        std::string note;                    // why not, when the reason enum can't say
+    };
+
+    struct Trace {
+        std::vector<NodeOutcome> nodes;
+
+        bool fired() const { return !nodes.empty(); }
+        bool anyWrote() const {
+            for (const auto& n : nodes) {
+                if (n.wrote) return true;
+            }
+            return false;
+        }
+        bool allFailed() const { return fired() && !anyWrote(); }
+        std::size_t failureCount() const {
+            std::size_t n = 0;
+            for (const auto& outcome : nodes) {
+                if (!outcome.wrote) ++n;
+            }
+            return n;
+        }
+    };
+
+    // The trace currently being written, if a Law has armed one. Compiled
+    // closures cannot be handed a destination (ECA::ActionExecutor returns
+    // void and takes only the event and the subject), so the collector is
+    // ambient and scoped — the same shape as the event/onset contexts.
+    class TraceScope {
+    public:
+        TraceScope();
+        ~TraceScope();
+        TraceScope(const TraceScope&) = delete;
+        TraceScope& operator=(const TraceScope&) = delete;
+        const Trace& trace() const { return _trace; }
+
+    private:
+        Trace _trace;
+        Trace* _saved = nullptr;
+    };
+
+    // Where a compiled node reports. No armed trace = nothing recorded (the
+    // node still runs; a law applied outside applyTo simply isn't audited).
+    static void record(NodeOutcome outcome);
+    static Trace* activeTrace();
+
     static const char* kindName(Kind k);
+    static const char* reasonName(PropertyPath::PathResult reason);
 
     Kind kind = Kind::Set;
 
@@ -180,6 +247,18 @@ struct ActionNode {
     // ------------------------------------------------------------------
     bool referencesSinceApplied() const;
     bool definedFor(Singular& subject) const;
+
+    // Does this node carry authored bounds that can END a drive — i.e. is it
+    // a function whose domain the author wrote? Map and Flow are; every
+    // function-free leaf is not. This is what keeps a composite honest: a
+    // Sequence of [bounded arc, plain Set] must end when the ARC ends, and a
+    // fold that lets the unbounded Set vote yes makes the bounds unwritable.
+    bool hasAuthoredBounds() const;
+
+    // Every property this action addresses, in the order encountered — the
+    // vocabulary the law needs its subject to HAVE. Used to pre-filter an
+    // untargeted sweep down to the beings a law could possibly act on.
+    void collectPaths(std::vector<PropertyPath>& out) const;
 
     // Factories.
     static ActionNode set(const std::string& dottedPath, PropertyValue v);
