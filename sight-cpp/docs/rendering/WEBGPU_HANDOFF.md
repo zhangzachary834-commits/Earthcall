@@ -138,6 +138,47 @@ the texture cache disabled; `smoke_renderer` (same bring-up, no app globals) exi
 it with `std::_Exit(0)` after its assertions — that is a WORKAROUND, not a fix.
 Suspect an ordering conflict between wgpu/Metal teardown and a global destructor.
 
+## Confirmed working on screen (2026-07-29)
+
+User-verified in `./earthcall_webgpu`:
+- imgui composites correctly over the 3D scene.
+- **Object colours correct** after the `faceAlbedo` fix (see the white-surface bug above).
+- **2D stroke thickness matches OpenGL.** Expected, and worth writing down so nobody
+  "fixes" it: once a stroke is painted, the canvas reaches the screen through
+  `drawImage2D` as a PIXEL BLIT, not through `drawLines2D`. The native-1px line
+  limit therefore only affects the vector-stroke fallback (before a canvas exists)
+  and thin UI outlines.
+
+**FIXED — `./earthcall_webgpu` segfaulted in `WebGpuRenderer::uploadTexture`.**
+Root cause was in the Makefile, not the renderer: `-include $(OBJECTS:.o=.d)`
+covered only the OpenGL build, so `build-webgpu/` had NO header dependency
+tracking. `-MMD` wrote `.d` files nothing read, editing a header recompiled
+nothing, and the binary got linked from units compiled against different versions
+of `WebGpuRenderer` — some predating the `_textures` member. Mismatched member
+offsets meant the map was read past the end of the object, hence a `std::map`
+whose tree read as all zeroes. Fixed by adding
+`-include $(WEBGPU_APP_OBJECTS:.o=.d)`.
+**Diagnostic trap worth remembering:** a debug build and an ASan build both
+"fixed" it — not because of the flags, but because both began with
+`rm -rf build-webgpu`. ANY clean build hides this class of bug. "Crashes at -O2,
+works at -O0" means UB *or* a stale build; check the build rules early.
+
+## STILL UNVERIFIED BY EYE
+The 3D drag gizmos, which only render while a specific 3D mode is active with an
+object selected (`GameRender.cpp` lines ~175-330):
+- `Mode3D::Morph` — per-vertex cube handles on a polyhedron; control-net + control
+  points on a Bezier patch.
+- `Mode3D::Morph/Combine/Sculpt` on a binary field — translucent ghost of operand
+  B, its gold drag handle, and the floating blend bead on its rail.
+- `Mode3D::Sculpt` with a clay target — gold bounding-box outline.
+- `Mode3D::BrushCreate` — the translucent WIREFRAME hologram preview
+  (`setWireframe`, the most WebGPU-specific of these: OpenGL used
+  `glPolygonMode(GL_LINE)`, WebGPU expands triangles to explicit edges).
+- Gravity-field arrows (`Physics::getGravityVisualization()`) — the only ADDITIVE
+  `drawLines` in the app.
+These exercise `drawSolid`, `drawLines` w/ Blend, `drawOverlay` and `setWireframe`
+against real content. Reach them via the toolbar (`T`) plus an object selection.
+
 ## Known gaps to close in Phase D
 - `WebGpuRenderer` stubs `drawSolid`/`begin2D`/`end2D`/`drawTris2D`/`drawLines2D`/
   `drawImage2D` — they `warnOnce` to stderr instead of drawing.
