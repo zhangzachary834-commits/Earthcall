@@ -1,4 +1,13 @@
 
+# Instrumented objects from `make asan-test`. Deliberately a separate tree from
+# build/ so ASan objects can never be linked into an ordinary binary — and not
+# committed, because it is a full second copy of every object file.
+build-asan/
+
+# The law audit trail (LawAuditLogger). Regenerated every run, and at Verbose
+# it grows fast enough that committing it would be its own problem.
+logs/
+
 # wgpu-native: we static-link the .a (committed); the .dylib is unused.
 third_party/wgpu/lib/libwgpu_native.dylib
 webgpu_smoke

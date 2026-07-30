@@ -16,9 +16,21 @@ CXX = g++
 #        it in release too, which makes any crash produce a readable backtrace.
 #   NOTE: we intentionally do NOT pass -DNDEBUG. That would strip every assert(),
 #        and the test suite is built with these same flags and checks via assert().
+#   BUILD=asan adds AddressSanitizer + UBSan. Use it to PROVE lifetime fixes
+#        rather than argue them: it catches use-after-free, buffer overruns, and
+#        undefined behaviour at the moment they happen instead of whenever the
+#        corruption finally surfaces. `make asan-test` drives it (and builds into
+#        its own directory, because mixing instrumented and plain objects in one
+#        binary is its own class of crash).
 BUILD ?= release
 ifeq ($(BUILD),debug)
     OPTFLAGS = -O0 -g
+else ifeq ($(BUILD),asan)
+    # -O1 keeps it usable; -fno-omit-frame-pointer is what makes the reports
+    # name real functions instead of addresses.
+    OPTFLAGS = -O1 -g -fno-omit-frame-pointer \
+               -fsanitize=address,undefined -fno-sanitize-recover=all
+    SANFLAGS = -fsanitize=address,undefined
 else
     OPTFLAGS = -O2 -g
 endif
@@ -32,7 +44,8 @@ CXXFLAGS = -std=c++17 -Wall -Wextra $(OPTFLAGS) \
            -I/opt/homebrew/Cellar/glfw/3.4/include \
            -I/opt/homebrew/include \
            -DGL_SILENCE_DEPRECATION
-LDFLAGS = -L/opt/homebrew/Cellar/lib \
+LDFLAGS = $(SANFLAGS) \
+          -L/opt/homebrew/Cellar/lib \
           -L/opt/homebrew/lib \
           -L/opt/homebrew/opt/openssl/lib \
           -lglfw \
@@ -382,7 +395,109 @@ test-serialization: serialization_compat_test
 test-binary-packing: binary_packing_test
 	./binary_packing_test
 
-test: test-property test-law test-creation test-loop test-recorder test-concept test-graph test-meta test-math test-continuous test-timeflow test-persist test-geomcache test-glucompat test-zone test-material test-material-render test-primitive-render test-action-spawn test-serialization test-binary-packing
+# ---------------------------------------------------------------------------
+# The whole suite, and why it is shaped like this.
+#
+# `test` used to be a list of prerequisites. Two things went wrong with that,
+# and together they hid a broken Flow integration for weeks:
+#
+#   1. ONE BROKEN TEST KILLED THE RUN. A prerequisite that fails to compile
+#      aborts make, so a single rotting test made the whole suite unrunnable —
+#      and an unrunnable suite is one nobody runs.
+#   2. IT DID NOT NOTICE STALE BINARIES. When a compile failed, the previously
+#      linked binary was still sitting in the repo root. Run it by hand and it
+#      passes: you are testing months-old code with a straight face.
+#
+# So: build and run each test independently, never stop at the first failure,
+# DELETE a test's binary before rebuilding it (so a failed build can never be
+# mistaken for a passing run), and exit non-zero with a summary naming exactly
+# what broke and whether it broke at build time or run time.
+# ---------------------------------------------------------------------------
+
+# Every test that must build AND pass. Add new tests HERE — this list is the
+# thing that enforces them.
+TESTS = property_bridge_test law_model_test law_audit_test law_loop_test \
+        change_recorder_test object_concept_test law_graph_test metalaw_test \
+        ontomath_test continuous_law_test time_flow_test law_persistence_test \
+        law_creation_test geometry_cache_test glu_compat_test zone_being_test \
+        formation_merge_test material_being_test material_render_test \
+        primitive_render_test action_spawn_test binary_packing_test
+
+# Quarantined, and named out loud so it cannot rot quietly. `make test` reports
+# these every run without failing on them — the point is that you keep seeing
+# them until somebody fixes or deletes them.
+#   serialization_compat_test  calls SaveSystem::writeBinary / writeJson, which
+#                              do not exist in that API (see SaveSystem.hpp:
+#                              writeSaveData / readSaveData).
+#   frontier_test              has no build rule at all.
+BROKEN_TESTS = serialization_compat_test frontier_test
+
+test:
+	@failed=""; passed=0; \
+	for t in $(TESTS); do \
+	  rm -f $$t; \
+	  if ! $(MAKE) --no-print-directory $$t >/tmp/ec-build-$$t.log 2>&1; then \
+	    printf '\033[31mBUILD FAIL\033[0m %s\n' "$$t"; \
+	    grep -E 'error:' /tmp/ec-build-$$t.log | head -5 || true; \
+	    failed="$$failed $$t(build)"; continue; \
+	  fi; \
+	  if ./$$t >/tmp/ec-run-$$t.log 2>&1; then \
+	    printf '\033[32mok\033[0m         %s\n' "$$t"; passed=$$((passed+1)); \
+	  else \
+	    printf '\033[31mFAIL\033[0m       %s (exit %s)\n' "$$t" "$$?"; \
+	    tail -8 /tmp/ec-run-$$t.log; \
+	    failed="$$failed $$t(run)"; \
+	  fi; \
+	done; \
+	echo; \
+	if [ -n "$(BROKEN_TESTS)" ]; then \
+	  printf '\033[33mquarantined:\033[0m $(BROKEN_TESTS) — fix or delete\n'; \
+	fi; \
+	if [ -n "$$failed" ]; then \
+	  printf '\033[31m%s passed, FAILED:\033[0m%s\n' "$$passed" "$$failed"; exit 1; \
+	fi; \
+	printf '\033[32mall %s tests passed\033[0m\n' "$$passed"
+
+# ---------------------------------------------------------------------------
+# The same tests under AddressSanitizer + UBSan.
+#
+# Instrumented objects live in build-asan/ so they can never be linked into the
+# ordinary build (a binary made of half-instrumented objects crashes in ways
+# that teach you nothing). The binaries are removed afterwards for the same
+# reason `test` removes them first: an ASan-instrumented `law_audit_test` left
+# in the repo root is a stale binary waiting to be trusted.
+#
+# Worth running after ANY change to law application order, the drive sessions,
+# or the unmaking reaper — those are where lifetime bugs live.
+# ---------------------------------------------------------------------------
+ASAN_TESTS = law_audit_test law_creation_test law_loop_test continuous_law_test \
+             time_flow_test law_model_test object_concept_test
+
+asan-test:
+	@echo "building $(words $(ASAN_TESTS)) tests with ASan+UBSan into build-asan/ ..."
+	@rm -f $(ASAN_TESTS)
+	@failed=""; passed=0; \
+	for t in $(ASAN_TESTS); do \
+	  if ! $(MAKE) --no-print-directory BUILD=asan BUILD_DIR=build-asan $$t \
+	       >/tmp/ec-asan-build-$$t.log 2>&1; then \
+	    printf '\033[31mBUILD FAIL\033[0m %s\n' "$$t"; \
+	    grep -E 'error:' /tmp/ec-asan-build-$$t.log | head -5 || true; \
+	    failed="$$failed $$t(build)"; continue; \
+	  fi; \
+	  if ASAN_OPTIONS=detect_leaks=0 ./$$t >/tmp/ec-asan-run-$$t.log 2>&1; then \
+	    printf '\033[32mclean\033[0m      %s\n' "$$t"; passed=$$((passed+1)); \
+	  else \
+	    printf '\033[31mSANITIZER\033[0m  %s\n' "$$t"; \
+	    grep -E 'ERROR|SUMMARY|runtime error' /tmp/ec-asan-run-$$t.log | head -10; \
+	    failed="$$failed $$t"; \
+	  fi; \
+	done; \
+	rm -f $(ASAN_TESTS); \
+	echo; \
+	if [ -n "$$failed" ]; then \
+	  printf '\033[31m%s clean, SANITIZER FOUND ISSUES:\033[0m%s\n' "$$passed" "$$failed"; exit 1; \
+	fi; \
+	printf '\033[32mall %s tests clean under ASan+UBSan\033[0m\n' "$$passed"
 
 # Pull in auto-generated header dependencies (.d files next to each .o)
 -include $(OBJECTS:.o=.d)
@@ -397,4 +512,4 @@ test: test-property test-law test-creation test-loop test-recorder test-concept 
 -include $(wildcard $(WEBGPU_BUILD_DIR)/tests/*.d)
 
 # Phony targets
-.PHONY: all clean run webgpu-smoke webgpu-mesh webgpu-renderer webgpu-window test test-property test-law test-loop test-recorder test-concept test-graph test-meta test-math test-continuous test-timeflow test-persist test-geomcache test-glucompat test-zone test-material test-material-render test-primitive-render
+.PHONY: all clean run webgpu-smoke webgpu-mesh webgpu-renderer webgpu-window test asan-test test-property test-law test-law-audit test-loop test-recorder test-concept test-graph test-meta test-math test-continuous test-timeflow test-persist test-geomcache test-glucompat test-zone test-creation test-material test-material-render test-primitive-render test-action-spawn test-serialization test-binary-packing
