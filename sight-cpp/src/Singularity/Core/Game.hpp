@@ -121,6 +121,9 @@ public:
     bool getAdvanced2DBrush() const;
     void setAdvanced2DBrush(bool value);
 
+    bool getUseLegacy2DTools() const;
+    void setUseLegacy2DTools(bool value);
+
     // Mouse state
     bool getMouseLeftPressedLast() const;
     void setMouseLeftPressedLast(bool value);
@@ -346,6 +349,13 @@ public:
     // Save / load
     void saveState(const std::string& filename);
     void loadState(const std::string& filename);
+    
+    void setSaveDirectory(const std::string& dir);
+    std::string getSaveDirectory() const;
+    
+    // FlatBuffer delta saves
+    std::vector<uint8_t> buildSaveChunkFlatBuffer();
+    void loadSaveChunkFlatBuffer(const std::vector<uint8_t>& buffer);
     // Manifesto: "Every Person has a Home they fully own." Idempotent —
     // creates the player's Home zone only if no zone they own exists yet.
     void ensureHomeZone();
@@ -359,7 +369,7 @@ private:
     enum class PerspectiveMode { FirstPerson = 0, SecondPerson, ThirdPerson };
     enum class Mode3D { None = -1, FacePaint = 0, FaceBrush, BrushCreate, Pottery, Rotation, Selection, Morph, Combine, Sculpt, Graph };
     enum class ToolTarget3D { WorldObjects = 0, AvatarBodyParts };
-    enum class CreatorSection { Paint = 0, Create3D, Character, World, Assets, Relations };
+    enum class CreatorSection { Paint = 0, Create3D, Character, World, Assets, Relations, Zones };
 
     using BrushType = Core::BrushType;
 
@@ -438,6 +448,7 @@ private:
 
     // Input state
     bool _mouseLeftPressedLast = false;
+    bool _useLegacy2DTools = false;
 
     // Creator / toolbar
     Tool         _currentTool { Tool::Type::Brush };
@@ -532,6 +543,7 @@ private:
     void renderWorldConsole();
     void renderAssetsConsole(Zone& zone);
     void renderRelationsConsole(Zone& zone);
+    void renderZonesConsole(ZoneManager& zoneMgr);
     void renderCreatorStatusBar();
     void renderSectionButton(CreatorSection section, const char* label);
     void renderPaintToolButton(Zone& zone, Tool::Type type, const char* label);

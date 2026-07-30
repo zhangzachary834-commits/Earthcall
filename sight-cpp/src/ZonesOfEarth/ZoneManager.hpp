@@ -6,6 +6,7 @@
 class ZoneManager {
     std::vector<Zone> _zones;
     size_t _currentIndex = 0;
+    std::vector<std::shared_ptr<Object>> globalObjects; // Repository of all objects
 
 public:
     void addZone(Zone&& zone) noexcept;           // prefer move for temporaries

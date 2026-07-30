@@ -34,10 +34,14 @@ std::vector<std::string> listFiles(SaveType type = SaveType::GAME);
 
 // Write JSON to disk via generated filename and log it; returns full path
 // For dry-run/parallel testing, this will also write a binary .ecsave alongside it.
-std::string writeJson(const nlohmann::json& j, const std::string& customLabel = "", SaveType type = SaveType::GAME);
+std::string writeSaveData(const nlohmann::json& j, const std::string& customLabel = "", SaveType type = SaveType::GAME);
+void writeSaveDataAsync(const nlohmann::json& j, const std::string& customLabel = "", SaveType type = SaveType::GAME);
 
-// Write JSON as MessagePack binary to disk. Returns full path.
-std::string writeBinary(const nlohmann::json& j, const std::string& customLabel = "", SaveType type = SaveType::GAME);
+// Overloads for raw binary data (e.g. FlatBuffers)
+std::string writeSaveData(const std::vector<uint8_t>& data, const std::string& customLabel, const std::string& ext, SaveType type);
+void writeSaveDataAsync(const std::vector<uint8_t>& data, const std::string& customLabel, const std::string& ext, SaveType type);
+
+bool isSaving();
 
 // Unified read function: detects whether the file is binary MessagePack or plain JSON and loads it.
 nlohmann::json readSaveData(const std::string& filepath);
@@ -62,8 +66,18 @@ struct SaveMetadata {
     size_t fileSize;
     SaveType type;
     std::string customLabel;
+    
+    // Cloud foundations
+    bool isCloudOnly = false;
+    bool keepLocal = true;
 };
 
 std::vector<SaveMetadata> getSaveMetadata(SaveType type = SaveType::GAME);
+
+// Merge two save files (j2 takes precedence over j1 in conflicts)
+nlohmann::json mergeSaveFiles(const std::string& file1, const std::string& file2);
+
+// Merge two save files and save the result, returns the new filename
+std::string mergeAndSaveFiles(const std::string& file1, const std::string& file2, const std::string& outputLabel = "", SaveType type = SaveType::GAME);
 
 } // namespace SaveSystem 

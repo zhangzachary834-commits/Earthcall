@@ -92,6 +92,13 @@ struct ActionNode {
         std::time_t timestamp;
     };
 
+    struct FailedEvent {
+        std::string actionName;
+        Singular* target;
+        PropertyPath::PathResult reason;
+        std::time_t timestamp;
+    };
+
     static const char* kindName(Kind k);
 
     Kind kind = Kind::Set;

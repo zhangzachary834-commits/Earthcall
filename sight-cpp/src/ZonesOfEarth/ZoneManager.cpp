@@ -21,6 +21,38 @@ void ZoneManager::switchTo(size_t index)
     {
         _currentIndex = index;
         std::cout << "🔀 Switching to zone [" << index << "]..." << std::endl;
+        
+        // Repopulate active zone's world with global objects that belong to it or its parents
+        std::vector<std::string> activeZones;
+        std::string currentZoneId = _zones[_currentIndex].getIdentifier();
+        while (!currentZoneId.empty()) {
+            activeZones.push_back(currentZoneId);
+            std::string parent = "";
+            for (const auto& z : _zones) {
+                if (z.getIdentifier() == currentZoneId) {
+                    parent = z.getParentZone();
+                    break;
+                }
+            }
+            if (parent == currentZoneId || parent.empty()) break;
+            currentZoneId = parent;
+        }
+
+        auto& worldObjs = _zones[_currentIndex].world().getOwnedObjectsMutable();
+        worldObjs.clear();
+        for (const auto& obj : globalObjects) {
+            bool matches = false;
+            for (const auto& az : activeZones) {
+                if (obj->belongsToZone(az)) {
+                    matches = true;
+                    break;
+                }
+            }
+            if (matches) {
+                worldObjs.push_back(obj);
+            }
+        }
+
         try { _zones[_currentIndex].load(); } catch (...) { std::cerr << "⚠️  Zone load failed." << std::endl; }
         describeCurrent();
         // The zone is a being: laws hear arrival (subject: the zone itself).

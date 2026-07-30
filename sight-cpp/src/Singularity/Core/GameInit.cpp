@@ -161,8 +161,8 @@ bool Game::init() {
     _world.setCamera(&_camera.pos);
 
     {
-        std::unique_ptr<Object> cube(new Object());
-        std::unique_ptr<Object> ground(new Object());
+        std::shared_ptr<Object> cube = std::make_shared<Object>();
+        std::shared_ptr<Object> ground = std::make_shared<Object>();
         // Tag these as baseline placeholders so we can safely special-case them later
         cube->setAttribute("baseline", "cube");
         ground->setAttribute("baseline", "ground");

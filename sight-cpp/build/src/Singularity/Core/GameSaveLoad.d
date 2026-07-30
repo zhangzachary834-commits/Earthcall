@@ -271,7 +271,7 @@ build/src/Singularity/Core/GameSaveLoad.o: \
   src/Form/Object/Geometry/ComplexShape.hpp \
   src/Form/Object/Geometry/Sdf.hpp src/Form/Object/Geometry/Patch.hpp \
   src/Form/Object/Automation/Automation.hpp \
-  src/Rendering/BrushSystem.hpp src/Rendering/DesignSystem.hpp \
+  src/Rendering/BrushSystem.hpp src/Legacy/DesignSystem.hpp \
   src/OurVerse/Tool.hpp src/Person/Body/BodyPart/BodyPart.hpp \
   src/ZonesOfEarth/Ourverse/Ourverse.hpp \
   src/ZonesOfEarth/Ourverse/../Zone/Zone.hpp \
@@ -311,7 +311,25 @@ build/src/Singularity/Core/GameSaveLoad.o: \
   src/Form/Material/MaterialManager.hpp src/Form/Material/Material.hpp \
   src/Util/SaveSystem.hpp src/Util/Serialization.hpp \
   src/ZonesOfEarth/World/World.hpp src/Util/Frontier.hpp \
-  src/ZonesOfEarth/AuthorsOfLaw/LawAuditLogger.hpp
+  src/Util/BinaryPack.hpp \
+  src/ZonesOfEarth/AuthorsOfLaw/LawAuditLogger.hpp \
+  src/Util/Schema/Earthcall_generated.h \
+  /opt/homebrew/include/flatbuffers/flatbuffers.h \
+  /opt/homebrew/include/flatbuffers/array.h \
+  /opt/homebrew/include/flatbuffers/base.h \
+  /opt/homebrew/include/flatbuffers/stl_emulation.h \
+  /opt/homebrew/include/flatbuffers/vector.h \
+  /opt/homebrew/include/flatbuffers/buffer.h \
+  /opt/homebrew/include/flatbuffers/buffer_ref.h \
+  /opt/homebrew/include/flatbuffers/verifier.h \
+  /opt/homebrew/include/flatbuffers/detached_buffer.h \
+  /opt/homebrew/include/flatbuffers/allocator.h \
+  /opt/homebrew/include/flatbuffers/default_allocator.h \
+  /opt/homebrew/include/flatbuffers/flatbuffer_builder.h \
+  /opt/homebrew/include/flatbuffers/string.h \
+  /opt/homebrew/include/flatbuffers/struct.h \
+  /opt/homebrew/include/flatbuffers/table.h \
+  /opt/homebrew/include/flatbuffers/vector_downward.h
 
 src/Singularity/Core/Game.hpp:
 
@@ -875,7 +893,7 @@ src/Form/Object/Automation/Automation.hpp:
 
 src/Rendering/BrushSystem.hpp:
 
-src/Rendering/DesignSystem.hpp:
+src/Legacy/DesignSystem.hpp:
 
 src/OurVerse/Tool.hpp:
 
@@ -975,4 +993,40 @@ src/ZonesOfEarth/World/World.hpp:
 
 src/Util/Frontier.hpp:
 
+src/Util/BinaryPack.hpp:
+
 src/ZonesOfEarth/AuthorsOfLaw/LawAuditLogger.hpp:
+
+src/Util/Schema/Earthcall_generated.h:
+
+/opt/homebrew/include/flatbuffers/flatbuffers.h:
+
+/opt/homebrew/include/flatbuffers/array.h:
+
+/opt/homebrew/include/flatbuffers/base.h:
+
+/opt/homebrew/include/flatbuffers/stl_emulation.h:
+
+/opt/homebrew/include/flatbuffers/vector.h:
+
+/opt/homebrew/include/flatbuffers/buffer.h:
+
+/opt/homebrew/include/flatbuffers/buffer_ref.h:
+
+/opt/homebrew/include/flatbuffers/verifier.h:
+
+/opt/homebrew/include/flatbuffers/detached_buffer.h:
+
+/opt/homebrew/include/flatbuffers/allocator.h:
+
+/opt/homebrew/include/flatbuffers/default_allocator.h:
+
+/opt/homebrew/include/flatbuffers/flatbuffer_builder.h:
+
+/opt/homebrew/include/flatbuffers/string.h:
+
+/opt/homebrew/include/flatbuffers/struct.h:
+
+/opt/homebrew/include/flatbuffers/table.h:
+
+/opt/homebrew/include/flatbuffers/vector_downward.h:

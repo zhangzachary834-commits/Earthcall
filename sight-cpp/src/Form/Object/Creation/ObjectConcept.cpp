@@ -261,7 +261,7 @@ std::vector<std::unique_ptr<Object>> ObjectConcept::instantiate(
                     if (mapping.agg == PropertyMapping::Aggregate::PerMember) {
                         Object* src = (*sources)[i % sources->size()];
                         PropertyValue v;
-                        if (src && mapping.source.getValue(*src, v)) {
+                        if (src && mapping.source.getValue(*src, v) == PropertyPath::PathResult::Ok) {
                             double x = 0.0;
                             if (propertyValueToNumber(v, x)) {
                                 auto y = mapping.transform.evaluate(x);
@@ -280,7 +280,7 @@ std::vector<std::unique_ptr<Object>> ObjectConcept::instantiate(
                         for (auto* src : *sources) {
                             PropertyValue v;
                             double xi = 0.0;
-                            if (src && mapping.source.getValue(*src, v) &&
+                            if (src && mapping.source.getValue(*src, v) == PropertyPath::PathResult::Ok &&
                                 propertyValueToNumber(v, xi)) {
                                 ++count;
                                 if (mapping.agg == PropertyMapping::Aggregate::Max) {
@@ -318,7 +318,7 @@ std::vector<std::unique_ptr<Object>> ObjectConcept::instantiate(
                         if (mapping.agg == PropertyMapping::Aggregate::PerMember) {
                             Object* src = (*sources)[i % sources->size()];
                             PropertyValue v;
-                            have = src && path.getValue(*src, v) &&
+                            have = src && path.getValue(*src, v) == PropertyPath::PathResult::Ok &&
                                    propertyValueToNumber(v, val);
                             if (!guardSubject) guardSubject = src;
                         } else {
@@ -329,7 +329,7 @@ std::vector<std::unique_ptr<Object>> ObjectConcept::instantiate(
                             for (auto* src : *sources) {
                                 PropertyValue v;
                                 double xi = 0.0;
-                                if (src && path.getValue(*src, v) &&
+                                if (src && path.getValue(*src, v) == PropertyPath::PathResult::Ok &&
                                     propertyValueToNumber(v, xi)) {
                                     ++count;
                                     if (mapping.agg == PropertyMapping::Aggregate::Max) {

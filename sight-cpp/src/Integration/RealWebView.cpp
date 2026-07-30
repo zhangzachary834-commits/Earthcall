@@ -4,7 +4,7 @@
 #include <map>
 #include "../json.hpp"
 #include "../Rendering/BrushSystem.hpp"
-#include "../Rendering/DesignSystem.hpp"
+#include "../Legacy/DesignSystem.hpp"
 #include "../Person/AvatarManager.hpp"
 #include "../ZonesOfEarth/World/World.hpp"
 #include "../ZonesOfEarth/ZoneManager.hpp"

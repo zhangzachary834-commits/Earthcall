@@ -5,6 +5,7 @@
 #include <algorithm>
 #include "GLFW/glfw3.h"
 #include "Rendering/Renderer.hpp"
+#include "Form/Object/Formation/Menu/stb_easy_font.h"
 
 using Scope = Zone::Scope;
 
@@ -385,7 +386,7 @@ void Zone::clearHistory() {
     }
 }
 
-void Zone::renderArt() const {
+void Zone::renderArt(bool useLegacy2DTools) const {
     // Called from inside GameRender's begin2D scope, so screen-space projection,
     // depth-test-off and alpha blending are already established. Each draw below
     // carries its own colour, so there is nothing left to reset by hand.
@@ -403,9 +404,47 @@ void Zone::renderArt() const {
         return draw::stripToSegments(v, /*closed=*/false);
     };
 
-    // Professional Design System (primary)
-    if (designSystem) {
+    // Professional Design System (legacy)
+    if (designSystem && useLegacy2DTools) {
         designSystem->render();
+    }
+    
+    // New 2D Object Rendering
+    if (!useLegacy2DTools) {
+        for (const auto* singular : _formation.getMembers()) {
+            const auto* obj = dynamic_cast<const Object*>(singular);
+            if (!obj) continue;
+            
+            if (obj->getShapeKind() == Object::ShapeKind::Shape2D) {
+                float w = obj->getShapeParams().width2D;
+                float h = obj->getShapeParams().height2D;
+                glm::vec3 pos = obj->getTransform()[3];
+                glm::vec4 color(obj->faceColors[0][0], obj->faceColors[0][1], obj->faceColors[0][2], 1.0f);
+                
+                std::vector<glm::vec2> pts = {
+                    {pos.x - w/2, pos.y - h/2},
+                    {pos.x + w/2, pos.y - h/2},
+                    {pos.x + w/2, pos.y + h/2},
+                    {pos.x - w/2, pos.y + h/2}
+                };
+                r.drawLines2D(draw::stripToSegments(pts, /*closed=*/true), color, 2.0f);
+            } else if (obj->getShapeKind() == Object::ShapeKind::Text2D) {
+                std::string text = obj->getTextString();
+                if (text.empty()) text = "Text";
+                char vertexBuffer[24000];
+                int quads = stb_easy_font_print(0.0f, 0.0f, const_cast<char*>(text.c_str()), nullptr, vertexBuffer, sizeof(vertexBuffer));
+                if (quads > 0) {
+                    float fontSize = obj->getShapeParams().width2D; // Just use width2D as font size for now
+                    if (fontSize <= 0.0f) fontSize = 16.0f;
+                    const float scale = std::max(0.25f, fontSize / 16.0f);
+                    std::vector<glm::vec2> tris = draw::easyFontToTris(vertexBuffer, quads);
+                    glm::vec3 pos = obj->getTransform()[3];
+                    glm::vec2 pos2d(pos.x, pos.y);
+                    for (glm::vec2& p : tris) p = pos2d + p * scale;
+                    r.drawTris2D(tris, glm::vec4(obj->faceColors[0][0], obj->faceColors[0][1], obj->faceColors[0][2], 1.0f));
+                }
+            }
+        }
     }
     
     bool brushCanvasVisible = false;

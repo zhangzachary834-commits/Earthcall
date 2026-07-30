@@ -88,7 +88,6 @@ public:
     glm::vec3 cursorSpawnRot{0.0f, 0.0f, 0.0f};
     glm::vec3 cursorSpawnScale{1.0f, 1.0f, 1.0f};
     glm::mat4 getCursorSpawnTransform() const;
-    void setCursorSpawnTransform(const glm::mat4& t) {}
     std::string cursorHoveredBodyPart;
     glm::vec3 cameraPos{0.0f, 0.0f, 0.0f};
     glm::vec3 cameraForward{0.0f, 0.0f, -1.0f};

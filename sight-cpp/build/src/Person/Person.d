@@ -273,7 +273,7 @@ build/src/Person/Person.o: src/Person/Person.cpp src/Person/Person.hpp \
   src/Form/Object/Formation/Menu/stb_easy_font.h \
   src/ZonesOfEarth/ZoneManager.hpp src/ZonesOfEarth/Zone/Zone.hpp \
   src/ZonesOfEarth/Zone/../World/World.hpp src/Rendering/BrushSystem.hpp \
-  src/Rendering/DesignSystem.hpp src/OurVerse/Tool.hpp \
+  src/Legacy/DesignSystem.hpp src/OurVerse/Tool.hpp \
   src/Person/PersonEvents.hpp \
   src/Form/Singular/Property/ComputedProperty.hpp \
   src/Form/Singular/Property/PropertyRef.hpp \
@@ -849,7 +849,7 @@ src/ZonesOfEarth/Zone/../World/World.hpp:
 
 src/Rendering/BrushSystem.hpp:
 
-src/Rendering/DesignSystem.hpp:
+src/Legacy/DesignSystem.hpp:
 
 src/OurVerse/Tool.hpp:
 

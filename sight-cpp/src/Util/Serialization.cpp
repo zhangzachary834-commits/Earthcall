@@ -1,5 +1,6 @@
 #include "Util/Serialization.hpp"
 #include "Form/Singular/Property/PropertyValueJson.hpp"
+#include "Util/BinaryPack.hpp"
 #include <cstring>
 #include <glm/gtc/type_ptr.hpp>
 #include <string>
@@ -161,8 +162,9 @@ void to_json(nlohmann::json& j, const Object& obj){
         const auto& p = obj.getPatchData();
         nlohmann::json pj;
         pj["du"] = p.du; pj["dv"] = p.dv;
-        pj["ctrl"] = nlohmann::json::array();
-        for (const auto& c : p.ctrl) pj["ctrl"].push_back({c.x, c.y, c.z});
+        BinaryPack::Writer bw;
+        bw.writeArray(p.ctrl);
+        pj["ctrlBinary"] = bw.toBinaryJson();
         j["patch"] = std::move(pj);
     }
     j["objectID"] = obj.getIdentifier();
@@ -189,6 +191,26 @@ void to_json(nlohmann::json& j, const Object& obj){
     if (obj.getGeometryType() == Object::GeometryType::Polyhedron) {
         const auto& pd = obj.getPolyhedronData();
         nlohmann::json pj;
+
+        BinaryPack::Writer wv;
+        wv.writeArray(pd.vertices);
+        pj["verticesBinary"] = wv.toBinaryJson();
+        
+        std::vector<int> flatFaces;
+        std::vector<int> faceSizes;
+        for (const auto& f : pd.faces) {
+            faceSizes.push_back(static_cast<int>(f.size()));
+            flatFaces.insert(flatFaces.end(), f.begin(), f.end());
+        }
+        BinaryPack::Writer wfd;
+        wfd.writeArray(flatFaces);
+        pj["facesDataBinary"] = wfd.toBinaryJson();
+        
+        BinaryPack::Writer wfs;
+        wfs.writeArray(faceSizes);
+        pj["facesSizesBinary"] = wfs.toBinaryJson();
+
+        // Fallback JSON
         nlohmann::json verts = nlohmann::json::array();
         for (const auto& v : pd.vertices) verts.push_back({v.x, v.y, v.z});
         pj["vertices"] = std::move(verts);
@@ -265,9 +287,13 @@ void from_json(const nlohmann::json& j, Object& obj){
         const auto& pj = j["patch"];
         geom::BezierPatch p;
         p.du = pj.value("du", 3); p.dv = pj.value("dv", 3);
-        if (pj.contains("ctrl"))
+        if (pj.contains("ctrlBinary")) {
+            BinaryPack::Reader br(pj["ctrlBinary"].get_binary());
+            br.readArray(p.ctrl);
+        } else if (pj.contains("ctrl")) {
             for (const auto& c : pj["ctrl"])
                 p.ctrl.push_back(glm::vec3(c[0].get<float>(), c[1].get<float>(), c[2].get<float>()));
+        }
         obj.setBezierPatch(p);
     } else if (j.contains("field")) {
         obj.setFieldShape(sdfFromJson(j["field"]), j.value("fieldExtent", 1.0f));
@@ -339,21 +365,45 @@ void from_json(const nlohmann::json& j, Object& obj){
         const auto& pj = j["polyhedron"];
         std::vector<glm::vec3> verts;
         std::vector<std::vector<int>> faces;
-        if (pj.contains("vertices")) {
-            const auto& vs = pj["vertices"];
-            verts.reserve(vs.size());
-            for (const auto& vj : vs) {
-                if (vj.size() >= 3) verts.emplace_back(vj[0].get<float>(), vj[1].get<float>(), vj[2].get<float>());
-            }
-        }
-        if (pj.contains("faces")) {
-            const auto& fs = pj["faces"];
-            faces.reserve(fs.size());
-            for (const auto& fj : fs) {
+        
+        if (pj.contains("verticesBinary") && pj.contains("facesDataBinary") && pj.contains("facesSizesBinary")) {
+            BinaryPack::Reader vReader(pj["verticesBinary"].get_binary());
+            vReader.readArray(verts);
+            
+            BinaryPack::Reader fDataReader(pj["facesDataBinary"].get_binary());
+            BinaryPack::Reader fSizesReader(pj["facesSizesBinary"].get_binary());
+            std::vector<int> flatFaces;
+            std::vector<int> faceSizes;
+            fDataReader.readArray(flatFaces);
+            fSizesReader.readArray(faceSizes);
+            
+            int offset = 0;
+            faces.reserve(faceSizes.size());
+            for (int size : faceSizes) {
                 std::vector<int> face;
-                face.reserve(fj.size());
-                for (const auto& idx : fj) face.push_back(idx.get<int>());
+                face.reserve(size);
+                for (int i = 0; i < size; ++i) {
+                    face.push_back(flatFaces[offset++]);
+                }
                 faces.push_back(std::move(face));
+            }
+        } else {
+            if (pj.contains("vertices")) {
+                const auto& vs = pj["vertices"];
+                verts.reserve(vs.size());
+                for (const auto& vj : vs) {
+                    if (vj.size() >= 3) verts.emplace_back(vj[0].get<float>(), vj[1].get<float>(), vj[2].get<float>());
+                }
+            }
+            if (pj.contains("faces")) {
+                const auto& fs = pj["faces"];
+                faces.reserve(fs.size());
+                for (const auto& fj : fs) {
+                    std::vector<int> face;
+                    face.reserve(fj.size());
+                    for (const auto& idx : fj) face.push_back(idx.get<int>());
+                    faces.push_back(std::move(face));
+                }
             }
         }
         if (!verts.empty() && !faces.empty()) {
@@ -626,7 +676,7 @@ void from_json(const nlohmann::json& j, World& world){
     if(!j.contains("objects")) return;
     const auto& arr = j["objects"];
     for(const auto& oj : arr){
-        std::unique_ptr<Object> obj(new Object());
+        std::shared_ptr<Object> obj = std::make_shared<Object>();
         from_json(oj, *obj);
         world.addObject(std::move(obj));
     }

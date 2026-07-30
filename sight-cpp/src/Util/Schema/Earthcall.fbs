@@ -1,0 +1,86 @@
+// Earthcall.fbs - FlatBuffers schema for Earthcall serialization
+
+namespace Earthcall.Schema;
+
+// --- HYBRID SCHEMA: DYNAMIC LAWS ---
+// The Law system uses arbitrary types. We map them into a generic key-value store.
+enum PropertyType : byte {
+  Int = 0,
+  Float = 1,
+  String = 2,
+  Binary = 3,
+  Bool = 4
+}
+
+table LawProperty {
+  key: string;
+  type: PropertyType;
+  val_int: long;
+  val_float: double;
+  val_string: string;
+  val_binary: [ubyte];
+  val_bool: bool;
+}
+
+table LawComponent {
+  name: string;
+  properties: [LawProperty];
+}
+
+// --- HARDCODED SCHEMA: CORE ENGINE ---
+// Optimized for zero-copy loading of giant arrays
+
+struct Vec3 {
+  x: float;
+  y: float;
+  z: float;
+}
+
+struct Vec4 {
+  x: float;
+  y: float;
+  z: float;
+  w: float;
+}
+
+table PolyhedronData {
+  vertices: [Vec3];
+  face_data: [int];
+  face_offsets: [int];
+}
+
+table SdfNode {
+  type: int;
+  operation: int;
+  transform: [float]; // 4x4 matrix
+  planes: [Vec4];
+  children_indices: [int];
+}
+
+// A generic "Entity" (could be a Zone, Person, or Prop)
+table Entity {
+  id: string;
+  name: string;
+  transform: [float];
+  polyhedron: PolyhedronData;
+  sdf_nodes: [SdfNode];
+  
+  // Dynamic components managed by the Law System
+  laws: [LawComponent];
+}
+
+// A Save Chunk represents a spatial region or category of entities (Delta Saves)
+table SaveChunk {
+  chunk_id: string;
+  entities: [Entity];
+}
+
+// The master state of the game
+table GlobalState {
+  world_name: string;
+  timestamp: string;
+  active_laws: [string];
+  chunks: [string]; // List of chunk filenames to load
+}
+
+root_type SaveChunk;

@@ -98,27 +98,15 @@ inline bool lawGetValue(Singular& subject, const PropertyPath& path, PropertyVal
     if (isTimePath(path)) return lawGetTime(path, out);
     PropertyPath remainder;
     Singular* root = resolveLawRoot(subject, path, remainder);
-    return root && remainder.getValue(*root, out);
+    return root && (remainder.getValue(*root, out) == PropertyPath::PathResult::Ok);
 }
 
-inline bool lawSetValue(Singular& subject, const PropertyPath& path, const PropertyValue& v) {
-    std::cout << "[lawSetValue DEBUG] Path: " << path.toString() << std::endl;
-    if (isTimePath(path)) {
-        std::cout << "[lawSetValue DEBUG] Failed: isTimePath" << std::endl;
-        return false;
-    }
+inline PropertyPath::PathResult lawSetValue(Singular& subject, const PropertyPath& path, const PropertyValue& v) {
+    if (isTimePath(path)) return PropertyPath::PathResult::ReadOnly;
     PropertyPath remainder;
     Singular* root = resolveLawRoot(subject, path, remainder);
-    if (!root) {
-        std::cout << "[lawSetValue DEBUG] Failed: resolveLawRoot returned nullptr" << std::endl;
-        return false;
-    }
-    std::cout << "[lawSetValue DEBUG] root resolved to: " << root->getIdentifier() << ", remainder: " << remainder.toString() << std::endl;
-    bool res = remainder.setValue(*root, v);
-    if (!res) {
-        std::cout << "[lawSetValue DEBUG] Failed: remainder.setValue returned false" << std::endl;
-    }
-    return res;
+    if (!root) return PropertyPath::PathResult::NoSuchProperty;
+    return remainder.setValue(*root, v);
 }
 
 inline std::optional<std::map<std::string, double>> readMathBindings(

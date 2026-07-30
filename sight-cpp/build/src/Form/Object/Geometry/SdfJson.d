@@ -151,7 +151,8 @@ build/src/Form/Object/Geometry/SdfJson.o: \
   /opt/homebrew/include/glm/vector_relational.hpp \
   /opt/homebrew/include/glm/integer.hpp \
   /opt/homebrew/include/glm/detail/func_integer.inl \
-  src/Form/Object/Geometry/SmoothSurface.hpp src/json.hpp
+  src/Form/Object/Geometry/SmoothSurface.hpp src/json.hpp \
+  src/Util/BinaryPack.hpp
 
 src/Form/Object/Geometry/SdfJson.hpp:
 
@@ -460,3 +461,5 @@ src/Form/Object/Geometry/Sdf.hpp:
 src/Form/Object/Geometry/SmoothSurface.hpp:
 
 src/json.hpp:
+
+src/Util/BinaryPack.hpp:

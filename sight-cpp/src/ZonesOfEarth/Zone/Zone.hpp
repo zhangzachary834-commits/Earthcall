@@ -7,7 +7,7 @@
 #include <memory>
 #include "Form/Object/Object.hpp"
 #include "Rendering/BrushSystem.hpp"
-#include "Rendering/DesignSystem.hpp"
+#include "Legacy/DesignSystem.hpp"
 
 class World; // forward decl
 
@@ -90,7 +90,7 @@ public:
     void continueStroke(float x, float y);
     void endStroke();
     void clearArt();
-    virtual void renderArt() const;
+    virtual void renderArt(bool useLegacy2DTools = false) const;
     void setDrawColor(float r, float g, float b);
     glm::vec3 getCurrentColor() const { return glm::vec3(drawR, drawG, drawB); }
     
@@ -174,6 +174,10 @@ public:
     World& world() { return *_world; }
     const World& world() const { return *_world; }
 
+    // Hierarchy (Embedding) ----------------------------------------------
+    const std::string& getParentZone() const { return _parentZoneName; }
+    void setParentZone(const std::string& pZone) { _parentZoneName = pZone; }
+
     // Conceptual metadata ------------------------------------------------
     void setScope(Scope scope) { _scope = scope; }
     Scope scope() const { return _scope; }
@@ -197,6 +201,7 @@ private:
     void buildProperties() override;
 
     std::string _name;
+    std::string _parentZoneName; // Name of the zone this is embedded in, if any
     Scope _scope;
     Qualities _qualities;
     Deletability _deletable;

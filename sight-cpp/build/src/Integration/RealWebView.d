@@ -152,7 +152,7 @@ build/src/Integration/RealWebView.o: src/Integration/RealWebView.cpp \
   /opt/homebrew/include/glm/vector_relational.hpp \
   /opt/homebrew/include/glm/integer.hpp \
   /opt/homebrew/include/glm/detail/func_integer.inl \
-  src/Integration/../Rendering/DesignSystem.hpp \
+  src/Integration/../Legacy/DesignSystem.hpp \
   /opt/homebrew/include/glm/gtc/matrix_transform.hpp \
   /opt/homebrew/include/glm/gtc/../mat4x4.hpp \
   /opt/homebrew/include/glm/gtc/../vec2.hpp \
@@ -271,15 +271,14 @@ build/src/Integration/RealWebView.o: src/Integration/RealWebView.cpp \
   src/Form/Object/Geometry/ComplexShape.hpp \
   src/Form/Object/Geometry/Sdf.hpp src/Form/Object/Geometry/Patch.hpp \
   src/Form/Object/Automation/Automation.hpp \
-  src/Person/Body/BodyPart/BodyPart.hpp \
+  src/Person/Body/BodyPart/BodyPart.hpp src/Rendering/BrushSystem.hpp \
   src/Integration/../Person/AvatarManager.hpp \
   src/Integration/../Person/Person.hpp src/Person/Body/Body.hpp \
   src/Integration/../Person/Soul/Soul.hpp \
   src/Integration/../ZonesOfEarth/World/World.hpp \
   src/Integration/../ZonesOfEarth/ZoneManager.hpp \
   src/ZonesOfEarth/Zone/Zone.hpp \
-  src/ZonesOfEarth/Zone/../World/World.hpp src/Rendering/BrushSystem.hpp \
-  src/Rendering/DesignSystem.hpp \
+  src/ZonesOfEarth/Zone/../World/World.hpp src/Legacy/DesignSystem.hpp \
   src/Integration/../Singularity/Core/Game.hpp \
   src/Form/Object/Formation/Menu/Menu.hpp \
   src/ZonesOfEarth/ZoneManager.hpp \
@@ -621,7 +620,7 @@ src/Integration/../Rendering/BrushSystem.hpp:
 
 /opt/homebrew/include/glm/detail/func_integer.inl:
 
-src/Integration/../Rendering/DesignSystem.hpp:
+src/Integration/../Legacy/DesignSystem.hpp:
 
 /opt/homebrew/include/glm/gtc/matrix_transform.hpp:
 
@@ -877,6 +876,8 @@ src/Form/Object/Automation/Automation.hpp:
 
 src/Person/Body/BodyPart/BodyPart.hpp:
 
+src/Rendering/BrushSystem.hpp:
+
 src/Integration/../Person/AvatarManager.hpp:
 
 src/Integration/../Person/Person.hpp:
@@ -893,9 +894,7 @@ src/ZonesOfEarth/Zone/Zone.hpp:
 
 src/ZonesOfEarth/Zone/../World/World.hpp:
 
-src/Rendering/BrushSystem.hpp:
-
-src/Rendering/DesignSystem.hpp:
+src/Legacy/DesignSystem.hpp:
 
 src/Integration/../Singularity/Core/Game.hpp:
 

@@ -50,7 +50,7 @@ void Person::buildProperties() {
     _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, glm::vec3>>(
         "cursorSpawnScale", this, &Person::cursorSpawnScale));
     _propertyRegistry.push_back(std::make_unique<ComputedProperty<Person, glm::mat4>>(
-        "cursorSpawnTransform", this, &Person::getCursorSpawnTransform, &Person::setCursorSpawnTransform));
+        "cursorSpawnTransform", this, &Person::getCursorSpawnTransform, nullptr));
     _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, glm::vec3>>(
         "cameraPos", this, &Person::cameraPos));
     _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, glm::vec3>>(

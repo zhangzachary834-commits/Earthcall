@@ -1,4 +1,5 @@
 #include "Form/Object/Geometry/SdfJson.hpp"
+#include "Util/BinaryPack.hpp"
 
 namespace geom {
 
@@ -14,6 +15,11 @@ nlohmann::json sdfToJson(const SdfNode& n) {
     };
     if (!n.expr.empty()) j["expr"] = n.expr;
     if (!n.planes.empty()) {
+        BinaryPack::Writer w;
+        w.writeArray(n.planes);
+        j["planesBinary"] = w.toBinaryJson();
+        
+        // Fallback JSON
         nlohmann::json planes = nlohmann::json::array();
         for (const auto& p : n.planes) planes.push_back({p.x, p.y, p.z, p.w});
         j["planes"] = planes;
@@ -45,7 +51,10 @@ SdfNode sdfFromJson(const nlohmann::json& j) {
         n.expr = j["expr"].get<std::string>();
         n.rpn = compileExpr(n.expr);   // derived, never serialized
     }
-    if (j.contains("planes")) {
+    if (j.contains("planesBinary")) {
+        BinaryPack::Reader r(j["planesBinary"].get_binary());
+        r.readArray(n.planes);
+    } else if (j.contains("planes")) {
         for (const auto& p : j["planes"]) {
             if (p.is_array() && p.size() == 4) {
                 n.planes.emplace_back(p[0].get<float>(), p[1].get<float>(),

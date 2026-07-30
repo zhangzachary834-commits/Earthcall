@@ -348,7 +348,7 @@ void Game::render() {
     // 2-D overlays ---------------------------------------------------------
     currentRenderer().begin2D(static_cast<uint32_t>(fbW), static_cast<uint32_t>(fbH));
 
-    mgr.active().renderArt();
+    mgr.active().renderArt(_useLegacy2DTools);
 
     if (_drawingStraightLine && _current3DMode == Mode3D::None && _currentTool.getType() == Tool::Type::Brush) {
         auto* brushSystem = mgr.active().getBrushSystem();

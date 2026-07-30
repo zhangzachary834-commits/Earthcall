@@ -1,0 +1,25 @@
+namespace Earthcall.FBS;
+
+struct Vec3 {
+  x: float;
+  y: float;
+  z: float;
+}
+
+table Stroke {
+  r: float;
+  g: float;
+  b: float;
+  line_width: float = 1.0;
+  points: [float];
+}
+
+table StrokeArray {
+  strokes: [Stroke];
+}
+
+table BezierPatch {
+  du: int;
+  dv: int;
+  ctrl: [Vec3];
+}

@@ -105,57 +105,63 @@ Property* PropertyPath::resolve(Singular& root, std::string* trailingComponent) 
     return nullptr;
 }
 
-bool PropertyPath::getValue(Singular& root, PropertyValue& out) const {
+PropertyPath::PathResult PropertyPath::getValue(Singular& root, PropertyValue& out) const {
     std::string component;
     Property* property = resolve(root, &component);
     if (!property) {
         if (segments.size() == 1) {
-            return root.getDynamicProperty(segments[0], out);
+            if (root.getDynamicProperty(segments[0], out)) {
+                return PathResult::Ok;
+            }
         }
-        return false;
+        return PathResult::NoSuchProperty;
     }
 
     PropertyValue v = property->value();
     if (component.empty()) {
         out = std::move(v);
-        return !std::holds_alternative<std::monostate>(out);
+        return !std::holds_alternative<std::monostate>(out) ? PathResult::Ok : PathResult::NoSuchProperty;
     }
 
     glm::vec3* vec = std::get_if<glm::vec3>(&v);
-    if (!vec) return false;
+    if (!vec) return PathResult::BadComponent;
     out = PropertyValue(*componentOf(*vec, component));
-    return true;
+    return PathResult::Ok;
 }
 
-bool PropertyPath::setValue(Singular& root, const PropertyValue& v) const {
+PropertyPath::PathResult PropertyPath::setValue(Singular& root, const PropertyValue& v) const {
     std::string component;
     Property* property = resolve(root, &component);
     if (!property) {
         if (segments.size() == 1) {
             root.setDynamicProperty(segments[0], v);
-            return true;
+            return PathResult::Ok;
         }
-        return false;
+        return PathResult::NoSuchProperty;
     }
 
     if (component.empty()) {
-        if (property->setValue(v)) return true;
+        if (property->setValue(v)) return PathResult::Ok;
         // Arithmetic coercion retry: match the alternative the slot holds.
         double n = 0.0;
         PropertyValue coerced;
         if (propertyValueToNumber(v, n) && coerceLike(property->value(), n, coerced)) {
-            return property->setValue(coerced);
+            if (property->setValue(coerced)) return PathResult::Ok;
         }
-        return false;
+        // If setValue fails, we'll assume it's because the property rejected it, likely read-only or type mismatch.
+        // For now, if types could coerce, it's ReadOnly. If not, it's TypeMismatch.
+        if (property->value().index() != v.index()) return PathResult::TypeMismatch;
+        return PathResult::ReadOnly;
     }
 
     // Component write: read the whole vec3, mutate one lane, write back whole
     // (so setters like Object::setPosition run their full side effects).
     double n = 0.0;
-    if (!propertyValueToNumber(v, n)) return false;
+    if (!propertyValueToNumber(v, n)) return PathResult::TypeMismatch;
     PropertyValue whole = property->value();
     glm::vec3* vec = std::get_if<glm::vec3>(&whole);
-    if (!vec) return false;
+    if (!vec) return PathResult::BadComponent;
     *componentOf(*vec, component) = static_cast<float>(n);
-    return property->setValue(PropertyValue(*vec));
+    if (property->setValue(PropertyValue(*vec))) return PathResult::Ok;
+    return PathResult::ReadOnly;
 }

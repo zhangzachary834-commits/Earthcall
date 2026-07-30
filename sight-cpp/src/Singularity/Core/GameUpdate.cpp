@@ -54,7 +54,7 @@ void Game::fuseObjects(Object* A, Object* B) {
     A->setFieldShape(geom::SdfNode::binary(ops[oi], an, bn, blend), 1.6f);
     auto& owned = mgr.active().world().getOwnedObjectsMutable();
     owned.erase(std::remove_if(owned.begin(), owned.end(),
-                [B](const std::unique_ptr<Object>& p){ return p.get() == B; }),
+                [B](const std::shared_ptr<Object>& p){ return p.get() == B; }),
                 owned.end());
 }
 

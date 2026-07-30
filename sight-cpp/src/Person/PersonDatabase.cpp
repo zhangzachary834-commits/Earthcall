@@ -18,7 +18,7 @@ void PersonDatabase::savePerson(const Person& person) {
     nlohmann::json j = person.serialize();
     
     // Save to the PERSON save type in SaveSystem
-    SaveSystem::writeJson(j, person.soulName, SaveSystem::SaveType::PERSON);
+    SaveSystem::writeSaveData(j, person.soulName, SaveSystem::SaveType::PERSON);
     
     std::cout << "Successfully saved Person profile for: " << person.soulName << std::endl;
 }

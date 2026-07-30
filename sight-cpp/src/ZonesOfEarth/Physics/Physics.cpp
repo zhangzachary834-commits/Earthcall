@@ -109,7 +109,7 @@ namespace Physics {
         obj->setTransform(t);
     }
 
-    void updateBodies(std::vector<std::unique_ptr<Object>>& objects,
+    void updateBodies(std::vector<std::shared_ptr<Object>>& objects,
                       float deltaTime,
                       float gravityAccel,
                       float airResistance,
@@ -563,7 +563,7 @@ namespace Physics {
         }, 10); // High priority for physics events
     }
 
-    void enforceCollisions(glm::vec3& position, const std::vector<std::unique_ptr<Object>>& objects) {
+    void enforceCollisions(glm::vec3& position, const std::vector<std::shared_ptr<Object>>& objects) {
         for (const auto& obj : objects) {
             if (!obj) continue;
             // Skip the baseline ground placeholder: it is a solid AABB cube whose
@@ -674,7 +674,7 @@ namespace Physics {
         return defaultMass;
     }
 
-    glm::vec3 computeWorldCenterOfMass(const std::vector<std::unique_ptr<Object>>& objects,
+    glm::vec3 computeWorldCenterOfMass(const std::vector<std::shared_ptr<Object>>& objects,
                                        const LawTarget* target) {
         glm::vec3 sumWeighted(0.0f);
         double totalMass = 0.0;
@@ -693,7 +693,7 @@ namespace Physics {
     }
 
     glm::vec3 sampleGravityField(const glm::vec3& position,
-                                 const std::vector<std::unique_ptr<Object>>& objects,
+                                 const std::vector<std::shared_ptr<Object>>& objects,
                                  float gravitationalConstant,
                                  float softeningEpsilon,
                                  const LawTarget* target) {

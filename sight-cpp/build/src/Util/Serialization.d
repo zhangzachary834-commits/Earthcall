@@ -269,7 +269,8 @@ build/src/Util/Serialization.o: src/Util/Serialization.cpp \
   src/Form/Object/Automation/Automation.hpp \
   src/ZonesOfEarth/World/World.hpp src/Person/Body/BodyPart/BodyPart.hpp \
   src/Person/Body/Body.hpp src/Util/Frontier.hpp \
-  src/Form/Singular/Property/PropertyValueJson.hpp
+  src/Form/Singular/Property/PropertyValueJson.hpp \
+  src/Util/BinaryPack.hpp
 
 src/Util/Serialization.hpp:
 
@@ -832,3 +833,5 @@ src/Person/Body/Body.hpp:
 src/Util/Frontier.hpp:
 
 src/Form/Singular/Property/PropertyValueJson.hpp:
+
+src/Util/BinaryPack.hpp:

@@ -153,7 +153,7 @@ void ChangeRecorder::sample(float dt) {
     for (auto& trace : _traces) {
         PropertyValue v;
         double x = 0.0;
-        if (trace.path.getValue(*_subject, v) && propertyValueToNumber(v, x)) {
+        if (trace.path.getValue(*_subject, v) == PropertyPath::PathResult::Ok && propertyValueToNumber(v, x)) {
             trace.samples.emplace_back(_t, x);
         }
     }

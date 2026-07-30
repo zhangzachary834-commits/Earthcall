@@ -43,6 +43,10 @@ This document is that procedure. It gives:
   law, a Relation between laws, or a Formation of laws;
 - **the kernel floor** (§6) — what must never be migrated, and why that boundary is
   a safety property, not a limitation;
+- **what a law may author about itself** (§6.1–6.3) — its condition's *domain*, freely
+  (feedback is how numeric laws terminate); its *docket* — enabled, authority, claims,
+  jurisdiction, tier, budget — never; and the six independent bounds that keep the
+  first permission from becoming the second;
 - **the ledger** (§7) — a machine-readable manifest so an agent can pick the next
   item without re-deriving the whole world;
 - **the procedure** (§8) — twelve numbered steps, executable without judgment calls;
@@ -775,7 +779,7 @@ law safe to grant. It mirrors the `TransferPolicy` Kernel tier
 
 | Domain | Specifically | Why |
 |---|---|---|
-| Frame & lifecycle | the update loop, GL/GPU submission, buffer uploads | a law cannot author the conditions of its own execution |
+| Frame & lifecycle | the update loop, GL/GPU submission, buffer uploads | a law cannot author the machinery that runs it (it may freely author its own condition's *domain* — see §6.1) |
 | Persistence | save, load, world serialization | you cannot author your way out of a corrupted save |
 | The Universe wiring | providers, registrars, the clock | the domain laws range over cannot be law-defined without circularity |
 | Authority | `Law::authorityLevel`, the metalaw ceiling | deliberately not a registered property today — keep it that way |
@@ -803,6 +807,137 @@ whole difference between the floor and everything standing on it.
 **Test for the tier of a new responsibility:** *if an authored law claims this and
 is wrong, can a Person fix it from inside the world?* Yes → Governable. Only with
 help → Gated. No → Kernel.
+
+---
+
+### 6.1 Reflexive authorship — a law over its own domain
+
+**A law MAY author the variables its own condition reads. This is allowed, ordinary,
+and necessary.**
+
+The tempting prohibition — "a law may not author the conditions of its own execution" —
+is wrong, and forbidding it would make simple numeric law unauthorable. Consider the
+smallest useful law in the system:
+
+```
+WhileTrue:  y < 10   →   y := y + 1
+```
+
+Its action writes the very number its condition tests. There is no way to author "rise
+until you reach ten" that does not do this. Any law that *changes what it checked* is
+authoring its own conditions of execution, which means the prohibition would outlaw
+nearly every law worth writing — every accumulator, every approach-and-stop, every
+"heal until full," every `Flow` whose rate depends on the quantity it integrates.
+
+Worse, forbidding it would not even buy safety, because the loop is what makes such
+laws **terminate**. `y < 10 → y += 1` stops on its own. A law that cannot touch its
+own domain has no way to satisfy itself and must be stopped from outside.
+
+So state the line precisely:
+
+> **A law may write the variables its condition reads. It may not write the terms by
+> which it is judged.**
+>
+> **Domain** — the world-state the condition ranges over — is the law's to author.
+> **Docket** — its own `enabled`, `authorityLevel`, its claims, its jurisdiction, its
+> tier, its budget, which metalaws reach it — is not.
+
+Domain is what the law is *about*. Docket is what the law is *accountable to*. A law
+raising its own ceiling is not feedback, it is a law placing itself beyond the reach of
+Persons — which is precisely what the authority ceiling in `Law.hpp:160-170` already
+refuses, and why `authorityLevel` is deliberately not a registered property.
+
+Two idioms worth knowing, because they make reflexive laws terminate cleanly:
+
+- **`OnBecomeTrue` + a reflexive action is a natural one-shot.** The action makes the
+  condition false, which re-arms the edge detector. It fires once per crossing, never
+  in a spin.
+- **The authored bounds ARE the duration.** For `Map` / `Flow`, `ActionNode::definedFor`
+  ends a drive session the moment the function becomes undefined at the current values
+  of its bound variables — and any bound variable may cut it, *including the one the
+  action is writing*. A reflexive law that drives itself out of its own authored piece
+  bounds stops itself, and publishes `law-drive-finished`. This mechanism already
+  exists; reflexive authorship is what makes it expressive.
+
+### 6.2 The accountability stack
+
+Reflexive authorship is permitted **and never unbounded**. Every law — reflexive or
+not — sits under six independent bounds. They are independent on purpose: each catches
+a different failure, and no single one is load-bearing alone.
+
+| # | Bound | What it catches | Machinery |
+|---|---|---|---|
+| 1 | **Metalaws** | a law behaving wrongly in ways a Person can name | `Law` is a legible Singular (`enabled`, `conditionMode`, `drives`, `name` registered by `Law::buildProperties`); a law whose target is a law IS a metalaw. **Exists.** |
+| 2 | **Law conflict resolution** | two laws deciding one quantity | Contention → first-mover fallback → Concord (§5.3). A reflexive law claiming a responsibility contends like any other. **Specified, §13 commits 2–3, 11.** |
+| 3 | **Zone jurisdiction** | a law reaching beings it has no standing over | `reachOver(being)` and the four bindings (§5.3a); a law's reach is its zone's reach. **Specified, §13 commits 13–14.** |
+| 4 | **Singularity rate limiting + the event queue** | the failure unique to reflexive laws: a loop that is individually legal and collectively ruinous | `kMaxChainRounds = 8` (`Law.hpp:475`) and `kMaxCallDepth = 32` (`ScalarForm.hpp:329`) exist; the per-tick **budget** does not — §6.3. |
+| 5 | **Fundamental Person rights** | a law reaching what no law may reach | Kernel tier: identity, ownership of Home, the exit guarantee, the escape hatches. **Never claimable, by construction.** |
+| 6 | **Kernel–Singularity hierarchy** | everything above being renegotiated from below | Tiers (Kernel / Gated / Governable) granted at the Singularity level, never law-modifiable; the authority ceiling refuses lower governing higher. **Exists in part.** |
+
+Bound 4 is the one reflexive authorship actually stresses, and it is the one still
+missing. The others already refuse a law that oversteps; none of them notice a law that
+stays perfectly within its rights ten million times per second.
+
+### 6.3 `SingularityBudget` — the rate ceiling reflexive laws require
+
+`kMaxChainRounds` bounds how far a cascade may propagate *within* one tick. It says
+nothing about how much work one law may do, how many events it may mint, or how a
+reflexive loop behaves *across* ticks. That is the gap.
+
+```cpp
+// src/Singularity/SingularityBudget.hpp
+//
+// What any law may spend in one tick. Granted at the Singularity level, never
+// law-modifiable (a law that could raise its own budget has no budget) — the
+// same anti-tyranny footing as TransferPolicy's Kernel gates and the authority
+// ceiling. Legible READ-ONLY as @budget.*, so Persons and metalaws can SEE the
+// spend without being able to alter the ceiling.
+class SingularityBudget : public Singular {
+public:
+    static SingularityBudget& instance();
+    std::string getIdentifier() const override { return "budget"; }
+
+    struct Ceilings {
+        int applicationsPerLawPerTick = 64;    // one law, one tick
+        int applicationsPerAuthorPerTick = 512;// all laws of one author
+        int eventsPublishedPerLawPerTick = 32; // ActionNode::Publish
+        int spawnsPerLawPerTick = 16;          // Create / Spawn — Babel's rate knob
+        int destroysPerLawPerTick = 16;        // ...and its counterpart
+    };
+
+    // Asked before each application/publish/spawn. Refusing is not an error:
+    // it is the ceiling doing its job, and it is RECORDED, never silent.
+    bool admit(const std::string& lawId, Kind kind);
+
+    // What overflowed this tick, for the audit log and the Law Author's face.
+    struct Overflow { std::string lawId, authorId; Kind kind; int attempted; };
+    const std::vector<Overflow>& overflows() const;
+};
+```
+
+Three rules that make this a ceiling rather than a silent failure:
+
+1. **Throttle, never drop silently.** An admission refusal is published
+   (`budget-exceeded`, subject: the law) and written to the `ApplicationRecord` as a
+   new `ApplicationResult::BudgetExceeded`. A Person must be able to discover that
+   their law is being held back, or debugging becomes archaeology.
+2. **The event queue is a queue, not a stack.** Events minted by a law's action are
+   *enqueued* for the next chain round — never dispatched re-entrantly from inside the
+   handler. `LawManager::tick` already works this way (facts asserted during a round
+   survive into the next, `Law.cpp:684-688`); the rule is that `ActionNode::Publish`
+   must never grow a synchronous path around it. Re-entrant dispatch turns a reflexive
+   law from a bounded loop into an unbounded stack, and the deadlock defect noted in
+   `LAW_AND_CREATION_SYSTEM.md` §9 is the same hazard wearing a different hat.
+3. **Oscillation is legal; invisible oscillation is not.** A reflexive law that flips a
+   value every tick forever is a legitimate authored thing — an oscillator. It stays
+   under the per-tick budget by construction (one application per tick), so nothing
+   should stop it. What the Law Author owes a Person is *visibility*: a law applying
+   every tick indefinitely should be legible as such, not silently churning.
+
+**Budget is Kernel tier and read-only to law-text.** `@budget.applicationsPerLawPerTick`
+is inspectable so a metalaw can *reason* about the ceiling, and unwritable so no law can
+raise it. This is bound 6 protecting bound 4 — the hierarchy exists exactly so that the
+rate limiter cannot be renegotiated by the thing it limits.
 
 ---
 
@@ -1215,6 +1350,16 @@ Person or a first mover authored in advance as a default discipline.
 high-authority metalaw win contests it was never granted, which is precisely the
 tyranny the ceiling exists to prevent.
 
+**Forbidding feedback.** Refusing to let a law write what its own condition reads
+outlaws every accumulator, every approach-and-stop, every "until full" — and buys no
+safety, because the loop is what makes those laws terminate. Bound the *rate* and
+protect the *docket* (§6.1–6.3); never bound the domain.
+
+**Confusing the domain with the docket.** The mirror error: permitting reflexive
+authorship so enthusiastically that a law may write its own `enabled`,
+`authorityLevel`, claims, tier, or budget. A law editing the terms by which it is
+judged is not feedback — it is a law stepping outside the reach of Persons.
+
 **Resolving by Synthesis when Partition was the answer.** Composing two laws that were
 never really in conflict — they were claiming one coarsely-named responsibility —
 produces a fused law nobody wanted and destroys two laws that were each fine. Ask
@@ -1271,6 +1416,7 @@ Each row compiles, each has a test, and each is behavior-preserving on its own.
 | 9 | **Migration C** (keyboard) through R5 — before camera, because camera movement depends on legible input | `make test-migration-input` |
 | 10 | **Migration B** (camera movement) through R5 | `make test-migration-camera` |
 | 11 | **`Concord` + disciplines**: `Partition` / `Precedence` / `Concession` first (no new evaluation needed), then `Synthesis` wired to the existing `LawSynthesis::compose`, then `Arbiter`; consent Formation + ratification gate; negotiation recorded in `Relation::events` | a two-law contention resolves by each discipline; an unratified Concord holds nothing; a Formation of laws appears as `holderOf()` |
+| 11b | **`SingularityBudget`** (§6.3): per-tick ceilings, `ApplicationResult::BudgetExceeded`, `budget-exceeded` published, read-only `@budget.*` surface, overflow log | a reflexive law is admitted normally; one that applies past its ceiling is throttled, records why, and cannot raise its own budget |
 | 12 | **Telos**: `Law::telosStatement` / `telosTest` serialized, probe repointed at telos tests, per-law preservation report | a proposed synthesis reports which constituent's telos it breaks, before anyone consents |
 | 13 | **Zone reach**: `reachOver(being)` over `Belonging` / `Obligation` / `Ownership`; zone-scoped claims; per-subject jurisdiction | a law of Zone A reaches a Person standing in Zone B through affiliation, and contends only over that Person |
 | 14 | **Zone regions** (prerequisite for `Presence`): zones acquire a `geom::SdfNode` region, overlap is an SDF intersection, `InRegion` answers containment | two overlapping zones contend only within the intersection |

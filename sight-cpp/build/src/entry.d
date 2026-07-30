@@ -270,7 +270,7 @@ build/src/entry.o: src/entry.cpp src/Singularity/Core/Engine.hpp \
   src/Form/Object/Geometry/ComplexShape.hpp \
   src/Form/Object/Geometry/Sdf.hpp src/Form/Object/Geometry/Patch.hpp \
   src/Form/Object/Automation/Automation.hpp \
-  src/Rendering/BrushSystem.hpp src/Rendering/DesignSystem.hpp \
+  src/Rendering/BrushSystem.hpp src/Legacy/DesignSystem.hpp \
   src/OurVerse/Tool.hpp src/Person/Body/BodyPart/BodyPart.hpp \
   src/ZonesOfEarth/Ourverse/Ourverse.hpp \
   src/ZonesOfEarth/Ourverse/../Zone/Zone.hpp \
@@ -868,7 +868,7 @@ src/Form/Object/Automation/Automation.hpp:
 
 src/Rendering/BrushSystem.hpp:
 
-src/Rendering/DesignSystem.hpp:
+src/Legacy/DesignSystem.hpp:
 
 src/OurVerse/Tool.hpp:
 

@@ -35,7 +35,7 @@ namespace Physics {
                       float airResistance = 0.1f);
 
     // Enforces collisions between a point (e.g., camera/player) and all objects' collision zones
-    void enforceCollisions(glm::vec3& position, const std::vector<std::unique_ptr<Object>>& objects);
+    void enforceCollisions(glm::vec3& position, const std::vector<std::shared_ptr<Object>>& objects);
 
     // --- Flight state helpers ---
     void setFlying(bool enabled);
@@ -106,7 +106,7 @@ namespace Physics {
     bool setBondParams(Object* a, Object* b, float restLength, float strength);
 
     // Apply bond forces and integrate all registered object bodies
-    void updateBodies(std::vector<std::unique_ptr<Object>>& objects,
+    void updateBodies(std::vector<std::shared_ptr<Object>>& objects,
                       float deltaTime,
                       float gravityAccel  = 9.81f,
                       float airResistance = 0.1f,
@@ -229,13 +229,13 @@ namespace Physics {
     float getObjectMass(Object* obj, float defaultMass = 1.0f);
 
     // Compute world center of mass across objects (optionally filter by LawTarget)
-    glm::vec3 computeWorldCenterOfMass(const std::vector<std::unique_ptr<Object>>& objects,
+    glm::vec3 computeWorldCenterOfMass(const std::vector<std::shared_ptr<Object>>& objects,
                                        const LawTarget* target = nullptr);
 
     // Sample the gravity acceleration vector (in world units per second^2) at a point due to all objects
     // Uses G (strength) and softening epsilon to avoid singularities
     glm::vec3 sampleGravityField(const glm::vec3& position,
-                                 const std::vector<std::unique_ptr<Object>>& objects,
+                                 const std::vector<std::shared_ptr<Object>>& objects,
                                  float gravitationalConstant,
                                  float softeningEpsilon,
                                  const LawTarget* target = nullptr);

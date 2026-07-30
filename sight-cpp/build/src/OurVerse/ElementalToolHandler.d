@@ -271,7 +271,7 @@ build/src/OurVerse/ElementalToolHandler.o: \
   src/Form/Object/Geometry/ComplexShape.hpp \
   src/Form/Object/Geometry/Sdf.hpp src/Form/Object/Geometry/Patch.hpp \
   src/Form/Object/Automation/Automation.hpp \
-  src/Rendering/BrushSystem.hpp src/Rendering/DesignSystem.hpp \
+  src/Rendering/BrushSystem.hpp src/Legacy/DesignSystem.hpp \
   src/OurVerse/Tool.hpp src/Person/Body/BodyPart/BodyPart.hpp \
   ../imgui/imgui.h ../imgui/imconfig.h src/Singularity/Core/Game.hpp \
   src/Form/Object/Formation/Menu/Menu.hpp \
@@ -866,7 +866,7 @@ src/Form/Object/Automation/Automation.hpp:
 
 src/Rendering/BrushSystem.hpp:
 
-src/Rendering/DesignSystem.hpp:
+src/Legacy/DesignSystem.hpp:
 
 src/OurVerse/Tool.hpp:
 

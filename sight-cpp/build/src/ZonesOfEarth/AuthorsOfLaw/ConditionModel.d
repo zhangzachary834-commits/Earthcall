@@ -285,7 +285,7 @@ build/src/ZonesOfEarth/AuthorsOfLaw/ConditionModel.o: \
   src/ZonesOfEarth/Physics/CollisionDispatcher.hpp \
   src/ZonesOfEarth/World/World.hpp src/ZonesOfEarth/Zone/Zone.hpp \
   src/ZonesOfEarth/Zone/../World/World.hpp src/Rendering/BrushSystem.hpp \
-  src/Rendering/DesignSystem.hpp src/OurVerse/Tool.hpp
+  src/Legacy/DesignSystem.hpp src/OurVerse/Tool.hpp
 
 src/ZonesOfEarth/AuthorsOfLaw/ConditionModel.hpp:
 
@@ -879,6 +879,6 @@ src/ZonesOfEarth/Zone/../World/World.hpp:
 
 src/Rendering/BrushSystem.hpp:
 
-src/Rendering/DesignSystem.hpp:
+src/Legacy/DesignSystem.hpp:
 
 src/OurVerse/Tool.hpp:

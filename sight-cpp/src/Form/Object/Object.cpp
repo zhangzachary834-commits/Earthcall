@@ -568,6 +568,11 @@ void Object::buildProperties() {
     addShapeParam("shape.paraboloidA", &ShapeParams::paraboloidA);
     addShapeParam("shape.ovoidAsym", &ShapeParams::ovoidAsym);
     addShapeParam("shape.fillet", &ShapeParams::fillet);
+    addShapeParam("shape.width2D", &ShapeParams::width2D);
+    addShapeParam("shape.height2D", &ShapeParams::height2D);
+
+    _propertyRegistry.push_back(std::make_unique<PropertyRef<Object, std::string>>(
+        "textString", this, &Object::_textString));
 
     // Whether the world's physics touches this being — governable state
     // ("make this object immaterial while the ritual runs").

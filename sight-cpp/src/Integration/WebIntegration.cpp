@@ -501,7 +501,7 @@ void WebIntegrationManager::saveWebApps() {
         nlohmann::json j = serializeWebApps();
         std::cout << "💾 Serialized JSON: " << j.dump(2) << std::endl;
         
-        std::string filename = SaveSystem::writeJson(j, "web_apps", SaveSystem::SaveType::INTEGRATION);
+        std::string filename = SaveSystem::writeSaveData(j, "web_apps", SaveSystem::SaveType::INTEGRATION);
         std::cout << "💾 Web apps saved to: " << filename << std::endl;
         
         // Verify the file was created

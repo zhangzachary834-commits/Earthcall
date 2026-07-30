@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <algorithm>
 
 class Formation;
 
@@ -74,7 +75,26 @@ public:
         return _dynamicProperties.erase(name) > 0;
     }
 
+    // Zone Designations
+    void addZoneDesignation(const std::string& zoneName) {
+        if (std::find(designatedZones.begin(), designatedZones.end(), zoneName) == designatedZones.end()) {
+            designatedZones.push_back(zoneName);
+        }
+    }
+    void removeZoneDesignation(const std::string& zoneName) {
+        auto it = std::find(designatedZones.begin(), designatedZones.end(), zoneName);
+        if (it != designatedZones.end()) {
+            designatedZones.erase(it);
+        }
+    }
+    bool belongsToZone(const std::string& zoneName) const {
+        return std::find(designatedZones.begin(), designatedZones.end(), zoneName) != designatedZones.end();
+    }
+    const std::vector<std::string>& getDesignatedZones() const { return designatedZones; }
+    std::vector<std::string>& getDesignatedZonesMutable() { return designatedZones; }
+
 protected:
+    std::vector<std::string> designatedZones;
     std::vector<std::unique_ptr<Property>> _propertyRegistry;
     std::map<std::string, PropertyValue> _dynamicProperties;
     Formation* _property_formation = nullptr;

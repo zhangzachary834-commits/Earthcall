@@ -653,12 +653,31 @@ void Tool::use(GLFWwindow *window, ZoneManager &mgr, Zone &zone, Type type, Core
             float width = std::abs(endX - start.x);
             float height = std::abs(endY - start.y);
 
-            if (width > 5.0f && height > 5.0f)
-            { // Minimum size threshold
+            if (type == Tool::Type::Rectangle || type == Tool::Type::Ellipse) {
+                if (game.getUseLegacy2DTools()) {
+                    zone.addDesignShape(type, minX + width * 0.5f, minY + height * 0.5f, width, height);
+                } else {
+                    auto obj = std::make_unique<Object>();
+                    auto* rawObj = obj.get();
+                    obj->setName(type == Tool::Type::Rectangle ? "Rectangle" : "Ellipse");
+                    glm::vec3 c = zone.getCurrentColor();
+                    obj->setFaceColor(0, c.r, c.g, c.b);
+                    
+                    obj->setShape(Object::ShapeKind::Shape2D, Object::ShapeParams{
+                        .width2D = width,
+                        .height2D = height
+                    });
+                    
+                    glm::mat4 m = glm::mat4(1.0f);
+                    m[3] = glm::vec4(minX + width * 0.5f, minY + height * 0.5f, 0.0f, 1.0f);
+                    obj->setTransform(m);
+                    
+                    zone.world().addObject(std::move(obj));
+                    zone.addToFormation(rawObj);
+                }
+            } else {
                 zone.addDesignShape(type, minX + width * 0.5f, minY + height * 0.5f, width, height);
-            }
-
-            game.end2DToolDrag();
+            }           game.end2DToolDrag();
         }
 
         // Color picker tool
@@ -812,7 +831,28 @@ void Tool::use(GLFWwindow *window, ZoneManager &mgr, Zone &zone, Type type, Core
             } else {
                 text = "Text " + std::to_string(textCounter++);
             }
-            zone.addDesignText(text, game.getCursorX(), game.getCursorY());
+            if (game.getUseLegacy2DTools()) {
+                zone.addDesignText(text, game.getCursorX(), game.getCursorY());
+            } else {
+                auto obj = std::make_unique<Object>();
+                auto* rawObj = obj.get();
+                obj->setName("Text");
+                glm::vec3 c = zone.getCurrentColor();
+                obj->setFaceColor(0, c.r, c.g, c.b);
+                
+                float fontSize = 32.0f; // Default font size
+                obj->setShape(Object::ShapeKind::Text2D, Object::ShapeParams{
+                    .width2D = fontSize
+                });
+                obj->setTextString(text);
+                
+                glm::mat4 m = glm::mat4(1.0f);
+                m[3] = glm::vec4(game.getCursorX(), game.getCursorY(), 0.0f, 1.0f);
+                obj->setTransform(m);
+                
+                zone.world().addObject(std::move(obj));
+                zone.addToFormation(rawObj);
+            }
         }
     }
     // Transform tools

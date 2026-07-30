@@ -48,10 +48,12 @@ static bool raycastTessMesh(const geom::TessMesh& m, const glm::vec3& o, const g
 
 bool Object::raycastFace(const glm::vec3& rayOriginWorld, const glm::vec3& rayDirWorld,
                          float& outT, int& outFaceIndex, glm::vec2& outUV) const {
-    // Transform ray to local space
     glm::mat4 inv = glm::inverse(getRaycastTransform());
     glm::vec3 oL = glm::vec3(inv * glm::vec4(rayOriginWorld, 1.0f));
-    glm::vec3 dL = glm::normalize(glm::vec3(inv * glm::vec4(rayDirWorld, 0.0f)));
+    glm::vec3 localDir = glm::vec3(inv * glm::vec4(rayDirWorld, 0.0f));
+    float dirLen = glm::length(localDir);
+    if (dirLen < 1e-8f) return false;
+    glm::vec3 dL = localDir / dirLen;
 
     // Topology-based geometry takes precedence over the legacy primitive switch.
     if (_hasField) {
@@ -329,6 +331,6 @@ bool Object::raycastFace(const glm::vec3& rayOriginWorld, const glm::vec3& rayDi
         }
     }
 
-    if (hit) { outT = bestT; outFaceIndex = bestFace; outUV = bestUV; return true; }
+    if (hit) { outT = bestT / dirLen; outFaceIndex = bestFace; outUV = bestUV; return true; }
     return false;
 }

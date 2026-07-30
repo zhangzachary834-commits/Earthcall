@@ -368,7 +368,7 @@ void AvatarManager::saveAvatarState(const std::string& avatarName, const std::st
         j["body"] = bodyToJson(avatar->getBody());
         
         // Use SaveSystem to write the file
-        SaveSystem::writeJson(j, avatarName, SaveSystem::SaveType::AVATAR);
+        SaveSystem::writeSaveData(j, avatarName, SaveSystem::SaveType::AVATAR);
         std::cout << "Saved avatar state for " << avatarName << std::endl;
     }
 }

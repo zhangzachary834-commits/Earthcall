@@ -28,6 +28,14 @@ struct PropertyPath {
     // and the returned Property is the vec3 itself.
     Property* resolve(Singular& root, std::string* trailingComponent = nullptr) const;
 
-    bool getValue(Singular& root, PropertyValue& out) const;
-    bool setValue(Singular& root, const PropertyValue& v) const;
+    enum class PathResult {
+        Ok,
+        NoSuchProperty,
+        TypeMismatch,
+        ReadOnly,
+        BadComponent
+    };
+
+    PathResult getValue(Singular& root, PropertyValue& out) const;
+    PathResult setValue(Singular& root, const PropertyValue& v) const;
 };

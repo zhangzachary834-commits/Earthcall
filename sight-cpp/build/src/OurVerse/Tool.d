@@ -271,7 +271,7 @@ build/src/OurVerse/Tool.o: src/OurVerse/Tool.cpp src/OurVerse/Tool.hpp \
   src/Form/Object/Formation/Menu/Menu.hpp \
   src/ZonesOfEarth/ZoneManager.hpp src/ZonesOfEarth/Zone/Zone.hpp \
   src/ZonesOfEarth/Zone/../World/World.hpp src/Rendering/BrushSystem.hpp \
-  src/Rendering/DesignSystem.hpp src/ZonesOfEarth/Ourverse/Ourverse.hpp \
+  src/Legacy/DesignSystem.hpp src/ZonesOfEarth/Ourverse/Ourverse.hpp \
   src/ZonesOfEarth/Ourverse/../Zone/Zone.hpp \
   src/ZonesOfEarth/Ourverse/../HomesOfEarth/Home.hpp \
   src/ZonesOfEarth/Ourverse/../HomesOfEarth/../Zone/Zone.hpp \
@@ -869,7 +869,7 @@ src/ZonesOfEarth/Zone/../World/World.hpp:
 
 src/Rendering/BrushSystem.hpp:
 
-src/Rendering/DesignSystem.hpp:
+src/Legacy/DesignSystem.hpp:
 
 src/ZonesOfEarth/Ourverse/Ourverse.hpp:
 

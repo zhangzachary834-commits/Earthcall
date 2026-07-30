@@ -7,6 +7,7 @@
 #include "Rendering/RelationManagerWindow.hpp"
 #include "Rendering/LawGraphWindow.hpp"
 #include "Rendering/CreationWindow.hpp"
+#include "Form/Object/Formation/Menu/stb_easy_font.h"
 #include "OurVerse/Tool.hpp"
 #include "OurVerse/AdvancedFacePaint.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
@@ -174,6 +175,9 @@ void Game::renderCreatorToolbar() {
         case CreatorSection::Relations:
             renderRelationsConsole(zone);
             break;
+        case CreatorSection::Zones:
+            renderZonesConsole(mgr);
+            break;
     }
 
     renderCreatorStatusBar();
@@ -210,6 +214,8 @@ void Game::renderCreatorSectionTabs() {
     renderSectionButton(CreatorSection::Assets, "Assets");
     ImGui::SameLine();
     renderSectionButton(CreatorSection::Relations, "Relations");
+    ImGui::SameLine();
+    renderSectionButton(CreatorSection::Zones, "Zones");
 }
 
 void Game::renderSectionButton(CreatorSection section, const char* label) {
@@ -322,6 +328,10 @@ void Game::renderPaintConsole(Zone& zone) {
     }
 
     ImGui::Checkbox("Advanced 2D Brush", &_brush.useAdvanced2D);
+    bool useLegacy = getUseLegacy2DTools();
+    if (ImGui::Checkbox("Legacy 2D Tools", &useLegacy)) {
+        setUseLegacy2DTools(useLegacy);
+    }
     if (_brush.useAdvanced2D) {
         if (!zone.getBrushSystem()) {
             zone.initializeBrushSystem();
@@ -1502,6 +1512,43 @@ void Game::renderRelationsConsole(Zone& zone) {
         _showCreationConsole = true;
     }
 }
+void Game::renderZonesConsole(ZoneManager& zoneMgr) {
+    if (ImGui::BeginChild("ZonesArea", ImVec2(0, 0), true)) {
+        ImGui::Text("Zone Management");
+        ImGui::Separator();
+        
+        const auto& zones = zoneMgr.zones();
+        size_t currentIdx = zoneMgr.currentIndex();
+        
+        if (ImGui::BeginListBox("Available Zones", ImVec2(-FLT_MIN, 150))) {
+            for (size_t i = 0; i < zones.size(); ++i) {
+                const bool isSelected = (currentIdx == i);
+                std::string label = zones[i].getIdentifier();
+                if (label.empty()) label = "Zone " + std::to_string(i);
+                
+                if (ImGui::Selectable(label.c_str(), isSelected)) {
+                    zoneMgr.switchTo(i);
+                }
+                if (isSelected) {
+                    ImGui::SetItemDefaultFocus();
+                }
+            }
+            ImGui::EndListBox();
+        }
+        
+        ImGui::Separator();
+        if (currentIdx < zones.size()) {
+            ImGui::Text("Current Zone: %s", zones[currentIdx].getIdentifier().c_str());
+            if (!zones[currentIdx].getParentZone().empty()) {
+                ImGui::Text("Embedded in: %s", zones[currentIdx].getParentZone().c_str());
+            } else {
+                ImGui::Text("Embedded in: None");
+            }
+        }
+    }
+    ImGui::EndChild();
+}
+
 
 void Game::renderCreatorStatusBar() {
     ImGui::Separator();

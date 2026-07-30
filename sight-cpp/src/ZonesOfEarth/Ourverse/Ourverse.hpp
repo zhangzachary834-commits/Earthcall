@@ -46,11 +46,11 @@ public:
     void setCamera(glm::vec3* cam) { cameraPos = cam; }
     glm::vec3* getCamera() const { return cameraPos; }
 
-    void addOwnedObject(std::unique_ptr<Object> obj) { ownedObjects.push_back(std::move(obj)); }
-    const std::vector<std::unique_ptr<Object>>& getOwnedObjects() const { return ownedObjects; }
+    void addOwnedObject(std::shared_ptr<Object> obj) { ownedObjects.push_back(std::move(obj)); }
+    const std::vector<std::shared_ptr<Object>>& getOwnedObjects() const { return ownedObjects; }
 
     // Mutable access (use with caution)
-    std::vector<std::unique_ptr<Object>>& getOwnedObjectsMutable() { return ownedObjects; }
+    std::vector<std::shared_ptr<Object>>& getOwnedObjectsMutable() { return ownedObjects; }
 
     // Remove all objects spawned dynamically (keep baseline 0 and 1)
     void clearDynamicObjects();
@@ -62,7 +62,7 @@ private:
     void buildProperties() override {}
 
     glm::vec3* cameraPos = nullptr;
-    std::vector<std::unique_ptr<Object>> ownedObjects;
+    std::vector<std::shared_ptr<Object>> ownedObjects;
 };
 
 struct InteractionEvent {

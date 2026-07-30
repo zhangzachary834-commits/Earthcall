@@ -6,8 +6,55 @@
 #include <algorithm>
 #include <sstream>
 #include <iomanip>
+#include "Util/CloudStorage.hpp"
+
+#include <zlib.h>
+#include <thread>
+#include <atomic>
 
 namespace SaveSystem {
+
+// Helper to compress a byte vector using zlib
+std::vector<uint8_t> compressData(const std::vector<uint8_t>& data) {
+    uLongf compressedLen = compressBound(data.size());
+    std::vector<uint8_t> compressed(compressedLen);
+    
+    if (compress(compressed.data(), &compressedLen, data.data(), data.size()) != Z_OK) {
+        std::cerr << "[SaveSystem] zlib compression failed!\n";
+        return data; // Fallback to uncompressed (should not happen)
+    }
+    
+    compressed.resize(compressedLen);
+    
+    // We prepend the original uncompressed size (8 bytes) so we know how much to allocate for decompression
+    std::vector<uint8_t> result(sizeof(size_t) + compressed.size());
+    size_t originalSize = data.size();
+    std::memcpy(result.data(), &originalSize, sizeof(size_t));
+    std::memcpy(result.data() + sizeof(size_t), compressed.data(), compressed.size());
+    
+    return result;
+}
+
+// Helper to decompress a byte vector using zlib
+std::vector<uint8_t> decompressData(const std::vector<uint8_t>& data) {
+    if (data.size() <= sizeof(size_t)) return data; // Invalid or uncompressed
+    
+    size_t originalSize;
+    std::memcpy(&originalSize, data.data(), sizeof(size_t));
+    
+    // Sanity check for uncompressed saves (if they don't have the size prefix, decompression will just fail and we fallback)
+    // A MessagePack payload usually starts with 0x8. If originalSize happens to match that, it might try to decompress.
+    // To be perfectly safe, we'll try to decompress, and if it fails, we assume it's an uncompressed legacy .ecsave.
+    std::vector<uint8_t> uncompressed(originalSize);
+    uLongf destLen = originalSize;
+    
+    int res = uncompress(uncompressed.data(), &destLen, data.data() + sizeof(size_t), data.size() - sizeof(size_t));
+    if (res != Z_OK) {
+        // Fallback: This might be an uncompressed .ecsave from Phase 3.
+        return data;
+    }
+    return uncompressed;
+}
 
 std::string getSaveTypeFolderName(SaveType type) {
     switch (type) {
@@ -129,28 +176,7 @@ std::vector<std::string> listFiles(SaveType type) {
     return valid;
 }
 
-std::string writeJson(const nlohmann::json& j, const std::string& customLabel, SaveType type) {
-    std::string filename = makeFilename(customLabel, type, ".json");
-    if (filename.empty()) return "";
-    
-    std::ofstream out(filename);
-    if (!out.is_open()) {
-        std::cerr << "[SaveSystem] Failed to open file for writing: " << filename << "\n";
-        return "";
-    }
-    
-    out << j.dump(2);
-    out.close();
-    
-    addToLog(filename, type);
-    
-    // Parallel write for dry-run verification of the Frontier substrate
-    writeBinary(j, customLabel, type);
-    
-    return filename;
-}
-
-std::string writeBinary(const nlohmann::json& j, const std::string& customLabel, SaveType type) {
+std::string writeSaveData(const nlohmann::json& j, const std::string& customLabel, SaveType type) {
     std::string filename = makeFilename(customLabel, type, ".ecsave");
     if (filename.empty()) return "";
     
@@ -161,16 +187,76 @@ std::string writeBinary(const nlohmann::json& j, const std::string& customLabel,
     }
     
     std::vector<uint8_t> v = nlohmann::json::to_msgpack(j);
-    out.write(reinterpret_cast<const char*>(v.data()), v.size());
+    std::vector<uint8_t> compressed = compressData(v);
+    out.write(reinterpret_cast<const char*>(compressed.data()), compressed.size());
     out.close();
     
-    // Also log the binary file, but don't duplicate it in the normal log if not necessary,
-    // actually, let's keep it clean and just write it to disk. 
-    // We won't add to log so it doesn't mess up listFiles which expects .json currently.
-    // addToLog(filename, type); 
+    // Upload Binary to cloud
+    Util::CloudStorage::uploadSaveAsync(filename, v, type, [filename](bool success) {
+        if (success) {
+            std::cout << "[SaveSystem] Successfully synced binary " << filename << " to cloud.\n";
+            // Here we would check keepLocal and potentially delete the local file
+        } else {
+            std::cerr << "[SaveSystem] Failed to sync binary " << filename << " to cloud.\n";
+        }
+    });
     
     return filename;
 }
+
+std::string writeSaveData(const std::vector<uint8_t>& data, const std::string& customLabel, const std::string& ext, SaveType type) {
+    std::string filename = makeFilename(customLabel, type, ext);
+    std::ofstream out(filename, std::ios::binary);
+    if (!out) {
+        std::cerr << "Failed to open " << filename << " for saving binary data.\n";
+        return filename;
+    }
+    
+    std::vector<uint8_t> compressed = compressData(data);
+    out.write(reinterpret_cast<const char*>(compressed.data()), compressed.size());
+    out.close();
+    
+    addToLog(filename, type);
+    
+    // Upload Binary to cloud
+    Util::CloudStorage::uploadSaveAsync(filename, data, type, [filename](bool success) {
+        if (success) {
+            std::cout << "[SaveSystem] Successfully synced binary " << filename << " to cloud.\n";
+            // Check keepLocal logic here eventually
+        } else {
+            std::cerr << "[SaveSystem] Failed to sync binary " << filename << " to cloud.\n";
+        }
+    });
+    
+    return filename;
+}
+
+std::atomic<bool> g_isSaving{false};
+
+bool isSaving() {
+    return g_isSaving.load();
+}
+
+void writeSaveDataAsync(const nlohmann::json& j, const std::string& customLabel, SaveType type) {
+    g_isSaving.store(true);
+    
+    // We deep copy the JSON object to pass it safely to the detached thread
+    std::thread([j_copy = j, customLabel, type]() {
+        writeSaveData(j_copy, customLabel, type);
+        g_isSaving.store(false);
+    }).detach();
+}
+
+void writeSaveDataAsync(const std::vector<uint8_t>& data, const std::string& customLabel, const std::string& ext, SaveType type) {
+    g_isSaving.store(true);
+    
+    // Deep copy the vector
+    std::thread([data_copy = data, customLabel, ext, type]() {
+        writeSaveData(data_copy, customLabel, ext, type);
+        g_isSaving.store(false);
+    }).detach();
+}
+
 
 nlohmann::json readSaveData(const std::string& filepath) {
     std::ifstream in(filepath, std::ios::binary);
@@ -182,7 +268,8 @@ nlohmann::json readSaveData(const std::string& filepath) {
     // Check magic bytes or extension to determine if it's msgpack
     if (filepath.length() > 7 && filepath.substr(filepath.length() - 7) == ".ecsave") {
         std::vector<uint8_t> bytes((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
-        return nlohmann::json::from_msgpack(bytes);
+        std::vector<uint8_t> decompressed = decompressData(bytes);
+        return nlohmann::json::from_msgpack(decompressed);
     } else {
         // Fallback to plain JSON
         nlohmann::json j;
@@ -299,6 +386,36 @@ std::vector<SaveMetadata> getSaveMetadata(SaveType type) {
               [](const auto& a, const auto& b) { return a.creationTime > b.creationTime; });
     
     return metadata;
+}
+
+nlohmann::json mergeSaveFiles(const std::string& file1, const std::string& file2) {
+    nlohmann::json j1 = readSaveData(file1);
+    nlohmann::json j2 = readSaveData(file2);
+    
+    if (j1.is_null() && !j2.is_null()) return j2;
+    if (j2.is_null() && !j1.is_null()) return j1;
+    if (j1.is_null() && j2.is_null()) return nlohmann::json::object();
+    
+    // If both are objects, we can merge them
+    if (j1.is_object() && j2.is_object()) {
+        j1.update(j2);
+    } else {
+        // Fallback: just return j2 if they aren't objects that can be merged
+        return j2;
+    }
+    
+    return j1;
+}
+
+std::string mergeAndSaveFiles(const std::string& file1, const std::string& file2, const std::string& outputLabel, SaveType type) {
+    nlohmann::json merged = mergeSaveFiles(file1, file2);
+    if (merged.is_null() || merged.empty()) {
+        std::cerr << "[SaveSystem] Merge resulted in empty/null data, aborting save.\n";
+        return "";
+    }
+    
+    std::string label = outputLabel.empty() ? "merged_" + timestamp() : outputLabel;
+    return writeSaveData(merged, label, type);
 }
 
 } // namespace SaveSystem 

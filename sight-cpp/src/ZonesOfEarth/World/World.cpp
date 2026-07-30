@@ -130,12 +130,12 @@ void World::render() const{}
 // Minimal change: render highlights for all objects if flagged
 // Note: For now, World::render is empty; we ensure callers render objects then we overlay outlines here if needed.
 
-void World::addObject(std::unique_ptr<Object> obj){ _objects.push_back(std::move(obj)); }
+void World::addObject(std::shared_ptr<Object> obj){ _objects.push_back(std::move(obj)); }
 
 bool World::removeObject(Object* obj) {
     if (!obj) return false;
     auto it = std::find_if(_objects.begin(), _objects.end(),
-                           [obj](const std::unique_ptr<Object>& p) { return p.get() == obj; });
+                           [obj](const std::shared_ptr<Object>& p) { return p.get() == obj; });
     if (it == _objects.end()) return false;   // not ours: free nothing
 
     // Announce the unmaking while the being still exists, so a law that

@@ -43,6 +43,14 @@ void Game::setAdvanced2DBrush(bool value) {
     _brush.useAdvanced2D = value;
 }
 
+bool Game::getUseLegacy2DTools() const {
+    return _useLegacy2DTools;
+}
+
+void Game::setUseLegacy2DTools(bool value) {
+    _useLegacy2DTools = value;
+}
+
 bool Game::getMouseLeftPressedLast() const {
     return _mouseLeftPressedLast;
 }

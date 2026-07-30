@@ -556,7 +556,7 @@ std::string SecurityManager::sanitizeJavaScript(const std::string& script) {
 void SecurityManager::saveSecurityData() {
     try {
         nlohmann::json j = serialize();
-        std::string filename = SaveSystem::writeJson(j, "security_data", SaveSystem::SaveType::INTEGRATION);
+        std::string filename = SaveSystem::writeSaveData(j, "security_data", SaveSystem::SaveType::INTEGRATION);
         std::cout << "🔒 Security data saved to: " << filename << std::endl;
     } catch (const std::exception& e) {
         std::cerr << "❌ Failed to save security data: " << e.what() << std::endl;

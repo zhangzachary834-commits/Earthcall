@@ -277,7 +277,7 @@ build/tests/zone_being_test.o: tests/zone_being_test.cpp \
   src/ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp \
   src/Singularity/OntoMath/CurveModel.hpp src/ZonesOfEarth/Zone/Zone.hpp \
   src/ZonesOfEarth/Zone/../World/World.hpp src/Rendering/BrushSystem.hpp \
-  src/Rendering/DesignSystem.hpp src/OurVerse/Tool.hpp \
+  src/Legacy/DesignSystem.hpp src/OurVerse/Tool.hpp \
   src/Person/Body/BodyPart/BodyPart.hpp
 
 src/ZonesOfEarth/AuthorsOfLaw/Law.hpp:
@@ -854,7 +854,7 @@ src/ZonesOfEarth/Zone/../World/World.hpp:
 
 src/Rendering/BrushSystem.hpp:
 
-src/Rendering/DesignSystem.hpp:
+src/Legacy/DesignSystem.hpp:
 
 src/OurVerse/Tool.hpp:
 

@@ -271,7 +271,7 @@ build/src/Singularity/Core/GameToolbar.o: \
   src/Form/Object/Geometry/ComplexShape.hpp \
   src/Form/Object/Geometry/Sdf.hpp src/Form/Object/Geometry/Patch.hpp \
   src/Form/Object/Automation/Automation.hpp \
-  src/Rendering/BrushSystem.hpp src/Rendering/DesignSystem.hpp \
+  src/Rendering/BrushSystem.hpp src/Legacy/DesignSystem.hpp \
   src/OurVerse/Tool.hpp src/Person/Body/BodyPart/BodyPart.hpp \
   src/ZonesOfEarth/Ourverse/Ourverse.hpp \
   src/ZonesOfEarth/Ourverse/../Zone/Zone.hpp \
@@ -307,6 +307,7 @@ build/src/Singularity/Core/GameToolbar.o: \
   src/Singularity/Core/SdfBuild.hpp \
   src/Rendering/RelationManagerWindow.hpp \
   src/Rendering/LawGraphWindow.hpp src/Rendering/CreationWindow.hpp \
+  src/Form/Object/Formation/Menu/stb_easy_font.h \
   src/ZonesOfEarth/Physics/Physics.hpp
 
 src/Singularity/Core/Game.hpp:
@@ -871,7 +872,7 @@ src/Form/Object/Automation/Automation.hpp:
 
 src/Rendering/BrushSystem.hpp:
 
-src/Rendering/DesignSystem.hpp:
+src/Legacy/DesignSystem.hpp:
 
 src/OurVerse/Tool.hpp:
 
@@ -958,5 +959,7 @@ src/Rendering/RelationManagerWindow.hpp:
 src/Rendering/LawGraphWindow.hpp:
 
 src/Rendering/CreationWindow.hpp:
+
+src/Form/Object/Formation/Menu/stb_easy_font.h:
 
 src/ZonesOfEarth/Physics/Physics.hpp:

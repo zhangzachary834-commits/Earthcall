@@ -269,7 +269,7 @@ build/src/globals.o: src/globals.cpp src/ZonesOfEarth/ZoneManager.hpp \
   src/Form/Object/Geometry/ComplexShape.hpp \
   src/Form/Object/Geometry/Sdf.hpp src/Form/Object/Geometry/Patch.hpp \
   src/Form/Object/Automation/Automation.hpp \
-  src/Rendering/BrushSystem.hpp src/Rendering/DesignSystem.hpp \
+  src/Rendering/BrushSystem.hpp src/Legacy/DesignSystem.hpp \
   src/OurVerse/Tool.hpp src/Person/Body/BodyPart/BodyPart.hpp \
   src/Form/Material/MaterialManager.hpp src/Form/Material/Material.hpp
 
@@ -831,7 +831,7 @@ src/Form/Object/Automation/Automation.hpp:
 
 src/Rendering/BrushSystem.hpp:
 
-src/Rendering/DesignSystem.hpp:
+src/Legacy/DesignSystem.hpp:
 
 src/OurVerse/Tool.hpp:
 

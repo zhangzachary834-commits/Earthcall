@@ -13,7 +13,9 @@
 #include "Form/Material/MaterialManager.hpp"
 #include "Util/SaveSystem.hpp"
 #include "Util/Serialization.hpp"
+#include "Util/BinaryPack.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/LawAuditLogger.hpp"
+#include "Util/Schema/Earthcall_generated.h"
 
 extern MaterialManager materials; // global Material beings (globals.cpp)
 
@@ -62,12 +64,13 @@ nlohmann::json Game::buildSaveJson() const {
         json zj; zj["name"] = z.name();
         zj["r"] = z.r; zj["g"] = z.g; zj["b"] = z.b;
         zj["owner"] = z.owner();   // ownership is covenant: it persists
-        json strokesJ = json::array();
+        BinaryPack::Writer bw;
+        bw.write(static_cast<uint32_t>(z.strokes.size()));
         for (const auto& s : z.strokes) {
-            json sj; sj["color"] = {s.r, s.g, s.b}; sj["points"] = s.points;
-            strokesJ.push_back(sj);
+            bw.write(s.r); bw.write(s.g); bw.write(s.b); bw.write(s.lineWidth);
+            bw.writeArray(s.points);
         }
-        zj["strokes"] = strokesJ;
+        zj["strokesBinary"] = bw.toBinaryJson();
         // Serialize the 3-D world owned by this zone
         zj["world"] = z.world();
         zj["formationRelations"] = z.formation().relations().toJson();
@@ -143,6 +146,89 @@ nlohmann::json Game::buildSaveJson() const {
 }
 
 // ------------------------------------------------------------------
+// buildSaveChunkFlatBuffer – Serialize dirty objects to FlatBuffer
+// ------------------------------------------------------------------
+std::vector<uint8_t> Game::buildSaveChunkFlatBuffer() {
+    flatbuffers::FlatBufferBuilder builder(1024);
+    
+    std::vector<flatbuffers::Offset<Earthcall::Schema::Entity>> entity_offsets;
+    auto& zoneWorld = mgr.active().world();
+    const auto& objs = zoneWorld.getOwnedObjects();
+    
+    for (size_t i = 2; i < objs.size(); ++i) {
+        const auto& o = objs[i];
+        if (!o->getIsDirty()) continue;
+        
+        // Mark as clean since we are saving it
+        o->clearDirty();
+        
+        // 1. Strings
+        auto id_str = builder.CreateString(o->getIdentifier());
+        auto name_str = builder.CreateString(o->getObjectType());
+        
+        // 2. Transform matrix (16 floats)
+        glm::mat4 t = o->getTransform();
+        std::vector<float> tf_data(16);
+        const float* t_ptr = (const float*)glm::value_ptr(t);
+        for(int m=0; m<16; m++) tf_data[m] = t_ptr[m];
+        auto tf_vec = builder.CreateVector(tf_data);
+        
+        // 3. Polyhedron Data
+        const auto& poly = o->getPolyhedronData();
+        std::vector<Earthcall::Schema::Vec3> fbs_verts;
+        for (const auto& v : poly.vertices) {
+            fbs_verts.push_back(Earthcall::Schema::Vec3(v.x, v.y, v.z));
+        }
+        auto verts_vec = builder.CreateVectorOfStructs(fbs_verts);
+        
+        std::vector<int> face_data;
+        std::vector<int> face_offsets;
+        for (const auto& face : poly.faces) {
+            face_offsets.push_back(face_data.size());
+            for (int v_idx : face) {
+                face_data.push_back(v_idx);
+            }
+        }
+        face_offsets.push_back(face_data.size()); // end offset
+        
+        auto face_data_vec = builder.CreateVector(face_data);
+        auto face_offsets_vec = builder.CreateVector(face_offsets);
+        
+        auto poly_data = Earthcall::Schema::CreatePolyhedronData(
+            builder, verts_vec, face_data_vec, face_offsets_vec);
+            
+        // 4. Entity
+        auto entity = Earthcall::Schema::CreateEntity(
+            builder,
+            id_str,
+            name_str,
+            tf_vec,
+            poly_data
+            // laws left empty for now to test serialization
+        );
+        
+        entity_offsets.push_back(entity);
+    }
+    
+    auto chunk_id = builder.CreateString("zone_" + std::to_string(mgr.currentIndex()) + "_delta_" + SaveSystem::timestamp());
+    auto entities_vec = builder.CreateVector(entity_offsets);
+    auto chunk = Earthcall::Schema::CreateSaveChunk(builder, chunk_id, entities_vec);
+    
+    builder.Finish(chunk);
+    
+    uint8_t* buf = builder.GetBufferPointer();
+    int size = builder.GetSize();
+    return std::vector<uint8_t>(buf, buf + size);
+}
+
+// ------------------------------------------------------------------
+// loadSaveChunkFlatBuffer
+// ------------------------------------------------------------------
+void Game::loadSaveChunkFlatBuffer(const std::vector<uint8_t>& buffer) {
+    // TODO: implement loading
+}
+
+// ------------------------------------------------------------------
 // saveState – write JSON to an explicit filename
 // ------------------------------------------------------------------
 void Game::saveState(const std::string& filename) {
@@ -180,7 +266,14 @@ void Game::saveStateWithLog(const std::string& customName) {
             actualName = SaveSystem::timestamp() + "_QuickSave";
         }
     }
-    SaveSystem::writeJson(j, actualName, SaveSystem::SaveType::GAME);
+    SaveSystem::writeSaveDataAsync(j, actualName, SaveSystem::SaveType::GAME);
+    
+    // Phase 4: Save dirty delta chunk as FlatBuffers
+    std::vector<uint8_t> deltaChunk = buildSaveChunkFlatBuffer();
+    if (!deltaChunk.empty()) {
+        SaveSystem::writeSaveDataAsync(deltaChunk, actualName + "_delta", ".ecsave", SaveSystem::SaveType::GAME);
+    }
+    
     ECA::LawAuditLogger::instance().setActiveWorld(actualName);
     logIo("SAVE (log) '" + actualName + "': " +
           std::to_string(_lawManager.getAll().size()) + " law(s), " +
@@ -253,9 +346,22 @@ void Game::loadState(const std::string& filename) {
                 z.g = zj.value("g", 0.05f);
                 z.b = zj.value("b", 0.1f);
                 z.setOwner(zj.value("owner", std::string{}));
-                if (zj.contains("strokes")) {
+                if (zj.contains("strokesBinary")) {
+                    BinaryPack::Reader br(zj["strokesBinary"].get_binary());
+                    uint32_t numStrokes = br.read<uint32_t>();
+                    for (uint32_t i = 0; i < numStrokes; ++i) {
+                        Zone::Stroke s;
+                        s.r = br.read<float>();
+                        s.g = br.read<float>();
+                        s.b = br.read<float>();
+                        s.lineWidth = br.read<float>();
+                        br.readArray(s.points);
+                        z.strokes.push_back(std::move(s));
+                    }
+                } else if (zj.contains("strokes")) {
                     for (const auto& sj : zj["strokes"]) {
                         Zone::Stroke s;
+                        s.lineWidth = 1.0f; // legacy default
                         auto col = sj.value("color", std::vector<float>{1, 1, 1});
                         if (col.size() >= 3) { s.r = col[0]; s.g = col[1]; s.b = col[2]; }
                         s.points = sj.value("points", std::vector<float>{});
@@ -589,6 +695,8 @@ void Game::drawSaveManager() {
                         std::string displayText = meta.customLabel.empty() ?
                             meta.filename : meta.customLabel;
                         displayText += " (" + std::string(timeStr) + ", " + sizeStr + ")";
+                        if (meta.isCloudOnly) displayText += " [CLOUD]";
+                        else displayText += " [LOCAL]";
 
                         if (ImGui::Selectable(displayText.c_str())) {
                             loadState(meta.fullPath);
@@ -603,6 +711,10 @@ void Game::drawSaveManager() {
                 ImGui::Separator();
                 if (ImGui::Button("Clean Old Saves")) {
                     SaveSystem::cleanupOldSaves(SaveSystem::SaveType::GAME, 10);
+                }
+                ImGui::SameLine();
+                if (ImGui::Button("Sync & Clear Local")) {
+                    std::cout << "[UI] Sync & Clear Local clicked. Cloud foundation active.\n";
                 }
 
                 ImGui::EndTabItem();

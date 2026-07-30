@@ -12,6 +12,32 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <utility>
 #include <iostream>
+#include <tuple>
+#include <map>
+
+namespace {
+    void emitResult(Singular& target, const std::string& actionName, PropertyPath::PathResult res, const PropertyPath& path) {
+        if (res == PropertyPath::PathResult::Ok) {
+            Core::EventBus::instance().publish(ActionNode::ExecutedEvent{actionName, &target, std::time(nullptr)});
+        } else {
+            static std::map<std::tuple<Singular*, std::string, PropertyPath::PathResult, std::string>, std::time_t> lastFailureTime;
+            auto key = std::make_tuple(&target, actionName, res, path.toString());
+            std::time_t now = std::time(nullptr);
+            if (now - lastFailureTime[key] > 2) {
+                lastFailureTime[key] = now;
+                std::string reasonStr = "Unknown";
+                if (res == PropertyPath::PathResult::NoSuchProperty) reasonStr = "No Such Property";
+                else if (res == PropertyPath::PathResult::TypeMismatch) reasonStr = "Type Mismatch";
+                else if (res == PropertyPath::PathResult::ReadOnly) reasonStr = "Read Only";
+                else if (res == PropertyPath::PathResult::BadComponent) reasonStr = "Bad Component";
+                
+                std::cerr << "[Law Error] " << actionName << " failed on " << target.getIdentifier() 
+                          << " for path " << path.toString() << " (" << reasonStr << ")" << std::endl;
+                Core::EventBus::instance().publish(ActionNode::FailedEvent{actionName, &target, res, now});
+            }
+        }
+    }
+}
 
 const char* ActionNode::kindName(Kind k) {
     switch (k) {
@@ -200,10 +226,8 @@ ECA::ActionExecutor ActionNode::compile() const {
             const PropertyPath p = path;
             const PropertyValue v = operand;
             return [p, v](const ECA::Event&, Singular& target) { 
-                if (lawSetValue(target, p, v)) {
-                    std::cout << "[Action Fired] Set evaluated successfully on " << target.getIdentifier() << std::endl;
-                    Core::EventBus::instance().publish(ActionNode::ExecutedEvent{"Set", &target, std::time(nullptr)});
-                }
+                auto res = lawSetValue(target, p, v);
+                emitResult(target, "Set", res, p);
             };
         }
         case Kind::Add:
@@ -244,10 +268,8 @@ ECA::ActionExecutor ActionNode::compile() const {
                     return;
                 }
                 
-                if (lawSetValue(target, p, result)) {   // coercion matches the slot
-                    std::cout << "[Action Fired] " << kindName(k) << " evaluated successfully on " << target.getIdentifier() << std::endl;
-                    Core::EventBus::instance().publish(ActionNode::ExecutedEvent{kindName(k), &target, std::time(nullptr)});
-                }
+                auto res = lawSetValue(target, p, result);
+                emitResult(target, kindName(k), res, p);
             };
         }
         case Kind::Drive: {
@@ -267,10 +289,8 @@ ECA::ActionExecutor ActionNode::compile() const {
                     PropertyValue v;
                     if (!lawGetValue(target, in, v) || !propertyValueToNumber(v, x)) return;
                 }
-                if (lawSetValue(target, p, PropertyValue(c.evaluate(x)))) {
-                    std::cout << "[Action Fired] Drive evaluated successfully on " << target.getIdentifier() << std::endl;
-                    Core::EventBus::instance().publish(ActionNode::ExecutedEvent{"Drive", &target, std::time(nullptr)});
-                }
+                auto res = lawSetValue(target, p, PropertyValue(c.evaluate(x)));
+                emitResult(target, "Drive", res, p);
             };
         }
         case Kind::Sequence:
@@ -326,8 +346,10 @@ ECA::ActionExecutor ActionNode::compile() const {
                                 placementSet = true;
                             }
                         }
-                    }
-                    if (!placementSet) {
+                        // Claude Code feedback: If an authored placementPath fails to read or has wrong type,
+                        // we MUST strictly abort the spawn instead of guessing a fallback, otherwise cubes pile up at origin.
+                        if (!placementSet) return;
+                    } else {
                         placement = glm::translate(glm::mat4(1.0f), subject->getPosition());
                     }
                 }
@@ -422,7 +444,8 @@ ECA::ActionExecutor ActionNode::compile() const {
                 for (const auto& [k, v] : *vars) pVars[k] = PropertyValue(v);
                 const auto valProp = f.evaluate(pVars, &subject);
                 if (!valProp) return;
-                lawSetValue(subject, target, *valProp);
+                auto res = lawSetValue(subject, target, *valProp);
+                emitResult(subject, "Map", res, target);
             };
         }
         case Kind::Flow: {
@@ -455,7 +478,8 @@ ECA::ActionExecutor ActionNode::compile() const {
                     return;
                 }
                 
-                lawSetValue(subject, target, next);
+                auto res = lawSetValue(subject, target, next);
+                emitResult(subject, "Flow", res, target);
             };
         }
 
@@ -487,13 +511,17 @@ ECA::ActionExecutor ActionNode::compile() const {
                 glm::vec3 position(0.0f);
                 if (!placementPath.empty()) {
                     PropertyValue pv;
+                    bool placementSet = false;
                     if (lawGetValue(target, placementPath, pv)) {
                         if (std::holds_alternative<glm::vec3>(pv)) {
                             position = std::get<glm::vec3>(pv);
+                            placementSet = true;
                         } else if (std::holds_alternative<glm::mat4>(pv)) {
                             position = glm::vec3(std::get<glm::mat4>(pv)[3]);
+                            placementSet = true;
                         }
                     }
+                    if (!placementSet) return;
                 } else if (auto* asObject = dynamic_cast<Object*>(&target)) {
                     position = asObject->getPosition();
                 }
