@@ -1,3 +1,30 @@
+# ---------------------------------------------------------------------------
+# Build output. All of this was TRACKED — 1,296 files, 592 MB, including a
+# 70 MB .dSYM DWARF blob and a 14.6 MB precompiled header. Object files are
+# machine- and flag-specific: committing them means every rebuild dirties the
+# tree, every pull can hand you objects compiled against different headers,
+# and `git status` is too noisy to read. None of it belongs in history.
+#
+# Untracking does NOT delete anything on disk, and does not change the build:
+# the Makefile regenerates all of it.
+# ---------------------------------------------------------------------------
+build/
+*.o
+*.d
+*.gch
+*.dSYM/
+
+# Linked binaries: the app, the tools, and every test executable. `make test`
+# deletes and relinks these on every run by design (a leftover binary from a
+# failed build is a stale binary waiting to be trusted), so tracking them
+# guarantees a permanently dirty tree.
+/earthcall
+/migrate_saves
+/read_laws
+/*_test
+# Binaries that got built next to their sources rather than at the root.
+src/earthcall
+tests/*_test
 
 # Instrumented objects from `make asan-test`. Deliberately a separate tree from
 # build/ so ASan objects can never be linked into an ordinary binary — and not

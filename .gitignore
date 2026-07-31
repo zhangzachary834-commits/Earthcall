@@ -1,0 +1,9 @@
+# Python virtualenv. Machine-specific and never portable between checkouts —
+# it was carrying 827 tracked files.
+venv/
+.venv/
+__pycache__/
+*.pyc
+
+# Agent worktrees (git already keeps their metadata; the trees are disposable).
+.claude/worktrees/
