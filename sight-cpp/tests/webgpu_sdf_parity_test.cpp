@@ -91,11 +91,11 @@ int main() {
     const glm::mat4 viewM = glm::lookAt(eye, glm::vec3(0.0f), glm::vec3(0, 1, 0));
     const glm::mat4 invVP = glm::inverse(proj * viewM);
 
-    auto gpuMask = [&](const geom::SdfNode& field) {
+    auto gpuMask = [&](const geom::SdfNode& field, const glm::mat4& model) {
         RenderMaterial mat;
         mat.baseColor = glm::vec3(1.0f);
         r.setCamera(viewM, proj, eye);
-        r.setModel(glm::mat4(1.0f));
+        r.setModel(model);
         r.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
         r.drawImplicit(field, kExtent, mat);
         r.endFrame();
@@ -131,7 +131,11 @@ int main() {
         return mask;
     };
 
-    auto cpuMask = [&](const geom::SdfNode& field) {
+    auto cpuMask = [&](const geom::SdfNode& field, const glm::mat4& model) {
+        // The GPU marches in FIELD space, so the reference must too: an affine
+        // transform maps the world ray to a field-space ray (lines stay lines),
+        // and the SDF is only meaningful there.
+        const glm::mat4 inv = glm::inverse(model);
         std::vector<uint8_t> mask(W * H, 0);
         for (uint32_t y = 0; y < H; ++y) {
             for (uint32_t x = 0; x < W; ++x) {
@@ -140,8 +144,10 @@ int main() {
                 const float ny = 1.0f - (float(y) + 0.5f) / H * 2.0f;
                 glm::vec4 nearP = invVP * glm::vec4(nx, ny, 0.0f, 1.0f);
                 glm::vec4 farP  = invVP * glm::vec4(nx, ny, 1.0f, 1.0f);
-                glm::vec3 o = glm::vec3(nearP) / nearP.w;
-                glm::vec3 d = glm::normalize(glm::vec3(farP) / farP.w - o);
+                glm::vec3 ow = glm::vec3(nearP) / nearP.w;
+                glm::vec3 fw = glm::vec3(farP) / farP.w;
+                glm::vec3 o = glm::vec3(inv * glm::vec4(ow, 1.0f));
+                glm::vec3 d = glm::normalize(glm::vec3(inv * glm::vec4(fw, 1.0f)) - o);
 
                 float tHit = 0.0f; glm::vec3 nrm;
                 bool hit = geom::raycastSdf(field, o, d, tHit, nrm);
@@ -158,7 +164,11 @@ int main() {
         return mask;
     };
 
-    struct Case { const char* name; std::shared_ptr<geom::SdfNode> node; };
+    struct Case {
+        const char* name;
+        std::shared_ptr<geom::SdfNode> node;
+        glm::mat4 model{1.0f};
+    };
     std::vector<Case> cases;
 
     // Every primitive.
@@ -208,10 +218,27 @@ int main() {
                binary(geom::SdfOp::Union, a, b),
                leaf(geom::SdfPrim::Sphere, glm::vec3(0.35f), 0.0f, glm::vec3(0, 0.4f, 0.4f))) });
 
+    // Under a TRANSFORM. Every case above uses an identity model, which never
+    // exercises the marcher's invModel path — and that path is where a field would
+    // silently render rotated, offset, or the wrong size. Non-uniform scale is
+    // included deliberately: marching in field space is correct for any invertible
+    // affine transform, and this proves it rather than assuming it.
+    {
+        glm::mat4 m = glm::translate(glm::mat4(1.0f), glm::vec3(0.2f, -0.15f, 0.1f));
+        m = glm::rotate(m, glm::radians(35.0f), glm::normalize(glm::vec3(0.3f, 1.0f, 0.2f)));
+        m = glm::scale(m, glm::vec3(1.3f, 0.7f, 1.0f)); // deliberately non-uniform
+        cases.push_back({ "Box@xform",
+                          leaf(geom::SdfPrim::Box, glm::vec3(0.5f, 0.55f, 0.4f)), m });
+        cases.push_back({ "Torus@xform",
+                          leaf(geom::SdfPrim::Torus, glm::vec3(0.55f, 0.2f, 0.0f)), m });
+        cases.push_back({ "SmoothUnion@xform",
+                          binary(geom::SdfOp::SmoothUnion, a, b, 0.3f), m });
+    }
+
     int failures = 0;
     for (const Case& c : cases) {
-        const std::vector<uint8_t> g = gpuMask(*c.node);
-        const std::vector<uint8_t> p = cpuMask(*c.node);
+        const std::vector<uint8_t> g = gpuMask(*c.node, c.model);
+        const std::vector<uint8_t> p = cpuMask(*c.node, c.model);
 
         size_t gpuOn = 0, cpuOn = 0, diff = 0;
         for (size_t i = 0; i < g.size(); ++i) {

@@ -256,6 +256,22 @@ needsGradientStep` reports when a tree contains an Expr leaf so ordinary distanc
 fields skip the extra 6 evaluations per step. `raycastSdf` does the same, so a
 picked point and a rendered point agree.
 
+Coverage now includes fields under a non-identity model (translate + rotate +
+NON-UNIFORM scale). Those exercise the marcher's `invModel` path, which the
+identity-model cases never touched and which is exactly where a field would
+silently render rotated, offset or the wrong size. They also confirm that marching
+in field space is correct for any invertible affine transform — a field-space ray
+is still a ray, and the SDF is only meaningful there — so no special handling of
+non-uniform scale is needed.
+
+**Two consequences of the raymarch path worth knowing:**
+- A field's selection highlight still comes from `drawOverlay(_fieldMesh, ...)`,
+  i.e. the TESSELLATED approximation, while the surface itself is exact. The glow
+  can therefore sit slightly off the true silhouette.
+- `_fieldMesh` is still built by `rebuildGeometryCaches()` even though WebGPU no
+  longer draws it. Wasted tessellation, not a bug; worth skipping once the OpenGL
+  backend is retired.
+
 Note `raycastSdf` currently has NO callers outside Sdf.cpp — the bug was latent,
 and implicit shapes would have failed to pick the moment something used it.
 
