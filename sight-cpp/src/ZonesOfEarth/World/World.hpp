@@ -10,6 +10,8 @@ class Object; // forward declaration
 // Represents the independent 3-D world that lives inside a Zone.
 // For now this is only a lightweight container that can be expanded later.
 
+//test comment
+
 // Retire this class entirely into legacy—Worlds are just Zones with spatial properties and objects, so we don't need a dedicated World sublcass, move essential functionality to other classes.
 class World : public Singular {
 public:
