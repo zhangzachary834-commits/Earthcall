@@ -228,14 +228,41 @@ glm::vec3 sdfNormal(const SdfNode& n, const glm::vec3& p) {
 // ---------------------------------------------------------------------------
 // Raycast (sphere tracing)
 // ---------------------------------------------------------------------------
+// Does this tree contain an implicit-expression leaf? Sphere tracing assumes the
+// field is a DISTANCE (1-Lipschitz), so a full step can never overshoot. An
+// implicit f(x,y,z)=0 leaf breaks that assumption: it is an iso-surface value that
+// can be arbitrarily larger than the true distance, and a full step then tunnels
+// straight through the surface. Detecting one lets the marcher damp its steps only
+// where it must, instead of halving speed for every ordinary field.
+static bool containsExpr(const SdfNode& n) {
+    if (n.op == SdfOp::Leaf) return n.prim == SdfPrim::Expr;
+    for (const auto& c : n.children) if (c && containsExpr(*c)) return true;
+    return false;
+}
+
 bool raycastSdf(const SdfNode& n, const glm::vec3& o, const glm::vec3& d,
                 float& tHit, glm::vec3& nrm) {
     glm::vec3 dir = glm::normalize(d);
     float t = 0.0f;
     const float maxT = 200.0f;
+    // Matches the WebGPU marcher, so a picked point and a rendered point agree
+    // about where the surface is.
+    const bool gradientStep = containsExpr(n);
     for (int i = 0; i < 256 && t < maxT; ++i) {
         glm::vec3 p = o + dir * t;
         float dist = evalSdf(n, p);
+        if (gradientStep) {
+            // f/|grad f|: a first-order distance estimate for a field that is only
+            // an iso-surface value. Without it the very first step from a typical
+            // camera leaps past the whole shape.
+            const float e = 1e-3f;
+            glm::vec3 g((evalSdf(n, p + glm::vec3(e,0,0)) - evalSdf(n, p - glm::vec3(e,0,0))),
+                        (evalSdf(n, p + glm::vec3(0,e,0)) - evalSdf(n, p - glm::vec3(0,e,0))),
+                        (evalSdf(n, p + glm::vec3(0,0,e)) - evalSdf(n, p - glm::vec3(0,0,e))));
+            g /= (2.0f * e);
+            const float gl = glm::length(g);
+            if (gl > 1e-6f) dist /= gl;
+        }
         if (dist < 1e-4f) {
             tHit = t;
             nrm = sdfNormal(n, p);

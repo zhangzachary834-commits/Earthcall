@@ -76,6 +76,7 @@ struct Emit {
     std::string        body;
     std::vector<float> params;
     int                next = 0; // next `let dN` temporary
+    bool               sawExpr = false; // an implicit leaf appeared -> not a distance
 
     // Record a number and return the WGSL expression that reads it.
     std::string param(float v) {
@@ -165,6 +166,7 @@ std::string emitNode(const geom::SdfNode& n, Emit& e) {
                 // The implicit f(x,y,z)=0 surface. NOTE: this is an iso-surface
                 // value, not a true distance, so sphere tracing must take damped
                 // steps through it — see the marcher's use of kExprDamping.
+                e.sawExpr = true;
                 if (n.rpn.empty()) { e.line("let " + out + " = 1e9;"); break; }
                 e.line("let " + out + " = " + emitRpn(n.rpn, e, lp) + ";");
                 break;
@@ -258,6 +260,14 @@ fn vs(@location(0) pos: vec3<f32>) -> VSOut {
     return o;
 }
 
+fn sdfGrad(p: vec3<f32>) -> vec3<f32> {
+    let e = 1e-3;
+    return vec3<f32>(
+        sdfEval(p + vec3<f32>(e, 0.0, 0.0)) - sdfEval(p - vec3<f32>(e, 0.0, 0.0)),
+        sdfEval(p + vec3<f32>(0.0, e, 0.0)) - sdfEval(p - vec3<f32>(0.0, e, 0.0)),
+        sdfEval(p + vec3<f32>(0.0, 0.0, e)) - sdfEval(p - vec3<f32>(0.0, 0.0, e))) / (2.0 * e);
+}
+
 fn sdfNormal(p: vec3<f32>) -> vec3<f32> {
     // Central differences, same 1e-3 epsilon the CPU sdfNormal uses.
     let e = 1e-3;
@@ -291,11 +301,20 @@ fn fs(in: VSOut) -> FSOut {
     var hit = false;
     for (var i = 0; i < 192; i = i + 1) {
         let p = ro + rd * t;
-        let d = sdfEval(p);
+        let raw = sdfEval(p);
+        // An implicit field is an iso-surface VALUE, not a distance. Dividing by
+        // the gradient magnitude turns it into a conservative distance estimate
+        // (first-order: f/|grad f|), which is what makes sphere tracing legal on
+        // it at all. Ordinary distance fields skip this — it costs 6 extra
+        // evaluations per step.
+        var d = raw;
+        if (damping > 0.5) {
+            let g = sdfGrad(p);
+            let gl = length(g);
+            if (gl > 1e-6) { d = raw / gl; }
+        }
         if (d < eps) { hit = true; break; }
-        // Damped steps: an implicit f(x,y,z)=0 field is an iso-surface value, not
-        // a distance, so a full step can tunnel straight through the surface.
-        t = t + max(d * damping, eps);
+        t = t + max(d, eps);
         if (t > maxDist) { break; }
     }
     if (!hit) { discard; }
@@ -341,6 +360,7 @@ Program compile(const geom::SdfNode& root) {
     prog.wgsl += "    return " + result + ";\n}\n";
     prog.wgsl += kMarcher;
     prog.params = std::move(e.params);
+    prog.needsGradientStep = e.sawExpr;
 
     // A storage array of length zero is invalid, and a field with no parameters at
     // all is possible (a bare degenerate tree). One unused float keeps the binding

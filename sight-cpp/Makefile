@@ -206,6 +206,15 @@ webgpu_object_test: $(WEBGPU_TEST_OBJECTS) $(WEBGPU_BUILD_DIR)/tests/webgpu_obje
 test-webgpu-object: webgpu_object_test
 	./webgpu_object_test
 
+# Guards the hand transcription of Sdf.cpp's formulas into WGSL: renders every
+# primitive and operator on the GPU and compares the silhouette against the CPU
+# raycaster. Run this after touching EITHER Sdf.cpp or SdfWgsl.cpp.
+webgpu_sdf_parity_test: $(WEBGPU_TEST_OBJECTS) $(WEBGPU_BUILD_DIR)/tests/webgpu_sdf_parity_test.o
+	$(CXX) $^ $(WGPU_LIB) $(LDFLAGS) $(WGPU_FRAMEWORKS) -o $@
+
+test-sdf-parity: webgpu_sdf_parity_test
+	./webgpu_sdf_parity_test
+
 # --- WebGPU verification (Milestone 5) --------------------------------------
 # Standalone: brings up a wgpu-native device, clears an offscreen frame, and reads
 # the pixels back. Proves the vendored library renders on this machine. Not part

@@ -28,6 +28,15 @@ namespace sdfwgsl {
 struct Program {
     std::string        wgsl;    // full shader source; identical for same-shaped trees
     std::vector<float> params;  // the numbers this instance needs, in emitted order
+
+    // True when the tree contains an implicit f(x,y,z)=0 leaf. Such a field is an
+    // ISO-SURFACE VALUE, not a distance: it can be arbitrarily larger than the
+    // true distance, so a sphere-tracing step of `f` tunnels straight through the
+    // surface. (For x^2+y^2+z^2-0.3 viewed from z=3, f is 8.7 while the surface is
+    // 2.45 away — even a halved step overshoots the shape entirely.) When set, the
+    // marcher steps by f/|grad f| instead, which is a conservative distance
+    // estimate. It costs a gradient per step, so it is only enabled where needed.
+    bool needsGradientStep = false;
 };
 
 // Compile a field into a raymarching shader plus its parameter block.

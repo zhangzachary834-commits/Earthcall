@@ -763,8 +763,8 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, float extent,
     // boundary still gets fragments. surfaceEps/maxDist mirror the CPU raycaster's
     // 1e-4 hit threshold; damping < 1 keeps implicit (non-distance) fields from
     // tunnelling through their own surface.
-    const float kExprDamping = 0.5f;
-    u.misc = glm::vec4(extent * 1.05f, 1e-4f, extent * 8.0f, kExprDamping);
+    u.misc = glm::vec4(extent * 1.05f, 1e-4f, extent * 8.0f,
+                       prog.needsGradientStep ? 1.0f : 0.0f);
 
     WGPUBufferDescriptor ubd = {};
     ubd.usage = WGPUBufferUsage_Uniform | WGPUBufferUsage_CopyDst;

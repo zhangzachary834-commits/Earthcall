@@ -231,6 +231,34 @@ Verification: `make webgpu-renderer` scene 11 (centre is lit surface, CORNER MIS
 — proving a traced sphere rather than a painted bounding box) and
 `make test-webgpu-object` (a real field `Object` through `drawObject()`).
 
+## SDF parity test — the transcription is now guarded (2026-08-01)
+
+`make test-sdf-parity` (`tests/webgpu_sdf_parity_test.cpp`) renders EVERY primitive
+and EVERY operator through the GPU raymarcher and compares the silhouette against
+`geom::raycastSdf`. 17 shapes, all agreeing with **zero** differing pixels.
+
+This exists because SdfWgsl.cpp's formulas are a hand transcription of Sdf.cpp's
+and nothing else enforces that they stay in step. **Run it after touching either
+file.** It compares silhouettes rather than colours so it tests the distance
+function itself, not shading.
+
+**It immediately found a real pre-existing bug.** Implicit `f(x,y,z)=0` fields
+(`SdfPrim::Expr`, the math-mode shapes) rendered NOTHING — on the GPU *and* in
+`geom::raycastSdf`. Cause: such a field is an iso-surface VALUE, not a distance,
+and can be arbitrarily larger than the true distance, so a sphere-tracing step of
+`f` tunnels past the surface. For `x^2+y^2+z^2-0.3` seen from z=3, `f` is 8.7 while
+the surface is 2.45 away — the first step alone clears the whole shape. Halving the
+step (the original mitigation) is not enough either.
+
+Fixed on BOTH sides by stepping `f/|grad f|`, a first-order distance estimate that
+is conservative and therefore legal for sphere tracing. `sdfwgsl::Program::
+needsGradientStep` reports when a tree contains an Expr leaf so ordinary distance
+fields skip the extra 6 evaluations per step. `raycastSdf` does the same, so a
+picked point and a rendered point agree.
+
+Note `raycastSdf` currently has NO callers outside Sdf.cpp — the bug was latent,
+and implicit shapes would have failed to pick the moment something used it.
+
 ## Known gaps to close in Phase D
 - `WebGpuRenderer` stubs `drawSolid`/`begin2D`/`end2D`/`drawTris2D`/`drawLines2D`/
   `drawImage2D` — they `warnOnce` to stderr instead of drawing.
