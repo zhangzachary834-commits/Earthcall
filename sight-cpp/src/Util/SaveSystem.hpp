@@ -26,8 +26,7 @@ std::string makeFilename(const std::string& customLabel = "", SaveType type = Sa
 // Get a formatted timestamp string
 std::string timestamp();
 
-// Append new entry to appropriate save log
-void addToLog(const std::string& filepath, SaveType type = SaveType::GAME);
+
 
 // Return list of files that still exist for a specific save type; also prunes stale entries from log
 std::vector<std::string> listFiles(SaveType type = SaveType::GAME);
@@ -49,8 +48,7 @@ nlohmann::json readSaveData(const std::string& filepath);
 // Get save type folder name
 std::string getSaveTypeFolderName(SaveType type);
 
-// Get save type log file name
-std::string getSaveTypeLogName(SaveType type);
+
 
 // Create backup of existing save
 std::string createBackup(const std::string& originalFile, SaveType type = SaveType::GAME);

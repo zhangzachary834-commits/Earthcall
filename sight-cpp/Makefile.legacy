@@ -445,16 +445,16 @@ test:
 	@failed=""; passed=0; \
 	for t in $(TESTS); do \
 	  rm -f $$t; \
-	  if ! $(MAKE) --no-print-directory $$t >/tmp/ec-build-$$t.log 2>&1; then \
+	  if ! $(MAKE) --no-print-directory $$t >build/ec-build-$$t.log 2>&1; then \
 	    printf '\033[31mBUILD FAIL\033[0m %s\n' "$$t"; \
-	    grep -E 'error:' /tmp/ec-build-$$t.log | head -5 || true; \
+	    grep -E 'error:' build/ec-build-$$t.log | head -5 || true; \
 	    failed="$$failed $$t(build)"; continue; \
 	  fi; \
-	  if ./$$t >/tmp/ec-run-$$t.log 2>&1; then \
+	  if ./$$t >build/ec-run-$$t.log 2>&1; then \
 	    printf '\033[32mok\033[0m         %s\n' "$$t"; passed=$$((passed+1)); \
 	  else \
 	    printf '\033[31mFAIL\033[0m       %s (exit %s)\n' "$$t" "$$?"; \
-	    tail -8 /tmp/ec-run-$$t.log; \
+	    tail -8 build/ec-run-$$t.log; \
 	    failed="$$failed $$t(run)"; \
 	  fi; \
 	done; \

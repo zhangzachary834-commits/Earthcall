@@ -69,18 +69,7 @@ std::string getSaveTypeFolderName(SaveType type) {
     }
 }
 
-std::string getSaveTypeLogName(SaveType type) {
-    switch (type) {
-        case SaveType::GAME: return "game_save_log.txt";
-        case SaveType::AVATAR: return "avatar_save_log.txt";
-        case SaveType::PERSON: return "person_save_log.txt";
-        case SaveType::DESIGN: return "design_save_log.txt";
-        case SaveType::BACKUP: return "backup_save_log.txt";
-        case SaveType::CUSTOM: return "custom_save_log.txt";
-        case SaveType::INTEGRATION: return "integration_save_log.txt";
-        default: return "game_save_log.txt";
-    }
-}
+
 
 std::string ensureSaveFolder() {
     std::filesystem::path p = "saves";
@@ -125,53 +114,24 @@ std::string makeFilename(const std::string& customLabel, SaveType type, const st
     return folder + "/" + stem + ext;
 }
 
-void addToLog(const std::string& filepath, SaveType type) {
-    std::string logFile = "saves/logs/" + getSaveTypeLogName(type);
-    
-    // Ensure logs directory exists
-    std::filesystem::path logsDir = "saves/logs";
-    std::error_code ec;
-    if (!std::filesystem::exists(logsDir, ec)) {
-        if (!std::filesystem::create_directories(logsDir, ec)) {
-            std::cerr << "[SaveSystem] Failed to create logs folder: " << ec.message() << "\n";
-            return;
-        }
-    }
-    
-    std::ofstream log(logFile, std::ios::app);
-    if (log.is_open()) {
-        log << filepath << "\n";
-        log.close();
-    } else {
-        std::cerr << "[SaveSystem] Failed to open log file: " << logFile << "\n";
-    }
-}
+
 
 std::vector<std::string> listFiles(SaveType type) {
     std::vector<std::string> valid;
-    std::string logFile = "saves/logs/" + getSaveTypeLogName(type);
+    std::string folder = ensureSaveTypeFolder(type);
+    if (folder.empty()) return valid;
     
-    std::ifstream in(logFile);
-    if (!in.is_open()) {
-        // Log file doesn't exist yet, that's okay
-        return valid;
-    }
-    
-    std::string line;
-    while (std::getline(in, line)) {
-        if (line.empty()) continue;
-        if (std::filesystem::exists(line)) {
-            valid.push_back(line);
+    std::error_code ec;
+    if (std::filesystem::exists(folder, ec)) {
+        for (const auto& entry : std::filesystem::directory_iterator(folder, ec)) {
+            if (entry.is_regular_file()) {
+                std::string ext = entry.path().extension().string();
+                if (ext == ".ecsave" || ext == ".json") {
+                    valid.push_back(entry.path().string());
+                }
+            }
         }
     }
-    in.close();
-    
-    // Rewrite log with pruned list if necessary
-    std::ofstream out(logFile, std::ios::trunc);
-    for (const auto& f : valid) {
-        out << f << "\n";
-    }
-    out.close();
     
     return valid;
 }
@@ -215,8 +175,6 @@ std::string writeSaveData(const std::vector<uint8_t>& data, const std::string& c
     std::vector<uint8_t> compressed = compressData(data);
     out.write(reinterpret_cast<const char*>(compressed.data()), compressed.size());
     out.close();
-    
-    addToLog(filename, type);
     
     // Upload Binary to cloud
     Util::CloudStorage::uploadSaveAsync(filename, data, type, [filename](bool success) {
@@ -293,7 +251,6 @@ std::string createBackup(const std::string& originalFile, SaveType type) {
     
     std::error_code ec;
     if (std::filesystem::copy_file(originalFile, backupPath, ec)) {
-        addToLog(backupPath, SaveType::BACKUP);
         return backupPath;
     } else {
         std::cerr << "[SaveSystem] Failed to create backup: " << ec.message() << "\n";
@@ -332,9 +289,6 @@ void cleanupOldSaves(SaveType type, int keepCount) {
             std::cerr << "[SaveSystem] Failed to remove old save: " << fileTimes[i].first << "\n";
         }
     }
-    
-    // Refresh the log file
-    listFiles(type);
 }
 
 std::vector<SaveMetadata> getSaveMetadata(SaveType type) {
