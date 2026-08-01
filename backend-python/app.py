@@ -6,7 +6,7 @@ app = Flask(__name__, static_url_path='/static')
 # Serve HTML page
 @app.route('/')
 def home():
-    return render_template('index.html'
+    return render_template('index.html')
 
 # API Route for JavaScript
 @app.route('/api/message')
