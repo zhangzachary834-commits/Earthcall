@@ -7,3 +7,4 @@ __pycache__/
 
 # Agent worktrees (git already keeps their metadata; the trees are disposable).
 .claude/worktrees/
+sight-cpp/saves/earthcall-io.log
