@@ -241,6 +241,19 @@ void to_json(nlohmann::json& j, const Object& obj){
         j["authoredProperties"] = std::move(dyn);
     }
 
+    if (!obj.stakeholders().empty()) {
+        nlohmann::json shJson = nlohmann::json::array();
+        for (const auto& sh : obj.stakeholders()) {
+            shJson.push_back({
+                {"propertyPath", sh.propertyPath},
+                {"authorId", sh.authorId},
+                {"lawId", sh.lawId},
+                {"timestamp", sh.timestamp}
+            });
+        }
+        j["stakeholders"] = std::move(shJson);
+    }
+
     // Elements: what this object is composed of, remembered BY IDENTIFIER.
     // Composition is a relation between beings, not ownership of them — the
     // World owns every object; the loader re-links these once all are present.
@@ -353,6 +366,17 @@ void from_json(const nlohmann::json& j, Object& obj){
     if (j.contains("elements") && j["elements"].is_array()) {
         for (const auto& id : j["elements"]) {
             if (id.is_string()) obj.pendingElementIds.push_back(id.get<std::string>());
+        }
+    }
+    
+    if (j.contains("stakeholders") && j["stakeholders"].is_array()) {
+        for (const auto& sh : j["stakeholders"]) {
+            obj.addStakeholder(
+                sh.value("propertyPath", ""),
+                sh.value("authorId", ""),
+                sh.value("lawId", ""),
+                sh.value("timestamp", static_cast<std::time_t>(0))
+            );
         }
     }
     if(j.contains("faceColors")){

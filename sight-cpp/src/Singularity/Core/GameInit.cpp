@@ -98,10 +98,10 @@ bool Game::init() {
     // --------------------------------------------------------------
     // Setup zones & menu
     // --------------------------------------------------------------
-    mgr.addZone(Zone("Sanctum of Beginnings"));
-    mgr.addZone(Zone("Temple of Echoes"));
-    mgr.addZone(Zone("Cavern of Light"));
-    mgr.addZone(Zone("Character Architect Forge"));
+    mgr.addZone(Zone("Sanctum of Beginnings", "default"));
+    mgr.addZone(Zone("Temple of Echoes", "default"));
+    mgr.addZone(Zone("Cavern of Light", "default"));
+    mgr.addZone(Zone("Character Architect Forge", "default"));
     ensureHomeZone();
 
     // Initialize elemental tool handler with zone manager
@@ -434,7 +434,7 @@ void Game::ensureHomeZone() {
         }
     }
 
-    Zone home("Home", 0.08f, 0.06f, 0.12f);
+    Zone home("Home", "strict", 0.08f, 0.06f, 0.12f);
     home.setOwner(playerId);
     home.setQuality("kind", "home");
     mgr.addZone(std::move(home));

@@ -4,7 +4,7 @@
 #include <iostream>
 
 Home::Home(std::vector<std::string> owners)
-    : Zone("Home"), owners(owners) {}
+    : Zone("Home", "default"), owners(owners) {}
 
 void Home::welcome() const {
     std::cout << "Welcome to " << owners[0] << "'s home." << std::endl;

@@ -8,6 +8,7 @@
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "Form/Object/Object.hpp"
+#include "Person/Person.hpp"
 
 #include <GLFW/glfw3.h>
 #include <cassert>
@@ -30,6 +31,10 @@ int main() {
         glfwTerminate();
         return 1;
     }
+    Person target(Soul("target"), Body::createBasicAvatar("Voxel"), "strict");
+    Person dictator(Soul("dictator"), Body::createBasicAvatar("Voxel"), "strict");
+
+    Zone prison("Prison", "default");
     glfwMakeContextCurrent(window);
 
     {
@@ -50,6 +55,7 @@ int main() {
         // This is a test of the civic order. A person cannot be acted upon
         // without consent/authority in ways that violate their body position.
         auto result = hostileLaw.applyTo(zack);
+        (void)result; // Should be rejected
         
         // ------------------------------------------------------------------
         // 3. Singularity-level ceiling override rejection (AI as First Mover).

@@ -341,7 +341,7 @@ void Game::loadState(const std::string& filename) {
         if (j.contains("zones")) {
             for (const auto& zj : j["zones"]) {
                 std::string name = zj.value("name", "Untitled Zone");
-                Zone z(name);
+                Zone z(name, "strict");
                 z.r = zj.value("r", 0.05f);
                 z.g = zj.value("g", 0.05f);
                 z.b = zj.value("b", 0.1f);
@@ -382,7 +382,7 @@ void Game::loadState(const std::string& filename) {
         }
 
         if (zonesVec.empty()) {
-            zonesVec.push_back(Zone("Default Zone"));
+            zonesVec.push_back(Zone("Default Zone", "default"));
         }
         // Home survives every load (and pre-ownership saves get one).
         // Must run BEFORE switchTo: addZone may reallocate the zone vector,

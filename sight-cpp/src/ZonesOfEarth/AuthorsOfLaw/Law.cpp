@@ -401,6 +401,18 @@ Law::ApplicationResult Law::applyTo(Singular& target) {
                        (first.note.empty() ? std::string(ActionNode::reasonName(first.reason))
                                            : first.note) + ")";
         }
+        if (wrote) {
+            for (const auto& node : trace.nodes) {
+                if (node.wrote && !node.path.empty()) {
+                    for (auto* author : _authors.getMembers()) {
+                        if (author) {
+                            target.addStakeholder(node.path, author->getIdentifier(), getIdentifier(), std::time(nullptr));
+                        }
+                    }
+                }
+            }
+        }
+
         nlohmann::json nodesJson = nlohmann::json::array();
         for (const auto& node : trace.nodes) {
             nodesJson.push_back({{"action", node.actionName},

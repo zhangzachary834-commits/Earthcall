@@ -22,7 +22,7 @@ Person* AvatarManager::createAvatar(const std::string& name, const std::string& 
     // Create new avatar
     Body body = Body::createBasicAvatar(artStyle);
     Soul soul(name);  // Create a soul for this person
-    Person* newAvatar = new Person(std::move(soul), std::move(body));
+    Person* newAvatar = new Person(std::move(soul), std::move(body), "strict");
     avatars.push_back(newAvatar);
     
     std::cout << "Created avatar: " << name << std::endl;
@@ -41,7 +41,7 @@ Person* AvatarManager::createCustomAvatar(const std::string& name, Body::BodyTyp
     // Create custom avatar
     Body body = Body::createCustomAvatar("Voxel", bodyType, props);
     Soul soul(name);  // Create a soul for this person
-    Person* newAvatar = new Person(std::move(soul), std::move(body));
+    Person* newAvatar = new Person(std::move(soul), std::move(body), "strict");
     avatars.push_back(newAvatar);
     
     std::cout << "Created custom avatar: " << name << std::endl;

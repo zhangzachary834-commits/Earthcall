@@ -69,10 +69,10 @@ int main() {
     std::cout << "\n--- Zone Management Demo ---" << std::endl;
     
     // Join zones (this will trigger PersonJoinedEvent)
-    alice->joinZone("Main Plaza");
-    alice->joinZone("Shopping District");
-    bob->joinZone("Main Plaza");
-    child->joinZone("Playground");
+    alice->joinZone("Main Plaza", \"default\");
+    alice->joinZone("Shopping District", \"default\");
+    bob->joinZone("Main Plaza", \"default\");
+    child->joinZone("Playground", \"default\");
     
     std::cout << "\n--- Checking Status ---" << std::endl;
     

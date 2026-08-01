@@ -75,6 +75,24 @@ public:
         return _dynamicProperties.erase(name) > 0;
     }
 
+    // Stakeholders: an append-only log of who has changed this being's properties.
+    // When a Law mutates a property, its authors are recorded as stakeholders.
+    struct StakeholderRecord {
+        std::string propertyPath;
+        std::string authorId;
+        std::string lawId;
+        std::time_t timestamp;
+    };
+
+    void addStakeholder(const std::string& propertyPath, const std::string& authorId, const std::string& lawId, std::time_t timestamp) {
+        _stakeholders.push_back({propertyPath, authorId, lawId, timestamp});
+    }
+
+    const std::vector<StakeholderRecord>& stakeholders() const {
+        return _stakeholders;
+    }
+
+
     // Zone Designations
     void addZoneDesignation(const std::string& zoneName) {
         if (std::find(designatedZones.begin(), designatedZones.end(), zoneName) == designatedZones.end()) {
@@ -95,6 +113,7 @@ public:
 
 protected:
     std::vector<std::string> designatedZones;
+    std::vector<StakeholderRecord> _stakeholders;
     std::vector<std::unique_ptr<Property>> _propertyRegistry;
     std::map<std::string, PropertyValue> _dynamicProperties;
     Formation* _property_formation = nullptr;

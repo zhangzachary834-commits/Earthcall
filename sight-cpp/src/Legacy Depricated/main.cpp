@@ -578,10 +578,10 @@ int main()
     // Register focus callback to fix ImGui/GLFW input bugs
     glfwSetWindowFocusCallback(win, window_focus_callback);
 
-    mgr.addZone(Zone("Sanctum of Beginnings"));
-    mgr.addZone(Zone("Temple of Echoes"));
-    mgr.addZone(Zone("Cavern of Light"));
-    mgr.addZone(Zone("Character Architect Forge"));
+    mgr.addZone(Zone("Sanctum of Beginnings", \"default\"));
+    mgr.addZone(Zone("Temple of Echoes", \"default\"));
+    mgr.addZone(Zone("Cavern of Light", \"default\"));
+    mgr.addZone(Zone("Character Architect Forge", \"default\"));
 
     // --------------------------------------------------------------
     // Populate main menu with zone switching entries (F1..F12)
