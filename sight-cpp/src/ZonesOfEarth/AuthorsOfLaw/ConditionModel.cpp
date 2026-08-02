@@ -12,6 +12,7 @@
 #include "ZonesOfEarth/Physics/CollisionDispatcher.hpp"
 #include "ZonesOfEarth/World/World.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
+#include "Singularity/Language/Lexeme.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -44,6 +45,7 @@ bool matchesKindImpl(const Singular& being, ConditionNode::BeingKind kind) {
         case ConditionNode::BeingKind::Law:       return dynamic_cast<const Law*>(&being) != nullptr;
         case ConditionNode::BeingKind::World:     return dynamic_cast<const World*>(&being) != nullptr;
         case ConditionNode::BeingKind::Zone:      return dynamic_cast<const Zone*>(&being) != nullptr;
+        case ConditionNode::BeingKind::Lexeme:    return dynamic_cast<const Singularity::Language::Lexeme*>(&being) != nullptr;
     }
     return false;
 }
@@ -58,6 +60,7 @@ const char* beingKindName(ConditionNode::BeingKind kind) {
         case ConditionNode::BeingKind::Law:       return "Law";
         case ConditionNode::BeingKind::World:     return "World";
         case ConditionNode::BeingKind::Zone:      return "Zone";
+        case ConditionNode::BeingKind::Lexeme:    return "Lexeme";
     }
     return "?";
 }

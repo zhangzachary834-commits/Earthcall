@@ -39,6 +39,10 @@ public:
     virtual ~Singular() = default;
     virtual std::string getIdentifier() const = 0;
 
+    // Checks if this Singular satisfies the strict Kernel bounds required for set-to-set synthesis.
+    // Placeholder for when we define these bounds later.
+    virtual bool satisfiesKernelBounds() const { return true; }
+
     Formation* singular_properties();
     const Formation* singular_properties() const;
 

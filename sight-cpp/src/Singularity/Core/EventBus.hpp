@@ -178,4 +178,14 @@ private:
     EventBus& operator=(const EventBus&) = delete;
 };
 
+// ------------------------------------------------------------------
+// Global Core Events
+// ------------------------------------------------------------------
+namespace Event {
+    struct Utterance {
+        std::string payload;      // The raw text/string spoken
+        std::string sourceClient; // The ID of the client/Person who spoke it
+    };
+} // namespace Event
+
 } // namespace Core 

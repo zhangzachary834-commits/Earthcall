@@ -80,7 +80,7 @@ WGPU_FRAMEWORKS = -framework Metal -framework QuartzCore -framework CoreFoundati
 # so the default OpenGL build never needs the wgpu library.
 # MigrateSaves.cpp is a standalone utility with its own main() (see the
 # migrate-saves target below); linking it into the app is a duplicate _main.
-SOURCES = $(shell find $(SRC_DIR) -name "*.cpp" \! -name "main.cpp" \! -name "MigrateSaves.cpp" \! -path "*/WebGPU/*") \
+SOURCES = $(shell find $(SRC_DIR) -name "*.cpp" \! -name "main.cpp" \! -name "MigrateSaves.cpp" \! -name "WebSocketServer.cpp" \! -path "*/WebGPU/*") \
           $(IMGUI_DIR)/imgui.cpp \
           $(IMGUI_DIR)/imgui_demo.cpp \
           $(IMGUI_DIR)/imgui_draw.cpp \
@@ -403,6 +403,12 @@ test-primitive-render: primitive_render_test
 
 test-action-spawn: action_spawn_test
 	./action_spawn_test
+
+synthesis_system_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/synthesis_system_test.o
+	$(CXX) $^ $(LDFLAGS) -o $@
+
+test-synthesis: synthesis_system_test
+	./synthesis_system_test
 
 binary_packing_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/binary_packing_test.o
 	$(CXX) $^ $(LDFLAGS) -o $@

@@ -13,6 +13,10 @@ def register_socket_events(socketio):
 
     @socketio.on('law_action')
     def handle_law_action(json_data):
+        token = json_data.get("token")
+        if token != "trusted-server-token":
+            print("Server received unauthorized Law Action")
+            return
         print(f"Server received Law Action: {json_data}")
         # Broadcast the law action to all other clients so they can simulate it
         emit('state_sync', {'event': 'law_executed', 'data': json_data}, broadcast=True, include_self=False)

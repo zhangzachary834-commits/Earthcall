@@ -14,7 +14,7 @@ app = Flask(__name__, static_url_path='/static')
 CORS(app)
 
 # Initialize SocketIO
-socketio = SocketIO(app, cors_allowed_origins="*")
+socketio = SocketIO(app, cors_allowed_origins=["https://trusted.earthcall.com", "http://localhost:3000", "http://127.0.0.1:3000"])
 
 # Import and register Blueprints
 from web.routes import web_bp
@@ -29,7 +29,7 @@ register_socket_events(socketio)
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     host = os.environ.get('HOST', '127.0.0.1')
-    debug = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 't')
+    debug = os.environ.get('DEBUG', 'False').lower() in ('true', '1', 't')
     
     print(f"Starting Earthcall Python Backend on {host}:{port}")
     socketio.run(app, host=host, port=port, debug=debug)

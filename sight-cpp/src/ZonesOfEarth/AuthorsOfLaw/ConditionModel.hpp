@@ -50,7 +50,7 @@ struct ConditionNode {
     // (Zone is likewise an Object — extra-spatial, per the manifesto — so
     // BeingKind::Object matches zones too; use BeingKind::Zone for precision.)
     enum class BeingKind { AnyBeing = 0, Object = 1, Person = 2, Relation = 3,
-                           Formation = 4, Law = 5, World = 6, Zone = 7 };
+                           Formation = 4, Law = 5, World = 6, Zone = 7, Lexeme = 8 };
 
     Kind kind = Kind::Compare;
 

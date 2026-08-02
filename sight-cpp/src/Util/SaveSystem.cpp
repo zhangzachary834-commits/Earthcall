@@ -21,7 +21,7 @@ std::vector<uint8_t> compressData(const std::vector<uint8_t>& data) {
     
     if (compress(compressed.data(), &compressedLen, data.data(), data.size()) != Z_OK) {
         std::cerr << "[SaveSystem] zlib compression failed!\n";
-        return data; // Fallback to uncompressed (should not happen)
+        throw std::runtime_error("Compression failed");
     }
     
     compressed.resize(compressedLen);
@@ -41,6 +41,11 @@ std::vector<uint8_t> decompressData(const std::vector<uint8_t>& data) {
     
     size_t originalSize;
     std::memcpy(&originalSize, data.data(), sizeof(size_t));
+    
+    // Cross-check against compressed size and hard limits to avoid OOM
+    if (originalSize > (data.size() - sizeof(size_t)) * 1032 + 1024 || originalSize > 1024 * 1024 * 1024) {
+        return data; // Invalid size, fallback
+    }
     
     // Sanity check for uncompressed saves (if they don't have the size prefix, decompression will just fail and we fallback)
     // A MessagePack payload usually starts with 0x8. If originalSize happens to match that, it might try to decompress.
@@ -113,15 +118,33 @@ std::string ensureSaveTypeFolder(SaveType type) {
 std::string timestamp() {
     std::time_t t = std::time(nullptr);
     char buf[32]; 
-    std::strftime(buf, sizeof(buf), "%Y%m%d_%H%M%S", std::localtime(&t));
+    struct tm tm_buf;
+#if defined(_WIN32)
+    localtime_s(&tm_buf, &t);
+#else
+    localtime_r(&t, &tm_buf);
+#endif
+    std::strftime(buf, sizeof(buf), "%Y%m%d_%H%M%S", &tm_buf);
     return buf;
+}
+
+std::string sanitizeLabel(const std::string& label) {
+    std::string safe = label;
+    for (char& c : safe) {
+        if (c == '/' || c == '\\' || c == ':') c = '_';
+    }
+    size_t pos;
+    while ((pos = safe.find("..")) != std::string::npos) {
+        safe.replace(pos, 2, "__");
+    }
+    return safe;
 }
 
 std::string makeFilename(const std::string& customLabel, SaveType type, const std::string& ext) {
     std::string folder = ensureSaveTypeFolder(type);
     if (folder.empty()) return "";
     
-    std::string stem = customLabel.empty() ? timestamp() : customLabel;
+    std::string stem = customLabel.empty() ? timestamp() : sanitizeLabel(customLabel);
     return folder + "/" + stem + ext;
 }
 
@@ -158,8 +181,14 @@ std::vector<std::string> listFiles(SaveType type) {
     }
     
     std::string line;
+    std::error_code ec;
+    auto absoluteSavesDir = std::filesystem::absolute("saves", ec);
     while (std::getline(in, line)) {
         if (line.empty()) continue;
+        auto absoluteLogPath = std::filesystem::absolute(line, ec);
+        if (absoluteLogPath.string().find(absoluteSavesDir.string()) != 0) {
+            continue; // Skip invalid paths
+        }
         if (std::filesystem::exists(line)) {
             valid.push_back(line);
         }
@@ -269,7 +298,12 @@ nlohmann::json readSaveData(const std::string& filepath) {
     if (filepath.length() > 7 && filepath.substr(filepath.length() - 7) == ".ecsave") {
         std::vector<uint8_t> bytes((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
         std::vector<uint8_t> decompressed = decompressData(bytes);
-        return nlohmann::json::from_msgpack(decompressed);
+        try {
+            return nlohmann::json::from_msgpack(decompressed);
+        } catch (...) {
+            std::cerr << "[SaveSystem] Malformed msgpack in: " << filepath << "\n";
+            return nlohmann::json();
+        }
     } else {
         // Fallback to plain JSON
         nlohmann::json j;

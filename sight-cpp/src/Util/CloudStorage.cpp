@@ -8,10 +8,16 @@
 
 namespace Util {
 
-static std::string g_endpoint = "http://localhost:8080";
-static std::string g_authToken = "dummy-token";
+#include <mutex>
+
+static std::string g_endpoint = "https://localhost:8080";
+static std::string g_authToken = "";
+static std::mutex g_configMutex;
 
 void CloudStorage::init() {
+    if (const char* env_token = std::getenv("EARTHCALL_CLOUD_TOKEN")) {
+        g_authToken = env_token;
+    }
     std::cout << "[CloudStorage] Initialized.\n";
 }
 
@@ -20,10 +26,12 @@ void CloudStorage::shutdown() {
 }
 
 void CloudStorage::setEndpoint(const std::string& url) {
+    std::lock_guard<std::mutex> lock(g_configMutex);
     g_endpoint = url;
 }
 
 void CloudStorage::setAuthToken(const std::string& token) {
+    std::lock_guard<std::mutex> lock(g_configMutex);
     g_authToken = token;
 }
 
@@ -38,16 +46,37 @@ void CloudStorage::uploadSaveAsync(const std::string& filename,
         // Simulate network delay
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
         
-        httplib::Client cli(g_endpoint.c_str());
+        std::string ep, token;
+        {
+            std::lock_guard<std::mutex> lock(g_configMutex);
+            ep = g_endpoint;
+            token = g_authToken;
+        }
+        
+        httplib::Client cli(ep.c_str());
         cli.set_connection_timeout(5, 0); // 5 seconds
         cli.set_read_timeout(5, 0);
         
         httplib::Headers headers = {
-            {"Authorization", "Bearer " + g_authToken},
+            {"Authorization", "Bearer " + token},
             {"Content-Type", "application/octet-stream"}
         };
         
-        std::string path = "/api/saves/" + typeStr + "/" + filename;
+        auto url_encode = [](const std::string& value) {
+            std::ostringstream escaped;
+            escaped.fill('0');
+            escaped << std::hex;
+            for (char c : value) {
+                if (isalnum((unsigned char)c) || c == '-' || c == '_' || c == '.' || c == '~') {
+                    escaped << c;
+                } else {
+                    escaped << std::uppercase << '%' << std::setw(2) << int((unsigned char)c) << std::nouppercase;
+                }
+            }
+            return escaped.str();
+        };
+        
+        std::string path = "/api/saves/" + typeStr + "/" + url_encode(filename);
         std::string body(reinterpret_cast<const char*>(data.data()), data.size());
         
         if (auto res = cli.Post(path.c_str(), headers, body, "application/octet-stream")) {
@@ -59,11 +88,7 @@ void CloudStorage::uploadSaveAsync(const std::string& filename,
                 std::cerr << "[CloudStorage] Upload failed with status: " << res->status << "\n";
             }
         } else {
-            // For foundation testing: if the server is down, we simulate a successful mock upload
-            // so we can test the UI and caching behaviour.
-            std::cout << "[CloudStorage] Upload mock success (server unreachable) for " << filename << "\n";
-            if (callback) callback(true);
-            return;
+            std::cout << "[CloudStorage] Server unreachable for " << filename << "\n";
         }
         
         if (callback) callback(false);
@@ -86,15 +111,36 @@ void CloudStorage::downloadSaveAsync(const std::string& filename,
     std::thread([filename, typeStr, callback]() {
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
         
-        httplib::Client cli(g_endpoint.c_str());
+        std::string ep, token;
+        {
+            std::lock_guard<std::mutex> lock(g_configMutex);
+            ep = g_endpoint;
+            token = g_authToken;
+        }
+        
+        httplib::Client cli(ep.c_str());
         cli.set_connection_timeout(5, 0);
         cli.set_read_timeout(5, 0);
         
         httplib::Headers headers = {
-            {"Authorization", "Bearer " + g_authToken}
+            {"Authorization", "Bearer " + token}
         };
         
-        std::string path = "/api/saves/" + typeStr + "/" + filename;
+        auto url_encode = [](const std::string& value) {
+            std::ostringstream escaped;
+            escaped.fill('0');
+            escaped << std::hex;
+            for (char c : value) {
+                if (isalnum((unsigned char)c) || c == '-' || c == '_' || c == '.' || c == '~') {
+                    escaped << c;
+                } else {
+                    escaped << std::uppercase << '%' << std::setw(2) << int((unsigned char)c) << std::nouppercase;
+                }
+            }
+            return escaped.str();
+        };
+        
+        std::string path = "/api/saves/" + typeStr + "/" + url_encode(filename);
         
         if (auto res = cli.Get(path.c_str(), headers)) {
             if (res->status == 200) {
@@ -105,8 +151,7 @@ void CloudStorage::downloadSaveAsync(const std::string& filename,
             }
         }
         
-        // Mock failure for now if server unreachable
-        std::cerr << "[CloudStorage] Mock download failure for " << filename << "\n";
+        std::cerr << "[CloudStorage] Download failure for " << filename << "\n";
         if (callback) callback(std::nullopt);
     }).detach();
 }
@@ -118,12 +163,19 @@ void CloudStorage::fetchMetadataAsync(SaveSystem::SaveType type,
     std::thread([typeStr, callback, type]() {
         std::this_thread::sleep_for(std::chrono::milliseconds(300));
         
-        httplib::Client cli(g_endpoint.c_str());
+        std::string ep, token;
+        {
+            std::lock_guard<std::mutex> lock(g_configMutex);
+            ep = g_endpoint;
+            token = g_authToken;
+        }
+        
+        httplib::Client cli(ep.c_str());
         cli.set_connection_timeout(5, 0);
         cli.set_read_timeout(5, 0);
         
         httplib::Headers headers = {
-            {"Authorization", "Bearer " + g_authToken}
+            {"Authorization", "Bearer " + token}
         };
         
         std::string path = "/api/saves/" + typeStr;
@@ -137,7 +189,6 @@ void CloudStorage::fetchMetadataAsync(SaveSystem::SaveType type,
             }
         }
         
-        // Return mock empty or populated cloud list if server unreachable
         if (callback) callback(results);
     }).detach();
 }

@@ -45,6 +45,29 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/../imgui
 )
 
+# Fetch standalone ASIO and WebSocketPP for native networking
+include(FetchContent)
+
+FetchContent_Declare(
+    asio
+    GIT_REPOSITORY https://github.com/chriskohlhoff/asio.git
+    GIT_TAG asio-1-28-0
+)
+FetchContent_MakeAvailable(asio)
+
+FetchContent_Declare(
+    websocketpp
+    GIT_REPOSITORY https://github.com/zaphoyd/websocketpp.git
+    GIT_TAG 0.8.2
+)
+FetchContent_MakeAvailable(websocketpp)
+
+include_directories(
+    ${asio_SOURCE_DIR}/asio/include
+    ${websocketpp_SOURCE_DIR}
+)
+add_definitions(-DASIO_STANDALONE -D_WEBSOCKETPP_CPP11_STL_)
+
 add_definitions(-DGL_SILENCE_DEPRECATION)
 
 # --- Core App Sources ---

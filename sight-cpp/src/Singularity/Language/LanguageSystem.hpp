@@ -7,6 +7,9 @@
 #include <memory>
 #include <unordered_map>
 
+#include <mutex>
+#include <queue>
+
 namespace Singularity {
 namespace Language {
 
@@ -33,14 +36,24 @@ public:
 
     void clear();
 
+    // Enqueue an incoming utterance (thread-safe, called from EventBus/WebSocket)
+    void queueUtterance(const std::string& payload, const std::string& sourceClient);
+
 private:
-    LanguageSystem() = default;
+    LanguageSystem();
     LanguageSystem(const LanguageSystem&) = delete;
     LanguageSystem& operator=(const LanguageSystem&) = delete;
 
     std::vector<std::shared_ptr<Lexeme>> _lexemes;
     std::unordered_map<std::string, std::shared_ptr<Lexeme>> _symbolIndex;
     std::unordered_map<std::string, std::shared_ptr<Lexeme>> _idIndex;
+
+    struct PendingUtterance {
+        std::string payload;
+        std::string sourceClient;
+    };
+    std::queue<PendingUtterance> _utteranceQueue;
+    std::mutex _queueMutex;
 };
 
 } // namespace Language

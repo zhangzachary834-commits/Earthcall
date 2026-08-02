@@ -159,14 +159,12 @@ URLValidationResult SecurityManager::validateURL(const std::string& url) {
     }
     
     // Check whitelist (if enabled)
-    if (!_config.whitelistedDomains.empty()) {
-        if (!isURLWhitelisted(url)) {
-            result.reason = "URL not in whitelist";
-            logEvent(SecurityEventType::URL_ACCESS, "Non-whitelisted URL blocked", url, result.reason, true);
-            return result;
-        }
-        result.isWhitelisted = true;
+    if (!isURLWhitelisted(url)) {
+        result.reason = "URL not in whitelist";
+        logEvent(SecurityEventType::URL_ACCESS, "Non-whitelisted URL blocked", url, result.reason, true);
+        return result;
     }
+    result.isWhitelisted = true;
     
     // Rate limiting
     if (_isRateLimited(url)) {
@@ -187,11 +185,11 @@ URLValidationResult SecurityManager::validateURL(const std::string& url) {
 
 bool SecurityManager::isURLWhitelisted(const std::string& url) {
     if (_config.whitelistedDomains.empty()) {
-        return true; // No whitelist means all allowed
+        return false; // No whitelist means fail closed
     }
     
     for (const auto& domain : _config.whitelistedDomains) {
-        if (url.find(domain) == 0) {
+        if (url == domain || url.find(domain + "/") == 0 || url.find(domain + "?") == 0 || url.find(domain + "#") == 0) {
             return true;
         }
     }
@@ -200,7 +198,15 @@ bool SecurityManager::isURLWhitelisted(const std::string& url) {
 
 bool SecurityManager::isURLBlacklisted(const std::string& url) {
     for (const auto& domain : _config.blacklistedDomains) {
-        if (url.find(domain) != std::string::npos) {
+        size_t hostStart = url.find("://");
+        if (hostStart == std::string::npos) hostStart = 0; else hostStart += 3;
+        size_t hostEnd = url.find('/', hostStart);
+        if (hostEnd == std::string::npos) hostEnd = url.length();
+        std::string host = url.substr(hostStart, hostEnd - hostStart);
+        size_t portPos = host.find(':');
+        if (portPos != std::string::npos) host = host.substr(0, portPos);
+        
+        if (host == domain || (host.length() > domain.length() && host.substr(host.length() - domain.length() - 1) == "." + domain)) {
             return true;
         }
     }
@@ -404,6 +410,10 @@ void SecurityManager::logEvent(SecurityEventType type, const std::string& descri
         _securityLog.erase(_securityLog.begin(), _securityLog.begin() + 1000);
     }
     
+    if (_sourceActivityCount.size() > 1000) {
+        _sourceActivityCount.clear(); // Simple eviction to bound memory
+    }
+    
     // Check for suspicious activity
     if (detectSuspiciousActivity(source)) {
         blockSource(source);
@@ -535,21 +545,13 @@ bool SecurityManager::validateJavaScript(const std::string& script, const std::s
 
 std::string SecurityManager::sanitizeJavaScript(const std::string& script) {
     std::string sanitized = script;
-    
-    // Remove potentially dangerous functions
-    std::vector<std::string> dangerousFunctions = {
-        "eval(", "Function(", "setTimeout(", "setInterval(", 
-        "document.write(", "document.writeln(", "innerHTML ="
-    };
-    
-    for (const auto& func : dangerousFunctions) {
-        size_t pos = 0;
-        while ((pos = sanitized.find(func, pos)) != std::string::npos) {
-            sanitized.replace(pos, func.length(), "// BLOCKED: " + func);
-            pos += 15; // Length of "// BLOCKED: "
-        }
-    }
-    
+    sanitized = std::regex_replace(sanitized, std::regex(R"(eval\s*\()"), "// BLOCKED: eval(");
+    sanitized = std::regex_replace(sanitized, std::regex(R"(window\[\s*['"]eval['"]\s*\])"), "// BLOCKED: eval");
+    sanitized = std::regex_replace(sanitized, std::regex(R"(Function\s*\()"), "// BLOCKED: Function(");
+    sanitized = std::regex_replace(sanitized, std::regex(R"(setTimeout\s*\()"), "// BLOCKED: setTimeout(");
+    sanitized = std::regex_replace(sanitized, std::regex(R"(setInterval\s*\()"), "// BLOCKED: setInterval(");
+    sanitized = std::regex_replace(sanitized, std::regex(R"(document\.write\s*\()"), "// BLOCKED: document.write(");
+    sanitized = std::regex_replace(sanitized, std::regex(R"(innerHTML\s*=)"), "// BLOCKED: innerHTML =");
     return sanitized;
 }
 

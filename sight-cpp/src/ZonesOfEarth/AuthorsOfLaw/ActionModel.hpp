@@ -83,7 +83,8 @@ struct ActionNode {
         AddElement = 13,
         RemoveProperty = 14,
         RemoveElement = 15,
-        Destroy = 16
+        Destroy = 16,
+        Synthesize = 17 // invoke the Universal SynthesisSystem (Concept -> Singulars)
     };
 
     struct ExecutedEvent {

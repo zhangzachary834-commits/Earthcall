@@ -47,7 +47,9 @@ private:
 
 public:
     Reader(const std::vector<uint8_t>& buf) : data(buf.data()), size(buf.size()), offset(0) {}
+    Reader(const std::vector<uint8_t>&&) = delete;
     Reader(const nlohmann::json::binary_t& bin) : data(bin.data()), size(bin.size()), offset(0) {}
+    Reader(const nlohmann::json::binary_t&&) = delete;
 
     template<typename T>
     T read() {
@@ -63,12 +65,14 @@ public:
     void readArray(std::vector<T>& vec) {
         static_assert(std::is_trivially_copyable<T>::value, "Type must be trivially copyable");
         uint32_t count = read<uint32_t>();
-        vec.resize(count);
         if (count > 0) {
-            size_t bytes = count * sizeof(T);
+            uint64_t bytes = static_cast<uint64_t>(count) * sizeof(T);
             if (offset + bytes > size) throw std::runtime_error("Binary buffer underflow in readArray");
-            std::memcpy(vec.data(), data + offset, bytes);
-            offset += bytes;
+            vec.resize(count);
+            std::memcpy(vec.data(), data + offset, static_cast<size_t>(bytes));
+            offset += static_cast<size_t>(bytes);
+        } else {
+            vec.resize(0);
         }
     }
 };

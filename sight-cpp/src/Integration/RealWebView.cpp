@@ -212,9 +212,15 @@ void RealWebView::navigate(const std::string& url) {
 #ifdef __APPLE__
 #if TARGET_OS_MAC
     if (_webView) {
-        _currentURL = url;
-        std::cout << "🌐 Attempting to navigate to: " << url << std::endl;
-        NSURL* nsUrl = [NSURL URLWithString:[NSString stringWithUTF8String:url.c_str()]];
+        auto& security = SecurityManager::instance();
+        auto validation = security.validateURL(url);
+        if (!validation.isValid) {
+            std::cout << "❌ Navigation blocked by security: " << validation.reason << std::endl;
+            return;
+        }
+        _currentURL = validation.sanitizedURL;
+        std::cout << "🌐 Attempting to navigate to: " << _currentURL << std::endl;
+        NSURL* nsUrl = [NSURL URLWithString:[NSString stringWithUTF8String:_currentURL.c_str()]];
         if (nsUrl) {
             NSURLRequest* request = [NSURLRequest requestWithURL:nsUrl];
             [_webView loadRequest:request];
@@ -410,9 +416,7 @@ void RealWebView::executeJavaScript(const std::string& script) {
             return;
         }
         
-        // Sanitize JavaScript
-        std::string safeScript = security.sanitizeJavaScript(script);
-        NSString* nsScript = [NSString stringWithUTF8String:safeScript.c_str()];
+        NSString* nsScript = [NSString stringWithUTF8String:script.c_str()];
         [_webView evaluateJavaScript:nsScript completionHandler:^(id result, NSError* error) {
             if (error) {
                 std::cout << "🌐 JavaScript error: " << [error.localizedDescription UTF8String] << std::endl;
@@ -495,7 +499,8 @@ void RealWebView::focus() {
 }
 
 void RealWebView::sendMessageToWeb(const std::string& message) {
-    std::string script = "window.earthcall.receiveMessage('" + message + "');";
+    nlohmann::json j = message;
+    std::string script = "window.earthcall.receiveMessage(" + j.dump() + ");";
     executeJavaScript(script);
     std::cout << "🌐 Sent message to web: " << message << std::endl;
 }
@@ -700,9 +705,16 @@ void RealWebView::_setupJavaScriptHandlers() {
 void RealWebView::_handleWebMessage(const std::string& message) {
     std::cout << "🌐 Received message from web: " << message << std::endl;
     
+    auto& security = SecurityManager::instance();
+    auto validation = security.validateMessage(message, _currentURL);
+    if (!validation.isValid) {
+        std::cout << "❌ Web message blocked by security: " << validation.reason << std::endl;
+        return;
+    }
+    
     try {
         // Parse JSON message
-        nlohmann::json j = nlohmann::json::parse(message);
+        nlohmann::json j = nlohmann::json::parse(validation.sanitizedMessage);
         
         if (j.contains("type") && j.contains("data")) {
             std::string type = j["type"];

@@ -2,6 +2,7 @@
 
 #include "Form/Object/Creation/ObjectConcept.hpp"
 #include "Form/Singular/Property/PropertyValueJson.hpp"
+#include "Form/Singular/SynthesisSystem.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "ZonesOfEarth/World/World.hpp"
 #include "Person/Body/BodyPart/BodyPart.hpp"
@@ -108,10 +109,11 @@ const char* ActionNode::kindName(Kind k) {
         case Kind::Publish: return "Publish";
         case Kind::Create: return "Create";
         case Kind::AddProperty: return "AddProperty";
-        case Kind::AddElement: return "AddElement";
         case Kind::RemoveProperty: return "RemoveProperty";
+        case Kind::AddElement: return "AddElement";
         case Kind::RemoveElement: return "RemoveElement";
         case Kind::Destroy: return "Destroy";
+        case Kind::Synthesize: return "Synthesize";
     }
     return "Unknown";
 }
@@ -192,7 +194,8 @@ nlohmann::json ActionNode::toJson() const {
             j["children"] = kids;
             break;
         }
-        case Kind::Spawn: {
+        case Kind::Spawn:
+        case Kind::Synthesize: {
             j["conceptId"] = conceptId;
             if (!spawnParentPath.empty()) j["spawnParentPath"] = spawnParentPath.toString();
             if (!spawnPlacementPath.empty()) j["spawnPlacementPath"] = spawnPlacementPath.toString();
@@ -814,6 +817,23 @@ ECA::ActionExecutor ActionNode::compile() const {
                 emitEffect("Destroy", true);
             };
         }
+        case Kind::Synthesize: {
+            const std::string id = conceptId;
+            return [id](const ECA::Event& event, Singular& target) {
+                auto concept = UniversalConceptRegistry::instance().findConcept(id);
+                if (!concept) {
+                    emitEffect("Synthesize", false, "no such concept: " + id);
+                    return;
+                }
+                // Call universal synthesis system
+                std::vector<Singular*> inputs;
+                if (event.subject) inputs.push_back(event.subject);
+                if (event.object) inputs.push_back(event.object);
+                
+                auto outputs = SynthesisSystem::instance().synthesize(inputs, *concept, {}, nullptr, &target);
+                emitEffect("Synthesize", !outputs.empty(), outputs.empty() ? "synthesis produced nothing" : "");
+            };
+        }
     }
     return [](const ECA::Event&, Singular&) {};
 }
@@ -848,6 +868,8 @@ std::string ActionNode::describe() const {
                    (containerToken.empty() ? std::string("subject") : containerToken);
         case Kind::Destroy:
             return "destroy " + (elementToken.empty() ? std::string("subject") : elementToken);
+        case Kind::Synthesize:
+            return "synthesize(" + conceptId + ")";
     }
     return "action";
 }
@@ -956,6 +978,7 @@ void ActionNode::collectPaths(std::vector<PropertyPath>& out) const {
             add(input);
             break;
         case Kind::Spawn:
+        case Kind::Synthesize:
             add(spawnParentPath);
             add(spawnPlacementPath);
             break;
