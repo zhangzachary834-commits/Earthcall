@@ -27,6 +27,7 @@ public:
     // Lifecycle -----------------------------------------------------------
     bool init(int argc = 0, char** argv = nullptr);
     void run(class Game& game);
+    void tick(class Game& game, float dt);
     void shutdown();
 
     // Accessors -----------------------------------------------------------

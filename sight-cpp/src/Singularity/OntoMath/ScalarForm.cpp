@@ -1,4 +1,5 @@
 #include "Singularity/OntoMath/ScalarForm.hpp"
+#include "Singularity/OntoMath/ProbabilityForm.hpp"
 
 // The guard is the condition calculus itself — pieces gated by law-text.
 // (Include at the .cpp level only: ConditionModel.hpp includes this header.)
@@ -470,6 +471,7 @@ void MathNode::collectDependencies(std::set<std::string>& outDeps) const {
 
 TypeResult MathNode::typeOf(const TypeEnv& env, const std::string& path) const {
     switch (op) {
+        case Op::Stochastic:
         case Op::ScalarLeaf: return TypeResult::ok(ValueKind::Scalar);
         case Op::ValueLeaf: {
             auto it = env.find(variableName);
@@ -691,6 +693,13 @@ std::optional<PropertyValue> MathNode::evaluate(const std::map<std::string, Prop
                 return PropertyValue(glm::vec3(std::floor(vec.x), std::floor(vec.y), std::floor(vec.z)));
             }
             return std::nullopt;
+        }
+        case Op::Stochastic: {
+            std::vector<std::optional<PropertyValue>> evalArgs;
+            for (const auto& child : children) {
+                evalArgs.push_back(child->evaluate(vars, subject));
+            }
+            return Probability::evaluateStochastic(stringArg, evalArgs);
         }
     }
     return std::nullopt;

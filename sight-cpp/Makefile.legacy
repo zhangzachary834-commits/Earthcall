@@ -335,6 +335,12 @@ law_audit_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/law_audit_test.o
 constitution_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/constitution_test.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
+logos_modality_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/logos_modality_test.o
+	$(CXX) $^ $(LDFLAGS) -o $@
+
+test-logos: logos_modality_test
+	./logos_modality_test
+
 test-property: property_bridge_test
 	./property_bridge_test
 

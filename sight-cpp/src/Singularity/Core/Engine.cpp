@@ -4,6 +4,10 @@
 #include "../../../imgui/imgui.h"
 #include "../../../imgui/backends/imgui_impl_glfw.h"
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
+
 // The GPU backend is selected at compile time — see Engine.hpp for why it cannot
 // be a runtime switch. Everything backend-specific in this file is behind this
 // one macro, so the two builds share the entire main loop structure.
@@ -18,6 +22,7 @@
 #endif
 
 #include "Singularity/Audio/AudioSystem.hpp"
+#include "Singularity/Language/LanguageSystem.hpp"
 
 #include <iostream>
 
@@ -136,14 +141,50 @@ bool Engine::init(int /*argc*/, char** /*argv*/) {
     return true;
 }
 
+#ifdef __EMSCRIPTEN__
+struct LoopContext {
+    Engine* engine;
+    Game* game;
+    double lastTime;
+};
+
+static void emscripten_main_loop(void* arg) {
+    LoopContext* ctx = static_cast<LoopContext*>(arg);
+    if (!ctx->engine->running() || !ctx->engine->window() || glfwWindowShouldClose(ctx->engine->window())) {
+        emscripten_cancel_main_loop();
+        ctx->engine->shutdown();
+        delete ctx;
+        return;
+    }
+    
+    double currentTime = glfwGetTime();
+    float dt = static_cast<float>(currentTime - ctx->lastTime);
+    ctx->lastTime = currentTime;
+    
+    ctx->engine->tick(*(ctx->game), dt);
+}
+#endif
+
 void Engine::run(Game& game) {
     double lastTime = glfwGetTime();
 
+#ifdef __EMSCRIPTEN__
+    LoopContext* ctx = new LoopContext{this, &game, lastTime};
+    emscripten_set_main_loop_arg(emscripten_main_loop, ctx, 0, 1);
+#else
     while (_running && _window && !glfwWindowShouldClose(_window)) {
         double currentTime = glfwGetTime();
         float  dt          = static_cast<float>(currentTime - lastTime);
         lastTime           = currentTime;
+        
+        tick(game, dt);
+    }
+    // Allow Game to perform shutdown logic before engine terminates
+    game.shutdown();
+#endif
+}
 
+void Engine::tick(Game& game, float dt) {
         glfwPollEvents();
 
 #ifdef EARTHCALL_WEBGPU
@@ -158,7 +199,7 @@ void Engine::run(Game& game) {
                 wgpu::configureSurface(_webgpu->ctx, static_cast<uint32_t>(fbw),
                                        static_cast<uint32_t>(fbh));
             }
-            if (fbw == 0 || fbh == 0) continue; // minimised: nothing to draw into
+            if (fbw == 0 || fbh == 0) return; // minimised: nothing to draw into
         }
         ImGui_ImplWGPU_NewFrame();
 #else
@@ -166,6 +207,9 @@ void Engine::run(Game& game) {
 #endif
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
+
+        // Tick language modality
+        Singularity::Language::LanguageSystem::instance().tick(dt);
 
         game.update(dt);
         game.render(); // brackets itself with Renderer begin/endFrame
@@ -184,10 +228,6 @@ void Engine::run(Game& game) {
         ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
         glfwSwapBuffers(_window);
 #endif
-    }
-
-    // Allow Game to perform shutdown logic before engine terminates
-    game.shutdown();
 }
 
 void Engine::shutdown() {
@@ -220,6 +260,9 @@ void Engine::shutdown() {
 
     // Shutdown audio system
     Core::Audio::AudioSystem::instance().shutdown();
+    
+    // Clear Language Lexemes
+    Singularity::Language::LanguageSystem::instance().clear();
 
     _running = false;
     std::cout << "👋 Engine shut down." << std::endl;

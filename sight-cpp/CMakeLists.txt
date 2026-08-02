@@ -166,3 +166,34 @@ foreach(TEST_SOURCE ${TEST_FILES})
     target_link_libraries(${TEST_NAME} PRIVATE earthcall_core)
     add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
 endforeach()
+
+# --- WebAssembly / Emscripten Build ---
+if (EMSCRIPTEN)
+    set(WASM_APP_SOURCES ${SRC_FILES})
+    list(FILTER WASM_APP_SOURCES EXCLUDE REGEX "src/Rendering/WebGPU/smoke_.*")
+    # Exclude macOS specific webviews
+    list(FILTER WASM_APP_SOURCES EXCLUDE REGEX "src/Integration/RealWebView.*")
+    list(FILTER WASM_APP_SOURCES EXCLUDE REGEX "src/Integration/WebIntegration.*")
+    # Also exclude native AudioToolbox/CoreAudio dependencies if needed
+
+    set(IMGUI_WASM_SOURCES
+        ${IMGUI_DIR}/imgui.cpp
+        ${IMGUI_DIR}/imgui_demo.cpp
+        ${IMGUI_DIR}/imgui_draw.cpp
+        ${IMGUI_DIR}/imgui_tables.cpp
+        ${IMGUI_DIR}/imgui_widgets.cpp
+        ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp
+        ${IMGUI_DIR}/backends/imgui_impl_wgpu.cpp
+    )
+
+    add_executable(earthcall_wasm src/entry.cpp ${WASM_APP_SOURCES} ${IMGUI_WASM_SOURCES})
+    target_compile_definitions(earthcall_wasm PRIVATE EARTHCALL_WEBGPU IMGUI_IMPL_WEBGPU_BACKEND_WGPU)
+    
+    # Emscripten linker flags for WebGPU, asyncify, glfw, and embind
+    set_target_properties(earthcall_wasm PROPERTIES LINK_FLAGS
+        "-s USE_WEBGPU=1 -s ASYNCIFY=1 -s WASM=1 -s ALLOW_MEMORY_GROWTH=1 -s USE_GLFW=3 --bind -O3"
+    )
+    # Output name
+    set_target_properties(earthcall_wasm PROPERTIES OUTPUT_NAME "earthcall")
+    set_target_properties(earthcall_wasm PROPERTIES SUFFIX ".js")
+endif()
