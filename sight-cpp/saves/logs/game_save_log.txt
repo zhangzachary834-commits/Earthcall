@@ -1001,3 +1001,4 @@ saves/games/20260729_225844_ecsave_delta.ecsave
 saves/games/20260801_162731_QuickSave_delta.ecsave
 saves/games/20260801_162950_QuickSave_delta.ecsave
 saves/games/20260801_163445_ecsave_delta.ecsave
+saves/games/20260801_192642_QuickSave_delta.ecsave

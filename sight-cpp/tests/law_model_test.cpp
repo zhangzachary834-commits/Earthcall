@@ -195,7 +195,8 @@ int main() {
 
         Soul pSoul("TestSubject");
         Body pAvatar = Body::createBasicAvatar("TestVoxel");
-        Person person(pSoul, std::move(pAvatar));
+        Person person(pSoul, std::move(pAvatar), "default");
+        strLaw.addAuthor(person);
         
         // Ensure property can be accessed
         PropertyValue valOut;
@@ -257,6 +258,7 @@ int main() {
         {
             Law multiLaw("multi-law");
             multiLaw.addAuthor(author);
+            multiLaw.addAuthor(person);
             
             // Multiple conditions: activeTool == "FloatSatisfied" AND position.y > 50.0
             std::vector<ConditionNode> conditions;
@@ -283,8 +285,9 @@ int main() {
         // 5. Verification of multiple-condition (All, Any) and multiple-action (Sequence) laws
         // ------------------------------------------------------------------
         {
-            Law multiLaw("multi-test");
+            Law multiLaw("multi-tester");
             multiLaw.addAuthor(author);
+            multiLaw.addAuthor(person);
 
             // Condition: (y < 0) AND (x > 10)
             auto c1 = ConditionNode::compare("position.y", ConditionNode::Op::Lt, PropertyValue(0.0));

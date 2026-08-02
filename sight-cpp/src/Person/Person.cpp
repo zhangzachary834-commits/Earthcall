@@ -59,10 +59,45 @@ void Person::buildProperties() {
         "activeShapeKind", this, &Person::activeShapeKind));
     _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, glm::vec3>>(
         "activeColor", this, &Person::activeColor));
+    _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, std::string>>(
+        "placementMode", this, &Person::placementMode));
+    _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, float>>(
+        "gridSnapSize", this, &Person::gridSnapSize));
+    _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, float>>(
+        "manualDistance", this, &Person::manualDistance));
+}
+
+void Person::updatePlacement() {
+    if (placementMode == "ManualDistance") {
+        cursorSpawnPos = cameraPos + cameraForward * manualDistance;
+    } else if (placementMode == "CursorSnap") {
+        float step = (gridSnapSize > 0.001f) ? gridSnapSize : 1.0f;
+        cursorSpawnPos = glm::vec3(
+            std::round(cursorHitPos.x / step) * step,
+            std::round(cursorHitPos.y / step) * step,
+            std::round(cursorHitPos.z / step) * step
+        );
+    } else {
+        cursorSpawnPos = cursorHitPos;
+    }
 }
 
 glm::mat4 Person::getCursorSpawnTransform() const {
-    glm::mat4 t = glm::translate(glm::mat4(1.0f), cursorSpawnPos);
+    glm::vec3 spawnPos = cursorSpawnPos;
+    if (placementMode == "ManualDistance") {
+        spawnPos = cameraPos + cameraForward * manualDistance;
+    } else if (placementMode == "CursorSnap") {
+        float step = (gridSnapSize > 0.001f) ? gridSnapSize : 1.0f;
+        spawnPos = glm::vec3(
+            std::round(cursorHitPos.x / step) * step,
+            std::round(cursorHitPos.y / step) * step,
+            std::round(cursorHitPos.z / step) * step
+        );
+    } else if (cursorSpawnPos == glm::vec3(0.0f)) {
+        spawnPos = cursorHitPos;
+    }
+
+    glm::mat4 t = glm::translate(glm::mat4(1.0f), spawnPos);
     t = glm::rotate(t, glm::radians(cursorSpawnRot.x), glm::vec3(1.0f, 0.0f, 0.0f));
     t = glm::rotate(t, glm::radians(cursorSpawnRot.y), glm::vec3(0.0f, 1.0f, 0.0f));
     t = glm::rotate(t, glm::radians(cursorSpawnRot.z), glm::vec3(0.0f, 0.0f, 1.0f));

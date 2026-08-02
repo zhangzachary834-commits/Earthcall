@@ -408,12 +408,14 @@ ECA::ActionExecutor ActionNode::compile() const {
 
                 std::vector<Object*> sources;
                 glm::mat4 placement(1.0f);
-                if (auto* subject = dynamic_cast<Object*>(event.subject)) {
-                    sources.push_back(subject);
+                if (event.subject) {
+                    if (auto* subjectObj = dynamic_cast<Object*>(event.subject)) {
+                        sources.push_back(subjectObj);
+                    }
                     bool placementSet = false;
                     if (!placementPath.empty()) {
                         PropertyValue pv;
-                        if (lawGetValue(*subject, placementPath, pv)) {
+                        if (lawGetValue(*event.subject, placementPath, pv)) {
                             if (std::holds_alternative<glm::mat4>(pv)) {
                                 placement = std::get<glm::mat4>(pv);
                                 placementSet = true;
@@ -431,8 +433,14 @@ ECA::ActionExecutor ActionNode::compile() const {
                                        "placement path unreadable: " + placementPath.toString());
                             return;
                         }
+                    } else if (auto* subjectObj = dynamic_cast<Object*>(event.subject)) {
+                        placement = glm::translate(glm::mat4(1.0f), subjectObj->getPosition());
                     } else {
-                        placement = glm::translate(glm::mat4(1.0f), subject->getPosition());
+                        PropertyValue posVal;
+                        if (lawGetValue(*event.subject, PropertyPath::parse("position"), posVal) &&
+                            std::holds_alternative<glm::vec3>(posVal)) {
+                            placement = glm::translate(glm::mat4(1.0f), std::get<glm::vec3>(posVal));
+                        }
                     }
                 }
                 auto newborns = concept->instantiate(
