@@ -41,6 +41,9 @@ CXXFLAGS = -std=c++17 -Wall -Wextra $(OPTFLAGS) \
            -I./src/ZonesOfEarth \
            -I./src/Person/Body \
            -I../imgui \
+           -I./third_party/glm \
+           -I./third_party/glfw/include \
+           -I./third_party/flatbuffers/include \
            -I/opt/homebrew/Cellar/glfw/3.4/include \
            -I/opt/homebrew/include \
            -DGL_SILENCE_DEPRECATION
@@ -329,6 +332,15 @@ law_creation_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/law_creation_test.o
 law_audit_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/law_audit_test.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
+constitution_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/constitution_test.o
+	$(CXX) $^ $(LDFLAGS) -o $@
+
+logos_modality_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/logos_modality_test.o
+	$(CXX) $^ $(LDFLAGS) -o $@
+
+test-logos: logos_modality_test
+	./logos_modality_test
+
 test-property: property_bridge_test
 	./property_bridge_test
 
@@ -337,6 +349,9 @@ test-law: law_model_test
 
 test-law-audit: law_audit_test
 	./law_audit_test
+
+test-constitution: constitution_test
+	./constitution_test
 
 test-loop: law_loop_test
 	./law_loop_test

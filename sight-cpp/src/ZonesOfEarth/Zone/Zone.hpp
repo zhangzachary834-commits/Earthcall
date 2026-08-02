@@ -31,8 +31,8 @@ public:
     using Qualities = std::unordered_map<std::string, std::string>;
     using Deletability = std::unordered_map<std::string, bool>;
 
-    Zone(const std::string &name, Scope scope = Scope::Local);
-    Zone(const std::string &name, float r, float g, float b, Scope scope = Scope::Local);
+    Zone(const std::string &name, const std::string& joyOrdering, Scope scope = Scope::Local);
+    Zone(const std::string &name, const std::string& joyOrdering, float r, float g, float b, Scope scope = Scope::Local);
 
     Zone(const Zone&);
     Zone& operator=(const Zone&);
@@ -205,6 +205,7 @@ private:
     Scope _scope;
     Qualities _qualities;
     Deletability _deletable;
+    std::string _joyOrdering;
     std::string _ownerId;   // owning Person's identifier ("" = commons)
     std::unique_ptr<World> _world; // per-zone world instance
     Formation _formation;

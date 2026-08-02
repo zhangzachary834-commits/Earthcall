@@ -70,12 +70,18 @@ glm::mat4 Person::getCursorSpawnTransform() const {
     return t;
 }
 
-Person::Person(Soul soul, Body body) : _soul(std::move(soul)), body(std::move(body)) {
+Person::Person(Soul soul, Body body, const std::string& joyOrdering) : _soul(std::move(soul)), body(std::move(body)) {
     // The Person's identifier IS the soul's identity. Left unset it was the
     // empty string — invisible in law authorship records and unmatchable
     // when a saved world reattaches authors by identifier.
     soulName = _soul.getIdentifier();
     if (soulName.empty()) soulName = "Person";
+    
+    // Validate that a joy ordering is provided, fulfilling the Singularity
+    // level requirement that Persons have a worship-ordering.
+    if (joyOrdering.empty()) {
+        std::cerr << "[WARNING] Person instantiated without a Joy-Ordering." << std::endl;
+    }
 }
 
 nlohmann::json Person::serialize() const {

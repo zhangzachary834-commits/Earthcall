@@ -73,23 +73,23 @@ void Zone::applyFormationRelations() {
     _formation.applyAttachmentRelations();
 }
 
-Zone::Zone(const std::string& name, Scope scope)
-    : _name(name), _scope(scope), _world(std::make_unique<World>()), _formation(Form::ShapeType::Cube, {1.0f, 1.0f, 1.0f})
+Zone::Zone(const std::string& name, const std::string& joyOrdering, Scope scope)
+    : _name(name), _scope(scope), _joyOrdering(joyOrdering), _world(std::make_unique<World>()), _formation(Form::ShapeType::Cube, {1.0f, 1.0f, 1.0f})
 {
     // Default background tint (deep space blue)
     r = 0.05f; g = 0.05f; b = 0.1f;
     _formation.addMember(_world.get());
 }
 
-Zone::Zone(const std::string& name, float rF, float gF, float bF, Scope scope)
-    : _name(name), _scope(scope), _world(std::make_unique<World>()), _formation(Form::ShapeType::Cube, {1.0f, 1.0f, 1.0f})
+Zone::Zone(const std::string& name, const std::string& joyOrdering, float rF, float gF, float bF, Scope scope)
+    : _name(name), _scope(scope), _joyOrdering(joyOrdering), _world(std::make_unique<World>()), _formation(Form::ShapeType::Cube, {1.0f, 1.0f, 1.0f})
 {
     r = rF; g = gF; b = bF;
     _formation.addMember(_world.get());
 }
 
 Zone::Zone(const Zone& other)
-    : _name(other._name), _scope(other._scope), _qualities(other._qualities), _deletable(other._deletable), _ownerId(other._ownerId), _world(std::make_unique<World>()), _formation(Form::ShapeType::Cube, {1.0f, 1.0f, 1.0f})
+    : _name(other._name), _scope(other._scope), _qualities(other._qualities), _deletable(other._deletable), _joyOrdering(other._joyOrdering), _ownerId(other._ownerId), _world(std::make_unique<World>()), _formation(Form::ShapeType::Cube, {1.0f, 1.0f, 1.0f})
 {
     r = other.r; g = other.g; b = other.b;
     strokes = other.strokes;
@@ -106,6 +106,7 @@ Zone& Zone::operator=(const Zone& other)
     std::swap(_scope, tmp._scope);
     std::swap(_qualities, tmp._qualities);
     std::swap(_deletable, tmp._deletable);
+    std::swap(_joyOrdering, tmp._joyOrdering);
     std::swap(_ownerId, tmp._ownerId);
     std::swap(r, tmp.r);
     std::swap(g, tmp.g);

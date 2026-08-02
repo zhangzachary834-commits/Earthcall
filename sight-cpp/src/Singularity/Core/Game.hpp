@@ -406,7 +406,7 @@ private:
     // Accumulated seconds since the world began — the world clock laws read
     // via the reserved "time" paths (set on Universe each frame in update()).
     double        _worldTime = 0.0;
-    Person        _player {Soul{"Player"}, Body::createBasicAvatar("Voxel")};
+    Person        _player {Soul{"Player"}, Body::createBasicAvatar("Voxel"), "strict"};
     AvatarManager _avatarManager;
     KeyboardHandler _keyboardHandler;
     MouseHandler  _mouseHandler;

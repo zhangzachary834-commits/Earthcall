@@ -11,6 +11,9 @@
 #include <iterator>
 #include <optional>
 
+#include "Person/Person.hpp"
+#include "ZonesOfEarth/Zone/Zone.hpp"
+
 namespace {
 std::vector<std::string> formationMemberIds(const Formation& formation) {
     std::vector<std::string> ids;
@@ -282,12 +285,51 @@ Law::ApplicationResult Law::applyTo(Singular& target) {
     // govern higher. This single check is what keeps the civic order from
     // collapsing into either chaos or tyranny.
     const Law* targetLaw = dynamic_cast<const Law*>(&target);
+    const Person* targetPerson = dynamic_cast<const Person*>(&target);
+    const Zone* targetZone = dynamic_cast<const Zone*>(&target);
+
+    bool violatesKernelBoundary = false;
+    if (_actionModel) {
+        std::vector<PropertyPath> paths;
+        _actionModel->collectPaths(paths);
+        
+        bool isSelfAuthored = false;
+        for (auto* author : _authors.getMembers()) {
+            if (author == &target) {
+                isSelfAuthored = true;
+                break;
+            }
+        }
+
+        for (const auto& p : paths) {
+            if (p.segments.empty()) continue;
+            const std::string& root = p.segments.front();
+            
+            // 1. Person Guard: Nobody else can move your body against your will.
+            if (targetPerson && !isSelfAuthored) {
+                if (root == "position" || root == "velocity" || root == "acceleration") {
+                    violatesKernelBoundary = true;
+                    break;
+                }
+            }
+            
+            // 3. Zone Exit Lock Rejection: Nobody can be locked in a zone against their will.
+            if (targetZone) {
+                if (root == "canExit") {
+                    violatesKernelBoundary = true;
+                    break;
+                }
+            }
+        }
+    }
 
     if (!_enabled) {
         result = ApplicationResult::Disabled;
     } else if (!isAuthored()) {
         result = ApplicationResult::Unauthored;
     } else if (targetLaw && _authorityLevel < targetLaw->authorityLevel()) {
+        result = ApplicationResult::AuthorityDenied;
+    } else if (violatesKernelBoundary) {
         result = ApplicationResult::AuthorityDenied;
     } else if (!conditionsSatisfied(target)) {
         result = ApplicationResult::ConditionsFailed;
@@ -359,6 +401,18 @@ Law::ApplicationResult Law::applyTo(Singular& target) {
                        (first.note.empty() ? std::string(ActionNode::reasonName(first.reason))
                                            : first.note) + ")";
         }
+        if (wrote) {
+            for (const auto& node : trace.nodes) {
+                if (node.wrote && !node.path.empty()) {
+                    for (auto* author : _authors.getMembers()) {
+                        if (author) {
+                            target.addStakeholder(node.path, author->getIdentifier(), getIdentifier(), std::time(nullptr));
+                        }
+                    }
+                }
+            }
+        }
+
         nlohmann::json nodesJson = nlohmann::json::array();
         for (const auto& node : trace.nodes) {
             nodesJson.push_back({{"action", node.actionName},

@@ -115,7 +115,7 @@ public:
     void deserialize(const nlohmann::json& j);
 
     // Constructors
-    Person(Soul soul, Body body);
+    Person(Soul soul, Body body, const std::string& joyOrdering);
     // Person(std::string soulName, Body&& body, glm::vec3 pos = {0.0f,0.0f,0.0f});  // Commented out - needs Soul reference
     void express() const;
     void draw() const;

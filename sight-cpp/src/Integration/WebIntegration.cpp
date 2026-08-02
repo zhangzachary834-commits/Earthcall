@@ -5,7 +5,11 @@
 #include <sstream>
 
 // Real web view implementation using native WebKit
+#ifndef __EMSCRIPTEN__
 #include "Integration/RealWebView.hpp"
+#else
+#include <emscripten.h>
+#endif
 
 namespace Integration {
 
@@ -13,6 +17,7 @@ namespace Integration {
 class WebView::WebViewImpl {
 public:
     WebViewImpl(const std::string& url) {
+#ifndef __EMSCRIPTEN__
         RealWebView::Config config;
         config.url = url;
         config.width = 800;
@@ -21,120 +26,175 @@ public:
         config.allow_navigation = true;
         
         _realWebView = std::make_unique<RealWebView>(config);
+#else
+        std::cout << "🌐 Wasm WebView initialized (Host browser is the view): " << url << std::endl;
+#endif
     }
     
     bool init() {
+#ifndef __EMSCRIPTEN__
         if (_realWebView) {
             return _realWebView->init();
         }
-        return false;
+#endif
+        return true;
     }
     
     void update() {
+#ifndef __EMSCRIPTEN__
         if (_realWebView) {
             _realWebView->update();
         }
+#endif
     }
     
     void render() {
+#ifndef __EMSCRIPTEN__
         if (_realWebView) {
             _realWebView->render();
         }
+#endif
     }
     
     void shutdown() {
+#ifndef __EMSCRIPTEN__
         if (_realWebView) {
             _realWebView->shutdown();
         }
+#endif
     }
     
     void navigate(const std::string& url) {
+#ifndef __EMSCRIPTEN__
         if (_realWebView) {
             _realWebView->navigate(url);
         }
+#else
+        // Let the host JS handle navigation if needed
+        EM_ASM({
+            console.log("C++ requested navigation to: " + UTF8ToString($0));
+            // window.location.href = UTF8ToString($0);
+        }, url.c_str());
+#endif
     }
     
     void executeJavaScript(const std::string& script) {
+#ifndef __EMSCRIPTEN__
         if (_realWebView) {
             _realWebView->executeJavaScript(script);
         }
+#else
+        emscripten_run_script(script.c_str());
+#endif
     }
     
     void showWindow() {
+#ifndef __EMSCRIPTEN__
         if (_realWebView) {
             _realWebView->showWindow();
         }
+#endif
     }
     
     void hideWindow() {
+#ifndef __EMSCRIPTEN__
         if (_realWebView) {
             _realWebView->hideWindow();
         }
+#endif
     }
     
     void setWindowVisible(bool visible) {
+#ifndef __EMSCRIPTEN__
         if (_realWebView) {
             _realWebView->setWindowVisible(visible);
         }
+#endif
     }
     
     // Web interaction methods
     void injectCSS(const std::string& css) {
+#ifndef __EMSCRIPTEN__
         if (_realWebView) {
             _realWebView->injectCSS(css);
         }
+#else
+        EM_ASM({
+            var style = document.createElement('style');
+            style.innerHTML = UTF8ToString($0);
+            document.head.appendChild(style);
+        }, css.c_str());
+#endif
     }
     
     void modifyElement(const std::string& selector, const std::string& property, const std::string& value) {
+#ifndef __EMSCRIPTEN__
         if (_realWebView) {
             _realWebView->modifyElement(selector, property, value);
         }
+#endif
     }
     
     void addElement(const std::string& parentSelector, const std::string& html) {
+#ifndef __EMSCRIPTEN__
         if (_realWebView) {
             _realWebView->addElement(parentSelector, html);
         }
+#endif
     }
     
     void removeElement(const std::string& selector) {
+#ifndef __EMSCRIPTEN__
         if (_realWebView) {
             _realWebView->removeElement(selector);
         }
+#endif
     }
     
     void setElementText(const std::string& selector, const std::string& text) {
+#ifndef __EMSCRIPTEN__
         if (_realWebView) {
             _realWebView->setElementText(selector, text);
         }
+#endif
     }
     
     void setElementHTML(const std::string& selector, const std::string& html) {
+#ifndef __EMSCRIPTEN__
         if (_realWebView) {
             _realWebView->setElementHTML(selector, html);
         }
+#endif
     }
     
     void enableDeveloperMode(bool enable) {
+#ifndef __EMSCRIPTEN__
         if (_realWebView) {
             _realWebView->enableDeveloperMode(enable);
         }
+#endif
     }
     
     void captureScreenshot() {
+#ifndef __EMSCRIPTEN__
         if (_realWebView) {
             _realWebView->captureScreenshot();
         }
+#endif
     }
     
     void enableLiveEditing(bool enable) {
+#ifndef __EMSCRIPTEN__
         if (_realWebView) {
             _realWebView->enableLiveEditing(enable);
         }
+#endif
     }
 
 private:
+#ifndef __EMSCRIPTEN__
     std::unique_ptr<RealWebView> _realWebView;
+#endif
 };
 
 // Bridge for communication between web apps and Earthcall
@@ -146,6 +206,13 @@ public:
         if (_parent && _parent->isActive()) {
             // Send message to web app
             std::cout << "🌉 Bridge -> WebApp: " << message << std::endl;
+#ifdef __EMSCRIPTEN__
+            EM_ASM({
+                if (window.earthcall_receive) {
+                    window.earthcall_receive(UTF8ToString($0));
+                }
+            }, message.c_str());
+#endif
         }
     }
     
@@ -608,3 +675,18 @@ void WebIntegrationManager::deserializeWebApps(const nlohmann::json& j) {
 }
 
 } // namespace Integration 
+
+#ifdef __EMSCRIPTEN__
+#include <emscripten/bind.h>
+
+// Global C-API wrapper for JS to easily call without C++ object instantiation
+extern "C" {
+    void emscripten_receive_from_js(const char* appName, const char* message) {
+        Integration::WebIntegrationManager::instance().sendToApp(appName, message);
+    }
+}
+
+EMSCRIPTEN_BINDINGS(earthcall_integration) {
+    emscripten::function("receive_from_js", &emscripten_receive_from_js);
+}
+#endif

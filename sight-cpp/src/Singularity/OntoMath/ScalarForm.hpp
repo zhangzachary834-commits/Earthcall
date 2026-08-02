@@ -218,7 +218,8 @@ struct MathNode {
         Hadamard = 9,
         Normalize = 10,
         Length = 11,
-        Map = 12 // Unary componentwise function (e.g. Round, Floor)
+        Map = 12, // Unary componentwise function (e.g. Round, Floor)
+        Stochastic = 13 // Random variable distribution
     };
 
     Op op;
