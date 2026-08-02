@@ -43,6 +43,8 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ZonesOfEarth
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Person/Body
     ${CMAKE_CURRENT_SOURCE_DIR}/../imgui
+    ${CMAKE_CURRENT_SOURCE_DIR}/local_deps/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/local_deps/glfw_install/include
 )
 
 # Fetch standalone ASIO and WebSocketPP for native networking
@@ -82,6 +84,7 @@ list(FILTER SRC_FILES EXCLUDE REGEX "src/Rendering/WebGPU/.*")
 list(FILTER SRC_FILES EXCLUDE REGEX "src/entry.cpp")
 list(FILTER SRC_FILES EXCLUDE REGEX "smoke_.*")
 list(FILTER SRC_FILES EXCLUDE REGEX "scratch/.*")
+list(FILTER SRC_FILES EXCLUDE REGEX "src/Legacy Depricated/.*")
 
 set(IMGUI_DIR "../imgui")
 set(IMGUI_SOURCES
