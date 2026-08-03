@@ -1,5 +1,20 @@
+# --- Web server and Socket.IO transport: app.py, api/, web/, sockets/events.py ---
 Flask==3.0.0
 Werkzeug==3.0.1
 Flask-SocketIO==5.3.6
 Flask-CORS==4.0.0
 python-dotenv==1.0.1
+
+# --- Raw WebSocket bridge to the C++ engine: sockets/engine_server.py ---
+# Pinned to the version already installed on this machine.
+websockets==15.0.1
+
+# --- Agent automation: agent/earthcall_agent.py ---
+# playwright also needs its browsers fetched once, separately from pip:
+#   python -m playwright install
+playwright==1.60.0
+# Desktop window/input control. Both are platform-sensitive: pygetwindow
+# ships no macOS window enumeration, so earthcall_agent's gw.* calls work
+# on Windows only.
+PyAutoGUI==0.9.54
+PyGetWindow==0.0.9
