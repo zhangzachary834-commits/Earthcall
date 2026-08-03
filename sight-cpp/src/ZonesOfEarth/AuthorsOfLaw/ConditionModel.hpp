@@ -7,6 +7,7 @@
 #include "Singularity/OntoMath/ScalarForm.hpp"
 #include "json.hpp"
 
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -32,16 +33,20 @@ struct ConditionNode {
                       // (a first mover shrunk to a pure PREDICATE): perception
                       // as an ordinary condition.
                       Overlaps = 11,
-                      // Pair quantifiers — first-order conditions over TWO
-                      // bound beings: "some pair (x, y) of kinds (A, B)
-                      // satisfies the inner condition" / "every ordered pair
-                      // does" (vacuously true when empty). Inside the inner
-                      // condition, plain paths address the FIRST of the pair
-                      // (it is the subject) and "@event.object" addresses the
-                      // SECOND — so Overlaps("@event.object") inside
-                      // ForAnyPair(Object, Object, ...) IS authored collision
-                      // detection. Pairs are ORDERED and distinct.
-                      ForAnyPair = 12, ForAllPair = 13 };
+                      // 12 and 13 were the pair quantifiers (ForAnyPair /
+                      // ForAllPair), retired in favour of modelling pairs as
+                      // Relations in the graph. APPEND-ONLY means those two
+                      // stay BURNED: a future kind must not reuse them, or a
+                      // saved world would load as something else entirely.
+                      //
+                      // Not a kind an author can pick — the landing place for
+                      // a kind THIS BUILD does not know: a save from another
+                      // version, or one of the retired pair quantifiers. It
+                      // never holds (compile() answers false and says why in
+                      // the audit log), and the original JSON rides along in
+                      // `unsupported` so a load/save round trip does not
+                      // destroy law text we merely cannot evaluate.
+                      Unsupported = 255 };
     enum class Op { Eq = 0, Ne = 1, Lt = 2, Le = 3, Gt = 4, Ge = 5, Near = 6, InRange = 7 };
 
     // The ontology's kinds, checked by dynamic_cast — honest C++ instanceof.
@@ -85,11 +90,15 @@ struct ConditionNode {
 
     // IsKind payload + the quantifiers' domain filter.
     BeingKind beingKind = BeingKind::AnyBeing;
-    BeingKind beingKindB = BeingKind::AnyBeing;   // the pair's SECOND role
     // Quantifier exceptions: "every instance ... with possible exceptions".
     std::vector<std::string> exceptIds;
 
     std::vector<ConditionNode> children;   // All/Any/Not members; quantifier inner test
+
+    // Unsupported payload: the node's original JSON, kept verbatim so this
+    // build can hand back law text it cannot read. shared_ptr because the
+    // common case is null and ConditionNode is copied freely.
+    std::shared_ptr<nlohmann::json> unsupported;
 
     nlohmann::json toJson() const;
     static ConditionNode fromJson(const nlohmann::json& j);
@@ -127,14 +136,7 @@ struct ConditionNode {
     // Universe by kind (quantifiers, folds).
     static bool matchesKind(const Singular& being, BeingKind kind);
 
-    // Pair quantifiers: inner's subject = the pair's FIRST; "@event.object"
-    // = the pair's SECOND. exceptIds exempt beings from either role.
-    static ConditionNode forAnyPair(BeingKind kindA, BeingKind kindB,
-                                    ConditionNode inner,
-                                    std::vector<std::string> exceptIds = {});
-    static ConditionNode forAllPairs(BeingKind kindA, BeingKind kindB,
-                                     ConditionNode inner,
-                                     std::vector<std::string> exceptIds = {});
+    // (Pair quantifiers removed: model pairs as Relations in the graph.)
     static ConditionNode forAny(BeingKind kind, ConditionNode inner,
                                 std::vector<std::string> exceptions = {});
     static ConditionNode forAll(BeingKind kind, ConditionNode inner,

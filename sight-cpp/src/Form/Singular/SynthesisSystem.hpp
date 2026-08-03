@@ -49,5 +49,10 @@ private:
     SynthesisSystem() = default;
     
     // Instantiates a specific Singular derived class by its class name (e.g. "Lexeme", "Zone")
-    std::shared_ptr<Singular> instantiateClass(const std::string& classType);
+    // initialProperties is consulted for values that must be set at birth:
+    // some beings register their identity read-only ("identity is not a slot"),
+    // so applying it as a property afterwards silently does nothing.
+    std::shared_ptr<Singular> instantiateClass(
+        const std::string& classType,
+        const std::map<std::string, PropertyValue>& initialProperties = {});
 };

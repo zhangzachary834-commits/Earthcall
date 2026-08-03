@@ -174,17 +174,23 @@ consuming it; cascades stay under `kMaxChainRounds`. Together they close the
 loop: a WhileTrue perception law announces `contact-perceived(a, b)` and a
 response law acts on `@event.object` — collision, legislated end to end.
 
-**Pair quantification (landed):** `ForAnyPair` / `ForAllPair` — first-order
-conditions over ORDERED, DISTINCT pairs of beings by kind (with exceptions).
-Inside the inner condition, plain paths address the pair's FIRST (it is the
-subject) and `@event.object` its SECOND — the existing referent vocabulary,
-borrowed (the ambient event context is saved and restored). So
-`ForAnyPair(Object, Object, Overlaps("@event.object"))` IS authored
-collision detection, and property claims range across pairs ("some being
-sits lower than another"). Known gap: the quantifier proves existence but
-does not yet export the WITNESS pair to the THEN (witness binding — future).
-Remaining from the same analysis: Rete-incremental + spatial-index
-evaluation for engine-grade cost (pair scans are O(n²) per evaluation).
+**Pair quantification (RETIRED — was kinds 12/13):** `ForAnyPair` /
+`ForAllPair` quantified over ORDERED, DISTINCT pairs of beings by kind, with
+the inner condition reading the pair's FIRST as its subject and its SECOND as
+`@event.object`. It was removed: the O(n²) scan per evaluation never got its
+spatial index, and borrowing the event vocabulary to carry the second element
+meant a pair claim could not export its WITNESS to the action — so the
+"authored collision detection" it enabled could detect a pair but never act on
+the one it found. **Model pairs as Relations in the graph instead** (see
+*Related*, below): a relation names both participants as first-class law text,
+which the quantifier's borrowed vocabulary could not.
+
+Kinds 12 and 13 are BURNED in `ConditionNode::Kind` — the enum is append-only,
+and reusing them would make an existing saved world load as something else
+entirely. Condition JSON carrying either now loads as `Kind::Unsupported`:
+never satisfied, loud in the audit log, and re-serialized VERBATIM so opening
+a world in this build does not destroy law text it cannot evaluate. See
+`design_review_remediation.md` §2 (in the repo-root `docs/`, not this tree).
 
 **Related (landed):** the Universe carries a relation provider (the engine
 wires the active zone's Formation relations) and `Related` compiles against

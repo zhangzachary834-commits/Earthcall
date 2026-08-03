@@ -195,8 +195,12 @@ int main() {
 
         Soul pSoul("TestSubject");
         Body pAvatar = Body::createBasicAvatar("TestVoxel");
-        Person person(pSoul, std::move(pAvatar));
-        
+        Person person(pSoul, std::move(pAvatar), "default");
+        // The Person Guard rejects a law that moves someone's body unless
+        // they are among its authors, so without this applyTo stops at
+        // AuthorityDenied and never evaluates the conditions under test.
+        strLaw.addAuthor(person);
+
         // Ensure property can be accessed
         PropertyValue valOut;
         PropertyPath::parse("activeTool").setValue(person, PropertyValue(std::string("None")));
@@ -257,7 +261,8 @@ int main() {
         {
             Law multiLaw("multi-law");
             multiLaw.addAuthor(author);
-            
+            multiLaw.addAuthor(person);   // moves person.position -- see the Person Guard above
+
             // Multiple conditions: activeTool == "FloatSatisfied" AND position.y > 50.0
             std::vector<ConditionNode> conditions;
             conditions.push_back(ConditionNode::compare("position.y", ConditionNode::Op::Gt, PropertyValue(50.0f)));
@@ -283,8 +288,9 @@ int main() {
         // 5. Verification of multiple-condition (All, Any) and multiple-action (Sequence) laws
         // ------------------------------------------------------------------
         {
-            Law multiLaw("multi-test");
+            Law multiLaw("multi-tester");
             multiLaw.addAuthor(author);
+            multiLaw.addAuthor(person);   // moves person.position -- see the Person Guard above
 
             // Condition: (y < 0) AND (x > 10)
             auto c1 = ConditionNode::compare("position.y", ConditionNode::Op::Lt, PropertyValue(0.0));

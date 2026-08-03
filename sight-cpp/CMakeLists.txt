@@ -18,7 +18,9 @@ find_package(OpenSSL REQUIRED)
 find_package(glfw3 QUIET)
 if (NOT glfw3_FOUND)
   # fallback using pkg-config if needed, or simple link
-  find_library(GLFW_LIB glfw)
+  find_library(GLFW_LIB NAMES glfw3 glfw HINTS ${CMAKE_CURRENT_SOURCE_DIR}/local_deps/glfw_install/lib)
+else()
+  set(GLFW_LIB glfw)
 endif()
 
 # macOS specific frameworks
@@ -45,6 +47,7 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/../imgui
     ${CMAKE_CURRENT_SOURCE_DIR}/local_deps/include
     ${CMAKE_CURRENT_SOURCE_DIR}/local_deps/glfw_install/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/flatbuffers/include
 )
 
 # Fetch standalone ASIO and WebSocketPP for native networking
@@ -79,7 +82,7 @@ file(GLOB_RECURSE SRC_FILES
 
 # Exclude standalone main files and WebGPU from core sources
 list(FILTER SRC_FILES EXCLUDE REGEX "src/main.cpp")
-list(FILTER SRC_FILES EXCLUDE REGEX "src/MigrateSaves.cpp")
+list(FILTER SRC_FILES EXCLUDE REGEX "src/Util/MigrateSaves.cpp")
 list(FILTER SRC_FILES EXCLUDE REGEX "src/Rendering/WebGPU/.*")
 list(FILTER SRC_FILES EXCLUDE REGEX "src/entry.cpp")
 list(FILTER SRC_FILES EXCLUDE REGEX "smoke_.*")
@@ -111,12 +114,15 @@ target_link_libraries(earthcall_core PUBLIC
 )
 if(APPLE)
     target_link_libraries(earthcall_core PUBLIC 
-        glfw
+        ${GLFW_LIB}
         ${COCOA_FW}
         ${WEBKIT_FW}
         ${COREAUDIO_FW}
         ${AUDIOTOOLBOX_FW}
         ${SECURITY_FW}
+        ${IOKIT_FW}
+        ${COREFOUNDATION_FW}
+        ${FOUNDATION_FW}
     )
 endif()
 
@@ -124,18 +130,15 @@ endif()
 add_executable(earthcall src/entry.cpp)
 target_link_libraries(earthcall PRIVATE earthcall_core)
 
-# --- Fetch wgpu-native ---
-include(FetchContent)
-set(WGPU_NATIVE_VERSION "v0.19.4.1") # Using a known stable wgpu release
-if(APPLE)
-    set(WGPU_URL "https://github.com/gfx-rs/wgpu-native/releases/download/${WGPU_NATIVE_VERSION}/wgpu-macos-aarch64-release.zip")
-endif()
-
-FetchContent_Declare(
-  wgpu_native
-  URL      ${WGPU_URL}
-)
-FetchContent_MakeAvailable(wgpu_native)
+# --- wgpu-native (vendored) ---
+# third_party/wgpu bundles a matching webgpu.h (new-style WGPUStringView /
+# CallbackInfo API, v29.0.1.1) plus a prebuilt libwgpu_native.a for macOS.
+# WebGpuRenderer.cpp and friends are written against this API generation, so
+# native and Emscripten builds must share this exact header rather than an
+# independently-fetched wgpu-native release (older releases ship an
+# incompatible pre-StringView ABI and will crash at runtime).
+set(WGPU_NATIVE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/third_party/wgpu)
+include_directories(${WGPU_NATIVE_DIR}/include)
 
 # --- WebGPU App ---
 # Exclude OpenGL specific imgui backend and include WebGPU ones
@@ -154,17 +157,20 @@ set(IMGUI_WEBGPU_SOURCES
 # Add WebGPU specific sources
 list(APPEND WEBGPU_APP_SOURCES 
     src/Rendering/WebGPU/WebGpuContext.mm
+    src/Rendering/WebGPU/WebGpuRenderer.cpp
+    src/Rendering/WebGPU/SdfWgsl.cpp
 )
 
 add_executable(earthcall_webgpu src/entry.cpp ${WEBGPU_APP_SOURCES} ${IMGUI_WEBGPU_SOURCES})
-target_include_directories(earthcall_webgpu PRIVATE ${wgpu_native_SOURCE_DIR})
+target_include_directories(earthcall_webgpu PRIVATE ${WGPU_NATIVE_DIR}/include)
 target_compile_definitions(earthcall_webgpu PRIVATE EARTHCALL_WEBGPU IMGUI_IMPL_WEBGPU_BACKEND_WGPU)
 set_source_files_properties(src/Rendering/WebGPU/WebGpuContext.mm PROPERTIES LANGUAGE OBJCXX)
 
 if(APPLE)
-    target_link_libraries(earthcall_webgpu PRIVATE 
-        ${wgpu_native_SOURCE_DIR}/libwgpu_native.a
-        glfw
+    target_link_libraries(earthcall_webgpu PRIVATE
+        OpenGL::GL
+        ${WGPU_NATIVE_DIR}/lib/libwgpu_native.a
+        ${GLFW_LIB}
         ${COCOA_FW}
         ${WEBKIT_FW}
         ${COREAUDIO_FW}
@@ -188,8 +194,48 @@ file(GLOB_RECURSE TEST_FILES "tests/*.cpp")
 
 foreach(TEST_SOURCE ${TEST_FILES})
     get_filename_component(TEST_NAME ${TEST_SOURCE} NAME_WE)
-    add_executable(${TEST_NAME} ${TEST_SOURCE})
-    target_link_libraries(${TEST_NAME} PRIVATE earthcall_core)
+    
+    # Skip WebGPU test on macOS if it's too complex to link for now, or link properly
+    if (${TEST_NAME} MATCHES "webgpu_.*")
+        add_executable(${TEST_NAME} ${TEST_SOURCE} src/Rendering/WebGPU/WebGpuRenderer.cpp src/Rendering/WebGPU/SdfWgsl.cpp src/Rendering/WebGPU/WebGpuContext.mm)
+        target_include_directories(${TEST_NAME} PRIVATE ${WGPU_NATIVE_DIR}/include)
+        target_compile_definitions(${TEST_NAME} PRIVATE EARTHCALL_WEBGPU IMGUI_IMPL_WEBGPU_BACKEND_WGPU)
+        set_source_files_properties(src/Rendering/WebGPU/WebGpuContext.mm PROPERTIES LANGUAGE OBJCXX)
+        if(APPLE)
+            target_link_libraries(${TEST_NAME} PRIVATE
+                earthcall_core
+                ${WGPU_NATIVE_DIR}/lib/libwgpu_native.a
+                ${GLFW_LIB}
+                ${COCOA_FW}
+                ${WEBKIT_FW}
+                ${COREAUDIO_FW}
+                ${AUDIOTOOLBOX_FW}
+                ${SECURITY_FW}
+                ${METAL_FW}
+                ${QUARTZCORE_FW}
+                ${COREFOUNDATION_FW}
+                ${IOKIT_FW}
+                ${FOUNDATION_FW}
+                ${APPKIT_FW}
+                ZLIB::ZLIB
+                OpenSSL::SSL
+                OpenSSL::Crypto
+                OpenGL::GL
+            )
+        else()
+            target_link_libraries(${TEST_NAME} PRIVATE earthcall_core)
+        endif()
+    else()
+        add_executable(${TEST_NAME} ${TEST_SOURCE})
+        target_link_libraries(${TEST_NAME} PRIVATE earthcall_core)
+    endif()
+
+    # The suite checks via assert(). A Release build passes -DNDEBUG, which
+    # compiles every one of them out and leaves tests that pass unconditionally
+    # -- see the same note in Makefile.legacy. Undefine it for test targets so
+    # a failing assertion actually fails the test.
+    target_compile_options(${TEST_NAME} PRIVATE -UNDEBUG)
+
     add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
 endforeach()
 

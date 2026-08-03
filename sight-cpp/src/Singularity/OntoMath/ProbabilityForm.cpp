@@ -55,8 +55,9 @@ std::optional<PropertyValue> evaluateStochastic(const std::string& distType, con
     std::vector<double> numericParams;
     for (const auto& arg : evaluatedArgs) {
         if (!arg) return std::nullopt; // Undefined inputs propagate to undefined output
-        if (arg->index() != 0) return std::nullopt; // Require scalar arguments for now
-        numericParams.push_back(std::get<double>(*arg));
+        double n = 0.0;
+        if (!propertyValueToNumber(*arg, n)) return std::nullopt;
+        numericParams.push_back(n);
     }
 
     Distribution::Kind kind = Distribution::Kind::Uniform;

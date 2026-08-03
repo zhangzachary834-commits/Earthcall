@@ -22,13 +22,15 @@ int main(){
     WGPUInstance inst = wgpuCreateInstance(nullptr);
     if(!inst){ printf("FAIL: instance\n"); return 1; }
 
-    AdapterR ar; WGPURequestAdapterCallbackInfo acb={};
+    AdapterR ar;
+    WGPURequestAdapterCallbackInfo acb={};
     acb.mode=WGPUCallbackMode_AllowProcessEvents; acb.callback=onAdapter; acb.userdata1=&ar;
     wgpuInstanceRequestAdapter(inst, nullptr, acb);
     while(!ar.done) wgpuInstanceProcessEvents(inst);
     if(!ar.a){ printf("FAIL: adapter\n"); return 1; }
 
-    DeviceR dr; WGPURequestDeviceCallbackInfo dcb={};
+    DeviceR dr;
+    WGPURequestDeviceCallbackInfo dcb={};
     dcb.mode=WGPUCallbackMode_AllowProcessEvents; dcb.callback=onDevice; dcb.userdata1=&dr;
     wgpuAdapterRequestDevice(ar.a, nullptr, dcb);
     while(!dr.done) wgpuInstanceProcessEvents(inst);
@@ -63,7 +65,8 @@ int main(){
     WGPUCommandBuffer cmd=wgpuCommandEncoderFinish(enc,nullptr);
     wgpuQueueSubmit(q,1,&cmd);
 
-    MapR mr; WGPUBufferMapCallbackInfo mcb={};
+    MapR mr;
+    WGPUBufferMapCallbackInfo mcb={};
     mcb.mode=WGPUCallbackMode_AllowProcessEvents; mcb.callback=onMap; mcb.userdata1=&mr;
     wgpuBufferMapAsync(buf, WGPUMapMode_Read, 0, 256*4, mcb);
     while(!mr.done) wgpuDevicePoll(dev, true, nullptr);

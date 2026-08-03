@@ -83,9 +83,44 @@ Singular* resolveParticipantToken(const std::string& token) {
     return nullptr;
 }
 
+// Kinds this build can actually evaluate. Deliberately a whitelist of the
+// live values rather than a `< count` range check: 12 and 13 are retired and
+// must keep failing this test even though they sit inside the range.
+bool isKnownConditionKind(int raw) {
+    switch (static_cast<ConditionNode::Kind>(raw)) {
+        case ConditionNode::Kind::Compare:
+        case ConditionNode::Kind::InRegion:
+        case ConditionNode::Kind::Related:
+        case ConditionNode::Kind::All:
+        case ConditionNode::Kind::Any:
+        case ConditionNode::Kind::Not:
+        case ConditionNode::Kind::Zone:
+        case ConditionNode::Kind::IsKind:
+        case ConditionNode::Kind::Identity:
+        case ConditionNode::Kind::ForAny:
+        case ConditionNode::Kind::ForAll:
+        case ConditionNode::Kind::Overlaps:
+            return true;
+        // Unsupported is where unknown kinds LAND; it is never a stored value
+        // an author picked, so it does not read back as known.
+        case ConditionNode::Kind::Unsupported:
+            return false;
+    }
+    return false;
+}
+
 } // namespace
 
 nlohmann::json ConditionNode::toJson() const {
+    // A kind this build cannot read is handed back exactly as it arrived.
+    // Re-serializing it from our own fields would drop every payload key we
+    // have no slot for, so merely OPENING a world in this build would destroy
+    // law text written by another one.
+    if (kind == Kind::Unsupported) {
+        if (unsupported) return *unsupported;
+        return nlohmann::json{{"kind", static_cast<int>(Kind::Unsupported)}};
+    }
+
     nlohmann::json j{{"kind", static_cast<int>(kind)}};
     switch (kind) {
         case Kind::Compare:
@@ -139,23 +174,34 @@ nlohmann::json ConditionNode::toJson() const {
             j["children"] = kids;
             break;
         }
-        case Kind::ForAnyPair:
-        case Kind::ForAllPair: {
-            j["beingKind"] = static_cast<int>(beingKind);
-            j["beingKindB"] = static_cast<int>(beingKindB);
-            if (!exceptIds.empty()) j["except"] = exceptIds;
-            nlohmann::json kids = nlohmann::json::array();
-            for (const auto& c : children) kids.push_back(c.toJson());
-            j["children"] = kids;
-            break;
-        }
+
     }
     return j;
 }
 
 ConditionNode ConditionNode::fromJson(const nlohmann::json& j) {
     ConditionNode n;
-    n.kind = static_cast<Kind>(j.value("kind", 0));
+
+    // The stored kind is an ARBITRARY int from a file, not a Kind. Casting it
+    // unchecked let a retired or future kind through as an out-of-range enum
+    // that no switch matched — so it compiled to a silent constant false and
+    // re-serialized as a stripped husk. Park it as Unsupported instead, keep
+    // the JSON, and say so out loud.
+    const int rawKind = j.value("kind", 0);
+    if (!isKnownConditionKind(rawKind)) {
+        n.kind = Kind::Unsupported;
+        n.unsupported = std::make_shared<nlohmann::json>(j);
+        ECA::LawAuditLogger::instance().log(
+            "CONDITION",
+            "Condition kind " + std::to_string(rawKind) +
+                " is not supported by this build - the condition will never hold. "
+                "Kinds 12 and 13 were the retired pair quantifiers; model pairs "
+                "as Relations in the graph instead.",
+            {{"kind", rawKind}});
+        return n;
+    }
+    n.kind = static_cast<Kind>(rawKind);
+
     if (j.contains("path")) n.path = PropertyPath::parse(j["path"].get<std::string>());
     n.op = static_cast<Op>(j.value("op", 0));
     if (j.contains("operand")) n.operand = propertyValueFromJson(j["operand"]);
@@ -170,7 +216,6 @@ ConditionNode ConditionNode::fromJson(const nlohmann::json& j) {
     if (j.contains("function")) n.zoneFunction = OntoMath::Piecewise::fromJson(j["function"]);
     if (j.contains("bindings")) n.bindings = mathBindingsFromJson(j["bindings"]);
     n.beingKind = static_cast<BeingKind>(j.value("beingKind", 0));
-    n.beingKindB = static_cast<BeingKind>(j.value("beingKindB", 0));
     if (j.contains("except")) n.exceptIds = j["except"].get<std::vector<std::string>>();
     if (j.contains("children")) {
         for (const auto& c : j["children"]) n.children.push_back(fromJson(c));
@@ -400,56 +445,18 @@ ECA::ConditionPredicate ConditionNode::compile() const {
                 return isAll;
             };
         }
-        case Kind::ForAnyPair:
-        case Kind::ForAllPair: {
-            // First-order quantification over ORDERED, DISTINCT pairs. The
-            // inner condition runs with the pair's FIRST as its subject and
-            // the pair's SECOND installed as "@event.object" (the ambient
-            // event context is saved and restored — the pair only borrows
-            // the vocabulary). ForAllPair over an empty domain is vacuously
-            // true; ForAnyPair is false. No inner condition = no claim.
-            const BeingKind ka = beingKind;
-            const BeingKind kb = beingKindB;
-            const std::vector<std::string> except = exceptIds;
-            const bool isAll = kind == Kind::ForAllPair;
-            ECA::ConditionPredicate inner =
-                children.empty() ? ECA::ConditionPredicate{} : children[0].compile();
-            return [ka, kb, except, isAll, inner](const ECA::Event& e, const Singular&) {
-                if (!inner) return isAll;   // no claim to test
-                auto& universe = Universe::instance();
-                const bool hadContext = universe.hasApplicationEvent();
-                Singular* savedSubject =
-                    hadContext ? universe.applicationEventSubject() : nullptr;
-                Singular* savedObject =
-                    hadContext ? universe.applicationEventObject() : nullptr;
-
-                const auto beings = universe.beings();
-                const auto exempt = [&](Singular* being) {
-                    return std::find(except.begin(), except.end(),
-                                     being->getIdentifier()) != except.end();
-                };
-                const auto scan = [&]() -> bool {
-                    for (Singular* x : beings) {
-                        if (!x || !ConditionNode::matchesKind(*x, ka) || exempt(x)) {
-                            continue;
-                        }
-                        for (Singular* y : beings) {
-                            if (!y || y == x || !ConditionNode::matchesKind(*y, kb) ||
-                                exempt(y)) {
-                                continue;
-                            }
-                            universe.setApplicationEvent(x, y);
-                            const bool holds = inner(e, *x);
-                            if (isAll && !holds) return false;
-                            if (!isAll && holds) return true;
-                        }
-                    }
-                    return isAll;
-                };
-                const bool result = scan();
-                if (hadContext) universe.setApplicationEvent(savedSubject, savedObject);
-                else universe.clearApplicationEvent();
-                return result;
+        case Kind::Unsupported: {
+            // Never satisfied — but it says so every time it is asked, so a
+            // law that stopped firing after a version change is traceable
+            // instead of just mysteriously inert.
+            const int raw = unsupported ? unsupported->value("kind", -1) : -1;
+            return [raw](const ECA::Event&, const Singular& target) {
+                ECA::LawAuditLogger::instance().log(
+                    "CONDITION",
+                    "Condition Evaluated [FAIL - Unsupported Kind]: kind " +
+                        std::to_string(raw) + " cannot be evaluated by this build",
+                    {{"targetId", target.getIdentifier()}, {"result", false}});
+                return false;
             };
         }
     }
@@ -475,8 +482,6 @@ void ConditionNode::collectPaths(std::vector<PropertyPath>& out) const {
             break;
         case Kind::ForAny:
         case Kind::ForAll:
-        case Kind::ForAnyPair:
-        case Kind::ForAllPair:
             // The inner condition is about the INSTANCES, not the subject.
             return;
         default:
@@ -540,21 +545,10 @@ std::string ConditionNode::describe() const {
             out += children.empty() ? "true" : children[0].describe();
             return out;
         }
-        case Kind::ForAnyPair:
-        case Kind::ForAllPair: {
-            std::string out =
-                kind == Kind::ForAnyPair ? "for-any pair (" : "for-all pairs (";
-            out += beingKindName(beingKind);
-            out += ", ";
-            out += beingKindName(beingKindB);
-            out += ")";
-            if (!exceptIds.empty()) {
-                out += " except " + std::to_string(exceptIds.size());
-            }
-            out += ": ";
-            out += children.empty() ? "true" : children[0].describe();
-            return out;
-        }
+        case Kind::Unsupported:
+            return "unsupported condition (kind " +
+                   std::to_string(unsupported ? unsupported->value("kind", -1) : -1) +
+                   ") - never holds";
     }
     return "condition";
 }
@@ -646,29 +640,6 @@ ConditionNode ConditionNode::forAll(BeingKind kind, ConditionNode inner,
     return n;
 }
 
-ConditionNode ConditionNode::forAnyPair(BeingKind kindA, BeingKind kindB,
-                                        ConditionNode inner,
-                                        std::vector<std::string> exceptIds) {
-    ConditionNode n;
-    n.kind = Kind::ForAnyPair;
-    n.beingKind = kindA;
-    n.beingKindB = kindB;
-    n.exceptIds = std::move(exceptIds);
-    n.children.push_back(std::move(inner));
-    return n;
-}
-
-ConditionNode ConditionNode::forAllPairs(BeingKind kindA, BeingKind kindB,
-                                         ConditionNode inner,
-                                         std::vector<std::string> exceptIds) {
-    ConditionNode n;
-    n.kind = Kind::ForAllPair;
-    n.beingKind = kindA;
-    n.beingKindB = kindB;
-    n.exceptIds = std::move(exceptIds);
-    n.children.push_back(std::move(inner));
-    return n;
-}
 
 ConditionNode ConditionNode::all(std::vector<ConditionNode> children) {
     ConditionNode n;

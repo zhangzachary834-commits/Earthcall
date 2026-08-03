@@ -43,7 +43,7 @@ int main() {
         // ------------------------------------------------------------------
         // 1. The truthful surface: name, color, drawColor, scope, owner.
         // ------------------------------------------------------------------
-        Zone home("Home", 0.08f, 0.06f, 0.12f);
+        Zone home("Home", "default", 0.08f, 0.06f, 0.12f);
         home.setOwner("zack");
 
         PropertyValue v;
@@ -87,7 +87,7 @@ int main() {
         // 3. Zones live in the Universe: quantifiers range over them and
         //    @-paths address them by name.
         // ------------------------------------------------------------------
-        Zone commons("Commons");   // unowned
+        Zone commons("Commons", "default");   // unowned
         Universe::instance().setProvider([&](std::vector<Singular*>& beings) {
             beings.push_back(&plain);
             beings.push_back(&home);

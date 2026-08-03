@@ -10,6 +10,7 @@
 #include <cstdio>
 #include <iterator>
 #include <optional>
+#include <unordered_set>
 
 #include "Person/Person.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
@@ -572,6 +573,62 @@ void Law::buildProperties() {
         "drives", this, &Law::propDrives, &Law::propSetDrives));
 }
 
+ReteToken ReteNetwork::alphaToken(const ReteFact& fact) {
+    ReteToken token;
+    token.facts.push_back(fact);
+    if (!fact.subjectId.empty()) token.bindings["subject"] = fact.subjectId;
+    return token;
+}
+
+ReteToken ReteNetwork::joinSeed(const ReteFact& left) {
+    ReteToken seed;
+    seed.facts.push_back(left);
+    if (!left.subjectId.empty()) seed.bindings["left"] = left.subjectId;
+    return seed;
+}
+
+ReteToken ReteNetwork::joinedToken(const ReteFact& left, const ReteFact& right) {
+    ReteToken token = joinSeed(left);
+    token.facts.push_back(right);
+    if (!right.subjectId.empty()) token.bindings["right"] = right.subjectId;
+    return token;
+}
+
+bool ReteNetwork::alphaFeedsAnyBeta(std::size_t alphaId) const {
+    for (const auto& beta : _betaNodes) {
+        if (beta.leftAlphaId == alphaId || beta.rightAlphaId == alphaId) return true;
+    }
+    return false;
+}
+
+bool ReteNetwork::alphaIsRead(std::size_t alphaId) const {
+    auto binding = _alphaLawBindings.find(alphaId);
+    if (binding != _alphaLawBindings.end() && !binding->second.empty()) return true;
+    return alphaFeedsAnyBeta(alphaId);
+}
+
+void ReteNetwork::refillAlphaMemory(AlphaNode& alpha) {
+    alpha.memory.clear();
+    for (const auto& fact : _facts) {
+        if (!alpha.predicate || alpha.predicate(fact)) alpha.memory.push_back(fact);
+    }
+}
+
+void ReteNetwork::refillBetaMemory(BetaNode& beta) {
+    beta.memory.clear();
+    const AlphaNode* left = findAlpha(beta.leftAlphaId);
+    const AlphaNode* right = findAlpha(beta.rightAlphaId);
+    if (!left || !right) return;
+    for (const auto& leftFact : left->memory) {
+        const ReteToken seed = joinSeed(leftFact);
+        for (const auto& rightFact : right->memory) {
+            const bool joined = beta.join ? beta.join(seed, rightFact)
+                                          : leftFact.subjectId == rightFact.subjectId;
+            if (joined) beta.memory.push_back(joinedToken(leftFact, rightFact));
+        }
+    }
+}
+
 std::string ReteNetwork::assertFact(ReteFact fact) {
     static std::atomic<unsigned long long> nextFactId{1};
     if (fact.id.empty()) {
@@ -581,15 +638,120 @@ std::string ReteNetwork::assertFact(ReteFact fact) {
         fact.subjectId = fact.subject->getIdentifier();
     }
     _facts.push_back(fact);
-    return _facts.back().id;
+    // Propagate from the LOCAL copy, not from a reference into _facts. Alpha
+    // predicates and beta joins are arbitrary caller closures; one that causes
+    // another fact to be asserted reallocates _facts and would leave a
+    // reference to .back() dangling mid-loop.
+    const ReteFact& f = fact;
+
+    std::vector<std::size_t> activatedAlphas;
+    for (auto& alpha : _alphaNodes) {
+        auto bindingIt = _alphaLawBindings.find(alpha.id);
+        const bool boundToLaw = bindingIt != _alphaLawBindings.end() && !bindingIt->second.empty();
+        // A node nothing reads is skipped — the predicate test is real cost
+        // and paying it for a node with no law bound and no beta downstream is
+        // waste. The skip is safe ONLY because every way a node becomes read
+        // again (bindLawToAlpha, addBetaNode) backfills its memory from _facts
+        // first; see refillAlphaMemory.
+        if (!boundToLaw && !alphaFeedsAnyBeta(alpha.id)) continue;
+
+        if (!alpha.predicate || alpha.predicate(f)) {
+            alpha.memory.push_back(f);
+            activatedAlphas.push_back(alpha.id);
+
+            if (boundToLaw) {
+                for (const auto& lawId : bindingIt->second) {
+                    _agenda.push_back(
+                        ReteActivation{lawId, alphaToken(f), std::time(nullptr)});
+                }
+            }
+        }
+    }
+
+    for (auto& beta : _betaNodes) {
+        bool inLeft = std::find(activatedAlphas.begin(), activatedAlphas.end(), beta.leftAlphaId) != activatedAlphas.end();
+        bool inRight = std::find(activatedAlphas.begin(), activatedAlphas.end(), beta.rightAlphaId) != activatedAlphas.end();
+        if (!inLeft && !inRight) continue;
+
+        const AlphaNode* left = findAlpha(beta.leftAlphaId);
+        const AlphaNode* right = findAlpha(beta.rightAlphaId);
+        if (!left || !right) continue;
+
+        auto bindingIt = _betaLawBindings.find(beta.id);
+        const bool hasLaw = bindingIt != _betaLawBindings.end() && !bindingIt->second.empty();
+
+        // Both halves go through joinSeed/joinedToken so a join closure sees
+        // the same token shape whichever side the new fact arrived on, and so
+        // an incrementally-built memory is indistinguishable from a
+        // backfilled one. The left branch used to pass a seed with EMPTY
+        // bindings while the right branch populated "left" — a closure reading
+        // bindings behaved differently depending on arrival order.
+        if (inLeft) {
+            for (const auto& rightFact : right->memory) {
+                const bool joined = beta.join ? beta.join(joinSeed(f), rightFact)
+                                              : f.subjectId == rightFact.subjectId;
+                if (!joined) continue;
+                const ReteToken token = joinedToken(f, rightFact);
+                beta.memory.push_back(token);
+                if (hasLaw) {
+                    for (const auto& lawId : bindingIt->second) {
+                        _agenda.push_back(ReteActivation{lawId, token, std::time(nullptr)});
+                    }
+                }
+            }
+        }
+
+        if (inRight) {
+            for (const auto& leftFact : left->memory) {
+                // When both alphas matched this fact the left branch already
+                // emitted the (f, f) pair; don't emit it twice.
+                if (inLeft && leftFact.id == f.id) continue;
+
+                const bool joined = beta.join ? beta.join(joinSeed(leftFact), f)
+                                              : leftFact.subjectId == f.subjectId;
+                if (!joined) continue;
+                const ReteToken token = joinedToken(leftFact, f);
+                beta.memory.push_back(token);
+                if (hasLaw) {
+                    for (const auto& lawId : bindingIt->second) {
+                        _agenda.push_back(ReteActivation{lawId, token, std::time(nullptr)});
+                    }
+                }
+            }
+        }
+    }
+
+    return f.id;
 }
 
 void ReteNetwork::retractFirst(std::size_t count) {
+    if (count == 0) return;
     if (count >= _facts.size()) {
-        _facts.clear();
-    } else {
-        _facts.erase(_facts.begin(), _facts.begin() + static_cast<std::ptrdiff_t>(count));
+        clearFacts();
+        return;
     }
+
+    std::unordered_set<std::string> removedIds;
+    for (std::size_t i = 0; i < count; ++i) removedIds.insert(_facts[i].id);
+
+    for (auto& alpha : _alphaNodes) {
+        alpha.memory.erase(std::remove_if(alpha.memory.begin(), alpha.memory.end(), 
+            [&](const ReteFact& f) { return removedIds.count(f.id); }), alpha.memory.end());
+    }
+    for (auto& beta : _betaNodes) {
+        beta.memory.erase(std::remove_if(beta.memory.begin(), beta.memory.end(), 
+            [&](const ReteToken& t) { 
+                for (const auto& f : t.facts) if (removedIds.count(f.id)) return true;
+                return false;
+            }), beta.memory.end());
+    }
+    _agenda.erase(std::remove_if(_agenda.begin(), _agenda.end(), 
+        [&](const ReteActivation& a) { 
+            for (const auto& f : a.token.facts) if (removedIds.count(f.id)) return true;
+            return false;
+        }), _agenda.end());
+
+    _facts.erase(_facts.begin(), _facts.begin() + static_cast<std::ptrdiff_t>(count));
 }
 
 bool ReteNetwork::retractFact(const std::string& factId) {
@@ -597,30 +759,61 @@ bool ReteNetwork::retractFact(const std::string& factId) {
     _facts.erase(std::remove_if(_facts.begin(), _facts.end(), [&](const ReteFact& fact) {
         return fact.id == factId;
     }), _facts.end());
-    return _facts.size() != oldSize;
+    if (_facts.size() == oldSize) return false;
+
+    for (auto& alpha : _alphaNodes) {
+        alpha.memory.erase(std::remove_if(alpha.memory.begin(), alpha.memory.end(),
+                                          [&](const ReteFact& f) { return f.id == factId; }),
+                           alpha.memory.end());
+    }
+    for (auto& beta : _betaNodes) {
+        beta.memory.erase(std::remove_if(beta.memory.begin(), beta.memory.end(),
+                                         [&](const ReteToken& token) {
+                                             for (const auto& f : token.facts) if (f.id == factId) return true;
+                                             return false;
+                                         }),
+                          beta.memory.end());
+    }
+    _agenda.erase(std::remove_if(_agenda.begin(), _agenda.end(),
+                                 [&](const ReteActivation& act) {
+                                     for (const auto& fact : act.token.facts) if (fact.id == factId) return true;
+                                     return false;
+                                 }),
+                  _agenda.end());
+    return true;
 }
 
 void ReteNetwork::retractFactsAbout(const Singular* being) {
     if (!being) return;
+    std::unordered_set<std::string> removedIds;
     _facts.erase(std::remove_if(_facts.begin(), _facts.end(),
-                                [being](const ReteFact& fact) {
-                                    return fact.subject == being || fact.object == being;
+                                [&](const ReteFact& fact) {
+                                    if (fact.subject == being || fact.object == being) {
+                                        removedIds.insert(fact.id);
+                                        return true;
+                                    }
+                                    return false;
                                 }),
                  _facts.end());
+    if (removedIds.empty()) return;
+
     for (auto& alpha : _alphaNodes) {
         alpha.memory.erase(std::remove_if(alpha.memory.begin(), alpha.memory.end(),
-                                          [being](const ReteFact& fact) {
-                                              return fact.subject == being ||
-                                                     fact.object == being;
-                                          }),
+                                          [&](const ReteFact& fact) { return removedIds.count(fact.id); }),
                            alpha.memory.end());
     }
+    for (auto& beta : _betaNodes) {
+        beta.memory.erase(std::remove_if(beta.memory.begin(), beta.memory.end(),
+                                         [&](const ReteToken& token) {
+                                             for (const auto& f : token.facts) if (removedIds.count(f.id)) return true;
+                                             return false;
+                                         }),
+                          beta.memory.end());
+    }
     _agenda.erase(std::remove_if(_agenda.begin(), _agenda.end(),
-                                 [being](const ReteActivation& activation) {
+                                 [&](const ReteActivation& activation) {
                                      for (const auto& fact : activation.token.facts) {
-                                         if (fact.subject == being || fact.object == being) {
-                                             return true;
-                                         }
+                                         if (removedIds.count(fact.id)) return true;
                                      }
                                      return false;
                                  }),
@@ -654,15 +847,61 @@ std::size_t ReteNetwork::addBetaNode(const std::string& description,
     node.rightAlphaId = rightAlphaId;
     node.join = std::move(join);
     _betaNodes.push_back(std::move(node));
-    return _betaNodes.back().id;
+    BetaNode& added = _betaNodes.back();
+
+    // Creating the beta is what makes its two alphas read. Until now they may
+    // have been skipped by every assert, so refill them and then build the
+    // join over what is already there — otherwise this node is permanently
+    // blind to every fact that predates it.
+    if (AlphaNode* left = findAlpha(added.leftAlphaId)) refillAlphaMemory(*left);
+    if (added.rightAlphaId != added.leftAlphaId) {
+        if (AlphaNode* right = findAlpha(added.rightAlphaId)) refillAlphaMemory(*right);
+    }
+    refillBetaMemory(added);
+    return added.id;
 }
 
 void ReteNetwork::bindLawToAlpha(const std::string& lawId, std::size_t alphaNodeId) {
-    if (!lawId.empty()) _alphaLawBindings[alphaNodeId].push_back(lawId);
+    if (lawId.empty()) return;
+
+    AlphaNode* alpha = findAlpha(alphaNodeId);
+    if (!alpha) {
+        // No such node (yet). Record the binding so a later node with this id
+        // is bound, but there is nothing to backfill from.
+        _alphaLawBindings[alphaNodeId].push_back(lawId);
+        return;
+    }
+
+    // Refill BEFORE recording the binding: while nothing read this node,
+    // assertFact skipped it, so its memory can be stale by every fact now
+    // live. Once a law is on it the node is read and stays current.
+    if (!alphaIsRead(alphaNodeId)) refillAlphaMemory(*alpha);
+
+    _alphaLawBindings[alphaNodeId].push_back(lawId);
+
+    // Live facts are this law's backlog. Queue them for THIS law only — laws
+    // already bound to the node were queued when their own facts arrived and
+    // must not fire twice.
+    const std::time_t now = std::time(nullptr);
+    for (const auto& fact : alpha->memory) {
+        _agenda.push_back(ReteActivation{lawId, alphaToken(fact), now});
+    }
 }
 
 void ReteNetwork::bindLawToBeta(const std::string& lawId, std::size_t betaNodeId) {
-    if (!lawId.empty()) _betaLawBindings[betaNodeId].push_back(lawId);
+    if (lawId.empty()) return;
+    _betaLawBindings[betaNodeId].push_back(lawId);
+
+    // Beta memory is kept current from creation onward (addBetaNode refills
+    // it), so the backlog is simply whatever the join already holds.
+    const std::time_t now = std::time(nullptr);
+    for (const auto& beta : _betaNodes) {
+        if (beta.id != betaNodeId) continue;
+        for (const auto& token : beta.memory) {
+            _agenda.push_back(ReteActivation{lawId, token, now});
+        }
+        break;
+    }
 }
 
 void ReteNetwork::unbindLaw(const std::string& lawId) {
@@ -674,6 +913,12 @@ void ReteNetwork::unbindLaw(const std::string& lawId) {
         auto& laws = binding.second;
         laws.erase(std::remove(laws.begin(), laws.end(), lawId), laws.end());
     }
+    // Dropping the binding is not enough: activations queued by earlier
+    // propagation still sit on the agenda, and the next tick drains them --
+    // so an "unbound" law keeps firing from its backlog. Every other
+    // retraction path (truncateFacts, retractFact) purges the agenda; these
+    // two were the omission that made unbinding cosmetic.
+    purgeAgendaOf(lawId);
     dropUnboundAlphaNodes();
 }
 
@@ -682,7 +927,25 @@ void ReteNetwork::unbindLawFromAlpha(const std::string& lawId, std::size_t alpha
     if (it == _alphaLawBindings.end()) return;
     auto& laws = it->second;
     laws.erase(std::remove(laws.begin(), laws.end(), lawId), laws.end());
+    // Activations do not record which alpha queued them, so only purge once
+    // this law has no alpha binding left to fire it -- otherwise unbinding
+    // one trigger would silently cancel pending work from another.
+    bool stillBound = false;
+    for (const auto& binding : _alphaLawBindings) {
+        if (std::find(binding.second.begin(), binding.second.end(), lawId) !=
+            binding.second.end()) {
+            stillBound = true;
+            break;
+        }
+    }
+    if (!stillBound) purgeAgendaOf(lawId);
     dropUnboundAlphaNodes();
+}
+
+void ReteNetwork::purgeAgendaOf(const std::string& lawId) {
+    _agenda.erase(std::remove_if(_agenda.begin(), _agenda.end(),
+                                 [&](const ReteActivation& a) { return a.lawId == lawId; }),
+                  _agenda.end());
 }
 
 std::size_t ReteNetwork::internTypeAlpha(const std::string& eventType) {
@@ -760,74 +1023,10 @@ void ReteNetwork::dropUnboundAlphaNodes() {
 }
 
 const std::vector<ReteActivation>& ReteNetwork::evaluate() {
-    _agenda.clear();
-
-    for (auto& alpha : _alphaNodes) {
-        alpha.memory.clear();
-
-        // Does anything downstream read this node? Ask BEFORE scanning: the
-        // predicate test runs once per fact, and paying it for a node with
-        // no law bound and no beta reading it is pure waste.
-        auto bindingIt = _alphaLawBindings.find(alpha.id);
-        const bool boundToLaw = bindingIt != _alphaLawBindings.end() && !bindingIt->second.empty();
-        bool feedsBeta = false;
-        for (const auto& beta : _betaNodes) {
-            if (beta.leftAlphaId == alpha.id || beta.rightAlphaId == alpha.id) {
-                feedsBeta = true;
-                break;
-            }
-        }
-        if (!boundToLaw && !feedsBeta) continue;
-
-        for (const auto& fact : _facts) {
-            if (!alpha.predicate || alpha.predicate(fact)) {
-                alpha.memory.push_back(fact);
-            }
-        }
-
-        if (!boundToLaw) continue;
-        for (const auto& lawId : bindingIt->second) {
-            for (const auto& fact : alpha.memory) {
-                ReteToken token;
-                token.facts.push_back(fact);
-                if (!fact.subjectId.empty()) token.bindings["subject"] = fact.subjectId;
-                _agenda.push_back(ReteActivation{lawId, token, std::time(nullptr)});
-            }
-        }
-    }
-
-    for (auto& beta : _betaNodes) {
-        beta.memory.clear();
-        const AlphaNode* left = findAlpha(beta.leftAlphaId);
-        const AlphaNode* right = findAlpha(beta.rightAlphaId);
-        if (!left || !right) continue;
-
-        for (const auto& leftFact : left->memory) {
-            ReteToken seed;
-            seed.facts.push_back(leftFact);
-            if (!leftFact.subjectId.empty()) seed.bindings["left"] = leftFact.subjectId;
-
-            for (const auto& rightFact : right->memory) {
-                const bool joined = beta.join ? beta.join(seed, rightFact)
-                                              : leftFact.subjectId == rightFact.subjectId;
-                if (!joined) continue;
-
-                ReteToken token = seed;
-                token.facts.push_back(rightFact);
-                if (!rightFact.subjectId.empty()) token.bindings["right"] = rightFact.subjectId;
-                beta.memory.push_back(token);
-            }
-        }
-
-        auto bindingIt = _betaLawBindings.find(beta.id);
-        if (bindingIt == _betaLawBindings.end()) continue;
-        for (const auto& lawId : bindingIt->second) {
-            for (const auto& token : beta.memory) {
-                _agenda.push_back(ReteActivation{lawId, token, std::time(nullptr)});
-            }
-        }
-    }
-
+    // Nothing to compute: propagation is incremental. assertFact maintains the
+    // node memories and queues activations as facts arrive, and the bind paths
+    // backfill from _facts so a law bound late still gets its backlog. This
+    // only hands back what is already pending.
     return _agenda;
 }
 
@@ -1370,6 +1569,13 @@ void LawManager::bindTrigger(const std::string& lawId, const std::string& eventT
     if (std::find(bound.begin(), bound.end(), eventType) != bound.end()) return;
     bound.push_back(eventType);
     _rete.bindLawToAlpha(lawId, _rete.internTypeAlpha(eventType));
+    // Binding backfills any still-live fact of this type onto the agenda. Mark
+    // the manager dirty so a round actually drains that backlog — a law bound
+    // mid-tick (laws may create laws) would otherwise wait for the next
+    // unrelated event before hearing what was already asserted. Only when
+    // something is genuinely pending, so an ordinary bind on a quiet network
+    // does not buy a wasted round.
+    if (!_rete.agenda().empty()) _dirty = true;
 }
 
 void LawManager::unbindTrigger(const std::string& lawId, const std::string& eventType) {

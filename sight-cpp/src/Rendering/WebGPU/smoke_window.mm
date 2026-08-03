@@ -90,7 +90,8 @@ int main() {
     while (!ar.done) wgpuInstanceProcessEvents(instance);
     if (!ar.a) { printf("FAIL: adapter\n"); return 1; }
 
-    DeviceR dr; WGPURequestDeviceCallbackInfo dcb = {};
+    DeviceR dr;
+    WGPURequestDeviceCallbackInfo dcb = {};
     dcb.mode = WGPUCallbackMode_AllowProcessEvents; dcb.callback = onDevice; dcb.userdata1 = &dr;
     wgpuAdapterRequestDevice(ar.a, nullptr, dcb);
     while (!dr.done) wgpuInstanceProcessEvents(instance);

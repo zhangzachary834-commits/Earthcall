@@ -21,7 +21,7 @@ void test_msgpack_roundtrip() {
     };
     
     // Save to message pack
-    std::string filename = SaveSystem::writeBinary(j, "test_compat", SaveSystem::SaveType::CUSTOM);
+    std::string filename = SaveSystem::writeSaveData(j, "test_compat", SaveSystem::SaveType::CUSTOM);
     assert(!filename.empty());
     
     // Load from message pack (fallback logic in readSaveData should detect binary)
@@ -47,7 +47,7 @@ void test_json_fallback() {
     j["legacy"] = true;
     
     // Write traditional JSON
-    std::string filename = SaveSystem::writeJson(j, "test_legacy", SaveSystem::SaveType::CUSTOM);
+    std::string filename = SaveSystem::writeSaveData(j, "test_legacy", SaveSystem::SaveType::CUSTOM);
     assert(!filename.empty());
     
     // Load it (fallback logic should detect plain json and parse it properly)

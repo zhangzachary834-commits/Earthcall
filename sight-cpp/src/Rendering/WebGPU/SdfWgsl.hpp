@@ -21,7 +21,7 @@
 #include <string>
 #include <vector>
 
-namespace geom { struct SdfNode; }
+namespace geom { struct SdfNode; class FieldNode; }
 
 namespace sdfwgsl {
 
@@ -45,6 +45,6 @@ struct Program {
 //
 // An empty/degenerate tree still yields valid WGSL that reports "no surface", so
 // callers never have to special-case it.
-Program compile(const geom::SdfNode& root);
+Program compile(const geom::SdfNode& root, const geom::FieldNode* fieldNode = nullptr);
 
 } // namespace sdfwgsl

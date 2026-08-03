@@ -1,0 +1,52 @@
+#pragma once
+
+#include "Form/Singular/Singular.hpp"
+#include "Form/Singular/Property/PropertyRef.hpp"
+#include "Singularity/OntoMath/Field.hpp"
+#include <glm/glm.hpp>
+#include <memory>
+#include <string>
+
+namespace geom {
+
+// A FieldNode represents the spatial placement of an OntoMath Field within the scene.
+// By inheriting from Singular, it maps the field's mathematical variables into the 
+// PropertyPath system, allowing the Law system to modulate the field dynamically.
+class FieldNode : public Singular {
+public:
+    FieldNode(std::string id = "field_node") : _id(std::move(id)) {
+        field = std::make_shared<OntoMath::ScalarField>();
+    }
+
+    std::string getIdentifier() const override { return _id; }
+
+    // Spatial transform
+    glm::vec3 origin{0.0f};
+    glm::vec3 scale{1.0f};
+
+    // The pure mathematical field definition
+    std::shared_ptr<OntoMath::ScalarField> field;
+
+protected:
+    void buildProperties() override {
+        // Expose spatial transform
+        _propertyRegistry.push_back(std::make_unique<PropertyRef<FieldNode, glm::vec3>>("origin", this, &FieldNode::origin));
+        _propertyRegistry.push_back(std::make_unique<PropertyRef<FieldNode, glm::vec3>>("scale", this, &FieldNode::scale));
+
+        // Expose mathematical configuration from the underlying OntoMath field
+        if (field) {
+            _propertyRegistry.push_back(std::make_unique<PropertyRef<OntoMath::ScalarField, float>>("field.baseDensity", field.get(), &OntoMath::ScalarField::baseDensity));
+            _propertyRegistry.push_back(std::make_unique<PropertyRef<OntoMath::ScalarField, float>>("field.frequency", field.get(), &OntoMath::ScalarField::frequency));
+            _propertyRegistry.push_back(std::make_unique<PropertyRef<OntoMath::ScalarField, float>>("field.amplitude", field.get(), &OntoMath::ScalarField::amplitude));
+            
+            // NOTE: The AST definition (field->astDefinition) is structurally more complex, 
+            // but the Law system can rewrite it via specialized OntoMath endpoints or by 
+            // replacing the AST entirely over the network.
+        }
+    }
+
+private:
+    std::string _id;
+};
+
+} // namespace geom

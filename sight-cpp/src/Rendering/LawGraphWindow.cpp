@@ -575,16 +575,10 @@ void seedConditionKind(ConditionNode& node) {
         case ConditionNode::Kind::Overlaps:
             if (node.otherId.empty()) node.otherId = "@event.object";
             break;
-        case ConditionNode::Kind::ForAnyPair:
-        case ConditionNode::Kind::ForAllPair:
-            if (node.beingKind == ConditionNode::BeingKind::AnyBeing) {
-                node.beingKind = ConditionNode::BeingKind::Object;
-                node.beingKindB = ConditionNode::BeingKind::Object;
-            }
-            if (node.children.empty()) {
-                // The classic pair claim: authored collision detection.
-                node.children.push_back(ConditionNode::overlaps("@event.object"));
-            }
+        case ConditionNode::Kind::Unsupported:
+            // Nothing to seed: the node is a sealed copy of law text this
+            // build cannot read, and touching its fields would only make the
+            // JSON we hand back diverge from what we were given.
             break;
         case ConditionNode::Kind::IsKind:
         case ConditionNode::Kind::ForAny:
@@ -623,18 +617,28 @@ bool beingKindCombo(ConditionNode& node) {
 bool editConditionNode(ConditionNode& node) {
     bool changed = false;
 
+    // Index in this list IS the Kind value, so it must stay in lockstep with
+    // the enum. The retired pair quantifiers (12, 13) were removed from Kind
+    // but left here, so picking one produced an out-of-range kind that no
+    // switch matched: a card that edited nothing and a condition that could
+    // never hold. An Unsupported node is not offered — it is a landing place
+    // for law text from another build, not something to author.
     static const char* kinds[] = {"compare", "in shape region", "related to...",
                                   "all of... (&&)", "any of... (||)", "not (!)",
                                   "math zone", "is a (type)", "this specific being",
                                   "for ANY being...", "for ALL beings...",
-                                  "overlaps (touching)", "for ANY PAIR...",
-                                  "for ALL PAIRS..."};
-    int kind = static_cast<int>(node.kind);
-    ImGui::SetNextItemWidth(170.0f);
-    if (ImGui::Combo("Condition type", &kind, kinds, 14)) {
-        node.kind = static_cast<ConditionNode::Kind>(kind);
-        seedConditionKind(node);
-        changed = true;
+                                  "overlaps (touching)"};
+    constexpr int kKindCount = static_cast<int>(IM_ARRAYSIZE(kinds));
+    if (node.kind == ConditionNode::Kind::Unsupported) {
+        ImGui::TextDisabled("Condition type: unsupported");
+    } else {
+        int kind = static_cast<int>(node.kind);
+        ImGui::SetNextItemWidth(170.0f);
+        if (ImGui::Combo("Condition type", &kind, kinds, kKindCount)) {
+            node.kind = static_cast<ConditionNode::Kind>(kind);
+            seedConditionKind(node);
+            changed = true;
+        }
     }
 
     switch (node.kind) {
@@ -783,6 +787,17 @@ bool editConditionNode(ConditionNode& node) {
             }
             break;
         }
+        case ConditionNode::Kind::Unsupported: {
+            ImGui::TextDisabled("This condition was written by a different build of Earthcall");
+            ImGui::TextDisabled("and cannot be read here, so it NEVER HOLDS - the law will");
+            ImGui::TextDisabled("not fire while it is present. Its original text is kept");
+            ImGui::TextDisabled("intact and saved back unchanged, so nothing is lost.");
+            ImGui::TextDisabled("Delete this card to author a replacement.");
+            ImGui::TextDisabled(" ");
+            ImGui::TextDisabled("(Kinds 12 and 13 were the pair quantifiers, retired in");
+            ImGui::TextDisabled("favour of modelling pairs as Relations in the graph.)");
+            break;
+        }
         case ConditionNode::Kind::Related: {
             ImGui::TextDisabled("True when the subject participates in a relation from the");
             ImGui::TextDisabled("world's relation graph. Directed relations satisfy only");
@@ -900,25 +915,6 @@ bool editConditionNode(ConditionNode& node) {
                 node.otherId = idBuf;
                 changed = true;
             }
-            break;
-        }
-        case ConditionNode::Kind::ForAnyPair:
-        case ConditionNode::Kind::ForAllPair: {
-            ImGui::TextDisabled(
-                node.kind == ConditionNode::Kind::ForAnyPair
-                    ? "True when SOME ordered pair (x, y) passes the inner test"
-                    : "True when EVERY ordered pair (x, y) passes the inner test");
-            ImGui::TextDisabled("Inside the inner test: plain paths are x (the pair's");
-            ImGui::TextDisabled("FIRST); '@event.object' paths are y (the SECOND).");
-            ImGui::TextDisabled("With Overlaps inside, this IS collision detection.");
-            if (beingKindCombo(node)) changed = true;
-            int kindB = static_cast<int>(node.beingKindB);
-            ImGui::SetNextItemWidth(130.0f);
-            if (ImGui::Combo("Paired with", &kindB, kBeingKindNames, 8)) {
-                node.beingKindB = static_cast<ConditionNode::BeingKind>(kindB);
-                changed = true;
-            }
-            ImGui::TextDisabled("The child card is the claim each pair must answer.");
             break;
         }
         case ConditionNode::Kind::ForAny:

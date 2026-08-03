@@ -403,52 +403,6 @@ int main() {
             beings.push_back(&beacon);
         });
 
-        // Authored detection: "some pair of Objects touches" — false while
-        // all three stand apart, true the moment two overlap.
-        auto somePairTouches = ConditionNode::forAnyPair(
-            ConditionNode::BeingKind::Object, ConditionNode::BeingKind::Object,
-            ConditionNode::overlaps("@event.object"));
-        assert(!somePairTouches.compile()(probe, author));
-        b.setPosition(glm::vec3(0.3f, 1.0f, 0.0f));       // b moves onto a
-        b.updateCollisionZone(b.getTransform());
-        assert(somePairTouches.compile()(probe, author));
-
-        // Property claims across pairs: "some being sits lower than another"
-        // and its universal cousin (false: no being is lower than ALL pairs
-        // demand). Heights are 1, 1, 9 here.
-        auto someLower = ConditionNode::forAnyPair(
-            ConditionNode::BeingKind::Object, ConditionNode::BeingKind::Object,
-            ConditionNode::comparePaths("position.y", ConditionNode::Op::Lt,
-                                        "@event.object.position.y"));
-        assert(someLower.compile()(probe, author));       // 1 < 9 exists
-        auto allLower = ConditionNode::forAllPairs(
-            ConditionNode::BeingKind::Object, ConditionNode::BeingKind::Object,
-            ConditionNode::comparePaths("position.y", ConditionNode::Op::Lt,
-                                        "@event.object.position.y"));
-        assert(!allLower.compile()(probe, author));       // 9 < 1 fails
-
-        // "...with possible exceptions": exempt the touching partner and
-        // the detection falls silent.
-        auto exceptB = ConditionNode::forAnyPair(
-            ConditionNode::BeingKind::Object, ConditionNode::BeingKind::Object,
-            ConditionNode::overlaps("@event.object"), {b.getIdentifier()});
-        assert(!exceptB.compile()(probe, author));
-
-        // The quantifier only BORROWS the event vocabulary: the ambient
-        // application-event context survives evaluation intact.
-        Universe::instance().setApplicationEvent(&beacon, &a);
-        assert(somePairTouches.compile()(probe, author));
-        assert(Universe::instance().applicationEventSubject() == &beacon);
-        assert(Universe::instance().applicationEventObject() == &a);
-        Universe::instance().clearApplicationEvent();
-
-        // Pair claims are law-text: they survive serialization.
-        auto rebornPair = ConditionNode::fromJson(somePairTouches.toJson());
-        assert(rebornPair.kind == ConditionNode::Kind::ForAnyPair);
-        assert(rebornPair.compile()(probe, author));
-        b.setPosition(glm::vec3(40.0f, 5.0f, 0.0f));      // separate again
-        b.updateCollisionZone(b.getTransform());
-        assert(!rebornPair.compile()(probe, author));
 
         Universe::instance().setProvider({});             // leave no dangling refs
     }

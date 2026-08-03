@@ -222,7 +222,7 @@ int main() {
         // 7. A Person is legible: position by path; name read-only.
         Soul soul("Witness");
         Body avatar = Body::createBasicAvatar("Voxel");
-        Person person(soul, std::move(avatar));
+        Person person(soul, std::move(avatar), "default");
         assert(person.getIdentifier() == "Witness");
         assert(PropertyPath::parse("position.y").setValue(person, PropertyValue(4.0f)) == PropertyPath::PathResult::Ok);
         assert(std::fabs(person.position.y - 4.0f) < 1e-5f);

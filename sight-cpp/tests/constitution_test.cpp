@@ -61,6 +61,9 @@ int main() {
         // 3. Singularity-level ceiling override rejection (AI as First Mover).
         // ------------------------------------------------------------------
         Law aiProposer("ai-proposal");
+        // Authored, or applyTo stops at Unauthored and never reaches the
+        // ceiling check this section is actually about.
+        aiProposer.addAuthor(dictator);
         aiProposer.setAuthorityLevel(0); // AI / ordinary authority
         
         Law singularityCeiling("ai-ceiling");

@@ -998,3 +998,5 @@ saves/games/20260729_225223_ecsave_delta.ecsave
 saves/games/Migrated_Save.ecsave
 saves/games/20260729_225654_ToolMigration.ecsave_delta.ecsave_delta.ecsave
 saves/games/20260729_225844_ecsave_delta.ecsave
+saves/games/20260802_183058_QuickSave_delta.ecsave
+saves/games/20260802_184959_QuickSave_delta.ecsave

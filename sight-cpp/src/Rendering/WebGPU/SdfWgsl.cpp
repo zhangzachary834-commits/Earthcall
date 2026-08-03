@@ -1,6 +1,7 @@
 #include "Rendering/WebGPU/SdfWgsl.hpp"
 
 #include "Form/Object/Geometry/Sdf.hpp"
+#include "Form/Object/Geometry/FieldNode.hpp"
 
 #include <cstdio>
 #include <string>
@@ -285,6 +286,11 @@ struct FSOut {
     @builtin(frag_depth) depth: f32,
 };
 
+// Dual-Path WGSL Field Evaluator
+// This function is generated dynamically based on whether the Law system 
+// provides a hardcoded parameter path or an AST-driven piecewise definition.
+// fieldEval is emitted before this block.
+
 @fragment
 fn fs(in: VSOut) -> FSOut {
     // Ray in field space, so the marched distances are the field's own.
@@ -299,14 +305,22 @@ fn fs(in: VSOut) -> FSOut {
 
     var t = 0.0;
     var hit = false;
+    var transmittance = 1.0;
+    var volumetric_scatter = 0.0;
+    
     for (var i = 0; i < 192; i = i + 1) {
         let p = ro + rd * t;
         let raw = sdfEval(p);
-        // An implicit field is an iso-surface VALUE, not a distance. Dividing by
-        // the gradient magnitude turns it into a conservative distance estimate
-        // (first-order: f/|grad f|), which is what makes sphere tracing legal on
-        // it at all. Ordinary distance fields skip this — it costs 6 extra
-        // evaluations per step.
+        
+        // Volumetric Field Accumulation
+        let density = fieldEval(p);
+        if (density > 0.0) {
+            let step_size = max(raw, eps);
+            let extinction = density * 0.5; // Tunable constant
+            transmittance *= exp(-extinction * step_size);
+            volumetric_scatter += density * step_size * transmittance;
+        }
+
         var d = raw;
         if (damping > 0.5) {
             let g = sdfGrad(p);
@@ -315,9 +329,12 @@ fn fs(in: VSOut) -> FSOut {
         }
         if (d < eps) { hit = true; break; }
         t = t + max(d, eps);
+        
+        // Early exit if the field is fully opaque
+        if (transmittance < 0.01) { break; }
         if (t > maxDist) { break; }
     }
-    if (!hit) { discard; }
+    if (!hit && transmittance > 0.99) { discard; }
 
     let pf = ro + rd * t;                                // field-space hit
     let pw = (u.model * vec4<f32>(pf, 1.0)).xyz;         // world-space hit
@@ -329,14 +346,25 @@ fn fs(in: VSOut) -> FSOut {
     let L = normalize(u.lightPos.xyz - pw);
     let V = normalize(u.eyePos.xyz - pw);
     let H = normalize(L + V);
-    let diff = max(dot(nw, L), 0.0);
-    let lit  = u.shading.x + u.shading.y * diff;
-    let spec = u.shading.z * pow(max(dot(nw, H), 0.0), max(u.shading.w, 1.0)) * step(0.0001, diff);
+    
+    var lit = 0.0;
+    var spec = 0.0;
+    
+    // Only calculate hard surface lighting if we actually hit the SDF boundary
+    if (hit) {
+        let diff = max(dot(nw, L), 0.0);
+        lit  = u.shading.x + u.shading.y * diff;
+        spec = u.shading.z * pow(max(dot(nw, H), 0.0), max(u.shading.w, 1.0)) * step(0.0001, diff);
+    }
 
     let clip = u.viewProj * vec4<f32>(pw, 1.0);
 
     var out: FSOut;
-    out.color = vec4<f32>(u.baseColor.rgb * lit + vec3<f32>(spec), u.baseColor.a);
+    // Combine hard surface with accumulated volumetric scatter
+    let base_rgb = u.baseColor.rgb * lit + vec3<f32>(spec);
+    let field_rgb = vec3<f32>(1.0, 1.0, 1.0) * volumetric_scatter; // Could be colored by the field later
+    
+    out.color = vec4<f32>(mix(base_rgb, field_rgb, 1.0 - transmittance), u.baseColor.a);
     // Depth from the ACTUAL hit, so a raymarched field occludes and is occluded by
     // ordinary meshes correctly instead of by its bounding box.
     out.depth = clip.z / clip.w;
@@ -346,18 +374,35 @@ fn fs(in: VSOut) -> FSOut {
 
 } // namespace
 
-Program compile(const geom::SdfNode& root) {
+Program compile(const geom::SdfNode& root, const geom::FieldNode* fieldNode) {
     Emit e;
     const std::string result = emitNode(root, e);
 
-    // Order matters: WGSL has no forward declarations, so a function must appear
-    // before anything that calls it. Primitives, then the generated sdfEval, then
-    // the marcher which calls both.
     Program prog;
     prog.wgsl  = kPrimitives;
     prog.wgsl += "\nfn sdfEval(p: vec3<f32>) -> f32 {\n";
     prog.wgsl += e.body;
     prog.wgsl += "    return " + result + ";\n}\n";
+
+    // --- Dual-Path Field Compiler ---
+    prog.wgsl += "\nfn fieldEval(p: vec3<f32>) -> f32 {\n";
+    if (fieldNode && fieldNode->field) {
+        // Here we branch on Path A vs Path B based on Law Integration logic.
+        // For now, we deploy Path A (Hardcoded procedural fields driven by variables).
+        // Path B (AST-Driven) would walk `fieldNode->field->astDefinition` and emit WGSL.
+        
+        std::string baseDensity = e.param(fieldNode->field->baseDensity);
+        std::string freq = e.param(fieldNode->field->frequency);
+        std::string amp = e.param(fieldNode->field->amplitude);
+        
+        prog.wgsl += "    // Path A: Hardcoded procedural evaluation\n";
+        prog.wgsl += "    let rawDensity = " + baseDensity + " + sin(p.x * " + freq + ") * " + amp + ";\n";
+        prog.wgsl += "    return max(rawDensity, 0.0);\n";
+    } else {
+        prog.wgsl += "    return 0.0;\n";
+    }
+    prog.wgsl += "}\n";
+
     prog.wgsl += kMarcher;
     prog.params = std::move(e.params);
     prog.needsGradientStep = e.sawExpr;

@@ -103,7 +103,8 @@ void WebSocketServer::start(uint16_t port) {
     _impl->server.start_accept();
     
     _impl->worker = std::thread([this]() {
-        std::cout << "[WebSocketServer] Listening on ws://localhost:" << _impl->server.get_local_endpoint().port() << std::endl;
+        websocketpp::lib::error_code ec;
+        std::cout << "[WebSocketServer] Listening on ws://localhost:" << _impl->server.get_local_endpoint(ec).port() << std::endl;
         _impl->server.run();
     });
 }

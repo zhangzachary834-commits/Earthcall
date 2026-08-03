@@ -2,6 +2,7 @@
 #include "Singularity/Language/Lexeme.hpp"
 #include "Form/Object/Object.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
+#include "Singularity/Core/EventEntity.hpp"
 #include <iostream>
 
 nlohmann::json SynthesisMapping::toJson() const {
@@ -37,8 +38,14 @@ std::optional<PropertyValue> SynthesisMapping::apply(double x, const std::map<st
         for (const auto& [k, v] : stringVars) {
             evalVars[k] = PropertyValue(v);
         }
-        evalVars[exact.inputVariable] = PropertyValue(x);
-        
+        // x is the NUMERIC reading of the source, and is 0.0 when the source
+        // was not a number. The caller binds a string source under this very
+        // name in stringVars, so assigning unconditionally would clobber it
+        // and evaluate the mapping against 0.0 instead of the text.
+        if (evalVars.find(exact.inputVariable) == evalVars.end()) {
+            evalVars[exact.inputVariable] = PropertyValue(x);
+        }
+
         auto res = exact.evaluate(evalVars, guardSubject);
         if (res) {
             if (std::holds_alternative<double>(*res)) {
@@ -60,13 +67,27 @@ SynthesisSystem& SynthesisSystem::instance() {
     return inst;
 }
 
-std::shared_ptr<Singular> SynthesisSystem::instantiateClass(const std::string& classType) {
+std::shared_ptr<Singular> SynthesisSystem::instantiateClass(
+    const std::string& classType,
+    const std::map<std::string, PropertyValue>& initialProperties) {
+    const auto initialString = [&](const std::string& key) -> std::string {
+        auto it = initialProperties.find(key);
+        if (it == initialProperties.end()) return {};
+        const auto* s = std::get_if<std::string>(&it->second);
+        return s ? *s : std::string{};
+    };
+
     if (classType == "Lexeme") {
         return std::make_shared<Singularity::Language::Lexeme>("");
     } else if (classType == "Object") {
         return std::make_shared<Object>();
     } else if (classType == "Zone") {
-        return std::make_shared<Zone>("", "");
+        // A Zone's name is registered read-only, so it can only be given at
+        // birth -- setting it from initialProperties below would no-op and
+        // leave the zone permanently unnamed.
+        return std::make_shared<Zone>(initialString("name"), "");
+    } else if (classType == "Event") {
+        return std::make_shared<Core::EventEntity>("CustomEvent");
     }
     // Fallback or dynamic instantiation can be extended here
     return nullptr;
@@ -90,7 +111,7 @@ std::vector<std::shared_ptr<Singular>> SynthesisSystem::synthesize(
     }
 
     for (const auto& tmpl : blueprint.members()) {
-        auto spawned = instantiateClass(tmpl.classType);
+        auto spawned = instantiateClass(tmpl.classType, tmpl.initialProperties);
         if (!spawned) continue;
 
         // Apply initial properties from template

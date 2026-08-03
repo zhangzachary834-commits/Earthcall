@@ -428,6 +428,12 @@ public:
                             std::size_t rightAlphaId,
                             BetaJoin join = {});
 
+    // Binding is retroactive: facts already live become this law's backlog,
+    // queued onto the agenda for the NEXT drain. Order of setup therefore does
+    // not matter — a law bound after its events were published still hears
+    // them, exactly as it did when evaluate() rebuilt the agenda every frame.
+    // Only the newly bound law is queued, so laws already on the node do not
+    // fire a second time.
     void bindLawToAlpha(const std::string& lawId, std::size_t alphaNodeId);
     void bindLawToBeta(const std::string& lawId, std::size_t betaNodeId);
     // Remove every binding of this law from the network. Nodes left with no
@@ -438,6 +444,9 @@ public:
     // rebind, and every world load, used to add another pile.
     void unbindLaw(const std::string& lawId);
     void unbindLawFromAlpha(const std::string& lawId, std::size_t alphaNodeId);
+    // Drop any activations already queued for a law, so unbinding actually
+    // silences it instead of leaving a backlog to fire on the next tick.
+    void purgeAgendaOf(const std::string& lawId);
 
     // One alpha node per event type, shared by every law that listens for it.
     // Fifty laws on "collision" is one predicate over the fact stream, not
@@ -458,6 +467,10 @@ public:
     bool hearsType(const std::string& eventType) const;
     bool hasOpaqueBoundAlpha() const;
 
+    // Propagation happens at assert and bind time, so by the time you get here
+    // the agenda is already complete — this just hands it back. Kept as the
+    // name callers use for "give me what is pending"; it no longer computes
+    // anything, and it does NOT clear the agenda (drainAgenda does).
     const std::vector<ReteActivation>& evaluate();
     std::vector<ReteActivation> drainAgenda();
     const std::vector<ReteActivation>& agenda() const { return _agenda; }
@@ -467,6 +480,33 @@ public:
 private:
     const AlphaNode* findAlpha(std::size_t id) const;
     AlphaNode* findAlpha(std::size_t id);
+
+    // ------------------------------------------------------------------
+    // Backfill. Propagation is incremental — assertFact maintains the
+    // memories — and it SKIPS any alpha node that no law is bound to and no
+    // beta reads, because predicate-testing a node nothing looks at is pure
+    // waste. That skip is only safe if a node can be brought current the
+    // moment something does start reading it, which is what these do.
+    //
+    // A node's memory is a pure function of (its predicate, _facts), so
+    // rebuilding it by rescanning _facts is always correct and idempotent —
+    // and it preserves assertion order, so a refilled memory is
+    // indistinguishable from one built fact by fact. Without this, a law
+    // bound after a fact was asserted stayed deaf to it forever while
+    // facts() still reported the fact as live.
+    // ------------------------------------------------------------------
+    void refillAlphaMemory(AlphaNode& alpha);
+    void refillBetaMemory(BetaNode& beta);
+    // The skip condition in assertFact, named once so backfill and
+    // propagation cannot drift apart.
+    bool alphaFeedsAnyBeta(std::size_t alphaId) const;
+    bool alphaIsRead(std::size_t alphaId) const;
+
+    // Token shapes, shared by incremental propagation and backfill so the two
+    // produce byte-identical memories and agendas.
+    static ReteToken alphaToken(const ReteFact& fact);
+    static ReteToken joinSeed(const ReteFact& left);
+    static ReteToken joinedToken(const ReteFact& left, const ReteFact& right);
 
     std::vector<ReteFact> _facts;
     std::vector<AlphaNode> _alphaNodes;

@@ -1441,13 +1441,24 @@ Recorded here so migrations report them instead of routing around them with clos
   poorly in the Law Author.
 - **No vector-valued expressions** — `Map` writes one scalar, so vec3 intent takes
   three parallel nodes (§10). `OntoMath`'s growth path already lists this.
-- **No witness binding from quantifiers** — `ForAnyPair` proves existence but does not
-  export the witnessing pair to the action (flagged in `LAW_AND_CREATION_SYSTEM.md` §2a).
-  Any migration that needs "act on the thing you found" hits this.
-- **Rete is not incremental for property state** — only event facts flow through it;
-  `WhileTrue` conditions are re-evaluated by full sweep each tick. Fine at current
-  world sizes; the ceiling is real and worth measuring before migrating anything that
-  ranges over all objects every frame.
+- **No witness binding from quantifiers** — a quantifier proves existence but does not
+  export the witness to the action (flagged in `LAW_AND_CREATION_SYSTEM.md` §2a).
+  Any migration that needs "act on the thing you found" hits this. This is what
+  retired the pair quantifiers (`ForAnyPair`/`ForAllPair`, kinds 12/13) rather than
+  growing them: pairs are modelled as Relations now, which name both participants as
+  law text. `ForAny`/`ForAll` over a single kind remain and have the same gap.
+- **Rete is incremental for event facts, by sweep for property state** — event facts
+  propagate as they are asserted (`ReteNetwork::assertFact` maintains the node
+  memories and queues activations; `evaluate()` only hands back what is pending).
+  `WhileTrue` conditions are still re-evaluated by full sweep each tick. Fine at
+  current world sizes; the ceiling is real and worth measuring before migrating
+  anything that ranges over all objects every frame.
+  - Incremental propagation SKIPS any alpha node no law is bound to and no beta
+    reads. That is only safe because binding is retroactive: `bindLawToAlpha` /
+    `addBetaNode` backfill the node's memory from the live fact list first, so setup
+    order does not matter. Do not add a path that makes a node read without
+    backfilling it — see `design_review_remediation.md` §1 (in the repo-root
+    `docs/`, not this tree).
 - **No per-phase authority ordering** — two laws in the same phase claiming different
   responsibilities that write the same property is legal and unordered. Jurisdiction
   catches the common case (same responsibility); overlapping *properties* across

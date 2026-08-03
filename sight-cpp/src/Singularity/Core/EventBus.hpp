@@ -15,6 +15,7 @@
 
 // Forward declarations
 class Formation;
+namespace Core { class EventEntity; }
 
 namespace Core {
 
@@ -185,6 +186,10 @@ namespace Event {
     struct Utterance {
         std::string payload;      // The raw text/string spoken
         std::string sourceClient; // The ID of the client/Person who spoke it
+    };
+
+    struct Custom {
+        std::shared_ptr<Core::EventEntity> singular; // The physical Event entity
     };
 } // namespace Event
 
