@@ -13,6 +13,8 @@ build/
 *.d
 *.gch
 *.dSYM/
+# The default clang output name, left behind by one-off `c++ foo.cpp` probes.
+a.out
 
 # Linked binaries: the app, the tools, and every test executable. `make test`
 # deletes and relinks these on every run by design (a leftover binary from a
