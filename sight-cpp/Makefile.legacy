@@ -323,6 +323,9 @@ primitive_render_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/primitive_render_test.
 action_spawn_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/action_spawn_test.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
+basic_cube_law_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/basic_cube_law_test.o
+	$(CXX) $^ $(LDFLAGS) -o $@
+
 serialization_compat_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/serialization_compat_test.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
@@ -425,6 +428,9 @@ test-serialization: serialization_compat_test
 test-binary-packing: binary_packing_test
 	./binary_packing_test
 
+test-basic-cube-law: basic_cube_law_test
+	./basic_cube_law_test
+
 # ---------------------------------------------------------------------------
 # The whole suite, and why it is shaped like this.
 #
@@ -451,7 +457,8 @@ TESTS = property_bridge_test law_model_test law_audit_test law_loop_test \
         ontomath_test continuous_law_test time_flow_test law_persistence_test \
         law_creation_test geometry_cache_test glu_compat_test zone_being_test \
         formation_merge_test material_being_test material_render_test \
-        primitive_render_test action_spawn_test binary_packing_test
+        primitive_render_test action_spawn_test binary_packing_test \
+        basic_cube_law_test
 
 # Quarantined, and named out loud so it cannot rot quietly. `make test` reports
 # these every run without failing on them — the point is that you keep seeing
@@ -466,16 +473,16 @@ test:
 	@failed=""; passed=0; \
 	for t in $(TESTS); do \
 	  rm -f $$t; \
-	  if ! $(MAKE) --no-print-directory $$t >/tmp/ec-build-$$t.log 2>&1; then \
+	  if ! $(MAKE) --no-print-directory $$t >build/ec-build-$$t.log 2>&1; then \
 	    printf '\033[31mBUILD FAIL\033[0m %s\n' "$$t"; \
-	    grep -E 'error:' /tmp/ec-build-$$t.log | head -5 || true; \
+	    grep -E 'error:' build/ec-build-$$t.log | head -5 || true; \
 	    failed="$$failed $$t(build)"; continue; \
 	  fi; \
-	  if ./$$t >/tmp/ec-run-$$t.log 2>&1; then \
+	  if ./$$t >build/ec-run-$$t.log 2>&1; then \
 	    printf '\033[32mok\033[0m         %s\n' "$$t"; passed=$$((passed+1)); \
 	  else \
 	    printf '\033[31mFAIL\033[0m       %s (exit %s)\n' "$$t" "$$?"; \
-	    tail -8 /tmp/ec-run-$$t.log; \
+	    tail -8 build/ec-run-$$t.log; \
 	    failed="$$failed $$t(run)"; \
 	  fi; \
 	done; \

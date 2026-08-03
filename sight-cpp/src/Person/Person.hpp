@@ -87,6 +87,11 @@ public:
     glm::vec3 cursorSpawnPos{0.0f, 0.0f, 0.0f};
     glm::vec3 cursorSpawnRot{0.0f, 0.0f, 0.0f};
     glm::vec3 cursorSpawnScale{1.0f, 1.0f, 1.0f};
+    // --- Placement Mode & Grid Snap Properties ---
+    std::string placementMode{"InFront"}; // "InFront", "ManualDistance", "CursorSnap"
+    float gridSnapSize{1.0f};
+    float manualDistance{5.0f};
+    void updatePlacement();
     glm::mat4 getCursorSpawnTransform() const;
     std::string cursorHoveredBodyPart;
     glm::vec3 cameraPos{0.0f, 0.0f, 0.0f};
