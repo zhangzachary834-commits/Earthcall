@@ -1,3 +1,12 @@
 [submodule "third_party/flatbuffers"]
 	path = third_party/flatbuffers
 	url = https://github.com/google/flatbuffers.git
+[submodule "sight-cpp/third_party/flatbuffers"]
+	path = sight-cpp/third_party/flatbuffers
+	url = https://github.com/google/flatbuffers.git
+[submodule "sight-cpp/third_party/glfw"]
+	path = sight-cpp/third_party/glfw
+	url = https://github.com/glfw/glfw.git
+[submodule "sight-cpp/third_party/glm"]
+	path = sight-cpp/third_party/glm
+	url = https://github.com/g-truc/glm.git
