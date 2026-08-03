@@ -625,6 +625,13 @@ void Game::update(float dt) {
     // Law System Perception properties on the Person
     _player.cameraPos = _camera.pos;
     _player.cameraForward = _camera.front;
+
+    // The default mapping the comment above describes: cursorHitPos/cameraPos
+    // -> cursorSpawnPos, per placementMode. It runs AFTER cameraPos and
+    // cameraForward are refreshed, or "ManualDistance" would place against
+    // last frame's camera. Laws that want their own placement overwrite
+    // cursorSpawnPos after this point and win.
+    _player.updatePlacement();
     _player.activeShapeKind = static_cast<int>(_polyhedron.shapeKind);
     _player.activeColor = glm::vec3(_currentColor[0], _currentColor[1], _currentColor[2]);
     _player.activeTool = _currentTool.getTypeName();

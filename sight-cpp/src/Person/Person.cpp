@@ -67,37 +67,34 @@ void Person::buildProperties() {
         "manualDistance", this, &Person::manualDistance));
 }
 
-void Person::updatePlacement() {
+glm::vec3 Person::computeSpawnPosition() const {
     if (placementMode == "ManualDistance") {
-        cursorSpawnPos = cameraPos + cameraForward * manualDistance;
-    } else if (placementMode == "CursorSnap") {
-        float step = (gridSnapSize > 0.001f) ? gridSnapSize : 1.0f;
-        cursorSpawnPos = glm::vec3(
+        return cameraPos + cameraForward * manualDistance;
+    }
+    if (placementMode == "CursorSnap") {
+        const float step = (gridSnapSize > 0.001f) ? gridSnapSize : 1.0f;
+        return glm::vec3(
             std::round(cursorHitPos.x / step) * step,
             std::round(cursorHitPos.y / step) * step,
             std::round(cursorHitPos.z / step) * step
         );
-    } else {
-        cursorSpawnPos = cursorHitPos;
     }
+    return cursorHitPos;   // "InFront"
+}
+
+void Person::updatePlacement() {
+    cursorSpawnPos = computeSpawnPosition();
 }
 
 glm::mat4 Person::getCursorSpawnTransform() const {
-    glm::vec3 spawnPos = cursorSpawnPos;
-    if (placementMode == "ManualDistance") {
-        spawnPos = cameraPos + cameraForward * manualDistance;
-    } else if (placementMode == "CursorSnap") {
-        float step = (gridSnapSize > 0.001f) ? gridSnapSize : 1.0f;
-        spawnPos = glm::vec3(
-            std::round(cursorHitPos.x / step) * step,
-            std::round(cursorHitPos.y / step) * step,
-            std::round(cursorHitPos.z / step) * step
-        );
-    } else if (cursorSpawnPos == glm::vec3(0.0f)) {
-        spawnPos = cursorHitPos;
-    }
-
-    glm::mat4 t = glm::translate(glm::mat4(1.0f), spawnPos);
+    // cursorSpawnPos is the answer, not a hint: updatePlacement() derives it
+    // from placementMode once per frame, and a law is free to overwrite it
+    // afterwards (which is the documented contract -- see GameUpdate). This
+    // used to re-derive the mode math here instead, which meant a law's
+    // cursorSpawnPos was ignored in two of the three modes, and the third
+    // treated an exact vec3(0) as "unset" -- so the world origin was not a
+    // placeable position.
+    glm::mat4 t = glm::translate(glm::mat4(1.0f), cursorSpawnPos);
     t = glm::rotate(t, glm::radians(cursorSpawnRot.x), glm::vec3(1.0f, 0.0f, 0.0f));
     t = glm::rotate(t, glm::radians(cursorSpawnRot.y), glm::vec3(0.0f, 1.0f, 0.0f));
     t = glm::rotate(t, glm::radians(cursorSpawnRot.z), glm::vec3(0.0f, 0.0f, 1.0f));

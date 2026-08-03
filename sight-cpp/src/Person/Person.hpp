@@ -91,6 +91,10 @@ public:
     std::string placementMode{"InFront"}; // "InFront", "ManualDistance", "CursorSnap"
     float gridSnapSize{1.0f};
     float manualDistance{5.0f};
+    // The one place placementMode is turned into a position.
+    glm::vec3 computeSpawnPosition() const;
+    // Refreshes cursorSpawnPos from computeSpawnPosition(). Called once per
+    // frame by GameUpdate; laws may overwrite cursorSpawnPos after it runs.
     void updatePlacement();
     glm::mat4 getCursorSpawnTransform() const;
     std::string cursorHoveredBodyPart;
