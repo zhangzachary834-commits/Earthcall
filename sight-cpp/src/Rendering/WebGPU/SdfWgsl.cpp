@@ -312,16 +312,21 @@ fn fs(in: VSOut) -> FSOut {
         let p = ro + rd * t;
         let raw = sdfEval(p);
         
+        var d = raw;
+        if (damping > 0.5) {
+            let g = sdfGrad(p);
+            let gl = length(g);
+            if (gl > 1e-6) { d = raw / gl; }
+        }
+
         // Volumetric Field Accumulation
         let density = fieldEval(p);
         if (density > 0.0) {
-            let step_size = max(raw, eps);
+            let step_size = max(d, eps);
             let extinction = density * 0.5; // Tunable constant
             transmittance *= exp(-extinction * step_size);
             volumetric_scatter += density * step_size * transmittance;
         }
-
-        var d = raw;
         if (damping > 0.5) {
             let g = sdfGrad(p);
             let gl = length(g);
@@ -336,6 +341,16 @@ fn fs(in: VSOut) -> FSOut {
     }
     if (!hit && transmittance > 0.99) { discard; }
 
+    var out: FSOut;
+    
+    if (!hit) {
+        // Resolve depth/normal garbage when early-exiting (volumetric only, no hard surface hit)
+        // WGSL requires all fields to be initialized, so we write max depth.
+        out.color = vec4<f32>(vec3<f32>(1.0) * volumetric_scatter, 1.0 - transmittance);
+        out.depth = 1.0; 
+        return out;
+    }
+
     let pf = ro + rd * t;                                // field-space hit
     let pw = (u.model * vec4<f32>(pf, 1.0)).xyz;         // world-space hit
     let nf = sdfNormal(pf);
@@ -347,24 +362,18 @@ fn fs(in: VSOut) -> FSOut {
     let V = normalize(u.eyePos.xyz - pw);
     let H = normalize(L + V);
     
-    var lit = 0.0;
-    var spec = 0.0;
-    
-    // Only calculate hard surface lighting if we actually hit the SDF boundary
-    if (hit) {
-        let diff = max(dot(nw, L), 0.0);
-        lit  = u.shading.x + u.shading.y * diff;
-        spec = u.shading.z * pow(max(dot(nw, H), 0.0), max(u.shading.w, 1.0)) * step(0.0001, diff);
-    }
+    let diff = max(dot(nw, L), 0.0);
+    let lit  = u.shading.x + u.shading.y * diff;
+    let spec = u.shading.z * pow(max(dot(nw, H), 0.0), max(u.shading.w, 1.0)) * step(0.0001, diff);
 
     let clip = u.viewProj * vec4<f32>(pw, 1.0);
 
-    var out: FSOut;
     // Combine hard surface with accumulated volumetric scatter
     let base_rgb = u.baseColor.rgb * lit + vec3<f32>(spec);
     let field_rgb = vec3<f32>(1.0, 1.0, 1.0) * volumetric_scatter; // Could be colored by the field later
     
-    out.color = vec4<f32>(mix(base_rgb, field_rgb, 1.0 - transmittance), u.baseColor.a);
+    let final_alpha = clamp(u.baseColor.a + (1.0 - transmittance), 0.0, 1.0);
+    out.color = vec4<f32>(base_rgb * transmittance + field_rgb, final_alpha);
     // Depth from the ACTUAL hit, so a raymarched field occludes and is occluded by
     // ordinary meshes correctly instead of by its bounding box.
     out.depth = clip.z / clip.w;
@@ -378,6 +387,9 @@ Program compile(const geom::SdfNode& root, const geom::FieldNode* fieldNode) {
     Emit e;
     const std::string result = emitNode(root, e);
 
+    // Order matters: WGSL has no forward declarations, so a function must appear
+    // before anything that calls it. Primitives, then the generated sdfEval, then
+    // the marcher which calls both.
     Program prog;
     prog.wgsl  = kPrimitives;
     prog.wgsl += "\nfn sdfEval(p: vec3<f32>) -> f32 {\n";
@@ -387,17 +399,18 @@ Program compile(const geom::SdfNode& root, const geom::FieldNode* fieldNode) {
     // --- Dual-Path Field Compiler ---
     prog.wgsl += "\nfn fieldEval(p: vec3<f32>) -> f32 {\n";
     if (fieldNode && fieldNode->field) {
-        // Here we branch on Path A vs Path B based on Law Integration logic.
-        // For now, we deploy Path A (Hardcoded procedural fields driven by variables).
-        // Path B (AST-Driven) would walk `fieldNode->field->astDefinition` and emit WGSL.
-        
-        std::string baseDensity = e.param(fieldNode->field->baseDensity);
-        std::string freq = e.param(fieldNode->field->frequency);
-        std::string amp = e.param(fieldNode->field->amplitude);
-        
-        prog.wgsl += "    // Path A: Hardcoded procedural evaluation\n";
-        prog.wgsl += "    let rawDensity = " + baseDensity + " + sin(p.x * " + freq + ") * " + amp + ";\n";
-        prog.wgsl += "    return max(rawDensity, 0.0);\n";
+        if (fieldNode->field->mode == OntoMath::ScalarField::EvaluationMode::AST) {
+            prog.wgsl += "    // Path B: AST-Driven evaluation\n";
+            prog.wgsl += "    return 0.0; // TODO: Implement AST WGSL emission\n";
+        } else {
+            std::string baseDensity = e.param(fieldNode->field->baseDensity);
+            std::string freq = e.param(fieldNode->field->frequency);
+            std::string amp = e.param(fieldNode->field->amplitude);
+            
+            prog.wgsl += "    // Path A: Hardcoded procedural evaluation\n";
+            prog.wgsl += "    let rawDensity = " + baseDensity + " + sin(p.x * " + freq + ") * " + amp + ";\n";
+            prog.wgsl += "    return max(rawDensity, 0.0);\n";
+        }
     } else {
         prog.wgsl += "    return 0.0;\n";
     }

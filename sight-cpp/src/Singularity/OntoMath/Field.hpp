@@ -1,23 +1,22 @@
 #pragma once
 
 #include "Singularity/OntoMath/ScalarForm.hpp"
+#include <nlohmann/json.hpp>
 #include <memory>
 #include <vector>
 
 namespace OntoMath {
 
-// Base interface for a mathematical Field
-class Field {
-public:
-    virtual ~Field() = default;
-};
-
 // Represents a mathematical continuous scalar density field.
 // Driven by either a hardcoded equation or an OntoMath Piecewise AST.
-class ScalarField : public Field {
+class ScalarField {
 public:
-    ScalarField();
-    ~ScalarField() override = default;
+    enum class EvaluationMode { Procedural, AST };
+
+    ScalarField() = default;
+    ~ScalarField() = default;
+
+    EvaluationMode mode = EvaluationMode::Procedural;
 
     // The underlying mathematical definition represented as a piecewise function
     // (AST) for Law integration and Path B WGSL compilation.
@@ -28,6 +27,9 @@ public:
     float baseDensity = 1.0f;
     float frequency = 1.0f;
     float amplitude = 1.0f;
+
+    nlohmann::json toJson() const;
+    static std::shared_ptr<ScalarField> fromJson(const nlohmann::json& j);
 };
 
 } // namespace OntoMath

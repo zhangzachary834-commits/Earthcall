@@ -4,6 +4,7 @@
 #include "Form/Singular/Property/PropertyRef.hpp"
 #include "Singularity/OntoMath/Field.hpp"
 #include <glm/glm.hpp>
+#include <nlohmann/json.hpp>
 #include <memory>
 #include <string>
 
@@ -14,9 +15,7 @@ namespace geom {
 // PropertyPath system, allowing the Law system to modulate the field dynamically.
 class FieldNode : public Singular {
 public:
-    FieldNode(std::string id = "field_node") : _id(std::move(id)) {
-        field = std::make_shared<OntoMath::ScalarField>();
-    }
+    FieldNode(std::string id = "field_node") : _id(std::move(id)), field(std::make_shared<OntoMath::ScalarField>()) {}
 
     std::string getIdentifier() const override { return _id; }
 
@@ -25,7 +24,11 @@ public:
     glm::vec3 scale{1.0f};
 
     // The pure mathematical field definition
-    std::shared_ptr<OntoMath::ScalarField> field;
+    // Const pointer ensures the property registry doesn't dangle
+    const std::shared_ptr<OntoMath::ScalarField> field;
+
+    nlohmann::json toJson() const;
+    static std::shared_ptr<FieldNode> fromJson(const nlohmann::json& j);
 
 protected:
     void buildProperties() override {

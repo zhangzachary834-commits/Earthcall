@@ -1,5 +1,8 @@
 #include "EventEntity.hpp"
 #include "Form/Singular/Property/PropertyRef.hpp"
+#include "Singularity/Core/EventBus.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include <uuid/uuid.h>
 
 namespace Core {
@@ -9,6 +12,13 @@ EventEntity::EventEntity(const std::string& eventType) : _eventType(eventType) {
     char uuid_str[37];
     uuid_unparse(uuid, uuid_str);
     _id = "event_" + std::string(uuid_str);
+    Universe::instance().addActiveEvent(this);
+}
+
+EventEntity::~EventEntity() {
+    Universe::instance().removeActiveEvent(this);
+    Core::EventBus::instance().publish(
+        ECA::Event{"object-destroyed", this, nullptr, std::time(nullptr)});
 }
 
 std::string EventEntity::getIdentifier() const {

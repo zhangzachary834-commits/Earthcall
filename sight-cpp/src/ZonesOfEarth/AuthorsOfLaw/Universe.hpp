@@ -38,6 +38,7 @@ public:
     std::vector<Singular*> beings() const {
         std::vector<Singular*> out;
         if (_provider) _provider(out);
+        out.insert(out.end(), _activeEvents.begin(), _activeEvents.end());
         if (!_unmaking.empty()) {
             // A being awaiting the reaper is already gone as far as law is
             // concerned: it must not be swept, quantified over, or addressed
@@ -230,6 +231,13 @@ public:
         return out;
     }
 
+    void addActiveEvent(Singular* eventEntity) {
+        _activeEvents.push_back(eventEntity);
+    }
+    void removeActiveEvent(Singular* eventEntity) {
+        _activeEvents.erase(std::remove(_activeEvents.begin(), _activeEvents.end(), eventEntity), _activeEvents.end());
+    }
+
 private:
     Universe() = default;
     Universe(const Universe&) = delete;
@@ -252,6 +260,7 @@ private:
     bool _eventSet = false;
 
     std::vector<Singular*> _unmaking;
+    std::vector<Singular*> _activeEvents;
 };
 
 // Free every being whose unmaking has been requested, releasing it from the

@@ -11,7 +11,7 @@ namespace Core {
 class EventEntity : public Singular {
 public:
     explicit EventEntity(const std::string& eventType);
-    ~EventEntity() override = default;
+    ~EventEntity() override;
 
     // Singular interface
     std::string getIdentifier() const override;
