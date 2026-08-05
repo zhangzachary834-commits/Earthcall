@@ -83,6 +83,8 @@ file(GLOB_RECURSE SRC_FILES
 # Exclude standalone main files and WebGPU from core sources
 list(FILTER SRC_FILES EXCLUDE REGEX "src/main.cpp")
 list(FILTER SRC_FILES EXCLUDE REGEX "src/Util/MigrateSaves.cpp")
+# Standalone tools carry their own main(); they must not enter the core lib.
+list(FILTER SRC_FILES EXCLUDE REGEX "src/Identity/MigrateIdentitiesTool.cpp")
 list(FILTER SRC_FILES EXCLUDE REGEX "src/Rendering/WebGPU/.*")
 list(FILTER SRC_FILES EXCLUDE REGEX "src/entry.cpp")
 list(FILTER SRC_FILES EXCLUDE REGEX "smoke_.*")
@@ -187,6 +189,13 @@ if(APPLE)
         OpenSSL::Crypto
     )
 endif()
+
+# --- Tools ---
+# Identity migration is an explicit, one-time act (see PersonMigration.hpp,
+# TRUST BOUNDARY), so it ships as a tool a Person runs rather than a step
+# that fires on load.
+add_executable(migrate_identities src/Identity/MigrateIdentitiesTool.cpp)
+target_link_libraries(migrate_identities PRIVATE earthcall_core)
 
 # --- Tests ---
 enable_testing()
