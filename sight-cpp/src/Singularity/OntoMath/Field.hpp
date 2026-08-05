@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Singularity/OntoMath/ScalarForm.hpp"
-#include <nlohmann/json.hpp>
+#include "json.hpp"
 #include <memory>
 #include <vector>
 
@@ -30,6 +30,28 @@ public:
 
     nlohmann::json toJson() const;
     static std::shared_ptr<ScalarField> fromJson(const nlohmann::json& j);
+};
+
+// Represents a mathematical continuous vector flow/force field.
+class VectorField {
+public:
+    enum class EvaluationMode { Procedural, AST };
+
+    VectorField() = default;
+    ~VectorField() = default;
+
+    EvaluationMode mode = EvaluationMode::Procedural;
+
+    Piecewise astDefinition;
+
+    float baseFlowX = 0.0f;
+    float baseFlowY = 0.0f;
+    float baseFlowZ = 0.0f;
+    float frequency = 1.0f;
+    float amplitude = 1.0f;
+
+    nlohmann::json toJson() const;
+    static std::shared_ptr<VectorField> fromJson(const nlohmann::json& j);
 };
 
 } // namespace OntoMath

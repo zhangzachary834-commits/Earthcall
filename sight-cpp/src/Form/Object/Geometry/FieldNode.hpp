@@ -4,7 +4,7 @@
 #include "Form/Singular/Property/PropertyRef.hpp"
 #include "Singularity/OntoMath/Field.hpp"
 #include <glm/glm.hpp>
-#include <nlohmann/json.hpp>
+#include "json.hpp"
 #include <memory>
 #include <string>
 
@@ -15,7 +15,10 @@ namespace geom {
 // PropertyPath system, allowing the Law system to modulate the field dynamically.
 class FieldNode : public Singular {
 public:
-    FieldNode(std::string id = "field_node") : _id(std::move(id)), field(std::make_shared<OntoMath::ScalarField>()) {}
+    FieldNode(std::string id = "field_node") 
+        : _id(std::move(id)), 
+          field(std::make_shared<OntoMath::ScalarField>()),
+          vectorField(std::make_shared<OntoMath::VectorField>()) {}
 
     std::string getIdentifier() const override { return _id; }
 
@@ -26,6 +29,7 @@ public:
     // The pure mathematical field definition
     // Const pointer ensures the property registry doesn't dangle
     const std::shared_ptr<OntoMath::ScalarField> field;
+    const std::shared_ptr<OntoMath::VectorField> vectorField;
 
     nlohmann::json toJson() const;
     static std::shared_ptr<FieldNode> fromJson(const nlohmann::json& j);
@@ -45,6 +49,14 @@ protected:
             // NOTE: The AST definition (field->astDefinition) is structurally more complex, 
             // but the Law system can rewrite it via specialized OntoMath endpoints or by 
             // replacing the AST entirely over the network.
+        }
+
+        if (vectorField) {
+            _propertyRegistry.push_back(std::make_unique<PropertyRef<OntoMath::VectorField, float>>("vectorField.baseFlowX", vectorField.get(), &OntoMath::VectorField::baseFlowX));
+            _propertyRegistry.push_back(std::make_unique<PropertyRef<OntoMath::VectorField, float>>("vectorField.baseFlowY", vectorField.get(), &OntoMath::VectorField::baseFlowY));
+            _propertyRegistry.push_back(std::make_unique<PropertyRef<OntoMath::VectorField, float>>("vectorField.baseFlowZ", vectorField.get(), &OntoMath::VectorField::baseFlowZ));
+            _propertyRegistry.push_back(std::make_unique<PropertyRef<OntoMath::VectorField, float>>("vectorField.frequency", vectorField.get(), &OntoMath::VectorField::frequency));
+            _propertyRegistry.push_back(std::make_unique<PropertyRef<OntoMath::VectorField, float>>("vectorField.amplitude", vectorField.get(), &OntoMath::VectorField::amplitude));
         }
     }
 

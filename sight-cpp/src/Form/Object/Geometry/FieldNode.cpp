@@ -8,6 +8,7 @@ nlohmann::json FieldNode::toJson() const {
     j["origin"] = {origin.x, origin.y, origin.z};
     j["scale"] = {scale.x, scale.y, scale.z};
     j["field"] = field->toJson();
+    j["vectorField"] = vectorField->toJson();
     return j;
 }
 
@@ -34,6 +35,20 @@ std::shared_ptr<FieldNode> FieldNode::fromJson(const nlohmann::json& j) {
             mutField->frequency = newField->frequency;
             mutField->amplitude = newField->amplitude;
             mutField->astDefinition = newField->astDefinition;
+        }
+    }
+    
+    if (j.contains("vectorField")) {
+        auto newVec = OntoMath::VectorField::fromJson(j["vectorField"]);
+        if (newVec) {
+            auto mutVec = const_cast<OntoMath::VectorField*>(node->vectorField.get());
+            mutVec->mode = newVec->mode;
+            mutVec->baseFlowX = newVec->baseFlowX;
+            mutVec->baseFlowY = newVec->baseFlowY;
+            mutVec->baseFlowZ = newVec->baseFlowZ;
+            mutVec->frequency = newVec->frequency;
+            mutVec->amplitude = newVec->amplitude;
+            mutVec->astDefinition = newVec->astDefinition;
         }
     }
     return node;

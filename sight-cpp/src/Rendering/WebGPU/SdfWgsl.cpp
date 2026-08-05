@@ -131,6 +131,120 @@ std::string emitRpn(const std::vector<geom::SdfToken>& rpn, Emit& e,
     return st.empty() ? "0.0" : st.back();
 }
 
+std::string emitScalarForm(const OntoMath::ScalarForm& sf, Emit& e, const std::string& pt) {
+    if (sf.terms.empty()) return "0.0";
+    std::string res = "";
+    for (size_t i = 0; i < sf.terms.size(); ++i) {
+        const auto& term = sf.terms[i];
+        std::string termStr = e.param(term.coefficient);
+        for (const auto& [var, exp] : term.factors) {
+            std::string wgslVar = (var == "x") ? (pt + ".x") : (var == "y") ? (pt + ".y") : (var == "z") ? (pt + ".z") : "0.0";
+            if (exp == 1.0) termStr += " * " + wgslVar;
+            else termStr += " * pow(" + wgslVar + ", " + e.param(exp) + ")";
+        }
+        for (const auto& tr : term.trans) {
+            std::string wgslVar = (tr.variable == "x") ? (pt + ".x") : (tr.variable == "y") ? (pt + ".y") : (tr.variable == "z") ? (pt + ".z") : "0.0";
+            std::string inner = "(" + e.param(tr.scale) + " * " + wgslVar + " + " + e.param(tr.shift) + ")";
+            if (tr.kind == OntoMath::TransFactor::Kind::Sin) termStr += " * sin(" + inner + ")";
+            else if (tr.kind == OntoMath::TransFactor::Kind::Cos) termStr += " * cos(" + inner + ")";
+            else if (tr.kind == OntoMath::TransFactor::Kind::Exp) termStr += " * exp(" + inner + ")";
+            else if (tr.kind == OntoMath::TransFactor::Kind::Ln) termStr += " * log(max(" + inner + ", 1e-8))";
+        }
+        if (i > 0) res += " + ";
+        res += "(" + termStr + ")";
+    }
+    return res;
+}
+
+std::string emitMathNode(const OntoMath::MathNode& node, Emit& e, const std::string& pt) {
+    switch (node.op) {
+        case OntoMath::MathNode::Op::ScalarLeaf:
+            return emitScalarForm(node.scalarForm, e, pt);
+        case OntoMath::MathNode::Op::ValueLeaf:
+            if (node.variableName == "p") return pt;
+            if (node.variableName == "x") return pt + ".x";
+            if (node.variableName == "y") return pt + ".y";
+            if (node.variableName == "z") return pt + ".z";
+            return "0.0";
+        case OntoMath::MathNode::Op::VectorConstruct: {
+            std::string res = "vec3<f32>(";
+            for (size_t i = 0; i < node.children.size(); ++i) {
+                res += emitMathNode(*node.children[i], e, pt);
+                if (i < node.children.size() - 1) res += ", ";
+            }
+            res += ")";
+            return res;
+        }
+        case OntoMath::MathNode::Op::Component: {
+            std::string child = emitMathNode(*node.children[0], e, pt);
+            return child + "." + node.stringArg;
+        }
+        case OntoMath::MathNode::Op::Add: {
+            return "(" + emitMathNode(*node.children[0], e, pt) + " + " + emitMathNode(*node.children[1], e, pt) + ")";
+        }
+        case OntoMath::MathNode::Op::Sub: {
+            return "(" + emitMathNode(*node.children[0], e, pt) + " - " + emitMathNode(*node.children[1], e, pt) + ")";
+        }
+        case OntoMath::MathNode::Op::Scale: {
+            return "(" + emitMathNode(*node.children[0], e, pt) + " * " + emitMathNode(*node.children[1], e, pt) + ")";
+        }
+        case OntoMath::MathNode::Op::Dot: {
+            return "dot(" + emitMathNode(*node.children[0], e, pt) + ", " + emitMathNode(*node.children[1], e, pt) + ")";
+        }
+        case OntoMath::MathNode::Op::Cross: {
+            return "cross(" + emitMathNode(*node.children[0], e, pt) + ", " + emitMathNode(*node.children[1], e, pt) + ")";
+        }
+        case OntoMath::MathNode::Op::Hadamard: {
+            return "(" + emitMathNode(*node.children[0], e, pt) + " * " + emitMathNode(*node.children[1], e, pt) + ")";
+        }
+        case OntoMath::MathNode::Op::Normalize: {
+            return "normalize(" + emitMathNode(*node.children[0], e, pt) + ")";
+        }
+        case OntoMath::MathNode::Op::Length: {
+            return "length(" + emitMathNode(*node.children[0], e, pt) + ")";
+        }
+        case OntoMath::MathNode::Op::Map: {
+            return node.stringArg + "(" + emitMathNode(*node.children[0], e, pt) + ")";
+        }
+        case OntoMath::MathNode::Op::Stochastic: {
+            return "1.0"; // Stochastics not trivially supported in stateless WGSL
+        }
+    }
+    return "0.0";
+}
+
+void emitPiecewise(const OntoMath::Piecewise& pw, Emit& e, const std::string& pt, const std::string& outType, std::string& outBody) {
+    std::string inVar = (pw.inputVariable == "x") ? (pt + ".x") : (pw.inputVariable == "y") ? (pt + ".y") : (pw.inputVariable == "z") ? (pt + ".z") : "0.0";
+    
+    for (size_t i = 0; i < pw.pieces.size(); ++i) {
+        const auto& piece = pw.pieces[i];
+        if (!piece.mathNode) continue;
+        
+        std::string cond = "";
+        if (piece.hasLo) cond += inVar + " >= " + e.param(piece.lo);
+        if (piece.hasHi) {
+            if (!cond.empty()) cond += " && ";
+            cond += inVar + " <= " + e.param(piece.hi);
+        }
+        
+        std::string val = emitMathNode(*piece.mathNode, e, pt);
+        
+        if (cond.empty()) {
+            outBody += "    return " + val + ";\n";
+            return;
+        } else {
+            outBody += "    if (" + cond + ") { return " + val + "; }\n";
+        }
+    }
+    
+    if (outType == "vec3<f32>") {
+        outBody += "    return vec3<f32>(0.0);\n";
+    } else {
+        outBody += "    return 0.0;\n";
+    }
+}
+
+
 // Emit one node, returning the name of the temporary holding its distance.
 std::string emitNode(const geom::SdfNode& n, Emit& e) {
     const std::string out = e.fresh();
@@ -401,7 +515,7 @@ Program compile(const geom::SdfNode& root, const geom::FieldNode* fieldNode) {
     if (fieldNode && fieldNode->field) {
         if (fieldNode->field->mode == OntoMath::ScalarField::EvaluationMode::AST) {
             prog.wgsl += "    // Path B: AST-Driven evaluation\n";
-            prog.wgsl += "    return 0.0; // TODO: Implement AST WGSL emission\n";
+            emitPiecewise(fieldNode->field->astDefinition, e, "p", "f32", prog.wgsl);
         } else {
             std::string baseDensity = e.param(fieldNode->field->baseDensity);
             std::string freq = e.param(fieldNode->field->frequency);
@@ -413,6 +527,30 @@ Program compile(const geom::SdfNode& root, const geom::FieldNode* fieldNode) {
         }
     } else {
         prog.wgsl += "    return 0.0;\n";
+    }
+    prog.wgsl += "}\n";
+
+    // --- Dual-Path Vector Field Compiler ---
+    prog.wgsl += "\nfn vectorFieldEval(p: vec3<f32>) -> vec3<f32> {\n";
+    if (fieldNode && fieldNode->vectorField) {
+        if (fieldNode->vectorField->mode == OntoMath::VectorField::EvaluationMode::AST) {
+            prog.wgsl += "    // Path B: AST-Driven evaluation\n";
+            emitPiecewise(fieldNode->vectorField->astDefinition, e, "p", "vec3<f32>", prog.wgsl);
+        } else {
+            std::string baseFlowX = e.param(fieldNode->vectorField->baseFlowX);
+            std::string baseFlowY = e.param(fieldNode->vectorField->baseFlowY);
+            std::string baseFlowZ = e.param(fieldNode->vectorField->baseFlowZ);
+            std::string freq = e.param(fieldNode->vectorField->frequency);
+            std::string amp = e.param(fieldNode->vectorField->amplitude);
+            
+            prog.wgsl += "    // Path A: Hardcoded procedural evaluation\n";
+            prog.wgsl += "    let rawFlowX = " + baseFlowX + " + sin(p.y * " + freq + ") * " + amp + ";\n";
+            prog.wgsl += "    let rawFlowY = " + baseFlowY + " + cos(p.z * " + freq + ") * " + amp + ";\n";
+            prog.wgsl += "    let rawFlowZ = " + baseFlowZ + " + sin(p.x * " + freq + ") * " + amp + ";\n";
+            prog.wgsl += "    return vec3<f32>(rawFlowX, rawFlowY, rawFlowZ);\n";
+        }
+    } else {
+        prog.wgsl += "    return vec3<f32>(0.0);\n";
     }
     prog.wgsl += "}\n";
 
