@@ -488,6 +488,27 @@ void Game::renderWildWestConsole() {
         mgr.active().world().addObject(obj);
     }
     
+    if (ImGui::Button("Spawn Black Hole")) {
+        auto obj = std::make_shared<Object>();
+        obj->setGeometryType(Object::GeometryType::Sphere);
+        obj->setTransform(glm::translate(glm::mat4(1.0f), glm::vec3(0, 50.0f, 0)));
+        obj->setFaceColor(0, 0.1f, 0.1f, 0.1f); // Dark grey/black
+        obj->setAttribute("mass", "1000000"); // Huge mass
+        mgr.active().world().addObject(obj);
+        
+        // Ensure Gravity Field is on
+        const auto& lawsRef = Physics::getLaws();
+        Physics::PhysicsLaw* gf = nullptr;
+        for (auto& L : const_cast<std::vector<Physics::PhysicsLaw>&>(lawsRef)) {
+            if (L.type == Physics::LawType::GravityField) { gf = &L; break; }
+        }
+        if (gf) {
+            gf->enabled = true;
+        } else {
+            Physics::PhysicsLaw newLaw; newLaw.name = "Gravity Field"; newLaw.type = Physics::LawType::GravityField; newLaw.enabled = true; newLaw.target.allObjects = true; Physics::addLaw(newLaw);
+        }
+    }
+    
     if (ImGui::Button("Explode All Objects!")) {
         const auto& objects = mgr.active().world().getOwnedObjects();
         for (const auto& up : objects) {
