@@ -1,3 +1,4 @@
+#include "Singularity/Language/Lexeme.hpp"
 #include "Formation.hpp"
 #include "Form/Object/Object.hpp"
 #include <GLFW/glfw3.h>
@@ -304,4 +305,45 @@ void Formation::applyAttachmentRelations() {
         }
         if (!progress) break;
     }
+}
+
+nlohmann::json Formation::toJson() const {
+    nlohmann::json j = nlohmann::json::object();
+    // Serialize members (Lexemes, etc.)
+    nlohmann::json jMembers = nlohmann::json::array();
+    for (auto* m : members) {
+        if (auto* lexeme = dynamic_cast<Singularity::Language::Lexeme*>(m)) {
+            jMembers.push_back({
+                {"type", "Lexeme"},
+                {"symbol", lexeme->getSymbol()},
+                {"id", lexeme->getIdentifier()}
+            });
+        } else {
+            // Stub for other singulars
+            jMembers.push_back({
+                {"type", "Singular"},
+                {"id", m->getIdentifier()}
+            });
+        }
+    }
+    j["members"] = jMembers;
+    
+    // Subformations
+    nlohmann::json jSub = nlohmann::json::array();
+    for (const auto& sub : subformations) {
+        jSub.push_back(sub->toJson());
+    }
+    j["subformations"] = jSub;
+    
+    // Relations
+    j["relations"] = relationMgr.toJson();
+    return j;
+}
+
+std::shared_ptr<Formation> Formation::fromJson(const nlohmann::json& json) {
+    auto f = std::make_shared<Formation>(std::vector<Singular*>{});
+    // This is a stub for the full recursive traversal. 
+    // In a real system we'd look up the Singulars from the engine by ID or create new Lexemes
+    // using LanguageSystem::instance().resolve(sym);
+    return f;
 }

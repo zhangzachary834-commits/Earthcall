@@ -46,6 +46,21 @@ class EngineServer:
         thread.start()
         return thread
 
+    def broadcast(self, payload: dict):
+        if not self.loop or not self.connected_clients:
+            return
+            
+        message = json.dumps(payload)
+        
+        async def _send_all():
+            for ws in self.connected_clients:
+                try:
+                    await ws.send(message)
+                except websockets.exceptions.ConnectionClosed:
+                    pass
+                    
+        asyncio.run_coroutine_threadsafe(_send_all(), self.loop)
+
 def start_engine_server(host="127.0.0.1", port=5001):
     server = EngineServer(host, port)
     server.run_in_background()

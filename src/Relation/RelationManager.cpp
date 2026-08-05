@@ -34,15 +34,15 @@
         RelationEvent ev;
         ev.timestamp    = std::time(nullptr);
         ev.description  = r.type;
-        ev.deltaWeight  = r.weight;
+        ev.deltaWeight  = r.getWeight();
         it->addEvent(ev);
 
         // Optional: update aggregate weight (could use running average, etc.)
-        it->weight += r.weight;
+        it->setWeight(it->getWeight() + r.getWeight());
     } else {
         // New relation – copy and create initial event
         Relation newRel = r;
-        RelationEvent ev{std::time(nullptr), r.type, r.weight};
+        RelationEvent ev{std::time(nullptr), r.type, r.getWeight()};
         newRel.events.push_back(ev);
         relations.push_back(std::move(newRel));
         
@@ -80,11 +80,11 @@ void RelationManager::add(const std::shared_ptr<Relation>& r) {
         RelationEvent ev;
         ev.timestamp    = std::time(nullptr);
         ev.description  = input.type;
-        ev.deltaWeight  = input.weight;
+        ev.deltaWeight  = input.getWeight();
         (*it)->addEvent(ev);
 
         // Optional: update aggregate weight (could use running average, etc.)
-        (*it)->weight += input.weight;
+        (*it)->setWeight((*it)->getWeight() + input.getWeight());
 
         // Re-binding an existing pair carries fresh attachment geometry: the
         // caller measured localOffset from the beings' current transforms, so
@@ -95,7 +95,7 @@ void RelationManager::add(const std::shared_ptr<Relation>& r) {
         }
     } else {
         // New relation – create initial event
-        RelationEvent ev{std::time(nullptr), input.type, input.weight};
+        RelationEvent ev{std::time(nullptr), input.type, input.getWeight()};
         r->events.push_back(ev);
         relations.push_back(r);
 
@@ -213,3 +213,14 @@ void RelationManager::loadFromJson(const nlohmann::json& j) {
         relations.push_back(std::make_shared<Relation>(Relation::fromJson(item)));
     }
 } 
+
+
+std::vector<std::string> RelationManager::findAdjacentEntities(const std::string& entityId, const std::string& relationType) const {
+    std::vector<std::string> result;
+    for (const auto& r : relations) {
+        if (!relationType.empty() && r->type != relationType) continue;
+        if (r->entityA == entityId) result.push_back(r->entityB);
+        else if (!r->directed && r->entityB == entityId) result.push_back(r->entityA);
+    }
+    return result;
+}

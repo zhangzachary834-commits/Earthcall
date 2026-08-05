@@ -222,7 +222,7 @@ std::shared_ptr<ObjectConcept> ObjectConcept::captureFrom(
         t.bIndex = b;
         t.type = rel->type;
         t.directed = rel->directed;
-        t.weight = rel->weight;
+        t.weight = rel->getWeight();
         concept->_relationTemplates.push_back(std::move(t));
     }
     return concept;

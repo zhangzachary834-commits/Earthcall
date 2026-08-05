@@ -56,14 +56,14 @@ public:
              const std::string& a,
              const std::string& b,
              bool directed = false,
-             float weight = 1.0f);
+              float initialWeight = -1.0f);
 
     // Convenience constructor for working directly with "singular" objects
     Relation(const std::string& type,
              const Singular& aEntity,
              const Singular& bEntity,
              bool directed = false,
-             float weight = 1.0f);
+              float initialWeight = -1.0f);
 
     // ---------------------------------------------------------------------
     // Introspection / Queries
@@ -100,8 +100,14 @@ public:
     std::string type;     // semantic tag of the relationship
     std::string entityA;  // first endpoint
     std::string entityB;  // second endpoint
+
+    // Developer mode flag for fallback auditing
+    static bool s_developerMode;
+    float getWeight() const;
+    void setWeight(float w);
+    
     bool directed = false;
-    float weight = 1.0f;
+    
 
     // Timeline of interaction events that influenced this relation
     std::vector<RelationEvent> events;

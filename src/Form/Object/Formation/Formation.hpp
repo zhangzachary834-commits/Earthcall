@@ -87,6 +87,11 @@ public:
     // Render the formation and its constituent objects
     void draw() const;
 
+    // (De)Serialization Helpers (Logos Phase 2)
+    nlohmann::json toJson() const;
+    static std::shared_ptr<Formation> fromJson(const nlohmann::json& json);
+
+
     // Add methods to manipulate formations, such as adding or removing elements,
     // checking relationships, etc.
 

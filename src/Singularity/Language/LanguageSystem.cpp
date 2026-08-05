@@ -1,3 +1,5 @@
+#include "Relation/RelationManager.hpp"
+#include "Relation/Relation.hpp"
 #include "Singularity/Language/LanguageSystem.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
@@ -85,14 +87,35 @@ void LanguageSystem::tick(float deltaTime) {
         std::cout << "[LanguageSystem] Spawning Lexeme for utterance: " << u.payload << std::endl;
         
         // Resolve or spawn the lexeme
-        auto lexeme = resolve(u.payload);
         
-        // Phase 5: Phenomenological Instantiation
-        // Assign the newly spawned Lexeme to the active Zone's Formation.
-        // It inherits the medium of the Zone (e.g. 3D space, UI, Text) rather
-        // than being hard-locked to a 3D coordinate struct.
+        // Simple NLP / Syntactic Parse Stub (Phase 3)
+        // If payload is like "Sword belongs_to Arthur", we split it.
+        std::string payload = u.payload;
+        size_t firstSpace = payload.find(' ');
+        size_t lastSpace = payload.rfind(' ');
+        
         Zone& activeZone = mgr.active();
-        activeZone.addToFormation(lexeme.get());
+        
+        if (firstSpace != std::string::npos && lastSpace != std::string::npos && firstSpace != lastSpace) {
+            std::string entityA = payload.substr(0, firstSpace);
+            std::string relType = payload.substr(firstSpace + 1, lastSpace - firstSpace - 1);
+            std::string entityB = payload.substr(lastSpace + 1);
+            
+            auto lexA = resolve(entityA);
+            auto lexB = resolve(entityB);
+            
+            activeZone.addToFormation(lexA.get());
+            activeZone.addToFormation(lexB.get());
+            
+            auto rel = std::make_shared<Relation>(relType, *lexA, *lexB, true);
+            // In a real system, the Formation would manage the relations. 
+            // We just instantiate the lexemes for now.
+            std::cout << "[LanguageSystem] Syntactic parse: " << entityA << " -> " << relType << " -> " << entityB << std::endl;
+        } else {
+            auto lexeme = resolve(u.payload);
+            activeZone.addToFormation(lexeme.get());
+        }
+
         
         std::cout << "[LanguageSystem] Lexeme '" << u.payload 
                   << "' joined Zone Formation: " << activeZone.name() << std::endl;

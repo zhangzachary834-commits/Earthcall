@@ -47,7 +47,15 @@ if __name__ == '__main__':
     
     # Start the Raw WebSocket Server for the Engine on port 5001
     engine_port = int(os.environ.get('ENGINE_PORT', 5001))
-    start_engine_server(host=host, port=engine_port)
+    engine_server = start_engine_server(host=host, port=engine_port)
+    
+    # Initialize Robotics Integrations
+    sys.path.insert(0, str(_SRC / "Integration" / "py"))
+    from robotics.connection_registry import ConnectionRegistry
+    from robotics.engine_sync import EngineSync
+    
+    connection_registry = ConnectionRegistry()
+    engine_sync = EngineSync(engine_server)
     
     # Start the Flask-SocketIO Meta-Server
     socketio.run(app, host=host, port=port, debug=debug)

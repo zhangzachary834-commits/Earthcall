@@ -14,7 +14,7 @@ class EngineSync:
             "property": property_name,
             "value": value
         }
-        self.ws_client.send(payload)
+        self.ws_client.broadcast(payload)
 
     def send_relation_assertion(self, relation_type: str, source_slug: str, target_slug: str):
         payload = {
@@ -23,7 +23,7 @@ class EngineSync:
             "source": source_slug,
             "target": target_slug
         }
-        self.ws_client.send(payload)
+        self.ws_client.broadcast(payload)
 
     def send_event(self, event_type: str, source_slug: str, details: dict = None):
         payload = {
@@ -32,4 +32,4 @@ class EngineSync:
             "source": source_slug,
             "details": details or {}
         }
-        self.ws_client.send(payload)
+        self.ws_client.broadcast(payload)

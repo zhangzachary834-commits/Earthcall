@@ -66,14 +66,14 @@ Relation::Relation(const std::string& type,
                    const std::string& a,
                    const std::string& b,
                    bool directed,
-                   float weight)
-    : type(type), entityA(a), entityB(b), directed(directed), weight(weight) {}
+                   float initialWeight)
+    : type(type), entityA(a), entityB(b), directed(directed) { if (initialWeight != -1.0f) setWeight(initialWeight); }
 
 void Relation::describe() const {
     std::cout << "Relation [" << type << "] "
               << (directed ? "from " : "between ")
               << entityA << (directed ? " -> " : " and ") << entityB
-              << " (strength=" << weight << ")"
+              << " (strength=" << getWeight() << ")"
               << std::endl;
 }
 
@@ -96,7 +96,7 @@ json Relation::toJson() const {
                 {"entityA", entityA},
                 {"entityB", entityB},
                 {"directed", directed},
-                {"weight", weight},
+                {"weight", getWeight()},
                 {"events", evArr},
                 {"attachment", attachment.toJson()}};
 }
@@ -107,7 +107,7 @@ Relation Relation::fromJson(const json& j) {
     r.entityA = j.at("entityA").get<std::string>();
     r.entityB = j.at("entityB").get<std::string>();
     r.directed = j.value("directed", false);
-    r.weight = j.value("weight", 1.0f);
+    r.setWeight(j.value("weight", 1.0f));
 
     if(j.contains("events") && j["events"].is_array()){
         for(const auto& item : j["events"]) {
@@ -128,8 +128,8 @@ Relation::Relation(const std::string& type,
                    const Singular& aEntity,
                    const Singular& bEntity,
                    bool directed,
-                   float weight)
-    : Relation(type, aEntity.getIdentifier(), bEntity.getIdentifier(), directed, weight) {}
+                   float initialWeight)
+    : Relation(type, aEntity.getIdentifier(), bEntity.getIdentifier(), directed, initialWeight) {}
 
 bool Relation::involves(const Singular& entity) const {
     return involves(entity.getIdentifier());
@@ -144,12 +144,29 @@ bool Relation::isBetween(const Singular& aEntity, const Singular& bEntity) const
 void Relation::buildProperties() {
     _propertyRegistry.push_back(std::make_unique<PropertyRef<Relation, std::string>>(
         "type", this, &Relation::type));
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<Relation, float>>(
-        "weight", this, &Relation::weight));
     _propertyRegistry.push_back(std::make_unique<PropertyRef<Relation, bool>>(
         "directed", this, &Relation::directed));
     _propertyRegistry.push_back(std::make_unique<ComputedProperty<Relation, std::string>>(
         "entityA", this, &Relation::propEntityA));
     _propertyRegistry.push_back(std::make_unique<ComputedProperty<Relation, std::string>>(
         "entityB", this, &Relation::propEntityB));
+}
+
+
+bool Relation::s_developerMode = true; // Default true for developer testing
+
+float Relation::getWeight() const {
+    PropertyValue out;
+    if (getDynamicProperty("weight", out)) {
+        return std::get<float>(out);
+    }
+    if (s_developerMode) {
+        std::cerr << "[Relation] AUDIT WARNING: weight not explicitly settled for Relation " << getIdentifier() << ". Falling back to 1.0f in developer mode." << std::endl;
+        return 1.0f;
+    }
+    throw std::runtime_error("Relation weight not explicitly settled by a Person.");
+}
+
+void Relation::setWeight(float w) {
+    setDynamicProperty("weight", PropertyValue(w));
 }

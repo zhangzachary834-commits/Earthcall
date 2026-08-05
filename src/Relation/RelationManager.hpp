@@ -44,6 +44,10 @@ public:
     std::vector<std::shared_ptr<Relation>> getRelationsBetween(const std::string& a, const std::string& b) const;
     std::vector<std::shared_ptr<Relation>> getRelationsOfType(const std::string& type) const;
 
+    // Semantic Traversal Utilities (Logos Phase 4)
+    std::vector<std::string> findAdjacentEntities(const std::string& entityId, const std::string& relationType = "") const;
+
+
     // (De)Serialization --------------------------------------------------
     nlohmann::json toJson() const;
     void loadFromJson(const nlohmann::json& j);

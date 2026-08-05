@@ -298,7 +298,8 @@ int main() {
         assert(PropertyPath::parse("entityA").getValue(touch, relValue) == PropertyPath::PathResult::Ok);
         assert(std::get<std::string>(relValue) == a.getIdentifier());
         assert(PropertyPath::parse("weight").setValue(touch, PropertyValue(0.25f)) == PropertyPath::PathResult::Ok);
-        assert(nearf(touch.weight, 0.25f));
+        assert(touch.directed == true);
+        assert(nearf(touch.getWeight(), 0.25f));
         assert(PropertyPath::parse("entityA").setValue(
             touch, PropertyValue(std::string("someone-else"))) != PropertyPath::PathResult::Ok);   // identity: read-only
 

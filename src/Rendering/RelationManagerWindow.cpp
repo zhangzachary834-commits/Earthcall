@@ -69,7 +69,7 @@ void renderRelationManagerWindow(bool* open, const RelationManager& registry) {
                 if (std::find(nodes.begin(), nodes.end(), rel->entityA) == nodes.end()) nodes.push_back(rel->entityA);
                 if (std::find(nodes.begin(), nodes.end(), rel->entityB) == nodes.end()) nodes.push_back(rel->entityB);
                 
-                edges.push_back({rel->entityA, rel->entityB, rel->type, rel->directed, static_cast<float>(rel->weight)});
+                edges.push_back({rel->entityA, rel->entityB, rel->type, rel->directed, static_cast<float>(rel->getWeight())});
             }
 
             ImGui::Text("Showing %zu relations between %zu entities", edges.size(), nodes.size());

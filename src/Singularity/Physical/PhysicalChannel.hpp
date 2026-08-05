@@ -15,6 +15,8 @@ public:
     bool isFirstMover() const override { return true; }
     const std::string& name() const { return _name; }
 
+    static void syncRegister(LawManager& laws);
+
 private:
     void buildProperties() override;
 

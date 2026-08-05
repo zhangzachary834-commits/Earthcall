@@ -277,7 +277,7 @@ int main() {
         const Relation& rebornRel = *rebornGraph.getAll().front();
         assert(rebornRel.type == "attached-to");
         assert(rebornRel.directed);
-        assert(nearf(rebornRel.weight, 0.8f));
+        assert(nearf(rebornRel.getWeight(), 0.8f));
         assert(rebornRel.entityA == twins[0]->getIdentifier());   // NEWBORN ids,
         assert(rebornRel.entityB == twins[1]->getIdentifier());   // not the sources'
 

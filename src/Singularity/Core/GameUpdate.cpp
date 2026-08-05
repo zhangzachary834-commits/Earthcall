@@ -16,6 +16,8 @@
 #include "Person/PersonEvents.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/PhysicsLawBridge.hpp"
+#include "Singularity/Physical/PhysicalChannel.hpp"
+
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
 
@@ -696,6 +698,8 @@ void Game::update(float dt) {
     // First movers stay legible: every engine physics law has a bridge Law
     // in the register, so gravity is governable text, not hidden machinery.
     PhysicsLawBridge::syncRegister(_lawManager);
+    Singularity::Physical::PhysicalChannel::syncRegister(_lawManager);
+
 
     // Laws hear the frame: everything published above (collisions, hover
     // edges, finished clips, applied laws) has been asserted as facts; one
