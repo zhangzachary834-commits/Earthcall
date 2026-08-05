@@ -44,7 +44,7 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Form
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ZonesOfEarth
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Person/Body
-    ${CMAKE_CURRENT_SOURCE_DIR}/../imgui
+    ${CMAKE_CURRENT_SOURCE_DIR}/imgui
     ${CMAKE_CURRENT_SOURCE_DIR}/local_deps/include
     ${CMAKE_CURRENT_SOURCE_DIR}/local_deps/glfw_install/include
     ${CMAKE_CURRENT_SOURCE_DIR}/third_party/flatbuffers/include
@@ -89,7 +89,7 @@ list(FILTER SRC_FILES EXCLUDE REGEX "smoke_.*")
 list(FILTER SRC_FILES EXCLUDE REGEX "scratch/.*")
 list(FILTER SRC_FILES EXCLUDE REGEX "src/Legacy Depricated/.*")
 
-set(IMGUI_DIR "../imgui")
+set(IMGUI_DIR "imgui")
 set(IMGUI_SOURCES
     ${IMGUI_DIR}/imgui.cpp
     ${IMGUI_DIR}/imgui_demo.cpp

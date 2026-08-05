@@ -1,8 +1,17 @@
 import os
+import sys
+from pathlib import Path
+
 from flask import Flask
 from flask_cors import CORS
 from flask_socketio import SocketIO
 from dotenv import load_dotenv
+
+# The socket handlers live with the rest of the Network modality, beside the
+# engine's WebSocketClient/WebSocketServer — they are two halves of one channel,
+# not two subsystems (docs/architecture/DIRECTORY_ORDERING.md §3).
+_SRC = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(_SRC / "Singularity" / "Network" / "py"))
 
 # Load environment variables from .env
 load_dotenv()
@@ -23,11 +32,11 @@ app.register_blueprint(web_bp)
 app.register_blueprint(api_bp)
 
 # Register WebSocket events
-from sockets.events import register_socket_events
+from events import register_socket_events
 register_socket_events(socketio)
 
 # Import and start the Raw WebSocket Engine Server
-from sockets.engine_server import start_engine_server
+from engine_server import start_engine_server
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))

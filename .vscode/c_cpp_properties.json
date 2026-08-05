@@ -3,14 +3,16 @@
         {
             "name": "Mac",
             "includePath": [
-                "${workspaceFolder}/sight-cpp/src**",
+                "${workspaceFolder}/src**",
                 "/opt/homebrew/include",
-                "${workspaceFolder}/sight-cpp/src/ZonesOfEarth",
-                "${workspaceFolder}/sight-cpp/src/Person",
-                "${workspaceFolder}/sight-cpp/src/ZonesOfEarth/HomesOfEarth",
-                "${workspaceFolder}/sight-cpp/src/ZonesOfEarth/Ourverse",
-                "${workspaceFolder}/sight-cpp/src/Relation",
-                "${workspaceFolder}/sight-cpp/src/Person/Body"
+                "${workspaceFolder}/src/ZonesOfEarth",
+                "${workspaceFolder}/src/Person",
+                "${workspaceFolder}/src/ZonesOfEarth/HomesOfEarth",
+                "${workspaceFolder}/src/ZonesOfEarth/Ourverse",
+                "${workspaceFolder}/src/Relation",
+                "${workspaceFolder}/src/Person/Body",
+                "${workspaceFolder}/imgui",
+                "${workspaceFolder}/third_party/flatbuffers/include"
             ],
             "defines": [],
             "macFrameworkPath": [
