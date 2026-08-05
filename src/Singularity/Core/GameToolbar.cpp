@@ -178,6 +178,9 @@ void Game::renderCreatorToolbar() {
         case CreatorSection::Zones:
             renderZonesConsole(mgr);
             break;
+        case CreatorSection::WildWest:
+            renderWildWestConsole();
+            break;
     }
 
     renderCreatorStatusBar();
@@ -216,6 +219,8 @@ void Game::renderCreatorSectionTabs() {
     renderSectionButton(CreatorSection::Relations, "Relations");
     ImGui::SameLine();
     renderSectionButton(CreatorSection::Zones, "Zones");
+    ImGui::SameLine();
+    renderSectionButton(CreatorSection::WildWest, "Wild West");
 }
 
 void Game::renderSectionButton(CreatorSection section, const char* label) {
@@ -450,6 +455,50 @@ void Game::renderPaintConsole(Zone& zone) {
     ImGui::SameLine();
     if (ImGui::Button("Clear History")) {
         zone.clearHistory();
+    }
+}
+
+void Game::renderWildWestConsole() {
+    ImGui::TextColored(ImVec4(1.0f, 0.2f, 0.6f, 1.0f), "WELCOME TO GEMINI'S WILD WEST!");
+    ImGui::Text("Crazy experiments live here.");
+    ImGui::Separator();
+
+    if (ImGui::Button("Spawn 100 Bouncy Cubes")) {
+        for (int i=0; i<100; ++i) {
+            auto obj = std::make_shared<Object>();
+            obj->setGeometryType(Object::GeometryType::Cube);
+            float rx = (rand() % 200 - 100) / 10.0f;
+            float ry = (rand() % 100) / 10.0f + 5.0f;
+            float rz = (rand() % 200 - 100) / 10.0f;
+            obj->setTransform(glm::translate(glm::mat4(1.0f), glm::vec3(rx, ry, rz)));
+            obj->setFaceColor(0, (rand()%100)/100.0f, (rand()%100)/100.0f, (rand()%100)/100.0f);
+            mgr.active().world().addObject(obj);
+        }
+    }
+    
+    ImGui::SameLine();
+    
+    if (ImGui::Button("Spawn Giant Torus")) {
+        auto obj = std::make_shared<Object>();
+        Object::ShapeParams p;
+        p.majorR = 10.0f; p.minorR = 2.0f;
+        obj->setShape(Object::ShapeKind::Torus, p);
+        obj->setTransform(glm::translate(glm::mat4(1.0f), glm::vec3(0, 20.0f, 0)));
+        obj->setFaceColor(0, 1.0f, 0.0f, 1.0f);
+        mgr.active().world().addObject(obj);
+    }
+    
+    if (ImGui::Button("Explode All Objects!")) {
+        const auto& objects = mgr.active().world().getOwnedObjects();
+        for (const auto& up : objects) {
+            Object* obj = up.get();
+            if (obj && !obj->hasAttribute("baseline")) {
+                float rx = (rand() % 200 - 100) / 10.0f;
+                float ry = (rand() % 100) / 10.0f + 10.0f;
+                float rz = (rand() % 200 - 100) / 10.0f;
+                obj->setTransform(glm::translate(glm::mat4(1.0f), glm::vec3(rx, ry, rz)));
+            }
+        }
     }
 }
 

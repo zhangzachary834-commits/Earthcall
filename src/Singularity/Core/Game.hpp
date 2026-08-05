@@ -369,7 +369,7 @@ private:
     enum class PerspectiveMode { FirstPerson = 0, SecondPerson, ThirdPerson };
     enum class Mode3D { None = -1, FacePaint = 0, FaceBrush, BrushCreate, Pottery, Rotation, Selection, Morph, Combine, Sculpt, Graph };
     enum class ToolTarget3D { WorldObjects = 0, AvatarBodyParts };
-    enum class CreatorSection { Paint = 0, Create3D, Character, World, Assets, Relations, Zones };
+    enum class CreatorSection { Paint = 0, Create3D, Character, World, Assets, Relations, Zones, WildWest };
 
     using BrushType = Core::BrushType;
 
@@ -544,6 +544,7 @@ private:
     void renderAssetsConsole(Zone& zone);
     void renderRelationsConsole(Zone& zone);
     void renderZonesConsole(ZoneManager& zoneMgr);
+    void renderWildWestConsole();
     void renderCreatorStatusBar();
     void renderSectionButton(CreatorSection section, const char* label);
     void renderPaintToolButton(Zone& zone, Tool::Type type, const char* label);
