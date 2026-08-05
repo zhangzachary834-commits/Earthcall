@@ -176,19 +176,82 @@ namespace Physics {
                         // Handled in a separate pairwise loop below for efficiency and symmetry
                         break;
                     }
+                    case LawType::Ecosystem: {
+                        // Handled in a separate global loop below
+                        break;
+                    }
                 }
             }
             // Fallback legacy gravity/air if no law applied a force
-            if (!laws.empty() && !appliedAny) {
-                // no-op; body has no forces this frame
-            } else if (laws.empty()) {
-                applyForce(body, glm::vec3(0.0f, -gravityAccel * body.mass, 0.0f));
-                glm::vec3 dragForce = -airResistance * body.velocity;
-                applyForce(body, dragForce);
+        if (!laws.empty() && !appliedAny) {
+            // no-op; body has no forces this frame
+        } else if (laws.empty()) {
+            applyForce(body, glm::vec3(0.0f, -gravityAccel * body.mass, 0.0f));
+            glm::vec3 dragForce = -airResistance * body.velocity;
+            applyForce(body, dragForce);
+        }
+        } // MISSING BRACE HERE
+
+        // 1b. Ecosystem / Cellular Automata Law
+        bool anyEcosystemLaw = false;
+        LawTarget ecosystemTarget{};
+        for (const auto& law : laws) {
+            if (law.enabled && law.type == LawType::Ecosystem) { anyEcosystemLaw = true; ecosystemTarget = law.target; break; }
+        }
+        
+        static float ecosystemTimer = 0.0f;
+        if (anyEcosystemLaw) {
+            ecosystemTimer += deltaTime;
+            if (ecosystemTimer >= 1.5f) { // Run every 1.5 seconds to see it happen
+                ecosystemTimer = 0.0f;
+                std::vector<int> neighborCounts(objects.size(), 0);
+                float neighborRadiusSq = 25.0f; // 5 units
+                
+                for (size_t i = 0; i < objects.size(); ++i) {
+                    if (!objects[i] || !objectMatchesTarget(*objects[i], ecosystemTarget)) continue;
+                    glm::vec3 posA = getObjectPos(objects[i].get());
+                    for (size_t j = i + 1; j < objects.size(); ++j) {
+                        if (!objects[j] || !objectMatchesTarget(*objects[j], ecosystemTarget)) continue;
+                        glm::vec3 posB = getObjectPos(objects[j].get());
+                        float distSq = glm::dot(posA - posB, posA - posB);
+                        if (distSq < neighborRadiusSq && distSq > 0.001f) {
+                            neighborCounts[i]++;
+                            neighborCounts[j]++;
+                        }
+                    }
+                }
+                
+                std::vector<std::shared_ptr<Object>> newObjects;
+                for (size_t i = 0; i < objects.size(); ++i) {
+                    if (!objects[i] || !objectMatchesTarget(*objects[i], ecosystemTarget)) continue;
+                    if (objects[i]->getAttribute("baseline") == "ground") continue;
+                    
+                    int n = neighborCounts[i];
+                    if (n <= 1 || n >= 4) {
+                        objects[i]->setAttribute("ecosystem_dead", "true");
+                    } else if (n == 3) {
+                        auto child = std::make_shared<Object>();
+                        child->setGeometryType(objects[i]->getGeometryType());
+                        glm::vec3 pos = getObjectPos(objects[i].get()) + glm::vec3((rand()%20 - 10)/2.0f, 5.0f, (rand()%20 - 10)/2.0f);
+                        child->setTransform(glm::translate(glm::mat4(1.0f), pos));
+                        child->setFaceColor(0, (rand()%100)/100.0f, (rand()%100)/100.0f, (rand()%100)/100.0f);
+                        newObjects.push_back(child);
+                    }
+                }
+                
+                // Erase dead objects
+                objects.erase(std::remove_if(objects.begin(), objects.end(), [](const std::shared_ptr<Object>& obj) {
+                    return obj && obj->getAttribute("ecosystem_dead") == "true";
+                }), objects.end());
+                
+                // Spawn new objects
+                for (auto& child : newObjects) {
+                    objects.push_back(child);
+                }
             }
         }
-
-        // 1b. Pairwise gravity field accumulation if a GravityField law exists
+        
+        // 1c. Pairwise gravity field accumulation if a GravityField law exists
         bool anyGravityField = false;
         LawTarget gravityFieldTarget{}; // default allObjects
         for (const auto& law : laws) {

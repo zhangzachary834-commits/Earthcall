@@ -164,7 +164,9 @@ namespace Physics {
         // Gradient gravity where every object attracts every other based on mass and distance
         GravityField,
         // Pull toward world center-of-mass (soft global attraction)
-        CenterGravity
+        CenterGravity,
+        // Cellular automata game of life rules for objects
+        Ecosystem
     };
 
     struct LawTarget {

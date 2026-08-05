@@ -521,6 +521,37 @@ void Game::renderWildWestConsole() {
             }
         }
     }
+
+    if (ImGui::Button("Seed Ecosystem (Game of Life)")) {
+        // Spawn 30 random objects in a cluster
+        for (int i=0; i<30; ++i) {
+            auto obj = std::make_shared<Object>();
+            obj->setGeometryType(Object::GeometryType::Cube);
+            float rx = (rand() % 100 - 50) / 5.0f;
+            float ry = (rand() % 50) / 5.0f + 5.0f;
+            float rz = (rand() % 100 - 50) / 5.0f;
+            obj->setTransform(glm::translate(glm::mat4(1.0f), glm::vec3(rx, ry, rz)));
+            obj->setFaceColor(0, (rand()%100)/100.0f, 1.0f, (rand()%100)/100.0f); // mostly green/yellow
+            mgr.active().world().addObject(obj);
+        }
+        
+        // Ensure Ecosystem Law is on
+        const auto& lawsRef = Physics::getLaws();
+        Physics::PhysicsLaw* el = nullptr;
+        for (auto& L : const_cast<std::vector<Physics::PhysicsLaw>&>(lawsRef)) {
+            if (L.type == Physics::LawType::Ecosystem) { el = &L; break; }
+        }
+        if (el) {
+            el->enabled = true;
+        } else {
+            Physics::PhysicsLaw newLaw; 
+            newLaw.name = "Ecosystem Cellular Automata"; 
+            newLaw.type = Physics::LawType::Ecosystem; 
+            newLaw.enabled = true; 
+            newLaw.target.allObjects = true; 
+            Physics::addLaw(newLaw);
+        }
+    }
 }
 
 void Game::set3DMode(Mode3D mode) {
