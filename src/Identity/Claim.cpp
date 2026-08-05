@@ -35,24 +35,6 @@ void appendField(std::vector<uint8_t>& out, const std::vector<uint8_t>& b) {
     out.insert(out.end(), b.begin(), b.end());
 }
 
-std::vector<uint8_t> hexDecode(const std::string& hex) {
-    std::vector<uint8_t> out;
-    if (hex.size() % 2 != 0) return out;
-    out.reserve(hex.size() / 2);
-    auto nibble = [](char c) -> int {
-        if (c >= '0' && c <= '9') return c - '0';
-        if (c >= 'a' && c <= 'f') return c - 'a' + 10;
-        if (c >= 'A' && c <= 'F') return c - 'A' + 10;
-        return -1;
-    };
-    for (size_t i = 0; i < hex.size(); i += 2) {
-        int hi = nibble(hex[i]), lo = nibble(hex[i + 1]);
-        if (hi < 0 || lo < 0) return {};
-        out.push_back(static_cast<uint8_t>((hi << 4) | lo));
-    }
-    return out;
-}
-
 // json::value() throws when a key is present but of the wrong type, which on
 // this path means malformed save data aborts the load instead of producing an
 // unverifiable claim. Read the type first and fall back rather than trusting.
@@ -66,17 +48,6 @@ int64_t intField(const nlohmann::json& j, const char* key) {
     auto it = j.find(key);
     if (it == j.end() || !it->is_number_integer()) return 0;
     return it->get<int64_t>();
-}
-
-std::string hexEncode(const std::vector<uint8_t>& data) {
-    static const char* digits = "0123456789abcdef";
-    std::string out;
-    out.reserve(data.size() * 2);
-    for (uint8_t b : data) {
-        out.push_back(digits[b >> 4]);
-        out.push_back(digits[b & 0x0F]);
-    }
-    return out;
 }
 
 } // namespace

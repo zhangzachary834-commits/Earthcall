@@ -1296,11 +1296,11 @@ void Game::renderCharacterConsole() {
             ImGui::BeginDisabled(_characterDesignLocked);
 
             static char nameBuf[128] = "";
-            if (nameBuf[0] == '\0' && !_player.soulName.empty()) {
-                std::snprintf(nameBuf, sizeof(nameBuf), "%s", _player.soulName.c_str());
+            if (nameBuf[0] == '\0' && !_player.displayName.empty()) {
+                std::snprintf(nameBuf, sizeof(nameBuf), "%s", _player.displayName.c_str());
             }
             if (ImGui::InputText("Soul Name", nameBuf, sizeof(nameBuf))) {
-                _player.soulName = nameBuf;
+                _player.displayName = nameBuf;
             }
             
             ImGui::Separator();

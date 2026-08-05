@@ -12,7 +12,7 @@ public:
     
     // Load a person's profile by soul name (identifier)
     // Returns true if successful, with populated person object
-    bool loadPerson(const std::string& soulName, Person& outPerson);
+    bool loadPerson(const std::string& displayName, Person& outPerson);
     
     // Get a list of all registered person identifiers
     std::vector<std::string> getAllRegisteredPersons() const;

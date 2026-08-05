@@ -91,6 +91,12 @@ private:
 std::string base32Encode(const std::vector<uint8_t>& data);
 bool base32Decode(const std::string& text, std::vector<uint8_t>& out);
 
+// Hex for the binary fields inside serialized claims and key files. Decoding
+// returns an empty vector on any malformed input rather than partial output --
+// a half-decoded signature must never read as a short signature.
+std::string hexEncode(const std::vector<uint8_t>& data);
+std::vector<uint8_t> hexDecode(const std::string& hex);
+
 } // namespace Identity
 
 namespace std {

@@ -10,24 +10,24 @@ PersonDatabase& PersonDatabase::getInstance() {
 }
 
 void PersonDatabase::savePerson(const Person& person) {
-    if (person.soulName.empty()) {
-        std::cerr << "Cannot save Person with empty soulName." << std::endl;
+    if (person.displayName.empty()) {
+        std::cerr << "Cannot save Person with empty displayName." << std::endl;
         return;
     }
     
     nlohmann::json j = person.serialize();
     
     // Save to the PERSON save type in SaveSystem
-    SaveSystem::writeSaveData(j, person.soulName, SaveSystem::SaveType::PERSON);
+    SaveSystem::writeSaveData(j, person.displayName, SaveSystem::SaveType::PERSON);
     
-    std::cout << "Successfully saved Person profile for: " << person.soulName << std::endl;
+    std::cout << "Successfully saved Person profile for: " << person.displayName << std::endl;
 }
 
-bool PersonDatabase::loadPerson(const std::string& soulName, Person& outPerson) {
-    // soulName reaches here from deserialized save data, so it is untrusted
+bool PersonDatabase::loadPerson(const std::string& displayName, Person& outPerson) {
+    // displayName reaches here from deserialized save data, so it is untrusted
     // and cannot be concatenated into a path raw. ensureSaveTypeFolder (not
     // getSaveTypeFolderName) is what savePerson writes into.
-    std::string safeName = SaveSystem::sanitizeLabel(soulName);
+    std::string safeName = SaveSystem::sanitizeLabel(displayName);
     if (safeName.empty()) return false;
 
     std::string folder = SaveSystem::ensureSaveTypeFolder(SaveSystem::SaveType::PERSON);

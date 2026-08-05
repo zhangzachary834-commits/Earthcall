@@ -7,6 +7,7 @@
 #include <glm/glm.hpp>
 #include <GLFW/glfw3.h>
 #include "Form/Singular/Singular.hpp"
+#include "Identity/SingularId.hpp"
 #include "Soul/Soul.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include <json.hpp>
@@ -72,7 +73,7 @@ public:
         std::map<std::string, std::vector<glm::vec3>> rotations; // bodyPart -> rotations
     };
 
-    std::string soulName;
+    std::string displayName;
     GameMode mode = GameMode::Creative;
     bool physicsEnabled = false;
     glm::vec3 position{0.0f, 0.0f, 0.0f};
@@ -145,13 +146,13 @@ public:
 
     // Constructors
     Person(Soul soul, Body body, const std::string& joyOrdering);
-    // Person(std::string soulName, Body&& body, glm::vec3 pos = {0.0f,0.0f,0.0f});  // Commented out - needs Soul reference
+    // Person(std::string displayName, Body&& body, glm::vec3 pos = {0.0f,0.0f,0.0f});  // Commented out - needs Soul reference
     void express() const;
     void draw() const;
     void drawNametag() const;
     void update(float deltaTime);
 
-    const std::string& getSoulName() const { return soulName; }
+    const std::string& getDisplayName() const { return displayName; }
 
     void setMode(GameMode m) { mode = m; }
     GameMode getMode() const { return mode; }
@@ -235,17 +236,62 @@ public:
     const std::string& getCurrentSession() const { return _currentSession; }
     const std::vector<std::string>& getJoinedZones() const { return _joinedZones; }
 
-    // Singular interface implementation
-    std::string getIdentifier() const override { return soulName; }
+    // ------------------------------------------------------------------
+    // Identity and personal address.
+    //
+    // This belongs to Person, not to Soul. Identity is how a Person is
+    // addressed, recognised, and held to what they own -- it is a fact about
+    // the Person as a whole, and routing it through a member meant the class
+    // responsible for a Person's standing in the world did not hold it.
+    //
+    // Two distinct things, deliberately not one:
+    //
+    //   personId    what this Person IS. An Ed25519 public key, so holding it
+    //               is provable and claiming it is not. Never chosen, never
+    //               typed in, never compared against a name.
+    //   displayName what this Person is CALLED. Chosen, editable, and free to
+    //               collide with anyone else's. It carries no authority --
+    //               that is exactly why it is safe to let people pick it.
+    // ------------------------------------------------------------------
+    const Identity::SingularId& personId() const { return _personId; }
+    bool hasIdentity() const { return _personId.canAuthenticate(); }
+
+    // Assigning identity is a distinct act from constructing a Person: a
+    // Person may exist in a loaded world before their key is available, and
+    // minting one on every construction would hand out a fresh identity to
+    // every temporary copy.
+    void setPersonId(const Identity::SingularId& id) { _personId = id; }
+
+    // Singular interface implementation. Prefers the cryptographic identity;
+    // falls back to the display name only for worlds saved before identities
+    // existed, which is what keeps legacy law-author resolution working until
+    // migration has run.
+    std::string getIdentifier() const override {
+        return _personId.canAuthenticate() ? _personId.toString() : displayName;
+    }
+
+    // Law-author resolution scans beings for a matching identifier. During
+    // migration a saved world may address this Person either way, so accept
+    // both -- but never let a display name match a Person who has a real
+    // identity, or picking someone's name would again be enough to be them.
+    bool matchesIdentifier(const std::string& candidate) const {
+        if (_personId.canAuthenticate()) return candidate == _personId.toString();
+        return candidate == displayName;
+    }
 
 private:
     // A Person is a legible Singular too: laws can ask about (and, where
     // authorized, act on) a person's position; the name is read-only —
     // identity is not a writable slot.
     void buildProperties() override;
-    std::string propName() const { return soulName; }
+    std::string propName() const { return displayName; }
 
+    // A Soul is what a Person worships and orders their joy by. It is
+    // deliberately no longer the source of identity: a Soul's identifier was a
+    // plain chosen string, so deriving the Person's identity from it meant
+    // anyone who typed the same string became the same Person.
     Soul _soul;
+    Identity::SingularId _personId;
     Body body;  // Body member variable
 
     // Helper method for creating default animations

@@ -13,7 +13,7 @@
 Person* AvatarManager::createAvatar(const std::string& name, const std::string& artStyle) {
     // Check if avatar already exists
     for (auto* avatar : avatars) {
-        if (avatar->getSoulName() == name) {
+        if (avatar->getDisplayName() == name) {
             std::cout << "Avatar '" << name << "' already exists!" << std::endl;
             return avatar;
         }
@@ -32,7 +32,7 @@ Person* AvatarManager::createAvatar(const std::string& name, const std::string& 
 Person* AvatarManager::createCustomAvatar(const std::string& name, Body::BodyType bodyType, Body::Proportions props) {
     // Check if avatar already exists
     for (auto* avatar : avatars) {
-        if (avatar->getSoulName() == name) {
+        if (avatar->getDisplayName() == name) {
             std::cout << "Avatar '" << name << "' already exists!" << std::endl;
             return avatar;
         }
@@ -59,7 +59,7 @@ Person* AvatarManager::createElderAvatar(const std::string& name) {
 void AvatarManager::removeAvatar(const std::string& name) {
     auto it = std::remove_if(avatars.begin(), avatars.end(),
         [&name](Person* avatar) {
-            return avatar->getSoulName() == name;
+            return avatar->getDisplayName() == name;
         });
     
     if (it != avatars.end()) {
@@ -71,7 +71,7 @@ void AvatarManager::removeAvatar(const std::string& name) {
 
 Person* AvatarManager::getAvatar(const std::string& name) {
     for (auto* avatar : avatars) {
-        if (avatar->getSoulName() == name) {
+        if (avatar->getDisplayName() == name) {
             return avatar;
         }
     }
@@ -227,7 +227,7 @@ std::vector<Person*> AvatarManager::getGroupMembers(const std::string& groupName
     if (it != avatarGroups.end()) {
         for (const auto& name : it->second) {
             for (auto* avatar : avatars) {
-                if (avatar->getSoulName() == name) {
+                if (avatar->getDisplayName() == name) {
                     members.push_back(avatar);
                     break;
                 }
@@ -308,13 +308,13 @@ void AvatarManager::applyPreset(const std::string& presetName, Person* avatar) {
         avatar->state.skinTone = it->second->state.skinTone;
         avatar->setHeight(it->second->state.height);
         avatar->setWeight(it->second->state.weight);
-        std::cout << "Applied preset '" << presetName << "' to " << avatar->getSoulName() << std::endl;
+        std::cout << "Applied preset '" << presetName << "' to " << avatar->getDisplayName() << std::endl;
     }
 }
 
 void AvatarManager::createPreset(const std::string& presetName, Person* avatar) {
     avatarPresets[presetName] = avatar;
-    std::cout << "Created preset '" << presetName << "' from " << avatar->getSoulName() << std::endl;
+    std::cout << "Created preset '" << presetName << "' from " << avatar->getDisplayName() << std::endl;
 }
 
 void AvatarManager::listPresets() const {
@@ -352,7 +352,7 @@ void AvatarManager::saveAvatarState(const std::string& avatarName, const std::st
     Person* avatar = getAvatar(avatarName);
     if (avatar) {
         nlohmann::json j;
-        j["avatarName"] = avatar->getSoulName();
+        j["avatarName"] = avatar->getDisplayName();
         j["health"] = avatar->state.health;
         j["energy"] = avatar->state.energy;
         j["level"] = avatar->state.level;
@@ -439,7 +439,7 @@ void AvatarManager::loadAvatarState(const std::string& avatarName, const std::st
 
 void AvatarManager::saveAllAvatars(const std::string& directory) {
     for (auto* avatar : avatars) {
-        saveAvatarState(avatar->getSoulName(), ""); // Use SaveSystem's automatic naming
+        saveAvatarState(avatar->getDisplayName(), ""); // Use SaveSystem's automatic naming
     }
 }
 

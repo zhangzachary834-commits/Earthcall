@@ -59,6 +59,37 @@ bool base32Decode(const std::string& text, std::vector<uint8_t>& out) {
     return true;
 }
 
+std::string hexEncode(const std::vector<uint8_t>& data) {
+    static const char* digits = "0123456789abcdef";
+    std::string out;
+    out.reserve(data.size() * 2);
+    for (uint8_t b : data) {
+        out.push_back(digits[b >> 4]);
+        out.push_back(digits[b & 0x0F]);
+    }
+    return out;
+}
+
+std::vector<uint8_t> hexDecode(const std::string& hex) {
+    if (hex.size() % 2 != 0) return {};
+
+    auto nibble = [](char c) -> int {
+        if (c >= '0' && c <= '9') return c - '0';
+        if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+        if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+        return -1;
+    };
+
+    std::vector<uint8_t> out;
+    out.reserve(hex.size() / 2);
+    for (size_t i = 0; i < hex.size(); i += 2) {
+        int hi = nibble(hex[i]), lo = nibble(hex[i + 1]);
+        if (hi < 0 || lo < 0) return {};
+        out.push_back(static_cast<uint8_t>((hi << 4) | lo));
+    }
+    return out;
+}
+
 SingularId SingularId::mintOpaque() {
     std::vector<uint8_t> bytes(kOpaqueBytes);
     if (RAND_bytes(bytes.data(), static_cast<int>(bytes.size())) != 1) {

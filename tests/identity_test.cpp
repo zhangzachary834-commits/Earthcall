@@ -4,11 +4,14 @@
 // demos. Each one is something that succeeded against the old string-identifier
 // model, so a regression here is a real loss of ground.
 #include "Identity/Claim.hpp"
+#include "Identity/KeyStore.hpp"
 #include "Identity/KeyPair.hpp"
 #include "Identity/SingularId.hpp"
 
 #include <cassert>
+#include <filesystem>
 #include <iostream>
+#include <fstream>
 #include <set>
 
 using namespace Identity;
@@ -207,6 +210,104 @@ static void testGarbageClaimsRejected() {
     std::cout << "  garbage and wrong-typed claims rejected OK\n";
 }
 
+
+static void testKeyStoreRoundTrip() {
+    // Use a scratch directory so the developer's real identity is never touched.
+    std::filesystem::path dir =
+        std::filesystem::temp_directory_path() / "earthcall_keystore_test";
+    std::filesystem::remove_all(dir);
+    KeyStore store(dir);
+
+    PrivateKey key = PrivateKey::generate();
+    SingularId id = key.id();
+
+    assert(!store.contains(id));
+    assert(store.store(key, "correct horse battery staple"));
+    assert(store.contains(id));
+
+    auto reopened = store.load(id, "correct horse battery staple");
+    assert(reopened.has_value());
+    assert(reopened->id() == id);
+
+    // The restored key must actually sign as the same identity.
+    std::vector<uint8_t> msg = {'p', 'r', 'o', 'o', 'f'};
+    assert(key.publicKey().verify(msg, reopened->sign(msg)));
+
+    assert(store.list().size() == 1);
+    assert(store.list()[0] == id);
+
+    std::filesystem::remove_all(dir);
+    std::cout << "  key store seals and restores an identity OK\n";
+}
+
+static void testKeyStoreRejectsWrongPassphrase() {
+    std::filesystem::path dir =
+        std::filesystem::temp_directory_path() / "earthcall_keystore_wrongpass";
+    std::filesystem::remove_all(dir);
+    KeyStore store(dir);
+
+    PrivateKey key = PrivateKey::generate();
+    assert(store.store(key, "right"));
+    assert(!store.load(key.id(), "wrong").has_value());
+    assert(!store.load(key.id(), "").has_value());
+    assert(store.load(key.id(), "right").has_value());
+
+    std::filesystem::remove_all(dir);
+    std::cout << "  key store rejects wrong passphrase OK\n";
+}
+
+static void testKeyStoreDetectsTampering() {
+    std::filesystem::path dir =
+        std::filesystem::temp_directory_path() / "earthcall_keystore_tamper";
+    std::filesystem::remove_all(dir);
+    KeyStore store(dir);
+
+    PrivateKey key = PrivateKey::generate();
+    assert(store.store(key, "pass"));
+
+    std::filesystem::path file;
+    for (const auto& e : std::filesystem::directory_iterator(dir)) {
+        if (e.path().extension() == ".key") file = e.path();
+    }
+    assert(!file.empty());
+
+    auto rewrite = [&](const std::string& field, const nlohmann::json& value) {
+        nlohmann::json j;
+        { std::ifstream in(file); in >> j; }
+        j[field] = value;
+        { std::ofstream out(file, std::ios::trunc); out << j.dump(2); }
+    };
+
+    // Downgrading the KDF cost would make offline guessing cheap. The header is
+    // bound as AAD precisely so this cannot pass.
+    rewrite("n", 2);
+    assert(!store.load(key.id(), "pass").has_value());
+
+    { std::ofstream out(file, std::ios::trunc); }
+    assert(store.store(key, "pass"));
+
+    // Flipping a ciphertext byte must fail the tag rather than yield garbage.
+    nlohmann::json j;
+    { std::ifstream in(file); in >> j; }
+    std::string ct = j["ciphertext"];
+    ct[0] = (ct[0] == 'a') ? 'b' : 'a';
+    rewrite("ciphertext", ct);
+    assert(!store.load(key.id(), "pass").has_value());
+
+    std::filesystem::remove_all(dir);
+    std::cout << "  key store detects header and ciphertext tampering OK\n";
+}
+
+static void testKeyStoreNeverWritesIntoSaves() {
+    // The default location must sit outside the repository, because saves/ is
+    // tracked by git and anything under it is one commit from being published.
+    std::string dir = KeyStore::defaultDirectory().string();
+    assert(dir.find("/saves/") == std::string::npos);
+    assert(dir.find(".earthcall") != std::string::npos ||
+           dir.find("identity") != std::string::npos);
+    std::cout << "  default key directory is outside saves/ OK (" << dir << ")\n";
+}
+
 int main() {
     std::cout << "identity_test:\n";
     testIdRoundTrip();
@@ -219,6 +320,10 @@ int main() {
     testNameSquattingFails();
     testCanonicalizationAttack();
     testGarbageClaimsRejected();
+    testKeyStoreRoundTrip();
+    testKeyStoreRejectsWrongPassphrase();
+    testKeyStoreDetectsTampering();
+    testKeyStoreNeverWritesIntoSaves();
     std::cout << "identity_test: ALL OK\n";
     return 0;
 }

@@ -142,11 +142,13 @@ glm::mat4 Person::getCursorSpawnTransform() const {
 }
 
 Person::Person(Soul soul, Body body, const std::string& joyOrdering) : _soul(std::move(soul)), body(std::move(body)) {
-    // The Person's identifier IS the soul's identity. Left unset it was the
-    // empty string — invisible in law authorship records and unmatchable
-    // when a saved world reattaches authors by identifier.
-    soulName = _soul.getIdentifier();
-    if (soulName.empty()) soulName = "Person";
+    // The soul's identity seeds the Person's NAME, not their identity. Left
+    // unset it was the empty string — invisible in law authorship records and
+    // unmatchable when a saved world reattaches authors by identifier.
+    // The cryptographic personId is assigned separately (setPersonId), because
+    // minting one here would give every temporary copy its own identity.
+    displayName = _soul.getIdentifier();
+    if (displayName.empty()) displayName = "Person";
     
     // Validate that a joy ordering is provided, fulfilling the Singularity
     // level requirement that Persons have a worship-ordering.
@@ -157,14 +159,40 @@ Person::Person(Soul soul, Body body, const std::string& joyOrdering) : _soul(std
 
 nlohmann::json Person::serialize() const {
     nlohmann::json j;
-    j["soulName"] = soulName;
+    j["displayName"] = displayName;
+    // "soulName" is still written so a save from here still opens in a build
+    // from before the split. It is a label in both directions and never the
+    // identity, so emitting it grants nothing.
+    j["soulName"] = displayName;
+    if (_personId.canAuthenticate()) j["personId"] = _personId.toString();
     j["nicknames"] = nicknames;
     return j;
 }
 
 void Person::deserialize(const nlohmann::json& j) {
-    if (j.contains("soulName")) soulName = j["soulName"];
-    if (j.contains("nicknames")) nicknames = j["nicknames"].get<std::vector<std::string>>();
+    // Type-checked: this reads save data, which is untrusted by construction.
+    // Prefer the new key, fall back to the pre-split one.
+    if (j.contains("displayName") && j["displayName"].is_string()) {
+        displayName = j["displayName"].get<std::string>();
+    } else if (j.contains("soulName") && j["soulName"].is_string()) {
+        displayName = j["soulName"].get<std::string>();
+    }
+
+    // A personId read from a file is only a CLAIM to that identity. Parsing it
+    // records who this Person says they are; it proves nothing on its own,
+    // because the public key is public — anyone can copy one into a save. What
+    // makes it binding is a signed Claim verified against it, which is the
+    // authority layer's job, not this one's. Legacy saves simply have none,
+    // and migration mints a key for them on first load.
+    if (j.contains("personId") && j["personId"].is_string()) {
+        Identity::SingularId claimed =
+            Identity::SingularId::parse(j["personId"].get<std::string>());
+        if (claimed.canAuthenticate()) _personId = claimed;
+    }
+
+    if (j.contains("nicknames") && j["nicknames"].is_array()) {
+        nicknames = j["nicknames"].get<std::vector<std::string>>();
+    }
 }
 
 
@@ -211,7 +239,7 @@ void Person::createDefaultAnimations() {
 }
 
 void Person::express() const {
-    std::cout << "\n✨ Person: " << soulName << std::endl;
+    std::cout << "\n✨ Person: " << displayName << std::endl;
     std::cout << "   Level: " << state.level << " (XP: " << state.experience << ")" << std::endl;
     std::cout << "   Health: " << state.health << "/" << state.maxHealth << std::endl;
     std::cout << "   Energy: " << state.energy << "/" << state.maxEnergy << std::endl;
@@ -259,7 +287,7 @@ void Person::drawNametag() const {
 
     // Prepare string buffer
     char buf[6000];
-    std::string line = soulName;
+    std::string line = displayName;
     int quads = stb_easy_font_print(static_cast<float>(winX), static_cast<float>(winY),
                                     const_cast<char*>(line.c_str()), nullptr,
                                     buf, sizeof(buf));
@@ -542,7 +570,7 @@ void Person::login(const std::string& sessionId) {
         Core::EventBus::instance().publish(event);
         Core::EventBus::instance().publish(ECA::Event{"person-logged-in", this, nullptr, std::time(nullptr)});
 
-        std::cout << "👤 " << soulName << " logged in (Session: " << _currentSession << ")" << std::endl;
+        std::cout << "👤 " << displayName << " logged in (Session: " << _currentSession << ")" << std::endl;
     }
 }
 
@@ -558,7 +586,7 @@ void Person::logout(const std::string& sessionId) {
         _isLoggedIn = false;
         _currentSession.clear();
         
-        std::cout << "👤 " << soulName << " logged out (Session: " << session << ")" << std::endl;
+        std::cout << "👤 " << displayName << " logged out (Session: " << session << ")" << std::endl;
     }
 }
 
@@ -582,7 +610,7 @@ void Person::joinZone(const std::string& zoneName) {
         Core::EventBus::instance().publish(event);
         Core::EventBus::instance().publish(ECA::Event{"person-joined-zone", this, zoneByName(zoneName), std::time(nullptr)});
 
-        std::cout << "👤 " << soulName << " joined zone: " << zoneName << std::endl;
+        std::cout << "👤 " << displayName << " joined zone: " << zoneName << std::endl;
     }
 }
 
@@ -596,7 +624,7 @@ void Person::leaveZone(const std::string& zoneName) {
         Core::EventBus::instance().publish(event);
         Core::EventBus::instance().publish(ECA::Event{"person-left-zone", this, zoneByName(zoneName), std::time(nullptr)});
 
-        std::cout << "👤 " << soulName << " left zone: " << zoneName << std::endl;
+        std::cout << "👤 " << displayName << " left zone: " << zoneName << std::endl;
     }
 }
 
@@ -624,7 +652,7 @@ void Person::levelUp() {
     state.energy = state.maxEnergy;
     state.mood += 20.0f;  // Happy about leveling up
     
-    std::cout << "🎉 " << soulName << " reached level " << state.level << "!" << std::endl;
+    std::cout << "🎉 " << displayName << " reached level " << state.level << "!" << std::endl;
 }
 
 void Person::addSkill(const std::string& skillName, float value) {
@@ -715,7 +743,7 @@ void Person::interactWith(Person* other) {
     addExperience(5.0f);
     other->addExperience(5.0f);
     
-    std::cout << soulName << " interacted with " << other->soulName << std::endl;
+    std::cout << displayName << " interacted with " << other->displayName << std::endl;
 }
 
 void Person::addNearbyAvatar(Person* avatar) {

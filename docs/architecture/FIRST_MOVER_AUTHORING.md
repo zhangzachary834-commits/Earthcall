@@ -5,8 +5,11 @@ writing directly into Earthcall's serialization — and what it means, ontologic
 morally, to be the kind of author who can do that.**
 
 **Status:** Formats verified against the tree at this commit. The authorization
-framework in §8 is specified and **not yet built** — the seam it plugs into is named in
-`Law.hpp:190-205` and quoted below.
+framework in §8 is now **partly built**: the register, its grants, and file scoping
+exist in `src/Identity/FirstMoverRegister.{hpp,cpp}` with the refusals under test in
+`tests/first_mover_test.cpp`. What remains is wiring — no engine write path consults it
+yet, so it governs nothing until the save path calls `mayWrite()`. See §8e for which
+rungs are standing. The seam §8 plugs into is named in `Law.hpp:190-205` and quoted below.
 **Audience:** humans and LLMs who edit save files directly. If you are an LLM reading
 this to write a save file: §7 is not optional, and §6 is the list of things you cannot
 get away with even if you try.
@@ -552,7 +555,7 @@ the kind of author who says what they made.*
 
 ---
 
-## 8. Authorization — specified, not yet built
+## 8. Authorization — specified, partly built
 
 The tree already contains the seam and already admits the gap. `Law.hpp:190-205`:
 
@@ -642,16 +645,34 @@ The floor, mirroring `LAW_MIGRATION_FRAMEWORK.md` §6's kernel floor:
 ### 8e. Build order
 
 ```
-1. First Mover Register as a legible Singular (TransferPolicy pattern) — no
-   enforcement yet. Recognition becomes writable-down, readable-by-law.
-2. `injectedBy` envelope accepted, recorded, surfaced in the Law Author window.
-   Still no enforcement: the world can now SEE its own injections.
-3. Quarantine state for unattested sections (§8c), with the register listing them.
-4. Attestation over named sections.
-5. Only then: refuse-by-default for unattested injection into a world whose
-   register says it requires attestation — a per-world property, not a global
-   switch, because a scratch world should stay easy to seed.
+1. [BUILT] First Mover Register — recognition, grants, and per-mover file
+   scopes. FirstMoverRegister::recognize / mayWrite / explain.
+2. [ ]     `injectedBy` envelope accepted, recorded, surfaced in the Law
+           Author window. The world can now SEE its own injections.
+3. [BUILT] Quarantine state (§8c): an entry whose grant fails verification
+           loads, is listed, and is inert. isQuarantined().
+4. [BUILT] Attestation — but over the MOVER's scopes, not yet over named
+           sections. Rung 2 is what extends it to sections.
+5. [ ]     Refuse-by-default for unattested injection, per-world.
 ```
+
+**What is actually enforced today: nothing.** The register answers `mayWrite()`
+correctly and refuses everything it should, but no engine write path calls it yet.
+That is rung 5's job and it is deliberately last — per the ladder below, enforcement
+comes after legibility, and a scratch world should stay easy to seed.
+
+**The scoping addition.** Rung 1 as specified made recognition binary. It is not:
+each mover carries a list of path patterns and may write only inside them, checked
+against the *resolved* path so no pattern can escape the save root. "May write the
+substrate" was too coarse a grant to hand a model — a model seeding a test fixture
+and a model rewriting the live world are different powers, and the register now
+distinguishes them.
+
+**A limit worth stating plainly.** The floors in §8d are enforced against *save data* —
+a forged or widened grant is refused on load. They are not enforced against a process
+already running as the user, which can edit any file the user can regardless of what
+the register says. This layer governs what the engine will honour, not what the
+filesystem will permit.
 
 Note the shape: this is the Migration Ladder again — legible, then audible, then
 governed, then displaced. Enforcement is the *last* rung, and every rung before it is
