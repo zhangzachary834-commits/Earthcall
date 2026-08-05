@@ -754,6 +754,13 @@ Chaos is unbounded recursion; Babel is one law claiming every target. Both are
 Metalaw predicates — no new machinery. (The theological Anti-Babel section itself
 lives in the Ourverse Manifesto; this is only its enforcement surface.)
 
+There is a **third** Babel shape these predicates cannot reach, because it happens
+before any law runs: a subsystem defining in C++ what a thing *is*, and so opening a
+second ontology beside this one. Its enforcement surface is a refusal procedure rather
+than a predicate — `NEW_KIND_FRAMEWORK.md`, which routes every "we need a new kind of
+thing" proposal through the concepts, relations, and laws above, and admits new source
+only as a Singularity modality channel.
+
 ---
 
 ## 7b. Zones as Beings — governance made spatial (stages 1–2 landed)

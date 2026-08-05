@@ -6,7 +6,8 @@
 rung 4 needs the six pieces of machinery in §5, which are specified here and mostly not
 yet built (`LawSynthesis` is the exception — the synthesis path already exists).
 **Companion docs:** `LAW_AND_CREATION_SYSTEM.md` (what a law *is*), `EarthcallOurverse.md`
-(why), `SHAPE_FORMATION_DAG_PLAN.md`, `EVENT_BUS_VS_EVENT_HANDLER.md`.
+(why), `NEW_KIND_FRAMEWORK.md` (the dual — how a *new* kind of thing enters, so that it
+never needs migrating), `SHAPE_FORMATION_DAG_PLAN.md`, `EVENT_BUS_VS_EVENT_HANDLER.md`.
 
 ---
 
