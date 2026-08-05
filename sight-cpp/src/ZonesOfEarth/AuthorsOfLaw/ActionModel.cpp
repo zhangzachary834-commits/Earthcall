@@ -127,6 +127,45 @@ const char* ActionNode::kindName(Kind k) {
 // ---------------------------------------------------------------------------
 namespace {
 
+// Per-spawn overrides. A concept remembers the shape and colour its members
+// had when it was captured; the hard-coded creation tools instead read the
+// author's live selection on every click. Reading that selection off the
+// subject here is what lets a law reproduce them without a concept per shape.
+void applySpawnOverrides(Object& newborn, Singular* source,
+                         const PropertyPath& shapeKindPath,
+                         const PropertyPath& colorPath) {
+    if (!source) return;
+
+    if (!shapeKindPath.empty()) {
+        PropertyValue pv;
+        double raw = 0.0;
+        if (lawGetValue(*source, shapeKindPath, pv) &&
+            propertyValueToNumber(pv, raw)) {
+            const int k = static_cast<int>(raw);
+            // Out-of-range would be undefined behaviour on the enum, and a
+            // saved law from a build with more kinds is an ordinary event.
+            if (k >= 0 && k <= static_cast<int>(Object::ShapeKind::Text2D)) {
+                // Keep the template's params: they describe radii and fillets
+                // the kind still needs, and the selection carries no params.
+                newborn.setShape(static_cast<Object::ShapeKind>(k), newborn.getShapeParams());
+            }
+        }
+    }
+
+    if (!colorPath.empty()) {
+        PropertyValue pv;
+        if (lawGetValue(*source, colorPath, pv) &&
+            std::holds_alternative<glm::vec3>(pv)) {
+            const glm::vec3 c = std::get<glm::vec3>(pv);
+            // The smooth kinds (Sphere, Ellipsoid, ...) report zero faces, so
+            // looping to getFaces() would silently colour nothing. Fall back to
+            // the six texture slots every Object carries, matching propSetColor.
+            const int faces = newborn.getFaces() > 0 ? newborn.getFaces() : 6;
+            for (int f = 0; f < faces; ++f) newborn.setFaceColor(f, c.x, c.y, c.z);
+        }
+    }
+}
+
 Singular* resolveBeingToken(const std::string& token, Singular& subject) {
     if (token.empty()) return &subject;
     if (token == "@event.subject") {
@@ -199,6 +238,8 @@ nlohmann::json ActionNode::toJson() const {
             j["conceptId"] = conceptId;
             if (!spawnParentPath.empty()) j["spawnParentPath"] = spawnParentPath.toString();
             if (!spawnPlacementPath.empty()) j["spawnPlacementPath"] = spawnPlacementPath.toString();
+            if (!spawnShapeKindPath.empty()) j["spawnShapeKindPath"] = spawnShapeKindPath.toString();
+            if (!spawnColorPath.empty()) j["spawnColorPath"] = spawnColorPath.toString();
             if (!children.empty()) {
                 nlohmann::json kids = nlohmann::json::array();
                 for (const auto& c : children) kids.push_back(c.toJson());
@@ -222,6 +263,8 @@ nlohmann::json ActionNode::toJson() const {
             if (!createType.empty()) j["createType"] = createType;
             if (!spawnParentPath.empty()) j["spawnParentPath"] = spawnParentPath.toString();
             if (!spawnPlacementPath.empty()) j["spawnPlacementPath"] = spawnPlacementPath.toString();
+            if (!spawnShapeKindPath.empty()) j["spawnShapeKindPath"] = spawnShapeKindPath.toString();
+            if (!spawnColorPath.empty()) j["spawnColorPath"] = spawnColorPath.toString();
             if (!children.empty()) {
                 nlohmann::json kids = nlohmann::json::array();
                 for (const auto& c : children) kids.push_back(c.toJson());
@@ -261,6 +304,8 @@ ActionNode ActionNode::fromJson(const nlohmann::json& j) {
     if (j.contains("conceptId")) n.conceptId = j["conceptId"].get<std::string>();
     if (j.contains("spawnParentPath")) n.spawnParentPath = PropertyPath::parse(j["spawnParentPath"].get<std::string>());
     if (j.contains("spawnPlacementPath")) n.spawnPlacementPath = PropertyPath::parse(j["spawnPlacementPath"].get<std::string>());
+    if (j.contains("spawnShapeKindPath")) n.spawnShapeKindPath = PropertyPath::parse(j["spawnShapeKindPath"].get<std::string>());
+    if (j.contains("spawnColorPath")) n.spawnColorPath = PropertyPath::parse(j["spawnColorPath"].get<std::string>());
     n.eventType = j.value("eventType", std::string());
     n.publishSubject = j.value("publishSubject", std::string());
     n.publishObject = j.value("publishObject", std::string());
@@ -382,11 +427,14 @@ ECA::ActionExecutor ActionNode::compile() const {
             const std::string id = conceptId;
             const PropertyPath pPath = spawnParentPath;
             const PropertyPath placementPath = spawnPlacementPath;
+            const PropertyPath shapeKindPath = spawnShapeKindPath;
+            const PropertyPath colorPath = spawnColorPath;
             std::vector<ECA::ActionExecutor> compiledChildren;
             compiledChildren.reserve(children.size());
             for (const auto& c : children) compiledChildren.push_back(c.compile());
 
-            return [id, pPath, placementPath, compiledChildren](const ECA::Event& event, Singular& target) {
+            return [id, pPath, placementPath, shapeKindPath, colorPath,
+                    compiledChildren](const ECA::Event& event, Singular& target) {
                 World* world = nullptr;
                 if (auto* tWorld = dynamic_cast<World*>(&target)) {
                     world = tWorld;
@@ -468,6 +516,9 @@ ECA::ActionExecutor ActionNode::compile() const {
                 }
 
                 for (auto& newborn : newborns) {
+                    // Before the children run, so an authored child action can
+                    // still override the live selection deliberately.
+                    applySpawnOverrides(*newborn, event.subject, shapeKindPath, colorPath);
                     for (const auto& run : compiledChildren) {
                         if (run) run(event, *newborn);
                     }
@@ -626,12 +677,14 @@ ECA::ActionExecutor ActionNode::compile() const {
             const std::string type = createType;
             const PropertyPath parentPath = spawnParentPath;
             const PropertyPath placementPath = spawnPlacementPath;
+            const PropertyPath shapeKindPath = spawnShapeKindPath;
+            const PropertyPath colorPath = spawnColorPath;
             std::vector<ECA::ActionExecutor> compiledChildren;
             compiledChildren.reserve(children.size());
             for (const auto& c : children) compiledChildren.push_back(c.compile());
 
-            return [shapeKind, type, parentPath, placementPath, compiledChildren](
-                       const ECA::Event& event, Singular& target) {
+            return [shapeKind, type, parentPath, placementPath, shapeKindPath, colorPath,
+                    compiledChildren](const ECA::Event& event, Singular& target) {
                 World* world = resolveWorld(target);
                 if (!world) {   // nowhere to be born: nothing happens
                     emitEffect("Create", false, "no World to be born into");
@@ -672,6 +725,7 @@ ECA::ActionExecutor ActionNode::compile() const {
                 // whole action vocabulary shapes it: Set its color, Map its
                 // radius from the subject's, AddProperty, AddElement.
                 Object* born = newborn.get();
+                applySpawnOverrides(*born, &target, shapeKindPath, colorPath);
                 for (const auto& run : compiledChildren) {
                     if (run) run(event, *born);
                 }
@@ -989,6 +1043,8 @@ void ActionNode::collectPaths(std::vector<PropertyPath>& out) const {
         case Kind::Synthesize:
             add(spawnParentPath);
             add(spawnPlacementPath);
+            add(spawnShapeKindPath);
+            add(spawnColorPath);
             break;
         case Kind::Create:
             // The newborn's own paths are addressed against the NEWBORN, not
@@ -997,6 +1053,8 @@ void ActionNode::collectPaths(std::vector<PropertyPath>& out) const {
             // legitimately create.
             add(spawnParentPath);
             add(spawnPlacementPath);
+            add(spawnShapeKindPath);
+            add(spawnColorPath);
             return;
         default:
             break;

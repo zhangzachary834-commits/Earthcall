@@ -181,6 +181,13 @@ struct ActionNode {
     std::string conceptId;           // Spawn (reserved)
     PropertyPath spawnParentPath;    // Spawn (optional parent object)
     PropertyPath spawnPlacementPath; // Spawn (optional placement coordinate)
+    // A concept fixes its members' shape and colour when it is CAPTURED, which
+    // makes "create what the author currently has selected" unauthorable: the
+    // hard-coded creation tools read the live selection every click. These read
+    // the same answer off the subject at spawn time and override the template.
+    // Empty = keep whatever the concept remembered.
+    PropertyPath spawnShapeKindPath; // Spawn/Create (optional int ShapeKind)
+    PropertyPath spawnColorPath;     // Spawn/Create (optional vec3, all faces)
 
     // Publish payload. Participant tokens: "" = the law's subject (for the
     // event's subject) / none (for its object); "@event.subject" and

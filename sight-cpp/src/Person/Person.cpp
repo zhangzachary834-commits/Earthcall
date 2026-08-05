@@ -63,23 +63,62 @@ void Person::buildProperties() {
         "placementMode", this, &Person::placementMode));
     _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, float>>(
         "gridSnapSize", this, &Person::gridSnapSize));
+    _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, bool>>(
+        "gridSnap", this, &Person::gridSnap));
     _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, float>>(
-        "manualDistance", this, &Person::manualDistance));
+        "inFrontDistance", this, &Person::inFrontDistance));
+    _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, glm::vec3>>(
+        "manualOffset", this, &Person::manualOffset));
+}
+
+float Person::spawnSurfaceOffset(const glm::vec3& normal) const {
+    // Mirrors Game::getBrushCreateSurfaceOffset: project the spawn box's half
+    // extents onto the surface normal, so the shape is pushed out by exactly
+    // its own reach and sits flush instead of sinking in.
+    const glm::vec3 n = glm::length(normal) > 1e-6f ? glm::normalize(normal)
+                                                    : glm::vec3(0.0f, 1.0f, 0.0f);
+    glm::mat4 rotation(1.0f);
+    rotation = glm::rotate(rotation, glm::radians(cursorSpawnRot.x), glm::vec3(1.0f, 0.0f, 0.0f));
+    rotation = glm::rotate(rotation, glm::radians(cursorSpawnRot.y), glm::vec3(0.0f, 1.0f, 0.0f));
+    rotation = glm::rotate(rotation, glm::radians(cursorSpawnRot.z), glm::vec3(0.0f, 0.0f, 1.0f));
+
+    const glm::vec3 half = cursorSpawnScale * 0.5f;
+    const glm::vec3 axisX = glm::normalize(glm::vec3(rotation * glm::vec4(1.0f, 0.0f, 0.0f, 0.0f)));
+    const glm::vec3 axisY = glm::normalize(glm::vec3(rotation * glm::vec4(0.0f, 1.0f, 0.0f, 0.0f)));
+    const glm::vec3 axisZ = glm::normalize(glm::vec3(rotation * glm::vec4(0.0f, 0.0f, 1.0f, 0.0f)));
+
+    return std::abs(glm::dot(n, axisX)) * half.x +
+           std::abs(glm::dot(n, axisY)) * half.y +
+           std::abs(glm::dot(n, axisZ)) * half.z;
 }
 
 glm::vec3 Person::computeSpawnPosition() const {
+    glm::vec3 spawnPos;
+
     if (placementMode == "ManualDistance") {
-        return cameraPos + cameraForward * manualDistance;
+        // Relative to the frozen anchor, not the live camera: the whole point
+        // of the mode is that the shape stays where it was put while you look
+        // around. GameUpdate captures the anchor on entering the mode.
+        spawnPos = manualAnchorPos +
+                   manualAnchorRight * manualOffset.x +
+                   manualAnchorUp * manualOffset.y +
+                   manualAnchorForward * manualOffset.z;
+    } else if (placementMode == "CursorSnap") {
+        // Against the surface under the cursor, offset along its normal so
+        // the shape rests on it. Falls back to the InFront placement when
+        // nothing was hit, which is what the hard-coded tool did.
+        spawnPos = cursorHitPos + cursorHitNormal * spawnSurfaceOffset(cursorHitNormal);
+    } else {   // "InFront"
+        spawnPos = cameraPos + cameraForward * inFrontDistance;
     }
-    if (placementMode == "CursorSnap") {
-        const float step = (gridSnapSize > 0.001f) ? gridSnapSize : 1.0f;
-        return glm::vec3(
-            std::round(cursorHitPos.x / step) * step,
-            std::round(cursorHitPos.y / step) * step,
-            std::round(cursorHitPos.z / step) * step
-        );
+
+    // Snapping rounds whatever the mode produced -- it is a toggle, not a mode.
+    if (gridSnap && gridSnapSize > 1e-6f) {
+        spawnPos.x = std::round(spawnPos.x / gridSnapSize) * gridSnapSize;
+        spawnPos.y = std::round(spawnPos.y / gridSnapSize) * gridSnapSize;
+        spawnPos.z = std::round(spawnPos.z / gridSnapSize) * gridSnapSize;
     }
-    return cursorHitPos;   // "InFront"
+    return spawnPos;
 }
 
 void Person::updatePlacement() {

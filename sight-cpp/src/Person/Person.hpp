@@ -88,11 +88,31 @@ public:
     glm::vec3 cursorSpawnRot{0.0f, 0.0f, 0.0f};
     glm::vec3 cursorSpawnScale{1.0f, 1.0f, 1.0f};
     // --- Placement Mode & Grid Snap Properties ---
+    // Mirrors of the brush placement state the creation tools run on, so a
+    // law can read and override what the hard-coded tool used to consume
+    // directly. GameUpdate refreshes these each frame.
     std::string placementMode{"InFront"}; // "InFront", "ManualDistance", "CursorSnap"
+    // Grid snap is ORTHOGONAL to the mode, exactly as the brush treats it:
+    // it rounds whatever position the mode produced. Folding it into a mode
+    // would make surface placement and snapping mutually exclusive.
+    bool gridSnap{false};
     float gridSnapSize{1.0f};
-    float manualDistance{5.0f};
+    // "InFront" places this far along the camera's forward axis.
+    float inFrontDistance{2.0f};
+    // "ManualDistance" places relative to a FROZEN anchor, so the shape stays
+    // where it was put instead of following the camera. GameUpdate captures
+    // the anchor on entering the mode.
+    glm::vec3 manualOffset{0.0f, 0.0f, 2.0f};
+    bool manualAnchorValid{false};
+    glm::vec3 manualAnchorPos{0.0f};
+    glm::vec3 manualAnchorRight{1.0f, 0.0f, 0.0f};
+    glm::vec3 manualAnchorUp{0.0f, 1.0f, 0.0f};
+    glm::vec3 manualAnchorForward{0.0f, 0.0f, -1.0f};
     // The one place placementMode is turned into a position.
     glm::vec3 computeSpawnPosition() const;
+    // Half-extent of the spawn box measured along `normal`, so a shape placed
+    // against a surface rests ON it rather than half inside it.
+    float spawnSurfaceOffset(const glm::vec3& normal) const;
     // Refreshes cursorSpawnPos from computeSpawnPosition(). Called once per
     // frame by GameUpdate; laws may overwrite cursorSpawnPos after it runs.
     void updatePlacement();

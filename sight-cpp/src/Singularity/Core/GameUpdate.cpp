@@ -324,12 +324,11 @@ void Game::update(float dt) {
 
         /* 3D Creation */
         else if (_current3DMode == Mode3D::BrushCreate) {
-            BodyPart* shapePart = nullptr;
-            if (useAvatarTargets) {
-                shapePart = dynamic_cast<BodyPart*>(_selectedObject3D);
-            }
             // Note: C++ hardcoded Tool::ShapeGenerator3D was removed here.
-            // The tool is now implemented dynamically via Law and triggers on the "onMouseClicked" event.
+            // The tool is now implemented dynamically via Law and triggers on
+            // the "onMouseClicked" event. Body-part targeting, which the tool
+            // did by hand off the selected part, is authored instead: the
+            // spawn action's parent path resolves "cursorHoveredBodyPart".
         } else if (_current3DMode == Mode3D::Pottery) {
             collect3DTargets(toolTargets);
             glm::mat4 avatarRoot = glm::translate(glm::mat4(1.0f), _player.position);
@@ -625,6 +624,43 @@ void Game::update(float dt) {
     // Law System Perception properties on the Person
     _player.cameraPos = _camera.pos;
     _player.cameraForward = _camera.front;
+
+    // --- Brush/placement state the removed ShapeGenerator3D tool consumed
+    // directly. A law reads it off the Person instead, so all of it has to
+    // reach the Person or the law spawns default cubes at a default pose.
+    // placementMode in particular was never assigned, which left every law
+    // stuck on "InFront" no matter what the UI said.
+    switch (_placement.mode) {
+        case BrushPlacementMode::ManualDistance: _player.placementMode = "ManualDistance"; break;
+        case BrushPlacementMode::CursorSnap:     _player.placementMode = "CursorSnap";     break;
+        case BrushPlacementMode::InFront:
+        default:                                 _player.placementMode = "InFront";        break;
+    }
+
+    // Freeze the manual anchor on entering the mode, exactly as the tool did:
+    // the offset is measured from where you were standing and looking, and
+    // must not drift as you turn.
+    if (_placement.mode == BrushPlacementMode::ManualDistance && !_placement.anchorValid) {
+        _placement.anchorPos     = _camera.pos + _camera.front * 2.0f;
+        _placement.anchorRight   = glm::normalize(glm::cross(_camera.front, _camera.up));
+        _placement.anchorUp      = _camera.up;
+        _placement.anchorForward = _camera.front;
+        _placement.anchorValid   = true;
+    }
+    _player.manualOffset        = _placement.manualOffset;
+    _player.manualAnchorValid   = _placement.anchorValid;
+    _player.manualAnchorPos     = _placement.anchorPos;
+    _player.manualAnchorRight   = _placement.anchorRight;
+    _player.manualAnchorUp      = _placement.anchorUp;
+    _player.manualAnchorForward = _placement.anchorForward;
+
+    _player.gridSnap     = _brush.gridSnap;
+    _player.gridSnapSize = _brush.gridSize;
+
+    // The pose half of buildBrushCreateTransform(). Without these the law
+    // spawned everything unrotated at scale 1 regardless of the brush.
+    _player.cursorSpawnRot   = _brush.rotation;
+    _player.cursorSpawnScale = _brush.scale * _brush.size;
 
     // The default mapping the comment above describes: cursorHitPos/cameraPos
     // -> cursorSpawnPos, per placementMode. It runs AFTER cameraPos and
