@@ -7,6 +7,7 @@
 #include <sstream>
 #include <iomanip>
 #include "Util/CloudStorage.hpp"
+#include "Identity/FirstMoverRegister.hpp"
 
 #include <zlib.h>
 #include <thread>
@@ -183,10 +184,28 @@ std::vector<std::string> listFiles(SaveType type) {
     return valid;
 }
 
+// The single gate every write passes through. Returns true when the write may
+// proceed. With no First Mover session active this is always true -- the
+// engine and in-world Persons are not governed here, and blocking them would
+// be a regression, not a safeguard. Inside a session the mover must hold a
+// scope covering this exact path.
+static bool permitted(const std::string& filename) {
+    auto& reg = Identity::FirstMoverRegister::instance();
+    if (reg.permitsWrite(filename)) return true;
+
+    // Refusals are loud. FIRST_MOVER_AUTHORING.md 8c is explicit that an
+    // unauthorized write must be visible rather than silently dropped.
+    std::cerr << "[SaveSystem] REFUSED write to " << filename << "\n"
+              << "  mover: " << reg.activeMover().abbreviated() << "\n"
+              << "  " << reg.explainWrite(filename) << "\n";
+    return false;
+}
+
 std::string writeSaveData(const nlohmann::json& j, const std::string& customLabel, SaveType type) {
     std::string filename = makeFilename(customLabel, type, ".ecsave");
     if (filename.empty()) return "";
-    
+    if (!permitted(filename)) return "";
+
     std::ofstream out(filename, std::ios::binary);
     if (!out.is_open()) {
         std::cerr << "[SaveSystem] Failed to open binary file for writing: " << filename << "\n";
@@ -223,6 +242,9 @@ std::string writeSaveData(const nlohmann::json& j, const std::string& customLabe
 
 std::string writeSaveData(const std::vector<uint8_t>& data, const std::string& customLabel, const std::string& ext, SaveType type) {
     std::string filename = makeFilename(customLabel, type, ext);
+    if (filename.empty()) return "";
+    if (!permitted(filename)) return "";
+
     std::ofstream out(filename, std::ios::binary);
     if (!out) {
         std::cerr << "Failed to open " << filename << " for saving binary data.\n";

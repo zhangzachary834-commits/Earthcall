@@ -5,6 +5,7 @@
 // authorization layer is everything it says no to.
 #include "Identity/FirstMoverRegister.hpp"
 #include "Identity/KeyPair.hpp"
+#include "Util/SaveSystem.hpp"
 
 #include <cassert>
 #include <filesystem>
@@ -278,6 +279,102 @@ static void testModelSignedGrantRefusedOnLoad() {
     std::cout << "  model-signed grant refused on load OK\n";
 }
 
+
+static void testSaveSystemEnforcesTheRegister() {
+    // End to end: the register is only worth having if a write path consults
+    // it. This drives the real SaveSystem, not a stand-in.
+    auto& reg = Identity::FirstMoverRegister::instance();
+    reg.clear();
+    reg.clearActiveMover();
+
+    // SaveSystem writes relative to the process cwd, so run inside a scratch
+    // directory and point the register at the "saves" it will create there.
+    auto sandbox = std::filesystem::temp_directory_path() / "earthcall_save_enforce";
+    std::filesystem::remove_all(sandbox);
+    std::filesystem::create_directories(sandbox);
+    auto previousCwd = std::filesystem::current_path();
+    std::filesystem::current_path(sandbox);
+
+    nlohmann::json payload = {{"hello", "world"}};
+
+    // 1. No session active: the engine's own save must be untouched by this
+    //    layer. Fail-open when unset is the whole reason it can ship safely.
+    std::string engineWrote = SaveSystem::writeSaveData(payload, "engine_save",
+                                                        SaveSystem::SaveType::GAME);
+    assert(!engineWrote.empty());
+    assert(std::filesystem::exists(engineWrote));
+
+    reg.setSaveRoot(std::filesystem::current_path() / "saves");
+
+    PrivateKey zach = PrivateKey::generate();
+    PrivateKey model = PrivateKey::generate();
+    assert(reg.recognize(zach, FirstMover::Kind::Person, model.id(),
+                         FirstMover::Kind::Model, "claude-fable-5",
+                         {"games/test_*.ecsave"}, 1000));
+
+    {
+        Identity::FirstMoverSession session(reg, model.id());
+
+        // 2. Inside its scope: allowed.
+        std::string ok = SaveSystem::writeSaveData(payload, "test_fixture",
+                                                   SaveSystem::SaveType::GAME);
+        assert(!ok.empty());
+        assert(std::filesystem::exists(ok));
+
+        // 3. Outside its scope: refused, and nothing written.
+        std::string refused = SaveSystem::writeSaveData(payload, "production_world",
+                                                        SaveSystem::SaveType::GAME);
+        assert(refused.empty());
+        assert(!std::filesystem::exists("saves/games/production_world.ecsave"));
+
+        // 4. A different save TYPE is a different directory, so the scope
+        //    does not reach it even with a matching stem.
+        std::string wrongType = SaveSystem::writeSaveData(payload, "test_person",
+                                                          SaveSystem::SaveType::PERSON);
+        assert(wrongType.empty());
+    }
+
+    // 5. The session is scoped: once it ends the engine writes freely again.
+    assert(!reg.hasActiveMover());
+    std::string afterWrote = SaveSystem::writeSaveData(payload, "engine_again",
+                                                       SaveSystem::SaveType::GAME);
+    assert(!afterWrote.empty());
+
+    std::filesystem::current_path(previousCwd);
+    std::filesystem::remove_all(sandbox);
+    reg.clear();
+    reg.clearActiveMover();
+    std::cout << "  SaveSystem enforces the register, engine saves unaffected OK\n";
+}
+
+static void testUnregisteredAgentCannotWriteAtAll() {
+    auto& reg = Identity::FirstMoverRegister::instance();
+    reg.clear();
+    reg.clearActiveMover();
+
+    auto sandbox = std::filesystem::temp_directory_path() / "earthcall_save_unreg";
+    std::filesystem::remove_all(sandbox);
+    std::filesystem::create_directories(sandbox);
+    auto previousCwd = std::filesystem::current_path();
+    std::filesystem::current_path(sandbox);
+    reg.setSaveRoot(std::filesystem::current_path() / "saves");
+
+    PrivateKey rogue = PrivateKey::generate();
+    {
+        Identity::FirstMoverSession session(reg, rogue.id());
+        // Never recognised by anyone. Every write refused, including one that
+        // would match a scope had it held any.
+        assert(SaveSystem::writeSaveData(nlohmann::json{{"a", 1}}, "test_x",
+                                         SaveSystem::SaveType::GAME).empty());
+    }
+
+    std::filesystem::current_path(previousCwd);
+    std::filesystem::remove_all(sandbox);
+    reg.clear();
+    reg.clearActiveMover();
+    std::cout << "  unregistered agent refused every write OK\n";
+}
+
 int main() {
     std::cout << "first_mover_test:\n";
     testGlobSemantics();
@@ -291,6 +388,8 @@ int main() {
     testEmptyScopeGrantsNothing();
     testRoundTripPreservesGrants();
     testModelSignedGrantRefusedOnLoad();
+    testSaveSystemEnforcesTheRegister();
+    testUnregisteredAgentCannotWriteAtAll();
     std::filesystem::remove_all(std::filesystem::temp_directory_path() / "earthcall_fm_saves");
     std::cout << "first_mover_test: ALL OK\n";
     return 0;

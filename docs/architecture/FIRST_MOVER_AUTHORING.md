@@ -5,11 +5,13 @@ writing directly into Earthcall's serialization — and what it means, ontologic
 morally, to be the kind of author who can do that.**
 
 **Status:** Formats verified against the tree at this commit. The authorization
-framework in §8 is now **partly built**: the register, its grants, and file scoping
-exist in `src/Identity/FirstMoverRegister.{hpp,cpp}` with the refusals under test in
-`tests/first_mover_test.cpp`. What remains is wiring — no engine write path consults it
-yet, so it governs nothing until the save path calls `mayWrite()`. See §8e for which
-rungs are standing. The seam §8 plugs into is named in `Law.hpp:190-205` and quoted below.
+framework in §8 is **built and enforced at the save path**: the register, its grants,
+per-mover file scoping, and quarantine live in `src/Identity/FirstMoverRegister.{hpp,cpp}`,
+`SaveSystem::writeSaveData` refuses writes the register does not permit, and the refusals
+are under test in `tests/first_mover_test.cpp`. Enforcement applies only while a
+`FirstMoverSession` is active, so engine and in-world saves are unaffected — see §8e.
+Rung 2 (the `injectedBy` envelope, attestation over *named sections* rather than over a
+mover's scopes) is still open. The seam §8 plugs into is named in `Law.hpp:190-205`.
 **Audience:** humans and LLMs who edit save files directly. If you are an LLM reading
 this to write a save file: §7 is not optional, and §6 is the list of things you cannot
 get away with even if you try.
@@ -653,13 +655,31 @@ The floor, mirroring `LAW_MIGRATION_FRAMEWORK.md` §6's kernel floor:
            loads, is listed, and is inert. isQuarantined().
 4. [BUILT] Attestation — but over the MOVER's scopes, not yet over named
            sections. Rung 2 is what extends it to sections.
-5. [ ]     Refuse-by-default for unattested injection, per-world.
+5. [BUILT] Enforcement at the save path, scoped to an active mover session.
+           SaveSystem::writeSaveData refuses a write the register does not
+           permit, and says why on stderr.
 ```
 
-**What is actually enforced today: nothing.** The register answers `mayWrite()`
-correctly and refuses everything it should, but no engine write path calls it yet.
-That is rung 5's job and it is deliberately last — per the ladder below, enforcement
-comes after legibility, and a scratch world should stay easy to seed.
+**How enforcement is scoped.** `FirstMoverRegister` carries an *active mover*, set
+only for the duration of a `FirstMoverSession` (RAII, so a session cannot leak past
+its scope). The rule is deliberately asymmetric:
+
+- **No session active → the write proceeds.** The engine and Persons gesturing
+  in-world are not First Movers injecting at the substrate; they are the ordinary
+  path, and an authorization layer that blocked them would be a regression rather
+  than a safeguard. This is also what let rung 5 land without touching any existing
+  world: a scratch world stays exactly as easy to seed as before.
+- **Session active → every gate must pass.** The mover must be registered, its grant
+  must verify, its grantor must be a Person, and the resolved path must fall inside
+  both the save root and one of its granted scopes.
+
+So an agent registers itself for the window in which it is writing, and is answerable
+for exactly that window. Outside it the engine is unaffected.
+
+**What this does not do.** It governs what the *engine* will honour, not what the
+filesystem will permit. A process running as the user can still write any file the
+user can, whatever the register says — enforcement here is about the substrate's own
+discipline, not about sandboxing the host.
 
 **The scoping addition.** Rung 1 as specified made recognition binary. It is not:
 each mover carries a list of path patterns and may write only inside them, checked

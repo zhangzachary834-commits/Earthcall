@@ -105,6 +105,36 @@ public:
     void setSaveRoot(std::filesystem::path root) { _saveRoot = std::move(root); }
     const std::filesystem::path& saveRoot() const { return _saveRoot; }
 
+    // ------------------------------------------------------------------
+    // The acting mover.
+    //
+    // Unset is the normal state and means the engine, or a Person gesturing
+    // in-world, is acting through ordinary process -- which this layer does
+    // not govern and must not obstruct. It becomes set only while a First
+    // Mover is driving: an agent session, a fixture builder, a model emitting
+    // a save. That is the window in which writes are checked.
+    //
+    // Deliberately fail-OPEN when unset and fail-CLOSED once set. An engine
+    // save must never be blocked by an authorization layer it predates; an
+    // agent's write must never succeed because nobody remembered to check.
+    // ------------------------------------------------------------------
+    void setActiveMover(const SingularId& mover) { _activeMover = mover; }
+    void clearActiveMover() { _activeMover = SingularId{}; }
+    const SingularId& activeMover() const { return _activeMover; }
+    bool hasActiveMover() const { return _activeMover.canAuthenticate(); }
+
+    // The one call a write path needs: true if this write is permitted right
+    // now. Unset mover -> allowed. Set mover -> must pass every gate.
+    bool permitsWrite(const std::filesystem::path& path) const {
+        if (!hasActiveMover()) return true;
+        return mayWrite(_activeMover, path);
+    }
+
+    std::string explainWrite(const std::filesystem::path& path) const {
+        if (!hasActiveMover()) return "allowed: no First Mover session active";
+        return explain(_activeMover, path);
+    }
+
     nlohmann::json toJson() const;
 
     // Replaces the register from a save file. Entries arrive as claims and are
@@ -118,6 +148,27 @@ public:
 private:
     std::vector<FirstMover> _movers;
     std::filesystem::path _saveRoot = "saves";
+    SingularId _activeMover;
+};
+
+// RAII window during which a First Mover is acting. Scoped rather than a bare
+// setter because an agent session that forgets to clear would leave every
+// later engine save being checked against the agent's scopes -- and the
+// failure would look like a permissions bug, not a leaked session.
+class FirstMoverSession {
+public:
+    FirstMoverSession(FirstMoverRegister& reg, const SingularId& mover)
+        : _reg(reg), _previous(reg.activeMover()) {
+        _reg.setActiveMover(mover);
+    }
+    ~FirstMoverSession() { _reg.setActiveMover(_previous); }
+
+    FirstMoverSession(const FirstMoverSession&) = delete;
+    FirstMoverSession& operator=(const FirstMoverSession&) = delete;
+
+private:
+    FirstMoverRegister& _reg;
+    SingularId _previous;
 };
 
 // Exposed for testing. '*' stays within a segment, '**' spans them.
