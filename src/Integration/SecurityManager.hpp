@@ -6,6 +6,7 @@
 #include <set>
 #include <functional>
 #include <memory>
+#include <mutex>
 #include <regex>
 #include "../json.hpp"
 
@@ -93,7 +94,10 @@ public:
     // Configuration
     void setSecurityLevel(SecurityLevel level);
     void setConfig(const SecurityConfig& config);
-    SecurityConfig getConfig() const { return _config; }
+    SecurityConfig getConfig() const {
+        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        return _config;
+    }
     
     // URL validation
     URLValidationResult validateURL(const std::string& url);
@@ -120,7 +124,10 @@ public:
     // Security logging
     void logEvent(SecurityEventType type, const std::string& description, 
                   const std::string& source, const std::string& details = "", bool blocked = false);
-    std::vector<SecurityEvent> getSecurityLog() const { return _securityLog; }
+    std::vector<SecurityEvent> getSecurityLog() const {
+        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        return _securityLog;
+    }
     void clearSecurityLog();
     void exportSecurityLog(const std::string& filename);
     
@@ -145,7 +152,10 @@ public:
     void deserialize(const nlohmann::json& j);
     
     // Statistics
-    int getTotalEvents() const { return _securityLog.size(); }
+    int getTotalEvents() const {
+        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        return static_cast<int>(_securityLog.size());
+    }
     int getBlockedEvents() const;
     std::map<std::string, int> getEventCounts() const;
     
@@ -156,7 +166,15 @@ public:
 private:
     SecurityManager() = default;
     ~SecurityManager() = default;
-    
+
+    // This singleton is reached from the WebView message-handler thread as
+    // well as the main loop, and every entry point below mutates shared state
+    // (the log, the activity counts, the block set, the rate-limit map).
+    // Recursive because the public API is layered on itself: validateURL ->
+    // isSourceBlocked, and logEvent -> detectSuspiciousActivity -> blockSource
+    // -> logEvent all re-enter through locked methods.
+    mutable std::recursive_mutex _mutex;
+
     SecurityConfig _config;
     std::map<std::string, std::set<PermissionType>> _grantedPermissions;
     std::set<std::string> _blockedSources;

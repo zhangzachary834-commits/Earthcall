@@ -7,8 +7,10 @@
 #include <websocketpp/config/asio_no_tls.hpp>
 #include <websocketpp/server.hpp>
 
+#include <algorithm>
 #include <iostream>
 #include <mutex>
+#include <vector>
 
 namespace Singularity {
 namespace Network {
@@ -24,10 +26,32 @@ struct WebSocketServer::Impl {
     std::vector<websocketpp::connection_hdl> connections;
     std::mutex connections_mutex;
 
+    // Exact-match allowlist. A substring test is not usable here: an attacker
+    // can register a host that merely *contains* "localhost"
+    // (https://localhost.example.com), and since a WebSocket handshake is not
+    // subject to the same-origin policy, any page the user visits could then
+    // drive the engine. Serve web_ui over one of these origins rather than
+    // opening it from file:// -- a file:// page sends "Origin: null", which is
+    // also what sandboxed iframes send, so "null" is deliberately not listed.
+    static bool isAllowedOrigin(const std::string& origin) {
+        static const std::vector<std::string> allowed = {
+            "http://localhost:3000",  "http://127.0.0.1:3000",
+            "http://localhost:8080",  "http://127.0.0.1:8080",
+            "https://localhost:3000", "https://127.0.0.1:3000",
+        };
+        return std::find(allowed.begin(), allowed.end(), origin) != allowed.end();
+    }
+
     bool on_validate(websocketpp::connection_hdl hdl) {
         auto con = server.get_con_from_hdl(hdl);
         std::string origin = con->get_request_header("Origin");
-        if (!origin.empty() && origin.find("localhost") == std::string::npos && origin.find("127.0.0.1") == std::string::npos) {
+
+        // No Origin header means no browser sent this. Browsers always attach
+        // one to a WS handshake, so absence cannot be a hostile web page --
+        // it is a local native client, already scoped by the loopback bind.
+        if (origin.empty()) return true;
+
+        if (!isAllowedOrigin(origin)) {
             std::cout << "[WebSocketServer] Rejected connection from origin: " << origin << std::endl;
             return false;
         }
@@ -38,10 +62,19 @@ struct WebSocketServer::Impl {
         std::string payload = msg->get_payload();
         try {
             auto j = nlohmann::json::parse(payload);
+            if (!j.is_object()) return;
+
             if (j.value("type", "") == "utterance") {
+                // Types are checked rather than coerced: value<std::string>
+                // hands back "" for a nested object, which would admit
+                // {"payload": {...}} as a silently empty utterance instead of
+                // rejecting it (cybersecurity policy 1, "Type Checking").
+                auto it = j.find("payload");
+                if (it == j.end() || !it->is_string()) return;
+
                 Core::Event::Utterance evt;
-                evt.payload = j.value("payload", "");
-                
+                evt.payload = it->get<std::string>();
+
                 // Very basic pointer-to-string cast to get a unique client ID
                 evt.sourceClient = std::to_string(reinterpret_cast<uintptr_t>(hdl.lock().get()));
                 

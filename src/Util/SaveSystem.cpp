@@ -118,22 +118,41 @@ std::string timestamp() {
 }
 
 std::string sanitizeLabel(const std::string& label) {
-    std::string safe = label;
-    for (char& c : safe) {
-        if (c == '/' || c == '\\' || c == ':') c = '_';
+    // Control characters matter as much as separators here: an embedded NUL
+    // truncates the name at the syscall boundary, so the path that gets
+    // opened stops being the path that was checked.
+    std::string safe;
+    safe.reserve(label.size());
+    for (unsigned char c : label) {
+        if (c == '/' || c == '\\' || c == ':' || c < 0x20 || c == 0x7F) {
+            safe.push_back('_');
+        } else {
+            safe.push_back(static_cast<char>(c));
+        }
     }
+
     size_t pos;
     while ((pos = safe.find("..")) != std::string::npos) {
         safe.replace(pos, 2, "__");
     }
+
+    // A name that is only dots still resolves to a directory entry rather than
+    // a save, and an over-long one is rejected by the filesystem.
+    if (safe.find_first_not_of('.') == std::string::npos) return "";
+    if (safe.size() > 128) safe.resize(128);
+
     return safe;
 }
 
 std::string makeFilename(const std::string& customLabel, SaveType type, const std::string& ext) {
     std::string folder = ensureSaveTypeFolder(type);
     if (folder.empty()) return "";
-    
-    std::string stem = customLabel.empty() ? timestamp() : sanitizeLabel(customLabel);
+
+    // A label that sanitizes away entirely must not collapse to a bare
+    // extension ("saves/games/.ecsave"); fall back to the timestamp instead.
+    std::string stem = customLabel.empty() ? std::string{} : sanitizeLabel(customLabel);
+    if (stem.empty()) stem = timestamp();
+
     return folder + "/" + stem + ext;
 }
 
@@ -174,11 +193,21 @@ std::string writeSaveData(const nlohmann::json& j, const std::string& customLabe
         return "";
     }
     
-    std::vector<uint8_t> v = nlohmann::json::to_msgpack(j);
-    std::vector<uint8_t> compressed = compressData(v);
+    // Encoding and compression both throw on failure. An empty return is this
+    // function's documented "did not write" signal, so failure is converted
+    // here rather than escaping into callers that never wrapped the call.
+    std::vector<uint8_t> v;
+    std::vector<uint8_t> compressed;
+    try {
+        v = nlohmann::json::to_msgpack(j);
+        compressed = compressData(v);
+    } catch (const std::exception& e) {
+        std::cerr << "[SaveSystem] Failed to encode " << filename << ": " << e.what() << "\n";
+        return "";
+    }
     out.write(reinterpret_cast<const char*>(compressed.data()), compressed.size());
     out.close();
-    
+
     // Upload Binary to cloud
     Util::CloudStorage::uploadSaveAsync(filename, v, type, [filename](bool success) {
         if (success) {
@@ -200,10 +229,16 @@ std::string writeSaveData(const std::vector<uint8_t>& data, const std::string& c
         return filename;
     }
     
-    std::vector<uint8_t> compressed = compressData(data);
+    std::vector<uint8_t> compressed;
+    try {
+        compressed = compressData(data);
+    } catch (const std::exception& e) {
+        std::cerr << "[SaveSystem] Failed to compress " << filename << ": " << e.what() << "\n";
+        return "";
+    }
     out.write(reinterpret_cast<const char*>(compressed.data()), compressed.size());
     out.close();
-    
+
     // Upload Binary to cloud
     Util::CloudStorage::uploadSaveAsync(filename, data, type, [filename](bool success) {
         if (success) {
@@ -226,9 +261,18 @@ bool isSaving() {
 void writeSaveDataAsync(const nlohmann::json& j, const std::string& customLabel, SaveType type) {
     g_isSaving.store(true);
     
-    // We deep copy the JSON object to pass it safely to the detached thread
+    // We deep copy the JSON object to pass it safely to the detached thread.
+    // Nothing may escape this lambda: an exception crossing the top of a
+    // thread is std::terminate, and the flag must clear on every path or the
+    // UI reports a save that is still in flight forever.
     std::thread([j_copy = j, customLabel, type]() {
-        writeSaveData(j_copy, customLabel, type);
+        try {
+            writeSaveData(j_copy, customLabel, type);
+        } catch (const std::exception& e) {
+            std::cerr << "[SaveSystem] Async save failed: " << e.what() << "\n";
+        } catch (...) {
+            std::cerr << "[SaveSystem] Async save failed: unknown error\n";
+        }
         g_isSaving.store(false);
     }).detach();
 }
@@ -236,9 +280,15 @@ void writeSaveDataAsync(const nlohmann::json& j, const std::string& customLabel,
 void writeSaveDataAsync(const std::vector<uint8_t>& data, const std::string& customLabel, const std::string& ext, SaveType type) {
     g_isSaving.store(true);
     
-    // Deep copy the vector
+    // Deep copy the vector. See the note above on why nothing may escape here.
     std::thread([data_copy = data, customLabel, ext, type]() {
-        writeSaveData(data_copy, customLabel, ext, type);
+        try {
+            writeSaveData(data_copy, customLabel, ext, type);
+        } catch (const std::exception& e) {
+            std::cerr << "[SaveSystem] Async save failed: " << e.what() << "\n";
+        } catch (...) {
+            std::cerr << "[SaveSystem] Async save failed: unknown error\n";
+        }
         g_isSaving.store(false);
     }).detach();
 }

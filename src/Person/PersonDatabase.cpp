@@ -24,9 +24,17 @@ void PersonDatabase::savePerson(const Person& person) {
 }
 
 bool PersonDatabase::loadPerson(const std::string& soulName, Person& outPerson) {
-    std::string folder = SaveSystem::getSaveTypeFolderName(SaveSystem::SaveType::PERSON);
-    std::string filepath = folder + "/" + soulName + ".json";
-    
+    // soulName reaches here from deserialized save data, so it is untrusted
+    // and cannot be concatenated into a path raw. ensureSaveTypeFolder (not
+    // getSaveTypeFolderName) is what savePerson writes into.
+    std::string safeName = SaveSystem::sanitizeLabel(soulName);
+    if (safeName.empty()) return false;
+
+    std::string folder = SaveSystem::ensureSaveTypeFolder(SaveSystem::SaveType::PERSON);
+    if (folder.empty()) return false;
+
+    std::string filepath = folder + "/" + safeName + ".json";
+
     if (!std::filesystem::exists(filepath)) {
         return false;
     }

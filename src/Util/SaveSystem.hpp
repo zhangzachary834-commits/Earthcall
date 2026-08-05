@@ -26,6 +26,11 @@ std::string makeFilename(const std::string& customLabel = "", SaveType type = Sa
 // Get a formatted timestamp string
 std::string timestamp();
 
+// Strip path separators and parent-directory hops out of a caller-supplied
+// label. Every path built from user- or save-file-derived text must pass
+// through here; makeFilename applies it, and direct path builders must too.
+std::string sanitizeLabel(const std::string& label);
+
 
 
 // Return list of files that still exist for a specific save type; also prunes stale entries from log

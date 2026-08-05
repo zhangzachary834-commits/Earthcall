@@ -44,6 +44,10 @@ private:
     LanguageSystem(const LanguageSystem&) = delete;
     LanguageSystem& operator=(const LanguageSystem&) = delete;
 
+    // Remove a Lexeme from every Zone's Formation before its owning
+    // shared_ptr is released. Formations store raw pointers.
+    void detachFromAllZones(Lexeme* lexeme);
+
     std::vector<std::shared_ptr<Lexeme>> _lexemes;
     std::unordered_map<std::string, std::shared_ptr<Lexeme>> _symbolIndex;
     std::unordered_map<std::string, std::shared_ptr<Lexeme>> _idIndex;

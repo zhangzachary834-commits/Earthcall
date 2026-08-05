@@ -15,6 +15,18 @@ LanguageSystem& LanguageSystem::instance() {
     return inst;
 }
 
+// A Formation holds its members as raw Singular*, so a Lexeme must be detached
+// from every Formation before its last shared_ptr goes away. Detaching only
+// from mgr.active() is not enough: a Lexeme instantiated while one Zone was
+// active outlives that Zone becoming inactive, and would leave a dangling
+// member behind in it.
+void LanguageSystem::detachFromAllZones(Lexeme* lexeme) {
+    if (!lexeme) return;
+    for (Zone& z : mgr.zones()) {
+        z.removeFromFormation(lexeme);
+    }
+}
+
 LanguageSystem::LanguageSystem() {
     // Subscribe to Utterance events globally.
     Core::EventBus::instance().subscribe<Core::Event::Utterance>([this](const Core::Event::Utterance& evt) {
@@ -30,7 +42,7 @@ std::shared_ptr<Lexeme> LanguageSystem::resolve(const std::string& symbol) {
 
     if (_lexemes.size() >= 1000) {
         auto oldest = _lexemes.front();
-        mgr.active().removeFromFormation(oldest.get());
+        detachFromAllZones(oldest.get());
         _idIndex.erase(oldest->getIdentifier());
         for (auto sit = _symbolIndex.begin(); sit != _symbolIndex.end(); ++sit) {
             if (sit->second == oldest) {
@@ -63,8 +75,8 @@ void LanguageSystem::remove(const std::string& symbol) {
     if (it == _symbolIndex.end()) return;
 
     std::shared_ptr<Lexeme> lexeme = it->second;
-    mgr.active().removeFromFormation(lexeme.get());
-    
+    detachFromAllZones(lexeme.get());
+
     _symbolIndex.erase(it);
     _idIndex.erase(lexeme->getIdentifier());
 
@@ -134,6 +146,11 @@ void LanguageSystem::queueUtterance(const std::string& payload, const std::strin
 }
 
 void LanguageSystem::clear() {
+    // Detach before dropping the owning references, or every Zone Formation is
+    // left pointing at freed Lexemes.
+    for (const auto& lexeme : _lexemes) {
+        detachFromAllZones(lexeme.get());
+    }
     _lexemes.clear();
     _symbolIndex.clear();
     _idIndex.clear();

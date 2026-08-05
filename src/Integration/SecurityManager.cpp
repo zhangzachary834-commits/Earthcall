@@ -75,6 +75,7 @@ SecurityManager& SecurityManager::instance() {
 }
 
 void SecurityManager::setSecurityLevel(SecurityLevel level) {
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     _config.level = level;
     
     // Configure based on security level
@@ -113,12 +114,14 @@ void SecurityManager::setSecurityLevel(SecurityLevel level) {
 }
 
 void SecurityManager::setConfig(const SecurityConfig& config) {
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     _config = config;
     _initializePatterns();
     logEvent(SecurityEventType::SUSPICIOUS_ACTIVITY, "Security configuration updated", "system");
 }
 
 URLValidationResult SecurityManager::validateURL(const std::string& url) {
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     URLValidationResult result;
     result.isValid = false;
     result.isWhitelisted = false;
@@ -184,6 +187,7 @@ URLValidationResult SecurityManager::validateURL(const std::string& url) {
 }
 
 bool SecurityManager::isURLWhitelisted(const std::string& url) {
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     if (_config.whitelistedDomains.empty()) {
         return false; // No whitelist means fail closed
     }
@@ -197,6 +201,7 @@ bool SecurityManager::isURLWhitelisted(const std::string& url) {
 }
 
 bool SecurityManager::isURLBlacklisted(const std::string& url) {
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     for (const auto& domain : _config.blacklistedDomains) {
         size_t hostStart = url.find("://");
         if (hostStart == std::string::npos) hostStart = 0; else hostStart += 3;
@@ -214,6 +219,7 @@ bool SecurityManager::isURLBlacklisted(const std::string& url) {
 }
 
 std::string SecurityManager::sanitizeURL(const std::string& url) {
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     std::string sanitized = url;
     
     // Remove any potential script injection
@@ -237,6 +243,7 @@ std::string SecurityManager::sanitizeURL(const std::string& url) {
 }
 
 bool SecurityManager::requestPermission(PermissionType permission, const std::string& source) {
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     // Check if already granted
     if (hasPermission(permission, source)) {
         return true;
@@ -277,6 +284,7 @@ bool SecurityManager::requestPermission(PermissionType permission, const std::st
 }
 
 bool SecurityManager::hasPermission(PermissionType permission, const std::string& source) const {
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     auto it = _grantedPermissions.find(source);
     if (it != _grantedPermissions.end()) {
         return it->second.find(permission) != it->second.end();
@@ -285,12 +293,14 @@ bool SecurityManager::hasPermission(PermissionType permission, const std::string
 }
 
 void SecurityManager::grantPermission(PermissionType permission, const std::string& source) {
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     _grantedPermissions[source].insert(permission);
     logEvent(SecurityEventType::PERMISSION_GRANTED, "Permission granted", source,
              "Permission: " + std::to_string(static_cast<int>(permission)));
 }
 
 void SecurityManager::revokePermission(PermissionType permission, const std::string& source) {
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     auto it = _grantedPermissions.find(source);
     if (it != _grantedPermissions.end()) {
         it->second.erase(permission);
@@ -303,11 +313,13 @@ void SecurityManager::revokePermission(PermissionType permission, const std::str
 }
 
 void SecurityManager::revokeAllPermissions(const std::string& source) {
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     _grantedPermissions.erase(source);
     logEvent(SecurityEventType::PERMISSION_DENIED, "All permissions revoked", source);
 }
 
 std::set<PermissionType> SecurityManager::getGrantedPermissions(const std::string& source) const {
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     auto it = _grantedPermissions.find(source);
     if (it != _grantedPermissions.end()) {
         return it->second;
@@ -316,6 +328,7 @@ std::set<PermissionType> SecurityManager::getGrantedPermissions(const std::strin
 }
 
 MessageValidationResult SecurityManager::validateMessage(const std::string& message, const std::string& source) {
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     MessageValidationResult result;
     result.isValid = false;
     
@@ -361,10 +374,12 @@ MessageValidationResult SecurityManager::validateMessage(const std::string& mess
 }
 
 bool SecurityManager::isMessageAllowed(const std::string& message, const std::string& source) {
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     return validateMessage(message, source).isValid;
 }
 
 std::string SecurityManager::generateCSP(const std::string& source) {
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     if (!_config.enableCSP) {
         return "";
     }
@@ -385,6 +400,7 @@ std::string SecurityManager::generateCSP(const std::string& source) {
 }
 
 std::string SecurityManager::generateSandboxPolicy() {
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     if (!_config.enableSandboxing) {
         return "";
     }
@@ -394,6 +410,7 @@ std::string SecurityManager::generateSandboxPolicy() {
 
 void SecurityManager::logEvent(SecurityEventType type, const std::string& description, 
                                const std::string& source, const std::string& details, bool blocked) {
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     SecurityEvent event;
     event.type = type;
     event.description = description;
@@ -431,11 +448,13 @@ void SecurityManager::logEvent(SecurityEventType type, const std::string& descri
 }
 
 void SecurityManager::clearSecurityLog() {
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     _securityLog.clear();
     _sourceActivityCount.clear();
 }
 
 void SecurityManager::exportSecurityLog(const std::string& filename) {
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     try {
         std::ofstream file(filename);
         if (file.is_open()) {
@@ -464,6 +483,7 @@ void SecurityManager::exportSecurityLog(const std::string& filename) {
 }
 
 bool SecurityManager::detectSuspiciousActivity(const std::string& source) {
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     auto it = _sourceActivityCount.find(source);
     if (it != _sourceActivityCount.end()) {
         // Block if more than 100 events in 1 minute
@@ -485,20 +505,24 @@ bool SecurityManager::detectSuspiciousActivity(const std::string& source) {
 }
 
 void SecurityManager::blockSource(const std::string& source) {
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     _blockedSources.insert(source);
     logEvent(SecurityEventType::SUSPICIOUS_ACTIVITY, "Source blocked due to suspicious activity", source);
 }
 
 void SecurityManager::unblockSource(const std::string& source) {
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     _blockedSources.erase(source);
     logEvent(SecurityEventType::SUSPICIOUS_ACTIVITY, "Source unblocked", source);
 }
 
 bool SecurityManager::isSourceBlocked(const std::string& source) const {
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     return _blockedSources.find(source) != _blockedSources.end();
 }
 
 bool SecurityManager::validateAPICall(const std::string& api, const std::string& source) {
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     // Map API names to required permissions
     std::map<std::string, PermissionType> apiPermissions = {
         {"brush", PermissionType::BRUSH_SYSTEM},
@@ -521,10 +545,12 @@ bool SecurityManager::validateAPICall(const std::string& api, const std::string&
 }
 
 bool SecurityManager::isAPICallAllowed(const std::string& api, const std::string& source) {
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     return validateAPICall(api, source);
 }
 
 bool SecurityManager::validateJavaScript(const std::string& script, const std::string& source) {
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     // Check for malicious patterns
     for (const auto& pattern : _maliciousPatterns) {
         if (std::regex_search(script, pattern)) {
@@ -556,6 +582,7 @@ std::string SecurityManager::sanitizeJavaScript(const std::string& script) {
 }
 
 void SecurityManager::saveSecurityData() {
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     try {
         nlohmann::json j = serialize();
         std::string filename = SaveSystem::writeSaveData(j, "security_data", SaveSystem::SaveType::INTEGRATION);
@@ -566,6 +593,7 @@ void SecurityManager::saveSecurityData() {
 }
 
 void SecurityManager::loadSecurityData() {
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     try {
         auto files = SaveSystem::listFiles(SaveSystem::SaveType::INTEGRATION);
         for (const auto& file : files) {
@@ -586,6 +614,7 @@ void SecurityManager::loadSecurityData() {
 }
 
 nlohmann::json SecurityManager::serialize() const {
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     nlohmann::json j;
     j["config"] = _config.serialize();
     j["securityLog"] = nlohmann::json::array();
@@ -614,6 +643,7 @@ nlohmann::json SecurityManager::serialize() const {
 }
 
 void SecurityManager::deserialize(const nlohmann::json& j) {
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     if (j.contains("config")) {
         _config.deserialize(j["config"]);
     }
@@ -649,6 +679,7 @@ void SecurityManager::deserialize(const nlohmann::json& j) {
 }
 
 int SecurityManager::getBlockedEvents() const {
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     int count = 0;
     for (const auto& event : _securityLog) {
         if (event.blocked) {
@@ -659,6 +690,7 @@ int SecurityManager::getBlockedEvents() const {
 }
 
 std::map<std::string, int> SecurityManager::getEventCounts() const {
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     std::map<std::string, int> counts;
     for (const auto& event : _securityLog) {
         std::string typeName = std::to_string(static_cast<int>(event.type));
@@ -668,10 +700,12 @@ std::map<std::string, int> SecurityManager::getEventCounts() const {
 }
 
 void SecurityManager::setPermissionCallback(std::function<bool(PermissionType, const std::string&)> callback) {
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     _permissionCallback = callback;
 }
 
 void SecurityManager::setSecurityAlertCallback(std::function<void(const SecurityEvent&)> callback) {
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     _securityAlertCallback = callback;
 }
 
