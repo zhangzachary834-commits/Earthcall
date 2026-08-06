@@ -5,10 +5,17 @@
 #include <type_traits>
 #include <variant>
 
+#include <memory>
+#include <vector>
+#include <map>
+
 class Singular;
 class Object;
 class Relation;
 class Formation;
+
+struct PropertyList;
+struct PropertyDict;
 
 // The typed currency of the property bridge: every legible property value fits
 // in this variant. glm::vec3 (not a private Vec3) because the whole codebase
@@ -31,8 +38,18 @@ using PropertyValue = std::variant<
     Singular*,
     Object*,
     Relation*,
-    Formation*
+    Formation*,
+    std::shared_ptr<PropertyList>,
+    std::shared_ptr<PropertyDict>
 >;
+
+struct PropertyList {
+    std::vector<PropertyValue> elements;
+};
+
+struct PropertyDict {
+    std::map<std::string, PropertyValue> elements;
+};
 
 // True when T is one of PropertyValue's alternatives. PropertyRef and
 // ComputedProperty use this to decide legibility at compile time.

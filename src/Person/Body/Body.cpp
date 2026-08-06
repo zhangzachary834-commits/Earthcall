@@ -18,7 +18,7 @@
 #include "BodyPart/Limb/Foot.hpp"
 
 Body::Body(std::string shape, std::string artStyle)
-    : shape(shape), artStyle(artStyle), formation(Form::ShapeType::Cube, {1.0f, 1.0f, 1.0f})
+    : shape(shape), artStyle(artStyle), formation()
 {
     // Voxel player default approx 1.8m tall, but our simplified avatar is ~1 unit tall in model space
     hitboxHeight = 1.0f;

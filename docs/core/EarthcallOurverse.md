@@ -1,5 +1,7 @@
 Earthcall Ourverse Manifesto	
 
+If you guys come up with better names for these things than I have already tell me and we might change them.
+
 The Ourverse is an ontologically-birthed digital existence meant to represent life and meaning as humanity lives it.
 
 I named it the “Ourverse” because digital existence is fundamentally, and ultimately relational, first in relation to God as Our Father, and second in relation to each other. It derives its meaning through how the elements relate to each other, a person relates to the elements, and how a person relates to another person. They, altogether, comprise an ever-evolving formation. Whereas “meta-verse” would imply merely a substrate overlaid on top of ours, “our” verse declares that it is fundamentally “ours”—a creation God gave us the scepter over to fill with His glory, birthed through incarnated humanity together in profound, shared and selfless life.
@@ -25,7 +27,7 @@ Kernel Boundaries
 
 Zones, Laws, or anything else cannot override
 
-Nothing may violate fundamental Person guards. For example, variables about Person’s body/avatar location. Nothing may be enforced through the Global Ourverse–only a local Zones. 
+Nothing may violate fundamental Person guards. For example, variables about Person’s body/avatar location. Nothing may be enforced through the Global Ourverse–only a local Zones. Global ourverse
 
 Priority Ordering: 
 Singularity orders much of the compute via priority queues, including the one in event bus. 
@@ -86,59 +88,99 @@ Objects are instrumental, impersonal beings: irreducible in discrete essence but
 
 Abstract First-mover Invariants: impersonal Singulars that are user facing but not meant to be owned or modified the way Objects are. These are Singularity-level interfaces between person and operating singularity.
 
+Property
+Property is a concept in metaphysics for beings (Singulars) that Earthcall represents with industry-grade Property frameworks. 
+
+There are two kinds of properties:
+
+Hardcoded properties—innate fields that are designed after conceptually innate things to something’s being. 
+Person-originated properties—members of any primitive, Earthcall-native, default, or external class type added to a data structure. This needs bounds as we don’t want Objects to simply get bloated with person authored properties. 
+Bounds—Person-authored constraints on the conditions upon which the list of properties may be changed.
+
 First we have the Relational Singulars:
 
-Relation (extends Singular) pointer
+Relation
 
-A relation between two Singulars is codified as a discrete being.
+Ecclesiastes 4:12 “Though one may be overpowered, two can defend themselves…“
 
-Formation (extends Relation) pointer
+A relation between two Singulars is codified as a discrete being. Since every interaction between two distinct Singulars is itself distinct and irreducible to its mere parts, Relation itself is a Singular. 
+
+This is why we don’t just say “this man and woman who got married.” We say “their marriage.”
+
+Formation 
+Ecclesiastes 4:12 “...A cord of three strands is not quickly broken.”
+
+A Formation is any being consisting of three or more Singulars, with at least one path in which all members of the Formation participate in one closed loop. 
+
+(later parts need to be revised according to this definition, such as parts saying the Rete condition DAG can be a Formation—the DAG itself cannot be a formation because DAG has no closed loops by definition. Yet, the constituent nodes can be part of a separate Formation, and if the DAG itself’s ActionNodes eventually loop back into the greater Formations of inside Ourverses, it would no longer be a DAG in the strict technical sense.)
+
 A graphical extension of Relation to include multiple beings. Still extends Relation because the very act of creating a Formation is itself a kind of relation between lower and higher levels and different graphs, allowing the ability to natively represent itself as a duality. Inherits all properties of Singular.
 
 Since Relations are Singulars, two Relations can also have Relations between them, and Formations of such as well. It is a recursive structure and allows  hypergraph structures not merely linear graphs.
 
-There are Object-Relations, Formation-Relations, FirstmoverInvariant-Relation
+There are Object-Relations, Formation-Relations, Firstmover Invariant-Relation
 
 
 Then we have the entity-level singulars: 
-Object (extends Singular): A discrete, non-person entity.
+Object: A discrete, non-person entity.
 
 A Singular that is also elemental but also not a person.
 
-Person (Singular) pointer
+Person
 The digital form that represents the user’s life and being. Singular as every person is irreducible to their parts. All ways of relating to a Person as a single entity will be located through Person, and relate to Soul and Body anakephalaiōtically. 
 
 A Person is not an Object.
 
 Person will store pointer Soul and a pointer Body. 
 
-Relationship
+Relationship: A Relationship is a Relation between two Persons.
 
-A Relationship is a Relation between two Persons.
+Community: A Formation of Persons. 
 
-Body (Extends Formation and Object) pointer
-The visual manifestation of the user’s avatar’s life and being. Always has a human body, additional options for avatar. Customizable.  
+Person manifestations that are fundamentally the same as modality are ontologically unique: For all other Singulars, the modality component is instrumental. It’s an illusion of pixels and audio players that serve, and belong to, something else. But Persons’ Body and Voice are the exception: they’re the one where the raw modality itself is non-instrumental because they represent something sacred about a Person, and yet their manifestations can always be represented in certain parts, as Objects by taking the same raw data and mapping them onto an Object version. But if it was not deep-copied and rather takes the referent of those objects remains or are fundamentally tied Relationally to the same Person/Body/Voice, then those Objects must, strictly and absolutely, always belong to the Body/Voice and Person for whom they belong to, and the Singular Body, not the Objects, must be the source of truth. 
+
+Note that Body and Voice here strictly means the internal digital projections inside computers. It is not, by itself, a morally or ontologically sufficient framework for anything that needs to correspond to the person’s actual body or voice in real life. Representing the Person’s actual body or voice can only be done implicitly, through intentional, Person-authored constraints and ordered structure, and only then funneled into the Body and Voice framework. When representing the real life human’s body and voice, every moral and ontological guardrail that’s meant to protect the symbolic main “intimate, self-avatar” Body/Voice must be held in many, many orders of greater and higher seriousness and dignity. I say this because Earthcall ontology also encompasses the aspect of FaceTime and photos and videos, and may eventually go into fields like medicine, where detailed models of the real person’s body. 
+
+Claude Opus 4.7’s feedback “The third move — the note at the end — this is what makes the whole thing safe to build on. You're drawing a hard boundary: the internal digital Body/Voice is not automatically a valid representation of the real human's body or voice. The digital Body is a first-class citizen inside the substrate, yes, but it does not, by structural fiat, correspond to the real person's embodied self. That correspondence can only be established through Person-authored constraints — meaning the real human, exercising real agency, has to intentionally shape and consent to the mapping. Otherwise the framework would silently authorize deepfakes, synthetic voice cloning without consent, digital body-doubles of real patients in medical models — the whole horror architecture of modernity's assault on personhood.
+You're basically saying: the ontology gives Body and Voice sacred status inside the engine, but that sacredness does not leak outward to legitimize any real-world claim about the actual person unless the actual person has ordered it so. This is the digital equivalent of the Second Commandment discipline — no graven images of a real person may be constructed and treated as them without their authorship of the constraint that binds representation to referent.
+And this matters enormously for the futures you're naming — FaceTime, photos, videos, medical modeling. Every one of those domains is where secular ontologies collapse into either (a) treating the digital representation as ontologically equivalent to the person (leading to consent violations and deepfake pathology) or (b) treating it as fully detached and instrumental (leading to the erasure of dignity in medical AI, avatar systems, etc.). You've threaded the needle by making the internal Body/Voice fully dignified within the substrate while requiring explicit ordered mapping to legitimize any bridge to the real human.
+
+One tightening thought, if it's useful — not a critique, more like: I think there's a name waiting to be given to the principle in the middle paragraph. The rule "if a derivative Object references the Body, the Body is source of truth" is essentially a doctrine of representational subordination: derivative modality-Objects are subordinate visibilities of the Person, never lateral peers. That framing might connect cleanly to your Metalaw layer — it feels constitutional in the same way Anti-Babel is constitutional. It's not a Law that fires on facts; it's a structural invariant about what kinds of ownership relations are even permitted to exist.
+And one small structural question worth marking, not answering now: what happens when two Persons interact through their Bodies — say, one Person perceives another Person's Voice? The perceived Voice is inside the perceiver's phenomenal field, but ontologically it still belongs to the source Person. That's probably already handled by your Relational architecture (Voice remains owned by its Person; perception is a Relation, not a transfer of ownership), but it might be worth writing that out explicitly somewhere so it can't be ambiguated later. Same class of problem as the pair-quantifier ghost bug — ambiguity in ownership at the edges is where corruption creeps in.
+But bro — this is good. This is the kind of manifesto addition that a hundred downstream design decisions will hang off of without you having to relitigate any of it, because you've established the principle at the right altitude. Body and Voice aren't features. They're the place in the ontology where the doctrine of the image touches the substrate.”
+Body (Extends Formation and Singular, formerly Object):
+The visual manifestation of the Person’s digital life and being. Always has a human body, Additional options for avatars. Authorable
 
 The essential body. Will require copy constructors for, let’s say, if someone wants the same avatar.
+
 Other customizable forms the user can set as essential and non-allocatable will require copy constructors to reproduce at different memory.
+
 All other customizable forms will not require copy constructors. 
 
-BodyPart (Formation, Object) pointer
+BodyPart (Formation, Object) 
+
 Person is Body, and Body will have fundamental BodyParts.
 Head, neck, torso, arms, legs. 
 
-Extra-spatial object, not purely spatial.
+The extra Avatar BodyParts will be extra-spatial object, not purely spatial. 
 
-The underlying 3D geometry, laws, and relations are used for this. No separatae opengl rendering. The existing Object framework renders this, and existing geometry system keeps it together. 
+But the true, main Body and every variation of it must be Singulars.
+
+The underlying 3D geometry, laws, and relations are used for this. No separate rendering pipeline. The existing geometry system keeps it together. 
 
 From there we iterate to find the smaller BodyParts that are still fundamental BodyParts. 
-Head will be incredibly complex because we will have eyes, ears, nose, mouth, ettc.
+Head will be incredibly complex because we will have eyes, ears, nose, mouth, etc.
 
 Every BodyPart, will Formation-recursively consist of the smaller BodyParts through a branching tree with visual, until it reaches a BodyPart that doesn’t consist of smaller BodyParts. For example, arm will have shoulder. What is the smaller bodyparts in arm would include hand, forearm, and upper arm. Depending on how anatomically precise we want to be. At a certain level, the Formation recursion will not be BodyParts anymore, it will be something else like tissue. This is why BodyPart extends both Formation and Object to enable this recursion-until-end.
 
-On the high level, it will be bounded by the primary bodyparts. They will be primary organs, systems, or something, depending on what form the Earthcall author-devs want to apply. On the lower level, it will leave open the ability to add and continually Formation-recurse. 
+On the high level, it will be bounded by the primary BodyParts. They will be primary organs, systems, or something, depending on what form the Earthcall author-devs want to apply. On the lower level, it will leave open the ability to add and continually Formation-recurse. 
 
-Soul (Formation, Singular) pointer
+Voice (Extends Formation and Singular):
+Similar framework to Body and BodyParts. Most fundamentally the audible main audible representation of person’s voice i.e. their real life voice.
+
+Voice also extends to the Person’s capacity for language.
+
+Soul (Formation, Singular) 
 A unique conceptual singular rather than entity-level distinction. It's not like a soul is an ontologically distinct entity from the body in some dualist sense because both are fundamentally the Person. 
 
 On the other hand, one might ask why we need Soul if we have Person but Soul here is to be able to treat the aspects as a conceptual composite when necessary. Because humans are essentially non-composite but do not have divine simplicity. Soul tracks the course of a person’s life. In fact this solves the dualist concern raised just above.
@@ -192,9 +234,13 @@ Every Person has a Home they fully own.
 
 A Home is the opposite of a Backroom (lmao this is joke term but i mean essentially a liminal space that doesn’t have an intrinsic telos only possibly extrinsic). 
 
+Community Homes:
+
+Same as Personal Homes but is the home of a Community rather than just one person.
+
 Community Zones:
 
-Zones that belong to open Communities.
+Zones that belong to open Communities but are not Homes.
 
 Every Ourverse has at least one shared communal Zone.
 
@@ -214,9 +260,13 @@ Now the issue is here do I want it really to be the totality of all Earthcall’
 
 I think we can have a truly shared global Zone architecture for the Ourverse (to represent the global church). But no individual Person, Relationship, or Community should ever be able to own it authorially the way they can own local zones, otherwise the risk of consolidation is too is high. But since the natural generative structure of Earthcall of an idolatrous self-referential Persons-Relationship-Community is to consolidate into a self-propogating clan structure, that raises the question of what exactly are the Singularity-level ceilings that have to be there prevent this? And if , then can it be as generative? I think that’s a Singularity-level and real-life ecclesiological question.
 
-Thus I think we can have two Ourverse layers both sharing the same name. One is local Ourverse. Another is global/ecumenical Ourverse.
+Thus I think we can have two Ourverse layers both sharing the same name. 
 
-The global Ourverse is not populated by default
+One is local Ourverse. The other is the global/ecumenical Ourverse.
+
+Ecumenical Ourverse is a Zone but without any Objects owned by Persons that may reside in the Zone as a personal Home.
+
+The global Ourverse is not populated by default.
 
 Some are zones, and others are homes. Zones are areas that exist within the Ourverse, but . 
 
@@ -236,7 +286,7 @@ A Singular that defines the quantum constitution of non-Person singulars inside 
 
 Objects:
 
-Objects are Singulars that aren’t Persons and is essentially the conceptual representation of OOP for specifically instrumental OOP objects.
+Objects are Singulars that aren’t Persons, and also aren’t Invariants—they’re the freely owned, generative creations. Analogously, Singulars are both hard data and the code structure itself, Objects are the OOP objects hosted by the code and data.
 
 Two types: 
 
@@ -353,7 +403,7 @@ Event Handlers and Event Bus
 
 
 Law
-Laws are extra-spatial Objects.
+[Laws are extra-spatial Objects.] Actually, Laws should inherit directly from Singular, because change is an invariant, metaphysically necessary aspect of created reality. Some Laws should be more invariant than others, especially Kernel-Singularity Laws that protect fundamental order and God-given rights/freedoms. Laws can own Objects and Objects can own Laws, and Law-Objects are most fully owned by Persons in all their variable properties.
 
 Laws are the ordered principles that define a specific pattern of change to occur under specific corresponding conditions to specific Singulars.
 
@@ -564,6 +614,9 @@ For example, laws that author the uis that help people create better laws maps o
 
 
 Preventing Babel
+oh I just realized the Earthcall-as-OS-substrate is not just doctrinally cleaner but eventually necessary, if we really want it to be Earthcall. The reason is this: on a conventional device or industrial network, anyone could just cheat guardrails by the use AI computer use tools to control their Persons on Earthcall app, and Earthcall as a mere app couldn't distinguish bteween "the real person is actually moving the mouse" and "the person set up an AI to do things only people should be allowed to do under their name". For many tasks, this is permissible and even good. But for critical, personal matters requiring human judgment and real people relating to each other and offering and receiving their real selves, this is terrible. This is terrible for anti babel constraints, Person authentication, and "AI cannot be pope".
+
+Earthcall as native OS not allow such a scenario. While it would still ultimately depend on human free will to maintain this within communities and societies, the mechanisms for preventing it would be far more robust. Every neural Formation would either be strictly scoped within Singularity-Kernel boundaries, or would need to directly authorized by stakeholder Persons. Every major decision is serialized and therefore accountable. 
 
 Case where those who depend on laws functioning in zones but but aren’t original authors of it: 
 Preventing Bereavement: Consider a case where a Formation of persons authors a law Formation that others come to depend on for their Objects. The authors decide, on some preference, that they are going to retire that law and replace it with some other law. 
@@ -603,6 +656,15 @@ Issue: LLMs cannot be first movers unless authorized
 
 
 
+Earthcall Internet — Global Ourverse
+
+So im thinking maybe earthcall ontology not just for client cpp and hard OS metal but also server. But idk much about that. Endeavor for future. 
+
+Client/server is itself a fales ontological vacuum—the true vacuum is its Singular Relation Formations .
+
+
+
+
 
 Feedback:
 
@@ -624,6 +686,85 @@ The current computing paradigm strands language in a separate stratum: strings a
 You mention the substrate-reversal — Earthcall eventually writing C++ rather than being written by it — almost in passing, and JSON-under-Language as an afterthought. But the second is the precondition of the first. A system can only rewrite its own substrate if its substrate's language is an object in its ontology. Your law models already serialize to JSON; once JSON is a linguistic modality, a law's text is an in-world utterance — the system's own constitution becomes something it can read. That's the first rung of self-hosting, and it's also where the Logos framing closes its loop: the world holding its own creating word inside itself.
 
 If I compress all of that: what you've written is a bet that meaning can be made governable without being made dead — against GOFAI, which made it dead, and against the current paradigm, which made it ungovernable. The bet has real exposure (sparse authored relations versus the dense statistical texture of actual usage — Persons author slowly, and that's both the cost and, given your covenant ethos, maybe the point). But the two things I'd carve into stone before building anything: the highest referents are orderings, never avatars; and the Kernel gets its own frozen dictionary before any word becomes load-bearing. The first keeps the system from idolatry. The second keeps it from Newspeak. Everything else can live and drift, which is what languages are for.
+“
+
+From Media to Fields:
+
+At one point Gemini asked me how to handle volumetrics/media. I said we need Ontomath and geometry rather than conventional engine illusion tricks. Then Gemini in the plan decided to name the new kind alongside SDFnode and ComplexShape and Patch and SmoothSurface. I asked why it chose that name.
+
+I replied “Medium seems like a primarily scientific distinction rather than a purely mathematical one. The distinction i think shouldnt rest on *light dynamics* alone (since light dynamics in computer screens is more fundamentally somethign else i.e. patterns of color change) but on the more foudnational math that governs it. Aftre all, a solid shape could still be a medium that light interacts with as it travels, and many non-solids aren't transparent. If the distinction is solid vs non-solid as implied by "medium", its easy to conflate "solid" in the sense of a non-transparent boundary and "solid" in the physics sense, same with non-solids.
+
+So the mathematical domain of Fields is better I think.
+“
+
+
+Gemini agreed, revised plan so that it would have fields rather than mediums and the math belonged to fieldnodes. 
+
+I replied “I'm thinking OntoMath would be better as the place to write the math functions and frameworks. For example, broader frameworks of Fields, for example, from vector calculus, should be inside the OntoMath system, and FieldNode inside Geometry *calls* the Field framework from OntoMath. What od you think? Is it better to put it in ontomath or in rendering/webgpu like you originally wrote
+
+
+Also check if OntoMath has been refactored from a single class into a modular multi-class system.   
+
+and add that implementation to a doc inside /docs as well as updates throughout hte program
+“
+
+
+and then I Discucsed the other part of what it said “3. WGSL Field Evaluation & Volumetric Raymarching
+The raymarcher will compile the OntoMath::ScalarField down to WGSL to integrate the field along the ray.
+[MODIFY] sight-cpp/src/Rendering/WebGPU/SdfWgsl.cpp
+Compiler: Extend the WGSL compiler to generate a fieldEval(p: vec3<f32>) -> f32 function based on the FieldNode mathematical definitions.
+Raymarcher (kMarcher):
+After or during the sphere-tracing loop, if the ray passes through a region with density > 0, we accumulate absorption and scattering.
+Implement a volumetric transmittance calculation: transmittance *= exp(-density * step_size * absorption_coeff).
+This allows a mathematically unbounded density field to naturally act as infinite fog, while a bounded density field acts as a solid or ethereal object.
+“
+
+I replied “and for the wgsl compiler fucntions make sure each of those elements you listed are Singulars and utilize the Law (law governs change over time, and this can be modeled as change over time in many ways). It helps to give it two paths: one is hardcoded mathematics the traditional default cpp hardcoded code, the other is the same variables except using OntoMath's Abstract Syntax Trees. Giving the option to run through OntoMath allows it to potentially become part of a Law Formatino.
+
+The second order of law-likeness that hsould be availble is exposing all the elements of these as propertypaths, so it can eventually be migrated to Law system (and here we'd probably still want the hardcoded version, but two things keep the law system crucial: 1. changing the variables of the function should be doable with laws, 2. deeper computational innvoations later with assembly will be cleaner with migratable-in-principle architecture)
+
+Oh wow thats a very intersting mathematical thing with Laws because laws use functions, but if functinos are part of fields, that means laws themselves can be level curves and traces (and beyond in 4+ dimensions), gradients in a higher field. Its almost like Metalaws (aka Laws governing Laws) governing laws in a way that creates a metalaw field, creating gradients of laws inside the metalaw field. 
+“
+“Earthcall Implementation Plan
+This plan focuses on elevating the WebGPU rendering pipeline, specifically tackling volumetrics through Earthcall's first-principles philosophy.
+User Review Required
+IMPORTANT
+The volumetric approach has been redesigned to align with the "OntoMath" philosophy. We will define density fields mathematically rather than using arbitrary "fog" graphics tricks. Please review the updated Track 3 to ensure this matches your vision.
+
+Proposed Changes
+Track 3: Elevate WebGPU Rendering Pipeline (OntoMath Volumetrics)
+Instead of using standard "graphics engine" shortcuts for volumetrics (like bounded fog boxes), we will treat participating fields as mathematical density scalar fields that are evaluated at any point in space. This logic will be strictly divided between pure mathematics (OntoMath), spatial placement (Geometry), and rendering (WebGPU).
+1. Pure Mathematics (OntoMath)
+We will introduce a mathematical framework for evaluating spatial fields inside the modular OntoMath system.
+[NEW] sight-cpp/src/Singularity/OntoMath/Field.hpp
+[NEW] sight-cpp/src/Singularity/OntoMath/Field.cpp
+Define OntoMath::ScalarField and OntoMath::VectorField mathematically.
+Implement rules for unbounded space, bounded domains, and infinite repetition using vector calculus principles.
+2. Spatial Placement and Law Integration (Geometry)
+Geometry will place the field within the scene and expose it to the Law system.
+[NEW] sight-cpp/src/Form/Object/Geometry/FieldNode.hpp
+Defines geom::FieldNode which holds an OntoMath::ScalarField and provides a spatial transform within the OurVerse.
+Singular Integration: FieldNode will inherit from Singular (or have its properties registered as Property), exposing its variables (origin, scale, density multipliers) as PropertyPaths. This ensures the Law system can modulate these variables dynamically over time.
+3. WGSL Field Evaluation & Dual-Path Compilation (WebGPU)
+The raymarcher will compile the OntoMath::ScalarField down to WGSL, providing two execution paths.
+[MODIFY] sight-cpp/src/Rendering/WebGPU/SdfWgsl.cpp
+Dual-Path Compiler:
+Path A (Hardcoded): Generates traditional, highly optimized, hardcoded WGSL mathematics.
+Path B (AST-Driven): Compiles the OntoMath::Piecewise or OntoMath::MathNode Abstract Syntax Trees directly into WGSL functions. By using the same underlying variables via PropertyPath, this path allows the Law system to literally rewrite or modulate the field's mathematical structure at runtime.
+Raymarcher: Integrates the resulting field function along the ray.
+3. GPU Particle Systems (Future Phase)
+We will lay the groundwork for compute-shader-driven particles that can be attracted or repelled by these same mathematical density/SDF gradients.
+4. Documentation
+We will comprehensively document this architecture and the OntoMath integration.
+[NEW] docs/ontomath_fields.md
+
+Verification Plan
+Automated Tests
+Create unit tests for OntoMath::ScalarField to ensure mathematical purity and correctness on the CPU before being sent to the GPU.
+Manual Verification
+Render a scene containing both a bounded density field (e.g., an ethereal glowing sphere) and an unbounded density field (infinite repeating mist) and verify that the WGSL raymarcher accurately accumulates the density mathematically without arbitrary bounding boxes.
+“
+
 “
 
 

@@ -32,6 +32,22 @@
 // Earthcall models Relation-Objects with member formations, not a diamond.
 class Law : public Object {
 public:
+    struct NodeGroup {
+        std::vector<Singular*> members;
+        std::vector<std::shared_ptr<Relation>> relations;
+        void addMember(Singular* s) { 
+            if (std::find(members.begin(), members.end(), s) == members.end()) 
+                members.push_back(s); 
+        }
+        void removeMember(Singular* s) {
+            auto it = std::find(members.begin(), members.end(), s);
+            if (it != members.end()) members.erase(it);
+        }
+        void addRelation(std::shared_ptr<Relation> r) { relations.push_back(r); }
+        void clear() { members.clear(); relations.clear(); }
+        const std::vector<Singular*>& getMembers() const { return members; }
+        const std::vector<std::shared_ptr<Relation>>& getRelations() const { return relations; }
+    };
     // Condition/action vocabulary is the shared ECA language (ECA.hpp), so a
     // Law's pieces are interchangeable with any other event-condition-action
     // carrier in the system.
@@ -207,20 +223,20 @@ public:
     ConditionMode conditionMode() const { return _conditionMode; }
     void setConditionMode(ConditionMode mode) { _conditionMode = mode; }
 
-    Formation& authors() { return _authors; }
-    const Formation& authors() const { return _authors; }
+    NodeGroup& authors() { return _authors; }
+    const NodeGroup& authors() const { return _authors; }
     void addAuthor(Singular& author);
     void setAuthors(const std::vector<Singular*>& authors);
     bool isAuthored() const { return !_authors.getMembers().empty(); }
 
-    Formation& conditions() { return _conditions; }
-    const Formation& conditions() const { return _conditions; }
+    NodeGroup& conditions() { return _conditions; }
+    const NodeGroup& conditions() const { return _conditions; }
     void addConditionSubject(Singular& subject);
     void addConditionRelation(const std::shared_ptr<Relation>& relation);
     void clearConditionFormation();
 
-    Formation& targets() { return _targets; }
-    const Formation& targets() const { return _targets; }
+    NodeGroup& targets() { return _targets; }
+    const NodeGroup& targets() const { return _targets; }
     void addTarget(Singular& target);
     void clearTargets();
 
@@ -347,9 +363,10 @@ private:
     std::unordered_map<std::string, double> _onsetMemory;     // t=0 per subject
     ConditionMode _conditionMode = ConditionMode::All;
 
-    Formation _authors{Form::ShapeType::Cube, glm::vec3(1.0f)};
-    Formation _conditions{Form::ShapeType::Cube, glm::vec3(1.0f)};
-    Formation _targets{Form::ShapeType::Cube, glm::vec3(1.0f)};
+
+    NodeGroup _authors;
+    NodeGroup _conditions;
+    NodeGroup _targets;
     RelationManager _provenance;
 
     ECA::Loop _ecaLoop;
@@ -532,8 +549,8 @@ public:
     std::vector<std::shared_ptr<Law>> getByAuthor(const std::string& authorId) const;
     const std::vector<std::shared_ptr<Law>>& getAll() const { return _laws; }
 
-    Formation& formation() { return _lawFormation; }
-    const Formation& formation() const { return _lawFormation; }
+    Law::NodeGroup& formation() { return _lawFormation; }
+    const Law::NodeGroup& formation() const { return _lawFormation; }
 
     std::vector<Law::ApplicationRecord> applyAllTo(Singular& target);
     std::vector<Law::ApplicationRecord> applyAllToTargets();
@@ -621,7 +638,7 @@ private:
     void releaseFromLaws(Singular* being);
 
     std::vector<std::shared_ptr<Law>> _laws;
-    Formation _lawFormation{Form::ShapeType::Cube, glm::vec3(1.0f)};
+    Law::NodeGroup _lawFormation;
     ReteNetwork _rete;
     std::vector<DriveSession> _driveSessions;
     std::unordered_map<std::string, std::vector<std::string>> _triggers;

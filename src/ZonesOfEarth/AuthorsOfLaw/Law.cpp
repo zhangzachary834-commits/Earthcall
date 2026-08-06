@@ -16,7 +16,7 @@
 #include "ZonesOfEarth/Zone/Zone.hpp"
 
 namespace {
-std::vector<std::string> formationMemberIds(const Formation& formation) {
+std::vector<std::string> formationMemberIds(const Law::NodeGroup& formation) {
     std::vector<std::string> ids;
     for (const auto* member : formation.getMembers()) {
         if (member) ids.push_back(member->getIdentifier());

@@ -1,4 +1,8 @@
-class Community extends Formations {
+#pragma once
+
+#include "Form/Object/Formation/Formation.hpp"
+
+class Community : public Formation {
 
     private:
     public:
@@ -10,4 +14,4 @@ class Community extends Formations {
         bool involves(const Singular& entity) const;
         bool isBetween(const std::string& a, const std::string& b) const;
         bool isBetween(const Singular& aEntity, const Singular& bEntity) const;
-}
+};

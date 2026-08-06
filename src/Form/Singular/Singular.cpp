@@ -1,6 +1,7 @@
 #include "Form/Singular/Singular.hpp"
 
 #include "Form/Singular/Property/Property.hpp"
+#include "Form/Singular/Property/DataStructure.hpp"
 
 Formation* Singular::singular_properties() {
     return _property_formation;
@@ -74,4 +75,28 @@ bool Singular::getDynamicProperty(const std::string& name, PropertyValue& out) c
 
 void Singular::setDynamicProperty(const std::string& name, const PropertyValue& v) {
     _dynamicProperties[name] = v;
+}
+
+void Singular::addDataStructure(const DataStructure& ds) {
+    _dataStructures[ds.name] = ds;
+}
+
+DataStructure* Singular::getDataStructure(const std::string& name) {
+    auto it = _dataStructures.find(name);
+    if (it != _dataStructures.end()) {
+        return &(it->second);
+    }
+    return nullptr;
+}
+
+const DataStructure* Singular::getDataStructure(const std::string& name) const {
+    auto it = _dataStructures.find(name);
+    if (it != _dataStructures.end()) {
+        return &(it->second);
+    }
+    return nullptr;
+}
+
+bool Singular::removeDataStructure(const std::string& name) {
+    return _dataStructures.erase(name) > 0;
 }

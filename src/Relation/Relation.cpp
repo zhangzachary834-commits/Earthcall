@@ -146,6 +146,8 @@ void Relation::buildProperties() {
         "type", this, &Relation::type));
     _propertyRegistry.push_back(std::make_unique<PropertyRef<Relation, bool>>(
         "directed", this, &Relation::directed));
+    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Relation, float>>(
+        "weight", this, &Relation::getWeight, &Relation::setWeight));
     _propertyRegistry.push_back(std::make_unique<ComputedProperty<Relation, std::string>>(
         "entityA", this, &Relation::propEntityA));
     _propertyRegistry.push_back(std::make_unique<ComputedProperty<Relation, std::string>>(
@@ -167,6 +169,6 @@ float Relation::getWeight() const {
     throw std::runtime_error("Relation weight not explicitly settled by a Person.");
 }
 
-void Relation::setWeight(float w) {
+void Relation::setWeight(const float& w) {
     setDynamicProperty("weight", PropertyValue(w));
 }

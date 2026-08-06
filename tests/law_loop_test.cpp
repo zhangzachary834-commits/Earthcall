@@ -57,8 +57,8 @@ int main() {
         // ------------------------------------------------------------------
         // 2. Formation identity: unique per instance; a copy is a new being.
         // ------------------------------------------------------------------
-        Formation fa(Form::ShapeType::Cube, glm::vec3(1.0f));
-        Formation fb(Form::ShapeType::Cube, glm::vec3(1.0f));
+        Formation fa;
+        Formation fb;
         assert(fa.getIdentifier() != "Formation");
         assert(fa.getIdentifier() != fb.getIdentifier());
         Formation fc(fa);

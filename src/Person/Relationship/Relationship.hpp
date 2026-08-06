@@ -1,6 +1,9 @@
+#pragma once
+
+#include "Relation/Relation.hpp"
 
 // A Relationship is a Relation between two Persons. 
-class Relationship extends Relation {
+class Relationship : public Relation {
     private:
     public:
         Relationship(const std::string& type, const std::string& a, const std::string& b, bool directed = false, float initialWeight = -1.0f);
@@ -12,4 +15,4 @@ class Relationship extends Relation {
         bool involves(const Singular& entity) const;
         bool isBetween(const std::string& a, const std::string& b) const;
         bool isBetween(const Singular& aEntity, const Singular& bEntity) const;
-}
+};

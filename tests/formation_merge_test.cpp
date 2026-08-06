@@ -47,7 +47,7 @@ int main() {
     }
     glfwMakeContextCurrent(window);
 
-    Formation root(Form::ShapeType::Cube, glm::vec3(1.0f));
+    Formation root;
 
     // Eight beings, all members of the root set so relation endpoints resolve.
     std::vector<std::unique_ptr<Object>> beings;

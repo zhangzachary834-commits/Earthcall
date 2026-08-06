@@ -4,7 +4,7 @@
 #include "Rendering/Renderer.hpp"
 
 BodyPart::BodyPart(const std::string& name, Type type, const Form& form)
-    : Object(), Formation(Form::ShapeType::Cube, {1.0f, 1.0f, 1.0f}), partName(name), partType(type), geometry(form)
+    : Object(), Formation(), partName(name), partType(type), geometry(form)
 {
     isLiteral = true;
     isSymbolic = false;

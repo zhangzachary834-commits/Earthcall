@@ -687,7 +687,7 @@ private:
                                            const glm::vec3& rotationDegrees) const;
 
     // What this object is composed of (see elementFormation()).
-    Formation _elementFormation{Form::ShapeType::Cube, glm::vec3(1.0f)};
+    Formation _elementFormation;
 
     // Hover state tracking
     mutable bool _isHovered = false;

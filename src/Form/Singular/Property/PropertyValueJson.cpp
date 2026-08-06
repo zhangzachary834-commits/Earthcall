@@ -44,6 +44,22 @@ nlohmann::json propertyValueToJson(const PropertyValue& v) {
                 }
             }
             return nlohmann::json{{"t", "mat4"}, {"m", m}};
+        } else if constexpr (std::is_same_v<X, std::shared_ptr<PropertyList>>) {
+            nlohmann::json arr = nlohmann::json::array();
+            if (x) {
+                for (const auto& el : x->elements) {
+                    arr.push_back(propertyValueToJson(el));
+                }
+            }
+            return nlohmann::json{{"t", "list"}, {"v", arr}};
+        } else if constexpr (std::is_same_v<X, std::shared_ptr<PropertyDict>>) {
+            nlohmann::json obj = nlohmann::json::object();
+            if (x) {
+                for (const auto& [k, val] : x->elements) {
+                    obj[k] = propertyValueToJson(val);
+                }
+            }
+            return nlohmann::json{{"t", "dict"}, {"v", obj}};
         } else {
             // Singular*/Object*/Relation*/Formation* — identity, not value.
             return refJson(static_cast<const Singular*>(x));
@@ -74,6 +90,24 @@ PropertyValue propertyValueFromJson(const nlohmann::json& j) {
             }
         }
         return PropertyValue(m);
+    }
+    if (t == "list") {
+        auto list = std::make_shared<PropertyList>();
+        if (j.contains("v") && j["v"].is_array()) {
+            for (const auto& el : j["v"]) {
+                list->elements.push_back(propertyValueFromJson(el));
+            }
+        }
+        return PropertyValue(list);
+    }
+    if (t == "dict") {
+        auto dict = std::make_shared<PropertyDict>();
+        if (j.contains("v") && j["v"].is_object()) {
+            for (auto it = j["v"].begin(); it != j["v"].end(); ++it) {
+                dict->elements[it.key()] = propertyValueFromJson(it.value());
+            }
+        }
+        return PropertyValue(dict);
     }
     // "none" and "ref" (world references resolve through the loader).
     return PropertyValue{};

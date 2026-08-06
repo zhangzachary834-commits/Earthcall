@@ -104,7 +104,7 @@ public:
     // Developer mode flag for fallback auditing
     static bool s_developerMode;
     float getWeight() const;
-    void setWeight(float w);
+    void setWeight(const float& w);
     
     bool directed = false;
     

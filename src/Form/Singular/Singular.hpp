@@ -1,5 +1,6 @@
 #pragma once
 #include "Form/Singular/Property/Property.hpp"
+#include "Form/Singular/Property/DataStructure.hpp"
 
 #include <memory>
 #include <string>
@@ -78,6 +79,15 @@ public:
     bool removeDynamicProperty(const std::string& name) {
         return _dynamicProperties.erase(name) > 0;
     }
+    
+    // Authored data structure methods
+    void addDataStructure(const class DataStructure& ds);
+    class DataStructure* getDataStructure(const std::string& name);
+    const class DataStructure* getDataStructure(const std::string& name) const;
+    bool removeDataStructure(const std::string& name);
+    const std::map<std::string, class DataStructure>& dataStructures() const {
+        return _dataStructures;
+    }
 
     // Stakeholders: an append-only log of who has changed this being's properties.
     // When a Law mutates a property, its authors are recorded as stakeholders.
@@ -120,6 +130,9 @@ protected:
     std::vector<StakeholderRecord> _stakeholders;
     std::vector<std::unique_ptr<Property>> _propertyRegistry;
     std::map<std::string, PropertyValue> _dynamicProperties;
+    
+    // Authored data structures and bounds (manifesto property framework)
+    std::map<std::string, class DataStructure> _dataStructures;
     Formation* _property_formation = nullptr;
     bool _propertiesBuilt = false;
     virtual void buildProperties() = 0;

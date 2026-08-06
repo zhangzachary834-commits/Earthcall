@@ -466,7 +466,7 @@ private:
 
     // 3D selection
     Object* _selectedObject3D = nullptr;
-    Formation _selectedFormation3D { Form::ShapeType::Cube, glm::vec3(1.0f) };
+    Formation _selectedFormation3D;
     int _morphVertexIndex = -1;   // selected vertex for the polyhedron Morph tool
     bool _fieldHandleDragging = false; // dragging a binary-field operand handle
     bool _blendHandleDragging = false; // dragging the floating blend/smoothness bead

@@ -74,7 +74,7 @@ void Zone::applyFormationRelations() {
 }
 
 Zone::Zone(const std::string& name, const std::string& joyOrdering, Scope scope)
-    : _name(name), _scope(scope), _joyOrdering(joyOrdering), _world(std::make_unique<World>()), _formation(Form::ShapeType::Cube, {1.0f, 1.0f, 1.0f})
+    : _name(name), _scope(scope), _joyOrdering(joyOrdering), _world(std::make_unique<World>()), _formation()
 {
     // Default background tint (deep space blue)
     r = 0.05f; g = 0.05f; b = 0.1f;
@@ -82,14 +82,14 @@ Zone::Zone(const std::string& name, const std::string& joyOrdering, Scope scope)
 }
 
 Zone::Zone(const std::string& name, const std::string& joyOrdering, float rF, float gF, float bF, Scope scope)
-    : _name(name), _scope(scope), _joyOrdering(joyOrdering), _world(std::make_unique<World>()), _formation(Form::ShapeType::Cube, {1.0f, 1.0f, 1.0f})
+    : _name(name), _scope(scope), _joyOrdering(joyOrdering), _world(std::make_unique<World>()), _formation()
 {
     r = rF; g = gF; b = bF;
     _formation.addMember(_world.get());
 }
 
 Zone::Zone(const Zone& other)
-    : _name(other._name), _scope(other._scope), _qualities(other._qualities), _deletable(other._deletable), _joyOrdering(other._joyOrdering), _ownerId(other._ownerId), _world(std::make_unique<World>()), _formation(Form::ShapeType::Cube, {1.0f, 1.0f, 1.0f})
+    : _name(other._name), _scope(other._scope), _qualities(other._qualities), _deletable(other._deletable), _joyOrdering(other._joyOrdering), _ownerId(other._ownerId), _world(std::make_unique<World>()), _formation()
 {
     r = other.r; g = other.g; b = other.b;
     strokes = other.strokes;

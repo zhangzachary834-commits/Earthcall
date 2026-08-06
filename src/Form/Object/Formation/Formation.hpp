@@ -3,35 +3,29 @@
 #include <vector>
 #include <algorithm>
 #include <memory>
-#include "Form/Form.hpp"
 #include <glm/glm.hpp>
 #include "Relation/RelationManager.hpp"
 #include "Form/Singular/Singular.hpp"
 
 
-class Formation : public Form, public Singular {
+class Formation : public Singular {
 
 public:
     // Constructor
+    Formation() = default;
     Formation(const std::vector<Singular*>& members);
-    Formation(const std::vector<Singular*>& members, const glm::vec3& dims);
-    Formation(const std::vector<Singular*>& members, Form::ShapeType type, const glm::vec3& dims);
 
-    // Some Formations are purely self-referencing Relations (i.e. formations of 2 singulars and the relation between singulars and the relation of relations), which could themselves be modeled as Relations between singulars and relations. 
-
-    // Legacy constructor for fallback
-    Formation(Form::ShapeType type, const glm::vec3& dims = {1.0f,1.0f,1.0f}) : Form(type, dims) {}
+    // Some Formations are purely self-referencing Relations (i.e. formations of 2 singulars and the relation between singulars and the relation of relations), which could themselves be modeled as Relations between singulars and relations.
 
     // Every Formation is a discrete being: identity is unique per instance,
     // and a COPY mints a fresh identity — a copied formation is a new being,
     // not an alias (the SdfNode deep-copy rule applied to identity). Keep the
     // member lists below in sync with the data members.
     Formation(const Formation& o)
-        : Form(o), Singular(o), members(o.members), relationMgr(o.relationMgr),
+        : Singular(o), members(o.members), relationMgr(o.relationMgr),
           subformations(o.subformations), relationTypeTag(o.relationTypeTag) {}
     Formation& operator=(const Formation& o) {
         if (this != &o) {
-            Form::operator=(o);
             Singular::operator=(o);
             members = o.members;
             relationMgr = o.relationMgr;

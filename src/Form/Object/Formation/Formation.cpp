@@ -32,21 +32,6 @@ Formation::Formation(const std::vector<Singular*>& members) {
 }
 
 
-Formation::Formation(const std::vector<Singular*>& members, const glm::vec3& dims) 
-    : Form(Form::ShapeType::Cube, dims) {
-    for(const auto& member : members) {
-        addMember(member);
-    }
-}
-
-Formation::Formation(const std::vector<Singular*>& members, Form::ShapeType type, const glm::vec3& dims) 
-    : Form(type, dims) {
-    for(const auto& member : members) {
-        addMember(member);
-    }
-}
-
-
 
 void Formation::addElement(const Singular& s) {
     addMember(const_cast<Singular*>(&s));
@@ -131,10 +116,6 @@ bool Formation::removeRelation(const std::shared_ptr<Relation>& r) {
 void Formation::draw() const {
 
     // Draw the physical members of the formation.
-    // if hasprimaryform = true, draw the primary form
-    // --> Draw the formation shape first (optional visual)
-    Form::draw();
-
     // Iterate through elements, processing each relation. 
     // Call event "draw" to event bus, with priorities on which member of the Formation and which Relations between them are processed first. Need specific algorithm.
     // Run algorithm to determine what algorithm makes this process the lowest O(n). Avoid worst case scenarios if possible.
@@ -180,7 +161,7 @@ std::shared_ptr<Formation> Formation::findOrCreateRelationFormation(const std::s
     }
 
     if (matchingIndices.empty()) {
-        auto created = std::make_shared<Formation>(Form::ShapeType::Cube, glm::vec3(1.0f));
+        auto created = std::make_shared<Formation>();
         created->relationTypeTag = r->type;
         subformations.push_back(created);
         return created;

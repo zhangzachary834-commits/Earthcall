@@ -127,5 +127,5 @@ private:
     ConceptRegistry& operator=(const ConceptRegistry&) = delete;
 
     std::vector<std::shared_ptr<ObjectConcept>> _concepts;
-    Formation _formation{Form::ShapeType::Cube, glm::vec3(1.0f)};
+    Formation _formation;
 };
