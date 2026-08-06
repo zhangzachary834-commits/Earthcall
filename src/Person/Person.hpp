@@ -236,6 +236,9 @@ public:
     const std::string& getCurrentSession() const { return _currentSession; }
     const std::vector<std::string>& getJoinedZones() const { return _joinedZones; }
 
+    // AI Network Request
+    void requestAIAction(const std::string& context, const std::string& targetObjectId);
+
     // ------------------------------------------------------------------
     // Identity and personal address.
     //

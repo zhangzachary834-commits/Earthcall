@@ -15,6 +15,7 @@
 #include "Form/Singular/Property/PropertyRef.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
+#include "Singularity/Network/WebSocketClient.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
@@ -846,4 +847,13 @@ void Person::updatePhysics(float deltaTime) {
         position.y = 0.0f;
         velocity.y = 0.0f;
     }
+}
+
+void Person::requestAIAction(const std::string& context, const std::string& targetObjectId) {
+    nlohmann::json payload = {
+        {"type", "request_ai_action"},
+        {"context", context},
+        {"target_singular_id", targetObjectId}
+    };
+    Singularity::Network::WebSocketClient::instance().send(payload.dump());
 }

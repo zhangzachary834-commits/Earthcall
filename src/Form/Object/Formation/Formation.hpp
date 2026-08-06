@@ -97,6 +97,11 @@ public:
 
     // Other methods can be added as needed for functionality
     
+    // Resolve the internal topology to identify valid cores (connected undirected components of >=3 nodes)
+    // and peripheral nodes. Spawns new Formations for disconnected valid cores and dissolves invalid nodes.
+    std::vector<std::shared_ptr<Formation>> resolveTopology();
+    bool isCoreMember(const Singular* s) const;
+    
     // Implement the pure virtual method from Singular. Unique per instance —
     // identity-keyed systems (Rete bindings, provenance) depend on it.
     std::string getIdentifier() const override { return _formationId; }

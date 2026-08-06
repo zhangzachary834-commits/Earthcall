@@ -186,6 +186,7 @@ namespace Event {
     struct Utterance {
         std::string payload;      // The raw text/string spoken
         std::string sourceClient; // The ID of the client/Person who spoke it
+        std::string targetSingularId; // The ID of the Object that the utterance is routed to
     };
 
     struct Custom {

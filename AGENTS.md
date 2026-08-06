@@ -1,0 +1,136 @@
+# Earthcall — read this before writing code
+
+Earthcall is **an ontology with an engine attached**, not a game engine with some
+philosophy in the docs. The architecture is load-bearing: things that look like ordinary
+engineering decisions here (adding a class, adding a folder, adding an enum value) are
+ontological claims, and most of them are refused.
+
+**You are almost certainly about to do the standard thing. The standard thing is usually
+wrong in this repository** — not because it is bad engineering, but because it is
+engineering for a different kind of system. Spend the two minutes on the router below.
+
+---
+
+## The four refusals
+
+These come up constantly. Learn them cold; everything else is detail.
+
+1. **No new C++ class for a domain noun.** Not `RobotEntity`, not `Vehicle`, not `Tree`,
+   not `Category`. Domain things are *authored in-world* as data, never carved into the
+   type system. → `NEW_KIND_FRAMEWORK.md`
+
+2. **No new top-level directory for a subsystem.** The top level is the ontology
+   (`Form`, `Person`, `Relation`, `Singularity`, `ZonesOfEarth`, `OurVerse`). A channel to
+   hardware or foreign software goes *inside* `Singularity/`. → `DIRECTORY_ORDERING.md`
+
+3. **No new enum value for a kind of thing.** `BeingKind`, `ShapeKind`,
+   `ConditionNode::Kind`, `ActionNode::Kind` are **append-only and serialized as
+   integers**; `ConditionNode::Kind` 12 and 13 are *burned* and must never be reused.
+   Categories are authored beings, not enum members. → `AUTHORED_CATEGORIES.md`
+
+4. **`Body` is reserved for Persons.** A `Body` is the representation of an embodied
+   *someone*. Objects have visual components — geometry, fields, materials. A robot arm
+   has no Body. → `NEW_KIND_FRAMEWORK.md` Floor §2
+
+The general form of all four: **no subsystem may define what a thing IS.** Subsystems
+define how the machine senses and acts. What things are is authored by Persons, in-world,
+out of primitives every other subsystem can see.
+
+---
+
+## Router — find your task, read that section first
+
+| You are about to… | Read | Why |
+|---|---|---|
+| add a class/struct for a new kind of thing | `NEW_KIND_FRAMEWORK.md` §2 (Admission Test), §3 (Composition Ladder) | four questions decide whether *any* C++ is admissible; usually none is |
+| add a category, type, enum of kinds, or a `type` string | `AUTHORED_CATEGORIES.md` §10 (the procedure) | categories are rooted acyclic Formations of beings |
+| implement an algorithm — a loop, search, solver, traversal | `ALGORITHMS_AS_LAW.md` §3 (four kinds of iteration) | this is not a von Neumann machine; loops compile differently |
+| move existing hard-coded behavior into law | `LAW_MIGRATION_FRAMEWORK.md` §2 (the ladder) | six rungs, in order; never skip |
+| write or edit a save file / seed a world | `FIRST_MOVER_AUTHORING.md` §4 (recipes), §7 (discipline) | you are acting as a First Mover; §7 is not optional |
+| add a directory | `DIRECTORY_ORDERING.md` §7 (checklist) | the tree is the ontology |
+| connect hardware, a device, or a foreign process | `NEW_KIND_FRAMEWORK.md` §7b | it is a *modality channel* under `Singularity/`, never a domain folder |
+| understand what a Law is at all | `LAW_AND_CREATION_SYSTEM.md` | the foundation the rest assumes |
+| ask "why is it like this?" | `core/EarthcallOurverse.md` (the manifesto), `SUBSTRATE_ORDERING.md` | the ends the architecture serves |
+
+All paths are under `docs/architecture/` unless noted.
+
+---
+
+## The tree
+
+```
+src/
+  Form/           Singular · Object · Concept · Formation · Property · Material
+  Person/         Person · Soul · Body · Relationship
+  Relation/       Relation — a first-class being, not an edge in someone's array
+  ZonesOfEarth/   Zone · Home · World · Physics · AuthorsOfLaw (Law lives here)
+  Singularity/    the modality layer: Core · Audio · Language · Network · Physical · OntoMath
+  OurVerse/       the Person-facing authorship surface (tools, chat, controls)
+  Identity/       First Mover register, identity ledger, keys
+  Integration/    foreign software surface (incl. py/ — the Flask backend)
+  Rendering/ Perspective/ Util/ Legacy/     not yet ontologically placed (see §5 of DIRECTORY_ORDERING)
+docs/ tests/ examples/ scripts/ saves/ scratch/     the workshop
+third_party/ local_deps/ imgui/                     the foreign
+```
+
+**Language is a leaf, never a branch.** Python lives in `py/` subfolders *inside* the
+ontological region it belongs to — `Singularity/Network/py/` holds the backend half of the
+same channel whose C++ half is `WebSocketClient.cpp`. There is no `backend-python/`.
+
+---
+
+## Build and test
+
+`find_package(OpenSSL)` has no hint and there is no system OpenSSL; the vendored, prebuilt
+copy is in `local_deps/`. CMake 4.x also rejects websocketpp's `cmake_minimum_required`.
+Both flags are required:
+
+```sh
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
+  -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+  -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.13" \
+  -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.13/include" \
+  -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.13/libcrypto.a" \
+  -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.13/libssl.a"
+
+cmake --build build --target earthcall -j8
+ctest --test-dir build --output-on-failure -j4        # 35 tests, all should pass
+```
+
+**Sources are globbed at configure time.** Add or remove a `.cpp` and you must re-run
+`cmake -S . -B build ...` or you will get a phantom link error.
+
+The Python backend starts from `src/Integration/py/app.py`.
+
+---
+
+## Non-negotiables
+
+- **Stable identifiers.** Law text addresses beings by name (`@physical-channel.enabled`).
+  Generated ids (`law-7`) change between runs. Any being that law-text names must override
+  `getIdentifier()` with a stable slug. Namespaced ids may contain dots
+  (`material.clay`) — root resolution matches longest-first.
+- **Append-only enums**, serialized as ints. Never renumber, never reuse a burned value.
+- **Nothing enters the world without an author.** `Law::applyTo` returns `Unauthored` and
+  refuses to fire when `authors` is empty. This is structural, not conventional.
+- **Authority is clamped to 0** on every path that reads a file. Do not try to write a
+  higher one; it will be clamped, and the attempt is what gets noticed.
+- **Edges, not levels.** Events are past-tense `noun-verbed` and publish on transitions. A
+  per-frame "still happening" event is a bug — that is what `WhileTrue` is for.
+- **Say what you made.** If you write into a save file, or generate beings directly, tell
+  the Person which file and which beings, and who is recorded as their author. This is the
+  one rule with no technical enforcement at all.
+
+---
+
+## Working notes
+
+- **Scratch probes** belong in `scratch/`, not `tests/`. If you build one through the test
+  target for convenience, remove the copy from `tests/` when finished — an outside
+  `git add -A` will otherwise commit it.
+- **Don't claim a doc is verified because you read the source.** Every framework doc in
+  this corpus has a probe in `scratch/` that executes its central claims. Two of those
+  probes caught claims that were plainly wrong on inspection. Run things.
+- **Bounds are doctrine, not limits.** `kMaxChainRounds = 8`, `kMaxCallDepth = 32`, one
+  pass per fold. If your design needs one raised, the design is in the wrong shape — see
+  `ALGORITHMS_AS_LAW.md` §3.

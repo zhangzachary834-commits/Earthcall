@@ -58,4 +58,4 @@ if __name__ == '__main__':
     engine_sync = EngineSync(engine_server)
     
     # Start the Flask-SocketIO Meta-Server
-    socketio.run(app, host=host, port=port, debug=debug)
+    socketio.run(app, host=host, port=port, debug=debug, allow_unsafe_werkzeug=True, use_reloader=False)

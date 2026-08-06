@@ -6,6 +6,8 @@
 #include <algorithm>
 #include <atomic>
 #include <unordered_set>
+#include <map>
+#include <set>
 #include "Rendering/Renderer.hpp"
 
 std::string Formation::nextFormationId() {
@@ -146,6 +148,161 @@ void Formation::rebuildCompleteGraph() {
         }
     }
 }
+
+bool Formation::isCoreMember(const Singular* s) const {
+    if (!s) return false;
+    std::string id = s->getIdentifier();
+    for (const auto& rel : relationMgr.getAll()) {
+        if (rel && !rel->directed) {
+            if (rel->entityA == id && findMemberByIdentifier(rel->entityB)) return true;
+            if (rel->entityB == id && findMemberByIdentifier(rel->entityA)) return true;
+        }
+    }
+    return false;
+}
+
+std::vector<std::shared_ptr<Formation>> Formation::resolveTopology() {
+    std::vector<std::shared_ptr<Formation>> spawnedFormations;
+    
+    // Step 1: Build undirected adjacency list
+    std::map<std::string, std::vector<std::string>> adj;
+    for (const auto& rel : relationMgr.getAll()) {
+        if (rel && !rel->directed) {
+            adj[rel->entityA].push_back(rel->entityB);
+            adj[rel->entityB].push_back(rel->entityA);
+        }
+    }
+
+    // Step 2: Find connected components (undirected)
+    std::vector<std::vector<std::string>> components;
+    std::set<std::string> visited;
+
+    for (const auto* m : members) {
+        if (!m) continue;
+        std::string startId = m->getIdentifier();
+        if (visited.find(startId) != visited.end()) continue;
+        
+        // Only consider nodes that have undirected edges
+        if (adj.find(startId) == adj.end() || adj[startId].empty()) continue;
+
+        std::vector<std::string> comp;
+        std::vector<std::string> stack = {startId};
+        visited.insert(startId);
+
+        while (!stack.empty()) {
+            std::string curr = stack.back();
+            stack.pop_back();
+            comp.push_back(curr);
+
+            for (const auto& neighbor : adj[curr]) {
+                if (visited.find(neighbor) == visited.end()) {
+                    visited.insert(neighbor);
+                    stack.push_back(neighbor);
+                }
+            }
+        }
+        components.push_back(comp);
+    }
+
+    // Step 3: Filter valid cores (>= 3 members)
+    std::vector<std::vector<std::string>> validCores;
+    for (const auto& comp : components) {
+        if (comp.size() >= 3) {
+            validCores.push_back(comp);
+        }
+    }
+
+    if (validCores.empty()) {
+        clearMembers();
+        relationMgr = RelationManager{};
+        return spawnedFormations;
+    }
+
+    size_t primaryIndex = 0;
+    for (size_t i = 1; i < validCores.size(); ++i) {
+        if (validCores[i].size() > validCores[primaryIndex].size()) {
+            primaryIndex = i;
+        }
+    }
+
+    // Step 4: Attach peripheral members
+    std::map<std::string, std::vector<std::string>> fullAdj;
+    for (const auto& rel : relationMgr.getAll()) {
+        if (!rel) continue;
+        fullAdj[rel->entityA].push_back(rel->entityB);
+        fullAdj[rel->entityB].push_back(rel->entityA); 
+    }
+
+    std::vector<std::set<std::string>> coreAndPeripherals(validCores.size());
+    for (size_t i = 0; i < validCores.size(); ++i) {
+        std::set<std::string>& group = coreAndPeripherals[i];
+        std::vector<std::string> stack = validCores[i];
+        for (const auto& node : stack) group.insert(node);
+
+        while (!stack.empty()) {
+            std::string curr = stack.back();
+            stack.pop_back();
+
+            for (const auto& neighbor : fullAdj[curr]) {
+                if (group.find(neighbor) == group.end()) {
+                    bool inAnotherCore = false;
+                    for (size_t j = 0; j < validCores.size(); ++j) {
+                        if (i == j) continue;
+                        if (std::find(validCores[j].begin(), validCores[j].end(), neighbor) != validCores[j].end()) {
+                            inAnotherCore = true;
+                            break;
+                        }
+                    }
+                    if (!inAnotherCore) {
+                        group.insert(neighbor);
+                        stack.push_back(neighbor);
+                    }
+                }
+            }
+        }
+    }
+
+    auto oldMembers = members;
+    auto oldRelations = relationMgr.getAll();
+    clearMembers();
+    relationMgr = RelationManager{};
+
+    const auto& primaryGroup = coreAndPeripherals[primaryIndex];
+    for (auto* m : oldMembers) {
+        if (m && primaryGroup.find(m->getIdentifier()) != primaryGroup.end()) {
+            addMember(m);
+        }
+    }
+    for (const auto& rel : oldRelations) {
+        if (!rel) continue;
+        if (primaryGroup.find(rel->entityA) != primaryGroup.end() && primaryGroup.find(rel->entityB) != primaryGroup.end()) {
+            relationMgr.add(rel);
+        }
+    }
+
+    for (size_t i = 0; i < validCores.size(); ++i) {
+        if (i == primaryIndex) continue;
+
+        auto spawned = std::make_shared<Formation>();
+        const auto& group = coreAndPeripherals[i];
+        
+        for (auto* m : oldMembers) {
+            if (m && group.find(m->getIdentifier()) != group.end()) {
+                spawned->addMember(m);
+            }
+        }
+        for (const auto& rel : oldRelations) {
+            if (!rel) continue;
+            if (group.find(rel->entityA) != group.end() && group.find(rel->entityB) != group.end()) {
+                spawned->relations().add(rel);
+            }
+        }
+        spawnedFormations.push_back(spawned);
+    }
+
+    return spawnedFormations;
+}
+
 
 std::shared_ptr<Formation> Formation::findOrCreateRelationFormation(const std::shared_ptr<Relation>& r) {
     if (!r) return nullptr;

@@ -24,7 +24,9 @@ using MathBindings = std::map<std::string, PropertyPath>;
 // Qualified paths: WHOSE property a path names is the author's choice.
 //   position.y                  the law's subject (whoever it applies to)
 //   @being-id.position.y        that NAMED being (Universe lookup), whoever
-//                               the subject is
+//                               the subject is. The id may contain dots
+//                               ("@material.clay.baseColor"): the root is
+//                               matched LONGEST-FIRST, most specific wins.
 //   @event.subject.position.y   the triggering event's subject
 //   @event.object.position.y    the triggering event's OTHER participant
 //                               (a collision has two)
@@ -51,12 +53,35 @@ inline Singular* resolveLawRoot(Singular& subject, const PropertyPath& path,
         }
         return nullptr;
     }
-    const std::string beingId = path.segments[0].substr(1);
+    // A being's identifier may itself contain dots: Material namespaces itself
+    // as "material.<name>" so it cannot collide with an Object in the same path
+    // space, and authored categories follow it with "category.<name>". Taking
+    // only the first segment would make every such being unaddressable —
+    // @material.clay.baseColor would look for a being called "material".
+    //
+    // So root resolution does what PropertyPath::resolve already does one level
+    // down: LONGEST dotted-name match first, most specific wins. A being named
+    // "material.clay" beats one named "material", and the segments it consumed
+    // are not offered to the property lookup.
     remainder.segments.assign(path.segments.begin() + 1, path.segments.end());
-    for (Singular* being : Universe::instance().beings()) {
-        if (being && being->getIdentifier() == beingId) return being;
+    const std::vector<Singular*> beings = Universe::instance().beings();
+    std::string candidate = path.segments[0].substr(1);
+    Singular* best = nullptr;
+    std::size_t bestConsumed = 0;
+    for (std::size_t n = 1; n <= path.segments.size(); ++n) {
+        if (n > 1) candidate += "." + path.segments[n - 1];
+        for (Singular* being : beings) {
+            if (being && being->getIdentifier() == candidate) {
+                best = being;
+                bestConsumed = n;
+                break;
+            }
+        }
     }
-    return nullptr;   // the named being is not in the world: no value
+    if (!best) return nullptr;   // the named being is not in the world: no value
+    remainder.segments.assign(path.segments.begin() + bestConsumed,
+                              path.segments.end());
+    return best;
 }
 
 // ---------------------------------------------------------------------------

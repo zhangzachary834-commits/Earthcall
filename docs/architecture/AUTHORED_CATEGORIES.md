@@ -5,8 +5,9 @@ Formation of beings, instead of as a C++ class, an enum value, or a subsystem's 
 registry. And how that unifies with the Material framework the renderer already uses.**
 
 **Status:** The mechanism exists — Formations, typed Relations, the `Related` condition,
-and `Material` as a working shallow instance of the pattern. Two wiring gaps are
-identified in §9 with the fix for each; both are small and neither is speculative.
+and `Material` as a working shallow instance of the pattern. **§9a is now done** (materials
+are Law-reachable and Law-addressable; it took two fixes, both recorded there). §9b — a
+home for category beings — remains, and is specified.
 **Companion docs:** `NEW_KIND_FRAMEWORK.md` (which refuses new C++ kinds — this document
 supplies what it was missing), `ALGORITHMS_AS_LAW.md` (§5f's propagation pattern is how
 inheritance resolves), `FIRST_MOVER_AUTHORING.md` (the JSON), `SHAPE_FORMATION_DAG_PLAN.md`
@@ -385,31 +386,52 @@ world's furniture. Write the `authored-by` edge.
 
 Two gaps. Both are small, both are real, and the first one blocks the whole design.
 
-### 9a. Materials are not in the Universe
+### 9a. Materials in the Universe — **done**, and it took two fixes, not one
 
-`Material.hpp` says *"the Law system can address `material.clay.baseColor`."* **Today it
-cannot.** `MaterialManager materials` is a global in `globals.cpp`, it is saved and loaded
-in `GameSaveLoad.cpp`, and the render layer resolves it — but it is never pushed into the
-Universe provider in `GameInit.cpp:53-78`, which supplies the World, objects, laws,
-relations, `TransferPolicy`, the player, and all zones.
+`Material.hpp` had always claimed *"the Law system can address
+`material.clay.baseColor`."* It could not. Making the claim true required two separate
+changes, and the second was only visible once the first was made — which is worth
+recording, because the same shape will recur for every namespaced being (categories
+included).
 
-Consequence: no law can read or write a material property, no quantifier can range over
-materials (`ForAny Material …`), and `@material.clay.baseColor` resolves to nothing.
-`Material::buildProperties()` already registers all six fields, so the surface is built
-and unreachable.
-
-The fix is three lines beside the existing pushes:
+**Fix 1 — reachability.** `MaterialManager materials` is a global in `globals.cpp`, saved
+in `GameSaveLoad.cpp` and resolved by the render layer, but it was never pushed into the
+Universe provider (`GameInit.cpp`), which supplies the World, objects, laws, relations,
+`TransferPolicy`, the player, and all zones. `Material::buildProperties()` had registered
+all six fields; the surface was built and unreachable. Now provided:
 
 ```cpp
-// Materials are cross-zone shared beings, and the header has always
-// claimed they are Law-addressable. Provide them so that is true.
-for (const auto& m : materials.getAll()) {
-    if (m) beings.push_back(m.get());
+for (const auto& material : materials.getAll()) {
+    if (material) beings.push_back(material.get());
 }
 ```
 
-Do this before anything else in this document; category-level material inheritance is
-meaningless while the categories' materials are invisible to law.
+That alone makes materials visible to quantifiers (`ForAny Material …`), folds, and
+`Related`.
+
+**Fix 2 — addressability.** It did *not* make `@material.clay.baseColor` work, because
+`resolveLawRoot` took the being id from the **first path segment only**:
+
+```cpp
+const std::string beingId = path.segments[0].substr(1);   // was: "material"
+```
+
+`PropertyPath` splits on dots, so `@material.clay.baseColor` parses to
+`[@material][clay][baseColor]` and looked for a being called `material`. **The very
+namespacing that keeps `Material` from colliding with an Object made it unaddressable.**
+
+Root resolution now does what `PropertyPath::resolve` already documents one level down —
+**longest dotted-name match, most specific wins** — so a being named `material.clay`
+beats one named `material`, and the segments it consumed never reach the property lookup.
+
+*(Verified: `scratch/material_addressing_probe.cpp` — resolves to `material.clay` with
+remainder `baseColor`, reads `(0.70, 0.40, 0.20)` through the qualified path, picks the
+longer id when both exist regardless of provider order, still answers nothing for an
+unknown being. All 35 existing tests pass.)*
+
+**The lesson for this document:** `category.<name>` is namespaced the same way, so
+authored categories depend on Fix 2 as much as materials do. Any being whose identifier
+carries a namespace prefix is addressable only because root resolution is longest-match.
 
 ### 9b. Category beings need a home
 

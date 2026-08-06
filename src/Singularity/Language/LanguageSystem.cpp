@@ -30,7 +30,7 @@ void LanguageSystem::detachFromAllZones(Lexeme* lexeme) {
 LanguageSystem::LanguageSystem() {
     // Subscribe to Utterance events globally.
     Core::EventBus::instance().subscribe<Core::Event::Utterance>([this](const Core::Event::Utterance& evt) {
-        this->queueUtterance(evt.payload, evt.sourceClient);
+        this->queueUtterance(evt.payload, evt.sourceClient, evt.targetSingularId);
     });
 }
 
@@ -126,6 +126,15 @@ void LanguageSystem::tick(float deltaTime) {
         } else {
             auto lexeme = resolve(u.payload);
             activeZone.addToFormation(lexeme.get());
+            
+            if (!u.targetSingularId.empty()) {
+                Singular* target = activeZone.formation().findMemberByIdentifier(u.targetSingularId);
+                if (target) {
+                    auto rel = std::make_shared<Relation>("speaks", *target, *lexeme, true);
+                    activeZone.formation().addRelation(rel);
+                    std::cout << "[LanguageSystem] Routed utterance to target Object: " << u.targetSingularId << std::endl;
+                }
+            }
         }
 
         
@@ -138,11 +147,11 @@ void LanguageSystem::tick(float deltaTime) {
     // 2. Decay conceptual weights (Future)
 }
 
-void LanguageSystem::queueUtterance(const std::string& payload, const std::string& sourceClient) {
+void LanguageSystem::queueUtterance(const std::string& payload, const std::string& sourceClient, const std::string& targetSingularId) {
     std::lock_guard<std::mutex> lock(_queueMutex);
     if (_utteranceQueue.size() >= 1000) return;
     if (payload.length() > 1024) return;
-    _utteranceQueue.push({payload, sourceClient});
+    _utteranceQueue.push({payload, sourceClient, targetSingularId});
 }
 
 void LanguageSystem::clear() {

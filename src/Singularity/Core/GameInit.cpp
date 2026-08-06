@@ -14,6 +14,7 @@
 #include "ZonesOfEarth/Physics/DefaultPhysicsLaws.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "Singularity/TransferPolicy.hpp"
+#include "Form/Material/MaterialManager.hpp"
 #include "Person/Body/BodyPart/BodyPart.hpp"
 
 #include <GLFW/glfw3.h>
@@ -23,6 +24,7 @@
 #include <memory>
 
 extern ZoneManager mgr;
+extern MaterialManager materials;   // global Material beings (globals.cpp)
 
 namespace Core {
 
@@ -64,6 +66,16 @@ bool Game::init() {
         // range over them like any other being.
         for (const auto& rel : mgr.active().formation().relations().getAll()) {
             if (rel) beings.push_back(rel.get());
+        }
+        // Materials are cross-zone shared beings (globals.cpp), and
+        // Material.hpp has always claimed "the Law system can address
+        // material.clay.baseColor". Until they were provided here that was
+        // aspiration: buildProperties() registered the surface and nothing
+        // could reach it. Providing them makes the claim true — laws read and
+        // drive appearance, and quantifiers range over materials like any
+        // other being. See docs/architecture/AUTHORED_CATEGORIES.md §9a.
+        for (const auto& material : materials.getAll()) {
+            if (material) beings.push_back(material.get());
         }
         // The transfer gate is a legible being: laws govern set-to-set
         // access by writing @transfer-policy.gate.* properties.

@@ -37,7 +37,7 @@ public:
     void clear();
 
     // Enqueue an incoming utterance (thread-safe, called from EventBus/WebSocket)
-    void queueUtterance(const std::string& payload, const std::string& sourceClient);
+    void queueUtterance(const std::string& payload, const std::string& sourceClient, const std::string& targetSingularId = "");
 
 private:
     LanguageSystem();
@@ -55,6 +55,7 @@ private:
     struct PendingUtterance {
         std::string payload;
         std::string sourceClient;
+        std::string targetSingularId;
     };
     std::queue<PendingUtterance> _utteranceQueue;
     std::mutex _queueMutex;

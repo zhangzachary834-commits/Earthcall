@@ -15,6 +15,13 @@ public:
     bool isFirstMover() const override { return true; }
     const std::string& name() const { return _name; }
 
+    // A STABLE identifier, not the generated law-<N>. First movers are excluded
+    // from the save, so their generated ids differ every run — which would break
+    // any law-text that addresses this channel by name (`@physical-channel.enabled
+    // := false`) on the next launch. The addressing contract requires a slug.
+    // See NEW_KIND_FRAMEWORK.md §7b and FIRST_MOVER_AUTHORING.md §6b.
+    std::string getIdentifier() const override { return _name; }
+
     static void syncRegister(LawManager& laws);
 
 private:

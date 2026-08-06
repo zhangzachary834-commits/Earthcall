@@ -21,8 +21,15 @@ class EngineServer:
                     data = json.loads(message)
                     print(f"[EngineServer] Received: {data}")
                     
-                    # Echo back for testing
-                    await websocket.send(json.dumps({"status": "received", "echo": data}))
+                    if data.get("type") == "request_ai_action":
+                        context = data.get("context", "")
+                        target_id = data.get("target_singular_id", "unknown_object")
+                        
+                        # Start streaming task
+                        asyncio.create_task(self.stream_ai_action(websocket, context, target_id))
+                    else:
+                        # Echo back for testing
+                        await websocket.send(json.dumps({"status": "received", "echo": data}))
                 except json.JSONDecodeError:
                     print(f"[EngineServer] Received binary/invalid payload of length {len(message)}")
         except websockets.exceptions.ConnectionClosed:
@@ -30,6 +37,24 @@ class EngineServer:
         finally:
             print(f"[EngineServer] Engine disconnected {websocket.remote_address}")
             self.connected_clients.remove(websocket)
+
+    async def stream_ai_action(self, websocket, context, target_id):
+        # We assume ai_service is available in the module path (started from app.py)
+        try:
+            from api.ai_service import generate_utterance
+            
+            async for chunk in generate_utterance(context, target_id):
+                payload = {
+                    "type": "ai_utterance_stream",
+                    "target_singular_id": target_id,
+                    "text": chunk
+                }
+                try:
+                    await websocket.send(json.dumps(payload))
+                except websockets.exceptions.ConnectionClosed:
+                    break
+        except Exception as e:
+            print(f"[EngineServer] AI stream error: {e}")
 
     async def _start_server(self):
         print(f"[EngineServer] Starting Raw WebSocket Server on {self.host}:{self.port}")
