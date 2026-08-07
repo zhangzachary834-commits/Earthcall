@@ -533,6 +533,10 @@ bool Object::isPointInside(const glm::vec3& point) const {
 }
 
 bool Object::isTouching(const Object& other) const {
+    if (!collisionZone.isTouching(other.collisionZone)) {
+        return false; // AABB broad-phase rejection
+    }
+
     constexpr float EPS = 1e-5f;
 
     if (geometryType != GeometryType::Polyhedron ||
@@ -550,8 +554,6 @@ bool Object::isTouching(const Object& other) const {
         }
         return world;
     };
-    const std::vector<glm::vec3> worldA = toWorld(transform, polyhedronData.vertices);
-    const std::vector<glm::vec3> worldB = toWorld(other.transform, other.polyhedronData.vertices);
 
     auto project = [](const std::vector<glm::vec3>& verts, const glm::vec3& axis,
                       float& outMin, float& outMax) {
@@ -564,7 +566,7 @@ bool Object::isTouching(const Object& other) const {
         }
     };
 
-    auto isSeparating = [&](const glm::vec3& axis) {
+    auto isSeparating = [&](const std::vector<glm::vec3>& worldA, const std::vector<glm::vec3>& worldB, const glm::vec3& axis) {
         if (glm::dot(axis, axis) < EPS * EPS) return false;
         float minA, maxA, minB, maxB;
         project(worldA, axis, minA, maxA);
@@ -572,36 +574,57 @@ bool Object::isTouching(const Object& other) const {
         return (maxA < minB - EPS) || (maxB < minA - EPS);
     };
 
-    for (const auto& face : polyhedronData.faces) {
-        if (face.size() < 3) continue;
-        if (isSeparating(PolyhedronData::computeNewellNormal(worldA, face))) return false;
-    }
-    for (const auto& face : other.polyhedronData.faces) {
-        if (face.size() < 3) continue;
-        if (isSeparating(PolyhedronData::computeNewellNormal(worldB, face))) return false;
-    }
+    auto checkConvexPair = [&](const PolyhedronData& polyA, const glm::mat4& transformA,
+                               const PolyhedronData& polyB, const glm::mat4& transformB) {
+        std::vector<glm::vec3> worldA = toWorld(transformA, polyA.vertices);
+        std::vector<glm::vec3> worldB = toWorld(transformB, polyB.vertices);
 
-    auto collectEdges = [](const std::vector<glm::vec3>& verts,
-                           const std::vector<std::vector<int>>& faces) {
-        std::vector<glm::vec3> dirs;
-        for (const auto& face : faces) {
-            size_t n = face.size();
-            for (size_t i = 0; i < n; ++i) {
-                dirs.push_back(verts[face[(i + 1) % n]] - verts[face[i]]);
+        for (const auto& face : polyA.faces) {
+            if (face.size() < 3) continue;
+            if (isSeparating(worldA, worldB, PolyhedronData::computeNewellNormal(worldA, face))) return false;
+        }
+        for (const auto& face : polyB.faces) {
+            if (face.size() < 3) continue;
+            if (isSeparating(worldA, worldB, PolyhedronData::computeNewellNormal(worldB, face))) return false;
+        }
+
+        auto collectEdges = [](const std::vector<glm::vec3>& verts,
+                               const std::vector<std::vector<int>>& faces) {
+            std::vector<glm::vec3> dirs;
+            for (const auto& face : faces) {
+                size_t n = face.size();
+                for (size_t i = 0; i < n; ++i) {
+                    dirs.push_back(verts[face[(i + 1) % n]] - verts[face[i]]);
+                }
+            }
+            return dirs;
+        };
+        std::vector<glm::vec3> edgesA = collectEdges(worldA, polyA.faces);
+        std::vector<glm::vec3> edgesB = collectEdges(worldB, polyB.faces);
+        for (const auto& eA : edgesA) {
+            for (const auto& eB : edgesB) {
+                glm::vec3 axis = glm::cross(eA, eB);
+                if (glm::length(axis) > EPS) {
+                    if (isSeparating(worldA, worldB, glm::normalize(axis))) return false;
+                }
             }
         }
-        return dirs;
+        return true;
     };
-    const std::vector<glm::vec3> edgesA = collectEdges(worldA, polyhedronData.faces);
-    const std::vector<glm::vec3> edgesB = collectEdges(worldB, other.polyhedronData.faces);
-    for (const auto& eA : edgesA) {
-        for (const auto& eB : edgesB) {
-            glm::vec3 axis = glm::cross(eA, eB);
-            if (glm::length(axis) > EPS) {
-                if (isSeparating(glm::normalize(axis))) return false;
+
+    // If both have V-HACD components, test all pairs
+    const std::vector<PolyhedronData>& partsA = polyhedronData.convexComponents.empty() ? 
+        std::vector<PolyhedronData>{polyhedronData} : polyhedronData.convexComponents;
+    const std::vector<PolyhedronData>& partsB = other.polyhedronData.convexComponents.empty() ? 
+        std::vector<PolyhedronData>{other.polyhedronData} : other.polyhedronData.convexComponents;
+
+    for (const auto& partA : partsA) {
+        for (const auto& partB : partsB) {
+            if (checkConvexPair(partA, transform, partB, other.transform)) {
+                return true; // Any overlapping pair means the objects touch
             }
         }
     }
 
-    return true;
+    return false;
 }

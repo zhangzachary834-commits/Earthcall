@@ -137,6 +137,7 @@ bool Engine::init(int /*argc*/, char** /*argv*/) {
 
     // Initialize audio system
     Core::Audio::AudioSystem::instance().init();
+    Core::Audio::AudioSystem::instance().setupAudioEventListeners();
 
     return true;
 }
@@ -210,6 +211,7 @@ void Engine::tick(Game& game, float dt) {
 
         // Tick language modality
         Singularity::Language::LanguageSystem::instance().tick(dt);
+        Core::Audio::AudioSystem::instance().tick();
 
         game.update(dt);
         game.render(); // brackets itself with Renderer begin/endFrame

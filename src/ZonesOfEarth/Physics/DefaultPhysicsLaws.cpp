@@ -10,6 +10,7 @@ std::vector<std::shared_ptr<Law>> createDefaultPhysicsLaws() {
 
     // 1. Gravity: Flow action over velocity (velocity := velocity + g * dt)
     auto gravity = std::make_shared<Law>("physics: gravity");
+    gravity->setObjectID("physics-gravity");
     gravity->setActivation(Law::Activation::WhileTrue);
     gravity->setScope(Law::Scope::Everyone);
     
@@ -33,6 +34,7 @@ std::vector<std::shared_ptr<Law>> createDefaultPhysicsLaws() {
 
     // 2. Integration: Flow action over position (position := position + velocity * dt)
     auto integration = std::make_shared<Law>("physics: kinematics");
+    integration->setObjectID("physics-kinematics");
     integration->setActivation(Law::Activation::WhileTrue);
     integration->setScope(Law::Scope::Everyone);
 

@@ -16,10 +16,19 @@ struct CollisionZone {
     // and radial/parametric checks.
     std::vector<glm::vec3> vertices;
 
-    // Quick AABB-vs-AABB test placeholder.
+    // Quick AABB-vs-AABB test for broad-phase rejection.
     bool isTouching(const CollisionZone& space) const {
-        (void)space;
-        return false;
+        glm::vec3 minA = corners[0], maxA = corners[0];
+        glm::vec3 minB = space.corners[0], maxB = space.corners[0];
+        for (int i = 1; i < 8; ++i) {
+            minA = glm::min(minA, corners[i]);
+            maxA = glm::max(maxA, corners[i]);
+            minB = glm::min(minB, space.corners[i]);
+            maxB = glm::max(maxB, space.corners[i]);
+        }
+        return (minA.x <= maxB.x && maxA.x >= minB.x) &&
+               (minA.y <= maxB.y && maxA.y >= minB.y) &&
+               (minA.z <= maxB.z && maxA.z >= minB.z);
     }
 
     // Object-aware overload — implemented out of line in Object.cpp because
