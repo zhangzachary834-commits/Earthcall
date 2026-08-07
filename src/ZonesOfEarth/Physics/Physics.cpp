@@ -539,17 +539,19 @@ namespace Physics {
         
         // Listen for physics collisions with high priority
         eventBus.subscribe<PhysicsCollisionEvent>([](const PhysicsCollisionEvent& event) {
-            // Log collision details
-            std::cout << "Physics Collision: Objects " 
-                      << (event.objectA ? event.objectA->getIdentifier() : "Unknown") 
-                      << " and " 
-                      << (event.objectB ? event.objectB->getIdentifier() : "Unknown")
-                      << " collided with force " << event.impactForce 
-                      << " at point (" << event.collisionPoint.x << ", " << event.collisionPoint.y << ", " << event.collisionPoint.z << ")" << std::endl;
             
             // Record collision in physics registry (existing functionality)
             if (event.objectA && event.objectB) {
                 recordCollision(*event.objectA, *event.objectB, event.impactForce);
+            }
+            
+            // Mint an ECA::Event so the Rete network can react to physical collisions
+            // We publish one from the perspective of each participant
+            if (event.objectA) {
+                Core::EventBus::instance().publish(ECA::Event{"physics.collision", event.objectA, event.objectB, std::time(nullptr)});
+            }
+            if (event.objectB) {
+                Core::EventBus::instance().publish(ECA::Event{"physics.collision", event.objectB, event.objectA, std::time(nullptr)});
             }
             
             // You can add more collision response logic here:

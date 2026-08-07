@@ -49,6 +49,17 @@ std::vector<std::shared_ptr<Law>> createDefaultPhysicsLaws() {
     integration->setActionModel(intAction);
     laws.push_back(integration);
 
+    // 3. Acoustics: Convert collision into audio.synthesize
+    auto acoustics = std::make_shared<Law>("physics: acoustics");
+    acoustics->setObjectID("physics-acoustics");
+    acoustics->setActivation(Law::Activation::OnEvent);
+    acoustics->ecaLoop().eventType = "physics.collision";
+    acoustics->setScope(Law::Scope::Everyone);
+
+    ActionNode playAction = ActionNode::playAudio("acoustic.frequency", "acoustic.amplitude", "sine");
+    acoustics->setActionModel(playAction);
+    laws.push_back(acoustics);
+
     return laws;
 }
 

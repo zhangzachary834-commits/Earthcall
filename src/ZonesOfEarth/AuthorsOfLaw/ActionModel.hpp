@@ -84,7 +84,8 @@ struct ActionNode {
         RemoveProperty = 14,
         RemoveElement = 15,
         Destroy = 16,
-        Synthesize = 17 // invoke the Universal SynthesisSystem (Concept -> Singulars)
+        Synthesize = 17, // invoke the Universal SynthesisSystem (Concept -> Singulars)
+        PlayAudio = 18   // Trigger the procedural audio synthesizer via properties
     };
 
     struct ExecutedEvent {
@@ -300,6 +301,14 @@ struct ActionNode {
     static ActionNode removeElement(const std::string& containerToken,
                                     const std::string& elementToken);
     static ActionNode destroy(const std::string& targetToken = "");
+    
+    // Audio Synthesis Action
+    // This uses the ActionNode's built-in payloads to pass parameters for the synthesizer.
+    // We repurpose properties:
+    //   path: where to read the frequency value
+    //   input: where to read the amplitude value
+    //   propertyName: material/waveType string
+    static ActionNode playAudio(const std::string& freqPath, const std::string& ampPath, const std::string& waveType = "");
 };
 
 // A law's action model is the root of one such tree.

@@ -114,6 +114,7 @@ const char* ActionNode::kindName(Kind k) {
         case Kind::RemoveElement: return "RemoveElement";
         case Kind::Destroy: return "Destroy";
         case Kind::Synthesize: return "Synthesize";
+        case Kind::PlayAudio: return "PlayAudio";
     }
     return "Unknown";
 }
@@ -247,6 +248,11 @@ nlohmann::json ActionNode::toJson() const {
             }
             break;
         }
+        case Kind::PlayAudio:
+            if (!path.empty()) j["path"] = path.toString();
+            if (!input.empty()) j["input"] = input.toString();
+            if (!propertyName.empty()) j["propertyName"] = propertyName;
+            break;
         case Kind::Map:
         case Kind::Flow:
             j["path"] = path.toString();
@@ -539,6 +545,21 @@ ECA::ActionExecutor ActionNode::compile() const {
                 }
                 emitEffect("Spawn", true);
                 Core::EventBus::instance().publish(ActionNode::ExecutedEvent{"Spawn", &target, std::time(nullptr)});
+            };
+        }
+        case Kind::PlayAudio: {
+            const PropertyPath freqPath = path;
+            const PropertyPath ampPath = input;
+            const std::string matType = propertyName;
+            
+            return [freqPath, ampPath, matType](const ECA::Event& event, Singular& subject) {
+                // Publish an AudioSynthesisEvent to the bus.
+                // The AudioSystem listens to this.
+                Core::EventBus::instance().publish(
+                    ECA::Event{"audio.synthesize", &subject, nullptr, std::time(nullptr)}
+                );
+                
+                emitEffect("PlayAudio", true);
             };
         }
         case Kind::Publish: {
@@ -932,6 +953,8 @@ std::string ActionNode::describe() const {
             return "destroy " + (elementToken.empty() ? std::string("subject") : elementToken);
         case Kind::Synthesize:
             return "synthesize(" + conceptId + ")";
+        case Kind::PlayAudio:
+            return kindName(kind);
     }
     return "action";
 }
@@ -1203,5 +1226,14 @@ ActionNode ActionNode::destroy(const std::string& targetToken) {
     ActionNode n;
     n.kind = Kind::Destroy;
     n.elementToken = targetToken;
+    return n;
+}
+
+ActionNode ActionNode::playAudio(const std::string& freqPath, const std::string& ampPath, const std::string& waveType) {
+    ActionNode n;
+    n.kind = Kind::PlayAudio;
+    n.path = PropertyPath::parse(freqPath);
+    n.input = PropertyPath::parse(ampPath);
+    n.propertyName = waveType;
     return n;
 }

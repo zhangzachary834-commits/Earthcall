@@ -24,6 +24,9 @@ public:
     // Play a spatialized sound effect at a specific 3D position
     void playSpatialSound(const std::string& filepath, const glm::vec3& position, float volume = 1.0f);
 
+    // Play a procedural synthesized sound based on acoustic properties
+    void playProceduralCollisionSound(const glm::vec3& position, const glm::vec3& velocity, double frequency, double amplitude, const std::string& waveTypeStr);
+
     // Play background music (looped)
     void playMusic(const std::string& filepath);
     void stopMusic();

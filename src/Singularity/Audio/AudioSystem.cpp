@@ -4,19 +4,30 @@
 
 #define MINIAUDIO_IMPLEMENTATION
 #include "miniaudio.h"
-
 #include "Singularity/Core/EventBus.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
+#include "Integration/EarthcallAPI.hpp"
+#include "ZonesOfEarth/ZoneManager.hpp"
+#include "ZonesOfEarth/World/World.hpp"
 #include "Form/Object/Object.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp"
+
+extern ZoneManager mgr;
 
 namespace Core {
 namespace Audio {
+
+struct SpatialSoundInstance {
+    ma_sound* sound = nullptr;
+    ma_waveform* waveform = nullptr;
+};
 
 struct AudioSystem::AudioState {
     ma_engine engine;
     ma_sound musicSound;
     bool hasMusic = false;
-    std::vector<ma_sound*> activeSpatialSounds;
+    std::vector<SpatialSoundInstance*> activeSpatialSounds;
 };
 
 AudioSystem& AudioSystem::instance() {
@@ -49,9 +60,14 @@ void AudioSystem::shutdown() {
         if (_state->hasMusic) {
             ma_sound_uninit(&_state->musicSound);
         }
-        for (auto sound : _state->activeSpatialSounds) {
-            ma_sound_uninit(sound);
-            delete sound;
+        for (auto instance : _state->activeSpatialSounds) {
+            ma_sound_uninit(instance->sound);
+            delete instance->sound;
+            if (instance->waveform) {
+                ma_waveform_uninit(instance->waveform);
+                delete instance->waveform;
+            }
+            delete instance;
         }
         _state->activeSpatialSounds.clear();
         ma_engine_uninit(&_state->engine);
@@ -73,39 +89,56 @@ void AudioSystem::setupAudioEventListeners() {
     if (!_initialized) return;
 
     auto& eventBus = Core::EventBus::instance();
-    eventBus.subscribe<Physics::PhysicsCollisionEvent>([this](const Physics::PhysicsCollisionEvent& event) {
-        if (!event.objectA || !event.objectB) return;
-        
-        std::string matA = event.objectA->materialId();
-        std::string matB = event.objectB->materialId();
+    eventBus.subscribe<ECA::Event>([this](const ECA::Event& event) {
+        if (event.type != "audio.synthesize" || !event.subject) return;
 
-        // Determine base sound based on material
-        std::string soundFile = "data/audio/collision_light.wav";
-        std::string heavySoundFile = "data/audio/collision_heavy.wav";
+        Object* obj = dynamic_cast<Object*>(event.subject);
+        if (!obj) return;
 
-        if (matA.find("wood") != std::string::npos || matB.find("wood") != std::string::npos) {
-            soundFile = "data/audio/wood_hit_light.wav";
-            heavySoundFile = "data/audio/wood_hit_heavy.wav";
-        } else if (matA.find("metal") != std::string::npos || matB.find("metal") != std::string::npos) {
-            soundFile = "data/audio/metal_hit_light.wav";
-            heavySoundFile = "data/audio/metal_hit_heavy.wav";
+        double frequency = 440.0;
+        double amplitude = 0.5;
+        std::string waveType = "sine";
+        glm::vec3 velocity(0.0f);
+
+        PropertyValue pv;
+        if (lawGetValue(*obj, PropertyPath::parse("acoustic.frequency"), pv) && std::holds_alternative<double>(pv)) {
+            frequency = std::get<double>(pv);
+        } else if (std::holds_alternative<int>(pv)) {
+            frequency = static_cast<double>(std::get<int>(pv));
         }
 
-        // Spatialized sound responses based on impact force
-        if (event.impactForce > 5.0f) {
-            playSpatialSound(heavySoundFile, event.collisionPoint);
-        } else if (event.impactForce > 0.5f) {
-            playSpatialSound(soundFile, event.collisionPoint, 0.5f);
+        if (lawGetValue(*obj, PropertyPath::parse("acoustic.amplitude"), pv) && std::holds_alternative<double>(pv)) {
+            amplitude = std::get<double>(pv);
+        } else if (std::holds_alternative<int>(pv)) {
+            amplitude = static_cast<double>(std::get<int>(pv));
         }
+
+        if (lawGetValue(*obj, PropertyPath::parse("acoustic.waveType"), pv) && std::holds_alternative<std::string>(pv)) {
+            waveType = std::get<std::string>(pv);
+        }
+
+        if (lawGetValue(*obj, PropertyPath::parse("velocity"), pv) && std::holds_alternative<glm::vec3>(pv)) {
+            velocity = std::get<glm::vec3>(pv);
+        }
+
+        playProceduralCollisionSound(obj->getPosition(), velocity, frequency, amplitude, waveType);
     });
 }
 
 void AudioSystem::tick() {
     if (!_initialized || !_state) return;
 
+    glm::vec3 camPos = Integration::getEarthcallAPI().getCameraPosition();
+    ma_engine_listener_set_position(&_state->engine, 0, camPos.x, camPos.y, camPos.z);
+
     for (auto it = _state->activeSpatialSounds.begin(); it != _state->activeSpatialSounds.end(); ) {
-        if (!ma_sound_is_playing(*it)) {
-            ma_sound_uninit(*it);
+        if (!ma_sound_is_playing((*it)->sound)) {
+            ma_sound_uninit((*it)->sound);
+            delete (*it)->sound;
+            if ((*it)->waveform) {
+                ma_waveform_uninit((*it)->waveform);
+                delete (*it)->waveform;
+            }
             delete *it;
             it = _state->activeSpatialSounds.erase(it);
         } else {
@@ -131,8 +164,113 @@ void AudioSystem::playSpatialSound(const std::string& filepath, const glm::vec3&
         ma_sound_set_position(sound, position.x, position.y, position.z);
         ma_sound_set_volume(sound, volume);
         ma_sound_start(sound);
-        _state->activeSpatialSounds.push_back(sound);
+        
+        SpatialSoundInstance* instance = new SpatialSoundInstance();
+        instance->sound = sound;
+        instance->waveform = nullptr;
+        _state->activeSpatialSounds.push_back(instance);
     } else {
+        delete sound;
+    }
+}
+
+void AudioSystem::playProceduralCollisionSound(const glm::vec3& position, const glm::vec3& velocity, double frequency, double amplitude, const std::string& waveTypeStr) {
+    if (!_initialized || !_state) return;
+
+    glm::vec3 camPos = Integration::getEarthcallAPI().getCameraPosition();
+    float distToCam = glm::distance(camPos, position);
+    glm::vec3 rayDir = camPos - position;
+    if (distToCam > 0.0001f) rayDir /= distToCam;
+
+    // 1. Doppler Shift
+    float speedOfSound = 343.0f;
+    float sourceVelTowardsListener = glm::dot(velocity, rayDir);
+    float dopplerFactor = speedOfSound / std::max(speedOfSound - sourceVelTowardsListener, 0.1f);
+
+    frequency *= dopplerFactor;
+
+    if (frequency < 20.0) frequency = 20.0;
+    if (frequency > 20000.0) frequency = 20000.0;
+
+    if (amplitude > 1.0) amplitude = 1.0;
+    if (amplitude < 0.0) amplitude = 0.0;
+
+    ma_waveform_type waveType = ma_waveform_type_sine;
+    if (waveTypeStr == "triangle") {
+        waveType = ma_waveform_type_triangle;
+    } else if (waveTypeStr == "square") {
+        waveType = ma_waveform_type_square;
+    } else if (waveTypeStr == "sawtooth") {
+        waveType = ma_waveform_type_sawtooth;
+    }
+
+    // 2. Occlusion Raycast
+    auto& objects = mgr.active().world().getOwnedObjects();
+    bool occluded = false;
+    for (const auto& up : objects) {
+        if (!up) continue;
+        Object* obj = up.get();
+        float t;
+        int faceIdx; glm::vec2 uv;
+        if (obj->raycastFace(position, rayDir, t, faceIdx, uv)) {
+            if (t > 0.01f && t < distToCam) { // Allow small threshold to not hit self
+                occluded = true;
+                break;
+            }
+        }
+    }
+
+    if (occluded) {
+        // Muffle the sound: lose high frequencies by turning into a sine wave and drop volume
+        waveType = ma_waveform_type_sine;
+        amplitude *= 0.4;
+    }
+
+    ma_waveform_config config = ma_waveform_config_init(
+        _state->engine.pDevice->playback.format,
+        _state->engine.pDevice->playback.channels,
+        _state->engine.pDevice->sampleRate,
+        waveType,
+        amplitude,
+        frequency
+    );
+
+    ma_waveform* waveform = new ma_waveform();
+    ma_result result = ma_waveform_init(&config, waveform);
+    if (result != MA_SUCCESS) {
+        delete waveform;
+        return;
+    }
+
+    ma_sound* sound = new ma_sound();
+    result = ma_sound_init_from_data_source(
+        &_state->engine,
+        waveform,
+        0,
+        NULL,
+        sound
+    );
+
+    if (result == MA_SUCCESS) {
+        ma_sound_set_position(sound, position.x, position.y, position.z);
+        ma_sound_set_velocity(sound, velocity.x, velocity.y, velocity.z);
+        
+        // 3. Speed-of-sound delay
+        ma_uint64 engineTimeMs = ma_engine_get_time_in_milliseconds(&_state->engine);
+        ma_uint64 delayMs = static_cast<ma_uint64>((distToCam / speedOfSound) * 1000.0f);
+        ma_sound_set_start_time_in_milliseconds(sound, engineTimeMs + delayMs);
+        
+        ma_sound_start(sound);
+
+        ma_sound_set_stop_time_with_fade_in_milliseconds(sound, engineTimeMs + delayMs + 300, 300);
+
+        SpatialSoundInstance* instance = new SpatialSoundInstance();
+        instance->sound = sound;
+        instance->waveform = waveform;
+        _state->activeSpatialSounds.push_back(instance);
+    } else {
+        ma_waveform_uninit(waveform);
+        delete waveform;
         delete sound;
     }
 }
