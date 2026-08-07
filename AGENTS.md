@@ -11,7 +11,7 @@ engineering for a different kind of system. Spend the two minutes on the router 
 
 ---
 
-## The four refusals
+## The five refusals
 
 These come up constantly. Learn them cold; everything else is detail.
 
@@ -32,7 +32,12 @@ These come up constantly. Learn them cold; everything else is detail.
    *someone*. Objects have visual components — geometry, fields, materials. A robot arm
    has no Body. → `NEW_KIND_FRAMEWORK.md` Floor §2
 
-The general form of all four: **no subsystem may define what a thing IS.** Subsystems
+5. **`Person` means Human.** A `Person` strictly represents an actual human being
+   interacting with Earthcall. AI agents or generative models are not Persons; an AI
+   is simply a First Mover (authoring data) or an `Object` (existing in-world as a
+   mechanism). Never model an AI as a `Person`.
+
+The general form of all five: **no subsystem may define what a thing IS.** Subsystems
 define how the machine senses and acts. What things are is authored by Persons, in-world,
 out of primitives every other subsystem can see.
 
