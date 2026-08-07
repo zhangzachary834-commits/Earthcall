@@ -369,12 +369,12 @@ private:
 };
 
 // Motion state made legible: velocity and mass live in the physics engine's
-// rigid-body registry; these bridges are what let collision RESPONSE migrate
+// rigid-form registry; these bridges are what let collision RESPONSE migrate
 // into authored laws ("on collision, reflect @event.object's velocity").
-class RigidBodyBridge : public Property {
+class RigidFormBridge : public Property {
 public:
     enum class Field { Velocity, Mass };
-    RigidBodyBridge(std::string name, Object* owner, Field field)
+    RigidFormBridge(std::string name, Object* owner, Field field)
         : _name(std::move(name)), _owner(owner), _field(field) {}
 
     std::string name() const override { return _name; }
@@ -382,21 +382,21 @@ public:
         return _field == Field::Velocity ? "vec3" : "float";
     }
     PropertyValue value() const override {
-        Physics::RigidBody& body = Physics::getBodyFor(_owner);
-        return _field == Field::Velocity ? PropertyValue(body.velocity)
-                                         : PropertyValue(body.mass);
+        Physics::RigidForm& form = Physics::getFormFor(_owner);
+        return _field == Field::Velocity ? PropertyValue(form.velocity)
+                                         : PropertyValue(form.mass);
     }
     bool setValue(const PropertyValue& v) override {
-        Physics::RigidBody& body = Physics::getBodyFor(_owner);
+        Physics::RigidForm& form = Physics::getFormFor(_owner);
         if (_field == Field::Velocity) {
             const auto* vec = std::get_if<glm::vec3>(&v);
             if (!vec) return false;
-            body.velocity = *vec;
+            form.velocity = *vec;
             return true;
         }
         double n = 0.0;
         if (!propertyValueToNumber(v, n) || n <= 0.0) return false;   // massless
-        body.mass = static_cast<float>(n);                            // is a lie
+        form.mass = static_cast<float>(n);                            // is a lie
         return true;
     }
 
@@ -578,12 +578,12 @@ void Object::buildProperties() {
     // ("make this object immaterial while the ritual runs").
     _propertyRegistry.push_back(std::make_unique<ComputedProperty<Object, bool>>(
         "physical", this, &Object::propPhysical, &Object::propSetPhysical));
-    // Motion state: the rigid body's truth, addressable — collision RESPONSE
+    // Motion state: the rigid form's truth, addressable — collision RESPONSE
     // becomes authorable law-text.
-    _propertyRegistry.push_back(std::make_unique<RigidBodyBridge>(
-        "velocity", this, RigidBodyBridge::Field::Velocity));
-    _propertyRegistry.push_back(std::make_unique<RigidBodyBridge>(
-        "mass", this, RigidBodyBridge::Field::Mass));
+    _propertyRegistry.push_back(std::make_unique<RigidFormBridge>(
+        "velocity", this, RigidFormBridge::Field::Velocity));
+    _propertyRegistry.push_back(std::make_unique<RigidFormBridge>(
+        "mass", this, RigidFormBridge::Field::Mass));
     // The object's tint (uniform across faces when written; face 0 when read).
     _propertyRegistry.push_back(std::make_unique<ComputedProperty<Object, glm::vec3>>(
         "color", this, &Object::propColor, &Object::propSetColor));

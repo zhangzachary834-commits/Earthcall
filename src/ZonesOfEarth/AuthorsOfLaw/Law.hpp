@@ -448,17 +448,19 @@ public:
     // Binding is retroactive: facts already live become this law's backlog,
     // queued onto the agenda for the NEXT drain. Order of setup therefore does
     // not matter — a law bound after its events were published still hears
-    // them, exactly as it did when evaluate() rebuilt the agenda every frame.
+    // them, as it did back when the agenda was rebuilt from scratch each frame.
     // Only the newly bound law is queued, so laws already on the node do not
     // fire a second time.
     void bindLawToAlpha(const std::string& lawId, std::size_t alphaNodeId);
     void bindLawToBeta(const std::string& lawId, std::size_t betaNodeId);
     // Remove every binding of this law from the network. Nodes left with no
     // bindings are DROPPED, not kept: "an unbound node is inert" was wrong
-    // about the cost — evaluate() predicate-tests every node against every
-    // fact before it ever looks at the bindings, so an accumulating pile of
-    // dead nodes is a per-frame tax that grows forever. Every trigger
-    // rebind, and every world load, used to add another pile.
+    // about the cost — a node is predicate-tested against every fact before
+    // anything looks at its bindings, so an accumulating pile of dead nodes is
+    // a standing tax. Every trigger rebind, and every world load, used to add
+    // another pile. (Propagation now skips unread nodes too, but dropping them
+    // is still right: they also cost the scan in alphaFeedsAnyBeta and get
+    // refilled on every bind.)
     void unbindLaw(const std::string& lawId);
     void unbindLawFromAlpha(const std::string& lawId, std::size_t alphaNodeId);
     // Drop any activations already queued for a law, so unbinding actually
@@ -484,11 +486,22 @@ public:
     bool hearsType(const std::string& eventType) const;
     bool hasOpaqueBoundAlpha() const;
 
-    // Propagation happens at assert and bind time, so by the time you get here
-    // the agenda is already complete — this just hands it back. Kept as the
-    // name callers use for "give me what is pending"; it no longer computes
-    // anything, and it does NOT clear the agenda (drainAgenda does).
-    const std::vector<ReteActivation>& evaluate();
+    // There is no evaluation phase. Propagation happens as it arrives —
+    // assertFact queues activations for the facts it matches, and the bind
+    // paths backfill from the live fact list — so the agenda is complete at
+    // every instant and there is never anything to bring up to date.
+    //
+    // (An evaluate() lived here through the incremental rewrite, having become
+    // a no-op returning _agenda. It was removed rather than renamed: agenda()
+    // already says exactly that, and a second name for one accessor is how the
+    // ordering bug in bindLawToAlpha stayed invisible — callers read the name
+    // as "recompute now" and assumed setup order did not matter.)
+    //
+    // agenda() peeks; drainAgenda() takes and clears. Conflict resolution —
+    // ordering the pending set by recency/specificity/salience before firing —
+    // is the one piece a classic Rete has that this does not, and it belongs
+    // in drainAgenda when it lands: it orders what is pending, it does not
+    // compute what is pending.
     std::vector<ReteActivation> drainAgenda();
     const std::vector<ReteActivation>& agenda() const { return _agenda; }
 
@@ -557,7 +570,8 @@ public:
 
     ReteNetwork& rete() { return _rete; }
     const ReteNetwork& rete() const { return _rete; }
-    const std::vector<ReteActivation>& evaluateRete() { return _rete.evaluate(); }
+    // (evaluateRete() lived here, wrapping the removed ReteNetwork::evaluate().
+    // It had no callers. Reach through rete().agenda() for a peek.)
 
     // ------------------------------------------------------------------
     // Hearing (Stage 3): laws listen. connectToEventBus() turns every
@@ -641,6 +655,7 @@ private:
     Law::NodeGroup _lawFormation;
     ReteNetwork _rete;
     std::vector<DriveSession> _driveSessions;
+    std::vector<std::shared_ptr<Core::EventEntity>> _activeCustomEvents;
     std::unordered_map<std::string, std::vector<std::string>> _triggers;
     bool _connected = false;
     bool _dirty = false;

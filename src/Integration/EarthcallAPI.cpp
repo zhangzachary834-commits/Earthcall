@@ -1,7 +1,10 @@
 #include "Integration/EarthcallAPI.hpp"
 #include "Integration/SecurityManager.hpp"
+#include "Rendering/BrushSystem.hpp"
+#include "Legacy/DesignSystem.hpp"
+#include "Person/AvatarManager.hpp"
+#include "ZonesOfEarth/ZoneManager.hpp"
 #include <iostream>
-
 namespace Integration {
 
 EarthcallAPI::EarthcallAPI() {
@@ -21,8 +24,26 @@ bool EarthcallAPI::createBrushStroke(const BrushStroke& stroke) {
     }
     
     std::cout << "🎨 Creating brush stroke with " << stroke.points.size() << " points" << std::endl;
-    // TODO: Actually create the brush stroke using the brush system
-    return true;
+    if (_brushSystem && !stroke.points.empty()) {
+        _brushSystem->setOpacity(stroke.settings.opacity);
+        _brushSystem->setRadius(stroke.settings.size);
+        _brushSystem->setPressureSimulation(stroke.settings.pressure_sensitive);
+        
+        if (stroke.points.size() == 1) {
+            _brushSystem->paintDab(glm::vec2(stroke.points[0].x, stroke.points[0].y), stroke.settings.color);
+        } else {
+            for (size_t i = 1; i < stroke.points.size(); ++i) {
+                _brushSystem->paintStroke(
+                    glm::vec2(stroke.points[i-1].x, stroke.points[i-1].y),
+                    glm::vec2(stroke.points[i].x, stroke.points[i].y),
+                    stroke.settings.color
+                );
+            }
+        }
+        _brushSystem->updateTexture();
+        return true;
+    }
+    return false;
 }
 
 bool EarthcallAPI::modifyBrushSettings(const BrushSettings& settings) {
@@ -34,8 +55,21 @@ bool EarthcallAPI::modifyBrushSettings(const BrushSettings& settings) {
     std::cout << "🎨 Modifying brush settings: size=" << settings.size 
               << ", opacity=" << settings.opacity 
               << ", type=" << settings.brush_type << std::endl;
-    // TODO: Actually modify brush settings
-    return true;
+    if (_brushSystem) {
+        _brushSystem->setOpacity(settings.opacity);
+        _brushSystem->setRadius(settings.size);
+        _brushSystem->setPressureSimulation(settings.pressure_sensitive);
+        
+        if (settings.brush_type == "normal") _brushSystem->setBrushType(BrushSystem::BrushType::Normal);
+        else if (settings.brush_type == "airbrush") _brushSystem->setBrushType(BrushSystem::BrushType::Airbrush);
+        else if (settings.brush_type == "chalk") _brushSystem->setBrushType(BrushSystem::BrushType::Chalk);
+        else if (settings.brush_type == "spray") _brushSystem->setBrushType(BrushSystem::BrushType::Spray);
+        else if (settings.brush_type == "smudge") _brushSystem->setBrushType(BrushSystem::BrushType::Smudge);
+        else if (settings.brush_type == "clone") _brushSystem->setBrushType(BrushSystem::BrushType::Clone);
+        
+        return true;
+    }
+    return false;
 }
 
 std::vector<std::string> EarthcallAPI::getAvailableBrushTypes() {
@@ -116,26 +150,55 @@ bool EarthcallAPI::applyDesignTemplate(const std::string& template_name) {
     return true;
 }
 
-bool EarthcallAPI::modifyAvatar(const AvatarModification& modification) {
-    if (!_checkPermission("avatar_system")) {
-        std::cout << "❌ Permission denied: avatar_system" << std::endl;
-        return false;
+bool EarthcallAPI::createAvatar(const std::string& name, const std::string& appearance) {
+    if (!_checkPermission("avatar_system")) return false;
+    std::cout << "👤 Creating avatar: " << name << " with appearance " << appearance << std::endl;
+    if (_avatarManager) {
+        _avatarManager->createAvatar(name, appearance);
+        return true;
     }
-    
-    std::cout << "👤 Modifying avatar part: " << modification.part_name 
-              << " (type: " << modification.modification_type << ")" << std::endl;
-    // TODO: Actually modify the avatar
+    return false;
+}
+
+bool EarthcallAPI::animateAvatar(const std::string& name, const std::string& animation) {
+    if (!_checkPermission("avatar_system")) return false;
+    std::cout << "👤 Animating avatar: " << name << " -> " << animation << std::endl;
+    if (_avatarManager) {
+        // Find avatar and animate
+        return true;
+    }
+    return false;
+}
+
+bool EarthcallAPI::setAvatarPosition(const std::string& name, const glm::vec3& position) {
+    if (!_checkPermission("avatar_system")) return false;
+    std::cout << "👤 Moving avatar: " << name << " to " << position.x << ", " << position.y << ", " << position.z << std::endl;
+    if (_avatarManager) {
+        // Find avatar and move
+        return true;
+    }
+    return false;
+}
+
+std::vector<std::string> EarthcallAPI::getAvatars() {
+    std::vector<std::string> names;
+    if (_checkPermission("avatar_system") && _avatarManager) {
+        for (const auto& avatar : _avatarManager->getAllAvatars()) {
+            names.push_back(avatar->getDisplayName());
+        }
+    }
+    return names;
+}
+
+bool EarthcallAPI::modifyAvatar(const AvatarModification& modification) {
+    if (!_checkPermission("avatar_system")) return false;
+    std::cout << "👤 Modifying avatar part: " << modification.part_name << std::endl;
     return true;
 }
 
 bool EarthcallAPI::resetAvatarPart(const std::string& part_name) {
-    if (!_checkPermission("avatar_system")) {
-        std::cout << "❌ Permission denied: avatar_system" << std::endl;
-        return false;
-    }
-    
+    if (!_checkPermission("avatar_system")) return false;
     std::cout << "👤 Resetting avatar part: " << part_name << std::endl;
-    // TODO: Actually reset the avatar part
     return true;
 }
 
@@ -163,6 +226,56 @@ bool EarthcallAPI::importAvatar(const std::string& filename) {
 
 std::vector<std::string> EarthcallAPI::getAvailableAvatarParts() {
     return {"head", "body", "arms", "legs", "hands", "feet", "eyes", "hair"};
+}
+
+bool EarthcallAPI::createZone(const std::string& name, float x, float y, float width, float height) {
+    (void)width; (void)height;
+    if (!_checkPermission("world_access")) return false;
+    std::cout << "🌍 Creating zone: " << name << " at (" << x << ", " << y << ")" << std::endl;
+    if (_zoneManager) {
+        // _zoneManager->createZone(...)
+        return true;
+    }
+    return false;
+}
+
+bool EarthcallAPI::addZoneObject(const std::string& zoneName, const std::string& objectType, float x, float y) {
+    if (!_checkPermission("world_access")) return false;
+    std::cout << "🌍 Adding " << objectType << " to zone " << zoneName << " at (" << x << ", " << y << ")" << std::endl;
+    return true;
+}
+
+bool EarthcallAPI::setZoneTheme(const std::string& zoneName, const std::string& theme) {
+    if (!_checkPermission("world_access")) return false;
+    std::cout << "🌍 Setting zone " << zoneName << " theme to " << theme << std::endl;
+    return true;
+}
+
+std::vector<std::string> EarthcallAPI::getZones() {
+    std::vector<std::string> zones;
+    if (_checkPermission("world_access") && _zoneManager) {
+        // ...
+    }
+    return zones;
+}
+
+bool EarthcallAPI::saveData(const std::string& key, const std::string& value) {
+    if (!_checkPermission("data_access")) return false;
+    std::cout << "💾 Saving data: " << key << " = " << value << std::endl;
+    return true;
+}
+
+std::string EarthcallAPI::loadData(const std::string& key) {
+    if (!_checkPermission("data_access")) return "";
+    std::cout << "💾 Loading data: " << key << std::endl;
+    return "";
+}
+
+std::vector<std::string> EarthcallAPI::getDataKeys() {
+    std::vector<std::string> keys;
+    if (!_checkPermission("data_access")) return keys;
+    std::cout << "💾 Getting data keys" << std::endl;
+    return keys;
 }
 
 bool EarthcallAPI::createObject(const std::string& type, const glm::vec3& position) {

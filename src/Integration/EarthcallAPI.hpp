@@ -8,9 +8,11 @@
 #include "../Person/AvatarManager.hpp"
 
 // Forward declarations
-namespace Rendering {
-    class BrushSystem;
-    class DesignSystem;
+class BrushSystem;
+class DesignSystem;
+
+namespace ZonesOfEarth {
+    class ZoneManager;
 }
 
 class AvatarManager;
@@ -71,6 +73,10 @@ public:
     bool applyDesignTemplate(const std::string& template_name);
 
     // Avatar System Access
+    bool createAvatar(const std::string& name, const std::string& appearance);
+    bool animateAvatar(const std::string& name, const std::string& animation);
+    bool setAvatarPosition(const std::string& name, const glm::vec3& position);
+    std::vector<std::string> getAvatars();
     bool modifyAvatar(const AvatarModification& modification);
     bool resetAvatarPart(const std::string& part_name);
     bool exportAvatar(const std::string& filename);
@@ -78,11 +84,20 @@ public:
     std::vector<std::string> getAvailableAvatarParts();
 
     // World/Environment Access
+    bool createZone(const std::string& name, float x, float y, float width, float height);
+    bool addZoneObject(const std::string& zoneName, const std::string& objectType, float x, float y);
+    bool setZoneTheme(const std::string& zoneName, const std::string& theme);
+    std::vector<std::string> getZones();
     bool createObject(const std::string& type, const glm::vec3& position);
     bool modifyObject(const std::string& id, const glm::vec3& position, const glm::vec3& scale);
     bool deleteObject(const std::string& id);
     glm::vec3 getCameraPosition();
     bool setCameraPosition(const glm::vec3& position);
+    
+    // Data/Save Access
+    bool saveData(const std::string& key, const std::string& value);
+    std::string loadData(const std::string& key);
+    std::vector<std::string> getDataKeys();
 
     // Communication
     void registerCallback(const std::string& event_type, std::function<void(const std::string&)> callback);
@@ -94,15 +109,22 @@ public:
     bool hasPermission(const std::string& permission) const;
     std::vector<std::string> getGrantedPermissions() const;
 
+    // System Access Setters
+    void setBrushSystem(BrushSystem* system) { _brushSystem = system; }
+    void setDesignSystem(DesignSystem* system) { _designSystem = system; }
+    void setAvatarManager(AvatarManager* manager) { _avatarManager = manager; }
+    void setZoneManager(ZonesOfEarth::ZoneManager* manager) { _zoneManager = manager; }
+
     // Lifecycle
     void update();
     void shutdown();
 
 private:
     // System references
-    Rendering::BrushSystem* _brushSystem = nullptr;
-    Rendering::DesignSystem* _designSystem = nullptr;
+    BrushSystem* _brushSystem = nullptr;
+    DesignSystem* _designSystem = nullptr;
     AvatarManager* _avatarManager = nullptr;
+    ZonesOfEarth::ZoneManager* _zoneManager = nullptr;
 
     // Permissions
     std::vector<std::string> _grantedPermissions;

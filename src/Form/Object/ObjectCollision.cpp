@@ -108,29 +108,30 @@ bool rayIntersectsTriangle(const glm::vec3& origin,
 } // namespace
 
 void Object::updateCollisionZone(const glm::mat4& transform) const {
+    glm::vec3 minCorner = glm::vec3(std::numeric_limits<float>::max());
+    glm::vec3 maxCorner = glm::vec3(-std::numeric_limits<float>::max());
+    bool hasBounds = false;
+
     if (geometryType == GeometryType::Polyhedron && !polyhedronData.vertices.empty()) {
-        // For polyhedrons, compute bounding box from all vertices
-        glm::vec3 minCorner = glm::vec3(std::numeric_limits<float>::max());
-        glm::vec3 maxCorner = glm::vec3(-std::numeric_limits<float>::max());
-        
         for (const auto& vertex : polyhedronData.vertices) {
             glm::vec4 world = transform * glm::vec4(vertex, 1.0f);
             glm::vec3 worldVertex = glm::vec3(world);
             minCorner = glm::min(minCorner, worldVertex);
             maxCorner = glm::max(maxCorner, worldVertex);
         }
-        
-        // Create bounding box corners
-        collisionZone.corners[0] = glm::vec3(minCorner.x, minCorner.y, minCorner.z);
-        collisionZone.corners[1] = glm::vec3(maxCorner.x, minCorner.y, minCorner.z);
-        collisionZone.corners[2] = glm::vec3(maxCorner.x, maxCorner.y, minCorner.z);
-        collisionZone.corners[3] = glm::vec3(minCorner.x, maxCorner.y, minCorner.z);
-        collisionZone.corners[4] = glm::vec3(minCorner.x, minCorner.y, maxCorner.z);
-        collisionZone.corners[5] = glm::vec3(maxCorner.x, minCorner.y, maxCorner.z);
-        collisionZone.corners[6] = glm::vec3(maxCorner.x, maxCorner.y, maxCorner.z);
-        collisionZone.corners[7] = glm::vec3(minCorner.x, maxCorner.y, maxCorner.z);
-    } else {
-        // Localace corners of a unit cube centered at origin (legacy behavior)
+        hasBounds = true;
+    } else if (!_supportCloud.empty()) {
+        for (const auto& vertex : _supportCloud) {
+            glm::vec4 world = transform * glm::vec4(vertex, 1.0f);
+            glm::vec3 worldVertex = glm::vec3(world);
+            minCorner = glm::min(minCorner, worldVertex);
+            maxCorner = glm::max(maxCorner, worldVertex);
+        }
+        hasBounds = true;
+    }
+    
+    if (!hasBounds) {
+        // Fallback for completely empty shapes (legacy behavior)
         glm::vec3 localCorners[8] = {
             {-0.5f, -0.5f, -0.5f},
             { 0.5f, -0.5f, -0.5f},
@@ -145,7 +146,18 @@ void Object::updateCollisionZone(const glm::mat4& transform) const {
             glm::vec4 world = transform * glm::vec4(localCorners[i], 1.0f);
             collisionZone.corners[i] = glm::vec3(world);
         }
+        return;
     }
+
+    // Create bounding box corners from min/max
+    collisionZone.corners[0] = glm::vec3(minCorner.x, minCorner.y, minCorner.z);
+    collisionZone.corners[1] = glm::vec3(maxCorner.x, minCorner.y, minCorner.z);
+    collisionZone.corners[2] = glm::vec3(maxCorner.x, maxCorner.y, minCorner.z);
+    collisionZone.corners[3] = glm::vec3(minCorner.x, maxCorner.y, minCorner.z);
+    collisionZone.corners[4] = glm::vec3(minCorner.x, minCorner.y, maxCorner.z);
+    collisionZone.corners[5] = glm::vec3(maxCorner.x, minCorner.y, maxCorner.z);
+    collisionZone.corners[6] = glm::vec3(maxCorner.x, maxCorner.y, maxCorner.z);
+    collisionZone.corners[7] = glm::vec3(minCorner.x, maxCorner.y, maxCorner.z);
 }
 
 // Rebuilds everything derived from the shape: the cached render tessellations and

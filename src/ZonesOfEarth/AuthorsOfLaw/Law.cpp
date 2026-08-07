@@ -4,6 +4,7 @@
 #include "Universe.hpp"
 #include "LawAuditLogger.hpp"
 #include "ZonesOfEarth/World/World.hpp"
+#include "Singularity/Core/EventEntity.hpp"
 
 #include <algorithm>
 #include <atomic>
@@ -986,9 +987,10 @@ bool ReteNetwork::hasOpaqueBoundAlpha() const {
     return false;
 }
 
-// A node nobody is bound to can never produce an activation, but evaluate()
-// still pays for it against every fact. Reclaim them rather than letting a
-// session's worth of rebinds and world loads pile up.
+// A node nobody is bound to can never produce an activation. Propagation
+// already skips it, but it still costs the beta scan on every assert and a
+// full refill on every bind, so reclaim it rather than letting a session's
+// worth of rebinds and world loads pile up.
 void ReteNetwork::dropUnboundAlphaNodes() {
     std::vector<std::size_t> doomed;
     for (const auto& alpha : _alphaNodes) {
@@ -1020,14 +1022,6 @@ void ReteNetwork::dropUnboundAlphaNodes() {
                                   doomed.end();
                        }),
         _alphaNodes.end());
-}
-
-const std::vector<ReteActivation>& ReteNetwork::evaluate() {
-    // Nothing to compute: propagation is incremental. assertFact maintains the
-    // node memories and queues activations as facts arrive, and the bind paths
-    // backfill from _facts so a law bound late still gets its backlog. This
-    // only hands back what is already pending.
-    return _agenda;
 }
 
 std::vector<ReteActivation> ReteNetwork::drainAgenda() {
@@ -1174,6 +1168,34 @@ void LawManager::connectToEventBus() {
         _dirty = true;
     });
 
+    Core::EventBus::instance().subscribe<Core::Event::Custom>([this](const Core::Event::Custom& e) {
+        if (!e.singular) return;
+        
+        std::string evType = e.singular->getEventType();
+        
+        ECA::LawAuditLogger::instance().log("EVENT", "Custom Event \"" + evType + "\" triggered (Id: " + e.singular->getIdentifier() + ")", {
+            {"eventType", evType},
+            {"eventId", e.singular->getIdentifier()},
+            {"sourceId", e.singular->getSourceId()},
+            {"targetId", e.singular->getTargetId()}
+        });
+        
+        // Keep the shared_ptr alive until the end of the tick so Rete memories don't dangle
+        _activeCustomEvents.push_back(e.singular);
+        // Register it with the Universe so that it is addressable in properties and scripts
+        Universe::instance().addActiveEvent(e.singular.get());
+        
+        ReteFact fact;
+        fact.type = evType;
+        fact.subject = e.singular.get();
+        fact.subjectId = e.singular->getIdentifier();
+        fact.object = nullptr;
+        
+        _rete.assertFact(fact);
+        _dirty = true;
+    });
+
+
     // Per-node action outcomes reach the audit log through the application
     // record (Law::applyTo), which knows the law, the subject, AND whether
     // the write landed. A second, thinner line per successful node here was
@@ -1188,7 +1210,9 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
         // DURING it (laws firing events from applyTo) survive into the next
         // round — that's how law chains resolve, bounded by kMaxChainRounds.
         const std::size_t consumed = _rete.facts().size();
-        _rete.evaluate();
+        // Straight to the drain: the agenda is already complete. (An
+        // _rete.evaluate() call sat here whose result was discarded — the
+        // last trace of the rebuild-every-frame design.)
         std::vector<ReteActivation> agenda = _rete.drainAgenda();
         for (const auto& activation : agenda) {
             Law* law = find(activation.lawId);
@@ -1242,6 +1266,13 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
         }
         _rete.retractFirst(consumed);
     }
+
+    // Now that event rounds have completed and Rete memory is retracted,
+    // the EventEntities representing custom events can be safely unmade.
+    for (auto& ev : _activeCustomEvents) {
+        Universe::instance().removeActiveEvent(ev.get());
+    }
+    _activeCustomEvents.clear();
 
     // ------------------------------------------------------------------
     // Continuous pass: level-triggered laws don't wait for events — their

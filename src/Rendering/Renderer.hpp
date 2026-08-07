@@ -7,7 +7,7 @@
 #include <utility>
 #include <vector>
 
-namespace geom { struct SdfNode; }
+namespace geom { struct SdfNode; class FieldNode; }
 
 // ---------------------------------------------------------------------------
 // The renderer boundary (OPENGL_MIGRATION_PLAN.md, Milestone 2). Every raw GPU
@@ -111,7 +111,8 @@ public:
 
     virtual void drawMesh(const geom::TessMesh& mesh, const RenderMaterial& material) = 0;
     virtual void drawImplicit(const geom::SdfNode& field, float extent,
-                              const RenderMaterial& material) = 0;
+                              const RenderMaterial& material,
+                              const geom::FieldNode* fieldNode = nullptr) = 0;
 
     // Unlit, blended overlays — the selection/law-candidate highlight. These are
     // deliberately separate verbs from drawMesh: colour-only, no lighting or

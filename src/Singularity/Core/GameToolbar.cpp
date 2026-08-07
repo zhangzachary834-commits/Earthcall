@@ -1564,7 +1564,7 @@ void Game::renderCreatorStatusBar() {
     ImGui::SameLine();
     ImGui::Text("Tool: %s", _currentTool.getTypeName().c_str());
     ImGui::SameLine();
-    ImGui::Text("Physics: %s", _world.isPhysicsEnabled() ? "On" : "Off");
+
 }
 
 } // namespace Core

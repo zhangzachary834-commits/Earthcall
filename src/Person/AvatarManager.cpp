@@ -162,11 +162,9 @@ void AvatarManager::updateAvatarAI(float deltaTime) {
         std::mt19937 gen(rd());
         std::uniform_real_distribution<float> dis(-1.0f, 1.0f);
         
-        if (avatar->getMode() == Person::GameMode::Survival) {
-            // Survival mode - more active
-            glm::vec3 randomForce(dis(gen), 0.0f, dis(gen));
-            avatar->applyForce(randomForce * 10.0f);
-        }
+        // GameMode has been removed; AI behavior should be defined by Laws
+        // glm::vec3 randomForce(dis(gen), 0.0f, dis(gen));
+        // avatar->applyForce(randomForce * 10.0f);
     }
 }
 
@@ -327,16 +325,16 @@ void AvatarManager::listPresets() const {
 void AvatarManager::enableAvatarAI(const std::string& avatarName) {
     Person* avatar = getAvatar(avatarName);
     if (avatar) {
-        avatar->setMode(Person::GameMode::Survival);
-        std::cout << "Enabled AI for " << avatarName << std::endl;
+        // AI behavior is now controlled by laws/properties instead of GameMode
+        // property update could go here
     }
 }
 
 void AvatarManager::disableAvatarAI(const std::string& avatarName) {
     Person* avatar = getAvatar(avatarName);
     if (avatar) {
-        avatar->setMode(Person::GameMode::Creative);
-        std::cout << "Disabled AI for " << avatarName << std::endl;
+        // AI behavior is now controlled by laws/properties instead of GameMode
+        // property update could go here
     }
 }
 
@@ -362,7 +360,7 @@ void AvatarManager::saveAvatarState(const std::string& avatarName, const std::st
         j["hairStyle"] = avatar->state.hairStyle;
         j["eyeColor"] = avatar->state.eyeColor;
         j["skinTone"] = avatar->state.skinTone;
-        j["mode"] = static_cast<int>(avatar->getMode());
+
         
         // Save full body state (dimensions, colors, transforms, faceTextures)
         j["body"] = bodyToJson(avatar->getBody());
@@ -392,9 +390,7 @@ void AvatarManager::loadAvatarState(const std::string& avatarName, const std::st
                 avatar->state.eyeColor = j.value("eyeColor", "");
                 avatar->state.skinTone = j.value("skinTone", "");
                 
-                if (j.contains("mode")) {
-                    avatar->setMode(static_cast<Person::GameMode>(j["mode"].get<int>()));
-                }
+
                 
                 // Load full body state (dimensions, colors, transforms, faceTextures)
                 if (j.contains("body")) {

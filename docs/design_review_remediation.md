@@ -11,8 +11,12 @@ correctness, only for how they are provisioned.
 
 This is a *design* review, companion to `security_audit_remediation.md`. It
 records what earlier passes left behind, what has been fixed, and what is
-knowingly still open. The distinction matters: **everything in §1 and §2 is
-fixed and verified; §3 onward is found-and-not-yet-fixed.**
+knowingly still open. The distinction matters: **§1–§3 are fixed and verified;
+§4 onward is found-and-not-yet-fixed.** Statuses are in the table below;
+trust the table over any prose that has drifted.
+
+**Amended 2026-08-06** (§3 closed; the repo was flattened from `sight-cpp/` to
+the root in between, and the two `docs/` trees merged into one).
 
 A note on the starting point: at review time the full test suite passed — 30/30
 under `ctest`. None of the findings below were visible as a test failure. They
@@ -27,7 +31,7 @@ down rather than leaving to be discovered from a bug report.
 |---|---|---|---|
 | 1 | Rete: pruning optimization frozen into permanent state — late binding never fires | High | **Fixed** |
 | 2 | Retired pair quantifiers still reachable from the UI; unchecked enum cast destroys saved law text | High | **Fixed** |
-| 3 | `evaluate()` is a no-op whose name and signature promise recomputation | Low | Open (comment corrected) |
+| 3 | `evaluate()` is a no-op whose name and signature promise recomputation | Low | **Fixed** (deleted) |
 | 4 | Python engine server rejects every connection; missing dependency; unauthenticated when host-bound | High | Open |
 | 5 | OntoMath fields: unreachable feature, no serialization, shader integration inconsistent | Medium | Open (documented) |
 | 6 | `WebSocketClient` desktop implementation is a silent no-op with no way to detect it | Medium | Open |
@@ -235,19 +239,52 @@ appended, never assigned 12 or 13.
 
 ---
 
-## 3. `evaluate()` no longer evaluates (OPEN)
+## 3. `evaluate()` no longer evaluates (FIXED — deleted, not renamed)
 
-`ReteNetwork::evaluate()` is now a no-op returning `_agenda`, and
-`LawManager::evaluateRete()` is a public wrapper around it with **zero callers**.
-The names and signatures still promise recomputation, which is how the §1
-ordering dependency stayed invisible.
+Independently raised by Gemini in a later pass, which recommended renaming to
+`pendingActivations()`. The diagnosis was right; the remedy was not the best
+available, for two reasons that only show up on inspection:
 
-Not fixed: renaming reaches into `tick()` and the public `evaluateRete()`
-surface. The comments on both now state plainly that nothing is computed and
-that the agenda is not cleared (`drainAgenda` does that).
+- **`agenda()` already existed** and returned the identical
+  `const std::vector<ReteActivation>&`. So `evaluate()` was not merely misnamed
+  — it was a duplicate of an accessor already carrying the honest name.
+  Renaming would have produced a *third* name for one accessor.
+- **`evaluateRete()` had zero callers**, and the sole `evaluate()` call site in
+  `tick()` discarded the return value — a dead statement immediately above
+  `drainAgenda()`.
 
-**Recommendation:** rename to `pendingActivations()` or fold into the existing
-`agenda()` accessor, and delete `evaluateRete()` unless a caller appears.
+### Why "keep the name and implement it" was not viable
+
+The other fork considered was to give `evaluate()` real work to do. There is
+none. After the §1 backfill the agenda is complete at every instant:
+`assertFact` propagates on arrival, the bind paths backfill and queue, the
+retract paths purge, and alpha predicates are `bool(const ReteFact&)` — pure
+functions of a fact that is immutable once asserted, so no queued result can go
+stale. Manufacturing work for an evaluation phase means reinstating the
+per-frame full recompute the incremental rewrite removed, at O(nodes × facts)
+every frame, to produce an agenda that was already correct.
+
+The one thing a classic Rete does at this point that this network does not is
+**conflict resolution** — ordering the pending set by recency/specificity/
+salience before firing. That is legitimate future work, but it belongs in
+`drainAgenda()`: it orders what is pending, it does not compute what is pending.
+Recorded in the header so it lands in the right place.
+
+### Remediation
+
+Deleted `ReteNetwork::evaluate()` (declaration and definition), deleted
+`LawManager::evaluateRete()`, and removed the dead call from `tick()`.
+`agenda()` peeks, `drainAgenda()` takes and clears — two methods, two distinct
+jobs, no third name. Also corrected three comments that still described
+`evaluate()` as predicate-testing every node against every fact each frame; that
+stale description was load-bearing for the wrong mental model.
+
+Build clean; 35/35 `ctest` passing (the suite grew from 30 with intervening
+commits), and the §1 probe re-run unchanged.
+
+**Note for future readers:** this is why the §1 bug was invisible. A name that
+promises recomputation tells every caller that setup order does not matter. It
+did matter, for months, and the name is what hid it.
 
 ---
 
@@ -428,9 +465,16 @@ been arguable:
 - **§4a** — the engine server started in-process and connected to with a real
   `websockets` client.
 
-Claims that a feature is unreachable (§5, §7) are from exhaustive `grep` for
+Claims that a feature is unreachable (§3, §5, §7) are from exhaustive `grep` for
 callers across `src` and `tests`. The 30/30 baseline was established by building
-and running the full `ctest` suite before any changes, and re-run after.
+and running the full `ctest` suite before any changes, and re-run after; the
+2026-08-06 amendment re-established it at 35/35 in the flattened tree.
+
+A note on reviewing review findings: §3 arrived second-hand (from Gemini) and
+was re-derived from the code before being acted on. That was worth doing — the
+diagnosis held, but the recommended remedy did not survive contact with the
+detail that `agenda()` already existed. Take a finding's *diagnosis* and its
+*prescription* as separately checkable.
 
 Not covered: the WebGPU renderer beyond the `SdfWgsl` diff, the Lexeme/language
 subsystem, and correctness of vendored dependency source.

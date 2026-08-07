@@ -14,19 +14,7 @@
 
 class Ourverse : public Singular {
 public:
-    enum class GameMode {
-        Creative,
-        Survival,
-        Spectator
-    };
 
-    GameMode mode = GameMode::Creative;
-    bool physicsEnabled = true;
-
-    void setMode(GameMode m) { mode = m; }
-    GameMode getMode() const { return mode; }
-    void togglePhysics() { physicsEnabled = !physicsEnabled; }
-    bool isPhysicsEnabled() const { return physicsEnabled; }
 
     std::vector<Zone> zones;
     std::vector<Home> homes;

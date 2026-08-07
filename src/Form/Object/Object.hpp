@@ -397,7 +397,7 @@ public:
     void interactWith(Formation&);
     void onInteraction(Formation&);
 
-    void drawSymbolicBody(); // or drawAsGeometry, drawPhysicalShell
+    void drawSymbolicForm(); // or drawAsGeometry, drawPhysicalShell
 
     Object();
     Object(Object&&) = default;
@@ -452,7 +452,7 @@ public:
     // transform in one call (use once per frame). Returns true if applied.
     bool updateAutomations(float dt);
 
-    // Decoupled path for hierarchical targets (e.g. body parts): advance the
+    // Decoupled path for hierarchical targets (e.g. form parts): advance the
     // clock once per frame, then sample as many times as needed against a base.
     void advanceAutomations(float dt);
     glm::mat4 sampleAutomations(const glm::mat4& base) const;
@@ -640,7 +640,7 @@ public:
 
     virtual ~Object() = default;
 
-    // Owning body part (non-null when this Object is a sub-object of a BodyPart)
+    // Owning form part (non-null when this Object is a sub-object of a BodyPart)
     void setOwnerBodyPart(BodyPart* owner) { part = owner; }
     BodyPart* getOwnerBodyPart() const { return part; }
 

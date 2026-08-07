@@ -10,7 +10,7 @@ class EngineServer:
         self.connected_clients = set()
         self.loop = None
 
-    async def handler(self, websocket, path):
+    async def handler(self, websocket):
         print(f"[EngineServer] New C++ Engine connected from {websocket.remote_address}")
         self.connected_clients.add(websocket)
         try:
@@ -36,7 +36,7 @@ class EngineServer:
             pass
         finally:
             print(f"[EngineServer] Engine disconnected {websocket.remote_address}")
-            self.connected_clients.remove(websocket)
+            self.connected_clients.discard(websocket)
 
     async def stream_ai_action(self, websocket, context, target_id):
         # We assume ai_service is available in the module path (started from app.py)

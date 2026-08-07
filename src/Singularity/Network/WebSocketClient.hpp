@@ -19,8 +19,11 @@ public:
     // Disconnect from the server
     void disconnect();
 
-    // Send a payload (text or binary) to the server
-    void send(const std::string& payload);
+    // Check if connected
+    bool isConnected() const;
+
+    // Send a payload (text or binary) to the server. Returns true if successful.
+    bool send(const std::string& payload);
 
     // Register a callback for when a message is received
     void onMessage(std::function<void(const std::string&)> callback);

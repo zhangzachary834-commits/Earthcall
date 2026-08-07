@@ -220,7 +220,7 @@ void Object::drawFieldModel() const {
     // cannot fall back to the cached mesh, which is why this asks rather than
     // always calling drawImplicit.
     if (r.rendersImplicitExactly()) {
-        r.drawImplicit(getFieldData(), getFieldExtent(), mat);
+        r.drawImplicit(getFieldData(), getFieldExtent(), mat, nullptr);
         return;
     }
     r.drawMesh(_fieldMesh, mat);

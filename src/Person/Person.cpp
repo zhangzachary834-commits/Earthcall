@@ -517,26 +517,7 @@ void Person::update(float deltaTime) {
 
 void Person::updateState(float deltaTime) {
     // Natural state changes over time
-    if (mode == GameMode::Survival) {
-        // Hunger and thirst increase over time
-        state.hunger += deltaTime * 0.1f;  // Hunger per second
-        state.thirst += deltaTime * 0.15f; // Thirst per second
-        
-        // Energy decreases with hunger and thirst
-        if (state.hunger > 50.0f || state.thirst > 50.0f) {
-            state.energy -= deltaTime * 2.0f;
-        }
-        
-        // Health decreases with extreme hunger/thirst
-        if (state.hunger > 90.0f || state.thirst > 90.0f) {
-            modifyHealth(-deltaTime * 5.0f);
-        }
-        
-        // Natural energy regeneration
-        if (state.hunger < 30.0f && state.thirst < 30.0f) {
-            state.energy += deltaTime * 5.0f;
-        }
-    }
+
     
     // Clamp values
     state.hunger = std::min(state.hunger, 100.0f);
@@ -818,9 +799,7 @@ void Person::setWeight(float w) {
 }
 
 void Person::applyForce(const glm::vec3& force) {
-    if (physicsEnabled) {
-        acceleration += force / state.weight;  // F = ma
-    }
+    acceleration += force / state.weight;  // F = ma
 }
 
 void Person::setVelocity(const glm::vec3& vel) {
@@ -828,8 +807,6 @@ void Person::setVelocity(const glm::vec3& vel) {
 }
 
 void Person::updatePhysics(float deltaTime) {
-    if (!physicsEnabled) return;
-    
     // Update velocity
     velocity += acceleration * deltaTime;
     

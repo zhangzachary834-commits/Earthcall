@@ -79,12 +79,13 @@ void OpenGLRenderer::drawMesh(const geom::TessMesh& mesh, const RenderMaterial& 
 }
 
 void OpenGLRenderer::drawImplicit(const geom::SdfNode& field, float extent,
-                                  const RenderMaterial& mat) {
+                                  const RenderMaterial& material,
+                                  const geom::FieldNode* fieldNode) {
     // Fixed-function GL has no raymarcher, so a field is drawn by tessellating it
     // and reusing drawMesh. Callers that already cache a field mesh (Object holds
     // _fieldMesh) should call drawMesh directly; this exists so the interface is
     // honest for callers that only have the SDF. WebGPU (M6) will raymarch here.
-    drawMesh(geom::tessellateSdf(field, extent), mat);
+    drawMesh(geom::tessellateSdf(field, extent), material);
 }
 
 void OpenGLRenderer::drawLines(const std::vector<std::pair<glm::vec3, glm::vec3>>& segments,

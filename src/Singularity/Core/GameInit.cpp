@@ -143,7 +143,7 @@ bool Game::init() {
     _mainMenu.addOption("Save Manager", GLFW_KEY_G, [this]() { _saveLoad.showManager = true; });
     _mainMenu.addOption("Toggle Chat", GLFW_KEY_H, [this]() { _showChatWindow = !_showChatWindow; });
     _mainMenu.addOption("Toggle Toolbar", GLFW_KEY_T, [this]() { _showToolbar = !_showToolbar; });
-    _mainMenu.addOption("Toggle Physics", GLFW_KEY_P, [this]() { _world.togglePhysics(); });
+
     _mainMenu.addOption("Toggle Legacy Engine", GLFW_KEY_E, [this]() {
         bool newState = !Physics::getLegacyEngineEnabled();
         Physics::setLegacyEngineEnabled(newState);
@@ -184,8 +184,6 @@ bool Game::init() {
 
     printf("[Init] Checkpoint C: baseline objects created\n");
 
-    // Physics default true
-    _world.setMode(Ourverse::GameMode::Creative);
 
     // Ensure _player initial position matches _camera.pos
     glm::vec3 anchor = _camera.pos - glm::vec3(0.0f, _player.getBody().getEyeHeight(), 0.0f);
@@ -257,9 +255,7 @@ bool Game::init() {
     _keyboardHandler.bindKey(GLFW_KEY_2, "perspective_second_person", [this]() { _currentPerspective = PerspectiveMode::SecondPerson; });
     _keyboardHandler.bindKey(GLFW_KEY_3, "perspective_third_person", [this]() { _currentPerspective = PerspectiveMode::ThirdPerson; });
     _keyboardHandler.bindKey(GLFW_KEY_F, "toggle_flight", [this]() {
-        if (_world.getMode() != Ourverse::GameMode::Survival) {
-            Physics::toggleFlying();
-        }
+        Physics::toggleFlying();
     });
     _keyboardHandler.bindKey(GLFW_KEY_C, "switch_to_character_zone", [this]() {
         const auto& zones = mgr.zones();

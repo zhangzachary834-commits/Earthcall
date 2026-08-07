@@ -31,8 +31,13 @@ void WebSocketClient::disconnect() {
     std::cout << "[WebSocketClient] (Desktop Mock) Disconnecting." << std::endl;
 }
 
-void WebSocketClient::send(const std::string& payload) {
-    std::cout << "[WebSocketClient] (Desktop Mock) Sent: " << payload << std::endl;
+bool WebSocketClient::isConnected() const {
+    return false; // Desktop mock is never connected
+}
+
+bool WebSocketClient::send(const std::string& payload) {
+    std::cout << "[WebSocketClient] (Desktop Mock) Dropped: " << payload << std::endl;
+    return false;
 }
 
 void WebSocketClient::onMessage(std::function<void(const std::string&)> callback) {

@@ -35,8 +35,18 @@ app.register_blueprint(api_bp)
 from events import register_socket_events
 register_socket_events(socketio)
 
-# Import and start the Raw WebSocket Engine Server
+# Start the Raw WebSocket Server for the Engine on port 5001 (unconditionally on loopback)
 from engine_server import start_engine_server
+engine_port = int(os.environ.get('ENGINE_PORT', 5001))
+engine_server = start_engine_server(host="127.0.0.1", port=engine_port)
+
+# Initialize Robotics Integrations
+sys.path.insert(0, str(_SRC / "Integration" / "py"))
+from robotics.connection_registry import ConnectionRegistry
+from robotics.engine_sync import EngineSync
+
+connection_registry = ConnectionRegistry()
+engine_sync = EngineSync(engine_server)
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
@@ -44,18 +54,6 @@ if __name__ == '__main__':
     debug = os.environ.get('DEBUG', 'False').lower() in ('true', '1', 't')
     
     print(f"Starting Earthcall Python Backend on {host}:{port}")
-    
-    # Start the Raw WebSocket Server for the Engine on port 5001
-    engine_port = int(os.environ.get('ENGINE_PORT', 5001))
-    engine_server = start_engine_server(host=host, port=engine_port)
-    
-    # Initialize Robotics Integrations
-    sys.path.insert(0, str(_SRC / "Integration" / "py"))
-    from robotics.connection_registry import ConnectionRegistry
-    from robotics.engine_sync import EngineSync
-    
-    connection_registry = ConnectionRegistry()
-    engine_sync = EngineSync(engine_server)
     
     # Start the Flask-SocketIO Meta-Server
     socketio.run(app, host=host, port=port, debug=debug, allow_unsafe_werkzeug=True, use_reloader=False)

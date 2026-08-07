@@ -708,11 +708,12 @@ const WebGpuRenderer::SdfPipeline* WebGpuRenderer::sdfPipeline(const std::string
 }
 
 void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, float extent,
-                                  const RenderMaterial& mat) {
+                                  const RenderMaterial& mat,
+                                  const geom::FieldNode* fieldNode) {
     if (!_pass) return;
 
     // Compile the tree. Structure -> WGSL (cached), numbers -> a buffer.
-    const sdfwgsl::Program prog = sdfwgsl::compile(field);
+    const sdfwgsl::Program prog = sdfwgsl::compile(field, fieldNode);
     const SdfPipeline* sp = sdfPipeline(prog.wgsl);
     if (!sp) return;
 

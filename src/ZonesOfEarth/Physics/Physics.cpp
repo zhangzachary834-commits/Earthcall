@@ -34,8 +34,8 @@ namespace Physics {
     bool getLegacyEngineEnabled() { return g_legacyEngineEnabled; }
     void setLegacyEngineEnabled(bool enabled) { g_legacyEngineEnabled = enabled; }
 
-    // Map Object* to RigidBody
-    static std::unordered_map<Object*, RigidBody> g_objectBodies;
+    // Map Object* to RigidForm
+    static std::unordered_map<Object*, RigidForm> g_objectForms;
     // Pairs touching as of the last resolved frame. There's no symmetric
     // physics callback for "stopped touching" the way there is for a fresh
     // collision, so we diff this set frame-to-frame to synthesize the edge
@@ -118,12 +118,12 @@ namespace Physics {
         // We keep legacy gravity/air as fallback when no laws exist
         const auto& laws = getLaws();
 
-        // 1. Clear forces & apply gravity to each body
+        // 1. Clear forces & apply gravity to each form
         for (const auto& upObj : objects) {
             if (!upObj) continue;
             auto* obj = upObj.get();
-            RigidBody& body = getBodyFor(obj);
-            clearForces(body);
+            RigidForm& form = getFormFor(obj);
+            clearForces(form);
             bool appliedAny = false;
             for (const auto& law : laws) {
                 if (!law.enabled) continue;
@@ -132,13 +132,13 @@ namespace Physics {
                     case LawType::Gravity: {
                         glm::vec3 dir = glm::normalize(law.direction);
                         if (glm::length(dir) < 1e-6f) dir = glm::vec3(0, -1, 0);
-                        applyForce(body, dir * (law.strength * body.mass));
+                        applyForce(form, dir * (law.strength * form.mass));
                         appliedAny = true;
                         break;
                     }
                     case LawType::AirResistance: {
-                        glm::vec3 drag = -law.strength * body.velocity; // linear drag
-                        applyForce(body, drag);
+                        glm::vec3 drag = -law.strength * form.velocity; // linear drag
+                        applyForce(form, drag);
                         appliedAny = true;
                         break;
                     }
@@ -156,18 +156,18 @@ namespace Physics {
                         if (len > 1e-4f) {
                             glm::vec3 dir = delta / len;
                             // Use strength as acceleration magnitude per unit mass
-                            applyForce(body, dir * (law.strength * body.mass));
+                            applyForce(form, dir * (law.strength * form.mass));
                             appliedAny = true;
                         }
                         break;
                     }
                     case LawType::CustomForce: {
-                        if (law.customApply) law.customApply(*obj, body, deltaTime);
+                        if (law.customApply) law.customApply(*obj, form, deltaTime);
                         else {
                             // Generic directional force with strength
                             glm::vec3 dir = glm::normalize(law.direction);
                             if (glm::length(dir) > 1e-6f)
-                                applyForce(body, dir * law.strength);
+                                applyForce(form, dir * law.strength);
                         }
                         appliedAny = true;
                         break;
@@ -180,11 +180,11 @@ namespace Physics {
             }
             // Fallback legacy gravity/air if no law applied a force
             if (!laws.empty() && !appliedAny) {
-                // no-op; body has no forces this frame
+                // no-op; form has no forces this frame
             } else if (laws.empty()) {
-                applyForce(body, glm::vec3(0.0f, -gravityAccel * body.mass, 0.0f));
-                glm::vec3 dragForce = -airResistance * body.velocity;
-                applyForce(body, dragForce);
+                applyForce(form, glm::vec3(0.0f, -gravityAccel * form.mass, 0.0f));
+                glm::vec3 dragForce = -airResistance * form.velocity;
+                applyForce(form, dragForce);
             }
         }
 
@@ -199,13 +199,13 @@ namespace Physics {
             for (size_t i = 0; i < count; ++i) {
                 Object* a = objects[i].get(); if (!a) continue; if (!objectMatchesTarget(*a, gravityFieldTarget)) continue;
                 glm::vec3 posA = a->getWorldCenter();
-                RigidBody& bodyA = getBodyFor(a);
-                float massA = getObjectMass(a, bodyA.mass);
+                RigidForm& formA = getFormFor(a);
+                float massA = getObjectMass(a, formA.mass);
                 for (size_t j = i + 1; j < count; ++j) {
                     Object* b = objects[j].get(); if (!b) continue; if (!objectMatchesTarget(*b, gravityFieldTarget)) continue;
                     glm::vec3 posB = b->getWorldCenter();
-                    RigidBody& bodyB = getBodyFor(b);
-                    float massB = getObjectMass(b, bodyB.mass);
+                    RigidForm& formB = getFormFor(b);
+                    float massB = getObjectMass(b, formB.mass);
                     glm::vec3 r = posB - posA;
                     float dist2 = glm::dot(r, r) + g_softeningEps * g_softeningEps;
                     if (dist2 <= 1e-12f) continue;
@@ -214,8 +214,8 @@ namespace Physics {
                     // Force magnitude: G * m1 * m2 / r^2
                     float magnitude = g_gravityConstant * massA * massB / dist2;
                     glm::vec3 force = dir * magnitude;
-                    applyForce(bodyA,  force);
-                    applyForce(bodyB, -force);
+                    applyForce(formA,  force);
+                    applyForce(formB, -force);
                 }
             }
         }
@@ -231,8 +231,8 @@ namespace Physics {
             glm::vec3 dir = delta / dist;
             float displacement = dist - bond.restLength;
             glm::vec3 force = dir * (bond.strength * displacement);
-            applyForce(getBodyFor(bond.a),  force);
-            applyForce(getBodyFor(bond.b), -force);
+            applyForce(getFormFor(bond.a),  force);
+            applyForce(getFormFor(bond.b), -force);
         }
 
         // Auto-create bonds based on geometry rules (simple n^2 loop for now)
@@ -248,11 +248,11 @@ namespace Physics {
             }
         }
 
-        // 3. Integrate each body and update object transforms
+        // 3. Integrate each form and update object transforms
         for (const auto& upObj : objects) {
             if (!upObj) continue;
             auto* obj = upObj.get();
-            RigidBody& body = getBodyFor(obj);
+            RigidForm& form = getFormFor(obj);
             glm::vec3 pos = getObjectPos(obj);
             // Use baseline unless an AirResistance law targets this object
             bool airLawForObject = false;
@@ -261,7 +261,7 @@ namespace Physics {
                 if (law.type != LawType::AirResistance) continue;
                 if (objectMatchesTarget(*obj, law.target)) { airLawForObject = true; break; }
             }
-            integrate(body, pos, deltaTime, airLawForObject ? 0.0f : airResistance, groundY);
+            integrate(form, pos, deltaTime, airLawForObject ? 0.0f : airResistance, groundY);
             setObjectPos(obj, pos);
         }
 
@@ -334,11 +334,11 @@ namespace Physics {
                 setObjectPos(a, posA);
                 setObjectPos(b, posB);
 
-                RigidBody& bodyA = getBodyFor(a);
-                RigidBody& bodyB = getBodyFor(b);
-                float impactForce = glm::length(bodyA.velocity) + glm::length(bodyB.velocity);
-                bodyA.velocity -= collisionNormal * glm::dot(bodyA.velocity, collisionNormal);
-                bodyB.velocity -= collisionNormal * glm::dot(bodyB.velocity, collisionNormal);
+                RigidForm& formA = getFormFor(a);
+                RigidForm& formB = getFormFor(b);
+                float impactForce = glm::length(formA.velocity) + glm::length(formB.velocity);
+                formA.velocity -= collisionNormal * glm::dot(formA.velocity, collisionNormal);
+                formB.velocity -= collisionNormal * glm::dot(formB.velocity, collisionNormal);
                 
                 glm::vec3 collisionPoint = collision.point;
                 PhysicsCollisionEvent collisionEvent(a, b, collisionPoint, collisionNormal, impactForce);
@@ -375,18 +375,18 @@ namespace Physics {
         g_touchingPairs = std::move(currentTouching);
     }
 
-    RigidBody& getBodyFor(Object* obj, float defaultMass) {
-        auto& body = g_objectBodies[obj];
-        if (body.mass <= 0.0f) body.mass = defaultMass;
-        // Keep body mass synchronized with object's declared mass attribute (if present)
-        float attributeMass = getObjectMass(obj, body.mass);
-        if (attributeMass > 0.0f && std::isfinite(attributeMass)) body.mass = attributeMass;
-        return body;
+    RigidForm& getFormFor(Object* obj, float defaultMass) {
+        auto& form = g_objectForms[obj];
+        if (form.mass <= 0.0f) form.mass = defaultMass;
+        // Keep form mass synchronized with object's declared mass attribute (if present)
+        float attributeMass = getObjectMass(obj, form.mass);
+        if (attributeMass > 0.0f && std::isfinite(attributeMass)) form.mass = attributeMass;
+        return form;
     }
 
     // Reset registry of rigid bodies (e.g., after loading a scene)
     void resetRigidBodies() {
-        g_objectBodies.clear();
+        g_objectForms.clear();
         g_touchingPairs.clear();
     }
 
@@ -396,23 +396,23 @@ namespace Physics {
     }
 
     // ---------------------------------------------------------------------
-    // Basic rigid-body helpers
+    // Basic rigid-form helpers
     // ---------------------------------------------------------------------
 
-    void applyForce(RigidBody& body, const glm::vec3& force) {
-        body.accumulatedForce += force;
+    void applyForce(RigidForm& form, const glm::vec3& force) {
+        form.accumulatedForce += force;
     }
 
-    void clearForces(RigidBody& body) {
-        body.accumulatedForce = glm::vec3(0.0f);
+    void clearForces(RigidForm& form) {
+        form.accumulatedForce = glm::vec3(0.0f);
     }
 
-    void integrate(RigidBody& body, glm::vec3& position, float deltaTime, float airResistance, float groundY) {
+    void integrate(RigidForm& form, glm::vec3& position, float deltaTime, float airResistance, float groundY) {
         // Semi-implicit Euler: v += (F/m) * dt, p += v * dt
 
         // Drag force proportional to velocity (linear air resistance)
-        glm::vec3 dragForce = -airResistance * body.velocity;
-        applyForce(body, dragForce);
+        glm::vec3 dragForce = -airResistance * form.velocity;
+        applyForce(form, dragForce);
 
         // If the object is resting on (or very near) the ground, cancel any
         // net downward force so gravity doesn't keep pulling it through the
@@ -421,12 +421,12 @@ namespace Physics {
         bool onGround = (position.y - groundY) < GROUND_REST_EPS;
         if (onGround) {
             // Cancel downward component of accumulated force (ground reaction)
-            if (body.accumulatedForce.y < 0.0f) {
-                body.accumulatedForce.y = 0.0f;
+            if (form.accumulatedForce.y < 0.0f) {
+                form.accumulatedForce.y = 0.0f;
             }
             // Kill any residual downward velocity
-            if (body.velocity.y < 0.0f) {
-                body.velocity.y = 0.0f;
+            if (form.velocity.y < 0.0f) {
+                form.velocity.y = 0.0f;
             }
             // Snap position exactly to ground if slightly below
             if (position.y < groundY) {
@@ -434,25 +434,25 @@ namespace Physics {
             }
         }
 
-        glm::vec3 acceleration = body.accumulatedForce / std::max(0.0001f, body.mass);
-        body.velocity += acceleration * deltaTime;
-        position      += body.velocity * deltaTime;
+        glm::vec3 acceleration = form.accumulatedForce / std::max(0.0001f, form.mass);
+        form.velocity += acceleration * deltaTime;
+        position      += form.velocity * deltaTime;
 
         // Final safety clamp: never allow below ground
         if (position.y < groundY) {
             position.y = groundY;
-            if (body.velocity.y < 0.0f) body.velocity.y = 0.0f;
+            if (form.velocity.y < 0.0f) form.velocity.y = 0.0f;
         }
 
-        clearForces(body);
+        clearForces(form);
     }
 
-    double kineticEnergy(const RigidBody& body) {
-        return 0.5 * body.mass * glm::dot(body.velocity, body.velocity);
+    double kineticEnergy(const RigidForm& form) {
+        return 0.5 * form.mass * glm::dot(form.velocity, form.velocity);
     }
 
-    double potentialEnergy(const RigidBody& body, float height, float gravityAccel) {
-        return body.mass * gravityAccel * height;
+    double potentialEnergy(const RigidForm& form, float height, float gravityAccel) {
+        return form.mass * gravityAccel * height;
     }
 
     RelationManager& registry() { return g_physicsRegistry; }
@@ -470,23 +470,21 @@ namespace Physics {
     }
 
     void applyGravity(glm::vec3& position,
-                      bool physicsEnabled,
-                      GameMode mode,
                       float deltaTime,
                       float groundY,
                       float gravityAccel,
                       float airResistance) {
 
-        // Preserve a single rigid body to represent the player/camera
-        static RigidBody playerBody{ /*mass*/ 70.0f };
+        // Preserve a single rigid form to represent the player/camera
+        static RigidForm playerForm{ /*mass*/ 70.0f };
 
-        if (!physicsEnabled || mode == GameMode::Spectator || isFlying) {
+        if (isFlying) {
             // Reset velocity when physics disabled or in non-physical modes
-            playerBody.velocity = glm::vec3(0.0f);
+            playerForm.velocity = glm::vec3(0.0f);
             return;
         }
 
-        clearForces(playerBody);
+        clearForces(playerForm);
 
         // First, apply laws that target the camera as if it were an object
         // We re-use the law registry by constructing a dummy LawTarget check
@@ -499,13 +497,13 @@ namespace Physics {
                 case LawType::Gravity: {
                     glm::vec3 dir = glm::normalize(law.direction);
                     if (glm::length(dir) < 1e-6f) dir = glm::vec3(0, -1, 0);
-                    applyForce(playerBody, dir * (law.strength * playerBody.mass));
+                    applyForce(playerForm, dir * (law.strength * playerForm.mass));
                     anyLawApplied = true;
                     break;
                 }
                 case LawType::AirResistance: {
-                    glm::vec3 drag = -law.strength * playerBody.velocity;
-                    applyForce(playerBody, drag);
+                    glm::vec3 drag = -law.strength * playerForm.velocity;
+                    applyForce(playerForm, drag);
                     anyLawApplied = true;
                     break;
                 }
@@ -516,17 +514,17 @@ namespace Physics {
         if (!anyLawApplied) {
             // Legacy fallback
             const float GROUND_EPS = 1e-4f;
-            bool grounded = std::abs(position.y - groundY) <= GROUND_EPS && playerBody.velocity.y <= 0.0f;
-            if (!grounded) applyForce(playerBody, glm::vec3(0.0f, -gravityAccel * playerBody.mass, 0.0f));
-            else playerBody.velocity.y = 0.0f;
+            bool grounded = std::abs(position.y - groundY) <= GROUND_EPS && playerForm.velocity.y <= 0.0f;
+            if (!grounded) applyForce(playerForm, glm::vec3(0.0f, -gravityAccel * playerForm.mass, 0.0f));
+            else playerForm.velocity.y = 0.0f;
         }
 
         // integrate() now handles ground-rest cancellation internally
-        integrate(playerBody, position, deltaTime, airResistance, groundY);
+        integrate(playerForm, position, deltaTime, airResistance, groundY);
 
         // Optionally: expose energies for debugging
-        // double ke = kineticEnergy(playerBody);
-        // double pe = potentialEnergy(playerBody, position.y - groundY, gravityAccel);
+        // double ke = kineticEnergy(playerForm);
+        // double pe = potentialEnergy(playerForm, position.y - groundY, gravityAccel);
     }
 
     void setFlying(bool enabled) { isFlying = enabled; }
@@ -668,9 +666,9 @@ namespace Physics {
                 } catch (...) {}
             }
         }
-        // Fallback to registered rigid body mass
-        auto it = g_objectBodies.find(obj);
-        if (it != g_objectBodies.end() && it->second.mass > 0.0f) return it->second.mass;
+        // Fallback to registered rigid form mass
+        auto it = g_objectForms.find(obj);
+        if (it != g_objectForms.end() && it->second.mass > 0.0f) return it->second.mass;
         return defaultMass;
     }
 
@@ -681,8 +679,8 @@ namespace Physics {
         for (const auto& up : objects) {
             if (!up) continue; Object* obj = up.get();
             if (target && !objectMatchesTarget(*obj, *target)) continue;
-            RigidBody& body = getBodyFor(obj);
-            float m = getObjectMass(obj, body.mass);
+            RigidForm& form = getFormFor(obj);
+            float m = getObjectMass(obj, form.mass);
             if (m <= 0.0f) continue;
             glm::vec3 pos = obj->getWorldCenter();
             sumWeighted += pos * m;
@@ -701,8 +699,8 @@ namespace Physics {
         for (const auto& up : objects) {
             if (!up) continue; Object* obj = up.get();
             if (target && !objectMatchesTarget(*obj, *target)) continue;
-            RigidBody& body = getBodyFor(obj);
-            float m = getObjectMass(obj, body.mass);
+            RigidForm& form = getFormFor(obj);
+            float m = getObjectMass(obj, form.mass);
             if (m <= 0.0f) continue;
             glm::vec3 pos = obj->getWorldCenter();
             glm::vec3 r = pos - position;

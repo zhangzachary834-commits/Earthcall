@@ -1,4 +1,5 @@
 #include "Integration/RealWebView.hpp"
+#include "Integration/EarthcallAPI.hpp"
 #include "Integration/SecurityManager.hpp"
 #include <iostream>
 #include <map>
@@ -787,8 +788,22 @@ void RealWebView::_handleBrushCreate(const nlohmann::json& data) {
         float size = data["size"];
         std::string texture = data["texture"];
         
-        // TODO: Connect to actual BrushSystem when available
-        std::cout << "🎨 [INTEGRATION] Would create brush: " << name << " (color: " << color << ", size: " << size << ", texture: " << texture << ")" << std::endl;
+        std::cout << "🎨 [INTEGRATION] Creating brush: " << name << std::endl;
+        
+        glm::vec3 vecColor(1.0f);
+        if (color.length() == 7 && color[0] == '#') {
+            int r = std::stoi(color.substr(1, 2), nullptr, 16);
+            int g = std::stoi(color.substr(3, 2), nullptr, 16);
+            int b = std::stoi(color.substr(5, 2), nullptr, 16);
+            vecColor = glm::vec3(r/255.0f, g/255.0f, b/255.0f);
+        }
+        
+        EarthcallAPI::BrushSettings settings;
+        settings.size = size;
+        settings.color = vecColor;
+        settings.brush_type = texture;
+        
+        getEarthcallAPI().modifyBrushSettings(settings);
         
         // Send confirmation back to web
         nlohmann::json response = {
@@ -805,8 +820,11 @@ void RealWebView::_handleBrushSetActive(const nlohmann::json& data) {
     try {
         std::string name = data["name"];
         
-        // TODO: Connect to actual BrushSystem when available
-        std::cout << "🎨 [INTEGRATION] Would set active brush: " << name << std::endl;
+        std::cout << "🎨 [INTEGRATION] Setting active brush: " << name << std::endl;
+        
+        EarthcallAPI::BrushSettings settings;
+        settings.brush_type = name;
+        getEarthcallAPI().modifyBrushSettings(settings);
         
         nlohmann::json response = {
             {"type", "brush_active_set"},
@@ -824,8 +842,13 @@ void RealWebView::_handleBrushPaint(const nlohmann::json& data) {
         float y = data["y"];
         float pressure = data["pressure"];
         
-        // TODO: Connect to actual BrushSystem when available
-        std::cout << "🎨 [INTEGRATION] Would paint at (" << x << ", " << y << ") with pressure " << pressure << std::endl;
+        std::cout << "🎨 [INTEGRATION] Painting at (" << x << ", " << y << ") with pressure " << pressure << std::endl;
+        
+        EarthcallAPI::BrushStroke stroke;
+        stroke.points.push_back(glm::vec3(x, y, 0.0f));
+        stroke.settings.pressure_sensitive = true;
+        
+        getEarthcallAPI().createBrushStroke(stroke);
     } catch (const std::exception& e) {
         std::cerr << "❌ Failed to paint: " << e.what() << std::endl;
     }
@@ -833,12 +856,12 @@ void RealWebView::_handleBrushPaint(const nlohmann::json& data) {
 
 void RealWebView::_handleBrushGetAll() {
     try {
-        // TODO: Connect to actual BrushSystem when available
-        std::cout << "🎨 [INTEGRATION] Would get all brushes" << std::endl;
+        std::vector<std::string> types = getEarthcallAPI().getAvailableBrushTypes();
+        std::cout << "🎨 [INTEGRATION] Getting all brushes" << std::endl;
         
         nlohmann::json response = {
             {"type", "brush_list"},
-            {"data", {{"brushes", {"demo_brush", "web_brush", "web_brush_blue"}}}}
+            {"data", {{"brushes", types}}}
         };
         sendMessageToWeb(response.dump());
     } catch (const std::exception& e) {
@@ -855,6 +878,8 @@ void RealWebView::_handleDesignCreateShape(const nlohmann::json& data) {
         float width = data["width"];
         float height = data["height"];
         std::string color = data["color"];
+        
+        (void)width; (void)height;
         
         // TODO: Connect to actual DesignSystem when available
         std::cout << "🎨 [INTEGRATION] Would create shape: " << type << " at (" << x << ", " << y << ") with color " << color << std::endl;
@@ -928,10 +953,10 @@ void RealWebView::_handleDesignGetAll() {
 void RealWebView::_handleAvatarCreate(const nlohmann::json& data) {
     try {
         std::string name = data["name"];
-        auto appearance = data["appearance"];
+        std::string appearance = data.value("appearance", "default");
         
-        // TODO: Connect to actual AvatarManager when available
-        std::cout << "👤 [INTEGRATION] Would create avatar: " << name << std::endl;
+        std::cout << "👤 [INTEGRATION] Creating avatar: " << name << std::endl;
+        getEarthcallAPI().createAvatar(name, appearance);
         
         nlohmann::json response = {
             {"type", "avatar_created"},
@@ -948,8 +973,8 @@ void RealWebView::_handleAvatarAnimate(const nlohmann::json& data) {
         std::string name = data["name"];
         std::string animation = data["animation"];
         
-        // TODO: Connect to actual AvatarManager when available
-        std::cout << "👤 [INTEGRATION] Would animate avatar: " << name << " with " << animation << std::endl;
+        std::cout << "👤 [INTEGRATION] Animating avatar: " << name << " with " << animation << std::endl;
+        getEarthcallAPI().animateAvatar(name, animation);
         
         nlohmann::json response = {
             {"type", "avatar_animated"},
@@ -966,10 +991,10 @@ void RealWebView::_handleAvatarSetPosition(const nlohmann::json& data) {
         std::string name = data["name"];
         float x = data["x"];
         float y = data["y"];
-        float z = data["z"];
+        float z = data.value("z", 0.0f);
         
-        // TODO: Connect to actual AvatarManager when available
-        std::cout << "👤 [INTEGRATION] Would set avatar position: " << name << " to (" << x << ", " << y << ", " << z << ")" << std::endl;
+        std::cout << "👤 [INTEGRATION] Setting avatar position: " << name << " to (" << x << ", " << y << ", " << z << ")" << std::endl;
+        getEarthcallAPI().setAvatarPosition(name, glm::vec3(x, y, z));
         
         nlohmann::json response = {
             {"type", "avatar_position_set"},
@@ -983,12 +1008,12 @@ void RealWebView::_handleAvatarSetPosition(const nlohmann::json& data) {
 
 void RealWebView::_handleAvatarGetAll() {
     try {
-        // TODO: Connect to actual AvatarManager when available
-        std::cout << "👤 [INTEGRATION] Would get all avatars" << std::endl;
+        std::vector<std::string> avatars = getEarthcallAPI().getAvatars();
+        std::cout << "👤 [INTEGRATION] Getting all avatars" << std::endl;
         
         nlohmann::json response = {
             {"type", "avatar_list"},
-            {"data", {{"avatars", {"Demo Alice", "Demo Bob", "WebUser"}}}}
+            {"data", {{"avatars", avatars}}}
         };
         sendMessageToWeb(response.dump());
     } catch (const std::exception& e) {
@@ -1005,8 +1030,8 @@ void RealWebView::_handleWorldCreateZone(const nlohmann::json& data) {
         float width = data["width"];
         float height = data["height"];
         
-        // TODO: Connect to actual ZoneManager when available
-        std::cout << "🌍 [INTEGRATION] Would create zone: " << name << " at (" << x << ", " << y << ") size (" << width << "x" << height << ")" << std::endl;
+        std::cout << "🌍 [INTEGRATION] Creating zone: " << name << " at (" << x << ", " << y << ") size " << width << "x" << height << std::endl;
+        getEarthcallAPI().createZone(name, x, y, width, height);
         
         nlohmann::json response = {
             {"type", "zone_created"},
@@ -1025,8 +1050,8 @@ void RealWebView::_handleWorldAddObject(const nlohmann::json& data) {
         float x = data["x"];
         float y = data["y"];
         
-        // TODO: Connect to actual ZoneManager when available
-        std::cout << "🌍 [INTEGRATION] Would add object: " << objectType << " to zone " << zoneName << " at (" << x << ", " << y << ")" << std::endl;
+        std::cout << "🌍 [INTEGRATION] Adding object: " << objectType << " to zone " << zoneName << " at (" << x << ", " << y << ")" << std::endl;
+        getEarthcallAPI().addZoneObject(zoneName, objectType, x, y);
         
         nlohmann::json response = {
             {"type", "object_added"},
@@ -1043,8 +1068,8 @@ void RealWebView::_handleWorldSetTheme(const nlohmann::json& data) {
         std::string zoneName = data["zoneName"];
         std::string theme = data["theme"];
         
-        // TODO: Connect to actual ZoneManager when available
-        std::cout << "🌍 [INTEGRATION] Would set theme: " << theme << " for zone " << zoneName << std::endl;
+        std::cout << "🌍 [INTEGRATION] Setting theme: " << theme << " for zone " << zoneName << std::endl;
+        getEarthcallAPI().setZoneTheme(zoneName, theme);
         
         nlohmann::json response = {
             {"type", "theme_set"},
@@ -1058,12 +1083,12 @@ void RealWebView::_handleWorldSetTheme(const nlohmann::json& data) {
 
 void RealWebView::_handleWorldGetAll() {
     try {
-        // TODO: Connect to actual ZoneManager when available
-        std::cout << "🌍 [INTEGRATION] Would get all zones" << std::endl;
+        std::vector<std::string> zones = getEarthcallAPI().getZones();
+        std::cout << "🌍 [INTEGRATION] Getting all zones" << std::endl;
         
         nlohmann::json response = {
             {"type", "world_list"},
-            {"data", {{"zones", {"Player's Sanctuary", "WebZone", "Demo Zone"}}}}
+            {"data", {{"zones", zones}}}
         };
         sendMessageToWeb(response.dump());
     } catch (const std::exception& e) {
@@ -1129,9 +1154,10 @@ void RealWebView::_handleDataSave(const nlohmann::json& data) {
     try {
         std::string key = data["key"];
         auto value = data["value"];
+        std::string valueStr = value.is_string() ? value.get<std::string>() : value.dump();
         
-        // TODO: Connect to actual SaveSystem when available
-        std::cout << "💾 [INTEGRATION] Would save data: " << key << " = " << value.dump() << std::endl;
+        std::cout << "💾 [INTEGRATION] Saving data: " << key << std::endl;
+        getEarthcallAPI().saveData(key, valueStr);
         
         nlohmann::json response = {
             {"type", "data_saved"},
@@ -1147,12 +1173,12 @@ void RealWebView::_handleDataLoad(const nlohmann::json& data) {
     try {
         std::string key = data["key"];
         
-        // TODO: Connect to actual SaveSystem when available
-        std::cout << "💾 [INTEGRATION] Would load data: " << key << std::endl;
+        std::cout << "💾 [INTEGRATION] Loading data: " << key << std::endl;
+        std::string value = getEarthcallAPI().loadData(key);
         
         nlohmann::json response = {
             {"type", "data_loaded"},
-            {"data", {{"key", key}, {"value", "demo_value"}}}
+            {"data", {{"key", key}, {"value", value}}}
         };
         sendMessageToWeb(response.dump());
     } catch (const std::exception& e) {
@@ -1162,12 +1188,12 @@ void RealWebView::_handleDataLoad(const nlohmann::json& data) {
 
 void RealWebView::_handleDataGetKeys() {
     try {
-        // TODO: Connect to actual SaveSystem when available
-        std::cout << "💾 [INTEGRATION] Would get all data keys" << std::endl;
+        std::vector<std::string> keys = getEarthcallAPI().getDataKeys();
+        std::cout << "💾 [INTEGRATION] Getting all data keys" << std::endl;
         
         nlohmann::json response = {
             {"type", "data_keys"},
-            {"data", {{"keys", {"web_settings", "web_progress", "demo_data"}}}}
+            {"data", {{"keys", keys}}}
         };
         sendMessageToWeb(response.dump());
     } catch (const std::exception& e) {

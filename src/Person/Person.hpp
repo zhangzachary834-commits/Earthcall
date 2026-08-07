@@ -20,11 +20,6 @@ struct PersonLogoutEvent;
 
 class Person : public Singular {
 public:
-    enum class GameMode {
-        Creative,
-        Survival,
-        Spectator
-    };
 
     /* NOTE: Refactor the "game-like" aspects of Person added by Cursor to a separate Avatar system.
     It's first and foremost a digital metaverse, not a game.
@@ -74,8 +69,7 @@ public:
     };
 
     std::string displayName;
-    GameMode mode = GameMode::Creative;
-    bool physicsEnabled = false;
+
     glm::vec3 position{0.0f, 0.0f, 0.0f};
     glm::vec3 velocity{0.0f, 0.0f, 0.0f};
     glm::vec3 acceleration{0.0f, 0.0f, 0.0f};
@@ -154,10 +148,7 @@ public:
 
     const std::string& getDisplayName() const { return displayName; }
 
-    void setMode(GameMode m) { mode = m; }
-    GameMode getMode() const { return mode; }
-    void togglePhysics() { physicsEnabled = !physicsEnabled; }
-    bool isPhysicsEnabled() const { return physicsEnabled; }
+
 
     // Update all body part world transforms based on current position
     void updatePose();

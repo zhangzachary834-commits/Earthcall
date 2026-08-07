@@ -10,18 +10,10 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build" FORCE)
 endif()
 
-# We need OpenGL, GLFW, OpenSSL, ZLIB
+# We need OpenGL, OpenSSL, ZLIB
 find_package(OpenGL REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(OpenSSL REQUIRED)
-# glfw3 is sometimes named glfw3, sometimes glfw
-find_package(glfw3 QUIET)
-if (NOT glfw3_FOUND)
-  # fallback using pkg-config if needed, or simple link
-  find_library(GLFW_LIB NAMES glfw3 glfw HINTS ${CMAKE_CURRENT_SOURCE_DIR}/local_deps/glfw_install/lib)
-else()
-  set(GLFW_LIB glfw)
-endif()
 
 # macOS specific frameworks
 if(APPLE)
@@ -46,12 +38,22 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Person/Body
     ${CMAKE_CURRENT_SOURCE_DIR}/imgui
     ${CMAKE_CURRENT_SOURCE_DIR}/local_deps/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/local_deps/glfw_install/include
     ${CMAKE_CURRENT_SOURCE_DIR}/third_party/flatbuffers/include
 )
 
-# Fetch standalone ASIO and WebSocketPP for native networking
+# Fetch standalone ASIO, WebSocketPP, and GLFW
 include(FetchContent)
+
+FetchContent_Declare(
+    glfw
+    GIT_REPOSITORY https://github.com/glfw/glfw.git
+    GIT_TAG 3.3.8
+)
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(glfw)
+set(GLFW_LIB glfw)
 
 FetchContent_Declare(
     asio
@@ -67,9 +69,18 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(websocketpp)
 
+FetchContent_Declare(
+    vhacd
+    GIT_REPOSITORY https://github.com/kmammou/v-hacd.git
+    GIT_TAG v4.1.0
+)
+set(ENABLE_TESTING OFF CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(vhacd)
+
 include_directories(
     ${asio_SOURCE_DIR}/asio/include
     ${websocketpp_SOURCE_DIR}
+    ${vhacd_SOURCE_DIR}/include
 )
 add_definitions(-DASIO_STANDALONE -D_WEBSOCKETPP_CPP11_STL_)
 

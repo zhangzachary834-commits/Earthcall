@@ -55,8 +55,8 @@ void World::update(float dt){
                 up->updateAutomations(stepDt);
             }
         }
-        if(physicsEnabled && Physics::getLegacyEngineEnabled()){
-            for(const auto& up: _objects) if(up) Physics::getBodyFor(up.get());
+        if(Physics::getLegacyEngineEnabled()){
+            for(const auto& up: _objects) if(up) Physics::getFormFor(up.get());
             Physics::updateBodies(_objects, stepDt, 9.81f, 0.1f, groundY);
         }
     }
@@ -103,7 +103,7 @@ void World::load() {
     
     mode = Mode::Creative;
     // Initialize physics system
-    physicsEnabled = true;
+
     
     // Create a basic ground plane 
     drawGround();

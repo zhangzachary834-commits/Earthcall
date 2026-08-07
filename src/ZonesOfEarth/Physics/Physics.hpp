@@ -14,12 +14,6 @@ namespace Physics {
     bool getLegacyEngineEnabled();
     void setLegacyEngineEnabled(bool enabled);
 
-    // Use Person's GameMode enum instead of storing it in Physics
-    enum class GameMode {
-        Creative,
-        Survival,
-        Spectator
-    };
 
     // Applies gravity and basic physics integration (velocity & air resistance)
     // deltaTime       - elapsed time since last update (seconds)
@@ -27,8 +21,6 @@ namespace Physics {
     // gravityAccel    - gravitational acceleration magnitude (m/s^2)
     // airResistance   - simple linear drag coefficient (0-1, per second)
     void applyGravity(glm::vec3& position,
-                      bool physicsEnabled,
-                      GameMode mode,
                       float deltaTime,
                       float groundY       = 0.0f,
                       float gravityAccel  = 9.81f,
@@ -48,35 +40,35 @@ namespace Physics {
         float magnitude{0.0f};
     };
 
-    // Simple rigid body used for point-mass entities (e.g., the player)
-    struct RigidBody {
+    // Simple rigid form used for point-mass entities (e.g., the player)
+    struct RigidForm {
         float mass{1.0f};                       // kilograms
         glm::vec3 velocity{0.0f};               // metres per second
         glm::vec3 accumulatedForce{0.0f};       // Newtons, reset each step
     };
 
-    // Accumulate an external force on the body (adds to this frame only)
-    void applyForce(RigidBody& body, const glm::vec3& force);
+    // Accumulate an external force on the form (adds to this frame only)
+    void applyForce(RigidForm& form, const glm::vec3& force);
 
     // Clears the force accumulator
-    void clearForces(RigidBody& body);
+    void clearForces(RigidForm& form);
 
     // Integrate motion via semi-implicit Euler and handle ground collision
-    void integrate(RigidBody& body,
+    void integrate(RigidForm& form,
                    glm::vec3& position,
                    float      deltaTime,
                    float      airResistance = 0.1f,
                    float      groundY       = 0.0f);
 
     // Energy helpers
-    double kineticEnergy(const RigidBody& body);
-    double potentialEnergy(const RigidBody& body, float height, float gravityAccel = 9.81f);
+    double kineticEnergy(const RigidForm& form);
+    double potentialEnergy(const RigidForm& form, float height, float gravityAccel = 9.81f);
 
     // --------------------------------------------------------------
-    // RigidBody registry for world Objects
+    // RigidForm registry for world Objects
     // --------------------------------------------------------------
-    // Create (if absent) and retrieve the RigidBody associated with the Object
-    RigidBody& getBodyFor(Object* obj, float defaultMass = 1.0f);
+    // Create (if absent) and retrieve the RigidForm associated with the Object
+    RigidForm& getFormFor(Object* obj, float defaultMass = 1.0f);
 
     // -----------------------------------------------------------------
     // Global registries maintenance (used during scene load/reset)
@@ -206,7 +198,7 @@ namespace Physics {
         glm::vec3 direction{0.0f, -1.0f, 0.0f}; // For gravity/custom directional force
 
         // Optional custom applicator
-        std::function<void(Object&, RigidBody&, float /*dt*/)> customApply;
+        std::function<void(Object&, RigidForm&, float /*dt*/)> customApply;
 
         LawTarget   target;
     };
@@ -225,7 +217,7 @@ namespace Physics {
     // -----------------------------------------------------------------
     // Gravity field helpers (for gameplay and debug visualization)
     // -----------------------------------------------------------------
-    // Resolve the mass to use for an object (reads attribute "mass" if present; falls back to its RigidBody mass or defaultMass)
+    // Resolve the mass to use for an object (reads attribute "mass" if present; falls back to its RigidForm mass or defaultMass)
     float getObjectMass(Object* obj, float defaultMass = 1.0f);
 
     // Compute world center of mass across objects (optionally filter by LawTarget)

@@ -50,8 +50,7 @@ public:
     // on the floor buries the body and the per-bodypart collision resolver
     // fights gravity every frame (the ground-level jitter).
     void setPlayerEyeHeight(float h) { _playerEyeHeight = h; }
-    void togglePhysics() { physicsEnabled = !physicsEnabled; }
-    bool isPhysicsEnabled() const { return physicsEnabled; }
+
     void setMode(Mode m){ mode = m; }
     void load();
     void unload();
@@ -69,6 +68,6 @@ private:
     std::vector<std::shared_ptr<Object>> _objects;
     glm::vec3* _cameraPos = nullptr;
     float _playerEyeHeight = 0.0f;
-    bool physicsEnabled = true;
+
     Mode mode = Mode::Creative;
 }; 

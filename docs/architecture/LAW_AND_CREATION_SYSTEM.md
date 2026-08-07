@@ -190,7 +190,7 @@ and reusing them would make an existing saved world load as something else
 entirely. Condition JSON carrying either now loads as `Kind::Unsupported`:
 never satisfied, loud in the audit log, and re-serialized VERBATIM so opening
 a world in this build does not destroy law text it cannot evaluate. See
-`design_review_remediation.md` §2 (in the repo-root `docs/`, not this tree).
+`../design_review_remediation.md` §2.
 
 **Related (landed):** the Universe carries a relation provider (the engine
 wires the active zone's Formation relations) and `Related` compiles against

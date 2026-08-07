@@ -1458,8 +1458,7 @@ Recorded here so migrations report them instead of routing around them with clos
     reads. That is only safe because binding is retroactive: `bindLawToAlpha` /
     `addBetaNode` backfill the node's memory from the live fact list first, so setup
     order does not matter. Do not add a path that makes a node read without
-    backfilling it — see `design_review_remediation.md` §1 (in the repo-root
-    `docs/`, not this tree).
+    backfilling it — see `../design_review_remediation.md` §1.
 - **No per-phase authority ordering** — two laws in the same phase claiming different
   responsibilities that write the same property is legal and unordered. Jurisdiction
   catches the common case (same responsibility); overlapping *properties* across

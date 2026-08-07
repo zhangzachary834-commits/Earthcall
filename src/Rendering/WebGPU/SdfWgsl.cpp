@@ -421,6 +421,7 @@ fn fs(in: VSOut) -> FSOut {
     var hit = false;
     var transmittance = 1.0;
     var volumetric_scatter = 0.0;
+    var first_hit_t = -1.0;
     
     for (var i = 0; i < 192; i = i + 1) {
         let p = ro + rd * t;
@@ -436,16 +437,17 @@ fn fs(in: VSOut) -> FSOut {
         // Volumetric Field Accumulation
         let density = fieldEval(p);
         if (density > 0.0) {
-            let step_size = max(d, eps);
-            let extinction = density * 0.5; // Tunable constant
+            if (first_hit_t < 0.0) { first_hit_t = t; }
+            let step_size = max(abs(d), eps); // Optical depth uses absolute distance to next bound or small step
+            let extinction = max(density * 0.5, 1e-6); // Tunable constant
+            
+            let old_t = transmittance;
             transmittance *= exp(-extinction * step_size);
-            volumetric_scatter += density * step_size * transmittance;
+            
+            // Analytical integration prevents double attenuation across large steps
+            volumetric_scatter += (density / extinction) * (old_t - transmittance);
         }
-        if (damping > 0.5) {
-            let g = sdfGrad(p);
-            let gl = length(g);
-            if (gl > 1e-6) { d = raw / gl; }
-        }
+        
         if (d < eps) { hit = true; break; }
         t = t + max(d, eps);
         
@@ -459,9 +461,22 @@ fn fs(in: VSOut) -> FSOut {
     
     if (!hit) {
         // Resolve depth/normal garbage when early-exiting (volumetric only, no hard surface hit)
-        // WGSL requires all fields to be initialized, so we write max depth.
-        out.color = vec4<f32>(vec3<f32>(1.0) * volumetric_scatter, 1.0 - transmittance);
-        out.depth = 1.0; 
+        // Set depth to the first volumetric hit so it occludes correctly
+        let final_alpha = 1.0 - transmittance;
+        let c = vec3<f32>(1.0, 1.0, 1.0) * volumetric_scatter;
+        if (final_alpha > 0.0) {
+            out.color = vec4<f32>(c / final_alpha, final_alpha);
+        } else {
+            out.color = vec4<f32>(0.0);
+        }
+        if (first_hit_t >= 0.0) {
+            let hit_p = ro + rd * first_hit_t;
+            let hit_w = (u.model * vec4<f32>(hit_p, 1.0)).xyz;
+            let hit_c = u.viewProj * vec4<f32>(hit_w, 1.0);
+            out.depth = hit_c.z / hit_c.w;
+        } else {
+            out.depth = 1.0; 
+        }
         return out;
     }
 
@@ -487,7 +502,14 @@ fn fs(in: VSOut) -> FSOut {
     let field_rgb = vec3<f32>(1.0, 1.0, 1.0) * volumetric_scatter; // Could be colored by the field later
     
     let final_alpha = clamp(u.baseColor.a + (1.0 - transmittance), 0.0, 1.0);
-    out.color = vec4<f32>(base_rgb * transmittance + field_rgb, final_alpha);
+    let final_rgb = base_rgb * transmittance + field_rgb;
+    
+    if (final_alpha > 0.0) {
+        out.color = vec4<f32>(final_rgb / final_alpha, final_alpha);
+    } else {
+        out.color = vec4<f32>(0.0);
+    }
+    
     // Depth from the ACTUAL hit, so a raymarched field occludes and is occluded by
     // ordinary meshes correctly instead of by its bounding box.
     out.depth = clip.z / clip.w;

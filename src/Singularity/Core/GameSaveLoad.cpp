@@ -92,8 +92,7 @@ nlohmann::json Game::buildSaveJson() const {
     j["currentColor"] = {_currentColor[0], _currentColor[1], _currentColor[2]};
     j["currentTool"]  = static_cast<int>(_currentTool.getType());
 
-    j["worldMode"]    = static_cast<int>(_world.getMode());
-    j["worldPhysics"] = _world.isPhysicsEnabled();
+
 
     // Save physics laws
     {
@@ -410,9 +409,7 @@ void Game::loadState(const std::string& filename) {
         }
         _currentTool = Tool(static_cast<Tool::Type>(j.value("currentTool", static_cast<int>(Tool::Type::Brush))));
 
-        _world.setMode(static_cast<Ourverse::GameMode>(j.value("worldMode", static_cast<int>(Ourverse::GameMode::Creative))));
-        bool phys = j.value("worldPhysics", true);
-        if (_world.isPhysicsEnabled() != phys) _world.togglePhysics();
+
         Physics::setFlying(j.value("flying", false));
 
         // Load physics laws

@@ -920,47 +920,74 @@ void PolyhedronData::recomputeAll() {
     rebuildConvexComponents();
 }
 
+#define ENABLE_VHACD_IMPLEMENTATION 1
+#include <VHACD.h>
+
 void PolyhedronData::rebuildConvexComponents() {
     convexComponents.clear();
     if (vertices.empty() || faces.empty()) return;
     if (isConvex) return;
 
-    glm::vec3 anchor(0.0f);
-    for (const auto& vertex : vertices) anchor += vertex;
-    anchor /= static_cast<float>(vertices.size());
-
-    auto tetraVolume = [](const glm::vec3& a, const glm::vec3& b,
-                          const glm::vec3& c, const glm::vec3& d) {
-        return std::abs(glm::dot(b - a, glm::cross(c - a, d - a))) / 6.0f;
-    };
-
+    // Convert faces to triangles for V-HACD
+    std::vector<uint32_t> triangles;
     for (const auto& face : faces) {
         if (face.size() < 3) continue;
         for (size_t i = 1; i + 1 < face.size(); ++i) {
-            const glm::vec3& a = vertices[face[0]];
-            const glm::vec3& b = vertices[face[i]];
-            const glm::vec3& c = vertices[face[i + 1]];
-            if (tetraVolume(anchor, a, b, c) <= 1e-8f) continue;
-
-            PolyhedronData component;
-            component.vertices = {anchor, a, b, c};
-            component.faces = {
-                {0, 2, 1},
-                {0, 1, 3},
-                {0, 3, 2},
-                {1, 2, 3}
-            };
-            component.ensureOutwardWinding();
-            component.computeNormals();
-            component.analyzeConvexity();
-            component.computeFaceAreas();
-            component.computeVertexCurvatures();
-            component.generateUVs();
-            component.classifyContours();
-            component.computeAngleData();
-            convexComponents.push_back(component);
+            triangles.push_back(static_cast<uint32_t>(face[0]));
+            triangles.push_back(static_cast<uint32_t>(face[i]));
+            triangles.push_back(static_cast<uint32_t>(face[i + 1]));
         }
     }
+
+    if (triangles.empty()) return;
+
+    VHACD::IVHACD* interfaceVHACD = VHACD::CreateVHACD();
+    VHACD::IVHACD::Parameters params;
+    params.m_maxConvexHulls = 32; // reasonable default
+    params.m_resolution = 100000;
+    params.m_asyncACD = false; // Synchronous
+
+    bool res = interfaceVHACD->Compute(
+        &vertices[0].x, static_cast<uint32_t>(vertices.size()),
+        triangles.data(), static_cast<uint32_t>(triangles.size() / 3),
+        params
+    );
+
+    if (res) {
+        uint32_t numHulls = interfaceVHACD->GetNConvexHulls();
+        for (uint32_t i = 0; i < numHulls; ++i) {
+            VHACD::IVHACD::ConvexHull ch;
+            if (interfaceVHACD->GetConvexHull(i, ch)) {
+                PolyhedronData component;
+                component.vertices.reserve(ch.m_points.size());
+                for (const auto& pt : ch.m_points) {
+                    component.vertices.emplace_back(static_cast<float>(pt.mX), static_cast<float>(pt.mY), static_cast<float>(pt.mZ));
+                }
+
+                component.faces.reserve(ch.m_triangles.size());
+                for (const auto& tri : ch.m_triangles) {
+                    component.faces.push_back({
+                        static_cast<int>(tri.mI0),
+                        static_cast<int>(tri.mI1),
+                        static_cast<int>(tri.mI2)
+                    });
+                }
+
+                component.ensureOutwardWinding();
+                component.computeNormals();
+                component.analyzeConvexity();
+                component.computeFaceAreas();
+                component.computeVertexCurvatures();
+                component.generateUVs();
+                component.classifyContours();
+                component.computeAngleData();
+                convexComponents.push_back(component);
+            }
+        }
+    }
+
+    interfaceVHACD->Clean();
+    interfaceVHACD->Release();
 }
 
 

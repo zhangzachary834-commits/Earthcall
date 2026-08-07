@@ -42,19 +42,7 @@ void Ourverse::display() const {
 
 void Ourverse::renderModeUI() {
     ImGui::Separator();
-    ImGui::Text("Game Mode:");
-    int mode = static_cast<int>(this->getMode());
-    const char* modes[] = {"Creative", "Survival", "Spectator"};
-    if (ImGui::Combo("##GameMode", &mode, modes, IM_ARRAYSIZE(modes))) {
-        this->setMode(static_cast<Ourverse::GameMode>(mode));
-    }
 
-    ImGui::SameLine();
-    bool physics = this->isPhysicsEnabled();
-    if (ImGui::Checkbox("Physics Enabled", &physics)) {
-        this->togglePhysics();
-        
-    }
 
     // Lighting toggle
     ImGui::SameLine();
@@ -328,27 +316,19 @@ void Ourverse::onUpdate(float deltaTime) {
 
     if (Physics::getLegacyEngineEnabled()) {
         Physics::applyGravity(*cameraPos,
-                              physicsEnabled,
-                              static_cast<Physics::GameMode>(mode),
                               deltaTime,
                               groundY);
-        // Disallow flying in Survival
-        if (mode == GameMode::Survival && Physics::getFlying()) {
-            Physics::setFlying(false);
-        }
-        if (physicsEnabled) {
-            // Ensure every owned object has a physics body (zone-level toggle is true by default)
-            for (const auto& upObj : ownedObjects) {
-                if (upObj) {
-                    Physics::getBodyFor(upObj.get());
-                }
+        
+        // Ensure every owned object has a physics body (zone-level toggle is true by default)
+        for (const auto& upObj : ownedObjects) {
+            if (upObj) {
+                Physics::getFormFor(upObj.get());
             }
+        }
 
-            // Step physics for all object bodies and bonds
             Physics::updateBodies(ownedObjects, deltaTime, /*gravityAccel*/ 9.81f, /*airResistance*/ 0.1f, groundY);
 
             Physics::enforceCollisions(*cameraPos, ownedObjects);
-        }
     }
 }
 
