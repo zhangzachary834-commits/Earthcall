@@ -49,16 +49,84 @@ std::vector<std::shared_ptr<Law>> createDefaultPhysicsLaws() {
     integration->setActionModel(intAction);
     laws.push_back(integration);
 
-    // 3. Acoustics: Convert collision into audio.synthesize
+    // 3. Acoustics: Convert collision into sound-emitter spawning
     auto acoustics = std::make_shared<Law>("physics: acoustics");
     acoustics->setObjectID("physics-acoustics");
     acoustics->setActivation(Law::Activation::OnEvent);
     acoustics->ecaLoop().eventType = "physics.collision";
     acoustics->setScope(Law::Scope::Everyone);
 
-    ActionNode playAction = ActionNode::playAudio("acoustic.frequency", "acoustic.amplitude", "sine");
-    acoustics->setActionModel(playAction);
+    ActionNode spawnEmitter = ActionNode::spawn("concept-sound-emitter");
+    acoustics->setActionModel(spawnEmitter);
     laws.push_back(acoustics);
+
+    // 4. Acoustics Envelope: ADSR WhileTrue law for sound-emitters
+    auto adsr = std::make_shared<Law>("physics: acoustics envelope");
+    adsr->setObjectID("physics-acoustics-envelope");
+    adsr->setActivation(Law::Activation::WhileTrue);
+    adsr->setScope(Law::Scope::Everyone);
+
+    ConditionNode conceptCond;
+    conceptCond.kind = ConditionNode::Kind::Related;
+    conceptCond.relationType = "generated-from";
+    conceptCond.otherId = "concept-sound-emitter";
+
+    adsr->setConditionModel(conceptCond);
+
+    // Envelope: 1.0 - (t * 2.0)  -> decays over 0.5 seconds
+    auto tNode = std::make_unique<OntoMath::MathNode>();
+    tNode->op = OntoMath::MathNode::Op::ValueLeaf;
+    tNode->variableName = "t";
+
+    auto twoNode = std::make_unique<OntoMath::MathNode>();
+    twoNode->op = OntoMath::MathNode::Op::ScalarLeaf;
+    twoNode->scalarForm = OntoMath::ScalarForm::constant(2.0);
+
+    // t * 2.0
+    auto tScaled = std::make_unique<OntoMath::MathNode>();
+    tScaled->op = OntoMath::MathNode::Op::Scale;
+    tScaled->children.push_back(std::move(twoNode));
+    tScaled->children.push_back(std::move(tNode));
+
+    auto oneNode = std::make_unique<OntoMath::MathNode>();
+    oneNode->op = OntoMath::MathNode::Op::ScalarLeaf;
+    oneNode->scalarForm = OntoMath::ScalarForm::constant(1.0);
+
+    // 1.0 - (t * 2.0)
+    auto subNode = std::make_shared<OntoMath::MathNode>();
+    subNode->op = OntoMath::MathNode::Op::Sub;
+    subNode->children.push_back(std::move(oneNode));
+    subNode->children.push_back(std::move(tScaled));
+
+    MathBindings adsrBindings;
+    adsrBindings["t"] = PropertyPath::parse("time.sinceApplied");
+
+    ActionNode envelopeAction = ActionNode::flow("acoustic.amplitude", OntoMath::Piecewise::continuous(subNode), adsrBindings);
+    adsr->setActionModel(envelopeAction);
+    laws.push_back(adsr);
+
+    // 5. Acoustics Decay: Destroy the emitter after 0.5s
+    auto decay = std::make_shared<Law>("physics: acoustics decay");
+    decay->setObjectID("physics-acoustics-decay");
+    decay->setActivation(Law::Activation::WhileTrue);
+    decay->setScope(Law::Scope::Everyone);
+
+    ConditionNode timeCond;
+    timeCond.kind = ConditionNode::Kind::Compare;
+    timeCond.op = ConditionNode::Op::Gt;
+    timeCond.path = PropertyPath::parse("time.sinceApplied");
+    timeCond.operand = 0.5;
+
+    ConditionNode decayAll;
+    decayAll.kind = ConditionNode::Kind::All;
+    decayAll.children.push_back(conceptCond);
+    decayAll.children.push_back(timeCond);
+
+    decay->setConditionModel(decayAll);
+
+    ActionNode destroyAction = ActionNode::destroy();
+    decay->setActionModel(destroyAction);
+    laws.push_back(decay);
 
     return laws;
 }

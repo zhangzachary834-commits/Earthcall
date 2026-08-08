@@ -112,6 +112,9 @@ public:
     std::shared_ptr<ObjectConcept> find(const std::string& conceptId) const;
     const std::vector<std::shared_ptr<ObjectConcept>>& getAll() const { return _concepts; }
 
+    void registerCoreConcepts();
+
+
     Formation& formation() { return _formation; }
     const Formation& formation() const { return _formation; }
 

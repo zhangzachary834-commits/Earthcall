@@ -23,11 +23,19 @@ struct SpatialSoundInstance {
     ma_waveform* waveform = nullptr;
 };
 
+struct SoundEmitterInstance {
+    Object* subject = nullptr;
+    ma_sound* sound = nullptr;
+    ma_waveform* waveform = nullptr;
+    ma_waveform_type currentWaveType = ma_waveform_type_sine;
+};
+
 struct AudioSystem::AudioState {
     ma_engine engine;
     ma_sound musicSound;
     bool hasMusic = false;
     std::vector<SpatialSoundInstance*> activeSpatialSounds;
+    std::vector<SoundEmitterInstance*> activeEmitters;
 };
 
 AudioSystem& AudioSystem::instance() {
@@ -70,6 +78,18 @@ void AudioSystem::shutdown() {
             delete instance;
         }
         _state->activeSpatialSounds.clear();
+
+        for (auto instance : _state->activeEmitters) {
+            ma_sound_uninit(instance->sound);
+            delete instance->sound;
+            if (instance->waveform) {
+                ma_waveform_uninit(instance->waveform);
+                delete instance->waveform;
+            }
+            delete instance;
+        }
+        _state->activeEmitters.clear();
+
         ma_engine_uninit(&_state->engine);
         delete _state;
         _state = nullptr;
@@ -87,42 +107,7 @@ void AudioSystem::playSound(const std::string& filepath) {
 
 void AudioSystem::setupAudioEventListeners() {
     if (!_initialized) return;
-
-    auto& eventBus = Core::EventBus::instance();
-    eventBus.subscribe<ECA::Event>([this](const ECA::Event& event) {
-        if (event.type != "audio.synthesize" || !event.subject) return;
-
-        Object* obj = dynamic_cast<Object*>(event.subject);
-        if (!obj) return;
-
-        double frequency = 440.0;
-        double amplitude = 0.5;
-        std::string waveType = "sine";
-        glm::vec3 velocity(0.0f);
-
-        PropertyValue pv;
-        if (lawGetValue(*obj, PropertyPath::parse("acoustic.frequency"), pv) && std::holds_alternative<double>(pv)) {
-            frequency = std::get<double>(pv);
-        } else if (std::holds_alternative<int>(pv)) {
-            frequency = static_cast<double>(std::get<int>(pv));
-        }
-
-        if (lawGetValue(*obj, PropertyPath::parse("acoustic.amplitude"), pv) && std::holds_alternative<double>(pv)) {
-            amplitude = std::get<double>(pv);
-        } else if (std::holds_alternative<int>(pv)) {
-            amplitude = static_cast<double>(std::get<int>(pv));
-        }
-
-        if (lawGetValue(*obj, PropertyPath::parse("acoustic.waveType"), pv) && std::holds_alternative<std::string>(pv)) {
-            waveType = std::get<std::string>(pv);
-        }
-
-        if (lawGetValue(*obj, PropertyPath::parse("velocity"), pv) && std::holds_alternative<glm::vec3>(pv)) {
-            velocity = std::get<glm::vec3>(pv);
-        }
-
-        playProceduralCollisionSound(obj->getPosition(), velocity, frequency, amplitude, waveType);
-    });
+    // We no longer subscribe to "audio.synthesize" - we use continuous sound-emitter objects.
 }
 
 void AudioSystem::tick() {
@@ -143,6 +128,128 @@ void AudioSystem::tick() {
             it = _state->activeSpatialSounds.erase(it);
         } else {
             ++it;
+        }
+    }
+
+    // Process SoundEmitters
+    auto& objects = mgr.active().world().getOwnedObjects();
+    
+    // Find missing emitters (objects destroyed)
+    for (auto it = _state->activeEmitters.begin(); it != _state->activeEmitters.end(); ) {
+        bool found = false;
+        for (const auto& up : objects) {
+            if (up.get() == (*it)->subject) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            ma_sound_uninit((*it)->sound);
+            delete (*it)->sound;
+            if ((*it)->waveform) {
+                ma_waveform_uninit((*it)->waveform);
+                delete (*it)->waveform;
+            }
+            delete *it;
+            it = _state->activeEmitters.erase(it);
+        } else {
+            ++it;
+        }
+    }
+
+    // Update existing or create new
+    for (const auto& up : objects) {
+        Object* obj = up.get();
+        if (!obj) continue;
+
+        PropertyValue isEmitterVal;
+        if (!lawGetValue(*obj, PropertyPath::parse("acoustic.isSoundEmitter"), isEmitterVal)) continue;
+
+        bool isEmitter = false;
+        if (std::holds_alternative<std::string>(isEmitterVal) && std::get<std::string>(isEmitterVal) == "true") {
+            isEmitter = true;
+        } else if (std::holds_alternative<bool>(isEmitterVal) && std::get<bool>(isEmitterVal)) {
+            isEmitter = true;
+        }
+        if (!isEmitter) continue;
+
+        // It is an emitter! Read properties
+        double frequency = 440.0;
+        double amplitude = 1.0;
+        std::string waveTypeStr = "sine";
+
+        PropertyValue pv;
+        if (lawGetValue(*obj, PropertyPath::parse("acoustic.frequency"), pv)) {
+            if (std::holds_alternative<double>(pv)) frequency = std::get<double>(pv);
+            else if (std::holds_alternative<int>(pv)) frequency = static_cast<double>(std::get<int>(pv));
+            else if (std::holds_alternative<std::string>(pv)) {
+                try { frequency = std::stod(std::get<std::string>(pv)); } catch(...) {}
+            }
+        }
+
+        if (lawGetValue(*obj, PropertyPath::parse("acoustic.amplitude"), pv)) {
+            if (std::holds_alternative<double>(pv)) amplitude = std::get<double>(pv);
+            else if (std::holds_alternative<int>(pv)) amplitude = static_cast<double>(std::get<int>(pv));
+            else if (std::holds_alternative<std::string>(pv)) {
+                try { amplitude = std::stod(std::get<std::string>(pv)); } catch(...) {}
+            }
+        }
+
+        if (lawGetValue(*obj, PropertyPath::parse("acoustic.waveType"), pv) && std::holds_alternative<std::string>(pv)) {
+            waveTypeStr = std::get<std::string>(pv);
+        }
+
+        ma_waveform_type waveType = ma_waveform_type_sine;
+        if (waveTypeStr == "triangle") waveType = ma_waveform_type_triangle;
+        else if (waveTypeStr == "square") waveType = ma_waveform_type_square;
+        else if (waveTypeStr == "sawtooth") waveType = ma_waveform_type_sawtooth;
+
+        // Find if we already have it
+        SoundEmitterInstance* instance = nullptr;
+        for (auto inst : _state->activeEmitters) {
+            if (inst->subject == obj) {
+                instance = inst;
+                break;
+            }
+        }
+
+        if (!instance) {
+            // Create new
+            instance = new SoundEmitterInstance();
+            instance->subject = obj;
+            instance->currentWaveType = waveType;
+
+            ma_waveform_config config = ma_waveform_config_init(
+                _state->engine.pDevice->playback.format,
+                _state->engine.pDevice->playback.channels,
+                _state->engine.pDevice->sampleRate,
+                waveType,
+                amplitude,
+                frequency
+            );
+
+            instance->waveform = new ma_waveform();
+            ma_waveform_init(&config, instance->waveform);
+
+            instance->sound = new ma_sound();
+            ma_sound_init_from_data_source(&_state->engine, instance->waveform, 0, NULL, instance->sound);
+            
+            glm::vec3 pos = obj->getPosition();
+            ma_sound_set_position(instance->sound, pos.x, pos.y, pos.z);
+            ma_sound_start(instance->sound);
+            
+            _state->activeEmitters.push_back(instance);
+        } else {
+            // Update existing
+            if (instance->currentWaveType != waveType) {
+                ma_waveform_set_type(instance->waveform, waveType);
+                instance->currentWaveType = waveType;
+            }
+            ma_waveform_set_amplitude(instance->waveform, amplitude);
+            ma_waveform_set_frequency(instance->waveform, frequency);
+            
+            glm::vec3 pos = obj->getPosition();
+            ma_sound_set_position(instance->sound, pos.x, pos.y, pos.z);
         }
     }
 }

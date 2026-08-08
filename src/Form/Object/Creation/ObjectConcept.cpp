@@ -454,6 +454,28 @@ ConceptRegistry& ConceptRegistry::instance() {
     return registry;
 }
 
+void ConceptRegistry::registerCoreConcepts() {
+    auto soundEmitter = std::make_shared<ObjectConcept>("sound-emitter");
+    soundEmitter->setObjectID("concept-sound-emitter");
+    // Empty member template: a sound emitter doesn't need physical geometry to exist,
+    // though we might add a tiny invisible shape if it requires bounds. For now, empty shape.
+    ObjectConcept::MemberTemplate tmpl;
+    tmpl.kind = Object::ShapeKind::Cube;
+    tmpl.params.r = 0.01f;
+    tmpl.params.ry = 0.01f;
+    tmpl.params.rz = 0.01f;
+    soundEmitter->members().push_back(tmpl);
+    
+    // Add default acoustic properties
+    soundEmitter->setAttribute("acoustic.isSoundEmitter", "true");
+    soundEmitter->setAttribute("acoustic.amplitude", "1.0");
+    soundEmitter->setAttribute("acoustic.frequency", "440.0");
+    soundEmitter->setAttribute("acoustic.waveType", "sine");
+    
+    add(soundEmitter);
+}
+
+
 void ConceptRegistry::add(const std::shared_ptr<ObjectConcept>& concept) {
     if (!concept) return;
     const std::string id = concept->getIdentifier();

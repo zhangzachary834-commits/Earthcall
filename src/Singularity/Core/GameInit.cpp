@@ -5,9 +5,9 @@
 #include "Singularity/Core/Engine.hpp"
 #include "../../../imgui/backends/imgui_impl_glfw.h"
 #include "Form/Object/Object.hpp"
-#include "Rendering/BrushSystem.hpp"
 #include "Rendering/ShadingSystem.hpp"
 #include "OurVerse/AdvancedFacePaint.hpp"
+#include "Form/Object/Creation/ObjectConcept.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
@@ -41,6 +41,9 @@ bool Game::init() {
     // ECA echo above; without this, PhysicsCollisionEvent had no listener
     // and collision history never reached the relation registry.
     Physics::setupPhysicsEventListeners();
+
+    // Register core concepts like sound-emitters before laws are built
+    ConceptRegistry::instance().registerCoreConcepts();
 
     // Inject default physics laws (gravity and kinematics)
     for (const auto& law : Physics::createDefaultPhysicsLaws()) {
