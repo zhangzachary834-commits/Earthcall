@@ -165,6 +165,17 @@ void applySpawnOverrides(Object& newborn, Singular* source,
             for (int f = 0; f < faces; ++f) newborn.setFaceColor(f, c.x, c.y, c.z);
         }
     }
+
+    // Copy acoustic properties from source (e.g., material) to newborn (e.g., sound-emitter)
+    for (const auto& prop : {"acoustic.frequency", "acoustic.waveType", "acoustic.amplitude"}) {
+        PropertyValue pv;
+        if (lawGetValue(*source, PropertyPath::parse(prop), pv)) {
+            newborn.setDynamicProperty(prop, pv);
+            if (std::string(prop) == "acoustic.frequency") {
+                newborn.setDynamicProperty("acoustic.baseFrequency", pv);
+            }
+        }
+    }
 }
 
 Singular* resolveBeingToken(const std::string& token, Singular& subject) {

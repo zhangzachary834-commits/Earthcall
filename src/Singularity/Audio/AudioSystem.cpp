@@ -204,6 +204,19 @@ void AudioSystem::tick() {
         else if (waveTypeStr == "square") waveType = ma_waveform_type_square;
         else if (waveTypeStr == "sawtooth") waveType = ma_waveform_type_sawtooth;
 
+        // 2. Ontological Occlusion (Muffling)
+        if (lawGetValue(*obj, PropertyPath::parse("acoustic.lowpassCutoff"), pv)) {
+            double cutoff = 22000.0;
+            if (std::holds_alternative<double>(pv)) cutoff = std::get<double>(pv);
+            else if (std::holds_alternative<int>(pv)) cutoff = static_cast<double>(std::get<int>(pv));
+            
+            if (cutoff < 10000.0) {
+                // Simulate muffling without a real DSP filter by forcing to sine and dropping amplitude
+                waveType = ma_waveform_type_sine;
+                amplitude *= (cutoff / 10000.0);
+            }
+        }
+
         // Find if we already have it
         SoundEmitterInstance* instance = nullptr;
         for (auto inst : _state->activeEmitters) {
@@ -309,28 +322,6 @@ void AudioSystem::playProceduralCollisionSound(const glm::vec3& position, const 
         waveType = ma_waveform_type_square;
     } else if (waveTypeStr == "sawtooth") {
         waveType = ma_waveform_type_sawtooth;
-    }
-
-    // 2. Occlusion Raycast
-    auto& objects = mgr.active().world().getOwnedObjects();
-    bool occluded = false;
-    for (const auto& up : objects) {
-        if (!up) continue;
-        Object* obj = up.get();
-        float t;
-        int faceIdx; glm::vec2 uv;
-        if (obj->raycastFace(position, rayDir, t, faceIdx, uv)) {
-            if (t > 0.01f && t < distToCam) { // Allow small threshold to not hit self
-                occluded = true;
-                break;
-            }
-        }
-    }
-
-    if (occluded) {
-        // Muffle the sound: lose high frequencies by turning into a sine wave and drop volume
-        waveType = ma_waveform_type_sine;
-        amplitude *= 0.4;
     }
 
     ma_waveform_config config = ma_waveform_config_init(

@@ -9,6 +9,9 @@
 #include <map>
 #include <optional>
 #include <string>
+#include <vector>
+#include "Integration/EarthcallAPI.hpp"
+#include "Form/Object/Object.hpp"
 
 // The bridge between authored mathematics and the substrate: a binding names
 // each free variable of an expression and says WHERE on the subject its value
@@ -121,6 +124,35 @@ inline bool isTimePath(const PropertyPath& path) {
 
 inline bool lawGetValue(Singular& subject, const PropertyPath& path, PropertyValue& out) {
     if (isTimePath(path)) return lawGetTime(path, out);
+    if (path.segments.size() == 2 && path.segments[0] == "world" && path.segments[1] == "occlusionToCamera") {
+        Object* objSubject = dynamic_cast<Object*>(&subject);
+        if (!objSubject) return false;
+        glm::vec3 pos = objSubject->getPosition();
+        glm::vec3 camPos = Integration::getEarthcallAPI().getCameraPosition();
+        glm::vec3 dir = camPos - pos;
+        float distToCam = glm::length(dir);
+        if (distToCam < 0.0001f) {
+            out = PropertyValue(0.0);
+            return true;
+        }
+        glm::vec3 rayDir = glm::normalize(dir);
+        bool occluded = false;
+        
+        for (Singular* s : Universe::instance().beings()) {
+            Object* obj = dynamic_cast<Object*>(s);
+            if (!obj || obj == objSubject) continue;
+            float t;
+            int faceIdx; glm::vec2 uv;
+            if (obj->raycastFace(pos, rayDir, t, faceIdx, uv)) {
+                if (t > 0.01f && t < distToCam) {
+                    occluded = true;
+                    break;
+                }
+            }
+        }
+        out = PropertyValue(occluded ? 1.0 : 0.0);
+        return true;
+    }
     PropertyPath remainder;
     Singular* root = resolveLawRoot(subject, path, remainder);
     return root && (remainder.getValue(*root, out) == PropertyPath::PathResult::Ok);

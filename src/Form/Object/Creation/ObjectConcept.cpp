@@ -473,6 +473,22 @@ void ConceptRegistry::registerCoreConcepts() {
     soundEmitter->setAttribute("acoustic.waveType", "sine");
     
     add(soundEmitter);
+
+    auto crystal = std::make_shared<ObjectConcept>("material.crystal");
+    crystal->setObjectID("concept-material-crystal");
+    ObjectConcept::MemberTemplate crystalTmpl;
+    crystalTmpl.kind = Object::ShapeKind::Cube;
+    crystalTmpl.params.r = 0.5f;
+    crystalTmpl.params.ry = 0.5f;
+    crystalTmpl.params.rz = 0.5f;
+    crystal->members().push_back(crystalTmpl);
+
+    crystal->setAttribute("acoustic.isMaterial", "true");
+    crystal->setAttribute("acoustic.frequency", "880.0");
+    crystal->setAttribute("acoustic.waveType", "triangle");
+    crystal->setAttribute("physics.mass", "5.0");
+
+    add(crystal);
 }
 
 
