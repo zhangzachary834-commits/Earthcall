@@ -1,6 +1,10 @@
 #include "Rendering/GL/GluCompat.hpp"
 
+#if defined(__APPLE__) && !defined(EMSCRIPTEN)
 #include <OpenGL/gl.h>
+#else
+#include <GL/gl.h>
+#endif
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <cmath>

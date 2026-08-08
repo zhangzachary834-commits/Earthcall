@@ -1,6 +1,6 @@
 #pragma once
 
-#ifndef EMSCRIPTEN
+#ifndef __EMSCRIPTEN__
 
 #include <memory>
 #include <string>
@@ -38,4 +38,4 @@ private:
 } // namespace Network
 } // namespace Singularity
 
-#endif // EMSCRIPTEN
+#endif // __EMSCRIPTEN__

@@ -104,7 +104,7 @@ template <>
 struct hash<Identity::SingularId> {
     size_t operator()(const Identity::SingularId& id) const noexcept {
         // FNV-1a over the raw bytes; ids are already uniformly random.
-        size_t h = 1469598103934665603ull;
+        uint64_t h = 1469598103934665603ull;
         for (uint8_t b : id.bytes()) {
             h ^= b;
             h *= 1099511628211ull;

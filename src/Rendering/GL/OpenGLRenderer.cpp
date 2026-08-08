@@ -3,7 +3,11 @@
 #include "Form/Object/Geometry/Sdf.hpp" // geom::SdfNode, tessellateSdf
 
 #include <GLFW/glfw3.h>
+#if defined(__APPLE__) && !defined(EMSCRIPTEN)
 #include <OpenGL/gl.h>
+#else
+#include <GL/gl.h>
+#endif
 
 namespace {
 // The view matrix from the last setCamera. GL has no separate model matrix — the

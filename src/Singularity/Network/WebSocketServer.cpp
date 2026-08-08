@@ -1,4 +1,4 @@
-#ifndef EMSCRIPTEN
+#ifndef __EMSCRIPTEN__
 
 #include "WebSocketServer.hpp"
 #include "Singularity/Core/EventBus.hpp"
@@ -173,4 +173,4 @@ void WebSocketServer::broadcast(const std::string& jsonPayload) {
 } // namespace Network
 } // namespace Singularity
 
-#endif // EMSCRIPTEN
+#endif // __EMSCRIPTEN__

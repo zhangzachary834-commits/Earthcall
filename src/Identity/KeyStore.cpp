@@ -1,8 +1,10 @@
 #include "Identity/KeyStore.hpp"
 
+#ifndef __EMSCRIPTEN__
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
 #include <openssl/rand.h>
+#endif
 
 #include <cstdlib>
 #include <fstream>
@@ -19,6 +21,8 @@ namespace Identity {
 namespace {
 
 constexpr int kFormatVersion = 1;
+
+#ifndef __EMSCRIPTEN__
 
 // scrypt cost. N=32768/r=8 is ~32 MB per attempt, which is the point: it makes
 // offline guessing against a stolen file expensive rather than merely slow.
@@ -143,6 +147,7 @@ void scrub(std::vector<uint8_t>& buf) {
     if (!buf.empty()) OPENSSL_cleanse(buf.data(), buf.size());
     buf.clear();
 }
+#endif
 
 std::string stringField(const nlohmann::json& j, const char* key) {
     auto it = j.find(key);
@@ -172,6 +177,7 @@ std::filesystem::path KeyStore::pathFor(const SingularId& id) const {
 }
 
 bool KeyStore::store(const PrivateKey& key, const std::string& passphrase) {
+#ifndef __EMSCRIPTEN__
     if (!key.isValid()) return false;
 
     std::error_code ec;
@@ -251,10 +257,14 @@ bool KeyStore::store(const PrivateKey& key, const std::string& passphrase) {
 #endif
 
     return true;
+#else
+    return false;
+#endif
 }
 
 std::optional<PrivateKey> KeyStore::load(const SingularId& id,
                                          const std::string& passphrase) const {
+#ifndef __EMSCRIPTEN__
     const std::filesystem::path path = pathFor(id);
     std::ifstream in(path, std::ios::binary);
     if (!in.is_open()) return std::nullopt;
@@ -320,6 +330,9 @@ std::optional<PrivateKey> KeyStore::load(const SingularId& id,
         OPENSSL_cleanse(seed.data(), seed.size());
         return std::nullopt;
     }
+#else
+    return std::nullopt;
+#endif
 }
 
 bool KeyStore::contains(const SingularId& id) const {

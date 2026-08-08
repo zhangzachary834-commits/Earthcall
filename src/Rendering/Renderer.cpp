@@ -11,8 +11,10 @@ Renderer* g_current = nullptr;
 
 Renderer& currentRenderer() {
     if (!g_current) {
+#ifndef __EMSCRIPTEN__
         static OpenGLRenderer s_defaultGL;
         g_current = &s_defaultGL;
+#endif
     }
     return *g_current;
 }

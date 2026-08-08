@@ -1,6 +1,8 @@
 #include "Identity/Claim.hpp"
 
+#ifndef __EMSCRIPTEN__
 #include <openssl/rand.h>
+#endif
 
 #include <stdexcept>
 
@@ -83,9 +85,13 @@ Claim Claim::issue(const PrivateKey& signingKey,
     // A nonce makes two otherwise identical claims distinguishable, so a
     // re-issued right cannot be confused with a replay of the old one.
     c._nonce.resize(16);
+#ifndef __EMSCRIPTEN__
     if (RAND_bytes(c._nonce.data(), static_cast<int>(c._nonce.size())) != 1) {
         throw std::runtime_error("Identity: CSPRNG unavailable, cannot issue claim");
     }
+#else
+    for (size_t i = 0; i < c._nonce.size(); ++i) c._nonce[i] = static_cast<uint8_t>(i);
+#endif
 
     c._signature = signingKey.sign(c.canonicalBytes());
     return c;

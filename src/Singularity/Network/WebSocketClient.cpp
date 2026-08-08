@@ -1,6 +1,6 @@
 #include "WebSocketClient.hpp"
 
-#ifndef EMSCRIPTEN
+#ifndef __EMSCRIPTEN__
 
 #include <iostream>
 
@@ -47,4 +47,4 @@ void WebSocketClient::onMessage(std::function<void(const std::string&)> callback
 } // namespace Network
 } // namespace Singularity
 
-#endif // EMSCRIPTEN
+#endif // __EMSCRIPTEN__

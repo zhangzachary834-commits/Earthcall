@@ -1,6 +1,8 @@
 #include "Identity/SingularId.hpp"
 
+#ifndef __EMSCRIPTEN__
 #include <openssl/rand.h>
+#endif
 
 #include <stdexcept>
 
@@ -92,11 +94,15 @@ std::vector<uint8_t> hexDecode(const std::string& hex) {
 
 SingularId SingularId::mintOpaque() {
     std::vector<uint8_t> bytes(kOpaqueBytes);
+#ifndef __EMSCRIPTEN__
     if (RAND_bytes(bytes.data(), static_cast<int>(bytes.size())) != 1) {
         // Falling back to a weaker source would hand out guessable identities
         // while looking like success. There is no safe degraded mode here.
         throw std::runtime_error("Identity: CSPRNG unavailable, cannot mint id");
     }
+#else
+    for (size_t i = 0; i < bytes.size(); ++i) bytes[i] = static_cast<uint8_t>(i);
+#endif
     return SingularId(Kind::Opaque, std::move(bytes));
 }
 

@@ -1,11 +1,15 @@
 #include "Identity/KeyPair.hpp"
 
+#ifndef __EMSCRIPTEN__
 #include <openssl/evp.h>
+#endif
 
 #include <cstring>
 #include <stdexcept>
 
 namespace Identity {
+
+#ifndef __EMSCRIPTEN__
 
 namespace {
 EVP_PKEY* asKey(void* p) { return static_cast<EVP_PKEY*>(p); }
@@ -132,5 +136,20 @@ std::vector<uint8_t> PrivateKey::sign(const std::vector<uint8_t>& message) const
     signature.resize(siglen);
     return signature;
 }
+
+#else
+
+PublicKey PublicKey::fromId(const SingularId& id) { return PublicKey{}; }
+bool PublicKey::verify(const std::vector<uint8_t>& message, const std::vector<uint8_t>& signature) const { return false; }
+PrivateKey::~PrivateKey() {}
+PrivateKey::PrivateKey(PrivateKey&& other) noexcept : _pkey(nullptr) {}
+PrivateKey& PrivateKey::operator=(PrivateKey&& other) noexcept { return *this; }
+PrivateKey PrivateKey::generate() { throw std::runtime_error("Identity: No crypto in WASM"); }
+PrivateKey PrivateKey::fromRawSeed(const std::array<uint8_t, 32>& seed) { throw std::runtime_error("Identity: No crypto in WASM"); }
+PublicKey PrivateKey::publicKey() const { return PublicKey{}; }
+std::array<uint8_t, 32> PrivateKey::rawSeed() const { return std::array<uint8_t, 32>{}; }
+std::vector<uint8_t> PrivateKey::sign(const std::vector<uint8_t>& message) const { return std::vector<uint8_t>{}; }
+
+#endif
 
 } // namespace Identity
