@@ -182,7 +182,7 @@ struct Fold {
 // MathNode — Typed AST over ScalarForm
 // ============================================================================
 
-enum class ValueKind { Scalar, Vector };
+enum class ValueKind { Scalar, Vector, ScalarField, VectorField };
 
 struct TypeDiagnostic {
     std::string nodePath;
@@ -219,7 +219,16 @@ struct MathNode {
         Normalize = 10,
         Length = 11,
         Map = 12, // Unary componentwise function (e.g. Round, Floor)
-        Stochastic = 13 // Random variable distribution
+        Stochastic = 13, // Random variable distribution
+        Project = 14,
+        Distance = 15,
+        Raycast = 16,
+        SDF = 17,
+        Gradient = 18,
+        LineIntegral = 19,
+        Union = 20,
+        Intersection = 21,
+        Difference = 22
     };
 
     Op op;

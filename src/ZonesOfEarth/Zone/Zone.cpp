@@ -3,6 +3,8 @@
 #include "Form/Singular/Property/ComputedProperty.hpp"
 #include <iostream>
 #include <algorithm>
+#include "Singularity/OntoMath/Field.hpp"
+#include "Form/Object/Geometry/FieldNode.hpp"
 #include "GLFW/glfw3.h"
 #include "Rendering/Renderer.hpp"
 #include "Form/Object/Formation/Menu/stb_easy_font.h"
@@ -39,6 +41,11 @@ void Zone::buildProperties() {
     // priority ceilings) is the next stage; the record comes first.
     _propertyRegistry.push_back(std::make_unique<ComputedProperty<Zone, std::string>>(
         "owner", this, &Zone::propOwner));
+
+    _propertyRegistry.push_back(std::make_unique<PropertyRef<Zone, std::shared_ptr<OntoMath::ScalarField>>>(
+        "spatialField", this, &Zone::_spatialField));
+    _propertyRegistry.push_back(std::make_unique<PropertyRef<Zone, std::shared_ptr<OntoMath::VectorField>>>(
+        "spatialVectorField", this, &Zone::_spatialVectorField));
 }
 
 constexpr float kBrushRadiusToStrokeWidth = 1000.0f;
@@ -74,28 +81,43 @@ void Zone::applyFormationRelations() {
 }
 
 Zone::Zone(const std::string& name, const std::string& joyOrdering, Scope scope)
-    : _name(name), _scope(scope), _joyOrdering(joyOrdering), _world(std::make_unique<World>()), _formation()
+    : _name(name), _scope(scope), _joyOrdering(joyOrdering), _world(std::make_unique<World>()), _formation(),
+      _spatialRootObject(std::make_shared<geom::FieldNode>(name + "_spatialRoot"))
 {
+    _spatialField = _spatialRootObject->field;
+    _spatialVectorField = _spatialRootObject->vectorField;
+
     // Default background tint (deep space blue)
     r = 0.05f; g = 0.05f; b = 0.1f;
     _formation.addMember(_world.get());
+    _formation.addMember(_spatialRootObject.get());
 }
 
 Zone::Zone(const std::string& name, const std::string& joyOrdering, float rF, float gF, float bF, Scope scope)
-    : _name(name), _scope(scope), _joyOrdering(joyOrdering), _world(std::make_unique<World>()), _formation()
+    : _name(name), _scope(scope), _joyOrdering(joyOrdering), _world(std::make_unique<World>()), _formation(),
+      _spatialRootObject(std::make_shared<geom::FieldNode>(name + "_spatialRoot"))
 {
+    _spatialField = _spatialRootObject->field;
+    _spatialVectorField = _spatialRootObject->vectorField;
+
     r = rF; g = gF; b = bF;
     _formation.addMember(_world.get());
+    _formation.addMember(_spatialRootObject.get());
 }
 
 Zone::Zone(const Zone& other)
-    : _name(other._name), _scope(other._scope), _qualities(other._qualities), _deletable(other._deletable), _joyOrdering(other._joyOrdering), _ownerId(other._ownerId), _world(std::make_unique<World>()), _formation()
+    : _name(other._name), _scope(other._scope), _qualities(other._qualities), _deletable(other._deletable), _joyOrdering(other._joyOrdering), _ownerId(other._ownerId), _world(std::make_unique<World>()), _formation(),
+      _spatialRootObject(std::make_shared<geom::FieldNode>(other._name + "_spatialRoot"))
 {
+    _spatialField = _spatialRootObject->field;
+    _spatialVectorField = _spatialRootObject->vectorField;
+
     r = other.r; g = other.g; b = other.b;
     strokes = other.strokes;
     drawR = other.drawR; drawG = other.drawG; drawB = other.drawB;
     drawMode = other.drawMode; isDrawing = other.isDrawing;
     _formation.addMember(_world.get());
+    _formation.addMember(_spatialRootObject.get());
 }
 
 Zone& Zone::operator=(const Zone& other)

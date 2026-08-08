@@ -210,6 +210,81 @@ std::vector<std::shared_ptr<Law>> createDefaultPhysicsLaws() {
     vibrato->setActionModel(vibAction);
     laws.push_back(vibrato);
 
+    // -----------------------------------------------------------------------
+    // Law: physics-acoustics-envelope (ADSR)
+    // -----------------------------------------------------------------------
+    auto envLaw = std::make_shared<Law>("physics-acoustics-envelope");
+    envLaw->setObjectID("physics-acoustics-envelope");
+    envLaw->setActivation(Law::Activation::WhileTrue);
+    envLaw->setScope(Law::Scope::Everyone);
+
+    ConditionNode envCond;
+    envCond.kind = ConditionNode::Kind::Compare;
+    envCond.path = PropertyPath::parse("acoustic.isSoundEmitter");
+    envCond.operand = PropertyValue(std::string("true"));
+    envCond.op = ConditionNode::Op::Eq;
+    envLaw->setConditionModel(envCond);
+
+    // Piece 1: Attack (0.0 to 0.05) -> t * 20.0
+    auto attackScale = std::make_unique<OntoMath::MathNode>();
+    attackScale->op = OntoMath::MathNode::Op::ScalarLeaf;
+    attackScale->scalarForm = OntoMath::ScalarForm::constant(20.0);
+
+    auto tNode1 = std::make_unique<OntoMath::MathNode>();
+    tNode1->op = OntoMath::MathNode::Op::ValueLeaf;
+    tNode1->variableName = "t";
+
+    auto attackNode = std::make_shared<OntoMath::MathNode>();
+    attackNode->op = OntoMath::MathNode::Op::Scale;
+    attackNode->children.push_back(std::move(attackScale));
+    attackNode->children.push_back(std::move(tNode1));
+
+    OntoMath::Piecewise::Piece attackPiece;
+    attackPiece.hasLo = true; attackPiece.lo = 0.0;
+    attackPiece.hasHi = true; attackPiece.hi = 0.05;
+    attackPiece.mathNode = attackNode;
+
+    // Piece 2: Decay (0.05 to 0.5) -> 1.0 - (t - 0.05) * 2.2222
+    // Which is: 1.11111111 - t * 2.22222222
+    auto decayTerm1 = std::make_unique<OntoMath::MathNode>();
+    decayTerm1->op = OntoMath::MathNode::Op::ScalarLeaf;
+    decayTerm1->scalarForm = OntoMath::ScalarForm::constant(1.11111111);
+
+    auto tNode2 = std::make_unique<OntoMath::MathNode>();
+    tNode2->op = OntoMath::MathNode::Op::ValueLeaf;
+    tNode2->variableName = "t";
+
+    auto decayScale = std::make_unique<OntoMath::MathNode>();
+    decayScale->op = OntoMath::MathNode::Op::ScalarLeaf;
+    decayScale->scalarForm = OntoMath::ScalarForm::constant(2.22222222);
+
+    auto decayT = std::make_unique<OntoMath::MathNode>();
+    decayT->op = OntoMath::MathNode::Op::Scale;
+    decayT->children.push_back(std::move(decayScale));
+    decayT->children.push_back(std::move(tNode2));
+
+    auto decayNode = std::make_shared<OntoMath::MathNode>();
+    decayNode->op = OntoMath::MathNode::Op::Sub;
+    decayNode->children.push_back(std::move(decayTerm1));
+    decayNode->children.push_back(std::move(decayT));
+
+    OntoMath::Piecewise::Piece decayPiece;
+    decayPiece.hasLo = true; decayPiece.lo = 0.05;
+    decayPiece.hasHi = true; decayPiece.hi = 0.5;
+    decayPiece.mathNode = decayNode;
+
+    OntoMath::Piecewise envelopeFunc;
+    envelopeFunc.inputVariable = "t";
+    envelopeFunc.pieces.push_back(attackPiece);
+    envelopeFunc.pieces.push_back(decayPiece);
+
+    MathBindings envBindings;
+    envBindings["t"] = PropertyPath::parse("time.sinceApplied");
+
+    ActionNode envAction = ActionNode::flow("acoustic.amplitude", envelopeFunc, envBindings);
+    envLaw->setActionModel(envAction);
+    laws.push_back(envLaw);
+
     return laws;
 }
 

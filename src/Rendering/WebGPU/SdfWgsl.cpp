@@ -209,6 +209,26 @@ std::string emitMathNode(const OntoMath::MathNode& node, Emit& e, const std::str
         case OntoMath::MathNode::Op::Stochastic: {
             return "1.0"; // Stochastics not trivially supported in stateless WGSL
         }
+        case OntoMath::MathNode::Op::Project: {
+            // Not strictly built-in to WGSL, need inline formulation: (dot(a,b)/dot(b,b))*b
+            std::string va = emitMathNode(*node.children[0], e, pt);
+            std::string vb = emitMathNode(*node.children[1], e, pt);
+            return "((" + vb + ") * (dot(" + va + ", " + vb + ") / dot(" + vb + ", " + vb + ")))";
+        }
+        case OntoMath::MathNode::Op::Distance: {
+            return "distance(" + emitMathNode(*node.children[0], e, pt) + ", " + emitMathNode(*node.children[1], e, pt) + ")";
+        }
+        case OntoMath::MathNode::Op::Raycast:
+        case OntoMath::MathNode::Op::SDF:
+        case OntoMath::MathNode::Op::Gradient:
+        case OntoMath::MathNode::Op::LineIntegral:
+        case OntoMath::MathNode::Op::Union:
+        case OntoMath::MathNode::Op::Intersection:
+        case OntoMath::MathNode::Op::Difference: {
+            // Field operations are compiled downstream via specific WGSL solver templates.
+            // Placeholder: returns 0.0 or vec3(0.0) depending on type context, but for AST string gen, 0.0 is safe fallback.
+            return "0.0"; 
+        }
     }
     return "0.0";
 }

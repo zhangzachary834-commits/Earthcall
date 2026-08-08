@@ -14,6 +14,11 @@ class Object;
 class Relation;
 class Formation;
 
+namespace OntoMath {
+    class ScalarField;
+    class VectorField;
+}
+
 struct PropertyList;
 struct PropertyDict;
 
@@ -40,7 +45,9 @@ using PropertyValue = std::variant<
     Relation*,
     Formation*,
     std::shared_ptr<PropertyList>,
-    std::shared_ptr<PropertyDict>
+    std::shared_ptr<PropertyDict>,
+    std::shared_ptr<OntoMath::ScalarField>,
+    std::shared_ptr<OntoMath::VectorField>
 >;
 
 struct PropertyList {

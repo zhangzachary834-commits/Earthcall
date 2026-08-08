@@ -562,6 +562,69 @@ TypeResult MathNode::typeOf(const TypeEnv& env, const std::string& path) const {
             if (*t != ValueKind::Vector) return TypeResult::error(TypeDiagnostic{path, "Map requires Vector argument"});
             return TypeResult::ok(ValueKind::Vector);
         }
+        case Op::Project: {
+            if (children.size() != 2) return TypeResult::error(TypeDiagnostic{path, "Project requires 2 arguments"});
+            auto t0 = children[0]->typeOf(env, path + ".[0]");
+            if (!t0) return t0;
+            auto t1 = children[1]->typeOf(env, path + ".[1]");
+            if (!t1) return t1;
+            if (*t0 != ValueKind::Vector || *t1 != ValueKind::Vector) return TypeResult::error(TypeDiagnostic{path, "Project requires Vector arguments"});
+            return TypeResult::ok(ValueKind::Vector);
+        }
+        case Op::Distance: {
+            if (children.size() != 2) return TypeResult::error(TypeDiagnostic{path, "Distance requires 2 arguments"});
+            auto t0 = children[0]->typeOf(env, path + ".[0]");
+            if (!t0) return t0;
+            auto t1 = children[1]->typeOf(env, path + ".[1]");
+            if (!t1) return t1;
+            if (*t0 != ValueKind::Vector || *t1 != ValueKind::Vector) return TypeResult::error(TypeDiagnostic{path, "Distance requires Vector arguments"});
+            return TypeResult::ok(ValueKind::Scalar);
+        }
+        case Op::Raycast: {
+            if (children.size() != 3) return TypeResult::error(TypeDiagnostic{path, "Raycast requires 3 arguments (Field, Origin, Direction)"});
+            auto t0 = children[0]->typeOf(env, path + ".[0]");
+            if (!t0) return t0;
+            if (*t0 != ValueKind::ScalarField) return TypeResult::error(TypeDiagnostic{path, "Raycast arg 0 must be ScalarField"});
+            auto t1 = children[1]->typeOf(env, path + ".[1]");
+            auto t2 = children[2]->typeOf(env, path + ".[2]");
+            if (!t1 || !t2) return t1 ? t2 : t1;
+            if (*t1 != ValueKind::Vector || *t2 != ValueKind::Vector) return TypeResult::error(TypeDiagnostic{path, "Raycast args 1,2 must be Vector"});
+            return TypeResult::ok(ValueKind::Scalar);
+        }
+        case Op::SDF: {
+            if (children.size() != 2) return TypeResult::error(TypeDiagnostic{path, "SDF requires 2 args (Field, Point)"});
+            auto t0 = children[0]->typeOf(env, path + ".[0]");
+            auto t1 = children[1]->typeOf(env, path + ".[1]");
+            if (!t0 || !t1) return t0 ? t1 : t0;
+            if (*t0 != ValueKind::ScalarField || *t1 != ValueKind::Vector) return TypeResult::error(TypeDiagnostic{path, "SDF requires (ScalarField, Vector)"});
+            return TypeResult::ok(ValueKind::Scalar);
+        }
+        case Op::Gradient: {
+            if (children.size() != 2) return TypeResult::error(TypeDiagnostic{path, "Gradient requires 2 args (ScalarField, Point)"});
+            auto t0 = children[0]->typeOf(env, path + ".[0]");
+            auto t1 = children[1]->typeOf(env, path + ".[1]");
+            if (!t0 || !t1) return t0 ? t1 : t0;
+            if (*t0 != ValueKind::ScalarField || *t1 != ValueKind::Vector) return TypeResult::error(TypeDiagnostic{path, "Gradient requires (ScalarField, Vector)"});
+            return TypeResult::ok(ValueKind::Vector);
+        }
+        case Op::LineIntegral: {
+            if (children.size() != 2) return TypeResult::error(TypeDiagnostic{path, "LineIntegral requires 2 args (VectorField, ParametricCurve/Vector)"});
+            auto t0 = children[0]->typeOf(env, path + ".[0]");
+            auto t1 = children[1]->typeOf(env, path + ".[1]");
+            if (!t0 || !t1) return t0 ? t1 : t0;
+            if (*t0 != ValueKind::VectorField || *t1 != ValueKind::Vector) return TypeResult::error(TypeDiagnostic{path, "LineIntegral requires (VectorField, Vector)"});
+            return TypeResult::ok(ValueKind::Scalar);
+        }
+        case Op::Union:
+        case Op::Intersection:
+        case Op::Difference: {
+            if (children.size() != 2) return TypeResult::error(TypeDiagnostic{path, "Field CSG requires 2 args"});
+            auto t0 = children[0]->typeOf(env, path + ".[0]");
+            auto t1 = children[1]->typeOf(env, path + ".[1]");
+            if (!t0 || !t1) return t0 ? t1 : t0;
+            if (*t0 != ValueKind::ScalarField || *t1 != ValueKind::ScalarField) return TypeResult::error(TypeDiagnostic{path, "CSG requires ScalarFields"});
+            return TypeResult::ok(ValueKind::ScalarField);
+        }
     }
     return TypeResult::error(TypeDiagnostic{path, "Unknown operation type"});
 }
@@ -700,6 +763,35 @@ std::optional<PropertyValue> MathNode::evaluate(const std::map<std::string, Prop
                 evalArgs.push_back(child->evaluate(vars, subject));
             }
             return Probability::evaluateStochastic(stringArg, evalArgs);
+        }
+        case Op::Project: {
+            if (children.size() != 2) return std::nullopt;
+            auto a = children[0]->evaluate(vars, subject);
+            auto b = children[1]->evaluate(vars, subject);
+            if (!a || !b || !std::holds_alternative<glm::vec3>(*a) || !std::holds_alternative<glm::vec3>(*b)) return std::nullopt;
+            glm::vec3 va = std::get<glm::vec3>(*a);
+            glm::vec3 vb = std::get<glm::vec3>(*b);
+            float lenB2 = glm::dot(vb, vb);
+            if (lenB2 < 1e-6f) return PropertyValue(glm::vec3(0.0f));
+            return PropertyValue(vb * (glm::dot(va, vb) / lenB2));
+        }
+        case Op::Distance: {
+            if (children.size() != 2) return std::nullopt;
+            auto a = children[0]->evaluate(vars, subject);
+            auto b = children[1]->evaluate(vars, subject);
+            if (!a || !b || !std::holds_alternative<glm::vec3>(*a) || !std::holds_alternative<glm::vec3>(*b)) return std::nullopt;
+            return PropertyValue(glm::distance(std::get<glm::vec3>(*a), std::get<glm::vec3>(*b)));
+        }
+        case Op::Raycast:
+        case Op::SDF:
+        case Op::Gradient:
+        case Op::LineIntegral:
+        case Op::Union:
+        case Op::Intersection:
+        case Op::Difference: {
+            // Complex spatial/field operations evaluate analytically or procedurally 
+            // downstream via WGSL. For generic CPU AST evaluation, these return nullopt.
+            return std::nullopt;
         }
     }
     return std::nullopt;

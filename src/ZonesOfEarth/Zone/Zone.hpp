@@ -10,6 +10,13 @@
 #include "Legacy/DesignSystem.hpp"
 
 class World; // forward decl
+namespace OntoMath {
+    class ScalarField;
+    class VectorField;
+}
+namespace geom {
+    class FieldNode;
+}
 
 class Zone : public Object
 {
@@ -209,6 +216,14 @@ private:
     std::string _ownerId;   // owning Person's identifier ("" = commons)
     std::unique_ptr<World> _world; // per-zone world instance
     Formation _formation;
+    
+    // The raw Singularity substrates for spatial math
+    std::shared_ptr<OntoMath::ScalarField> _spatialField;
+    std::shared_ptr<OntoMath::VectorField> _spatialVectorField;
+    
+    // The spatial root object (a FieldNode) that shares the pointers 
+    // and is a member of the formation
+    std::shared_ptr<geom::FieldNode> _spatialRootObject;
     // Removed cache; formation members are rebuilt on copy
 
 public:

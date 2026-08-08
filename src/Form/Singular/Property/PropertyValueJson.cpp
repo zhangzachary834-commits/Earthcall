@@ -6,6 +6,7 @@
 #include "Form/Object/Object.hpp"
 #include "Form/Object/Formation/Formation.hpp"
 #include "Relation/Relation.hpp"
+#include "Singularity/OntoMath/Field.hpp"
 
 namespace {
 
@@ -60,6 +61,10 @@ nlohmann::json propertyValueToJson(const PropertyValue& v) {
                 }
             }
             return nlohmann::json{{"t", "dict"}, {"v", obj}};
+        } else if constexpr (std::is_same_v<X, std::shared_ptr<OntoMath::ScalarField>>) {
+            return nlohmann::json{{"t", "scalar_field"}};
+        } else if constexpr (std::is_same_v<X, std::shared_ptr<OntoMath::VectorField>>) {
+            return nlohmann::json{{"t", "vector_field"}};
         } else {
             // Singular*/Object*/Relation*/Formation* — identity, not value.
             return refJson(static_cast<const Singular*>(x));
