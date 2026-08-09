@@ -204,8 +204,6 @@ void Game::update(float dt) {
         _brush.rotation = rotation;
     }
 
-    // Update avatar system
-    _avatarManager.updateAllAvatars(dt);
 
     // Simple cube rotation animation
     _cubeAngle += 50.0f * dt; // degrees/sec
@@ -237,19 +235,8 @@ void Game::update(float dt) {
                 ECA::Event{"onMouseClicked", &_player, nullptr, static_cast<std::time_t>(_worldTime)});
         }
 
-        bool useAvatarTargets = (_current3DTarget == ToolTarget3D::AvatarBodyParts);
         auto collect3DTargets = [&](std::vector<Object*>& targets) {
             targets.clear();
-            if (useAvatarTargets) {
-                for (auto* part : _player.getBody().parts) {
-                    if (!part) continue;
-                    targets.push_back(part);
-                    for (const auto& sub : part->getSubObjects()) {
-                        if (sub) targets.push_back(sub.get());
-                    }
-                }
-                return;
-            }
             const auto& objects = mgr.active().world().getOwnedObjects();
             for (const auto& up : objects) {
                 targets.push_back(up.get());
@@ -333,14 +320,10 @@ void Game::update(float dt) {
             // spawn action's parent path resolves "cursorHoveredBodyPart".
         } else if (_current3DMode == Mode3D::Pottery) {
             collect3DTargets(toolTargets);
-            glm::mat4 avatarRoot = glm::translate(glm::mat4(1.0f), _player.position);
-            Tool::Pottery3D(_window, this, mgr, dt, toolTargets,
-                            useAvatarTargets ? &avatarRoot : nullptr);
+            Tool::Pottery3D(_window, this, mgr, dt, toolTargets, nullptr);
         } else if (_current3DMode == Mode3D::Rotation) {
             collect3DTargets(toolTargets);
-            glm::mat4 avatarRoot = glm::translate(glm::mat4(1.0f), _player.position);
-            Tool::Rotate3D(_window, this, mgr, dt, toolTargets,
-                           useAvatarTargets ? &avatarRoot : nullptr);
+            Tool::Rotate3D(_window, this, mgr, dt, toolTargets, nullptr);
         } else if (_current3DMode == Mode3D::Selection) {
             collect3DTargets(toolTargets);
             if (mouseLeftNow && !_mouseLeftPressedLast) {

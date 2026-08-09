@@ -2,7 +2,6 @@
 #include "Integration/SecurityManager.hpp"
 #include "Rendering/BrushSystem.hpp"
 #include "Legacy/DesignSystem.hpp"
-#include "Person/AvatarManager.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include <iostream>
 namespace Integration {
@@ -12,7 +11,6 @@ EarthcallAPI::EarthcallAPI() {
     // Initialize system references (will be connected later)
     _brushSystem = nullptr;
     _designSystem = nullptr;
-    _avatarManager = nullptr;
 }
 
 EarthcallAPI::~EarthcallAPI() = default;
@@ -148,84 +146,6 @@ bool EarthcallAPI::applyDesignTemplate(const std::string& template_name) {
     std::cout << "🎨 Applying design template: " << template_name << std::endl;
     // TODO: Actually apply the template
     return true;
-}
-
-bool EarthcallAPI::createAvatar(const std::string& name, const std::string& appearance) {
-    if (!_checkPermission("avatar_system")) return false;
-    std::cout << "👤 Creating avatar: " << name << " with appearance " << appearance << std::endl;
-    if (_avatarManager) {
-        _avatarManager->createAvatar(name, appearance);
-        return true;
-    }
-    return false;
-}
-
-bool EarthcallAPI::animateAvatar(const std::string& name, const std::string& animation) {
-    if (!_checkPermission("avatar_system")) return false;
-    std::cout << "👤 Animating avatar: " << name << " -> " << animation << std::endl;
-    if (_avatarManager) {
-        // Find avatar and animate
-        return true;
-    }
-    return false;
-}
-
-bool EarthcallAPI::setAvatarPosition(const std::string& name, const glm::vec3& position) {
-    if (!_checkPermission("avatar_system")) return false;
-    std::cout << "👤 Moving avatar: " << name << " to " << position.x << ", " << position.y << ", " << position.z << std::endl;
-    if (_avatarManager) {
-        // Find avatar and move
-        return true;
-    }
-    return false;
-}
-
-std::vector<std::string> EarthcallAPI::getAvatars() {
-    std::vector<std::string> names;
-    if (_checkPermission("avatar_system") && _avatarManager) {
-        for (const auto& avatar : _avatarManager->getAllAvatars()) {
-            names.push_back(avatar->getDisplayName());
-        }
-    }
-    return names;
-}
-
-bool EarthcallAPI::modifyAvatar(const AvatarModification& modification) {
-    if (!_checkPermission("avatar_system")) return false;
-    std::cout << "👤 Modifying avatar part: " << modification.part_name << std::endl;
-    return true;
-}
-
-bool EarthcallAPI::resetAvatarPart(const std::string& part_name) {
-    if (!_checkPermission("avatar_system")) return false;
-    std::cout << "👤 Resetting avatar part: " << part_name << std::endl;
-    return true;
-}
-
-bool EarthcallAPI::exportAvatar(const std::string& filename) {
-    if (!_checkPermission("file_system")) {
-        std::cout << "❌ Permission denied: file_system" << std::endl;
-        return false;
-    }
-    
-    std::cout << "👤 Exporting avatar to: " << filename << std::endl;
-    // TODO: Actually export the avatar
-    return true;
-}
-
-bool EarthcallAPI::importAvatar(const std::string& filename) {
-    if (!_checkPermission("file_system")) {
-        std::cout << "❌ Permission denied: file_system" << std::endl;
-        return false;
-    }
-    
-    std::cout << "👤 Importing avatar from: " << filename << std::endl;
-    // TODO: Actually import the avatar
-    return true;
-}
-
-std::vector<std::string> EarthcallAPI::getAvailableAvatarParts() {
-    return {"head", "body", "arms", "legs", "hands", "feet", "eyes", "hair"};
 }
 
 bool EarthcallAPI::createZone(const std::string& name, float x, float y, float width, float height) {

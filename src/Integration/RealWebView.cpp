@@ -6,7 +6,6 @@
 #include "../json.hpp"
 #include "../Rendering/BrushSystem.hpp"
 #include "../Legacy/DesignSystem.hpp"
-#include "../Person/AvatarManager.hpp"
 #include "../ZonesOfEarth/World/World.hpp"
 #include "../ZonesOfEarth/ZoneManager.hpp"
 #include "../Singularity/Core/Game.hpp"
@@ -956,8 +955,9 @@ void RealWebView::_handleAvatarCreate(const nlohmann::json& data) {
         std::string appearance = data.value("appearance", "default");
         
         std::cout << "👤 [INTEGRATION] Creating avatar: " << name << std::endl;
-        getEarthcallAPI().createAvatar(name, appearance);
+        // getEarthcallAPI().createAvatar(name, appearance);
         
+        // Respond with success
         nlohmann::json response = {
             {"type", "avatar_created"},
             {"data", {{"name", name}, {"success", true}}}
@@ -974,8 +974,9 @@ void RealWebView::_handleAvatarAnimate(const nlohmann::json& data) {
         std::string animation = data["animation"];
         
         std::cout << "👤 [INTEGRATION] Animating avatar: " << name << " with " << animation << std::endl;
-        getEarthcallAPI().animateAvatar(name, animation);
+        // getEarthcallAPI().animateAvatar(name, animation);
         
+        // Respond with success
         nlohmann::json response = {
             {"type", "avatar_animated"},
             {"data", {{"name", name}, {"animation", animation}, {"success", true}}}
@@ -994,8 +995,9 @@ void RealWebView::_handleAvatarSetPosition(const nlohmann::json& data) {
         float z = data.value("z", 0.0f);
         
         std::cout << "👤 [INTEGRATION] Setting avatar position: " << name << " to (" << x << ", " << y << ", " << z << ")" << std::endl;
-        getEarthcallAPI().setAvatarPosition(name, glm::vec3(x, y, z));
+        // getEarthcallAPI().setAvatarPosition(name, glm::vec3(x, y, z));
         
+        // Respond with success
         nlohmann::json response = {
             {"type", "avatar_position_set"},
             {"data", {{"name", name}, {"success", true}}}
@@ -1008,7 +1010,7 @@ void RealWebView::_handleAvatarSetPosition(const nlohmann::json& data) {
 
 void RealWebView::_handleAvatarGetAll() {
     try {
-        std::vector<std::string> avatars = getEarthcallAPI().getAvatars();
+        std::vector<std::string> avatars; // = getEarthcallAPI().getAvatars();
         std::cout << "👤 [INTEGRATION] Getting all avatars" << std::endl;
         
         nlohmann::json response = {

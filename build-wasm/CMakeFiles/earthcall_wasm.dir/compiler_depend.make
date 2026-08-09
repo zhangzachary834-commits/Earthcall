@@ -109421,6 +109421,15 @@ CMakeFiles/earthcall_wasm.dir/src/Util/SaveSystem.cpp.o: /Users/zacharyzhang/Doc
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/compat/time.h \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/compat/xlocale.h \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/ctype.h \
+  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/emscripten.h \
+  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/emscripten/em_asm.h \
+  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/emscripten/em_js.h \
+  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/emscripten/em_macros.h \
+  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/emscripten/em_types.h \
+  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/emscripten/emscripten.h \
+  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/emscripten/promise.h \
+  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/emscripten/version.h \
+  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/emscripten/wget.h \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/endian.h \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/errno.h \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/features.h \
@@ -109430,6 +109439,7 @@ CMakeFiles/earthcall_wasm.dir/src/Util/SaveSystem.cpp.o: /Users/zacharyzhang/Doc
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/pthread.h \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/sched.h \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/stdarg.h \
+  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/stdbool.h \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/stddef.h \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/stdint.h \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/stdio.h \
@@ -109462,6 +109472,7 @@ CMakeFiles/earthcall_wasm.dir/src/Util/SaveSystem.cpp.o: /Users/zacharyzhang/Doc
   /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/endian.h \
   /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/limits.h \
   /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/stdarg.h \
+  /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/stdbool.h \
   /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/stddef.h \
   /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/stdint.h
 

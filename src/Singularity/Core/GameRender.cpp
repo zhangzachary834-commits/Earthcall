@@ -337,13 +337,6 @@ void Game::render() {
         _player.drawNametag();
     }
 
-    // Draw demo avatars if enabled
-    if (_showAvatarDemo) {
-        for (auto* avatar : _avatarManager.getAllAvatars()) {
-            avatar->draw();
-            avatar->drawNametag();
-        }
-    }
 
     // 2-D overlays ---------------------------------------------------------
     currentRenderer().begin2D(static_cast<uint32_t>(fbW), static_cast<uint32_t>(fbH));
@@ -489,44 +482,7 @@ void Game::render() {
         // Integration::IntegrationManager::instance().renderIntegrationUI();
     }
 
-    // Avatar demo info panel
-    if (_showAvatarDemo) {
-        ImGui::Begin("Avatar System Demo", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 
-        ImGui::Text("Avatar System Features:");
-        ImGui::BulletText("Health, Energy, Mood, Experience");
-        ImGui::BulletText("Body Part Damage & Healing");
-        ImGui::BulletText("Clothing System");
-        ImGui::BulletText("Inventory Management");
-        ImGui::BulletText("Avatar Interactions");
-        ImGui::BulletText("Animation System");
-        ImGui::BulletText("AI Behavior");
-        ImGui::BulletText("Customization Presets");
-
-        ImGui::Separator();
-        ImGui::Text("Controls:");
-        ImGui::Text("O - Toggle Avatar Demo");
-        ImGui::Text("H - Toggle Chat Window");
-        ImGui::Text("T - Toggle Toolbar");
-
-        ImGui::Separator();
-        ImGui::Text("Demo Avatars: %d", _avatarManager.getTotalAvatars());
-        ImGui::Text("Average Health: %.1f", _avatarManager.getAverageHealth());
-        ImGui::Text("Average Level: %.1f", _avatarManager.getAverageLevel());
-        ImGui::Text("Total Experience: %d", _avatarManager.getTotalExperience());
-
-        if (ImGui::Button("Heal All Avatars")) {
-            _avatarManager.healAllAvatars(50.0f);
-        }
-        if (ImGui::Button("Damage All Avatars")) {
-            _avatarManager.damageAllAvatars(10.0f);
-        }
-        if (ImGui::Button("Restore All Avatars")) {
-            _avatarManager.restoreAllAvatars();
-        }
-
-        ImGui::End();
-    }
 
     // Close the frame: no-op under OpenGL (already drawn immediately); under
     // WebGPU this ends the render pass, submits, and presents the surface.

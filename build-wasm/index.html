@@ -15,15 +15,6 @@
     <canvas id="earthcall-canvas" oncontextmenu="event.preventDefault()"></canvas>
     <script type='text/javascript'>
       var Module = {
-        preRun: [function() {
-            FS.mkdir('/saves');
-            FS.mount(IDBFS, {}, '/saves');
-            Module.addRunDependency('syncfs');
-            FS.syncfs(true, function(err) {
-                if (err) console.error('Error syncing IDBFS:', err);
-                Module.removeRunDependency('syncfs');
-            });
-        }],
         print: (text) => console.log('WASM PRINT: ' + text),
         printErr: (text) => console.log('WASM ERR: ' + text),
         canvas: (function() {

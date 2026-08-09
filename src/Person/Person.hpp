@@ -25,37 +25,7 @@ public:
     It's first and foremost a digital metaverse, not a game.
     We need to focus on the Earthcall essentials before adding game-like features. */
 
-    // Avatar State System
-    struct AvatarState {
-        float health = 100.0f;
-        float maxHealth = 100.0f;
-        float energy = 100.0f;
-        float maxEnergy = 100.0f;
-        float mood = 50.0f;  // -100 to 100
-        float hunger = 0.0f;
-        float thirst = 0.0f;
-        float temperature = 37.0f;  // Celsius
-        float experience = 0.0f;
-        int level = 1;
-        
-        // Skills and abilities
-        std::map<std::string, float> skills;
-        
-        // Status effects
-        std::vector<std::string> activeEffects;
-        
-        // Avatar customization
-        std::string hairStyle = "Default";
-        std::string eyeColor = "Brown";
-        std::string skinTone = "Natural";
-        float height = 1.0f;
-        float weight = 70.0f;  // kg
-        
-        // Social stats
-        int friends = 0;
-        int reputation = 0;
-        std::vector<std::string> relationships;
-    };
+
 
     // Animation System
     struct Animation {
@@ -117,22 +87,7 @@ public:
     glm::vec3 cameraForward{0.0f, 0.0f, -1.0f};
     glm::vec3 activeColor{1.0f, 1.0f, 1.0f};
 
-    // Enhanced avatar system
-    AvatarState state;
-    std::vector<Animation> animations;
-    Animation* currentAnimation = nullptr;
-    bool _idleActive = false;
-    bool _walkActive = false;
-    
-    // Interaction system
-    std::vector<Person*> nearbyAvatars;
-    float interactionRange = 3.0f;
-    
-    // Inventory system
-    std::vector<std::string> inventory;
-    int maxInventorySize = 20;
 
-    std::vector<std::string> nicknames;
     
     // Serialization
     nlohmann::json serialize() const;
@@ -153,15 +108,7 @@ public:
     // Update all body part world transforms based on current position
     void updatePose();
 
-    // Avatar State Management
-    void updateState(float deltaTime);
-    void modifyHealth(float amount);
-    void modifyEnergy(float amount);
-    void modifyMood(float amount);
-    void addExperience(float amount);
-    void levelUp();
-    void addSkill(const std::string& skillName, float value);
-    float getSkill(const std::string& skillName) const;
+
     
     // Animation System
     void addAnimation(const Animation& anim);
@@ -178,8 +125,6 @@ public:
     void playIdleAutomation();              // gentle breathing / sway
     void playWalkAutomation(float speed);   // swing legs & arms; speed scales tempo
     void stopBodyAutomations();
-    bool isWalkAutomationActive() const { return _walkActive; }
-    bool isIdleAutomationActive() const { return _idleActive; }
 
     // Apply a locomotion intent: walking swaps in the walk cycle (tempo tracks
     // speed), standing still settles into idle. Holds the transition guard so it
@@ -191,23 +136,7 @@ public:
     // its target Person. Idempotent; call once at startup.
     static void installLocomotionRouting();
     
-    // Interaction System
-    void interactWith(Person* other);
-    void addNearbyAvatar(Person* avatar);
-    void removeNearbyAvatar(Person* avatar);
-    bool isNearby(Person* other) const;
-    
-    // Inventory System
-    bool addToInventory(const std::string& item);
-    bool removeFromInventory(const std::string& item);
-    bool hasItem(const std::string& item) const;
-    
-    // Avatar Customization
-    void setHairStyle(const std::string& style);
-    void setEyeColor(const std::string& color);
-    void setSkinTone(const std::string& tone);
-    void setHeight(float h);
-    void setWeight(float w);
+
     
     // Physics and Movement
     void applyForce(const glm::vec3& force);
@@ -296,5 +225,12 @@ private:
     std::string _currentSession;
     std::vector<std::string> _joinedZones;
     
+
+    
+    // Transient animation state
+    bool _walkActive = false;
+    bool _idleActive = false;
+    std::vector<Animation> animations;
+    Animation* currentAnimation = nullptr;
 
 };

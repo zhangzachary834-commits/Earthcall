@@ -636,12 +636,7 @@ nlohmann::json bodyToJson(const Body& body) {
     nlohmann::json j;
     j["shape"] = body.shape;
     j["artStyle"] = body.artStyle;
-    j["bodyType"] = static_cast<int>(body.bodyType);
-    j["proportions"] = static_cast<int>(body.proportions);
     j["height"] = body.height;
-    j["weight"] = body.weight;
-    j["muscleMass"] = body.muscleMass;
-    j["bodyFat"] = body.bodyFat;
 
     nlohmann::json partsArr = nlohmann::json::array();
     for (const auto* part : body.parts) {
@@ -655,16 +650,7 @@ nlohmann::json bodyToJson(const Body& body) {
 }
 
 void bodyFromJson(const nlohmann::json& j, Body& body) {
-    if (j.contains("bodyType")) {
-        body.setBodyType(static_cast<Body::BodyType>(j["bodyType"].get<int>()));
-    }
-    if (j.contains("proportions")) {
-        body.setProportions(static_cast<Body::Proportions>(j["proportions"].get<int>()));
-    }
     if (j.contains("height")) body.height = j["height"].get<float>();
-    if (j.contains("weight")) body.weight = j["weight"].get<float>();
-    if (j.contains("muscleMass")) body.muscleMass = j["muscleMass"].get<float>();
-    if (j.contains("bodyFat")) body.bodyFat = j["bodyFat"].get<float>();
 
     // Match saved parts to existing parts by name
     if (j.contains("bodyParts")) {

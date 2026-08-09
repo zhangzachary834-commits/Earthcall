@@ -524,11 +524,6 @@ void Game::render3DConsole() {
         _current3DTarget = ToolTarget3D::WorldObjects;
         clearSelection3D();
     }
-    ImGui::SameLine();
-    if (ImGui::RadioButton("Avatar Parts", targetIdx == static_cast<int>(ToolTarget3D::AvatarBodyParts))) {
-        _current3DTarget = ToolTarget3D::AvatarBodyParts;
-        clearSelection3D();
-    }
 
     ImGui::Separator();
     ImGui::TextUnformatted("Shape");
@@ -1059,21 +1054,10 @@ void Game::render3DConsole() {
 void Game::renderCharacterConsole() {
     Body& body = _player.getBody();
 
-    if (_current3DTarget == ToolTarget3D::AvatarBodyParts) {
-        if (auto* pickedPart = dynamic_cast<BodyPart*>(_selectedObject3D)) {
-            _selectedCharacterPart = pickedPart;
-        }
-    }
     if (!_selectedCharacterPart && !body.parts.empty()) {
         _selectedCharacterPart = body.parts.front();
     }
 
-    if (ImGui::Button("Edit Avatar Parts")) {
-        _current3DTarget = ToolTarget3D::AvatarBodyParts;
-        _current3DMode = Mode3D::Selection;
-        _currentPerspective = PerspectiveMode::ThirdPerson;
-    }
-    ImGui::SameLine();
     ImGui::Checkbox("Design Lock", &_characterDesignLocked);
 
     if (ImGui::BeginTabBar("CharacterTabs")) {
@@ -1085,7 +1069,6 @@ void Game::renderCharacterConsole() {
                 if (ImGui::Selectable(part->getName().c_str(), selected)) {
                     _selectedCharacterPart = part;
                     setSelectedObject3D(part);
-                    _current3DTarget = ToolTarget3D::AvatarBodyParts;
                 }
             }
 
@@ -1168,129 +1151,6 @@ void Game::renderCharacterConsole() {
             ImGui::EndTabItem();
         }
 
-        if (ImGui::BeginTabItem("Avatar Stats")) {
-            ImGui::BeginDisabled(_characterDesignLocked);
-
-            ImGui::Text("Health: %.1f/%.1f", _player.state.health, _player.state.maxHealth);
-            ImGui::Text("Energy: %.1f/%.1f", _player.state.energy, _player.state.maxEnergy);
-            ImGui::Text("Mood: %.1f", _player.state.mood);
-            ImGui::Text("Level: %d (XP: %.1f)", _player.state.level, _player.state.experience);
-
-            ImGui::Separator();
-            ImGui::TextUnformatted("Skills");
-            for (const auto& skill : _player.state.skills) {
-                ImGui::Text("%s: %.1f", skill.first.c_str(), skill.second);
-            }
-
-            ImGui::Separator();
-            if (ImGui::Button("Add Experience")) {
-                _player.addExperience(50.0f);
-            }
-            ImGui::SameLine();
-            if (ImGui::Button("Heal Avatar")) {
-                _player.modifyHealth(50.0f);
-            }
-            ImGui::SameLine();
-            if (ImGui::Button("Restore Energy")) {
-                _player.modifyEnergy(50.0f);
-            }
-
-            ImGui::EndDisabled();
-            ImGui::EndTabItem();
-        }
-
-        if (ImGui::BeginTabItem("Form")) {
-            ImGui::BeginDisabled(_characterDesignLocked);
-
-            float height = body.height;
-            if (ImGui::SliderFloat("Height", &height, 0.5f, 2.5f, "%.2f m")) {
-                body.setHeight(height);
-                _player.state.height = height;
-                _player.updatePose();
-            }
-
-            float weight = body.weight;
-            if (ImGui::SliderFloat("Weight", &weight, 30.0f, 150.0f, "%.1f kg")) {
-                body.setWeight(weight);
-                _player.state.weight = weight;
-            }
-
-            int proportions = static_cast<int>(body.proportions);
-            const char* proportionNames[] = {"Child", "Teen", "Adult", "Elder"};
-            if (ImGui::Combo("Proportions", &proportions, proportionNames, IM_ARRAYSIZE(proportionNames))) {
-                body.setProportions(static_cast<Body::Proportions>(proportions));
-                _player.updatePose();
-            }
-
-            ImGui::EndDisabled();
-            ImGui::EndTabItem();
-        }
-
-        if (ImGui::BeginTabItem("Clothing")) {
-            ImGui::BeginDisabled(_characterDesignLocked);
-
-            ImGui::TextUnformatted("Equipped Clothing");
-            for (auto& item : body.clothing) {
-                bool equipped = item.second.isEquipped;
-                if (ImGui::Checkbox(item.first.c_str(), &equipped)) {
-                    if (equipped) {
-                        body.equipClothing(item.first);
-                    } else {
-                        body.unequipClothing(item.first);
-                    }
-                }
-                if (equipped) {
-                    ImGui::SameLine();
-                    ImGui::Text("(Protection: %.1f, Warmth: %.1f)",
-                                item.second.protection, item.second.warmth);
-                }
-            }
-
-            ImGui::Separator();
-            ImGui::Text("Total Protection: %.1f", body.getTotalProtection());
-            ImGui::Text("Total Warmth: %.1f", body.getTotalWarmth());
-
-            ImGui::EndDisabled();
-            ImGui::EndTabItem();
-        }
-
-        if (ImGui::BeginTabItem("Inventory")) {
-            ImGui::BeginDisabled(_characterDesignLocked);
-
-            ImGui::Text("Inventory (%zu/%d items)", _player.inventory.size(), _player.maxInventorySize);
-            for (size_t i = 0; i < _player.inventory.size(); ++i) {
-                ImGui::Text("%zu. %s", i + 1, _player.inventory[i].c_str());
-            }
-
-            ImGui::Separator();
-            static char newItem[64] = "";
-            if (ImGui::InputText("Add Item", newItem, sizeof(newItem), ImGuiInputTextFlags_EnterReturnsTrue)) {
-                if (_player.addToInventory(newItem)) {
-                    newItem[0] = '\0';
-                }
-            }
-
-            ImGui::EndDisabled();
-            ImGui::EndTabItem();
-        }
-
-        if (ImGui::BeginTabItem("Presets")) {
-            ImGui::BeginDisabled(_characterDesignLocked);
-
-            static char presetName[64] = "";
-            ImGui::InputText("Preset Name", presetName, sizeof(presetName));
-            if (ImGui::Button("Create Preset") && presetName[0] != '\0') {
-                _avatarManager.createPreset(presetName, &_player);
-                presetName[0] = '\0';
-            }
-            ImGui::SameLine();
-            if (ImGui::Button("Create Current")) {
-                _avatarManager.createPreset("Current", &_player);
-            }
-
-            ImGui::EndDisabled();
-            ImGui::EndTabItem();
-        }
 
         if (ImGui::BeginTabItem("Identity")) {
             ImGui::BeginDisabled(_characterDesignLocked);
@@ -1301,31 +1161,6 @@ void Game::renderCharacterConsole() {
             }
             if (ImGui::InputText("Soul Name", nameBuf, sizeof(nameBuf))) {
                 _player.displayName = nameBuf;
-            }
-            
-            ImGui::Separator();
-            ImGui::Text("Nicknames");
-            static char newNickname[64] = "";
-            ImGui::InputText("New Nickname", newNickname, sizeof(newNickname));
-            ImGui::SameLine();
-            if (ImGui::Button("Add") && newNickname[0] != '\0') {
-                _player.nicknames.push_back(newNickname);
-                newNickname[0] = '\0';
-            }
-            
-            if (ImGui::BeginListBox("##NicknamesList")) {
-                for (size_t i = 0; i < _player.nicknames.size(); ++i) {
-                    ImGui::PushID(static_cast<int>(i));
-                    ImGui::TextUnformatted(_player.nicknames[i].c_str());
-                    ImGui::SameLine();
-                    if (ImGui::Button("Remove")) {
-                        _player.nicknames.erase(_player.nicknames.begin() + i);
-                        ImGui::PopID();
-                        break;
-                    }
-                    ImGui::PopID();
-                }
-                ImGui::EndListBox();
             }
 
             ImGui::EndDisabled();

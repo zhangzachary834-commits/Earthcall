@@ -269,29 +269,7 @@ bool Game::init() {
             }
         }
     });
-    _keyboardHandler.bindKey(GLFW_KEY_O, "toggle_avatar_demo", [this]() {
-        _showAvatarDemo = !_showAvatarDemo;
-        if (_showAvatarDemo) {
-            // Initialize demo avatars if not already created
-            if (_avatarManager.getTotalAvatars() == 0) {
-                _avatarManager.createAvatar("Demo Alice", "Voxel");
-                _avatarManager.createAvatar("Demo Bob", "Voxel");
-                _avatarManager.createChildAvatar("Demo Child");
-                _avatarManager.createElderAvatar("Demo Elder");
 
-                // Position them around the player
-                Person* alice = _avatarManager.getAvatar("Demo Alice");
-                Person* bob = _avatarManager.getAvatar("Demo Bob");
-                Person* child = _avatarManager.getAvatar("Demo Child");
-                Person* elder = _avatarManager.getAvatar("Demo Elder");
-
-                if (alice) alice->position = _player.position + glm::vec3(3.0f, 0.0f, 0.0f);
-                if (bob) bob->position = _player.position + glm::vec3(-3.0f, 0.0f, 0.0f);
-                if (child) child->position = _player.position + glm::vec3(0.0f, 0.0f, 3.0f);
-                if (elder) elder->position = _player.position + glm::vec3(0.0f, 0.0f, -3.0f);
-            }
-        }
-    });
     // Debug toggles for gravity field visualization and law enable
     _keyboardHandler.bindKey(GLFW_KEY_F6, "toggle_gravity_viz", [this]() {
         bool v = Physics::getGravityVisualization();
@@ -315,14 +293,7 @@ bool Game::init() {
         if (_current3DMode == Mode3D::FaceBrush) {
             Object* target = _selectedObject3D;
             if (!target) {
-                if (_current3DTarget == ToolTarget3D::AvatarBodyParts) {
-                    for (auto* part : _player.getBody().parts) {
-                        if (part) {
-                            target = part;
-                            break;
-                        }
-                    }
-                } else {
+
             const auto& objects = mgr.active().world().getOwnedObjects();
                 for (const auto& up : objects) {
                     Object* obj = up.get();
@@ -332,7 +303,6 @@ bool Game::init() {
                     }
                 }
                 }
-            }
             if (target) {
                 // For now, undo the last stroke on the first face
                 target->undoStroke(0);

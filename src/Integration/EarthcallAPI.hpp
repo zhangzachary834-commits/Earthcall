@@ -4,8 +4,8 @@
 #include <vector>
 #include <functional>
 #include <memory>
+#include <map>
 #include <glm/glm.hpp>
-#include "../Person/AvatarManager.hpp"
 
 // Forward declarations
 class BrushSystem;
@@ -14,8 +14,6 @@ class DesignSystem;
 namespace ZonesOfEarth {
     class ZoneManager;
 }
-
-class AvatarManager;
 
 namespace Integration {
 
@@ -47,13 +45,6 @@ public:
         std::map<std::string, std::string> properties;
     };
 
-    // Avatar System API
-    struct AvatarModification {
-        std::string part_name;
-        std::string modification_type; // "color", "shape", "texture"
-        std::map<std::string, std::string> parameters;
-    };
-
     // Constructor
     EarthcallAPI();
     ~EarthcallAPI();
@@ -72,16 +63,6 @@ public:
     std::vector<DesignElement> getDesignElements();
     bool applyDesignTemplate(const std::string& template_name);
 
-    // Avatar System Access
-    bool createAvatar(const std::string& name, const std::string& appearance);
-    bool animateAvatar(const std::string& name, const std::string& animation);
-    bool setAvatarPosition(const std::string& name, const glm::vec3& position);
-    std::vector<std::string> getAvatars();
-    bool modifyAvatar(const AvatarModification& modification);
-    bool resetAvatarPart(const std::string& part_name);
-    bool exportAvatar(const std::string& filename);
-    bool importAvatar(const std::string& filename);
-    std::vector<std::string> getAvailableAvatarParts();
 
     // World/Environment Access
     bool createZone(const std::string& name, float x, float y, float width, float height);
@@ -112,7 +93,6 @@ public:
     // System Access Setters
     void setBrushSystem(BrushSystem* system) { _brushSystem = system; }
     void setDesignSystem(DesignSystem* system) { _designSystem = system; }
-    void setAvatarManager(AvatarManager* manager) { _avatarManager = manager; }
     void setZoneManager(ZonesOfEarth::ZoneManager* manager) { _zoneManager = manager; }
 
     // Lifecycle
@@ -123,7 +103,6 @@ private:
     // System references
     BrushSystem* _brushSystem = nullptr;
     DesignSystem* _designSystem = nullptr;
-    AvatarManager* _avatarManager = nullptr;
     ZonesOfEarth::ZoneManager* _zoneManager = nullptr;
 
     // Permissions

@@ -13,10 +13,6 @@
 #include <thread>
 #include <atomic>
 
-#ifdef __EMSCRIPTEN__
-#include <emscripten.h>
-#endif
-
 namespace SaveSystem {
 
 // Helper to compress a byte vector using zlib
@@ -231,16 +227,6 @@ std::string writeSaveData(const nlohmann::json& j, const std::string& customLabe
     out.write(reinterpret_cast<const char*>(compressed.data()), compressed.size());
     out.close();
 
-#ifdef __EMSCRIPTEN__
-    EM_ASM(
-        FS.syncfs(false, function (err) {
-            if (err) {
-                console.error('FS.syncfs error: ', err);
-            }
-        });
-    );
-#endif
-
     // Upload Binary to cloud
     Util::CloudStorage::uploadSaveAsync(filename, v, type, [filename](bool success) {
         if (success) {
@@ -274,16 +260,6 @@ std::string writeSaveData(const std::vector<uint8_t>& data, const std::string& c
     }
     out.write(reinterpret_cast<const char*>(compressed.data()), compressed.size());
     out.close();
-
-#ifdef __EMSCRIPTEN__
-    EM_ASM(
-        FS.syncfs(false, function (err) {
-            if (err) {
-                console.error('FS.syncfs error: ', err);
-            }
-        });
-    );
-#endif
 
     // Upload Binary to cloud
     Util::CloudStorage::uploadSaveAsync(filename, data, type, [filename](bool success) {

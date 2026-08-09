@@ -11,7 +11,7 @@
 #include "OurVerse/ElementalToolHandler.hpp"
 #include "OurVerse/CursorTools.hpp"
 #include "Person/Person.hpp"
-#include "Person/AvatarManager.hpp"
+
 #include "Person/Soul/Soul.hpp"
 #include "Person/Body/Body.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
@@ -368,7 +368,7 @@ public:
 private:
     enum class PerspectiveMode { FirstPerson = 0, SecondPerson, ThirdPerson };
     enum class Mode3D { None = -1, FacePaint = 0, FaceBrush, BrushCreate, Pottery, Rotation, Selection, Morph, Combine, Sculpt, Graph };
-    enum class ToolTarget3D { WorldObjects = 0, AvatarBodyParts };
+    enum class ToolTarget3D { WorldObjects = 0 };
     enum class CreatorSection { Paint = 0, Create3D, Character, World, Assets, Relations, Zones };
 
     using BrushType = Core::BrushType;
@@ -407,7 +407,7 @@ private:
     // via the reserved "time" paths (set on Universe each frame in update()).
     double        _worldTime = 0.0;
     Person        _player {Soul{"Player"}, Body::createBasicAvatar("Voxel"), "strict"};
-    AvatarManager _avatarManager;
+
     KeyboardHandler _keyboardHandler;
     MouseHandler  _mouseHandler;
     ElementalToolHandler _elementalToolHandler;
@@ -416,7 +416,7 @@ private:
     // UI toggles
     bool _showIntegrationUI = false;
     bool _showChatWindow    = true;
-    bool _showAvatarDemo    = false;
+
     bool _showKeymapWindow  = false;
     bool _showToolbar       = true;
     bool _showDebugCoordinates = false;

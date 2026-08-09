@@ -166,7 +166,6 @@ nlohmann::json Person::serialize() const {
     // identity, so emitting it grants nothing.
     j["soulName"] = displayName;
     if (_personId.canAuthenticate()) j["personId"] = _personId.toString();
-    j["nicknames"] = nicknames;
     return j;
 }
 
@@ -189,10 +188,6 @@ void Person::deserialize(const nlohmann::json& j) {
         Identity::SingularId claimed =
             Identity::SingularId::parse(j["personId"].get<std::string>());
         if (claimed.canAuthenticate()) _personId = claimed;
-    }
-
-    if (j.contains("nicknames") && j["nicknames"].is_array()) {
-        nicknames = j["nicknames"].get<std::vector<std::string>>();
     }
 }
 
@@ -241,11 +236,6 @@ void Person::createDefaultAnimations() {
 
 void Person::express() const {
     std::cout << "\n✨ Person: " << displayName << std::endl;
-    std::cout << "   Level: " << state.level << " (XP: " << state.experience << ")" << std::endl;
-    std::cout << "   Health: " << state.health << "/" << state.maxHealth << std::endl;
-    std::cout << "   Energy: " << state.energy << "/" << state.maxEnergy << std::endl;
-    std::cout << "   Mood: " << state.mood << std::endl;
-    std::cout << "   Friends: " << state.friends << ", Reputation: " << state.reputation << std::endl;
     body.describe();
 }
 
@@ -508,37 +498,10 @@ void Person::installLocomotionRouting() {
 }
 
 void Person::update(float deltaTime) {
-    updateState(deltaTime);
     updateAnimation(deltaTime);
     updateBodyAutomations(deltaTime);
     updatePhysics(deltaTime);
     updatePose();
-}
-
-void Person::updateState(float deltaTime) {
-    // Natural state changes over time
-
-    
-    // Clamp values
-    state.hunger = std::min(state.hunger, 100.0f);
-    state.thirst = std::min(state.thirst, 100.0f);
-    state.energy = std::clamp(state.energy, 0.0f, state.maxEnergy);
-    state.mood = std::clamp(state.mood, -100.0f, 100.0f);
-}
-
-void Person::modifyHealth(float amount) {
-    state.health += amount;
-    state.health = std::clamp(state.health, 0.0f, state.maxHealth);
-    
-    if (amount < 0) {
-        // Damage taken - affect mood
-        state.mood -= std::abs(amount) * 0.1f;
-    }
-}
-
-void Person::modifyEnergy(float amount) {
-    state.energy += amount;
-    state.energy = std::clamp(state.energy, 0.0f, state.maxEnergy);
 }
 
 // Session and Zone Management Methods
@@ -610,44 +573,7 @@ void Person::leaveZone(const std::string& zoneName) {
     }
 }
 
-void Person::modifyMood(float amount) {
-    state.mood += amount;
-    state.mood = std::clamp(state.mood, -100.0f, 100.0f);
-}
 
-void Person::addExperience(float amount) {
-    state.experience += amount;
-    
-    // Check for level up
-    float xpNeeded = state.level * 100.0f;  // Simple XP formula
-    if (state.experience >= xpNeeded) {
-        levelUp();
-    }
-}
-
-void Person::levelUp() {
-    state.level++;
-    state.experience = 0.0f;
-    state.maxHealth += 10.0f;
-    state.maxEnergy += 5.0f;
-    state.health = state.maxHealth;  // Full heal on level up
-    state.energy = state.maxEnergy;
-    state.mood += 20.0f;  // Happy about leveling up
-    
-    std::cout << "🎉 " << displayName << " reached level " << state.level << "!" << std::endl;
-}
-
-void Person::addSkill(const std::string& skillName, float value) {
-    state.skills[skillName] += value;
-    if (state.skills[skillName] > 100.0f) {
-        state.skills[skillName] = 100.0f;
-    }
-}
-
-float Person::getSkill(const std::string& skillName) const {
-    auto it = state.skills.find(skillName);
-    return (it != state.skills.end()) ? it->second : 0.0f;
-}
 
 void Person::addAnimation(const Animation& anim) {
     animations.push_back(anim);
@@ -710,96 +636,9 @@ void Person::updateAnimation(float deltaTime) {
     }
 }
 
-void Person::interactWith(Person* other) {
-    if (!other || !isNearby(other)) return;
-    
-    // Basic interaction - increase friendship
-    state.friends++;
-    other->state.friends++;
-    
-    // Mood boost from social interaction
-    modifyMood(10.0f);
-    other->modifyMood(10.0f);
-    
-    // Experience gain
-    addExperience(5.0f);
-    other->addExperience(5.0f);
-    
-    std::cout << displayName << " interacted with " << other->displayName << std::endl;
-}
-
-void Person::addNearbyAvatar(Person* avatar) {
-    if (avatar && avatar != this) {
-        auto it = std::find(nearbyAvatars.begin(), nearbyAvatars.end(), avatar);
-        if (it == nearbyAvatars.end()) {
-            nearbyAvatars.push_back(avatar);
-        }
-    }
-}
-
-void Person::removeNearbyAvatar(Person* avatar) {
-    auto it = std::find(nearbyAvatars.begin(), nearbyAvatars.end(), avatar);
-    if (it != nearbyAvatars.end()) {
-        nearbyAvatars.erase(it);
-    }
-}
-
-bool Person::isNearby(Person* other) const {
-    if (!other) return false;
-    float distance = glm::length(position - other->position);
-    return distance <= interactionRange;
-}
-
-bool Person::addToInventory(const std::string& item) {
-    if (inventory.size() >= maxInventorySize) {
-        return false;  // Inventory full
-    }
-    inventory.push_back(item);
-    return true;
-}
-
-bool Person::removeFromInventory(const std::string& item) {
-    auto it = std::find(inventory.begin(), inventory.end(), item);
-    if (it != inventory.end()) {
-        inventory.erase(it);
-        return true;
-    }
-    return false;
-}
-
-bool Person::hasItem(const std::string& item) const {
-    return std::find(inventory.begin(), inventory.end(), item) != inventory.end();
-}
-
-void Person::setHairStyle(const std::string& style) {
-    state.hairStyle = style;
-}
-
-void Person::setEyeColor(const std::string& color) {
-    state.eyeColor = color;
-}
-
-void Person::setSkinTone(const std::string& tone) {
-    state.skinTone = tone;
-}
-
-void Person::setHeight(float h) {
-    state.height = h;
-    // Update body scale
-    for (auto* part : body.parts) {
-        if (part) {
-            glm::mat4 scale = glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, h, 1.0f));
-            part->setLocalTransform(scale * part->localTransform());
-        }
-    }
-}
-
-void Person::setWeight(float w) {
-    state.weight = w;
-}
 
 void Person::applyForce(const glm::vec3& force) {
-    acceleration += force / state.weight;  // F = ma
+    acceleration += force / 70.0f;  // F = ma (assuming 70kg)
 }
 
 void Person::setVelocity(const glm::vec3& vel) {
