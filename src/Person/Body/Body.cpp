@@ -10,8 +10,7 @@
 #include "BodyPart/Limb/Torso.hpp"
 #include "BodyPart/Limb/Neck.hpp"
 #include "Head/Head.hpp"
-#include "BodyPart/Chest.hpp"
-#include "BodyPart/Stomach.hpp"
+
 #include "BodyPart/Limb/Shoulder.hpp"
 #include "BodyPart/Limb/ForeArm.hpp"
 #include "BodyPart/Limb/ForeLeg.hpp"
@@ -104,15 +103,6 @@ Body Body::createBasicAvatar(const std::string& artStyle) {
     auto* torso = new Torso();
     torso->setTransform(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.3f, 0.0f)));
     avatar.addPart(torso);
-
-    // ----------------------- Chest & Stomach -----------
-    auto* chest = new Chest();
-    chest->setTransform(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.45f, 0.0f)));
-    avatar.addPart(chest);
-
-    auto* stomach = new Stomach();
-    stomach->setTransform(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.125f, 0.0f)));
-    avatar.addPart(stomach);
 
     // ----------------------- Lower Torso ----------------
     auto* lowerTorso = new BodyPart("LowerTorso", BodyPart::Type::Torso,

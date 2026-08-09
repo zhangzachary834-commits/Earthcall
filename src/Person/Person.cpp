@@ -391,8 +391,7 @@ void Person::playIdleAutomation() {
         clip.loop = true;
 
         switch (part->getType()) {
-            case BodyPart::Type::Torso:
-            case BodyPart::Type::Organ: {
+            case BodyPart::Type::Torso: {
                 // Slow breathing: chest rises and swells a touch.
                 Automation::Track sclY{Automation::Channel::SclY, Automation::Wave::Sine, 0.025f, 0.3f, 0.0f, 0.0f};
                 Automation::Track posY{Automation::Channel::PosY, Automation::Wave::Sine, 0.015f, 0.3f, 0.0f, 0.0f};

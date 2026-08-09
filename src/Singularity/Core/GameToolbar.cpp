@@ -1136,16 +1136,6 @@ void Game::renderCharacterConsole() {
                     _selectedCharacterPart->addSubObject(Object::GeometryType::Cube, glm::mat4(1.0f));
                 }
 
-                ImGui::Separator();
-                ImGui::Text("Health: %.1f/%.1f", _selectedCharacterPart->getHealth(), _selectedCharacterPart->getMaxHealth());
-                if (ImGui::Button("Heal Part")) {
-                    _selectedCharacterPart->heal(20.0f);
-                }
-                ImGui::SameLine();
-                if (ImGui::Button("Damage Part")) {
-                    _selectedCharacterPart->takeDamage(10.0f);
-                }
-
                 ImGui::EndDisabled();
             }
             ImGui::EndTabItem();

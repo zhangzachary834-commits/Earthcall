@@ -41,7 +41,7 @@ public:
     ~Formation() = default;
 
     // ------ Generic membership helpers (any Singular) ------------
-    void addMember(Singular* s);
+    virtual void addMember(Singular* s);
     bool hasMember(const Singular* s) const;
     Singular* findMemberByIdentifier(const std::string& identifier) const;
 

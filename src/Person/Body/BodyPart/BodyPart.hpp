@@ -19,17 +19,10 @@ class BodyPart : public Object, public Formation {
         Arm,
         Leg,
         Hand,
-        Foot,
-        Organ
+        Foot
     };
 
-    enum class HealthState {
-        Healthy,
-        Bruised,
-        Injured,
-        Broken,
-        Missing
-    };
+
 
     BodyPart(const std::string& name = "", Type type = Type::Undefined, const Form& form = Form());
     BodyPart(const std::string& name, Type type, const Form& form, const glm::mat4& initialTransform);
@@ -92,37 +85,7 @@ class BodyPart : public Object, public Formation {
     const glm::mat4& getSubObjectLocalOffset(size_t index) const;
     void setSubObjectLocalOffset(size_t index, const glm::mat4& localOffset);
 
-    // Health and damage system
-    void setHealth(float health);
-    float getHealth() const { return health; }
-    float getMaxHealth() const { return maxHealth; }
-    void takeDamage(float damage);
-    void heal(float amount);
-    HealthState getHealthState() const;
-    bool isDamaged() const;
-    bool isBroken() const;
-    bool isMissing() const;
-    
-    // Functionality system
-    void setFunctional(bool functional) { isFunctional = functional; }
-    bool getFunctional() const { return isFunctional; }
-    float getFunctionality() const;  // Returns 0.0 to 1.0 based on health
-    
-    // Sensitivity and pain system
-    void setSensitivity(float sens) { sensitivity = sens; }
-    float getSensitivity() const { return sensitivity; }
-    float getPainLevel() const;
-    
-    // Regeneration system
-    void setRegenerationRate(float rate) { regenerationRate = rate; }
-    float getRegenerationRate() const { return regenerationRate; }
-    bool canRegenerate() const;
-    
-    // Special effects
-    void addEffect(const std::string& effect);
-    void removeEffect(const std::string& effect);
-    bool hasEffect(const std::string& effect) const;
-    const std::vector<std::string>& getEffects() const { return effects; }
+
 
     private:
 
@@ -136,14 +99,6 @@ class BodyPart : public Object, public Formation {
     std::vector<std::unique_ptr<Object>> _subObjects;
     // Parallel vector: each sub-object's transform relative to this body part
     std::vector<glm::mat4> _subObjectLocalOffsets;
-    
-    // Health system
-    float health = 100.0f;
-    float maxHealth = 100.0f;
-    bool isFunctional = true;
-    float sensitivity = 1.0f;
-    float regenerationRate = 0.0f;
-    std::vector<std::string> effects;
     
     void updateColor();
 };

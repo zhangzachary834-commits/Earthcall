@@ -30,38 +30,7 @@ BodyPart::BodyPart(const std::string& name, Type type, const Form& form)
     
     setTransform(_localTransform);
     
-    // Set default health based on part type
-    switch (type) {
-        case Type::Head:
-            maxHealth = 50.0f;
-            sensitivity = 2.0f;  // Head is very sensitive
-            break;
-        case Type::Torso:
-            maxHealth = 100.0f;
-            sensitivity = 1.5f;
-            break;
-        case Type::Arm:
-        case Type::Leg:
-            maxHealth = 75.0f;
-            sensitivity = 1.2f;
-            break;
-        case Type::Hand:
-        case Type::Foot:
-            maxHealth = 25.0f;
-            sensitivity = 1.8f;
-            break;
-        case Type::Organ:
-            maxHealth = 30.0f;
-            sensitivity = 3.0f;  // Organs are very sensitive
-            break;
-        default:
-            maxHealth = 50.0f;
-            sensitivity = 1.0f;
-            break;
-    }
-    
-    health = maxHealth;
-    // updateColor();  // Commented out - let texture colors take precedence
+
 }
 
 BodyPart::BodyPart(const std::string& name, Type type, const Form& form, const glm::mat4& initialTransform)
@@ -94,13 +63,7 @@ void BodyPart::draw() const {
 }
 
 void BodyPart::update(float deltaTime) {
-    // Natural regeneration
-    if (canRegenerate() && health < maxHealth) {
-        heal(regenerationRate * deltaTime);
-    }
     
-    // Update effects
-    // (Could add effect processing here)
 }
 
 void BodyPart::setTransform(const glm::mat4& t) {
@@ -126,124 +89,7 @@ glm::mat4 BodyPart::getRaycastTransform() const {
     return getTransform() * glm::scale(glm::mat4(1.0f), geometry.getDimensions());
 }
 
-void BodyPart::setHealth(float h) {
-    health = std::clamp(h, 0.0f, maxHealth);
-    updateColor();
-    
-    // Update functionality based on health
-    if (health <= 0.0f) {
-        isFunctional = false;
-    } else if (health >= maxHealth * 0.5f) {
-        isFunctional = true;
-    }
-}
 
-void BodyPart::takeDamage(float damage) {
-    if (damage <= 0.0f) return;
-    
-    // Apply sensitivity multiplier
-    float actualDamage = damage * sensitivity;
-    health -= actualDamage;
-    health = std::max(0.0f, health);
-    
-    updateColor();
-    
-    // Update functionality
-    if (health <= 0.0f) {
-        isFunctional = false;
-    } else if (health < maxHealth * 0.5f) {
-        isFunctional = false;  // Part becomes non-functional when heavily damaged
-    }
-}
-
-void BodyPart::heal(float amount) {
-    if (amount <= 0.0f) return;
-    
-    health += amount;
-    health = std::min(health, maxHealth);
-    
-    updateColor();
-    
-    // Restore functionality if healed enough
-    if (health >= maxHealth * 0.5f) {
-        isFunctional = true;
-    }
-}
-
-BodyPart::HealthState BodyPart::getHealthState() const {
-    float healthPercent = health / maxHealth;
-    
-    if (healthPercent <= 0.0f) {
-        return HealthState::Missing;
-    } else if (healthPercent <= 0.25f) {
-        return HealthState::Broken;
-    } else if (healthPercent <= 0.5f) {
-        return HealthState::Injured;
-    } else if (healthPercent <= 0.75f) {
-        return HealthState::Bruised;
-    } else {
-        return HealthState::Healthy;
-    }
-}
-
-bool BodyPart::isDamaged() const {
-    return health < maxHealth;
-}
-
-bool BodyPart::isBroken() const {
-    return health <= maxHealth * 0.25f;
-}
-
-bool BodyPart::isMissing() const {
-    return health <= 0.0f;
-}
-
-float BodyPart::getFunctionality() const {
-    if (!isFunctional) return 0.0f;
-    
-    float healthPercent = health / maxHealth;
-    if (healthPercent >= 0.8f) {
-        return 1.0f;  // Full functionality
-    } else if (healthPercent >= 0.5f) {
-        return 0.5f;  // Reduced functionality
-    } else {
-        return 0.0f;  // No functionality
-    }
-}
-
-float BodyPart::getPainLevel() const {
-    if (health >= maxHealth) return 0.0f;
-    
-    float damagePercent = 1.0f - (health / maxHealth);
-    return damagePercent * sensitivity;
-}
-
-bool BodyPart::canRegenerate() const {
-    // Check if any effects prevent regeneration
-    if (hasEffect("NoRegeneration") || hasEffect("Cursed")) {
-        return false;
-    }
-    
-    // Only regenerate if not missing and has regeneration rate
-    return health > 0.0f && regenerationRate > 0.0f;
-}
-
-void BodyPart::addEffect(const std::string& effect) {
-    if (!hasEffect(effect)) {
-        effects.push_back(effect);
-    }
-}
-
-void BodyPart::removeEffect(const std::string& effect) {
-    auto it = std::find(effects.begin(), effects.end(), effect);
-    if (it != effects.end()) {
-        effects.erase(it);
-    }
-}
-
-bool BodyPart::hasEffect(const std::string& effect) const {
-    return std::find(effects.begin(), effects.end(), effect) != effects.end();
-}
 
 // -----------------------------------------------------------------
 // Shape management
@@ -361,51 +207,5 @@ void BodyPart::setSubObjectLocalOffset(size_t index, const glm::mat4& localOffse
     if (_subObjects[index]) {
         glm::mat4 worldT = getTransform() * localOffset;
         _subObjects[index]->setTransform(worldT);
-    }
-}
-
-void BodyPart::updateColor() {
-    float healthPercent = health / maxHealth;
-    
-    if (healthPercent >= 0.8f) {
-        // Healthy - normal color
-        color[0] = 1.0f;  // Red
-        color[1] = 1.0f;  // Green
-        color[2] = 1.0f;  // Blue
-    } else if (healthPercent >= 0.5f) {
-        // Bruised - slight red tint
-        color[0] = 1.0f;
-        color[1] = 0.8f;
-        color[2] = 0.8f;
-    } else if (healthPercent >= 0.25f) {
-        // Injured - more red
-        color[0] = 1.0f;
-        color[1] = 0.5f;
-        color[2] = 0.5f;
-    } else if (healthPercent > 0.0f) {
-        // Broken - very red
-        color[0] = 1.0f;
-        color[1] = 0.2f;
-        color[2] = 0.2f;
-    } else {
-        // Missing - dark gray
-        color[0] = 0.3f;
-        color[1] = 0.3f;
-        color[2] = 0.3f;
-    }
-    
-    // Apply special effect colors
-    if (hasEffect("Burning")) {
-        color[0] = 1.0f;
-        color[1] = 0.5f;
-        color[2] = 0.0f;  // Orange
-    } else if (hasEffect("Frozen")) {
-        color[0] = 0.5f;
-        color[1] = 0.8f;
-        color[2] = 1.0f;  // Light blue
-    } else if (hasEffect("Poisoned")) {
-        color[0] = 0.5f;
-        color[1] = 1.0f;
-        color[2] = 0.5f;  // Green
     }
 }
