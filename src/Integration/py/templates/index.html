@@ -25,9 +25,11 @@
 <body>
     <canvas id="canvas" oncontextmenu="event.preventDefault()"></canvas>
     
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui/app.css') }}" type="text/css">
     <div id="ui-layer">
-        <!-- Modern HTML UI will be injected here -->
+        <!-- Modern HTML UI will be injected here by app.js -->
     </div>
+    <script src="{{ url_for('static', filename='ui/app.js') }}"></script>
 
     <!-- Emscripten Module Config -->
     <script>

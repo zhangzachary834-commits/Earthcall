@@ -41,6 +41,7 @@ void CloudStorage::uploadSaveAsync(const std::string& filename,
                                    std::function<void(bool)> callback) {
     std::string typeStr = SaveSystem::getSaveTypeFolderName(type);
     
+#ifndef __EMSCRIPTEN__
     // Detach a thread for the upload
     std::thread([filename, data, typeStr, callback]() {
         // Simulate network delay
@@ -93,6 +94,9 @@ void CloudStorage::uploadSaveAsync(const std::string& filename,
         
         if (callback) callback(false);
     }).detach();
+#else
+    if (callback) callback(false);
+#endif
 }
 
 void CloudStorage::uploadSaveAsync(const std::string& filename,
@@ -108,6 +112,7 @@ void CloudStorage::downloadSaveAsync(const std::string& filename,
                                      std::function<void(std::optional<std::vector<uint8_t>>)> callback) {
     std::string typeStr = SaveSystem::getSaveTypeFolderName(type);
     
+#ifndef __EMSCRIPTEN__
     std::thread([filename, typeStr, callback]() {
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
         
@@ -154,12 +159,16 @@ void CloudStorage::downloadSaveAsync(const std::string& filename,
         std::cerr << "[CloudStorage] Download failure for " << filename << "\n";
         if (callback) callback(std::nullopt);
     }).detach();
+#else
+    if (callback) callback(std::nullopt);
+#endif
 }
 
 void CloudStorage::fetchMetadataAsync(SaveSystem::SaveType type,
                                       std::function<void(std::vector<SaveSystem::SaveMetadata>)> callback) {
     std::string typeStr = SaveSystem::getSaveTypeFolderName(type);
     
+#ifndef __EMSCRIPTEN__
     std::thread([typeStr, callback, type]() {
         std::this_thread::sleep_for(std::chrono::milliseconds(300));
         
@@ -191,6 +200,9 @@ void CloudStorage::fetchMetadataAsync(SaveSystem::SaveType type,
         
         if (callback) callback(results);
     }).detach();
+#else
+    if (callback) callback({});
+#endif
 }
 
 } // namespace Util

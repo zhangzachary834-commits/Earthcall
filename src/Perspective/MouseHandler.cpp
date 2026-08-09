@@ -126,6 +126,12 @@ void MouseHandler::handleMouseButton(int button, int action, int mods) {
     if (action == GLFW_PRESS) {
         _currentState.buttonStates[mouseButton] = ButtonState::JustPressed;
         
+#ifdef __EMSCRIPTEN__
+        if (_cursorLocked && !_currentState.isCaptured) {
+            captureMouse(glfwGetCurrentContext());
+        }
+#endif
+
         // Trigger callback if bound
         auto it = _buttonBindings.find(mouseButton);
         if (it != _buttonBindings.end() && it->second.isEnabled && it->second.callback) {

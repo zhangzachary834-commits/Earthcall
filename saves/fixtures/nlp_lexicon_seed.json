@@ -1,0 +1,38 @@
+{
+  "currentZone": 0,
+  "zones": [
+    {
+      "name": "Global_Lexicon_Zone",
+      "r": 0.05,
+      "g": 0.05,
+      "b": 0.1,
+      "formationRelations": [
+        { "type": "is_pos", "entityA": "the", "entityB": "determiner", "directed": true, "weight": 1.0 },
+        { "type": "is_pos", "entityA": "a", "entityB": "determiner", "directed": true, "weight": 1.0 },
+        { "type": "is_pos", "entityA": "an", "entityB": "determiner", "directed": true, "weight": 1.0 },
+        
+        { "type": "is_pos", "entityA": "sword", "entityB": "noun", "directed": true, "weight": 1.0 },
+        { "type": "is_pos", "entityA": "arthur", "entityB": "noun", "directed": true, "weight": 1.0 },
+        { "type": "is_pos", "entityA": "apple", "entityB": "noun", "directed": true, "weight": 1.0 },
+
+        { "type": "is_pos", "entityA": "picked", "entityB": "verb", "directed": true, "weight": 1.0 },
+        { "type": "is_pos", "entityA": "up", "entityB": "preposition", "directed": true, "weight": 1.0 },
+        { "type": "resolves_to", "entityA": "picked_up", "entityB": "has_inventory", "directed": true, "weight": 1.0 },
+
+        { "type": "is_pos", "entityA": "grabbed", "entityB": "verb", "directed": true, "weight": 1.0 },
+        { "type": "resolves_to", "entityA": "grabbed", "entityB": "has_inventory", "directed": true, "weight": 1.0 },
+
+        { "type": "is_pos", "entityA": "belongs", "entityB": "verb", "directed": true, "weight": 1.0 },
+        { "type": "is_pos", "entityA": "to", "entityB": "preposition", "directed": true, "weight": 1.0 },
+        { "type": "resolves_to", "entityA": "belongs_to", "entityB": "has_inventory", "directed": true, "weight": 1.0 }
+      ]
+    }
+  ],
+  "injectedBy": {
+    "mover": "antigravity",
+    "onBehalfOf": "zacharyzhang",
+    "at": 1783903356,
+    "sections": ["zones[0].formationRelations"],
+    "attestation": "Initial NLP Lexicon Seed"
+  }
+}

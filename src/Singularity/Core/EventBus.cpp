@@ -8,7 +8,9 @@ namespace Core {
 EventBus::EventBus()
 {
     _running = true;
+#ifndef __EMSCRIPTEN__
     _worker  = std::thread(&EventBus::processQueue, this);
+#endif
 }
 
 EventBus::~EventBus()
@@ -47,8 +49,10 @@ void EventBus::shutdown()
         std::lock_guard<std::mutex> lock(_queueMutex);
         _running = false;
     }
+#ifndef __EMSCRIPTEN__
     _cv.notify_all();
     if (_worker.joinable()) _worker.join();
+#endif
 }
 
 // The sum of all Queues should be conceptualized as a Formation instance.
@@ -57,6 +61,7 @@ void EventBus::shutdown()
 // Relations should be the channel through which queues are connected.
 void EventBus::processQueue()
 {
+#ifndef __EMSCRIPTEN__
     while (true) {
         Job job;
         {
@@ -67,6 +72,21 @@ void EventBus::processQueue()
             _queue.pop();
         }
         // Execute job without holding queue lock
+        if (job) job();
+    }
+#endif
+}
+
+void EventBus::tick() {
+    // Process all currently queued jobs
+    std::queue<Job> currentJobs;
+    {
+        std::lock_guard<std::mutex> lock(_queueMutex);
+        std::swap(currentJobs, _queue);
+    }
+    while (!currentJobs.empty()) {
+        Job job = std::move(currentJobs.front());
+        currentJobs.pop();
         if (job) job();
     }
 }

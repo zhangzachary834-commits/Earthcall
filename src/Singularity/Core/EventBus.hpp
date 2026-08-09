@@ -128,7 +128,9 @@ public:
             std::lock_guard<std::mutex> lock(_queueMutex);
             _queue.emplace(std::move(job));
         }
+#ifndef __EMSCRIPTEN__
         _cv.notify_one();
+#endif
     }
 
     // ------------------------------------------------------------------
@@ -155,8 +157,10 @@ private:
     using Job = std::function<void()>;
     std::queue<Job>                _queue;
     std::mutex                     _queueMutex;
+#ifndef __EMSCRIPTEN__
     std::condition_variable        _cv;
     std::thread                    _worker;
+#endif
     bool                           _running = false;
 
     // Event history for formation relations ---------------------------------
@@ -171,6 +175,9 @@ private:
 
     // Internal helpers ------------------------------------------------------
     void processQueue();
+public:
+    void tick();
+private:
 
     // Singleton plumbing ----------------------------------------------------
     EventBus();

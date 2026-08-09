@@ -480,7 +480,9 @@ void WebGpuRenderer::overlayPass(const std::function<void(WGPURenderPassEncoder)
 
 void WebGpuRenderer::present() {
     if (!_surface || !_surfaceView) return;
+#ifndef __EMSCRIPTEN__
     wgpuSurfacePresent(_surface);
+#endif
     wgpuTextureViewRelease(_surfaceView);
     _surfaceView = nullptr;
     _surfaceTex = nullptr; // owned by the surface; not ours to release

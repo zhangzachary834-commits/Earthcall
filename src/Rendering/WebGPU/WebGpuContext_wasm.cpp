@@ -15,7 +15,7 @@ WindowContext createWindowContext(GLFWwindow* win) {
 
     WGPUEmscriptenSurfaceSourceCanvasHTMLSelector canvasDesc = {};
     canvasDesc.chain.sType = WGPUSType_EmscriptenSurfaceSourceCanvasHTMLSelector;
-    canvasDesc.selector = WGPUStringView{"#canvas", 7};
+    canvasDesc.selector = WGPUStringView{"#earthcall-canvas", 17};
 
     WGPUSurfaceDescriptor surfDesc = {};
     surfDesc.nextInChain = reinterpret_cast<WGPUChainedStruct*>(&canvasDesc);
@@ -38,6 +38,7 @@ WindowContext createWindowContext(GLFWwindow* win) {
 
     AdapterResult ar;
     WGPURequestAdapterCallbackInfo acb = {};
+    acb.mode = WGPUCallbackMode_AllowSpontaneous;
     acb.callback = onAdapter;
     acb.userdata1 = &ar;
     wgpuInstanceRequestAdapter(ctx.instance, &options, acb);
@@ -61,6 +62,7 @@ WindowContext createWindowContext(GLFWwindow* win) {
 
     DeviceResult dr;
     WGPURequestDeviceCallbackInfo dcb = {};
+    dcb.mode = WGPUCallbackMode_AllowSpontaneous;
     dcb.callback = onDevice;
     dcb.userdata1 = &dr;
     wgpuAdapterRequestDevice(ctx.adapter, nullptr, dcb);

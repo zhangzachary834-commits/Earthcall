@@ -13,6 +13,10 @@
 #include <thread>
 #include <atomic>
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
+
 namespace SaveSystem {
 
 // Helper to compress a byte vector using zlib
@@ -227,6 +231,16 @@ std::string writeSaveData(const nlohmann::json& j, const std::string& customLabe
     out.write(reinterpret_cast<const char*>(compressed.data()), compressed.size());
     out.close();
 
+#ifdef __EMSCRIPTEN__
+    EM_ASM(
+        FS.syncfs(false, function (err) {
+            if (err) {
+                console.error('FS.syncfs error: ', err);
+            }
+        });
+    );
+#endif
+
     // Upload Binary to cloud
     Util::CloudStorage::uploadSaveAsync(filename, v, type, [filename](bool success) {
         if (success) {
@@ -261,6 +275,16 @@ std::string writeSaveData(const std::vector<uint8_t>& data, const std::string& c
     out.write(reinterpret_cast<const char*>(compressed.data()), compressed.size());
     out.close();
 
+#ifdef __EMSCRIPTEN__
+    EM_ASM(
+        FS.syncfs(false, function (err) {
+            if (err) {
+                console.error('FS.syncfs error: ', err);
+            }
+        });
+    );
+#endif
+
     // Upload Binary to cloud
     Util::CloudStorage::uploadSaveAsync(filename, data, type, [filename](bool success) {
         if (success) {
@@ -283,6 +307,16 @@ bool isSaving() {
 void writeSaveDataAsync(const nlohmann::json& j, const std::string& customLabel, SaveType type) {
     g_isSaving.store(true);
     
+#ifdef __EMSCRIPTEN__
+    try {
+        writeSaveData(j, customLabel, type);
+    } catch (const std::exception& e) {
+        std::cerr << "[SaveSystem] save failed: " << e.what() << "\n";
+    } catch (...) {
+        std::cerr << "[SaveSystem] save failed: unknown error\n";
+    }
+    g_isSaving.store(false);
+#else
     // We deep copy the JSON object to pass it safely to the detached thread.
     // Nothing may escape this lambda: an exception crossing the top of a
     // thread is std::terminate, and the flag must clear on every path or the
@@ -297,11 +331,22 @@ void writeSaveDataAsync(const nlohmann::json& j, const std::string& customLabel,
         }
         g_isSaving.store(false);
     }).detach();
+#endif
 }
 
 void writeSaveDataAsync(const std::vector<uint8_t>& data, const std::string& customLabel, const std::string& ext, SaveType type) {
     g_isSaving.store(true);
     
+#ifdef __EMSCRIPTEN__
+    try {
+        writeSaveData(data, customLabel, ext, type);
+    } catch (const std::exception& e) {
+        std::cerr << "[SaveSystem] save failed: " << e.what() << "\n";
+    } catch (...) {
+        std::cerr << "[SaveSystem] save failed: unknown error\n";
+    }
+    g_isSaving.store(false);
+#else
     // Deep copy the vector. See the note above on why nothing may escape here.
     std::thread([data_copy = data, customLabel, ext, type]() {
         try {
@@ -313,6 +358,7 @@ void writeSaveDataAsync(const std::vector<uint8_t>& data, const std::string& cus
         }
         g_isSaving.store(false);
     }).detach();
+#endif
 }
 
 

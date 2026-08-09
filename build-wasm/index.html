@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Earthcall Web</title>
+    <style>
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #000; }
+        canvas { display: block; width: 100vw; height: 100vh; }
+    </style>
+</head>
+<body>
+    <div id="start-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); color: white; display: flex; align-items: center; justify-content: center; z-index: 100; cursor: pointer; font-family: sans-serif;">
+        <h1>Click to Start Earthcall</h1>
+    </div>
+    <canvas id="earthcall-canvas" oncontextmenu="event.preventDefault()"></canvas>
+    <script type='text/javascript'>
+      var Module = {
+        preRun: [function() {
+            FS.mkdir('/saves');
+            FS.mount(IDBFS, {}, '/saves');
+            Module.addRunDependency('syncfs');
+            FS.syncfs(true, function(err) {
+                if (err) console.error('Error syncing IDBFS:', err);
+                Module.removeRunDependency('syncfs');
+            });
+        }],
+        print: (text) => console.log('WASM PRINT: ' + text),
+        printErr: (text) => console.log('WASM ERR: ' + text),
+        canvas: (function() {
+          var canvas = document.getElementById('earthcall-canvas');
+          return canvas;
+        })()
+      };
+
+      document.getElementById('start-overlay').addEventListener('click', function() {
+          this.style.display = 'none';
+          // A user gesture has occurred.
+          // Emscripten's WebAudio and pointer lock logic will now be permitted.
+          // We can also explicitly request pointer lock on the canvas here if desired.
+          document.getElementById('earthcall-canvas').requestPointerLock();
+      });
+    </script>
+    <script async type="text/javascript" src="earthcall.js"></script>
+</body>
+</html>

@@ -3,6 +3,7 @@
 #include "Singularity/Language/LanguageSystem.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
+#include "Singularity/Language/SyntacticParser.hpp"
 #include <iostream>
 
 extern ZoneManager mgr;
@@ -100,29 +101,23 @@ void LanguageSystem::tick(float deltaTime) {
         
         // Resolve or spawn the lexeme
         
-        // Simple NLP / Syntactic Parse Stub (Phase 3)
-        // If payload is like "Sword belongs_to Arthur", we split it.
-        std::string payload = u.payload;
-        size_t firstSpace = payload.find(' ');
-        size_t lastSpace = payload.rfind(' ');
-        
         Zone& activeZone = mgr.active();
         
-        if (firstSpace != std::string::npos && lastSpace != std::string::npos && firstSpace != lastSpace) {
-            std::string entityA = payload.substr(0, firstSpace);
-            std::string relType = payload.substr(firstSpace + 1, lastSpace - firstSpace - 1);
-            std::string entityB = payload.substr(lastSpace + 1);
-            
-            auto lexA = resolve(entityA);
-            auto lexB = resolve(entityB);
-            
-            activeZone.addToFormation(lexA.get());
-            activeZone.addToFormation(lexB.get());
-            
-            auto rel = std::make_shared<Relation>(relType, *lexA, *lexB, true);
-            // In a real system, the Formation would manage the relations. 
-            // We just instantiate the lexemes for now.
-            std::cout << "[LanguageSystem] Syntactic parse: " << entityA << " -> " << relType << " -> " << entityB << std::endl;
+        auto parsedRelations = SyntacticParser::parse(u.payload, activeZone);
+        
+        if (!parsedRelations.empty()) {
+            for (const auto& pr : parsedRelations) {
+                auto lexA = resolve(pr.entityA);
+                auto lexB = resolve(pr.entityB);
+                
+                activeZone.addToFormation(lexA.get());
+                activeZone.addToFormation(lexB.get());
+                
+                auto rel = std::make_shared<Relation>(pr.relationType, *lexA, *lexB, true);
+                activeZone.formation().addRelation(rel);
+                
+                std::cout << "[LanguageSystem] Graph Parse: [" << pr.entityA << "] -> " << pr.relationType << " -> [" << pr.entityB << "]" << std::endl;
+            }
         } else {
             auto lexeme = resolve(u.payload);
             activeZone.addToFormation(lexeme.get());
@@ -137,9 +132,8 @@ void LanguageSystem::tick(float deltaTime) {
             }
         }
 
-        
-        std::cout << "[LanguageSystem] Lexeme '" << u.payload 
-                  << "' joined Zone Formation: " << activeZone.name() << std::endl;
+        std::cout << "[LanguageSystem] Finished processing utterance '" << u.payload 
+                  << "' in Zone: " << activeZone.name() << std::endl;
         
         localQueue.pop();
     }

@@ -27,7 +27,9 @@ LawAuditLogger::LawAuditLogger() {
         std::cerr << "[LawAuditLogger] Warning: Could not open audit log files in logs/\n";
     }
 
+#ifndef __EMSCRIPTEN__
     _worker = std::thread(&LawAuditLogger::backgroundWorker, this);
+#endif
 }
 
 bool LawAuditLogger::wouldLog(const std::string& type) const {
@@ -47,10 +49,12 @@ void LawAuditLogger::shutdown() {
             std::lock_guard<std::mutex> lock(_mutex);
             _running = false;
         }
+#ifndef __EMSCRIPTEN__
         _cv.notify_one();
         if (_worker.joinable()) {
             _worker.join();
         }
+#endif
     }
 }
 
@@ -64,8 +68,14 @@ void LawAuditLogger::setActiveWorld(const std::string& worldName) {
     entry.type = "SYSTEM";
     entry.message = "Active world changed to: " + worldName;
     entry.details = nlohmann::json{{"world", worldName}};
+#ifdef __EMSCRIPTEN__
+    if (_logFile.is_open()) {
+        _logFile << "[" << entry.timestamp << "] [" << entry.type << "] " << entry.message << "\n";
+    }
+#else
     _queue.push(entry);
     _cv.notify_one();
+#endif
 }
 
 std::string LawAuditLogger::currentTimestamp() {
@@ -89,6 +99,11 @@ void LawAuditLogger::log(const std::string& type, const std::string& message, co
     entry.message = message;
     entry.details = details;
     
+#ifdef __EMSCRIPTEN__
+    if (_logFile.is_open()) {
+        _logFile << "[" << entry.timestamp << "] [" << entry.type << "] " << entry.message << "\n";
+    }
+#else
     {
         std::lock_guard<std::mutex> lock(_mutex);
         if (_running) {
@@ -96,6 +111,7 @@ void LawAuditLogger::log(const std::string& type, const std::string& message, co
         }
     }
     _cv.notify_one();
+#endif
 }
 
 void LawAuditLogger::backgroundWorker() {

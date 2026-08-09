@@ -23,6 +23,7 @@
 
 #include "Singularity/Audio/AudioSystem.hpp"
 #include "Singularity/Language/LanguageSystem.hpp"
+#include "Singularity/Core/EventBus.hpp"
 
 #include <iostream>
 
@@ -42,6 +43,7 @@ Engine& Engine::instance() {
 }
 
 bool Engine::init(int /*argc*/, char** /*argv*/) {
+    std::cout << "Engine::init starting" << std::endl;
     if (glfwInit() == GLFW_FALSE) {
         std::cerr << "⚠️  Failed to initialise GLFW!" << std::endl;
         return false;
@@ -53,6 +55,7 @@ bool Engine::init(int /*argc*/, char** /*argv*/) {
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 #endif
 
+    std::cout << "Engine::init creating window" << std::endl;
     _window = glfwCreateWindow(1280, 720, "Earthcall", nullptr, nullptr);
     if (!_window) {
         std::cerr << "⚠️  Failed to create GLFW window!" << std::endl;
@@ -60,9 +63,14 @@ bool Engine::init(int /*argc*/, char** /*argv*/) {
         return false;
     }
 
+    std::cout << "Engine::init window created" << std::endl;
+
 #ifdef EARTHCALL_WEBGPU
+    std::cout << "Engine::init creating WebGpuBackend" << std::endl;
     _webgpu = new WebGpuBackend();
+    std::cout << "Engine::init calling createWindowContext" << std::endl;
     _webgpu->ctx = wgpu::createWindowContext(_window);
+    std::cout << "Engine::init createWindowContext returned" << std::endl;
     if (!_webgpu->ctx.valid()) {
         std::cerr << "⚠️  Failed to bring up WebGPU!" << std::endl;
         glfwDestroyWindow(_window); _window = nullptr;
@@ -96,7 +104,9 @@ bool Engine::init(int /*argc*/, char** /*argv*/) {
 #endif
 
     // Lock cursor initially so camera control behaves consistently
+#ifndef __EMSCRIPTEN__
     glfwSetInputMode(_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+#endif
     // ------------------------------
     // ImGui context initialisation
     // ------------------------------
@@ -212,6 +222,9 @@ void Engine::tick(Game& game, float dt) {
         // Tick language modality
         Singularity::Language::LanguageSystem::instance().tick(dt);
         Core::Audio::AudioSystem::instance().tick();
+#ifdef __EMSCRIPTEN__
+        Core::EventBus::instance().tick();
+#endif
 
         game.update(dt);
         game.render(); // brackets itself with Renderer begin/endFrame

@@ -16,7 +16,7 @@ engineering for a different kind of system. Spend the two minutes on the router 
 These come up constantly. Learn them cold; everything else is detail.
 
 1. **No new C++ class for a domain noun.** Not `RobotEntity`, not `Vehicle`, not `Tree`,
-   not `Category`. Domain things are *authored in-world* as data, never carved into the
+   not `Category`. This principle also extends to hardcoded fields (e.g., `health` or `inventory` on a `Person`). Domain things and their state are *authored in-world* as data, never carved into the
    type system. → `NEW_KIND_FRAMEWORK.md`
 
 2. **No new top-level directory for a subsystem.** The top level is the ontology

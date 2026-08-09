@@ -291,7 +291,7 @@ if (EMSCRIPTEN)
     
     # Emscripten linker flags for WebGPU, asyncify, glfw, and embind
     set_target_properties(earthcall_wasm PROPERTIES LINK_FLAGS
-        "--use-port=emdawnwebgpu -s ASYNCIFY=1 -s WASM=1 -s ALLOW_MEMORY_GROWTH=1 -s USE_GLFW=3 -s USE_ZLIB=1 --bind -O3"
+        "--use-port=emdawnwebgpu -s ASYNCIFY=1 -s WASM=1 -s ALLOW_MEMORY_GROWTH=1 -s USE_GLFW=3 -s USE_ZLIB=1 --bind -O3 -s ASSERTIONS=1"
     )
     # Output name
     set_target_properties(earthcall_wasm PROPERTIES OUTPUT_NAME "earthcall")

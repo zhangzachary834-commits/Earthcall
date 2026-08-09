@@ -687,6 +687,6 @@ extern "C" {
 }
 
 EMSCRIPTEN_BINDINGS(earthcall_integration) {
-    emscripten::function("receive_from_js", &emscripten_receive_from_js);
+    emscripten::function("receive_from_js", &emscripten_receive_from_js, emscripten::allow_raw_pointers());
 }
 #endif
