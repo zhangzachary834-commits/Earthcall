@@ -140,7 +140,14 @@ bool RelationManager::remove(const std::shared_ptr<Relation>& r) {
                other.directed == target.directed;
     });
     if (it != relations.end()) {
+        auto removed = *it;
         relations.erase(it);
+
+        ECA::Event echo;
+        echo.type = "relation-destroyed";
+        echo.subject = removed.get();
+        echo.timestamp = std::time(nullptr);
+        Core::EventBus::instance().publish(echo);
         return true;
     }
     return false;
@@ -152,7 +159,15 @@ bool RelationManager::removeBetween(const std::string& a, const std::string& b, 
         if (!r) return false;
         bool matchesEntities = r->isBetween(a, b);
         bool matchesType = type.empty() || r->type == type;
-        return matchesEntities && matchesType;
+        if (matchesEntities && matchesType) {
+            ECA::Event echo;
+            echo.type = "relation-destroyed";
+            echo.subject = r.get();
+            echo.timestamp = std::time(nullptr);
+            Core::EventBus::instance().publish(echo);
+            return true;
+        }
+        return false;
     }), relations.end());
     return relations.size() != oldSize;
 }

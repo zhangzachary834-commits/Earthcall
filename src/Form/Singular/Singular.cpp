@@ -3,6 +3,18 @@
 #include "Form/Singular/Property/Property.hpp"
 #include "Form/Singular/Property/DataStructure.hpp"
 
+static Singular::PropertyChangeCallback s_propertyChangeCallback = nullptr;
+
+void Singular::setPropertyChangeCallback(PropertyChangeCallback cb) {
+    s_propertyChangeCallback = cb;
+}
+
+void Singular::notifyPropertyChanged(Singular* owner, const std::string& name) {
+    if (s_propertyChangeCallback) {
+        s_propertyChangeCallback(owner, name);
+    }
+}
+
 Formation* Singular::singular_properties() {
     return _property_formation;
 }

@@ -106,6 +106,13 @@ struct ConditionNode {
     // Tree → closure, once. The tree remains the law's text.
     ECA::ConditionPredicate compile() const;
 
+    // Compiles this condition tree into the given ReteNetwork.
+    // Returns a list of terminal node IDs (Alpha or Beta) that represent the satisfied conditions.
+    std::vector<std::size_t> compileToRete(class ReteNetwork& rete,
+                                           const std::string& lawId,
+                                           std::size_t leftId = 0,
+                                           bool leftIsBeta = false) const;
+
     // One-line human summary for ApplicationRecord logs.
     std::string describe() const;
 

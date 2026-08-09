@@ -13,6 +13,7 @@
 #include <optional>
 #include <unordered_set>
 
+#include "Form/Singular/Property/PropertyValueJson.hpp"
 #include "Person/Person.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 
@@ -574,30 +575,41 @@ void Law::buildProperties() {
         "drives", this, &Law::propDrives, &Law::propSetDrives));
 }
 
-ReteToken ReteNetwork::alphaToken(const ReteFact& fact) {
+ReteToken ReteNetwork::alphaToken(const FactPtr& fact) {
     ReteToken token;
     token.facts.push_back(fact);
-    if (!fact.subjectId.empty()) token.bindings["subject"] = fact.subjectId;
+    if (fact->subject && !fact->subject->getIdentifier().empty()) token.bindings["subject"] = fact->subject->getIdentifier();
+    else if (!fact->subjectId.empty()) token.bindings["subject"] = fact->subjectId;
     return token;
 }
 
-ReteToken ReteNetwork::joinSeed(const ReteFact& left) {
+ReteToken ReteNetwork::joinSeed(const FactPtr& left) {
     ReteToken seed;
     seed.facts.push_back(left);
-    if (!left.subjectId.empty()) seed.bindings["left"] = left.subjectId;
+    if (left->subject && !left->subject->getIdentifier().empty()) seed.bindings["left"] = left->subject->getIdentifier();
+    else if (!left->subjectId.empty()) seed.bindings["left"] = left->subjectId;
     return seed;
 }
 
-ReteToken ReteNetwork::joinedToken(const ReteFact& left, const ReteFact& right) {
+ReteToken ReteNetwork::joinedToken(const FactPtr& left, const FactPtr& right) {
     ReteToken token = joinSeed(left);
     token.facts.push_back(right);
-    if (!right.subjectId.empty()) token.bindings["right"] = right.subjectId;
+    if (right->subject && !right->subject->getIdentifier().empty()) token.bindings["right"] = right->subject->getIdentifier();
+    else if (!right->subjectId.empty()) token.bindings["right"] = right->subjectId;
+    return token;
+}
+
+ReteToken ReteNetwork::joinedToken(const ReteToken& left, const FactPtr& right) {
+    ReteToken token = left;
+    token.facts.push_back(right);
+    if (right->subject && !right->subject->getIdentifier().empty()) token.bindings["right"] = right->subject->getIdentifier();
+    else if (!right->subjectId.empty()) token.bindings["right"] = right->subjectId;
     return token;
 }
 
 bool ReteNetwork::alphaFeedsAnyBeta(std::size_t alphaId) const {
     for (const auto& beta : _betaNodes) {
-        if (beta.leftAlphaId == alphaId || beta.rightAlphaId == alphaId) return true;
+        if ((!beta.leftIsBeta && beta.leftId == alphaId) || beta.rightAlphaId == alphaId) return true;
     }
     return false;
 }
@@ -617,43 +629,50 @@ void ReteNetwork::refillAlphaMemory(AlphaNode& alpha) {
 
 void ReteNetwork::refillBetaMemory(BetaNode& beta) {
     beta.memory.clear();
-    const AlphaNode* left = findAlpha(beta.leftAlphaId);
     const AlphaNode* right = findAlpha(beta.rightAlphaId);
-    if (!left || !right) return;
-    for (const auto& leftFact : left->memory) {
-        const ReteToken seed = joinSeed(leftFact);
-        for (const auto& rightFact : right->memory) {
-            const bool joined = beta.join ? beta.join(seed, rightFact)
-                                          : leftFact.subjectId == rightFact.subjectId;
-            if (joined) beta.memory.push_back(joinedToken(leftFact, rightFact));
+    if (!right) return;
+    
+    if (beta.leftIsBeta) {
+        auto it = std::find_if(_betaNodes.begin(), _betaNodes.end(), [&](const BetaNode& b) { return b.id == beta.leftId; });
+        if (it == _betaNodes.end()) return;
+        const BetaNode* left = &(*it);
+        
+        for (const auto& leftToken : left->memory) {
+            for (const auto& rightFact : right->memory) {
+                const bool joined = beta.join ? beta.join(leftToken, rightFact)
+                                              : (leftToken.facts.empty() ? false : (leftToken.facts[0]->subjectId == rightFact->subjectId));
+                if (joined) beta.memory.push_back(joinedToken(leftToken, rightFact));
+            }
+        }
+    } else {
+        const AlphaNode* left = findAlpha(beta.leftId);
+        if (!left) return;
+        for (const auto& leftFact : left->memory) {
+            const ReteToken seed = joinSeed(leftFact);
+            for (const auto& rightFact : right->memory) {
+                const bool joined = beta.join ? beta.join(seed, rightFact)
+                                              : leftFact->subjectId == rightFact->subjectId;
+                if (joined) beta.memory.push_back(joinedToken(leftFact, rightFact));
+            }
         }
     }
 }
 
-std::string ReteNetwork::assertFact(ReteFact fact) {
+std::string ReteNetwork::assertFact(FactPtr fact) {
     static std::atomic<unsigned long long> nextFactId{1};
-    if (fact.id.empty()) {
-        fact.id = "fact-" + std::to_string(nextFactId.fetch_add(1));
+    if (fact->id.empty()) {
+        fact->id = "fact-" + std::to_string(nextFactId.fetch_add(1));
     }
-    if (fact.subject && fact.subjectId.empty()) {
-        fact.subjectId = fact.subject->getIdentifier();
+    if (fact->subject && fact->subjectId.empty()) {
+        fact->subjectId = fact->subject->getIdentifier();
     }
     _facts.push_back(fact);
-    // Propagate from the LOCAL copy, not from a reference into _facts. Alpha
-    // predicates and beta joins are arbitrary caller closures; one that causes
-    // another fact to be asserted reallocates _facts and would leave a
-    // reference to .back() dangling mid-loop.
-    const ReteFact& f = fact;
+    const FactPtr& f = fact;
 
     std::vector<std::size_t> activatedAlphas;
     for (auto& alpha : _alphaNodes) {
         auto bindingIt = _alphaLawBindings.find(alpha.id);
         const bool boundToLaw = bindingIt != _alphaLawBindings.end() && !bindingIt->second.empty();
-        // A node nothing reads is skipped — the predicate test is real cost
-        // and paying it for a node with no law bound and no beta downstream is
-        // waste. The skip is safe ONLY because every way a node becomes read
-        // again (bindLawToAlpha, addBetaNode) backfills its memory from _facts
-        // first; see refillAlphaMemory.
         if (!boundToLaw && !alphaFeedsAnyBeta(alpha.id)) continue;
 
         if (!alpha.predicate || alpha.predicate(f)) {
@@ -669,128 +688,254 @@ std::string ReteNetwork::assertFact(ReteFact fact) {
         }
     }
 
+    std::vector<std::size_t> activatedBetas;
+    std::unordered_map<std::size_t, std::vector<ReteToken>> newBetaTokens;
+    
     for (auto& beta : _betaNodes) {
-        bool inLeft = std::find(activatedAlphas.begin(), activatedAlphas.end(), beta.leftAlphaId) != activatedAlphas.end();
+        bool inLeftAlpha = !beta.leftIsBeta && std::find(activatedAlphas.begin(), activatedAlphas.end(), beta.leftId) != activatedAlphas.end();
+        bool inLeftBeta = beta.leftIsBeta && std::find(activatedBetas.begin(), activatedBetas.end(), beta.leftId) != activatedBetas.end();
         bool inRight = std::find(activatedAlphas.begin(), activatedAlphas.end(), beta.rightAlphaId) != activatedAlphas.end();
-        if (!inLeft && !inRight) continue;
+        if (!inLeftAlpha && !inLeftBeta && !inRight) continue;
 
-        const AlphaNode* left = findAlpha(beta.leftAlphaId);
         const AlphaNode* right = findAlpha(beta.rightAlphaId);
-        if (!left || !right) continue;
+        if (!right) continue;
 
         auto bindingIt = _betaLawBindings.find(beta.id);
         const bool hasLaw = bindingIt != _betaLawBindings.end() && !bindingIt->second.empty();
+        bool betaActivated = false;
 
-        // Both halves go through joinSeed/joinedToken so a join closure sees
-        // the same token shape whichever side the new fact arrived on, and so
-        // an incrementally-built memory is indistinguishable from a
-        // backfilled one. The left branch used to pass a seed with EMPTY
-        // bindings while the right branch populated "left" — a closure reading
-        // bindings behaved differently depending on arrival order.
-        if (inLeft) {
-            for (const auto& rightFact : right->memory) {
-                const bool joined = beta.join ? beta.join(joinSeed(f), rightFact)
-                                              : f.subjectId == rightFact.subjectId;
-                if (!joined) continue;
-                const ReteToken token = joinedToken(f, rightFact);
-                beta.memory.push_back(token);
-                if (hasLaw) {
-                    for (const auto& lawId : bindingIt->second) {
-                        _agenda.push_back(ReteActivation{lawId, token, std::time(nullptr)});
+        if (beta.leftIsBeta) {
+            auto it = std::find_if(_betaNodes.begin(), _betaNodes.end(), [&](const BetaNode& b) { return b.id == beta.leftId; });
+            if (it == _betaNodes.end()) continue;
+            const BetaNode* left = &(*it);
+            
+            if (inLeftBeta) {
+                for (const auto& leftToken : newBetaTokens[beta.leftId]) {
+                    for (const auto& rightFact : right->memory) {
+                        const bool joined = beta.join ? beta.join(leftToken, rightFact)
+                                                      : (leftToken.facts.empty() ? false : (leftToken.facts[0]->subjectId == rightFact->subjectId));
+                        if (!joined) continue;
+                        const ReteToken token = joinedToken(leftToken, rightFact);
+                        beta.memory.push_back(token);
+                        newBetaTokens[beta.id].push_back(token);
+                        betaActivated = true;
+                        if (hasLaw) {
+                            for (const auto& lawId : bindingIt->second) {
+                                _agenda.push_back(ReteActivation{lawId, token, std::time(nullptr)});
+                            }
+                        }
+                    }
+                }
+            }
+            if (inRight) {
+                for (const auto& leftToken : left->memory) {
+                    const bool joined = beta.join ? beta.join(leftToken, f)
+                                                  : (leftToken.facts.empty() ? false : (leftToken.facts[0]->subjectId == f->subjectId));
+                    if (!joined) continue;
+                    const ReteToken token = joinedToken(leftToken, f);
+                    
+                    bool isDuplicate = false;
+                    if (inLeftBeta) {
+                        for (const auto& nt : newBetaTokens[beta.id]) {
+                            if (nt.facts == token.facts) { isDuplicate = true; break; }
+                        }
+                    }
+                    if (isDuplicate) continue;
+                    
+                    beta.memory.push_back(token);
+                    newBetaTokens[beta.id].push_back(token);
+                    betaActivated = true;
+                    if (hasLaw) {
+                        for (const auto& lawId : bindingIt->second) {
+                            _agenda.push_back(ReteActivation{lawId, token, std::time(nullptr)});
+                        }
+                    }
+                }
+            }
+        } else {
+            const AlphaNode* left = findAlpha(beta.leftId);
+            if (!left) continue;
+            
+            if (inLeftAlpha) {
+                for (const auto& rightFact : right->memory) {
+                    const bool joined = beta.join ? beta.join(joinSeed(f), rightFact)
+                                                  : f->subjectId == rightFact->subjectId;
+                    if (!joined) continue;
+                    const ReteToken token = joinedToken(f, rightFact);
+                    beta.memory.push_back(token);
+                    betaActivated = true;
+                    if (hasLaw) {
+                        for (const auto& lawId : bindingIt->second) {
+                            _agenda.push_back(ReteActivation{lawId, token, std::time(nullptr)});
+                        }
+                    }
+                }
+            }
+            if (inRight) {
+                for (const auto& leftFact : left->memory) {
+                    if (inLeftAlpha && leftFact->id == f->id) continue;
+                    const bool joined = beta.join ? beta.join(joinSeed(leftFact), f)
+                                                  : leftFact->subjectId == f->subjectId;
+                    if (!joined) continue;
+                    const ReteToken token = joinedToken(leftFact, f);
+                    beta.memory.push_back(token);
+                    betaActivated = true;
+                    if (hasLaw) {
+                        for (const auto& lawId : bindingIt->second) {
+                            _agenda.push_back(ReteActivation{lawId, token, std::time(nullptr)});
+                        }
                     }
                 }
             }
         }
-
-        if (inRight) {
-            for (const auto& leftFact : left->memory) {
-                // When both alphas matched this fact the left branch already
-                // emitted the (f, f) pair; don't emit it twice.
-                if (inLeft && leftFact.id == f.id) continue;
-
-                const bool joined = beta.join ? beta.join(joinSeed(leftFact), f)
-                                              : leftFact.subjectId == f.subjectId;
-                if (!joined) continue;
-                const ReteToken token = joinedToken(leftFact, f);
-                beta.memory.push_back(token);
-                if (hasLaw) {
-                    for (const auto& lawId : bindingIt->second) {
-                        _agenda.push_back(ReteActivation{lawId, token, std::time(nullptr)});
-                    }
-                }
-            }
-        }
+        
+        if (betaActivated) activatedBetas.push_back(beta.id);
     }
 
-    return f.id;
+    return f->id;
 }
 
 void ReteNetwork::retractFirst(std::size_t count) {
     if (count == 0) return;
     if (count >= _facts.size()) {
-        clearFacts();
-        return;
+        count = _facts.size();
     }
 
     std::unordered_set<std::string> removedIds;
-    for (std::size_t i = 0; i < count; ++i) removedIds.insert(_facts[i].id);
+    std::vector<FactPtr> new_facts;
+    for (std::size_t i = 0; i < count; ++i) {
+        if (!_facts[i]->isState) {
+            removedIds.insert(_facts[i]->id);
+        } else {
+            new_facts.push_back(_facts[i]);
+        }
+    }
 
     for (auto& alpha : _alphaNodes) {
         alpha.memory.erase(std::remove_if(alpha.memory.begin(), alpha.memory.end(), 
-            [&](const ReteFact& f) { return removedIds.count(f.id); }), alpha.memory.end());
+            [&](const FactPtr& f) { return removedIds.count(f->id); }), alpha.memory.end());
     }
     for (auto& beta : _betaNodes) {
         beta.memory.erase(std::remove_if(beta.memory.begin(), beta.memory.end(), 
             [&](const ReteToken& t) { 
-                for (const auto& f : t.facts) if (removedIds.count(f.id)) return true;
+                for (const auto& f : t.facts) if (removedIds.count(f->id)) return true;
                 return false;
             }), beta.memory.end());
     }
     _agenda.erase(std::remove_if(_agenda.begin(), _agenda.end(), 
         [&](const ReteActivation& a) { 
-            for (const auto& f : a.token.facts) if (removedIds.count(f.id)) return true;
+            for (const auto& f : a.token.facts) if (removedIds.count(f->id)) return true;
             return false;
         }), _agenda.end());
 
-    _facts.erase(_facts.begin(), _facts.begin() + static_cast<std::ptrdiff_t>(count));
+    for (std::size_t i = count; i < _facts.size(); ++i) {
+        new_facts.push_back(_facts[i]);
+    }
+    _facts = std::move(new_facts);
 }
 
 bool ReteNetwork::retractFact(const std::string& factId) {
     auto oldSize = _facts.size();
-    _facts.erase(std::remove_if(_facts.begin(), _facts.end(), [&](const ReteFact& fact) {
-        return fact.id == factId;
+    _facts.erase(std::remove_if(_facts.begin(), _facts.end(), [&](const FactPtr& fact) {
+        return fact->id == factId;
     }), _facts.end());
     if (_facts.size() == oldSize) return false;
 
     for (auto& alpha : _alphaNodes) {
         alpha.memory.erase(std::remove_if(alpha.memory.begin(), alpha.memory.end(),
-                                          [&](const ReteFact& f) { return f.id == factId; }),
+                                          [&](const FactPtr& f) { return f->id == factId; }),
                            alpha.memory.end());
     }
     for (auto& beta : _betaNodes) {
         beta.memory.erase(std::remove_if(beta.memory.begin(), beta.memory.end(),
                                          [&](const ReteToken& token) {
-                                             for (const auto& f : token.facts) if (f.id == factId) return true;
+                                             for (const auto& f : token.facts) if (f->id == factId) return true;
                                              return false;
                                          }),
                           beta.memory.end());
     }
     _agenda.erase(std::remove_if(_agenda.begin(), _agenda.end(),
                                  [&](const ReteActivation& act) {
-                                     for (const auto& fact : act.token.facts) if (fact.id == factId) return true;
+                                     for (const auto& fact : act.token.facts) if (fact->id == factId) return true;
                                      return false;
                                  }),
                   _agenda.end());
     return true;
 }
 
+void ReteNetwork::retractStateFactsBySubject(const std::string& subjectId) {
+    std::unordered_set<std::string> removedIds;
+    _facts.erase(std::remove_if(_facts.begin(), _facts.end(), [&](const FactPtr& fact) {
+        if (fact->isState && fact->subjectId == subjectId) {
+            removedIds.insert(fact->id);
+            return true;
+        }
+        return false;
+    }), _facts.end());
+
+    if (removedIds.empty()) return;
+
+    for (auto& alpha : _alphaNodes) {
+        alpha.memory.erase(std::remove_if(alpha.memory.begin(), alpha.memory.end(), 
+            [&](const FactPtr& f) { return removedIds.count(f->id); }), alpha.memory.end());
+    }
+    for (auto& beta : _betaNodes) {
+        beta.memory.erase(std::remove_if(beta.memory.begin(), beta.memory.end(), 
+            [&](const ReteToken& t) { 
+                for (const auto& f : t.facts) if (removedIds.count(f->id)) return true;
+                return false;
+            }), beta.memory.end());
+    }
+    _agenda.erase(std::remove_if(_agenda.begin(), _agenda.end(), 
+        [&](const ReteActivation& a) { 
+            for (const auto& f : a.token.facts) if (removedIds.count(f->id)) return true;
+            return false;
+        }), _agenda.end());
+}
+
+void ReteNetwork::markFactDirty(const std::string& subjectId, const std::string& attribute) {
+    for (const auto& fact : _facts) {
+        if (fact->isState && fact->subjectId == subjectId && fact->attribute == attribute) {
+            if (!fact->dirty) {
+                fact->dirty = true;
+                _dirtyFacts.push_back(fact);
+            }
+        }
+    }
+}
+
+void ReteNetwork::evaluateDirty() {
+    std::vector<FactPtr> dirty = std::move(_dirtyFacts);
+    _dirtyFacts.clear();
+    
+    for (auto& fact : dirty) {
+        if (!fact->dirty) continue;
+        fact->dirty = false;
+        
+        if (!fact->subject) continue;
+        
+        auto* prop = fact->subject->findProperty(fact->attribute);
+        if (prop) {
+            nlohmann::json newValue = propertyValueToJson(prop->value());
+            if (fact->value == newValue) continue; // no change
+            
+            // Retract the old fact
+            retractFact(fact->id);
+            
+            // Update value and re-assert
+            fact->value = newValue;
+            assertFact(fact);
+        }
+    }
+}
+
 void ReteNetwork::retractFactsAbout(const Singular* being) {
     if (!being) return;
     std::unordered_set<std::string> removedIds;
     _facts.erase(std::remove_if(_facts.begin(), _facts.end(),
-                                [&](const ReteFact& fact) {
-                                    if (fact.subject == being || fact.object == being) {
-                                        removedIds.insert(fact.id);
+                                [&](const FactPtr& fact) {
+                                    if (fact->subject == being || fact->object == being) {
+                                        removedIds.insert(fact->id);
                                         return true;
                                     }
                                     return false;
@@ -800,13 +945,13 @@ void ReteNetwork::retractFactsAbout(const Singular* being) {
 
     for (auto& alpha : _alphaNodes) {
         alpha.memory.erase(std::remove_if(alpha.memory.begin(), alpha.memory.end(),
-                                          [&](const ReteFact& fact) { return removedIds.count(fact.id); }),
+                                          [&](const FactPtr& fact) { return removedIds.count(fact->id); }),
                            alpha.memory.end());
     }
     for (auto& beta : _betaNodes) {
         beta.memory.erase(std::remove_if(beta.memory.begin(), beta.memory.end(),
                                          [&](const ReteToken& token) {
-                                             for (const auto& f : token.facts) if (removedIds.count(f.id)) return true;
+                                             for (const auto& f : token.facts) if (removedIds.count(f->id)) return true;
                                              return false;
                                          }),
                           beta.memory.end());
@@ -814,7 +959,7 @@ void ReteNetwork::retractFactsAbout(const Singular* being) {
     _agenda.erase(std::remove_if(_agenda.begin(), _agenda.end(),
                                  [&](const ReteActivation& activation) {
                                      for (const auto& fact : activation.token.facts) {
-                                         if (removedIds.count(fact.id)) return true;
+                                         if (removedIds.count(fact->id)) return true;
                                      }
                                      return false;
                                  }),
@@ -838,13 +983,15 @@ std::size_t ReteNetwork::addAlphaNode(const std::string& description, AlphaPredi
 }
 
 std::size_t ReteNetwork::addBetaNode(const std::string& description,
-                                     std::size_t leftAlphaId,
+                                     bool leftIsBeta,
+                                     std::size_t leftId,
                                      std::size_t rightAlphaId,
                                      BetaJoin join) {
     BetaNode node;
     node.id = _nextBetaId++;
     node.description = description;
-    node.leftAlphaId = leftAlphaId;
+    node.leftIsBeta = leftIsBeta;
+    node.leftId = leftId;
     node.rightAlphaId = rightAlphaId;
     node.join = std::move(join);
     _betaNodes.push_back(std::move(node));
@@ -854,8 +1001,11 @@ std::size_t ReteNetwork::addBetaNode(const std::string& description,
     // have been skipped by every assert, so refill them and then build the
     // join over what is already there — otherwise this node is permanently
     // blind to every fact that predates it.
-    if (AlphaNode* left = findAlpha(added.leftAlphaId)) refillAlphaMemory(*left);
-    if (added.rightAlphaId != added.leftAlphaId) {
+    if (!added.leftIsBeta) {
+        if (AlphaNode* left = findAlpha(added.leftId)) refillAlphaMemory(*left);
+    }
+    // Technically rightAlphaId can equal leftId if both point to the same Alpha node, so we only refill once
+    if (added.leftIsBeta || added.rightAlphaId != added.leftId) {
         if (AlphaNode* right = findAlpha(added.rightAlphaId)) refillAlphaMemory(*right);
     }
     refillBetaMemory(added);
@@ -956,7 +1106,7 @@ std::size_t ReteNetwork::internTypeAlpha(const std::string& eventType) {
     }
     const std::size_t id = addAlphaNode(
         "type == " + eventType,
-        [eventType](const ReteFact& f) { return f.type == eventType; });
+        [eventType](const FactPtr& f) { return f->type == eventType; });
     _typeAlphaIndex[eventType] = id;
     return id;
 }
@@ -967,7 +1117,7 @@ bool ReteNetwork::hearsType(const std::string& eventType) const {
     auto binding = _alphaLawBindings.find(interned->second);
     if (binding != _alphaLawBindings.end() && !binding->second.empty()) return true;
     for (const auto& beta : _betaNodes) {
-        if (beta.leftAlphaId == interned->second || beta.rightAlphaId == interned->second) {
+        if ((!beta.leftIsBeta && beta.leftId == interned->second) || beta.rightAlphaId == interned->second) {
             auto betaBinding = _betaLawBindings.find(beta.id);
             if (betaBinding != _betaLawBindings.end() && !betaBinding->second.empty()) return true;
         }
@@ -1000,7 +1150,7 @@ void ReteNetwork::dropUnboundAlphaNodes() {
         // A beta node reading this alpha still needs it alive.
         bool feedsBeta = false;
         for (const auto& beta : _betaNodes) {
-            if (beta.leftAlphaId == alpha.id || beta.rightAlphaId == alpha.id) {
+            if ((!beta.leftIsBeta && beta.leftId == alpha.id) || beta.rightAlphaId == alpha.id) {
                 feedsBeta = true;
                 break;
             }
@@ -1034,11 +1184,11 @@ nlohmann::json ReteNetwork::toJson() const {
     nlohmann::json factsJson = nlohmann::json::array();
     for (const auto& fact : _facts) {
         factsJson.push_back({
-            {"id", fact.id},
-            {"type", fact.type},
-            {"subjectId", fact.subjectId},
-            {"attribute", fact.attribute},
-            {"value", fact.value}
+            {"id", fact->id},
+            {"type", fact->type},
+            {"subjectId", fact->subjectId},
+            {"attribute", fact->attribute},
+            {"value", fact->value}
         });
     }
 
@@ -1056,7 +1206,8 @@ nlohmann::json ReteNetwork::toJson() const {
         betaJson.push_back({
             {"id", beta.id},
             {"description", beta.description},
-            {"leftAlphaId", beta.leftAlphaId},
+            {"leftIsBeta", beta.leftIsBeta},
+            {"leftId", beta.leftId},
             {"rightAlphaId", beta.rightAlphaId},
             {"memorySize", beta.memory.size()}
         });
@@ -1065,7 +1216,7 @@ nlohmann::json ReteNetwork::toJson() const {
     nlohmann::json agendaJson = nlohmann::json::array();
     for (const auto& activation : _agenda) {
         nlohmann::json factIds = nlohmann::json::array();
-        for (const auto& fact : activation.token.facts) factIds.push_back(fact.id);
+        for (const auto& fact : activation.token.facts) factIds.push_back(fact->id);
         agendaJson.push_back({
             {"lawId", activation.lawId},
             {"timestamp", activation.timestamp},
@@ -1139,6 +1290,12 @@ void LawManager::connectToEventBus() {
         return _rete.hearsType(type) || _rete.hasOpaqueBoundAlpha();
     });
 
+    Singular::setPropertyChangeCallback([this](Singular* owner, const std::string& name) {
+        if (!owner) return;
+        _rete.markFactDirty(owner->getIdentifier(), name);
+        _dirty = true;
+    });
+
     Core::EventBus::instance().subscribe<ECA::Event>([this](const ECA::Event& e) {
         std::string subjectId = e.subject ? e.subject->getIdentifier() : "null";
         std::string objectId = e.object ? e.object->getIdentifier() : "null";
@@ -1155,17 +1312,32 @@ void LawManager::connectToEventBus() {
         // releases them, so without this a law targeting a deleted object
         // dereferences freed memory every tick for the rest of the session.
         // This covers beings unmade by the delete tool as well as by law.
-        if (e.type == "object-destroyed" && e.subject) {
+        if ((e.type == "object-destroyed" || e.type == "relation-destroyed") && e.subject) {
             releaseFromLaws(e.subject);
+            _rete.retractStateFactsBySubject(e.subject->getIdentifier());
         }
 
-        ReteFact fact;
-        fact.type = e.type;
-        fact.subject = e.subject;
-        fact.subjectId = subjectId;
-        fact.object = e.object;
+        auto fact = std::make_shared<ReteFact>();
+        fact->type = e.type;
+        fact->subject = e.subject;
+        fact->subjectId = subjectId;
+        fact->object = e.object;
         _rete.assertFact(fact);
         _dirty = true;
+
+        if ((e.type == "object-created" || e.type == "relation-formed") && e.subject) {
+            for (auto* prop : e.subject->listProperties()) {
+                auto stateFact = std::make_shared<ReteFact>();
+                stateFact->type = "property-state";
+                stateFact->subject = e.subject;
+                stateFact->subjectId = subjectId;
+                stateFact->attribute = prop->name();
+                stateFact->value = propertyValueToJson(prop->value());
+                stateFact->isState = true;
+                stateFact->dirty = false;
+                _rete.assertFact(stateFact);
+            }
+        }
     });
 
     Core::EventBus::instance().subscribe<Core::Event::Custom>([this](const Core::Event::Custom& e) {
@@ -1185,11 +1357,11 @@ void LawManager::connectToEventBus() {
         // Register it with the Universe so that it is addressable in properties and scripts
         Universe::instance().addActiveEvent(e.singular.get());
         
-        ReteFact fact;
-        fact.type = evType;
-        fact.subject = e.singular.get();
-        fact.subjectId = e.singular->getIdentifier();
-        fact.object = nullptr;
+        auto fact = std::make_shared<ReteFact>();
+        fact->type = evType;
+        fact->subject = e.singular.get();
+        fact->subjectId = e.singular->getIdentifier();
+        fact->object = nullptr;
         
         _rete.assertFact(fact);
         _dirty = true;
@@ -1203,6 +1375,11 @@ void LawManager::connectToEventBus() {
 }
 
 std::vector<Law::ApplicationRecord> LawManager::tick() {
+    if (_rete.hasDirtyFacts()) {
+        _rete.evaluateDirty();
+        _dirty = true;
+    }
+
     std::vector<Law::ApplicationRecord> records;
     for (int round = 0; round < kMaxChainRounds && _dirty; ++round) {
         _dirty = false;
@@ -1219,10 +1396,10 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
             if (!law) continue;
             Singular* subject = activation.token.facts.empty()
                                     ? nullptr
-                                    : activation.token.facts.front().subject;
+                                    : activation.token.facts.front()->subject;
             Singular* eventObject = activation.token.facts.empty()
                                         ? nullptr
-                                        : activation.token.facts.front().object;
+                                        : activation.token.facts.front()->object;
 
             // The event's PARTICIPANTS stay addressable while the law
             // responds — "@event.subject" / "@event.object" paths let the

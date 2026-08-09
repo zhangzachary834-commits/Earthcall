@@ -7,6 +7,7 @@
 #include <vector>
 #include <map>
 #include <algorithm>
+#include <functional>
 
 class Formation;
 
@@ -43,6 +44,10 @@ public:
     // Checks if this Singular satisfies the strict Kernel bounds required for set-to-set synthesis.
     // Placeholder for when we define these bounds later.
     virtual bool satisfiesKernelBounds() const { return true; }
+
+    using PropertyChangeCallback = std::function<void(Singular*, const std::string&)>;
+    static void setPropertyChangeCallback(PropertyChangeCallback cb);
+    static void notifyPropertyChanged(Singular* owner, const std::string& name);
 
     Formation* singular_properties();
     const Formation* singular_properties() const;

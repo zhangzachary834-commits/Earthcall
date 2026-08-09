@@ -391,10 +391,13 @@ struct ReteFact {
     nlohmann::json value;
     Singular* subject{nullptr};
     Singular* object{nullptr};   // the event's OTHER participant (collision has two)
+    bool isState{false};
+    bool dirty{true};
 };
+using FactPtr = std::shared_ptr<ReteFact>;
 
 struct ReteToken {
-    std::vector<ReteFact> facts;
+    std::vector<FactPtr> facts;
     std::unordered_map<std::string, std::string> bindings;
 };
 
@@ -406,27 +409,33 @@ struct ReteActivation {
 
 class ReteNetwork {
 public:
-    using AlphaPredicate = std::function<bool(const ReteFact&)>;
-    using BetaJoin = std::function<bool(const ReteToken&, const ReteFact&)>;
+    using AlphaPredicate = std::function<bool(const FactPtr&)>;
+    using BetaJoin = std::function<bool(const ReteToken&, const FactPtr&)>;
 
     struct AlphaNode {
         std::size_t id{0};
         std::string description;
         AlphaPredicate predicate;
-        std::vector<ReteFact> memory;
+        std::vector<FactPtr> memory;
     };
 
     struct BetaNode {
         std::size_t id{0};
         std::string description;
-        std::size_t leftAlphaId{0};
+        bool leftIsBeta{false};
+        std::size_t leftId{0};
         std::size_t rightAlphaId{0};
         BetaJoin join;
         std::vector<ReteToken> memory;
     };
 
-    std::string assertFact(ReteFact fact);
+    // State facts are inserted and persistent across ticks.
+    std::string assertFact(FactPtr fact);
     bool retractFact(const std::string& factId);
+    void retractStateFactsBySubject(const std::string& subjectId);
+    void markFactDirty(const std::string& subjectId, const std::string& attribute);
+    void evaluateDirty();
+    bool hasDirtyFacts() const { return !_dirtyFacts.empty(); }
     // Drop every fact naming this being. Called when it is actually freed:
     // facts hold raw participant pointers and outlive the round that
     // asserted them, so a fact about a dead being is a dangling read waiting
@@ -437,11 +446,12 @@ public:
     // during it (laws firing events) survive into the next round.
     void retractFirst(std::size_t count);
     void clearFacts();
-    const std::vector<ReteFact>& facts() const { return _facts; }
+    const std::vector<FactPtr>& facts() const { return _facts; }
 
     std::size_t addAlphaNode(const std::string& description, AlphaPredicate predicate);
     std::size_t addBetaNode(const std::string& description,
-                            std::size_t leftAlphaId,
+                            bool leftIsBeta,
+                            std::size_t leftId,
                             std::size_t rightAlphaId,
                             BetaJoin join = {});
 
@@ -534,11 +544,13 @@ private:
 
     // Token shapes, shared by incremental propagation and backfill so the two
     // produce byte-identical memories and agendas.
-    static ReteToken alphaToken(const ReteFact& fact);
-    static ReteToken joinSeed(const ReteFact& left);
-    static ReteToken joinedToken(const ReteFact& left, const ReteFact& right);
+    static ReteToken alphaToken(const FactPtr& fact);
+    static ReteToken joinSeed(const FactPtr& left);
+    static ReteToken joinedToken(const FactPtr& left, const FactPtr& right);
+    static ReteToken joinedToken(const ReteToken& left, const FactPtr& right);
 
-    std::vector<ReteFact> _facts;
+    std::vector<FactPtr> _facts;
+    std::vector<FactPtr> _dirtyFacts;
     std::vector<AlphaNode> _alphaNodes;
     std::vector<BetaNode> _betaNodes;
     std::vector<ReteActivation> _agenda;

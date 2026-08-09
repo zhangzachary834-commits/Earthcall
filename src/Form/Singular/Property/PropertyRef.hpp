@@ -9,8 +9,14 @@
 template <typename Owner, typename T>
 class PropertyRef : public Property {
 public:
-    PropertyRef(std::string propertyName, Owner* owner, T Owner::*member)
-        : _name(std::move(propertyName)), _owner(owner), _member(member) {}
+    Singular* _singularOwner = nullptr;
+
+    PropertyRef(std::string propertyName, Owner* owner, T Owner::*member, Singular* singularOwner = nullptr)
+        : _name(std::move(propertyName)), _owner(owner), _member(member), _singularOwner(singularOwner) {
+        if constexpr (std::is_base_of_v<Singular, Owner>) {
+            if (!_singularOwner) _singularOwner = static_cast<Singular*>(owner);
+        }
+    }
 
     std::string name() const override {
         return _name;
@@ -30,6 +36,9 @@ public:
 
     void set(const T& value) {
         _owner->*_member = value;
+        if (_singularOwner) {
+            Singular::notifyPropertyChanged(_singularOwner, _name);
+        }
     }
 
     PropertyValue value() const override {

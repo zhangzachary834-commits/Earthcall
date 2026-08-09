@@ -463,6 +463,75 @@ ECA::ConditionPredicate ConditionNode::compile() const {
     return [](const ECA::Event&, const Singular&) { return false; };
 }
 
+std::vector<std::size_t> ConditionNode::compileToRete(ReteNetwork& rete,
+                                                      const std::string& lawId,
+                                                      std::size_t leftId,
+                                                      bool leftIsBeta) const {
+    if (kind == Kind::All) {
+        std::size_t currentLeft = leftId;
+        bool currentIsBeta = leftIsBeta;
+        std::vector<std::size_t> terminals;
+        if (children.empty()) return {currentLeft};
+        for (const auto& child : children) {
+            terminals = child.compileToRete(rete, lawId, currentLeft, currentIsBeta);
+            if (terminals.empty()) return {}; 
+            currentLeft = terminals[0];
+            if (leftId == 0 && &child == &children.front()) {
+                currentIsBeta = false;
+            } else {
+                currentIsBeta = true;
+            }
+        }
+        return terminals;
+    }
+    if (kind == Kind::Any) {
+        std::vector<std::size_t> allTerminals;
+        for (const auto& child : children) {
+            auto t = child.compileToRete(rete, lawId, leftId, leftIsBeta);
+            allTerminals.insert(allTerminals.end(), t.begin(), t.end());
+        }
+        return allTerminals;
+    }
+    
+    // For leaf nodes:
+    std::string targetAttr = "";
+    if (kind == Kind::Compare) targetAttr = path.segments.empty() ? "" : path.segments.front();
+    else if (kind == Kind::Related) targetAttr = relationType;
+    
+    std::string desc = this->describe();
+    ECA::ConditionPredicate orig = this->compile();
+    
+    std::size_t alphaId = rete.addAlphaNode(desc, 
+        [orig, targetAttr](const FactPtr& fact) {
+            if (!fact->isState) return false;
+            if (!fact->subject) return false;
+            if (!targetAttr.empty()) {
+                if (fact->type == "property-state" && fact->attribute != targetAttr) return false;
+                if (fact->type == "relation-state" && fact->attribute != targetAttr) return false;
+            }
+            ECA::Event dummy;
+            return orig(dummy, *fact->subject);
+        });
+        
+    if (leftId == 0) {
+        return {alphaId};
+    }
+    
+    std::size_t betaId = rete.addBetaNode(desc + " (join)", leftIsBeta, leftId, alphaId,
+        [](const ReteToken& left, const FactPtr& right) {
+            std::string leftSubject;
+            auto it = left.bindings.find("subject");
+            if (it != left.bindings.end()) {
+                leftSubject = it->second;
+            } else if (!left.facts.empty()) {
+                leftSubject = left.facts[0]->subjectId;
+            }
+            return leftSubject.empty() || leftSubject == right->subjectId;
+        });
+        
+    return {betaId};
+}
+
 void ConditionNode::collectPaths(std::vector<PropertyPath>& out) const {
     const auto add = [&out](const PropertyPath& p) {
         if (!p.empty()) out.push_back(p);
