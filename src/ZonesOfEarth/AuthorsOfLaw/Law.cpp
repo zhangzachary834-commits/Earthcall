@@ -1247,6 +1247,42 @@ ReteNetwork::AlphaNode* ReteNetwork::findAlpha(std::size_t id) {
     return nullptr;
 }
 
+std::vector<Singular*> ReteNetwork::collectTerminalSubjects(
+    const std::vector<std::size_t>& terminalIds) const {
+    // Collect unique subjects from terminal node memories.
+    // Terminal IDs may refer to alpha or beta nodes — we check both.
+    std::unordered_set<Singular*> seen;
+    std::vector<Singular*> result;
+
+    for (std::size_t termId : terminalIds) {
+        // Check alpha nodes first.
+        const AlphaNode* alpha = findAlpha(termId);
+        if (alpha) {
+            for (const auto& fact : alpha->memory) {
+                if (fact->subject && seen.insert(fact->subject).second) {
+                    result.push_back(fact->subject);
+                }
+            }
+            continue;
+        }
+        // Check beta nodes.
+        for (const auto& beta : _betaNodes) {
+            if (beta.id != termId) continue;
+            for (const auto& token : beta.memory) {
+                Singular* subj = nullptr;
+                for (const auto& fact : token.facts) {
+                    if (fact->subject) { subj = fact->subject; break; }
+                }
+                if (subj && seen.insert(subj).second) {
+                    result.push_back(subj);
+                }
+            }
+            break;
+        }
+    }
+    return result;
+}
+
 std::shared_ptr<Law> LawManager::createLaw(const std::string& name,
                                            const std::vector<Singular*>& authors) {
     auto law = std::make_shared<Law>(name, authors);
@@ -1264,6 +1300,13 @@ void LawManager::add(const std::shared_ptr<Law>& law) {
 
     _laws.push_back(law);
     _lawFormation.addMember(law.get());
+
+    // Compile continuous laws' conditions into Rete terminals at registration
+    // time, so the O(Matching) path is ready from the first tick.
+    if (law->activation() != Law::Activation::OnEvent &&
+        law->conditionModel()) {
+        compileConditionsToRete(*law);
+    }
 
     LawRegisteredEvent event{law, std::time(nullptr)};
     Core::EventBus::instance().publish(event);
@@ -1466,6 +1509,36 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
         if (!law || law->activation() == Law::Activation::OnEvent) continue;
         if (!law->isEnabled() || !law->isAuthored()) continue;
 
+        const std::string lawId = law->getIdentifier();
+        auto termIt = _reteTerminals.find(lawId);
+        const bool hasTerminals = (termIt != _reteTerminals.end() && !termIt->second.empty());
+
+        // WhileTrue laws with compiled Rete terminals: O(Matching) path.
+        // The terminal node memories already contain exactly the beings that
+        // satisfy all conditions, so we skip both sweepSubjects AND
+        // conditionsSatisfied — the Rete network has done both reactively.
+        if (hasTerminals && law->activation() == Law::Activation::WhileTrue) {
+            std::vector<std::size_t> termIds;
+            termIds.reserve(termIt->second.size());
+            for (const auto& info : termIt->second) termIds.push_back(info.nodeId);
+
+            std::vector<Singular*> subjects = _rete.collectTerminalSubjects(termIds);
+            for (Singular* subject : subjects) {
+                if (!subject || Universe::instance().isUnmade(subject)) continue;
+                const std::string subjectId = subject->getIdentifier();
+                if (law->drives() &&
+                    hasDriveSession(lawId, subjectId)) {
+                    if (law->retrigger() == Law::Retrigger::Absorb) continue;
+                    restartDriveSession(*law, subjectId);
+                }
+                applyAndMaybeDrive(*law, *subject, records);
+            }
+            continue;
+        }
+
+        // OnBecomeTrue and laws without Rete terminals: full sweep path.
+        // Edge detection requires knowing when a being LEAVES the match set,
+        // so the full sweep is still necessary here.
         std::vector<Singular*> subjects = sweepSubjects(*law);
 
         for (Singular* subject : subjects) {
@@ -1766,6 +1839,7 @@ bool LawManager::remove(const std::string& lawId) {
 
     _rete.unbindLaw(lawId);
     _triggers.erase(lawId);
+    _reteTerminals.erase(lawId);
     _lawFormation.removeMember(it->get());
     _laws.erase(it);
     return true;
@@ -1808,6 +1882,44 @@ const std::vector<std::string>& LawManager::triggersOf(const std::string& lawId)
     return it == _triggers.end() ? kNone : it->second;
 }
 
+void LawManager::compileConditionsToRete(Law& law) {
+    const std::string lawId = law.getIdentifier();
+
+    // Unbind old terminals for this law (if recompiling).
+    auto oldIt = _reteTerminals.find(lawId);
+    if (oldIt != _reteTerminals.end()) {
+        // The old condition nodes are still in the rete — we need to unbind
+        // the law from them. The nodes themselves will be dropped by
+        // dropUnboundAlphaNodes if nothing else reads them.
+        _rete.unbindLaw(lawId);
+        _reteTerminals.erase(oldIt);
+    }
+
+    if (!law.conditionModel()) return;
+    const ConditionModel& model = *law.conditionModel();
+
+    // Compile the tree into the rete network, getting terminal node IDs.
+    std::vector<std::size_t> terminals = model.compileToRete(_rete, lawId);
+    if (terminals.empty()) return;
+
+    // Determine whether each terminal is an alpha or beta node.
+    std::vector<TerminalInfo> infos;
+    infos.reserve(terminals.size());
+    for (std::size_t termId : terminals) {
+        bool isBeta = !_rete.isAlphaNode(termId);
+        infos.push_back({termId, isBeta});
+
+        // Bind the law to each terminal so that the Rete network knows to
+        // queue activations for this law when facts match.
+        if (isBeta) {
+            _rete.bindLawToBeta(lawId, termId);
+        } else {
+            _rete.bindLawToAlpha(lawId, termId);
+        }
+    }
+    _reteTerminals[lawId] = std::move(infos);
+}
+
 void LawManager::loadFromJson(const nlohmann::json& j) {
     // Replace-all, like the world loader — EXCEPT first movers, whose truth
     // lives in the engine and survives every load.
@@ -1821,9 +1933,11 @@ void LawManager::loadFromJson(const nlohmann::json& j) {
         _rete.unbindLaw(law->getIdentifier());
         _lawFormation.removeMember(law.get());
         _triggers.erase(law->getIdentifier());
+        _reteTerminals.erase(law->getIdentifier());
     }
     _laws = std::move(firstMovers);
     _driveSessions.clear();
+    _reteTerminals.clear();
 
     const auto findBeing = [](const std::string& id) -> Singular* {
         for (Singular* being : Universe::instance().beings()) {
@@ -1866,6 +1980,16 @@ void LawManager::loadFromJson(const nlohmann::json& j) {
                 bindTrigger(it.key(), type.get<std::string>());
             }
         }
+    }
+
+    // Compile continuous laws' conditions into Rete terminals.
+    // This must happen after add() and after trigger binding, because the
+    // condition model needs to be set and the Rete network populated.
+    for (const auto& law : _laws) {
+        if (!law) continue;
+        if (law->activation() == Law::Activation::OnEvent) continue;
+        if (!law->conditionModel()) continue;
+        compileConditionsToRete(*law);
     }
 }
 

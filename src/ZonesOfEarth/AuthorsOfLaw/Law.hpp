@@ -515,6 +515,14 @@ public:
     std::vector<ReteActivation> drainAgenda();
     const std::vector<ReteActivation>& agenda() const { return _agenda; }
 
+    // Collect all unique subjects that currently match a set of terminal nodes.
+    // Used by WhileTrue laws to replace sweepSubjects with O(Matching) iteration.
+    std::vector<Singular*> collectTerminalSubjects(
+        const std::vector<std::size_t>& terminalIds) const;
+
+    // True when the given ID belongs to an alpha node (not beta).
+    bool isAlphaNode(std::size_t id) const { return findAlpha(id) != nullptr; }
+
     nlohmann::json toJson() const;
 
 private:
@@ -649,6 +657,9 @@ public:
 
     nlohmann::json toJson() const;
 
+    // Compile a law's condition model into Rete nodes and track terminals.
+    void compileConditionsToRete(Law& law);
+
 private:
     void maybeStartDriveSession(Law& law, Singular& subject);
     void restartDriveSession(Law& law, const std::string& subjectId);
@@ -669,6 +680,13 @@ private:
     std::vector<DriveSession> _driveSessions;
     std::vector<std::shared_ptr<Core::EventEntity>> _activeCustomEvents;
     std::unordered_map<std::string, std::vector<std::string>> _triggers;
+    // Terminal node IDs for each law's compiled condition DAG.
+    // Key: lawId, Value: {nodeId, isBeta} pairs for the DAG's terminal nodes.
+    struct TerminalInfo {
+        std::size_t nodeId;
+        bool isBeta;  // true = BetaNode, false = AlphaNode
+    };
+    std::unordered_map<std::string, std::vector<TerminalInfo>> _reteTerminals;
     bool _connected = false;
     bool _dirty = false;
 };
