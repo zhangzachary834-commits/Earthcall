@@ -232,7 +232,7 @@ void Game::update(float dt) {
 
         if (mouseLeftNow && !_mouseLeftPressedLast) {
             Core::EventBus::instance().publish(
-                ECA::Event{"onMouseClicked", &_player, nullptr, static_cast<std::time_t>(_worldTime)});
+                ECA::Event{"mouse-clicked", &_player, nullptr, static_cast<std::time_t>(_worldTime)});
         }
 
         auto collect3DTargets = [&](std::vector<Object*>& targets) {
@@ -315,7 +315,7 @@ void Game::update(float dt) {
         else if (_current3DMode == Mode3D::BrushCreate) {
             // Note: C++ hardcoded Tool::ShapeGenerator3D was removed here.
             // The tool is now implemented dynamically via Law and triggers on
-            // the "onMouseClicked" event. Body-part targeting, which the tool
+            // the "mouse-clicked" event. Body-part targeting, which the tool
             // did by hand off the selected part, is authored instead: the
             // spawn action's parent path resolves "cursorHoveredBodyPart".
         } else if (_current3DMode == Mode3D::Pottery) {

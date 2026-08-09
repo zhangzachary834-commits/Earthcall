@@ -6742,7 +6742,6 @@ CMakeFiles/earthcall_wasm.dir/src/Form/Object/Creation/ObjectConcept.cpp.o: /Use
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec3.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec4.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vector_relational.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Form.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/AngleTools.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Automation/Automation.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Contour.hpp \
@@ -6765,13 +6764,7 @@ CMakeFiles/earthcall_wasm.dir/src/Form/Object/Creation/ObjectConcept.cpp.o: /Use
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyPath.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Identity/SingularId.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarManager.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Person.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Soul/Soul.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Integration/EarthcallAPI.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/Body.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/BodyPart.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/Relation.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/RelationManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/RenderMaterial.hpp \
@@ -26788,14 +26781,9 @@ CMakeFiles/earthcall_wasm.dir/src/Form/Singular/SynthesisSystem.cpp.o: /Users/za
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/SynthesisSystem.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Identity/SingularId.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarManager.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Person.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Soul/Soul.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Integration/EarthcallAPI.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Legacy/DesignSystem.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/Body.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/BodyPart.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/Relation.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/RelationManager.hpp \
@@ -32690,6 +32678,22 @@ CMakeFiles/earthcall_wasm.dir/src/Integration/EarthcallAPI.cpp.o: /Users/zachary
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/fwd.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/geometric.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/glm.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/scalar_constants.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/geometric.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/setup.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/scalar_constants.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/scalar_constants.inl \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/constants.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/constants.inl \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/matrix.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/trigonometric.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_clip_space.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_clip_space.inl \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_projection.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_projection.inl \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_transform.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_transform.inl \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/geometric.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/common.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/qualifier.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/setup.hpp \
@@ -32758,31 +32762,8 @@ CMakeFiles/earthcall_wasm.dir/src/Integration/EarthcallAPI.cpp.o: /Users/zachary
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_uint1.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_uint1_sized.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/geometric.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/setup.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/scalar_constants.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/geometric.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/constants.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/matrix.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/trigonometric.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_clip_space.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_clip_space.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_projection.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_projection.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_transform.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_transform.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/scalar_constants.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/scalar_constants.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/geometric.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat4x4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/matrix.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/trigonometric.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/constants.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/constants.inl \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/matrix_transform.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/matrix_transform.inl \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/trigonometric.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vector_relational.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/epsilon.hpp \
@@ -32799,10 +32780,13 @@ CMakeFiles/earthcall_wasm.dir/src/Integration/EarthcallAPI.cpp.o: /Users/zachary
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat4x2.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat4x3.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat4x4.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/matrix.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/trigonometric.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec2.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec3.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec4.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/matrix_transform.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/matrix_transform.inl \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/type_ptr.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/type_ptr.inl \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/integer.hpp \
@@ -32841,17 +32825,11 @@ CMakeFiles/earthcall_wasm.dir/src/Integration/EarthcallAPI.cpp.o: /Users/zachary
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Identity/SingularId.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarManager.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Person.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Soul/Soul.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/json.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Integration/EarthcallAPI.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Integration/SecurityManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Legacy/DesignSystem.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarManager.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/Body.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/BodyPart.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/Relation.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/RelationManager.hpp \
@@ -33776,121 +33754,6 @@ CMakeFiles/earthcall_wasm.dir/src/Integration/IntegrationManager.cpp.o: /Users/z
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/fwd.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/geometric.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/glm.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/common.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/qualifier.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/setup.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat3x3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat4x4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_vec3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_vec4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/exponential.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/common.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat3x3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat4x4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_vec3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_vec4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/exponential.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vector_relational.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/quaternion_geometric.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/quaternion_relational.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/quaternion_relational.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_relational.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/constants.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/matrix_transform.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/trigonometric.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/qualifier.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/setup.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_float.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_quat.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_quat.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_vec1.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/exponential.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/exponential.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_relational.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/geometric.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/quaternion_geometric.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/quaternion_geometric.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/scalar_constants.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/scalar_int_sized.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/scalar_uint_sized.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_int1.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_uint1.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/geometric.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/trigonometric.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vector_relational.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/quaternion_common.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/quaternion_common.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/quaternion_double.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/quaternion_double_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/quaternion_float.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/quaternion_float_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/quaternion_geometric.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/quaternion_relational.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/quaternion_transform.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/quaternion_transform.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/quaternion_trigonometric.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/quaternion_trigonometric.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/scalar_constants.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_bool1.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_bool1_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_double1.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_double1_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_float1.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_float1_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_int1.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_int1_sized.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_relational.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_relational.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_uint1.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_uint1_sized.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/geometric.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/setup.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/scalar_constants.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/geometric.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/constants.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/matrix.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/trigonometric.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_clip_space.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_clip_space.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_projection.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_projection.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_transform.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_transform.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/scalar_constants.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/scalar_constants.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/geometric.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat4x4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/matrix.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/trigonometric.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/constants.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/constants.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/matrix_transform.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/matrix_transform.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/trigonometric.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vector_relational.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/epsilon.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/epsilon.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/quaternion.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/quaternion.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/vec1.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat2x2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat2x3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat2x4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat3x2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat3x3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat3x4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat4x2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat4x3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat4x4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/matrix_transform.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/type_ptr.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/type_ptr.inl \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/integer.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat2x2.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat2x3.hpp \
@@ -33908,42 +33771,12 @@ CMakeFiles/earthcall_wasm.dir/src/Integration/IntegrationManager.cpp.o: /Users/z
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec3.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec4.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vector_relational.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Form.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/AngleTools.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Automation/Automation.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Contour.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Formation/Formation.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Geometry/ComplexShape.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Geometry/Patch.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Geometry/Sdf.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Geometry/SmoothSurface.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/AngleTools.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Contour.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Identity/SingularId.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarManager.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Person.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Soul/Soul.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/json.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Integration/EarthcallAPI.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Integration/IntegrationManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Integration/SecurityManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Integration/WebIntegration.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Integration/WindowManager.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/Body.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/BodyPart.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/Relation.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/RelationManager.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/RenderMaterial.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/Renderer.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/EventBus.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Util/SaveSystem.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/json.hpp \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/GL/gl.h \
@@ -34378,12 +34211,6 @@ CMakeFiles/earthcall_wasm.dir/src/Integration/IntegrationManager.cpp.o: /Users/z
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/view_interface.h \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__split_buffer \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__std_mbstate_t.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__stop_token/atomic_unique_lock.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__stop_token/intrusive_list_view.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__stop_token/intrusive_shared_ptr.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__stop_token/stop_callback.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__stop_token/stop_state.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__stop_token/stop_token.h \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__string/char_traits.h \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__string/constexpr_c_functions.h \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__string/extern_template_lists.h \
@@ -34397,8 +34224,6 @@ CMakeFiles/earthcall_wasm.dir/src/Integration/IntegrationManager.cpp.o: /Users/z
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__thread/poll_with_backoff.h \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__thread/support.h \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__thread/support/pthread.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__thread/this_thread.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__thread/thread.h \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__thread/timed_backoff_policy.h \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__tree \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__tuple/find_index.h \
@@ -34577,7 +34402,6 @@ CMakeFiles/earthcall_wasm.dir/src/Integration/IntegrationManager.cpp.o: /Users/z
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cmath \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/compare \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/concepts \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/condition_variable \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cstdarg \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cstddef \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cstdint \
@@ -34619,7 +34443,6 @@ CMakeFiles/earthcall_wasm.dir/src/Integration/IntegrationManager.cpp.o: /Users/z
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/ratio \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/regex \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/set \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/sstream \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/stack \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/stddef.h \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/stdexcept \
@@ -34630,10 +34453,8 @@ CMakeFiles/earthcall_wasm.dir/src/Integration/IntegrationManager.cpp.o: /Users/z
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/string.h \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/string_view \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/system_error \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/thread \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/tuple \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/type_traits \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/typeindex \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/typeinfo \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/unordered_map \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/utility \
@@ -39984,7 +39805,6 @@ CMakeFiles/earthcall_wasm.dir/src/OurVerse/Controls.cpp.o: /Users/zacharyzhang/D
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Identity/SingularId.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Integration/EarthcallAPI.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Legacy/DesignSystem.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/AdvancedFacePaint.hpp \
@@ -39993,7 +39813,6 @@ CMakeFiles/earthcall_wasm.dir/src/OurVerse/Controls.cpp.o: /Users/zacharyzhang/D
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/CursorTools.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/ElementalToolHandler.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/Body.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/BodyPart.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Person.hpp \
@@ -41102,7 +40921,6 @@ CMakeFiles/earthcall_wasm.dir/src/OurVerse/CursorTools.cpp.o: /Users/zacharyzhan
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Identity/SingularId.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Integration/EarthcallAPI.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Legacy/DesignSystem.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/AdvancedFacePaint.hpp \
@@ -41110,7 +40928,6 @@ CMakeFiles/earthcall_wasm.dir/src/OurVerse/CursorTools.cpp.o: /Users/zacharyzhan
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/CursorTools.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/ElementalToolHandler.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/Body.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/BodyPart.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Person.hpp \
@@ -42220,7 +42037,6 @@ CMakeFiles/earthcall_wasm.dir/src/OurVerse/ElementalToolHandler.cpp.o: /Users/za
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Identity/SingularId.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Integration/EarthcallAPI.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Legacy/DesignSystem.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/AdvancedFacePaint.hpp \
@@ -42228,7 +42044,6 @@ CMakeFiles/earthcall_wasm.dir/src/OurVerse/ElementalToolHandler.cpp.o: /Users/za
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/CursorTools.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/ElementalToolHandler.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/Body.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/BodyPart.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Person.hpp \
@@ -43337,7 +43152,6 @@ CMakeFiles/earthcall_wasm.dir/src/OurVerse/Tool.cpp.o: /Users/zacharyzhang/Docum
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Identity/SingularId.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Integration/EarthcallAPI.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Legacy/DesignSystem.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/AdvancedFacePaint.hpp \
@@ -43345,7 +43159,6 @@ CMakeFiles/earthcall_wasm.dir/src/OurVerse/Tool.cpp.o: /Users/zacharyzhang/Docum
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/CursorTools.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/ElementalToolHandler.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/Body.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/BodyPart.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Person.hpp \
@@ -44078,2190 +43891,6 @@ CMakeFiles/earthcall_wasm.dir/src/OurVerse/Tool.cpp.o: /Users/zacharyzhang/Docum
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/typeinfo \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/unordered_map \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/unordered_set \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/utility \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/valarray \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/variant \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/vector \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/version \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/wchar.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/wctype.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/compat/math.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/compat/stdarg.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/compat/stdlib.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/compat/string.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/compat/time.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/compat/xlocale.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/ctype.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/errno.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/features.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/float.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/limits.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/locale.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/math.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/pthread.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/sched.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/stdarg.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/stddef.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/stdint.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/stdio.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/stdlib.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/string.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/strings.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/time.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/unistd.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/wasi/api.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/wchar.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/wctype.h \
-  /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/__float_float.h \
-  /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/__float_header_macro.h \
-  /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/__float_infinity_nan.h \
-  /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/__stdarg___gnuc_va_list.h \
-  /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/__stdarg___va_copy.h \
-  /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/__stdarg_header_macro.h \
-  /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/__stdarg_va_arg.h \
-  /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/__stdarg_va_copy.h \
-  /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/__stdarg_va_list.h \
-  /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/__stddef_header_macro.h \
-  /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/__stddef_max_align_t.h \
-  /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/__stddef_null.h \
-  /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/__stddef_nullptr_t.h \
-  /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/__stddef_offsetof.h \
-  /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/__stddef_ptrdiff_t.h \
-  /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/__stddef_size_t.h \
-  /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/__stddef_wchar_t.h \
-  /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/float.h \
-  /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/limits.h \
-  /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/stdarg.h \
-  /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/stddef.h \
-  /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/stdint.h
-
-CMakeFiles/earthcall_wasm.dir/src/Person/AvatarDemo.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarDemo.cpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/matrix.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat2x2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat2x3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat2x3.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat2x4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat2x4.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat3x2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat3x2.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat3x3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat3x3.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat3x4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat3x4.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat4x2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat4x2.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat4x3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat4x3.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat4x4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat4x4.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_vec2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_vec3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_vec4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_double2x3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_double2x3_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_double2x4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_double2x4_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_double3x2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_double3x2_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_double3x3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_double3x3_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_double3x4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_double3x4_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_double4x2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_double4x2_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_double4x3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_double4x3_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_double4x4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_double4x4_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_float2x3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_float2x3_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_float2x4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_float2x4_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_float3x2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_float3x2_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_float3x3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_float3x3_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_float3x4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_float3x4_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_float4x2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_float4x2_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_float4x3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_float4x3_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_float4x4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_float4x4_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/common.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/func_vector_relational.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/qualifier.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/setup.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vector_relational.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/compute_vector_relational.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/_fixes.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/_vectorize.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/compute_common.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/func_common.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/func_exponential.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/qualifier.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/setup.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_vec1.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_vec1.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_vec2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_vec3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_vec4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/exponential.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/func_geometric.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_vec3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/geometric.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/func_matrix.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/qualifier.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/setup.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat2x2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat2x3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat2x4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat3x2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat3x3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat3x4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat4x2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat4x3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat4x4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/matrix.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/compute_vector_relational.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/setup.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/compute_vector_relational.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/qualifier.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/setup.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat2x2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat2x2.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_vec2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_vec2.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_vec3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_vec3.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_vec4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_vec4.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/setup.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/scalar_int_sized.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/scalar_uint_sized.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_int2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_int3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_int4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_uint2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_uint3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_uint4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_double2x2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_double2x2_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_float2x2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_float2x2_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_bool2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_bool2_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_bool3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_bool3_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_bool4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_bool4_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_double2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_double2_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_double3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_double3_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_double4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_double4_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_float2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_float2_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_float3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_float3_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_float4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_float4_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_int2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_int2_sized.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_int3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_int3_sized.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_int4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_int4_sized.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_uint2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_uint2_sized.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_uint3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_uint3_sized.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_uint4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_uint4_sized.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/common.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/common.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/simd/platform.h \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/_fixes.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/_vectorize.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/func_integer.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/func_packing.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/func_trigonometric.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/qualifier.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/setup.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_half.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_half.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/exponential.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/fwd.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/geometric.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/glm.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/common.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/qualifier.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/setup.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat3x3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat4x4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_vec3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_vec4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/exponential.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/common.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat3x3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat4x4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_vec3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_vec4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/exponential.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vector_relational.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/quaternion_geometric.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/quaternion_relational.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/quaternion_relational.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_relational.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/constants.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/matrix_transform.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/trigonometric.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/qualifier.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/setup.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_float.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_quat.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_quat.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_vec1.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/exponential.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/exponential.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_relational.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/geometric.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/quaternion_geometric.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/quaternion_geometric.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/scalar_constants.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/scalar_int_sized.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/scalar_uint_sized.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_int1.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_uint1.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/geometric.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/trigonometric.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vector_relational.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/quaternion_common.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/quaternion_common.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/quaternion_double.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/quaternion_double_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/quaternion_float.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/quaternion_float_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/quaternion_geometric.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/quaternion_relational.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/quaternion_transform.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/quaternion_transform.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/quaternion_trigonometric.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/quaternion_trigonometric.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/scalar_constants.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_bool1.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_bool1_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_double1.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_double1_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_float1.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_float1_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_int1.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_int1_sized.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_relational.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_relational.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_uint1.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_uint1_sized.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/geometric.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/setup.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/scalar_constants.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/geometric.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/constants.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/matrix.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/trigonometric.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_clip_space.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_clip_space.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_projection.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_projection.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_transform.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_transform.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/scalar_constants.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/scalar_constants.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/geometric.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat4x4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/matrix.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/trigonometric.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/constants.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/constants.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/matrix_transform.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/matrix_transform.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/trigonometric.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vector_relational.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/epsilon.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/epsilon.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/quaternion.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/quaternion.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/vec1.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat2x2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat2x3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat2x4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat3x2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat3x3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat3x4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat4x2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat4x3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat4x4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/matrix_transform.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/type_ptr.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/type_ptr.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/integer.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat2x2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat2x3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat2x4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat3x2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat3x3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat3x4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat4x2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat4x3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat4x4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/matrix.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/packing.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/trigonometric.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vector_relational.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Form.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/AngleTools.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Automation/Automation.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Contour.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Formation/Formation.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Geometry/ComplexShape.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Geometry/Patch.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Geometry/Sdf.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Geometry/SmoothSurface.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/AngleTools.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Contour.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Identity/SingularId.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarManager.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/Body.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/BodyPart.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Person.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Soul/Soul.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/Relation.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/RelationManager.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/RenderMaterial.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/Renderer.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/EventBus.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/json.hpp \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/GL/gl.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/GL/glext.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/GLFW/glfw3.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/KHR/khrplatform.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/alloca.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/assert.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/bits/alltypes.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/bits/errno.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/bits/limits.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/adjacent_find.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/all_of.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/any_of.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/binary_search.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/clamp.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/comp.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/comp_ref_type.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/copy.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/copy_backward.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/copy_if.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/copy_move_common.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/copy_n.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/count.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/count_if.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/equal.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/equal_range.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/fill.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/fill_n.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/find.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/find_end.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/find_first_of.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/find_if.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/find_if_not.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/find_segment_if.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/for_each.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/for_each_n.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/for_each_n_segment.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/for_each_segment.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/generate.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/generate_n.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/half_positive.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/in_out_result.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/includes.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/inplace_merge.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/is_heap.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/is_heap_until.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/is_partitioned.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/is_permutation.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/is_sorted.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/is_sorted_until.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/iter_swap.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/iterator_operations.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/lexicographical_compare.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/lexicographical_compare_three_way.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/lower_bound.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/make_heap.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/make_projected.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/max.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/max_element.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/merge.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/min.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/min_element.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/minmax.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/minmax_element.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/mismatch.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/move.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/move_backward.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/next_permutation.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/none_of.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/nth_element.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/out_value_result.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/partial_sort.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/partial_sort_copy.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/partition.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/partition_copy.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/partition_point.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/pop_heap.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/prev_permutation.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/pstl.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/push_heap.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/radix_sort.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/ranges_copy.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/ranges_copy_n.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/ranges_iterator_concept.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/remove.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/remove_copy.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/remove_copy_if.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/remove_if.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/replace.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/replace_copy.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/replace_copy_if.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/replace_if.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/reverse.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/reverse_copy.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/rotate.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/rotate_copy.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/sample.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/search.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/search_n.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/set_difference.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/set_intersection.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/set_symmetric_difference.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/set_union.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/shuffle.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/sift_down.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/simd_utils.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/sort.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/sort_heap.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/specialized_algorithms.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/stable_partition.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/stable_sort.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/swap_ranges.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/three_way_comp_ref_type.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/transform.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/unique.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/unique_copy.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/unwrap_iter.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/unwrap_range.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/upper_bound.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__assert \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__assertion_handler \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__atomic/aliases.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__atomic/atomic.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__atomic/atomic_flag.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__atomic/atomic_init.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__atomic/atomic_lock_free.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__atomic/atomic_sync.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__atomic/atomic_sync_timed.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__atomic/atomic_waitable_traits.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__atomic/check_memory_order.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__atomic/contention_t.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__atomic/fence.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__atomic/floating_point_helper.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__atomic/is_always_lock_free.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__atomic/kill_dependency.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__atomic/memory_order.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__atomic/support.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__atomic/support/c11.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__atomic/to_gcc_order.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__bit/bit_cast.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__bit/bit_log2.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__bit/blsr.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__bit/countl.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__bit/countr.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__bit/invert_if.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__bit/popcount.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__bit_reference \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__charconv/tables.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__charconv/to_chars_base_10.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__charconv/to_chars_integral.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__charconv/to_chars_result.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__charconv/traits.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__chrono/convert_to_timespec.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__chrono/duration.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__chrono/file_clock.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__chrono/high_resolution_clock.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__chrono/steady_clock.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__chrono/system_clock.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__chrono/time_point.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__compare/common_comparison_category.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__compare/compare_three_way.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__compare/compare_three_way_result.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__compare/ordering.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__compare/synth_three_way.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__compare/three_way_comparable.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/arithmetic.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/assignable.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/boolean_testable.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/class_or_enum.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/common_reference_with.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/comparison_common_type.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/constructible.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/convertible_to.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/copyable.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/derived_from.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/destructible.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/different_from.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/equality_comparable.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/invocable.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/movable.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/predicate.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/regular.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/relation.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/same_as.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/semiregular.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/swappable.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/totally_ordered.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__condition_variable/condition_variable.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__config \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__config_site \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__configuration/abi.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__configuration/availability.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__configuration/compiler.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__configuration/experimental.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__configuration/hardening.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__configuration/language.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__configuration/platform.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__cstddef/byte.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__cstddef/max_align_t.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__cstddef/nullptr_t.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__cstddef/ptrdiff_t.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__cstddef/size_t.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__debug_utils/randomize_range.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__debug_utils/sanitizers.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__debug_utils/strict_weak_ordering_check.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__exception/exception.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__exception/exception_ptr.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__exception/nested_exception.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__exception/operations.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__exception/terminate.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__filesystem/copy_options.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__filesystem/directory_entry.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__filesystem/directory_iterator.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__filesystem/directory_options.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__filesystem/file_status.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__filesystem/file_time_type.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__filesystem/file_type.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__filesystem/filesystem_error.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__filesystem/operations.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__filesystem/path.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__filesystem/path_iterator.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__filesystem/perm_options.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__filesystem/perms.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__filesystem/recursive_directory_iterator.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__filesystem/space_info.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__filesystem/u8path.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__format/enable_insertable.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__format/fmt_pair_like.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__format/range_format.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/binary_function.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/binary_negate.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/bind.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/binder1st.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/binder2nd.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/boyer_moore_searcher.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/compose.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/default_searcher.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/function.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/hash.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/identity.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/invoke.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/is_transparent.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/mem_fn.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/mem_fun_ref.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/not_fn.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/operations.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/perfect_forward.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/pointer_to_binary_function.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/pointer_to_unary_function.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/ranges_operations.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/reference_wrapper.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/unary_function.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/unary_negate.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/weak_result_type.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/array.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/bit_reference.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/byte.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/complex.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/deque.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/fstream.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/functional.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/get.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/ios.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/istream.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/memory.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/memory_resource.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/ostream.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/pair.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/queue.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/sstream.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/stack.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/streambuf.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/string.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/string_view.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/subrange.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/tuple.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/variant.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/vector.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__hash_table \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ios/fpos.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/access.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/advance.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/aliasing_iterator.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/back_insert_iterator.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/bounded_iter.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/concepts.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/data.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/default_sentinel.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/distance.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/empty.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/erase_if_container.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/front_insert_iterator.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/incrementable_traits.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/insert_iterator.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/istream_iterator.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/istreambuf_iterator.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/iter_move.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/iter_swap.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/iterator.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/iterator_traits.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/move_iterator.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/move_sentinel.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/next.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/ostream_iterator.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/ostreambuf_iterator.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/prev.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/ranges_iterator_traits.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/readable_traits.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/reverse_access.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/reverse_iterator.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/segmented_iterator.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/size.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/static_bounded_iter.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/wrap_iter.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__locale \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__locale_dir/check_grouping.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__locale_dir/get_c_locale.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__locale_dir/locale_base_api.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__locale_dir/locale_base_api/bsd_locale_fallbacks.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__locale_dir/messages.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__locale_dir/money.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__locale_dir/num.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__locale_dir/pad_and_output.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__locale_dir/scan_keyword.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__locale_dir/time.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__locale_dir/wbuffer_convert.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__locale_dir/wstring_convert.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__log_hardening_failure \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/abs.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/copysign.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/error_functions.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/exponential_functions.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/fdim.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/fma.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/gamma.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/hyperbolic_functions.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/hypot.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/inverse_hyperbolic_functions.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/inverse_trigonometric_functions.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/logarithms.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/min_max.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/modulo.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/remainder.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/roots.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/rounding_functions.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/special_functions.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/traits.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/trigonometric_functions.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__mbstate_t.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/addressof.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/align.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/allocate_at_least.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/allocation_guard.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/allocator.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/allocator_arg_t.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/allocator_destructor.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/allocator_traits.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/array_cookie.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/auto_ptr.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/compressed_pair.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/construct_at.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/destroy.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/destruct_n.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/inout_ptr.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/is_sufficiently_aligned.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/noexcept_move_assign_container.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/out_ptr.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/pointer_traits.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/raw_storage_iterator.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/shared_count.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/shared_ptr.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/swap_allocator.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/temp_value.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/temporary_buffer.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/uninitialized_algorithms.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/unique_ptr.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/unique_temporary_buffer.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/uses_allocator.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory_resource/memory_resource.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory_resource/polymorphic_allocator.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__mutex/lock_guard.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__mutex/mutex.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__mutex/once_flag.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__mutex/tag_types.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__mutex/unique_lock.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__new/align_val_t.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__new/allocate.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__new/exceptions.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__new/global_new_delete.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__new/interference_size.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__new/launder.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__new/new_handler.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__new/nothrow_t.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__new/placement_new_delete.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__node_handle \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__numeric/accumulate.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__numeric/adjacent_difference.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__numeric/exclusive_scan.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__numeric/gcd_lcm.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__numeric/inclusive_scan.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__numeric/inner_product.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__numeric/iota.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__numeric/partial_sum.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__numeric/pstl.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__numeric/ranges_iota.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__numeric/reduce.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__numeric/transform_exclusive_scan.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__numeric/transform_inclusive_scan.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__numeric/transform_reduce.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ostream/basic_ostream.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ostream/put_character_sequence.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__random/is_valid.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__random/log2.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__random/uniform_int_distribution.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/access.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/all.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/as_rvalue_view.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/concepts.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/container_compatible_range.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/dangling.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/data.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/empty.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/enable_borrowed_range.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/enable_view.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/from_range.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/owning_view.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/range_adaptor.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/ref_view.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/size.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/subrange.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/view_interface.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__split_buffer \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__std_mbstate_t.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__stop_token/atomic_unique_lock.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__stop_token/intrusive_list_view.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__stop_token/intrusive_shared_ptr.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__stop_token/stop_callback.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__stop_token/stop_state.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__stop_token/stop_token.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__string/char_traits.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__string/constexpr_c_functions.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__string/extern_template_lists.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__system_error/errc.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__system_error/error_category.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__system_error/error_code.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__system_error/error_condition.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__system_error/system_error.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__system_error/throw_system_error.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__thread/id.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__thread/poll_with_backoff.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__thread/support.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__thread/support/pthread.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__thread/this_thread.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__thread/thread.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__thread/timed_backoff_policy.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__tree \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__tuple/find_index.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__tuple/ignore.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__tuple/sfinae_helpers.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__tuple/tuple_element.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__tuple/tuple_like.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__tuple/tuple_like_no_subrange.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__tuple/tuple_size.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/add_cv_quals.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/add_pointer.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/add_reference.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/aligned_storage.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/aligned_union.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/alignment_of.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/common_reference.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/common_type.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/conditional.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/conjunction.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/container_traits.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/copy_cv.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/copy_cvref.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/datasizeof.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/decay.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/dependent_type.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/desugars_to.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/detected_or.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/disjunction.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/enable_if.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/extent.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/has_unique_object_representation.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/has_virtual_destructor.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/integer_traits.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/integral_constant.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/invoke.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_abstract.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_aggregate.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_allocator.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_always_bitcastable.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_arithmetic.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_array.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_assignable.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_base_of.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_callable.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_char_like_type.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_class.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_compound.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_const.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_constant_evaluated.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_constructible.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_convertible.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_core_convertible.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_destructible.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_empty.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_enum.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_equality_comparable.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_execution_policy.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_final.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_floating_point.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_function.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_fundamental.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_generic_transparent_comparator.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_implicitly_default_constructible.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_integral.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_literal_type.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_member_pointer.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_nothrow_assignable.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_nothrow_constructible.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_nothrow_destructible.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_null_pointer.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_object.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_pod.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_pointer.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_polymorphic.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_primary_template.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_reference.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_reference_wrapper.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_referenceable.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_same.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_scalar.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_signed.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_specialization.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_standard_layout.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_swappable.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_trivial.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_trivially_assignable.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_trivially_constructible.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_trivially_copyable.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_trivially_destructible.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_trivially_lexicographically_comparable.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_trivially_relocatable.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_union.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_unqualified.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_unsigned.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_valid_expansion.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_void.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_volatile.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/lazy.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/make_32_64_or_128_bit.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/make_const_lvalue_ref.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/make_signed.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/make_transparent.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/make_unsigned.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/maybe_const.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/nat.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/negation.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/promote.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/rank.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/reference_constructs_from_temporary.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/remove_all_extents.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/remove_const.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/remove_const_ref.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/remove_cv.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/remove_cvref.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/remove_extent.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/remove_pointer.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/remove_reference.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/remove_volatile.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/result_of.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/strip_signature.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/type_identity.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/type_list.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/underlying_type.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/unwrap_ref.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/void_t.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__undef_macros \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/as_const.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/auto_cast.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/convert_to_integral.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/declval.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/default_three_way_comparator.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/element_count.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/empty.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/exception_guard.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/exchange.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/forward.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/forward_like.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/in_place.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/integer_sequence.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/is_pointer_in_range.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/is_valid_range.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/lazy_synth_three_way_comparator.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/move.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/no_destroy.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/pair.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/piecewise_construct.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/priority_tag.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/private_constructor_tag.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/rel_ops.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/scope_guard.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/swap.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/try_key_extraction.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/unreachable.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__variant/monostate.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__vector/comparison.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__vector/container_traits.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__vector/pmr.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__vector/swap.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__vector/vector.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__vector/vector_bool.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__verbose_abort \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__verbose_trap \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/algorithm \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/any \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/array \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/atomic \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/bit \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/bitset \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cassert \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cctype \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cerrno \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cfloat \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/chrono \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/climits \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/clocale \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cmath \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/compare \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/concepts \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/condition_variable \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cstdarg \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cstddef \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cstdint \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cstdio \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cstdlib \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cstring \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/ctime \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/ctype.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cwchar \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cwctype \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/deque \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/errno.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/exception \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/execution \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/filesystem \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/float.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/format \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/forward_list \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/functional \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/initializer_list \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/iomanip \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/ios \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/iosfwd \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/iostream \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/istream \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/iterator \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/limits \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/locale \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/map \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/math.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/memory \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/mutex \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/new \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/numeric \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/optional \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/ostream \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/print \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/queue \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/ratio \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/sstream \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/stack \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/stddef.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/stdexcept \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/stdio.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/stdlib.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/streambuf \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/string \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/string.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/string_view \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/system_error \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/thread \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/tuple \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/type_traits \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/typeindex \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/typeinfo \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/unordered_map \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/utility \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/valarray \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/variant \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/vector \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/version \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/wchar.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/wctype.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/compat/math.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/compat/stdarg.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/compat/stdlib.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/compat/string.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/compat/time.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/compat/xlocale.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/ctype.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/errno.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/features.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/float.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/limits.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/locale.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/math.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/pthread.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/sched.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/stdarg.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/stddef.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/stdint.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/stdio.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/stdlib.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/string.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/strings.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/time.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/unistd.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/wasi/api.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/wchar.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/wctype.h \
-  /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/__float_float.h \
-  /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/__float_header_macro.h \
-  /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/__float_infinity_nan.h \
-  /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/__stdarg___gnuc_va_list.h \
-  /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/__stdarg___va_copy.h \
-  /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/__stdarg_header_macro.h \
-  /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/__stdarg_va_arg.h \
-  /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/__stdarg_va_copy.h \
-  /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/__stdarg_va_list.h \
-  /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/__stddef_header_macro.h \
-  /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/__stddef_max_align_t.h \
-  /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/__stddef_null.h \
-  /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/__stddef_nullptr_t.h \
-  /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/__stddef_offsetof.h \
-  /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/__stddef_ptrdiff_t.h \
-  /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/__stddef_size_t.h \
-  /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/__stddef_wchar_t.h \
-  /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/float.h \
-  /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/limits.h \
-  /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/stdarg.h \
-  /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/stddef.h \
-  /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/stdint.h
-
-CMakeFiles/earthcall_wasm.dir/src/Person/AvatarManager.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarManager.cpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/matrix.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat2x2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat2x3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat2x3.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat2x4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat2x4.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat3x2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat3x2.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat3x3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat3x3.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat3x4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat3x4.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat4x2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat4x2.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat4x3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat4x3.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat4x4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat4x4.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_vec2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_vec3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_vec4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_double2x3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_double2x3_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_double2x4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_double2x4_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_double3x2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_double3x2_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_double3x3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_double3x3_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_double3x4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_double3x4_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_double4x2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_double4x2_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_double4x3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_double4x3_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_double4x4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_double4x4_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_float2x3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_float2x3_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_float2x4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_float2x4_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_float3x2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_float3x2_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_float3x3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_float3x3_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_float3x4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_float3x4_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_float4x2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_float4x2_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_float4x3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_float4x3_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_float4x4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_float4x4_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/common.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/func_vector_relational.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/qualifier.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/setup.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vector_relational.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/compute_vector_relational.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/_fixes.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/_vectorize.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/compute_common.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/func_common.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/func_exponential.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/qualifier.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/setup.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_vec1.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_vec1.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_vec2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_vec3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_vec4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/exponential.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/func_geometric.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_vec3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/geometric.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/func_matrix.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/qualifier.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/setup.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat2x2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat2x3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat2x4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat3x2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat3x3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat3x4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat4x2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat4x3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat4x4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/matrix.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/compute_vector_relational.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/setup.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/compute_vector_relational.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/qualifier.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/setup.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat2x2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat2x2.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_vec2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_vec2.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_vec3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_vec3.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_vec4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_vec4.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/setup.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/scalar_int_sized.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/scalar_uint_sized.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_int2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_int3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_int4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_uint2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_uint3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_uint4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_double2x2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_double2x2_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_float2x2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_float2x2_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_bool2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_bool2_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_bool3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_bool3_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_bool4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_bool4_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_double2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_double2_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_double3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_double3_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_double4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_double4_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_float2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_float2_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_float3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_float3_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_float4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_float4_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_int2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_int2_sized.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_int3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_int3_sized.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_int4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_int4_sized.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_uint2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_uint2_sized.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_uint3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_uint3_sized.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_uint4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_uint4_sized.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/common.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/common.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/simd/platform.h \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/_fixes.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/_vectorize.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/func_integer.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/func_packing.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/func_trigonometric.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/qualifier.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/setup.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_half.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_half.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/exponential.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/fwd.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/geometric.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/glm.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/common.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/qualifier.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/setup.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat3x3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat4x4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_vec3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_vec4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/exponential.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/common.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat3x3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat4x4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_vec3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_vec4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/exponential.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vector_relational.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/quaternion_geometric.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/quaternion_relational.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/quaternion_relational.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_relational.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/constants.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/matrix_transform.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/trigonometric.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/qualifier.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/setup.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_float.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_quat.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_quat.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_vec1.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/exponential.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/exponential.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_relational.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/geometric.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/quaternion_geometric.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/quaternion_geometric.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/scalar_constants.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/scalar_int_sized.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/scalar_uint_sized.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_int1.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_uint1.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/geometric.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/trigonometric.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vector_relational.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/quaternion_common.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/quaternion_common.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/quaternion_double.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/quaternion_double_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/quaternion_float.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/quaternion_float_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/quaternion_geometric.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/quaternion_relational.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/quaternion_transform.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/quaternion_transform.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/quaternion_trigonometric.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/quaternion_trigonometric.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/scalar_constants.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_bool1.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_bool1_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_double1.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_double1_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_float1.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_float1_precision.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_int1.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_int1_sized.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_relational.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_relational.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_uint1.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_uint1_sized.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/geometric.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/setup.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/scalar_constants.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/geometric.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/constants.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/matrix.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/trigonometric.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_clip_space.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_clip_space.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_projection.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_projection.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_transform.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_transform.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/scalar_constants.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/scalar_constants.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/geometric.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat4x4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/matrix.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/trigonometric.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/constants.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/constants.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/matrix_transform.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/matrix_transform.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/trigonometric.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vector_relational.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/epsilon.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/epsilon.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/quaternion.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/quaternion.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/vec1.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat2x2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat2x3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat2x4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat3x2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat3x3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat3x4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat4x2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat4x3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat4x4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/matrix_transform.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/type_ptr.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/type_ptr.inl \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/integer.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat2x2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat2x3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat2x4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat3x2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat3x3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat3x4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat4x2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat4x3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/mat4x4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/matrix.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/packing.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/trigonometric.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec2.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec3.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec4.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vector_relational.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Form.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/AngleTools.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Automation/Automation.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Contour.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Formation/Formation.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Geometry/ComplexShape.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Geometry/Patch.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Geometry/Sdf.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Geometry/SmoothSurface.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/AngleTools.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Contour.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Identity/SingularId.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarManager.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/Body.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/BodyPart.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Person.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Soul/Soul.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/Relation.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/RelationManager.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/RenderMaterial.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/Renderer.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/EventBus.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Util/Frontier.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Util/SaveSystem.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Util/Serialization.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/World/World.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/json.hpp \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/GL/gl.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/GL/glext.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/GLFW/glfw3.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/KHR/khrplatform.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/alloca.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/assert.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/bits/alltypes.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/bits/errno.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/bits/limits.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/adjacent_find.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/all_of.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/any_of.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/binary_search.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/clamp.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/comp.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/comp_ref_type.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/copy.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/copy_backward.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/copy_if.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/copy_move_common.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/copy_n.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/count.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/count_if.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/equal.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/equal_range.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/fill.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/fill_n.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/find.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/find_end.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/find_first_of.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/find_if.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/find_if_not.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/find_segment_if.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/for_each.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/for_each_n.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/for_each_n_segment.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/for_each_segment.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/generate.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/generate_n.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/half_positive.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/in_out_result.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/includes.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/inplace_merge.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/is_heap.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/is_heap_until.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/is_partitioned.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/is_permutation.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/is_sorted.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/is_sorted_until.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/iter_swap.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/iterator_operations.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/lexicographical_compare.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/lexicographical_compare_three_way.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/lower_bound.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/make_heap.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/make_projected.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/max.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/max_element.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/merge.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/min.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/min_element.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/minmax.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/minmax_element.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/mismatch.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/move.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/move_backward.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/next_permutation.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/none_of.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/nth_element.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/out_value_result.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/partial_sort.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/partial_sort_copy.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/partition.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/partition_copy.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/partition_point.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/pop_heap.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/prev_permutation.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/pstl.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/push_heap.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/radix_sort.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/ranges_copy.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/ranges_copy_n.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/ranges_iterator_concept.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/remove.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/remove_copy.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/remove_copy_if.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/remove_if.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/replace.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/replace_copy.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/replace_copy_if.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/replace_if.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/reverse.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/reverse_copy.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/rotate.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/rotate_copy.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/sample.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/search.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/search_n.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/set_difference.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/set_intersection.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/set_symmetric_difference.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/set_union.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/shuffle.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/sift_down.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/simd_utils.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/sort.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/sort_heap.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/specialized_algorithms.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/stable_partition.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/stable_sort.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/swap_ranges.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/three_way_comp_ref_type.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/transform.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/unique.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/unique_copy.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/unwrap_iter.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/unwrap_range.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/upper_bound.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__assert \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__assertion_handler \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__atomic/aliases.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__atomic/atomic.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__atomic/atomic_flag.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__atomic/atomic_init.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__atomic/atomic_lock_free.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__atomic/atomic_sync.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__atomic/atomic_sync_timed.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__atomic/atomic_waitable_traits.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__atomic/check_memory_order.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__atomic/contention_t.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__atomic/fence.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__atomic/floating_point_helper.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__atomic/is_always_lock_free.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__atomic/kill_dependency.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__atomic/memory_order.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__atomic/support.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__atomic/support/c11.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__atomic/to_gcc_order.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__bit/bit_cast.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__bit/bit_log2.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__bit/blsr.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__bit/countl.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__bit/countr.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__bit/invert_if.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__bit/popcount.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__bit_reference \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__charconv/tables.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__charconv/to_chars_base_10.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__charconv/to_chars_integral.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__charconv/to_chars_result.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__charconv/traits.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__chrono/convert_to_timespec.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__chrono/duration.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__chrono/file_clock.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__chrono/high_resolution_clock.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__chrono/steady_clock.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__chrono/system_clock.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__chrono/time_point.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__compare/common_comparison_category.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__compare/compare_three_way.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__compare/compare_three_way_result.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__compare/ordering.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__compare/synth_three_way.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__compare/three_way_comparable.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/arithmetic.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/assignable.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/boolean_testable.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/class_or_enum.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/common_reference_with.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/comparison_common_type.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/constructible.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/convertible_to.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/copyable.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/derived_from.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/destructible.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/different_from.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/equality_comparable.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/invocable.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/movable.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/predicate.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/regular.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/relation.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/same_as.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/semiregular.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/swappable.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/totally_ordered.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__condition_variable/condition_variable.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__config \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__config_site \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__configuration/abi.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__configuration/availability.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__configuration/compiler.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__configuration/experimental.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__configuration/hardening.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__configuration/language.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__configuration/platform.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__cstddef/byte.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__cstddef/max_align_t.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__cstddef/nullptr_t.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__cstddef/ptrdiff_t.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__cstddef/size_t.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__debug_utils/randomize_range.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__debug_utils/sanitizers.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__debug_utils/strict_weak_ordering_check.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__exception/exception.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__exception/exception_ptr.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__exception/nested_exception.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__exception/operations.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__exception/terminate.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__filesystem/copy_options.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__filesystem/directory_entry.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__filesystem/directory_iterator.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__filesystem/directory_options.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__filesystem/file_status.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__filesystem/file_time_type.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__filesystem/file_type.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__filesystem/filesystem_error.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__filesystem/operations.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__filesystem/path.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__filesystem/path_iterator.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__filesystem/perm_options.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__filesystem/perms.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__filesystem/recursive_directory_iterator.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__filesystem/space_info.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__filesystem/u8path.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__format/enable_insertable.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__format/fmt_pair_like.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__format/range_format.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/binary_function.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/binary_negate.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/bind.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/binder1st.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/binder2nd.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/boyer_moore_searcher.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/compose.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/default_searcher.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/function.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/hash.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/identity.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/invoke.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/is_transparent.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/mem_fn.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/mem_fun_ref.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/not_fn.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/operations.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/perfect_forward.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/pointer_to_binary_function.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/pointer_to_unary_function.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/ranges_operations.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/reference_wrapper.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/unary_function.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/unary_negate.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/weak_result_type.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/array.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/bit_reference.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/byte.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/complex.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/deque.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/fstream.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/functional.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/get.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/ios.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/istream.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/memory.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/memory_resource.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/ostream.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/pair.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/queue.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/sstream.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/stack.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/streambuf.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/string.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/string_view.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/subrange.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/tuple.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/variant.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/vector.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__hash_table \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ios/fpos.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/access.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/advance.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/aliasing_iterator.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/back_insert_iterator.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/bounded_iter.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/concepts.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/data.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/default_sentinel.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/distance.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/empty.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/erase_if_container.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/front_insert_iterator.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/incrementable_traits.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/insert_iterator.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/istream_iterator.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/istreambuf_iterator.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/iter_move.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/iter_swap.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/iterator.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/iterator_traits.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/move_iterator.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/move_sentinel.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/next.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/ostream_iterator.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/ostreambuf_iterator.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/prev.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/ranges_iterator_traits.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/readable_traits.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/reverse_access.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/reverse_iterator.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/segmented_iterator.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/size.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/static_bounded_iter.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/wrap_iter.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__locale \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__locale_dir/check_grouping.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__locale_dir/get_c_locale.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__locale_dir/locale_base_api.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__locale_dir/locale_base_api/bsd_locale_fallbacks.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__locale_dir/messages.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__locale_dir/money.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__locale_dir/num.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__locale_dir/pad_and_output.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__locale_dir/scan_keyword.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__locale_dir/time.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__locale_dir/wbuffer_convert.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__locale_dir/wstring_convert.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__log_hardening_failure \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/abs.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/copysign.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/error_functions.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/exponential_functions.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/fdim.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/fma.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/gamma.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/hyperbolic_functions.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/hypot.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/inverse_hyperbolic_functions.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/inverse_trigonometric_functions.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/logarithms.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/min_max.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/modulo.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/remainder.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/roots.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/rounding_functions.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/special_functions.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/traits.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/trigonometric_functions.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__mbstate_t.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/addressof.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/align.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/allocate_at_least.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/allocation_guard.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/allocator.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/allocator_arg_t.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/allocator_destructor.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/allocator_traits.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/array_cookie.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/auto_ptr.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/compressed_pair.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/construct_at.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/destroy.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/destruct_n.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/inout_ptr.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/is_sufficiently_aligned.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/noexcept_move_assign_container.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/out_ptr.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/pointer_traits.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/raw_storage_iterator.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/shared_count.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/shared_ptr.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/swap_allocator.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/temp_value.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/temporary_buffer.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/uninitialized_algorithms.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/unique_ptr.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/unique_temporary_buffer.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/uses_allocator.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory_resource/memory_resource.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory_resource/polymorphic_allocator.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__mutex/lock_guard.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__mutex/mutex.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__mutex/once_flag.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__mutex/tag_types.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__mutex/unique_lock.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__new/align_val_t.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__new/allocate.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__new/exceptions.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__new/global_new_delete.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__new/interference_size.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__new/launder.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__new/new_handler.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__new/nothrow_t.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__new/placement_new_delete.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__node_handle \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__numeric/accumulate.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__numeric/adjacent_difference.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__numeric/exclusive_scan.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__numeric/gcd_lcm.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__numeric/inclusive_scan.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__numeric/inner_product.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__numeric/iota.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__numeric/partial_sum.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__numeric/pstl.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__numeric/ranges_iota.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__numeric/reduce.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__numeric/transform_exclusive_scan.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__numeric/transform_inclusive_scan.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__numeric/transform_reduce.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ostream/basic_ostream.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ostream/put_character_sequence.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__random/bernoulli_distribution.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__random/binomial_distribution.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__random/cauchy_distribution.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__random/chi_squared_distribution.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__random/clamp_to_integral.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__random/default_random_engine.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__random/discard_block_engine.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__random/discrete_distribution.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__random/exponential_distribution.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__random/extreme_value_distribution.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__random/fisher_f_distribution.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__random/gamma_distribution.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__random/generate_canonical.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__random/geometric_distribution.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__random/independent_bits_engine.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__random/is_seed_sequence.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__random/is_valid.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__random/knuth_b.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__random/linear_congruential_engine.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__random/log2.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__random/lognormal_distribution.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__random/mersenne_twister_engine.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__random/negative_binomial_distribution.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__random/normal_distribution.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__random/piecewise_constant_distribution.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__random/piecewise_linear_distribution.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__random/poisson_distribution.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__random/random_device.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__random/ranlux.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__random/seed_seq.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__random/shuffle_order_engine.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__random/student_t_distribution.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__random/subtract_with_carry_engine.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__random/uniform_int_distribution.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__random/uniform_random_bit_generator.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__random/uniform_real_distribution.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__random/weibull_distribution.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/access.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/all.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/as_rvalue_view.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/concepts.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/container_compatible_range.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/dangling.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/data.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/empty.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/enable_borrowed_range.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/enable_view.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/from_range.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/owning_view.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/range_adaptor.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/ref_view.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/size.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/subrange.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/view_interface.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__split_buffer \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__std_mbstate_t.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__stop_token/atomic_unique_lock.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__stop_token/intrusive_list_view.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__stop_token/intrusive_shared_ptr.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__stop_token/stop_callback.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__stop_token/stop_state.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__stop_token/stop_token.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__string/char_traits.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__string/constexpr_c_functions.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__string/extern_template_lists.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__system_error/errc.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__system_error/error_category.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__system_error/error_code.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__system_error/error_condition.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__system_error/system_error.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__system_error/throw_system_error.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__thread/id.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__thread/poll_with_backoff.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__thread/support.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__thread/support/pthread.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__thread/this_thread.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__thread/thread.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__thread/timed_backoff_policy.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__tree \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__tuple/find_index.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__tuple/ignore.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__tuple/sfinae_helpers.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__tuple/tuple_element.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__tuple/tuple_like.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__tuple/tuple_like_no_subrange.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__tuple/tuple_size.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/add_cv_quals.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/add_pointer.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/add_reference.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/aligned_storage.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/aligned_union.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/alignment_of.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/common_reference.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/common_type.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/conditional.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/conjunction.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/container_traits.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/copy_cv.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/copy_cvref.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/datasizeof.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/decay.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/dependent_type.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/desugars_to.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/detected_or.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/disjunction.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/enable_if.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/extent.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/has_unique_object_representation.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/has_virtual_destructor.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/integer_traits.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/integral_constant.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/invoke.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_abstract.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_aggregate.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_allocator.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_always_bitcastable.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_arithmetic.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_array.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_assignable.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_base_of.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_callable.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_char_like_type.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_class.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_compound.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_const.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_constant_evaluated.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_constructible.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_convertible.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_core_convertible.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_destructible.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_empty.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_enum.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_equality_comparable.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_execution_policy.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_final.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_floating_point.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_function.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_fundamental.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_generic_transparent_comparator.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_implicitly_default_constructible.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_integral.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_literal_type.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_member_pointer.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_nothrow_assignable.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_nothrow_constructible.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_nothrow_destructible.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_null_pointer.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_object.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_pod.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_pointer.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_polymorphic.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_primary_template.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_reference.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_reference_wrapper.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_referenceable.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_same.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_scalar.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_signed.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_specialization.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_standard_layout.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_swappable.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_trivial.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_trivially_assignable.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_trivially_constructible.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_trivially_copyable.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_trivially_destructible.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_trivially_lexicographically_comparable.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_trivially_relocatable.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_union.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_unqualified.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_unsigned.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_valid_expansion.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_void.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_volatile.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/lazy.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/make_32_64_or_128_bit.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/make_const_lvalue_ref.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/make_signed.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/make_transparent.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/make_unsigned.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/maybe_const.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/nat.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/negation.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/promote.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/rank.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/reference_constructs_from_temporary.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/remove_all_extents.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/remove_const.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/remove_const_ref.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/remove_cv.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/remove_cvref.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/remove_extent.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/remove_pointer.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/remove_reference.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/remove_volatile.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/result_of.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/strip_signature.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/type_identity.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/type_list.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/underlying_type.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/unwrap_ref.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/void_t.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__undef_macros \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/as_const.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/auto_cast.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/convert_to_integral.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/declval.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/default_three_way_comparator.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/element_count.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/empty.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/exception_guard.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/exchange.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/forward.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/forward_like.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/in_place.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/integer_sequence.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/is_pointer_in_range.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/is_valid_range.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/lazy_synth_three_way_comparator.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/move.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/no_destroy.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/pair.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/piecewise_construct.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/priority_tag.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/private_constructor_tag.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/rel_ops.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/scope_guard.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/swap.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/try_key_extraction.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/unreachable.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__variant/monostate.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__vector/comparison.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__vector/container_traits.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__vector/pmr.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__vector/swap.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__vector/vector.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__vector/vector_bool.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__verbose_abort \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__verbose_trap \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/algorithm \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/any \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/array \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/atomic \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/bit \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/bitset \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cassert \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cctype \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cerrno \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cfloat \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/chrono \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/climits \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/clocale \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cmath \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/compare \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/concepts \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/condition_variable \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cstdarg \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cstddef \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cstdint \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cstdio \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cstdlib \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cstring \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/ctime \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/ctype.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cwchar \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cwctype \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/deque \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/errno.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/exception \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/execution \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/filesystem \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/float.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/format \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/forward_list \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/fstream \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/functional \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/initializer_list \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/iomanip \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/ios \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/iosfwd \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/iostream \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/istream \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/iterator \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/limits \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/locale \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/map \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/math.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/memory \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/mutex \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/new \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/numeric \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/optional \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/ostream \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/print \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/queue \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/random \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/ratio \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/sstream \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/stack \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/stddef.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/stdexcept \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/stdio.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/stdlib.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/streambuf \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/string \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/string.h \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/string_view \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/system_error \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/thread \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/tuple \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/type_traits \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/typeindex \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/typeinfo \
-  /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/unordered_map \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/utility \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/valarray \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/variant \
@@ -127598,7 +125227,6 @@ CMakeFiles/earthcall_wasm.dir/src/entry.cpp.o: /Users/zacharyzhang/Documents/Git
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Identity/SingularId.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Integration/EarthcallAPI.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Legacy/DesignSystem.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/AdvancedFacePaint.hpp \
@@ -127606,7 +125234,6 @@ CMakeFiles/earthcall_wasm.dir/src/entry.cpp.o: /Users/zacharyzhang/Documents/Git
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/CursorTools.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/ElementalToolHandler.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/Body.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/BodyPart.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Person.hpp \
@@ -129547,6 +127174,10 @@ CMakeFiles/earthcall_wasm.dir/src/globals.cpp.o: /Users/zacharyzhang/Documents/G
 
 /Users/zacharyzhang/Documents/GitHub/Earthcall/third_party/flatbuffers/include/flatbuffers/base.h:
 
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Util/Serialization.hpp:
+
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Util/Frontier.hpp:
+
 /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Physics/DefaultPhysicsLaws.hpp:
 
 /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/GameInit.cpp:
@@ -129599,6 +127230,8 @@ CMakeFiles/earthcall_wasm.dir/src/globals.cpp.o: /Users/zacharyzhang/Documents/G
 
 /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtx/rotate_vector.hpp:
 
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarManager.hpp:
+
 /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Perspective/KeyboardHandler.cpp:
 
 /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Perspective/AvatarHandler.cpp:
@@ -129643,10 +127276,6 @@ CMakeFiles/earthcall_wasm.dir/src/globals.cpp.o: /Users/zacharyzhang/Documents/G
 
 /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/Body.cpp:
 
-/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Util/Serialization.hpp:
-
-/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Util/Frontier.hpp:
-
 /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/CursorTools.cpp:
 
 /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/HomesOfEarth/Home.hpp:
@@ -129660,6 +127289,12 @@ CMakeFiles/earthcall_wasm.dir/src/globals.cpp.o: /Users/zacharyzhang/Documents/G
 /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/PolyhedronSettings.hpp:
 
 /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/Game.hpp:
+
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Soul/Soul.hpp:
+
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Person.hpp:
+
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/Body.hpp:
 
 /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Controls.hpp:
 
@@ -129742,6 +127377,8 @@ CMakeFiles/earthcall_wasm.dir/src/globals.cpp.o: /Users/zacharyzhang/Documents/G
 /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Zone/Zone.hpp:
 
 /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/BrushSystem.hpp:
+
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/BodyPart.hpp:
 
 /Users/zacharyzhang/Documents/GitHub/Earthcall/third_party/flatbuffers/include/flatbuffers/stl_emulation.h:
 
@@ -129840,16 +127477,6 @@ CMakeFiles/earthcall_wasm.dir/src/globals.cpp.o: /Users/zacharyzhang/Documents/G
 /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/RelationManager.hpp:
 
 /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/Relation.hpp:
-
-/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/BodyPart.hpp:
-
-/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/Body.hpp:
-
-/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Soul/Soul.hpp:
-
-/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Person.hpp:
-
-/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarManager.hpp:
 
 /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp:
 
@@ -130079,8 +127706,6 @@ CMakeFiles/earthcall_wasm.dir/src/globals.cpp.o: /Users/zacharyzhang/Documents/G
 
 /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/exception:
 
-/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarManager.cpp:
-
 /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/errno.h:
 
 /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cwctype:
@@ -130200,8 +127825,6 @@ CMakeFiles/earthcall_wasm.dir/src/globals.cpp.o: /Users/zacharyzhang/Documents/G
 /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__filesystem/filesystem_error.h:
 
 /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__tuple/sfinae_helpers.h:
-
-/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarDemo.cpp:
 
 /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/fdim.h:
 

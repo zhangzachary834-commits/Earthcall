@@ -268,6 +268,7 @@ void Object::claimIdentifierAtLeast(const std::string& id) {
 Object::Object() {
     if (objectID.empty()) {
         objectID = "object-" + std::to_string(g_nextObjectId.fetch_add(1));
+        printf("WARNING: Object initialized without a stable string identifier. Assigned volatile ID '%s'. This object should not be reliably targeted by Law text.\n", objectID.c_str());
     }
     initFaceTextures();
     syncRotationStateFromTransform(transform);
@@ -654,12 +655,12 @@ void Object::updateHoverState(bool isHovering) {
         // Mouse entered the object
         ObjectHoverEnterEvent event(*this, _hoverPoint, glm::vec2(0, 0)); // Screen pos would be passed in
         Core::EventBus::instance().publish(event);
-        Core::EventBus::instance().publish(ECA::Event{"object-hover-enter", this, nullptr, std::time(nullptr)});
+        Core::EventBus::instance().publish(ECA::Event{"object-hover-entered", this, nullptr, std::time(nullptr)});
     } else if (!isHovering && wasHovered) {
         // Mouse exited the object
         ObjectHoverExitEvent event(*this, _hoverPoint, glm::vec2(0, 0)); // Screen pos would be passed in
         Core::EventBus::instance().publish(event);
-        Core::EventBus::instance().publish(ECA::Event{"object-hover-exit", this, nullptr, std::time(nullptr)});
+        Core::EventBus::instance().publish(ECA::Event{"object-hover-exited", this, nullptr, std::time(nullptr)});
     } else if (isHovering) {
         // Mouse is hovering over the object
         ObjectHoverEvent event(*this, _hoverPoint, glm::vec2(0, 0)); // Screen pos would be passed in

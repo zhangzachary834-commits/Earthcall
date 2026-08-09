@@ -53,7 +53,7 @@ std::vector<std::shared_ptr<Law>> createDefaultPhysicsLaws() {
     auto acoustics = std::make_shared<Law>("physics: acoustics");
     acoustics->setObjectID("physics-acoustics");
     acoustics->setActivation(Law::Activation::OnEvent);
-    acoustics->ecaLoop().eventType = "physics.collision";
+    acoustics->ecaLoop().eventType = "objects-collided";
     acoustics->setScope(Law::Scope::Everyone);
 
     ActionNode spawnEmitter = ActionNode::spawn("concept-sound-emitter");

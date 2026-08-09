@@ -567,7 +567,7 @@ ECA::ActionExecutor ActionNode::compile() const {
                 // Publish an AudioSynthesisEvent to the bus.
                 // The AudioSystem listens to this.
                 Core::EventBus::instance().publish(
-                    ECA::Event{"audio.synthesize", &subject, nullptr, std::time(nullptr)}
+                    ECA::Event{"audio-synthesized", &subject, nullptr, std::time(nullptr)}
                 );
                 
                 emitEffect("PlayAudio", true);

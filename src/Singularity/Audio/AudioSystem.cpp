@@ -107,7 +107,7 @@ void AudioSystem::playSound(const std::string& filepath) {
 
 void AudioSystem::setupAudioEventListeners() {
     if (!_initialized) return;
-    // We no longer subscribe to "audio.synthesize" - we use continuous sound-emitter objects.
+    // We no longer subscribe to "audio-synthesized" - we use continuous sound-emitter objects.
 }
 
 void AudioSystem::tick() {

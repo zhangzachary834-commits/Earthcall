@@ -548,10 +548,10 @@ namespace Physics {
             // Mint an ECA::Event so the Rete network can react to physical collisions
             // We publish one from the perspective of each participant
             if (event.objectA) {
-                Core::EventBus::instance().publish(ECA::Event{"physics.collision", event.objectA, event.objectB, std::time(nullptr)});
+                Core::EventBus::instance().publish(ECA::Event{"objects-collided", event.objectA, event.objectB, std::time(nullptr)});
             }
             if (event.objectB) {
-                Core::EventBus::instance().publish(ECA::Event{"physics.collision", event.objectB, event.objectA, std::time(nullptr)});
+                Core::EventBus::instance().publish(ECA::Event{"objects-collided", event.objectB, event.objectA, std::time(nullptr)});
             }
             
             // You can add more collision response logic here:

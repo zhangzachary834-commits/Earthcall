@@ -1664,60 +1664,6 @@ src/OurVerse/Tool.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/OurVerse/Tool.cpp.s
 .PHONY : src/OurVerse/Tool.cpp.s
 
-src/Person/AvatarDemo.o: src/Person/AvatarDemo.cpp.o
-.PHONY : src/Person/AvatarDemo.o
-
-# target to build an object file
-src/Person/AvatarDemo.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/Person/AvatarDemo.cpp.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/Person/AvatarDemo.cpp.o
-.PHONY : src/Person/AvatarDemo.cpp.o
-
-src/Person/AvatarDemo.i: src/Person/AvatarDemo.cpp.i
-.PHONY : src/Person/AvatarDemo.i
-
-# target to preprocess a source file
-src/Person/AvatarDemo.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/Person/AvatarDemo.cpp.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/Person/AvatarDemo.cpp.i
-.PHONY : src/Person/AvatarDemo.cpp.i
-
-src/Person/AvatarDemo.s: src/Person/AvatarDemo.cpp.s
-.PHONY : src/Person/AvatarDemo.s
-
-# target to generate assembly for a file
-src/Person/AvatarDemo.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/Person/AvatarDemo.cpp.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/Person/AvatarDemo.cpp.s
-.PHONY : src/Person/AvatarDemo.cpp.s
-
-src/Person/AvatarManager.o: src/Person/AvatarManager.cpp.o
-.PHONY : src/Person/AvatarManager.o
-
-# target to build an object file
-src/Person/AvatarManager.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/Person/AvatarManager.cpp.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/Person/AvatarManager.cpp.o
-.PHONY : src/Person/AvatarManager.cpp.o
-
-src/Person/AvatarManager.i: src/Person/AvatarManager.cpp.i
-.PHONY : src/Person/AvatarManager.i
-
-# target to preprocess a source file
-src/Person/AvatarManager.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/Person/AvatarManager.cpp.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/Person/AvatarManager.cpp.i
-.PHONY : src/Person/AvatarManager.cpp.i
-
-src/Person/AvatarManager.s: src/Person/AvatarManager.cpp.s
-.PHONY : src/Person/AvatarManager.s
-
-# target to generate assembly for a file
-src/Person/AvatarManager.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/Person/AvatarManager.cpp.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/Person/AvatarManager.cpp.s
-.PHONY : src/Person/AvatarManager.cpp.s
-
 src/Person/Body/Body.o: src/Person/Body/Body.cpp.o
 .PHONY : src/Person/Body/Body.o
 
@@ -4502,12 +4448,6 @@ help:
 	@echo "... src/OurVerse/Tool.o"
 	@echo "... src/OurVerse/Tool.i"
 	@echo "... src/OurVerse/Tool.s"
-	@echo "... src/Person/AvatarDemo.o"
-	@echo "... src/Person/AvatarDemo.i"
-	@echo "... src/Person/AvatarDemo.s"
-	@echo "... src/Person/AvatarManager.o"
-	@echo "... src/Person/AvatarManager.i"
-	@echo "... src/Person/AvatarManager.s"
 	@echo "... src/Person/Body/Body.o"
 	@echo "... src/Person/Body/Body.i"
 	@echo "... src/Person/Body/Body.s"

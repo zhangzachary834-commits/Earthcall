@@ -807,41 +807,11 @@ CMakeFiles/earthcall_wasm.dir/src/OurVerse/Tool.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/earthcall_wasm.dir/src/OurVerse/Tool.cpp.s"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp -o CMakeFiles/earthcall_wasm.dir/src/OurVerse/Tool.cpp.s
 
-CMakeFiles/earthcall_wasm.dir/src/Person/AvatarDemo.cpp.o: CMakeFiles/earthcall_wasm.dir/flags.make
-CMakeFiles/earthcall_wasm.dir/src/Person/AvatarDemo.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
-CMakeFiles/earthcall_wasm.dir/src/Person/AvatarDemo.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarDemo.cpp
-CMakeFiles/earthcall_wasm.dir/src/Person/AvatarDemo.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_50) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Person/AvatarDemo.cpp.o"
-	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Person/AvatarDemo.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Person/AvatarDemo.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Person/AvatarDemo.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarDemo.cpp
-
-CMakeFiles/earthcall_wasm.dir/src/Person/AvatarDemo.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/earthcall_wasm.dir/src/Person/AvatarDemo.cpp.i"
-	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarDemo.cpp > CMakeFiles/earthcall_wasm.dir/src/Person/AvatarDemo.cpp.i
-
-CMakeFiles/earthcall_wasm.dir/src/Person/AvatarDemo.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/earthcall_wasm.dir/src/Person/AvatarDemo.cpp.s"
-	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarDemo.cpp -o CMakeFiles/earthcall_wasm.dir/src/Person/AvatarDemo.cpp.s
-
-CMakeFiles/earthcall_wasm.dir/src/Person/AvatarManager.cpp.o: CMakeFiles/earthcall_wasm.dir/flags.make
-CMakeFiles/earthcall_wasm.dir/src/Person/AvatarManager.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
-CMakeFiles/earthcall_wasm.dir/src/Person/AvatarManager.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarManager.cpp
-CMakeFiles/earthcall_wasm.dir/src/Person/AvatarManager.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_51) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Person/AvatarManager.cpp.o"
-	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Person/AvatarManager.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Person/AvatarManager.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Person/AvatarManager.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarManager.cpp
-
-CMakeFiles/earthcall_wasm.dir/src/Person/AvatarManager.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/earthcall_wasm.dir/src/Person/AvatarManager.cpp.i"
-	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarManager.cpp > CMakeFiles/earthcall_wasm.dir/src/Person/AvatarManager.cpp.i
-
-CMakeFiles/earthcall_wasm.dir/src/Person/AvatarManager.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/earthcall_wasm.dir/src/Person/AvatarManager.cpp.s"
-	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarManager.cpp -o CMakeFiles/earthcall_wasm.dir/src/Person/AvatarManager.cpp.s
-
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/Body.cpp.o: CMakeFiles/earthcall_wasm.dir/flags.make
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/Body.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/Body.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/Body.cpp
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/Body.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_52) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Person/Body/Body.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_50) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Person/Body/Body.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Person/Body/Body.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Person/Body/Body.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Person/Body/Body.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/Body.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/Body.cpp.i: cmake_force
@@ -856,7 +826,7 @@ CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/BodyPart.cpp.o: CMakeFile
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/BodyPart.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/BodyPart.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/BodyPart.cpp
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/BodyPart.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_53) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/BodyPart.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_51) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/BodyPart.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/BodyPart.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/BodyPart.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/BodyPart.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/BodyPart.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/BodyPart.cpp.i: cmake_force
@@ -871,7 +841,7 @@ CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Chest.cpp.o: CMakeFiles/e
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Chest.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Chest.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/Chest.cpp
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Chest.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_54) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Chest.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_52) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Chest.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Chest.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Chest.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Chest.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/Chest.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Chest.cpp.i: cmake_force
@@ -886,7 +856,7 @@ CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb.cpp.o: CMakeFiles/ea
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/Limb.cpp
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_55) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_53) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/Limb.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb.cpp.i: cmake_force
@@ -901,7 +871,7 @@ CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Arm.cpp.o: CMakeFile
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Arm.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Arm.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/Limb/Arm.cpp
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Arm.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_56) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Arm.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_54) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Arm.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Arm.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Arm.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Arm.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/Limb/Arm.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Arm.cpp.i: cmake_force
@@ -916,7 +886,7 @@ CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Foot.cpp.o: CMakeFil
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Foot.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Foot.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/Limb/Foot.cpp
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Foot.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_57) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Foot.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_55) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Foot.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Foot.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Foot.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Foot.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/Limb/Foot.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Foot.cpp.i: cmake_force
@@ -931,7 +901,7 @@ CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/ForeArm.cpp.o: CMake
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/ForeArm.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/ForeArm.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/Limb/ForeArm.cpp
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/ForeArm.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_58) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/ForeArm.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_56) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/ForeArm.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/ForeArm.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/ForeArm.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/ForeArm.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/Limb/ForeArm.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/ForeArm.cpp.i: cmake_force
@@ -946,7 +916,7 @@ CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/ForeLeg.cpp.o: CMake
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/ForeLeg.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/ForeLeg.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/Limb/ForeLeg.cpp
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/ForeLeg.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_59) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/ForeLeg.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_57) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/ForeLeg.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/ForeLeg.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/ForeLeg.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/ForeLeg.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/Limb/ForeLeg.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/ForeLeg.cpp.i: cmake_force
@@ -961,7 +931,7 @@ CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Hand.cpp.o: CMakeFil
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Hand.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Hand.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/Limb/Hand.cpp
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Hand.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_60) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Hand.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_58) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Hand.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Hand.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Hand.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Hand.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/Limb/Hand.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Hand.cpp.i: cmake_force
@@ -976,7 +946,7 @@ CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Leg.cpp.o: CMakeFile
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Leg.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Leg.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/Limb/Leg.cpp
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Leg.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_61) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Leg.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_59) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Leg.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Leg.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Leg.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Leg.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/Limb/Leg.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Leg.cpp.i: cmake_force
@@ -991,7 +961,7 @@ CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Neck.cpp.o: CMakeFil
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Neck.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Neck.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/Limb/Neck.cpp
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Neck.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_62) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Neck.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_60) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Neck.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Neck.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Neck.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Neck.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/Limb/Neck.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Neck.cpp.i: cmake_force
@@ -1006,7 +976,7 @@ CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Shoulder.cpp.o: CMak
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Shoulder.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Shoulder.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/Limb/Shoulder.cpp
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Shoulder.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_63) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Shoulder.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_61) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Shoulder.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Shoulder.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Shoulder.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Shoulder.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/Limb/Shoulder.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Shoulder.cpp.i: cmake_force
@@ -1021,7 +991,7 @@ CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Torso.cpp.o: CMakeFi
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Torso.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Torso.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/Limb/Torso.cpp
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Torso.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_64) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Torso.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_62) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Torso.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Torso.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Torso.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Torso.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/Limb/Torso.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Torso.cpp.i: cmake_force
@@ -1036,7 +1006,7 @@ CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Organ.cpp.o: CMakeFiles/e
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Organ.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Organ.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/Organ.cpp
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Organ.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_65) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Organ.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_63) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Organ.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Organ.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Organ.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Organ.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/Organ.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Organ.cpp.i: cmake_force
@@ -1051,7 +1021,7 @@ CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Stomach.cpp.o: CMakeFiles
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Stomach.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Stomach.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/Stomach.cpp
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Stomach.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_66) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Stomach.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_64) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Stomach.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Stomach.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Stomach.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Stomach.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/Stomach.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Stomach.cpp.i: cmake_force
@@ -1066,7 +1036,7 @@ CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/System.cpp.o: CMakeFiles/
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/System.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/System.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/System.cpp
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/System.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_67) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/System.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_65) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/System.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/System.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/System.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/System.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/System.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/System.cpp.i: cmake_force
@@ -1081,7 +1051,7 @@ CMakeFiles/earthcall_wasm.dir/src/Person/Body/Head/Head.cpp.o: CMakeFiles/earthc
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/Head/Head.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/Head/Head.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/Head/Head.cpp
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/Head/Head.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_68) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Person/Body/Head/Head.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_66) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Person/Body/Head/Head.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Person/Body/Head/Head.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Person/Body/Head/Head.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Person/Body/Head/Head.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/Head/Head.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Person/Body/Head/Head.cpp.i: cmake_force
@@ -1096,7 +1066,7 @@ CMakeFiles/earthcall_wasm.dir/src/Person/Person.cpp.o: CMakeFiles/earthcall_wasm
 CMakeFiles/earthcall_wasm.dir/src/Person/Person.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Person/Person.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Person.cpp
 CMakeFiles/earthcall_wasm.dir/src/Person/Person.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_69) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Person/Person.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_67) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Person/Person.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Person/Person.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Person/Person.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Person/Person.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Person.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Person/Person.cpp.i: cmake_force
@@ -1111,7 +1081,7 @@ CMakeFiles/earthcall_wasm.dir/src/Person/PersonDatabase.cpp.o: CMakeFiles/earthc
 CMakeFiles/earthcall_wasm.dir/src/Person/PersonDatabase.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Person/PersonDatabase.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/PersonDatabase.cpp
 CMakeFiles/earthcall_wasm.dir/src/Person/PersonDatabase.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_70) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Person/PersonDatabase.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_68) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Person/PersonDatabase.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Person/PersonDatabase.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Person/PersonDatabase.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Person/PersonDatabase.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/PersonDatabase.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Person/PersonDatabase.cpp.i: cmake_force
@@ -1126,7 +1096,7 @@ CMakeFiles/earthcall_wasm.dir/src/Person/Relationship/Community/Community.cpp.o:
 CMakeFiles/earthcall_wasm.dir/src/Person/Relationship/Community/Community.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Person/Relationship/Community/Community.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Relationship/Community/Community.cpp
 CMakeFiles/earthcall_wasm.dir/src/Person/Relationship/Community/Community.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_71) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Person/Relationship/Community/Community.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_69) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Person/Relationship/Community/Community.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Person/Relationship/Community/Community.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Person/Relationship/Community/Community.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Person/Relationship/Community/Community.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Relationship/Community/Community.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Person/Relationship/Community/Community.cpp.i: cmake_force
@@ -1141,7 +1111,7 @@ CMakeFiles/earthcall_wasm.dir/src/Person/Relationship/Relationship.cpp.o: CMakeF
 CMakeFiles/earthcall_wasm.dir/src/Person/Relationship/Relationship.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Person/Relationship/Relationship.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Relationship/Relationship.cpp
 CMakeFiles/earthcall_wasm.dir/src/Person/Relationship/Relationship.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_72) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Person/Relationship/Relationship.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_70) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Person/Relationship/Relationship.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Person/Relationship/Relationship.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Person/Relationship/Relationship.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Person/Relationship/Relationship.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Relationship/Relationship.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Person/Relationship/Relationship.cpp.i: cmake_force
@@ -1156,7 +1126,7 @@ CMakeFiles/earthcall_wasm.dir/src/Person/Soul/Soul.cpp.o: CMakeFiles/earthcall_w
 CMakeFiles/earthcall_wasm.dir/src/Person/Soul/Soul.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Person/Soul/Soul.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Soul/Soul.cpp
 CMakeFiles/earthcall_wasm.dir/src/Person/Soul/Soul.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_73) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Person/Soul/Soul.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_71) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Person/Soul/Soul.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Person/Soul/Soul.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Person/Soul/Soul.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Person/Soul/Soul.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Soul/Soul.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Person/Soul/Soul.cpp.i: cmake_force
@@ -1171,7 +1141,7 @@ CMakeFiles/earthcall_wasm.dir/src/Perspective/AvatarHandler.cpp.o: CMakeFiles/ea
 CMakeFiles/earthcall_wasm.dir/src/Perspective/AvatarHandler.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Perspective/AvatarHandler.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Perspective/AvatarHandler.cpp
 CMakeFiles/earthcall_wasm.dir/src/Perspective/AvatarHandler.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_74) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Perspective/AvatarHandler.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_72) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Perspective/AvatarHandler.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Perspective/AvatarHandler.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Perspective/AvatarHandler.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Perspective/AvatarHandler.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Perspective/AvatarHandler.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Perspective/AvatarHandler.cpp.i: cmake_force
@@ -1186,7 +1156,7 @@ CMakeFiles/earthcall_wasm.dir/src/Perspective/BasicPerspective/Perspective.cpp.o
 CMakeFiles/earthcall_wasm.dir/src/Perspective/BasicPerspective/Perspective.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Perspective/BasicPerspective/Perspective.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Perspective/BasicPerspective/Perspective.cpp
 CMakeFiles/earthcall_wasm.dir/src/Perspective/BasicPerspective/Perspective.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_75) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Perspective/BasicPerspective/Perspective.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_73) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Perspective/BasicPerspective/Perspective.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Perspective/BasicPerspective/Perspective.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Perspective/BasicPerspective/Perspective.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Perspective/BasicPerspective/Perspective.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Perspective/BasicPerspective/Perspective.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Perspective/BasicPerspective/Perspective.cpp.i: cmake_force
@@ -1201,7 +1171,7 @@ CMakeFiles/earthcall_wasm.dir/src/Perspective/KeyboardHandler.cpp.o: CMakeFiles/
 CMakeFiles/earthcall_wasm.dir/src/Perspective/KeyboardHandler.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Perspective/KeyboardHandler.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Perspective/KeyboardHandler.cpp
 CMakeFiles/earthcall_wasm.dir/src/Perspective/KeyboardHandler.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_76) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Perspective/KeyboardHandler.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_74) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Perspective/KeyboardHandler.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Perspective/KeyboardHandler.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Perspective/KeyboardHandler.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Perspective/KeyboardHandler.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Perspective/KeyboardHandler.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Perspective/KeyboardHandler.cpp.i: cmake_force
@@ -1216,7 +1186,7 @@ CMakeFiles/earthcall_wasm.dir/src/Perspective/MouseHandler.cpp.o: CMakeFiles/ear
 CMakeFiles/earthcall_wasm.dir/src/Perspective/MouseHandler.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Perspective/MouseHandler.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Perspective/MouseHandler.cpp
 CMakeFiles/earthcall_wasm.dir/src/Perspective/MouseHandler.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_77) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Perspective/MouseHandler.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_75) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Perspective/MouseHandler.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Perspective/MouseHandler.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Perspective/MouseHandler.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Perspective/MouseHandler.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Perspective/MouseHandler.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Perspective/MouseHandler.cpp.i: cmake_force
@@ -1231,7 +1201,7 @@ CMakeFiles/earthcall_wasm.dir/src/Perspective/PersonPerspective.cpp.o: CMakeFile
 CMakeFiles/earthcall_wasm.dir/src/Perspective/PersonPerspective.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Perspective/PersonPerspective.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Perspective/PersonPerspective.cpp
 CMakeFiles/earthcall_wasm.dir/src/Perspective/PersonPerspective.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_78) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Perspective/PersonPerspective.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_76) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Perspective/PersonPerspective.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Perspective/PersonPerspective.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Perspective/PersonPerspective.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Perspective/PersonPerspective.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Perspective/PersonPerspective.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Perspective/PersonPerspective.cpp.i: cmake_force
@@ -1246,7 +1216,7 @@ CMakeFiles/earthcall_wasm.dir/src/Perspective/PerspectiveManager.cpp.o: CMakeFil
 CMakeFiles/earthcall_wasm.dir/src/Perspective/PerspectiveManager.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Perspective/PerspectiveManager.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Perspective/PerspectiveManager.cpp
 CMakeFiles/earthcall_wasm.dir/src/Perspective/PerspectiveManager.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_79) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Perspective/PerspectiveManager.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_77) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Perspective/PerspectiveManager.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Perspective/PerspectiveManager.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Perspective/PerspectiveManager.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Perspective/PerspectiveManager.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Perspective/PerspectiveManager.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Perspective/PerspectiveManager.cpp.i: cmake_force
@@ -1261,7 +1231,7 @@ CMakeFiles/earthcall_wasm.dir/src/Relation/Relation.cpp.o: CMakeFiles/earthcall_
 CMakeFiles/earthcall_wasm.dir/src/Relation/Relation.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Relation/Relation.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/Relation.cpp
 CMakeFiles/earthcall_wasm.dir/src/Relation/Relation.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_80) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Relation/Relation.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_78) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Relation/Relation.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Relation/Relation.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Relation/Relation.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Relation/Relation.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/Relation.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Relation/Relation.cpp.i: cmake_force
@@ -1276,7 +1246,7 @@ CMakeFiles/earthcall_wasm.dir/src/Relation/RelationManager.cpp.o: CMakeFiles/ear
 CMakeFiles/earthcall_wasm.dir/src/Relation/RelationManager.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Relation/RelationManager.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/RelationManager.cpp
 CMakeFiles/earthcall_wasm.dir/src/Relation/RelationManager.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_81) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Relation/RelationManager.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_79) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Relation/RelationManager.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Relation/RelationManager.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Relation/RelationManager.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Relation/RelationManager.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/RelationManager.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Relation/RelationManager.cpp.i: cmake_force
@@ -1291,7 +1261,7 @@ CMakeFiles/earthcall_wasm.dir/src/Rendering/BrushSystem.cpp.o: CMakeFiles/earthc
 CMakeFiles/earthcall_wasm.dir/src/Rendering/BrushSystem.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Rendering/BrushSystem.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/BrushSystem.cpp
 CMakeFiles/earthcall_wasm.dir/src/Rendering/BrushSystem.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_82) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Rendering/BrushSystem.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_80) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Rendering/BrushSystem.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Rendering/BrushSystem.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Rendering/BrushSystem.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Rendering/BrushSystem.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/BrushSystem.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Rendering/BrushSystem.cpp.i: cmake_force
@@ -1306,7 +1276,7 @@ CMakeFiles/earthcall_wasm.dir/src/Rendering/CardTreeLayout.cpp.o: CMakeFiles/ear
 CMakeFiles/earthcall_wasm.dir/src/Rendering/CardTreeLayout.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Rendering/CardTreeLayout.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/CardTreeLayout.cpp
 CMakeFiles/earthcall_wasm.dir/src/Rendering/CardTreeLayout.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_83) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Rendering/CardTreeLayout.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_81) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Rendering/CardTreeLayout.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Rendering/CardTreeLayout.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Rendering/CardTreeLayout.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Rendering/CardTreeLayout.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/CardTreeLayout.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Rendering/CardTreeLayout.cpp.i: cmake_force
@@ -1321,7 +1291,7 @@ CMakeFiles/earthcall_wasm.dir/src/Rendering/CreationWindow.cpp.o: CMakeFiles/ear
 CMakeFiles/earthcall_wasm.dir/src/Rendering/CreationWindow.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Rendering/CreationWindow.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/CreationWindow.cpp
 CMakeFiles/earthcall_wasm.dir/src/Rendering/CreationWindow.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_84) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Rendering/CreationWindow.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_82) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Rendering/CreationWindow.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Rendering/CreationWindow.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Rendering/CreationWindow.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Rendering/CreationWindow.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/CreationWindow.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Rendering/CreationWindow.cpp.i: cmake_force
@@ -1336,7 +1306,7 @@ CMakeFiles/earthcall_wasm.dir/src/Rendering/DrawAdapters.cpp.o: CMakeFiles/earth
 CMakeFiles/earthcall_wasm.dir/src/Rendering/DrawAdapters.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Rendering/DrawAdapters.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/DrawAdapters.cpp
 CMakeFiles/earthcall_wasm.dir/src/Rendering/DrawAdapters.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_85) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Rendering/DrawAdapters.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_83) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Rendering/DrawAdapters.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Rendering/DrawAdapters.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Rendering/DrawAdapters.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Rendering/DrawAdapters.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/DrawAdapters.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Rendering/DrawAdapters.cpp.i: cmake_force
@@ -1351,7 +1321,7 @@ CMakeFiles/earthcall_wasm.dir/src/Rendering/ElementalToolWindows.cpp.o: CMakeFil
 CMakeFiles/earthcall_wasm.dir/src/Rendering/ElementalToolWindows.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Rendering/ElementalToolWindows.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/ElementalToolWindows.cpp
 CMakeFiles/earthcall_wasm.dir/src/Rendering/ElementalToolWindows.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_86) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Rendering/ElementalToolWindows.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_84) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Rendering/ElementalToolWindows.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Rendering/ElementalToolWindows.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Rendering/ElementalToolWindows.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Rendering/ElementalToolWindows.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/ElementalToolWindows.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Rendering/ElementalToolWindows.cpp.i: cmake_force
@@ -1366,7 +1336,7 @@ CMakeFiles/earthcall_wasm.dir/src/Rendering/GL/GluCompat.cpp.o: CMakeFiles/earth
 CMakeFiles/earthcall_wasm.dir/src/Rendering/GL/GluCompat.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Rendering/GL/GluCompat.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/GL/GluCompat.cpp
 CMakeFiles/earthcall_wasm.dir/src/Rendering/GL/GluCompat.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_87) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Rendering/GL/GluCompat.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_85) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Rendering/GL/GluCompat.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Rendering/GL/GluCompat.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Rendering/GL/GluCompat.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Rendering/GL/GluCompat.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/GL/GluCompat.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Rendering/GL/GluCompat.cpp.i: cmake_force
@@ -1381,7 +1351,7 @@ CMakeFiles/earthcall_wasm.dir/src/Rendering/HighlightSystem.cpp.o: CMakeFiles/ea
 CMakeFiles/earthcall_wasm.dir/src/Rendering/HighlightSystem.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Rendering/HighlightSystem.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/HighlightSystem.cpp
 CMakeFiles/earthcall_wasm.dir/src/Rendering/HighlightSystem.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_88) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Rendering/HighlightSystem.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_86) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Rendering/HighlightSystem.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Rendering/HighlightSystem.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Rendering/HighlightSystem.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Rendering/HighlightSystem.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/HighlightSystem.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Rendering/HighlightSystem.cpp.i: cmake_force
@@ -1396,7 +1366,7 @@ CMakeFiles/earthcall_wasm.dir/src/Rendering/LawGraphWindow.cpp.o: CMakeFiles/ear
 CMakeFiles/earthcall_wasm.dir/src/Rendering/LawGraphWindow.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Rendering/LawGraphWindow.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/LawGraphWindow.cpp
 CMakeFiles/earthcall_wasm.dir/src/Rendering/LawGraphWindow.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_89) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Rendering/LawGraphWindow.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_87) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Rendering/LawGraphWindow.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Rendering/LawGraphWindow.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Rendering/LawGraphWindow.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Rendering/LawGraphWindow.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/LawGraphWindow.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Rendering/LawGraphWindow.cpp.i: cmake_force
@@ -1411,7 +1381,7 @@ CMakeFiles/earthcall_wasm.dir/src/Rendering/MathEditors.cpp.o: CMakeFiles/earthc
 CMakeFiles/earthcall_wasm.dir/src/Rendering/MathEditors.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Rendering/MathEditors.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/MathEditors.cpp
 CMakeFiles/earthcall_wasm.dir/src/Rendering/MathEditors.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_90) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Rendering/MathEditors.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_88) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Rendering/MathEditors.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Rendering/MathEditors.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Rendering/MathEditors.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Rendering/MathEditors.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/MathEditors.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Rendering/MathEditors.cpp.i: cmake_force
@@ -1426,7 +1396,7 @@ CMakeFiles/earthcall_wasm.dir/src/Rendering/RelationManagerWindow.cpp.o: CMakeFi
 CMakeFiles/earthcall_wasm.dir/src/Rendering/RelationManagerWindow.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Rendering/RelationManagerWindow.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/RelationManagerWindow.cpp
 CMakeFiles/earthcall_wasm.dir/src/Rendering/RelationManagerWindow.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_91) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Rendering/RelationManagerWindow.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_89) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Rendering/RelationManagerWindow.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Rendering/RelationManagerWindow.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Rendering/RelationManagerWindow.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Rendering/RelationManagerWindow.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/RelationManagerWindow.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Rendering/RelationManagerWindow.cpp.i: cmake_force
@@ -1441,7 +1411,7 @@ CMakeFiles/earthcall_wasm.dir/src/Rendering/RenderMaterial.cpp.o: CMakeFiles/ear
 CMakeFiles/earthcall_wasm.dir/src/Rendering/RenderMaterial.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Rendering/RenderMaterial.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/RenderMaterial.cpp
 CMakeFiles/earthcall_wasm.dir/src/Rendering/RenderMaterial.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_92) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Rendering/RenderMaterial.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_90) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Rendering/RenderMaterial.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Rendering/RenderMaterial.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Rendering/RenderMaterial.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Rendering/RenderMaterial.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/RenderMaterial.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Rendering/RenderMaterial.cpp.i: cmake_force
@@ -1456,7 +1426,7 @@ CMakeFiles/earthcall_wasm.dir/src/Rendering/Renderer.cpp.o: CMakeFiles/earthcall
 CMakeFiles/earthcall_wasm.dir/src/Rendering/Renderer.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Rendering/Renderer.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/Renderer.cpp
 CMakeFiles/earthcall_wasm.dir/src/Rendering/Renderer.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_93) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Rendering/Renderer.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_91) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Rendering/Renderer.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Rendering/Renderer.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Rendering/Renderer.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Rendering/Renderer.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/Renderer.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Rendering/Renderer.cpp.i: cmake_force
@@ -1471,7 +1441,7 @@ CMakeFiles/earthcall_wasm.dir/src/Rendering/ShadingSystem.cpp.o: CMakeFiles/eart
 CMakeFiles/earthcall_wasm.dir/src/Rendering/ShadingSystem.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Rendering/ShadingSystem.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/ShadingSystem.cpp
 CMakeFiles/earthcall_wasm.dir/src/Rendering/ShadingSystem.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_94) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Rendering/ShadingSystem.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_92) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Rendering/ShadingSystem.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Rendering/ShadingSystem.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Rendering/ShadingSystem.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Rendering/ShadingSystem.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/ShadingSystem.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Rendering/ShadingSystem.cpp.i: cmake_force
@@ -1486,7 +1456,7 @@ CMakeFiles/earthcall_wasm.dir/src/Singularity/Audio/AudioSystem.cpp.o: CMakeFile
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Audio/AudioSystem.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Audio/AudioSystem.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Audio/AudioSystem.cpp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Audio/AudioSystem.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_95) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/Audio/AudioSystem.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_93) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/Audio/AudioSystem.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Singularity/Audio/AudioSystem.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Singularity/Audio/AudioSystem.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Singularity/Audio/AudioSystem.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Audio/AudioSystem.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Audio/AudioSystem.cpp.i: cmake_force
@@ -1501,7 +1471,7 @@ CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/Engine.cpp.o: CMakeFiles/eart
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/Engine.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/Engine.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/Engine.cpp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/Engine.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_96) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/Engine.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_94) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/Engine.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/Engine.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/Engine.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/Engine.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/Engine.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/Engine.cpp.i: cmake_force
@@ -1516,7 +1486,7 @@ CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/EventBus.cpp.o: CMakeFiles/ea
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/EventBus.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/EventBus.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/EventBus.cpp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/EventBus.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_97) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/EventBus.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_95) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/EventBus.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/EventBus.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/EventBus.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/EventBus.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/EventBus.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/EventBus.cpp.i: cmake_force
@@ -1531,7 +1501,7 @@ CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/EventEntity.cpp.o: CMakeFiles
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/EventEntity.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/EventEntity.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/EventEntity.cpp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/EventEntity.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_98) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/EventEntity.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_96) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/EventEntity.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/EventEntity.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/EventEntity.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/EventEntity.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/EventEntity.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/EventEntity.cpp.i: cmake_force
@@ -1546,7 +1516,7 @@ CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/EventHandler.cpp.o: CMakeFile
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/EventHandler.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/EventHandler.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/EventHandler.cpp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/EventHandler.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_99) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/EventHandler.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_97) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/EventHandler.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/EventHandler.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/EventHandler.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/EventHandler.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/EventHandler.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/EventHandler.cpp.i: cmake_force
@@ -1561,7 +1531,7 @@ CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/Game.cpp.o: CMakeFiles/earthc
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/Game.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/Game.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/Game.cpp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/Game.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_100) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/Game.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_98) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/Game.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/Game.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/Game.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/Game.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/Game.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/Game.cpp.i: cmake_force
@@ -1576,7 +1546,7 @@ CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameInit.cpp.o: CMakeFiles/ea
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameInit.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameInit.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/GameInit.cpp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameInit.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_101) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameInit.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_99) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameInit.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameInit.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameInit.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameInit.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/GameInit.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameInit.cpp.i: cmake_force
@@ -1591,7 +1561,7 @@ CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameNodeGraph.cpp.o: CMakeFil
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameNodeGraph.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameNodeGraph.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/GameNodeGraph.cpp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameNodeGraph.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_102) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameNodeGraph.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_100) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameNodeGraph.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameNodeGraph.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameNodeGraph.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameNodeGraph.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/GameNodeGraph.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameNodeGraph.cpp.i: cmake_force
@@ -1606,7 +1576,7 @@ CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameRender.cpp.o: CMakeFiles/
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameRender.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameRender.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/GameRender.cpp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameRender.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_103) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameRender.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_101) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameRender.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameRender.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameRender.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameRender.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/GameRender.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameRender.cpp.i: cmake_force
@@ -1621,7 +1591,7 @@ CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameSaveLoad.cpp.o: CMakeFile
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameSaveLoad.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameSaveLoad.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/GameSaveLoad.cpp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameSaveLoad.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_104) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameSaveLoad.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_102) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameSaveLoad.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameSaveLoad.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameSaveLoad.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameSaveLoad.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/GameSaveLoad.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameSaveLoad.cpp.i: cmake_force
@@ -1636,7 +1606,7 @@ CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameToolbar.cpp.o: CMakeFiles
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameToolbar.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameToolbar.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/GameToolbar.cpp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameToolbar.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_105) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameToolbar.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_103) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameToolbar.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameToolbar.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameToolbar.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameToolbar.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/GameToolbar.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameToolbar.cpp.i: cmake_force
@@ -1651,7 +1621,7 @@ CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameUpdate.cpp.o: CMakeFiles/
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameUpdate.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameUpdate.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/GameUpdate.cpp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameUpdate.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_106) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameUpdate.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_104) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameUpdate.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameUpdate.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameUpdate.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameUpdate.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/GameUpdate.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameUpdate.cpp.i: cmake_force
@@ -1666,7 +1636,7 @@ CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/PolyhedronSettings.cpp.o: CMa
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/PolyhedronSettings.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/PolyhedronSettings.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/PolyhedronSettings.cpp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/PolyhedronSettings.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_107) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/PolyhedronSettings.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_105) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/PolyhedronSettings.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/PolyhedronSettings.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/PolyhedronSettings.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/PolyhedronSettings.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/PolyhedronSettings.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/PolyhedronSettings.cpp.i: cmake_force
@@ -1681,7 +1651,7 @@ CMakeFiles/earthcall_wasm.dir/src/Singularity/Language/LanguageSystem.cpp.o: CMa
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Language/LanguageSystem.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Language/LanguageSystem.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Language/LanguageSystem.cpp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Language/LanguageSystem.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_108) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/Language/LanguageSystem.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_106) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/Language/LanguageSystem.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Singularity/Language/LanguageSystem.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Singularity/Language/LanguageSystem.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Singularity/Language/LanguageSystem.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Language/LanguageSystem.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Language/LanguageSystem.cpp.i: cmake_force
@@ -1696,7 +1666,7 @@ CMakeFiles/earthcall_wasm.dir/src/Singularity/Language/Lexeme.cpp.o: CMakeFiles/
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Language/Lexeme.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Language/Lexeme.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Language/Lexeme.cpp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Language/Lexeme.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_109) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/Language/Lexeme.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_107) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/Language/Lexeme.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Singularity/Language/Lexeme.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Singularity/Language/Lexeme.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Singularity/Language/Lexeme.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Language/Lexeme.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Language/Lexeme.cpp.i: cmake_force
@@ -1711,7 +1681,7 @@ CMakeFiles/earthcall_wasm.dir/src/Singularity/Language/SyntacticParser.cpp.o: CM
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Language/SyntacticParser.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Language/SyntacticParser.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Language/SyntacticParser.cpp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Language/SyntacticParser.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_110) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/Language/SyntacticParser.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_108) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/Language/SyntacticParser.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Singularity/Language/SyntacticParser.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Singularity/Language/SyntacticParser.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Singularity/Language/SyntacticParser.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Language/SyntacticParser.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Language/SyntacticParser.cpp.i: cmake_force
@@ -1726,7 +1696,7 @@ CMakeFiles/earthcall_wasm.dir/src/Singularity/Network/WebSocketClient.cpp.o: CMa
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Network/WebSocketClient.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Network/WebSocketClient.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Network/WebSocketClient.cpp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Network/WebSocketClient.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_111) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/Network/WebSocketClient.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_109) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/Network/WebSocketClient.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Singularity/Network/WebSocketClient.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Singularity/Network/WebSocketClient.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Singularity/Network/WebSocketClient.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Network/WebSocketClient.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Network/WebSocketClient.cpp.i: cmake_force
@@ -1741,7 +1711,7 @@ CMakeFiles/earthcall_wasm.dir/src/Singularity/Network/WebSocketClient_wasm.cpp.o
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Network/WebSocketClient_wasm.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Network/WebSocketClient_wasm.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Network/WebSocketClient_wasm.cpp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Network/WebSocketClient_wasm.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_112) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/Network/WebSocketClient_wasm.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_110) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/Network/WebSocketClient_wasm.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Singularity/Network/WebSocketClient_wasm.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Singularity/Network/WebSocketClient_wasm.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Singularity/Network/WebSocketClient_wasm.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Network/WebSocketClient_wasm.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Network/WebSocketClient_wasm.cpp.i: cmake_force
@@ -1756,7 +1726,7 @@ CMakeFiles/earthcall_wasm.dir/src/Singularity/Network/WebSocketServer.cpp.o: CMa
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Network/WebSocketServer.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Network/WebSocketServer.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Network/WebSocketServer.cpp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Network/WebSocketServer.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_113) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/Network/WebSocketServer.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_111) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/Network/WebSocketServer.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Singularity/Network/WebSocketServer.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Singularity/Network/WebSocketServer.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Singularity/Network/WebSocketServer.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Network/WebSocketServer.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Network/WebSocketServer.cpp.i: cmake_force
@@ -1771,7 +1741,7 @@ CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/CurveModel.cpp.o: CMakeFi
 CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/CurveModel.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/CurveModel.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/OntoMath/CurveModel.cpp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/CurveModel.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_114) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/CurveModel.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_112) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/CurveModel.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/CurveModel.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/CurveModel.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/CurveModel.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/OntoMath/CurveModel.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/CurveModel.cpp.i: cmake_force
@@ -1786,7 +1756,7 @@ CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/Field.cpp.o: CMakeFiles/e
 CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/Field.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/Field.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/OntoMath/Field.cpp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/Field.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_115) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/Field.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_113) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/Field.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/Field.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/Field.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/Field.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/OntoMath/Field.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/Field.cpp.i: cmake_force
@@ -1801,7 +1771,7 @@ CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/Function.cpp.o: CMakeFile
 CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/Function.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/Function.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/OntoMath/Function.cpp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/Function.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_116) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/Function.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_114) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/Function.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/Function.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/Function.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/Function.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/OntoMath/Function.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/Function.cpp.i: cmake_force
@@ -1816,7 +1786,7 @@ CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/Operations.cpp.o: CMakeFi
 CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/Operations.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/Operations.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/OntoMath/Operations.cpp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/Operations.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_117) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/Operations.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_115) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/Operations.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/Operations.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/Operations.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/Operations.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/OntoMath/Operations.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/Operations.cpp.i: cmake_force
@@ -1831,7 +1801,7 @@ CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/ProbabilityForm.cpp.o: CM
 CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/ProbabilityForm.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/ProbabilityForm.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/OntoMath/ProbabilityForm.cpp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/ProbabilityForm.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_118) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/ProbabilityForm.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_116) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/ProbabilityForm.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/ProbabilityForm.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/ProbabilityForm.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/ProbabilityForm.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/OntoMath/ProbabilityForm.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/ProbabilityForm.cpp.i: cmake_force
@@ -1846,7 +1816,7 @@ CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/ScalarForm.cpp.o: CMakeFi
 CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/ScalarForm.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/ScalarForm.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/OntoMath/ScalarForm.cpp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/ScalarForm.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_119) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/ScalarForm.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_117) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/ScalarForm.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/ScalarForm.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/ScalarForm.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/ScalarForm.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/OntoMath/ScalarForm.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/ScalarForm.cpp.i: cmake_force
@@ -1861,7 +1831,7 @@ CMakeFiles/earthcall_wasm.dir/src/Singularity/Physical/Adapters/SerialAdapter.cp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Physical/Adapters/SerialAdapter.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Physical/Adapters/SerialAdapter.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Physical/Adapters/SerialAdapter.cpp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Physical/Adapters/SerialAdapter.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_120) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/Physical/Adapters/SerialAdapter.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_118) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/Physical/Adapters/SerialAdapter.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Singularity/Physical/Adapters/SerialAdapter.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Singularity/Physical/Adapters/SerialAdapter.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Singularity/Physical/Adapters/SerialAdapter.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Physical/Adapters/SerialAdapter.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Physical/Adapters/SerialAdapter.cpp.i: cmake_force
@@ -1876,7 +1846,7 @@ CMakeFiles/earthcall_wasm.dir/src/Singularity/Physical/PhysicalChannel.cpp.o: CM
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Physical/PhysicalChannel.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Physical/PhysicalChannel.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Physical/PhysicalChannel.cpp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Physical/PhysicalChannel.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_121) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/Physical/PhysicalChannel.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_119) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/Physical/PhysicalChannel.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Singularity/Physical/PhysicalChannel.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Singularity/Physical/PhysicalChannel.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Singularity/Physical/PhysicalChannel.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Physical/PhysicalChannel.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Physical/PhysicalChannel.cpp.i: cmake_force
@@ -1891,7 +1861,7 @@ CMakeFiles/earthcall_wasm.dir/src/Singularity/Singularity.cpp.o: CMakeFiles/eart
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Singularity.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Singularity.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Singularity.cpp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Singularity.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_122) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/Singularity.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_120) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/Singularity.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Singularity/Singularity.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Singularity/Singularity.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Singularity/Singularity.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Singularity.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Singularity/Singularity.cpp.i: cmake_force
@@ -1906,7 +1876,7 @@ CMakeFiles/earthcall_wasm.dir/src/Singularity/TransferPolicy.cpp.o: CMakeFiles/e
 CMakeFiles/earthcall_wasm.dir/src/Singularity/TransferPolicy.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/TransferPolicy.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/TransferPolicy.cpp
 CMakeFiles/earthcall_wasm.dir/src/Singularity/TransferPolicy.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_123) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/TransferPolicy.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_121) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Singularity/TransferPolicy.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Singularity/TransferPolicy.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Singularity/TransferPolicy.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Singularity/TransferPolicy.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/TransferPolicy.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Singularity/TransferPolicy.cpp.i: cmake_force
@@ -1921,7 +1891,7 @@ CMakeFiles/earthcall_wasm.dir/src/Util/CloudStorage.cpp.o: CMakeFiles/earthcall_
 CMakeFiles/earthcall_wasm.dir/src/Util/CloudStorage.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Util/CloudStorage.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Util/CloudStorage.cpp
 CMakeFiles/earthcall_wasm.dir/src/Util/CloudStorage.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_124) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Util/CloudStorage.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_122) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Util/CloudStorage.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Util/CloudStorage.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Util/CloudStorage.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Util/CloudStorage.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Util/CloudStorage.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Util/CloudStorage.cpp.i: cmake_force
@@ -1936,7 +1906,7 @@ CMakeFiles/earthcall_wasm.dir/src/Util/SaveSystem.cpp.o: CMakeFiles/earthcall_wa
 CMakeFiles/earthcall_wasm.dir/src/Util/SaveSystem.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Util/SaveSystem.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Util/SaveSystem.cpp
 CMakeFiles/earthcall_wasm.dir/src/Util/SaveSystem.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_125) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Util/SaveSystem.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_123) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Util/SaveSystem.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Util/SaveSystem.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Util/SaveSystem.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Util/SaveSystem.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Util/SaveSystem.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Util/SaveSystem.cpp.i: cmake_force
@@ -1951,7 +1921,7 @@ CMakeFiles/earthcall_wasm.dir/src/Util/Serialization.cpp.o: CMakeFiles/earthcall
 CMakeFiles/earthcall_wasm.dir/src/Util/Serialization.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Util/Serialization.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Util/Serialization.cpp
 CMakeFiles/earthcall_wasm.dir/src/Util/Serialization.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_126) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Util/Serialization.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_124) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Util/Serialization.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Util/Serialization.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Util/Serialization.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Util/Serialization.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Util/Serialization.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Util/Serialization.cpp.i: cmake_force
@@ -1966,7 +1936,7 @@ CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/ActionModel.cpp.o: C
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/ActionModel.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/ActionModel.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/AuthorsOfLaw/ActionModel.cpp
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/ActionModel.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_127) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/ActionModel.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_125) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/ActionModel.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/ActionModel.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/ActionModel.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/ActionModel.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/AuthorsOfLaw/ActionModel.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/ActionModel.cpp.i: cmake_force
@@ -1981,7 +1951,7 @@ CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/ChangeRecorder.cpp.o
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/ChangeRecorder.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/ChangeRecorder.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/AuthorsOfLaw/ChangeRecorder.cpp
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/ChangeRecorder.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_128) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/ChangeRecorder.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_126) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/ChangeRecorder.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/ChangeRecorder.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/ChangeRecorder.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/ChangeRecorder.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/AuthorsOfLaw/ChangeRecorder.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/ChangeRecorder.cpp.i: cmake_force
@@ -1996,7 +1966,7 @@ CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/ConditionModel.cpp.o
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/ConditionModel.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/ConditionModel.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/AuthorsOfLaw/ConditionModel.cpp
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/ConditionModel.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_129) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/ConditionModel.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_127) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/ConditionModel.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/ConditionModel.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/ConditionModel.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/ConditionModel.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/AuthorsOfLaw/ConditionModel.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/ConditionModel.cpp.i: cmake_force
@@ -2011,7 +1981,7 @@ CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/ECA.cpp.o: CMakeFile
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/ECA.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/ECA.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/AuthorsOfLaw/ECA.cpp
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/ECA.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_130) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/ECA.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_128) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/ECA.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/ECA.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/ECA.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/ECA.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/AuthorsOfLaw/ECA.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/ECA.cpp.i: cmake_force
@@ -2026,7 +1996,7 @@ CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/Law.cpp.o: CMakeFile
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/Law.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/Law.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/AuthorsOfLaw/Law.cpp
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/Law.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_131) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/Law.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_129) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/Law.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/Law.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/Law.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/Law.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/AuthorsOfLaw/Law.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/Law.cpp.i: cmake_force
@@ -2041,7 +2011,7 @@ CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/LawAuditLogger.cpp.o
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/LawAuditLogger.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/LawAuditLogger.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/AuthorsOfLaw/LawAuditLogger.cpp
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/LawAuditLogger.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_132) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/LawAuditLogger.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_130) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/LawAuditLogger.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/LawAuditLogger.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/LawAuditLogger.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/LawAuditLogger.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/AuthorsOfLaw/LawAuditLogger.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/LawAuditLogger.cpp.i: cmake_force
@@ -2056,7 +2026,7 @@ CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/LawSynthesis.cpp.o: 
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/LawSynthesis.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/LawSynthesis.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/AuthorsOfLaw/LawSynthesis.cpp
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/LawSynthesis.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_133) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/LawSynthesis.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_131) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/LawSynthesis.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/LawSynthesis.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/LawSynthesis.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/LawSynthesis.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/AuthorsOfLaw/LawSynthesis.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/LawSynthesis.cpp.i: cmake_force
@@ -2071,7 +2041,7 @@ CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/PhysicsLawBridge.cpp
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/PhysicsLawBridge.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/PhysicsLawBridge.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/AuthorsOfLaw/PhysicsLawBridge.cpp
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/PhysicsLawBridge.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_134) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/PhysicsLawBridge.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_132) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/PhysicsLawBridge.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/PhysicsLawBridge.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/PhysicsLawBridge.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/PhysicsLawBridge.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/AuthorsOfLaw/PhysicsLawBridge.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/PhysicsLawBridge.cpp.i: cmake_force
@@ -2086,7 +2056,7 @@ CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/HomesOfEarth/Home.cpp.o: CMakeFil
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/HomesOfEarth/Home.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/HomesOfEarth/Home.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/HomesOfEarth/Home.cpp
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/HomesOfEarth/Home.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_135) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/HomesOfEarth/Home.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_133) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/HomesOfEarth/Home.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/HomesOfEarth/Home.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/HomesOfEarth/Home.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/HomesOfEarth/Home.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/HomesOfEarth/Home.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/HomesOfEarth/Home.cpp.i: cmake_force
@@ -2101,7 +2071,7 @@ CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Ourverse/Ourverse.cpp.o: CMakeFil
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Ourverse/Ourverse.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Ourverse/Ourverse.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.cpp
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Ourverse/Ourverse.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_136) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Ourverse/Ourverse.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_134) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Ourverse/Ourverse.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Ourverse/Ourverse.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Ourverse/Ourverse.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Ourverse/Ourverse.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Ourverse/Ourverse.cpp.i: cmake_force
@@ -2116,7 +2086,7 @@ CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Physics/CollisionDispatcher.cpp.o
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Physics/CollisionDispatcher.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Physics/CollisionDispatcher.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Physics/CollisionDispatcher.cpp
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Physics/CollisionDispatcher.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_137) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Physics/CollisionDispatcher.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_135) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Physics/CollisionDispatcher.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Physics/CollisionDispatcher.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Physics/CollisionDispatcher.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Physics/CollisionDispatcher.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Physics/CollisionDispatcher.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Physics/CollisionDispatcher.cpp.i: cmake_force
@@ -2131,7 +2101,7 @@ CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Physics/DefaultPhysicsLaws.cpp.o:
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Physics/DefaultPhysicsLaws.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Physics/DefaultPhysicsLaws.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Physics/DefaultPhysicsLaws.cpp
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Physics/DefaultPhysicsLaws.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_138) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Physics/DefaultPhysicsLaws.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_136) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Physics/DefaultPhysicsLaws.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Physics/DefaultPhysicsLaws.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Physics/DefaultPhysicsLaws.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Physics/DefaultPhysicsLaws.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Physics/DefaultPhysicsLaws.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Physics/DefaultPhysicsLaws.cpp.i: cmake_force
@@ -2146,7 +2116,7 @@ CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Physics/Physics.cpp.o: CMakeFiles
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Physics/Physics.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Physics/Physics.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Physics/Physics.cpp
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Physics/Physics.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_139) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Physics/Physics.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_137) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Physics/Physics.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Physics/Physics.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Physics/Physics.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Physics/Physics.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Physics/Physics.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Physics/Physics.cpp.i: cmake_force
@@ -2161,7 +2131,7 @@ CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/World/World.cpp.o: CMakeFiles/ear
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/World/World.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/World/World.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/World/World.cpp
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/World/World.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_140) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/World/World.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_138) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/World/World.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/World/World.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/World/World.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/World/World.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/World/World.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/World/World.cpp.i: cmake_force
@@ -2176,7 +2146,7 @@ CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Zone/Zone.cpp.o: CMakeFiles/earth
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Zone/Zone.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Zone/Zone.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Zone/Zone.cpp
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Zone/Zone.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_141) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Zone/Zone.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_139) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Zone/Zone.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Zone/Zone.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Zone/Zone.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Zone/Zone.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Zone/Zone.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Zone/Zone.cpp.i: cmake_force
@@ -2191,7 +2161,7 @@ CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/ZoneManager.cpp.o: CMakeFiles/ear
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/ZoneManager.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/ZoneManager.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/ZoneManager.cpp
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/ZoneManager.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_142) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/ZoneManager.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_140) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/ZoneManager.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/ZoneManager.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/ZoneManager.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/ZoneManager.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/ZoneManager.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/ZoneManager.cpp.i: cmake_force
@@ -2206,7 +2176,7 @@ CMakeFiles/earthcall_wasm.dir/src/globals.cpp.o: CMakeFiles/earthcall_wasm.dir/f
 CMakeFiles/earthcall_wasm.dir/src/globals.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/globals.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/globals.cpp
 CMakeFiles/earthcall_wasm.dir/src/globals.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_143) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/globals.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_141) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/globals.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/globals.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/globals.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/globals.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/globals.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/globals.cpp.i: cmake_force
@@ -2221,7 +2191,7 @@ CMakeFiles/earthcall_wasm.dir/src/Rendering/WebGPU/SdfWgsl.cpp.o: CMakeFiles/ear
 CMakeFiles/earthcall_wasm.dir/src/Rendering/WebGPU/SdfWgsl.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Rendering/WebGPU/SdfWgsl.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/WebGPU/SdfWgsl.cpp
 CMakeFiles/earthcall_wasm.dir/src/Rendering/WebGPU/SdfWgsl.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_144) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Rendering/WebGPU/SdfWgsl.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_142) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Rendering/WebGPU/SdfWgsl.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Rendering/WebGPU/SdfWgsl.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Rendering/WebGPU/SdfWgsl.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Rendering/WebGPU/SdfWgsl.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/WebGPU/SdfWgsl.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Rendering/WebGPU/SdfWgsl.cpp.i: cmake_force
@@ -2236,7 +2206,7 @@ CMakeFiles/earthcall_wasm.dir/src/Rendering/WebGPU/WebGpuContext_wasm.cpp.o: CMa
 CMakeFiles/earthcall_wasm.dir/src/Rendering/WebGPU/WebGpuContext_wasm.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Rendering/WebGPU/WebGpuContext_wasm.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/WebGPU/WebGpuContext_wasm.cpp
 CMakeFiles/earthcall_wasm.dir/src/Rendering/WebGPU/WebGpuContext_wasm.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_145) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Rendering/WebGPU/WebGpuContext_wasm.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_143) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Rendering/WebGPU/WebGpuContext_wasm.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Rendering/WebGPU/WebGpuContext_wasm.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Rendering/WebGPU/WebGpuContext_wasm.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Rendering/WebGPU/WebGpuContext_wasm.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/WebGPU/WebGpuContext_wasm.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Rendering/WebGPU/WebGpuContext_wasm.cpp.i: cmake_force
@@ -2251,7 +2221,7 @@ CMakeFiles/earthcall_wasm.dir/src/Rendering/WebGPU/WebGpuRenderer.cpp.o: CMakeFi
 CMakeFiles/earthcall_wasm.dir/src/Rendering/WebGPU/WebGpuRenderer.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/src/Rendering/WebGPU/WebGpuRenderer.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/WebGPU/WebGpuRenderer.cpp
 CMakeFiles/earthcall_wasm.dir/src/Rendering/WebGPU/WebGpuRenderer.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_146) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Rendering/WebGPU/WebGpuRenderer.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_144) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Rendering/WebGPU/WebGpuRenderer.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Rendering/WebGPU/WebGpuRenderer.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Rendering/WebGPU/WebGpuRenderer.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Rendering/WebGPU/WebGpuRenderer.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/WebGPU/WebGpuRenderer.cpp
 
 CMakeFiles/earthcall_wasm.dir/src/Rendering/WebGPU/WebGpuRenderer.cpp.i: cmake_force
@@ -2266,7 +2236,7 @@ CMakeFiles/earthcall_wasm.dir/imgui/imgui.cpp.o: CMakeFiles/earthcall_wasm.dir/f
 CMakeFiles/earthcall_wasm.dir/imgui/imgui.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/imgui/imgui.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/imgui/imgui.cpp
 CMakeFiles/earthcall_wasm.dir/imgui/imgui.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_147) "Building CXX object CMakeFiles/earthcall_wasm.dir/imgui/imgui.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_145) "Building CXX object CMakeFiles/earthcall_wasm.dir/imgui/imgui.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/imgui/imgui.cpp.o -MF CMakeFiles/earthcall_wasm.dir/imgui/imgui.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/imgui/imgui.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/imgui/imgui.cpp
 
 CMakeFiles/earthcall_wasm.dir/imgui/imgui.cpp.i: cmake_force
@@ -2281,7 +2251,7 @@ CMakeFiles/earthcall_wasm.dir/imgui/imgui_demo.cpp.o: CMakeFiles/earthcall_wasm.
 CMakeFiles/earthcall_wasm.dir/imgui/imgui_demo.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/imgui/imgui_demo.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/imgui/imgui_demo.cpp
 CMakeFiles/earthcall_wasm.dir/imgui/imgui_demo.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_148) "Building CXX object CMakeFiles/earthcall_wasm.dir/imgui/imgui_demo.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_146) "Building CXX object CMakeFiles/earthcall_wasm.dir/imgui/imgui_demo.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/imgui/imgui_demo.cpp.o -MF CMakeFiles/earthcall_wasm.dir/imgui/imgui_demo.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/imgui/imgui_demo.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/imgui/imgui_demo.cpp
 
 CMakeFiles/earthcall_wasm.dir/imgui/imgui_demo.cpp.i: cmake_force
@@ -2296,7 +2266,7 @@ CMakeFiles/earthcall_wasm.dir/imgui/imgui_draw.cpp.o: CMakeFiles/earthcall_wasm.
 CMakeFiles/earthcall_wasm.dir/imgui/imgui_draw.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/imgui/imgui_draw.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/imgui/imgui_draw.cpp
 CMakeFiles/earthcall_wasm.dir/imgui/imgui_draw.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_149) "Building CXX object CMakeFiles/earthcall_wasm.dir/imgui/imgui_draw.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_147) "Building CXX object CMakeFiles/earthcall_wasm.dir/imgui/imgui_draw.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/imgui/imgui_draw.cpp.o -MF CMakeFiles/earthcall_wasm.dir/imgui/imgui_draw.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/imgui/imgui_draw.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/imgui/imgui_draw.cpp
 
 CMakeFiles/earthcall_wasm.dir/imgui/imgui_draw.cpp.i: cmake_force
@@ -2311,7 +2281,7 @@ CMakeFiles/earthcall_wasm.dir/imgui/imgui_tables.cpp.o: CMakeFiles/earthcall_was
 CMakeFiles/earthcall_wasm.dir/imgui/imgui_tables.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/imgui/imgui_tables.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/imgui/imgui_tables.cpp
 CMakeFiles/earthcall_wasm.dir/imgui/imgui_tables.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_150) "Building CXX object CMakeFiles/earthcall_wasm.dir/imgui/imgui_tables.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_148) "Building CXX object CMakeFiles/earthcall_wasm.dir/imgui/imgui_tables.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/imgui/imgui_tables.cpp.o -MF CMakeFiles/earthcall_wasm.dir/imgui/imgui_tables.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/imgui/imgui_tables.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/imgui/imgui_tables.cpp
 
 CMakeFiles/earthcall_wasm.dir/imgui/imgui_tables.cpp.i: cmake_force
@@ -2326,7 +2296,7 @@ CMakeFiles/earthcall_wasm.dir/imgui/imgui_widgets.cpp.o: CMakeFiles/earthcall_wa
 CMakeFiles/earthcall_wasm.dir/imgui/imgui_widgets.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/imgui/imgui_widgets.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/imgui/imgui_widgets.cpp
 CMakeFiles/earthcall_wasm.dir/imgui/imgui_widgets.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_151) "Building CXX object CMakeFiles/earthcall_wasm.dir/imgui/imgui_widgets.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_149) "Building CXX object CMakeFiles/earthcall_wasm.dir/imgui/imgui_widgets.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/imgui/imgui_widgets.cpp.o -MF CMakeFiles/earthcall_wasm.dir/imgui/imgui_widgets.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/imgui/imgui_widgets.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/imgui/imgui_widgets.cpp
 
 CMakeFiles/earthcall_wasm.dir/imgui/imgui_widgets.cpp.i: cmake_force
@@ -2341,7 +2311,7 @@ CMakeFiles/earthcall_wasm.dir/imgui/backends/imgui_impl_glfw.cpp.o: CMakeFiles/e
 CMakeFiles/earthcall_wasm.dir/imgui/backends/imgui_impl_glfw.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/imgui/backends/imgui_impl_glfw.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/imgui/backends/imgui_impl_glfw.cpp
 CMakeFiles/earthcall_wasm.dir/imgui/backends/imgui_impl_glfw.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_152) "Building CXX object CMakeFiles/earthcall_wasm.dir/imgui/backends/imgui_impl_glfw.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_150) "Building CXX object CMakeFiles/earthcall_wasm.dir/imgui/backends/imgui_impl_glfw.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/imgui/backends/imgui_impl_glfw.cpp.o -MF CMakeFiles/earthcall_wasm.dir/imgui/backends/imgui_impl_glfw.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/imgui/backends/imgui_impl_glfw.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/imgui/backends/imgui_impl_glfw.cpp
 
 CMakeFiles/earthcall_wasm.dir/imgui/backends/imgui_impl_glfw.cpp.i: cmake_force
@@ -2356,7 +2326,7 @@ CMakeFiles/earthcall_wasm.dir/imgui/backends/imgui_impl_wgpu.cpp.o: CMakeFiles/e
 CMakeFiles/earthcall_wasm.dir/imgui/backends/imgui_impl_wgpu.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
 CMakeFiles/earthcall_wasm.dir/imgui/backends/imgui_impl_wgpu.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/imgui/backends/imgui_impl_wgpu.cpp
 CMakeFiles/earthcall_wasm.dir/imgui/backends/imgui_impl_wgpu.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_153) "Building CXX object CMakeFiles/earthcall_wasm.dir/imgui/backends/imgui_impl_wgpu.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_151) "Building CXX object CMakeFiles/earthcall_wasm.dir/imgui/backends/imgui_impl_wgpu.cpp.o"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/imgui/backends/imgui_impl_wgpu.cpp.o -MF CMakeFiles/earthcall_wasm.dir/imgui/backends/imgui_impl_wgpu.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/imgui/backends/imgui_impl_wgpu.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/imgui/backends/imgui_impl_wgpu.cpp
 
 CMakeFiles/earthcall_wasm.dir/imgui/backends/imgui_impl_wgpu.cpp.i: cmake_force
@@ -2418,8 +2388,6 @@ earthcall_wasm_OBJECTS = \
 "CMakeFiles/earthcall_wasm.dir/src/OurVerse/CursorTools.cpp.o" \
 "CMakeFiles/earthcall_wasm.dir/src/OurVerse/ElementalToolHandler.cpp.o" \
 "CMakeFiles/earthcall_wasm.dir/src/OurVerse/Tool.cpp.o" \
-"CMakeFiles/earthcall_wasm.dir/src/Person/AvatarDemo.cpp.o" \
-"CMakeFiles/earthcall_wasm.dir/src/Person/AvatarManager.cpp.o" \
 "CMakeFiles/earthcall_wasm.dir/src/Person/Body/Body.cpp.o" \
 "CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/BodyPart.cpp.o" \
 "CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Chest.cpp.o" \
@@ -2575,8 +2543,6 @@ earthcall.js: CMakeFiles/earthcall_wasm.dir/src/OurVerse/Controls.cpp.o
 earthcall.js: CMakeFiles/earthcall_wasm.dir/src/OurVerse/CursorTools.cpp.o
 earthcall.js: CMakeFiles/earthcall_wasm.dir/src/OurVerse/ElementalToolHandler.cpp.o
 earthcall.js: CMakeFiles/earthcall_wasm.dir/src/OurVerse/Tool.cpp.o
-earthcall.js: CMakeFiles/earthcall_wasm.dir/src/Person/AvatarDemo.cpp.o
-earthcall.js: CMakeFiles/earthcall_wasm.dir/src/Person/AvatarManager.cpp.o
 earthcall.js: CMakeFiles/earthcall_wasm.dir/src/Person/Body/Body.cpp.o
 earthcall.js: CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/BodyPart.cpp.o
 earthcall.js: CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Chest.cpp.o
@@ -2682,7 +2648,7 @@ earthcall.js: CMakeFiles/earthcall_wasm.dir/imgui/backends/imgui_impl_wgpu.cpp.o
 earthcall.js: CMakeFiles/earthcall_wasm.dir/build.make
 earthcall.js: CMakeFiles/earthcall_wasm.dir/objects1.rsp
 earthcall.js: CMakeFiles/earthcall_wasm.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_154) "Linking CXX executable earthcall.js"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_152) "Linking CXX executable earthcall.js"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/earthcall_wasm.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.

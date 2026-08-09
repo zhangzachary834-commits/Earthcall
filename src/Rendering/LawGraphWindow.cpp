@@ -142,10 +142,10 @@ struct EventOption {
     const char* meaning;
 };
 constexpr EventOption kEngineEvents[] = {
-    {"collision",                "two objects collide (subject: the first object)"},
-    {"onMouseClicked",           "the primary mouse button is clicked (subject: the person)"},
-    {"object-hover-enter",       "the cursor enters an object (subject: the object)"},
-    {"object-hover-exit",        "the cursor leaves an object (subject: the object)"},
+    {"objects-collided",         "two objects collide (subject: the first object)"},
+    {"mouse-clicked",            "the primary mouse button is clicked (subject: the person)"},
+    {"object-hover-entered",     "the cursor enters an object (subject: the object)"},
+    {"object-hover-exited",      "the cursor leaves an object (subject: the object)"},
     {"automation-clip-finished", "a non-looping automation clip ends (subject: the object)"},
     {"law-applied",              "any law successfully applies (subject: its target)"},
     {"law-registered",           "a new law is registered (subject: the law)"},
