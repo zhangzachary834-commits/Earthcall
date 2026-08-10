@@ -82,7 +82,7 @@ bool Game::handleFieldGizmos(Object* o, bool pressEdge, bool mouseDown, double w
     if (!o || !o->isBinaryField()) { _blendHandleDragging = false; _fieldHandleDragging = false; return false; }
     const GLdouble* mv = _camera.modelview;
     const GLdouble* pr = _camera.projection;
-    const GLint*    vp = _camera.viewport;
+    const int*      vp = _camera.viewport;
     const glm::mat4 xf = o->getTransform();
 
     // Operand-B drag handle (gold cube at operand B's offset).
@@ -358,7 +358,7 @@ void Game::update(float dt) {
                 obj->getPolyhedronVertexCount() > 0) {
                 const GLdouble* mv = _camera.modelview;
                 const GLdouble* pr = _camera.projection;
-                const GLint*    vp = _camera.viewport;
+                const int*      vp = _camera.viewport;
                 glm::mat4 xf = obj->getTransform();
                 double winX = xpos * scaleX;
                 double winY = vp[3] - ypos * scaleY; // GL y-up
@@ -403,7 +403,7 @@ void Game::update(float dt) {
                 // control net; the surface re-forms live).
                 const GLdouble* mv = _camera.modelview;
                 const GLdouble* pr = _camera.projection;
-                const GLint*    vp = _camera.viewport;
+                const int*      vp = _camera.viewport;
                 glm::mat4 xf = obj->getTransform();
                 double winX = xpos * scaleX;
                 double winY = vp[3] - ypos * scaleY;
@@ -479,7 +479,7 @@ void Game::update(float dt) {
 
             const GLdouble* mv = _camera.modelview;
             const GLdouble* pr = _camera.projection;
-            const GLint*    vp = _camera.viewport;
+            const int*      vp = _camera.viewport;
             const double winX = xpos * scaleX;
             const double winY = vp[3] - ypos * scaleY;
 

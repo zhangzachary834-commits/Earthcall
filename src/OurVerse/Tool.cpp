@@ -231,7 +231,7 @@ void applyToolTransform(Object* obj, const glm::mat4& worldTransform, const glm:
 bool buildMouseRay(GLFWwindow* window, Core::Game* game, glm::vec3& rayOrigin, glm::vec3& rayDir) {
     if (!window || !game) return false;
 
-    const GLint* vp = game->getCameraViewport();
+    const int* vp = game->getCameraViewport();
     if (!vp || vp[2] <= 0 || vp[3] <= 0) return false;
 
     double winX = 0.0, winY = 0.0; // in framebuffer / GL coords (origin bottom-left)

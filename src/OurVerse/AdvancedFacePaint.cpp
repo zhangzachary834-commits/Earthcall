@@ -1,14 +1,5 @@
 #include "AdvancedFacePaint.hpp"
 #include "Form/Object/Object.hpp"
-#ifdef __APPLE__
-#include <OpenGL/glext.h>
-// Define aliases for Apple OpenGL functions
-#define glGenVertexArrays glGenVertexArraysAPPLE
-#define glBindVertexArray glBindVertexArrayAPPLE
-#define glDeleteVertexArrays glDeleteVertexArraysAPPLE
-#else
-#include <GL/glext.h>
-#endif
 #include <iostream>
 #include <cmath>
 #include <random>

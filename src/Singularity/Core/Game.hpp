@@ -85,10 +85,10 @@ public:
     void setCameraFront(const glm::vec3& v) { _camera.front = v; }
     void setCameraUp   (const glm::vec3& v) { _camera.up    = v; }
 
-    const GLint*    getCameraViewport()   const { return _camera.viewport; }
+    const int*      getCameraViewport()   const { return _camera.viewport; }
     const GLdouble* getCameraModelview()  const { return _camera.modelview; }
     const GLdouble* getCameraProjection() const { return _camera.projection; }
-    void setCameraViewport(const GLint viewport[4]) {
+    void setCameraViewport(const int viewport[4]) {
         std::copy(viewport, viewport + 4, _camera.viewport);
     }
     void setCameraModelview(const GLdouble modelview[16]) {

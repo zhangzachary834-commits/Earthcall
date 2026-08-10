@@ -12,7 +12,6 @@
 #include "Person/Body/BodyPart/BodyPart.hpp"
 
 #include <GLFW/glfw3.h>
-#include "Rendering/GL/GluCompat.hpp"
 #include "Rendering/Renderer.hpp"
 #include <imgui.h>
 #include <glm/glm.hpp>

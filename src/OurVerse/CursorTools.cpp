@@ -32,7 +32,7 @@ Object* CursorTools::pickObjectAtCursor3D(Core::Game& game) const {
     // Build a ray from cursor using View/Projection/Viewport
     const float mouseX = game.getCursorX();
     const float mouseY = game.getCursorY();
-    const GLint* vp = game.getCameraViewport();
+    const int* vp = game.getCameraViewport();
     const GLdouble* mv = game.getCameraModelview();
     const GLdouble* pr = game.getCameraProjection();
 

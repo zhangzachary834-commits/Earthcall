@@ -22,12 +22,6 @@
 #include <vector>
 #include <cstdint>
 #include "Formation/Formation.hpp"
-#include <GLFW/glfw3.h> // Include OpenGL headers for rendering
-#if defined(__APPLE__) && !defined(EMSCRIPTEN)
-#include <OpenGL/gl.h> // GL types/enums used in this header (GLU retired, Milestone 3)
-#else
-#include <GL/gl.h>
-#endif
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include "Form/Singular/Singular.hpp"

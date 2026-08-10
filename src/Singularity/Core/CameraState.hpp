@@ -13,7 +13,7 @@ struct CameraState {
 
     GLdouble modelview[16]  {};
     GLdouble projection[16] {};
-    GLint    viewport[4]    {0, 0, 0, 0};
+    int      viewport[4]    {0, 0, 0, 0};
 };
 
 } // namespace Core
