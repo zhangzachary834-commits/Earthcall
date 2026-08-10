@@ -1,12 +1,27 @@
 #pragma once
 #include <vector>
 #include <string>
+#include "json.hpp"
 #include "Zone/Zone.hpp"
+#include "SaveContext.hpp"
+
+// Persistence and UI state for save/load operations
+struct SaveLoadState {
+    std::vector<std::string> files;
+    bool showLoadWindow = false;
+    bool showSaveWindow = false;
+    bool showManager = false;
+    char customName[256] = "";
+    std::string lastLoadReport;
+    std::string loadedSaveName;
+    std::string saveDirectory = "saves/games/";
+};
 
 class ZoneManager {
     std::vector<Zone> _zones;
     size_t _currentIndex = 0;
     std::vector<std::shared_ptr<Object>> globalObjects; // Repository of all objects
+    SaveLoadState _saveLoad;
 
 public:
     void addZone(Zone&& zone) noexcept;           // prefer move for temporaries
@@ -30,4 +45,22 @@ public:
 
     // Current active zone index
     size_t currentIndex() const { return _currentIndex; }
+
+    // Save/Load state access
+    SaveLoadState& getSaveLoadState() { return _saveLoad; }
+    const SaveLoadState& getSaveLoadState() const { return _saveLoad; }
+
+    // Save/Load methods (moved from Game)
+    void ensureHomeZone(const std::string& playerId);
+    void updateSaveFiles();
+    void setSaveDirectory(const std::string& dir);
+    std::string getSaveDirectory() const;
+    
+    // Save/load state carried in from outside the Zone layer (see SaveContext.hpp)
+    nlohmann::json buildSaveJson(const SaveContext& ctx) const;
+    void saveState(const std::string& filename, SaveContext& ctx);
+    void loadState(const std::string& filename, SaveContext& ctx);
+    void saveStateWithLog(const std::string& customName, SaveContext& ctx);
+    std::vector<uint8_t> buildSaveChunkFlatBuffer();
+    void loadSaveChunkFlatBuffer(const std::vector<uint8_t>& buffer);
 };

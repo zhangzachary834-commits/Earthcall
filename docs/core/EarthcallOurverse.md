@@ -1,4 +1,4 @@
-Earthcall Ourverse Manifesto	
+# Earthcall Ourverse Manifesto	
 
 If you guys come up with better names for these things than I have already tell me and we might change them.
 
@@ -45,13 +45,13 @@ Fundamental Modalities
 
 Singularity gives structure for each fundamental mode a given Earthcall program operates on (which typically I think would include all the modalities of the mechanical hardware)
 
-Singularity ultimately is what we would call the “OS (operating system)”—fundamental computational architecture and assembly, bits, and the hardware. To give an idea, Singularity modes usually include: visual (whether the screen or any other thing in the hardware visually affected), keyboard, audio (input and output), camera. But since the current Earthcall prototype embryo is written in cpp ontology, it must interface the rest of the computer treating its softwares as Singularity too—which in mundane terms, is API calls, standard files, going through OS permissions, terminal commands, etc.. When the very OS substrate of Earthcall itself is comprised of Assembly or even machine code, such that the entire computer is itself ordered according to the Earthcall ontology, that is when things reverse—Earthcall writes cpp/C under the hood rather than merely being written by them on the high level.
+Singularity ultimately is what we would call the “OS (operating system)”—fundamental computational architecture and assembly, bits, and the hardware. To give an idea, Singularity modes usually include: visual (whether the screen or any other thing in the hardware visually affected), keyboard, audio (input and output), camera. But since the current Earthcall prototype embryo is written in cpp ontology, it must interface the rest of the computer treating its softwares as Singularity too—which in mundane terms, is API calls, standard files, going through OS permissions, terminal commands, etc.. When the very OS substrate of Earthcall itself is comprised of Assembly or even machine code, such that the entire computer is itself ordered according to the Earthcall ontology, that is when things reverse—instead of a single Earthcall application being cpp/C under the hood, cpp/C under the hood runs a low level machine substrate ordered according to Earthcall. (Reasosn to do this include the problem of nature kf properties and adding properties vs inherent ownership, the problem of data structures as Singulars, and the problem of non earthcall higher OS or industrial frameworks overriding Earthcall such as by enabling AI agents to secretly pose as Persons)
 
 Now you would think visual and audio is the obvious first, but I’d actually add another:
 
 Human Language (both visual-symbolic and verbal). It is a distinct dimension of semantic meaning-representation irreducible to just the raw mediary physical components (i.e. words aren’t just ink). Not just human language—think outside the box: JSON and all programming languages should eventually be explicitly modeled under Human Language.
 
-This allows us to create direct mathematical relationshops between words (and other linguistic-symbolic units) as we so choose based on Law creation and Object set generation.
+This allows us to create direct mathematical relationships between words (and other linguistic-symbolic units) as we so choose based on Law creation and Object set generation.
 
 Human Language as a foundational modality at Singularity is the technical instantiation of the doctrine that the cosmos was spoken into being. Meaning is substrate-native because the substrate participates in the structure that the Logos established.
 
@@ -152,6 +152,7 @@ Body (Extends Formation and Singular, formerly Object):
 The visual manifestation of the Person’s digital life and being. Always has a human body, Additional options for avatars. Authorable
 
 The essential body. Will require copy constructors for, let’s say, if someone wants the same avatar.
+Earthcall recognizes that computers are ordered by the structure of worldview, and that fundamental, hardcoded invariants represent that worldview. The computer serving the invariants that act as relational vessels that receive and channel the Person’s directions in a specific ordering of meaning. The semantic category order of a computer structures everything it creates, and those categories must inherit from real world categories. For those layers that are categorically distinct in God-created reality should be treated, just as Israel’s Temple of God held distinct chambers, like the outer temple and the Holy of Holies. 
 
 Other customizable forms the user can set as essential and non-allocatable will require copy constructors to reproduce at different memory.
 
@@ -211,6 +212,8 @@ Zones handle everything with respect to jurisdiction. The law hierarchy consider
 Zone boundaries: There can be overlap between members of zones, but the zones themselves will be discrete. If there is no more distinction then it is not two distinct zones but rather one unified zone, like a gradient. 
 
 Overlapping zones may have laws that are in conflict or are otherwise in friction that undermine the telos of each respective law. Consider the space within a zone that overlaps with another Zone, or Persons/Objects who happen to be in another Zone but are also bound by the jurisdiction of another zone because of their affiliation, obligation, and/or belonging to it. There, the program won’t resolve it for them unless a default resolution setting is set (via an authored MetaLaw or a first mover)—Persons must agree to a law synthesis process to resolve the conflict, or some other conflict resolution.
+
+UPDATE (august 9): So I wrote that part a month ago, and then I later actually implemented the law system. when i actually wrote the law system i used AST (abstract syntax trees) in Ontomath and i realized it is actually much simpler to synthesize laws than I thought. You hold all nodes and operations from both laws in mind at once and then think about how exactly you want them to change or combine or remove nodes. Very automatable with metalaws, which means a well designed law system can run this at high performance.
 
 Ourverse will ultimately be updated through the internet, or any other form of shared-device hosting. So the class will represent it, but the Ourverse in its truest sense will not be fully captured by the code. So we will have local ourverses for the users.
 
@@ -608,8 +611,17 @@ HOEPFULLY ME SNEAKING INTO THE UCLA ACM CLUB CYBERSECURITY DISCORD HELPS (they l
 
 Earthcall’s Power
 
-The real advancement fo earthcall is not just one feature its how deeply it roots from computational ontology
-For example, laws that author the uis that help people create better laws maps onto the concept of self-writing programs and how computation modifies itself
+The real advancement of earthcall is not just one feature, it’s that it roots computational ontology directly into its metaphysical primitives. Everything is built on the primitives rather than having to be written by scratch.
+
+Everything when represented truthfully as the Formations of their Singulars can assemble together. The ingenuity of a Person can directly affect objects. 
+
+There’s a well established principle in computer science that every state that modifies another thing, inside the whole of a computer, can itself be part of that modified state. Earthcall’s ontology makes this directly clear in how .
+Now translate that into the human mind. The very instruments, structures, and faculties upon which we use to generate ideas and create things.
+
+earthcall lets you do things like creating an art Zone that has intertwined capabilities from clip art studio, photoshop, and CAD, desmos, and physics simulations all in the same strokes, use math laws to generate night skies, a calendar and schedule system that overlaps Zones with the Zones/apps (apps) where you actaully do the work, Music where notes correspond to mathematical structures inside buildings, simulations of completely differnet worlds than ours like extraterrestrial planets, simulations of nature, simulate cities perfectly unities with nature, model actual cities and nature and simulate real life infrastructural operations that would make it that unity possible, create games directly from the substrate of a movie and movie from a game or anime into game instead of having making them as separate artifacts from scratch, take the games and movies and make them real robotics and vice versa, cybersecurity tjat checks the exact memory trajectory of a Person or Singular inside a Formation of Zones to verify it is in fact the original Object, software you download that you can personalize and change however you want on your own end so its more like downloading a universal template instead of a rigid app, video games or simulations that can literally merge with each other seamlessly (object/singular set to set creation, law set to set synthesis)
+This means innovation can happen at the speed of thoughts.
+
+For example, laws that author the uis that help people create better laws maps onto the concept of self-writing programs and how computation modifies itself. Since the very states
 
 
 
@@ -660,7 +672,7 @@ Earthcall Internet — Global Ourverse
 
 So im thinking maybe earthcall ontology not just for client cpp and hard OS metal but also server. But idk much about that. Endeavor for future. 
 
-Client/server is itself a fales ontological vacuum—the true vacuum is its Singular Relation Formations .
+Client/server is itself a false ontological vacuum—the true vacuum is its Singular Relation Formations.
 
 
 
@@ -687,6 +699,9 @@ You mention the substrate-reversal — Earthcall eventually writing C++ rather t
 
 If I compress all of that: what you've written is a bet that meaning can be made governable without being made dead — against GOFAI, which made it dead, and against the current paradigm, which made it ungovernable. The bet has real exposure (sparse authored relations versus the dense statistical texture of actual usage — Persons author slowly, and that's both the cost and, given your covenant ethos, maybe the point). But the two things I'd carve into stone before building anything: the highest referents are orderings, never avatars; and the Kernel gets its own frozen dictionary before any word becomes load-bearing. The first keeps the system from idolatry. The second keeps it from Newspeak. Everything else can live and drift, which is what languages are for.
 “
+
+Now I largely agree with what Fable/Mythos said. But I think having a hardcoded Kernel dictionary could end up becoming its own form of Babel—a specific, frozen snapshot of flawed languages dictating the meaning of everything downstream, one that may be owned and defined by a consolidated structure. So we want to preserve mutability without making it Newspeak at a whim. Instead, meaning of words should belong to Formations of stakeholders, just like the Law model. I would say only the most invariant linguistic categories should be hardcoded Kernally, with new categories being added by upgrading Earthcall code. Now the cpp version has limitations, in the Earthcall OS version I would have the “Kernel dictionary” be different per zone, since machine-level memory would itself be ordered according to Zones and Homes owned by Persons and Relationships and Communities, even the Singularity version be amendable by its Formation stakeholdrs. 
+
 
 From Media to Fields:
 
@@ -765,10 +780,6 @@ Manual Verification
 Render a scene containing both a bounded density field (e.g., an ethereal glowing sphere) and an unbounded density field (infinite repeating mist) and verify that the WGSL raymarcher accurately accumulates the density mathematically without arbitrary bounding boxes.
 “
 
-“
-
-
-# Earthcall Ourverse Manifesto
 
 Earthcall’s language is not meant to form people independently. It’s meant to hold Christian experiences... Everything else is built on that.
 

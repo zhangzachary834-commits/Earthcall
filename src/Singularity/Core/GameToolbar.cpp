@@ -1229,15 +1229,15 @@ void Game::renderAssetsConsole(Zone& zone) {
     }
     ImGui::SameLine();
     if (ImGui::Button("Save As")) {
-        _saveLoad.showSaveWindow = true;
+        mgr.getSaveLoadState().showSaveWindow = true;
     }
     ImGui::SameLine();
     if (ImGui::Button("Load")) {
-        updateSaveFiles();
-        _saveLoad.showLoadWindow = true;
+        mgr.updateSaveFiles();
+        mgr.getSaveLoadState().showLoadWindow = true;
     }
     if (ImGui::Button("Save Manager")) {
-        _saveLoad.showManager = true;
+        mgr.getSaveLoadState().showManager = true;
     }
 
     ImGui::Separator();

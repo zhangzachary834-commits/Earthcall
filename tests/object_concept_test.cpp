@@ -118,7 +118,7 @@ int main() {
 
         const std::size_t alpha = mgr.rete().addAlphaNode(
             "type == birth-signal",
-            [](const ReteFact& f) { return f.type == "birth-signal"; });
+            [](const FactPtr& f) { return f->type == "birth-signal"; });
         mgr.rete().bindLawToAlpha(birthLaw->getIdentifier(), alpha);
 
         // Unauthored: the event arrives but nothing may enter the world.

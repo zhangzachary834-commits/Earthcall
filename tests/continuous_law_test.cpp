@@ -190,7 +190,7 @@ int main() {
         raiseAll->setActionModel(ActionNode::set("position.y", PropertyValue(20.0)));
         const std::size_t alphaRaise = mgr.rete().addAlphaNode(
             "type == raise-signal",
-            [](const ReteFact& f) { return f.type == "raise-signal"; });
+            [](const FactPtr& f) { return f->type == "raise-signal"; });
         mgr.rete().bindLawToAlpha(raiseAll->getIdentifier(), alphaRaise);
 
         // ONE event whose subject is only `a` — yet BOTH rise: the sweep
@@ -344,7 +344,7 @@ int main() {
             "@event.object.position.y", PropertyValue(21.0)));
         const std::size_t alphaContact = mgr.rete().addAlphaNode(
             "type == contact-perceived",
-            [](const ReteFact& f) { return f.type == "contact-perceived"; });
+            [](const FactPtr& f) { return f->type == "contact-perceived"; });
         mgr.rete().bindLawToAlpha(respond->getIdentifier(), alphaContact);
 
         mgr.tick();     // perception fires; its testimony becomes a fact

@@ -155,11 +155,11 @@ int main() {
         //     physics engine's rigid body — collision RESPONSE can be law.
         assert(PropertyPath::parse("velocity").setValue(
             obj, PropertyValue(glm::vec3(0.0f, 5.0f, 0.0f))) == PropertyPath::PathResult::Ok);
-        assert(std::fabs(Physics::getBodyFor(&obj).velocity.y - 5.0f) < 1e-5f);
+        assert(std::fabs(Physics::getFormFor(&obj).velocity.y - 5.0f) < 1e-5f);
         assert(PropertyPath::parse("velocity.y").setValue(obj, PropertyValue(-2.0f)) == PropertyPath::PathResult::Ok);
-        assert(std::fabs(Physics::getBodyFor(&obj).velocity.y + 2.0f) < 1e-5f);
+        assert(std::fabs(Physics::getFormFor(&obj).velocity.y + 2.0f) < 1e-5f);
         assert(PropertyPath::parse("mass").setValue(obj, PropertyValue(2.5f)) == PropertyPath::PathResult::Ok);
-        assert(std::fabs(Physics::getBodyFor(&obj).mass - 2.5f) < 1e-5f);
+        assert(std::fabs(Physics::getFormFor(&obj).mass - 2.5f) < 1e-5f);
         assert(PropertyPath::parse("mass").setValue(obj, PropertyValue(0.0)) != PropertyPath::PathResult::Ok);
         assert(PropertyPath::parse("mass").setValue(obj, PropertyValue(-1.0)) != PropertyPath::PathResult::Ok);
 

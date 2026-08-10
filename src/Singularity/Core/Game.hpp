@@ -22,17 +22,17 @@
 #include "Singularity/Input/KeyboardHandler.hpp"
 #include "Singularity/Input/MouseHandler.hpp"
 
-#include "BrushSettings.hpp"
+#include "Form/Object/Tool/BrushSettings.hpp"
 #include "Singularity/Screen/Camera.hpp"
-#include "CloneToolState.hpp"
-#include "FacePaintSettings.hpp"
-#include "PlacementState.hpp"
-#include "PolyhedronSettings.hpp"
-#include "PotteryTool.hpp"
-#include "RotationSettings.hpp"
-#include "SaveLoadState.hpp"
+#include "Form/Object/Tool/CloneToolState.hpp"
+#include "Form/Object/Tool/FacePaintSettings.hpp"
+#include "Form/Object/Tool/PlacementState.hpp"
+#include "Form/Object/Tool/PolyhedronSettings.hpp"
+#include "Form/Object/Tool/PotteryTool.hpp"
+#include "Form/Object/Tool/RotationSettings.hpp"
 
 #include "json.hpp"
+
 #include <array>
 #include <memory>
 #include <string>
@@ -350,35 +350,31 @@ public:
     bool isMenuOpen() const { return _mainMenu.isOpen(); }
     bool& getShowKeymapRef() { return _showKeymapWindow; }
 
-    // Save / load
+    // Save/load delegates to ZoneManager (temporary until full refactor)
     void saveState(const std::string& filename);
     void loadState(const std::string& filename);
-    
-    void setSaveDirectory(const std::string& dir);
-    std::string getSaveDirectory() const;
-    
-    // FlatBuffer delta saves
+    void saveStateWithLog(const std::string& customName = "");
     std::vector<uint8_t> buildSaveChunkFlatBuffer();
     void loadSaveChunkFlatBuffer(const std::vector<uint8_t>& buffer);
-    // Manifesto: "Every Person has a Home they fully own." Idempotent —
-    // creates the player's Home zone only if no zone they own exists yet.
-    void ensureHomeZone();
-    void saveStateWithLog(const std::string& customName = "");
-    void updateSaveFiles();
+    nlohmann::json buildSaveJson() const;
+
+    // Save/load UI methods (temporary, will be moved to OurVerse)
     void drawLoadWindow();
     void drawSaveWindow();
     void drawSaveManager();
 
 private:
+    // Builds the SaveContext (see ZonesOfEarth/SaveContext.hpp) that carries
+    // the seven members save/load actually touches out to ZoneManager,
+    // without ZoneManager needing to know Game exists.
+    SaveContext makeSaveContext();
+
     enum class PerspectiveMode { FirstPerson = 0, SecondPerson, ThirdPerson };
     enum class Mode3D { None = -1, FacePaint = 0, FaceBrush, BrushCreate, Pottery, Rotation, Selection, Morph, Combine, Sculpt, Graph };
     enum class ToolTarget3D { WorldObjects = 0 };
     enum class CreatorSection { Paint = 0, Create3D, Character, World, Assets, Relations, Zones };
 
     using BrushType = Core::BrushType;
-
-    // Save serialization helper (shared by saveState & saveStateWithLog)
-    nlohmann::json buildSaveJson() const;
 
     // Window handle (cached for input & dimensions)
     GLFWwindow* _window = nullptr;
@@ -394,7 +390,6 @@ private:
     RotationSettings    _rotation;
     CloneToolState      _clone;
     StrokeTracking      _strokeTracking;
-    SaveLoadState       _saveLoad;
 
     // Perspective & controls
     PerspectiveMode _currentPerspective = PerspectiveMode::FirstPerson;

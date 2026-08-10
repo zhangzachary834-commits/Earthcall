@@ -189,7 +189,7 @@ int main() {
             boundedInT(OntoMath::ScalarForm::variable("t", 1.0, 2.0), 0.0, 2.0),
             tBinding));                                    // y := 2t for t in [0,2]
         const std::size_t alphaKick = mgr.rete().addAlphaNode(
-            "type == kick", [](const ReteFact& f) { return f.type == "kick"; });
+            "type == kick", [](const FactPtr& f) { return f->type == "kick"; });
         mgr.rete().bindLawToAlpha(arc->getIdentifier(), alphaKick);
 
         Universe::instance().setClock(200.0, 0.1);
@@ -376,7 +376,7 @@ int main() {
         onTheOther->setActionModel(ActionNode::set(
             "@event.object.position.y", PropertyValue(33.0)));
         const std::size_t alphaTouch = mgr.rete().addAlphaNode(
-            "type == touch", [](const ReteFact& f) { return f.type == "touch"; });
+            "type == touch", [](const FactPtr& f) { return f->type == "touch"; });
         mgr.rete().bindLawToAlpha(onTheOther->getIdentifier(), alphaTouch);
 
         Core::EventBus::instance().publish(

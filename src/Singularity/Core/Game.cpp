@@ -5,7 +5,7 @@
 //   GameRender.cpp      – render()
 //   GameToolbar.cpp     – renderCreatorToolbar()
 //   GamePolyhedron.cpp  – buildCurrentPolyhedron(), _polyhedron.generateCustom()
-//   GameSaveLoad.cpp    – save / load / shutdown / save-UI dialogs
+//   Save/load methods moved to ZoneManager
 
 #include "Game.hpp"
 #include "Form/Object/Object.hpp"
@@ -31,6 +31,14 @@ Game::~Game() {
 
     // Cleanup Advanced Face Paint System
     AdvancedFacePaint::cleanupAdvancedPainter();
+}
+
+// ------------------------------------------------------------------
+// shutdown - Automatically save game state upon shutdown
+// ------------------------------------------------------------------
+void Game::shutdown() {
+    // Automatically save game state upon shutdown
+    saveStateWithLog();
 }
 
 // ---- Simple accessors ------------------------------------------------

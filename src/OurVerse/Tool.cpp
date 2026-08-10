@@ -10,6 +10,8 @@
 #include <iostream>
 #include <utility>
 
+extern ZoneManager mgr;
+
 namespace {
 constexpr float kBrushRadiusToScreenPixels = 1000.0f;
 constexpr float kDefaultBrushRadius = 0.001f;

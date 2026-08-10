@@ -102,7 +102,8 @@ public:
     // Transient load state: element identifiers read from a save, waiting for
     // the rest of the world to exist before they can be re-linked into the
     // element Formation (World's from_json does the pass, then clears this).
-    // Access via _composition.pendingElementIds
+    std::vector<std::string>& getPendingElementIds() { return _composition.pendingElementIds; }
+    const std::vector<std::string>& getPendingElementIds() const { return _composition.pendingElementIds; }
 
     // Unique identifier for the object.
     std::string getObjectID() const;

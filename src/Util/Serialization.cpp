@@ -365,7 +365,7 @@ void from_json(const nlohmann::json& j, Object& obj){
     }
     if (j.contains("elements") && j["elements"].is_array()) {
         for (const auto& id : j["elements"]) {
-            if (id.is_string()) obj.pendingElementIds.push_back(id.get<std::string>());
+            if (id.is_string()) obj.getPendingElementIds().push_back(id.get<std::string>());
         }
     }
     
@@ -697,8 +697,8 @@ void from_json(const nlohmann::json& j, World& world){
     // beings that are present, never a pointer to something absent).
     auto& owned = world.getOwnedObjectsMutable();
     for (auto& holder : owned) {
-        if (!holder || holder->pendingElementIds.empty()) continue;
-        for (const auto& id : holder->pendingElementIds) {
+        if (!holder || holder->getPendingElementIds().empty()) continue;
+        for (const auto& id : holder->getPendingElementIds()) {
             for (auto& candidate : owned) {
                 if (candidate && candidate.get() != holder.get() &&
                     candidate->getIdentifier() == id) {
@@ -707,6 +707,6 @@ void from_json(const nlohmann::json& j, World& world){
                 }
             }
         }
-        holder->pendingElementIds.clear();
+        holder->getPendingElementIds().clear();
     }
 }

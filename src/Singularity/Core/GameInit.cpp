@@ -117,7 +117,7 @@ bool Game::init() {
     mgr.addZone(Zone("Temple of Echoes", "default"));
     mgr.addZone(Zone("Cavern of Light", "default"));
     mgr.addZone(Zone("Character Architect Forge", "default"));
-    ensureHomeZone();
+    mgr.ensureHomeZone(_player.getIdentifier());
 
     // Initialize elemental tool handler with zone manager
     _elementalToolHandler = ElementalToolHandler(&mgr);
@@ -145,9 +145,9 @@ bool Game::init() {
 
     // Enhanced main menu options (non-destructive; all previous features intact)
     _mainMenu.addOption("Quick Save", GLFW_KEY_S, [this]() { saveStateWithLog(); });
-    _mainMenu.addOption("Save As...", GLFW_KEY_A, [this]() { _saveLoad.showSaveWindow = true; });
-    _mainMenu.addOption("Load", GLFW_KEY_L, [this]() { updateSaveFiles(); _saveLoad.showLoadWindow = true; });
-    _mainMenu.addOption("Save Manager", GLFW_KEY_G, [this]() { _saveLoad.showManager = true; });
+    _mainMenu.addOption("Save As...", GLFW_KEY_A, [this]() { mgr.getSaveLoadState().showSaveWindow = true; });
+    _mainMenu.addOption("Load", GLFW_KEY_L, [this]() { mgr.updateSaveFiles(); mgr.getSaveLoadState().showLoadWindow = true; });
+    _mainMenu.addOption("Save Manager", GLFW_KEY_G, [this]() { mgr.getSaveLoadState().showManager = true; });
     _mainMenu.addOption("Toggle Chat", GLFW_KEY_H, [this]() { _showChatWindow = !_showChatWindow; });
     _mainMenu.addOption("Toggle Toolbar", GLFW_KEY_T, [this]() { _showToolbar = !_showToolbar; });
 
@@ -395,36 +395,6 @@ void Game::sWindowFocusCallback(GLFWwindow* win, int focused) {
         self->_prevFocusCallback(win, focused);
     }
     if (self) self->_mouseHandler.onWindowFocus(focused);
-}
-
-// --------------------------------------------------------------
-// Manifesto: "Every Person has a Home they fully own." Idempotent:
-// if the player already owns ANY zone (fresh boot or a loaded save),
-// nothing happens; otherwise a Home zone is born, owned by them.
-// Named plainly "Home" so laws address it as @Home.* without spaces.
-// --------------------------------------------------------------
-void Game::ensureHomeZone() {
-    const std::string playerId = _player.getIdentifier();
-    if (playerId.empty()) return;   // an unnamed person cannot hold title
-
-    for (const auto& zone : mgr.zones()) {
-        if (zone.owner() == playerId) return;   // already homed
-    }
-    // A save from before ownership existed may hold an unowned "Home" —
-    // claim it instead of minting a name-twin (identifiers must stay unique).
-    for (auto& zone : mgr.zones()) {
-        if (zone.name() == "Home" && zone.owner().empty()) {
-            zone.setOwner(playerId);
-            return;
-        }
-    }
-
-    Zone home("Home", "strict", 0.08f, 0.06f, 0.12f);
-    home.setOwner(playerId);
-    home.setQuality("kind", "home");
-    mgr.addZone(std::move(home));
-    printf("[Init] Home established for '%s' (zone count now %zu)\n",
-           playerId.c_str(), mgr.zones().size());
 }
 
 void Game::sFramebufferSizeCallback(GLFWwindow* win, int width, int height) {

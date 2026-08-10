@@ -78,7 +78,7 @@ int main() {
 
         const std::size_t alphaEnters = mgr.rete().addAlphaNode(
             "type == enters-world",
-            [](const ReteFact& f) { return f.type == "enters-world"; });
+            [](const FactPtr& f) { return f->type == "enters-world"; });
         mgr.rete().bindLawToAlpha(floorLaw->getIdentifier(), alphaEnters);
 
         Object obj;
@@ -113,7 +113,7 @@ int main() {
         gildLaw->setActionModel(ActionNode::set("shape.fillet", PropertyValue(0.9f)));
         const std::size_t alphaApplied = mgr.rete().addAlphaNode(
             "type == law-applied",
-            [](const ReteFact& f) { return f.type == "law-applied"; });
+            [](const FactPtr& f) { return f->type == "law-applied"; });
         mgr.rete().bindLawToAlpha(gildLaw->getIdentifier(), alphaApplied);
 
         Core::EventBus::instance().publish(

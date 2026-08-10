@@ -2,10 +2,10 @@
 
 **How to eliminate the Game God object and distribute its concerns ontologically.**
 
-**Status:** Rungs 0-3 in progress. Execution ongoing.
+**Status:** Rungs 0-3 and 5 complete. Rung 4 partial — settings structs relocated, authored Tool beings not started (see §8). Execution ongoing.
 **Author:** Mistral Vibe + Zachary Zhang
 **Target:** Delete `src/Singularity/Core/Game.hpp` and all `Game*.cpp` files
-**Last Updated:** 2026-08-09
+**Last Updated:** 2026-08-10
 
 ---
 
@@ -429,8 +429,6 @@ Use the todo system to track progress:
   - All Game*.cpp files use direct member access which works with both types
   - CameraState.hpp still exists but is no longer included anywhere
 
-### Completed
-
 - **[Rung 3] Migrate Player Movement State** ✅
   - **Phase 1 (Shadow) - COMPLETED:**
     - Added `grounded`, `wasGrounded`, `wasMoving`, `jumpKeyDownLast` to Person class
@@ -449,7 +447,6 @@ Use the todo system to track progress:
   - **Phase 5 (Purge) - COMPLETED:**
     - Removed `_playerVelY`, `_playerGrounded`, `_jumpKeyDownLast`, `_playerWasMoving` from Game.hpp
     - No remaining references to these members in the codebase
-    - Build verified: Game.cpp and GameUpdate.cpp compile successfully
   - **Phase 6 (Law) - COMPLETED:**
     - Moved `stepMovement()` logic from Game to `Person::stepMovement()`
     - Game no longer owns movement integration
@@ -457,22 +454,36 @@ Use the todo system to track progress:
     - Game calls `person.stepMovement(dt, window, camera, mgr, flying, canMove)`
   - **Next:** Consider making Person::stepMovement a Law (requires refactoring to use Law system)
 
+- **[Rung 5] Extract Save/Load** ✅
+  - Moved `SaveLoadState`, `ensureHomeZone()`, and the save/load methods (`saveState`, `loadState`, `saveStateWithLog`, `buildSaveJson`, `buildSaveChunkFlatBuffer`, `loadSaveChunkFlatBuffer`, `updateSaveFiles`, `setSaveDirectory`, `getSaveDirectory`) onto `ZoneManager`; removed the `SaveLoadState` member and its include from Game; deleted `SaveLoadState.hpp`. Game now holds thin delegates only.
+  - The move initially COPIED rather than moved: eight duplicate definitions were left behind in `GameSaveLoad.cpp` (redefinitions of `buildSaveJson`, `buildSaveChunkFlatBuffer`, `loadSaveChunkFlatBuffer`, `saveState`, `saveStateWithLog`, `loadState`, `shutdown`, `updateSaveFiles`), which did not compile. These have been removed. Earlier drafts of this document claimed "Build verified" for this rung; that claim was false when written.
+  - Layer inversion resolved: `ZonesOfEarth/SaveContext.hpp` carries the seven Game members save/load actually touches (`_camera`, `_mouseHandler`, `_currentColor`, `_currentTool`, `_player`, `_lawManager`, `_worldTime`) as pointers to the live objects, so a load can still write back. `ZoneManager`'s four methods take a `SaveContext&` in place of a `Core::Game*`; `ZoneManager.cpp` no longer includes `Singularity/Core/Game.hpp`; `friend class ::ZoneManager` is gone from `Game.hpp`; and `extern ZoneManager mgr` no longer appears in any header (the delegate bodies moved out-of-line into `GameSaveLoad.cpp`). **`ZonesOfEarth` no longer depends on `Singularity/Core`.**
+  - Still on Game, pending Rung 6: the save/load ImGui dialogs (`drawLoadWindow`, `drawSaveWindow`, `drawSaveManager`). These are UI surface, not persistence, and belong in `OurVerse/`.
+  - Verified: target `earthcall` builds clean; ctest 35/35.
+
 ### Pending
 
-- **[Rung 4] Extract Tool State** ⏳
-  - BrushSettings, PolyhedronSettings, FaceBrushSettings, AdvancedFacePaintState, etc. still in Game
-  - Target: Create `Form/Object/Tool/` hierarchy, migrate tool settings as properties on Tool beings
-
-- **[Rung 5] Extract Save/Load** ⏳
-  - SaveLoadState, saveState, loadState, etc. still in Game
-  - Target: Move to ZoneManager persistence
+- **[Rung 4] Extract Tool State** — PARTIAL
+  - Done: relocated the seven tool settings structs (BrushSettings.hpp, CloneToolState.hpp, FacePaintSettings.hpp, PlacementState.hpp, PolyhedronSettings.hpp, PotteryTool.hpp, RotationSettings.hpp) from `Singularity/Core/` to `Form/Object/Tool/`; updated includes in Game.hpp and PolyhedronSettings.cpp; deleted the originals from Singularity/Core/
+  - Not done: the stated goal of this rung — "migrate tool settings as properties on Tool beings" — has not happened. Game still owns the settings structs directly as members; they were only moved to a new file location, not turned into properties on authored beings.
+  - A `Form::Tool` base class with a `Type` enum (`Brush`, `Polyhedron`, `FaceBrush`, `AdvancedFacePaint`, `Placement`, `Pottery`, `Rotation`, `Clone`, `StrokeTracking`) was created as part of this rung's earlier work. It has been deleted (`src/Form/Object/Tool/Tool.hpp`, `Tool.cpp`): a C++ class for a domain noun plus an enum of kinds-of-thing is exactly what CLAUDE.md refusals #1 and #3 forbid. It was also referenced by nothing in the codebase and contained a guaranteed-infinite-recursion bug in `getIdentifier()`. **A C++ `Tool` class with a `Type` enum is NOT an acceptable implementation of this rung** — do not recreate it.
+  - Remaining work: author Tool beings in-world (per `NEW_KIND_FRAMEWORK.md` / `AUTHORED_CATEGORIES.md`), not a new subclass hierarchy. This work has not started.
 
 - **[Rung 6] Delete Game** ⏳
-  - Depends on completion of Rungs 3-5
+  - Depends on completion of Rungs 3-5. Rung 5 is complete; Rung 4 is partial (see above). Rung 6 has not started.
+  - Also folded in here: moving the save/load ImGui dialogs off Game into `OurVerse/`.
+
+### Test Suite
+
+ctest is **35/35**. Five test executables previously failed to compile and did not run; both causes were API drift from earlier refactors, unrelated to Rungs 4/5, and have been fixed:
+
+- `continuous_law_test`, `law_loop_test`, `object_concept_test`, `time_flow_test` — seven alpha-node lambdas took `const ReteFact&`, but `ReteNetwork::AlphaPredicate` is `std::function<bool(const FactPtr&)>` where `FactPtr = std::shared_ptr<ReteFact>` (`src/ZonesOfEarth/AuthorsOfLaw/Law.hpp:397,412`). Lambdas now take `const FactPtr&` and dereference with `f->type`.
+- `property_bridge_test` — called `Physics::getBodyFor(...)`, which no longer exists; renamed to `Physics::getFormFor(Object*, float)` (`src/ZonesOfEarth/Physics/Physics.hpp:71`), returning `RigidForm&`. The `.velocity` / `.mass` fields the test reads are unchanged.
 
 ### Files Created
 
 - `docs/architecture/GAME_ELIMINATION_PLAN.md` - This document
+- `src/ZonesOfEarth/SaveContext.hpp` - Carries save/load state across the layer boundary so `ZonesOfEarth` need not know `Core::Game` exists
 - `src/Singularity/Input/KeyboardHandler.hpp`
 - `src/Singularity/Input/KeyboardHandler.cpp`
 - `src/Singularity/Input/MouseHandler.hpp`
@@ -487,11 +498,11 @@ Use the todo system to track progress:
 - `src/Singularity/Core/GameUpdate.cpp` - Shadow writes for player movement state
 - `src/Person/Person.hpp` - Added `grounded`, `wasGrounded`, `wasMoving` properties
 - `src/Person/Person.cpp` - Updated serialization for new properties
-
-### Files Modified
-
-- `src/Singularity/Core/Game.hpp` - Freeze comment, include paths, Camera type
-- `src/Singularity/Core/GameInit.cpp` - Handler initialization, menu sync
+- `src/ZonesOfEarth/ZoneManager.hpp` / `.cpp` - Owns save/load state and methods; takes `SaveContext`
+- `src/Singularity/Core/GameSaveLoad.cpp` - Duplicate definitions removed; delegate bodies moved here out-of-line
+- `src/Singularity/Core/GameToolbar.cpp` - Save/load call sites routed through Game's delegates
+- `src/Form/Object/Object.hpp` - Added `getPendingElementIds()` accessor pair for the private `_composition`
+- `src/Util/Serialization.cpp` - Uses the new `getPendingElementIds()` accessor
 
 ### Files Deleted
 
@@ -499,6 +510,8 @@ Use the todo system to track progress:
 - `src/Perspective/KeyboardHandler.cpp`
 - `src/Perspective/MouseHandler.hpp`
 - `src/Perspective/MouseHandler.cpp`
+- `src/Form/Object/Tool/Tool.hpp` - domain-noun class with a kind-enum, violated CLAUDE.md refusals #1 and #3; unreferenced; see Rung 4 above
+- `src/Form/Object/Tool/Tool.cpp` - same as above
 
 ### Files To Delete (After Rung 6)
 
