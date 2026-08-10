@@ -1,30 +1,19 @@
 #include "KeyboardHandler.hpp"
-#include "Singularity/Core/Game.hpp"
 #include <algorithm>
-#ifdef IMGUI_DISABLE
-// ImGui not available
-#else
+#if !defined(IMGUI_DISABLE) && !defined(HEADLESS)
 #include <imgui.h>
 #endif
 
 KeyboardHandler::KeyboardHandler() {
-    // Constructor - initialize with default state
     _isEnabled = true;
-    _gameInstance = nullptr;
-    // Initialize game key states to false
-    _gameKeyStates = {};
 }
 
 KeyboardHandler::~KeyboardHandler() {
-    // Destructor - cleanup is handled automatically
 }
 
 void KeyboardHandler::update() {
-    if (!_isEnabled) {
-        return;
-    }
+    if (!_isEnabled) return;
     
-    // Advance transient states so JustPressed is only visible for one update cycle.
     for (auto& [key, binding] : _keyBindings) {
         if (binding.state == KeyState::JustPressed) {
             binding.state = KeyState::Pressed;
@@ -35,15 +24,11 @@ void KeyboardHandler::update() {
 }
 
 void KeyboardHandler::handleKeyPress(int key) {
-    if (!_isEnabled) {
-        return;
-    }
+    if (!_isEnabled) return;
     
     auto it = _keyBindings.find(key);
     if (it != _keyBindings.end() && it->second.isEnabled) {
         KeyBinding& binding = it->second;
-        
-        // Only trigger if not already pressed
         if (binding.state == KeyState::Released) {
             binding.state = KeyState::JustPressed;
             if (binding.callback) {
@@ -54,9 +39,7 @@ void KeyboardHandler::handleKeyPress(int key) {
 }
 
 void KeyboardHandler::handleKeyRelease(int key) {
-    if (!_isEnabled) {
-        return;
-    }
+    if (!_isEnabled) return;
     
     auto it = _keyBindings.find(key);
     if (it != _keyBindings.end()) {
@@ -140,214 +123,176 @@ int KeyboardHandler::getKeyForAction(const std::string& action) const {
 }
 
 void KeyboardHandler::setupDefaultPerspectiveBindings() {
-    // Common perspective controls
-    bindKey(GLFW_KEY_W, "move_forward", [](){});
-    bindKey(GLFW_KEY_S, "move_backward", [](){});
-    bindKey(GLFW_KEY_A, "move_left", [](){});
-    bindKey(GLFW_KEY_D, "move_right", [](){});
-    bindKey(GLFW_KEY_SPACE, "move_up", [](){});
-    bindKey(GLFW_KEY_LEFT_SHIFT, "move_down", [](){});
-    bindKey(GLFW_KEY_ESCAPE, "toggle_cursor", [](){});
-    bindKey(GLFW_KEY_F1, "perspective_1", [](){});
-    bindKey(GLFW_KEY_F2, "perspective_2", [](){});
-    bindKey(GLFW_KEY_F3, "perspective_3", [](){});
-    bindKey(GLFW_KEY_F4, "perspective_4", [](){});
-    bindKey(GLFW_KEY_F5, "perspective_5", [](){});
+    bindKey(GLFW_KEY_W, "move_forward", []{});
+    bindKey(GLFW_KEY_S, "move_backward", []{});
+    bindKey(GLFW_KEY_A, "move_left", []{});
+    bindKey(GLFW_KEY_D, "move_right", []{});
+    bindKey(GLFW_KEY_SPACE, "move_up", []{});
+    bindKey(GLFW_KEY_LEFT_SHIFT, "move_down", []{});
+    bindKey(GLFW_KEY_ESCAPE, "toggle_cursor", []{});
+    bindKey(GLFW_KEY_F1, "perspective_1", []{});
+    bindKey(GLFW_KEY_F2, "perspective_2", []{});
+    bindKey(GLFW_KEY_F3, "perspective_3", []{});
+    bindKey(GLFW_KEY_F4, "perspective_4", []{});
+    bindKey(GLFW_KEY_F5, "perspective_5", []{});
 }
 
 void KeyboardHandler::setupFirstPersonBindings() {
-    // First person specific controls
-    bindKey(GLFW_KEY_W, "walk_forward", [](){});
-    bindKey(GLFW_KEY_S, "walk_backward", [](){});
-    bindKey(GLFW_KEY_A, "strafe_left", [](){});
-    bindKey(GLFW_KEY_D, "strafe_right", [](){});
-    bindKey(GLFW_KEY_SPACE, "jump", [](){});
-    bindKey(GLFW_KEY_LEFT_SHIFT, "crouch", [](){});
-    bindKey(GLFW_KEY_LEFT_CONTROL, "sprint", [](){});
-    bindKey(GLFW_KEY_E, "interact", [](){});
-    bindKey(GLFW_KEY_Q, "use_item", [](){});
-    bindKey(GLFW_KEY_R, "reload", [](){});
+    bindKey(GLFW_KEY_W, "walk_forward", []{});
+    bindKey(GLFW_KEY_S, "walk_backward", []{});
+    bindKey(GLFW_KEY_A, "strafe_left", []{});
+    bindKey(GLFW_KEY_D, "strafe_right", []{});
+    bindKey(GLFW_KEY_SPACE, "jump", []{});
+    bindKey(GLFW_KEY_LEFT_SHIFT, "crouch", []{});
+    bindKey(GLFW_KEY_LEFT_CONTROL, "sprint", []{});
+    bindKey(GLFW_KEY_E, "interact", []{});
+    bindKey(GLFW_KEY_Q, "use_item", []{});
+    bindKey(GLFW_KEY_R, "reload", []{});
 }
 
 void KeyboardHandler::setupThirdPersonBindings() {
-    // Third person specific controls
-    bindKey(GLFW_KEY_W, "move_forward", [](){});
-    bindKey(GLFW_KEY_S, "move_backward", [](){});
-    bindKey(GLFW_KEY_A, "turn_left", [](){});
-    bindKey(GLFW_KEY_D, "turn_right", [](){});
-    bindKey(GLFW_KEY_SPACE, "jump", [](){});
-    bindKey(GLFW_KEY_LEFT_SHIFT, "crouch", [](){});
-    bindKey(GLFW_KEY_LEFT_CONTROL, "sprint", [](){});
-    bindKey(GLFW_KEY_E, "interact", [](){});
-    bindKey(GLFW_KEY_Q, "use_item", [](){});
-    bindKey(GLFW_KEY_R, "reload", [](){});
-    bindKey(GLFW_KEY_TAB, "switch_target", [](){});
+    bindKey(GLFW_KEY_W, "move_forward", []{});
+    bindKey(GLFW_KEY_S, "move_backward", []{});
+    bindKey(GLFW_KEY_A, "turn_left", []{});
+    bindKey(GLFW_KEY_D, "turn_right", []{});
+    bindKey(GLFW_KEY_SPACE, "jump", []{});
+    bindKey(GLFW_KEY_LEFT_SHIFT, "crouch", []{});
+    bindKey(GLFW_KEY_LEFT_CONTROL, "sprint", []{});
+    bindKey(GLFW_KEY_E, "interact", []{});
+    bindKey(GLFW_KEY_Q, "use_item", []{});
+    bindKey(GLFW_KEY_R, "reload", []{});
+    bindKey(GLFW_KEY_TAB, "switch_target", []{});
 }
 
 void KeyboardHandler::setupFreeCameraBindings() {
-    // Free camera specific controls
-    bindKey(GLFW_KEY_W, "camera_forward", [](){});
-    bindKey(GLFW_KEY_S, "camera_backward", [](){});
-    bindKey(GLFW_KEY_A, "camera_left", [](){});
-    bindKey(GLFW_KEY_D, "camera_right", [](){});
-    bindKey(GLFW_KEY_SPACE, "camera_up", [](){});
-    bindKey(GLFW_KEY_LEFT_SHIFT, "camera_down", [](){});
-    bindKey(GLFW_KEY_LEFT_CONTROL, "camera_fast", [](){});
-    bindKey(GLFW_KEY_LEFT_ALT, "camera_slow", [](){});
-    bindKey(GLFW_KEY_R, "reset_camera", [](){});
-    bindKey(GLFW_KEY_F, "focus_target", [](){});
-}
-
-// Game-specific key bindings
-void KeyboardHandler::setupGameBindings() {
-    // Menu and UI controls
-    setupMenuBindings();
-    
-    // Camera movement controls
-    setupCameraBindings();
-    
-    // Tool and perspective controls
-    setupToolBindings();
-    setupPerspectiveBindings();
-    
-    // Utility controls
-    setupUtilityBindings();
+    bindKey(GLFW_KEY_W, "camera_forward", []{});
+    bindKey(GLFW_KEY_S, "camera_backward", []{});
+    bindKey(GLFW_KEY_A, "camera_left", []{});
+    bindKey(GLFW_KEY_D, "camera_right", []{});
+    bindKey(GLFW_KEY_SPACE, "camera_up", []{});
+    bindKey(GLFW_KEY_LEFT_SHIFT, "camera_down", []{});
+    bindKey(GLFW_KEY_LEFT_CONTROL, "camera_fast", []{});
+    bindKey(GLFW_KEY_LEFT_ALT, "camera_slow", []{});
+    bindKey(GLFW_KEY_R, "reset_camera", []{});
+    bindKey(GLFW_KEY_F, "focus_target", []{});
 }
 
 void KeyboardHandler::setupMenuBindings() {
-    // Menu toggle with M
-    bindKey(GLFW_KEY_M, "toggle_menu", [](){});
-    
-    // Cursor lock/unlock with Escape
-    bindKey(GLFW_KEY_ESCAPE, "toggle_cursor_lock", [](){});
-    
-    // Chat window toggle with H
-    bindKey(GLFW_KEY_H, "toggle_chat", [](){});
-    
-    // Integration UI toggle with I
-    bindKey(GLFW_KEY_I, "toggle_integration_ui", [](){});
-    
-    // Toolbar visibility toggle with T
-    bindKey(GLFW_KEY_T, "toggle_toolbar", [](){});
+    bindKey(GLFW_KEY_M, "toggle_menu", []{});
+    bindKey(GLFW_KEY_ESCAPE, "toggle_cursor_lock", []{});
+    bindKey(GLFW_KEY_H, "toggle_chat", []{});
+    bindKey(GLFW_KEY_I, "toggle_integration_ui", []{});
+    bindKey(GLFW_KEY_T, "toggle_toolbar", []{});
 }
 
 void KeyboardHandler::setupCameraBindings() {
-    // Camera movement WASD + SHIFT/SPACE
-    bindKey(GLFW_KEY_W, "camera_forward", [](){});
-    bindKey(GLFW_KEY_S, "camera_backward", [](){});
-    bindKey(GLFW_KEY_A, "camera_left", [](){});
-    bindKey(GLFW_KEY_D, "camera_right", [](){});
-    bindKey(GLFW_KEY_LEFT_SHIFT, "camera_down", [](){});
-    bindKey(GLFW_KEY_SPACE, "camera_up", [](){});
+    bindKey(GLFW_KEY_W, "camera_forward", []{});
+    bindKey(GLFW_KEY_S, "camera_backward", []{});
+    bindKey(GLFW_KEY_A, "camera_left", []{});
+    bindKey(GLFW_KEY_D, "camera_right", []{});
+    bindKey(GLFW_KEY_LEFT_SHIFT, "camera_down", []{});
+    bindKey(GLFW_KEY_SPACE, "camera_up", []{});
+    bindKey(GLFW_KEY_V, "camera_sprint", []{});
+    bindKey(GLFW_KEY_LEFT_ALT, "camera_slow", []{});
     
-    // Speed modifiers
-    bindKey(GLFW_KEY_V, "camera_sprint", [](){});
-    bindKey(GLFW_KEY_LEFT_ALT, "camera_slow", [](){}); // Changed from M to avoid conflict
-    
-    // Manual offset controls (for ManualDistance placement mode)
-    bindKey(GLFW_KEY_RIGHT, "manual_offset_right", [](){});
-    bindKey(GLFW_KEY_LEFT, "manual_offset_left", [](){});
-    bindKey(GLFW_KEY_PAGE_UP, "manual_offset_up", [](){});
-    bindKey(GLFW_KEY_PAGE_DOWN, "manual_offset_down", [](){});
-    bindKey(GLFW_KEY_UP, "manual_offset_forward", [](){});
-    bindKey(GLFW_KEY_DOWN, "manual_offset_backward", [](){});
+    bindKey(GLFW_KEY_RIGHT, "manual_offset_right", []{});
+    bindKey(GLFW_KEY_LEFT, "manual_offset_left", []{});
+    bindKey(GLFW_KEY_PAGE_UP, "manual_offset_up", []{});
+    bindKey(GLFW_KEY_PAGE_DOWN, "manual_offset_down", []{});
+    bindKey(GLFW_KEY_UP, "manual_offset_forward", []{});
+    bindKey(GLFW_KEY_DOWN, "manual_offset_backward", []{});
 }
 
 void KeyboardHandler::setupToolBindings() {
-    // Perspective switching keys 1/2/3
-    bindKey(GLFW_KEY_1, "perspective_first_person", [](){});
-    bindKey(GLFW_KEY_2, "perspective_second_person", [](){});
-    bindKey(GLFW_KEY_3, "perspective_third_person", [](){});
-    
-    // Flight toggle (F)
-    bindKey(GLFW_KEY_F, "toggle_flight", [](){});
-    
-    // Quick switch to Character design zone via C key
-    bindKey(GLFW_KEY_C, "switch_to_character_zone", [](){});
-    
-    // Avatar demo toggle with O key
-    bindKey(GLFW_KEY_O, "toggle_avatar_demo", [](){});
+    bindKey(GLFW_KEY_1, "perspective_first_person", []{});
+    bindKey(GLFW_KEY_2, "perspective_second_person", []{});
+    bindKey(GLFW_KEY_3, "perspective_third_person", []{});
+    bindKey(GLFW_KEY_F, "toggle_flight", []{});
+    bindKey(GLFW_KEY_C, "switch_to_character_zone", []{});
+    bindKey(GLFW_KEY_O, "toggle_avatar_demo", []{});
 }
 
 void KeyboardHandler::setupPerspectiveBindings() {
-    // These are already covered in setupToolBindings, but kept separate for organization
-    bindKey(GLFW_KEY_1, "perspective_first_person", [](){});
-    bindKey(GLFW_KEY_2, "perspective_second_person", [](){});
-    bindKey(GLFW_KEY_3, "perspective_third_person", [](){});
+    bindKey(GLFW_KEY_1, "perspective_first_person", []{});
+    bindKey(GLFW_KEY_2, "perspective_second_person", []{});
+    bindKey(GLFW_KEY_3, "perspective_third_person", []{});
 }
 
 void KeyboardHandler::setupUtilityBindings() {
-    // Undo/Redo with Ctrl+Z and Ctrl+Y
-    bindKey(GLFW_KEY_Z, "undo", [](){});
-    bindKey(GLFW_KEY_Y, "redo", [](){});
-    
-    // Straight line mode with Shift
-    bindKey(GLFW_KEY_LEFT_SHIFT, "straight_line_mode", [](){});
-    bindKey(GLFW_KEY_RIGHT_SHIFT, "straight_line_mode", [](){});
+    bindKey(GLFW_KEY_Z, "undo", []{});
+    bindKey(GLFW_KEY_Y, "redo", []{});
+    bindKey(GLFW_KEY_LEFT_SHIFT, "straight_line_mode", []{});
+    bindKey(GLFW_KEY_RIGHT_SHIFT, "straight_line_mode", []{});
 }
 
-// Main game input update function - this replaces the keyboard handling in Game::update()
+void KeyboardHandler::setupGameBindings() {
+    setupMenuBindings();
+    setupCameraBindings();
+    setupToolBindings();
+    setupPerspectiveBindings();
+    setupUtilityBindings();
+}
+
+// Game input update - to be refactored to use EventBus instead of Game-specific logic
+// This method contains Game-specific state tracking and should be migrated
+// to use EventBus for cross-component communication.
 void KeyboardHandler::updateGameInput(GLFWwindow* window) {
-    if (!_isEnabled || !window || _keyBindings.empty()) {
-        return;
-    }
+    if (!_isEnabled || !window || _keyBindings.empty()) return;
     
     // Check if any text input is active (ImGui)
     bool anyTextInputActive = false;
-#ifdef IMGUI_DISABLE
-    // ImGui not available, assume no text input
-#else
+#if !defined(IMGUI_DISABLE) && !defined(HEADLESS)
     anyTextInputActive = ImGui::IsAnyItemActive() || ImGui::IsWindowFocused();
 #endif
     
-    // Detect if in-menu to gate most game shortcuts
-    bool menuOpen = (_gameInstance != nullptr) && _gameInstance->isMenuOpen();
-
     // Menu toggle with M (allowed even when menu is open)
     bool mPressed = glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS;
-    if (mPressed && !_gameKeyStates.mPressedLast) {
-        // This will be handled by the Game class through the callback system
+    static bool mPressedLast = false;
+    if (mPressed && !mPressedLast) {
         auto it = _keyBindings.find(GLFW_KEY_M);
         if (it != _keyBindings.end() && it->second.callback) {
             it->second.callback();
         }
     }
-    _gameKeyStates.mPressedLast = mPressed;
+    mPressedLast = mPressed;
 
     // Cursor lock/unlock with Escape
     bool escapePressed = glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS;
-    if (!menuOpen && escapePressed && !_gameKeyStates.escapePressedLast) {
+    static bool escapePressedLast = false;
+    if (!_menuOpen && escapePressed && !escapePressedLast) {
         auto it = _keyBindings.find(GLFW_KEY_ESCAPE);
         if (it != _keyBindings.end() && it->second.callback) {
             it->second.callback();
         }
     }
-    _gameKeyStates.escapePressedLast = escapePressed;
+    escapePressedLast = escapePressed;
 
     // Chat window toggle with H - only when not typing
     bool hPressed = glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS;
-    if (!menuOpen && hPressed && !_gameKeyStates.hPressedLast && !anyTextInputActive) {
+    static bool hPressedLast = false;
+    if (!_menuOpen && hPressed && !hPressedLast && !anyTextInputActive) {
         auto it = _keyBindings.find(GLFW_KEY_H);
         if (it != _keyBindings.end() && it->second.callback) {
             it->second.callback();
         }
     }
-    _gameKeyStates.hPressedLast = hPressed;
+    hPressedLast = hPressed;
 
     // Integration UI toggle with I - only when not typing
     bool iPressed = glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS;
-    if (!menuOpen && iPressed && !_gameKeyStates.iPressedLast && !anyTextInputActive) {
+    static bool iPressedLast = false;
+    if (!_menuOpen && iPressed && !iPressedLast && !anyTextInputActive) {
         auto it = _keyBindings.find(GLFW_KEY_I);
         if (it != _keyBindings.end() && it->second.callback) {
             it->second.callback();
         }
     }
-    _gameKeyStates.iPressedLast = iPressed;
+    iPressedLast = iPressed;
 
     // Toolbar visibility toggle with T - only when not typing
     bool tPressed = glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS;
     static bool tPressedLast = false;
-    if (!menuOpen && tPressed && !tPressedLast && !anyTextInputActive) {
+    if (!_menuOpen && tPressed && !tPressedLast && !anyTextInputActive) {
         auto it = _keyBindings.find(GLFW_KEY_T);
         if (it != _keyBindings.end() && it->second.callback) {
             it->second.callback();
@@ -356,7 +301,7 @@ void KeyboardHandler::updateGameInput(GLFWwindow* window) {
     tPressedLast = tPressed;
 
     // Perspective switching keys 1/2/3 - only when not typing
-    if (!menuOpen && !anyTextInputActive) {
+    if (!_menuOpen && !anyTextInputActive) {
         if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS) {
             auto it = _keyBindings.find(GLFW_KEY_1);
             if (it != _keyBindings.end() && it->second.callback) {
@@ -377,20 +322,21 @@ void KeyboardHandler::updateGameInput(GLFWwindow* window) {
         }
     }
 
-    // Flight toggle (F) only when not Survival and not typing
+    // Flight toggle (F) only when not typing
     bool fPressed = glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS;
-    if (!menuOpen && fPressed && !_gameKeyStates.fPressedLast && !anyTextInputActive) {
+    static bool fPressedLast = false;
+    if (!_menuOpen && fPressed && !fPressedLast && !anyTextInputActive) {
         auto it = _keyBindings.find(GLFW_KEY_F);
         if (it != _keyBindings.end() && it->second.callback) {
             it->second.callback();
         }
     }
-    _gameKeyStates.fPressedLast = fPressed;
+    fPressedLast = fPressed;
 
     // Quick switch to Character design zone via C key - only when not typing
     bool cPressed = glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS;
     static bool cPressedLast = false;
-    if (!menuOpen && cPressed && !cPressedLast && !anyTextInputActive) {
+    if (!_menuOpen && cPressed && !cPressedLast && !anyTextInputActive) {
         auto it = _keyBindings.find(GLFW_KEY_C);
         if (it != _keyBindings.end() && it->second.callback) {
             it->second.callback();
@@ -401,7 +347,7 @@ void KeyboardHandler::updateGameInput(GLFWwindow* window) {
     // Avatar demo toggle with O key - only when not typing
     bool oPressed = glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS;
     static bool oPressedLast = false;
-    if (!menuOpen && oPressed && !oPressedLast && !anyTextInputActive) {
+    if (!_menuOpen && oPressed && !oPressedLast && !anyTextInputActive) {
         auto it = _keyBindings.find(GLFW_KEY_O);
         if (it != _keyBindings.end() && it->second.callback) {
             it->second.callback();
@@ -415,19 +361,21 @@ void KeyboardHandler::updateGameInput(GLFWwindow* window) {
     bool zPressed = glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS;
     bool yPressed = glfwGetKey(window, GLFW_KEY_Y) == GLFW_PRESS;
     
-    if (!menuOpen && ctrlPressed && zPressed && !_gameKeyStates.undoPressedLast && !anyTextInputActive) {
+    static bool undoPressedLast = false;
+    if (!_menuOpen && ctrlPressed && zPressed && !undoPressedLast && !anyTextInputActive) {
         auto it = _keyBindings.find(GLFW_KEY_Z);
         if (it != _keyBindings.end() && it->second.callback) {
             it->second.callback();
         }
     }
-    _gameKeyStates.undoPressedLast = ctrlPressed && zPressed;
+    undoPressedLast = ctrlPressed && zPressed;
     
-    if (!menuOpen && ctrlPressed && yPressed && !_gameKeyStates.redoPressedLast && !anyTextInputActive) {
+    static bool redoPressedLast = false;
+    if (!_menuOpen && ctrlPressed && yPressed && !redoPressedLast && !anyTextInputActive) {
         auto it = _keyBindings.find(GLFW_KEY_Y);
         if (it != _keyBindings.end() && it->second.callback) {
             it->second.callback();
         }
     }
-    _gameKeyStates.redoPressedLast = ctrlPressed && yPressed;
+    redoPressedLast = ctrlPressed && yPressed;
 }

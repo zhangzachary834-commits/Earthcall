@@ -136,7 +136,11 @@ bool Game::init() {
 
     // Populate menu options
     printf("[Init] Checkpoint B1: before menu addOption(Resume)\n");
-    _mainMenu.addOption("Resume World", GLFW_KEY_R, [this]() { _mainMenu.close(); });
+    _mainMenu.addOption("Resume World", GLFW_KEY_R, [this]() { 
+        _mainMenu.close();
+        _keyboardHandler.setMenuOpen(false);
+        _mouseHandler.setMenuOpen(false);
+    });
     printf("[Init] Checkpoint B2: after menu addOption(Resume)\n");
 
     // Enhanced main menu options (non-destructive; all previous features intact)
@@ -238,14 +242,14 @@ bool Game::init() {
     _advancedFacePaint.smudge = AdvancedFacePaint::SmudgeSettings();
 
     // Initialize keyboard handler
-    _keyboardHandler.setGameInstance(this);
-
-    // Initialize mouse handler
-    _mouseHandler.setGameInstance(this);
+    // Sync menu state between handlers
+    _keyboardHandler.setMenuOpen(_mainMenu.isOpen());
+    _mouseHandler.setMenuOpen(_mainMenu.isOpen());
 
     // Set up specific game callbacks
     _keyboardHandler.bindKey(GLFW_KEY_M, "toggle_menu", [this]() {
         _mainMenu.toggle();
+        _keyboardHandler.setMenuOpen(_mainMenu.isOpen());
         _mouseHandler.setMenuOpen(_mainMenu.isOpen());
     });
     _keyboardHandler.bindKey(GLFW_KEY_ESCAPE, "toggle_cursor_lock", [this]() {

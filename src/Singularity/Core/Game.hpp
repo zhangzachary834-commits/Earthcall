@@ -1,3 +1,7 @@
+// FROZEN: No new code. See docs/architecture/GAME_ELIMINATION_PLAN.md
+// This class is being eliminated. All new features must go to their
+// ontological home, not here.
+
 #pragma once
 
 #include <GLFW/glfw3.h>
@@ -15,11 +19,11 @@
 #include "Person/Soul/Soul.hpp"
 #include "Person/Body/Body.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
-#include "Perspective/KeyboardHandler.hpp"
-#include "Perspective/MouseHandler.hpp"
+#include "Singularity/Input/KeyboardHandler.hpp"
+#include "Singularity/Input/MouseHandler.hpp"
 
 #include "BrushSettings.hpp"
-#include "CameraState.hpp"
+#include "Singularity/Screen/Camera.hpp"
 #include "CloneToolState.hpp"
 #include "FacePaintSettings.hpp"
 #include "PlacementState.hpp"
@@ -380,7 +384,7 @@ private:
     GLFWwindow* _window = nullptr;
 
     // Subsystems / components --------------------------------------------
-    CameraState         _camera;
+    Camera             _camera;
     BrushSettings       _brush;
     PolyhedronSettings  _polyhedron;
     FaceBrushSettings   _faceBrush;
@@ -431,10 +435,6 @@ private:
     // resolved position and never push the camera back (that competition was
     // the source of the ground/cube jitter).
     void  stepMovement(float dt);
-    float _playerVelY        = 0.0f;  // vertical velocity (world units/sec)
-    bool  _playerGrounded    = false; // resting on ground/support this frame
-    bool  _jumpKeyDownLast   = false; // edge-trigger for jump
-    bool  _playerWasMoving   = false; // previous frame's locomotion state, for the locomotion-started/-stopped edge
 
     // Rotate-tool drag state (see accessors above)
     bool   _rotateDragging    = false;

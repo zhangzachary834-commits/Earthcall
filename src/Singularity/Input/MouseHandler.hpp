@@ -5,9 +5,6 @@
 #include <string>
 #include <GLFW/glfw3.h>
 
-// Forward declarations
-namespace Core { class Game; }
-
 class MouseHandler {
 public:
     enum class MouseButton {
@@ -65,7 +62,6 @@ private:
     bool _cursorLocked = true;
     bool _menuOpen = false;
     CameraRotationState _cameraRotation;
-    Core::Game* _gameInstance = nullptr;
 
     void primeCursorBaseline(GLFWwindow* window);
 
@@ -118,9 +114,8 @@ public:
     void setupFirstPersonBindings();
     void setupThirdPersonBindings();
     void setupFreeCameraBindings();
-
-    // Cursor functionality (moved from Game.cpp)
-    // Cursor position
+    
+    // Cursor functionality
     float getCursorX() const { return _cursorX; }
     float getCursorY() const { return _cursorY; }
     void setCursorX(float x) { _cursorX = x; }
@@ -144,10 +139,6 @@ public:
     
     // Window focus handling
     void onWindowFocus(int focused);
-    
-    // Game instance management
-    void setGameInstance(Core::Game* game) { _gameInstance = game; }
-    Core::Game* getGameInstance() const { return _gameInstance; }
     
     // Cursor state management
     void resetFirstMouse() { _cameraRotation.firstMouse = true; }

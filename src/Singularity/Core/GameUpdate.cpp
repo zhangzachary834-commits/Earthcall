@@ -717,10 +717,11 @@ void Game::stepMovement(float dt) {
     glm::vec3 expectedPlayerPos = _camera.pos - glm::vec3(0.0f, eyeH, 0.0f);
     if (glm::distance(_player.position, expectedPlayerPos) > 1e-4f) {
         _camera.pos = _player.position + glm::vec3(0.0f, eyeH, 0.0f);
-        _playerVelY = 0.0f; // kill falling momentum on teleport
+        _player.velocity.y = 0.0f; // kill falling momentum on teleport
     }
     const glm::vec3 posBefore = _camera.pos;
-    const bool wasGrounded = _playerGrounded; // captured before this frame's resolve, for the landed edge
+    // Rung 3 Phase 3 (Sole): All state now lives on Person, Game no longer owns its own copy
+    const bool wasGrounded = _player.wasGrounded; // captured before this frame's resolve, for the landed edge
 
     float actualSpeed = _camera.speed;
     if (glfwGetKey(_window, GLFW_KEY_V) == GLFW_PRESS) actualSpeed *= 2.5f;       // sprint
@@ -791,31 +792,32 @@ void Game::stepMovement(float dt) {
         if (jumpKeyDown) vy += actualSpeed;
         if (canMove && glfwGetKey(_window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) vy -= actualSpeed;
         _camera.pos.y += vy;
-        _playerVelY = 0.0f;
-        _playerGrounded = false;
+        _player.velocity.y = 0.0f;
+        _player.grounded = false;
     } else {
         constexpr float GRAVITY    = 9.81f;
         constexpr float JUMP_SPEED = 5.0f;
-        if (jumpKeyDown && !_jumpKeyDownLast && _playerGrounded) {
-            _playerVelY = JUMP_SPEED;   // jump impulse
-            _playerGrounded = false;
+        if (jumpKeyDown && !_player.jumpKeyDownLast && _player.grounded) {
+            _player.velocity.y = JUMP_SPEED;   // jump impulse
+            _player.grounded = false;
             Core::EventBus::instance().publish(ECA::Event{"jump-started", &_player, nullptr, std::time(nullptr)});
         }
-        _playerVelY -= GRAVITY * dt;     // integrate gravity
-        _camera.pos.y += _playerVelY * dt;
+        _player.velocity.y -= GRAVITY * dt;     // integrate gravity
+        _camera.pos.y += _player.velocity.y * dt;
     }
-    _jumpKeyDownLast = jumpKeyDown;
+    _player.jumpKeyDownLast = jumpKeyDown;
 
     // Floor constraint: feet can never sink below the support surface.
     if (_camera.pos.y <= minEyeY) {
         _camera.pos.y = minEyeY;
-        if (_playerVelY < 0.0f) _playerVelY = 0.0f;
-        _playerGrounded = true;
+        if (_player.velocity.y < 0.0f) _player.velocity.y = 0.0f;
+        _player.grounded = true;
     } else {
-        _playerGrounded = !flying && (_camera.pos.y - minEyeY) <= 1e-3f;
+        _player.grounded = !flying && (_camera.pos.y - minEyeY) <= 1e-3f;
     }
-    if (_playerGrounded && !wasGrounded) {
+    if (_player.grounded && !wasGrounded) {
         Core::EventBus::instance().publish(ECA::Event{"landed", &_player, nullptr, std::time(nullptr)});
+        _player.wasGrounded = _player.grounded; // Update for next frame
     }
 
     // 5. Locomotion event + animation clocks, then a single pose from the camera.
@@ -825,12 +827,12 @@ void Game::stepMovement(float dt) {
     const bool moving = distance > 1e-5f;
     const float speedPerSec = (moving && dt > 1e-5f) ? distance / dt : 0.0f;
     Core::EventBus::instance().publish(LocomotionChanged{&_player, moving, speedPerSec});
-    if (moving && !_playerWasMoving) {
+    if (moving && !_player.wasMoving) {  // read from Person
         Core::EventBus::instance().publish(ECA::Event{"locomotion-started", &_player, nullptr, std::time(nullptr)});
-    } else if (!moving && _playerWasMoving) {
+    } else if (!moving && _player.wasMoving) {  // read from Person
         Core::EventBus::instance().publish(ECA::Event{"locomotion-stopped", &_player, nullptr, std::time(nullptr)});
     }
-    _playerWasMoving = moving;
+    _player.wasMoving = moving;
     _player.updateBodyAutomations(dt);
 
     _player.position = _camera.pos - glm::vec3(0.0f, eyeH, 0.0f);

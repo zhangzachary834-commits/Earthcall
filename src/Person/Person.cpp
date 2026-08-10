@@ -166,6 +166,12 @@ nlohmann::json Person::serialize() const {
     // identity, so emitting it grants nothing.
     j["soulName"] = displayName;
     if (_personId.canAuthenticate()) j["personId"] = _personId.toString();
+    j["position"] = {position.x, position.y, position.z};
+    j["velocity"] = {velocity.x, velocity.y, velocity.z};
+    j["grounded"] = grounded;
+    j["wasGrounded"] = wasGrounded;
+    j["wasMoving"] = wasMoving;
+    j["jumpKeyDownLast"] = jumpKeyDownLast;
     return j;
 }
 
@@ -188,6 +194,24 @@ void Person::deserialize(const nlohmann::json& j) {
         Identity::SingularId claimed =
             Identity::SingularId::parse(j["personId"].get<std::string>());
         if (claimed.canAuthenticate()) _personId = claimed;
+    }
+    if (j.contains("position") && j["position"].is_array() && j["position"].size() >= 3) {
+        position = glm::vec3(j["position"][0], j["position"][1], j["position"][2]);
+    }
+    if (j.contains("velocity") && j["velocity"].is_array() && j["velocity"].size() >= 3) {
+        velocity = glm::vec3(j["velocity"][0], j["velocity"][1], j["velocity"][2]);
+    }
+    if (j.contains("grounded") && j["grounded"].is_boolean()) {
+        grounded = j["grounded"].get<bool>();
+    }
+    if (j.contains("wasGrounded") && j["wasGrounded"].is_boolean()) {
+        wasGrounded = j["wasGrounded"].get<bool>();
+    }
+    if (j.contains("wasMoving") && j["wasMoving"].is_boolean()) {
+        wasMoving = j["wasMoving"].get<bool>();
+    }
+    if (j.contains("jumpKeyDownLast") && j["jumpKeyDownLast"].is_boolean()) {
+        jumpKeyDownLast = j["jumpKeyDownLast"].get<bool>();
     }
 }
 

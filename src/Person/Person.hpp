@@ -43,6 +43,10 @@ public:
     glm::vec3 position{0.0f, 0.0f, 0.0f};
     glm::vec3 velocity{0.0f, 0.0f, 0.0f};
     glm::vec3 acceleration{0.0f, 0.0f, 0.0f};
+    bool grounded = false;  // Whether the person is resting on a surface
+    bool wasGrounded = false; // Previous frame's grounded state, for landing detection
+    bool wasMoving = false;  // Previous frame's locomotion state, for locomotion events
+    bool jumpKeyDownLast = false; // Previous frame's jump key state, for jump edge detection
     // --- Law System Perception Properties --- 
     std::string activeTool;
     std::string active3DMode;
