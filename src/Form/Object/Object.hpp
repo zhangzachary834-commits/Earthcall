@@ -28,6 +28,10 @@
 #include "Singularity/Core/EventBus.hpp"
 #include "Contour.hpp"
 #include "AngleTools.hpp"
+#include "Object/ObjectIdentity.hpp"
+#include "Object/ObjectTypes.hpp"
+#include "Object/ObjectEvents.hpp"
+#include "Object/ObjectComposition.hpp"
 #include "Object/PolyhedronData.hpp"
 #include "Object/FaceTexture.hpp"
 #include "Object/CollisionZone.hpp"
@@ -43,53 +47,17 @@
 // Forward declaration to break circular dependency
 class BodyPart;
 
-// Forward declaration for Object hover events
-struct ObjectHoverEvent;
-struct ObjectHoverEnterEvent;
-struct ObjectHoverExitEvent;
-
 class Object : public Singular {
 
 public:
-    // Geometry type to allow different primitive shapes (legacy axis; retained
-    // for save migration and the polyhedron path).
-    enum class GeometryType { Cube = 0, Sphere, Cylinder, Cone, Polyhedron };
+    // Geometry types are defined in ObjectTypes.hpp
+    using GeometryType = ObjectTypes::GeometryType;
+    using ShapeKind = ObjectTypes::ShapeKind;
+    using ShapeParams = ObjectTypes::ShapeParams;
+    using SpatialKind = ObjectTypes::SpatialKind;
+    using StateSnapshot = ObjectTypes::StateSnapshot;
 
-    // Named shape within the topology framework. The identity is the SpatialKind
-    // category; ShapeKind is just which parameterization. Serialized as an int,
-    // so this enum is APPEND-ONLY.
-    enum class ShapeKind {
-        Cube = 0, Polyhedron = 1, Sphere = 2, Cylinder = 3, Cone = 4,  // legacy-aligned
-        Ellipsoid = 5, Ovoid = 6, Paraboloid = 7, Torus = 8, RoundedBox = 9,
-        Field = 10, // SDF expression (morph / boolean / implicit) — see fieldData
-        Patch = 11, // Bezier control-net surface — see patchData
-        Shape2D = 12,
-        Text2D = 13
-    };
-
-    // Per-shape parameters (defaults match the geom factory defaults so an
-    // unparameterized setShape reproduces current behavior). Persisted so
-    // parameterized shapes round-trip through save/load.
-    struct ShapeParams {
-        float r           = 0.5f;   // sphere/ellipsoid-x, cylinder/cone radius
-        float ry          = 0.32f;  // ellipsoid y semi-axis
-        float rz          = 0.5f;   // ellipsoid z semi-axis
-        float halfH       = 0.5f;   // cylinder/cone half-height
-        float majorR      = 0.35f;  // torus major radius
-        float minorR      = 0.15f;  // torus minor radius
-        float paraboloidA = 2.0f;   // paraboloid steepness
-        float ovoidAsym   = 0.25f;  // ovoid taper
-        float fillet      = 0.12f;  // rounded-box fillet radius
-        float width2D     = 100.0f; // 2D shape width
-        float height2D    = 100.0f; // 2D shape height
-        // Note: For std::string or complex types, PropertyBridge doesn't directly
-        // support pointers to members easily, so we typically use attributes/tags,
-        // but we'll add text properties here as floats or just handle text string 
-        // separately via Object attributes.
-
-    };
-
-    std::string screenMode();
+    std::string screenMode() const;
 
     /**
     Recursive Object Creation:
@@ -105,72 +73,44 @@ public:
     */
 
     // Get the dimensions of the object.
-    int getDimensions();
+    int getDimensions() const;
     void setDimensions(int d);
-
-    int getCorners();
-    void setCorners(int c);
-
-    int getFaces();
-    void setFaces(int f);
-
-    int getMassQuantity();
-    void setMassQuantity(int m);
-
-    // The legacy descriptive count (vestigial: set by hand, read by nobody).
-    // The TRUTH of what this object is made of is the element Formation below.
-    int getElements();
-    void setElements(int e);
 
     // ------------------------------------------------------------------
     // Elements — the beings this object is composed of. "Recursive Object
     // Creation" above, made real: any Singular may be an element of an
     // Object, so a law can build a composite out of beings it created
     // (ActionNode::Create + ActionNode::AddElement) without the engine
-    // knowing what it is building. Membership is a FORMATION, not a
+    // knowing what it is building. Membership is a Formation, not a
     // vector<Object*>: elements are beings held in relation, so the
     // structure among them (Formation::relations) rides along, and
     // Formation's own identity makes the composition addressable.
     //
-    // Ownership: the formation holds NON-OWNING pointers, exactly like every
+    // Ownership: the Formation holds NON-OWNING pointers, exactly like every
     // other Formation. A newborn created by a law is owned by the World; its
     // element membership is a second, relational fact about it.
     // ------------------------------------------------------------------
-    Formation& elementFormation() { return _elementFormation; }
-    const Formation& elementFormation() const { return _elementFormation; }
+    Formation& elementFormation() { return _composition._elementFormation; }
+    const Formation& elementFormation() const { return _composition._elementFormation; }
     void addElement(Singular* s);
     bool removeElement(Singular* s);
     bool hasElement(const Singular* s) const;
     int elementCount() const {
-        return static_cast<int>(_elementFormation.getMembers().size());
+        return static_cast<int>(_composition._elementFormation.getMembers().size());
     }
 
     // Transient load state: element identifiers read from a save, waiting for
     // the rest of the world to exist before they can be re-linked into the
     // element Formation (World's from_json does the pass, then clears this).
-    std::vector<std::string> pendingElementIds;
-
-    int getRelationships();
-    void setRelationships(int r);
-
-    int getComplexityLevel();
-    void setComplexityLevel(int cl);
-
-    // Levels of Truth
-    int getPhysicalObject();
-    void setPhysicalObject(int po);
-
-    int getSymbolicObject();
-    void setSymbolicObject(int so);
+    // Access via _composition.pendingElementIds
 
     // Unique identifier for the object.
-    std::string getObjectID();
+    std::string getObjectID() const;
     void setObjectID(int oi);
     void setObjectID(const std::string& oi) {
         objectID = oi;
-        claimIdentifierAtLeast(oi);   // a restored id advances the counter
+        ObjectIdentity::claimIdentifierAtLeast(oi);   // a restored id advances the counter
     }
-    static void claimIdentifierAtLeast(const std::string& id);
 
     std::string getObjectType() const;
     void setObjectType(int ot);
@@ -180,43 +120,29 @@ public:
     void setObjectType(const std::string& ot) { objectType = ot; }
 
     // Position in 2D/3D space. The anchor point. Replace with glm::vec3 if using GLM for better math operations.
-    int getX(); // x coordinate
+    int getX() const; // x coordinate
     void setX(int x);
 
-    int getY(); // y coordinate
+    int getY() const; // y coordinate
     void setY(int y);
 
-    int getZ(); // z coordinate
+    int getZ() const; // z coordinate
     void setZ(int z);
 
 private:
     // Private members can be added here if needed, such as properties for the object
     // e.g., position, rotation, scale, texture, etc.
 
-    int corners;
-    int faces;
-
-    int massQuantity = 0;
-    int elements = 0;
-
+    // Legacy position properties (kept for compatibility)
+    float x = 0.0f, y = 0.0f, z = 0.0f;
     bool isElement = true;
-
-    int complexityLevel = 0;
-
     float dimensions = 3.0f;
-
-    int relationships = 0;
-
-    bool physicalObject = true;
 
     std::string _name;
     std::string _textString;
     std::string _entityName;
     std::string objectType;
     std::string objectID;
-
-    // Position in 3D space. The anchor point. Replace with glm::vec3 if using GLM for better math operations.
-    float x, y, z;
 
     // Parent Formation instances that this Object is a part of
     std::vector<Formation> parentFormationInstances;
@@ -525,7 +451,6 @@ public:
     // --- Topology-based geometry model (smooth surfaces / complex shapes) ---
     // The fundamental category of the object. Named primitives are merely
     // parameterizations inside a category, never the identity itself.
-    enum class SpatialKind { Polyhedron, SmoothSurface, ComplexShape, Field, Patch };
     SpatialKind getSpatialKind() const {
         if (_hasPatch)   return SpatialKind::Patch;
         if (_hasField)   return SpatialKind::Field;
@@ -651,11 +576,35 @@ public:
     void setAttribute(const std::string& key, const std::string& value);
     bool hasAttribute(const std::string& key) const;
     const std::string& getAttribute(const std::string& key) const; // empty string if missing
-    const std::unordered_map<std::string, std::string>& getAttributes() const { return attributes; }
+    const std::unordered_map<std::string, std::string>& getAttributes() const { return _composition.attributes; }
     void addTag(const std::string& tag);
     void removeTag(const std::string& tag);
     bool hasTag(const std::string& tag) const;
-    const std::vector<std::string>& getTags() const { return tags; }
+    const std::vector<std::string>& getTags() const { return _composition.tags; }
+    
+    // Legacy property accessors (composition-related)
+    // Methods with out-of-line implementations in Object.cpp
+    int getCorners() const;
+    void setCorners(int c);
+    int getFaces() const;
+    void setFaces(int f);
+    int getMassQuantity() const;
+    void setMassQuantity(int m);
+    int getElements() const;
+    void setElements(int e);
+    
+    // Methods with inline implementations (no cpp definitions)
+    int getRelationships() const { return _composition.relationships; }
+    void setRelationships(int r) { _composition.relationships = r; }
+    int getComplexityLevel() const { return _composition.complexityLevel; }
+    void setComplexityLevel(int cl) { _composition.complexityLevel = cl; }
+    int getPhysicalObject() const { return _composition.physicalObject ? 1 : 0; }
+    void setPhysicalObject(int po) { _composition.physicalObject = (po != 0); }
+    int getSymbolicObject() const { return _composition.physicalObject ? 0 : 1; }
+    void setSymbolicObject(int so) { _composition.physicalObject = (so == 0); }
+    
+    // ID management
+    void claimIdentifierAtLeast(const std::string& id);
     void setName(const std::string& name) { _name = name; }
     
     std::string getTextString() const { return _textString; }
@@ -670,8 +619,8 @@ private:
     void buildProperties() override;
     // Property bridges: more of the object's being made legible, so laws
     // can govern it and set-to-set creation can carry it.
-    bool propPhysical() const { return physicalObject; }
-    void propSetPhysical(const bool& v) { physicalObject = v; }
+    bool propPhysical() const { return _composition.physicalObject; }
+    void propSetPhysical(const bool& v) { _composition.physicalObject = v; }
     glm::vec3 propColor() const {
         return glm::vec3(faceColors[0][0], faceColors[0][1], faceColors[0][2]);
     }
@@ -684,17 +633,13 @@ private:
     glm::mat4 composeTransformWithRotation(const glm::mat4& sourceTransform,
                                            const glm::vec3& rotationDegrees) const;
 
-    // What this object is composed of (see elementFormation()).
-    Formation _elementFormation;
+    // Composition state (element membership, attributes, tags, legacy properties)
+    ObjectCompositionState _composition;
 
     // Hover state tracking
     mutable bool _isHovered = false;
     mutable glm::vec3 _hoverPoint{0.0f, 0.0f, 0.0f};
     mutable bool _wasHoveredLastFrame = false;
-
-    // Attributes and tags storage
-    std::unordered_map<std::string, std::string> attributes;
-    std::vector<std::string> tags;
 
     glm::vec3 center{0.0f, 0.0f, 0.0f};
     glm::vec3 authoritativeAxis{0.0f, 1.0f, 0.0f};
@@ -718,10 +663,3 @@ public:
 inline bool CollisionZone::isTouching(const Object& object) const {
     return isTouching(object.collisionZone);
 }
-
-struct StateSnapshot {
-    float time;
-    float x, y, z;
-    std::string interactionSummary;
-    std::vector<std::string> symbolicTags;
-};
