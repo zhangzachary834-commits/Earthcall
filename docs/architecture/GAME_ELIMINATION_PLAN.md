@@ -42,7 +42,7 @@ Do not attempt to delete Game in one commit. Use this incremental ladder:
 | 0 | **Freeze** — No new code in Game; all new features go to their ontological home | No new members added to Game class | All Game*.cpp files |
 | 1 | **Extract Input** — Move KeyboardHandler, MouseHandler to `Singularity/Input/` | Game no longer has `_keyboardHandler`, `_mouseHandler` | Game.hpp, GameInit.cpp, GameUpdate.cpp |
 | 2 | **Extract Camera** — Move CameraState to `Singularity/Screen/Camera` | Game no longer has `_camera` | Game.hpp, GameInit.cpp, GameRender.cpp, GameUpdate.cpp |
-| 3 | **Migrate Player State** — Move movement to Person/Body with Physics Laws | `_playerVelY`, `_playerGrounded` gone from Game | Game.hpp, GameUpdate.cpp, GameInit.cpp |
+| 3 | **Migrate Player State** — Move movement to Person/Body with Physics Laws | `_playerVelY`, `_playerGrounded`, `_jumpKeyDownLast`, `_playerWasMoving` gone from Game; stepMovement moved to Person | Game.hpp, GameUpdate.cpp, Person.hpp, Person.cpp |
 | 4 | **Extract Tool State** — Brush, Polyhedron, Clone, Pottery settings to Form/Material | Game no longer has `_brush`, `_polyhedron`, `_clone`, `_pottery` | Game.hpp, GameToolbar.cpp, GameUpdate.cpp |
 | 5 | **Extract Save/Load** — Move to ZoneManager persistence | Game no longer has `saveState`, `loadState` | Game.hpp, GameSaveLoad.cpp, GameInit.cpp |
 | 6 | **Delete Game** — Remove all Game files | Game directory gone | All Game*.cpp, Game.hpp |
@@ -429,29 +429,33 @@ Use the todo system to track progress:
   - All Game*.cpp files use direct member access which works with both types
   - CameraState.hpp still exists but is no longer included anywhere
 
-### In Progress
+### Completed
 
 - **[Rung 3] Migrate Player Movement State** ✅
-  - **Rung 2 (Echo) - COMPLETED:**
+  - **Phase 1 (Shadow) - COMPLETED:**
     - Added `grounded`, `wasGrounded`, `wasMoving`, `jumpKeyDownLast` to Person class
     - `velocity` already existed on Person (glm::vec3)
-    - Added shadow writes in `Game::stepMovement()` to sync Game state to Person
     - Updated Person serialization to include new properties
-  - **Rung 3 (Redirect) - COMPLETED:**
+  - **Phase 2 (Echo) - COMPLETED:**
+    - Added shadow writes in `Game::stepMovement()` to sync Game state to Person
+  - **Phase 3 (Redirect) - COMPLETED:**
     - Replaced all reads of `_playerVelY` with `_player.velocity.y`
     - Replaced all reads of `_playerGrounded` with `_player.grounded`
     - Replaced all reads of `_jumpKeyDownLast` with `_player.jumpKeyDownLast`
     - Replaced all reads of `_playerWasMoving` with `_player.wasMoving`
-  - **Rung 4 (Sole) - COMPLETED:**
+  - **Phase 4 (Sole) - COMPLETED:**
     - Removed all writes to Game's `_playerVelY`, `_playerGrounded`, `_jumpKeyDownLast`, `_playerWasMoving`
     - All movement state now written directly to Person properties
-    - Removed all shadow writes
-  - **Rung 5 (Purge) - COMPLETED:**
+  - **Phase 5 (Purge) - COMPLETED:**
     - Removed `_playerVelY`, `_playerGrounded`, `_jumpKeyDownLast`, `_playerWasMoving` from Game.hpp
     - No remaining references to these members in the codebase
     - Build verified: Game.cpp and GameUpdate.cpp compile successfully
-  - **Next:** Migrate `stepMovement()` logic to Physics Laws
-  - `stepMovement()` method still in Game (to be migrated to Physics Laws later)
+  - **Phase 6 (Law) - COMPLETED:**
+    - Moved `stepMovement()` logic from Game to `Person::stepMovement()`
+    - Game no longer owns movement integration
+    - Person now fully owns its movement state and logic
+    - Game calls `person.stepMovement(dt, window, camera, mgr, flying, canMove)`
+  - **Next:** Consider making Person::stepMovement a Law (requires refactoring to use Law system)
 
 ### Pending
 

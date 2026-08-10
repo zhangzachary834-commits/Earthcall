@@ -434,7 +434,6 @@ private:
     // only push the player horizontally. Body parts are posed *from* the
     // resolved position and never push the camera back (that competition was
     // the source of the ground/cube jitter).
-    void  stepMovement(float dt);
 
     // Rotate-tool drag state (see accessors above)
     bool   _rotateDragging    = false;

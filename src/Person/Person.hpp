@@ -10,6 +10,7 @@
 #include "Identity/SingularId.hpp"
 #include "Soul/Soul.hpp"
 #include "Singularity/Core/EventBus.hpp"
+#include "Singularity/Screen/Camera.hpp"
 #include <json.hpp>
 
 // Forward declarations for Person events (defined in PersonEvents.hpp)
@@ -146,6 +147,13 @@ public:
     void applyForce(const glm::vec3& force);
     void setVelocity(const glm::vec3& vel);
     void updatePhysics(float deltaTime);
+    
+    // Movement integration (previously Game::stepMovement)
+    // Takes external dependencies: camera, window for input, zone manager for collisions
+    void stepMovement(float dt, struct GLFWwindow* window, 
+                      Core::Camera* camera, 
+                      class ZoneManager* mgr, 
+                      bool flying, bool canMove);
     
     // Body access methods
     Body& getBody() { return body; }
