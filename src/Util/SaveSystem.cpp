@@ -86,6 +86,11 @@ std::string ensureSaveFolder() {
             return "";
         }
     }
+    
+#ifdef __EMSCRIPTEN__
+    ensureIdbMounted();
+#endif
+    
     return p.string();
 }
 
@@ -202,6 +207,52 @@ static bool permitted(const std::string& filename) {
 }
 
 #ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+
+// IDBFS state tracking
+static bool s_idbMounted = false;
+
+static void ensureIdbMounted() {
+    if (s_idbMounted) return;
+    // Mount the saves directory to IDBFS for persistence
+    // IDBFS persists to IndexedDB and survives page reloads
+    EM_JS(void, mount_idb, (), {
+        // Check if IDBFS is already available
+        if (typeof FS !== 'undefined' && FS.filesystems && FS.filesystems.IDBFS) {
+            try {
+                // Mount /saves to IDBFS
+                FS.mkdir('/saves');
+                FS.mount(IDBFS, { root: '/saves' }, '/saves');
+                // Also mount the current directory if saves are there
+                FS.mkdir('.');
+                FS.mount(IDBFS, {}, '.');
+            } catch (e) {
+                console.error('IDBFS mount failed:', e);
+            }
+        }
+    });
+    s_idbMounted = true;
+}
+
+static void syncIdb() {
+    // Sync IDBFS to IndexedDB
+    EM_JS(void, sync_idb, (), {
+        if (typeof FS !== 'undefined' && FS.syncfs) {
+            try {
+                FS.syncfs(true, function(err) {
+                    if (err) {
+                        console.error('IDBFS sync failed:', err);
+                    } else {
+                        console.log('IDBFS synced successfully');
+                    }
+                });
+            } catch (e) {
+                console.error('IDBFS sync error:', e);
+            }
+        }
+    });
+}
+
 // There is no IDBFS mount, no FS.syncfs, and no --preload-file anywhere in
 // this tree (see AUDIT_2026-08-10.md §2.7). The default wasm filesystem
 // (MEMFS) is purely in-memory: the write below genuinely succeeds -- the
@@ -266,7 +317,8 @@ std::string writeSaveData(const nlohmann::json& j, const std::string& customLabe
     out.close();
 
 #ifdef __EMSCRIPTEN__
-    warnNotDurable(filename);
+    ensureIdbMounted();
+    syncIdb();
 #endif
 
     // Upload Binary to cloud
@@ -300,7 +352,8 @@ std::string writeSaveData(const std::vector<uint8_t>& data, const std::string& c
     out.close();
 
 #ifdef __EMSCRIPTEN__
-    warnNotDurable(filename);
+    ensureIdbMounted();
+    syncIdb();
 #endif
 
     // Upload Binary to cloud

@@ -49,6 +49,11 @@ bool Game::init() {
     for (const auto& law : Physics::createDefaultPhysicsLaws()) {
         law->setEnabled(!Physics::getLegacyEngineEnabled());
         _lawManager.add(law);
+        // OnEvent laws need their triggers bound explicitly.
+        // physics-acoustics is OnEvent with eventType = "contact-began"
+        if (law->activation() == Law::Activation::OnEvent) {
+            _lawManager.bindTrigger(law->getIdentifier(), law->ecaLoop().eventType);
+        }
     }
 
     // The Universe: what continuous laws watch and quantified conditions
