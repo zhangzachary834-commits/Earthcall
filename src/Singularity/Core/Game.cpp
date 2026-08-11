@@ -8,7 +8,7 @@
 //   Save/load methods moved to ZoneManager
 
 #include "Game.hpp"
-#include "Form/Object/Object.hpp"
+#include "ConstructedBeing/Object/Object.hpp"
 #include "OurVerse/AdvancedFacePaint.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"

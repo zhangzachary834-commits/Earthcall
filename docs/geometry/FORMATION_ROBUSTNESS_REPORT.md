@@ -14,7 +14,7 @@
 
 ## 1. What `Formation` is today (grounded in code)
 
-`class Formation : public Form, public Singular` (`src/Form/Object/Formation/Formation.{hpp,cpp}`):
+`class Formation : public Form, public Singular` (`../../src/ConstructedBeing/Object/Formation/Formation.{hpp,cpp}`):
 
 - **Members:** `std::vector<Singular*> members` — **raw, non‑owning** pointers.
 - **Relations:** `RelationManager relationMgr` — owns `shared_ptr<Relation>`.

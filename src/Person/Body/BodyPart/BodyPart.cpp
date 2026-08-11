@@ -3,24 +3,15 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include "Rendering/Renderer.hpp"
 
-BodyPart::BodyPart(const std::string& name, Type type, const Form& form)
-    : Object(), Formation(), partName(name), partType(type), geometry(form)
+BodyPart::BodyPart(const std::string& name, Type type, 
+                   ObjectTypes::GeometryType geometryType, const glm::vec3& dimensions)
+    : Object(), Formation(), partName(name), partType(type), _dimensions(dimensions)
 {
     isLiteral = true;
     isSymbolic = false;
     _localTransform = glm::mat4(1.0f);
     
-    switch (form.getShape()) {
-        case Form::ShapeType::Cube:
-            setGeometryType(GeometryType::Cube);
-            break;
-        case Form::ShapeType::Sphere:
-            setGeometryType(GeometryType::Sphere);
-            break;
-        default:
-            setGeometryType(GeometryType::Cube);
-            break;
-    }
+    setGeometryType(geometryType);
     
     initFaceTextures();
     
@@ -33,8 +24,10 @@ BodyPart::BodyPart(const std::string& name, Type type, const Form& form)
 
 }
 
-BodyPart::BodyPart(const std::string& name, Type type, const Form& form, const glm::mat4& initialTransform)
-    : BodyPart(name, type, form) {
+BodyPart::BodyPart(const std::string& name, Type type, 
+                   ObjectTypes::GeometryType geometryType, const glm::vec3& dimensions,
+                   const glm::mat4& initialTransform)
+    : BodyPart(name, type, geometryType, dimensions) {
     _localTransform = initialTransform;
     setTransform(initialTransform);
 }
@@ -43,9 +36,8 @@ void BodyPart::draw() const {
     Renderer& r = currentRenderer();
 
     // Draw primary shape under body part's world transform
-    glm::vec3 dims = geometry.getDimensions();
     r.pushModel(transform);
-    r.pushModel(glm::scale(glm::mat4(1.0f), dims));
+    r.pushModel(glm::scale(glm::mat4(1.0f), _dimensions));
     drawObject();
     drawHighlightOutline();
     r.popModel();
@@ -73,7 +65,7 @@ void BodyPart::setTransform(const glm::mat4& t) {
         _localTransform = t;
     }
 
-    glm::mat4 scaled = t * glm::scale(glm::mat4(1.0f), geometry.getDimensions());
+    glm::mat4 scaled = t * glm::scale(glm::mat4(1.0f), _dimensions);
     updateCollisionZone(scaled);
 
     // Propagate world transform to every sub-object so raycasting,
@@ -86,7 +78,7 @@ void BodyPart::setTransform(const glm::mat4& t) {
 }
 
 glm::mat4 BodyPart::getRaycastTransform() const {
-    return getTransform() * glm::scale(glm::mat4(1.0f), geometry.getDimensions());
+    return getTransform() * glm::scale(glm::mat4(1.0f), _dimensions);
 }
 
 

@@ -1,6 +1,6 @@
 #include "Singularity/OntoMath/Field.hpp"
-#include "Form/Object/Geometry/FieldNode.hpp"
-#include "Form/Singular/Property/PropertyPath.hpp"
+#include "ConstructedBeing/Object/Geometry/FieldNode.hpp"
+#include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
 #include <iostream>
 #include <cassert>
 

@@ -825,10 +825,10 @@ index 5763d14..0365b64 100644
  # Earthcall Ourverse Manifesto
  
  Earthcall’s language is not meant to form people independently. It’s meant to hold Christian experiences... Everything else is built on that.
-diff --git a/sight-cpp/src/Form/Singular/Property/Property.hpp b/sight-cpp/src/Form/Singular/Property/Property.hpp
+diff --git a/sight-cpp/src/ConstructedBeing/Singular/Property/Property.hpp b/sight-cpp/src/ConstructedBeing/Singular/Property/Property.hpp
 index de8822d..97a4cc2 100644
---- a/sight-cpp/src/Form/Singular/Property/Property.hpp
-+++ b/sight-cpp/src/Form/Singular/Property/Property.hpp
+--- a/sight-cpp/src/ConstructedBeing/Singular/Property/Property.hpp
++++ b/sight-cpp/src/ConstructedBeing/Singular/Property/Property.hpp
 @@ -16,6 +16,14 @@ Action = mutation over PropertyPath
  PropertyMapping = source-to-target transformation for object generation
  
@@ -869,10 +869,10 @@ index de8822d..97a4cc2 100644
      // Runtime-generic access — the door the Law system walks through.
      // value() returns monostate when the underlying type is not legible
      // (not a PropertyValue alternative); setValue returns false on type
-diff --git a/sight-cpp/src/Form/Singular/Singular.hpp b/sight-cpp/src/Form/Singular/Singular.hpp
+diff --git a/sight-cpp/src/ConstructedBeing/Singular/Singular.hpp b/sight-cpp/src/ConstructedBeing/Singular/Singular.hpp
 index 54b80af..6c4c5e3 100644
---- a/sight-cpp/src/Form/Singular/Singular.hpp
-+++ b/sight-cpp/src/Form/Singular/Singular.hpp
+--- a/sight-cpp/src/ConstructedBeing/Singular/Singular.hpp
++++ b/sight-cpp/src/ConstructedBeing/Singular/Singular.hpp
 @@ -39,6 +39,10 @@ public:
      virtual ~Singular() = default;
      virtual std::string getIdentifier() const = 0;
@@ -1500,9 +1500,9 @@ index 42862f8..c66b91e 100644
 +++ b/sight-cpp/src/ZonesOfEarth/AuthorsOfLaw/ActionModel.cpp
 @@ -2,6 +2,7 @@
  
- #include "Form/Object/Creation/ObjectConcept.hpp"
- #include "Form/Singular/Property/PropertyValueJson.hpp"
-+#include "Form/Singular/SynthesisSystem.hpp"
+ #include "ConstructedBeing/Object/Creation/ObjectConcept.hpp"
+ #include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
++#include "ConstructedBeing/Singular/SynthesisSystem.hpp"
  #include "Singularity/Core/EventBus.hpp"
  #include "ZonesOfEarth/World/World.hpp"
  #include "Person/Body/BodyPart/BodyPart.hpp"

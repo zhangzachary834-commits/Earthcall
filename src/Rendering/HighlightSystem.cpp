@@ -1,5 +1,5 @@
 #include "HighlightSystem.hpp"
-#include "Form/Object/Object.hpp"
+#include "ConstructedBeing/Object/Object.hpp"
 
 namespace Rendering {
 

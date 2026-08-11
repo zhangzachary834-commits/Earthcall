@@ -1,6 +1,6 @@
 #include "Util/SaveSystem.hpp"
 #include "Util/Serialization.hpp"
-#include "Form/Object/Object.hpp"
+#include "ConstructedBeing/Object/Object.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ConditionModel.hpp"
 
 #include <GLFW/glfw3.h>

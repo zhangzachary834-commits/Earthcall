@@ -3,9 +3,9 @@
 #include <vector>
 #include <memory>
 #include <ctime>
-#include "Form/Object/Object.hpp"
-#include "Form/Object/Formation/Formation.hpp"
-#include "Form/Form.hpp"
+#include "ConstructedBeing/Object/Object.hpp"
+#include "ConstructedBeing/Object/Formation/Formation.hpp"
+#include "ConstructedBeing/Object/Object/ObjectTypes.hpp"
 #include <glm/glm.hpp>
 
 class BodyPart : public Object, public Formation {
@@ -24,8 +24,12 @@ class BodyPart : public Object, public Formation {
 
 
 
-    BodyPart(const std::string& name = "", Type type = Type::Undefined, const Form& form = Form());
-    BodyPart(const std::string& name, Type type, const Form& form, const glm::mat4& initialTransform);
+    BodyPart(const std::string& name = "", Type type = Type::Undefined, 
+             ObjectTypes::GeometryType geometryType = ObjectTypes::GeometryType::Cube,
+             const glm::vec3& dimensions = glm::vec3(1.0f, 1.0f, 1.0f));
+    BodyPart(const std::string& name, Type type, 
+             ObjectTypes::GeometryType geometryType, const glm::vec3& dimensions,
+             const glm::mat4& initialTransform);
 
     void draw() const;
     void update(float deltaTime);
@@ -47,9 +51,9 @@ class BodyPart : public Object, public Formation {
     void setColor(float r,float g,float b){color[0]=r;color[1]=g;color[2]=b;}
     const float* getColor() const {return color;}
 
-    // Geometry accessor for editor
-    Form&       getGeometry()       { return geometry; }
-    const Form& getGeometry() const { return geometry; }
+    // Dimensions accessor
+    const glm::vec3& getDimensions() const { return _dimensions; }
+    void setDimensions(const glm::vec3& dims) { _dimensions = dims; }
 
     const glm::mat4& localTransform() const {return _localTransform;}
 
@@ -91,7 +95,7 @@ class BodyPart : public Object, public Formation {
 
     std::string partName;
     Type        partType {Type::Undefined};
-    Form        geometry;
+    glm::vec3   _dimensions = glm::vec3(1.0f, 1.0f, 1.0f);
     float color[3] = {1.0f,1.0f,1.0f};
     glm::mat4 _localTransform = glm::mat4(1.0f);
 

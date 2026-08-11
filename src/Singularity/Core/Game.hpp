@@ -7,7 +7,7 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 
-#include "Form/Object/Formation/Menu/Menu.hpp"
+#include "ConstructedBeing/Object/Formation/Menu/Menu.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "ZonesOfEarth/Ourverse/Ourverse.hpp"
 #include "OurVerse/Chat.hpp"
@@ -22,14 +22,14 @@
 #include "Singularity/Input/KeyboardHandler.hpp"
 #include "Singularity/Input/MouseHandler.hpp"
 
-#include "Form/Object/Tool/BrushSettings.hpp"
+#include "ConstructedBeing/Object/Tool/BrushSettings.hpp"
 #include "Singularity/Screen/Camera.hpp"
-#include "Form/Object/Tool/CloneToolState.hpp"
-#include "Form/Object/Tool/FacePaintSettings.hpp"
-#include "Form/Object/Tool/PlacementState.hpp"
-#include "Form/Object/Tool/PolyhedronSettings.hpp"
-#include "Form/Object/Tool/PotteryTool.hpp"
-#include "Form/Object/Tool/RotationSettings.hpp"
+#include "ConstructedBeing/Object/Tool/CloneToolState.hpp"
+#include "ConstructedBeing/Object/Tool/FacePaintSettings.hpp"
+#include "ConstructedBeing/Object/Tool/PlacementState.hpp"
+#include "ConstructedBeing/Object/Tool/PolyhedronSettings.hpp"
+#include "ConstructedBeing/Object/Tool/PotteryTool.hpp"
+#include "ConstructedBeing/Object/Tool/RotationSettings.hpp"
 
 #include "json.hpp"
 

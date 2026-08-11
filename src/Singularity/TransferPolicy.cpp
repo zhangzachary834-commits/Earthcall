@@ -1,6 +1,6 @@
 #include "Singularity/TransferPolicy.hpp"
 
-#include "Form/Singular/Property/ComputedProperty.hpp"
+#include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 
 TransferPolicy& TransferPolicy::instance() {
     static TransferPolicy policy;

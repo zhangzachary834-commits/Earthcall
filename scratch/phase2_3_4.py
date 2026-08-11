@@ -4,7 +4,7 @@ import re
 src_dir = '/Users/zacharyzhang/documents/github/earthcall/src'
 
 def update_formation_hpp():
-    path = os.path.join(src_dir, 'Form/Object/Formation/Formation.hpp')
+    path = os.path.join(src_dir, 'ConstructedBeing/Object/Formation/Formation.hpp')
     with open(path, 'r') as f:
         content = f.read()
     
@@ -20,7 +20,7 @@ def update_formation_hpp():
         print("Updated Formation.hpp")
 
 def update_formation_cpp():
-    path = os.path.join(src_dir, 'Form/Object/Formation/Formation.cpp')
+    path = os.path.join(src_dir, 'ConstructedBeing/Object/Formation/Formation.cpp')
     with open(path, 'r') as f:
         content = f.read()
         

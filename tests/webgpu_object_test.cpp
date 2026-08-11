@@ -11,8 +11,8 @@
 // texture upload goes through the Renderer boundary, so selecting the WebGPU
 // backend first means Object construction never calls into OpenGL.
 
-#include "Form/Object/Object.hpp"
-#include "Form/Object/Geometry/Sdf.hpp"
+#include "ConstructedBeing/Object/Object.hpp"
+#include "ConstructedBeing/Object/Geometry/Sdf.hpp"
 #include "Rendering/Renderer.hpp"
 #include "Rendering/WebGPU/WebGpuRenderer.hpp"
 #include "Rendering/WebGPU/WgpuDevice.hpp"

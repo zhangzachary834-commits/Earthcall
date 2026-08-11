@@ -1,6 +1,6 @@
 #include "PhysicalChannel.hpp"
 
-#include "Form/Singular/Property/ComputedProperty.hpp"
+#include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 
 namespace Singularity {

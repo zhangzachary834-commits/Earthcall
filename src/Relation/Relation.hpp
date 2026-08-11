@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 #include "json.hpp" // nlohmann::json single-header
-#include "Form/Singular/Singular.hpp"
+#include "ConstructedBeing/Singular/Singular.hpp"
 #include <vector>
 #include <ctime>
 #include <glm/glm.hpp>

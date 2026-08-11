@@ -1,4 +1,5 @@
 #include "Limb.hpp"
 
-Limb::Limb(const std::string& name, Type type, const Form& form)
-    : BodyPart(name, type, form) {}
+Limb::Limb(const std::string& name, Type type, 
+           ObjectTypes::GeometryType geometryType, const glm::vec3& dimensions)
+    : BodyPart(name, type, geometryType, dimensions) {}

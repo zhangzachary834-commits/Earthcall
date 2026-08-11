@@ -1,8 +1,8 @@
 #pragma once
 
 #include "ActionModel.hpp"
-#include "Form/Object/Automation/Automation.hpp"
-#include "Form/Singular/Property/PropertyPath.hpp"
+#include "ConstructedBeing/Object/Automation/Automation.hpp"
+#include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
 #include "Singularity/OntoMath/CurveModel.hpp"
 
 #include <string>

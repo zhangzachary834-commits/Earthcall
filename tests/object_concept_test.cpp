@@ -9,7 +9,7 @@
 
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
-#include "Form/Object/Creation/ObjectConcept.hpp"
+#include "ConstructedBeing/Object/Creation/ObjectConcept.hpp"
 #include "Singularity/TransferPolicy.hpp"
 #include "ZonesOfEarth/World/World.hpp"
 

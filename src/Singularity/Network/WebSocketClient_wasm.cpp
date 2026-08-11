@@ -1,6 +1,10 @@
 #include "WebSocketClient.hpp"
 
-#ifdef EMSCRIPTEN
+// emcc defines __EMSCRIPTEN__; plain EMSCRIPTEN is only a build-system
+// environment variable, never a preprocessor macro. This guard never matched,
+// so this translation unit compiled to nothing and WebSocketClient had no
+// wasm implementation at all -- see AUDIT_2026-08-10.md §2.6.
+#ifdef __EMSCRIPTEN__
 
 #include <emscripten/websocket.h>
 #include <iostream>
@@ -10,20 +14,24 @@ namespace Network {
 
 struct WebSocketClient::Impl {
     EMSCRIPTEN_WEBSOCKET_T socket = 0;
+    bool connected = false;
     std::function<void(const std::string&)> messageCallback;
 
     static EM_BOOL onOpen(int eventType, const EmscriptenWebSocketOpenEvent *websocketEvent, void *userData) {
         std::cout << "[WebSocketClient] Connected to EngineServer." << std::endl;
+        static_cast<Impl*>(userData)->connected = true;
         return EM_TRUE;
     }
 
     static EM_BOOL onError(int eventType, const EmscriptenWebSocketErrorEvent *websocketEvent, void *userData) {
         std::cerr << "[WebSocketClient] Connection error." << std::endl;
+        static_cast<Impl*>(userData)->connected = false;
         return EM_TRUE;
     }
 
     static EM_BOOL onClose(int eventType, const EmscriptenWebSocketCloseEvent *websocketEvent, void *userData) {
         std::cout << "[WebSocketClient] Connection closed." << std::endl;
+        static_cast<Impl*>(userData)->connected = false;
         return EM_TRUE;
     }
 
@@ -72,13 +80,21 @@ void WebSocketClient::disconnect() {
         emscripten_websocket_delete(_impl->socket);
         _impl->socket = 0;
     }
+    _impl->connected = false;
 }
 
-void WebSocketClient::send(const std::string& payload) {
-    if (_impl->socket > 0) {
-        // Send as text for now
-        emscripten_websocket_send_utf8_text(_impl->socket, payload.c_str());
-    }
+bool WebSocketClient::isConnected() const {
+    return _impl->socket > 0 && _impl->connected;
+}
+
+bool WebSocketClient::send(const std::string& payload) {
+    // The header declares this bool (see WebSocketClient.hpp / the native
+    // desktop-mock implementation in WebSocketClient.cpp); this TU never
+    // compiled before the __EMSCRIPTEN__ fix, so its `void` return here had
+    // never been checked against the header by a compiler. Match it now.
+    if (_impl->socket <= 0) return false;
+    emscripten_websocket_send_utf8_text(_impl->socket, payload.c_str());
+    return true;
 }
 
 void WebSocketClient::onMessage(std::function<void(const std::string&)> callback) {
@@ -88,4 +104,4 @@ void WebSocketClient::onMessage(std::function<void(const std::string&)> callback
 } // namespace Network
 } // namespace Singularity
 
-#endif // EMSCRIPTEN
+#endif // __EMSCRIPTEN__

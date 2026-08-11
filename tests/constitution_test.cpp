@@ -7,7 +7,7 @@
 
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
-#include "Form/Object/Object.hpp"
+#include "ConstructedBeing/Object/Object.hpp"
 #include "Person/Person.hpp"
 
 #include <GLFW/glfw3.h>

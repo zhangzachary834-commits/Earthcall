@@ -1,6 +1,6 @@
 #include "Rendering/RenderMaterial.hpp"
 
-#include "Form/Material/MaterialManager.hpp"
+#include "ConstructedBeing/Material/MaterialManager.hpp"
 
 extern MaterialManager materials; // global Material beings (globals.cpp)
 

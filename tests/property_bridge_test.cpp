@@ -6,8 +6,8 @@
 // PropertyRef (center, shape.* params), arithmetic coercion, and clean
 // failure on unknown paths.
 
-#include "Form/Object/Object.hpp"
-#include "Form/Singular/Property/PropertyPath.hpp"
+#include "ConstructedBeing/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
 #include "Person/Person.hpp"
 #include "Person/Soul/Soul.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/PhysicsLawBridge.hpp"

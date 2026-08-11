@@ -2,9 +2,9 @@
 #include <string>
 #include <vector>
 #include <map>
-#include "Form/Object/Object.hpp"
-#include "Form/Object/Formation/Formation.hpp"
-#include "Form/Singular/Singular.hpp"
+#include "ConstructedBeing/Object/Object.hpp"
+#include "ConstructedBeing/Object/Formation/Formation.hpp"
+#include "ConstructedBeing/Singular/Singular.hpp"
 #include "BodyPart/BodyPart.hpp"
 
 /* The same class that will create the characters will also be used for all meta-bodies. 

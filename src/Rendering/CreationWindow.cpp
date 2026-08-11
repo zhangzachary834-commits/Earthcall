@@ -1,8 +1,8 @@
 #include "Rendering/CreationWindow.hpp"
 
 #include "Rendering/MathEditors.hpp"
-#include "Form/Object/Creation/ObjectConcept.hpp"
-#include "Form/Object/Object.hpp"
+#include "ConstructedBeing/Object/Creation/ObjectConcept.hpp"
+#include "ConstructedBeing/Object/Object.hpp"
 #include "Singularity/TransferPolicy.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ZonesOfEarth/World/World.hpp"

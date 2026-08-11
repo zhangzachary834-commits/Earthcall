@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ECA.hpp"
-#include "Form/Singular/Property/PropertyPath.hpp"
+#include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
 #include "MathBinding.hpp"
 #include "Singularity/OntoMath/CurveModel.hpp"
 #include "Singularity/OntoMath/ScalarForm.hpp"

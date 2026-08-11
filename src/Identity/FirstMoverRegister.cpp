@@ -160,6 +160,12 @@ enum class Gate {
     ScopeTampered,
     OutsideSaveRoot,
     NoMatchingScope,
+    // Distinct from GrantInvalid on purpose. GrantInvalid means the signature
+    // was checked and did not match; this means the platform has no way to
+    // check at all (the wasm build links no OpenSSL). Collapsing the two
+    // reports "invalid grant" for a grant nobody looked at -- exactly the lie
+    // "Say what you made" refuses.
+    CryptoUnavailable,
 };
 
 Gate evaluate(const FirstMover* m,
@@ -182,6 +188,12 @@ Gate evaluate(const FirstMover* m,
             return Gate::GrantorNotPerson;
         }
     }
+
+    // Ask before verifying rather than catching a throw from grant.verify():
+    // this keeps the gate a plain value computation with no dependency on
+    // wasm exception-catching support, and it means we never actually invoke
+    // a verify() that cannot deliver a real answer.
+    if (!cryptoAvailable()) return Gate::CryptoUnavailable;
 
     if (!m->grant.verify()) return Gate::GrantInvalid;
 
@@ -239,6 +251,10 @@ bool FirstMoverRegister::isQuarantined(const SingularId& mover) const {
     const FirstMover* m = find(mover);
     if (!m) return false; // absent is not quarantined; it is simply unknown
     const Gate g = evaluate(m, _movers, _saveRoot / "probe", _saveRoot, nullptr);
+    // CryptoUnavailable is deliberately excluded: quarantine means "this grant
+    // looks tampered with," which is a judgment about the data. Here there is
+    // no judgment to report -- this platform simply cannot check. mayWrite()
+    // still refuses (fail-closed) regardless of this flag.
     return g == Gate::SelfAttested || g == Gate::GrantorNotPerson ||
            g == Gate::GrantInvalid || g == Gate::GrantSubjectMismatch ||
            g == Gate::ScopeTampered;
@@ -256,6 +272,10 @@ std::string FirstMoverRegister::explain(const SingularId& mover,
         case Gate::ScopeTampered: return "refused: scope list does not match the signed grant";
         case Gate::OutsideSaveRoot: return "refused: path resolves outside the save root";
         case Gate::NoMatchingScope: return "refused: path matches none of the mover's granted scopes";
+        case Gate::CryptoUnavailable:
+            return "refused: no cryptographic verification is available on this platform "
+                   "(wasm build has no CSPRNG/OpenSSL); this grant's validity cannot be "
+                   "determined here, so the write is refused rather than assumed";
     }
     return "refused";
 }

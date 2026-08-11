@@ -9,7 +9,7 @@
 #include "Integration/EarthcallAPI.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "ZonesOfEarth/World/World.hpp"
-#include "Form/Object/Object.hpp"
+#include "ConstructedBeing/Object/Object.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp"
 

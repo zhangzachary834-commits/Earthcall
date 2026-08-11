@@ -16,7 +16,7 @@ It treats "Game" as a C++ class that owns:
 - Camera state (Screen modality)
 - Player movement (Person/Body + Physics)
 - Input handling (Keyboard/Mouse modalities)
-- Tool/brush settings (Form/Material + authored state)
+- Tool/brush settings (ConstructedBeing/Material + authored state)
 - Selection state (Formation relations)
 - Save/load (Zone persistence)
 - UI toggles (OurVerse authorship surface)
@@ -43,7 +43,7 @@ Do not attempt to delete Game in one commit. Use this incremental ladder:
 | 1 | **Extract Input** — Move KeyboardHandler, MouseHandler to `Singularity/Input/` | Game no longer has `_keyboardHandler`, `_mouseHandler` | Game.hpp, GameInit.cpp, GameUpdate.cpp |
 | 2 | **Extract Camera** — Move CameraState to `Singularity/Screen/Camera` | Game no longer has `_camera` | Game.hpp, GameInit.cpp, GameRender.cpp, GameUpdate.cpp |
 | 3 | **Migrate Player State** — Move movement to Person/Body with Physics Laws | `_playerVelY`, `_playerGrounded`, `_jumpKeyDownLast`, `_playerWasMoving` gone from Game; stepMovement moved to Person | Game.hpp, GameUpdate.cpp, Person.hpp, Person.cpp |
-| 4 | **Extract Tool State** — Brush, Polyhedron, Clone, Pottery settings to Form/Material | Game no longer has `_brush`, `_polyhedron`, `_clone`, `_pottery` | Game.hpp, GameToolbar.cpp, GameUpdate.cpp |
+| 4 | **Extract Tool State** — Brush, Polyhedron, Clone, Pottery settings to ConstructedBeing/Material | Game no longer has `_brush`, `_polyhedron`, `_clone`, `_pottery` | Game.hpp, GameToolbar.cpp, GameUpdate.cpp |
 | 5 | **Extract Save/Load** — Move to ZoneManager persistence | Game no longer has `saveState`, `loadState` | Game.hpp, GameSaveLoad.cpp, GameInit.cpp |
 | 6 | **Delete Game** — Remove all Game files | Game directory gone | All Game*.cpp, Game.hpp |
 
@@ -226,9 +226,9 @@ modelview, projection matrices.
 8. AdvancedFacePaint — complex nested state
 
 **Files to Create:**
-- `src/Form/Object/Tool/Tool.hpp` — base Tool class
-- `src/Form/Object/Tool/BrushTool.hpp`
-- `src/Form/Object/Tool/PolyhedronTool.hpp`
+- `../../src/ConstructedBeing/Object/Tool/Tool.hpp` — base Tool class
+- `../../src/ConstructedBeing/Object/Tool/BrushTool.hpp`
+- `../../src/ConstructedBeing/Object/Tool/PolyhedronTool.hpp`
 - etc.
 
 **Files to Modify:**
@@ -466,7 +466,7 @@ Use the todo system to track progress:
 - **[Rung 4] Extract Tool State** — PARTIAL
   - Done: relocated the seven tool settings structs (BrushSettings.hpp, CloneToolState.hpp, FacePaintSettings.hpp, PlacementState.hpp, PolyhedronSettings.hpp, PotteryTool.hpp, RotationSettings.hpp) from `Singularity/Core/` to `Form/Object/Tool/`; updated includes in Game.hpp and PolyhedronSettings.cpp; deleted the originals from Singularity/Core/
   - Not done: the stated goal of this rung — "migrate tool settings as properties on Tool beings" — has not happened. Game still owns the settings structs directly as members; they were only moved to a new file location, not turned into properties on authored beings.
-  - A `Form::Tool` base class with a `Type` enum (`Brush`, `Polyhedron`, `FaceBrush`, `AdvancedFacePaint`, `Placement`, `Pottery`, `Rotation`, `Clone`, `StrokeTracking`) was created as part of this rung's earlier work. It has been deleted (`src/Form/Object/Tool/Tool.hpp`, `Tool.cpp`): a C++ class for a domain noun plus an enum of kinds-of-thing is exactly what CLAUDE.md refusals #1 and #3 forbid. It was also referenced by nothing in the codebase and contained a guaranteed-infinite-recursion bug in `getIdentifier()`. **A C++ `Tool` class with a `Type` enum is NOT an acceptable implementation of this rung** — do not recreate it.
+  - A `Form::Tool` base class with a `Type` enum (`Brush`, `Polyhedron`, `FaceBrush`, `AdvancedFacePaint`, `Placement`, `Pottery`, `Rotation`, `Clone`, `StrokeTracking`) was created as part of this rung's earlier work. It has been deleted (`../../src/ConstructedBeing/Object/Tool/Tool.hpp`, `Tool.cpp`): a C++ class for a domain noun plus an enum of kinds-of-thing is exactly what CLAUDE.md refusals #1 and #3 forbid. It was also referenced by nothing in the codebase and contained a guaranteed-infinite-recursion bug in `getIdentifier()`. **A C++ `Tool` class with a `Type` enum is NOT an acceptable implementation of this rung** — do not recreate it.
   - Remaining work: author Tool beings in-world (per `NEW_KIND_FRAMEWORK.md` / `AUTHORED_CATEGORIES.md`), not a new subclass hierarchy. This work has not started.
 
 - **[Rung 6] Delete Game** ⏳
@@ -501,7 +501,7 @@ ctest is **35/35**. Five test executables previously failed to compile and did n
 - `src/ZonesOfEarth/ZoneManager.hpp` / `.cpp` - Owns save/load state and methods; takes `SaveContext`
 - `src/Singularity/Core/GameSaveLoad.cpp` - Duplicate definitions removed; delegate bodies moved here out-of-line
 - `src/Singularity/Core/GameToolbar.cpp` - Save/load call sites routed through Game's delegates
-- `src/Form/Object/Object.hpp` - Added `getPendingElementIds()` accessor pair for the private `_composition`
+- `../../src/ConstructedBeing/Object/Object.hpp` - Added `getPendingElementIds()` accessor pair for the private `_composition`
 - `src/Util/Serialization.cpp` - Uses the new `getPendingElementIds()` accessor
 
 ### Files Deleted
@@ -510,8 +510,8 @@ ctest is **35/35**. Five test executables previously failed to compile and did n
 - `src/Perspective/KeyboardHandler.cpp`
 - `src/Perspective/MouseHandler.hpp`
 - `src/Perspective/MouseHandler.cpp`
-- `src/Form/Object/Tool/Tool.hpp` - domain-noun class with a kind-enum, violated CLAUDE.md refusals #1 and #3; unreferenced; see Rung 4 above
-- `src/Form/Object/Tool/Tool.cpp` - same as above
+- `../../src/ConstructedBeing/Object/Tool/Tool.hpp` - domain-noun class with a kind-enum, violated CLAUDE.md refusals #1 and #3; unreferenced; see Rung 4 above
+- `../../src/ConstructedBeing/Object/Tool/Tool.cpp` - same as above
 
 ### Files To Delete (After Rung 6)
 

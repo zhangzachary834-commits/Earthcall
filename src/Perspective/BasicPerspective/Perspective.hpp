@@ -2,7 +2,7 @@
 
 #include <string>
 #include <GLFW/glfw3.h>
-#include "Form/Singular/Singular.hpp"
+#include "ConstructedBeing/Singular/Singular.hpp"
 
 class Perspective : public Singular {
 public:

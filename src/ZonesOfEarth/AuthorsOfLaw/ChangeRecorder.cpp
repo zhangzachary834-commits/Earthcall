@@ -1,6 +1,6 @@
 #include "ChangeRecorder.hpp"
 
-#include "Form/Singular/Singular.hpp"
+#include "ConstructedBeing/Singular/Singular.hpp"
 
 #include <cmath>
 

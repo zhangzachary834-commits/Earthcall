@@ -6,7 +6,7 @@
 #include "Body.hpp"
 #include <glm/glm.hpp>
 #include <GLFW/glfw3.h>
-#include "Form/Singular/Singular.hpp"
+#include "ConstructedBeing/Singular/Singular.hpp"
 #include "Identity/SingularId.hpp"
 #include "Soul/Soul.hpp"
 #include "Singularity/Core/EventBus.hpp"

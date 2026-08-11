@@ -11,9 +11,9 @@
 // preserves BEHAVIOR, not just descriptions.
 
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
-#include "Form/Object/Object.hpp"
+#include "ConstructedBeing/Object/Object.hpp"
 #include "Person/Person.hpp"
-#include "Form/Object/Creation/ObjectConcept.hpp"
+#include "ConstructedBeing/Object/Creation/ObjectConcept.hpp"
 #include "ZonesOfEarth/World/World.hpp"
 
 #include <GLFW/glfw3.h>

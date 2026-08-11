@@ -1,9 +1,9 @@
 #include "ConditionModel.hpp"
 
-#include "Form/Object/Geometry/SdfJson.hpp"
-#include "Form/Object/Formation/Formation.hpp"
-#include "Form/Object/Object.hpp"
-#include "Form/Singular/Property/PropertyValueJson.hpp"
+#include "ConstructedBeing/Object/Geometry/SdfJson.hpp"
+#include "ConstructedBeing/Object/Formation/Formation.hpp"
+#include "ConstructedBeing/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
 #include "Law.hpp"
 #include "LawAuditLogger.hpp"
 #include "Person/Person.hpp"

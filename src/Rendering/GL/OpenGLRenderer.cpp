@@ -1,6 +1,6 @@
 #include "Rendering/GL/OpenGLRenderer.hpp"
 
-#include "Form/Object/Geometry/Sdf.hpp" // geom::SdfNode, tessellateSdf
+#include "ConstructedBeing/Object/Geometry/Sdf.hpp" // geom::SdfNode, tessellateSdf
 
 #include <GLFW/glfw3.h>
 #if defined(__APPLE__) && !defined(EMSCRIPTEN)

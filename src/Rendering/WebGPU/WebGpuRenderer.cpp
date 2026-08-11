@@ -1,7 +1,7 @@
 #include "Rendering/WebGPU/WebGpuRenderer.hpp"
 #include "Rendering/WebGPU/WgpuDevice.hpp"
 #include "Rendering/WebGPU/SdfWgsl.hpp"
-#include "Form/Object/Geometry/Sdf.hpp"
+#include "ConstructedBeing/Object/Geometry/Sdf.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <cstdio>

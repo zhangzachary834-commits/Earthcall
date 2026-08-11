@@ -50,6 +50,26 @@ tests/*_test
 # committed, because it is a full second copy of every object file.
 build-asan/
 
+# WebAssembly build output — the same problem as build/ above, missed the
+# first time. fc25329 committed 81 files here (a 4.1 MB earthcall.wasm, a
+# 12.8 MB compiler_depend.make, a CMakeCache.txt pinned to one machine's
+# emsdk path); e5d3fc5 then deleted ~267k lines of it again. A fresh clone
+# inherits the stale CMakeCache and fails to configure until this directory
+# is deleted by hand. Regenerates from `cmake -S . -B build-wasm ...`.
+#
+# NOTE: build-wasm/index.html is, as of this writing, the only page that
+# boots the wasm build (it sets Module.canvas to the #earthcall-canvas
+# selector WebGpuContext_wasm.cpp hardcodes) and is currently tracked despite
+# living in this directory. It should move to a tracked, non-ignored home
+# (e.g. web_ui/) before `rm -rf build-wasm` is allowed to destroy it again —
+# see docs/WASM_FIX_NOTES.md.
+build-wasm/
+
+# node_modules, wherever it lands (e.g. scratch/puppeteer_test/node_modules,
+# 2,221 files committed by the same fc25329 above). Regenerates via `npm
+# install`.
+node_modules/
+
 # The law audit trail (LawAuditLogger). Regenerated every run, and at Verbose
 # it grows fast enough that committing it would be its own problem.
 /logs/

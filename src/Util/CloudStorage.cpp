@@ -2,6 +2,7 @@
 #include <iostream>
 #include <thread>
 #include <chrono>
+#include <atomic>
 // Define httplib implementation in exactly one compilation unit.
 // If it's used elsewhere, we'd need a separate httplib.cpp, but for now we define it here.
 #include "../../third_party/httplib/httplib.h"
@@ -13,6 +14,22 @@ namespace Util {
 static std::string g_endpoint = "https://localhost:8080";
 static std::string g_authToken = "";
 static std::mutex g_configMutex;
+
+#ifdef __EMSCRIPTEN__
+// No HTTP client is wired for wasm (httplib is native-only above), so every
+// call below fails synchronously by construction -- not a transient network
+// problem, a fixed fact about this build. Say it once per session rather
+// than repeat it on every save/load/metadata fetch.
+static std::atomic<bool> g_wasmCloudWarned{false};
+static void warnWasmCloudUnavailable() {
+    if (!g_wasmCloudWarned.exchange(true)) {
+        std::cerr << "[CloudStorage] Cloud sync is not available in the browser "
+                     "build (no HTTP client wired for wasm); uploads, downloads, "
+                     "and metadata fetches will report unavailable for the rest "
+                     "of this session.\n";
+    }
+}
+#endif
 
 void CloudStorage::init() {
     if (const char* env_token = std::getenv("EARTHCALL_CLOUD_TOKEN")) {
@@ -95,6 +112,7 @@ void CloudStorage::uploadSaveAsync(const std::string& filename,
         if (callback) callback(false);
     }).detach();
 #else
+    warnWasmCloudUnavailable();
     if (callback) callback(false);
 #endif
 }
@@ -160,6 +178,7 @@ void CloudStorage::downloadSaveAsync(const std::string& filename,
         if (callback) callback(std::nullopt);
     }).detach();
 #else
+    warnWasmCloudUnavailable();
     if (callback) callback(std::nullopt);
 #endif
 }
@@ -201,6 +220,7 @@ void CloudStorage::fetchMetadataAsync(SaveSystem::SaveType type,
         if (callback) callback(results);
     }).detach();
 #else
+    warnWasmCloudUnavailable();
     if (callback) callback({});
 #endif
 }

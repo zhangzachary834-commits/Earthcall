@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Form/Object/Formation/Formation.hpp"
+#include "ConstructedBeing/Object/Formation/Formation.hpp"
 
 class Community : public Formation {
 private:

@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Start Connection
     connectWebSocket();
     
-    // Handle Form Submission
+    // Handle ConstructedBeing Submission
     form.addEventListener('submit', (e) => {
         e.preventDefault();
         

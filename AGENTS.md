@@ -1,13 +1,13 @@
 # Earthcall — read this before writing code
 
-Earthcall is **an ontology with an engine attached**, not a game engine with some
-philosophy in the docs. The architecture is load-bearing: things that look like ordinary
+Earthcall is **an ontology with an engine prototype attached**, not merely a game engine with some
+philosophy in the docs. The ontological architecture is load-bearing—things that look like ordinary
 engineering decisions here (adding a class, adding a folder, adding an enum value) are
 ontological claims, and most of them are refused.
 
 **You are almost certainly about to do the standard thing. The standard thing is usually
-wrong in this repository** — not because it is bad engineering, but because it is
-engineering for a different kind of system. Spend the two minutes on the router below.
+wrong in this repository**—not because it is bad engineering, but because it is
+engineering for a fundamentally different kind of system. Spend the two minutes on the router below.
 
 ---
 
@@ -139,3 +139,7 @@ The Python backend starts from `src/Integration/py/app.py`.
 - **Bounds are doctrine, not limits.** `kMaxChainRounds = 8`, `kMaxCallDepth = 32`, one
   pass per fold. If your design needs one raised, the design is in the wrong shape — see
   `ALGORITHMS_AS_LAW.md` §3.
+
+## Keeping Track of Progress
+
+Once you're finished with everything else, update this very document if any relevant changes were made.

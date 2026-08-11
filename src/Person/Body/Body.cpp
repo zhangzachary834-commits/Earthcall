@@ -2,8 +2,7 @@
 #include <iostream>
 #include <algorithm>
 #include "BodyPart/BodyPart.hpp"
-#include "Form/Object/Formation/Formation.hpp"
-#include "Form/Form.hpp"
+#include "ConstructedBeing/Object/Formation/Formation.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include "BodyPart/Limb/Arm.hpp"
 #include "BodyPart/Limb/Leg.hpp"
@@ -106,7 +105,7 @@ Body Body::createBasicAvatar(const std::string& artStyle) {
 
     // ----------------------- Lower Torso ----------------
     auto* lowerTorso = new BodyPart("LowerTorso", BodyPart::Type::Torso,
-                                    Form(Form::ShapeType::Cube, {0.45f, 0.25f, 0.22f}));
+                                    ObjectTypes::GeometryType::Cube, {0.45f, 0.25f, 0.22f});
     lowerTorso->setTransform(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.15f, 0.0f)));
     avatar.addPart(lowerTorso);
 

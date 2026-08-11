@@ -90,7 +90,13 @@ Claim Claim::issue(const PrivateKey& signingKey,
         throw std::runtime_error("Identity: CSPRNG unavailable, cannot issue claim");
     }
 #else
-    for (size_t i = 0; i < c._nonce.size(); ++i) c._nonce[i] = static_cast<uint8_t>(i);
+    // A deterministic 0,1,2,... nonce defeats the exact replay distinguisher
+    // this field exists for (see the comment above). No CSPRNG is linked into
+    // the wasm build, so there is no safe value to put here -- fail the same
+    // way the native branch does above.
+    throw std::runtime_error(
+        "Identity: no CSPRNG available on this platform (wasm build has no "
+        "OpenSSL); cannot issue a claim");
 #endif
 
     c._signature = signingKey.sign(c.canonicalBytes());

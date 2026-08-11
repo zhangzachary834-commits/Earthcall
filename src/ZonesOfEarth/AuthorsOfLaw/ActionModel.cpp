@@ -1,8 +1,8 @@
 #include "ActionModel.hpp"
 
-#include "Form/Object/Creation/ObjectConcept.hpp"
-#include "Form/Singular/Property/PropertyValueJson.hpp"
-#include "Form/Singular/SynthesisSystem.hpp"
+#include "ConstructedBeing/Object/Creation/ObjectConcept.hpp"
+#include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
+#include "ConstructedBeing/Singular/SynthesisSystem.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "ZonesOfEarth/World/World.hpp"
 #include "Person/Body/BodyPart/BodyPart.hpp"
@@ -539,6 +539,7 @@ ECA::ActionExecutor ActionNode::compile() const {
                     for (const auto& run : compiledChildren) {
                         if (run) run(event, *newborn);
                     }
+                    Object* born = newborn.get();
                     if (parent) {
                         // Cast to BodyPart since only BodyParts can have sub-objects currently
                         if (auto* bp = dynamic_cast<BodyPart*>(parent)) {
@@ -549,6 +550,15 @@ ECA::ActionExecutor ActionNode::compile() const {
                     } else {
                         world->addObject(std::move(newborn));
                     }
+                    // A birth is a birth. Create announces "object-created"
+                    // and Spawn did not, which meant a spawned being got no
+                    // property-state facts asserted for it and was invisible
+                    // to every WhileTrue law taking the Rete fast path — the
+                    // emitter existed and nothing continuous could ever see
+                    // it. Published AFTER ownership transfers, so no listener
+                    // sees a being the world does not yet hold.
+                    Core::EventBus::instance().publish(
+                        ECA::Event{"object-created", born, event.subject, std::time(nullptr)});
                 }
                 if (newborns.empty()) {
                     emitEffect("Spawn", false, "concept instantiated nothing");
@@ -650,6 +660,21 @@ ECA::ActionExecutor ActionNode::compile() const {
                     emitEffect("Flow", false, "no world clock: nothing to integrate over");
                     return;
                 }
+                // The TARGET is read first, and deliberately. An integrator
+                // that cannot read what it integrates cannot do anything with
+                // the rate, and a bound variable may be arbitrarily expensive
+                // to evaluate — a world reading can cost a raycast against
+                // every being in the world. Reading the bindings first meant
+                // that work was done and then thrown away on every tick where
+                // the target did not resolve, which was every tick, because
+                // the property the occlusion law wrote to was never seeded.
+                // Cheapest refusal first.
+                PropertyValue current;
+                if (!lawGetValue(subject, target, current)) {
+                    emitEffect("Flow", false, "cannot read " + target.toString());
+                    return;
+                }
+
                 auto vars = readMathBindings(subject, binds);
                 if (!vars) {
                     emitEffect("Flow", false, "a bound variable does not read on this subject");
@@ -663,12 +688,6 @@ ECA::ActionExecutor ActionNode::compile() const {
                 // non-write so a drive session sees it and lets go.
                 if (!valProp) {
                     emitEffect("Flow", false, "outside the authored bounds");
-                    return;
-                }
-
-                PropertyValue current;
-                if (!lawGetValue(subject, target, current)) {
-                    emitEffect("Flow", false, "cannot read " + target.toString());
                     return;
                 }
 

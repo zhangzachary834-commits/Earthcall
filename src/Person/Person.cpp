@@ -7,14 +7,15 @@
 #include <GLFW/glfw3.h>
 #include "Rendering/GL/GluCompat.hpp"
 #include "Rendering/Renderer.hpp"
-#include "Form/Object/Formation/Menu/stb_easy_font.h"
+#include "ConstructedBeing/Object/Formation/Menu/stb_easy_font.h"
+#include "Util/Serialization.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "Singularity/Screen/Camera.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
 #include "PersonEvents.hpp"
-#include "Form/Singular/Property/ComputedProperty.hpp"
-#include "Form/Singular/Property/PropertyRef.hpp"
+#include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
+#include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
 #include "Singularity/Network/WebSocketClient.hpp"
@@ -174,6 +175,10 @@ nlohmann::json Person::serialize() const {
     j["wasGrounded"] = wasGrounded;
     j["wasMoving"] = wasMoving;
     j["jumpKeyDownLast"] = jumpKeyDownLast;
+    
+    // Save body and body parts
+    j["body"] = ::bodyToJson(body);
+    
     return j;
 }
 
@@ -214,6 +219,11 @@ void Person::deserialize(const nlohmann::json& j) {
     }
     if (j.contains("jumpKeyDownLast") && j["jumpKeyDownLast"].is_boolean()) {
         jumpKeyDownLast = j["jumpKeyDownLast"].get<bool>();
+    }
+    
+    // Load body and body parts
+    if (j.contains("body")) {
+        ::bodyFromJson(j["body"], body);
     }
 }
 

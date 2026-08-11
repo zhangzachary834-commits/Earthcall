@@ -8,7 +8,7 @@
 // or restructures it and the shape re-meshes live via setFieldShape.
 
 #include "Game.hpp"
-#include "Form/Object/Object.hpp"
+#include "ConstructedBeing/Object/Object.hpp"
 
 #include <imgui.h>
 #include "Rendering/GL/GluCompat.hpp"

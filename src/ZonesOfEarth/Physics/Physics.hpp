@@ -2,9 +2,9 @@
 #include <glm/glm.hpp>
 #include <vector>
 #include <memory>
-#include "Form/Object/Object.hpp"
+#include "ConstructedBeing/Object/Object.hpp"
 #include "Relation/RelationManager.hpp"
-#include "Form/Singular/Singular.hpp"
+#include "ConstructedBeing/Singular/Singular.hpp"
 #include <string>
 #include <functional>
 

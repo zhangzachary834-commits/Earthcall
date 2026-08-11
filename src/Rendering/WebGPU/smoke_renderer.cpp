@@ -7,9 +7,9 @@
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE // WebGPU clip depth is [0,1], not GL's [-1,1]
 #include "WebGpuRenderer.hpp"
 #include "WgpuDevice.hpp"
-#include "Form/Object/Geometry/SmoothSurface.hpp" // geom::TessMesh / TessVertex
+#include "ConstructedBeing/Object/Geometry/SmoothSurface.hpp" // geom::TessMesh / TessVertex
 #include "Rendering/RenderMaterial.hpp"
-#include "Form/Object/Geometry/Sdf.hpp"
+#include "ConstructedBeing/Object/Geometry/Sdf.hpp"
 
 #include <webgpu/wgpu.h>
 #include <glm/glm.hpp>

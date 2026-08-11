@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Form/Object/Object.hpp"
-#include "Form/Singular/Property/PropertyPath.hpp"
+#include "ConstructedBeing/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
 #include "json.hpp"
 
 #include <map>

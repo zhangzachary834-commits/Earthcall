@@ -42,7 +42,7 @@ The Object Hover Events system automatically detects when the mouse cursor is ho
 
 ```cpp
 #include "Singularity/Core/EventBus.hpp"
-#include "Form/Object/Object.hpp"
+#include "ConstructedBeing/Object/Object.hpp"
 
 // Create handlers for each event type
 void handleObjectHover(const ObjectHoverEvent& event) {
@@ -177,7 +177,7 @@ void updateObjectHovering() {
 To see Object hover events in action, compile and run the example:
 
 ```bash
-g++ -o object_hover_events_example examples/object_hover_events_example.cpp src/Form/Object/Object.cpp src/Singularity/Core/EventBus.cpp
+g++ -o object_hover_events_example examples/object_hover_events_example.cpp src/ConstructedBeing/Object/Object.cpp src/Singularity/Core/EventBus.cpp
 ./object_hover_events_example
 ```
 

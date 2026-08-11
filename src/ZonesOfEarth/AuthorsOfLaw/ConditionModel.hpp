@@ -1,8 +1,8 @@
 #pragma once
 
 #include "ECA.hpp"
-#include "Form/Object/Geometry/Sdf.hpp"
-#include "Form/Singular/Property/PropertyPath.hpp"
+#include "ConstructedBeing/Object/Geometry/Sdf.hpp"
+#include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
 #include "MathBinding.hpp"
 #include "Singularity/OntoMath/ScalarForm.hpp"
 #include "json.hpp"

@@ -2,7 +2,7 @@
 
 #include <vector>
 #include <memory>
-#include "Form/Object/Object.hpp"
+#include "ConstructedBeing/Object/Object.hpp"
 #include <glm/glm.hpp>
 
 class Object; // forward declaration

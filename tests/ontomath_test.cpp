@@ -1,4 +1,4 @@
-#include "Form/Singular/Property/PropertyPath.hpp"
+#include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
 // OntoMath milestone test: Earthcall is driven by math in the program.
 //
 // The exact symbolic core (multivariate terms, algebra, calculus, piecewise
@@ -12,7 +12,7 @@
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "Singularity/OntoMath/ScalarForm.hpp"
 #include "Singularity/OntoMath/Operations.hpp"
-#include "Form/Object/Object.hpp"
+#include "ConstructedBeing/Object/Object.hpp"
 
 #include <GLFW/glfw3.h>
 #include <cassert>

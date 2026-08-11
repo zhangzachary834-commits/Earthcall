@@ -12,8 +12,8 @@
 // kind means that kind's render cache was rebuilt in the same pass. What matters
 // is the invariant caching can break: an edit must still reach the mesh.
 
-#include "Form/Object/Object.hpp"
-#include "Form/Object/Geometry/Sdf.hpp"
+#include "ConstructedBeing/Object/Object.hpp"
+#include "ConstructedBeing/Object/Geometry/Sdf.hpp"
 
 #include <GLFW/glfw3.h>
 #include <cassert>

@@ -237,6 +237,21 @@ std::vector<std::string> verifyOwnership(const nlohmann::json& save) {
     auto zones = save.find("zones");
     if (zones == save.end() || !zones->is_array()) return broken;
 
+    // No OpenSSL is linked into the wasm build (see CMakeLists.txt's
+    // `if (NOT EMSCRIPTEN)` guard around find_package(OpenSSL)), so
+    // Claim::verify() cannot deliver a real answer there and throws rather
+    // than lie with `false`. A claim we cannot check is not a claim we can
+    // trust, so every owned zone is reported broken -- fail closed, and say
+    // why, rather than crash on the first ownerClaim encountered.
+    if (!cryptoAvailable()) {
+        for (const auto& z : *zones) {
+            if (z.is_object() && z.find("ownerClaim") != z.end()) {
+                broken.push_back(stringField(z, "name"));
+            }
+        }
+        return broken;
+    }
+
     for (const auto& z : *zones) {
         if (!z.is_object()) continue;
 

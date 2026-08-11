@@ -1,6 +1,6 @@
 #include "Law.hpp"
 
-#include "Form/Singular/Property/ComputedProperty.hpp"
+#include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 #include "Universe.hpp"
 #include "LawAuditLogger.hpp"
 #include "ZonesOfEarth/World/World.hpp"
@@ -13,7 +13,7 @@
 #include <optional>
 #include <unordered_set>
 
-#include "Form/Singular/Property/PropertyValueJson.hpp"
+#include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
 #include "Person/Person.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 

@@ -1,5 +1,5 @@
 #include "Singularity/Language/Lexeme.hpp"
-#include "Form/Singular/Property/PropertyRef.hpp"
+#include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
 
 #include <uuid/uuid.h>
 

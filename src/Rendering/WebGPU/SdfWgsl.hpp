@@ -37,6 +37,26 @@ struct Program {
     // marcher steps by f/|grad f| instead, which is a conservative distance
     // estimate. It costs a gradient per step, so it is only enabled where needed.
     bool needsGradientStep = false;
+
+    // THE REFUSAL. False when the field's authored OntoMath AST contains
+    // something this compiler will not turn into WGSL: an operation with no
+    // implementation (Raycast, LineIntegral), an op this build does not know, a
+    // variable with no binding in a field expression, a piece guarded by a
+    // world condition the GPU has no subject to testify about, or a tree that
+    // fails its type check.
+    //
+    // CALLERS MUST CHECK THIS BEFORE CREATING A PIPELINE. It replaces the old
+    // behaviour, which was to emit the literal string "0.0" for every
+    // unimplemented op — a number that reads as a real answer (for a signed
+    // distance, "on the surface"; for a density, "empty here") and cannot be
+    // told apart downstream from an authored zero. Refusing to draw is
+    // recoverable; drawing the wrong thing silently is not.
+    //
+    // When !ok, `wgsl` is a comment-only source with no entry points, so any
+    // pipeline built from it fails too — the refusal cannot be ignored by
+    // accident, only deliberately.
+    bool        ok = true;
+    std::string error;   // one line, naming the op and why
 };
 
 // Compile a field into a raymarching shader plus its parameter block.

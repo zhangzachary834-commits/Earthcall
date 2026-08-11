@@ -10,7 +10,7 @@
 #include <vector>
 #include <set>
 
-#include "Form/Singular/Property/PropertyValue.hpp"
+#include "ConstructedBeing/Singular/Property/PropertyValue.hpp"
 
 class Singular;
 struct ConditionNode;   // guards: the condition calculus gates pieces
@@ -182,12 +182,26 @@ struct Fold {
 // MathNode — Typed AST over ScalarForm
 // ============================================================================
 
-enum class ValueKind { Scalar, Vector, ScalarField, VectorField };
+// The types the MathNode calculus distinguishes. NOT serialized — this is a
+// compile-time judgement ABOUT an authored tree, never written into a save —
+// so unlike MathNode::Op it may be extended.
+//
+// Unknown is not a type an author writes. It is what typeOf answers for a
+// ValueLeaf whose variable has no declared signature, and only when the caller
+// asked for a LENIENT check (allowUnbound — the deserialization seam, where no
+// binding environment exists yet). It unifies with everything, so arity and
+// structural errors are still caught while genuinely undecidable ones are
+// reported as undecided rather than invented.
+enum class ValueKind { Scalar, Vector, ScalarField, VectorField, Unknown };
 
 struct TypeDiagnostic {
     std::string nodePath;
     std::string message;
 };
+
+// One legible line: "root.Scale[1]: Scale requires ...".
+std::string formatTypeDiagnostic(const TypeDiagnostic& d);
+const char* valueKindName(ValueKind k);
 
 struct TypeResult {
     bool success;
@@ -202,6 +216,25 @@ struct TypeResult {
 };
 
 using TypeEnv = std::map<std::string, ValueKind>;
+
+// The ambient point a field expression is evaluated AT. A field AST is a
+// pointwise expression: the CPU evaluator binds these variables in its
+// variable map, and the WGSL emitter binds them to the shader's point. They
+// are the ONE convention that makes CPU and GPU evaluate the same tree.
+//   "p"          the point, a Vector
+//   "x","y","z"  its components, Scalars
+inline constexpr const char* kAmbientPointVar = "p";
+
+// Central-difference step for Gradient, shared by both paths deliberately: the
+// marcher's sdfGrad/sdfNormal and geom::sdfNormal use the same 1e-3, and a
+// gradient that changed value with the backend would be a shape changing with
+// the backend.
+inline constexpr double kGradientEpsilon = 1e-3;
+
+// Degenerate-direction threshold for Normalize and Project, on the UNSQUARED
+// length. Squaring it (the bug this replaced) zeroes every vector shorter than
+// 1e-3, which is nowhere near degenerate.
+inline constexpr float kDegenerateVectorLength = 1e-6f;
 
 struct MathNode {
     // Serialized as ints — APPEND-ONLY
@@ -222,22 +255,56 @@ struct MathNode {
         Stochastic = 13, // Random variable distribution
         Project = 14,
         Distance = 15,
+        // Raycast and LineIntegral are DECLARED but not implemented on either
+        // path: both need machinery (a marching budget, a curve
+        // parameterization + quadrature rule) that nothing in this tree
+        // authors. They evaluate to nullopt on the CPU and REFUSE to compile
+        // on the GPU. See ONTOMATH_FRAMEWORK.md §5.
         Raycast = 16,
+        // SDF(fieldExpr, q)     — the field expression sampled at the point q.
+        // Gradient(fieldExpr,q) — its central-difference gradient at q.
         SDF = 17,
         Gradient = 18,
         LineIntegral = 19,
+        // The CSG booleans over signed distance. These are NOT a second
+        // vocabulary: they are exactly geom::SdfOp::Union / Intersect /
+        // Subtract (Sdf.hpp), same three formulas — min(a,b), max(a,b),
+        // max(a,-b) — so a boolean authored in a field expression and the same
+        // boolean authored in a shape tree are the same operation.
         Union = 20,
         Intersection = 21,
-        Difference = 22
+        Difference = 22,
+
+        // Not a kind an author picks — the landing place for an op THIS BUILD
+        // does not know: a save written by another version. It never
+        // evaluates (nullopt), never type-checks, and refuses to compile to
+        // WGSL; the original JSON rides along in `unsupported` so a load/save
+        // round trip does not destroy law text we merely cannot read. Mirrors
+        // ConditionNode::Kind::Unsupported. Reserved forever at 255.
+        Unsupported = 255
     };
 
-    Op op;
+    Op op = Op::ScalarLeaf;
     ScalarForm scalarForm;
     std::string variableName;
     std::string stringArg; // For Component index or Map func name
     std::vector<std::unique_ptr<MathNode>> children;
-    
-    TypeResult typeOf(const TypeEnv& env, const std::string& path = "root") const;
+
+    // Unsupported payload: the node's original JSON, kept verbatim.
+    std::shared_ptr<nlohmann::json> unsupported;
+
+    // The judgement on an authored tree. `allowUnbound` is for the seams that
+    // have no binding environment yet (deserialization): an unbound ValueLeaf
+    // answers Unknown, which unifies with everything, instead of failing.
+    // Strict (the default) is what a compiler seam must use.
+    TypeResult typeOf(const TypeEnv& env, const std::string& path = "root",
+                      bool allowUnbound = false) const;
+
+    // Convenience over typeOf for the seams: true when the tree type-checks;
+    // otherwise false with a legible one-line reason naming op and mismatch.
+    bool checkTypes(const TypeEnv& env, std::string& outError,
+                    ValueKind* outKind = nullptr, bool allowUnbound = false) const;
+
     void collectDependencies(std::set<std::string>& outDeps) const;
 
     std::optional<PropertyValue> evaluate(const std::map<std::string, PropertyValue>& vars, const Singular* subject = nullptr) const;
@@ -246,6 +313,11 @@ struct MathNode {
     static std::unique_ptr<MathNode> fromJson(const nlohmann::json& j);
     static std::shared_ptr<MathNode> fromLegacyExpression(const ScalarForm& expr);
 };
+
+// Is this raw integer (out of a save file) one of MathNode::Op's values?
+bool isKnownMathOp(int raw);
+// Author-facing name of an op, for diagnostics.
+const char* mathOpName(MathNode::Op op);
 
 // The manifesto's DiscreteFunctions: discrete bounds within which a
 // continuous expression governs. Bounds are on one designated input variable

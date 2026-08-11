@@ -3,9 +3,9 @@
 #include <vector>
 #include <unordered_map>
 #include "../World/World.hpp"
-#include "Form/Object/Formation/Formation.hpp"
+#include "ConstructedBeing/Object/Formation/Formation.hpp"
 #include <memory>
-#include "Form/Object/Object.hpp"
+#include "ConstructedBeing/Object/Object.hpp"
 #include "Rendering/BrushSystem.hpp"
 #include "Legacy/DesignSystem.hpp"
 

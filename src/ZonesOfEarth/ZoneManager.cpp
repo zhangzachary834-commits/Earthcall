@@ -6,8 +6,8 @@
 #include "Util/BinaryPack.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/LawAuditLogger.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
-#include "Form/Material/MaterialManager.hpp"
-#include "Form/Object/Creation/ObjectConcept.hpp"
+#include "ConstructedBeing/Material/MaterialManager.hpp"
+#include "ConstructedBeing/Object/Creation/ObjectConcept.hpp"
 #include "Singularity/OntoMath/ScalarForm.hpp"
 #include "Singularity/TransferPolicy.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
@@ -398,8 +398,28 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
                     from_json(zj["world"], z.world());
                 }
                 if (zj.contains("formationRelations")) {
+                    // MEMBERS BEFORE RELATIONS. Zone::syncFormationMembers does
+                    // not run until the frame loop, so a relation added here used
+                    // to find neither of its endpoints: it got a subformation with
+                    // no members, and since subformations were matched only by
+                    // member lookup, that empty set could never match anything
+                    // again. Every world loaded from disk came up with set-to-set
+                    // grouping already broken. The objects exist now — say so
+                    // before the bonds between them are read.
+                    z.syncFormationMembers();
+                    size_t refused = 0;
                     for (const auto& relJson : zj["formationRelations"]) {
-                        z.formation().add(std::make_shared<Relation>(Relation::fromJson(relJson)));
+                        if (!z.formation().add(std::make_shared<Relation>(Relation::fromJson(relJson)))) {
+                            ++refused;
+                        }
+                    }
+                    if (refused > 0) {
+                        std::cout << "⚠️  Zone '" << z.name() << "': " << refused
+                                  << " saved formation relation(s) were REFUSED on load "
+                                  << "(self-ground or a directed cycle). They are not in "
+                                  << "the formation and will not be written back on the "
+                                  << "next save. Fix them in the save file to keep them."
+                                  << std::endl;
                     }
                 }
                 zonesVec.push_back(std::move(z));

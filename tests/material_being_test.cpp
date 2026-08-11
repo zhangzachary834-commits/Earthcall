@@ -12,9 +12,9 @@
 // old global ShadingSystem constants, so nothing looks different until a Person
 // authors a new material.
 
-#include "Form/Material/Material.hpp"
-#include "Form/Material/MaterialManager.hpp"
-#include "Form/Singular/Property/PropertyPath.hpp"
+#include "ConstructedBeing/Material/Material.hpp"
+#include "ConstructedBeing/Material/MaterialManager.hpp"
+#include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
 
 #include <cassert>
 #include <cmath>

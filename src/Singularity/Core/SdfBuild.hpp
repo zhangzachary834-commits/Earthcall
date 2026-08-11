@@ -5,7 +5,7 @@
 // Header-only (inline) so both the toolbar panels and the in-scene Combine tool
 // use one definition. Object.hpp transitively provides geom:: (Geometry/Sdf.hpp).
 
-#include "Form/Object/Object.hpp"
+#include "ConstructedBeing/Object/Object.hpp"
 
 // Lower a named shape (+params) into an SDF leaf for morph/boolean composition.
 inline geom::SdfNode shapeToSdfLeaf(Object::ShapeKind k, const Object::ShapeParams& p) {

@@ -10,8 +10,8 @@
 //
 // Run: make test-creation
 
-#include "Form/Object/Object.hpp"
-#include "Form/Singular/Property/PropertyPath.hpp"
+#include "ConstructedBeing/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"

@@ -202,7 +202,7 @@ regrouping has thinned it.
 
 The move required exactly **two** edits to `CMakeLists.txt` — `../imgui` → `imgui`,
 twice — because every `#include` in the tree was already written relative to `src/`
-(`#include "Form/Object/Object.hpp"`), and `src/` is still called `src/`. Nothing else
+(`#include "ConstructedBeing/Object/Object.hpp"`), and `src/` is still called `src/`. Nothing else
 in 299 source files changed. That the whole rearrangement cost two lines is the
 strongest available evidence that `sight-cpp/` was a label rather than a boundary.
 

@@ -153,7 +153,7 @@ _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, glm::vec3>>(
 **Pattern B — the state lives in a foreign struct the being does not own.**
 Write a `Property` subclass that reaches into it. Three precedents in one file:
 `ShapeParamBridge`, `RigidBodyBridge`, `FacePropertyBridge`
-(`src/Form/Object/Object.cpp:536-580`). `RigidBodyBridge` is the closest analogue —
+(`../../src/ConstructedBeing/Object/Object.cpp:536-580`). `RigidBodyBridge` is the closest analogue —
 it exposes `Physics::getBodyFor(obj)`'s velocity and mass as `velocity` / `mass`
 on the Object, so collision *response* became authorable without moving the
 rigid-body registry.
@@ -166,7 +166,7 @@ and all Zones (`:68`). This is how input, the UI, and the camera each acquire a 
 in §9–11.
 
 **Naming rules.** Dotted names are registered *flat* — `PropertyPath::resolve`
-does longest-dotted-name matching first (`Form/Singular/Property/PropertyPath.hpp:12-19`),
+does longest-dotted-name matching first (`ConstructedBeing/Singular/Property/PropertyPath.hpp:12-19`),
 so `key.SPACE` and `face.0.color` are single registry entries, not nested beings.
 Use dotted flat names for families of leaves; use nested Singulars only when the
 sub-thing is genuinely a being with its own life.
@@ -674,7 +674,7 @@ only new mutable surface** a migration adds. If a migration wants to add a mutab
 is real state (register it honestly) or it is intent (register it and zero it).
 
 For law-private bookkeeping there is already a mechanism that needs no C++ change:
-`Singular::setDynamicProperty` / `getDynamicProperty` (`Form/Singular/Singular.hpp:60`).
+`Singular::setDynamicProperty` / `getDynamicProperty` (`ConstructedBeing/Singular/Singular.hpp:60`).
 
 ### 5.5 The parity probe — proving the law does what the code did
 
@@ -1192,7 +1192,7 @@ seed laws below, since a multiplier applied under a condition *is* a law.
 The decision at `:720-731` is: intent = normalize(forwardXZ·(W−S) + rightXZ·(D−A)).
 As models, with the input beings from §11 bound as numbers (`bool` satisfies
 `std::is_arithmetic_v`, so `propertyValueToNumber` reads `pressed` as 1.0 / 0.0 —
-verified at `Form/Singular/Property/PropertyValue.hpp:51`):
+verified at `ConstructedBeing/Singular/Property/PropertyValue.hpp:51`):
 
 ```
 condition:  All( Compare(@ui.inputCaptured, Eq, false) )

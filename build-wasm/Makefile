@@ -379,59 +379,59 @@ src/Form/Form.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/Form/Form.cpp.s
 .PHONY : src/Form/Form.cpp.s
 
-src/Form/Material/Material.o: src/Form/Material/Material.cpp.o
-.PHONY : src/Form/Material/Material.o
+src/ConstructedBeing/Material/Material.o: src/ConstructedBeing/Material/Material.cpp.o
+.PHONY : src/ConstructedBeing/Material/Material.o
 
 # target to build an object file
-src/Form/Material/Material.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/Form/Material/Material.cpp.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/Form/Material/Material.cpp.o
-.PHONY : src/Form/Material/Material.cpp.o
+src/ConstructedBeing/Material/Material.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Material/Material.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Material/Material.cpp.o
+.PHONY : src/ConstructedBeing/Material/Material.cpp.o
 
-src/Form/Material/Material.i: src/Form/Material/Material.cpp.i
-.PHONY : src/Form/Material/Material.i
+src/ConstructedBeing/Material/Material.i: src/ConstructedBeing/Material/Material.cpp.i
+.PHONY : src/ConstructedBeing/Material/Material.i
 
 # target to preprocess a source file
-src/Form/Material/Material.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/Form/Material/Material.cpp.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/Form/Material/Material.cpp.i
-.PHONY : src/Form/Material/Material.cpp.i
+src/ConstructedBeing/Material/Material.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Material/Material.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Material/Material.cpp.i
+.PHONY : src/ConstructedBeing/Material/Material.cpp.i
 
-src/Form/Material/Material.s: src/Form/Material/Material.cpp.s
-.PHONY : src/Form/Material/Material.s
+src/ConstructedBeing/Material/Material.s: src/ConstructedBeing/Material/Material.cpp.s
+.PHONY : src/ConstructedBeing/Material/Material.s
 
 # target to generate assembly for a file
-src/Form/Material/Material.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/Form/Material/Material.cpp.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/Form/Material/Material.cpp.s
-.PHONY : src/Form/Material/Material.cpp.s
+src/ConstructedBeing/Material/Material.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Material/Material.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Material/Material.cpp.s
+.PHONY : src/ConstructedBeing/Material/Material.cpp.s
 
-src/Form/Material/MaterialManager.o: src/Form/Material/MaterialManager.cpp.o
-.PHONY : src/Form/Material/MaterialManager.o
+src/ConstructedBeing/Material/MaterialManager.o: src/ConstructedBeing/Material/MaterialManager.cpp.o
+.PHONY : src/ConstructedBeing/Material/MaterialManager.o
 
 # target to build an object file
-src/Form/Material/MaterialManager.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/Form/Material/MaterialManager.cpp.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/Form/Material/MaterialManager.cpp.o
-.PHONY : src/Form/Material/MaterialManager.cpp.o
+src/ConstructedBeing/Material/MaterialManager.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Material/MaterialManager.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Material/MaterialManager.cpp.o
+.PHONY : src/ConstructedBeing/Material/MaterialManager.cpp.o
 
-src/Form/Material/MaterialManager.i: src/Form/Material/MaterialManager.cpp.i
-.PHONY : src/Form/Material/MaterialManager.i
+src/ConstructedBeing/Material/MaterialManager.i: src/ConstructedBeing/Material/MaterialManager.cpp.i
+.PHONY : src/ConstructedBeing/Material/MaterialManager.i
 
 # target to preprocess a source file
-src/Form/Material/MaterialManager.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/Form/Material/MaterialManager.cpp.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/Form/Material/MaterialManager.cpp.i
-.PHONY : src/Form/Material/MaterialManager.cpp.i
+src/ConstructedBeing/Material/MaterialManager.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Material/MaterialManager.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Material/MaterialManager.cpp.i
+.PHONY : src/ConstructedBeing/Material/MaterialManager.cpp.i
 
-src/Form/Material/MaterialManager.s: src/Form/Material/MaterialManager.cpp.s
-.PHONY : src/Form/Material/MaterialManager.s
+src/ConstructedBeing/Material/MaterialManager.s: src/ConstructedBeing/Material/MaterialManager.cpp.s
+.PHONY : src/ConstructedBeing/Material/MaterialManager.s
 
 # target to generate assembly for a file
-src/Form/Material/MaterialManager.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/Form/Material/MaterialManager.cpp.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/Form/Material/MaterialManager.cpp.s
-.PHONY : src/Form/Material/MaterialManager.cpp.s
+src/ConstructedBeing/Material/MaterialManager.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Material/MaterialManager.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Material/MaterialManager.cpp.s
+.PHONY : src/ConstructedBeing/Material/MaterialManager.cpp.s
 
 src/Form/Object/AngleTools.o: src/Form/Object/AngleTools.cpp.o
 .PHONY : src/Form/Object/AngleTools.o
@@ -973,167 +973,167 @@ src/Form/Object/ObjectRender.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/Form/Object/ObjectRender.cpp.s
 .PHONY : src/Form/Object/ObjectRender.cpp.s
 
-src/Form/Singular/Concept.o: src/Form/Singular/Concept.cpp.o
-.PHONY : src/Form/Singular/Concept.o
+src/ConstructedBeing/Singular/Concept.o: src/ConstructedBeing/Singular/Concept.cpp.o
+.PHONY : src/ConstructedBeing/Singular/Concept.o
 
 # target to build an object file
-src/Form/Singular/Concept.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/Form/Singular/Concept.cpp.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Concept.cpp.o
-.PHONY : src/Form/Singular/Concept.cpp.o
+src/ConstructedBeing/Singular/Concept.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Concept.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Concept.cpp.o
+.PHONY : src/ConstructedBeing/Singular/Concept.cpp.o
 
-src/Form/Singular/Concept.i: src/Form/Singular/Concept.cpp.i
-.PHONY : src/Form/Singular/Concept.i
+src/ConstructedBeing/Singular/Concept.i: src/ConstructedBeing/Singular/Concept.cpp.i
+.PHONY : src/ConstructedBeing/Singular/Concept.i
 
 # target to preprocess a source file
-src/Form/Singular/Concept.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/Form/Singular/Concept.cpp.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Concept.cpp.i
-.PHONY : src/Form/Singular/Concept.cpp.i
+src/ConstructedBeing/Singular/Concept.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Concept.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Concept.cpp.i
+.PHONY : src/ConstructedBeing/Singular/Concept.cpp.i
 
-src/Form/Singular/Concept.s: src/Form/Singular/Concept.cpp.s
-.PHONY : src/Form/Singular/Concept.s
+src/ConstructedBeing/Singular/Concept.s: src/ConstructedBeing/Singular/Concept.cpp.s
+.PHONY : src/ConstructedBeing/Singular/Concept.s
 
 # target to generate assembly for a file
-src/Form/Singular/Concept.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/Form/Singular/Concept.cpp.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Concept.cpp.s
-.PHONY : src/Form/Singular/Concept.cpp.s
+src/ConstructedBeing/Singular/Concept.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Concept.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Concept.cpp.s
+.PHONY : src/ConstructedBeing/Singular/Concept.cpp.s
 
-src/Form/Singular/Property/Property.o: src/Form/Singular/Property/Property.cpp.o
-.PHONY : src/Form/Singular/Property/Property.o
+src/ConstructedBeing/Singular/Property/Property.o: src/ConstructedBeing/Singular/Property/Property.cpp.o
+.PHONY : src/ConstructedBeing/Singular/Property/Property.o
 
 # target to build an object file
-src/Form/Singular/Property/Property.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/Form/Singular/Property/Property.cpp.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/Property.cpp.o
-.PHONY : src/Form/Singular/Property/Property.cpp.o
+src/ConstructedBeing/Singular/Property/Property.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Property/Property.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/Property.cpp.o
+.PHONY : src/ConstructedBeing/Singular/Property/Property.cpp.o
 
-src/Form/Singular/Property/Property.i: src/Form/Singular/Property/Property.cpp.i
-.PHONY : src/Form/Singular/Property/Property.i
+src/ConstructedBeing/Singular/Property/Property.i: src/ConstructedBeing/Singular/Property/Property.cpp.i
+.PHONY : src/ConstructedBeing/Singular/Property/Property.i
 
 # target to preprocess a source file
-src/Form/Singular/Property/Property.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/Form/Singular/Property/Property.cpp.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/Property.cpp.i
-.PHONY : src/Form/Singular/Property/Property.cpp.i
+src/ConstructedBeing/Singular/Property/Property.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Property/Property.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/Property.cpp.i
+.PHONY : src/ConstructedBeing/Singular/Property/Property.cpp.i
 
-src/Form/Singular/Property/Property.s: src/Form/Singular/Property/Property.cpp.s
-.PHONY : src/Form/Singular/Property/Property.s
+src/ConstructedBeing/Singular/Property/Property.s: src/ConstructedBeing/Singular/Property/Property.cpp.s
+.PHONY : src/ConstructedBeing/Singular/Property/Property.s
 
 # target to generate assembly for a file
-src/Form/Singular/Property/Property.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/Form/Singular/Property/Property.cpp.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/Property.cpp.s
-.PHONY : src/Form/Singular/Property/Property.cpp.s
+src/ConstructedBeing/Singular/Property/Property.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Property/Property.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/Property.cpp.s
+.PHONY : src/ConstructedBeing/Singular/Property/Property.cpp.s
 
-src/Form/Singular/Property/PropertyPath.o: src/Form/Singular/Property/PropertyPath.cpp.o
-.PHONY : src/Form/Singular/Property/PropertyPath.o
+src/ConstructedBeing/Singular/Property/PropertyPath.o: src/ConstructedBeing/Singular/Property/PropertyPath.cpp.o
+.PHONY : src/ConstructedBeing/Singular/Property/PropertyPath.o
 
 # target to build an object file
-src/Form/Singular/Property/PropertyPath.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/Form/Singular/Property/PropertyPath.cpp.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/PropertyPath.cpp.o
-.PHONY : src/Form/Singular/Property/PropertyPath.cpp.o
+src/ConstructedBeing/Singular/Property/PropertyPath.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Property/PropertyPath.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/PropertyPath.cpp.o
+.PHONY : src/ConstructedBeing/Singular/Property/PropertyPath.cpp.o
 
-src/Form/Singular/Property/PropertyPath.i: src/Form/Singular/Property/PropertyPath.cpp.i
-.PHONY : src/Form/Singular/Property/PropertyPath.i
+src/ConstructedBeing/Singular/Property/PropertyPath.i: src/ConstructedBeing/Singular/Property/PropertyPath.cpp.i
+.PHONY : src/ConstructedBeing/Singular/Property/PropertyPath.i
 
 # target to preprocess a source file
-src/Form/Singular/Property/PropertyPath.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/Form/Singular/Property/PropertyPath.cpp.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/PropertyPath.cpp.i
-.PHONY : src/Form/Singular/Property/PropertyPath.cpp.i
+src/ConstructedBeing/Singular/Property/PropertyPath.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Property/PropertyPath.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/PropertyPath.cpp.i
+.PHONY : src/ConstructedBeing/Singular/Property/PropertyPath.cpp.i
 
-src/Form/Singular/Property/PropertyPath.s: src/Form/Singular/Property/PropertyPath.cpp.s
-.PHONY : src/Form/Singular/Property/PropertyPath.s
+src/ConstructedBeing/Singular/Property/PropertyPath.s: src/ConstructedBeing/Singular/Property/PropertyPath.cpp.s
+.PHONY : src/ConstructedBeing/Singular/Property/PropertyPath.s
 
 # target to generate assembly for a file
-src/Form/Singular/Property/PropertyPath.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/Form/Singular/Property/PropertyPath.cpp.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/PropertyPath.cpp.s
-.PHONY : src/Form/Singular/Property/PropertyPath.cpp.s
+src/ConstructedBeing/Singular/Property/PropertyPath.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Property/PropertyPath.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/PropertyPath.cpp.s
+.PHONY : src/ConstructedBeing/Singular/Property/PropertyPath.cpp.s
 
-src/Form/Singular/Property/PropertyValueJson.o: src/Form/Singular/Property/PropertyValueJson.cpp.o
-.PHONY : src/Form/Singular/Property/PropertyValueJson.o
+src/ConstructedBeing/Singular/Property/PropertyValueJson.o: src/ConstructedBeing/Singular/Property/PropertyValueJson.cpp.o
+.PHONY : src/ConstructedBeing/Singular/Property/PropertyValueJson.o
 
 # target to build an object file
-src/Form/Singular/Property/PropertyValueJson.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/Form/Singular/Property/PropertyValueJson.cpp.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/PropertyValueJson.cpp.o
-.PHONY : src/Form/Singular/Property/PropertyValueJson.cpp.o
+src/ConstructedBeing/Singular/Property/PropertyValueJson.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Property/PropertyValueJson.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/PropertyValueJson.cpp.o
+.PHONY : src/ConstructedBeing/Singular/Property/PropertyValueJson.cpp.o
 
-src/Form/Singular/Property/PropertyValueJson.i: src/Form/Singular/Property/PropertyValueJson.cpp.i
-.PHONY : src/Form/Singular/Property/PropertyValueJson.i
+src/ConstructedBeing/Singular/Property/PropertyValueJson.i: src/ConstructedBeing/Singular/Property/PropertyValueJson.cpp.i
+.PHONY : src/ConstructedBeing/Singular/Property/PropertyValueJson.i
 
 # target to preprocess a source file
-src/Form/Singular/Property/PropertyValueJson.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/Form/Singular/Property/PropertyValueJson.cpp.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/PropertyValueJson.cpp.i
-.PHONY : src/Form/Singular/Property/PropertyValueJson.cpp.i
+src/ConstructedBeing/Singular/Property/PropertyValueJson.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Property/PropertyValueJson.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/PropertyValueJson.cpp.i
+.PHONY : src/ConstructedBeing/Singular/Property/PropertyValueJson.cpp.i
 
-src/Form/Singular/Property/PropertyValueJson.s: src/Form/Singular/Property/PropertyValueJson.cpp.s
-.PHONY : src/Form/Singular/Property/PropertyValueJson.s
+src/ConstructedBeing/Singular/Property/PropertyValueJson.s: src/ConstructedBeing/Singular/Property/PropertyValueJson.cpp.s
+.PHONY : src/ConstructedBeing/Singular/Property/PropertyValueJson.s
 
 # target to generate assembly for a file
-src/Form/Singular/Property/PropertyValueJson.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/Form/Singular/Property/PropertyValueJson.cpp.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/PropertyValueJson.cpp.s
-.PHONY : src/Form/Singular/Property/PropertyValueJson.cpp.s
+src/ConstructedBeing/Singular/Property/PropertyValueJson.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Property/PropertyValueJson.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/PropertyValueJson.cpp.s
+.PHONY : src/ConstructedBeing/Singular/Property/PropertyValueJson.cpp.s
 
-src/Form/Singular/Singular.o: src/Form/Singular/Singular.cpp.o
-.PHONY : src/Form/Singular/Singular.o
+src/ConstructedBeing/Singular/Singular.o: src/ConstructedBeing/Singular/Singular.cpp.o
+.PHONY : src/ConstructedBeing/Singular/Singular.o
 
 # target to build an object file
-src/Form/Singular/Singular.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/Form/Singular/Singular.cpp.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Singular.cpp.o
-.PHONY : src/Form/Singular/Singular.cpp.o
+src/ConstructedBeing/Singular/Singular.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Singular.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Singular.cpp.o
+.PHONY : src/ConstructedBeing/Singular/Singular.cpp.o
 
-src/Form/Singular/Singular.i: src/Form/Singular/Singular.cpp.i
-.PHONY : src/Form/Singular/Singular.i
+src/ConstructedBeing/Singular/Singular.i: src/ConstructedBeing/Singular/Singular.cpp.i
+.PHONY : src/ConstructedBeing/Singular/Singular.i
 
 # target to preprocess a source file
-src/Form/Singular/Singular.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/Form/Singular/Singular.cpp.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Singular.cpp.i
-.PHONY : src/Form/Singular/Singular.cpp.i
+src/ConstructedBeing/Singular/Singular.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Singular.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Singular.cpp.i
+.PHONY : src/ConstructedBeing/Singular/Singular.cpp.i
 
-src/Form/Singular/Singular.s: src/Form/Singular/Singular.cpp.s
-.PHONY : src/Form/Singular/Singular.s
+src/ConstructedBeing/Singular/Singular.s: src/ConstructedBeing/Singular/Singular.cpp.s
+.PHONY : src/ConstructedBeing/Singular/Singular.s
 
 # target to generate assembly for a file
-src/Form/Singular/Singular.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/Form/Singular/Singular.cpp.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Singular.cpp.s
-.PHONY : src/Form/Singular/Singular.cpp.s
+src/ConstructedBeing/Singular/Singular.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Singular.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Singular.cpp.s
+.PHONY : src/ConstructedBeing/Singular/Singular.cpp.s
 
-src/Form/Singular/SynthesisSystem.o: src/Form/Singular/SynthesisSystem.cpp.o
-.PHONY : src/Form/Singular/SynthesisSystem.o
+src/ConstructedBeing/Singular/SynthesisSystem.o: src/ConstructedBeing/Singular/SynthesisSystem.cpp.o
+.PHONY : src/ConstructedBeing/Singular/SynthesisSystem.o
 
 # target to build an object file
-src/Form/Singular/SynthesisSystem.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/Form/Singular/SynthesisSystem.cpp.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/Form/Singular/SynthesisSystem.cpp.o
-.PHONY : src/Form/Singular/SynthesisSystem.cpp.o
+src/ConstructedBeing/Singular/SynthesisSystem.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/SynthesisSystem.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/SynthesisSystem.cpp.o
+.PHONY : src/ConstructedBeing/Singular/SynthesisSystem.cpp.o
 
-src/Form/Singular/SynthesisSystem.i: src/Form/Singular/SynthesisSystem.cpp.i
-.PHONY : src/Form/Singular/SynthesisSystem.i
+src/ConstructedBeing/Singular/SynthesisSystem.i: src/ConstructedBeing/Singular/SynthesisSystem.cpp.i
+.PHONY : src/ConstructedBeing/Singular/SynthesisSystem.i
 
 # target to preprocess a source file
-src/Form/Singular/SynthesisSystem.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/Form/Singular/SynthesisSystem.cpp.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/Form/Singular/SynthesisSystem.cpp.i
-.PHONY : src/Form/Singular/SynthesisSystem.cpp.i
+src/ConstructedBeing/Singular/SynthesisSystem.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/SynthesisSystem.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/SynthesisSystem.cpp.i
+.PHONY : src/ConstructedBeing/Singular/SynthesisSystem.cpp.i
 
-src/Form/Singular/SynthesisSystem.s: src/Form/Singular/SynthesisSystem.cpp.s
-.PHONY : src/Form/Singular/SynthesisSystem.s
+src/ConstructedBeing/Singular/SynthesisSystem.s: src/ConstructedBeing/Singular/SynthesisSystem.cpp.s
+.PHONY : src/ConstructedBeing/Singular/SynthesisSystem.s
 
 # target to generate assembly for a file
-src/Form/Singular/SynthesisSystem.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/Form/Singular/SynthesisSystem.cpp.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/Form/Singular/SynthesisSystem.cpp.s
-.PHONY : src/Form/Singular/SynthesisSystem.cpp.s
+src/ConstructedBeing/Singular/SynthesisSystem.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_core.dir/build.make CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/SynthesisSystem.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/earthcall_wasm.dir/build.make CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/SynthesisSystem.cpp.s
+.PHONY : src/ConstructedBeing/Singular/SynthesisSystem.cpp.s
 
 src/Identity/Claim.o: src/Identity/Claim.cpp.o
 .PHONY : src/Identity/Claim.o
@@ -4305,12 +4305,12 @@ help:
 	@echo "... src/Form/Form.o"
 	@echo "... src/Form/Form.i"
 	@echo "... src/Form/Form.s"
-	@echo "... src/Form/Material/Material.o"
-	@echo "... src/Form/Material/Material.i"
-	@echo "... src/Form/Material/Material.s"
-	@echo "... src/Form/Material/MaterialManager.o"
-	@echo "... src/Form/Material/MaterialManager.i"
-	@echo "... src/Form/Material/MaterialManager.s"
+	@echo "... src/ConstructedBeing/Material/Material.o"
+	@echo "... src/ConstructedBeing/Material/Material.i"
+	@echo "... src/ConstructedBeing/Material/Material.s"
+	@echo "... src/ConstructedBeing/Material/MaterialManager.o"
+	@echo "... src/ConstructedBeing/Material/MaterialManager.i"
+	@echo "... src/ConstructedBeing/Material/MaterialManager.s"
 	@echo "... src/Form/Object/AngleTools.o"
 	@echo "... src/Form/Object/AngleTools.i"
 	@echo "... src/Form/Object/AngleTools.s"
@@ -4371,24 +4371,24 @@ help:
 	@echo "... src/Form/Object/ObjectRender.o"
 	@echo "... src/Form/Object/ObjectRender.i"
 	@echo "... src/Form/Object/ObjectRender.s"
-	@echo "... src/Form/Singular/Concept.o"
-	@echo "... src/Form/Singular/Concept.i"
-	@echo "... src/Form/Singular/Concept.s"
-	@echo "... src/Form/Singular/Property/Property.o"
-	@echo "... src/Form/Singular/Property/Property.i"
-	@echo "... src/Form/Singular/Property/Property.s"
-	@echo "... src/Form/Singular/Property/PropertyPath.o"
-	@echo "... src/Form/Singular/Property/PropertyPath.i"
-	@echo "... src/Form/Singular/Property/PropertyPath.s"
-	@echo "... src/Form/Singular/Property/PropertyValueJson.o"
-	@echo "... src/Form/Singular/Property/PropertyValueJson.i"
-	@echo "... src/Form/Singular/Property/PropertyValueJson.s"
-	@echo "... src/Form/Singular/Singular.o"
-	@echo "... src/Form/Singular/Singular.i"
-	@echo "... src/Form/Singular/Singular.s"
-	@echo "... src/Form/Singular/SynthesisSystem.o"
-	@echo "... src/Form/Singular/SynthesisSystem.i"
-	@echo "... src/Form/Singular/SynthesisSystem.s"
+	@echo "... src/ConstructedBeing/Singular/Concept.o"
+	@echo "... src/ConstructedBeing/Singular/Concept.i"
+	@echo "... src/ConstructedBeing/Singular/Concept.s"
+	@echo "... src/ConstructedBeing/Singular/Property/Property.o"
+	@echo "... src/ConstructedBeing/Singular/Property/Property.i"
+	@echo "... src/ConstructedBeing/Singular/Property/Property.s"
+	@echo "... src/ConstructedBeing/Singular/Property/PropertyPath.o"
+	@echo "... src/ConstructedBeing/Singular/Property/PropertyPath.i"
+	@echo "... src/ConstructedBeing/Singular/Property/PropertyPath.s"
+	@echo "... src/ConstructedBeing/Singular/Property/PropertyValueJson.o"
+	@echo "... src/ConstructedBeing/Singular/Property/PropertyValueJson.i"
+	@echo "... src/ConstructedBeing/Singular/Property/PropertyValueJson.s"
+	@echo "... src/ConstructedBeing/Singular/Singular.o"
+	@echo "... src/ConstructedBeing/Singular/Singular.i"
+	@echo "... src/ConstructedBeing/Singular/Singular.s"
+	@echo "... src/ConstructedBeing/Singular/SynthesisSystem.o"
+	@echo "... src/ConstructedBeing/Singular/SynthesisSystem.i"
+	@echo "... src/ConstructedBeing/Singular/SynthesisSystem.s"
 	@echo "... src/Identity/Claim.o"
 	@echo "... src/Identity/Claim.i"
 	@echo "... src/Identity/Claim.s"

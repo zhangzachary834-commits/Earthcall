@@ -1,6 +1,6 @@
 #include "PhysicsLawBridge.hpp"
 
-#include "Form/Singular/Property/ComputedProperty.hpp"
+#include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 
 PhysicsLawBridge::PhysicsLawBridge(const std::string& physicsLawName)
     : Law("physics: " + physicsLawName), _physicsName(physicsLawName) {}

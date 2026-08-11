@@ -1,5 +1,5 @@
 #include "Util/Serialization.hpp"
-#include "Form/Singular/Property/PropertyValueJson.hpp"
+#include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
 #include "Util/BinaryPack.hpp"
 #include <cstring>
 #include <glm/gtc/type_ptr.hpp>
@@ -469,9 +469,9 @@ nlohmann::json bodyPartToJson(const BodyPart& part) {
     j["geometryType"] = static_cast<int>(part.getPrimaryShape());
 
     // Geometry dimensions
-    auto dims = part.getGeometry().getDimensions();
+    auto dims = part.getDimensions();
     j["dimensions"] = {dims.x, dims.y, dims.z};
-    j["geometryShape"] = static_cast<int>(part.getGeometry().getShape());
+    j["geometryShape"] = static_cast<int>(part.getPrimaryShape());
 
     // Base color
     const float* col = part.getColor();
@@ -539,7 +539,7 @@ void bodyPartFromJson(const nlohmann::json& j, BodyPart& part) {
     if (j.contains("dimensions")) {
         auto dims = j["dimensions"];
         if (dims.size() >= 3) {
-            part.getGeometry().setDimensions(glm::vec3(dims[0], dims[1], dims[2]));
+            part.setDimensions(glm::vec3(dims[0], dims[1], dims[2]));
         }
     }
 
@@ -652,7 +652,7 @@ nlohmann::json bodyToJson(const Body& body) {
 void bodyFromJson(const nlohmann::json& j, Body& body) {
     if (j.contains("height")) body.height = j["height"].get<float>();
 
-    // Match saved parts to existing parts by name
+    // Match saved parts to existing parts by name, or create new parts if they don't exist
     if (j.contains("bodyParts")) {
         const auto& partsArr = j["bodyParts"];
         for (const auto& pj : partsArr) {
@@ -660,11 +660,22 @@ void bodyFromJson(const nlohmann::json& j, Body& body) {
             if (name.empty()) continue;
 
             // Find matching part in the body
+            BodyPart* existingPart = nullptr;
             for (auto* part : body.parts) {
                 if (part && part->getName() == name) {
-                    bodyPartFromJson(pj, *part);
+                    existingPart = part;
                     break;
                 }
+            }
+
+            if (existingPart) {
+                // Update existing part
+                bodyPartFromJson(pj, *existingPart);
+            } else {
+                // Create new part from save data
+                BodyPart* newPart = new BodyPart();
+                bodyPartFromJson(pj, *newPart);
+                body.addPart(newPart);
             }
         }
     }

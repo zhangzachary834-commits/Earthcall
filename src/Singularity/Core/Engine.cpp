@@ -163,6 +163,14 @@ static void emscripten_main_loop(void* arg) {
     LoopContext* ctx = static_cast<LoopContext*>(arg);
     if (!ctx->engine->running() || !ctx->engine->window() || glfwWindowShouldClose(ctx->engine->window())) {
         emscripten_cancel_main_loop();
+        // Mirror the native loop-exit path below (Engine::run's #else arm):
+        // Game must get a chance to flush, final-save, or unsubscribe events
+        // before the engine tears down. This call was missing here, so any
+        // such teardown work Game does was silently skipped on close, but
+        // only in the browser -- entry.cpp's own post-loop call is
+        // unreachable in this build (emscripten_set_main_loop_arg with
+        // simulate_infinite_loop=1 never returns, it unwinds the stack).
+        ctx->game->shutdown();
         ctx->engine->shutdown();
         delete ctx;
         return;

@@ -6,11 +6,11 @@
 #include "../Zone/Zone.hpp"
 #include "../HomesOfEarth/Home.hpp"
 #include "Relation/Relation.hpp"
-#include "Form/Object/Object.hpp"
-#include "Form/Object/Formation/Formation.hpp"
+#include "ConstructedBeing/Object/Object.hpp"
+#include "ConstructedBeing/Object/Formation/Formation.hpp"
 #include "Person/Body/BodyPart/BodyPart.hpp"
 #include "../Physics/Physics.hpp"
-#include "Form/Singular/Singular.hpp"
+#include "ConstructedBeing/Singular/Singular.hpp"
 
 class Ourverse : public Singular {
 public:

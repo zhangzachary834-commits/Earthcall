@@ -3,7 +3,7 @@
 #include "imgui.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include "Form/Object/Object.hpp"
+#include "ConstructedBeing/Object/Object.hpp"
 #include <unordered_set>
 #include "Rendering/HighlightSystem.hpp"
 #include "Rendering/ShadingSystem.hpp"

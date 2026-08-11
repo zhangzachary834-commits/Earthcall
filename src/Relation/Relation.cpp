@@ -1,7 +1,7 @@
 #include "Relation.hpp"
-#include "Form/Singular/Singular.hpp"
-#include "Form/Singular/Property/ComputedProperty.hpp"
-#include "Form/Singular/Property/PropertyRef.hpp"
+#include "ConstructedBeing/Singular/Singular.hpp"
+#include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
+#include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
 #include <iostream>
 #include <cstring>
 

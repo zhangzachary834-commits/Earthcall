@@ -101,7 +101,14 @@ SingularId SingularId::mintOpaque() {
         throw std::runtime_error("Identity: CSPRNG unavailable, cannot mint id");
     }
 #else
-    for (size_t i = 0; i < bytes.size(); ++i) bytes[i] = static_cast<uint8_t>(i);
+    // There is no CSPRNG linked into the wasm build (OpenSSL is native-only;
+    // see CMakeLists.txt's `if (NOT EMSCRIPTEN)` guard around find_package
+    // (OpenSSL)). A constant id here would silently collide across every
+    // call, every session, every user -- the same failure shape the native
+    // branch above refuses. Fail the same way: throw, don't degrade.
+    throw std::runtime_error(
+        "Identity: no CSPRNG available on this platform (wasm build has no "
+        "OpenSSL); cannot mint an id");
 #endif
     return SingularId(Kind::Opaque, std::move(bytes));
 }

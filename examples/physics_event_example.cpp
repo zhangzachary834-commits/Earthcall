@@ -1,6 +1,6 @@
 #include "ZonesOfEarth/Physics/Physics.hpp"
 #include "Singularity/Core/EventBus.hpp"
-#include "Form/Object/Object.hpp"
+#include "ConstructedBeing/Object/Object.hpp"
 #include <iostream>
 
 // Example of how to use the hybrid physics/EventBus system

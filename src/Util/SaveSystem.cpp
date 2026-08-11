@@ -201,6 +201,44 @@ static bool permitted(const std::string& filename) {
     return false;
 }
 
+#ifdef __EMSCRIPTEN__
+// There is no IDBFS mount, no FS.syncfs, and no --preload-file anywhere in
+// this tree (see AUDIT_2026-08-10.md §2.7). The default wasm filesystem
+// (MEMFS) is purely in-memory: the write below genuinely succeeds -- the
+// bytes are readable back for the rest of this tab's session -- but nothing
+// makes them survive a reload or a closed tab. Say so on every save, plainly,
+// rather than let a successful in-memory write read as "saved." This is
+// intentionally NOT a one-time warning like the cloud-sync notice below: it
+// is the outcome of the specific save the Person just asked for, not a fixed
+// fact about the build they can be told once and forget.
+static void warnNotDurable(const std::string& filename) {
+    std::cerr << "[SaveSystem] " << filename
+              << " exists only in this browser tab's in-memory filesystem; it "
+                 "will be LOST on reload or tab close. No persistent storage "
+                 "(IDBFS or equivalent) is wired up for this build yet -- this "
+                 "is not a real save.\n";
+}
+#endif
+
+// Cloud sync has no server-independent implementation on any platform, and on
+// wasm CloudStorage's callback fails synchronously on every single call (no
+// HTTP client is wired for wasm; see CloudStorage.cpp). Reporting "Failed to
+// sync ... to cloud" on every save reads as an ongoing problem when it is a
+// fixed, known fact about this build -- say it once per session rather than
+// spam it.
+static std::atomic<bool> g_cloudSyncUnavailableWarned{false};
+static void reportCloudSyncResult(bool success, const std::string& filename) {
+    if (success) {
+        std::cout << "[SaveSystem] Successfully synced " << filename << " to cloud.\n";
+        return;
+    }
+    if (!g_cloudSyncUnavailableWarned.exchange(true)) {
+        std::cerr << "[SaveSystem] Cloud sync unavailable in this build; saves "
+                     "stay local to this session only (further failures this "
+                     "session will not be logged again).\n";
+    }
+}
+
 std::string writeSaveData(const nlohmann::json& j, const std::string& customLabel, SaveType type) {
     std::string filename = makeFilename(customLabel, type, ".ecsave");
     if (filename.empty()) return "";
@@ -227,16 +265,16 @@ std::string writeSaveData(const nlohmann::json& j, const std::string& customLabe
     out.write(reinterpret_cast<const char*>(compressed.data()), compressed.size());
     out.close();
 
+#ifdef __EMSCRIPTEN__
+    warnNotDurable(filename);
+#endif
+
     // Upload Binary to cloud
     Util::CloudStorage::uploadSaveAsync(filename, v, type, [filename](bool success) {
-        if (success) {
-            std::cout << "[SaveSystem] Successfully synced binary " << filename << " to cloud.\n";
-            // Here we would check keepLocal and potentially delete the local file
-        } else {
-            std::cerr << "[SaveSystem] Failed to sync binary " << filename << " to cloud.\n";
-        }
+        reportCloudSyncResult(success, filename);
+        // Here we would check keepLocal and potentially delete the local file
     });
-    
+
     return filename;
 }
 
@@ -261,16 +299,16 @@ std::string writeSaveData(const std::vector<uint8_t>& data, const std::string& c
     out.write(reinterpret_cast<const char*>(compressed.data()), compressed.size());
     out.close();
 
+#ifdef __EMSCRIPTEN__
+    warnNotDurable(filename);
+#endif
+
     // Upload Binary to cloud
     Util::CloudStorage::uploadSaveAsync(filename, data, type, [filename](bool success) {
-        if (success) {
-            std::cout << "[SaveSystem] Successfully synced binary " << filename << " to cloud.\n";
-            // Check keepLocal logic here eventually
-        } else {
-            std::cerr << "[SaveSystem] Failed to sync binary " << filename << " to cloud.\n";
-        }
+        reportCloudSyncResult(success, filename);
+        // Check keepLocal logic here eventually
     });
-    
+
     return filename;
 }
 

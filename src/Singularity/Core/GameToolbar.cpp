@@ -1,13 +1,13 @@
 // GameToolbar.cpp - unified Creator Console for creation, editing, and world tools.
 
 #include "Game.hpp"
-#include "Form/Object/Object.hpp"
+#include "ConstructedBeing/Object/Object.hpp"
 #include "Singularity/Core/SdfBuild.hpp"
 #include "Rendering/BrushSystem.hpp"
 #include "Rendering/RelationManagerWindow.hpp"
 #include "Rendering/LawGraphWindow.hpp"
 #include "Rendering/CreationWindow.hpp"
-#include "Form/Object/Formation/Menu/stb_easy_font.h"
+#include "ConstructedBeing/Object/Formation/Menu/stb_easy_font.h"
 #include "OurVerse/Tool.hpp"
 #include "OurVerse/AdvancedFacePaint.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
@@ -1084,10 +1084,10 @@ void Game::renderCharacterConsole() {
                     _selectedCharacterPart->setPrimaryShape(static_cast<Object::GeometryType>(currentShape));
                 }
 
-                glm::vec3 dims = _selectedCharacterPart->getGeometry().getDimensions();
+                glm::vec3 dims = _selectedCharacterPart->getDimensions();
                 float dimArr[3] = {dims.x, dims.y, dims.z};
                 if (ImGui::SliderFloat3("Dimensions", dimArr, 0.05f, 1.0f, "%.2f")) {
-                    _selectedCharacterPart->getGeometry().setDimensions({dimArr[0], dimArr[1], dimArr[2]});
+                    _selectedCharacterPart->setDimensions({dimArr[0], dimArr[1], dimArr[2]});
                     _selectedCharacterPart->setTransform(_selectedCharacterPart->getTransform());
                 }
 

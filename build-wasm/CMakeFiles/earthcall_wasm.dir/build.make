@@ -102,35 +102,35 @@ CMakeFiles/earthcall_wasm.dir/src/Form/Form.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/earthcall_wasm.dir/src/Form/Form.cpp.s"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Form.cpp -o CMakeFiles/earthcall_wasm.dir/src/Form/Form.cpp.s
 
-CMakeFiles/earthcall_wasm.dir/src/Form/Material/Material.cpp.o: CMakeFiles/earthcall_wasm.dir/flags.make
-CMakeFiles/earthcall_wasm.dir/src/Form/Material/Material.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
-CMakeFiles/earthcall_wasm.dir/src/Form/Material/Material.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Material/Material.cpp
-CMakeFiles/earthcall_wasm.dir/src/Form/Material/Material.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Form/Material/Material.cpp.o"
-	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Form/Material/Material.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Form/Material/Material.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Form/Material/Material.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Material/Material.cpp
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Material/Material.cpp.o: CMakeFiles/earthcall_wasm.dir/flags.make
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Material/Material.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Material/Material.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Material/Material.cpp
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Material/Material.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Material/Material.cpp.o"
+	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Material/Material.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Material/Material.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Material/Material.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Material/Material.cpp
 
-CMakeFiles/earthcall_wasm.dir/src/Form/Material/Material.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/earthcall_wasm.dir/src/Form/Material/Material.cpp.i"
-	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Material/Material.cpp > CMakeFiles/earthcall_wasm.dir/src/Form/Material/Material.cpp.i
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Material/Material.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Material/Material.cpp.i"
+	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Material/Material.cpp > CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Material/Material.cpp.i
 
-CMakeFiles/earthcall_wasm.dir/src/Form/Material/Material.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/earthcall_wasm.dir/src/Form/Material/Material.cpp.s"
-	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Material/Material.cpp -o CMakeFiles/earthcall_wasm.dir/src/Form/Material/Material.cpp.s
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Material/Material.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Material/Material.cpp.s"
+	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Material/Material.cpp -o CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Material/Material.cpp.s
 
-CMakeFiles/earthcall_wasm.dir/src/Form/Material/MaterialManager.cpp.o: CMakeFiles/earthcall_wasm.dir/flags.make
-CMakeFiles/earthcall_wasm.dir/src/Form/Material/MaterialManager.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
-CMakeFiles/earthcall_wasm.dir/src/Form/Material/MaterialManager.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Material/MaterialManager.cpp
-CMakeFiles/earthcall_wasm.dir/src/Form/Material/MaterialManager.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Form/Material/MaterialManager.cpp.o"
-	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Form/Material/MaterialManager.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Form/Material/MaterialManager.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Form/Material/MaterialManager.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Material/MaterialManager.cpp
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Material/MaterialManager.cpp.o: CMakeFiles/earthcall_wasm.dir/flags.make
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Material/MaterialManager.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Material/MaterialManager.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Material/MaterialManager.cpp
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Material/MaterialManager.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Material/MaterialManager.cpp.o"
+	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Material/MaterialManager.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Material/MaterialManager.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Material/MaterialManager.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Material/MaterialManager.cpp
 
-CMakeFiles/earthcall_wasm.dir/src/Form/Material/MaterialManager.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/earthcall_wasm.dir/src/Form/Material/MaterialManager.cpp.i"
-	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Material/MaterialManager.cpp > CMakeFiles/earthcall_wasm.dir/src/Form/Material/MaterialManager.cpp.i
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Material/MaterialManager.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Material/MaterialManager.cpp.i"
+	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Material/MaterialManager.cpp > CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Material/MaterialManager.cpp.i
 
-CMakeFiles/earthcall_wasm.dir/src/Form/Material/MaterialManager.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/earthcall_wasm.dir/src/Form/Material/MaterialManager.cpp.s"
-	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Material/MaterialManager.cpp -o CMakeFiles/earthcall_wasm.dir/src/Form/Material/MaterialManager.cpp.s
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Material/MaterialManager.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Material/MaterialManager.cpp.s"
+	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Material/MaterialManager.cpp -o CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Material/MaterialManager.cpp.s
 
 CMakeFiles/earthcall_wasm.dir/src/Form/Object/AngleTools.cpp.o: CMakeFiles/earthcall_wasm.dir/flags.make
 CMakeFiles/earthcall_wasm.dir/src/Form/Object/AngleTools.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
@@ -432,95 +432,95 @@ CMakeFiles/earthcall_wasm.dir/src/Form/Object/ObjectRender.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/earthcall_wasm.dir/src/Form/Object/ObjectRender.cpp.s"
 	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/ObjectRender.cpp -o CMakeFiles/earthcall_wasm.dir/src/Form/Object/ObjectRender.cpp.s
 
-CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Concept.cpp.o: CMakeFiles/earthcall_wasm.dir/flags.make
-CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Concept.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
-CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Concept.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Concept.cpp
-CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Concept.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_25) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Concept.cpp.o"
-	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Concept.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Concept.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Concept.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Concept.cpp
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Concept.cpp.o: CMakeFiles/earthcall_wasm.dir/flags.make
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Concept.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Concept.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Concept.cpp
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Concept.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_25) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Concept.cpp.o"
+	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Concept.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Concept.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Concept.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Concept.cpp
 
-CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Concept.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Concept.cpp.i"
-	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Concept.cpp > CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Concept.cpp.i
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Concept.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Concept.cpp.i"
+	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Concept.cpp > CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Concept.cpp.i
 
-CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Concept.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Concept.cpp.s"
-	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Concept.cpp -o CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Concept.cpp.s
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Concept.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Concept.cpp.s"
+	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Concept.cpp -o CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Concept.cpp.s
 
-CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/Property.cpp.o: CMakeFiles/earthcall_wasm.dir/flags.make
-CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/Property.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
-CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/Property.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.cpp
-CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/Property.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_26) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/Property.cpp.o"
-	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/Property.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/Property.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/Property.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.cpp
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/Property.cpp.o: CMakeFiles/earthcall_wasm.dir/flags.make
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/Property.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/Property.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.cpp
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/Property.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_26) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/Property.cpp.o"
+	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/Property.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/Property.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/Property.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.cpp
 
-CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/Property.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/Property.cpp.i"
-	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.cpp > CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/Property.cpp.i
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/Property.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/Property.cpp.i"
+	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.cpp > CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/Property.cpp.i
 
-CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/Property.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/Property.cpp.s"
-	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.cpp -o CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/Property.cpp.s
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/Property.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/Property.cpp.s"
+	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.cpp -o CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/Property.cpp.s
 
-CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/PropertyPath.cpp.o: CMakeFiles/earthcall_wasm.dir/flags.make
-CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/PropertyPath.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
-CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/PropertyPath.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyPath.cpp
-CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/PropertyPath.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_27) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/PropertyPath.cpp.o"
-	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/PropertyPath.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/PropertyPath.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/PropertyPath.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyPath.cpp
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/PropertyPath.cpp.o: CMakeFiles/earthcall_wasm.dir/flags.make
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/PropertyPath.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/PropertyPath.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyPath.cpp
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/PropertyPath.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_27) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/PropertyPath.cpp.o"
+	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/PropertyPath.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/PropertyPath.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/PropertyPath.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyPath.cpp
 
-CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/PropertyPath.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/PropertyPath.cpp.i"
-	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyPath.cpp > CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/PropertyPath.cpp.i
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/PropertyPath.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/PropertyPath.cpp.i"
+	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyPath.cpp > CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/PropertyPath.cpp.i
 
-CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/PropertyPath.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/PropertyPath.cpp.s"
-	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyPath.cpp -o CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/PropertyPath.cpp.s
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/PropertyPath.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/PropertyPath.cpp.s"
+	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyPath.cpp -o CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/PropertyPath.cpp.s
 
-CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/PropertyValueJson.cpp.o: CMakeFiles/earthcall_wasm.dir/flags.make
-CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/PropertyValueJson.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
-CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/PropertyValueJson.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValueJson.cpp
-CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/PropertyValueJson.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_28) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/PropertyValueJson.cpp.o"
-	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/PropertyValueJson.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/PropertyValueJson.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/PropertyValueJson.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValueJson.cpp
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/PropertyValueJson.cpp.o: CMakeFiles/earthcall_wasm.dir/flags.make
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/PropertyValueJson.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/PropertyValueJson.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValueJson.cpp
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/PropertyValueJson.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_28) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/PropertyValueJson.cpp.o"
+	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/PropertyValueJson.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/PropertyValueJson.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/PropertyValueJson.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValueJson.cpp
 
-CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/PropertyValueJson.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/PropertyValueJson.cpp.i"
-	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValueJson.cpp > CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/PropertyValueJson.cpp.i
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/PropertyValueJson.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/PropertyValueJson.cpp.i"
+	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValueJson.cpp > CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/PropertyValueJson.cpp.i
 
-CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/PropertyValueJson.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/PropertyValueJson.cpp.s"
-	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValueJson.cpp -o CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/PropertyValueJson.cpp.s
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/PropertyValueJson.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/PropertyValueJson.cpp.s"
+	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValueJson.cpp -o CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/PropertyValueJson.cpp.s
 
-CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Singular.cpp.o: CMakeFiles/earthcall_wasm.dir/flags.make
-CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Singular.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
-CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Singular.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.cpp
-CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Singular.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_29) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Singular.cpp.o"
-	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Singular.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Singular.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Singular.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.cpp
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Singular.cpp.o: CMakeFiles/earthcall_wasm.dir/flags.make
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Singular.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Singular.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.cpp
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Singular.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_29) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Singular.cpp.o"
+	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Singular.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Singular.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Singular.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.cpp
 
-CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Singular.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Singular.cpp.i"
-	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.cpp > CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Singular.cpp.i
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Singular.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Singular.cpp.i"
+	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.cpp > CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Singular.cpp.i
 
-CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Singular.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Singular.cpp.s"
-	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.cpp -o CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Singular.cpp.s
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Singular.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Singular.cpp.s"
+	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.cpp -o CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Singular.cpp.s
 
-CMakeFiles/earthcall_wasm.dir/src/Form/Singular/SynthesisSystem.cpp.o: CMakeFiles/earthcall_wasm.dir/flags.make
-CMakeFiles/earthcall_wasm.dir/src/Form/Singular/SynthesisSystem.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
-CMakeFiles/earthcall_wasm.dir/src/Form/Singular/SynthesisSystem.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/SynthesisSystem.cpp
-CMakeFiles/earthcall_wasm.dir/src/Form/Singular/SynthesisSystem.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_30) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/Form/Singular/SynthesisSystem.cpp.o"
-	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/Form/Singular/SynthesisSystem.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/Form/Singular/SynthesisSystem.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/Form/Singular/SynthesisSystem.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/SynthesisSystem.cpp
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/SynthesisSystem.cpp.o: CMakeFiles/earthcall_wasm.dir/flags.make
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/SynthesisSystem.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/SynthesisSystem.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/SynthesisSystem.cpp
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/SynthesisSystem.cpp.o: CMakeFiles/earthcall_wasm.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_30) "Building CXX object CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/SynthesisSystem.cpp.o"
+	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/SynthesisSystem.cpp.o -MF CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/SynthesisSystem.cpp.o.d -o CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/SynthesisSystem.cpp.o -c /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/SynthesisSystem.cpp
 
-CMakeFiles/earthcall_wasm.dir/src/Form/Singular/SynthesisSystem.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/earthcall_wasm.dir/src/Form/Singular/SynthesisSystem.cpp.i"
-	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/SynthesisSystem.cpp > CMakeFiles/earthcall_wasm.dir/src/Form/Singular/SynthesisSystem.cpp.i
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/SynthesisSystem.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/SynthesisSystem.cpp.i"
+	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/SynthesisSystem.cpp > CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/SynthesisSystem.cpp.i
 
-CMakeFiles/earthcall_wasm.dir/src/Form/Singular/SynthesisSystem.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/earthcall_wasm.dir/src/Form/Singular/SynthesisSystem.cpp.s"
-	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/SynthesisSystem.cpp -o CMakeFiles/earthcall_wasm.dir/src/Form/Singular/SynthesisSystem.cpp.s
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/SynthesisSystem.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/SynthesisSystem.cpp.s"
+	/Users/zacharyzhang/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/SynthesisSystem.cpp -o CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/SynthesisSystem.cpp.s
 
 CMakeFiles/earthcall_wasm.dir/src/Identity/Claim.cpp.o: CMakeFiles/earthcall_wasm.dir/flags.make
 CMakeFiles/earthcall_wasm.dir/src/Identity/Claim.cpp.o: CMakeFiles/earthcall_wasm.dir/includes_CXX.rsp
@@ -2341,8 +2341,8 @@ CMakeFiles/earthcall_wasm.dir/imgui/backends/imgui_impl_wgpu.cpp.s: cmake_force
 earthcall_wasm_OBJECTS = \
 "CMakeFiles/earthcall_wasm.dir/src/entry.cpp.o" \
 "CMakeFiles/earthcall_wasm.dir/src/Form/Form.cpp.o" \
-"CMakeFiles/earthcall_wasm.dir/src/Form/Material/Material.cpp.o" \
-"CMakeFiles/earthcall_wasm.dir/src/Form/Material/MaterialManager.cpp.o" \
+"CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Material/Material.cpp.o" \
+"CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Material/MaterialManager.cpp.o" \
 "CMakeFiles/earthcall_wasm.dir/src/Form/Object/AngleTools.cpp.o" \
 "CMakeFiles/earthcall_wasm.dir/src/Form/Object/Automation/Automation.cpp.o" \
 "CMakeFiles/earthcall_wasm.dir/src/Form/Object/Contour.cpp.o" \
@@ -2363,12 +2363,12 @@ earthcall_wasm_OBJECTS = \
 "CMakeFiles/earthcall_wasm.dir/src/Form/Object/ObjectPaint.cpp.o" \
 "CMakeFiles/earthcall_wasm.dir/src/Form/Object/ObjectRaycast.cpp.o" \
 "CMakeFiles/earthcall_wasm.dir/src/Form/Object/ObjectRender.cpp.o" \
-"CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Concept.cpp.o" \
-"CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/Property.cpp.o" \
-"CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/PropertyPath.cpp.o" \
-"CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/PropertyValueJson.cpp.o" \
-"CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Singular.cpp.o" \
-"CMakeFiles/earthcall_wasm.dir/src/Form/Singular/SynthesisSystem.cpp.o" \
+"CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Concept.cpp.o" \
+"CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/Property.cpp.o" \
+"CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/PropertyPath.cpp.o" \
+"CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/PropertyValueJson.cpp.o" \
+"CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Singular.cpp.o" \
+"CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/SynthesisSystem.cpp.o" \
 "CMakeFiles/earthcall_wasm.dir/src/Identity/Claim.cpp.o" \
 "CMakeFiles/earthcall_wasm.dir/src/Identity/FirstMoverRegister.cpp.o" \
 "CMakeFiles/earthcall_wasm.dir/src/Identity/IdentityLedger.cpp.o" \
@@ -2496,8 +2496,8 @@ earthcall_wasm_EXTERNAL_OBJECTS =
 
 earthcall.js: CMakeFiles/earthcall_wasm.dir/src/entry.cpp.o
 earthcall.js: CMakeFiles/earthcall_wasm.dir/src/Form/Form.cpp.o
-earthcall.js: CMakeFiles/earthcall_wasm.dir/src/Form/Material/Material.cpp.o
-earthcall.js: CMakeFiles/earthcall_wasm.dir/src/Form/Material/MaterialManager.cpp.o
+earthcall.js: CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Material/Material.cpp.o
+earthcall.js: CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Material/MaterialManager.cpp.o
 earthcall.js: CMakeFiles/earthcall_wasm.dir/src/Form/Object/AngleTools.cpp.o
 earthcall.js: CMakeFiles/earthcall_wasm.dir/src/Form/Object/Automation/Automation.cpp.o
 earthcall.js: CMakeFiles/earthcall_wasm.dir/src/Form/Object/Contour.cpp.o
@@ -2518,12 +2518,12 @@ earthcall.js: CMakeFiles/earthcall_wasm.dir/src/Form/Object/ObjectMotion.cpp.o
 earthcall.js: CMakeFiles/earthcall_wasm.dir/src/Form/Object/ObjectPaint.cpp.o
 earthcall.js: CMakeFiles/earthcall_wasm.dir/src/Form/Object/ObjectRaycast.cpp.o
 earthcall.js: CMakeFiles/earthcall_wasm.dir/src/Form/Object/ObjectRender.cpp.o
-earthcall.js: CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Concept.cpp.o
-earthcall.js: CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/Property.cpp.o
-earthcall.js: CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/PropertyPath.cpp.o
-earthcall.js: CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/PropertyValueJson.cpp.o
-earthcall.js: CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Singular.cpp.o
-earthcall.js: CMakeFiles/earthcall_wasm.dir/src/Form/Singular/SynthesisSystem.cpp.o
+earthcall.js: CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Concept.cpp.o
+earthcall.js: CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/Property.cpp.o
+earthcall.js: CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/PropertyPath.cpp.o
+earthcall.js: CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/PropertyValueJson.cpp.o
+earthcall.js: CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Singular.cpp.o
+earthcall.js: CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/SynthesisSystem.cpp.o
 earthcall.js: CMakeFiles/earthcall_wasm.dir/src/Identity/Claim.cpp.o
 earthcall.js: CMakeFiles/earthcall_wasm.dir/src/Identity/FirstMoverRegister.cpp.o
 earthcall.js: CMakeFiles/earthcall_wasm.dir/src/Identity/IdentityLedger.cpp.o

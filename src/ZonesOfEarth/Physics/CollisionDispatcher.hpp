@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Form/Object/Object.hpp"
+#include "ConstructedBeing/Object/Object.hpp"
 #include <glm/glm.hpp>
 
 namespace Physics {

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.5)
 project(Earthcall VERSION 1.0 LANGUAGES CXX OBJCXX)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -35,7 +35,7 @@ endif()
 # Include directories
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/src
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/Form
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/s
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ZonesOfEarth
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Person/Body
     ${CMAKE_CURRENT_SOURCE_DIR}/imgui

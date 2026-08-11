@@ -1,5 +1,5 @@
 #include "ZonesOfEarth/ZoneManager.hpp"
-#include "Form/Material/MaterialManager.hpp"
+#include "ConstructedBeing/Material/MaterialManager.hpp"
 
 // Global ZoneManager used by various modules (e.g., Person.cpp).
 ZoneManager mgr;

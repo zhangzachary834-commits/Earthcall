@@ -1,7 +1,12 @@
 #include "Singularity/Core/EventBus.hpp"
 #include <string>
 
-#ifdef EMSCRIPTEN
+// emcc defines __EMSCRIPTEN__; plain EMSCRIPTEN is only a build-system
+// environment variable, never a preprocessor macro. This guard never
+// matched, so this whole translation unit compiled to nothing: --bind
+// exported no symbols and web_ui/app.js's `Module.Earthcall_EmitUtterance`
+// feature test was always false. See AUDIT_2026-08-10.md §2.6.
+#ifdef __EMSCRIPTEN__
 #include <emscripten/bind.h>
 
 // Expose a global function to JS so the HTML frontend can push utterances

@@ -1,13 +1,13 @@
 #include "Zone.hpp"
 #include "../World/World.hpp"
-#include "Form/Singular/Property/ComputedProperty.hpp"
+#include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 #include <iostream>
 #include <algorithm>
 #include "Singularity/OntoMath/Field.hpp"
-#include "Form/Object/Geometry/FieldNode.hpp"
+#include "ConstructedBeing/Object/Geometry/FieldNode.hpp"
 #include "GLFW/glfw3.h"
 #include "Rendering/Renderer.hpp"
-#include "Form/Object/Formation/Menu/stb_easy_font.h"
+#include "ConstructedBeing/Object/Formation/Menu/stb_easy_font.h"
 
 using Scope = Zone::Scope;
 

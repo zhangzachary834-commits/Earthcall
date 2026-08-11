@@ -2009,7 +2009,7 @@ CMakeFiles/earthcall_wasm.dir/src/Form/Form.cpp.o: /Users/zacharyzhang/Documents
   /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/stddef.h \
   /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/stdint.h
 
-CMakeFiles/earthcall_wasm.dir/src/Form/Material/Material.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Material/Material.cpp \
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Material/Material.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Material/Material.cpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/matrix.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat2x2.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat2x3.hpp \
@@ -2190,12 +2190,12 @@ CMakeFiles/earthcall_wasm.dir/src/Form/Material/Material.cpp.o: /Users/zacharyzh
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec3.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec4.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vector_relational.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Material/Material.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyRef.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Material/Material.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyRef.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/json.hpp \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/alloca.h \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/assert.h \
@@ -2925,7 +2925,7 @@ CMakeFiles/earthcall_wasm.dir/src/Form/Material/Material.cpp.o: /Users/zacharyzh
   /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/stddef.h \
   /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/stdint.h
 
-CMakeFiles/earthcall_wasm.dir/src/Form/Material/MaterialManager.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Material/MaterialManager.cpp \
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Material/MaterialManager.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Material/MaterialManager.cpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/matrix.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat2x2.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat2x3.hpp \
@@ -3106,12 +3106,12 @@ CMakeFiles/earthcall_wasm.dir/src/Form/Material/MaterialManager.cpp.o: /Users/za
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec3.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec4.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vector_relational.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Material/Material.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Material/MaterialManager.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Material/Material.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Material/MaterialManager.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/json.hpp \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/alloca.h \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/assert.h \
@@ -6759,11 +6759,11 @@ CMakeFiles/earthcall_wasm.dir/src/Form/Object/Creation/ObjectConcept.cpp.o: /Use
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyPath.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyPath.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Integration/EarthcallAPI.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/Relation.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/RelationManager.hpp \
@@ -7833,10 +7833,10 @@ CMakeFiles/earthcall_wasm.dir/src/Form/Object/Formation/Formation.cpp.o: /Users/
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/Relation.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/RelationManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/RenderMaterial.hpp \
@@ -10478,11 +10478,11 @@ CMakeFiles/earthcall_wasm.dir/src/Form/Object/Geometry/FieldNode.cpp.o: /Users/z
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec4.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vector_relational.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Geometry/FieldNode.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyRef.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyRef.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/OntoMath/Field.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/OntoMath/ScalarForm.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/json.hpp \
@@ -14945,12 +14945,12 @@ CMakeFiles/earthcall_wasm.dir/src/Form/Object/Object.cpp.o: /Users/zacharyzhang/
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/ComputedProperty.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyRef.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/ComputedProperty.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyRef.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/Relation.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/RelationManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/HighlightSystem.hpp \
@@ -17734,10 +17734,10 @@ CMakeFiles/earthcall_wasm.dir/src/Form/Object/ObjectCollision.cpp.o: /Users/zach
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/Relation.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/RelationManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/HighlightSystem.hpp \
@@ -18802,10 +18802,10 @@ CMakeFiles/earthcall_wasm.dir/src/Form/Object/ObjectMotion.cpp.o: /Users/zachary
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/Relation.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/RelationManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/HighlightSystem.hpp \
@@ -19872,10 +19872,10 @@ CMakeFiles/earthcall_wasm.dir/src/Form/Object/ObjectPaint.cpp.o: /Users/zacharyz
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/Relation.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/RelationManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/HighlightSystem.hpp \
@@ -20940,10 +20940,10 @@ CMakeFiles/earthcall_wasm.dir/src/Form/Object/ObjectRaycast.cpp.o: /Users/zachar
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/Relation.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/RelationManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/HighlightSystem.hpp \
@@ -22008,10 +22008,10 @@ CMakeFiles/earthcall_wasm.dir/src/Form/Object/ObjectRender.cpp.o: /Users/zachary
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/Relation.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/RelationManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/HighlightSystem.hpp \
@@ -22764,7 +22764,7 @@ CMakeFiles/earthcall_wasm.dir/src/Form/Object/ObjectRender.cpp.o: /Users/zachary
   /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/stddef.h \
   /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/stdint.h
 
-CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Concept.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Concept.cpp \
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Concept.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Concept.cpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/matrix.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat2x2.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat2x3.hpp \
@@ -22945,12 +22945,12 @@ CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Concept.cpp.o: /Users/zacharyzha
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec3.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec4.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vector_relational.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Concept.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValueJson.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Concept.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValueJson.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/json.hpp \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/alloca.h \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/assert.h \
@@ -23682,9 +23682,9 @@ CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Concept.cpp.o: /Users/zacharyzha
   /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/stddef.h \
   /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/stdint.h
 
-CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/Property.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.cpp
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/Property.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.cpp
 
-CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/PropertyPath.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyPath.cpp \
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/PropertyPath.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyPath.cpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/matrix.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat2x2.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat2x3.hpp \
@@ -23865,11 +23865,11 @@ CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/PropertyPath.cpp.o: /Us
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec3.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec4.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vector_relational.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyPath.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyPath.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/alloca.h \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/assert.h \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/bits/alltypes.h \
@@ -24540,7 +24540,7 @@ CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/PropertyPath.cpp.o: /Us
   /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/stddef.h \
   /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/stdint.h
 
-CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/PropertyValueJson.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValueJson.cpp \
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Property/PropertyValueJson.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValueJson.cpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/matrix.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat2x2.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat2x3.hpp \
@@ -24850,11 +24850,11 @@ CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/PropertyValueJson.cpp.o
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValueJson.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValueJson.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/Relation.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/RelationManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/RenderMaterial.hpp \
@@ -25608,7 +25608,7 @@ CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Property/PropertyValueJson.cpp.o
   /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/stddef.h \
   /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/stdint.h
 
-CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Singular.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.cpp \
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/Singular.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.cpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/matrix.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat2x2.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat2x3.hpp \
@@ -25789,10 +25789,10 @@ CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Singular.cpp.o: /Users/zacharyzh
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec3.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec4.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vector_relational.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/alloca.h \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/assert.h \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/bits/alltypes.h \
@@ -26463,7 +26463,7 @@ CMakeFiles/earthcall_wasm.dir/src/Form/Singular/Singular.cpp.o: /Users/zacharyzh
   /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/stddef.h \
   /Users/zacharyzhang/emsdk/upstream/lib/clang/24/include/stdint.h
 
-CMakeFiles/earthcall_wasm.dir/src/Form/Singular/SynthesisSystem.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/SynthesisSystem.cpp \
+CMakeFiles/earthcall_wasm.dir/src/ConstructedBeing/Singular/SynthesisSystem.cpp.o: /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/SynthesisSystem.cpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/matrix.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat2x2.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat2x3.hpp \
@@ -26774,13 +26774,13 @@ CMakeFiles/earthcall_wasm.dir/src/Form/Singular/SynthesisSystem.cpp.o: /Users/za
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Concept.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyPath.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/SynthesisSystem.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Concept.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyPath.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/SynthesisSystem.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Integration/EarthcallAPI.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Legacy/DesignSystem.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.hpp \
@@ -32821,10 +32821,10 @@ CMakeFiles/earthcall_wasm.dir/src/Integration/EarthcallAPI.cpp.o: /Users/zachary
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/json.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Integration/EarthcallAPI.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Integration/SecurityManager.hpp \
@@ -36932,10 +36932,10 @@ CMakeFiles/earthcall_wasm.dir/src/Legacy/DesignSystem.cpp.o: /Users/zacharyzhang
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Legacy/DesignSystem.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/BodyPart.hpp \
@@ -38005,10 +38005,10 @@ CMakeFiles/earthcall_wasm.dir/src/OurVerse/AdvancedFacePaint.cpp.o: /Users/zacha
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/AdvancedFacePaint.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/Relation.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/RelationManager.hpp \
@@ -39799,11 +39799,11 @@ CMakeFiles/earthcall_wasm.dir/src/OurVerse/Controls.cpp.o: /Users/zacharyzhang/D
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyPath.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyPath.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Identity/SingularId.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Integration/EarthcallAPI.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Legacy/DesignSystem.hpp \
@@ -40915,11 +40915,11 @@ CMakeFiles/earthcall_wasm.dir/src/OurVerse/CursorTools.cpp.o: /Users/zacharyzhan
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyPath.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyPath.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Identity/SingularId.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Integration/EarthcallAPI.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Legacy/DesignSystem.hpp \
@@ -42031,11 +42031,11 @@ CMakeFiles/earthcall_wasm.dir/src/OurVerse/ElementalToolHandler.cpp.o: /Users/za
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyPath.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyPath.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Identity/SingularId.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Integration/EarthcallAPI.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Legacy/DesignSystem.hpp \
@@ -43146,11 +43146,11 @@ CMakeFiles/earthcall_wasm.dir/src/OurVerse/Tool.cpp.o: /Users/zacharyzhang/Docum
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyPath.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyPath.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Identity/SingularId.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Integration/EarthcallAPI.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Legacy/DesignSystem.hpp \
@@ -44259,10 +44259,10 @@ CMakeFiles/earthcall_wasm.dir/src/Person/Body/Body.cpp.o: /Users/zacharyzhang/Do
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/Body.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/BodyPart.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/Chest.hpp \
@@ -45341,10 +45341,10 @@ CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/BodyPart.cpp.o: /Users/za
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/BodyPart.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/Relation.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/RelationManager.hpp \
@@ -46407,10 +46407,10 @@ CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Chest.cpp.o: /Users/zacha
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/BodyPart.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/Chest.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/Relation.hpp \
@@ -47474,10 +47474,10 @@ CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb.cpp.o: /Users/zachar
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/BodyPart.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/Limb.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/Relation.hpp \
@@ -48541,10 +48541,10 @@ CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Arm.cpp.o: /Users/za
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/BodyPart.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/Limb.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/Limb/Arm.hpp \
@@ -49609,10 +49609,10 @@ CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Foot.cpp.o: /Users/z
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/BodyPart.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/Limb.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/Limb/Foot.hpp \
@@ -50677,10 +50677,10 @@ CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/ForeArm.cpp.o: /User
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/BodyPart.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/Limb.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/Limb/ForeArm.hpp \
@@ -51745,10 +51745,10 @@ CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/ForeLeg.cpp.o: /User
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/BodyPart.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/Limb.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/Limb/ForeLeg.hpp \
@@ -52813,10 +52813,10 @@ CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Hand.cpp.o: /Users/z
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/BodyPart.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/Limb.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/Limb/Hand.hpp \
@@ -53881,10 +53881,10 @@ CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Leg.cpp.o: /Users/za
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/BodyPart.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/Limb.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/Limb/Leg.hpp \
@@ -54949,10 +54949,10 @@ CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Neck.cpp.o: /Users/z
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/BodyPart.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/Limb.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/Limb/Neck.hpp \
@@ -56017,10 +56017,10 @@ CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Shoulder.cpp.o: /Use
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/BodyPart.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/Limb.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/Limb/Shoulder.hpp \
@@ -57085,10 +57085,10 @@ CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Limb/Torso.cpp.o: /Users/
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/BodyPart.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/Limb.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/Limb/Torso.hpp \
@@ -58155,10 +58155,10 @@ CMakeFiles/earthcall_wasm.dir/src/Person/Body/BodyPart/Stomach.cpp.o: /Users/zac
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/BodyPart.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/Stomach.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/Relation.hpp \
@@ -59224,10 +59224,10 @@ CMakeFiles/earthcall_wasm.dir/src/Person/Body/Head/Head.cpp.o: /Users/zacharyzha
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/BodyPart.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/Head/Head.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/Relation.hpp \
@@ -60292,12 +60292,12 @@ CMakeFiles/earthcall_wasm.dir/src/Person/Person.cpp.o: /Users/zacharyzhang/Docum
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/ComputedProperty.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyRef.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/ComputedProperty.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyRef.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Identity/SingularId.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Legacy/DesignSystem.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.hpp \
@@ -61375,10 +61375,10 @@ CMakeFiles/earthcall_wasm.dir/src/Person/PersonDatabase.cpp.o: /Users/zacharyzha
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Identity/SingularId.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/Body.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/BodyPart.hpp \
@@ -62323,10 +62323,10 @@ CMakeFiles/earthcall_wasm.dir/src/Person/Soul/Soul.cpp.o: /Users/zacharyzhang/Do
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec3.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec4.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vector_relational.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Soul/Soul.hpp \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/alloca.h \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/assert.h \
@@ -63316,11 +63316,11 @@ CMakeFiles/earthcall_wasm.dir/src/Perspective/KeyboardHandler.cpp.o: /Users/zach
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyPath.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyPath.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Identity/SingularId.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Integration/EarthcallAPI.hpp \
@@ -66902,12 +66902,12 @@ CMakeFiles/earthcall_wasm.dir/src/Relation/Relation.cpp.o: /Users/zacharyzhang/D
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec3.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec4.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vector_relational.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/ComputedProperty.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyRef.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/ComputedProperty.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyRef.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/Relation.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/json.hpp \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/alloca.h \
@@ -67934,10 +67934,10 @@ CMakeFiles/earthcall_wasm.dir/src/Relation/RelationManager.cpp.o: /Users/zachary
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec3.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec4.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vector_relational.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/Relation.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/RelationManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/EventBus.hpp \
@@ -70533,11 +70533,11 @@ CMakeFiles/earthcall_wasm.dir/src/Rendering/CreationWindow.cpp.o: /Users/zachary
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyPath.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyPath.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Identity/SingularId.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Person.hpp \
@@ -72909,10 +72909,10 @@ CMakeFiles/earthcall_wasm.dir/src/Rendering/HighlightSystem.cpp.o: /Users/zachar
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/Relation.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/RelationManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/HighlightSystem.hpp \
@@ -73980,11 +73980,11 @@ CMakeFiles/earthcall_wasm.dir/src/Rendering/LawGraphWindow.cpp.o: /Users/zachary
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyPath.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyPath.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Identity/SingularId.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Person.hpp \
@@ -75068,11 +75068,11 @@ CMakeFiles/earthcall_wasm.dir/src/Rendering/MathEditors.cpp.o: /Users/zacharyzha
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyPath.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyPath.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Identity/SingularId.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Person.hpp \
@@ -76135,10 +76135,10 @@ CMakeFiles/earthcall_wasm.dir/src/Rendering/RelationManagerWindow.cpp.o: /Users/
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec3.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec4.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vector_relational.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/Relation.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/RelationManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/RelationManagerWindow.hpp \
@@ -77065,12 +77065,12 @@ CMakeFiles/earthcall_wasm.dir/src/Rendering/RenderMaterial.cpp.o: /Users/zachary
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec3.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec4.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vector_relational.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Material/Material.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Material/MaterialManager.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Material/Material.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Material/MaterialManager.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/RenderMaterial.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/json.hpp \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/alloca.h \
@@ -79643,11 +79643,11 @@ CMakeFiles/earthcall_wasm.dir/src/Rendering/WebGPU/SdfWgsl.cpp.o: /Users/zachary
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Geometry/FieldNode.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Geometry/Sdf.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Geometry/SmoothSurface.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyRef.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyRef.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/WebGPU/SdfWgsl.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/OntoMath/Field.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/OntoMath/ScalarForm.hpp \
@@ -82267,11 +82267,11 @@ CMakeFiles/earthcall_wasm.dir/src/Singularity/Audio/AudioSystem.cpp.o: /Users/za
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyPath.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyPath.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Identity/SingularId.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Person.hpp \
@@ -83381,11 +83381,11 @@ CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/Engine.cpp.o: /Users/zacharyz
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyPath.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyPath.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Identity/SingularId.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Integration/EarthcallAPI.hpp \
@@ -85080,11 +85080,11 @@ CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/EventEntity.cpp.o: /Users/zac
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec3.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec4.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vector_relational.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyRef.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyRef.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/EventBus.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/EventEntity.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/AuthorsOfLaw/ECA.hpp \
@@ -86801,11 +86801,11 @@ CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/Game.cpp.o: /Users/zacharyzha
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyPath.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyPath.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Identity/SingularId.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Integration/EarthcallAPI.hpp \
@@ -87903,8 +87903,8 @@ CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameInit.cpp.o: /Users/zachar
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec4.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vector_relational.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Form.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Material/Material.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Material/MaterialManager.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Material/Material.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Material/MaterialManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/AngleTools.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Automation/Automation.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Contour.hpp \
@@ -87922,11 +87922,11 @@ CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameInit.cpp.o: /Users/zachar
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyPath.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyPath.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Identity/SingularId.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Integration/EarthcallAPI.hpp \
@@ -89045,11 +89045,11 @@ CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameNodeGraph.cpp.o: /Users/z
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyPath.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyPath.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Identity/SingularId.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Integration/EarthcallAPI.hpp \
@@ -90163,11 +90163,11 @@ CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameRender.cpp.o: /Users/zach
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyPath.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyPath.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Identity/SingularId.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Integration/EarthcallAPI.hpp \
@@ -91269,8 +91269,8 @@ CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameSaveLoad.cpp.o: /Users/za
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec4.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vector_relational.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Form.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Material/Material.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Material/MaterialManager.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Material/Material.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Material/MaterialManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/AngleTools.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Automation/Automation.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Contour.hpp \
@@ -91288,11 +91288,11 @@ CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameSaveLoad.cpp.o: /Users/za
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyPath.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyPath.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Identity/SingularId.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Integration/EarthcallAPI.hpp \
@@ -92432,11 +92432,11 @@ CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameToolbar.cpp.o: /Users/zac
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyPath.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyPath.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Identity/SingularId.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Integration/EarthcallAPI.hpp \
@@ -93554,11 +93554,11 @@ CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/GameUpdate.cpp.o: /Users/zach
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyPath.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyPath.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Identity/SingularId.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Integration/EarthcallAPI.hpp \
@@ -94675,10 +94675,10 @@ CMakeFiles/earthcall_wasm.dir/src/Singularity/Core/PolyhedronSettings.cpp.o: /Us
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/Relation.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/RelationManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/RenderMaterial.hpp \
@@ -95741,10 +95741,10 @@ CMakeFiles/earthcall_wasm.dir/src/Singularity/Language/LanguageSystem.cpp.o: /Us
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Legacy/DesignSystem.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/BodyPart.hpp \
@@ -96687,11 +96687,11 @@ CMakeFiles/earthcall_wasm.dir/src/Singularity/Language/Lexeme.cpp.o: /Users/zach
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec3.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec4.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vector_relational.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyRef.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyRef.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Language/Lexeme.hpp \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/alloca.h \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/assert.h \
@@ -97675,10 +97675,10 @@ CMakeFiles/earthcall_wasm.dir/src/Singularity/Language/SyntacticParser.cpp.o: /U
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Legacy/DesignSystem.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/BodyPart.hpp \
@@ -100664,7 +100664,7 @@ CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/Field.cpp.o: /Users/zacha
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec3.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec4.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vector_relational.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/OntoMath/Field.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/OntoMath/ScalarForm.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/json.hpp \
@@ -101584,7 +101584,7 @@ CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/ProbabilityForm.cpp.o: /U
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec3.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec4.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vector_relational.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/OntoMath/ProbabilityForm.hpp \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/alloca.h \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/assert.h \
@@ -102619,11 +102619,11 @@ CMakeFiles/earthcall_wasm.dir/src/Singularity/OntoMath/ScalarForm.cpp.o: /Users/
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyPath.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyPath.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Identity/SingularId.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Person.hpp \
@@ -103703,12 +103703,12 @@ CMakeFiles/earthcall_wasm.dir/src/Singularity/Physical/PhysicalChannel.cpp.o: /U
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/ComputedProperty.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyPath.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/ComputedProperty.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyPath.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Identity/SingularId.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Person.hpp \
@@ -104789,12 +104789,12 @@ CMakeFiles/earthcall_wasm.dir/src/Singularity/TransferPolicy.cpp.o: /Users/zacha
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/ComputedProperty.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyPath.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/ComputedProperty.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyPath.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/Relation.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/RelationManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/RenderMaterial.hpp \
@@ -107416,11 +107416,11 @@ CMakeFiles/earthcall_wasm.dir/src/Util/Serialization.cpp.o: /Users/zacharyzhang/
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValueJson.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValueJson.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/Body.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/BodyPart.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/Relation.hpp \
@@ -108490,14 +108490,14 @@ CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/ActionModel.cpp.o: /
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Concept.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyPath.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValueJson.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/SynthesisSystem.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Concept.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyPath.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValueJson.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/SynthesisSystem.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Identity/SingularId.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Person.hpp \
@@ -109575,11 +109575,11 @@ CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/ChangeRecorder.cpp.o
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyPath.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyPath.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Identity/SingularId.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Person.hpp \
@@ -110658,12 +110658,12 @@ CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/ConditionModel.cpp.o
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyPath.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValueJson.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyPath.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValueJson.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Identity/SingularId.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Person.hpp \
@@ -111623,10 +111623,10 @@ CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/ECA.cpp.o: /Users/za
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec3.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec4.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vector_relational.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/AuthorsOfLaw/ECA.hpp \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/alloca.h \
   /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/assert.h \
@@ -112609,12 +112609,12 @@ CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/Law.cpp.o: /Users/za
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/ComputedProperty.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyPath.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/ComputedProperty.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyPath.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Identity/SingularId.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Person.hpp \
@@ -114441,11 +114441,11 @@ CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/LawSynthesis.cpp.o: 
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyPath.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyPath.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Identity/SingularId.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Person.hpp \
@@ -115526,12 +115526,12 @@ CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/AuthorsOfLaw/PhysicsLawBridge.cpp
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/ComputedProperty.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyPath.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/ComputedProperty.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyPath.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Identity/SingularId.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Person.hpp \
@@ -116612,10 +116612,10 @@ CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/HomesOfEarth/Home.cpp.o: /Users/z
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Identity/SingularId.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Legacy/DesignSystem.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.hpp \
@@ -117691,10 +117691,10 @@ CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Ourverse/Ourverse.cpp.o: /Users/z
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Identity/SingularId.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Legacy/DesignSystem.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.hpp \
@@ -118775,10 +118775,10 @@ CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Physics/CollisionDispatcher.cpp.o
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/Relation.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/RelationManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/RenderMaterial.hpp \
@@ -119841,11 +119841,11 @@ CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Physics/DefaultPhysicsLaws.cpp.o:
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyPath.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyPath.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Identity/SingularId.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/AvatarManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Person.hpp \
@@ -120924,10 +120924,10 @@ CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Physics/Physics.cpp.o: /Users/zac
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/Relation.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/RelationManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/RenderMaterial.hpp \
@@ -121994,10 +121994,10 @@ CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/World/World.cpp.o: /Users/zachary
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/Relation.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Relation/RelationManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/HighlightSystem.hpp \
@@ -123067,12 +123067,12 @@ CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/Zone/Zone.cpp.o: /Users/zacharyzh
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/ComputedProperty.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyRef.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/ComputedProperty.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyRef.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Legacy/DesignSystem.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/BodyPart.hpp \
@@ -124144,10 +124144,10 @@ CMakeFiles/earthcall_wasm.dir/src/ZonesOfEarth/ZoneManager.cpp.o: /Users/zachary
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Legacy/DesignSystem.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/BodyPart.hpp \
@@ -125221,11 +125221,11 @@ CMakeFiles/earthcall_wasm.dir/src/entry.cpp.o: /Users/zacharyzhang/Documents/Git
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyPath.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyPath.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Identity/SingularId.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Integration/EarthcallAPI.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Legacy/DesignSystem.hpp \
@@ -126320,8 +126320,8 @@ CMakeFiles/earthcall_wasm.dir/src/globals.cpp.o: /Users/zacharyzhang/Documents/G
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vec4.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/vector_relational.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Form.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Material/Material.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Material/MaterialManager.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Material/Material.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Material/MaterialManager.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/AngleTools.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Automation/Automation.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Contour.hpp \
@@ -126336,10 +126336,10 @@ CMakeFiles/earthcall_wasm.dir/src/globals.cpp.o: /Users/zacharyzhang/Documents/G
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/CollisionZone.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/FaceTexture.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/Object/PolyhedronData.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp \
-  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp \
+  /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Legacy/DesignSystem.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.hpp \
   /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body/BodyPart/BodyPart.hpp \
@@ -127384,17 +127384,17 @@ CMakeFiles/earthcall_wasm.dir/src/globals.cpp.o: /Users/zacharyzhang/Documents/G
 
 /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Legacy/DesignSystem.hpp:
 
-/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/SynthesisSystem.hpp:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/SynthesisSystem.hpp:
 
-/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/SynthesisSystem.cpp:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/SynthesisSystem.cpp:
 
-/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValueJson.cpp:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValueJson.cpp:
 
-/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyPath.cpp:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyPath.cpp:
 
-/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValueJson.hpp:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValueJson.hpp:
 
-/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Concept.hpp:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Concept.hpp:
 
 /Users/zacharyzhang/Documents/GitHub/Earthcall/third_party/flatbuffers/include/flatbuffers/table.h:
 
@@ -127568,7 +127568,7 @@ CMakeFiles/earthcall_wasm.dir/src/globals.cpp.o: /Users/zacharyzhang/Documents/G
 
 /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/AngleTools.hpp:
 
-/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Material/MaterialManager.cpp:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Material/MaterialManager.cpp:
 
 /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/unordered_map:
 
@@ -127672,17 +127672,17 @@ CMakeFiles/earthcall_wasm.dir/src/globals.cpp.o: /Users/zacharyzhang/Documents/G
 
 /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/out_value_result.h:
 
-/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.hpp:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.hpp:
 
-/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyValue.hpp:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyValue.hpp:
 
 /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Object/ObjectPaint.cpp:
 
-/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyRef.hpp:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyRef.hpp:
 
-/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.hpp:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.hpp:
 
-/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Material/Material.cpp:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Material/Material.cpp:
 
 /Users/zacharyzhang/Documents/GitHub/Earthcall/third_party/flatbuffers/include/flatbuffers/verifier.h:
 
@@ -128162,7 +128162,7 @@ CMakeFiles/earthcall_wasm.dir/src/globals.cpp.o: /Users/zacharyzhang/Documents/G
 
 /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__format/fmt_pair_like.h:
 
-/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Material/Material.hpp:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Material/Material.hpp:
 
 /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__exception/operations.h:
 
@@ -128680,7 +128680,7 @@ CMakeFiles/earthcall_wasm.dir/src/globals.cpp.o: /Users/zacharyzhang/Documents/G
 
 /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/byte.h:
 
-/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/Property.cpp:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/Property.cpp:
 
 /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/vector_double2.hpp:
 
@@ -128740,7 +128740,7 @@ CMakeFiles/earthcall_wasm.dir/src/globals.cpp.o: /Users/zacharyzhang/Documents/G
 
 /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/find.h:
 
-/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Material/MaterialManager.hpp:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Material/MaterialManager.hpp:
 
 /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/ext/matrix_double2x2_precision.hpp:
 
@@ -128804,7 +128804,7 @@ CMakeFiles/earthcall_wasm.dir/src/globals.cpp.o: /Users/zacharyzhang/Documents/G
 
 /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/replace_copy.h:
 
-/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/PropertyPath.hpp:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/PropertyPath.hpp:
 
 /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/type_mat3x3.hpp:
 
@@ -128818,7 +128818,7 @@ CMakeFiles/earthcall_wasm.dir/src/globals.cpp.o: /Users/zacharyzhang/Documents/G
 
 /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/string.h:
 
-/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/ComputedProperty.hpp:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/ComputedProperty.hpp:
 
 /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/detail/func_common.inl:
 
@@ -129340,9 +129340,9 @@ CMakeFiles/earthcall_wasm.dir/src/globals.cpp.o: /Users/zacharyzhang/Documents/G
 
 /Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/integer.hpp:
 
-/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Singular.cpp:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Singular.cpp:
 
-/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Property/DataStructure.hpp:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Property/DataStructure.hpp:
 
 /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/stdarg.h:
 
@@ -129766,7 +129766,7 @@ _deps/vhacd-src/include/VHACD.h:
 
 /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/for_each_n.h:
 
-/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Form/Singular/Concept.cpp:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Singular/Concept.cpp:
 
 /Users/zacharyzhang/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/add_reference.h:
 

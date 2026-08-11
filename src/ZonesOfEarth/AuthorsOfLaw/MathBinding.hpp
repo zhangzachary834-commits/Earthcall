@@ -1,17 +1,16 @@
 #pragma once
 
-#include "Form/Singular/Property/PropertyPath.hpp"
-#include "Form/Singular/Singular.hpp"
+#include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
+#include "ConstructedBeing/Singular/Singular.hpp"
 #include "Universe.hpp"
 #include "json.hpp"
 
+#include <functional>
 #include <iostream>
 #include <map>
 #include <optional>
 #include <string>
 #include <vector>
-#include "Integration/EarthcallAPI.hpp"
-#include "Form/Object/Object.hpp"
 
 // The bridge between authored mathematics and the substrate: a binding names
 // each free variable of an expression and says WHERE on the subject its value
@@ -33,6 +32,12 @@ using MathBindings = std::map<std::string, PropertyPath>;
 //   @event.subject.position.y   the triggering event's subject
 //   @event.object.position.y    the triggering event's OTHER participant
 //                               (a collision has two)
+//   @world.<reading>            a WORLD READING about the subject, answered
+//                               by whichever modality channel registered it
+//                               (see registerWorldReading below). Read-only,
+//                               and intercepted in lawGetValue before root
+//                               resolution — there is no being called
+//                               "world" to look up.
 // The event roots resolve through the application-event context the
 // LawManager arms while laws respond to an event; outside an event response
 // they are undefined — a condition never passes and an action never writes
@@ -122,36 +127,69 @@ inline bool isTimePath(const PropertyPath& path) {
     return !path.segments.empty() && path.segments[0] == "time";
 }
 
+// ---------------------------------------------------------------------------
+// World readings — the "@world.*" referent.
+//
+// A reading is a NAMED, read-only quantity about the subject's SITUATION that
+// no property on the subject holds: whether sound from it reaches the
+// listener, how much light falls on it. Written as ordinary law text:
+//
+//   @world.occlusionToCamera     the world, asked about this subject
+//
+// It joins the qualified-referent vocabulary above (@being-id, @event.subject,
+// @event.object) rather than opening a bare `world.` root, for two reasons.
+// It reads correctly — a reading is genuinely ABOUT the subject but OWNED by
+// the world, which is what the @ prefix has always marked. And
+// `Law::rebuildRequiredProperties` deliberately excludes @-rooted paths from
+// the vocabulary a sweep filters on ("qualified roots address someone else"),
+// which is exactly right here: a bare `world.` root would make every law that
+// reads one require a property literally named `world`, and `couldApplyTo`
+// would then filter every being in the world out of that law's sweep.
+//
+// A MODALITY CHANNEL registers what it can answer; the law engine knows only
+// that such readings exist and never what any of them MEANS. This matters:
+// `lawGetValue` is the funnel every binding read and every Compare condition
+// passes through, and it briefly carried a hardcoded branch for
+// "world.occlusionToCamera" — a raycast, a camera lookup, and an
+// `#include "Integration/EarthcallAPI.hpp"` that dragged the foreign-software
+// surface into ActionModel, ConditionModel, Universe, PropertyMapping and
+// SynthesisSystem. A subsystem may not define what a thing is, and the
+// hottest path in the engine may not know what occlusion is.
+//
+// Registration is idempotent-by-replacement and expected once, at channel
+// init. Nothing is registered by default: an unregistered reading simply does
+// not read, and a law that binds it does not fire — undefined, never guessed.
+// ---------------------------------------------------------------------------
+using WorldReading = std::function<bool(Singular& subject, PropertyValue& out)>;
+
+inline std::map<std::string, WorldReading>& worldReadings() {
+    static std::map<std::string, WorldReading> readings;
+    return readings;
+}
+
+// `dottedName` is the full path INCLUDING the "@world." referent
+// (e.g. "@world.occlusionToCamera") — the name a Person writes.
+inline void registerWorldReading(const std::string& dottedName, WorldReading reading) {
+    if (dottedName.rfind("@world.", 0) != 0) return;   // the referent is reserved
+    if (!reading) {
+        worldReadings().erase(dottedName);
+        return;
+    }
+    worldReadings()[dottedName] = std::move(reading);
+}
+
+inline bool isWorldReadingPath(const PropertyPath& path) {
+    return path.segments.size() >= 2 && path.segments[0] == "@world";
+}
+
 inline bool lawGetValue(Singular& subject, const PropertyPath& path, PropertyValue& out) {
     if (isTimePath(path)) return lawGetTime(path, out);
-    if (path.segments.size() == 2 && path.segments[0] == "world" && path.segments[1] == "occlusionToCamera") {
-        Object* objSubject = dynamic_cast<Object*>(&subject);
-        if (!objSubject) return false;
-        glm::vec3 pos = objSubject->getPosition();
-        glm::vec3 camPos = Integration::getEarthcallAPI().getCameraPosition();
-        glm::vec3 dir = camPos - pos;
-        float distToCam = glm::length(dir);
-        if (distToCam < 0.0001f) {
-            out = PropertyValue(0.0);
-            return true;
-        }
-        glm::vec3 rayDir = glm::normalize(dir);
-        bool occluded = false;
-        
-        for (Singular* s : Universe::instance().beings()) {
-            Object* obj = dynamic_cast<Object*>(s);
-            if (!obj || obj == objSubject) continue;
-            float t;
-            int faceIdx; glm::vec2 uv;
-            if (obj->raycastFace(pos, rayDir, t, faceIdx, uv)) {
-                if (t > 0.01f && t < distToCam) {
-                    occluded = true;
-                    break;
-                }
-            }
-        }
-        out = PropertyValue(occluded ? 1.0 : 0.0);
-        return true;
+    if (isWorldReadingPath(path)) {
+        const auto& readings = worldReadings();
+        if (readings.empty()) return false;          // no channel answers "@world.*"
+        const auto found = readings.find(path.toString());
+        if (found == readings.end() || !found->second) return false;
+        return found->second(subject, out);
     }
     PropertyPath remainder;
     Singular* root = resolveLawRoot(subject, path, remainder);
@@ -160,6 +198,11 @@ inline bool lawGetValue(Singular& subject, const PropertyPath& path, PropertyVal
 
 inline PropertyPath::PathResult lawSetValue(Singular& subject, const PropertyPath& path, const PropertyValue& v) {
     if (isTimePath(path)) return PropertyPath::PathResult::ReadOnly;
+    // A world reading is an observation, not a dial: the world is not written
+    // by asserting a measurement of it.
+    if (isWorldReadingPath(path) && worldReadings().count(path.toString())) {
+        return PropertyPath::PathResult::ReadOnly;
+    }
     PropertyPath remainder;
     Singular* root = resolveLawRoot(subject, path, remainder);
     if (!root) return PropertyPath::PathResult::NoSuchProperty;

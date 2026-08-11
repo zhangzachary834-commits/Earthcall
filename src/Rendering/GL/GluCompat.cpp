@@ -1,6 +1,12 @@
 #include "Rendering/GL/GluCompat.hpp"
 
-#if defined(__APPLE__) && !defined(EMSCRIPTEN)
+// emcc defines __EMSCRIPTEN__, not EMSCRIPTEN (a build-system environment
+// variable, not a preprocessor macro) -- see AUDIT_2026-08-10.md §2.6. In
+// practice __APPLE__ is never defined for the emscripten target regardless
+// (it targets wasm32-unknown-emscripten, not a Darwin triple), so this
+// particular guard was latently correct; fixed here anyway so it is not the
+// next person's landmine.
+#if defined(__APPLE__) && !defined(__EMSCRIPTEN__)
 #include <OpenGL/gl.h>
 #else
 #include <GL/gl.h>

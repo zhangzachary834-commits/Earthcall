@@ -1,11 +1,11 @@
 #pragma once
 
 #include "Singularity/Core/EventBus.hpp"
-#include "Form/Object/Formation/Formation.hpp"
-#include "Form/Object/Object.hpp"
+#include "ConstructedBeing/Object/Formation/Formation.hpp"
+#include "ConstructedBeing/Object/Object.hpp"
 #include "Relation/Relation.hpp"
 #include "Relation/RelationManager.hpp"
-#include "Form/Singular/Singular.hpp"
+#include "ConstructedBeing/Singular/Singular.hpp"
 #include "ECA.hpp"
 #include "ConditionModel.hpp"
 #include "ActionModel.hpp"

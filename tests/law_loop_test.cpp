@@ -7,8 +7,8 @@
 // kMaxChainRounds (the first anti-Babel ceiling in code).
 
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
-#include "Form/Object/Object.hpp"
-#include "Form/Object/Formation/Formation.hpp"
+#include "ConstructedBeing/Object/Object.hpp"
+#include "ConstructedBeing/Object/Formation/Formation.hpp"
 
 #include <GLFW/glfw3.h>
 #include <cassert>

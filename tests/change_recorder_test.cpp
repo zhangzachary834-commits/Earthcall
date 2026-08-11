@@ -7,7 +7,7 @@
 // frequency, bias — as an ActionModel. The demonstration IS the source code.
 
 #include "ZonesOfEarth/AuthorsOfLaw/ChangeRecorder.hpp"
-#include "Form/Object/Object.hpp"
+#include "ConstructedBeing/Object/Object.hpp"
 
 #include <GLFW/glfw3.h>
 #include <cassert>

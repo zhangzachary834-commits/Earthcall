@@ -9,13 +9,19 @@
 
 namespace Identity {
 
+bool cryptoAvailable() {
 #ifndef __EMSCRIPTEN__
+    return true;
+#else
+    return false;
+#endif
+}
 
-namespace {
-EVP_PKEY* asKey(void* p) { return static_cast<EVP_PKEY*>(p); }
-} // namespace
-
-// --- PublicKey -------------------------------------------------------------
+// --- PublicKey::fromId -------------------------------------------------
+//
+// Pure byte reinterpretation -- no OpenSSL call involved -- so this is
+// correct on every platform, wasm included. What wasm actually cannot do is
+// verify(): the Ed25519 math itself, below.
 
 PublicKey PublicKey::fromId(const SingularId& id) {
     if (!id.canAuthenticate() || id.bytes().size() != 32) return PublicKey{};
@@ -23,6 +29,14 @@ PublicKey PublicKey::fromId(const SingularId& id) {
     std::memcpy(raw.data(), id.bytes().data(), 32);
     return PublicKey(raw);
 }
+
+#ifndef __EMSCRIPTEN__
+
+namespace {
+EVP_PKEY* asKey(void* p) { return static_cast<EVP_PKEY*>(p); }
+} // namespace
+
+// --- PublicKey::verify ------------------------------------------------------
 
 bool PublicKey::verify(const std::vector<uint8_t>& message,
                        const std::vector<uint8_t>& signature) const {
@@ -139,16 +153,34 @@ std::vector<uint8_t> PrivateKey::sign(const std::vector<uint8_t>& message) const
 
 #else
 
-PublicKey PublicKey::fromId(const SingularId& id) { return PublicKey{}; }
-bool PublicKey::verify(const std::vector<uint8_t>& message, const std::vector<uint8_t>& signature) const { return false; }
+// No OpenSSL is linked into the wasm build, so none of these can produce or
+// check a real signature. Every one of them used to either fabricate a
+// plausible-looking value (verify() -> false, meaning "checked, bad" when
+// nothing was checked; sign() -> {}, a well-formed empty signature; rawSeed()
+// -> all-zero, a well-formed-looking seed) or, for generate()/fromRawSeed(),
+// already threw. That was an inconsistent failure mode by entry point: throw
+// consistently everywhere instead, matching the native branch's own refusal
+// to hand out a guessable identity. A caller that must distinguish "no
+// crypto on this platform" from "this signature is invalid" should check
+// cryptoAvailable() before calling verify(), rather than relying on catching
+// this throw.
+bool PublicKey::verify(const std::vector<uint8_t>& message, const std::vector<uint8_t>& signature) const {
+    throw std::runtime_error(
+        "Identity: no crypto available on this platform (wasm build has no "
+        "OpenSSL); cannot verify a signature");
+}
 PrivateKey::~PrivateKey() {}
 PrivateKey::PrivateKey(PrivateKey&& other) noexcept : _pkey(nullptr) {}
 PrivateKey& PrivateKey::operator=(PrivateKey&& other) noexcept { return *this; }
 PrivateKey PrivateKey::generate() { throw std::runtime_error("Identity: No crypto in WASM"); }
 PrivateKey PrivateKey::fromRawSeed(const std::array<uint8_t, 32>& seed) { throw std::runtime_error("Identity: No crypto in WASM"); }
 PublicKey PrivateKey::publicKey() const { return PublicKey{}; }
-std::array<uint8_t, 32> PrivateKey::rawSeed() const { return std::array<uint8_t, 32>{}; }
-std::vector<uint8_t> PrivateKey::sign(const std::vector<uint8_t>& message) const { return std::vector<uint8_t>{}; }
+std::array<uint8_t, 32> PrivateKey::rawSeed() const {
+    throw std::runtime_error("Identity: No crypto in WASM");
+}
+std::vector<uint8_t> PrivateKey::sign(const std::vector<uint8_t>& message) const {
+    throw std::runtime_error("Identity: No crypto in WASM");
+}
 
 #endif
 

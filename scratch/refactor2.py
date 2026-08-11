@@ -37,7 +37,7 @@ with open(rm_path, 'w') as f:
 print("Updated RelationManager.cpp")
 
 # Read ObjectConcept.cpp
-oc_path = os.path.join(src_dir, 'Form/Object/Creation/ObjectConcept.cpp')
+oc_path = os.path.join(src_dir, 'ConstructedBeing/Object/Creation/ObjectConcept.cpp')
 with open(oc_path, 'r') as f:
     oc_content = f.read()
 oc_content = oc_content.replace('rel->weight', 'rel->getWeight()')

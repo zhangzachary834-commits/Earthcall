@@ -22,7 +22,7 @@ conditions and actions as `std::function` closures. Closures cannot be:
   closure has no describable process. A law with no text, only force.
 
 This problem was already solved once, in geometry. `geom::SdfNode`
-(`src/Form/Object/Geometry/Sdf.hpp`) stores shapes as **plain data trees** —
+(`../../src/ConstructedBeing/Object/Geometry/Sdf.hpp`) stores shapes as **plain data trees** —
 serializable, introspectable, editable — and compiles/tessellates on demand. Its
 own header says why: *"deliberately plain data (not opaque lambdas) so it can be
 serialized, introspected, and edited."*
@@ -53,7 +53,7 @@ First movement is ground; authored law is text.
 
 *A Person must be able to say "this object's height" without writing C++.*
 
-Files: `src/Form/Singular/Property/`
+Files: `../../src/ConstructedBeing/Singular/Property/`
 
 ### 1a. Runtime-generic access on `Property`
 
@@ -603,7 +603,7 @@ personhood integrity, authorship, or substrate order.
 
 ## 7. Object Set-to-Set Creation
 
-Files: `src/Form/Object/Creation/ObjectConcept.{hpp,cpp}`, `PropertyMapping.hpp`,
+Files: `../../src/ConstructedBeing/Object/Creation/ObjectConcept.{hpp,cpp}`, `PropertyMapping.hpp`,
 `ConceptRegistry.{hpp,cpp}`
 
 ### 7a. `ObjectConcept` — the word for the thing
@@ -832,9 +832,9 @@ every shape feature became operations on `SdfNode`.
 | Defect | Location | Why it matters here |
 |---|---|---|
 | Working-tree `Law.hpp` sketch doesn't compile against `Law.cpp` | `AuthorsOfLaw/Law.hpp` | Commit 1 |
-| `Singular.hpp` invalid member syntax (`std::vector<char> characters*`) | `Form/Singular/Singular.hpp` | Commit 1 — intent subsumed by property registry |
+| `Singular.hpp` invalid member syntax (`std::vector<char> characters*`) | `ConstructedBeing/Singular/Singular.hpp` | Commit 1 — intent subsumed by property registry |
 | `OntoMath/Function.hpp` is pseudocode | `Singularity/OntoMath/` | Commit 1; grows into `CurveModel` in commit 3 |
 | `Law::toJson` persists descriptions, not behavior | `AuthorsOfLaw/Law.cpp` | Commit 3 |
 | `EventBus::publish` dispatches under `_mutex` — re-entrant publish deadlocks | `Singularity/Core/EventBus.hpp` | Commit 4 — law chaining publishes from handlers |
 | `Formation::getIdentifier()` returns `"Formation"` for all instances | `Form/Object/Formation/Formation.hpp` | Commit 4 — identity-keyed Rete/provenance |
-| `PropertyValue.hpp`: no `#pragma once`, private `Vec3` instead of `glm::vec3` | `Form/Singular/Property/` | Commit 1 |
+| `PropertyValue.hpp`: no `#pragma once`, private `Vec3` instead of `glm::vec3` | `ConstructedBeing/Singular/Property/` | Commit 1 |

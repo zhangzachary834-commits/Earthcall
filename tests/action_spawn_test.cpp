@@ -2,7 +2,7 @@
 #include <iostream>
 #include "ZonesOfEarth/World/World.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp"
-#include "Form/Object/Creation/ObjectConcept.hpp"
+#include "ConstructedBeing/Object/Creation/ObjectConcept.hpp"
 #include "Person/Person.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 

@@ -5,6 +5,7 @@
 // (Include at the .cpp level only: ConditionModel.hpp includes this header.)
 #include "ZonesOfEarth/AuthorsOfLaw/ConditionModel.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/LawAuditLogger.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -469,165 +470,354 @@ void MathNode::collectDependencies(std::set<std::string>& outDeps) const {
     }
 }
 
-TypeResult MathNode::typeOf(const TypeEnv& env, const std::string& path) const {
+const char* valueKindName(ValueKind k) {
+    switch (k) {
+        case ValueKind::Scalar:      return "Scalar";
+        case ValueKind::Vector:      return "Vector";
+        case ValueKind::ScalarField: return "ScalarField";
+        case ValueKind::VectorField: return "VectorField";
+        case ValueKind::Unknown:     return "Unknown";
+    }
+    return "Unknown";
+}
+
+const char* mathOpName(MathNode::Op op) {
+    switch (op) {
+        case MathNode::Op::ScalarLeaf:      return "ScalarLeaf";
+        case MathNode::Op::ValueLeaf:       return "ValueLeaf";
+        case MathNode::Op::VectorConstruct: return "VectorConstruct";
+        case MathNode::Op::Component:       return "Component";
+        case MathNode::Op::Add:             return "Add";
+        case MathNode::Op::Sub:             return "Sub";
+        case MathNode::Op::Scale:           return "Scale";
+        case MathNode::Op::Dot:             return "Dot";
+        case MathNode::Op::Cross:           return "Cross";
+        case MathNode::Op::Hadamard:        return "Hadamard";
+        case MathNode::Op::Normalize:       return "Normalize";
+        case MathNode::Op::Length:          return "Length";
+        case MathNode::Op::Map:             return "Map";
+        case MathNode::Op::Stochastic:      return "Stochastic";
+        case MathNode::Op::Project:         return "Project";
+        case MathNode::Op::Distance:        return "Distance";
+        case MathNode::Op::Raycast:         return "Raycast";
+        case MathNode::Op::SDF:             return "SDF";
+        case MathNode::Op::Gradient:        return "Gradient";
+        case MathNode::Op::LineIntegral:    return "LineIntegral";
+        case MathNode::Op::Union:           return "Union";
+        case MathNode::Op::Intersection:    return "Intersection";
+        case MathNode::Op::Difference:      return "Difference";
+        case MathNode::Op::Unsupported:     return "Unsupported";
+    }
+    return "Unsupported";
+}
+
+// The stored op is an ARBITRARY int out of a file, not an Op. Casting it
+// unchecked produces a scoped-enum value outside the enumeration — formally UB,
+// and in practice a node no switch matches. Same shape as
+// isKnownConditionKind in ConditionModel.cpp.
+bool isKnownMathOp(int raw) {
+    switch (static_cast<MathNode::Op>(raw)) {
+        case MathNode::Op::ScalarLeaf:
+        case MathNode::Op::ValueLeaf:
+        case MathNode::Op::VectorConstruct:
+        case MathNode::Op::Component:
+        case MathNode::Op::Add:
+        case MathNode::Op::Sub:
+        case MathNode::Op::Scale:
+        case MathNode::Op::Dot:
+        case MathNode::Op::Cross:
+        case MathNode::Op::Hadamard:
+        case MathNode::Op::Normalize:
+        case MathNode::Op::Length:
+        case MathNode::Op::Map:
+        case MathNode::Op::Stochastic:
+        case MathNode::Op::Project:
+        case MathNode::Op::Distance:
+        case MathNode::Op::Raycast:
+        case MathNode::Op::SDF:
+        case MathNode::Op::Gradient:
+        case MathNode::Op::LineIntegral:
+        case MathNode::Op::Union:
+        case MathNode::Op::Intersection:
+        case MathNode::Op::Difference:
+            return true;
+        // Unsupported is where unknown ops LAND; it is never a stored value an
+        // author picked, so it does not read back as known.
+        case MathNode::Op::Unsupported:
+            return false;
+    }
+    return false;
+}
+
+std::string formatTypeDiagnostic(const TypeDiagnostic& d) {
+    return d.nodePath + ": " + d.message;
+}
+
+namespace {
+
+// Unknown unifies with everything: it is "no declared signature here", not a
+// claim. Every other pair must match exactly.
+bool kindIs(ValueKind got, ValueKind want) {
+    return got == ValueKind::Unknown || got == want;
+}
+// A ScalarField sampled at a point IS a scalar. In a POINTWISE AST — which is
+// the only kind this calculus has, on either path — the two coincide, so CSG
+// and SDF accept either and report the wider of the two.
+bool scalarLike(ValueKind k) {
+    return k == ValueKind::Scalar || k == ValueKind::ScalarField ||
+           k == ValueKind::Unknown;
+}
+bool vectorLike(ValueKind k) {
+    return k == ValueKind::Vector || k == ValueKind::VectorField ||
+           k == ValueKind::Unknown;
+}
+ValueKind widerScalar(ValueKind a, ValueKind b) {
+    if (a == ValueKind::ScalarField || b == ValueKind::ScalarField) return ValueKind::ScalarField;
+    if (a == ValueKind::Unknown || b == ValueKind::Unknown) return ValueKind::Unknown;
+    return ValueKind::Scalar;
+}
+
+TypeResult arity(const std::string& path, MathNode::Op op, std::size_t got, std::size_t want) {
+    return TypeResult::error(TypeDiagnostic{
+        path, std::string(mathOpName(op)) + " requires " + std::to_string(want) +
+              " argument(s), got " + std::to_string(got)});
+}
+TypeResult mismatch(const std::string& path, MathNode::Op op, int index,
+                    const char* want, ValueKind got) {
+    return TypeResult::error(TypeDiagnostic{
+        path, std::string(mathOpName(op)) + " argument " + std::to_string(index) +
+              " must be " + want + ", got " + valueKindName(got)});
+}
+
+} // namespace
+
+// Every arity and type rule of the calculus. CALL THIS at any seam where an AST
+// enters the system — deserialization, and before compiling a field AST to
+// WGSL. It was dead code for one commit and that cost a whole authored envelope
+// law (Scale over two scalars, silently nullopt). See AUDIT_2026-08-10 §2.8.
+TypeResult MathNode::typeOf(const TypeEnv& env, const std::string& path,
+                            bool allowUnbound) const {
+    // A child slot that is null is a malformed tree, not a type error to
+    // propagate blindly — say so before dereferencing anything.
+    for (std::size_t i = 0; i < children.size(); ++i) {
+        if (!children[i]) {
+            return TypeResult::error(TypeDiagnostic{
+                path, std::string(mathOpName(op)) + " argument " +
+                      std::to_string(static_cast<int>(i)) + " is missing"});
+        }
+    }
+    const auto sub = [&](std::size_t i) {
+        return children[i]->typeOf(env, path + "." + mathOpName(op) + "[" +
+                                            std::to_string(static_cast<int>(i)) + "]",
+                                   allowUnbound);
+    };
+
     switch (op) {
         case Op::Stochastic:
         case Op::ScalarLeaf: return TypeResult::ok(ValueKind::Scalar);
         case Op::ValueLeaf: {
             auto it = env.find(variableName);
             if (it == env.end()) {
-                // If the variable isn't in the explicit environment, we can assume it's a valid path
-                // However, the rule states we need a declared signature. If we strictly enforce it, we must return unexpected.
-                // But let's allow it if it's a known property or just fallback to Vector to be safe? 
-                // No, Claude asked for strict checking: "ValueLeaf op that resolves a named binding whose typeOf consults a declared signature".
-                return TypeResult::error(TypeDiagnostic{path, "Unbound variable: " + variableName});
+                if (allowUnbound) return TypeResult::ok(ValueKind::Unknown);
+                return TypeResult::error(TypeDiagnostic{
+                    path, "ValueLeaf names '" + variableName +
+                          "', which has no declared signature in this environment"});
             }
             return TypeResult::ok(it->second);
         }
         case Op::VectorConstruct: {
-            if (children.size() != 3) return TypeResult::error(TypeDiagnostic{path, "VectorConstruct requires 3 arguments"});
-            for(int i=0; i<3; ++i) {
-                auto t = children[i]->typeOf(env, path + ".VectorConstruct[" + std::to_string(i) + "]");
+            if (children.size() != 3) return arity(path, op, children.size(), 3);
+            for (std::size_t i = 0; i < 3; ++i) {
+                auto t = sub(i);
                 if (!t) return t;
-                if (*t != ValueKind::Scalar) return TypeResult::error(TypeDiagnostic{path, "VectorConstruct arguments must be Scalar"});
+                if (!kindIs(*t, ValueKind::Scalar))
+                    return mismatch(path, op, static_cast<int>(i), "Scalar", *t);
             }
             return TypeResult::ok(ValueKind::Vector);
         }
         case Op::Component: {
-            if (children.size() != 1) return TypeResult::error(TypeDiagnostic{path, "Component requires 1 argument"});
-            auto t = children[0]->typeOf(env, path + ".Component[0]");
+            if (children.size() != 1) return arity(path, op, children.size(), 1);
+            if (stringArg != "x" && stringArg != "y" && stringArg != "z") {
+                return TypeResult::error(TypeDiagnostic{
+                    path, "Component names axis '" + stringArg + "'; expected x, y or z"});
+            }
+            auto t = sub(0);
             if (!t) return t;
-            if (*t != ValueKind::Vector) return TypeResult::error(TypeDiagnostic{path, "Component requires Vector argument"});
+            if (!kindIs(*t, ValueKind::Vector)) return mismatch(path, op, 0, "Vector", *t);
             return TypeResult::ok(ValueKind::Scalar);
         }
         case Op::Add:
         case Op::Sub: {
-            if (children.size() != 2) return TypeResult::error(TypeDiagnostic{path, "Add/Sub require 2 arguments"});
-            auto t0 = children[0]->typeOf(env, path + ".[0]");
-            if (!t0) return t0;
-            auto t1 = children[1]->typeOf(env, path + ".[1]");
-            if (!t1) return t1;
-            if (*t0 != *t1) return TypeResult::error(TypeDiagnostic{path, "Add/Sub require matching argument types"});
+            if (children.size() != 2) return arity(path, op, children.size(), 2);
+            auto t0 = sub(0); if (!t0) return t0;
+            auto t1 = sub(1); if (!t1) return t1;
+            if (*t0 == ValueKind::Unknown) return TypeResult::ok(*t1);
+            if (*t1 == ValueKind::Unknown) return TypeResult::ok(*t0);
+            if (scalarLike(*t0) && scalarLike(*t1)) return TypeResult::ok(widerScalar(*t0, *t1));
+            if (*t0 != *t1) {
+                return TypeResult::error(TypeDiagnostic{
+                    path, std::string(mathOpName(op)) + " requires matching arguments, got " +
+                          valueKindName(*t0) + " and " + valueKindName(*t1)});
+            }
             return TypeResult::ok(*t0);
         }
         case Op::Scale: {
-            if (children.size() != 2) return TypeResult::error(TypeDiagnostic{path, "Scale requires 2 arguments"});
-            auto t0 = children[0]->typeOf(env, path + ".Scale[0]");
-            if (!t0) return t0;
-            auto t1 = children[1]->typeOf(env, path + ".Scale[1]");
-            if (!t1) return t1;
-            if ((*t0 == ValueKind::Scalar && *t1 == ValueKind::Vector) || 
-                (*t0 == ValueKind::Vector && *t1 == ValueKind::Scalar)) {
+            // (Scalar, Vector) and (Vector, Scalar) scale a vector.
+            // (Scalar, Scalar) is ORDINARY MULTIPLICATION — see the note in
+            // evaluate(); the GPU emitter has always compiled it as `a * b`,
+            // so refusing it on the CPU was a live CPU/GPU divergence.
+            if (children.size() != 2) return arity(path, op, children.size(), 2);
+            auto t0 = sub(0); if (!t0) return t0;
+            auto t1 = sub(1); if (!t1) return t1;
+            if (*t0 == ValueKind::Unknown || *t1 == ValueKind::Unknown)
+                return TypeResult::ok(ValueKind::Unknown);
+            if (scalarLike(*t0) && scalarLike(*t1)) return TypeResult::ok(widerScalar(*t0, *t1));
+            if ((scalarLike(*t0) && *t1 == ValueKind::Vector) ||
+                (*t0 == ValueKind::Vector && scalarLike(*t1))) {
                 return TypeResult::ok(ValueKind::Vector);
             }
-            return TypeResult::error(TypeDiagnostic{path, "Scale requires (Scalar, Vector) or (Vector, Scalar)"});
+            return TypeResult::error(TypeDiagnostic{
+                path, "Scale requires (Scalar, Vector), (Vector, Scalar) or (Scalar, Scalar), got " +
+                      std::string(valueKindName(*t0)) + " and " + valueKindName(*t1)});
         }
         case Op::Dot: {
-            if (children.size() != 2) return TypeResult::error(TypeDiagnostic{path, "Dot requires 2 arguments"});
-            auto t0 = children[0]->typeOf(env, path + ".Dot[0]");
-            if (!t0) return t0;
-            auto t1 = children[1]->typeOf(env, path + ".Dot[1]");
-            if (!t1) return t1;
-            if (*t0 != ValueKind::Vector || *t1 != ValueKind::Vector) return TypeResult::error(TypeDiagnostic{path, "Dot requires Vector arguments"});
+            if (children.size() != 2) return arity(path, op, children.size(), 2);
+            auto t0 = sub(0); if (!t0) return t0;
+            auto t1 = sub(1); if (!t1) return t1;
+            if (!kindIs(*t0, ValueKind::Vector)) return mismatch(path, op, 0, "Vector", *t0);
+            if (!kindIs(*t1, ValueKind::Vector)) return mismatch(path, op, 1, "Vector", *t1);
             return TypeResult::ok(ValueKind::Scalar);
         }
         case Op::Cross:
         case Op::Hadamard: {
-            if (children.size() != 2) return TypeResult::error(TypeDiagnostic{path, "Cross/Hadamard require 2 arguments"});
-            auto t0 = children[0]->typeOf(env, path + ".[0]");
-            if (!t0) return t0;
-            auto t1 = children[1]->typeOf(env, path + ".[1]");
-            if (!t1) return t1;
-            if (*t0 != ValueKind::Vector || *t1 != ValueKind::Vector) return TypeResult::error(TypeDiagnostic{path, "Cross/Hadamard require Vector arguments"});
+            if (children.size() != 2) return arity(path, op, children.size(), 2);
+            auto t0 = sub(0); if (!t0) return t0;
+            auto t1 = sub(1); if (!t1) return t1;
+            if (!kindIs(*t0, ValueKind::Vector)) return mismatch(path, op, 0, "Vector", *t0);
+            if (!kindIs(*t1, ValueKind::Vector)) return mismatch(path, op, 1, "Vector", *t1);
             return TypeResult::ok(ValueKind::Vector);
         }
         case Op::Normalize: {
-            if (children.size() != 1) return TypeResult::error(TypeDiagnostic{path, "Normalize requires 1 argument"});
-            auto t = children[0]->typeOf(env, path + ".Normalize[0]");
-            if (!t) return t;
-            if (*t != ValueKind::Vector) return TypeResult::error(TypeDiagnostic{path, "Normalize requires Vector argument"});
+            if (children.size() != 1) return arity(path, op, children.size(), 1);
+            auto t = sub(0); if (!t) return t;
+            if (!kindIs(*t, ValueKind::Vector)) return mismatch(path, op, 0, "Vector", *t);
             return TypeResult::ok(ValueKind::Vector);
         }
         case Op::Length: {
-            if (children.size() != 1) return TypeResult::error(TypeDiagnostic{path, "Length requires 1 argument"});
-            auto t = children[0]->typeOf(env, path + ".Length[0]");
-            if (!t) return t;
-            if (*t != ValueKind::Vector) return TypeResult::error(TypeDiagnostic{path, "Length requires Vector argument"});
+            if (children.size() != 1) return arity(path, op, children.size(), 1);
+            auto t = sub(0); if (!t) return t;
+            if (!kindIs(*t, ValueKind::Vector)) return mismatch(path, op, 0, "Vector", *t);
             return TypeResult::ok(ValueKind::Scalar);
         }
         case Op::Map: {
-            if (children.size() != 1) return TypeResult::error(TypeDiagnostic{path, "Map requires 1 argument"});
-            auto t = children[0]->typeOf(env, path + ".Map[0]");
-            if (!t) return t;
-            if (*t != ValueKind::Vector) return TypeResult::error(TypeDiagnostic{path, "Map requires Vector argument"});
+            if (children.size() != 1) return arity(path, op, children.size(), 1);
+            if (stringArg != "Round" && stringArg != "Floor") {
+                return TypeResult::error(TypeDiagnostic{
+                    path, "Map names function '" + stringArg +
+                          "', which this build does not define (Round, Floor)"});
+            }
+            auto t = sub(0); if (!t) return t;
+            if (!kindIs(*t, ValueKind::Vector)) return mismatch(path, op, 0, "Vector", *t);
             return TypeResult::ok(ValueKind::Vector);
         }
         case Op::Project: {
-            if (children.size() != 2) return TypeResult::error(TypeDiagnostic{path, "Project requires 2 arguments"});
-            auto t0 = children[0]->typeOf(env, path + ".[0]");
-            if (!t0) return t0;
-            auto t1 = children[1]->typeOf(env, path + ".[1]");
-            if (!t1) return t1;
-            if (*t0 != ValueKind::Vector || *t1 != ValueKind::Vector) return TypeResult::error(TypeDiagnostic{path, "Project requires Vector arguments"});
+            if (children.size() != 2) return arity(path, op, children.size(), 2);
+            auto t0 = sub(0); if (!t0) return t0;
+            auto t1 = sub(1); if (!t1) return t1;
+            if (!kindIs(*t0, ValueKind::Vector)) return mismatch(path, op, 0, "Vector", *t0);
+            if (!kindIs(*t1, ValueKind::Vector)) return mismatch(path, op, 1, "Vector", *t1);
             return TypeResult::ok(ValueKind::Vector);
         }
         case Op::Distance: {
-            if (children.size() != 2) return TypeResult::error(TypeDiagnostic{path, "Distance requires 2 arguments"});
-            auto t0 = children[0]->typeOf(env, path + ".[0]");
-            if (!t0) return t0;
-            auto t1 = children[1]->typeOf(env, path + ".[1]");
-            if (!t1) return t1;
-            if (*t0 != ValueKind::Vector || *t1 != ValueKind::Vector) return TypeResult::error(TypeDiagnostic{path, "Distance requires Vector arguments"});
+            if (children.size() != 2) return arity(path, op, children.size(), 2);
+            auto t0 = sub(0); if (!t0) return t0;
+            auto t1 = sub(1); if (!t1) return t1;
+            if (!kindIs(*t0, ValueKind::Vector)) return mismatch(path, op, 0, "Vector", *t0);
+            if (!kindIs(*t1, ValueKind::Vector)) return mismatch(path, op, 1, "Vector", *t1);
             return TypeResult::ok(ValueKind::Scalar);
         }
         case Op::Raycast: {
-            if (children.size() != 3) return TypeResult::error(TypeDiagnostic{path, "Raycast requires 3 arguments (Field, Origin, Direction)"});
-            auto t0 = children[0]->typeOf(env, path + ".[0]");
-            if (!t0) return t0;
-            if (*t0 != ValueKind::ScalarField) return TypeResult::error(TypeDiagnostic{path, "Raycast arg 0 must be ScalarField"});
-            auto t1 = children[1]->typeOf(env, path + ".[1]");
-            auto t2 = children[2]->typeOf(env, path + ".[2]");
-            if (!t1 || !t2) return t1 ? t2 : t1;
-            if (*t1 != ValueKind::Vector || *t2 != ValueKind::Vector) return TypeResult::error(TypeDiagnostic{path, "Raycast args 1,2 must be Vector"});
+            if (children.size() != 3) return arity(path, op, children.size(), 3);
+            auto t0 = sub(0); if (!t0) return t0;
+            auto t1 = sub(1); if (!t1) return t1;
+            auto t2 = sub(2); if (!t2) return t2;
+            if (!scalarLike(*t0)) return mismatch(path, op, 0, "ScalarField", *t0);
+            if (!kindIs(*t1, ValueKind::Vector)) return mismatch(path, op, 1, "Vector", *t1);
+            if (!kindIs(*t2, ValueKind::Vector)) return mismatch(path, op, 2, "Vector", *t2);
             return TypeResult::ok(ValueKind::Scalar);
         }
         case Op::SDF: {
-            if (children.size() != 2) return TypeResult::error(TypeDiagnostic{path, "SDF requires 2 args (Field, Point)"});
-            auto t0 = children[0]->typeOf(env, path + ".[0]");
-            auto t1 = children[1]->typeOf(env, path + ".[1]");
-            if (!t0 || !t1) return t0 ? t1 : t0;
-            if (*t0 != ValueKind::ScalarField || *t1 != ValueKind::Vector) return TypeResult::error(TypeDiagnostic{path, "SDF requires (ScalarField, Vector)"});
+            if (children.size() != 2) return arity(path, op, children.size(), 2);
+            auto t0 = sub(0); if (!t0) return t0;
+            auto t1 = sub(1); if (!t1) return t1;
+            if (!scalarLike(*t0)) return mismatch(path, op, 0, "ScalarField", *t0);
+            if (!kindIs(*t1, ValueKind::Vector)) return mismatch(path, op, 1, "Vector", *t1);
             return TypeResult::ok(ValueKind::Scalar);
         }
         case Op::Gradient: {
-            if (children.size() != 2) return TypeResult::error(TypeDiagnostic{path, "Gradient requires 2 args (ScalarField, Point)"});
-            auto t0 = children[0]->typeOf(env, path + ".[0]");
-            auto t1 = children[1]->typeOf(env, path + ".[1]");
-            if (!t0 || !t1) return t0 ? t1 : t0;
-            if (*t0 != ValueKind::ScalarField || *t1 != ValueKind::Vector) return TypeResult::error(TypeDiagnostic{path, "Gradient requires (ScalarField, Vector)"});
+            if (children.size() != 2) return arity(path, op, children.size(), 2);
+            auto t0 = sub(0); if (!t0) return t0;
+            auto t1 = sub(1); if (!t1) return t1;
+            if (!scalarLike(*t0)) return mismatch(path, op, 0, "ScalarField", *t0);
+            if (!kindIs(*t1, ValueKind::Vector)) return mismatch(path, op, 1, "Vector", *t1);
             return TypeResult::ok(ValueKind::Vector);
         }
         case Op::LineIntegral: {
-            if (children.size() != 2) return TypeResult::error(TypeDiagnostic{path, "LineIntegral requires 2 args (VectorField, ParametricCurve/Vector)"});
-            auto t0 = children[0]->typeOf(env, path + ".[0]");
-            auto t1 = children[1]->typeOf(env, path + ".[1]");
-            if (!t0 || !t1) return t0 ? t1 : t0;
-            if (*t0 != ValueKind::VectorField || *t1 != ValueKind::Vector) return TypeResult::error(TypeDiagnostic{path, "LineIntegral requires (VectorField, Vector)"});
+            if (children.size() != 2) return arity(path, op, children.size(), 2);
+            auto t0 = sub(0); if (!t0) return t0;
+            auto t1 = sub(1); if (!t1) return t1;
+            if (!vectorLike(*t0)) return mismatch(path, op, 0, "VectorField", *t0);
+            if (!kindIs(*t1, ValueKind::Vector)) return mismatch(path, op, 1, "Vector", *t1);
             return TypeResult::ok(ValueKind::Scalar);
         }
         case Op::Union:
         case Op::Intersection:
         case Op::Difference: {
-            if (children.size() != 2) return TypeResult::error(TypeDiagnostic{path, "Field CSG requires 2 args"});
-            auto t0 = children[0]->typeOf(env, path + ".[0]");
-            auto t1 = children[1]->typeOf(env, path + ".[1]");
-            if (!t0 || !t1) return t0 ? t1 : t0;
-            if (*t0 != ValueKind::ScalarField || *t1 != ValueKind::ScalarField) return TypeResult::error(TypeDiagnostic{path, "CSG requires ScalarFields"});
-            return TypeResult::ok(ValueKind::ScalarField);
+            if (children.size() != 2) return arity(path, op, children.size(), 2);
+            auto t0 = sub(0); if (!t0) return t0;
+            auto t1 = sub(1); if (!t1) return t1;
+            if (!scalarLike(*t0)) return mismatch(path, op, 0, "ScalarField", *t0);
+            if (!scalarLike(*t1)) return mismatch(path, op, 1, "ScalarField", *t1);
+            return TypeResult::ok(widerScalar(*t0, *t1));
         }
+        case Op::Unsupported:
+            return TypeResult::error(TypeDiagnostic{
+                path, "this build does not know this operation; it was preserved "
+                      "verbatim from the save and will never evaluate"});
     }
-    return TypeResult::error(TypeDiagnostic{path, "Unknown operation type"});
+    return TypeResult::error(TypeDiagnostic{path, "unreachable: op is outside the enumeration"});
 }
+
+bool MathNode::checkTypes(const TypeEnv& env, std::string& outError,
+                          ValueKind* outKind, bool allowUnbound) const {
+    const TypeResult r = typeOf(env, "root", allowUnbound);
+    if (!r) {
+        outError = formatTypeDiagnostic(r.diagnostic);
+        return false;
+    }
+    if (outKind) *outKind = r.kind;
+    outError.clear();
+    return true;
+}
+
+namespace {
+
+// Rebind the AMBIENT POINT (see kAmbientPointVar) to q, leaving every other
+// binding alone. This is what SDF/Gradient do to sample a field expression
+// somewhere other than where the enclosing expression is being evaluated —
+// the CPU counterpart of the WGSL emitter substituting a different point
+// expression for `p`.
+std::map<std::string, PropertyValue> varsAtPoint(
+        const std::map<std::string, PropertyValue>& vars, const glm::vec3& q) {
+    std::map<std::string, PropertyValue> out = vars;
+    out[kAmbientPointVar] = PropertyValue(q);
+    out["x"] = PropertyValue(static_cast<double>(q.x));
+    out["y"] = PropertyValue(static_cast<double>(q.y));
+    out["z"] = PropertyValue(static_cast<double>(q.z));
+    return out;
+}
+
+} // namespace
 
 std::optional<PropertyValue> MathNode::evaluate(const std::map<std::string, PropertyValue>& vars, const Singular* subject) const {
     switch(op) {
@@ -703,10 +893,28 @@ std::optional<PropertyValue> MathNode::evaluate(const std::map<std::string, Prop
             auto a = children[0]->evaluate(vars, subject);
             auto b = children[1]->evaluate(vars, subject);
             if (!a || !b) return std::nullopt;
-            if (std::holds_alternative<double>(*a) && std::holds_alternative<glm::vec3>(*b)) {
-                return PropertyValue(static_cast<float>(std::get<double>(*a)) * std::get<glm::vec3>(*b));
-            } else if (std::holds_alternative<glm::vec3>(*a) && std::holds_alternative<double>(*b)) {
-                return PropertyValue(std::get<glm::vec3>(*a) * static_cast<float>(std::get<double>(*b)));
+            const bool aVec = std::holds_alternative<glm::vec3>(*a);
+            const bool bVec = std::holds_alternative<glm::vec3>(*b);
+            double da = 0.0, db = 0.0;
+            if (aVec && bVec) return std::nullopt;   // vec*vec is Hadamard, not Scale
+            if (!aVec && bVec) {
+                if (!propertyValueToNumber(*a, da)) return std::nullopt;
+                return PropertyValue(static_cast<float>(da) * std::get<glm::vec3>(*b));
+            }
+            if (aVec && !bVec) {
+                if (!propertyValueToNumber(*b, db)) return std::nullopt;
+                return PropertyValue(std::get<glm::vec3>(*a) * static_cast<float>(db));
+            }
+            // WIDENED (2026-08-10): scalar * scalar is ordinary multiplication.
+            // It used to fall through to nullopt, which poisoned every
+            // enclosing node and silently killed authored laws (the ADSR decay
+            // envelope, AUDIT §2.8) — while the WGSL emitter compiled the same
+            // node to `a * b` and computed it. Refusing on one path and
+            // computing on the other is the divergence, not the widening.
+            // Accept any two numeric alternatives, matching ScalarLeaf's own
+            // coercion rule (propertyValueToNumber).
+            if (propertyValueToNumber(*a, da) && propertyValueToNumber(*b, db)) {
+                return PropertyValue(da * db);
             }
             return std::nullopt;
         }
@@ -771,9 +979,17 @@ std::optional<PropertyValue> MathNode::evaluate(const std::map<std::string, Prop
             if (!a || !b || !std::holds_alternative<glm::vec3>(*a) || !std::holds_alternative<glm::vec3>(*b)) return std::nullopt;
             glm::vec3 va = std::get<glm::vec3>(*a);
             glm::vec3 vb = std::get<glm::vec3>(*b);
-            float lenB2 = glm::dot(vb, vb);
-            if (lenB2 < 1e-6f) return PropertyValue(glm::vec3(0.0f));
-            return PropertyValue(vb * (glm::dot(va, vb) / lenB2));
+            // The guard is on the UNSQUARED length, exactly as Op::Normalize
+            // above. Testing dot(b,b) < 1e-6 (the bug this replaces) is a
+            // SQUARED length, so it zeroed every b shorter than 1e-3 and
+            // returned vec3(0) where the true projection is (1,0,0).
+            //
+            // Below the threshold the answer is not a guess: span{0} = {0}, and
+            // the orthogonal projection onto the zero subspace IS zero. The
+            // WGSL emitter carries the identical guard and threshold — see
+            // SdfWgsl.cpp Op::Project.
+            if (glm::length(vb) < kDegenerateVectorLength) return PropertyValue(glm::vec3(0.0f));
+            return PropertyValue(vb * (glm::dot(va, vb) / glm::dot(vb, vb)));
         }
         case Op::Distance: {
             if (children.size() != 2) return std::nullopt;
@@ -782,22 +998,97 @@ std::optional<PropertyValue> MathNode::evaluate(const std::map<std::string, Prop
             if (!a || !b || !std::holds_alternative<glm::vec3>(*a) || !std::holds_alternative<glm::vec3>(*b)) return std::nullopt;
             return PropertyValue(glm::distance(std::get<glm::vec3>(*a), std::get<glm::vec3>(*b)));
         }
-        case Op::Raycast:
-        case Op::SDF:
-        case Op::Gradient:
-        case Op::LineIntegral:
+        // --- The CSG booleans over signed distance -------------------------
+        // These ARE geom::SdfOp::Union / Intersect / Subtract (Sdf.cpp's
+        // evalSdf), formula for formula. One vocabulary, two places it can be
+        // written: a shape tree, or a field expression.
         case Op::Union:
         case Op::Intersection:
         case Op::Difference: {
-            // Complex spatial/field operations evaluate analytically or procedurally 
-            // downstream via WGSL. For generic CPU AST evaluation, these return nullopt.
-            return std::nullopt;
+            if (children.size() != 2) return std::nullopt;
+            auto a = children[0]->evaluate(vars, subject);
+            auto b = children[1]->evaluate(vars, subject);
+            if (!a || !b) return std::nullopt;
+            double da = 0.0, db = 0.0;
+            if (!propertyValueToNumber(*a, da) || !propertyValueToNumber(*b, db)) {
+                return std::nullopt;
+            }
+            if (op == Op::Union)        return PropertyValue(std::min(da, db));
+            if (op == Op::Intersection) return PropertyValue(std::max(da, db));
+            return PropertyValue(std::max(da, -db));   // Difference == Subtract
         }
+
+        // --- Sampling a field expression at a point ------------------------
+        // SDF(f, q): evaluate f with the AMBIENT POINT rebound to q. The WGSL
+        // emitter does the same thing by substituting q for its point
+        // expression, so the two paths compute the same number.
+        case Op::SDF: {
+            if (children.size() != 2) return std::nullopt;
+            auto q = children[1]->evaluate(vars, subject);
+            if (!q || !std::holds_alternative<glm::vec3>(*q)) return std::nullopt;
+            auto at = varsAtPoint(vars, std::get<glm::vec3>(*q));
+            auto v = children[0]->evaluate(at, subject);
+            if (!v) return std::nullopt;
+            double d = 0.0;
+            if (!propertyValueToNumber(*v, d)) return std::nullopt;
+            return PropertyValue(d);
+        }
+
+        // Gradient(f, q): the standard central-difference estimate, with the
+        // SAME step the marcher's sdfGrad and geom::sdfNormal use. Undefined
+        // wherever f is undefined at any of the six sample points — a
+        // one-sided guess would be exactly the fabrication this op was fixed
+        // for.
+        case Op::Gradient: {
+            if (children.size() != 2) return std::nullopt;
+            auto q = children[1]->evaluate(vars, subject);
+            if (!q || !std::holds_alternative<glm::vec3>(*q)) return std::nullopt;
+            const glm::vec3 p = std::get<glm::vec3>(*q);
+            const float eps = static_cast<float>(kGradientEpsilon);
+            glm::vec3 grad(0.0f);
+            for (int axis = 0; axis < 3; ++axis) {
+                glm::vec3 step(0.0f);
+                step[axis] = eps;
+                auto hi = children[0]->evaluate(varsAtPoint(vars, p + step), subject);
+                auto lo = children[0]->evaluate(varsAtPoint(vars, p - step), subject);
+                if (!hi || !lo) return std::nullopt;
+                double dh = 0.0, dl = 0.0;
+                if (!propertyValueToNumber(*hi, dh) || !propertyValueToNumber(*lo, dl)) {
+                    return std::nullopt;
+                }
+                grad[axis] = static_cast<float>((dh - dl) / (2.0 * kGradientEpsilon));
+            }
+            return PropertyValue(grad);
+        }
+
+        // --- Declared, not implemented -------------------------------------
+        // Raycast needs a marching budget and a hit epsilon; LineIntegral needs
+        // a curve parameterization and a quadrature rule. Neither is authored
+        // anywhere in this tree, so neither can be made to agree across the CPU
+        // and GPU paths. UNDEFINED, never a guess (ScalarForm.hpp's own rule,
+        // ALGORITHMS_AS_LAW §7). The WGSL emitter REFUSES to compile them
+        // rather than emitting a number — see SdfWgsl.cpp.
+        case Op::Raycast:
+        case Op::LineIntegral:
+            return std::nullopt;
+
+        // An op this build does not know: preserved verbatim, never evaluated.
+        case Op::Unsupported:
+            return std::nullopt;
     }
     return std::nullopt;
 }
 
 nlohmann::json MathNode::toJson() const {
+    // An op this build cannot read is handed back exactly as it arrived.
+    // Re-serializing it from our own fields would drop every payload key we
+    // have no slot for, so merely OPENING a world in this build would destroy
+    // law text written by another one. (ConditionNode::toJson, same rule.)
+    if (op == Op::Unsupported) {
+        if (unsupported) return *unsupported;
+        return nlohmann::json{{"op", static_cast<int>(Op::Unsupported)}};
+    }
+
     nlohmann::json j;
     j["op"] = static_cast<int>(op);
     if (op == Op::ScalarLeaf) {
@@ -819,7 +1110,34 @@ nlohmann::json MathNode::toJson() const {
 
 std::unique_ptr<MathNode> MathNode::fromJson(const nlohmann::json& j) {
     auto node = std::make_unique<MathNode>();
-    node->op = static_cast<Op>(j["op"].get<int>());
+
+    // THE FIRST SEAM. The stored op is an arbitrary int out of a file. Casting
+    // it unchecked (what this used to do) turns "op": 99 into a scoped-enum
+    // value outside the enumeration — formally UB, and in practice a node no
+    // switch matches, which evaluated to a silent nullopt and re-serialized as
+    // a stripped husk. Park it as Unsupported, keep the JSON verbatim, say so.
+    const int rawOp = j.value("op", 0);
+    if (!isKnownMathOp(rawOp)) {
+        node->op = Op::Unsupported;
+        node->unsupported = std::make_shared<nlohmann::json>(j);
+        // "LAW", not "CONDITION": the audit logger suppresses CONDITION at
+        // Summary level, and a malformed save is exactly what must not be
+        // suppressed. stderr too — this is a load-time refusal, not a
+        // per-frame event, so it cannot become a firehose.
+        std::fprintf(stderr,
+                     "[OntoMath] MathNode op %d is not known to this build; the "
+                     "expression is undefined and preserved verbatim.\n", rawOp);
+        ECA::LawAuditLogger::instance().log(
+            "LAW",
+            "MathNode op " + std::to_string(rawOp) +
+                " is not supported by this build - the expression will never "
+                "evaluate (undefined, not zero). The node is preserved verbatim "
+                "so saving does not destroy it.",
+            {{"op", rawOp}});
+        return node;
+    }
+    node->op = static_cast<Op>(rawOp);
+
     if (j.contains("scalarForm")) {
         node->scalarForm = ScalarForm::fromJson(j["scalarForm"]);
     }
@@ -832,6 +1150,26 @@ std::unique_ptr<MathNode> MathNode::fromJson(const nlohmann::json& j) {
     if (j.contains("children")) {
         for (const auto& c : j["children"]) {
             node->children.push_back(fromJson(c));
+        }
+    }
+
+    // THE SECOND SEAM, and the reason typeOf exists at all. A deserializer has
+    // no binding environment, so this is the LENIENT check: unbound variables
+    // answer Unknown and unify with anything, while arity, axis names, function
+    // names and every concrete type mismatch are caught and named. The node is
+    // still returned — refusing to load law text is worse than loading it with
+    // a complaint on the record — but nothing enters the world silently wrong.
+    if (!node->children.empty() || node->op == Op::Component || node->op == Op::Map) {
+        std::string error;
+        if (!node->checkTypes(TypeEnv{}, error, nullptr, /*allowUnbound=*/true)) {
+            std::fprintf(stderr, "[OntoMath] MathNode type error on load: %s\n",
+                         error.c_str());
+            ECA::LawAuditLogger::instance().log(
+                "LAW",
+                "MathNode failed its type check on load: " + error +
+                    ". The expression is undefined and the law that reads it "
+                    "will not fire.",
+                {{"op", rawOp}, {"error", error}});
         }
     }
     return node;
@@ -1025,6 +1363,10 @@ std::optional<PropertyValue> Piecewise::evaluate(const std::map<std::string, Pro
             }
             return std::nullopt;
         }
+        // A piece with no value at all (no mathNode, no call, no fold) is
+        // malformed law text, not a value of zero — and dereferencing it was a
+        // null deref one bad save away.
+        if (!piece.mathNode) return std::nullopt;
         return piece.mathNode->evaluate(vars, subject);
     }
     return std::nullopt;   // outside every piece: undefined, not zero

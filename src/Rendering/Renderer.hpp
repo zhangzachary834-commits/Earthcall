@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Rendering/RenderMaterial.hpp"
-#include "Form/Object/Geometry/SmoothSurface.hpp" // geom::TessMesh
+#include "ConstructedBeing/Object/Geometry/SmoothSurface.hpp" // geom::TessMesh
 
 #include <cstdint>
 #include <utility>

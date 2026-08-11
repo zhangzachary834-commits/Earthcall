@@ -70,4 +70,12 @@ private:
     void* _pkey = nullptr;
 };
 
+// True where a real cryptographic guarantee can actually be produced (Ed25519
+// sign/verify, a CSPRNG). False on the wasm build, which links no OpenSSL --
+// see CMakeLists.txt's `if (NOT EMSCRIPTEN)` guard around find_package
+// (OpenSSL). Callers that need to tell "no crypto on this platform" apart
+// from "checked, and it's invalid" should ask this before trusting a false
+// or a caught throw from PublicKey::verify() / Claim::verify().
+bool cryptoAvailable();
+
 } // namespace Identity

@@ -1,6 +1,6 @@
 #include "Physics.hpp"
 #include "ZonesOfEarth/Physics/CollisionDispatcher.hpp"
-#include "Form/Object/Object.hpp"
+#include "ConstructedBeing/Object/Object.hpp"
 #include "Relation/RelationManager.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
@@ -346,7 +346,27 @@ namespace Physics {
                 // String-typed echo for Person-authored laws ("collision",
                 // subject = a, object = b).
                 Core::EventBus::instance().publish(ECA::Event{"collision", a, b, std::time(nullptr)});
-                currentTouching.insert(a < b ? std::make_pair(a, b) : std::make_pair(b, a));
+
+                // EDGES, NOT LEVELS. `collision` above is a level — it fires
+                // every frame a pair overlaps, which is what a law asking
+                // "are they touching?" wants and what a law asking "did they
+                // JUST touch?" must never see. Two boxes resting against each
+                // other are colliding forever; a law that spawns on that level
+                // spawns ~60 beings a second, per pair, until the frame rate
+                // gives out.
+                //
+                // So the touching-pair set that already synthesizes
+                // "contact-ended" below also synthesizes its opposite here:
+                // ONE "contact-began" per pair, on the false->true edge, with
+                // the same (subject, object) convention. Anything that means
+                // "a collision happened" — the acoustic spawn law above all —
+                // belongs on this event, not on `collision`.
+                const auto pairKey = a < b ? std::make_pair(a, b) : std::make_pair(b, a);
+                if (!g_touchingPairs.count(pairKey) && !currentTouching.count(pairKey)) {
+                    Core::EventBus::instance().publish(ECA::Event{
+                        "contact-began", pairKey.first, pairKey.second, std::time(nullptr)});
+                }
+                currentTouching.insert(pairKey);
 
                 // Update collision zones after correction for later pairs
                 a->updateCollisionZone(a->getTransform());
@@ -545,21 +565,17 @@ namespace Physics {
                 recordCollision(*event.objectA, *event.objectB, event.impactForce);
             }
             
-            // Mint an ECA::Event so the Rete network can react to physical collisions
-            // We publish one from the perspective of each participant
-            if (event.objectA) {
-                Core::EventBus::instance().publish(ECA::Event{"objects-collided", event.objectA, event.objectB, std::time(nullptr)});
-            }
-            if (event.objectB) {
-                Core::EventBus::instance().publish(ECA::Event{"objects-collided", event.objectB, event.objectA, std::time(nullptr)});
-            }
-            
-            // You can add more collision response logic here:
-            // - Play sound effects
-            // - Create particle effects
-            // - Update UI elements
-            // - Trigger game mechanics
-            // - Update formation relations
+            // NO ECA echo here. This handler used to mint two
+            // "objects-collided" events per pair — and PhysicsCollisionEvent
+            // is published on EVERY frame an overlap persists, so that was
+            // ~120 facts per second per resting pair, each one a Rete
+            // assertion, feeding a law that spawned a being for each.
+            //
+            // The ECA vocabulary for contact is published where the edge is
+            // actually known, in updateBodies: `collision` (the level, every
+            // frame of overlap), `contact-began` and `contact-ended` (the two
+            // edges, once each). This handler does what only it can do —
+            // record the collision in the relation graph.
         }, 10); // High priority for physics events
     }
 

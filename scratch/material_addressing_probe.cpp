@@ -8,8 +8,8 @@
 
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp"
-#include "Form/Material/Material.hpp"
-#include "Form/Object/Object.hpp"
+#include "ConstructedBeing/Material/Material.hpp"
+#include "ConstructedBeing/Object/Object.hpp"
 
 #include <cassert>
 #include <cstdio>

@@ -11,8 +11,8 @@
 
 #include "ZonesOfEarth/AuthorsOfLaw/ConditionModel.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
-#include "Form/Object/Object.hpp"
-#include "Form/Material/Material.hpp"
+#include "ConstructedBeing/Object/Object.hpp"
+#include "ConstructedBeing/Material/Material.hpp"
 #include "Relation/RelationManager.hpp"
 
 #include <cassert>
