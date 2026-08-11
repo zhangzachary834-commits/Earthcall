@@ -76,43 +76,55 @@ int main() {
     form.addRelation(cd);
     form.addRelation(ef);
 
-    // Initial resolution
-    auto spawned = form.resolveTopology();
-    
-    // Core 1 (A,B,C) + peripheral (D) is size 4. This remains in the primary formation.
-    // Core 2 (E,F) is size 2, meaning it is dissolved (cleared out of the formation).
-    // Spawned should be empty because there's only 1 valid core.
-    assert(spawned.empty());
+    // Initial resolution.
+    //
+    // Adjacency is direction-BLIND: direction is what a relation means, not a
+    // statement about whether two beings are held together. So C->D joins D to
+    // the A-B-C component, giving one component of four and one of two.
+    Formation::Topology t1 = form.resolveTopology();
+
+    // One valid core (size >= 3), so nothing is spawned off; {E,F} is too small
+    // to stand on its own and comes back as orphaned rather than being erased.
+    assert(t1.applied);
+    assert(!t1.rooted);
+    assert(t1.spawned.empty());
+    assert(t1.orphaned.size() == 2);
 
     // Check members
     assert(formationHas(form, a));
     assert(formationHas(form, b));
     assert(formationHas(form, c));
     assert(formationHas(form, d)); // Peripheral is retained!
-    assert(!formationHas(form, e)); // Dissolved
-    assert(!formationHas(form, f)); // Dissolved
+    assert(!formationHas(form, e)); // Released — reported in t1.orphaned
+    assert(!formationHas(form, f)); // Released — reported in t1.orphaned
 
-    // Check core status
+    // Core status still asks about UNDIRECTED edges: being held together at all
+    // is what membership answers; being at the core is a stronger claim.
     assert(form.isCoreMember(a));
     assert(form.isCoreMember(b));
     assert(form.isCoreMember(c));
     assert(!form.isCoreMember(d)); // D is peripheral, no undirected edges
-    assert(!form.isCoreMember(e)); // E is dissolved entirely
+    assert(!form.isCoreMember(e)); // E was released
 
-    // Break the cycle A-B-C into just A-B and B-C. (still size 3 valid core!)
+    // Break the cycle A-B-C into just A-B and B-C. Still one component of four.
     form.removeRelation(ca);
-    auto spawned2 = form.resolveTopology();
-    assert(spawned2.empty());
+    Formation::Topology t2 = form.resolveTopology();
+    assert(t2.applied);
+    assert(t2.spawned.empty());
+    assert(t2.orphaned.empty());
     assert(formationHas(form, a));
     assert(formationHas(form, b));
     assert(formationHas(form, c));
 
-    // Remove B-C. Now we have A-B (size 2) and C (size 1).
+    // Remove B-C. Now A-B (size 2) and C-D (size 2): no component is a valid
+    // core. The answer is "nothing here holds" — and it is REPORTED, not
+    // enacted. Asking a Formation a question must not destroy it.
     form.removeRelation(bc);
-    auto spawned3 = form.resolveTopology();
-    assert(spawned3.empty());
-    // Since all cores are < 3, the entire formation dissolves!
-    assert(form.getMembers().empty());
+    Formation::Topology t3 = form.resolveTopology();
+    assert(!t3.applied);
+    assert(t3.spawned.empty());
+    assert(t3.orphaned.size() == 4);
+    assert(form.getMembers().size() == 4);   // membership untouched by the asking
 
     beings.clear();
     glfwDestroyWindow(window);

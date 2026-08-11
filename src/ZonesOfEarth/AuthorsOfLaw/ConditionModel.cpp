@@ -468,21 +468,36 @@ std::vector<std::size_t> ConditionNode::compileToRete(ReteNetwork& rete,
                                                       std::size_t leftId,
                                                       bool leftIsBeta) const {
     if (kind == Kind::All) {
-        std::size_t currentLeft = leftId;
-        bool currentIsBeta = leftIsBeta;
-        std::vector<std::size_t> terminals;
-        if (children.empty()) return {currentLeft};
+        // An empty All is vacuously true, which is not something the network
+        // can express as a node. Returning {leftId} propagated the sentinel 0
+        // upward as though it were a real node id; return nothing instead and
+        // let compileConditionsToRete fall back to the full sweep, which CAN
+        // evaluate "true".
+        if (children.empty()) return leftId == 0 ? std::vector<std::size_t>{}
+                                                 : std::vector<std::size_t>{leftId};
+
+        // Each child is joined onto the conjunction built so far. A child may
+        // yield MORE than one terminal — Any does, one per branch — and each
+        // of those is a separate way the conjunction can be satisfied, so the
+        // rest of the clauses must be joined onto every one of them. Threading
+        // only terminals[0] turned `All(Any(b,c), d)` into `b AND d`: a subject
+        // holding c AND d matched nothing at all.
+        std::vector<std::size_t> currents{leftId};
         for (const auto& child : children) {
-            terminals = child.compileToRete(rete, lawId, currentLeft, currentIsBeta);
-            if (terminals.empty()) return {}; 
-            currentLeft = terminals[0];
-            if (leftId == 0 && &child == &children.front()) {
-                currentIsBeta = false;
-            } else {
-                currentIsBeta = true;
+            std::vector<std::size_t> next;
+            for (std::size_t left : currents) {
+                // leftId 0 is the "no left yet" sentinel, so it is never a node
+                // and must not be asked about. Every other id is a real node,
+                // and the id namespace is shared, so the network can say which
+                // table it lives in — this is the one authority on alpha-vs-beta.
+                const bool isBeta = (left != 0) && !rete.isAlphaNode(left);
+                auto t = child.compileToRete(rete, lawId, left, isBeta);
+                if (t.empty()) return {};
+                next.insert(next.end(), t.begin(), t.end());
             }
+            currents = std::move(next);
         }
-        return terminals;
+        return currents;
     }
     if (kind == Kind::Any) {
         std::vector<std::size_t> allTerminals;
@@ -501,13 +516,25 @@ std::vector<std::size_t> ConditionNode::compileToRete(ReteNetwork& rete,
     std::string desc = this->describe();
     ECA::ConditionPredicate orig = this->compile();
     
-    std::size_t alphaId = rete.addAlphaNode(desc, 
-        [orig, targetAttr](const FactPtr& fact) {
+    // A property's NAME may itself be dotted — "shape.r", "shape.fillet" — so
+    // an attribute filter comparing the whole name against the path's first
+    // segment rejected every fact about them, and any condition over a shape
+    // parameter matched nothing at all. Both sides are reduced to their root,
+    // which is the granularity the filter was reaching for in the first place.
+    const auto rootOf = [](const std::string& dotted) {
+        const std::size_t dot = dotted.find('.');
+        return dot == std::string::npos ? dotted : dotted.substr(0, dot);
+    };
+
+    std::size_t alphaId = rete.addAlphaNode(desc,
+        [orig, targetAttr, rootOf](const FactPtr& fact) {
             if (!fact->isState) return false;
             if (!fact->subject) return false;
             if (!targetAttr.empty()) {
-                if (fact->type == "property-state" && fact->attribute != targetAttr) return false;
-                if (fact->type == "relation-state" && fact->attribute != targetAttr) return false;
+                if ((fact->type == "property-state" || fact->type == "relation-state") &&
+                    rootOf(fact->attribute) != targetAttr) {
+                    return false;
+                }
             }
             ECA::Event dummy;
             return orig(dummy, *fact->subject);

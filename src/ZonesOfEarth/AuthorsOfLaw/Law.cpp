@@ -18,7 +18,7 @@
 #include "ZonesOfEarth/Zone/Zone.hpp"
 
 namespace {
-std::vector<std::string> formationMemberIds(const Law::NodeGroup& formation) {
+std::vector<std::string> formationMemberIds(const Formation& formation) {
     std::vector<std::string> ids;
     for (const auto* member : formation.getMembers()) {
         if (member) ids.push_back(member->getIdentifier());
@@ -86,6 +86,17 @@ void Law::initializeLawIdentity() {
     _lawId = "law-" + std::to_string(g_nextLawId.fetch_add(1));
     setObjectID(_lawId);
     setPhysicalObject(0);
+    nameGroupFormations();
+}
+
+// The three groups are beings, so they need names a Person can write, not the
+// generated `formation-N` that changes every run. Called from both places the
+// law id is decided — construction and load — because an id restored from a
+// save must carry its formations' names back with it.
+void Law::nameGroupFormations() {
+    _authors.setIdentifier(_lawId + ".authors");
+    _conditions.setIdentifier(_lawId + ".conditions");
+    _targets.setIdentifier(_lawId + ".targets");
 }
 
 void Law::setName(const std::string& name) {
@@ -184,6 +195,7 @@ void Law::clearActions() {
 
 void Law::setConditionModel(ConditionModel model) {
     _conditionModel = std::move(model);
+    ++_conditionRevision;
     recompile();
 }
 
@@ -254,6 +266,7 @@ std::shared_ptr<Law> Law::fromJson(const nlohmann::json& j) {
     if (j.contains("id")) {
         law->_lawId = j["id"].get<std::string>();
         law->setObjectID(law->_lawId);
+        law->nameGroupFormations();
         claimLawIdAtLeast(law->_lawId);   // fresh ids stay fresh after loads
     }
     law->setEnabled(j.value("enabled", true));
@@ -763,6 +776,12 @@ std::string ReteNetwork::assertFact(FactPtr fact) {
                     if (!joined) continue;
                     const ReteToken token = joinedToken(f, rightFact);
                     beta.memory.push_back(token);
+                    // Also announce it downstream. A beta node whose LEFT is
+                    // this one reads newBetaTokens[leftId], not the memory —
+                    // so a token that only landed in memory was invisible to
+                    // the next join, and a three-clause All() dropped matches
+                    // depending on which order its facts happened to arrive in.
+                    newBetaTokens[beta.id].push_back(token);
                     betaActivated = true;
                     if (hasLaw) {
                         for (const auto& lawId : bindingIt->second) {
@@ -779,6 +798,7 @@ std::string ReteNetwork::assertFact(FactPtr fact) {
                     if (!joined) continue;
                     const ReteToken token = joinedToken(leftFact, f);
                     beta.memory.push_back(token);
+                    newBetaTokens[beta.id].push_back(token);   // see above
                     betaActivated = true;
                     if (hasLaw) {
                         for (const auto& lawId : bindingIt->second) {
@@ -827,6 +847,14 @@ void ReteNetwork::retractFirst(std::size_t count) {
             for (const auto& f : a.token.facts) if (removedIds.count(f->id)) return true;
             return false;
         }), _agenda.end());
+
+    // A retracted fact must also leave the dirty queue. _dirtyFacts holds the
+    // fact alive, but `fact->subject` is a RAW pointer into a being that may
+    // be gone — evaluateDirty() dereferences it next tick. Nothing purged this
+    // queue on any retraction path.
+    _dirtyFacts.erase(std::remove_if(_dirtyFacts.begin(), _dirtyFacts.end(),
+                                     [&](const FactPtr& f) { return removedIds.count(f->id) != 0; }),
+                      _dirtyFacts.end());
 
     for (std::size_t i = count; i < _facts.size(); ++i) {
         new_facts.push_back(_facts[i]);
@@ -891,6 +919,13 @@ void ReteNetwork::retractStateFactsBySubject(const std::string& subjectId) {
             for (const auto& f : a.token.facts) if (removedIds.count(f->id)) return true;
             return false;
         }), _agenda.end());
+    // A retracted fact must also leave the dirty queue. _dirtyFacts holds the
+    // fact alive, but `fact->subject` is a RAW pointer into a being that may
+    // be gone — evaluateDirty() dereferences it next tick. Nothing purged this
+    // queue on any retraction path.
+    _dirtyFacts.erase(std::remove_if(_dirtyFacts.begin(), _dirtyFacts.end(),
+                                     [&](const FactPtr& f) { return removedIds.count(f->id) != 0; }),
+                      _dirtyFacts.end());
 }
 
 void ReteNetwork::markFactDirty(const std::string& subjectId, const std::string& attribute) {
@@ -964,10 +999,16 @@ void ReteNetwork::retractFactsAbout(const Singular* being) {
                                      return false;
                                  }),
                   _agenda.end());
+    // Same reason as the other retraction paths: a dirty entry still naming
+    // this being is a dangling read waiting for the next evaluateDirty().
+    _dirtyFacts.erase(std::remove_if(_dirtyFacts.begin(), _dirtyFacts.end(),
+                                     [&](const FactPtr& f) { return removedIds.count(f->id) != 0; }),
+                      _dirtyFacts.end());
 }
 
 void ReteNetwork::clearFacts() {
     _facts.clear();
+    _dirtyFacts.clear();
     _agenda.clear();
     for (auto& alpha : _alphaNodes) alpha.memory.clear();
     for (auto& beta : _betaNodes) beta.memory.clear();
@@ -975,7 +1016,7 @@ void ReteNetwork::clearFacts() {
 
 std::size_t ReteNetwork::addAlphaNode(const std::string& description, AlphaPredicate predicate) {
     AlphaNode node;
-    node.id = _nextAlphaId++;
+    node.id = _nextNodeId++;
     node.description = description;
     node.predicate = std::move(predicate);
     _alphaNodes.push_back(std::move(node));
@@ -988,7 +1029,7 @@ std::size_t ReteNetwork::addBetaNode(const std::string& description,
                                      std::size_t rightAlphaId,
                                      BetaJoin join) {
     BetaNode node;
-    node.id = _nextBetaId++;
+    node.id = _nextNodeId++;
     node.description = description;
     node.leftIsBeta = leftIsBeta;
     node.leftId = leftId;
@@ -1369,17 +1410,7 @@ void LawManager::connectToEventBus() {
         _dirty = true;
 
         if ((e.type == "object-created" || e.type == "relation-formed") && e.subject) {
-            for (auto* prop : e.subject->listProperties()) {
-                auto stateFact = std::make_shared<ReteFact>();
-                stateFact->type = "property-state";
-                stateFact->subject = e.subject;
-                stateFact->subjectId = subjectId;
-                stateFact->attribute = prop->name();
-                stateFact->value = propertyValueToJson(prop->value());
-                stateFact->isState = true;
-                stateFact->dirty = false;
-                _rete.assertFact(stateFact);
-            }
+            seedStateFacts(e.subject);
         }
     });
 
@@ -1418,6 +1449,26 @@ void LawManager::connectToEventBus() {
 }
 
 std::vector<Law::ApplicationRecord> LawManager::tick() {
+    // Bring compiled terminals up to date with the conditions they were
+    // compiled from, before anything reads either. Conditions are edited from
+    // the graph window, from tools, and from loaded worlds; asking here means
+    // no editing path has to remember to recompile, and the reactive and
+    // sweep evaluations cannot be looking at different conditions.
+    for (const auto& law : _laws) {
+        if (law) syncReteCompilation(*law);
+    }
+
+    // Introduce any being the network has not met. Only while connected: the
+    // property-change callback installed by connectToEventBus() is what keeps
+    // a seeded fact current, and a snapshot nothing refreshes is worse than no
+    // snapshot — the reactive path would answer confidently from stale values.
+    // Disconnected, the sweep below reads the beings themselves and is right.
+    if (_connected) {
+        for (Singular* being : Universe::instance().beings()) {
+            seedStateFacts(being);
+        }
+    }
+
     if (_rete.hasDirtyFacts()) {
         _rete.evaluateDirty();
         _dirty = true;
@@ -1437,6 +1488,19 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
         for (const auto& activation : agenda) {
             Law* law = find(activation.lawId);
             if (!law) continue;
+            // An activation is a SIGNAL that a match set changed — it is not
+            // permission to fire. Continuous laws belong to the continuous
+            // pass below, which is the only place that knows about edges.
+            // Firing them here as well made OnBecomeTrue level-triggered: it
+            // fired from the drain, again in the continuous pass, and again
+            // on every re-assert while its condition merely stayed true.
+            // "Edges, not levels."
+            if (law->activation() != Law::Activation::OnEvent) continue;
+            // Disabled and unauthored laws are NOT filtered here. applyTo
+            // refuses them and says so in the record, and the refusal is the
+            // point: "the attempt is what gets noticed." Skipping them here
+            // would make an unauthored law's attempt to enter the world
+            // silent, which is the one outcome this gate exists to prevent.
             Singular* subject = activation.token.facts.empty()
                                     ? nullptr
                                     : activation.token.facts.front()->subject;
@@ -1511,7 +1575,12 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
 
         const std::string lawId = law->getIdentifier();
         auto termIt = _reteTerminals.find(lawId);
-        const bool hasTerminals = (termIt != _reteTerminals.end() && !termIt->second.empty());
+        // Terminals alone do not license the reactive path: it answers from
+        // state facts, and state facts are only as current as the change feed
+        // that maintains them. Unconnected, there is no feed — so there is no
+        // reactive answer to give, only a stale one. Fall through to the sweep.
+        const bool hasTerminals =
+            _connected && termIt != _reteTerminals.end() && !termIt->second.empty();
 
         // WhileTrue laws with compiled Rete terminals: O(Matching) path.
         // The terminal node memories already contain exactly the beings that
@@ -1523,6 +1592,52 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
             for (const auto& info : termIt->second) termIds.push_back(info.nodeId);
 
             std::vector<Singular*> subjects = _rete.collectTerminalSubjects(termIds);
+
+            // WHOM the law is about is the author's answer, not the network's.
+            // The terminal memories hold every being that satisfies the
+            // conditions; a law scoped to one being still applies to that one
+            // being. Without this, an authored targets Formation was silently
+            // ignored on the reactive path and honored on the sweep — the same
+            // law meaning two different things depending on which path ran.
+            const auto& targets = law->targets().getMembers();
+            if (!targets.empty()) {
+                std::unordered_set<const Singular*> allowed(targets.begin(), targets.end());
+                subjects.erase(std::remove_if(subjects.begin(), subjects.end(),
+                                              [&allowed](Singular* s) {
+                                                  return allowed.count(s) == 0;
+                                              }),
+                               subjects.end());
+            }
+
+            // Onset bookkeeping, which the sweep below does and this path did
+            // not: t=0 for `time.sinceApplied` is the moment the condition went
+            // false->true for this subject. With no onset remembered, applyTo
+            // falls back to "now" every tick, so every Flow and Drive authored
+            // against that clock read t=0 forever.
+            std::unordered_set<std::string> matching;
+            matching.reserve(subjects.size());
+            for (Singular* subject : subjects) {
+                if (!subject || Universe::instance().isUnmade(subject)) continue;
+                const std::string subjectId = subject->getIdentifier();
+                matching.insert(subjectId);
+                const bool wasHolding = law->lastConditionState(subjectId);
+                law->rememberConditionState(subjectId, true);
+                if (!wasHolding && Universe::instance().hasClock()) {
+                    law->rememberOnset(subjectId, Universe::instance().now());
+                }
+            }
+
+            // Release: whoever the law held for last tick and does not now.
+            // Collected first, because forgetting mutates what we are reading.
+            std::vector<std::string> released;
+            for (const auto& [subjectId, held] : law->conditionMemory()) {
+                if (held && matching.count(subjectId) == 0) released.push_back(subjectId);
+            }
+            for (const auto& subjectId : released) {
+                law->rememberConditionState(subjectId, false);
+                law->forgetOnset(subjectId);
+            }
+
             for (Singular* subject : subjects) {
                 if (!subject || Universe::instance().isUnmade(subject)) continue;
                 const std::string subjectId = subject->getIdentifier();
@@ -1695,6 +1810,9 @@ void LawManager::releaseFromLaws(Singular* being) {
         law->authors().removeMember(being);
     }
     const std::string id = being->getIdentifier();
+    // Forget that we introduced it to the network, so an id reused by a later
+    // being is seeded afresh instead of being taken for one we already know.
+    _seededSubjects.erase(id);
     _driveSessions.erase(
         std::remove_if(_driveSessions.begin(), _driveSessions.end(),
                        [&id](const DriveSession& s) { return s.subjectId == id; }),
@@ -1840,6 +1958,7 @@ bool LawManager::remove(const std::string& lawId) {
     _rete.unbindLaw(lawId);
     _triggers.erase(lawId);
     _reteTerminals.erase(lawId);
+    _compiledConditionRevision.erase(lawId);
     _lawFormation.removeMember(it->get());
     _laws.erase(it);
     return true;
@@ -1882,8 +2001,55 @@ const std::vector<std::string>& LawManager::triggersOf(const std::string& lawId)
     return it == _triggers.end() ? kNone : it->second;
 }
 
+void LawManager::seedStateFacts(Singular* being) {
+    if (!being) return;
+    const std::string subjectId = being->getIdentifier();
+    if (subjectId.empty()) return;
+    if (!_seededSubjects.insert(subjectId).second) return;   // already known
+
+    for (auto* prop : being->listProperties()) {
+        if (!prop) continue;
+        auto stateFact = std::make_shared<ReteFact>();
+        stateFact->type = "property-state";
+        stateFact->subject = being;
+        stateFact->subjectId = subjectId;
+        stateFact->attribute = prop->name();
+        stateFact->value = propertyValueToJson(prop->value());
+        stateFact->isState = true;
+        stateFact->dirty = false;
+        _rete.assertFact(stateFact);
+    }
+}
+
+void LawManager::syncReteCompilation(Law& law) {
+    const std::string lawId = law.getIdentifier();
+    const bool wantsRete =
+        law.activation() != Law::Activation::OnEvent && law.conditionModel() != nullptr;
+
+    auto revIt = _compiledConditionRevision.find(lawId);
+    const bool alreadyCompiled = revIt != _compiledConditionRevision.end();
+
+    if (!wantsRete) {
+        // Cleared its condition, or became an OnEvent law. Terminals compiled
+        // from a condition it no longer holds would keep queueing it.
+        if (alreadyCompiled) {
+            _rete.unbindLaw(lawId);
+            _reteTerminals.erase(lawId);
+            _compiledConditionRevision.erase(revIt);
+        }
+        return;
+    }
+
+    if (alreadyCompiled && revIt->second == law.conditionRevision()) return;
+    compileConditionsToRete(law);
+}
+
 void LawManager::compileConditionsToRete(Law& law) {
     const std::string lawId = law.getIdentifier();
+    // Stamped first, and unconditionally: the paths below that give up early
+    // (no model, nothing compilable) are still a complete answer for THIS
+    // revision, and re-deciding it every tick would be a standing tax.
+    _compiledConditionRevision[lawId] = law.conditionRevision();
 
     // Unbind old terminals for this law (if recompiling).
     auto oldIt = _reteTerminals.find(lawId);
@@ -1934,10 +2100,12 @@ void LawManager::loadFromJson(const nlohmann::json& j) {
         _lawFormation.removeMember(law.get());
         _triggers.erase(law->getIdentifier());
         _reteTerminals.erase(law->getIdentifier());
+        _compiledConditionRevision.erase(law->getIdentifier());
     }
     _laws = std::move(firstMovers);
     _driveSessions.clear();
     _reteTerminals.clear();
+    _compiledConditionRevision.clear();
 
     const auto findBeing = [](const std::string& id) -> Singular* {
         for (Singular* being : Universe::instance().beings()) {

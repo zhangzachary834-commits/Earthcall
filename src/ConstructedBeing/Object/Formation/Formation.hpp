@@ -194,6 +194,18 @@ public:
     // identity-keyed systems (Rete bindings, provenance) depend on it.
     std::string getIdentifier() const override { return _formationId; }
 
+    // Name this Formation with a STABLE slug instead of the generated
+    // `formation-N`, which changes between runs and so cannot appear in law
+    // text. A Formation that belongs to a named being — a Law's authors, its
+    // targets — should be addressable as `<owner>.authors`, not as whichever
+    // number it happened to draw this session. Refuses an empty name rather
+    // than leaving the being unnamed; returns false when it does.
+    bool setIdentifier(const std::string& id) {
+        if (id.empty()) return false;
+        _formationId = id;
+        return true;
+    }
+
 private:
     static std::string nextFormationId();
     std::string _formationId = nextFormationId();

@@ -165,6 +165,13 @@ int main() {
         assert(bothClauses->isAuthored());       // else it could never fire at all
         assert(edgeLaw->targets().getMembers().size() == 1);
 
+        // The three groups are Formations — beings — and they carry STABLE
+        // names derived from the law, restored along with it. A generated
+        // `formation-N` could not be written in law text; `law-3.targets` can.
+        assert(edgeLaw->targets().getIdentifier() == edgeLawId + ".targets");
+        assert(edgeLaw->authors().getIdentifier() == edgeLawId + ".authors");
+        assert(bothClauses->conditions().getIdentifier() == bothClausesId + ".conditions");
+
         mgr.tick();
 
         // The being that satisfies both clauses was reached...
@@ -224,10 +231,12 @@ int main() {
         // Still true, three ticks later: an edge fires once, not once per tick.
         assert(nearf(static_cast<float>(readNumber(edgeSubject, "position.z")), 0.5f));
 
-        // Release and re-hold: the edge RE-ARMS.
-        edgeSubject.setPosition(glm::vec3(5.0f, 4.0f, 0.0f));
+        // Release and re-hold: the edge RE-ARMS. Only `y` is written — the
+        // accumulator lives in `z`, and setPosition() would zero it, which
+        // would make "fired once more" and "never fired again" look alike.
+        writeFloat(edgeSubject, "position.y", 4.0f);
         mgr.tick();
-        edgeSubject.setPosition(glm::vec3(5.0f, 0.0f, 0.0f));
+        writeFloat(edgeSubject, "position.y", 0.0f);
         mgr.tick();
         assert(nearf(static_cast<float>(readNumber(edgeSubject, "position.z")), 1.0f));
 

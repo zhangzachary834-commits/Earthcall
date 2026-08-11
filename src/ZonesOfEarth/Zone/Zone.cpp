@@ -3,6 +3,7 @@
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 #include <iostream>
 #include <algorithm>
+#include <unordered_set>
 #include "Singularity/OntoMath/Field.hpp"
 #include "ConstructedBeing/Object/Geometry/FieldNode.hpp"
 #include "GLFW/glfw3.h"
@@ -66,13 +67,30 @@ void Zone::unload() {
     std::cout << "🌍 Zone '" << _name << "' unloaded." << std::endl;
 }
 
+// SYNC, not accumulate. This only ever added, so a destroyed Object stayed in
+// the zone's Formation as a raw pointer into freed memory — read again on the
+// very next frame, and every frame after, for the rest of the session. The
+// reaper releases beings from Law formations, and World::removeObject releases
+// the ones other Objects hold; nothing released this one. Rebuilding the
+// membership from the world (plus whatever the caller names) is the release.
 void Zone::syncFormationMembers(const std::vector<Singular*>& extraMembers) {
-    _formation.addMember(_world.get());
-    for (const auto& up : _world->getOwnedObjects()) {
-        if (up) _formation.addMember(up.get());
-    }
-    for (auto* member : extraMembers) {
+    std::unordered_set<const Singular*> live;
+    const auto admit = [&](Singular* member) {
+        if (!member) return;
+        live.insert(member);
         _formation.addMember(member);
+    };
+
+    admit(_world.get());
+    admit(_spatialRootObject.get());
+    for (const auto& up : _world->getOwnedObjects()) admit(up.get());
+    for (auto* member : extraMembers) admit(member);
+
+    // Anything the formation still names that this pass did not is gone. Copy
+    // first: removeMember mutates the vector being read.
+    const std::vector<Singular*> current = _formation.getMembers();
+    for (Singular* member : current) {
+        if (!member || live.count(member) == 0) _formation.removeMember(member);
     }
 }
 
@@ -141,6 +159,14 @@ Zone& Zone::operator=(const Zone& other)
     std::swap(isDrawing, tmp.isDrawing);
     std::swap(_world, tmp._world);
     std::swap(_formation, tmp._formation);
+    // The spatial trio travels WITH the formation or not at all. The copy
+    // constructor puts `_spatialRootObject.get()` into `_formation`, so
+    // swapping the formation while leaving the root behind hands this zone a
+    // Formation holding a raw pointer into `tmp` — which is destroyed on the
+    // next line. Every read of that member afterwards is a use-after-free.
+    std::swap(_spatialRootObject, tmp._spatialRootObject);
+    std::swap(_spatialField, tmp._spatialField);
+    std::swap(_spatialVectorField, tmp._spatialVectorField);
     return *this;
 }
 

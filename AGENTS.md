@@ -65,7 +65,8 @@ All paths are under `docs/architecture/` unless noted.
 
 ```
 src/
-  Form/           Singular · Object · Concept · Formation · Property · Material
+  ConstructedBeing/  Singular · Object · Concept · Formation · Property · Material
+                  (named `Form/` until 2a11f94; the docs corpus still says Form in places)
   Person/         Person · Soul · Body · Relationship
   Relation/       Relation — a first-class being, not an edge in someone's array
   ZonesOfEarth/   Zone · Home · World · Physics · AuthorsOfLaw (Law lives here)
@@ -99,7 +100,7 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
   -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.13/libssl.a"
 
 cmake --build build --target earthcall -j8
-ctest --test-dir build --output-on-failure -j4        # 35 tests, all should pass
+ctest --test-dir build --output-on-failure -j4        # 36 tests, all should pass
 ```
 
 **Sources are globbed at configure time.** Add or remove a `.cpp` and you must re-run

@@ -17,6 +17,7 @@
 #include <optional>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -32,22 +33,14 @@
 // Earthcall models Relation-Objects with member formations, not a diamond.
 class Law : public Object {
 public:
-    struct NodeGroup {
-        std::vector<Singular*> members;
-        std::vector<std::shared_ptr<Relation>> relations;
-        void addMember(Singular* s) { 
-            if (std::find(members.begin(), members.end(), s) == members.end()) 
-                members.push_back(s); 
-        }
-        void removeMember(Singular* s) {
-            auto it = std::find(members.begin(), members.end(), s);
-            if (it != members.end()) members.erase(it);
-        }
-        void addRelation(std::shared_ptr<Relation> r) { relations.push_back(r); }
-        void clear() { members.clear(); relations.clear(); }
-        const std::vector<Singular*>& getMembers() const { return members; }
-        const std::vector<std::shared_ptr<Relation>>& getRelations() const { return relations; }
-    };
+    // A Law's authors, condition subjects and targets are FORMATIONS — beings
+    // in their own right, with an identifier, legible properties, a place in
+    // the Universe and provenance. They were briefly replaced by a bare
+    // `struct NodeGroup { vector<Singular*>; vector<shared_ptr<Relation>>; }`,
+    // which re-implemented the mechanical half of Formation and dropped
+    // everything ontological: `law->authors()` stopped being a being and
+    // became a field. Refusal #1 — no new C++ class for a domain noun — and
+    // this one had a name in the ontology already.
     // Condition/action vocabulary is the shared ECA language (ECA.hpp), so a
     // Law's pieces are interchangeable with any other event-condition-action
     // carrier in the system.
@@ -167,6 +160,14 @@ public:
     void rememberConditionState(const std::string& subjectId, bool state) {
         _conditionMemory[subjectId] = state;
     }
+    // Who the law believes it currently holds for. The reactive path learns
+    // who ENTERED the match set from the network, but nothing tells it who
+    // LEFT — so it reads its own memory and takes the difference. Release is
+    // what re-arms the onset clock, and a release nobody notices is an onset
+    // that never re-arms.
+    const std::unordered_map<std::string, bool>& conditionMemory() const {
+        return _conditionMemory;
+    }
 
     // Per-subject onset memory: the world time at which this law's condition
     // last went false->true for that subject. This is the t=0 of
@@ -223,20 +224,20 @@ public:
     ConditionMode conditionMode() const { return _conditionMode; }
     void setConditionMode(ConditionMode mode) { _conditionMode = mode; }
 
-    NodeGroup& authors() { return _authors; }
-    const NodeGroup& authors() const { return _authors; }
+    Formation& authors() { return _authors; }
+    const Formation& authors() const { return _authors; }
     void addAuthor(Singular& author);
     void setAuthors(const std::vector<Singular*>& authors);
     bool isAuthored() const { return !_authors.getMembers().empty(); }
 
-    NodeGroup& conditions() { return _conditions; }
-    const NodeGroup& conditions() const { return _conditions; }
+    Formation& conditions() { return _conditions; }
+    const Formation& conditions() const { return _conditions; }
     void addConditionSubject(Singular& subject);
     void addConditionRelation(const std::shared_ptr<Relation>& relation);
     void clearConditionFormation();
 
-    NodeGroup& targets() { return _targets; }
-    const NodeGroup& targets() const { return _targets; }
+    Formation& targets() { return _targets; }
+    const Formation& targets() const { return _targets; }
     void addTarget(Singular& target);
     void clearTargets();
 
@@ -300,7 +301,17 @@ public:
     void clearConditionModel() {
         _conditionModel.reset();
         _conditionPredicates.clear();
+        ++_conditionRevision;
     }
+
+    // Bumped by every change to the condition tree. The compiled Rete
+    // terminals are DERIVED from that tree, and only two paths ever built
+    // them (registration and world load) — so a law edited in the graph
+    // window kept firing on its old conditions through the network while
+    // conditionsSatisfied() answered with the new ones. The two evaluation
+    // paths disagreed by construction. LawManager watches this number and
+    // recompiles, so nobody has to remember to ask.
+    std::uint64_t conditionRevision() const { return _conditionRevision; }
     void clearActionModel() {
         _actionModel.reset();
         _actions.clear();
@@ -330,6 +341,8 @@ public:
 
 private:
     void initializeLawIdentity();
+    // Stable, law-derived names for the three group Formations (see the .cpp).
+    void nameGroupFormations();
     ApplicationRecord makeRecord(Singular* target, ApplicationResult result) const;
     void publishAppliedEvent(Singular* target, ApplicationResult result) const;
 
@@ -361,12 +374,13 @@ private:
     Retrigger _retrigger = Retrigger::Absorb;
     std::unordered_map<std::string, bool> _conditionMemory;   // edge detection
     std::unordered_map<std::string, double> _onsetMemory;     // t=0 per subject
+    std::uint64_t _conditionRevision{0};                      // see conditionRevision()
     ConditionMode _conditionMode = ConditionMode::All;
 
 
-    NodeGroup _authors;
-    NodeGroup _conditions;
-    NodeGroup _targets;
+    Formation _authors;
+    Formation _conditions;
+    Formation _targets;
     RelationManager _provenance;
 
     ECA::Loop _ecaLoop;
@@ -567,8 +581,15 @@ private:
     std::unordered_map<std::size_t, std::vector<std::string>> _alphaLawBindings;
     std::unordered_map<std::size_t, std::vector<std::string>> _betaLawBindings;
     std::unordered_map<std::string, std::size_t> _typeAlphaIndex;   // event type -> node
-    std::size_t _nextAlphaId{1};
-    std::size_t _nextBetaId{1};
+    // ONE counter for both tables. Alpha and beta ids are handed to callers as
+    // bare `std::size_t` and are told apart afterwards by isAlphaNode(), which
+    // answers by looking the id up in the alpha table — so two independent
+    // counters made "beta 1" indistinguishable from "alpha 1", and since beta
+    // ids run behind alpha ids in every real compile, every beta terminal was
+    // misread as the alpha of the same number. `All(a<1, b<1)` bound the law to
+    // its FIRST clause alone. Sharing the counter is what makes the id itself
+    // carry the distinction the lookup was already assuming it had.
+    std::size_t _nextNodeId{1};
 };
 
 class LawManager {
@@ -582,8 +603,8 @@ public:
     std::vector<std::shared_ptr<Law>> getByAuthor(const std::string& authorId) const;
     const std::vector<std::shared_ptr<Law>>& getAll() const { return _laws; }
 
-    Law::NodeGroup& formation() { return _lawFormation; }
-    const Law::NodeGroup& formation() const { return _lawFormation; }
+    Formation& formation() { return _lawFormation; }
+    const Formation& formation() const { return _lawFormation; }
 
     std::vector<Law::ApplicationRecord> applyAllTo(Singular& target);
     std::vector<Law::ApplicationRecord> applyAllToTargets();
@@ -675,7 +696,7 @@ private:
     void releaseFromLaws(Singular* being);
 
     std::vector<std::shared_ptr<Law>> _laws;
-    Law::NodeGroup _lawFormation;
+    Formation _lawFormation;
     ReteNetwork _rete;
     std::vector<DriveSession> _driveSessions;
     std::vector<std::shared_ptr<Core::EventEntity>> _activeCustomEvents;
@@ -687,6 +708,33 @@ private:
         bool isBeta;  // true = BetaNode, false = AlphaNode
     };
     std::unordered_map<std::string, std::vector<TerminalInfo>> _reteTerminals;
+    // The Law::conditionRevision() each entry in _reteTerminals was built
+    // from. Compiled terminals are derived state; this is what lets the tick
+    // notice they have gone stale rather than trusting that whoever edited
+    // the condition remembered to say so.
+    std::unordered_map<std::string, std::uint64_t> _compiledConditionRevision;
+    // Rebuild this law's terminals if its condition changed (or drop them if
+    // it no longer wants any). Cheap when nothing moved: one map lookup.
+    void syncReteCompilation(Law& law);
+
+    // ------------------------------------------------------------------
+    // Give the network the `property-state` facts for a being it has not met.
+    //
+    // Alpha predicates compiled from conditions all begin `if (!fact->isState)
+    // return false;` — state facts are the ONLY thing a condition can match.
+    // They used to be asserted from exactly one place: the "object-created"
+    // echo, whose sole publisher is an ActionNode Create/Spawn. So a being
+    // that entered the world any other way — a loaded save, the object tool,
+    // a Universe provider — was invisible to every compiled condition, and a
+    // WhileTrue law loaded from disk matched nobody while the identical law
+    // authored in-session worked. Same law text, two behaviors, decided by
+    // where the being came from.
+    //
+    // Seeding is once per being: the property-change callback installed by
+    // connectToEventBus() is what keeps the facts current afterwards.
+    // ------------------------------------------------------------------
+    void seedStateFacts(Singular* being);
+    std::unordered_set<std::string> _seededSubjects;
     bool _connected = false;
     bool _dirty = false;
 };
