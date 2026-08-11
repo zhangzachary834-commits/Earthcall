@@ -1,4 +1,0 @@
-/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles/earthcall_core.dir
-/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles/earthcall_wasm.dir
-/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles/edit_cache.dir
-/Users/zacharyzhang/Documents/GitHub/Earthcall/build-wasm/CMakeFiles/rebuild_cache.dir
