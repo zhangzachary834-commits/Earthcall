@@ -295,7 +295,7 @@ const PolyhedronData& cubePolyhedron() {
 
 const PolyhedronData& polyhedronBodyFor(const Object& object) {
     const PolyhedronData& data = object.getPolyhedronData();
-    if (object.getGeometryType() == Object::GeometryType::Polyhedron &&
+    if (object.getShapeKind() == Object::ShapeKind::Polyhedron &&
         !data.vertices.empty() &&
         !data.faces.empty()) {
         return data;

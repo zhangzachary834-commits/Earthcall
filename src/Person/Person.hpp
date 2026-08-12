@@ -49,48 +49,9 @@ public:
     bool wasMoving = false;  // Previous frame's locomotion state, for locomotion events
     bool jumpKeyDownLast = false; // Previous frame's jump key state, for jump edge detection
     // --- Law System Perception Properties --- 
-    std::string activeTool;
-    std::string active3DMode;
-    int activeShapeKind = 0;
-    glm::vec3 cursorHitPos{0.0f, 0.0f, 0.0f};
-    glm::vec3 cursorHitNormal{0.0f, 1.0f, 0.0f};
-    glm::vec3 cursorSpawnPos{0.0f, 0.0f, 0.0f};
-    glm::vec3 cursorSpawnRot{0.0f, 0.0f, 0.0f};
-    glm::vec3 cursorSpawnScale{1.0f, 1.0f, 1.0f};
-    // --- Placement Mode & Grid Snap Properties ---
-    // Mirrors of the brush placement state the creation tools run on, so a
-    // law can read and override what the hard-coded tool used to consume
-    // directly. GameUpdate refreshes these each frame.
-    std::string placementMode{"InFront"}; // "InFront", "ManualDistance", "CursorSnap"
-    // Grid snap is ORTHOGONAL to the mode, exactly as the brush treats it:
-    // it rounds whatever position the mode produced. Folding it into a mode
-    // would make surface placement and snapping mutually exclusive.
-    bool gridSnap{false};
-    float gridSnapSize{1.0f};
-    // "InFront" places this far along the camera's forward axis.
-    float inFrontDistance{2.0f};
-    // "ManualDistance" places relative to a FROZEN anchor, so the shape stays
-    // where it was put instead of following the camera. GameUpdate captures
-    // the anchor on entering the mode.
-    glm::vec3 manualOffset{0.0f, 0.0f, 2.0f};
-    bool manualAnchorValid{false};
-    glm::vec3 manualAnchorPos{0.0f};
-    glm::vec3 manualAnchorRight{1.0f, 0.0f, 0.0f};
-    glm::vec3 manualAnchorUp{0.0f, 1.0f, 0.0f};
-    glm::vec3 manualAnchorForward{0.0f, 0.0f, -1.0f};
-    // The one place placementMode is turned into a position.
-    glm::vec3 computeSpawnPosition() const;
-    // Half-extent of the spawn box measured along `normal`, so a shape placed
-    // against a surface rests ON it rather than half inside it.
-    float spawnSurfaceOffset(const glm::vec3& normal) const;
-    // Refreshes cursorSpawnPos from computeSpawnPosition(). Called once per
-    // frame by GameUpdate; laws may overwrite cursorSpawnPos after it runs.
-    void updatePlacement();
-    glm::mat4 getCursorSpawnTransform() const;
-    std::string cursorHoveredBodyPart;
+
     glm::vec3 cameraPos{0.0f, 0.0f, 0.0f};
     glm::vec3 cameraForward{0.0f, 0.0f, -1.0f};
-    glm::vec3 activeColor{1.0f, 1.0f, 1.0f};
 
 
     
@@ -156,8 +117,12 @@ public:
                       bool flying, bool canMove);
     
     // Body access methods
-    Body& getBody() { return body; }
-    const Body& getBody() const { return body; }
+    Body& getBody() { return bodies[activeBodyIndex]; }
+    const Body& getBody() const { return bodies[activeBodyIndex]; }
+    
+    // Multiple bodies management
+    void addBody(Body&& newBody) { bodies.push_back(std::move(newBody)); }
+    void setActiveBody(int index) { if(index >= 0 && index < bodies.size()) activeBodyIndex = index; }
 
     // Session and Zone Management
     void login(const std::string& sessionId = "");
@@ -227,7 +192,8 @@ private:
     // anyone who typed the same string became the same Person.
     Soul _soul;
     Identity::SingularId _personId;
-    Body body;  // Body member variable
+    std::vector<Body> bodies;
+    int activeBodyIndex = 0;
 
     // Helper method for creating default animations
     void createDefaultAnimations();

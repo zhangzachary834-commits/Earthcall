@@ -35,7 +35,7 @@ PolyhedronData PolyhedronData::createRegularPolyhedron(int numFaces, float radiu
             };
             break;
             
-        case 6: // Cube (already handled by GeometryType::Cube, but included for completeness)
+        case 6: // Cube (already handled by ShapeKind::Cube, but included for completeness)
             data.vertices = {
                 {-scale, -scale, -scale}, {scale, -scale, -scale}, {scale, scale, -scale}, {-scale, scale, -scale},
                 {-scale, -scale, scale}, {scale, -scale, scale}, {scale, scale, scale}, {-scale, scale, scale}

@@ -26,7 +26,7 @@
 #include <optional>
 #include <unordered_set>
 #include <unordered_map>
-#include "Rendering/HighlightSystem.hpp"
+#include "Singularity/Screen/HighlightSystem.hpp"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -43,7 +43,7 @@ void Object::setDimensions(int d) {
 }
 
 int Object::getCorners() const {
-    if (geometryType == GeometryType::Polyhedron) {
+    if (_shapeKind == ShapeKind::Polyhedron) {
         return polyhedronData.getVertexCount();
     }
     return _composition.corners;
@@ -60,7 +60,7 @@ int Object::getFaces() const {
     if (_hasComplex) return complexData.patchCount();
     if (_hasSmooth)  return 1;
     if (_hasPatch)   return 1; // a Bezier patch is one surface with one face texture
-    if (geometryType == GeometryType::Polyhedron) {
+    if (_shapeKind == ShapeKind::Polyhedron) {
         return polyhedronData.getFaceCount();
     }
     return _composition.faces;
@@ -170,45 +170,39 @@ void Object::setPolyhedronData(const PolyhedronData& data) {
     _polyhedronDirty = true; // render mesh cache must follow the geometry
     _hasSmooth = false;   // a polyhedron is flat-faced, not a topology surface
     _hasComplex = false;
-    if (geometryType == GeometryType::Polyhedron) {
-        initFaceTextures();
+    if (_shapeKind == ShapeKind::Polyhedron) {
     }
 }
 
 void Object::createTetrahedron() {
-    geometryType = GeometryType::Polyhedron;
+    _shapeKind = ShapeKind::Polyhedron;
     polyhedronData = PolyhedronData::createRegularPolyhedron(4);
     _polyhedronDirty = true;
-    initFaceTextures();
 }
 
 void Object::createOctahedron() {
-    geometryType = GeometryType::Polyhedron;
+    _shapeKind = ShapeKind::Polyhedron;
     polyhedronData = PolyhedronData::createRegularPolyhedron(8);
     _polyhedronDirty = true;
-    initFaceTextures();
 }
 
 void Object::createDodecahedron() {
-    geometryType = GeometryType::Polyhedron;
+    _shapeKind = ShapeKind::Polyhedron;
     polyhedronData = PolyhedronData::createRegularPolyhedron(12);
     _polyhedronDirty = true;
-    initFaceTextures();
 }
 
 void Object::createIcosahedron() {
-    geometryType = GeometryType::Polyhedron;
+    _shapeKind = ShapeKind::Polyhedron;
     polyhedronData = PolyhedronData::createRegularPolyhedron(20);
     _polyhedronDirty = true;
-    initFaceTextures();
 }
 
 void Object::createCustomPolyhedron(const std::vector<glm::vec3>& vertices, 
                                    const std::vector<std::vector<int>>& faces) {
-    geometryType = GeometryType::Polyhedron;
+    _shapeKind = ShapeKind::Polyhedron;
     polyhedronData = PolyhedronData::createCustomPolyhedron(vertices, faces);
     _polyhedronDirty = true;
-    initFaceTextures();
 }
 
 // ID management lives in ObjectIdentity.hpp. The member function that used to
@@ -220,7 +214,6 @@ Object::Object() {
         objectID = ObjectIdentity::generateObjectId();
         printf("WARNING: Object initialized without a stable string identifier. Assigned volatile ID '%s'. This object should not be reliably targeted by Law text.\n", objectID.c_str());
     }
-    initFaceTextures();
     syncRotationStateFromTransform(transform);
 }
 
@@ -234,5 +227,4 @@ void Object::setPosition(const glm::vec3& p) {
 
 void Object::propSetColor(const glm::vec3& c) {
     const int faces = getFaces() > 0 ? getFaces() : 6;
-    for (int f = 0; f < faces; ++f) setFaceColor(f, c.x, c.y, c.z);
 }

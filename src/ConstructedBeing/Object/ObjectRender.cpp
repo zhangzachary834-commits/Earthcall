@@ -5,8 +5,8 @@
 #include "Contour.hpp"
 #include "AngleTools.hpp"
 #include "Automation/AutomationEvents.hpp"
-#include "Rendering/Renderer.hpp"
-#include "Rendering/RenderMaterial.hpp"
+#include "Singularity/Screen/Renderer.hpp"
+#include "Singularity/Screen/RenderMaterial.hpp"
 #include <GLFW/glfw3.h>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/matrix_transform.hpp> // glm::translate / glm::rotate for cap placement
@@ -20,7 +20,7 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <atomic>
-#include "Rendering/HighlightSystem.hpp"
+#include "Singularity/Screen/HighlightSystem.hpp"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -31,7 +31,7 @@
 // ---------------------------------------------------------------------
 
 // --- Legacy primitive meshes (Milestone 2: behind the renderer boundary) ----
-// The legacy GeometryType::Sphere/Cylinder/Cone/Cube paths used to emit immediate-
+// The legacy ShapeKind::Sphere/Cylinder/Cone/Cube paths used to emit immediate-
 // mode GL here. They are now built as TessMeshes and drawn through the Renderer
 // like every other surface. These are UNIT shapes (radius 0.5, height 1) — the
 // object's size comes from its transform — so each mesh is constant and built
@@ -186,9 +186,13 @@ void Object::drawCube() const {
 // One face's albedo, in both the handle and CPU-pixel forms — see FaceAlbedo.
 // Empty when this object has no paint for that face, which leaves the surface
 // showing its material baseColor alone.
+#include "ConstructedBeing/Material/MaterialManager.hpp"
+extern MaterialManager materials;
+
 FaceAlbedo Object::faceAlbedo(size_t face) const {
-    if (face >= faceTextures.size()) return {};
-    const FaceTexture& ft = faceTextures[face];
+    auto mat = materials.resolveOrDefault(_materialId);
+    if (!mat || face >= mat->faceTextures.size()) return {};
+    const FaceTexture& ft = mat->faceTextures[face];
     // A backend uploading from `pixels` trusts `size` to describe it. If the two
     // ever disagree it would read past the end of the buffer, so treat a mismatch
     // as "no paint" rather than handing out an overrun.
@@ -240,15 +244,15 @@ void Object::drawObject() const {
     if (_hasComplex) { drawComplexModel(); return; }
     if (_hasSmooth)  { drawSmoothModel();  return; }
     if (_hasPatch)   { drawPatchModel();   return; }
-    switch (geometryType) {
-        case GeometryType::Cube:
+    switch (_shapeKind) {
+        case ShapeKind::Cube:
             drawCube();
             break;
-        case GeometryType::Sphere:
+        case ShapeKind::Sphere:
             currentRenderer().drawMesh(sphereUnitMesh(),
                 resolveRenderMaterial(_materialId, faceAlbedo(0)));
             break;
-        case GeometryType::Cylinder:
+        case ShapeKind::Cylinder:
             // Side (face 0) then both caps (face 1) — geometry pre-centred on Z.
             currentRenderer().drawMesh(cylinderSideMesh(),
                 resolveRenderMaterial(_materialId, faceAlbedo(0)));
@@ -257,14 +261,14 @@ void Object::drawObject() const {
             currentRenderer().drawMesh(capTopMesh(),
                 resolveRenderMaterial(_materialId, faceAlbedo(1)));
             break;
-        case GeometryType::Cone:
+        case ShapeKind::Cone:
             // Side (face 0) then base cap (face 1).
             currentRenderer().drawMesh(coneSideMesh(),
                 resolveRenderMaterial(_materialId, faceAlbedo(0)));
             currentRenderer().drawMesh(capBottomMesh(),
                 resolveRenderMaterial(_materialId, faceAlbedo(1)));
             break;
-        case GeometryType::Polyhedron:
+        case ShapeKind::Polyhedron:
             drawPolyhedron();
             break;
     }
@@ -296,7 +300,7 @@ void Object::drawHighlightOutline() const {
             r.drawOverlay(m, glm::vec4(color, 0.16f - 0.06f * p), 1.0f + 0.02f * (p + 1), true);
     };
 
-    if (geometryType == GeometryType::Polyhedron && !polyhedronData.vertices.empty()) {
+    if (_shapeKind == ShapeKind::Polyhedron && !polyhedronData.vertices.empty()) {
         std::vector<std::pair<glm::vec3, glm::vec3>> edges;
         for (const auto& face : polyhedronData.faces)
             for (size_t k = 0; k < face.size(); ++k)

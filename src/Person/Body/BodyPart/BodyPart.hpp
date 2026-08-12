@@ -15,20 +15,25 @@ class BodyPart : public Object, public Formation {
     enum class Type {
         Undefined,
         Head,
+        Neck,
         Torso,
+        Shoulder,
         Arm,
-        Leg,
+        ForeArm,
         Hand,
+        Finger,
+        Leg,
+        ForeLeg,
         Foot
     };
 
 
 
     BodyPart(const std::string& name = "", Type type = Type::Undefined, 
-             ObjectTypes::GeometryType geometryType = ObjectTypes::GeometryType::Cube,
+             ObjectTypes::ShapeKind geometryType = ObjectTypes::ShapeKind::Cube,
              const glm::vec3& dimensions = glm::vec3(1.0f, 1.0f, 1.0f));
     BodyPart(const std::string& name, Type type, 
-             ObjectTypes::GeometryType geometryType, const glm::vec3& dimensions,
+             ObjectTypes::ShapeKind geometryType, const glm::vec3& dimensions,
              const glm::mat4& initialTransform);
 
     void draw() const;
@@ -60,8 +65,8 @@ class BodyPart : public Object, public Formation {
     // -----------------------------------------------------------------
     // Shape management — change the primary shape of this body part
     // -----------------------------------------------------------------
-    void setPrimaryShape(Object::GeometryType gt);
-    Object::GeometryType getPrimaryShape() const { return getGeometryType(); }
+    void setPrimaryShape(Object::ShapeKind gt);
+    Object::ShapeKind getPrimaryShape() const { return getShapeKind(); }
 
     // True if any face texture has been painted (i.e. not a flat fill).
     bool hasCustomTextures() const;
@@ -72,8 +77,6 @@ class BodyPart : public Object, public Formation {
     // collision; the *local* offsets (relative to this body part) are
     // kept in a parallel vector so they survive transform propagation.
     // -----------------------------------------------------------------
-    Object* addSubObject(Object::GeometryType gt = Object::GeometryType::Cube,
-                         const glm::mat4& localOffset = glm::mat4(1.0f));
     Object* addSubObject(Object::ShapeKind kind,
                          const glm::mat4& localOffset = glm::mat4(1.0f));
     Object* addSubObject(std::unique_ptr<Object> obj,

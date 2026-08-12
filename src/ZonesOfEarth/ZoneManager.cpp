@@ -2,9 +2,9 @@
 #include "ConstructedBeing/CategoryManager.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
-#include "Util/SaveSystem.hpp"
-#include "Util/Serialization.hpp"
-#include "Util/BinaryPack.hpp"
+#include "Singularity/Storage/SaveSystem.hpp"
+#include "Singularity/Storage/Serialization.hpp"
+#include "Singularity/Storage/BinaryPack.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/LawAuditLogger.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
 #include "ConstructedBeing/Material/MaterialManager.hpp"
@@ -17,7 +17,7 @@
 #include "OurVerse/Tool.hpp"
 #include "Person/Person.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
-#include "Util/Schema/Earthcall_generated.h"
+#include "Singularity/Storage/Schema/Earthcall_generated.h"
 #include <flatbuffers/flatbuffers.h>
 #include <imgui.h>
 #include <glm/glm.hpp>
@@ -485,7 +485,7 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
                 law.target.geometryTypes.clear();
                 if (tj.contains("geometryTypes")) {
                     for (const auto& gi : tj["geometryTypes"])
-                        law.target.geometryTypes.push_back(static_cast<Object::GeometryType>(gi.get<int>()));
+                        law.target.geometryTypes.push_back(static_cast<Object::ShapeKind>(gi.get<int>()));
                 }
                 law.target.spatialKinds.clear();
                 if (tj.contains("spatialKinds")) {

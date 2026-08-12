@@ -330,10 +330,11 @@ guidelines; an agent encountering them stops and asks the world's author.
    `Vehicle`, not `Tree`, not `Instrument`. The existing subclasses are ontological
    categories (`Person`, `Relation`, `Formation`, `Law`, `Zone`, `World`,
    `ObjectConcept`, `Body`), and the list closes to domain nouns permanently.
+   *(Exception: The human form. `BodyPart` and constitutive members for the `Person` vessel are invariant ontological structures, not domain nouns, and thus admitted in C++).*
 
 2. **`Body` is reserved for Persons.** A `Body` is the visual/physical representation
    of a Person specifically — it implies embodied personhood, a Singular that is
-   *someone*. Objects have visual components: geometry, fields, materials, face paint.
+   *someone*. Because the human form is invariant, `BodyPart` and its constitutive members (Head, Torso, Limbs, Fingers) are admitted as C++ structures. Objects have visual components: geometry, fields, materials, face paint.
    `Body::BodyType::Mechanical` exists for *mechanical Persons*, not for machines. A
    robot arm has no Body. Whether any robot ever has one is a question about
    personhood, which is bestowed and predicated — never something a thing crosses into

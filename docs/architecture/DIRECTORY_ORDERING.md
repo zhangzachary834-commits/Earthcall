@@ -89,13 +89,10 @@ Earthcall/
       Network/             WebSocketClient.cpp · WebSocketServer.cpp
                              py/  engine_server.py · events.py
       OntoMath/            authored mathematics
-    OurVerse/              tools · chat · controls — the authorship surface
-    Perspective/           ⟂ stage 2 (§5)
-    Rendering/             ⟂ stage 2 (§5)
-    Integration/           ⟂ stage 2 (§5)
-                             py/  app.py · api/ · web/ · static/ · templates/ · agent/
+    OurVerse/              ⟂ stage 2 (§4)
+    Identity/              ⟂ stage 2 (§4)
+    Legacy/                ⟂ stage 2 (§5)
     Util/                  ⟂ stage 2 (§5)
-    Legacy/                not-yet-ordered, honestly named
 
   docs/  tests/  examples/  scripts/  saves/  scratch/  web_ui/     the workshop
   third_party/  local_deps/  imgui/                                 the foreign
@@ -175,6 +172,10 @@ existing subsystems are reshaped to fit it.
 | `Integration/` | `Singularity/Foreign/` | The manifesto's own words: the prototype "must interface the rest of the computer treating its softwares as Singularity too — which in mundane terms, is API calls, standard files, going through OS permissions, terminal commands." `RealWebView`, `WindowManager`, `SecurityManager` and the Flask backend are all one thing: the channel to foreign software. |
 | `Perspective/` | split | `KeyboardHandler`, `MouseHandler` → `Singularity/Input/` (they are the `Mouse` / `Keyboard` input elements). `PersonPerspective`, `AvatarHandler` → `Person/Perspective/` — a Person's situated view is not a device, it is part of what a Person is. |
 | `Util/` | dissolve | Each utility moves to the region that uses it, or to `Singularity/Core/` if it is genuinely substrate. "Util" is the name a tree gives a decision it has not made. |
+
+| Subsystem | Action | Why |
+|---|---|---|
+| `Legacy/` | dissolve | the graveyard; burn down gradually. |
 
 **Stage 2's exit test:** nothing at `src/` top level is named after a technology.
 

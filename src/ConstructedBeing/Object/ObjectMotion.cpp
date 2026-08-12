@@ -17,7 +17,7 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <atomic>
-#include "Rendering/HighlightSystem.hpp"
+#include "Singularity/Screen/HighlightSystem.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
 
 #ifndef M_PI

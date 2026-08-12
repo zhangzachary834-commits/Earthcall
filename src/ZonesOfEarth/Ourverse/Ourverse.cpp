@@ -5,8 +5,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include "ConstructedBeing/Object/Object.hpp"
 #include <unordered_set>
-#include "Rendering/HighlightSystem.hpp"
-#include "Rendering/ShadingSystem.hpp"
+#include "Singularity/Screen/HighlightSystem.hpp"
+#include "Singularity/Screen/ShadingSystem.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include <unordered_map>
 

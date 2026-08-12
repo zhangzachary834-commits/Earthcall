@@ -51,7 +51,6 @@ class Object : public Singular {
 
 public:
     // Geometry types are defined in ObjectTypes.hpp
-    using GeometryType = ObjectTypes::GeometryType;
     using ShapeKind = ObjectTypes::ShapeKind;
     using ShapeParams = ObjectTypes::ShapeParams;
     using SpatialKind = ObjectTypes::SpatialKind;
@@ -151,16 +150,16 @@ private:
     // Child Formation instances that are within this object
     std::vector<Formation> childFormationInstances;
 
-    BodyPart* part = nullptr;
+    // BodyPart* part = nullptr; // MOVED to elementFormation or removed
 
     // The primitive shape this Object represents. Default is Cube for compatibility.
-    GeometryType geometryType = GeometryType::Cube;
+    ShapeKind _shapeKind = ShapeKind::Cube;
 
     // Polyhedron data for arbitrary polyhedrons
     PolyhedronData polyhedronData;
 
     // Topology-based geometry model. When _hasComplex / _hasSmooth is set these
-    // supersede geometryType for rendering, raycast and collision; geometryType
+    // supersede _shapeKind for rendering, raycast and collision; _shapeKind
     // is retained for the polyhedron path and legacy save migration.
     geom::SmoothSurfaceData smoothData;
     geom::ComplexShapeData  complexData;
@@ -186,7 +185,6 @@ private:
     bool _hasComplex = false;
     bool _hasField   = false;
     bool _hasPatch   = false;
-    ShapeKind _shapeKind = ShapeKind::Cube;
     ShapeParams _shapeParams;
 
     // Which Material being paints this object, referenced BY IDENTIFIER (the same
@@ -252,52 +250,28 @@ public:
     // -----------------------------------------------------------------
 
     // One texture per logical face (vector size determined by geometry type)
-    std::vector<FaceTexture> faceTextures;
 
     // Initialise or reinitialise textures after geometry type set/changed
-    void initFaceTextures();
 
     // Convenience: fill entire face with a colour (compatibility with old fill tool)
-    void fillFaceColor(int faceIndex, float r, float g, float b);
 
     // Paint a circular dab onto a face at UV (0-1) with given radius (0-1)
-    void paintFace(int faceIndex, const glm::vec2& uv, float r, float g, float b, float radius = 0.05f, float softness = 1.0f);
 
     // Advanced brush painting with pressure and dynamics
-    void paintFaceAdvanced(int faceIndex, const glm::vec2& uv, float r, float g, float b, 
-                          float radius = 0.05f, float softness = 1.0f, float opacity = 1.0f, 
-                          float flow = 1.0f, int brushType = 0);
 
     // Paint stroke between two points with interpolation
-    void paintStroke(int faceIndex, const glm::vec2& startUV, const glm::vec2& endUV, 
-                     float r, float g, float b, float radius = 0.05f, float softness = 1.0f, 
-                     float opacity = 1.0f, float spacing = 0.1f);
 
     // Smudge tool - blend existing colors
-    void smudgeFace(int faceIndex, const glm::vec2& uv, float radius = 0.05f, float strength = 0.5f);
 
     // Clone tool - copy from source to destination
-    void cloneFace(int faceIndex, const glm::vec2& destUV, const glm::vec2& sourceUV, 
-                   float radius = 0.05f, float opacity = 1.0f);
 
     // Airbrush effect
-    void airbrushFace(int faceIndex, const glm::vec2& uv, float r, float g, float b, 
-                      float radius = 0.05f, float density = 0.5f, float opacity = 1.0f);
 
     // Layer management
-    void addTextureLayer(int faceIndex);
-    void deleteTextureLayer(int faceIndex, int layerIndex);
-    void setActiveLayer(int faceIndex, int layerIndex);
-    void setLayerOpacity(int faceIndex, int layerIndex, float opacity);
-    void setBlendMode(int faceIndex, int layerIndex, int mode);
 
     // Undo/Redo
-    void saveStrokeState(int faceIndex);
-    void undoStroke(int faceIndex);
-    void clearStrokeHistory(int faceIndex);
 
     // Older API remains but now delegates to fillFaceColor for backward compatibility
-    void setFaceColor(int faceIndex, float r, float g, float b) { fillFaceColor(faceIndex, r, g, b); }
 
     void updateCollisionZone(const glm::mat4& transform) const;
     bool isPointInside(const glm::vec3& point) const;
@@ -400,29 +374,28 @@ public:
     //   Cylinder → ComplexShape (round side + 2 flat caps, Hard rims)
     //   Cone     → ComplexShape (round side + flat base, Hard rim)
     //   Cube/Polyhedron keep the flat-faced path. This is also the legacy-save
-    //   migration point (from_json calls setGeometryType).
-    void setGeometryType(GeometryType t) {
-        geometryType = t;
+    //   migration point (from_json calls setShapeKind).
+    void setShapeKind(ShapeKind t) {
+        _shapeKind = t;
         _hasSmooth = false;
         _hasComplex = false;
         _hasField = false;
         _hasPatch = false;
         switch (t) {
-            case GeometryType::Cube:       _shapeKind = ShapeKind::Cube;       initFaceTextures();                       break;
-            case GeometryType::Polyhedron: _shapeKind = ShapeKind::Polyhedron; initFaceTextures();                       break;
-            case GeometryType::Sphere:     _shapeKind = ShapeKind::Sphere;     setSmoothSurface(geom::makeSphere());     break;
-            case GeometryType::Cylinder:   _shapeKind = ShapeKind::Cylinder;   setComplexShape(geom::cappedCylinder());  break;
-            case GeometryType::Cone:       _shapeKind = ShapeKind::Cone;       setComplexShape(geom::cappedCone());       break;
+            case ShapeKind::Cube:       _shapeKind = ShapeKind::Cube;       break;
+            case ShapeKind::Polyhedron: _shapeKind = ShapeKind::Polyhedron; break;
+            case ShapeKind::Sphere:     _shapeKind = ShapeKind::Sphere;     setSmoothSurface(geom::makeSphere());     break;
+            case ShapeKind::Cylinder:   _shapeKind = ShapeKind::Cylinder;   setComplexShape(geom::cappedCylinder());  break;
+            case ShapeKind::Cone:       _shapeKind = ShapeKind::Cone;       setComplexShape(geom::cappedCone());       break;
         }
     }
-    GeometryType getGeometryType() const { return geometryType; }
 
-    // Build any named shape in the framework (superset of setGeometryType).
+    // Build any named shape in the framework (superset of setShapeKind).
     void setShape(ShapeKind k) { setShape(k, ShapeParams{}); }
     void setShape(ShapeKind k, const ShapeParams& p) {
         switch (k) {
-            case ShapeKind::Cube:       setGeometryType(GeometryType::Cube);       break;
-            case ShapeKind::Polyhedron: setGeometryType(GeometryType::Polyhedron); break;
+            case ShapeKind::Cube:       setShapeKind(ShapeKind::Cube);       break;
+            case ShapeKind::Polyhedron: setShapeKind(ShapeKind::Polyhedron); break;
             case ShapeKind::Sphere:     setSmoothSurface(geom::makeSphere(p.r));   break;
             case ShapeKind::Cylinder:   setComplexShape(geom::cappedCylinder(p.r, p.halfH)); break;
             case ShapeKind::Cone:       setComplexShape(geom::cappedCone(p.r, p.halfH));      break;
@@ -440,7 +413,7 @@ public:
                 // Generated externally (VoxelSystem / Bezier patches)
                 break;
         }
-        _shapeKind = k;      // assert after setGeometryType may have set a legacy value
+        _shapeKind = k;      // assert after setShapeKind may have set a legacy value
         _shapeParams = p;
     }
     ShapeKind getShapeKind() const { return _shapeKind; }
@@ -468,7 +441,7 @@ public:
         patchData = p; _hasPatch = true;
         _hasField = _hasSmooth = _hasComplex = false;
         _shapeKind = ShapeKind::Patch;
-        initFaceTextures(); rebuildGeometryCaches();
+        rebuildGeometryCaches();
     }
     int getPatchControlCount() const { return _hasPatch ? static_cast<int>(patchData.ctrl.size()) : 0; }
     glm::vec3 getPatchControlLocal(int i) const {
@@ -482,7 +455,7 @@ public:
     }
     int getPatchDegreeU() const { return _hasPatch ? patchData.du : 0; }
     int getPatchDegreeV() const { return _hasPatch ? patchData.dv : 0; }
-    void elevatePatchU() { if (_hasPatch) { geom::elevateU(patchData); initFaceTextures(); rebuildGeometryCaches(); } }
+    void elevatePatchU() { if (_hasPatch) { geom::elevateU(patchData); rebuildGeometryCaches(); } }
     void elevatePatchV() { if (_hasPatch) { geom::elevateV(patchData); rebuildGeometryCaches(); } }
     bool hasSmoothSurface() const { return _hasSmooth; }
     bool hasComplexShape()  const { return _hasComplex; }
@@ -498,10 +471,10 @@ public:
     const geom::SdfNode&           getFieldData()   const { return fieldData; }
     const std::vector<glm::vec3>& getSupportCloud() const { return _supportCloud; }
     void setSmoothSurface(const geom::SmoothSurfaceData& s) {
-        smoothData = s; _hasSmooth = true; _hasComplex = false; _hasField = false; _hasPatch = false; initFaceTextures(); rebuildGeometryCaches();
+        smoothData = s; _hasSmooth = true; _hasComplex = false; _hasField = false; _hasPatch = false; rebuildGeometryCaches();
     }
     void setComplexShape(const geom::ComplexShapeData& c) {
-        complexData = c; _hasComplex = true; _hasSmooth = false; _hasField = false; _hasPatch = false; initFaceTextures(); rebuildGeometryCaches();
+        complexData = c; _hasComplex = true; _hasSmooth = false; _hasField = false; _hasPatch = false; rebuildGeometryCaches();
     }
     // An SDF-defined shape (morph / boolean / implicit). `extent` is the half-size
     // of the region the field is meshed/marched over.
@@ -509,7 +482,7 @@ public:
         fieldData = f; _fieldExtent = extent;
         _hasField = true; _hasSmooth = false; _hasComplex = false; _hasPatch = false;
         _shapeKind = ShapeKind::Field;
-        initFaceTextures(); rebuildGeometryCaches();
+        rebuildGeometryCaches();
     }
     float getFieldExtent() const { return _fieldExtent; }
     // Live-edit the blend of a Morph/SmoothUnion field (re-tessellates).
@@ -565,9 +538,8 @@ public:
     virtual ~Object() = default;
 
     // Owning form part (non-null when this Object is a sub-object of a BodyPart)
-    void setOwnerBodyPart(BodyPart* owner) { part = owner; }
-    BodyPart* getOwnerBodyPart() const { return part; }
-
+    // void setOwnerBodyPart(BodyPart* owner) { part = owner; }
+    // BodyPart* getOwnerBodyPart() const { return part; }
     // Singular interface implementation
     std::string getIdentifier() const override { return objectID; }
 

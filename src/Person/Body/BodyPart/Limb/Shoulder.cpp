@@ -2,5 +2,5 @@
 
 Shoulder::Shoulder(Side side)
     : Limb((side == Side::Left ? "LeftShoulder" : "RightShoulder"),
-            BodyPart::Type::Arm, // categorize as arm for now
-            ObjectTypes::GeometryType::Cube, {0.18f, 0.18f, 0.18f}) {}
+            BodyPart::Type::Shoulder,
+            ObjectTypes::ShapeKind::Cube, {0.18f, 0.18f, 0.18f}) {}

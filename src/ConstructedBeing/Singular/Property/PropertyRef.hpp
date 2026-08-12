@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Property.hpp"
+#include "ConstructedBeing/Singular/Singular.hpp"
 
 #include <string>
 #include <typeinfo>

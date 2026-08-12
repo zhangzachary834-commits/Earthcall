@@ -59,7 +59,7 @@ inline std::vector<glm::vec4> polyhedronToConvexPlanes(const PolyhedronData& pd)
 // convex-SDF leaf from its faces; everything else maps through its shape kind/params.
 inline geom::SdfNode objectToSdfNode(const Object& o) {
     if (o.hasField()) return o.getFieldData();
-    if (o.getGeometryType() == Object::GeometryType::Polyhedron) {
+    if (o.getShapeKind() == Object::ShapeKind::Polyhedron) {
         auto planes = polyhedronToConvexPlanes(o.getPolyhedronData());
         if (!planes.empty()) return geom::SdfNode::convex(std::move(planes));
     }

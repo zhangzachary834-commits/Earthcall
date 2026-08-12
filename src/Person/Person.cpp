@@ -5,10 +5,10 @@
 #include <functional>
 #include <unordered_map>
 #include <GLFW/glfw3.h>
-#include "Rendering/GL/GluCompat.hpp"
-#include "Rendering/Renderer.hpp"
+#include "Singularity/Screen/GL/GluCompat.hpp"
+#include "Singularity/Screen/Renderer.hpp"
 #include "ConstructedBeing/Object/Formation/Menu/stb_easy_font.h"
-#include "Util/Serialization.hpp"
+#include "Singularity/Storage/Serialization.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "Singularity/Screen/Camera.hpp"
@@ -37,115 +37,18 @@ void Person::buildProperties() {
         "position", this, &Person::position));
     _propertyRegistry.push_back(std::make_unique<ComputedProperty<Person, std::string>>(
         "name", this, &Person::propName));   // read-only: identity is not a slot
-        
     // --- Law System Perception Properties ---
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, std::string>>(
-        "activeTool", this, &Person::activeTool));
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, std::string>>(
-        "active3DMode", this, &Person::active3DMode));
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, glm::vec3>>(
-        "cursorHitPos", this, &Person::cursorHitPos));
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, glm::vec3>>(
-        "cursorHitNormal", this, &Person::cursorHitNormal));
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, glm::vec3>>(
-        "cursorSpawnPos", this, &Person::cursorSpawnPos));
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, glm::vec3>>(
-        "cursorSpawnRot", this, &Person::cursorSpawnRot));
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, glm::vec3>>(
-        "cursorSpawnScale", this, &Person::cursorSpawnScale));
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Person, glm::mat4>>(
-        "cursorSpawnTransform", this, &Person::getCursorSpawnTransform, nullptr));
     _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, glm::vec3>>(
         "cameraPos", this, &Person::cameraPos));
     _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, glm::vec3>>(
         "cameraForward", this, &Person::cameraForward));
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, int>>(
-        "activeShapeKind", this, &Person::activeShapeKind));
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, glm::vec3>>(
-        "activeColor", this, &Person::activeColor));
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, std::string>>(
-        "placementMode", this, &Person::placementMode));
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, float>>(
-        "gridSnapSize", this, &Person::gridSnapSize));
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, bool>>(
-        "gridSnap", this, &Person::gridSnap));
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, float>>(
-        "inFrontDistance", this, &Person::inFrontDistance));
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, glm::vec3>>(
-        "manualOffset", this, &Person::manualOffset));
 }
 
-float Person::spawnSurfaceOffset(const glm::vec3& normal) const {
-    // Mirrors Game::getBrushCreateSurfaceOffset: project the spawn box's half
-    // extents onto the surface normal, so the shape is pushed out by exactly
-    // its own reach and sits flush instead of sinking in.
-    const glm::vec3 n = glm::length(normal) > 1e-6f ? glm::normalize(normal)
-                                                    : glm::vec3(0.0f, 1.0f, 0.0f);
-    glm::mat4 rotation(1.0f);
-    rotation = glm::rotate(rotation, glm::radians(cursorSpawnRot.x), glm::vec3(1.0f, 0.0f, 0.0f));
-    rotation = glm::rotate(rotation, glm::radians(cursorSpawnRot.y), glm::vec3(0.0f, 1.0f, 0.0f));
-    rotation = glm::rotate(rotation, glm::radians(cursorSpawnRot.z), glm::vec3(0.0f, 0.0f, 1.0f));
 
-    const glm::vec3 half = cursorSpawnScale * 0.5f;
-    const glm::vec3 axisX = glm::normalize(glm::vec3(rotation * glm::vec4(1.0f, 0.0f, 0.0f, 0.0f)));
-    const glm::vec3 axisY = glm::normalize(glm::vec3(rotation * glm::vec4(0.0f, 1.0f, 0.0f, 0.0f)));
-    const glm::vec3 axisZ = glm::normalize(glm::vec3(rotation * glm::vec4(0.0f, 0.0f, 1.0f, 0.0f)));
 
-    return std::abs(glm::dot(n, axisX)) * half.x +
-           std::abs(glm::dot(n, axisY)) * half.y +
-           std::abs(glm::dot(n, axisZ)) * half.z;
-}
-
-glm::vec3 Person::computeSpawnPosition() const {
-    glm::vec3 spawnPos;
-
-    if (placementMode == "ManualDistance") {
-        // Relative to the frozen anchor, not the live camera: the whole point
-        // of the mode is that the shape stays where it was put while you look
-        // around. GameUpdate captures the anchor on entering the mode.
-        spawnPos = manualAnchorPos +
-                   manualAnchorRight * manualOffset.x +
-                   manualAnchorUp * manualOffset.y +
-                   manualAnchorForward * manualOffset.z;
-    } else if (placementMode == "CursorSnap") {
-        // Against the surface under the cursor, offset along its normal so
-        // the shape rests on it. Falls back to the InFront placement when
-        // nothing was hit, which is what the hard-coded tool did.
-        spawnPos = cursorHitPos + cursorHitNormal * spawnSurfaceOffset(cursorHitNormal);
-    } else {   // "InFront"
-        spawnPos = cameraPos + cameraForward * inFrontDistance;
-    }
-
-    // Snapping rounds whatever the mode produced -- it is a toggle, not a mode.
-    if (gridSnap && gridSnapSize > 1e-6f) {
-        spawnPos.x = std::round(spawnPos.x / gridSnapSize) * gridSnapSize;
-        spawnPos.y = std::round(spawnPos.y / gridSnapSize) * gridSnapSize;
-        spawnPos.z = std::round(spawnPos.z / gridSnapSize) * gridSnapSize;
-    }
-    return spawnPos;
-}
-
-void Person::updatePlacement() {
-    cursorSpawnPos = computeSpawnPosition();
-}
-
-glm::mat4 Person::getCursorSpawnTransform() const {
-    // cursorSpawnPos is the answer, not a hint: updatePlacement() derives it
-    // from placementMode once per frame, and a law is free to overwrite it
-    // afterwards (which is the documented contract -- see GameUpdate). This
-    // used to re-derive the mode math here instead, which meant a law's
-    // cursorSpawnPos was ignored in two of the three modes, and the third
-    // treated an exact vec3(0) as "unset" -- so the world origin was not a
-    // placeable position.
-    glm::mat4 t = glm::translate(glm::mat4(1.0f), cursorSpawnPos);
-    t = glm::rotate(t, glm::radians(cursorSpawnRot.x), glm::vec3(1.0f, 0.0f, 0.0f));
-    t = glm::rotate(t, glm::radians(cursorSpawnRot.y), glm::vec3(0.0f, 1.0f, 0.0f));
-    t = glm::rotate(t, glm::radians(cursorSpawnRot.z), glm::vec3(0.0f, 0.0f, 1.0f));
-    t = glm::scale(t, cursorSpawnScale);
-    return t;
-}
-
-Person::Person(Soul soul, Body body, const std::string& joyOrdering) : _soul(std::move(soul)), body(std::move(body)) {
+Person::Person(Soul soul, Body body, const std::string& joyOrdering) : _soul(std::move(soul)) {
+    bodies.push_back(std::move(body));
+    // Start with a small sphere around the origin as a fallback bounding
     // The soul's identity seeds the Person's NAME, not their identity. Left
     // unset it was the empty string — invisible in law authorship records and
     // unmatchable when a saved world reattaches authors by identifier.
@@ -177,7 +80,7 @@ nlohmann::json Person::serialize() const {
     j["jumpKeyDownLast"] = jumpKeyDownLast;
     
     // Save body and body parts
-    j["body"] = ::bodyToJson(body);
+    j["body"] = ::bodyToJson(getBody());
     
     return j;
 }
@@ -223,7 +126,7 @@ void Person::deserialize(const nlohmann::json& j) {
     
     // Load body and body parts
     if (j.contains("body")) {
-        ::bodyFromJson(j["body"], body);
+        if (!bodies.empty()) ::bodyFromJson(j["body"], bodies[activeBodyIndex]);
     }
 }
 
@@ -272,7 +175,7 @@ void Person::createDefaultAnimations() {
 
 void Person::express() const {
     std::cout << "\n✨ Person: " << displayName << std::endl;
-    body.describe();
+    getBody().describe();
 }
 
 
@@ -280,7 +183,7 @@ void Person::draw() const {
     // Body parts already carry their absolute transforms (updated via updatePose),
     // so an extra translation would double-apply position and make the avatar
     // appear to move faster than the camera. Simply draw the body parts.
-    body.draw();
+    getBody().draw();
 }
 
 // ---------------------------------------------------------------------------------
@@ -288,7 +191,7 @@ void Person::draw() const {
 // ---------------------------------------------------------------------------------
 void Person::drawNametag() const {
     // Offset above the head where the nametag should appear (world space)
-    const float tagHeight = body.getNametagHeight();
+    const float tagHeight = getBody().getNametagHeight();
 
     // Read the camera off the renderer rather than out of the GL matrix stack —
     // portable, and independent of what the stack happens to hold right now.
@@ -331,8 +234,8 @@ void Person::updatePose() {
     glm::mat4 base = glm::translate(glm::mat4(1.0f), position);
 
     std::unordered_map<std::string, BodyPart*> partsByName;
-    partsByName.reserve(body.parts.size());
-    for (auto* part : body.parts) {
+    partsByName.reserve(getBody().parts.size());
+    for (auto* part : getBody().parts) {
         if (part) partsByName[part->getName()] = part;
     }
 
@@ -366,7 +269,7 @@ void Person::updatePose() {
     };
 
     std::unordered_map<BodyPart*, glm::mat4> resolvedWorld;
-    resolvedWorld.reserve(body.parts.size());
+    resolvedWorld.reserve(getBody().parts.size());
 
     std::function<glm::mat4(BodyPart*)> resolvePart = [&](BodyPart* part) -> glm::mat4 {
         if (!part) return base;
@@ -393,13 +296,13 @@ void Person::updatePose() {
         return worldT;
     };
 
-    for (auto* part : body.parts) {
+    for (auto* part : getBody().parts) {
         if (part) part->setTransform(resolvePart(part));
     }
 }
 
 void Person::updateBodyAutomations(float deltaTime) {
-    for (auto* part : body.parts) {
+    for (auto* part : getBody().parts) {
         if (!part || !part->hasAutomations()) continue;
         // The authored local pose is the rest that animated channels build on.
         part->setAutomationRest(part->localTransform());
@@ -408,7 +311,7 @@ void Person::updateBodyAutomations(float deltaTime) {
 }
 
 void Person::stopBodyAutomations() {
-    for (auto* part : body.parts) {
+    for (auto* part : getBody().parts) {
         if (part) part->clearAutomations();
     }
     _idleActive = false;
@@ -419,7 +322,7 @@ void Person::playIdleAutomation() {
     stopBodyAutomations();
     _idleActive = true;
 
-    for (auto* part : body.parts) {
+    for (auto* part : getBody().parts) {
         if (!part) continue;
         const float sideX = part->localTransform()[3].x;  // <0 left, >0 right
         Automation::Clip clip;
@@ -462,7 +365,7 @@ void Person::playWalkAutomation(float speed) {
         stopBodyAutomations();
         _walkActive = true;
 
-        for (auto* part : body.parts) {
+        for (auto* part : getBody().parts) {
             if (!part) continue;
             const float sideX = part->localTransform()[3].x;  // <0 left, >0 right
             Automation::Clip clip;
@@ -503,7 +406,7 @@ void Person::playWalkAutomation(float speed) {
 
     // Keep the stride tempo in sync with current travel speed without
     // rebuilding (which would reset the clip clocks and stutter the cycle).
-    for (auto* part : body.parts) {
+    for (auto* part : getBody().parts) {
         if (!part) continue;
         for (auto& clip : part->automationState().clips) {
             if (clip.name == "walk") clip.speed = tempo;
@@ -650,7 +553,7 @@ void Person::updateAnimation(float deltaTime) {
     // Apply animation to body parts
     float progress = currentAnimation->currentTime / currentAnimation->duration;
     
-    for (auto& part : body.parts) {
+    for (auto& part : getBody().parts) {
         if (!part) continue;
         
         auto keyframeIt = currentAnimation->keyframes.find(part->getName());
@@ -716,7 +619,7 @@ void Person::updatePhysics(float deltaTime) {
 void Person::stepMovement(float dt, GLFWwindow* window, Core::Camera* camera, 
                           ZoneManager* mgr, bool flying, bool canMove) {
     const auto& objects = mgr->active().world().getOwnedObjects();
-    const float eyeH = body.getEyeHeight();
+    const float eyeH = getBody().getEyeHeight();
 
     // Check if the person position was explicitly teleported (e.g. by a Law).
     // At the end of the last stepMovement, position was exactly camera->pos - eyeH.

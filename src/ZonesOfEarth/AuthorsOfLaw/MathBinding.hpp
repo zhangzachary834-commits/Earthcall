@@ -151,7 +151,7 @@ inline bool isTimePath(const PropertyPath& path) {
 // `lawGetValue` is the funnel every binding read and every Compare condition
 // passes through, and it briefly carried a hardcoded branch for
 // "world.occlusionToCamera" — a raycast, a camera lookup, and an
-// `#include "Integration/EarthcallAPI.hpp"` that dragged the foreign-software
+// `#include "Singularity/Foreign/EarthcallAPI.hpp"` that dragged the foreign-software
 // surface into ActionModel, ConditionModel, Universe and the whole set-to-set
 // path. A subsystem may not define what a thing is, and the hottest path in
 // the engine may not know what occlusion is.

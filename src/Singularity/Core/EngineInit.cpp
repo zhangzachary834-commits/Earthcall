@@ -10,7 +10,7 @@
 #include "../../OurVerse/ElementalToolHandler.hpp"
 #include "../../../imgui/backends/imgui_impl_glfw.h"
 #include "ConstructedBeing/Object/Object.hpp"
-#include "Rendering/ShadingSystem.hpp"
+#include "Singularity/Screen/ShadingSystem.hpp"
 #include "OurVerse/AdvancedFacePaint.hpp"
 #include "ConstructedBeing/Object/Creation/ObjectConcept.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
@@ -27,6 +27,7 @@
 #include <imgui.h>
 #include <glm/glm.hpp>
 #include <iostream>
+#include "CreationChannel.hpp"
 #include <memory>
 
 extern ZoneManager mgr;
@@ -48,6 +49,9 @@ void Engine::initLogic() {
 
     // Register core concepts like sound-emitters before laws are built
     ConceptRegistry::instance().registerCoreConcepts();
+
+    // Register first-mover CreationChannel
+    Singularity::Core::CreationChannel::syncRegister(*_lawManager);
 
     // Inject default physics laws (gravity and kinematics)
     for (const auto& law : Physics::createDefaultPhysicsLaws()) {

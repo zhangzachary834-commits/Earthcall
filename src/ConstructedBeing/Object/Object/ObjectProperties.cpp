@@ -132,126 +132,127 @@ private:
 };
 
 // Face property bridge: connects face texture properties to property system
-class FacePropertyBridge : public Property {
-public:
-    enum class Field { Color, LayerCount, ActiveLayer, UseLayers, LayerOpacity, BlendMode, TextureSize };
-
-    FacePropertyBridge(std::string name, Object* owner, int face, Field field)
-        : _name(std::move(name)), _owner(owner), _face(face), _field(field) {}
-
-    std::string name() const override { return _name; }
-    std::string typeName() const override {
-        switch (_field) {
-            case Field::Color: return "vec3";
-            case Field::UseLayers: return "bool";
-            case Field::LayerOpacity: return "float";
-            default: return "int";
-        }
-    }
-
-    PropertyValue value() const override {
-        const FaceTexture* tex = texture();
-        switch (_field) {
-            case Field::Color:
-                if (_face < 6) {
-                    return PropertyValue(glm::vec3(_owner->faceColors[_face][0],
-                                                   _owner->faceColors[_face][1],
-                                                   _owner->faceColors[_face][2]));
-                }
-                return PropertyValue(glm::vec3(1.0f));
-            case Field::LayerCount:
-                return PropertyValue(tex ? static_cast<int>(tex->layers.size()) : 0);
-            case Field::ActiveLayer:
-                return PropertyValue(tex ? tex->activeLayer : 0);
-            case Field::UseLayers:
-                return PropertyValue(tex ? tex->useLayers : false);
-            case Field::LayerOpacity: {
-                if (!tex || tex->layers.empty()) return PropertyValue(1.0f);
-                const int layer = clampLayer(*tex);
-                return PropertyValue(tex->layerOpacities[layer]);
-            }
-            case Field::BlendMode: {
-                if (!tex || tex->layers.empty()) return PropertyValue(0);
-                const int layer = clampLayer(*tex);
-                return PropertyValue(tex->blendModes[layer]);
-            }
-            case Field::TextureSize:
-                return PropertyValue(tex ? tex->size : 0);
-        }
-        return PropertyValue{};
-    }
-
-    bool setValue(const PropertyValue& v) override {
-        FaceTexture* tex = texture();
-        switch (_field) {
-            case Field::Color: {
-                const auto* c = std::get_if<glm::vec3>(&v);
-                if (!c) return false;
-                _owner->setFaceColor(_face, c->x, c->y, c->z);
-                return true;
-            }
-            case Field::ActiveLayer: {
-                double n = 0.0;
-                if (!tex || tex->layers.empty() || !propertyValueToNumber(v, n)) return false;
-                tex->activeLayer = std::max(
-                    0, std::min(static_cast<int>(tex->layers.size()) - 1,
-                                static_cast<int>(n)));
-                return true;
-            }
-            case Field::UseLayers: {
-                if (!tex) return false;
-                if (const auto* b = std::get_if<bool>(&v)) {
-                    tex->useLayers = *b;
-                } else {
-                    double n = 0.0;
-                    if (!propertyValueToNumber(v, n)) return false;
-                    tex->useLayers = n != 0.0;
-                }
-                recomposite(*tex);
-                return true;
-            }
-            case Field::LayerOpacity: {
-                double n = 0.0;
-                if (!tex || tex->layers.empty() || !propertyValueToNumber(v, n)) return false;
-                tex->setLayerOpacity(clampLayer(*tex), static_cast<float>(n));
-                recomposite(*tex);
-                return true;
-            }
-            case Field::BlendMode: {
-                double n = 0.0;
-                if (!tex || tex->layers.empty() || !propertyValueToNumber(v, n)) return false;
-                tex->setBlendMode(clampLayer(*tex), static_cast<int>(n));
-                recomposite(*tex);
-                return true;
-            }
-            case Field::LayerCount:
-            case Field::TextureSize:
-                return false;   // structure is made with tools, not assigned
-        }
-        return false;
-    }
-
-private:
-    FaceTexture* texture() const {
-        if (_face < 0 || _face >= static_cast<int>(_owner->faceTextures.size())) {
-            return nullptr;
-        }
-        return &_owner->faceTextures[static_cast<std::size_t>(_face)];
-    }
-    static int clampLayer(const FaceTexture& tex) {
-        return std::max(0, std::min(static_cast<int>(tex.layers.size()) - 1,
-                                    tex.activeLayer));
-    }
-    static void recomposite(const FaceTexture& tex) {
-        if (tex.useLayers) tex.compositeLayers();
-        tex.updateWholeGPU();
-    }
-
-    std::string _name;
-    Object* _owner;
-    int _face;
-    Field _field;
-};
+// class FacePropertyBridge : public Property {
+// public:
+//     enum class Field { Color, LayerCount, ActiveLayer, UseLayers, LayerOpacity, BlendMode, TextureSize };
+// 
+//     FacePropertyBridge(std::string name, Object* owner, int face, Field field)
+//         : _name(std::move(name)), _owner(owner), _face(face), _field(field) {}
+// 
+//     std::string name() const override { return _name; }
+//     std::string typeName() const override {
+//         switch (_field) {
+//             case Field::Color: return "vec3";
+//             case Field::UseLayers: return "bool";
+//             case Field::LayerOpacity: return "float";
+//             default: return "int";
+//         }
+//     }
+// 
+//     PropertyValue value() const override {
+//         const FaceTexture* tex = texture();
+//         switch (_field) {
+//             case Field::Color:
+//                 if (_face < 6) {
+//                     return PropertyValue(glm::vec3(_owner->faceColors[_face][0],
+//                                                    _owner->faceColors[_face][1],
+//                                                    _owner->faceColors[_face][2]));
+//                 }
+//                 return PropertyValue(glm::vec3(1.0f));
+//             case Field::LayerCount:
+//                 return PropertyValue(tex ? static_cast<int>(tex->layers.size()) : 0);
+//             case Field::ActiveLayer:
+//                 return PropertyValue(tex ? tex->activeLayer : 0);
+//             case Field::UseLayers:
+//                 return PropertyValue(tex ? tex->useLayers : false);
+//             case Field::LayerOpacity: {
+//                 if (!tex || tex->layers.empty()) return PropertyValue(1.0f);
+//                 const int layer = clampLayer(*tex);
+//                 return PropertyValue(tex->layerOpacities[layer]);
+//             }
+//             case Field::BlendMode: {
+//                 if (!tex || tex->layers.empty()) return PropertyValue(0);
+//                 const int layer = clampLayer(*tex);
+//                 return PropertyValue(tex->blendModes[layer]);
+//             }
+//             case Field::TextureSize:
+//                 return PropertyValue(tex ? tex->size : 0);
+//         }
+//         return PropertyValue{};
+//     }
+// 
+//     bool setValue(const PropertyValue& v) override {
+//         FaceTexture* tex = texture();
+//         switch (_field) {
+//             case Field::Color: {
+//                 const auto* c = std::get_if<glm::vec3>(&v);
+//                 if (!c) return false;
+//                 // _owner->setFaceColor(_face, c->x, c->y, c->z);
+//                 return true;
+//             }
+//             case Field::ActiveLayer: {
+//                 double n = 0.0;
+//                 if (!tex || tex->layers.empty() || !propertyValueToNumber(v, n)) return false;
+//                 tex->activeLayer = std::max(
+//                     0, std::min(static_cast<int>(tex->layers.size()) - 1,
+//                                 static_cast<int>(n)));
+//                 return true;
+//             }
+//             case Field::UseLayers: {
+//                 if (!tex) return false;
+//                 if (const auto* b = std::get_if<bool>(&v)) {
+//                     tex->useLayers = *b;
+//                 } else {
+//                     double n = 0.0;
+//                     if (!propertyValueToNumber(v, n)) return false;
+//                     tex->useLayers = n != 0.0;
+//                 }
+//                 recomposite(*tex);
+//                 return true;
+//             }
+//             case Field::LayerOpacity: {
+//                 double n = 0.0;
+//                 if (!tex || tex->layers.empty() || !propertyValueToNumber(v, n)) return false;
+//                 tex->setLayerOpacity(clampLayer(*tex), static_cast<float>(n));
+//                 recomposite(*tex);
+//                 return true;
+//             }
+//             case Field::BlendMode: {
+//                 double n = 0.0;
+//                 if (!tex || tex->layers.empty() || !propertyValueToNumber(v, n)) return false;
+//                 tex->setBlendMode(clampLayer(*tex), static_cast<int>(n));
+//                 recomposite(*tex);
+//                 return true;
+//             }
+//             case Field::LayerCount:
+//             case Field::TextureSize:
+//                 return false;   // structure is made with tools, not assigned
+//         }
+//         return false;
+//     }
+// 
+// private:
+//     FaceTexture* texture() const {
+//         // if (_face < 0 || _face >= static_cast<int>(_owner->faceTextures.size())) {
+//         //     return nullptr;
+//         // }
+//         // return &_owner->faceTextures[static_cast<std::size_t>(_face)];
+//         return nullptr;
+//     }
+//     static int clampLayer(const FaceTexture& tex) {
+//         return std::max(0, std::min(static_cast<int>(tex.layers.size()) - 1,
+//                                     tex.activeLayer));
+//     }
+//     static void recomposite(const FaceTexture& tex) {
+//         if (tex.useLayers) tex.compositeLayers();
+//         tex.updateWholeGPU();
+//     }
+// 
+//     std::string _name;
+//     Object* _owner;
+//     int _face;
+//     Field _field;
+// };
 
 } // namespace
 
@@ -309,20 +310,20 @@ void Object::buildProperties() {
     // The whole face-texture surface, face by face (color, layers, opacity,
     // blend) — laws can fade a face's layer or recolor one side; set-to-set
     // carries surface structure. Pixels/strokes stay source-code-only.
-    const int faceCount =
-        std::min<int>(static_cast<int>(faceTextures.size()), 32);
-    for (int f = 0; f < faceCount; ++f) {
-        const std::string base = "face." + std::to_string(f) + ".";
-        auto addFace = [&](const char* leaf, FacePropertyBridge::Field field) {
-            _propertyRegistry.push_back(std::make_unique<FacePropertyBridge>(
-                base + leaf, this, f, field));
-        };
-        addFace("color", FacePropertyBridge::Field::Color);
-        addFace("layerCount", FacePropertyBridge::Field::LayerCount);
-        addFace("activeLayer", FacePropertyBridge::Field::ActiveLayer);
-        addFace("useLayers", FacePropertyBridge::Field::UseLayers);
-        addFace("layerOpacity", FacePropertyBridge::Field::LayerOpacity);
-        addFace("blendMode", FacePropertyBridge::Field::BlendMode);
-        addFace("textureSize", FacePropertyBridge::Field::TextureSize);
-    }
+    // const int faceCount =
+    //     std::min<int>(static_cast<int>(faceTextures.size()), 32);
+    // for (int f = 0; f < faceCount; ++f) {
+    //     const std::string base = "face." + std::to_string(f) + ".";
+    //     auto addFace = [&](const char* leaf, FacePropertyBridge::Field field) {
+    //         _propertyRegistry.push_back(std::make_unique<FacePropertyBridge>(
+    //             base + leaf, this, f, field));
+    //     };
+    //     addFace("color", FacePropertyBridge::Field::Color);
+    //     addFace("layerCount", FacePropertyBridge::Field::LayerCount);
+    //     addFace("activeLayer", FacePropertyBridge::Field::ActiveLayer);
+    //     addFace("useLayers", FacePropertyBridge::Field::UseLayers);
+    //     addFace("layerOpacity", FacePropertyBridge::Field::LayerOpacity);
+    //     addFace("blendMode", FacePropertyBridge::Field::BlendMode);
+    //     addFace("textureSize", FacePropertyBridge::Field::TextureSize);
+    // }
 }

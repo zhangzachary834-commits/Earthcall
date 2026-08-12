@@ -1,23 +1,23 @@
 #include "BodyPart.hpp"
 #include <algorithm>
 #include <glm/gtc/matrix_transform.hpp>
-#include "Rendering/Renderer.hpp"
+#include "Singularity/Screen/Renderer.hpp"
 
 BodyPart::BodyPart(const std::string& name, Type type, 
-                   ObjectTypes::GeometryType geometryType, const glm::vec3& dimensions)
+                   ObjectTypes::ShapeKind geometryType, const glm::vec3& dimensions)
     : Object(), Formation(), partName(name), partType(type), _dimensions(dimensions)
 {
     isLiteral = true;
     isSymbolic = false;
     _localTransform = glm::mat4(1.0f);
     
-    setGeometryType(geometryType);
+    setShapeKind(geometryType);
     
-    initFaceTextures();
+    // initFaceTextures();
     
-    for (size_t f = 0; f < faceTextures.size(); ++f) {
-        fillFaceColor(static_cast<int>(f), 0.96f, 0.80f, 0.69f);
-    }
+    // for (size_t f = 0; f < faceTextures.size(); ++f) {
+    //     fillFaceColor(static_cast<int>(f), 0.96f, 0.80f, 0.69f);
+    // }
     
     setTransform(_localTransform);
     
@@ -25,7 +25,7 @@ BodyPart::BodyPart(const std::string& name, Type type,
 }
 
 BodyPart::BodyPart(const std::string& name, Type type, 
-                   ObjectTypes::GeometryType geometryType, const glm::vec3& dimensions,
+                   ObjectTypes::ShapeKind geometryType, const glm::vec3& dimensions,
                    const glm::mat4& initialTransform)
     : BodyPart(name, type, geometryType, dimensions) {
     _localTransform = initialTransform;
@@ -86,25 +86,16 @@ glm::mat4 BodyPart::getRaycastTransform() const {
 // -----------------------------------------------------------------
 // Shape management
 // -----------------------------------------------------------------
-void BodyPart::setPrimaryShape(Object::GeometryType gt) {
-    setGeometryType(gt);   // reinitialises faceTextures via Object
-    for (size_t f = 0; f < faceTextures.size(); ++f) {
-        fillFaceColor(static_cast<int>(f), color[0], color[1], color[2]);
+void BodyPart::setPrimaryShape(Object::ShapeKind gt) {
+    setShapeKind(gt);   // reinitialises faceTextures via Object
+    for (int f = 0; f < 6; ++f) {
+        faceColors[f][0] = color[0];
+        faceColors[f][1] = color[1];
+        faceColors[f][2] = color[2];
     }
 }
 
 bool BodyPart::hasCustomTextures() const {
-    // A texture is "custom" if any pixel differs from a flat fill.
-    // Quick heuristic: check a few sample pixels against the first pixel.
-    for (const auto& ft : faceTextures) {
-        if (ft.pixels.size() < 4) continue;
-        uint32_t first = *reinterpret_cast<const uint32_t*>(ft.pixels.data());
-        size_t totalPixels = ft.pixels.size() / 4;
-        for (size_t p = 1; p < totalPixels; p += std::max<size_t>(1, totalPixels / 64)) {
-            uint32_t sample = reinterpret_cast<const uint32_t*>(ft.pixels.data())[p];
-            if (sample != first) return true;
-        }
-    }
     return false;
 }
 
@@ -115,11 +106,13 @@ Object* BodyPart::addSubObject(Object::ShapeKind kind, const glm::mat4& localOff
     auto obj = std::make_unique<Object>();
     obj->setShape(kind);
 
-    obj->setOwnerBodyPart(this);
+    // obj->setOwnerBodyPart(this);
     glm::mat4 worldT = getTransform() * localOffset;
     obj->setTransform(worldT);
-    for (size_t f = 0; f < obj->faceTextures.size(); ++f) {
-        obj->fillFaceColor(static_cast<int>(f), color[0], color[1], color[2]);
+    for (int f = 0; f < 6; ++f) {
+        obj->faceColors[f][0] = color[0];
+        obj->faceColors[f][1] = color[1];
+        obj->faceColors[f][2] = color[2];
     }
     Object* raw = obj.get();
     _subObjects.push_back(std::move(obj));
@@ -130,31 +123,9 @@ Object* BodyPart::addSubObject(Object::ShapeKind kind, const glm::mat4& localOff
 
 Object* BodyPart::addSubObject(std::unique_ptr<Object> obj, const glm::mat4& localOffset) {
     if (!obj) return nullptr;
-    obj->setOwnerBodyPart(this);
+    // obj->setOwnerBodyPart(this);
     glm::mat4 worldT = getTransform() * localOffset;
     obj->setTransform(worldT);
-    Object* raw = obj.get();
-    _subObjects.push_back(std::move(obj));
-    _subObjectLocalOffsets.push_back(localOffset);
-    addMember(raw);
-    return raw;
-}
-
-Object* BodyPart::addSubObject(Object::GeometryType gt, const glm::mat4& localOffset) {
-    auto obj = std::make_unique<Object>();
-    obj->setGeometryType(gt);
-
-    // Set the back-pointer so tools can find the owning body part
-    obj->setOwnerBodyPart(this);
-
-    // Compute and set the world-space transform immediately
-    glm::mat4 worldT = getTransform() * localOffset;
-    obj->setTransform(worldT);
-
-    for (size_t f = 0; f < obj->faceTextures.size(); ++f) {
-        obj->fillFaceColor(static_cast<int>(f), color[0], color[1], color[2]);
-    }
-
     Object* raw = obj.get();
     _subObjects.push_back(std::move(obj));
     _subObjectLocalOffsets.push_back(localOffset);

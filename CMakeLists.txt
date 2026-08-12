@@ -110,15 +110,15 @@ file(GLOB_RECURSE SRC_FILES
 
 # Exclude standalone main files and WebGPU from core sources
 list(FILTER SRC_FILES EXCLUDE REGEX "src/main.cpp")
-list(FILTER SRC_FILES EXCLUDE REGEX "src/Util/MigrateSaves.cpp")
+list(FILTER SRC_FILES EXCLUDE REGEX "src/Singularity/Storage/MigrateSaves.cpp")
 # Standalone tools carry their own main(); they must not enter the core lib.
 list(FILTER SRC_FILES EXCLUDE REGEX "src/Identity/MigrateIdentitiesTool.cpp")
-list(FILTER SRC_FILES EXCLUDE REGEX "src/Rendering/WebGPU/.*")
+list(FILTER SRC_FILES EXCLUDE REGEX "src/Singularity/Screen/WebGPU/.*")
 list(FILTER SRC_FILES EXCLUDE REGEX "src/entry.cpp")
 list(FILTER SRC_FILES EXCLUDE REGEX "smoke_.*")
 list(FILTER SRC_FILES EXCLUDE REGEX "scratch/.*")
 list(FILTER SRC_FILES EXCLUDE REGEX "src/Legacy Depricated/.*")
-list(FILTER SRC_FILES EXCLUDE REGEX "src/Integration/py/.*")
+list(FILTER SRC_FILES EXCLUDE REGEX "src/Singularity/Foreign/py/.*")
 
 set(IMGUI_DIR "imgui")
 set(IMGUI_SOURCES
@@ -132,8 +132,8 @@ set(IMGUI_SOURCES
 )
 
 # Compile WebIntegration and RealWebView as Objective-C++ since they use macOS APIs
-set_source_files_properties(src/Integration/RealWebView.cpp PROPERTIES LANGUAGE OBJCXX)
-set_source_files_properties(src/Integration/WebIntegration.cpp PROPERTIES LANGUAGE OBJCXX)
+set_source_files_properties(src/Singularity/Foreign/RealWebView.cpp PROPERTIES LANGUAGE OBJCXX)
+set_source_files_properties(src/Singularity/Foreign/WebIntegration.cpp PROPERTIES LANGUAGE OBJCXX)
 
 # Object library for shared code
 add_library(earthcall_core OBJECT ${SRC_FILES} ${IMGUI_SOURCES})
@@ -172,7 +172,7 @@ if(NOT EMSCRIPTEN)
 
     # --- WebGPU App ---
     set(WEBGPU_APP_SOURCES ${SRC_FILES})
-    list(FILTER WEBGPU_APP_SOURCES EXCLUDE REGEX "src/Rendering/WebGPU/smoke_.*")
+    list(FILTER WEBGPU_APP_SOURCES EXCLUDE REGEX "src/Singularity/Screen/WebGPU/smoke_.*")
 
     set(IMGUI_WEBGPU_SOURCES
         ${IMGUI_DIR}/imgui.cpp
@@ -185,15 +185,15 @@ if(NOT EMSCRIPTEN)
     )
     # Add WebGPU specific sources
     list(APPEND WEBGPU_APP_SOURCES 
-        src/Rendering/WebGPU/WebGpuContext.mm
-        src/Rendering/WebGPU/WebGpuRenderer.cpp
-        src/Rendering/WebGPU/SdfWgsl.cpp
+        src/Singularity/Screen/WebGPU/WebGpuContext.mm
+        src/Singularity/Screen/WebGPU/WebGpuRenderer.cpp
+        src/Singularity/Screen/WebGPU/SdfWgsl.cpp
     )
 
     add_executable(earthcall_webgpu src/entry.cpp ${WEBGPU_APP_SOURCES} ${IMGUI_WEBGPU_SOURCES})
     target_include_directories(earthcall_webgpu PRIVATE ${WGPU_NATIVE_DIR}/include)
     target_compile_definitions(earthcall_webgpu PRIVATE EARTHCALL_WEBGPU IMGUI_IMPL_WEBGPU_BACKEND_WGPU)
-    set_source_files_properties(src/Rendering/WebGPU/WebGpuContext.mm PROPERTIES LANGUAGE OBJCXX)
+    set_source_files_properties(src/Singularity/Screen/WebGPU/WebGpuContext.mm PROPERTIES LANGUAGE OBJCXX)
 
     if(APPLE)
         target_link_libraries(earthcall_webgpu PRIVATE
@@ -229,10 +229,10 @@ if(NOT EMSCRIPTEN)
         get_filename_component(TEST_NAME ${TEST_SOURCE} NAME_WE)
         
         if (${TEST_NAME} MATCHES "webgpu_.*")
-            add_executable(${TEST_NAME} ${TEST_SOURCE} src/Rendering/WebGPU/WebGpuRenderer.cpp src/Rendering/WebGPU/SdfWgsl.cpp src/Rendering/WebGPU/WebGpuContext.mm)
+            add_executable(${TEST_NAME} ${TEST_SOURCE} src/Singularity/Screen/WebGPU/WebGpuRenderer.cpp src/Singularity/Screen/WebGPU/SdfWgsl.cpp src/Singularity/Screen/WebGPU/WebGpuContext.mm)
             target_include_directories(${TEST_NAME} PRIVATE ${WGPU_NATIVE_DIR}/include)
             target_compile_definitions(${TEST_NAME} PRIVATE EARTHCALL_WEBGPU IMGUI_IMPL_WEBGPU_BACKEND_WGPU)
-            set_source_files_properties(src/Rendering/WebGPU/WebGpuContext.mm PROPERTIES LANGUAGE OBJCXX)
+            set_source_files_properties(src/Singularity/Screen/WebGPU/WebGpuContext.mm PROPERTIES LANGUAGE OBJCXX)
             if(APPLE)
                 target_link_libraries(${TEST_NAME} PRIVATE
                     earthcall_core
@@ -270,16 +270,16 @@ endif()
 # --- WebAssembly / Emscripten Build ---
 if (EMSCRIPTEN)
     set(WASM_APP_SOURCES ${SRC_FILES})
-    list(FILTER WASM_APP_SOURCES EXCLUDE REGEX "src/Rendering/WebGPU/smoke_.*")
+    list(FILTER WASM_APP_SOURCES EXCLUDE REGEX "src/Singularity/Screen/WebGPU/smoke_.*")
     # Exclude macOS specific webviews
-    list(FILTER WASM_APP_SOURCES EXCLUDE REGEX "src/Integration/RealWebView.*")
-    list(FILTER WASM_APP_SOURCES EXCLUDE REGEX "src/Integration/WebIntegration.*")
+    list(FILTER WASM_APP_SOURCES EXCLUDE REGEX "src/Singularity/Foreign/RealWebView.*")
+    list(FILTER WASM_APP_SOURCES EXCLUDE REGEX "src/Singularity/Foreign/WebIntegration.*")
     # Exclude Legacy OpenGL renderer but keep GluCompat
-    list(FILTER WASM_APP_SOURCES EXCLUDE REGEX "src/Rendering/GL/OpenGLRenderer.cpp")
+    list(FILTER WASM_APP_SOURCES EXCLUDE REGEX "src/Singularity/Screen/GL/OpenGLRenderer.cpp")
     # Also exclude native AudioToolbox/CoreAudio dependencies if needed
 
     # Add back WebGPU sources since they were excluded from SRC_FILES globally
-    file(GLOB_RECURSE WEBGPU_SOURCES "src/Rendering/WebGPU/*.cpp")
+    file(GLOB_RECURSE WEBGPU_SOURCES "src/Singularity/Screen/WebGPU/*.cpp")
     list(FILTER WEBGPU_SOURCES EXCLUDE REGEX "smoke_.*")
     list(APPEND WASM_APP_SOURCES ${WEBGPU_SOURCES})
 

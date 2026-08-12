@@ -6,7 +6,7 @@
 #include "miniaudio.h"
 #include "Singularity/Core/EventBus.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
-#include "Integration/EarthcallAPI.hpp"
+#include "Singularity/Foreign/EarthcallAPI.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "ZonesOfEarth/World/World.hpp"
 #include "ConstructedBeing/Object/Object.hpp"

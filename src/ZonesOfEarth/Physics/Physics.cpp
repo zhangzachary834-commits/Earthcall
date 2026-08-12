@@ -65,7 +65,7 @@ namespace Physics {
     }
 
     // Encode pair of shapes into 32-bit key
-    static uint32_t keyFor(Object::GeometryType a, Object::GeometryType b){
+    static uint32_t keyFor(Object::ShapeKind a, Object::ShapeKind b){
         int ai = static_cast<int>(a);
         int bi = static_cast<int>(b);
         if(ai>bi) std::swap(ai,bi);
@@ -74,12 +74,12 @@ namespace Physics {
 
     static std::unordered_set<uint32_t> g_autoBondRules;
 
-    void setAutoBond(Object::GeometryType a, Object::GeometryType b, bool enabled){
+    void setAutoBond(Object::ShapeKind a, Object::ShapeKind b, bool enabled){
         uint32_t k = keyFor(a,b);
         if(enabled) g_autoBondRules.insert(k); else g_autoBondRules.erase(k);
     }
 
-    bool getAutoBond(Object::GeometryType a, Object::GeometryType b){
+    bool getAutoBond(Object::ShapeKind a, Object::ShapeKind b){
         return g_autoBondRules.count(keyFor(a,b))>0;
     }
 
@@ -242,7 +242,7 @@ namespace Physics {
                 Object* oa = objects[i].get();
                 Object* ob = objects[j].get();
                 if(!oa||!ob) continue;
-                if(!getAutoBond(oa->getGeometryType(), ob->getGeometryType())) continue;
+                if(!getAutoBond(oa->getShapeKind(), ob->getShapeKind())) continue;
                 // check duplicate
                 bool exists=false; for(const auto& b : g_bonds){ if((b.a==oa&&b.b==ob)||(b.a==ob&&b.b==oa)){exists=true;break;} }
                 if(!exists) addBond(oa,ob,1.0f,10.0f);
@@ -653,7 +653,7 @@ namespace Physics {
         }
         if (t.limitByGeometry) {
             bool ok = false;
-            for (auto g : t.geometryTypes) if (obj.getGeometryType() == g) { ok = true; break; }
+            for (auto g : t.geometryTypes) if (obj.getShapeKind() == g) { ok = true; break; }
             if (!ok) return false;
         }
         if (t.limitByObjectType) {

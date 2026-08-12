@@ -3,7 +3,7 @@
 #include "Tool.hpp"
 #include "Singularity/Core/Engine.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
-#include "Rendering/BrushSystem.hpp"
+#include "Singularity/Screen/BrushSystem.hpp"
 #include <algorithm>
 #include <string>
 

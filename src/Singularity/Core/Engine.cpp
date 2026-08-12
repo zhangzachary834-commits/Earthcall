@@ -12,10 +12,10 @@
 // one macro, so the two builds share the entire main loop structure.
 #ifdef EARTHCALL_WEBGPU
 #include "../../../imgui/backends/imgui_impl_wgpu.h"
-#include "Rendering/Renderer.hpp"
-#include "Rendering/WebGPU/WebGpuContext.hpp"
-#include "Rendering/WebGPU/WebGpuRenderer.hpp"
-#include "Rendering/WebGPU/WgpuDevice.hpp"
+#include "Singularity/Screen/Renderer.hpp"
+#include "Singularity/Screen/WebGPU/WebGpuContext.hpp"
+#include "Singularity/Screen/WebGPU/WebGpuRenderer.hpp"
+#include "Singularity/Screen/WebGPU/WgpuDevice.hpp"
 #else
 #include "../../../imgui/backends/imgui_impl_opengl2.h"
 #endif

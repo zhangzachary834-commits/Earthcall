@@ -7,8 +7,8 @@
 #include "ZonesOfEarth/Physics/Physics.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
-#include "Rendering/HighlightSystem.hpp"
-#include "Rendering/Renderer.hpp"
+#include "Singularity/Screen/HighlightSystem.hpp"
+#include "Singularity/Screen/Renderer.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
 #include <algorithm>

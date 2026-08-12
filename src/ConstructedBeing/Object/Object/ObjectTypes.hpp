@@ -18,11 +18,11 @@ namespace geom {
     struct ComplexShapeData;
     struct SdfNode;
     class FieldNode;
-    class TessMesh;
+    struct TessMesh;
     struct BezierPatch;
 }
 
-class PolyhedronData;
+struct PolyhedronData;
 
 namespace ObjectTypes {
 
@@ -30,11 +30,7 @@ namespace ObjectTypes {
 // Geometry Types
 // ============================================================================
 
-// Geometry type to allow different primitive shapes (legacy axis; retained
-// for save migration and the polyhedron path).
-enum class GeometryType { Cube = 0, Sphere, Cylinder, Cone, Polyhedron };
 
-// Named shape within the topology framework. The identity is the SpatialKind
 // category; ShapeKind is just which parameterization. Serialized as an int,
 // so this enum is APPEND-ONLY.
 enum class ShapeKind {

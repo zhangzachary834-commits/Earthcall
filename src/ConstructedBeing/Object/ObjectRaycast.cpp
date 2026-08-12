@@ -16,7 +16,7 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <atomic>
-#include "Rendering/HighlightSystem.hpp"
+#include "Singularity/Screen/HighlightSystem.hpp"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -303,28 +303,28 @@ bool Object::raycastFace(const glm::vec3& rayOriginWorld, const glm::vec3& rayDi
 
     float bestT = 1e9f; int bestFace = -1; glm::vec2 bestUV(0.0f);
     bool hit = false;
-    switch (geometryType) {
-        case GeometryType::Cube: {
+    switch (_shapeKind) {
+        case ShapeKind::Cube: {
             float t; int f; glm::vec2 uv;
             if (intersectAABBUnitCube(t, f, uv)) { bestT = t; bestFace = f; bestUV = uv; hit = true; }
             break;
         }
-        case GeometryType::Sphere: {
+        case ShapeKind::Sphere: {
             float t; glm::vec2 uv;
             if (intersectSphere(t, uv)) { bestT = t; bestFace = 0; bestUV = uv; hit = true; }
             break;
         }
-        case GeometryType::Cylinder: {
+        case ShapeKind::Cylinder: {
             float t; int f; glm::vec2 uv;
             if (intersectCylinder(t, f, uv)) { bestT = t; bestFace = f; bestUV = uv; hit = true; }
             break;
         }
-        case GeometryType::Cone: {
+        case ShapeKind::Cone: {
             float t; int f; glm::vec2 uv;
             if (intersectCone(t, f, uv)) { bestT = t; bestFace = f; bestUV = uv; hit = true; }
             break;
         }
-        case GeometryType::Polyhedron: {
+        case ShapeKind::Polyhedron: {
             float t; int f; glm::vec2 uv;
             if (intersectPolyhedron(t, f, uv)) { bestT = t; bestFace = f; bestUV = uv; hit = true; }
             break;

@@ -4,4 +4,4 @@
 
 Head::Head()
     : BodyPart("Head", BodyPart::Type::Head,
-               ObjectTypes::GeometryType::Cube, {0.3f, 0.3f, 0.3f}) {}
+               ObjectTypes::ShapeKind::Cube, {0.3f, 0.3f, 0.3f}) {}

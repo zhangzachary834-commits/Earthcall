@@ -13,6 +13,9 @@ Or even if not the same class, it will be the same structure */
 class Body : public Object {
 
 public:
+    Body(Body&&) = default;
+    Body& operator=(Body&&) = default;
+    
     std::string shape;
     std::string artStyle;
     std::vector<std::string> adornments;
@@ -45,6 +48,8 @@ public:
     // Factory: build a simple humanoid body composed of basic parts
     static Body createBasicAvatar(const std::string& artStyle = "Voxel");
     
+    // Factory: build an authored body from an ObjectConcept
+    static Body createFromConcept(const class ObjectConcept& concept);
     // Body customization
     void setHeight(float h);
     void scaleBodyParts();

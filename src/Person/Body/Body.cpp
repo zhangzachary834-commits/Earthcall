@@ -14,6 +14,7 @@
 #include "BodyPart/Limb/ForeArm.hpp"
 #include "BodyPart/Limb/ForeLeg.hpp"
 #include "BodyPart/Limb/Foot.hpp"
+#include "ConstructedBeing/Object/Creation/ObjectConcept.hpp"
 
 Body::Body(std::string shape, std::string artStyle)
     : shape(shape), artStyle(artStyle), formation()
@@ -105,7 +106,7 @@ Body Body::createBasicAvatar(const std::string& artStyle) {
 
     // ----------------------- Lower Torso ----------------
     auto* lowerTorso = new BodyPart("LowerTorso", BodyPart::Type::Torso,
-                                    ObjectTypes::GeometryType::Cube, {0.45f, 0.25f, 0.22f});
+                                    ObjectTypes::ShapeKind::Cube, {0.45f, 0.25f, 0.22f});
     lowerTorso->setTransform(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.15f, 0.0f)));
     avatar.addPart(lowerTorso);
 
@@ -169,4 +170,19 @@ Body Body::createBasicAvatar(const std::string& artStyle) {
     avatar.addPart(rightFoot);
 
     return avatar;
+}
+
+Body Body::createFromConcept(const ObjectConcept& concept) {
+    Body avatar(concept.name(), "Concept");
+    int index = 0;
+    // Iterate over the concept's members and create generic body parts for each
+    for(const auto& member : concept.members()) {
+        BodyPart* bp = new BodyPart("concept-part-" + std::to_string(index++), BodyPart::Type::Undefined, Object::ShapeKind::Cube, glm::vec3(1.0f));
+        if (member.hasGeometry) {
+            bp->setShape(member.kind);
+            bp->setTransform(member.relativeTransform);
+        }
+        avatar.addPart(bp);
+    }
+    return std::move(avatar);
 }

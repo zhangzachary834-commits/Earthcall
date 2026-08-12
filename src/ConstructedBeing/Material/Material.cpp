@@ -1,13 +1,9 @@
 #include "ConstructedBeing/Material/Material.hpp"
-
 #include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
 
 using json = nlohmann::json;
 
 void Material::buildProperties() {
-    // Every field a Law may want to read or drive is registered here. baseColor
-    // is a vec3 (RGB); opacity is separate so the whole appearance stays within
-    // the PropertyValue variant (float / vec3 / string / bool).
     _propertyRegistry.push_back(std::make_unique<PropertyRef<Material, glm::vec3>>(
         "baseColor", this, &Material::baseColor));
     _propertyRegistry.push_back(std::make_unique<PropertyRef<Material, float>>(
@@ -47,4 +43,16 @@ Material Material::fromJson(const json& j) {
     m.ambient   = j.value("ambient", 0.2f);
     m.diffuse   = j.value("diffuse", 0.8f);
     return m;
+}
+
+void Material::initFaceTextures(int numFaces) {
+    if (faceTextures.size() == static_cast<size_t>(numFaces)) {
+        return; // Already initialised correctly
+    }
+    faceTextures.clear();
+    for (int i = 0; i < numFaces; ++i) {
+        FaceTexture tex;
+        tex.create(); // Default 64x64 white texture
+        faceTextures.push_back(std::move(tex));
+    }
 }

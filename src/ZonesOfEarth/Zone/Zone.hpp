@@ -6,7 +6,7 @@
 #include "ConstructedBeing/Object/Formation/Formation.hpp"
 #include <memory>
 #include "ConstructedBeing/Object/Object.hpp"
-#include "Rendering/BrushSystem.hpp"
+#include "Singularity/Screen/BrushSystem.hpp"
 #include "Legacy/DesignSystem.hpp"
 
 class World; // forward decl

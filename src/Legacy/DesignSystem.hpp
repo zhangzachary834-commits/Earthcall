@@ -7,7 +7,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include "OurVerse/Tool.hpp"
-#include "Rendering/BrushSystem.hpp"
+#include "Singularity/Screen/BrushSystem.hpp"
 
 // Forward declarations
 class Zone;

@@ -18,6 +18,7 @@ These come up constantly. Learn them cold; everything else is detail.
 1. **No new C++ class for a domain noun.** Not `RobotEntity`, not `Vehicle`, not `Tree`,
    not `Category`. This principle also extends to hardcoded fields (e.g., `health` or `inventory` on a `Person`). Domain things and their state are *authored in-world* as data, never carved into the
    type system. → `NEW_KIND_FRAMEWORK.md`
+   *(Exception: The human form. `BodyPart` and constitutive members for the `Person` vessel are invariant ontological structures, not domain nouns, and thus admitted in C++).*
 
 2. **No new top-level directory for a subsystem.** The top level is the ontology
    (`Form`, `Person`, `Relation`, `Singularity`, `ZonesOfEarth`, `OurVerse`). A channel to
@@ -74,11 +75,10 @@ src/
   Person/         Person · Soul · Body · Relationship
   Relation/       Relation — a first-class being, not an edge in someone's array
   ZonesOfEarth/   Zone · Home · World · Physics · AuthorsOfLaw (Law lives here)
-  Singularity/    the modality layer: Core · Audio · Language · Network · Physical · OntoMath
+  Singularity/    the modality layer: Core · Audio · Language · Network · Physical · OntoMath · Foreign · Input · Screen · Storage
   OurVerse/       the Person-facing authorship surface (tools, chat, controls)
   Identity/       First Mover register, identity ledger, keys
-  Integration/    foreign software surface (incl. py/ — the Flask backend)
-  Rendering/ Perspective/ Util/ Legacy/     not yet ontologically placed (see §5 of DIRECTORY_ORDERING)
+  Legacy/         not yet ontologically placed
 docs/ tests/ examples/ scripts/ saves/ scratch/     the workshop
 third_party/ local_deps/ imgui/                     the foreign
 ```

@@ -5,9 +5,13 @@
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "GLFW/glfw3.h"
-#include "Rendering/GL/GluCompat.hpp"
+#include "Singularity/Screen/GL/GluCompat.hpp"
 #include "AdvancedFacePaint.hpp"
+#include "ConstructedBeing/Material/MaterialManager.hpp"
+#include "ConstructedBeing/Material/PaintToolSurface.hpp"
 #include <algorithm>
+
+extern MaterialManager materials;
 #include <cmath>
 #include <iostream>
 #include <utility>
@@ -212,6 +216,15 @@ void applyToolTransform(Object* obj, const glm::mat4& worldTransform, const glm:
 
     // Sub-object belonging to a body part — convert world transform to
     // body-part-local offset so the sub-object stays attached correctly
+    // Since getOwnerBodyPart is removed, we search the active person's body if possible.
+    // Or we can rely on a helper to find it. For now, we'll just check if it's in the active person's body.
+    // (A better architectural fix is needed to find parent formations).
+    
+    // As a temporary fix since we removed obj->getOwnerBodyPart():
+    // For now, if we can't find the owner, just set transform directly. 
+    // The true fix is to pass the owner down or use relation graph.
+    // For now, just set the transform.
+    /*
     if (BodyPart* owner = obj->getOwnerBodyPart()) {
         glm::mat4 localOffset = glm::inverse(owner->getTransform()) * worldTransform;
         for (size_t i = 0; i < owner->getSubObjectCount(); ++i) {
@@ -222,6 +235,7 @@ void applyToolTransform(Object* obj, const glm::mat4& worldTransform, const glm:
         }
         return;
     }
+    */
 
     obj->setTransform(worldTransform);
 }
@@ -291,7 +305,7 @@ bool pickSurface(const std::vector<Object*>& targets,
 
     best.point = rayOrigin + rayDir * best.t;
     const glm::mat4 xf = best.obj->getRaycastTransform();
-    if (best.obj->getGeometryType() == Object::GeometryType::Cube && best.face >= 0) {
+    if (best.obj->getShapeKind() == Object::ShapeKind::Cube && best.face >= 0) {
         // raycastFace encodes a cube face as axis*2 + (sign>0 ? 0 : 1).
         best.isCube = true;
         best.axis = best.face / 2;
@@ -665,7 +679,9 @@ void Tool::use(GLFWwindow *window, ZoneManager &mgr, Zone &zone, Type type, Core
                     auto* rawObj = obj.get();
                     obj->setName(type == Tool::Type::Rectangle ? "Rectangle" : "Ellipse");
                     glm::vec3 c = zone.getCurrentColor();
-                    obj->setFaceColor(0, c.r, c.g, c.b);
+                    obj->faceColors[0][0] = c.r;
+                    obj->faceColors[0][1] = c.g;
+                    obj->faceColors[0][2] = c.b;
                     
                     obj->setShape(Object::ShapeKind::Shape2D, Object::ShapeParams{
                         .width2D = width,
@@ -842,7 +858,9 @@ void Tool::use(GLFWwindow *window, ZoneManager &mgr, Zone &zone, Type type, Core
                 auto* rawObj = obj.get();
                 obj->setName("Text");
                 glm::vec3 c = zone.getCurrentColor();
-                obj->setFaceColor(0, c.r, c.g, c.b);
+                obj->faceColors[0][0] = c.r;
+                obj->faceColors[0][1] = c.g;
+                obj->faceColors[0][2] = c.b;
                 
                 float fontSize = 32.0f; // Default font size
                 obj->setShape(Object::ShapeKind::Text2D, Object::ShapeParams{
@@ -1139,18 +1157,25 @@ void Tool::FacePaint(GLFWwindow *window, Core::Engine *engine, ZoneManager &mgr,
                 void* gradientSettings = engine->getCurrentGradientSettings();
                 void* smudgeSettings = engine->getCurrentSmudgeSettings();
                 
-                bool success = AdvancedFacePaint::paintFaceAdvanced(hitObj, hitFace, hitUV, 
-                                                                  nullptr, nullptr);
-                
-                if (!success) {
-                    // Fall back to basic fill if advanced painting fails
-                    hitObj->fillFaceColor(hitFace, engine->getCurrentColor(0), engine->getCurrentColor(1), engine->getCurrentColor(2));
+                bool success = false;
+                if (auto mat = materials.resolveOrDefault(hitObj->materialId())) {
+                    PaintToolSurface pts(*mat);
+                    success = AdvancedFacePaint::paintFaceAdvanced(hitObj, hitFace, hitUV, 
+                                                                      nullptr, nullptr);
+                    
+                    if (!success) {
+                        // Fall back to basic fill if advanced painting fails
+                        pts.fillFaceColor(hitFace, engine->getCurrentColor(0), engine->getCurrentColor(1), engine->getCurrentColor(2));
+                    }
                 }
             }
             else
             {
                 // Use basic fill for FacePaint click
-                hitObj->fillFaceColor(hitFace, engine->getCurrentColor(0), engine->getCurrentColor(1), engine->getCurrentColor(2));
+                if (auto mat = materials.resolveOrDefault(hitObj->materialId())) {
+                    PaintToolSurface pts(*mat);
+                    pts.fillFaceColor(hitFace, engine->getCurrentColor(0), engine->getCurrentColor(1), engine->getCurrentColor(2));
+                }
             }
         }
     }
@@ -1221,62 +1246,65 @@ void Tool::FacePaint(GLFWwindow *window, Core::Engine *engine, ZoneManager &mgr,
             }
 
             // Apply brush based on type
-            switch (0)
-            {
-            case 0:
-                // Interpolate only if staying on the same object and face
-                if (false &&
-                    glm::vec2(0).x >= 0.0f &&
-                    nullptr == hitObj &&
-                    0 == hitFace)
+            if (auto mat = materials.resolveOrDefault(hitObj->materialId())) {
+                PaintToolSurface pts(*mat);
+                switch (0)
                 {
-                    hitObj->paintStroke(hitFace, glm::vec2(0), uv,
-                                        engine->getCurrentColor(0), engine->getCurrentColor(1), engine->getCurrentColor(2),
-                                        0.0f * pressure, 0.0f,
-                                        0.0f, 0.0f);
-                }
-                else
-                {
-                    hitObj->paintFaceAdvanced(hitFace, uv,
+                case 0:
+                    // Interpolate only if staying on the same object and face
+                    if (false &&
+                        glm::vec2(0).x >= 0.0f &&
+                        nullptr == hitObj &&
+                        0 == hitFace)
+                    {
+                        pts.paintStroke(hitFace, glm::vec2(0), uv,
+                                            engine->getCurrentColor(0), engine->getCurrentColor(1), engine->getCurrentColor(2),
+                                            0.0f * pressure, 0.0f,
+                                            0.0f, 0.0f);
+                    }
+                    else
+                    {
+                        pts.paintFaceAdvanced(hitFace, uv,
+                                                  engine->getCurrentColor(0), engine->getCurrentColor(1), engine->getCurrentColor(2),
+                                                  0.0f * pressure, 0.0f,
+                                                  0.0f, 0.0f, 0);
+                    }
+                    break;
+
+                case 4:
+                     pts.airbrushFace(hitFace, uv,
+                                          engine->getCurrentColor(0), engine->getCurrentColor(1), engine->getCurrentColor(2),
+                                          0.0f * pressure, /*density*/ 0.5f, 0.0f);
+                    break;
+
+                case 5:
+                    pts.paintFaceAdvanced(hitFace, uv,
                                               engine->getCurrentColor(0), engine->getCurrentColor(1), engine->getCurrentColor(2),
                                               0.0f * pressure, 0.0f,
-                                              0.0f, 0.0f, 0);
+                                              0.0f, 0.0f, 2);
+                    break;
+
+                case 6:
+                    pts.paintFaceAdvanced(hitFace, uv,
+                                              engine->getCurrentColor(0), engine->getCurrentColor(1), engine->getCurrentColor(2),
+                                              0.0f * pressure, 0.0f,
+                                              0.0f, 0.0f, 3);
+                    break;
+
+                case 1:
+                     pts.smudgeFace(hitFace, uv,
+                                        0.0f * pressure, /*strength*/ 0.5f);
+                    break;
+
+                case 2:
+                    if (false)
+                    {
+                        glm::vec2 sourceUV = uv + glm::vec2(0);
+                        pts.cloneFace(hitFace, uv, sourceUV,
+                                          0.0f * pressure, 0.0f);
+                    }
+                    break;
                 }
-                break;
-
-            case 4:
-                 hitObj->airbrushFace(hitFace, uv,
-                                      engine->getCurrentColor(0), engine->getCurrentColor(1), engine->getCurrentColor(2),
-                                      0.0f * pressure, /*density*/ 0.5f, 0.0f);
-                break;
-
-            case 5:
-                hitObj->paintFaceAdvanced(hitFace, uv,
-                                          engine->getCurrentColor(0), engine->getCurrentColor(1), engine->getCurrentColor(2),
-                                          0.0f * pressure, 0.0f,
-                                          0.0f, 0.0f, 2);
-                break;
-
-            case 6:
-                hitObj->paintFaceAdvanced(hitFace, uv,
-                                          engine->getCurrentColor(0), engine->getCurrentColor(1), engine->getCurrentColor(2),
-                                          0.0f * pressure, 0.0f,
-                                          0.0f, 0.0f, 3);
-                break;
-
-            case 1:
-                 hitObj->smudgeFace(hitFace, uv,
-                                    0.0f * pressure, /*strength*/ 0.5f);
-                break;
-
-            case 2:
-                if (false)
-                {
-                    glm::vec2 sourceUV = uv + glm::vec2(0);
-                    hitObj->cloneFace(hitFace, uv, sourceUV,
-                                      0.0f * pressure, 0.0f);
-                }
-                break;
             }
 
             // Remember last stroke context

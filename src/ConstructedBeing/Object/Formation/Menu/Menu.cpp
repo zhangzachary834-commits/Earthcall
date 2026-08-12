@@ -4,7 +4,7 @@
 
 #define STB_EASY_FONT_IMPLEMENTATION   // only in this translation unit
 #include "stb_easy_font.h"             // header‑only bitmap font
-#include "Rendering/Renderer.hpp"
+#include "Singularity/Screen/Renderer.hpp"
 
 Menu::Menu() {
     // Pre-reserve a small number of options to avoid early reallocations

@@ -118,10 +118,10 @@ namespace Physics {
     void recordCollision(const Singular& a, const Singular& b, float strength = 1.0f);
 
     // -----------------------------------------------------------------
-    // Automatic bonding rules by GeometryType pairs
+    // Automatic bonding rules by ShapeKind pairs
     // -----------------------------------------------------------------
-    void setAutoBond(Object::GeometryType a, Object::GeometryType b, bool enabled);
-    bool getAutoBond(Object::GeometryType a, Object::GeometryType b);
+    void setAutoBond(Object::ShapeKind a, Object::ShapeKind b, bool enabled);
+    bool getAutoBond(Object::ShapeKind a, Object::ShapeKind b);
 
     // -----------------------------------------------------------------
     // EventBus Integration
@@ -164,7 +164,7 @@ namespace Physics {
         bool allObjects = true;
         // Filter by geometry type flags
         bool limitByGeometry = false;
-        std::vector<Object::GeometryType> geometryTypes;
+        std::vector<Object::ShapeKind> geometryTypes;
         // Preferred topology-level filter. When enabled, this is checked before
         // legacy geometryTypes so laws can target the real spatial category.
         bool limitBySpatialKind = false;

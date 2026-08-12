@@ -1,5 +1,5 @@
 #include "ConstructedBeing/Object/Geometry/SdfJson.hpp"
-#include "Util/BinaryPack.hpp"
+#include "Singularity/Storage/BinaryPack.hpp"
 
 namespace geom {
 

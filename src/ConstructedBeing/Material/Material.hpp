@@ -3,6 +3,8 @@
 #include "ConstructedBeing/Singular/Singular.hpp"
 #include "json.hpp"
 
+#include "ConstructedBeing/Object/Object/FaceTexture.hpp"
+
 #include <glm/glm.hpp>
 #include <string>
 
@@ -51,4 +53,11 @@ private:
     // a material is re-identifying it. Everything else is Law-addressable.
     std::string _name = "default";
     void buildProperties() override;
+
+public:
+    // Per-face texture painting support
+    std::vector<struct FaceTexture> faceTextures;
+    
+    // Initialise or reinitialise textures after geometry type set/changed
+    void initFaceTextures(int numFaces);
 };

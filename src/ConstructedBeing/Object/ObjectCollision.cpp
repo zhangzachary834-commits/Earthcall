@@ -16,7 +16,7 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <atomic>
-#include "Rendering/HighlightSystem.hpp"
+#include "Singularity/Screen/HighlightSystem.hpp"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -112,7 +112,7 @@ void Object::updateCollisionZone(const glm::mat4& transform) const {
     glm::vec3 maxCorner = glm::vec3(-std::numeric_limits<float>::max());
     bool hasBounds = false;
 
-    if (geometryType == GeometryType::Polyhedron && !polyhedronData.vertices.empty()) {
+    if (_shapeKind == ShapeKind::Polyhedron && !polyhedronData.vertices.empty()) {
         for (const auto& vertex : polyhedronData.vertices) {
             glm::vec4 world = transform * glm::vec4(vertex, 1.0f);
             glm::vec3 worldVertex = glm::vec3(world);
@@ -222,16 +222,16 @@ glm::vec3 Object::getLocalSupportPoint(const glm::vec3& localDirection) const {
         return bestV;
     }
 
-    switch (geometryType) {
-        case GeometryType::Cube:
+    switch (_shapeKind) {
+        case ShapeKind::Cube:
             return glm::vec3(dir.x >= 0.0f ? 0.5f : -0.5f,
                              dir.y >= 0.0f ? 0.5f : -0.5f,
                              dir.z >= 0.0f ? 0.5f : -0.5f);
-        case GeometryType::Sphere: {
+        case ShapeKind::Sphere: {
             glm::vec3 n = glm::normalize(dir);
             return n * 0.5f;
         }
-        case GeometryType::Cylinder: {
+        case ShapeKind::Cylinder: {
             glm::vec2 radial(dir.x, dir.y);
             float radialLen = glm::length(radial);
             glm::vec3 support(0.0f, 0.0f, dir.z >= 0.0f ? 0.5f : -0.5f);
@@ -242,7 +242,7 @@ glm::vec3 Object::getLocalSupportPoint(const glm::vec3& localDirection) const {
             }
             return support;
         }
-        case GeometryType::Cone: {
+        case ShapeKind::Cone: {
             glm::vec2 radial(dir.x, dir.y);
             float radialLen = glm::length(radial);
             float apexScore = 0.5f * dir.z;
@@ -259,7 +259,7 @@ glm::vec3 Object::getLocalSupportPoint(const glm::vec3& localDirection) const {
             }
             return support;
         }
-        case GeometryType::Polyhedron: {
+        case ShapeKind::Polyhedron: {
             if (polyhedronData.vertices.empty()) {
                 return glm::vec3(dir.x >= 0.0f ? 0.5f : -0.5f,
                                  dir.y >= 0.0f ? 0.5f : -0.5f,
@@ -294,7 +294,7 @@ bool Object::isCollisionShapeConvex() const {
     if (_hasField)   return false; // SDF expressions (morph/boolean) may be non-convex
     if (_hasSmooth)  return geom::isConvex(smoothData);
     if (_hasComplex) return true; // capped cylinder/cone and rounded box are convex
-    if (geometryType != GeometryType::Polyhedron) return true;
+    if (_shapeKind != ShapeKind::Polyhedron) return true;
     return polyhedronData.getIsConvex();
 }
 
@@ -322,8 +322,8 @@ bool Object::computeLocalPointPenetration(const glm::vec3& localPoint,
         return true;
     }
 
-    switch (geometryType) {
-        case GeometryType::Cube: {
+    switch (_shapeKind) {
+        case ShapeKind::Cube: {
             if (std::abs(localPoint.x) > 0.5f || std::abs(localPoint.y) > 0.5f || std::abs(localPoint.z) > 0.5f) {
                 return false;
             }
@@ -345,7 +345,7 @@ bool Object::computeLocalPointPenetration(const glm::vec3& localPoint,
             }
             return true;
         }
-        case GeometryType::Sphere: {
+        case ShapeKind::Sphere: {
             float len = glm::length(localPoint);
             if (len > 0.5f) return false;
 
@@ -358,7 +358,7 @@ bool Object::computeLocalPointPenetration(const glm::vec3& localPoint,
             }
             return true;
         }
-        case GeometryType::Cylinder: {
+        case ShapeKind::Cylinder: {
             glm::vec2 radial(localPoint.x, localPoint.y);
             float radialLen = glm::length(radial);
             if (radialLen > 0.5f || std::abs(localPoint.z) > 0.5f) return false;
@@ -375,7 +375,7 @@ bool Object::computeLocalPointPenetration(const glm::vec3& localPoint,
             }
             return true;
         }
-        case GeometryType::Cone: {
+        case ShapeKind::Cone: {
             float h = localPoint.z + 0.5f;
             if (h < 0.0f || h > 1.0f) return false;
 
@@ -416,7 +416,7 @@ bool Object::computeLocalPointPenetration(const glm::vec3& localPoint,
             }
             return true;
         }
-        case GeometryType::Polyhedron: {
+        case ShapeKind::Polyhedron: {
             if (polyhedronData.vertices.empty() || polyhedronData.faces.empty()) return false;
 
             glm::vec3 closestPoint(0.0f);
@@ -539,8 +539,8 @@ bool Object::isTouching(const Object& other) const {
 
     constexpr float EPS = 1e-5f;
 
-    if (geometryType != GeometryType::Polyhedron ||
-        other.geometryType != GeometryType::Polyhedron ||
+    if (_shapeKind != ShapeKind::Polyhedron ||
+        other._shapeKind != ShapeKind::Polyhedron ||
         polyhedronData.vertices.empty() || polyhedronData.faces.empty() ||
         other.polyhedronData.vertices.empty() || other.polyhedronData.faces.empty()) {
         return false;

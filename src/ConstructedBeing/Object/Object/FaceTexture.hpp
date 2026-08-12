@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Rendering/Renderer.hpp" // TextureHandle
+#include "Singularity/Screen/Renderer.hpp" // TextureHandle
 
 #include <cstdint>
 #include <vector>
