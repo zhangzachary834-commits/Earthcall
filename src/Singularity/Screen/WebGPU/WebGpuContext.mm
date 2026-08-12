@@ -4,7 +4,7 @@
 // requested with the surface as `compatibleSurface`, or it may come back unable
 // to present to that surface.
 
-#include "Rendering/WebGPU/WebGpuContext.hpp"
+#include "Singularity/Screen/WebGPU/WebGpuContext.hpp"
 
 #import <Cocoa/Cocoa.h>
 #import <QuartzCore/CAMetalLayer.h>

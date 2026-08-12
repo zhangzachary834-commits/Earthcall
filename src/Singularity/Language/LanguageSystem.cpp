@@ -113,10 +113,24 @@ void LanguageSystem::tick(float deltaTime) {
                 activeZone.addToFormation(lexA.get());
                 activeZone.addToFormation(lexB.get());
                 
-                auto rel = std::make_shared<Relation>(pr.relationType, *lexA, *lexB, true);
-                activeZone.formation().addRelation(rel);
+                auto rels = activeZone.formation().relations().getRelationsBetween(lexA->getIdentifier(), lexB->getIdentifier());
+                bool found = false;
+                for (auto r : rels) {
+                    if (r->type == pr.relationType) {
+                        float w = r->getWeight();
+                        r->setWeight(std::min(1.0f, w + 0.2f)); // Reinforce existing pathway
+                        found = true;
+                        std::cout << "[LanguageSystem] Reinforced Graph Edge: [" << pr.entityA << "] -> " << pr.relationType << " -> [" << pr.entityB << "] (Weight: " << r->getWeight() << ")" << std::endl;
+                        break;
+                    }
+                }
                 
-                std::cout << "[LanguageSystem] Graph Parse: [" << pr.entityA << "] -> " << pr.relationType << " -> [" << pr.entityB << "]" << std::endl;
+                if (!found) {
+                    auto rel = std::make_shared<Relation>(pr.relationType, *lexA, *lexB, true);
+                    rel->setWeight(0.5f); // Starting confidence
+                    activeZone.formation().addRelation(rel);
+                    std::cout << "[LanguageSystem] New Graph Parse: [" << pr.entityA << "] -> " << pr.relationType << " -> [" << pr.entityB << "]" << std::endl;
+                }
             }
         } else {
             auto lexeme = resolve(u.payload);
@@ -138,7 +152,31 @@ void LanguageSystem::tick(float deltaTime) {
         localQueue.pop();
     }
 
-    // 2. Decay conceptual weights (Future)
+    // 2. Synaptic Plasticity (Decay semantic weights)
+    Zone& activeZone = mgr.active();
+    std::vector<std::shared_ptr<Relation>> toRemove;
+    
+    for (const auto& rel : activeZone.formation().relations().getAll()) {
+        // Skip structural/authored ontology relations
+        if (rel->type == "is_pos" || rel->type == "resolves_to" || rel->type == "member" || rel->type == "attachment" || rel->type == "speaks") {
+            continue;
+        }
+        
+        float w = rel->getWeight();
+        if (w > 0.0f) {
+            w -= 0.02f * deltaTime; // Decay rate
+            if (w <= 0.0f) {
+                toRemove.push_back(rel);
+                std::cout << "[LanguageSystem] Semantic pathway decayed and forgotten: " << rel->getIdentifier() << std::endl;
+            } else {
+                rel->setWeight(w);
+            }
+        }
+    }
+    
+    for (const auto& rel : toRemove) {
+        activeZone.formation().removeRelation(rel);
+    }
 }
 
 void LanguageSystem::queueUtterance(const std::string& payload, const std::string& sourceClient, const std::string& targetSingularId) {
