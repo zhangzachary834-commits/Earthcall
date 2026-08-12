@@ -1,4 +1,5 @@
 #include "ZoneManager.hpp"
+#include "ConstructedBeing/CategoryManager.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
 #include "Util/SaveSystem.hpp"
@@ -27,6 +28,7 @@
 #include <vector>
 
 extern MaterialManager materials;
+extern CategoryManager categories;
 
 void ZoneManager::addZone(Zone&& zone) noexcept
 {
@@ -197,6 +199,7 @@ nlohmann::json ZoneManager::buildSaveJson(const SaveContext& ctx) const {
     j["zones"] = zonesJson;
 
     j["materials"] = materials.toJson();
+    j["categories"] = categories.toJson();
 
     // Camera and player view - accessed through SaveContext
     j["cameraPos"]   = {ctx.camera->pos.x, ctx.camera->pos.y, ctx.camera->pos.z};
@@ -361,6 +364,7 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
 
         // Load material beings
         if (j.contains("materials")) materials.loadFromJson(j["materials"]);
+        if (j.contains("categories")) categories.loadFromJson(j["categories"]);
 
         size_t currentZoneIdx = j.value("currentZone", 0);
         auto& zonesVec = _zones; zonesVec.clear();

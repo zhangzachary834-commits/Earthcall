@@ -9,8 +9,6 @@
 template <typename Owner, typename T>
 class PropertyRef : public Property {
 public:
-    Singular* _singularOwner = nullptr;
-
     PropertyRef(std::string propertyName, Owner* owner, T Owner::*member, Singular* singularOwner = nullptr)
         : _name(std::move(propertyName)), _owner(owner), _member(member), _singularOwner(singularOwner) {
         if constexpr (std::is_base_of_v<Singular, Owner>) {
@@ -75,4 +73,6 @@ private:
     std::string _name;
     Owner* _owner;
     T Owner::*_member;
+public:
+    Singular* _singularOwner = nullptr;
 };

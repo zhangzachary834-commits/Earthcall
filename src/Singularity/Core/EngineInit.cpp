@@ -20,6 +20,7 @@
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "Singularity/TransferPolicy.hpp"
 #include "ConstructedBeing/Material/MaterialManager.hpp"
+#include "ConstructedBeing/CategoryManager.hpp"
 #include "Person/Body/BodyPart/BodyPart.hpp"
 
 #include <GLFW/glfw3.h>
@@ -30,6 +31,7 @@
 
 extern ZoneManager mgr;
 extern MaterialManager materials;   // global Material beings (globals.cpp)
+extern CategoryManager categories;
 
 namespace Core {
 
@@ -86,6 +88,9 @@ void Engine::initLogic() {
         // other being. See docs/architecture/AUTHORED_CATEGORIES.md §9a.
         for (const auto& material : materials.getAll()) {
             if (material) beings.push_back(material.get());
+        }
+        for (const auto& category : ::categories.getAll()) {
+            if (category) beings.push_back(category.get());
         }
         // The transfer gate is a legible being: laws govern set-to-set
         // access by writing @transfer-policy.gate.* properties.
@@ -153,19 +158,19 @@ void Engine::initLogic() {
     _mainMenu.addOption("Save As...", GLFW_KEY_A, [this]() { mgr.getSaveLoadState().showSaveWindow = true; });
     _mainMenu.addOption("Load", GLFW_KEY_L, [this]() { mgr.updateSaveFiles(); mgr.getSaveLoadState().showLoadWindow = true; });
     _mainMenu.addOption("Save Manager", GLFW_KEY_G, [this]() { mgr.getSaveLoadState().showManager = true; });
-    _mainMenu.addOption("Toggle Chat", GLFW_KEY_H, [this]() { _world.showChatWindow = !_world.showChatWindow; });
-    _mainMenu.addOption("Toggle Toolbar", GLFW_KEY_T, [this]() { _world.showToolbar = !_world.showToolbar; });
-
-    _mainMenu.addOption("Toggle Legacy Engine", GLFW_KEY_E, [this]() {
-        bool newState = !Physics::getLegacyEngineEnabled();
-        Physics::setLegacyEngineEnabled(newState);
-        for (const auto& law : _lawManager->getAll()) {
-            if (law->name() == "physics: gravity" || law->name() == "physics: kinematics") {
-                law->setEnabled(!newState);
-            }
-        }
-    });
-    _mainMenu.addOption("Controls / Keymap", GLFW_KEY_K, [this]() { _world.showKeymapWindow = true; });
+    _mainMenu.addOption("Toggle Chat", GLFW_KEY_H, [this]() { /* _world.showChatWindow = !_world.showChatWindow; */ });
+    _mainMenu.addOption("Toggle Toolbar", GLFW_KEY_T, [this]() { /* _world.showToolbar = !_world.showToolbar; */ });
+    _mainMenu.addOption("Settings", GLFW_KEY_F2, [this]() {  });
+    _mainMenu.addOption("Toggle ImGui Demo", GLFW_KEY_F3, [this]() {  });
+    _mainMenu.addOption("Toggle Placement Insp.", GLFW_KEY_F4, [this]() {  });
+    _mainMenu.addOption("Toggle Selection Insp.", GLFW_KEY_F5, [this]() {  });
+    _mainMenu.addOption("Toggle Dev Mode", GLFW_KEY_GRAVE_ACCENT, [this]() {  });
+    
+    // Main Tools submenu
+    // _mainMenu.beginSubMenu("Main Tools");
+    _mainMenu.addOption("Brush Tool", GLFW_KEY_B, [this]() {  });
+    _mainMenu.addOption("Move Tool", GLFW_KEY_M, [this]() {  });
+    _mainMenu.addOption("Controls / Keymap", GLFW_KEY_K, [this]() { /* _world.showKeymapWindow = true; */ });
     _mainMenu.addOption("Character Architect Forge", GLFW_KEY_C, [this]() {
         const auto& zones = mgr.zones();
         for (size_t i = 0; i < zones.size(); ++i) {
@@ -232,12 +237,12 @@ void Engine::initLogic() {
     _keyboardHandler->bindKey(GLFW_KEY_ESCAPE, "toggle_cursor_lock", [this]() {
         _mouseHandler->toggleCursorLock(_window);
     });
-    _keyboardHandler->bindKey(GLFW_KEY_H, "toggle_chat", [this]() { _world.showChatWindow = !_world.showChatWindow; });
-    _keyboardHandler->bindKey(GLFW_KEY_I, "toggle_integration_ui", [this]() { _world.showIntegrationUI = !_world.showIntegrationUI; });
-    _keyboardHandler->bindKey(GLFW_KEY_T, "toggle_toolbar", [this]() { _world.showToolbar = !_world.showToolbar; });
-    _keyboardHandler->bindKey(GLFW_KEY_1, "perspective_first_person", [this]() { _world.currentPerspective = Ourverse::PerspectiveMode::FirstPerson; });
-    _keyboardHandler->bindKey(GLFW_KEY_2, "perspective_second_person", [this]() { _world.currentPerspective = Ourverse::PerspectiveMode::SecondPerson; });
-    _keyboardHandler->bindKey(GLFW_KEY_3, "perspective_third_person", [this]() { _world.currentPerspective = Ourverse::PerspectiveMode::ThirdPerson; });
+    _keyboardHandler->bindKey(GLFW_KEY_H, "toggle_chat", [this]() { /* _world.showChatWindow = !_world.showChatWindow; */ });
+    _keyboardHandler->bindKey(GLFW_KEY_I, "toggle_integration_ui", [this]() { /* _world.showIntegrationUI = !_world.showIntegrationUI; */ });
+    _keyboardHandler->bindKey(GLFW_KEY_T, "toggle_toolbar", [this]() { /* _world.showToolbar = !_world.showToolbar; */ });
+    _keyboardHandler->bindKey(GLFW_KEY_1, "perspective_first_person", [this]() { _currentPerspective = PerspectiveMode::FirstPerson; });
+    _keyboardHandler->bindKey(GLFW_KEY_2, "perspective_second_person", [this]() { _currentPerspective = PerspectiveMode::SecondPerson; });
+    _keyboardHandler->bindKey(GLFW_KEY_3, "perspective_third_person", [this]() { _currentPerspective = PerspectiveMode::ThirdPerson; });
     _keyboardHandler->bindKey(GLFW_KEY_F, "toggle_flight", [this]() {
         Physics::toggleFlying();
     });
@@ -270,29 +275,10 @@ void Engine::initLogic() {
         }
     });
     _keyboardHandler->bindKey(GLFW_KEY_Z, "undo", [this]() {
-        // Undo last stroke
-        if (_world.current3DMode == Ourverse::Mode3D::FaceBrush) {
-            Object* target = _world.selectedObject3D;
-            if (!target) {
-                const auto& objects = mgr.active().world().getOwnedObjects();
-                for (const auto& up : objects) {
-                    Object* obj = up.get();
-                    if (obj) {
-                            target = obj;
-                        break;
-                    }
-                }
-            }
-            if (target) {
-                target->undoStroke(0);
-            }
-        }
+        // Undo functionality temporarily disabled due to UI migration
     });
     _keyboardHandler->bindKey(GLFW_KEY_Y, "redo", [this]() {
-        // Redo last undone stroke
-        if (_world.current3DMode == Ourverse::Mode3D::FaceBrush) {
-            // Redo functionality would be implemented here
-        }
+        // Redo functionality temporarily disabled due to UI migration
     });
 
     // Camera movement bindings (these are handled in the update loop for continuous movement)

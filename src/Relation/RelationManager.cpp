@@ -51,12 +51,20 @@
         Core::EventBus::instance().publish(event);
     }
 }*/
+#include <unordered_set>
+#include <iostream>
 
 void RelationManager::add(const std::shared_ptr<Relation>& r) {
     if (!r) return;
 
+    if (r->type == "subcategory-of" && wouldFormCycle(r->entityA, r->entityB, "subcategory-of")) {
+        std::cerr << "RelationManager::add - Rejecting cycle in subcategory-of: " << r->entityA << " -> " << r->entityB << std::endl;
+        return; // reject cyclic relation
+    }
+
     const Relation& input = *r;
     // Check if an equivalent relation already exists (same type & endpoints)
+
     auto it = std::find_if(relations.begin(), relations.end(), [&](const std::shared_ptr<Relation>& otherPtr) {
         if (!otherPtr) return false;
         const Relation& other = *otherPtr;
@@ -231,11 +239,43 @@ void RelationManager::loadFromJson(const nlohmann::json& j) {
 
 
 std::vector<std::string> RelationManager::findAdjacentEntities(const std::string& entityId, const std::string& relationType) const {
-    std::vector<std::string> result;
-    for (const auto& r : relations) {
-        if (!relationType.empty() && r->type != relationType) continue;
-        if (r->entityA == entityId) result.push_back(r->entityB);
-        else if (!r->directed && r->entityB == entityId) result.push_back(r->entityA);
+    std::vector<std::string> adjacent;
+    for (const auto& relPtr : relations) {
+        if (!relPtr) continue;
+        const Relation& rel = *relPtr;
+        if (!relationType.empty() && rel.type != relationType) continue;
+
+        if (rel.entityA == entityId) {
+            adjacent.push_back(rel.entityB);
+        } else if (!rel.directed && rel.entityB == entityId) {
+            adjacent.push_back(rel.entityA);
+        }
     }
-    return result;
+    return adjacent;
+}
+
+bool RelationManager::wouldFormCycle(const std::string& start, const std::string& target, const std::string& relationType) const {
+    if (start == target) return true;
+    
+    // Trace target's outgoing relations to see if we can reach start
+    std::vector<std::string> queue = {target};
+    std::unordered_set<std::string> visited = {target};
+    
+    while (!queue.empty()) {
+        std::string current = queue.back();
+        queue.pop_back();
+        
+        for (const auto& relPtr : relations) {
+            if (!relPtr) continue;
+            const Relation& rel = *relPtr;
+            if (rel.type == relationType && rel.entityA == current) {
+                if (rel.entityB == start) return true;
+                if (visited.find(rel.entityB) == visited.end()) {
+                    visited.insert(rel.entityB);
+                    queue.push_back(rel.entityB);
+                }
+            }
+        }
+    }
+    return false;
 }

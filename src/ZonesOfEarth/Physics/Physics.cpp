@@ -4,6 +4,7 @@
 #include "Relation/RelationManager.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include <glm/glm.hpp>
 #include <iostream>
 #include <algorithm>
@@ -657,7 +658,21 @@ namespace Physics {
         }
         if (t.limitByObjectType) {
             bool ok = false;
-            for (const auto& s : t.objectTypes) if (obj.getObjectType() == s) { ok = true; break; }
+            for (const auto& s : t.objectTypes) {
+                if (obj.getObjectType() == s) { ok = true; break; }
+                
+                // Also check if obj has an "in-category" relation to s
+                bool inCategory = false;
+                for (const auto* rel : Universe::instance().relations()) {
+                    if (rel && rel->type == "in-category" && 
+                        rel->entityA == obj.getIdentifier() && 
+                        rel->entityB == s) {
+                        inCategory = true;
+                        break;
+                    }
+                }
+                if (inCategory) { ok = true; break; }
+            }
             if (!ok) return false;
         }
         if (t.limitByAttribute) {

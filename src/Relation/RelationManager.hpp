@@ -45,8 +45,11 @@ public:
     std::vector<std::shared_ptr<Relation>> getRelationsOfType(const std::string& type) const;
 
     // Semantic Traversal Utilities (Logos Phase 4)
+    // Semantic Traversal Utilities (Logos Phase 4)
     std::vector<std::string> findAdjacentEntities(const std::string& entityId, const std::string& relationType = "") const;
 
+    // Checks if adding a directed relation from start to target of the given type would form a cycle
+    bool wouldFormCycle(const std::string& start, const std::string& target, const std::string& relationType) const;
 
     // (De)Serialization --------------------------------------------------
     nlohmann::json toJson() const;

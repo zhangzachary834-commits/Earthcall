@@ -183,8 +183,8 @@ public:
     bool _fieldHandleDragging = false;
     bool _blendHandleDragging = false;
 
-    // Perspective
-    Ourverse::PerspectiveMode _currentPerspective = Ourverse::PerspectiveMode::FirstPerson;
+    enum class PerspectiveMode { FirstPerson = 0, SecondPerson, ThirdPerson };
+    PerspectiveMode _currentPerspective = PerspectiveMode::FirstPerson;
 
     
 };

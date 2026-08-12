@@ -1,0 +1,104 @@
+{
+  "categories": [
+    {
+      "objectID": "category.furniture",
+      "name": "Furniture",
+      "shapeKind": 0,
+      "geometryType": 0,
+      "authoredProperties": {
+        "displayName": {"t": "string", "v": "Furniture"}
+      }
+    },
+    {
+      "objectID": "category.chair",
+      "name": "Chair",
+      "shapeKind": 0,
+      "geometryType": 0,
+      "authoredProperties": {
+        "displayName": {"t": "string", "v": "Chair"},
+        "sittable": {"t": "bool", "v": true}
+      }
+    },
+    {
+      "objectID": "category.table",
+      "name": "Table",
+      "shapeKind": 0,
+      "geometryType": 0,
+      "authoredProperties": {
+        "displayName": {"t": "string", "v": "Table"}
+      }
+    }
+  ],
+  "authoredLaws": {
+    "laws": [
+      {
+        "id": "law-inherit-category",
+        "name": "Propagate Category Inheritance",
+        "enabled": true,
+        "authority": 0,
+        "activation": 0,
+        "scope": 0,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": ["System"],
+        "conditionModel": {
+          "kind": 3,
+          "children": [
+            {
+              "kind": 2,
+              "relationType": "instance-of",
+              "otherId": "@event.object"
+            },
+            {
+              "kind": 2,
+              "relationType": "subcategory-of",
+              "otherId": "@event.target"
+            }
+          ]
+        },
+        "actionModel": {
+          "kind": 5,
+          "children": [
+            {
+              "kind": 10,
+              "path": "category-propagated"
+            }
+          ]
+        },
+        "provenance": [
+          {
+            "type": "authored-by",
+            "entityA": "law-inherit-category",
+            "entityB": "System",
+            "directed": true,
+            "weight": 1.0
+          }
+        ]
+      }
+    ],
+    "triggers": {
+      "law-inherit-category": ["relation-formed"]
+    }
+  },
+  "zones": [
+    {
+      "formationRelations": [
+        {
+          "type": "subcategory-of",
+          "entityA": "category.chair",
+          "entityB": "category.furniture",
+          "directed": true,
+          "weight": 1.0
+        },
+        {
+          "type": "subcategory-of",
+          "entityA": "category.table",
+          "entityB": "category.furniture",
+          "directed": true,
+          "weight": 1.0
+        }
+      ]
+    }
+  ]
+}

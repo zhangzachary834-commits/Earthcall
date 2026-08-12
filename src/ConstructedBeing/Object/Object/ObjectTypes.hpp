@@ -14,11 +14,12 @@
 
 // Forward declarations for types used in the type definitions
 namespace geom {
-    class SmoothSurfaceData;
-    class ComplexShapeData;
-    class SdfNode;
+    struct SmoothSurfaceData;
+    struct ComplexShapeData;
+    struct SdfNode;
+    class FieldNode;
     class TessMesh;
-    class BezierPatch;
+    struct BezierPatch;
 }
 
 class PolyhedronData;
