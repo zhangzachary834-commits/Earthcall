@@ -1,0 +1,12 @@
+{
+	"InstallScripts" : 
+	[
+		"/Users/zacharyzhang/Documents/GitHub/Earthcall/build2/cmake_install.cmake",
+		"/Users/zacharyzhang/Documents/GitHub/Earthcall/build2/_deps/glfw-build/cmake_install.cmake",
+		"/Users/zacharyzhang/Documents/GitHub/Earthcall/build2/_deps/glfw-build/src/cmake_install.cmake",
+		"/Users/zacharyzhang/Documents/GitHub/Earthcall/build2/_deps/flatbuffers-build/cmake_install.cmake",
+		"/Users/zacharyzhang/Documents/GitHub/Earthcall/build2/_deps/websocketpp-build/cmake_install.cmake",
+		"/Users/zacharyzhang/Documents/GitHub/Earthcall/build2/_deps/websocketpp-build/websocketpp/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

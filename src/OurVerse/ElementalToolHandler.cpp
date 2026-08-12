@@ -1,7 +1,7 @@
 #include "ElementalToolHandler.hpp"
 #include "imgui.h"
 #include "Tool.hpp"
-#include "Singularity/Core/Game.hpp"
+#include "Singularity/Core/Engine.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "Rendering/BrushSystem.hpp"
 #include <algorithm>
@@ -93,8 +93,8 @@ ElementalToolHandler::~ElementalToolHandler() {
     // Destructor
 }
 
-void ElementalToolHandler::tool_status_update(Core::Game* game, GLFWwindow* window) {
-    (void)game;
+void ElementalToolHandler::tool_status_update(Core::Engine* engine, GLFWwindow* window) {
+    (void)engine;
     (void)window;
     static bool showPaint = true;
     

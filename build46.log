@@ -1,0 +1,579 @@
+[  8%] Built target glfw
+[  8%] Building CXX object CMakeFiles/earthcall_core.dir/src/OurVerse/Tool.cpp.o
+[  8%] Building CXX object CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/Ourverse/OurverseNodeGraph.cpp.o
+[  8%] Building CXX object CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/Ourverse/OurverseSaveLoad.cpp.o
+[  8%] Building CXX object CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/Ourverse/OurverseUI.cpp.o
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:3:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:35:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/PolyhedronData.hpp:12:1: warning: 'PolyhedronData' defined as a struct here but previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   12 | struct PolyhedronData {
+      | ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:24:1: note: did you mean struct here?
+   24 | class PolyhedronData;
+      | ^~~~~
+      | struct
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:3:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:36:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/FaceTexture.hpp:3:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/Renderer.hpp:4:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Geometry/SmoothSurface.hpp:23:1: warning: 'TessMesh' defined as a struct here but previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   23 | struct TessMesh {
+      | ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:20:5: note: did you mean struct here?
+   20 |     class TessMesh;
+      |     ^~~~~
+      |     struct
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:3:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:36:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/FaceTexture.hpp:3:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/Renderer.hpp:4:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Geometry/SmoothSurface.hpp:27:1: warning: 'SmoothSurfaceData' defined as a struct here but previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   27 | struct SmoothSurfaceData {
+      | ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:17:5: note: did you mean struct here?
+   17 |     class SmoothSurfaceData;
+      |     ^~~~~
+      |     struct
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:3:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:36:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/FaceTexture.hpp:3:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/Renderer.hpp:10:18: warning: struct 'SdfNode' was previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   10 | namespace geom { struct SdfNode; class FieldNode; }
+      |                  ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:19:11: note: previous use is here
+   19 |     class SdfNode;
+      |           ^
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:3:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:39:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Geometry/ComplexShape.hpp:70:1: warning: 'ComplexShapeData' defined as a struct here but previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   70 | struct ComplexShapeData {
+      | ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:18:5: note: did you mean struct here?
+   18 |     class ComplexShapeData;
+      |     ^~~~~
+      |     struct
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseNodeGraph.cpp:1:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.hpp:8:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/Zone.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/../World/World.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:35:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/PolyhedronData.hpp:12:1: warning: 'PolyhedronData' defined as a struct here but previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   12 | struct PolyhedronData {
+      | ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:24:1: note: did you mean struct here?
+   24 | class PolyhedronData;
+      | ^~~~~
+      | struct
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:3:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:40:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Geometry/Sdf.hpp:46:1: warning: 'SdfNode' defined as a struct here but previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   46 | struct SdfNode {
+      | ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:19:5: note: did you mean struct here?
+   19 |     class SdfNode;
+      |     ^~~~~
+      |     struct
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseUI.cpp:1:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.hpp:8:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/Zone.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/../World/World.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:35:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/PolyhedronData.hpp:12:1: warning: 'PolyhedronData' defined as a struct here but previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   12 | struct PolyhedronData {
+      | ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:24:1: note: did you mean struct here?
+   24 | class PolyhedronData;
+      | ^~~~~
+      | struct
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:3:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:41:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Geometry/Patch.hpp:16:1: warning: 'BezierPatch' defined as a struct here but previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   16 | struct BezierPatch {
+      | ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:21:5: note: did you mean struct here?
+   21 |     class BezierPatch;
+      |     ^~~~~
+      |     struct
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseNodeGraph.cpp:1:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.hpp:8:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/Zone.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/../World/World.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:36:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/FaceTexture.hpp:3:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/Renderer.hpp:4:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Geometry/SmoothSurface.hpp:23:1: warning: 'TessMesh' defined as a struct here but previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   23 | struct TessMesh {
+      | ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:20:5: note: did you mean struct here?
+   20 |     class TessMesh;
+      |     ^~~~~
+      |     struct
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseNodeGraph.cpp:1:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.hpp:8:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/Zone.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/../World/World.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:36:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/FaceTexture.hpp:3:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/Renderer.hpp:4:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Geometry/SmoothSurface.hpp:27:1: warning: 'SmoothSurfaceData' defined as a struct here but previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   27 | struct SmoothSurfaceData {
+      | ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:17:5: note: did you mean struct here?
+   17 |     class SmoothSurfaceData;
+      |     ^~~~~
+      |     struct
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseNodeGraph.cpp:1:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.hpp:8:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/Zone.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/../World/World.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:36:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/FaceTexture.hpp:3:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/Renderer.hpp:10:18: warning: struct 'SdfNode' was previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   10 | namespace geom { struct SdfNode; class FieldNode; }
+      |                  ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:19:11: note: previous use is here
+   19 |     class SdfNode;
+      |           ^
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseUI.cpp:1:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.hpp:8:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/Zone.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/../World/World.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:36:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/FaceTexture.hpp:3:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/Renderer.hpp:4:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Geometry/SmoothSurface.hpp:23:1: warning: 'TessMesh' defined as a struct here but previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   23 | struct TessMesh {
+      | ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:20:5: note: did you mean struct here?
+   20 |     class TessMesh;
+      |     ^~~~~
+      |     struct
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseUI.cpp:1:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.hpp:8:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/Zone.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/../World/World.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:36:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/FaceTexture.hpp:3:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/Renderer.hpp:4:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Geometry/SmoothSurface.hpp:27:1: warning: 'SmoothSurfaceData' defined as a struct here but previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   27 | struct SmoothSurfaceData {
+      | ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:17:5: note: did you mean struct here?
+   17 |     class SmoothSurfaceData;
+      |     ^~~~~
+      |     struct
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseUI.cpp:1:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.hpp:8:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/Zone.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/../World/World.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:36:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/FaceTexture.hpp:3:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/Renderer.hpp:10:18: warning: struct 'SdfNode' was previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   10 | namespace geom { struct SdfNode; class FieldNode; }
+      |                  ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:19:11: note: previous use is here
+   19 |     class SdfNode;
+      |           ^
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseNodeGraph.cpp:1:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.hpp:8:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/Zone.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/../World/World.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:39:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Geometry/ComplexShape.hpp:70:1: warning: 'ComplexShapeData' defined as a struct here but previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   70 | struct ComplexShapeData {
+      | ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:18:5: note: did you mean struct here?
+   18 |     class ComplexShapeData;
+      |     ^~~~~
+      |     struct
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseNodeGraph.cpp:1:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.hpp:8:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/Zone.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/../World/World.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:40:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Geometry/Sdf.hpp:46:1: warning: 'SdfNode' defined as a struct here but previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   46 | struct SdfNode {
+      | ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:19:5: note: did you mean struct here?
+   19 |     class SdfNode;
+      |     ^~~~~
+      |     struct
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseUI.cpp:1:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.hpp:8:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/Zone.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/../World/World.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:39:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Geometry/ComplexShape.hpp:70:1: warning: 'ComplexShapeData' defined as a struct here but previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   70 | struct ComplexShapeData {
+      | ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:18:5: note: did you mean struct here?
+   18 |     class ComplexShapeData;
+      |     ^~~~~
+      |     struct
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseUI.cpp:1:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.hpp:8:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/Zone.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/../World/World.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:40:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Geometry/Sdf.hpp:46:1: warning: 'SdfNode' defined as a struct here but previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   46 | struct SdfNode {
+      | ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:19:5: note: did you mean struct here?
+   19 |     class SdfNode;
+      |     ^~~~~
+      |     struct
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseNodeGraph.cpp:1:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.hpp:8:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/Zone.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/../World/World.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:41:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Geometry/Patch.hpp:16:1: warning: 'BezierPatch' defined as a struct here but previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   16 | struct BezierPatch {
+      | ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:21:5: note: did you mean struct here?
+   21 |     class BezierPatch;
+      |     ^~~~~
+      |     struct
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseUI.cpp:1:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.hpp:8:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/Zone.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/../World/World.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:41:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Geometry/Patch.hpp:16:1: warning: 'BezierPatch' defined as a struct here but previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   16 | struct BezierPatch {
+      | ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:21:5: note: did you mean struct here?
+   21 |     class BezierPatch;
+      |     ^~~~~
+      |     struct
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:4:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/Engine.hpp:69:49: warning: unused parameter 'type' [-Wunused-parameter]
+   69 |     template<typename T> void begin2DToolDrag(T type, glm::vec2 pos) { _is2DToolDragging = true; _dragStart = pos; _dragCurrent = pos; }
+      |                                                 ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/Engine.hpp:71:50: warning: unused parameter 'type' [-Wunused-parameter]
+   71 |     template<typename T> bool is2DToolDragging(T type) const { return _is2DToolDragging; }
+      |                                                  ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/Engine.hpp:82:30: warning: unused parameter 'index' [-Wunused-parameter]
+   82 |     void setCurrentColor(int index, float val) {} // dummy for now
+      |                              ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/Engine.hpp:82:43: warning: unused parameter 'val' [-Wunused-parameter]
+   82 |     void setCurrentColor(int index, float val) {} // dummy for now
+      |                                           ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/Engine.hpp:137:37: warning: unused parameter 'x' [-Wunused-parameter]
+  137 |     void setRotateLastCursor(double x, double y) {}
+      |                                     ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/Engine.hpp:137:47: warning: unused parameter 'y' [-Wunused-parameter]
+  137 |     void setRotateLastCursor(double x, double y) {}
+      |                                               ^
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseUI.cpp:2:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../../Singularity/Core/Engine.hpp:69:49: warning: unused parameter 'type' [-Wunused-parameter]
+   69 |     template<typename T> void begin2DToolDrag(T type, glm::vec2 pos) { _is2DToolDragging = true; _dragStart = pos; _dragCurrent = pos; }
+      |                                                 ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../../Singularity/Core/Engine.hpp:71:50: warning: unused parameter 'type' [-Wunused-parameter]
+   71 |     template<typename T> bool is2DToolDragging(T type) const { return _is2DToolDragging; }
+      |                                                  ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../../Singularity/Core/Engine.hpp:82:30: warning: unused parameter 'index' [-Wunused-parameter]
+   82 |     void setCurrentColor(int index, float val) {} // dummy for now
+      |                              ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../../Singularity/Core/Engine.hpp:82:43: warning: unused parameter 'val' [-Wunused-parameter]
+   82 |     void setCurrentColor(int index, float val) {} // dummy for now
+      |                                           ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../../Singularity/Core/Engine.hpp:137:37: warning: unused parameter 'x' [-Wunused-parameter]
+  137 |     void setRotateLastCursor(double x, double y) {}
+      |                                     ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../../Singularity/Core/Engine.hpp:137:47: warning: unused parameter 'y' [-Wunused-parameter]
+  137 |     void setRotateLastCursor(double x, double y) {}
+      |                                               ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseUI.cpp:6:41: warning: unused parameter 'zone' [-Wunused-parameter]
+    6 | void Ourverse::renderPaintConsole(Zone& zone) {}
+      |                                         ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseUI.cpp:10:42: warning: unused parameter 'zone' [-Wunused-parameter]
+   10 | void Ourverse::renderAssetsConsole(Zone& zone) {}
+      |                                          ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseUI.cpp:11:52: warning: unused parameter 'zoneMgr' [-Wunused-parameter]
+   11 | void Ourverse::renderRelationsConsole(ZoneManager& zoneMgr) {}
+      |                                                    ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseUI.cpp:13:51: warning: unused parameter 'section' [-Wunused-parameter]
+   13 | void Ourverse::renderSectionButton(CreatorSection section, const char* label) {}
+      |                                                   ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseUI.cpp:13:72: warning: unused parameter 'label' [-Wunused-parameter]
+   13 | void Ourverse::renderSectionButton(CreatorSection section, const char* label) {}
+      |                                                                        ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseUI.cpp:14:42: warning: unused parameter 'mode' [-Wunused-parameter]
+   14 | void Ourverse::render3DModeButton(Mode3D mode, const char* label) {}
+      |                                          ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseUI.cpp:14:60: warning: unused parameter 'label' [-Wunused-parameter]
+   14 | void Ourverse::render3DModeButton(Mode3D mode, const char* label) {}
+      |                                                            ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:954:61: error: no member named 'PotteryTool' in 'Core::Engine'; did you mean 'Core::PotteryTool'?
+  954 |             float dir = (engine->getCurrentPotteryTool() == Core::Engine::PotteryTool::Expand) ? 1.0f : -1.0f;
+      |                                                             ^~~~~~~~~~~~~~~~~~~~~~~~~
+      |                                                             Core::PotteryTool
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/Engine.hpp:19:16: note: 'Core::PotteryTool' declared here
+   19 |     enum class PotteryTool { Pinch, Pull, Push, Smooth, Flatten, Sharpen, Expand };
+      |                ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:1030:21: warning: variable 'hit' set but not used [-Wunused-but-set-variable]
+ 1030 |         if (Object* hit = pickNearestObject(targets, rayOrigin, rayDir)) {
+      |                     ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:1055:26: error: no member named 'RotationAxisMode' in 'Core::Engine'; did you mean 'Core::RotationAxisMode'?
+ 1055 |                     case Core::Engine::RotationAxisMode::FreeXY:
+      |                          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                          Core::RotationAxisMode
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/Engine.hpp:20:16: note: 'Core::RotationAxisMode' declared here
+   20 |     enum class RotationAxisMode { Free, X, Y, Z, FreeXY, AuthoritativeAxis };
+      |                ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:1059:26: error: no member named 'RotationAxisMode' in 'Core::Engine'; did you mean 'Core::RotationAxisMode'?
+ 1059 |                     case Core::Engine::RotationAxisMode::X:
+      |                          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                          Core::RotationAxisMode
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/Engine.hpp:20:16: note: 'Core::RotationAxisMode' declared here
+   20 |     enum class RotationAxisMode { Free, X, Y, Z, FreeXY, AuthoritativeAxis };
+      |                ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:1062:26: error: no member named 'RotationAxisMode' in 'Core::Engine'; did you mean 'Core::RotationAxisMode'?
+ 1062 |                     case Core::Engine::RotationAxisMode::Y:
+      |                          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                          Core::RotationAxisMode
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/Engine.hpp:20:16: note: 'Core::RotationAxisMode' declared here
+   20 |     enum class RotationAxisMode { Free, X, Y, Z, FreeXY, AuthoritativeAxis };
+      |                ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:1065:26: error: no member named 'RotationAxisMode' in 'Core::Engine'; did you mean 'Core::RotationAxisMode'?
+ 1065 |                     case Core::Engine::RotationAxisMode::Z:
+      |                          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                          Core::RotationAxisMode
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/Engine.hpp:20:16: note: 'Core::RotationAxisMode' declared here
+   20 |     enum class RotationAxisMode { Free, X, Y, Z, FreeXY, AuthoritativeAxis };
+      |                ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:1068:26: error: no member named 'RotationAxisMode' in 'Core::Engine'; did you mean 'Core::RotationAxisMode'?
+ 1068 |                     case Core::Engine::RotationAxisMode::AuthoritativeAxis: {
+      |                          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                          Core::RotationAxisMode
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/Engine.hpp:20:16: note: 'Core::RotationAxisMode' declared here
+   20 |     enum class RotationAxisMode { Free, X, Y, Z, FreeXY, AuthoritativeAxis };
+      |                ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:1054:33: warning: enumeration value 'Free' not handled in switch [-Wswitch]
+ 1054 |                 switch (engine->getRotationAxisMode()) {
+      |                         ~~~~~~~~^~~~~~~~~~~~~~~~~~~~~
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:1054:33: note: add missing switch cases
+ 1054 |                 switch (engine->getRotationAxisMode()) {
+      |                                 ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:1143:67: error: cannot initialize a parameter of type 'const GradientSettings *' with an lvalue of type 'void *'
+ 1143 |                                                                   gradientSettings, smudgeSettings);
+      |                                                                   ^~~~~~~~~~~~~~~~
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/AdvancedFacePaint.hpp:121:51: note: passing argument to parameter 'gradient' here
+  121 |                           const GradientSettings* gradient = nullptr, 
+      |                                                   ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:1202:41: error: too few arguments to function call, expected 2, have 1
+ 1202 |             engine->setBrushCursorPos(uv);
+      |             ~~~~~~~~~~~~~~~~~~~~~~~~~   ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/Engine.hpp:168:10: note: 'setBrushCursorPos' declared here
+  168 |     void setBrushCursorPos(float, float) {}
+      |          ^                 ~~~~~~~~~~~~
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:1226:32: error: no member named 'PublicBrushType' in 'Core::Engine'
+ 1226 |             case Core::Engine::PublicBrushType::Normal:
+      |                  ~~~~~~~~~~~~~~^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:1243:61: error: no member named 'getBrushFlow' in 'Core::Engine'
+ 1243 |                                               0.0f, engine->getBrushFlow(), 0);
+      |                                                     ~~~~~~  ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:1247:32: error: no member named 'PublicBrushType' in 'Core::Engine'
+ 1247 |             case Core::Engine::PublicBrushType::Airbrush:
+      |                  ~~~~~~~~~~~~~~^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:1253:32: error: no member named 'PublicBrushType' in 'Core::Engine'
+ 1253 |             case Core::Engine::PublicBrushType::Chalk:
+      |                  ~~~~~~~~~~~~~~^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:1257:57: error: no member named 'getBrushFlow' in 'Core::Engine'
+ 1257 |                                           0.0f, engine->getBrushFlow(), 2);
+      |                                                 ~~~~~~  ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:1260:32: error: no member named 'PublicBrushType' in 'Core::Engine'
+ 1260 |             case Core::Engine::PublicBrushType::Spray:
+      |                  ~~~~~~~~~~~~~~^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:1264:57: error: no member named 'getBrushFlow' in 'Core::Engine'
+ 1264 |                                           0.0f, engine->getBrushFlow(), 3);
+      |                                                 ~~~~~~  ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:1267:32: error: no member named 'PublicBrushType' in 'Core::Engine'
+ 1267 |             case Core::Engine::PublicBrushType::Smudge:
+      |                  ~~~~~~~~~~~~~~^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:1272:32: error: no member named 'PublicBrushType' in 'Core::Engine'
+ 1272 |             case Core::Engine::PublicBrushType::Clone:
+      |                  ~~~~~~~~~~~~~~^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:1275:45: error: invalid operands to binary expression ('glm::vec2' (aka 'vec<2, float, defaultp>') and 'glm::vec3' (aka 'vec<3, float, defaultp>'))
+ 1275 |                     glm::vec2 sourceUV = uv + glm::vec3(0);
+      |                                          ~~ ^ ~~~~~~~~~~~~
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/./ext/../detail/type_vec2.inl:477:48: note: candidate template ignored: deduced conflicting types for parameter 'T' ('float' vs. 'glm::vec3' (aka 'vec<3, float, defaultp>'))
+  477 |         GLM_FUNC_QUALIFIER GLM_CONSTEXPR vec<2, T, Q> operator+(vec<2, T, Q> const& v, T scalar)
+      |                                                       ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/./ext/../detail/type_vec3.inl:598:48: note: candidate template ignored: deduced conflicting types for parameter 'T' ('glm::vec2' (aka 'vec<2, float, defaultp>') vs. 'float')
+  598 |         GLM_FUNC_QUALIFIER GLM_CONSTEXPR vec<3, T, Q> operator+(T scalar, vec<3, T, Q> const& v)
+      |                                                       ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/./ext/../detail/type_vec2.inl:485:48: note: candidate template ignored: could not match 1 against 3
+  485 |         GLM_FUNC_QUALIFIER GLM_CONSTEXPR vec<2, T, Q> operator+(vec<2, T, Q> const& v1, vec<1, T, Q> const& v2)
+      |                                                       ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/./ext/../detail/type_vec2.inl:493:48: note: candidate template ignored: could not match 2 against 3
+  493 |         GLM_FUNC_QUALIFIER GLM_CONSTEXPR vec<2, T, Q> operator+(T scalar, vec<2, T, Q> const& v)
+      |                                                       ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/./ext/../detail/type_vec2.inl:501:48: note: candidate template ignored: could not match 1 against 2
+  501 |         GLM_FUNC_QUALIFIER GLM_CONSTEXPR vec<2, T, Q> operator+(vec<1, T, Q> const& v1, vec<2, T, Q> const& v2)
+      |                                                       ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/./ext/../detail/type_vec2.inl:509:48: note: candidate template ignored: could not match 2 against 3
+  509 |         GLM_FUNC_QUALIFIER GLM_CONSTEXPR vec<2, T, Q> operator+(vec<2, T, Q> const& v1, vec<2, T, Q> const& v2)
+      |                                                       ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/./ext/../detail/type_vec3.inl:580:48: note: candidate template ignored: could not match 3 against 2
+  580 |         GLM_FUNC_QUALIFIER GLM_CONSTEXPR vec<3, T, Q> operator+(vec<3, T, Q> const& v, T scalar)
+      |                                                       ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/./ext/../detail/type_vec3.inl:589:48: note: candidate template ignored: could not match 3 against 2
+  589 |         GLM_FUNC_QUALIFIER GLM_CONSTEXPR vec<3, T, Q> operator+(vec<3, T, Q> const& v, vec<1, T, Q> const& scalar)
+      |                                                       ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/./ext/../detail/type_vec3.inl:607:48: note: candidate template ignored: could not match 1 against 2
+  607 |         GLM_FUNC_QUALIFIER GLM_CONSTEXPR vec<3, T, Q> operator+(vec<1, T, Q> const& scalar, vec<3, T, Q> const& v)
+      |                                                       ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/./ext/../detail/type_vec3.inl:616:48: note: candidate template ignored: could not match 3 against 2
+  616 |         GLM_FUNC_QUALIFIER GLM_CONSTEXPR vec<3, T, Q> operator+(vec<3, T, Q> const& v1, vec<3, T, Q> const& v2)
+      |                                                       ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/./ext/../detail/type_vec4.inl:804:48: note: candidate template ignored: could not match 4 against 2
+  804 |         GLM_FUNC_QUALIFIER GLM_CONSTEXPR vec<4, T, Q> operator+(vec<4, T, Q> const& v, T const & scalar)
+      |                                                       ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/./ext/../detail/type_vec4.inl:810:48: note: candidate template ignored: could not match 4 against 2
+  810 |         GLM_FUNC_QUALIFIER GLM_CONSTEXPR vec<4, T, Q> operator+(vec<4, T, Q> const& v1, vec<1, T, Q> const& v2)
+      |                                                       ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/./ext/../detail/type_vec4.inl:816:48: note: candidate template ignored: could not match 4 against 3
+  816 |         GLM_FUNC_QUALIFIER GLM_CONSTEXPR vec<4, T, Q> operator+(T scalar, vec<4, T, Q> const& v)
+      |                                                       ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/./ext/../detail/type_vec4.inl:822:48: note: candidate template ignored: could not match 1 against 2
+  822 |         GLM_FUNC_QUALIFIER GLM_CONSTEXPR vec<4, T, Q> operator+(vec<1, T, Q> const& v1, vec<4, T, Q> const& v2)
+      |                                                       ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/./ext/../detail/type_vec4.inl:828:48: note: candidate template ignored: could not match 4 against 2
+  828 |         GLM_FUNC_QUALIFIER GLM_CONSTEXPR vec<4, T, Q> operator+(vec<4, T, Q> const& v1, vec<4, T, Q> const& v2)
+      |                                                       ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/./ext/../detail/.././ext/../detail/type_mat2x3.inl:351:37: note: candidate template ignored: could not match 'mat' against 'glm::vec'
+  351 |         GLM_FUNC_QUALIFIER mat<2, 3, T, Q> operator+(mat<2, 3, T, Q> const& m, T scalar)
+      |                                            ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/./ext/../detail/.././ext/../detail/type_mat2x3.inl:359:37: note: candidate template ignored: could not match 'mat' against 'glm::vec'
+  359 |         GLM_FUNC_QUALIFIER mat<2, 3, T, Q> operator+(mat<2, 3, T, Q> const& m1, mat<2, 3, T, Q> const& m2)
+      |                                            ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/./ext/../detail/.././ext/../detail/type_mat2x4.inl:353:37: note: candidate template ignored: could not match 'mat' against 'glm::vec'
+  353 |         GLM_FUNC_QUALIFIER mat<2, 4, T, Q> operator+(mat<2, 4, T, Q> const& m, T scalar)
+      |                                            ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/./ext/../detail/.././ext/../detail/type_mat2x4.inl:361:37: note: candidate template ignored: could not match 'mat' against 'glm::vec'
+  361 |         GLM_FUNC_QUALIFIER mat<2, 4, T, Q> operator+(mat<2, 4, T, Q> const& m1, mat<2, 4, T, Q> const& m2)
+      |                                            ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/./ext/../detail/.././ext/../detail/type_mat3x2.inl:380:37: note: candidate template ignored: could not match 'mat' against 'glm::vec'
+  380 |         GLM_FUNC_QUALIFIER mat<3, 2, T, Q> operator+(mat<3, 2, T, Q> const& m, T scalar)
+      |                                            ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/./ext/../detail/.././ext/../detail/type_mat3x2.inl:389:37: note: candidate template ignored: could not match 'mat' against 'glm::vec'
+  389 |         GLM_FUNC_QUALIFIER mat<3, 2, T, Q> operator+(mat<3, 2, T, Q> const& m1, mat<3, 2, T, Q> const& m2)
+      |                                            ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/./ext/../detail/.././ext/../detail/type_mat3x3.inl:396:37: note: candidate template ignored: could not match 'mat' against 'glm::vec'
+  396 |         GLM_FUNC_QUALIFIER mat<3, 3, T, Q> operator+(mat<3, 3, T, Q> const& m, T scalar)
+      |                                            ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/./ext/../detail/.././ext/../detail/type_mat3x3.inl:405:37: note: candidate template ignored: could not match 'mat' against 'glm::vec'
+  405 |         GLM_FUNC_QUALIFIER mat<3, 3, T, Q> operator+(T scalar, mat<3, 3, T, Q> const& m)
+      |                                            ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/./ext/../detail/.././ext/../detail/type_mat3x3.inl:414:37: note: candidate template ignored: could not match 'mat' against 'glm::vec'
+  414 |         GLM_FUNC_QUALIFIER mat<3, 3, T, Q> operator+(mat<3, 3, T, Q> const& m1, mat<3, 3, T, Q> const& m2)
+      |                                            ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/./ext/../detail/.././ext/../detail/type_mat3x4.inl:386:37: note: candidate template ignored: could not match 'mat' against 'glm::vec'
+  386 |         GLM_FUNC_QUALIFIER mat<3, 4, T, Q> operator+(mat<3, 4, T, Q> const& m, T scalar)
+      |                                            ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/./ext/../detail/.././ext/../detail/type_mat3x4.inl:395:37: note: candidate template ignored: could not match 'mat' against 'glm::vec'
+  395 |         GLM_FUNC_QUALIFIER mat<3, 4, T, Q> operator+(mat<3, 4, T, Q> const& m1, mat<3, 4, T, Q> const& m2)
+      |                                            ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/./ext/../detail/.././ext/../detail/type_mat4x2.inl:409:37: note: candidate template ignored: could not match 'mat' against 'glm::vec'
+  409 |         GLM_FUNC_QUALIFIER mat<4, 2, T, Q> operator+(mat<4, 2, T, Q> const& m, T scalar)
+      |                                            ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/./ext/../detail/.././ext/../detail/type_mat4x2.inl:419:37: note: candidate template ignored: could not match 'mat' against 'glm::vec'
+  419 |         GLM_FUNC_QUALIFIER mat<4, 2, T, Q> operator+(mat<4, 2, T, Q> const& m1, mat<4, 2, T, Q> const& m2)
+      |                                            ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/./ext/../detail/.././ext/../detail/type_mat4x3.inl:409:37: note: candidate template ignored: could not match 'mat' against 'glm::vec'
+  409 |         GLM_FUNC_QUALIFIER mat<4, 3, T, Q> operator+(mat<4, 3, T, Q> const& m, T const& s)
+      |                                            ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/./ext/../detail/.././ext/../detail/type_mat4x3.inl:419:37: note: candidate template ignored: could not match 'mat' against 'glm::vec'
+  419 |         GLM_FUNC_QUALIFIER mat<4, 3, T, Q> operator+(mat<4, 3, T, Q> const& m1, mat<4, 3, T, Q> const& m2)
+      |                                            ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/./ext/../detail/.././ext/../detail/type_mat4x4.inl:456:37: note: candidate template ignored: could not match 'mat' against 'glm::vec'
+  456 |         GLM_FUNC_QUALIFIER mat<4, 4, T, Q> operator+(mat<4, 4, T, Q> const& m, T const& s)
+      |                                            ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/./ext/../detail/.././ext/../detail/type_mat4x4.inl:466:37: note: candidate template ignored: could not match 'mat' against 'glm::vec'
+  466 |         GLM_FUNC_QUALIFIER mat<4, 4, T, Q> operator+(T const& s, mat<4, 4, T, Q> const& m)
+      |                                            ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/./ext/../detail/.././ext/../detail/type_mat4x4.inl:476:37: note: candidate template ignored: could not match 'mat' against 'glm::vec'
+  476 |         GLM_FUNC_QUALIFIER mat<4, 4, T, Q> operator+(mat<4, 4, T, Q> const& m1, mat<4, 4, T, Q> const& m2)
+      |                                            ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/./ext/../detail/../detail/../detail/../detail/type_vec1.inl:307:48: note: candidate template ignored: could not match 1 against 2
+  307 |         GLM_FUNC_QUALIFIER GLM_CONSTEXPR vec<1, T, Q> operator+(vec<1, T, Q> const& v, T scalar)
+      |                                                       ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/./ext/../detail/../detail/../detail/../detail/type_vec1.inl:314:48: note: candidate template ignored: could not match 1 against 3
+  314 |         GLM_FUNC_QUALIFIER GLM_CONSTEXPR vec<1, T, Q> operator+(T scalar, vec<1, T, Q> const& v)
+      |                                                       ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/./ext/../detail/../detail/../detail/../detail/type_vec1.inl:321:48: note: candidate template ignored: could not match 1 against 2
+  321 |         GLM_FUNC_QUALIFIER GLM_CONSTEXPR vec<1, T, Q> operator+(vec<1, T, Q> const& v1, vec<1, T, Q> const& v2)
+      |                                                       ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/./ext/../detail/type_mat2x2.inl:365:37: note: candidate template ignored: could not match 'mat' against 'glm::vec'
+  365 |         GLM_FUNC_QUALIFIER mat<2, 2, T, Q> operator+(mat<2, 2, T, Q> const& m, T scalar)
+      |                                            ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/./ext/../detail/type_mat2x2.inl:373:37: note: candidate template ignored: could not match 'mat' against 'glm::vec'
+  373 |         GLM_FUNC_QUALIFIER mat<2, 2, T, Q> operator+(T scalar, mat<2, 2, T, Q> const& m)
+      |                                            ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/./ext/../detail/type_mat2x2.inl:381:37: note: candidate template ignored: could not match 'mat' against 'glm::vec'
+  381 |         GLM_FUNC_QUALIFIER mat<2, 2, T, Q> operator+(mat<2, 2, T, Q> const& m1, mat<2, 2, T, Q> const& m2)
+      |                                            ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/../gtc/../ext/../detail/type_quat.inl:325:45: note: candidate template ignored: could not match 'qua' against 'glm::vec'
+  325 |         GLM_FUNC_QUALIFIER GLM_CONSTEXPR qua<T, Q> operator+(qua<T, Q> const& q, qua<T, Q> const& p)
+      |                                                    ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/./ext/../detail/type_vec2.inl:461:48: note: candidate function template not viable: requires single argument 'v', but 2 arguments were provided
+  461 |         GLM_FUNC_QUALIFIER GLM_CONSTEXPR vec<2, T, Q> operator+(vec<2, T, Q> const& v)
+      |                                                       ^         ~~~~~~~~~~~~~~~~~~~~~
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/./ext/../detail/type_vec3.inl:563:48: note: candidate function template not viable: requires single argument 'v', but 2 arguments were provided
+  563 |         GLM_FUNC_QUALIFIER GLM_CONSTEXPR vec<3, T, Q> operator+(vec<3, T, Q> const& v)
+      |                                                       ^         ~~~~~~~~~~~~~~~~~~~~~
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/./ext/../detail/type_vec4.inl:790:48: note: candidate function template not viable: requires single argument 'v', but 2 arguments were provided
+  790 |         GLM_FUNC_QUALIFIER GLM_CONSTEXPR vec<4, T, Q> operator+(vec<4, T, Q> const& v)
+      |                                                       ^         ~~~~~~~~~~~~~~~~~~~~~
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/./ext/../detail/type_mat2x2.inl:349:37: note: candidate function template not viable: requires single argument 'm', but 2 arguments were provided
+  349 |         GLM_FUNC_QUALIFIER mat<2, 2, T, Q> operator+(mat<2, 2, T, Q> const& m)
+      |                                            ^         ~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/./ext/../detail/.././ext/../detail/type_mat2x3.inl:335:37: note: candidate function template not viable: requires single argument 'm', but 2 arguments were provided
+  335 |         GLM_FUNC_QUALIFIER mat<2, 3, T, Q> operator+(mat<2, 3, T, Q> const& m)
+      |                                            ^         ~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/./ext/../detail/.././ext/../detail/type_mat2x4.inl:337:37: note: candidate function template not viable: requires single argument 'm', but 2 arguments were provided
+  337 |         GLM_FUNC_QUALIFIER mat<2, 4, T, Q> operator+(mat<2, 4, T, Q> const& m)
+      |                                            ^         ~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/./ext/../detail/.././ext/../detail/type_mat3x2.inl:363:37: note: candidate function template not viable: requires single argument 'm', but 2 arguments were provided
+  363 |         GLM_FUNC_QUALIFIER mat<3, 2, T, Q> operator+(mat<3, 2, T, Q> const& m)
+      |                                            ^         ~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/./ext/../detail/.././ext/../detail/type_mat3x3.inl:379:37: note: candidate function template not viable: requires single argument 'm', but 2 arguments were provided
+  379 |         GLM_FUNC_QUALIFIER mat<3, 3, T, Q> operator+(mat<3, 3, T, Q> const& m)
+      |                                            ^         ~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/./ext/../detail/.././ext/../detail/type_mat3x4.inl:369:37: note: candidate function template not viable: requires single argument 'm', but 2 arguments were provided
+  369 |         GLM_FUNC_QUALIFIER mat<3, 4, T, Q> operator+(mat<3, 4, T, Q> const& m)
+      |                                            ^         ~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/./ext/../detail/.././ext/../detail/type_mat4x2.inl:391:37: note: candidate function template not viable: requires single argument 'm', but 2 arguments were provided
+  391 |         GLM_FUNC_QUALIFIER mat<4, 2, T, Q> operator+(mat<4, 2, T, Q> const& m)
+      |                                            ^         ~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/./ext/../detail/.././ext/../detail/type_mat4x3.inl:391:37: note: candidate function template not viable: requires single argument 'm', but 2 arguments were provided
+  391 |         GLM_FUNC_QUALIFIER mat<4, 3, T, Q> operator+(mat<4, 3, T, Q> const& m)
+      |                                            ^         ~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/./ext/../detail/.././ext/../detail/type_mat4x4.inl:438:37: note: candidate function template not viable: requires single argument 'm', but 2 arguments were provided
+  438 |         GLM_FUNC_QUALIFIER mat<4, 4, T, Q> operator+(mat<4, 4, T, Q> const& m)
+      |                                            ^         ~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/./ext/../detail/../detail/../detail/../detail/type_vec1.inl:292:48: note: candidate function template not viable: requires single argument 'v', but 2 arguments were provided
+  292 |         GLM_FUNC_QUALIFIER GLM_CONSTEXPR vec<1, T, Q> operator+(vec<1, T, Q> const& v)
+      |                                                       ^         ~~~~~~~~~~~~~~~~~~~~~
+/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include/glm/gtc/../gtc/../ext/../detail/type_quat.inl:311:45: note: candidate function template not viable: requires single argument 'q', but 2 arguments were provided
+  311 |         GLM_FUNC_QUALIFIER GLM_CONSTEXPR qua<T, Q> operator+(qua<T, Q> const& q)
+      |                                                    ^         ~~~~~~~~~~~~~~~~~~
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:1303:52: warning: unused parameter 'targets' [-Wunused-parameter]
+ 1303 |                        const std::vector<Object*>& targets)
+      |                                                    ^
+7 warnings generated.
+20 warnings generated.
+16 warnings and 18 errors generated.
+make[3]: *** [CMakeFiles/earthcall_core.dir/src/OurVerse/Tool.cpp.o] Error 1
+make[2]: *** [CMakeFiles/earthcall_core.dir/all] Error 2
+make[1]: *** [CMakeFiles/earthcall.dir/rule] Error 2
+make: *** [earthcall] Error 2

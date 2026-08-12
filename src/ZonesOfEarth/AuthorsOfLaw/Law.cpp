@@ -289,6 +289,15 @@ std::shared_ptr<Law> Law::fromJson(const nlohmann::json& j) {
     if (j.contains("actionModel")) {
         law->setActionModel(ActionNode::fromJson(j["actionModel"]));
     }
+    // The law's descent, restored. `toJson` has always written provenance and
+    // this never read it back, so "synthesized-from" — the whole record of
+    // which laws a higher law was made out of — survived exactly until the
+    // next load. Authors and targets are still reattached by the world loader
+    // (they are live members, not recorded edges); this is the ANCESTRY, and
+    // it is recorded by identifier, so it restores here on its own.
+    if (j.contains("provenance")) {
+        law->_provenance.loadFromJson(j["provenance"]);
+    }
     return law;
 }
 

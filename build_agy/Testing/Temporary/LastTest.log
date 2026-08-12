@@ -1,0 +1,1402 @@
+Start testing: Aug 11 18:58 PDT
+----------------------------------------------------------
+Unable to find executable: /Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy/webgpu_particle_test
+35/37 Testing: webgpu_particle_test
+35/37 Test: webgpu_particle_test
+Command: ""
+Directory: /Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy
+"webgpu_particle_test" start time: 
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"webgpu_particle_test" end time: Aug 11 18:58 PDT
+"webgpu_particle_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+29/37 Testing: rete_compile_test
+29/37 Test: rete_compile_test
+Command: "/Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy/rete_compile_test"
+Directory: /Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy
+"rete_compile_test" start time: Aug 11 18:58 PDT
+Output:
+----------------------------------------------------------
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-1'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-2'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-3'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-4'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-5'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-6'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-7'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-8'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-9'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-10'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-11'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-12'. This object should not be reliably targeted by Law text.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation law-2-targets-object-6. Falling back to 1.0f in developer mode.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-13'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-14'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-15'. This object should not be reliably targeted by Law text.
+rete_compile_test: ALL OK
+<end of output>
+Test time =   0.84 sec
+----------------------------------------------------------
+Test Passed.
+"rete_compile_test" end time: Aug 11 18:58 PDT
+"rete_compile_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+13/37 Testing: identity_test
+13/37 Test: identity_test
+Command: "/Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy/identity_test"
+Directory: /Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy
+"identity_test" start time: Aug 11 18:58 PDT
+Output:
+----------------------------------------------------------
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-1'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-2'. This object should not be reliably targeted by Law text.
+identity_test:
+  id round-trip OK (did:xiqbrzc3…)
+  2000 minted ids, no collisions OK
+  malformed ids rejected OK
+  sign/verify + tamper detection OK
+  seed restores identity OK
+  ownership claim verifies through save round-trip OK
+  save-file tampering rejected on all 6 fields OK
+  distinct identities under one display name OK
+  canonicalization attack rejected OK
+  garbage and wrong-typed claims rejected OK
+  key store seals and restores an identity OK
+  key store rejects wrong passphrase OK
+  key store detects header and ciphertext tampering OK
+  default key directory is outside saves/ OK (/Users/zacharyzhang/.earthcall/identity)
+identity_test: ALL OK
+<end of output>
+Test time =   1.55 sec
+----------------------------------------------------------
+Test Passed.
+"identity_test" end time: Aug 11 18:58 PDT
+"identity_test" time elapsed: 00:00:01
+----------------------------------------------------------
+
+15/37 Testing: law_creation_test
+15/37 Test: law_creation_test
+Command: "/Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy/law_creation_test"
+Directory: /Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy
+"law_creation_test" start time: Aug 11 18:58 PDT
+Output:
+----------------------------------------------------------
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-1'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-2'. This object should not be reliably targeted by Law text.
+Running Law Creation Test...
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-3'. This object should not be reliably targeted by Law text.
+
+[1] Create
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-4'. This object should not be reliably targeted by Law text.
+  ok: one object was born
+  ok: the newborn carries its authored type
+  ok: the newborn has the authored shape kind
+  ok: an unplaced newborn stands where the subject stands
+  ok: the newborn has an identity of its own
+
+[2] Create with children
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-5'. This object should not be reliably targeted by Law text.
+  ok: the second newborn exists
+  ok: a child Set shaped the newborn, not the subject
+  ok: the subject was left alone
+  ok: a child AddProperty granted the newborn a property at birth
+
+[3] AddProperty / RemoveProperty
+  ok: the property was granted
+  ok: it was granted its opening value
+  ok: the granted property reads through PropertyPath
+  ok: granting a name the engine already owns is refused
+  ok: the granted property was revoked
+  ok: a first-mover property clears to empty rather than vanishing
+  ok: ...and its slot still exists
+
+[4] AddElement / RemoveElement
+  ok: both newborns are still present
+  ok: the container gained an element
+  ok: ...and it is the being we named
+  ok: composition is directed, not mutual
+  ok: an empty container token means the subject
+  ok: the element was released
+  ok: releasing an element does not destroy it
+
+[5] Destroy
+  ok: the lantern holds the beacon
+  ok: the ask alone frees nothing — the caller's pointers stay valid
+  ok: ...but it is already gone as far as law is concerned
+  ok: no sweep can reach a being awaiting the reaper
+  ok: no sweep can reach a being awaiting the reaper
+  ok: no sweep can reach a being awaiting the reaper
+  ok: the object is gone
+  ok: ...by identity
+  ok: the unmaking was announced while the being still existed
+  ok: every composition that held it released it first
+
+[6] JSON round-trip
+  ok: kind survives
+  ok: shape kind survives
+  ok: authored type survives
+  ok: children survive
+  ok: a granted property's name survives
+  ok: participant tokens survive
+  ok: round-trip: RemoveProperty
+  ok: round-trip: RemoveElement
+  ok: round-trip: Destroy
+
+SUCCESS — 42 checks passed.
+<end of output>
+Test time =   1.71 sec
+----------------------------------------------------------
+Test Passed.
+"law_creation_test" end time: Aug 11 18:58 PDT
+"law_creation_test" time elapsed: 00:00:01
+----------------------------------------------------------
+
+18/37 Testing: law_model_test
+18/37 Test: law_model_test
+Command: "/Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy/law_model_test"
+Directory: /Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy
+"law_model_test" start time: Aug 11 18:58 PDT
+Output:
+----------------------------------------------------------
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-1'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-2'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-3'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-4'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-5'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-6'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-7'. This object should not be reliably targeted by Law text.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation law-1-authored-by-object-3. Falling back to 1.0f in developer mode.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-8'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-9'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-10'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-11'. This object should not be reliably targeted by Law text.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation law-3-authored-by-object-3. Falling back to 1.0f in developer mode.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-12'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-13'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-14'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-15'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-16'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-17'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-18'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-19'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-20'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-21'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-22'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-23'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-24'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-25'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-26'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-27'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-28'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-29'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-30'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-31'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-32'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-33'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-34'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-35'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-36'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-37'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-38'. This object should not be reliably targeted by Law text.
+All core Law model tests passed.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-39'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-40'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-41'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-42'. This object should not be reliably targeted by Law text.
+law_model_test: ALL OK
+<end of output>
+Test time =   2.07 sec
+----------------------------------------------------------
+Test Passed.
+"law_model_test" end time: Aug 11 18:58 PDT
+"law_model_test" time elapsed: 00:00:02
+----------------------------------------------------------
+
+26/37 Testing: person_migration_test
+26/37 Test: person_migration_test
+Command: "/Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy/person_migration_test"
+Directory: /Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy
+"person_migration_test" start time: Aug 11 18:58 PDT
+Output:
+----------------------------------------------------------
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-1'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-2'. This object should not be reliably targeted by Law text.
+person_migration_test:
+  legacy world migrates and its ownership verifies OK
+    2 identity(ies) minted, 0 reused from ledger; 1 owner(s), 2 deletability entr(ies), 1 law author(s) rewritten
+  warning: law authors were rewritten by name match; verify the Law Author window shows each law still authored
+  post-migration ownership cannot be edited into place OK
+  migration is idempotent OK
+  one name resolves to one identity across worlds OK
+  ledger survives reload OK
+  law authorship migrates, non-Person targets untouched OK
+  deletability rekeyed for every Person in the map OK
+[IdentityLedger] ledger names Zach but its key is missing from the store; refusing to remint
+  missing key refuses to remint an identity OK
+  empty and malformed saves handled without crashing OK
+person_migration_test: ALL OK
+<end of output>
+Test time =   3.15 sec
+----------------------------------------------------------
+Test Passed.
+"person_migration_test" end time: Aug 11 18:58 PDT
+"person_migration_test" time elapsed: 00:00:03
+----------------------------------------------------------
+
+25/37 Testing: ontomath_test
+25/37 Test: ontomath_test
+Command: "/Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy/ontomath_test"
+Directory: /Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy
+"ontomath_test" start time: Aug 11 18:58 PDT
+Output:
+----------------------------------------------------------
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-1'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-2'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-3'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-4'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-5'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-6'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-7'. This object should not be reliably targeted by Law text.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation law-1-authored-by-object-3. Falling back to 1.0f in developer mode.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-8'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-9'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-10'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-11'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-12'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-13'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-14'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-15'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-16'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-17'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-18'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-19'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-20'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-21'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-22'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-23'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-24'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-25'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-26'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-27'. This object should not be reliably targeted by Law text.
+ontomath_test: ALL OK
+<end of output>
+Test time =   1.68 sec
+----------------------------------------------------------
+Test Passed.
+"ontomath_test" end time: Aug 11 18:58 PDT
+"ontomath_test" time elapsed: 00:00:01
+----------------------------------------------------------
+
+5/37 Testing: constitution_test
+5/37 Test: constitution_test
+Command: "/Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy/constitution_test"
+Directory: /Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy
+"constitution_test" start time: Aug 11 18:58 PDT
+Output:
+----------------------------------------------------------
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-1'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-2'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-3'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-4'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-5'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-6'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-7'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-8'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-9'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-10'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-11'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-12'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-13'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-14'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-15'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-16'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-17'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-18'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-19'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-20'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-21'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-22'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-23'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-24'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-25'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-26'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-27'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-28'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-29'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-30'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-31'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-32'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-33'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-34'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-35'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-36'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-37'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-38'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-39'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-40'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-41'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-42'. This object should not be reliably targeted by Law text.
+constitution_test: ALL OK
+<end of output>
+Test time =   2.16 sec
+----------------------------------------------------------
+Test Passed.
+"constitution_test" end time: Aug 11 18:58 PDT
+"constitution_test" time elapsed: 00:00:02
+----------------------------------------------------------
+
+34/37 Testing: webgpu_object_test
+34/37 Test: webgpu_object_test
+Command: "/Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy/webgpu_object_test"
+Directory: /Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy
+"webgpu_object_test" start time: Aug 11 18:58 PDT
+Output:
+----------------------------------------------------------
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-1'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-2'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-3'. This object should not be reliably targeted by Law text.
+painted cube centre = (106,0,0,255)
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-4'. This object should not be reliably targeted by Law text.
+green cube centre   = (0,106,0,255)
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-5'. This object should not be reliably targeted by Law text.
+default cube centre = (0,0,106,255)
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-6'. This object should not be reliably targeted by Law text.
+field centre        = (96,0,0,255)  corner = (0,0,0,255)
+webgpu_object_test: ALL OK
+<end of output>
+Test time =   1.46 sec
+----------------------------------------------------------
+Test Passed.
+"webgpu_object_test" end time: Aug 11 18:58 PDT
+"webgpu_object_test" time elapsed: 00:00:01
+----------------------------------------------------------
+
+8/37 Testing: formation_merge_test
+8/37 Test: formation_merge_test
+Command: "/Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy/formation_merge_test"
+Directory: /Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy
+"formation_merge_test" start time: Aug 11 18:58 PDT
+Output:
+----------------------------------------------------------
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-1'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-2'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-3'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-4'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-5'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-6'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-7'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-8'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-9'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-10'. This object should not be reliably targeted by Law text.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation object-3-bond-object-4. Falling back to 1.0f in developer mode.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation object-3-bond-object-4. Falling back to 1.0f in developer mode.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation object-5-other-object-6. Falling back to 1.0f in developer mode.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation object-5-other-object-6. Falling back to 1.0f in developer mode.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation object-7-bond-object-8. Falling back to 1.0f in developer mode.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation object-7-bond-object-8. Falling back to 1.0f in developer mode.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation object-9-bond-object-10. Falling back to 1.0f in developer mode.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation object-9-bond-object-10. Falling back to 1.0f in developer mode.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation object-3-bond-object-7. Falling back to 1.0f in developer mode.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation object-7-bond-object-8. Falling back to 1.0f in developer mode.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation object-9-bond-object-10. Falling back to 1.0f in developer mode.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation object-3-bond-object-7. Falling back to 1.0f in developer mode.
+formation_merge_test: OK
+<end of output>
+Test time =   1.79 sec
+----------------------------------------------------------
+Test Passed.
+"formation_merge_test" end time: Aug 11 18:58 PDT
+"formation_merge_test" time elapsed: 00:00:01
+----------------------------------------------------------
+
+16/37 Testing: law_graph_test
+16/37 Test: law_graph_test
+Command: "/Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy/law_graph_test"
+Directory: /Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy
+"law_graph_test" start time: Aug 11 18:58 PDT
+Output:
+----------------------------------------------------------
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-1'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-2'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-3'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-4'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-5'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-6'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-7'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-8'. This object should not be reliably targeted by Law text.
+law_graph_test: ALL OK
+<end of output>
+Test time =   2.05 sec
+----------------------------------------------------------
+Test Passed.
+"law_graph_test" end time: Aug 11 18:58 PDT
+"law_graph_test" time elapsed: 00:00:02
+----------------------------------------------------------
+
+36/37 Testing: webgpu_sdf_parity_test
+36/37 Test: webgpu_sdf_parity_test
+Command: "/Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy/webgpu_sdf_parity_test"
+Directory: /Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy
+"webgpu_sdf_parity_test" start time: Aug 11 18:58 PDT
+Output:
+----------------------------------------------------------
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-1'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-2'. This object should not be reliably targeted by Law text.
+  Sphere         gpu= 268 cpu= 268 diff=  0 (tol 167) ok
+  Box            gpu= 252 cpu= 252 diff=  0 (tol 162) ok
+  RoundBox       gpu= 248 cpu= 248 diff=  0 (tol 161) ok
+  Ellipsoid      gpu= 220 cpu= 220 diff=  0 (tol 152) ok
+  Cylinder       gpu= 208 cpu= 208 diff=  0 (tol 148) ok
+  Cone           gpu= 124 cpu= 124 diff=  0 (tol 115) ok
+  Torus          gpu= 240 cpu= 240 diff=  0 (tol 158) ok
+  Sphere@offset  gpu= 117 cpu= 117 diff=  0 (tol 112) ok
+  Convex(tetra)  gpu= 432 cpu= 432 diff=  0 (tol 211) ok
+  Expr(distance) gpu= 164 cpu= 164 diff=  0 (tol 132) ok
+  Expr(iso)      gpu= 164 cpu= 164 diff=  0 (tol 132) ok
+  Union          gpu= 304 cpu= 304 diff=  0 (tol 178) ok
+  Intersect      gpu=  86 cpu=  86 diff=  0 (tol  96) ok
+  Subtract       gpu= 168 cpu= 168 diff=  0 (tol 133) ok
+  Morph          gpu= 160 cpu= 160 diff=  0 (tol 130) ok
+  SmoothUnion    gpu= 308 cpu= 308 diff=  0 (tol 179) ok
+  Nested         gpu= 300 cpu= 300 diff=  0 (tol 177) ok
+  Box@xform      gpu= 258 cpu= 258 diff=  0 (tol 164) ok
+  Torus@xform    gpu= 209 cpu= 209 diff=  0 (tol 148) ok
+  SmoothUnion@xform gpu= 301 cpu= 301 diff=  0 (tol 177) ok
+webgpu_sdf_parity_test: ALL OK (20 shapes agree with the CPU)
+<end of output>
+Test time =   2.03 sec
+----------------------------------------------------------
+Test Passed.
+"webgpu_sdf_parity_test" end time: Aug 11 18:58 PDT
+"webgpu_sdf_parity_test" time elapsed: 00:00:02
+----------------------------------------------------------
+
+11/37 Testing: geometry_cache_test
+11/37 Test: geometry_cache_test
+Command: "/Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy/geometry_cache_test"
+Directory: /Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy
+"geometry_cache_test" start time: Aug 11 18:58 PDT
+Output:
+----------------------------------------------------------
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-1'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-2'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-3'. This object should not be reliably targeted by Law text.
+  smooth:  rebuilt on radius edit (320 -> 320 pts)
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-4'. This object should not be reliably targeted by Law text.
+  complex: rebuilt on radius edit (261 -> 261 pts)
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-5'. This object should not be reliably targeted by Law text.
+  field:   built on set (259 pts)
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-6'. This object should not be reliably targeted by Law text.
+  patch:   rebuilt on control-net edit (266 -> 266 pts)
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-7'. This object should not be reliably targeted by Law text.
+  switch:  smooth -> complex leaves only the complex cache
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-8'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-9'. This object should not be reliably targeted by Law text.
+  render:  cached mesh drew 284 px at r=0.3, 2576 px at r=0.9
+geometry_cache_test: ALL OK
+<end of output>
+Test time =   2.07 sec
+----------------------------------------------------------
+Test Passed.
+"geometry_cache_test" end time: Aug 11 18:58 PDT
+"geometry_cache_test" time elapsed: 00:00:02
+----------------------------------------------------------
+
+19/37 Testing: law_persistence_test
+19/37 Test: law_persistence_test
+Command: "/Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy/law_persistence_test"
+Directory: /Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy
+"law_persistence_test" start time: Aug 11 18:58 PDT
+Output:
+----------------------------------------------------------
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-1'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-2'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-3'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-4'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-5'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-6'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-7'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-8'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-9'. This object should not be reliably targeted by Law text.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation law-1-authored-by-object-3. Falling back to 1.0f in developer mode.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-10'. This object should not be reliably targeted by Law text.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation law-2-targets-object-6. Falling back to 1.0f in developer mode.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-11'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-12'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-13'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-14'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-15'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-16'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-17'. This object should not be reliably targeted by Law text.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation law-5-authored-by-object-3. Falling back to 1.0f in developer mode.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-18'. This object should not be reliably targeted by Law text.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation law-6-authored-by-object-3. Falling back to 1.0f in developer mode.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-19'. This object should not be reliably targeted by Law text.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation law-7-authored-by-object-3. Falling back to 1.0f in developer mode.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-20'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-21'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-22'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-88889'. This object should not be reliably targeted by Law text.
+law_persistence_test: ALL OK
+<end of output>
+Test time =   1.84 sec
+----------------------------------------------------------
+Test Passed.
+"law_persistence_test" end time: Aug 11 18:58 PDT
+"law_persistence_test" time elapsed: 00:00:01
+----------------------------------------------------------
+
+9/37 Testing: formation_topology_test
+9/37 Test: formation_topology_test
+Command: "/Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy/formation_topology_test"
+Directory: /Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy
+"formation_topology_test" start time: Aug 11 18:58 PDT
+Output:
+----------------------------------------------------------
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-1'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-2'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-3'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-4'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-5'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-6'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-7'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-8'. This object should not be reliably targeted by Law text.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation object-3-bond-object-4. Falling back to 1.0f in developer mode.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation object-3-bond-object-4. Falling back to 1.0f in developer mode.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation object-4-bond-object-5. Falling back to 1.0f in developer mode.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation object-4-bond-object-5. Falling back to 1.0f in developer mode.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation object-5-bond-object-3. Falling back to 1.0f in developer mode.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation object-5-bond-object-3. Falling back to 1.0f in developer mode.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation object-5-bond-object-6. Falling back to 1.0f in developer mode.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation object-5-bond-object-6. Falling back to 1.0f in developer mode.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation object-7-bond-object-8. Falling back to 1.0f in developer mode.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation object-7-bond-object-8. Falling back to 1.0f in developer mode.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation object-3-bond-object-4. Falling back to 1.0f in developer mode.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation object-3-bond-object-4. Falling back to 1.0f in developer mode.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation object-4-bond-object-5. Falling back to 1.0f in developer mode.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation object-4-bond-object-5. Falling back to 1.0f in developer mode.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation object-5-bond-object-3. Falling back to 1.0f in developer mode.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation object-5-bond-object-3. Falling back to 1.0f in developer mode.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation object-5-bond-object-6. Falling back to 1.0f in developer mode.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation object-5-bond-object-6. Falling back to 1.0f in developer mode.
+Formation 'formation-9': resolveTopology released 2 member(s) held by no valid core. They are returned in Topology::orphaned — nothing was destroyed silently.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation object-3-bond-object-4. Falling back to 1.0f in developer mode.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation object-3-bond-object-4. Falling back to 1.0f in developer mode.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation object-4-bond-object-5. Falling back to 1.0f in developer mode.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation object-4-bond-object-5. Falling back to 1.0f in developer mode.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation object-5-bond-object-6. Falling back to 1.0f in developer mode.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation object-5-bond-object-6. Falling back to 1.0f in developer mode.
+formation_topology_test: OK
+<end of output>
+Test time =   2.10 sec
+----------------------------------------------------------
+Test Passed.
+"formation_topology_test" end time: Aug 11 18:58 PDT
+"formation_topology_test" time elapsed: 00:00:02
+----------------------------------------------------------
+
+23/37 Testing: metalaw_test
+23/37 Test: metalaw_test
+Command: "/Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy/metalaw_test"
+Directory: /Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy
+"metalaw_test" start time: Aug 11 18:58 PDT
+Output:
+----------------------------------------------------------
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-1'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-2'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-3'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-4'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-5'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-6'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-7'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-8'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-9'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-10'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-11'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-12'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-13'. This object should not be reliably targeted by Law text.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation law-7-authored-by-object-3. Falling back to 1.0f in developer mode.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-14'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-15'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-16'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-17'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-18'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-19'. This object should not be reliably targeted by Law text.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation law-11-authored-by-object-3. Falling back to 1.0f in developer mode.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation law-11-synthesized-from-law-9. Falling back to 1.0f in developer mode.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation law-11-synthesized-from-law-10. Falling back to 1.0f in developer mode.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-20'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-21'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-22'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-23'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-24'. This object should not be reliably targeted by Law text.
+metalaw_test: ALL OK
+<end of output>
+Test time =   1.87 sec
+----------------------------------------------------------
+Test Passed.
+"metalaw_test" end time: Aug 11 18:58 PDT
+"metalaw_test" time elapsed: 00:00:01
+----------------------------------------------------------
+
+2/37 Testing: basic_cube_law_test
+2/37 Test: basic_cube_law_test
+Command: "/Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy/basic_cube_law_test"
+Directory: /Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy
+"basic_cube_law_test" start time: Aug 11 18:58 PDT
+Output:
+----------------------------------------------------------
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-1'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-2'. This object should not be reliably targeted by Law text.
+============================================================
+Running Basic Cube 3D Custom Shape Generator Law Test...
+============================================================
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-3'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-4'. This object should not be reliably targeted by Law text.
+  ok: ConceptRegistry registered basic cube concept
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-5'. This object should not be reliably targeted by Law text.
+  ok: Law is authored by player
+  ok: Law trigger bound to onMouseClicked
+
+[Test 1] Triggering event when activeTool = "Brush"...
+  ok: No object created when activeTool is Brush
+
+[Test 1b] Triggering with the 2D "Custom Shape" tool outside Create mode...
+  ok: 2D "Custom Shape" tool creates nothing outside Create mode
+
+[Test 2] Triggering event in Placement Mode "InFront"...
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-6'. This object should not be reliably targeted by Law text.
+  ok: Basic cube object spawned in InFront placement mode
+  ok: Spawned object pointer is valid
+  ok: Object is ShapeKind::Cube
+  ok: InFront mode placed object at cameraPos + forward * 2.0 (0, 2, -2)
+
+[Test 3] Triggering event in Placement Mode "CursorSnap" (surface placement)...
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-7'. This object should not be reliably targeted by Law text.
+  ok: Second basic cube spawned in CursorSnap placement mode
+  ok: Second spawned object pointer is valid
+  ok: Second object is ShapeKind::Cube
+  ok: CursorSnap rests the shape ON the surface: hit (10,3,-7) + normal * half extent 0.5
+
+[Test 3b] Grid snap applies to InFront placement too...
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-8'. This object should not be reliably targeted by Law text.
+  ok: Cube spawned with grid snap in InFront mode
+  ok: Grid snap rounded an InFront placement (0.4, 2.2, -2.3) to (0, 2, -2)
+
+[Test 4] Triggering event in Placement Mode "ManualDistance"...
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-9'. This object should not be reliably targeted by Law text.
+  ok: Fourth basic cube spawned in ManualDistance placement mode
+  ok: Fourth spawned object pointer is valid
+  ok: Fourth object is ShapeKind::Cube
+  ok: ManualDistance placed object at anchor + offset (0, 2, -12)
+
+[Test 4b] Moving the camera must not move an anchored placement...
+  ok: Anchored placement stayed at (0, 2, -12) after the camera moved
+
+[Test 4c] Shape kind and colour follow the live selection...
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-10'. This object should not be reliably targeted by Law text.
+  ok: Fifth object spawned with an overridden shape kind
+  ok: Spawned a Sphere from activeShapeKind, overriding the concept's Cube template
+  ok: Every face took activeColor (1, 0, 0), as the tool coloured them
+
+[Test 5] Testing JSON Serialization and Persistence of Placement Law...
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-11'. This object should not be reliably targeted by Law text.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation law-1-authored-by-Player. Falling back to 1.0f in developer mode.
+  ok: Law restored from JSON using lawId
+  ok: Author reattached to reloaded law
+  ok: Reloaded law retained onMouseClicked trigger binding
+  ok: Reloaded law retained its shape-kind override path
+  ok: Reloaded law retained its colour override path
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-12'. This object should not be reliably targeted by Law text.
+  ok: Reloaded law executed successfully on event, spawning a sixth object
+  ok: Sixth spawned object shape kind is ShapeKind::Cube (Basic Cube)
+  ok: Reloaded law combined surface offset and grid snap: (4.0, 2.5, -3.0)
+
+============================================================
+SUCCESS! All 31 checks passed for Basic Cube 3D Custom Shape Generator Law!
+============================================================
+<end of output>
+Test time =   1.91 sec
+----------------------------------------------------------
+Test Passed.
+"basic_cube_law_test" end time: Aug 11 18:58 PDT
+"basic_cube_law_test" time elapsed: 00:00:01
+----------------------------------------------------------
+
+27/37 Testing: primitive_render_test
+27/37 Test: primitive_render_test
+Command: "/Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy/primitive_render_test"
+Directory: /Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy
+"primitive_render_test" start time: Aug 11 18:58 PDT
+Output:
+----------------------------------------------------------
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-1'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-2'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-3'. This object should not be reliably targeted by Law text.
+  cube     drew 1024 px through the renderer
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-4'. This object should not be reliably targeted by Law text.
+  sphere   drew 796 px through the renderer
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-5'. This object should not be reliably targeted by Law text.
+  cylinder drew 812 px through the renderer
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-6'. This object should not be reliably targeted by Law text.
+  cone     drew 812 px through the renderer
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-7'. This object should not be reliably targeted by Law text.
+  polyhedron drew 162 px (tetra) -> 612 px (icosa); cache follows edits
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-8'. This object should not be reliably targeted by Law text.
+  material: cube brightness 1437696 -> dim 1242112 (material reaches the primitive path)
+  overlay: drawLines 496 px, drawOverlay 1024 px through the renderer
+primitive_render_test: ALL OK
+<end of output>
+Test time =   2.21 sec
+----------------------------------------------------------
+Test Passed.
+"primitive_render_test" end time: Aug 11 18:58 PDT
+"primitive_render_test" time elapsed: 00:00:02
+----------------------------------------------------------
+
+4/37 Testing: change_recorder_test
+4/37 Test: change_recorder_test
+Command: "/Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy/change_recorder_test"
+Directory: /Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy
+"change_recorder_test" start time: Aug 11 18:58 PDT
+Output:
+----------------------------------------------------------
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-1'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-2'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-3'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-4'. This object should not be reliably targeted by Law text.
+change_recorder_test: ALL OK
+<end of output>
+Test time =   2.17 sec
+----------------------------------------------------------
+Test Passed.
+"change_recorder_test" end time: Aug 11 18:58 PDT
+"change_recorder_test" time elapsed: 00:00:02
+----------------------------------------------------------
+
+24/37 Testing: object_concept_test
+24/37 Test: object_concept_test
+Command: "/Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy/object_concept_test"
+Directory: /Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy
+"object_concept_test" start time: Aug 11 18:58 PDT
+Output:
+----------------------------------------------------------
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-1'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-2'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-3'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-4'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-5'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-6'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-7'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-8'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-9'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-10'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-11'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-12'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-13'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-14'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-15'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-16'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-17'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-18'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-19'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-20'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-21'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-22'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-23'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-24'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-25'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-26'. This object should not be reliably targeted by Law text.
+[Law Error] Set failed on object-16 for path @transfer-policy.gate.position (Read Only)
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-27'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-28'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-29'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-30'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-31'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-32'. This object should not be reliably targeted by Law text.
+object_concept_test: ALL OK
+<end of output>
+Test time =   2.39 sec
+----------------------------------------------------------
+Test Passed.
+"object_concept_test" end time: Aug 11 18:58 PDT
+"object_concept_test" time elapsed: 00:00:02
+----------------------------------------------------------
+
+6/37 Testing: continuous_law_test
+6/37 Test: continuous_law_test
+Command: "/Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy/continuous_law_test"
+Directory: /Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy
+"continuous_law_test" start time: Aug 11 18:58 PDT
+Output:
+----------------------------------------------------------
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-1'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-2'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-3'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-4'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-5'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-6'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-7'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-8'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-9'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-10'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-11'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-12'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-13'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-14'. This object should not be reliably targeted by Law text.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation law-4-authored-by-object-3. Falling back to 1.0f in developer mode.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-15'. This object should not be reliably targeted by Law text.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation object-4-touching-object-5. Falling back to 1.0f in developer mode.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation object-4-touching-object-5. Falling back to 1.0f in developer mode.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation object-4-owns-object-9. Falling back to 1.0f in developer mode.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation object-4-owns-object-9. Falling back to 1.0f in developer mode.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation object-4-touching-object-5. Falling back to 1.0f in developer mode.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-16'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-17'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-18'. This object should not be reliably targeted by Law text.
+continuous_law_test: ALL OK
+<end of output>
+Test time =   2.23 sec
+----------------------------------------------------------
+Test Passed.
+"continuous_law_test" end time: Aug 11 18:58 PDT
+"continuous_law_test" time elapsed: 00:00:02
+----------------------------------------------------------
+
+33/37 Testing: time_flow_test
+33/37 Test: time_flow_test
+Command: "/Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy/time_flow_test"
+Directory: /Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy
+"time_flow_test" start time: Aug 11 18:58 PDT
+Output:
+----------------------------------------------------------
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-1'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-2'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-3'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-4'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-5'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-6'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-7'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-8'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-9'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-10'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-11'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-12'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-13'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-14'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-15'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-16'. This object should not be reliably targeted by Law text.
+time_flow_test: ALL OK
+<end of output>
+Test time =   2.12 sec
+----------------------------------------------------------
+Test Passed.
+"time_flow_test" end time: Aug 11 18:58 PDT
+"time_flow_test" time elapsed: 00:00:02
+----------------------------------------------------------
+
+7/37 Testing: first_mover_test
+7/37 Test: first_mover_test
+Command: "/Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy/first_mover_test"
+Directory: /Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy
+"first_mover_test" start time: Aug 11 18:58 PDT
+Output:
+----------------------------------------------------------
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-1'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-2'. This object should not be reliably targeted by Law text.
+first_mover_test:
+  glob semantics OK
+  model writes only inside its granted scopes OK
+  unregistered mover refused OK
+  self-attestation refused OK
+  model cannot recognise another mover OK
+  scope widening detected, entry quarantined not dropped OK
+  forged and re-pointed grants refused OK
+  save-root floor holds even with a '**' grant OK
+  empty scope grants nothing OK
+  register round-trips through a save OK
+  model-signed grant refused on load OK
+[SaveSystem] REFUSED write to saves/games/production_world.ecsave
+  mover: did:rn5x3lkf…
+  refused: path matches none of the mover's granted scopes
+[SaveSystem] REFUSED write to saves/persons/test_person.ecsave
+  mover: did:rn5x3lkf…
+  refused: path matches none of the mover's granted scopes
+  SaveSystem enforces the register, engine saves unaffected OK
+[SaveSystem] REFUSED write to saves/games/test_x.ecsave
+  mover: did:ci4zoi2q…
+  refused: mover is not in the First Mover Register
+  unregistered agent refused every write OK
+first_mover_test: ALL OK
+<end of output>
+Test time =   1.96 sec
+----------------------------------------------------------
+Test Passed.
+"first_mover_test" end time: Aug 11 18:58 PDT
+"first_mover_test" time elapsed: 00:00:01
+----------------------------------------------------------
+
+14/37 Testing: law_audit_test
+14/37 Test: law_audit_test
+Command: "/Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy/law_audit_test"
+Directory: /Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy
+"law_audit_test" start time: Aug 11 18:58 PDT
+Output:
+----------------------------------------------------------
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-1'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-2'. This object should not be reliably targeted by Law text.
+
+[1] Destroy is deferred to the end of the tick
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-3'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-4'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-5'. This object should not be reliably targeted by Law text.
+  ok: the kindling exists
+  ok: the tick unmade it
+  ok: the reaper drained the queue
+  ok: the unmade being was released from every law that named it
+  ok: a second tick after the unmaking is safe
+
+[2] Applied is not the same claim as changed
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-6'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-7'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-8'. This object should not be reliably targeted by Law text.
+[Law Error] Set failed on object-6 for path noSuchProperty.deeper (No Such Property)
+  ok: the action branch was reached, so the result is Applied
+  ok: ...but nothing was written
+  ok: the trace names the node that fired
+  ok: ...and says WHY it did not land
+  ok: the record carries that truth out to the UI and the save
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-9'. This object should not be reliably targeted by Law text.
+  ok: real law applies
+  ok: ...and changed something
+  ok: ...visibly
+
+[3] A law that changed nothing does not earn a drive
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-10'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-11'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-12'. This object should not be reliably targeted by Law text.
+[Law Error] Set failed on object-10 for path noSuchProperty.deeper (No Such Property)
+  ok: no session opened for a law that wrote nothing
+
+[4] Only bounded children vote on a composite's life
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-13'. This object should not be reliably targeted by Law text.
+  ok: a Map carries authored bounds
+  ok: a Set does not
+  ok: a sequence containing one does
+  ok: inside the arc's bounds, the sequence lives
+  ok: outside them it ends — the unbounded sibling does not keep it alive
+  ok: a wholly unbounded sequence still never ends
+
+[5] A save file cannot raise its own ceiling
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-14'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-15'. This object should not be reliably targeted by Law text.
+  ok: the first-mover path grants freely
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-16'. This object should not be reliably targeted by Law text.
+  ok: the ordinary path clamps to the authored ceiling
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-17'. This object should not be reliably targeted by Law text.
+[Relation] AUDIT WARNING: weight not explicitly settled for Relation law-6-authored-by-object-14. Falling back to 1.0f in developer mode.
+  ok: loading clamps it too — the ceiling survives a text editor
+  ok: ...so the forged law still cannot govern a kernel law
+
+[6] Alpha nodes are interned and reclaimed
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-18'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-19'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-20'. This object should not be reliably targeted by Law text.
+  ok: two laws on one event type share one node
+  ok: a second type adds one node
+  ok: twenty rebinds leak nothing
+  ok: the last law off a node reclaims it
+
+[7] An untargeted sweep is filtered by the law's vocabulary
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-21'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-22'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-23'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-24'. This object should not be reliably targeted by Law text.
+  ok: the law's text names the vocabulary it needs
+  ok: an Object carries it
+  ok: a Law does not — it is extra-spatial, and is skipped
+  ok: the sweep never visited it
+  ok: ...and still reached everyone it should
+
+[8] Flow integrates a component path
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-25'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-26'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-27'. This object should not be reliably targeted by Law text.
+  ok: 2 per second over 2 seconds is 4, exactly
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-28'. This object should not be reliably targeted by Law text.
+  ok: a string lane integrates nothing
+  ok: ...and the trace says so in words, rather than returning in silence
+
+SUCCESS — 36 checks passed.
+<end of output>
+Test time =   1.96 sec
+----------------------------------------------------------
+Test Passed.
+"law_audit_test" end time: Aug 11 18:58 PDT
+"law_audit_test" time elapsed: 00:00:01
+----------------------------------------------------------
+
+10/37 Testing: frontier_test
+10/37 Test: frontier_test
+Command: "/Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy/frontier_test"
+Directory: /Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy
+"frontier_test" start time: Aug 11 18:58 PDT
+Output:
+----------------------------------------------------------
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-1'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-2'. This object should not be reliably targeted by Law text.
+frontier_test: Starting...
+frontier_test: compile-time migration OK
+frontier_test: runtime load from V1 OK
+frontier_test: runtime load from V2 OK
+frontier_test: runtime load from V3 OK
+frontier_test: ALL OK
+<end of output>
+Test time =   1.91 sec
+----------------------------------------------------------
+Test Passed.
+"frontier_test" end time: Aug 11 18:58 PDT
+"frontier_test" time elapsed: 00:00:01
+----------------------------------------------------------
+
+22/37 Testing: material_render_test
+22/37 Test: material_render_test
+Command: "/Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy/material_render_test"
+Directory: /Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy
+"material_render_test" start time: Aug 11 18:58 PDT
+Output:
+----------------------------------------------------------
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-1'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-2'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-3'. This object should not be reliably targeted by Law text.
+  tint:    default red sum 651784 -> dim material 288664 (material reaches pixels)
+  restore: reassigning material.default brightens again (651784)
+material_render_test: ALL OK
+<end of output>
+Test time =   2.03 sec
+----------------------------------------------------------
+Test Passed.
+"material_render_test" end time: Aug 11 18:58 PDT
+"material_render_test" time elapsed: 00:00:02
+----------------------------------------------------------
+
+17/37 Testing: law_loop_test
+17/37 Test: law_loop_test
+Command: "/Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy/law_loop_test"
+Directory: /Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy
+"law_loop_test" start time: Aug 11 18:58 PDT
+Output:
+----------------------------------------------------------
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-1'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-2'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-3'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-4'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-5'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-6'. This object should not be reliably targeted by Law text.
+law_loop_test: ALL OK
+<end of output>
+Test time =   2.11 sec
+----------------------------------------------------------
+Test Passed.
+"law_loop_test" end time: Aug 11 18:58 PDT
+"law_loop_test" time elapsed: 00:00:02
+----------------------------------------------------------
+
+28/37 Testing: property_bridge_test
+28/37 Test: property_bridge_test
+Command: "/Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy/property_bridge_test"
+Directory: /Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy
+"property_bridge_test" start time: Aug 11 18:58 PDT
+Output:
+----------------------------------------------------------
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-1'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-2'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-3'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-4'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-5'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-6'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-7'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-8'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-9'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-10'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-11'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-12'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-13'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-14'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-15'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-16'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-17'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-18'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-19'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-20'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-21'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-22'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-23'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-24'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-25'. This object should not be reliably targeted by Law text.
+property_bridge_test: ALL OK
+<end of output>
+Test time =   2.09 sec
+----------------------------------------------------------
+Test Passed.
+"property_bridge_test" end time: Aug 11 18:58 PDT
+"property_bridge_test" time elapsed: 00:00:02
+----------------------------------------------------------
+
+30/37 Testing: serialization_compat_test
+30/37 Test: serialization_compat_test
+Command: "/Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy/serialization_compat_test"
+Directory: /Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy
+"serialization_compat_test" start time: Aug 11 18:58 PDT
+Output:
+----------------------------------------------------------
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-1'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-2'. This object should not be reliably targeted by Law text.
+serialization_compat_test: Starting...
+serialization_compat_test: MessagePack roundtrip OK
+serialization_compat_test: JSON fallback OK
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-3'. This object should not be reliably targeted by Law text.
+serialization_compat_test: retired condition kind preserved OK
+serialization_compat_test: ALL OK
+<end of output>
+Test time =   2.08 sec
+----------------------------------------------------------
+Test Passed.
+"serialization_compat_test" end time: Aug 11 18:58 PDT
+"serialization_compat_test" time elapsed: 00:00:02
+----------------------------------------------------------
+
+31/37 Testing: singular_set_to_set_test
+31/37 Test: singular_set_to_set_test
+Command: "/Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy/singular_set_to_set_test"
+Directory: /Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy
+"singular_set_to_set_test" start time: Aug 11 18:58 PDT
+Output:
+----------------------------------------------------------
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-1'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-2'. This object should not be reliably targeted by Law text.
+Running Singular set-to-set tests...
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-3'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-4'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-5'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-6'. This object should not be reliably targeted by Law text.
+  captured state travels to a newborn with no source set OK
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-7'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-8'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-9'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-10'. This object should not be reliably targeted by Law text.
+  member kind and captured state round-trip through JSON OK
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-11'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-12'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-13'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-14'. This object should not be reliably targeted by Law text.
+  provenance survives the save/load round trip OK
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-15'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-16'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-17'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-18'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-19'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-20'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-21'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-22'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-23'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-24'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-25'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-26'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-27'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-28'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-29'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-30'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-31'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-32'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-33'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-34'. This object should not be reliably targeted by Law text.
+  a Person may be a source and is never a birth OK
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-35'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-36'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-37'. This object should not be reliably targeted by Law text.
+  a bindings-only mapping passes the gate and transfers OK
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-38'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-39'. This object should not be reliably targeted by Law text.
+  a Gated property is not remembered by a concept OK
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-40'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-41'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-42'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-43'. This object should not be reliably targeted by Law text.
+  Synthesize derives from the live input set and births into the World OK
+All Singular set-to-set tests passed.
+<end of output>
+Test time =   1.91 sec
+----------------------------------------------------------
+Test Passed.
+"singular_set_to_set_test" end time: Aug 11 18:58 PDT
+"singular_set_to_set_test" time elapsed: 00:00:01
+----------------------------------------------------------
+
+3/37 Testing: binary_packing_test
+3/37 Test: binary_packing_test
+Command: "/Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy/binary_packing_test"
+Directory: /Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy
+"binary_packing_test" start time: Aug 11 18:58 PDT
+Output:
+----------------------------------------------------------
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-1'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-2'. This object should not be reliably targeted by Law text.
+Testing Zero-Dependency Binary Packing...
+Stroke binary packing successful! Size in msgpack: 40042 bytes
+Legacy msgpack size (no zero-copy): 50043 bytes
+Patch binary packing successful! Size in msgpack: 1479 bytes
+All binary packing tests passed!
+<end of output>
+Test time =   1.85 sec
+----------------------------------------------------------
+Test Passed.
+"binary_packing_test" end time: Aug 11 18:58 PDT
+"binary_packing_test" time elapsed: 00:00:01
+----------------------------------------------------------
+
+21/37 Testing: material_being_test
+21/37 Test: material_being_test
+Command: "/Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy/material_being_test"
+Directory: /Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy
+"material_being_test" start time: Aug 11 18:58 PDT
+Output:
+----------------------------------------------------------
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-1'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-2'. This object should not be reliably targeted by Law text.
+  being:   material.clay is law-addressable (shininess, baseColor driven)
+  default: reproduces old global constants (ambient .2 / diffuse .8 / shininess 32)
+  manager: create/get/resolveOrDefault work; default is undeletable
+  serial:  materials round-trip through JSON, default preserved
+material_being_test: ALL OK
+<end of output>
+Test time =   1.76 sec
+----------------------------------------------------------
+Test Passed.
+"material_being_test" end time: Aug 11 18:58 PDT
+"material_being_test" time elapsed: 00:00:01
+----------------------------------------------------------
+
+12/37 Testing: glu_compat_test
+12/37 Test: glu_compat_test
+Command: "/Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy/glu_compat_test"
+Directory: /Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy
+"glu_compat_test" start time: Aug 11 18:58 PDT
+Output:
+----------------------------------------------------------
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-1'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-2'. This object should not be reliably targeted by Law text.
+  round-trip: project->unProject recovers 4 world points
+  known:      on-axis point projects to center (400.0, 300.0), z=0.991
+  degenerate: singular matrix returns false
+glu_compat_test: ALL OK
+<end of output>
+Test time =   1.92 sec
+----------------------------------------------------------
+Test Passed.
+"glu_compat_test" end time: Aug 11 18:58 PDT
+"glu_compat_test" time elapsed: 00:00:01
+----------------------------------------------------------
+
+32/37 Testing: test_field
+32/37 Test: test_field
+Command: "/Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy/test_field"
+Directory: /Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy
+"test_field" start time: Aug 11 18:58 PDT
+Output:
+----------------------------------------------------------
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-1'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-2'. This object should not be reliably targeted by Law text.
+testFieldNodeProperties passed.
+All Field tests passed.
+<end of output>
+Test time =   1.98 sec
+----------------------------------------------------------
+Test Passed.
+"test_field" end time: Aug 11 18:58 PDT
+"test_field" time elapsed: 00:00:01
+----------------------------------------------------------
+
+20/37 Testing: logos_modality_test
+20/37 Test: logos_modality_test
+Command: "/Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy/logos_modality_test"
+Directory: /Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy
+"logos_modality_test" start time: Aug 11 18:58 PDT
+Output:
+----------------------------------------------------------
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-1'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-2'. This object should not be reliably targeted by Law text.
+--- Running Logos Modality Tests ---
+Testing LanguageSystem...
+✓ LanguageSystem tests passed.
+Testing Stochastic OntoMath...
+Uniform Sample: 1.4583
+Uniform Sample: 0.149959
+Uniform Sample: 2.12429
+Uniform Sample: 0.615662
+Uniform Sample: 3.4051
+✓ Stochastic OntoMath tests passed.
+--- All Tests Passed ---
+<end of output>
+Test time =   2.04 sec
+----------------------------------------------------------
+Test Passed.
+"logos_modality_test" end time: Aug 11 18:58 PDT
+"logos_modality_test" time elapsed: 00:00:02
+----------------------------------------------------------
+
+1/37 Testing: action_spawn_test
+1/37 Test: action_spawn_test
+Command: "/Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy/action_spawn_test"
+Directory: /Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy
+"action_spawn_test" start time: Aug 11 18:58 PDT
+Output:
+----------------------------------------------------------
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-1'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-2'. This object should not be reliably targeted by Law text.
+Running ActionModel Spawn Test...
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-3'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-4'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-5'. This object should not be reliably targeted by Law text.
+SUCCESS! 1 object spawned into the world.
+<end of output>
+Test time =   2.05 sec
+----------------------------------------------------------
+Test Passed.
+"action_spawn_test" end time: Aug 11 18:58 PDT
+"action_spawn_test" time elapsed: 00:00:02
+----------------------------------------------------------
+
+37/37 Testing: zone_being_test
+37/37 Test: zone_being_test
+Command: "/Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy/zone_being_test"
+Directory: /Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy
+"zone_being_test" start time: Aug 11 18:58 PDT
+Output:
+----------------------------------------------------------
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-1'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-2'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-3'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-4'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-5'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-6'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-7'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-8'. This object should not be reliably targeted by Law text.
+WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-9'. This object should not be reliably targeted by Law text.
+zone_being_test: all sections passed
+<end of output>
+Test time =   2.20 sec
+----------------------------------------------------------
+Test Passed.
+"zone_being_test" end time: Aug 11 18:58 PDT
+"zone_being_test" time elapsed: 00:00:02
+----------------------------------------------------------
+
+End testing: Aug 11 18:58 PDT

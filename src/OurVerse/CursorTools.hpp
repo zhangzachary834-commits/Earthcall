@@ -7,7 +7,7 @@
 class Object;
 class ZoneManager;
 
-namespace Core { class Game; }
+namespace Core { class Engine; }
 
 // CursorTools: handles 3D selection and UI for object picking
 class CursorTools {
@@ -16,7 +16,7 @@ public:
     CursorTools();
 
     // Update selection/picking each frame
-    void update(Core::Game& game);
+    void update(Core::Engine& engine);
 
     // Render the cursor tools window (returns whether open)
     void renderUI(bool& open);
@@ -39,7 +39,7 @@ private:
     bool _appendWithShift = true;
 
     // Internal: perform 3D pick using camera data in Game and objects in active Zone
-    Object* pickObjectAtCursor3D(Core::Game& game) const;
+    Object* pickObjectAtCursor3D(Core::Engine& engine) const;
 
     // Apply currently selected law to selected objects (hooked via UI)
     void applyLawToSelection(int lawId);

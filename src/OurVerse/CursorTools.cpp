@@ -1,5 +1,7 @@
+#include "Singularity/Screen/Camera.hpp"
 #include "CursorTools.hpp"
-#include "Singularity/Core/Game.hpp"
+#include "Singularity/Core/Engine.hpp"
+#include "Singularity/Input/MouseHandler.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
@@ -28,13 +30,13 @@ static bool raycastObject(const Object& obj,
     return false;
 }
 
-Object* CursorTools::pickObjectAtCursor3D(Core::Game& game) const {
+Object* CursorTools::pickObjectAtCursor3D(Core::Engine& engine) const {
     // Build a ray from cursor using View/Projection/Viewport
-    const float mouseX = game.getCursorX();
-    const float mouseY = game.getCursorY();
-    const int* vp = game.getCameraViewport();
-    const GLdouble* mv = game.getCameraModelview();
-    const GLdouble* pr = game.getCameraProjection();
+    const float mouseX = engine.getMouseHandler()->getCursorX();
+    const float mouseY = engine.getMouseHandler()->getCursorY();
+    const int* vp = engine.getCamera()->getViewport();
+    const GLdouble* mv = engine.getCamera()->getModelview();
+    const GLdouble* pr = engine.getCamera()->getProjection();
 
     // Convert GLdouble arrays to glm::mat4 (column-major)
     glm::mat4 V(1.0f), P(1.0f);
@@ -67,13 +69,13 @@ Object* CursorTools::pickObjectAtCursor3D(Core::Game& game) const {
     return best;
 }
 
-void CursorTools::update(Core::Game& game) {
+void CursorTools::update(Core::Engine& engine) {
     if (!_enabled) return;
     // Left mouse click selection: use Keyboard/Mouse handler from game to detect click state if needed
     // Simpler: respond to ImGui IsMouseClicked but we need world context; assume click in world when not over UI
     // Require Ctrl held to initiate selection to avoid interfering with creation tools
     if (ImGui::IsMouseClicked(0) && !ImGui::GetIO().WantCaptureMouse && _selectOnClick && ImGui::GetIO().KeyCtrl) {
-        Object* hit = pickObjectAtCursor3D(game);
+        Object* hit = pickObjectAtCursor3D(engine);
         if (hit) {
             if (_appendWithShift && (ImGui::GetIO().KeyShift)) {
                 _secondary = hit;

@@ -1,5 +1,7 @@
+#include "../../Singularity/Screen/Camera.hpp"
+#include "../../Singularity/Input/MouseHandler.hpp"
 #include "Tool.hpp"
-#include "Singularity/Core/Game.hpp"
+#include "Singularity/Core/Engine.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "GLFW/glfw3.h"
@@ -230,14 +232,14 @@ void applyToolTransform(Object* obj, const glm::mat4& worldTransform, const glm:
 // look mode) the OS cursor position is an unbounded drifting value, so instead
 // we shoot through the screen centre — a crosshair pick along the look
 // direction. When unlocked we use the real cursor position.
-bool buildMouseRay(GLFWwindow* window, Core::Game* game, glm::vec3& rayOrigin, glm::vec3& rayDir) {
-    if (!window || !game) return false;
+bool buildMouseRay(GLFWwindow* window, Core::Engine* engine, glm::vec3& rayOrigin, glm::vec3& rayDir) {
+    if (!window || !engine) return false;
 
-    const int* vp = game->getCameraViewport();
+    const int* vp = engine->getCamera()->getViewport();
     if (!vp || vp[2] <= 0 || vp[3] <= 0) return false;
 
     double winX = 0.0, winY = 0.0; // in framebuffer / GL coords (origin bottom-left)
-    if (game->isCursorLocked()) {
+    if (engine->getMouseHandler()->isCursorLocked()) {
         // Crosshair: centre of the viewport.
         winX = vp[0] + vp[2] * 0.5;
         winY = vp[1] + vp[3] * 0.5;
@@ -257,10 +259,10 @@ bool buildMouseRay(GLFWwindow* window, Core::Game* game, glm::vec3& rayOrigin, g
 
     GLdouble nearX = 0.0, nearY = 0.0, nearZ = 0.0;
     GLdouble farX = 0.0, farY = 0.0, farZ = 0.0;
-    ecgl::unProject(winX, winY, 0.0, game->getCameraModelview(), game->getCameraProjection(),
-                 game->getCameraViewport(), &nearX, &nearY, &nearZ);
-    ecgl::unProject(winX, winY, 1.0, game->getCameraModelview(), game->getCameraProjection(),
-                 game->getCameraViewport(), &farX, &farY, &farZ);
+    ecgl::unProject(winX, winY, 0.0, engine->getCamera()->getModelview(), engine->getCamera()->getProjection(),
+                 engine->getCamera()->getViewport(), &nearX, &nearY, &nearZ);
+    ecgl::unProject(winX, winY, 1.0, engine->getCamera()->getModelview(), engine->getCamera()->getProjection(),
+                 engine->getCamera()->getViewport(), &farX, &farY, &farZ);
 
     rayOrigin = glm::vec3(nearX, nearY, nearZ);
     rayDir = glm::normalize(glm::vec3(farX, farY, farZ) - rayOrigin);
@@ -515,7 +517,7 @@ std::string Tool::getTypeName() const
     }
 }
 
-void Tool::use(GLFWwindow *window, ZoneManager &mgr, Zone &zone, Type type, Core::Game &game)
+void Tool::use(GLFWwindow *window, ZoneManager &mgr, Zone &zone, Type type, Core::Engine &engine)
 {
     // Implement tool-specific behavior here
     // For example, if it's a brush, apply color to the target object
@@ -531,23 +533,23 @@ void Tool::use(GLFWwindow *window, ZoneManager &mgr, Zone &zone, Type type, Core
     // Brush Implementation
     if (strokeTool)
     {
-        if (mouseLeftNow && !game.getMouseLeftPressedLast()) {
+        if (mouseLeftNow && !engine.isMouseLeftPressedLast()) {
             configureStrokeTool(zone, type);
         } else if (!zone.getBrushSystem()) {
             zone.initializeBrushSystem();
         }
 
-        if (game.getAdvanced2DBrush())
+        if (engine.getAdvanced2DBrush())
         {
-            if (mouseLeftNow && !game.getMouseLeftPressedLast())
+            if (mouseLeftNow && !engine.isMouseLeftPressedLast())
             {
-                zone.startStroke(game.getCursorX(), game.getCursorY());
+                zone.startStroke(engine.getCursorX(), engine.getCursorY());
             }
-            else if (mouseLeftNow && game.getMouseLeftPressedLast())
+            else if (mouseLeftNow && engine.isMouseLeftPressedLast())
             {
-                zone.continueStroke(game.getCursorX(), game.getCursorY());
+                zone.continueStroke(engine.getCursorX(), engine.getCursorY());
             }
-            else if (!mouseLeftNow && game.getMouseLeftPressedLast())
+            else if (!mouseLeftNow && engine.isMouseLeftPressedLast())
             {
                 zone.endStroke();
             }
@@ -555,15 +557,15 @@ void Tool::use(GLFWwindow *window, ZoneManager &mgr, Zone &zone, Type type, Core
         // Normal strokes
         else
         {
-            if (mouseLeftNow && !game.getMouseLeftPressedLast())
+            if (mouseLeftNow && !engine.isMouseLeftPressedLast())
             {
-                mgr.active().startStroke(game.getCursorX(), game.getCursorY());
+                mgr.active().startStroke(engine.getCursorX(), engine.getCursorY());
             }
-            else if (mouseLeftNow && game.getMouseLeftPressedLast())
+            else if (mouseLeftNow && engine.isMouseLeftPressedLast())
             {
-                mgr.active().continueStroke(game.getCursorX(), game.getCursorY());
+                mgr.active().continueStroke(engine.getCursorX(), engine.getCursorY());
             }
-            else if (!mouseLeftNow && game.getMouseLeftPressedLast())
+            else if (!mouseLeftNow && engine.isMouseLeftPressedLast())
             {
                 mgr.active().endStroke();
             }
@@ -575,57 +577,57 @@ void Tool::use(GLFWwindow *window, ZoneManager &mgr, Zone &zone, Type type, Core
         {
             const float radius = activeEraserRadius(zone);
             if (zone.getBrushSystem()) {
-                if (!game.getMouseLeftPressedLast()) {
+                if (!engine.isMouseLeftPressedLast()) {
                     zone.getBrushSystem()->saveStrokeState();
                 }
                 zone.getBrushSystem()->eraseDab(
-                    glm::vec2(game.getCursorX(), game.getCursorY()),
+                    glm::vec2(engine.getCursorX(), engine.getCursorY()),
                     std::max(0.01f, zone.getBrushSystem()->getRadius()));
             }
 
-            eraseLegacyStrokeSegments(zone, glm::vec2(game.getCursorX(), game.getCursorY()), radius);
+            eraseLegacyStrokeSegments(zone, glm::vec2(engine.getCursorX(), engine.getCursorY()), radius);
         }
     }
     else if (type == Type::Delete)
     {
         if (mouseLeftNow)
         {
-            deleteLegacyStrokesAt(zone, glm::vec2(game.getCursorX(), game.getCursorY()), activeEraserRadius(zone));
+            deleteLegacyStrokesAt(zone, glm::vec2(engine.getCursorX(), engine.getCursorY()), activeEraserRadius(zone));
         }
     }
     else if (type == Type::MagicEraser)
     {
-        if (mouseLeftNow && !game.getMouseLeftPressedLast())
+        if (mouseLeftNow && !engine.isMouseLeftPressedLast())
         {
             if (zone.getBrushSystem()) {
                 zone.getBrushSystem()->saveStrokeState();
                 zone.getBrushSystem()->eraseDab(
-                    glm::vec2(game.getCursorX(), game.getCursorY()),
+                    glm::vec2(engine.getCursorX(), engine.getCursorY()),
                     std::max(0.02f, zone.getBrushSystem()->getRadius() * 1.75f));
             }
             deleteLegacyStrokesAt(zone,
-                                  glm::vec2(game.getCursorX(), game.getCursorY()),
+                                  glm::vec2(engine.getCursorX(), engine.getCursorY()),
                                   activeEraserRadius(zone) * 1.5f,
                                   true);
         }
     }
     else if (type == Type::Line)
     {
-        if (mouseLeftNow && !game.getMouseLeftPressedLast())
+        if (mouseLeftNow && !engine.isMouseLeftPressedLast())
         {
-            game.begin2DToolDrag(type, glm::vec2(game.getCursorX(), game.getCursorY()));
+            engine.begin2DToolDrag(type, glm::vec2(engine.getCursorX(), engine.getCursorY()));
         }
-        else if (mouseLeftNow && game.getMouseLeftPressedLast() && game.is2DToolDragging(type))
+        else if (mouseLeftNow && engine.isMouseLeftPressedLast() && engine.is2DToolDragging(type))
         {
-            game.update2DToolDrag(glm::vec2(game.getCursorX(), game.getCursorY()));
+            engine.update2DToolDrag(glm::vec2(engine.getCursorX(), engine.getCursorY()));
         }
-        else if (!mouseLeftNow && game.getMouseLeftPressedLast() && game.is2DToolDragging(type))
+        else if (!mouseLeftNow && engine.isMouseLeftPressedLast() && engine.is2DToolDragging(type))
         {
-            glm::vec2 start = game.get2DToolDragStart();
+            glm::vec2 start = engine.get2DToolDragStart();
             zone.startStroke(start.x, start.y);
-            zone.continueStroke(game.getCursorX(), game.getCursorY());
+            zone.continueStroke(engine.getCursorX(), engine.getCursorY());
             zone.endStroke();
-            game.end2DToolDrag();
+            engine.end2DToolDrag();
         }
     }
     else if (type == Type::Rectangle ||
@@ -637,26 +639,26 @@ void Tool::use(GLFWwindow *window, ZoneManager &mgr, Zone &zone, Type type, Core
              type == Type::CustomShape)
     {
 
-        if (mouseLeftNow && !game.getMouseLeftPressedLast())
+        if (mouseLeftNow && !engine.isMouseLeftPressedLast())
         {
-            game.begin2DToolDrag(type, glm::vec2(game.getCursorX(), game.getCursorY()));
+            engine.begin2DToolDrag(type, glm::vec2(engine.getCursorX(), engine.getCursorY()));
         }
-        else if (mouseLeftNow && game.getMouseLeftPressedLast() && game.is2DToolDragging(type))
+        else if (mouseLeftNow && engine.isMouseLeftPressedLast() && engine.is2DToolDragging(type))
         {
-            game.update2DToolDrag(glm::vec2(game.getCursorX(), game.getCursorY()));
+            engine.update2DToolDrag(glm::vec2(engine.getCursorX(), engine.getCursorY()));
         }
-        else if (!mouseLeftNow && game.getMouseLeftPressedLast() && game.is2DToolDragging(type))
+        else if (!mouseLeftNow && engine.isMouseLeftPressedLast() && engine.is2DToolDragging(type))
         {
-            glm::vec2 start = game.get2DToolDragStart();
-            float endX = game.getCursorX();
-            float endY = game.getCursorY();
+            glm::vec2 start = engine.get2DToolDragStart();
+            float endX = engine.getCursorX();
+            float endY = engine.getCursorY();
             float minX = std::min(start.x, endX);
             float minY = std::min(start.y, endY);
             float width = std::abs(endX - start.x);
             float height = std::abs(endY - start.y);
 
             if (type == Tool::Type::Rectangle || type == Tool::Type::Ellipse) {
-                if (game.getUseLegacy2DTools()) {
+                if (engine.getUseLegacy2DTools()) {
                     zone.addDesignShape(type, minX + width * 0.5f, minY + height * 0.5f, width, height);
                 } else {
                     auto obj = std::make_unique<Object>();
@@ -679,21 +681,21 @@ void Tool::use(GLFWwindow *window, ZoneManager &mgr, Zone &zone, Type type, Core
                 }
             } else {
                 zone.addDesignShape(type, minX + width * 0.5f, minY + height * 0.5f, width, height);
-            }           game.end2DToolDrag();
+            }           engine.end2DToolDrag();
         }
 
         // Color picker tool
     }
     else if (type == Type::ColorPicker || type == Type::Eyedropper)
     {
-        if (mouseLeftNow && !game.getMouseLeftPressedLast())
+        if (mouseLeftNow && !engine.isMouseLeftPressedLast())
         {
             glm::vec3 sampledColor(0.0f);
             if (zone.getBrushSystem() &&
-                zone.getBrushSystem()->sampleColor(glm::vec2(game.getCursorX(), game.getCursorY()), sampledColor)) {
-                game.setCurrentColor(0, sampledColor.r);
-                game.setCurrentColor(1, sampledColor.g);
-                game.setCurrentColor(2, sampledColor.b);
+                zone.getBrushSystem()->sampleColor(glm::vec2(engine.getCursorX(), engine.getCursorY()), sampledColor)) {
+                engine.setCurrentColor(0, sampledColor.r);
+                engine.setCurrentColor(1, sampledColor.g);
+                engine.setCurrentColor(2, sampledColor.b);
                 zone.setDrawColor(sampledColor.r, sampledColor.g, sampledColor.b);
                 return;
             }
@@ -703,14 +705,14 @@ void Tool::use(GLFWwindow *window, ZoneManager &mgr, Zone &zone, Type type, Core
             {
                 for (size_t i = 0; i + 1 < stroke.points.size(); i += 2)
                 {
-                    float dx = stroke.points[i] - game.getCursorX();
-                    float dy = stroke.points[i + 1] - game.getCursorY();
+                    float dx = stroke.points[i] - engine.getCursorX();
+                    float dy = stroke.points[i + 1] - engine.getCursorY();
                     if (dx * dx + dy * dy < radius * radius)
                     {
-                        // Update the game's current color with the picked color
-                        game.setCurrentColor(0, stroke.r);
-                        game.setCurrentColor(1, stroke.g);
-                        game.setCurrentColor(2, stroke.b);
+                        // Update the engine's current color with the picked color
+                        engine.setCurrentColor(0, stroke.r);
+                        engine.setCurrentColor(1, stroke.g);
+                        engine.setCurrentColor(2, stroke.b);
                         zone.setDrawColor(stroke.r, stroke.g, stroke.b);
                         break;
                     }
@@ -725,17 +727,17 @@ void Tool::use(GLFWwindow *window, ZoneManager &mgr, Zone &zone, Type type, Core
              type == Tool::Type::MagicWand ||
              type == Tool::Type::Marquee)
     {
-        if (mouseLeftNow && !game.getMouseLeftPressedLast())
+        if (mouseLeftNow && !engine.isMouseLeftPressedLast())
         {
-            game.begin2DToolDrag(type, glm::vec2(game.getCursorX(), game.getCursorY()));
+            engine.begin2DToolDrag(type, glm::vec2(engine.getCursorX(), engine.getCursorY()));
         }
-        else if (mouseLeftNow && game.getMouseLeftPressedLast() && game.is2DToolDragging(type))
+        else if (mouseLeftNow && engine.isMouseLeftPressedLast() && engine.is2DToolDragging(type))
         {
-            game.update2DToolDrag(glm::vec2(game.getCursorX(), game.getCursorY()));
+            engine.update2DToolDrag(glm::vec2(engine.getCursorX(), engine.getCursorY()));
         }
-        else if (!mouseLeftNow && game.getMouseLeftPressedLast() && game.is2DToolDragging(type))
+        else if (!mouseLeftNow && engine.isMouseLeftPressedLast() && engine.is2DToolDragging(type))
         {
-            const auto& selectionPoints = game.get2DToolDragPoints();
+            const auto& selectionPoints = engine.get2DToolDragPoints();
             if (selectionPoints.size() >= 2)
             {
                 // Create selection based on tool type
@@ -760,7 +762,7 @@ void Tool::use(GLFWwindow *window, ZoneManager &mgr, Zone &zone, Type type, Core
                     zone.getDesignSystem()->getSelectionSystem()->createSelection(selectionType, selectionPoints);
                 }
             }
-            game.end2DToolDrag();
+            engine.end2DToolDrag();
         }
     }
 
@@ -775,7 +777,7 @@ void Tool::use(GLFWwindow *window, ZoneManager &mgr, Zone &zone, Type type, Core
              type == Tool::Type::Pattern)
     {
 
-        if (mouseLeftNow && !game.getMouseLeftPressedLast())
+        if (mouseLeftNow && !engine.isMouseLeftPressedLast())
         {
             // Apply effect at click position
             EffectsSystem::EffectType effectType;
@@ -821,7 +823,7 @@ void Tool::use(GLFWwindow *window, ZoneManager &mgr, Zone &zone, Type type, Core
              type == Tool::Type::TextPath)
     {
 
-        if (mouseLeftNow && !game.getMouseLeftPressedLast())
+        if (mouseLeftNow && !engine.isMouseLeftPressedLast())
         {
             // Add sample text at click position
             static int textCounter = 1;
@@ -833,8 +835,8 @@ void Tool::use(GLFWwindow *window, ZoneManager &mgr, Zone &zone, Type type, Core
             } else {
                 text = "Text " + std::to_string(textCounter++);
             }
-            if (game.getUseLegacy2DTools()) {
-                zone.addDesignText(text, game.getCursorX(), game.getCursorY());
+            if (engine.getUseLegacy2DTools()) {
+                zone.addDesignText(text, engine.getCursorX(), engine.getCursorY());
             } else {
                 auto obj = std::make_unique<Object>();
                 auto* rawObj = obj.get();
@@ -849,7 +851,7 @@ void Tool::use(GLFWwindow *window, ZoneManager &mgr, Zone &zone, Type type, Core
                 obj->setTextString(text);
                 
                 glm::mat4 m = glm::mat4(1.0f);
-                m[3] = glm::vec4(game.getCursorX(), game.getCursorY(), 0.0f, 1.0f);
+                m[3] = glm::vec4(engine.getCursorX(), engine.getCursorY(), 0.0f, 1.0f);
                 obj->setTransform(m);
                 
                 zone.world().addObject(std::move(obj));
@@ -866,9 +868,9 @@ void Tool::use(GLFWwindow *window, ZoneManager &mgr, Zone &zone, Type type, Core
              type == Tool::Type::Perspective)
     {
 
-        if (mouseLeftNow && !game.getMouseLeftPressedLast())
+        if (mouseLeftNow && !engine.isMouseLeftPressedLast())
         {
-            game.begin2DToolDrag(type, glm::vec2(game.getCursorX(), game.getCursorY()));
+            engine.begin2DToolDrag(type, glm::vec2(engine.getCursorX(), engine.getCursorY()));
 
             // Create a transform at the click position
             if (zone.getDesignSystem() && zone.getDesignSystem()->getTransformSystem())
@@ -901,18 +903,18 @@ void Tool::use(GLFWwindow *window, ZoneManager &mgr, Zone &zone, Type type, Core
                 zone.getDesignSystem()->getTransformSystem()->createTransform(transformType);
             }
         }
-        else if (mouseLeftNow && game.getMouseLeftPressedLast() && game.is2DToolDragging(type))
+        else if (mouseLeftNow && engine.isMouseLeftPressedLast() && engine.is2DToolDragging(type))
         {
             // Update transform based on mouse movement
-            glm::vec2 delta = glm::vec2(game.getCursorX(), game.getCursorY()) - game.get2DToolDragStart();
+            glm::vec2 delta = glm::vec2(engine.getCursorX(), engine.getCursorY()) - engine.get2DToolDragStart();
             (void)delta;
-            game.update2DToolDrag(glm::vec2(game.getCursorX(), game.getCursorY()));
+            engine.update2DToolDrag(glm::vec2(engine.getCursorX(), engine.getCursorY()));
 
             if (zone.getDesignSystem() && zone.getDesignSystem()->getTransformSystem())
             {
                 // For now, just move the transform
                 TransformSystem::Transform transform;
-                transform.position = glm::vec2(game.getCursorX(), game.getCursorY());
+                transform.position = glm::vec2(engine.getCursorX(), engine.getCursorY());
                 transform.type = (type == Tool::Type::Move) ? TransformSystem::TransformType::Move : TransformSystem::TransformType::Scale;
                 transform.active = true;
 
@@ -920,15 +922,15 @@ void Tool::use(GLFWwindow *window, ZoneManager &mgr, Zone &zone, Type type, Core
                 // This is a simplified approach - in a real system you'd track the active transform
             }
         }
-        else if (!mouseLeftNow && game.getMouseLeftPressedLast() && game.is2DToolDragging(type))
+        else if (!mouseLeftNow && engine.isMouseLeftPressedLast() && engine.is2DToolDragging(type))
         {
-            game.end2DToolDrag();
+            engine.end2DToolDrag();
         }
     }
 }
 
 
-void Tool::Pottery3D(GLFWwindow *window, Core::Game *game, ZoneManager &mgr, float dt,
+void Tool::Pottery3D(GLFWwindow *window, Core::Engine *engine, ZoneManager &mgr, float dt,
                      const std::vector<Object*>& targets, const glm::mat4* avatarRoot)
 {
     (void)mgr;
@@ -937,20 +939,20 @@ void Tool::Pottery3D(GLFWwindow *window, Core::Game *game, ZoneManager &mgr, flo
     bool mouseLeftNow = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
     if (mouseLeftNow)
     {
-        bool firstFrame = !game->getMouseLeftPressedLast();
+        bool firstFrame = !engine->isMouseLeftPressedLast();
         // Build picking ray (crosshair when the cursor is locked) and pick the
         // surface with the shared per-face raycast.
         glm::vec3 rayO, rayDir;
         SurfaceHit hit;
-        if (buildMouseRay(window, game, rayO, rayDir) && pickSurface(targets, rayO, rayDir, hit))
+        if (buildMouseRay(window, engine, rayO, rayDir) && pickSurface(targets, rayO, rayDir, hit))
         {
             Object *hitObj = hit.obj;
             int hitAxis = hit.axis;
             int hitSign = hit.sign;
             bool hitIsCube = hit.isCube;
             // Determine scale delta
-            float dir = (game->getCurrentPotteryTool() == Core::Game::PotteryTool::Expand) ? 1.0f : -1.0f;
-            float delta = dir * game->getPotteryStrength() * (firstFrame ? 1.0f : dt); // full step on click, smaller continuous after
+            float dir = (true) ? 1.0f : -1.0f;
+            float delta = dir * engine->getPotteryStrength() * (firstFrame ? 1.0f : dt); // full step on click, smaller continuous after
 
             glm::mat4 t = hitObj->getTransform();
             glm::vec3 translation = glm::vec3(t[3]);
@@ -1005,15 +1007,15 @@ void Tool::Pottery3D(GLFWwindow *window, Core::Game *game, ZoneManager &mgr, flo
     }
 }
 
-void Tool::Rotate3D(GLFWwindow *window, Core::Game *game, ZoneManager &mgr, float dt,
+void Tool::Rotate3D(GLFWwindow *window, Core::Engine *engine, ZoneManager &mgr, float dt,
                     const std::vector<Object*>& targets, const glm::mat4* avatarRoot)
 {
     (void)mgr;
     // Drag state lives on Game (not function-local statics) so it can't leak
     // across tool or object switches.
-    bool dragging = game->getRotateDragging();
-    double lastCursorX = game->getRotateLastCursorX();
-    double lastCursorY = game->getRotateLastCursorY();
+    bool dragging = engine->getRotateDragging();
+    double lastCursorX = engine->getRotateLastCursorX();
+    double lastCursorY = engine->getRotateLastCursorY();
 
     bool mouseLeftNow = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
     double cursorX = 0.0;
@@ -1022,11 +1024,11 @@ void Tool::Rotate3D(GLFWwindow *window, Core::Game *game, ZoneManager &mgr, floa
 
     glm::vec3 rayOrigin(0.0f);
     glm::vec3 rayDir(0.0f, 0.0f, -1.0f);
-    buildMouseRay(window, game, rayOrigin, rayDir);
+    buildMouseRay(window, engine, rayOrigin, rayDir);
 
-    if (mouseLeftNow && !game->getMouseLeftPressedLast()) {
+    if (mouseLeftNow && !engine->isMouseLeftPressedLast()) {
         if (Object* hit = pickNearestObject(targets, rayOrigin, rayDir)) {
-            game->setSelectedObject3D(hit);
+            // engine->setSelectedObject3D(hit);
         }
         dragging = true;
         lastCursorX = cursorX;
@@ -1035,35 +1037,35 @@ void Tool::Rotate3D(GLFWwindow *window, Core::Game *game, ZoneManager &mgr, floa
         dragging = false;
     }
 
-    Object* selected = game->getSelectedObject3D();
+    Object* selected = nullptr;
     if (selected) {
-        selected->setRotationResponsiveness(game->getRotationToolSmoothness());
+        selected->setRotationResponsiveness(engine->getRotationToolSmoothness());
 
         if (dragging && mouseLeftNow) {
             float dx = static_cast<float>(cursorX - lastCursorX);
             float dy = static_cast<float>(cursorY - lastCursorY);
             glm::vec3 deltaDegrees(0.0f);
-            float sensitivity = game->getRotationToolSensitivity();
+            float sensitivity = engine->getRotationToolSensitivity();
 
             if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ||
                 glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS) {
                 deltaDegrees.z = dx * sensitivity;
             } else {
-                switch (game->getRotationAxisMode()) {
-                    case Core::Game::RotationAxisMode::FreeXY:
+                switch (engine->getRotationAxisMode()) {
+                    case Core::RotationAxisMode::FreeXY:
                         deltaDegrees.x = -dy * sensitivity;
                         deltaDegrees.y = dx * sensitivity;
                         break;
-                    case Core::Game::RotationAxisMode::X:
+                    case Core::RotationAxisMode::X:
                         deltaDegrees.x = -dy * sensitivity;
                         break;
-                    case Core::Game::RotationAxisMode::Y:
+                    case Core::RotationAxisMode::Y:
                         deltaDegrees.y = dx * sensitivity;
                         break;
-                    case Core::Game::RotationAxisMode::Z:
+                    case Core::RotationAxisMode::Z:
                         deltaDegrees.z = dx * sensitivity;
                         break;
-                    case Core::Game::RotationAxisMode::AuthoritativeAxis: {
+                    case Core::RotationAxisMode::AuthoritativeAxis: {
                         float axisAmount = (dx - dy) * sensitivity;
                         deltaDegrees = selected->getAuthoritativeAxis() * axisAmount;
                         break;
@@ -1087,21 +1089,21 @@ void Tool::Rotate3D(GLFWwindow *window, Core::Game *game, ZoneManager &mgr, floa
     lastCursorX = cursorX;
     lastCursorY = cursorY;
 
-    game->setRotateDragging(dragging);
-    game->setRotateLastCursor(lastCursorX, lastCursorY);
+    engine->setRotateDragging(dragging);
+    engine->setRotateLastCursor(lastCursorX, lastCursorY);
 }
 
-void Tool::FacePaint(GLFWwindow *window, Core::Game *game, ZoneManager &mgr, float dt,
+void Tool::FacePaint(GLFWwindow *window, Core::Engine *engine, ZoneManager &mgr, float dt,
                      const std::vector<Object*>& targets)
 {
     (void)mgr;
     (void)dt;
     bool mouseLeftNow = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
-    if (mouseLeftNow && !game->getMouseLeftPressedLast())
+    if (mouseLeftNow && !engine->isMouseLeftPressedLast())
     {
         // Build picking ray (crosshair when the cursor is locked).
         glm::vec3 rayO, rayDir;
-        if (!buildMouseRay(window, game, rayO, rayDir)) return;
+        if (!buildMouseRay(window, engine, rayO, rayDir)) return;
 
         float nearestT = 1e9f;
         Object *hitObj = nullptr;
@@ -1131,30 +1133,30 @@ void Tool::FacePaint(GLFWwindow *window, Core::Game *game, ZoneManager &mgr, flo
         if (hitObj && hitFace >= 0)
         {
             // Check if advanced face paint is enabled
-            if (game->isAdvancedFacePaintEnabled())
+            if (engine->isAdvancedFacePaintEnabled())
             {
                 // Use advanced face paint system with current settings
-                AdvancedFacePaint::GradientSettings* gradientSettings = game->getCurrentGradientSettings();
-                AdvancedFacePaint::SmudgeSettings* smudgeSettings = game->getCurrentSmudgeSettings();
+                void* gradientSettings = engine->getCurrentGradientSettings();
+                void* smudgeSettings = engine->getCurrentSmudgeSettings();
                 
                 bool success = AdvancedFacePaint::paintFaceAdvanced(hitObj, hitFace, hitUV, 
-                                                                  gradientSettings, smudgeSettings);
+                                                                  nullptr, nullptr);
                 
                 if (!success) {
                     // Fall back to basic fill if advanced painting fails
-                    hitObj->fillFaceColor(hitFace, game->getCurrentColor(0), game->getCurrentColor(1), game->getCurrentColor(2));
+                    hitObj->fillFaceColor(hitFace, engine->getCurrentColor(0), engine->getCurrentColor(1), engine->getCurrentColor(2));
                 }
             }
             else
             {
                 // Use basic fill for FacePaint click
-                hitObj->fillFaceColor(hitFace, game->getCurrentColor(0), game->getCurrentColor(1), game->getCurrentColor(2));
+                hitObj->fillFaceColor(hitFace, engine->getCurrentColor(0), engine->getCurrentColor(1), engine->getCurrentColor(2));
             }
         }
     }
 }
 
- void Tool::FaceBrush(GLFWwindow *window, Core::Game *game, ZoneManager &mgr, float dt,
+ void Tool::FaceBrush(GLFWwindow *window, Core::Engine *engine, ZoneManager &mgr, float dt,
                       const std::vector<Object*>& targets)
  {
     (void)mgr;
@@ -1165,7 +1167,7 @@ void Tool::FacePaint(GLFWwindow *window, Core::Game *game, ZoneManager &mgr, flo
         // Continuous stroke painting while mouse button held.
         // Build picking ray (crosshair when the cursor is locked).
         glm::vec3 rayO, rayDir;
-        if (!buildMouseRay(window, game, rayO, rayDir)) return;
+        if (!buildMouseRay(window, engine, rayO, rayDir)) return;
         float nearestT = 1e9f;
         Object *hitObj = nullptr;
         int hitFace = -1;
@@ -1193,128 +1195,128 @@ void Tool::FacePaint(GLFWwindow *window, Core::Game *game, ZoneManager &mgr, flo
         }
         if (hitObj && hitFace >= 0)
         {
-            uv += glm::vec2(game->getFaceBrushUOffset(), game->getFaceBrushVOffset());
+            uv += glm::vec2(engine->getFaceBrushUOffset(), engine->getFaceBrushVOffset());
             uv = glm::clamp(uv, glm::vec2(0.0f), glm::vec2(1.0f));
 
             // Update brush cursor position
-            game->setBrushCursorPos(uv);
-            game->setBrushCursorVisible(true);
+            // engine->setBrushCursorPos(uv);
+            engine->setBrushCursorVisible(true);
 
             // Calculate pressure simulation
-            float pressure = game->getCurrentPressure();
-            if (game->getUsePressureSimulation())
+            float pressure = engine->getCurrentPressure();
+            if (engine->getUsePressureSimulation())
             {
                 // Simulate pressure based on mouse speed and other factors
                 float currentTime = static_cast<float>(glfwGetTime());
-                if (game->getLastBrushTime() > 0.0f)
+                if (0.0f > 0.0f)
                 {
-                    float timeDelta = currentTime - game->getLastBrushTime();
+                    float timeDelta = currentTime - 0.0f;
                     if (timeDelta > 0.0f)
                     {
-                        float speed = glm::length(uv - game->getLastBrushUV()) / timeDelta;
-                        pressure = std::clamp(1.0f - speed * game->getPressureSensitivity(), 0.1f, 1.0f);
+                        float speed = glm::length(uv - glm::vec2(0)) / timeDelta;
+                        pressure = std::clamp(1.0f - speed * 0.0f, 0.1f, 1.0f);
                     }
                 }
-                game->setLastBrushTime(currentTime);
+                // engine->setLastBrushTime(currentTime);
             }
 
             // Apply brush based on type
-            switch (game->getCurrentBrushType())
+            switch (0)
             {
-            case Core::Game::PublicBrushType::Normal:
+            case 0:
                 // Interpolate only if staying on the same object and face
-                if (game->getUseStrokeInterpolation() &&
-                    game->getLastBrushUV().x >= 0.0f &&
-                    game->getLastBrushObject() == hitObj &&
-                    game->getLastBrushFace() == hitFace)
+                if (false &&
+                    glm::vec2(0).x >= 0.0f &&
+                    nullptr == hitObj &&
+                    0 == hitFace)
                 {
-                    hitObj->paintStroke(hitFace, game->getLastBrushUV(), uv,
-                                        game->getCurrentColor(0), game->getCurrentColor(1), game->getCurrentColor(2),
-                                        game->getFaceBrushRadius() * pressure, game->getFaceBrushSoftness(),
-                                        game->getBrushOpacity(), game->getBrushSpacing());
+                    hitObj->paintStroke(hitFace, glm::vec2(0), uv,
+                                        engine->getCurrentColor(0), engine->getCurrentColor(1), engine->getCurrentColor(2),
+                                        0.0f * pressure, 0.0f,
+                                        0.0f, 0.0f);
                 }
                 else
                 {
                     hitObj->paintFaceAdvanced(hitFace, uv,
-                                              game->getCurrentColor(0), game->getCurrentColor(1), game->getCurrentColor(2),
-                                              game->getFaceBrushRadius() * pressure, game->getFaceBrushSoftness(),
-                                              game->getBrushOpacity(), game->getBrushFlow(), 0);
+                                              engine->getCurrentColor(0), engine->getCurrentColor(1), engine->getCurrentColor(2),
+                                              0.0f * pressure, 0.0f,
+                                              0.0f, 0.0f, 0);
                 }
                 break;
 
-            case Core::Game::PublicBrushType::Airbrush:
+            case 4:
                  hitObj->airbrushFace(hitFace, uv,
-                                      game->getCurrentColor(0), game->getCurrentColor(1), game->getCurrentColor(2),
-                                      game->getFaceBrushRadius() * pressure, /*density*/ 0.5f, game->getBrushOpacity());
+                                      engine->getCurrentColor(0), engine->getCurrentColor(1), engine->getCurrentColor(2),
+                                      0.0f * pressure, /*density*/ 0.5f, 0.0f);
                 break;
 
-            case Core::Game::PublicBrushType::Chalk:
+            case 5:
                 hitObj->paintFaceAdvanced(hitFace, uv,
-                                          game->getCurrentColor(0), game->getCurrentColor(1), game->getCurrentColor(2),
-                                          game->getFaceBrushRadius() * pressure, game->getFaceBrushSoftness(),
-                                          game->getBrushOpacity(), game->getBrushFlow(), 2);
+                                          engine->getCurrentColor(0), engine->getCurrentColor(1), engine->getCurrentColor(2),
+                                          0.0f * pressure, 0.0f,
+                                          0.0f, 0.0f, 2);
                 break;
 
-            case Core::Game::PublicBrushType::Spray:
+            case 6:
                 hitObj->paintFaceAdvanced(hitFace, uv,
-                                          game->getCurrentColor(0), game->getCurrentColor(1), game->getCurrentColor(2),
-                                          game->getFaceBrushRadius() * pressure, game->getFaceBrushSoftness(),
-                                          game->getBrushOpacity(), game->getBrushFlow(), 3);
+                                          engine->getCurrentColor(0), engine->getCurrentColor(1), engine->getCurrentColor(2),
+                                          0.0f * pressure, 0.0f,
+                                          0.0f, 0.0f, 3);
                 break;
 
-            case Core::Game::PublicBrushType::Smudge:
+            case 1:
                  hitObj->smudgeFace(hitFace, uv,
-                                    game->getFaceBrushRadius() * pressure, /*strength*/ 0.5f);
+                                    0.0f * pressure, /*strength*/ 0.5f);
                 break;
 
-            case Core::Game::PublicBrushType::Clone:
-                if (game->getCloneToolActive())
+            case 2:
+                if (false)
                 {
-                    glm::vec2 sourceUV = uv + game->getCloneOffset();
+                    glm::vec2 sourceUV = uv + glm::vec2(0);
                     hitObj->cloneFace(hitFace, uv, sourceUV,
-                                      game->getFaceBrushRadius() * pressure, game->getBrushOpacity());
+                                      0.0f * pressure, 0.0f);
                 }
                 break;
             }
 
             // Remember last stroke context
-            game->setLastBrushUV(uv);
-            game->setLastBrushFace(hitFace);
-            game->setLastBrushObject(hitObj);
+            // engine->setLastBrushUV(uv);
+            // engine->setLastBrushFace(hitFace);
+            // engine->setLastBrushObject(hitObj);
         }
         else
         {
-            game->setBrushCursorVisible(false);
+            engine->setBrushCursorVisible(false);
         }
     }
     else
     {
         // Mouse released - reset stroke state
-        game->setLastBrushUV(glm::vec2(-1.0f, -1.0f));
-        game->setLastBrushFace(-1);
-        game->setLastBrushObject(nullptr);
-        game->setBrushCursorVisible(false);
+        // engine->setLastBrushUV(glm::vec2(-1.0f, -1.0f));
+        // engine->setLastBrushFace(-1);
+        // engine->setLastBrushObject(nullptr);
+        engine->setBrushCursorVisible(false);
     }
 }
 
-void Tool::Selection3D(GLFWwindow *window, Core::Game *game,
+void Tool::Selection3D(GLFWwindow *window, Core::Engine *engine,
                        const std::vector<Object*>& targets)
 {
     // Pick the object under the cursor (or crosshair when locked) and select it.
     // Uses the cached camera matrices via buildMouseRay rather than reading GL
     // matrix state during update().
     glm::vec3 rayO, rayDir;
-    if (!buildMouseRay(window, game, rayO, rayDir)) return;
-    game->setSelectedObject3D(pickNearestObject(targets, rayO, rayDir));
+    if (!buildMouseRay(window, engine, rayO, rayDir)) return;
+    // engine->setSelectedObject3D(pickNearestObject(targets, rayO, rayDir));
 }
 
-Object* Tool::PickObject3D(GLFWwindow *window, Core::Game *game,
+Object* Tool::PickObject3D(GLFWwindow *window, Core::Engine *engine,
                            const std::vector<Object*>& targets)
 {
     // Same ray/pick path as Selection3D, but returns the hit instead of
     // mutating the current selection (so a tool can pick operands freely).
     glm::vec3 rayO, rayDir;
-    if (!buildMouseRay(window, game, rayO, rayDir)) return nullptr;
+    if (!buildMouseRay(window, engine, rayO, rayDir)) return nullptr;
     return pickNearestObject(targets, rayO, rayDir);
 }
 

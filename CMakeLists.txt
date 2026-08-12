@@ -40,7 +40,6 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Person/Body
     ${CMAKE_CURRENT_SOURCE_DIR}/imgui
     ${CMAKE_CURRENT_SOURCE_DIR}/local_deps/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/flatbuffers/include
 )
 
 # Fetch standalone ASIO, WebSocketPP, and GLFW
@@ -58,6 +57,15 @@ if (NOT EMSCRIPTEN)
     FetchContent_MakeAvailable(glfw)
     set(GLFW_LIB glfw)
 endif()
+
+FetchContent_Declare(
+    flatbuffers
+    GIT_REPOSITORY https://github.com/google/flatbuffers.git
+    GIT_TAG v25.12.19
+)
+set(FLATBUFFERS_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(flatbuffers)
+include_directories(${flatbuffers_SOURCE_DIR}/include)
 
 if (NOT EMSCRIPTEN)
     FetchContent_Declare(

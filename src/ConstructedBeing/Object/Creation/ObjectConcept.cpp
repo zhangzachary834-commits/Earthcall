@@ -72,6 +72,8 @@ PropertyMapping PropertyMapping::fromJson(const nlohmann::json& j) {
 nlohmann::json ObjectConcept::MemberTemplate::toJson() const {
     nlohmann::json j{
         {"kind", static_cast<int>(kind)},
+        {"beingKind", static_cast<int>(beingKind)},
+        {"hasGeometry", hasGeometry},
         {"params", {params.r, params.ry, params.rz, params.halfH, params.majorR,
                     params.minorR, params.paraboloidA, params.ovoidAsym, params.fillet}},
         {"relativeTransform", mat4ToJson(relativeTransform)}
@@ -80,12 +82,29 @@ nlohmann::json ObjectConcept::MemberTemplate::toJson() const {
         j["field"] = geom::sdfToJson(field);
         j["fieldExtent"] = fieldExtent;
     }
+    if (!captured.empty()) {
+        nlohmann::json state = nlohmann::json::object();
+        for (const auto& entry : captured) {
+            state[entry.first] = propertyValueToJson(entry.second);
+        }
+        j["captured"] = state;
+    }
     return j;
 }
 
 ObjectConcept::MemberTemplate ObjectConcept::MemberTemplate::fromJson(const nlohmann::json& j) {
     MemberTemplate m;
     m.kind = static_cast<Object::ShapeKind>(j.value("kind", 0));
+    // Concepts written before members carried a kind were all Objects with
+    // bodies — the old default, stated rather than assumed.
+    m.beingKind = static_cast<ConditionNode::BeingKind>(
+        j.value("beingKind", static_cast<int>(ConditionNode::BeingKind::Object)));
+    m.hasGeometry = j.value("hasGeometry", true);
+    if (j.contains("captured") && j["captured"].is_object()) {
+        for (auto it = j["captured"].begin(); it != j["captured"].end(); ++it) {
+            m.captured[it.key()] = propertyValueFromJson(it.value());
+        }
+    }
     if (j.contains("params") && j["params"].is_array() && j["params"].size() == 9) {
         const auto& p = j["params"];
         m.params.r = p[0].get<float>();
@@ -170,18 +189,97 @@ void ObjectConcept::setConceptId(const std::string& stableId) {
     claimConceptIdAtLeast(stableId);
 }
 
+namespace {
+
+// The paths a MemberTemplate already owns outright. Remembering them a second
+// time in the property snapshot would let a stale copy of the source's WORLD
+// pose fight the placement the author asked for, and a stale copy of the shape
+// fight the geometry recipe.
+bool templateOwnsPath(const std::string& path) {
+    static const char* kOwned[] = {"position", "rotation", "transform", "center"};
+    for (const char* owned : kOwned) {
+        if (path == owned) return true;
+    }
+    return path.rfind("shape", 0) == 0;   // "shape", "shape.r", "shape.majorR", …
+}
+
+// A concept remembers VALUES. A property whose value is another being is
+// identity, not value: copying the pointer would make every newborn point at
+// the original's neighbours, and copying the identifier would make the save
+// file claim a relationship nothing formed. Structure travels through
+// RelationTemplates instead.
+bool isValueLike(const PropertyValue& v) {
+    return !std::holds_alternative<std::monostate>(v) &&
+           !std::holds_alternative<Singular*>(v) &&
+           !std::holds_alternative<Object*>(v) &&
+           !std::holds_alternative<Relation*>(v) &&
+           !std::holds_alternative<Formation*>(v);
+}
+
+// Which kind of being this is, asked most-specific-first: a Zone and a Law are
+// both Objects, and answering "Object" for either would lose exactly the
+// distinction the template is being taught to keep.
+ConditionNode::BeingKind kindOf(const Singular& being) {
+    using K = ConditionNode::BeingKind;
+    static const K kOrder[] = {K::Person, K::Law,       K::World,     K::Zone,
+                               K::Lexeme, K::Relation,  K::Formation, K::Object};
+    for (K candidate : kOrder) {
+        if (ConditionNode::matchesKind(being, candidate)) return candidate;
+    }
+    return K::AnyBeing;
+}
+
+// Everything this being carries that may honestly be taken: its registered
+// property surface plus its authored dynamic vocabulary, minus what the
+// template already owns, minus what is identity rather than value, minus
+// whatever the Singularity gate currently closes.
+//
+// Gated at CAPTURE as well as at replay. A concept must never REMEMBER what
+// it may not take: a snapshot taken through a closed gate would sit in the
+// save file as a durable copy of governed state, and closing the gate
+// afterwards could not undo it.
+std::map<std::string, PropertyValue> captureState(Singular& source) {
+    std::map<std::string, PropertyValue> state;
+    const auto admit = [&](const std::string& path, const PropertyValue& v) {
+        if (templateOwnsPath(path) || !isValueLike(v)) return;
+        if (!TransferPolicy::instance().canTransfer(PropertyPath::parse(path))) return;
+        state[path] = v;
+    };
+    for (Property* property : source.listProperties()) {
+        if (property) admit(property->name(), property->value());
+    }
+    for (const auto& authored : source.dynamicProperties()) {
+        admit(authored.first, authored.second);
+    }
+    return state;
+}
+
+} // namespace
+
 std::shared_ptr<ObjectConcept> ObjectConcept::captureFrom(
     const std::vector<Object*>& sourceSet,
     const std::string& name,
     Singular* author) {
+    std::vector<Singular*> beings(sourceSet.begin(), sourceSet.end());
+    return captureFromBeings(beings, name, author);
+}
+
+std::shared_ptr<ObjectConcept> ObjectConcept::captureFromBeings(
+    const std::vector<Singular*>& sourceSet,
+    const std::string& name,
+    Singular* author) {
     auto concept = std::make_shared<ObjectConcept>(name);
 
+    // The centroid is taken over the members that HAVE a place. A Relation in
+    // the set has no position, and averaging in an origin it never occupied
+    // would drag the whole concept off-centre.
     glm::vec3 centroid(0.0f);
     int counted = 0;
     for (const auto* source : sourceSet) {
-        if (!source) continue;
-        centroid += source->getPosition();
-        ++counted;
+        if (const auto* placed = dynamic_cast<const Object*>(source)) {
+            centroid += placed->getPosition();
+            ++counted;
+        }
     }
     if (counted > 0) centroid /= static_cast<float>(counted);
     const glm::mat4 toCentroid = glm::translate(glm::mat4(1.0f), -centroid);
@@ -189,14 +287,22 @@ std::shared_ptr<ObjectConcept> ObjectConcept::captureFrom(
     for (auto* source : sourceSet) {
         if (!source) continue;
         MemberTemplate member;
-        member.kind = source->getShapeKind();
-        member.params = source->getShapeParams();
-        member.hasField = source->hasField();
-        if (member.hasField) {
-            member.field = source->getFieldData();      // deep copy — its own being
-            member.fieldExtent = source->getFieldExtent();
+        member.beingKind = kindOf(*source);
+        member.captured = captureState(*source);
+
+        if (auto* embodied = dynamic_cast<Object*>(source)) {
+            member.hasGeometry = true;
+            member.kind = embodied->getShapeKind();
+            member.params = embodied->getShapeParams();
+            member.hasField = embodied->hasField();
+            if (member.hasField) {
+                member.field = embodied->getFieldData();   // deep copy — its own being
+                member.fieldExtent = embodied->getFieldExtent();
+            }
+            member.relativeTransform = toCentroid * embodied->getTransform();
+        } else {
+            member.hasGeometry = false;
         }
-        member.relativeTransform = toCentroid * source->getTransform();
         concept->_members.push_back(std::move(member));
 
         concept->_provenance.add(std::make_shared<Relation>(
@@ -239,19 +345,114 @@ std::shared_ptr<ObjectConcept> ObjectConcept::captureFrom(
 std::vector<std::unique_ptr<Object>> ObjectConcept::instantiate(
     const glm::mat4& placement,
     const std::vector<Object*>* sources) {
+    if (!sources) return instantiate(placement, static_cast<std::vector<Singular*>*>(nullptr));
+    std::vector<Singular*> beings(sources->begin(), sources->end());
+    return instantiate(placement, &beings);
+}
+
+namespace {
+
+// WHAT MAY BE BORN. Every Singular may be a source — reading a property and
+// deriving from it is the same act whoever carries it — but birth is not
+// symmetrical with reading, and pretending it is would be the loudest kind of
+// mistake this file could make.
+//
+//   Person   — refused, always. A Person is an actual human being; there is no
+//              such thing as instantiating one, and a system that would try is
+//              already wrong about what it is doing.
+//   Zone,
+//   Law,
+//   World    — refused for now, but for an entirely different reason: they are
+//              births whose GOVERNANCE is undecided. A newborn Zone needs an
+//              owner and a jurisdiction; a newborn Law needs authors and a
+//              trigger. Guessing those is how a creation system quietly starts
+//              legislating. They wait for their author to say what they mean.
+//   Object   — born.
+//
+// A member that may not be born is SKIPPED and SAID, never silently downgraded
+// into a cube.
+bool birthKind(ConditionNode::BeingKind kind, std::string& refusal) {
+    switch (kind) {
+        case ConditionNode::BeingKind::Person:
+            refusal = "a Person is not instantiated";
+            return false;
+        case ConditionNode::BeingKind::Zone:
+            refusal = "a Zone's birth needs an owner and a jurisdiction (undecided)";
+            return false;
+        case ConditionNode::BeingKind::Law:
+            refusal = "a Law's birth needs authors and a trigger (undecided)";
+            return false;
+        case ConditionNode::BeingKind::World:
+            refusal = "a World is not instantiated";
+            return false;
+        case ConditionNode::BeingKind::Relation:
+            refusal = "relations are reborn from RelationTemplates, not member templates";
+            return false;
+        case ConditionNode::BeingKind::Formation:
+            refusal = "a Formation is membership, not a birth";
+            return false;
+        case ConditionNode::BeingKind::Lexeme:
+            refusal = "a Lexeme's birth belongs to the Language channel";
+            return false;
+        case ConditionNode::BeingKind::AnyBeing:
+        case ConditionNode::BeingKind::Object:
+            return true;
+    }
+    return true;
+}
+
+} // namespace
+
+std::vector<std::unique_ptr<Object>> ObjectConcept::instantiate(
+    const glm::mat4& placement,
+    const std::vector<Singular*>* sources) {
     std::vector<std::unique_ptr<Object>> newborns;
     newborns.reserve(_members.size());
 
+    // Members and newborns are no longer index-for-index once a member can be
+    // refused, and the RelationTemplates address members BY INDEX — so the
+    // mapping between the two is kept explicitly rather than assumed.
+    std::vector<int> newbornOfMember(_members.size(), -1);
+
     for (std::size_t i = 0; i < _members.size(); ++i) {
         const MemberTemplate& member = _members[i];
-        auto newborn = std::make_unique<Object>();
-        if (member.hasField) {
-            newborn->setFieldShape(member.field, member.fieldExtent);
-        } else {
-            newborn->setShape(member.kind, member.params);
+        std::string refusal;
+        if (!birthKind(member.beingKind, refusal)) {
+            ECA::Event refused;
+            refused.type = "concept-member-refused";
+            refused.subject = this;
+            refused.timestamp = std::time(nullptr);
+            Core::EventBus::instance().publish(refused);
+            continue;
         }
-        newborn->setTransform(placement * member.relativeTransform);
-        newborn->updateCollisionZone(newborn->getTransform());   // like every creation tool
+
+        auto newborn = std::make_unique<Object>();
+        if (member.hasGeometry) {
+            if (member.hasField) {
+                newborn->setFieldShape(member.field, member.fieldExtent);
+            } else {
+                newborn->setShape(member.kind, member.params);
+            }
+            newborn->setTransform(placement * member.relativeTransform);
+            newborn->updateCollisionZone(newborn->getTransform());  // like every creation tool
+        } else {
+            newborn->setPhysicalObject(0);   // it had no body; it is given none
+        }
+
+        // What the member WAS, replayed. Gated again here: a snapshot taken
+        // while a gate stood open must not keep flowing after a law closes it,
+        // so the moment of TRANSFER is checked, not only the moment of memory.
+        for (const auto& remembered : member.captured) {
+            const PropertyPath path = PropertyPath::parse(remembered.first);
+            if (!TransferPolicy::instance().canTransfer(path)) continue;
+            if (path.setValue(*newborn, remembered.second) ==
+                PropertyPath::PathResult::NoSuchProperty) {
+                // The newborn has no such registered property — then it is
+                // authored vocabulary, and authored vocabulary is exactly what
+                // dynamic properties are for.
+                newborn->setDynamicProperty(remembered.first, remembered.second);
+            }
+        }
 
         // The concept's OWN authored state travels to the newborn. A
         // MemberTemplate remembers shape, field and pose; everything else a
@@ -278,7 +479,25 @@ std::vector<std::unique_ptr<Object>> ObjectConcept::instantiate(
         // TransferPolicy (itself law-governable) allows.
         if (sources && !sources->empty()) {
             for (const auto& mapping : _mappings) {
-                if (!TransferPolicy::instance().canTransfer(mapping.source)) continue;
+                // WHAT IS TAKEN IS WHAT IS GATED. This used to consult
+                // `mapping.source` alone — but a multivariable mapping reads
+                // its `bindings` and may leave the legacy single source
+                // empty, and `canTransfer({})` is false, so every
+                // bindings-authored mapping was refused before it began and
+                // the per-binding check further down was unreachable. An
+                // absent path is not a closed one; the gate belongs on the
+                // paths this mapping actually reads.
+                const MathBindings readPaths = mapping.readPaths();
+                if (readPaths.empty()) continue;   // reads nothing, transfers nothing
+                bool gateOpen = true;
+                for (const auto& binding : readPaths) {
+                    if (!TransferPolicy::instance().canTransfer(binding.second)) {
+                        gateOpen = false;
+                        break;
+                    }
+                }
+                if (!gateOpen) continue;
+
                 std::map<std::string, double> evalVars;
                 bool allValid = true;
                 const Singular* guardSubject = nullptr;
@@ -286,7 +505,7 @@ std::vector<std::unique_ptr<Object>> ObjectConcept::instantiate(
                 if (mapping.bindings.empty() && !mapping.hasExact && !mapping.source.empty()) {
                     // Legacy single source - try direct transfer first if non-numeric
                     if (mapping.agg == PropertyMapping::Aggregate::PerMember) {
-                        Object* src = (*sources)[i % sources->size()];
+                        Singular* src = (*sources)[i % sources->size()];
                         PropertyValue v;
                         if (src && mapping.source.getValue(*src, v) == PropertyPath::PathResult::Ok) {
                             double x = 0.0;
@@ -325,25 +544,19 @@ std::vector<std::unique_ptr<Object>> ObjectConcept::instantiate(
                         }
                     }
                 } else {
-                    // Multivariate or exact math mode
-                    auto bindings = mapping.bindings;
-                    if (bindings.empty() && !mapping.source.empty()) {
-                        bindings["x"] = mapping.source;
-                    }
+                    // Multivariate or exact math mode. The gate above already
+                    // cleared every one of these paths.
+                    const MathBindings& bindings = readPaths;
 
                     for (const auto& bindingPair : bindings) {
                         const std::string& varName = bindingPair.first;
                         const PropertyPath& path = bindingPair.second;
-                        
-                        if (!TransferPolicy::instance().canTransfer(path)) {
-                            allValid = false;
-                            break;
-                        }
+
                         double val = 0.0;
                         bool have = false;
 
                         if (mapping.agg == PropertyMapping::Aggregate::PerMember) {
-                            Object* src = (*sources)[i % sources->size()];
+                            Singular* src = (*sources)[i % sources->size()];
                             PropertyValue v;
                             have = src && path.getValue(*src, v) == PropertyPath::PathResult::Ok &&
                                    propertyValueToNumber(v, val);
@@ -396,6 +609,7 @@ std::vector<std::unique_ptr<Object>> ObjectConcept::instantiate(
         // safe across the newborn's move into its container).
         _provenance.add(std::make_shared<Relation>(
             "generated-from", *newborn, *this, true, 1.0f));
+        newbornOfMember[i] = static_cast<int>(newborns.size());
         newborns.push_back(std::move(newborn));
     }
 
@@ -403,16 +617,24 @@ std::vector<std::unique_ptr<Object>> ObjectConcept::instantiate(
     // relation becomes a fresh relation between the corresponding newborns,
     // registered into the world's graph through the Universe. Each
     // registration publishes "relation-formed" like any other.
+    //
+    // Addressed through newbornOfMember, not by raw index: a refused member
+    // shifts every later newborn, and an edge that silently retargets is an
+    // edge between the wrong two beings — worse than a missing one.
     if (!_relationTemplates.empty() && Universe::instance().hasRelationRegistrar()) {
-        for (const auto& t : _relationTemplates) {
-            if (t.aIndex < 0 || t.bIndex < 0 ||
-                t.aIndex >= static_cast<int>(newborns.size()) ||
-                t.bIndex >= static_cast<int>(newborns.size())) {
-                continue;
+        const auto newbornAt = [&](int memberIndex) -> Object* {
+            if (memberIndex < 0 || memberIndex >= static_cast<int>(newbornOfMember.size())) {
+                return nullptr;
             }
-            Universe::instance().addRelation(std::make_shared<Relation>(
-                t.type, *newborns[static_cast<std::size_t>(t.aIndex)],
-                *newborns[static_cast<std::size_t>(t.bIndex)], t.directed, t.weight));
+            const int at = newbornOfMember[static_cast<std::size_t>(memberIndex)];
+            return at < 0 ? nullptr : newborns[static_cast<std::size_t>(at)].get();
+        };
+        for (const auto& t : _relationTemplates) {
+            Object* a = newbornAt(t.aIndex);
+            Object* b = newbornAt(t.bIndex);
+            if (!a || !b) continue;
+            Universe::instance().addRelation(
+                std::make_shared<Relation>(t.type, *a, *b, t.directed, t.weight));
         }
     }
 
@@ -490,6 +712,16 @@ std::shared_ptr<ObjectConcept> ObjectConcept::fromJson(const nlohmann::json& j) 
         for (const auto& t : j["relationTemplates"]) {
             concept->_relationTemplates.push_back(RelationTemplate::fromJson(t));
         }
+    }
+    // Ancestry. `toJson` has always written this and `fromJson` never read it
+    // back, which made provenance WRITE-ONLY: every abstracted-from,
+    // authored-by and generated-from edge died at the next load. The
+    // anti-Babel ceilings of §7d are predicates OVER these chains —
+    // generation depth walks ancestry, authorship attestation demands the
+    // chain terminate in a Person — so a world that forgets them on load
+    // cannot enforce either. A being's descent is part of what it is.
+    if (j.contains("provenance")) {
+        concept->_provenance.loadFromJson(j["provenance"]);
     }
     return concept;
 }

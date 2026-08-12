@@ -1,0 +1,907 @@
+[  8%] Built target glfw
+[  8%] Building CXX object CMakeFiles/earthcall_core.dir/src/OurVerse/Tool.cpp.o
+[  8%] Building CXX object CMakeFiles/earthcall_core.dir/src/Singularity/Core/EngineRender.cpp.o
+[  8%] Building CXX object CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/Ourverse/OurverseUI.cpp.o
+[  8%] Building CXX object CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/Ourverse/OurverseSaveLoad.cpp.o
+[  8%] Building CXX object CMakeFiles/earthcall_core.dir/imgui/imgui.cpp.o
+[  8%] Building CXX object CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/Ourverse/OurverseNodeGraph.cpp.o
+[  8%] Building CXX object CMakeFiles/earthcall_core.dir/imgui/imgui_demo.cpp.o
+[ 10%] Building CXX object CMakeFiles/earthcall_core.dir/imgui/imgui_draw.cpp.o
+[ 10%] Building CXX object CMakeFiles/earthcall_core.dir/imgui/imgui_tables.cpp.o
+[ 10%] Building CXX object CMakeFiles/earthcall_core.dir/imgui/imgui_widgets.cpp.o
+/Users/zacharyzhang/Documents/GitHub/Earthcall/imgui/imgui_widgets.cpp:5055:58: warning: variable 'empty_string' is uninitialized when passed as a const pointer argument here [-Wuninitialized-const-pointer]
+ 5055 |                 stb_textedit_replace(state, state->Stb, &empty_string, 0);
+      |                                                          ^~~~~~~~~~~~
+[ 10%] Building CXX object CMakeFiles/earthcall_core.dir/imgui/backends/imgui_impl_glfw.cpp.o
+[ 13%] Building CXX object CMakeFiles/earthcall_core.dir/imgui/backends/imgui_impl_opengl2.cpp.o
+/Users/zacharyzhang/Documents/GitHub/Earthcall/imgui/backends/imgui_impl_opengl2.cpp:68:9: warning: 'GL_SILENCE_DEPRECATION' macro redefined [-Wmacro-redefined]
+   68 | #define GL_SILENCE_DEPRECATION
+      |         ^
+<command line>:2:9: note: previous definition is here
+    2 | #define GL_SILENCE_DEPRECATION 1
+      |         ^
+1 warning generated.
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseSaveLoad.cpp:4:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../../Singularity/Core/Engine.hpp:2:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.hpp:8:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/Zone.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/../World/World.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:35:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/PolyhedronData.hpp:12:1: warning: 'PolyhedronData' defined as a struct here but previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   12 | struct PolyhedronData {
+      | ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:24:1: note: did you mean struct here?
+   24 | class PolyhedronData;
+      | ^~~~~
+      | struct
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseSaveLoad.cpp:4:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../../Singularity/Core/Engine.hpp:2:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.hpp:8:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/Zone.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/../World/World.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:36:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/FaceTexture.hpp:3:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/Renderer.hpp:4:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Geometry/SmoothSurface.hpp:23:1: warning: 'TessMesh' defined as a struct here but previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   23 | struct TessMesh {
+      | ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:20:5: note: did you mean struct here?
+   20 |     class TessMesh;
+      |     ^~~~~
+      |     struct
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseSaveLoad.cpp:4:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../../Singularity/Core/Engine.hpp:2:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.hpp:8:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/Zone.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/../World/World.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:36:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/FaceTexture.hpp:3:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/Renderer.hpp:4:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Geometry/SmoothSurface.hpp:27:1: warning: 'SmoothSurfaceData' defined as a struct here but previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   27 | struct SmoothSurfaceData {
+      | ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:17:5: note: did you mean struct here?
+   17 |     class SmoothSurfaceData;
+      |     ^~~~~
+      |     struct
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseSaveLoad.cpp:4:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../../Singularity/Core/Engine.hpp:2:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.hpp:8:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/Zone.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/../World/World.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:36:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/FaceTexture.hpp:3:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/Renderer.hpp:10:18: warning: struct 'SdfNode' was previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   10 | namespace geom { struct SdfNode; class FieldNode; }
+      |                  ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:19:11: note: previous use is here
+   19 |     class SdfNode;
+      |           ^
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseSaveLoad.cpp:4:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../../Singularity/Core/Engine.hpp:2:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.hpp:8:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/Zone.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/../World/World.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:39:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Geometry/ComplexShape.hpp:70:1: warning: 'ComplexShapeData' defined as a struct here but previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   70 | struct ComplexShapeData {
+      | ^
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/EngineRender.cpp:1:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/../../Singularity/Core/Engine.hpp:2:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.hpp:8:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/Zone.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/../World/World.hpp:5/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:18:5: note: did you mean struct here?
+   18 |     class ComplexShapeDa:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:35:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/PolyhedronData.hpp:12:ta;
+      |     ^~~~~
+      |     struct
+1: warning: 'PolyhedronData' defined as a struct here but previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   12 | struct PolyhedronData {
+      | ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:24:1: note: did you mean struct here?
+   24 | class PolyhedronData;
+      | ^~~~~
+      | struct
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseSaveLoad.cpp:4:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../../Singularity/Core/Engine.hpp:2:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.hpp:8:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/Zone.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/../World/World.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:40:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Geometry/Sdf.hpp:46:1: warning: 'SdfNode' defined as a struct here but previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   46 | struct SdfNode {
+      | ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:19:5: note: did you mean struct here?
+   19 |     class SdfNode;
+      |     ^~~~~
+      |     struct
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseSaveLoad.cpp:4:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../../Singularity/Core/Engine.hpp:2:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.hpp:8:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/Zone.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/../World/World.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:41:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Geometry/Patch.hpp:16:1: warning: 'BezierPatch' defined as a struct here but previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   16 | struct BezierPatch {
+      | ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:21:5: In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:2:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:35:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/PolyhedronData.hpp:12:1: warning: 'PolyhedronData' defined as a struct here but previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   12 | struct note: did you mean struct here?
+   21 |     class BezierPatch;
+      |     ^~~~~
+      |     struct
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseUI.cpp:3:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../../Singularity/Core/Engine.hpp:2:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.hpp:8:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/Zone.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/../World/World.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:35:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/PolyhedronData.hpp:12:1: warning: 'PolyhedronData' defined as a struct here but previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   12 | struct PolyhedronData {
+      | ^
+PolyhedronData {
+      | ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:24:1: note: did you mean struct here?
+   24 | class PolyhedronData;
+      | ^~~~~
+      | struct
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/EngineRender.cpp:1:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/../../Singularity/Core/Engine.hpp:2:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.hpp:8:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/Zone.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/../World/World.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:36:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/FaceTexture.hpp:3:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/Renderer.hpp:4:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Geometry/SmoothSurface.hpp:23:1: warning: 'TessMesh' defined as a struct here but previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   23 | struct TessMesh {
+      | ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:20:5: note: did you mean struct here?
+   20 |     class TessMesh;
+      |     ^~~~~
+      |     struct
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:24:1: note: did you mean struct here?
+   24 | class PolyhedronData;
+      | ^~~~~
+      | struct
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/EngineRender.cpp:1:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/../../Singularity/Core/Engine.hpp:2:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.hpp:8:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/Zone.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/../World/World.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:36:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/FaceTexture.hpp:3:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/Renderer.hpp:4:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Geometry/SmoothSurface.hpp:27:1: warning: 'SmoothSurfaceData' defined as a struct here but previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   27 | struct SmoothSurfaceData {
+      | ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:17:5: note: did you mean struct here?
+   17 |     class SmoothSurfaceData;
+      |     ^~~~~
+      |     struct
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/EngineRender.cpp:1:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/../../Singularity/Core/Engine.hpp:2:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.hpp:8:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/Zone.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/../World/World.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:36:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/FaceTexture.hpp:3:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/Renderer.hpp:10:18: warning: struct 'SdfNode' was previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   10 | namespace geom { struct SdfNode; class FieldNode; }
+      |                  ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:19:11: note: previous use is here
+   19 |     class SdfNode;
+      |           ^
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:2:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:36:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/FaceTexture.hpp:3:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/Renderer.hpp:4:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Geometry/SmoothSurface.hpp:23:1: warning: 'TessMesh' defined as a struct here but previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   23 | struct TessMesh {
+      | ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:20:5: note: did you mean struct here?
+   20 |     class TessMesh;
+      |     ^~~~~
+      |     struct
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/EngineRender.cpp:1:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/../../Singularity/Core/Engine.hpp:2:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.hpp:8:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/Zone.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/../World/World.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:39:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Geometry/ComplexShape.hpp:70:1: warning: 'ComplexShapeData' defined as a struct here but previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   70 | struct ComplexShapeData {
+      | ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:18:5: note: did you mean struct here?
+   18 |     class ComplexShapeData;
+      |     ^~~~~
+      |     struct
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:2:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:36:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/FaceTexture.hpp:3:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/Renderer.hpp:4:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Geometry/SmoothSurface.hpp:27:1: warning: 'SmoothSurfaceData' defined as a struct here but previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   27 | struct SmoothSurfaceData {
+      | ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:17:5: note: did you mean struct here?
+   17 |     class SmoothSurfaceData;
+      |     ^~~~~
+      |     struct
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:2:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:36:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/FaceTexture.hpp:3:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/Renderer.hpp:10:18: warning: struct 'SdfNode' was previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   10 | namespace geom { struct SdfNode; class FieldNode; }
+      |                  ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:19:11: note: previous use is here
+   19 |     class SdfNode;
+      |           ^
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/EngineRender.cpp:1:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/../../Singularity/Core/Engine.hpp:2:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.hpp:8:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/Zone.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/../World/World.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:40:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Geometry/Sdf.hpp:46:1: warning: 'SdfNode' defined as a struct here but previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   46 | struct SdfNode {
+      | ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:19:5: note: did you mean struct here?
+   19 |     class SdfNode;
+      |     ^~~~~
+      |     struct
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseUI.cpp:3:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../../Singularity/Core/Engine.hpp:2:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.hpp:8:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/Zone.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/../World/World.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:36:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/FaceTexture.hpp:3:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/Renderer.hpp:4:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Geometry/SmoothSurface.hpp:23:1: warning: 'TessMesh' defined as a struct here but previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   23 | struct TessMesh {
+      | ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:20:5: note: did you mean struct here?
+   20 |     class TessMesh;
+      |     ^~~~~
+      |     struct
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseUI.cpp:3:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../../Singularity/Core/Engine.hpp:2:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.hpp:8:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/Zone.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/../World/World.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:36:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/FaceTexture.hpp:3:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/Renderer.hpp:4:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Geometry/SmoothSurface.hpp:27:1: warning: 'SmoothSurfaceData' defined as a struct here but previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   27 | struct SmoothSurfaceData {
+      | ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:17:5: note: did you mean struct here?
+   17 |     class SmoothSurfaceData;
+      |     ^~~~~
+      |     struct
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseUI.cpp:3:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../../Singularity/Core/Engine.hpp:2:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.hpp:8:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/Zone.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/../World/World.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:36:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/FaceTexture.hpp:3:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/Renderer.hpp:10:18: warning: struct 'SdfNode' was previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   10 | namespace geom { struct SdfNode; class FieldNode; }
+      |                  ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:19:11: note: previous use is here
+   19 |     class SdfNode;
+      |           ^
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:2:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:39:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Geometry/ComplexShape.hpp:70:1: warning: 'ComplexShapeData' defined as a struct here but previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   70 | struct ComplexShapeData {
+      | ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:18:5: note: did you mean struct here?
+   18 |     class ComplexShapeData;
+      |     ^~~~~
+      |     struct
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:2:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:40:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Geometry/Sdf.hpp:46:1: warning: 'SdfNode' defined as a struct here but previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   46 | struct SdfNode {
+      | ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:19:5: note: did you mean struct here?
+   19 |     class SdfNode;
+      |     ^~~~~
+      |     struct
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/EngineRender.cpp:1:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/../../Singularity/Core/Engine.hpp:2:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.hpp:8:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/Zone.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/../World/World.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:41:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Geometry/Patch.hpp:16:1: warning: 'BezierPatch' defined as a struct here but previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   16 | struct BezierPatch {
+      | ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:21:5: note: did you mean struct here?
+   21 |     class BezierPatch;
+      |     ^~~~~
+      |     struct
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseUI.cpp:3:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../../Singularity/Core/Engine.hpp:2:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.hpp:8:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/Zone.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/../World/World.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:39:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Geometry/ComplexShape.hpp:70:1: warning: 'ComplexShapeData' defined as a struct here but previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   70 | struct ComplexShapeData {
+      | ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:18:5: note: did you mean struct here?
+   18 |     class ComplexShapeData;
+      |     ^~~~~
+      |     struct
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseUI.cpp:3:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../../Singularity/Core/Engine.hpp:2:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.hpp:8:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/Zone.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/../World/World.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:40:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Geometry/Sdf.hpp:46:1: warning: 'SdfNode' defined as a struct here but previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   46 | struct SdfNode {
+      | ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:19:5: note: did you mean struct here?
+   19 |     class SdfNode;
+      |     ^~~~~
+      |     struct
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:2:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:41:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Geometry/Patch.hpp:16:1: warning: 'BezierPatch' defined as a struct here but previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   16 | struct BezierPatch {
+      | ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:21:5: note: did you mean struct here?
+   21 |     class BezierPatch;
+      |     ^~~~~
+      |     struct
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseUI.cpp:3:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../../Singularity/Core/Engine.hpp:2:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.hpp:8:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/Zone.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/../World/World.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:41:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Geometry/Patch.hpp:16:1: warning: 'BezierPatch' defined as a struct here but previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   16 | struct BezierPatch {
+      | ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:21:5: note: did you mean struct here?
+   21 |     class BezierPatch;
+      |     ^~~~~
+      |     struct
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseNodeGraph.cpp:10:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../../Singularity/Core/Engine.hpp:2:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.hpp:8:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/Zone.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/../World/World.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:35:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/PolyhedronData.hpp:12:1: warning: 'PolyhedronData' defined as a struct here but previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   12 | struct PolyhedronData {
+      | ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:24:1: note: did you mean struct here?
+   24 | class PolyhedronData;
+      | ^~~~~
+      | struct
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseNodeGraph.cpp:10:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../../Singularity/Core/Engine.hpp:2:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.hpp:8:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/Zone.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/../World/World.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:36:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/FaceTexture.hpp:3:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/Renderer.hpp:4:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Geometry/SmoothSurface.hpp:23:1: warning: 'TessMesh' defined as a struct here but previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   23 | struct TessMesh {
+      | ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:20:5: note: did you mean struct here?
+   20 |     class TessMesh;
+      |     ^~~~~
+      |     struct
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseNodeGraph.cpp:10:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../../Singularity/Core/Engine.hpp:2:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.hpp:8:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/Zone.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/../World/World.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:36:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/FaceTexture.hpp:3:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/Renderer.hpp:4:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Geometry/SmoothSurface.hpp:27:1: warning: 'SmoothSurfaceData' defined as a struct here but previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   27 | struct SmoothSurfaceData {
+      | ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:17:5: note: did you mean struct here?
+   17 |     class SmoothSurfaceData;
+      |     ^~~~~
+      |     struct
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseNodeGraph.cpp:10:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../../Singularity/Core/Engine.hpp:2:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.hpp:8:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/Zone.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/../World/World.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:36:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/FaceTexture.hpp:3:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Rendering/Renderer.hpp:10:18: warning: struct 'SdfNode' was previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   10 | namespace geom { struct SdfNode; class FieldNode; }
+      |                  ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:19:11: note: previous use is here
+   19 |     class SdfNode;
+      |           ^
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseNodeGraph.cpp:10:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../../Singularity/Core/Engine.hpp:2:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.hpp:8:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/Zone.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/../World/World.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:39:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Geometry/ComplexShape.hpp:70:1: warning: 'ComplexShapeData' defined as a struct here but previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   70 | struct ComplexShapeData {
+      | ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:18:5: note: did you mean struct here?
+   18 |     class ComplexShapeData;
+      |     ^~~~~
+      |     struct
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseNodeGraph.cpp:10:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../../Singularity/Core/Engine.hpp:2:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.hpp:8:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/Zone.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/../World/World.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:40:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Geometry/Sdf.hpp:46:1: warning: 'SdfNode' defined as a struct here but previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   46 | struct SdfNode {
+      | ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:19:5: note: did you mean struct here?
+   19 |     class SdfNode;
+      |     ^~~~~
+      |     struct
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseNodeGraph.cpp:10:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../../Singularity/Core/Engine.hpp:2:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.hpp:8:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/Zone.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../Zone/../World/World.hpp:5:
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object.hpp:41:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Geometry/Patch.hpp:16:1: warning: 'BezierPatch' defined as a struct here but previously declared as a class; this is valid, but may result in linker errors under the Microsoft C++ ABI [-Wmismatched-tags]
+   16 | struct BezierPatch {
+      | ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ConstructedBeing/Object/Object/ObjectTypes.hpp:21:5: note: did you mean struct here?
+   21 |     class BezierPatch;
+      |     ^~~~~
+      |     struct
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseSaveLoad.cpp:4:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../../Singularity/Core/Engine.hpp:69:49: warning: unused parameter 'type' [-Wunused-parameter]
+   69 |     template<typename T> void begin2DToolDrag(T type, glm::vec2 pos) { _is2DToolDragging = true; _dragStart = pos; _dragCurrent = pos; }
+      |                                                 ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../../Singularity/Core/Engine.hpp:71:50: warning: unused parameter 'type' [-Wunused-parameter]
+   71 |     template<typename T> bool is2DToolDragging(T type) const { return _is2DToolDragging; }
+      |                                                  ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../../Singularity/Core/Engine.hpp:82:30: warning: unused parameter 'index' [-Wunused-parameter]
+   82 |     void setCurrentColor(int index, float val) {} // dummy for now
+      |                              ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../../Singularity/Core/Engine.hpp:82:43: warning: unused parameter 'val' [-Wunused-parameter]
+   82 |     void setCurrentColor(int index, float val) {} // dummy for now
+      |                                           ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../../Singularity/Core/Engine.hpp:137:37: warning: unused parameter 'x' [-Wunused-parameter]
+  137 |     void setRotateLastCursor(double x, double y) {}
+      |                                     ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../../Singularity/Core/Engine.hpp:137:47: warning: unused parameter 'y' [-Wunused-parameter]
+  137 |     void setRotateLastCursor(double x, double y) {}
+      |                                               ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseSaveLoad.cpp:21:23: error: cannot define or redeclare 'makeSaveContext' here because namespace 'Core' does not enclose namespace 'Ourverse'
+   21 | SaveContext Ourverse::makeSaveContext() {
+      |             ~~~~~~~~~~^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseSaveLoad.cpp:23:24: error: cannot take the address of an rvalue of type 'Camera *'
+   23 |     ctx.camera       = &Core::Engine::instance().getCamera();
+      |                        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseSaveLoad.cpp:24:24: error: cannot take the address of an rvalue of type 'MouseHandler *'
+   24 |     ctx.mouseHandler = &Core::Engine::instance().getMouseHandler();
+      |                        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+1 warning generated.
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:3:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/Engine.hpp:69:49: warning: unused parameter 'type' [-Wunused-parameter]
+   69 |     template<typename T> void begin2DToolDrag(T type, glm::vec2 pos) { _is2DToolDragging = true; _dragStart = pos; _dragCurrent = pos; }
+      |                                                 ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/Engine.hpp:71:50: warning: unused parameter 'type' [-Wunused-parameter]
+   71 |     template<typename T> bool is2DToolDragging(T type) const { return _is2DToolDragging; }
+      |                                                  ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/Engine.hpp:82:30: warning: unused parameter 'index' [-Wunused-parameter]
+   82 |     void setCurrentColor(int index, float val) {} // dummy for now
+      |                              ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/Engine.hpp:82:43: warning: unused parameter 'val' [-Wunused-parameter]
+   82 |     void setCurrentColor(int index, float val) {} // dummy for now
+      |                                           ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/Engine.hpp:137:37: warning: unused parameter 'x' [-Wunused-parameter]
+  137 |     void setRotateLastCursor(double x, double y) {}
+      |                                     ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/Engine.hpp:137:47: warning: unused parameter 'y' [-Wunused-parameter]
+  137 |     void setRotateLastCursor(double x, double y) {}
+      |                                               ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseSaveLoad.cpp:25:24: error: use of undeclared identifier 'currentColor'
+   25 |     ctx.currentColor = currentColor;
+      |                        ^~~~~~~~~~~~
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/EngineRender.cpp:1:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/../../Singularity/Core/Engine.hpp:69:49: warning: unused parameter 'type' [-Wunused-parameter]
+   69 |     template<typename T> void begin2DToolDrag(T type, glm::vec2 pos) { _is2DToolDragging = true; _dragStart = pos; _dragCurrent = pos; }
+      |                                                 ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/../../Singularity/Core/Engine.hpp:71:50: warning: unused parameter 'type' [-Wunused-parameter]
+   71 |     template<typename T> bool is2DToolDragging(T type) const { return _is2DToolDragging; }
+      |                                                  ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/../../Singularity/Core/Engine.hpp:82:30: warning: unused parameter 'index' [-Wunused-parameter]
+   82 |     void setCurrentColor(int index, float val) {} // dummy for now
+      |                              ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/../../Singularity/Core/Engine.hpp:82:43: warning: unused parameter 'val' [-Wunused-parameter]
+   82 |     void setCurrentColor(int index, float val) {} // dummy for now
+      |                                           ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/../../Singularity/Core/Engine.hpp:137:37: warning: unused parameter 'x' [-Wunused-parameter]
+  137 |     void setRotateLastCursor(double x, double y) {}
+      |                                     ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/../../Singularity/Core/Engine.hpp:137:47: warning: unused parameter 'y' [-Wunused-parameter]
+  137 |     void setRotateLastCursor(double x, double y) {}
+      |                                               ^
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseUI.cpp:3:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../../Singularity/Core/Engine.hpp:69:49: warning: unused parameter 'type' [-Wunused-parameter]
+   69 |     template<typename T> void begin2DToolDrag(T type, glm::vec2 pos) { _is2DToolDragging = true; _dragStart = pos; _dragCurrent = pos; }
+      |                                                 ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../../Singularity/Core/Engine.hpp:71:50: warning: unused parameter 'type' [-Wunused-parameter]
+   71 |     template<typename T> bool is2DToolDragging(T type) const { return _is2DToolDragging; }
+      |                                                  ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../../Singularity/Core/Engine.hpp:82:30: warning: unused parameter 'index' [-Wunused-parameter]
+   82 |     void setCurrentColor(int index, float val) {} // dummy for now
+      |                              ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../../Singularity/Core/Engine.hpp:82:43: warning: unused parameter 'val' [-Wunused-parameter]
+   82 |     void setCurrentColor(int index, float val) {} // dummy for now
+      |                                           ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../../Singularity/Core/Engine.hpp:137:37: warning: unused parameter 'x' [-Wunused-parameter]
+  137 |     void setRotateLastCursor(double x, double y) {}
+      |                                     ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../../Singularity/Core/Engine.hpp:137:47: warning: unused parameter 'y' [-Wunused-parameter]
+  137 |     void setRotateLastCursor(double x, double y) {}
+      |                                               ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseSaveLoad.cpp:26:25: error: use of undeclared identifier '_currentTool'; did you mean 'SaveContext::currentTool'?
+   26 |     ctx.currentTool  = &_currentTool;
+      |                         ^~~~~~~~~~~~
+      |                         SaveContext::currentTool
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/SaveContext.hpp:23:19: note: 'SaveContext::currentTool' declared here
+   23 |     Tool*         currentTool  = nullptr;
+      |                   ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseSaveLoad.cpp:26:25: error: invalid use of non-static data member 'currentTool'
+   26 |     ctx.currentTool  = &_currentTool;
+      |                         ^~~~~~~~~~~~
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseSaveLoad.cpp:27:24: error: cannot take the address of an rvalue of type 'Person *'
+   27 |     ctx.player       = &Core::Engine::instance().getPlayer();
+      |                        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseSaveLoad.cpp:28:24: error: cannot take the address of an rvalue of type 'LawManager *'
+   28 |     ctx.lawManager   = &Core::Engine::instance().getLawManager();
+      |                        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseSaveLoad.cpp:29:24: error: cannot take the address of an rvalue of type 'double'
+   29 |     ctx.worldTime    = &Core::Engine::instance().getWorldTime();
+      |                        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseSaveLoad.cpp:33:16: error: cannot define or redeclare 'saveState' here because namespace 'Core' does not enclose namespace 'Ourverse'
+   33 | void Ourverse::saveState(const std::string& filename) {
+      |      ~~~~~~~~~~^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseSaveLoad.cpp:34:17: error: redefinition of 'ctx'
+   34 |     SaveContext ctx = makeSaveContext();
+      |                 ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseSaveLoad.cpp:22:17: note: previous definition is here
+   22 |     SaveContext ctx;
+      |                 ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseSaveLoad.cpp:34:23: error: use of undeclared identifier 'makeSaveContext'; did you mean 'SaveContext'?
+   34 |     SaveContext ctx = makeSaveContext();
+      |                       ^~~~~~~~~~~~~~~
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/SaveContext.hpp:19:8: note: 'SaveContext' declared here
+   19 | struct SaveContext {
+      |        ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseSaveLoad.cpp:35:19: error: use of undeclared identifier 'filename'; did you mean 'SaveSystem::SaveMetadata::filename'?
+   35 |     mgr.saveState(filename, ctx);
+      |                   ^~~~~~~~
+      |                   SaveSystem::SaveMetadata::filename
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Util/SaveSystem.hpp:66:17: note: 'SaveSystem::SaveMetadata::filename' declared here
+   66 |     std::string filename;
+      |                 ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseSaveLoad.cpp:35:19: error: invalid use of non-static data member 'filename'
+   35 |     mgr.saveState(filename, ctx);
+      |                   ^~~~~~~~
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseSaveLoad.cpp:38:16: error: cannot define or redeclare 'loadState' here because namespace 'Core' does not enclose namespace 'Ourverse'
+   38 | void Ourverse::loadState(const std::string& filename) {
+      |      ~~~~~~~~~~^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseSaveLoad.cpp:39:17: error: redefinition of 'ctx'
+   39 |     SaveContext ctx = makeSaveContext();
+      |                 ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseSaveLoad.cpp:22:17: note: previous definition is here
+   22 |     SaveContext ctx;
+      |                 ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseSaveLoad.cpp:39:23: error: use of undeclared identifier 'makeSaveContext'; did you mean 'SaveContext'?
+   39 |     SaveContext ctx = makeSaveContext();
+      |                       ^~~~~~~~~~~~~~~
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/SaveContext.hpp:19:8: note: 'SaveContext' declared here
+   19 | struct SaveContext {
+      |        ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseSaveLoad.cpp:40:19: error: use of undeclared identifier 'filename'; did you mean 'SaveSystem::SaveMetadata::filename'?
+   40 |     mgr.loadState(filename, ctx);
+      |                   ^~~~~~~~
+      |                   SaveSystem::SaveMetadata::filename
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Util/SaveSystem.hpp:66:17: note: 'SaveSystem::SaveMetadata::filename' declared here
+   66 |     std::string filename;
+      |                 ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseSaveLoad.cpp:40:19: error: invalid use of non-static data member 'filename'
+   40 |     mgr.loadState(filename, ctx);
+      |                   ^~~~~~~~
+fatal error: too many errors emitted, stopping now [-ferror-limit=]
+13 warnings and 20 errors generated.
+make[3]: *** [CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/Ourverse/OurverseSaveLoad.cpp.o] Error 1
+make[3]: *** Waiting for unfinished jobs....
+In file included from /Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseNodeGraph.cpp:10:
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../../Singularity/Core/Engine.hpp:69:49: warning: unused parameter 'type' [-Wunused-parameter]
+   69 |     template<typename T> void begin2DToolDrag(T type, glm::vec2 pos) { _is2DToolDragging = true; _dragStart = pos; _dragCurrent = pos; }
+      |                                                 ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../../Singularity/Core/Engine.hpp:71:50: warning: unused parameter 'type' [-Wunused-parameter]
+   71 |     template<typename T> bool is2DToolDragging(T type) const { return _is2DToolDragging; }
+      |                                                  ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../../Singularity/Core/Engine.hpp:82:30: warning: unused parameter 'index' [-Wunused-parameter]
+   82 |     void setCurrentColor(int index, float val) {} // dummy for now
+      |                              ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../../Singularity/Core/Engine.hpp:82:43: warning: unused parameter 'val' [-Wunused-parameter]
+   82 |     void setCurrentColor(int index, float val) {} // dummy for now
+      |                                           ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../../Singularity/Core/Engine.hpp:137:37: warning: unused parameter 'x' [-Wunused-parameter]
+  137 |     void setRotateLastCursor(double x, double y) {}
+      |                                     ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/../../Singularity/Core/Engine.hpp:137:47: warning: unused parameter 'y' [-Wunused-parameter]
+  137 |     void setRotateLastCursor(double x, double y) {}
+      |                                               ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseNodeGraph.cpp:83:16: error: cannot define or redeclare 'renderNodeGraph' here because namespace 'Core' does not enclose namespace 'Ourverse'
+   83 | void Ourverse::renderNodeGraph() {
+      |      ~~~~~~~~~~^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseNodeGraph.cpp:84:9: error: use of undeclared identifier 'current3DMode'
+   84 |     if (current3DMode != Mode3D::Graph) return;
+      |         ^~~~~~~~~~~~~
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseNodeGraph.cpp:84:26: error: use of undeclared identifier 'Mode3D'; did you mean 'Ourverse::Mode3D'?
+   84 |     if (current3DMode != Mode3D::Graph) return;
+      |                          ^~~~~~
+      |                          Ourverse::Mode3D
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.hpp:53:16: note: 'Ourverse::Mode3D' declared here
+   53 |     enum class Mode3D { None = -1, FacePaint = 0, FaceBrush, BrushCreate, Pottery, Rotation, Selection, Morph, Combine, Sculpt, Graph };
+      |                ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseNodeGraph.cpp:85:17: error: use of undeclared identifier 'selectedObject3D'; did you mean 'Ourverse::selectedObject3D'?
+   85 |     Object* o = selectedObject3D;
+      |                 ^~~~~~~~~~~~~~~~
+      |                 Ourverse::selectedObject3D
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.hpp:81:13: note: 'Ourverse::selectedObject3D' declared here
+   81 |     Object* selectedObject3D = nullptr;
+      |             ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseNodeGraph.cpp:85:17: error: invalid use of non-static data member 'selectedObject3D'
+   85 |     Object* o = selectedObject3D;
+      |                 ^~~~~~~~~~~~~~~~
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:954:27: error: use of undeclared identifier 'dir'; did you mean 'div'?
+  954 |             float delta = dir * engine->getPotteryStrength() * (firstFrame ? 1.0f : dt); // full step on click, smaller continuous after
+      |                           ^~~
+      |                           div
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/stdlib.h:128:38: note: 'div' declared here
+  128 | inline _LIBCPP_HIDE_FROM_ABI lldiv_t div(long long __x, long long __y) _NOEXCEPT { return ::lldiv(__x, __y); }
+      |                                      ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:954:31: error: invalid operands to binary expression ('lldiv_t (long long, long long) noexcept' and 'float')
+  954 |             float delta = dir * engine->getPotteryStrength() * (firstFrame ? 1.0f : dt); // full step on click, smaller continuous after
+      |                           ~~~ ^ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:1029:21: warning: variable 'hit' set but not used [-Wunused-but-set-variable]
+ 1029 |         if (Object* hit = pickNearestObject(targets, rayOrigin, rayDir)) {
+      |                     ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:1040:5: error: expected expression
+ 1040 |     if (selected) {
+      |     ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:1009:87: warning: unused parameter 'dt' [-Wunused-parameter]
+ 1009 | void Tool::Rotate3D(GLFWwindow *window, Core::Engine/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseNodeGraph.cpp: 96:10: *enerror: non-local lambda expression cannot have a capture-defaultgine, ZoneManager &mgr, fl
+oa   96 | t      dt,
+      |                                                                                       ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp   [&](:1010:75:const SdfNode& n, int depth, int parent,  warning: unused parameter 'avatarRoot' [-Wunused-parameter]
+std::vector<int> path) -> int {
+      |          ^
+ 1010 |                     const std::vector<Object*>& targets, const glm::mat4* avatarRoot)
+      |                                                                           ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseNodeGraph.cpp:121:64: error: member reference type 'Camera *' is a pointer; did you mean to use '->'?
+  121 |     const glm::vec3 camP = Core::Engine::instance().getCamera().pos;
+      |                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+      |                                                                ->
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseNodeGraph.cpp:122:79: error: member reference type 'Camera *' is a pointer; did you mean to use '->'?
+  122 |     const glm::vec3 fwd  = glm::normalize(Core::Engine::instance().getCamera().front);
+      |                                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+      |                                                                               ->
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseNodeGraph.cpp:123:79: error: member reference type 'Camera *' is a pointer; did you mean to use '->'?
+  123 |     const glm::vec3 wup  = glm::normalize(Core::Engine::instance().getCamera().up);
+      |                                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+      |                                                                               ->
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseNodeGraph.cpp:134:21: error: non-local lambda expression cannot have a capture-default
+  134 |     auto worldOf = [&](const NV& nv) {
+      |                     ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseNodeGraph.cpp:149:78: error: member reference type 'Camera *' is a pointer; did you mean to use '->'?
+  149 |     const float vpH = static_cast<float>(Core::Engine::instance().getCamera().viewport[3]);
+      |                                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+      |                                                                              ->
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseNodeGraph.cpp:150:21: error: non-local lambda expression cannot have a capture-default
+  150 |     auto project = [&](const glm::vec3& w, ImVec2& out) -> bool {
+      |                     ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseNodeGraph.cpp:152:79: error: member reference type 'Camera *' is a pointer; did you mean to use '->'?
+  152 |         if (!ecgl::project(w.x, w.y, w.z, Core::Engine::instance().getCamera().modelview, Core::Engine::instance().getCamera().projection, Core::Engine::instance().getCamera().viewport, &px, &py, &pz))
+      |                                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+      |                                                                               ->
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseNodeGraph.cpp:152:127: error: member reference type 'Camera *' is a pointer; did you mean to use '->'?
+  152 |         if (!ecgl::project(w.x, w.y, w.z, Core::Engine::instance().getCamera().modelview, Core::Engine::instance().getCamera().projection, Core::Engine::instance().getCamera().viewport, &px, &py, &pz))
+      |                                                                                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+      |                                                                                                                               ->
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseNodeGraph.cpp:152:176: error: member reference type 'Camera *' is a pointer; did you mean to use '->'?
+  152 |         if (!ecgl::project(w.x, w.y, w.z, Core::Engine::instance().getCamera().modelview, Core::Engine::instance().getCamera().projection, Core::Engine::instance().getCamera().viewport, &px, &py, &pz))
+      |                                                                                                                                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+      |                                                                                                                                                                                ->
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseNodeGraph.cpp:166:20: error: non-local lambda expression cannot have a capture-default
+  166 |     auto manOff = [&](const std::vector<int>& path) -> ImVec2 {
+      |                    ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:1142:67: error: use of undeclared identifier 'gradientSettings'
+ 1142 |                                                                   gradientSettings, smudgeSettings);
+      |                                                                   ^~~~~~~~~~~~~~~~
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseNodeGraph.cpp:167:19: error: use of undeclared identifier '_graphManualOffset'; did you mean 'Ourverse::graphManualOffset'?
+  167 |         auto it = _graphManualOffset.find(path);
+      |                   ^~~~~~~~~~~~~~~~~~
+      |                   Ourverse::graphManualOffset
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.hpp:103:43: note: 'Ourverse::graphManualOffset' declared here
+  103 |     std::map<std::vector<int>, glm::vec2> graphManualOffset;
+      |                                           ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseNodeGraph.cpp:167:19: error: invalid use of non-static data member 'graphManualOffset'
+  167 |         auto it = _graphManualOffset.find(path);
+      |                   ^~~~~~~~~~~~~~~~~~
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:1142:85: error: use of undeclared identifier 'smudgeSettings'
+ 1142 |                                                                   gradientSettings, smudgeSettings);
+      |                                                                                     ^~~~~~~~~~~~~~
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseNodeGraph.cpp:168:22: error: use of undeclared identifier '_graphManualOffset'; did you mean 'Ourverse::graphManualOffset'?
+  168 |         return it != _graphManualOffset.end() ? ImVec2(it->second.x, it->second.y) : ImVec2(0.0f, 0.0f);
+      |                      ^~~~~~~~~~~~~~~~~~
+      |                      Ourverse::graphManualOffset
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.hpp:103:43: note: 'Ourverse::graphManualOffset' declared here
+  103 |     std::map<std::vector<int>, glm::vec2> graphManualOffset;
+      |                                           ^
+fatal error: too many errors emitted, stopping now [-ferror-limit=]
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:1144:22: error: use of undeclared identifier 'success'
+ 1144 |                 if (!success) {
+      |                      ^~~~~~~
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:1149:13: error: expected expression
+ 1149 |             else
+      |             ^
+13 warnings and 20 errors generated.
+make[3]: *** [CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/Ourverse/OurverseNodeGraph.cpp.o] Error 1
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:1201:41: error: too few arguments to function call, expected 2, have 1
+ 1201 |             engine->setBrushCursorPos(uv);
+      |             ~~~~~~~~~~~~~~~~~~~~~~~~~   ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Core/Engine.hpp:168:10: note: 'setBrushCursorPos' declared here
+  168 |     void setBrushCursorPos(float, float) {}
+      |          ^                 ~~~~~~~~~~~~
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:1209:23: warning: unused variable 'currentTime' [-Wunused-variable]
+ 1209 |                 float currentTime = static_cast<float>(glfwGetTime());
+      |                       ^~~~~~~~~~~
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:1229:29: error: no member named 'getLastBrushObject' in 'Core::Engine'
+ 1229 |                     engine->getLastBrushObject() == hitObj &&
+      |                     ~~~~~~  ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:1230:29: error: no member named 'getLastBrushFace' in 'Core::Engine'
+ 1230 |                     engine->getLastBrushFace() == hitFace)
+      |                     ~~~~~~  ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:1230:58: error: expected ';' after expression
+ 1230 |                     engine->getLastBrushFace() == hitFace)
+      |                                                          ^
+      |                                                          ;
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:1230:58: error: expected expression
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:1250:17: error: expected expression
+ 1250 |                 break;
+      |                 ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:1257:17: error: expected expression
+ 1257 |                 break;
+      |                 ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:1264:17: error: expected expression
+ 1264 |                 break;
+      |                 ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:1269:17: error: expected expression
+ 1269 |                 break;
+      |                 ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:1272:29: error: no member named 'getCloneToolActive' in 'Core::Engine'
+ 1272 |                 if (engine->getCloneToolActive())
+      |                     ~~~~~~  ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:1274:55: error: no member named 'getCloneOffset' in 'Core::Engine'
+ 1274 |                     glm::vec2 sourceUV = uv + engine->getCloneOffset();
+      |                                               ~~~~~~  ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/OurVerse/Tool.cpp:1277:17: error: expected expression
+ 1277 |                 }
+      |                 ^
+fatal error: too many errors emitted, stopping now [-ferror-limit=]
+17 warnings and 20 errors generated.
+make[3]: *** [CMakeFiles/earthcall_core.dir/src/OurVerse/Tool.cpp.o] Error 1
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseUI.cpp:140:16: error: cannot define or redeclare 'renderCreatorToolbar' here because namespace 'Core' does not enclose namespace 'Ourverse'
+  140 | void Ourverse::renderCreatorToolbar() {
+      |      ~~~~~~~~~~^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseUI.cpp:148:53: error: use of undeclared identifier 'showToolbar'; did you mean 'Ourverse::showToolbar'?
+  148 |     if (!ImGui::Begin("Earthcall Creator Console", &showToolbar, ImGuiWindowFlags_NoCollapse)) {
+      |                                                     ^~~~~~~~~~~
+      |                                                     Ourverse::showToolbar
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.hpp:63:10: note: 'Ourverse::showToolbar' declared here
+   63 |     bool showToolbar       = true;
+      |          ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseUI.cpp:148:53: error: invalid use of non-static data member 'showToolbar'
+  148 |     if (!ImGui::Begin("Earthcall Creator Console", &showToolbar, ImGuiWindowFlags_NoCollapse)) {
+      |                                                     ^~~~~~~~~~~
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseUI.cpp:150:9: error: use of undeclared identifier 'drawLoadWindow'
+  150 |         drawLoadWindow();
+      |         ^~~~~~~~~~~~~~
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseUI.cpp:151:9: error: use of undeclared identifier 'drawSaveWindow'
+  151 |         drawSaveWindow();
+      |         ^~~~~~~~~~~~~~
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseUI.cpp:152:9: error: use of undeclared identifier 'drawSaveManager'
+  152 |         drawSaveManager();
+      |         ^~~~~~~~~~~~~~~
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseUI.cpp:156:5: error: use of undeclared identifier 'renderCreatorSectionTabs'
+  156 |     renderCreatorSectionTabs();
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseUI.cpp:159:13: error: unknown type name 'creatorSection'; did you mean 'Ourverse::CreatorSection'?
+  159 |     switch (creatorSection) {
+      |             ^~~~~~~~~~~~~~
+      |             Ourverse::CreatorSection
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.hpp:55:16: note: 'Ourverse::CreatorSection' declared here
+   55 |     enum class CreatorSection { Paint = 0, Create3D, Character, World, Assets, Relations, Zones };
+      |                ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseUI.cpp:159:27: error: expected unqualified-id
+  159 |     switch (creatorSection) {
+      |                           ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseUI.cpp:160:14: error: use of undeclared identifier 'CreatorSection'; did you mean 'Ourverse::CreatorSection'?
+  160 |         case CreatorSection::Paint:
+      |              ^~~~~~~~~~~~~~
+      |              Ourverse::CreatorSection
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.hpp:55:16: note: 'Ourverse::CreatorSection' declared here
+   55 |     enum class CreatorSection { Paint = 0, Create3D, Character, World, Assets, Relations, Zones };
+      |                ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseUI.cpp:160:14: error: value of type 'Ourverse::CreatorSection' is not implicitly convertible to 'int'
+  160 |         case CreatorSection::Paint:
+      |              ^~~~~~~~~~~~~~~~~~~~~
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseUI.cpp:161:13: error: use of undeclared identifier 'renderPaintConsole'
+  161 |             renderPaintConsole(zone);
+      |             ^~~~~~~~~~~~~~~~~~
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseUI.cpp:163:14: error: use of undeclared identifier 'CreatorSection'; did you mean 'Ourverse::CreatorSection'?
+  163 |         case CreatorSection::Create3D:
+      |              ^~~~~~~~~~~~~~
+      |              Ourverse::CreatorSection
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.hpp:55:16: note: 'Ourverse::CreatorSection' declared here
+   55 |     enum class CreatorSection { Paint = 0, Create3D, Character, World, Assets, Relations, Zones };
+      |                ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseUI.cpp:163:14: error: value of type 'Ourverse::CreatorSection' is not implicitly convertible to 'int'
+  163 |         case CreatorSection::Create3D:
+      |              ^~~~~~~~~~~~~~~~~~~~~~~~
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseUI.cpp:164:13: error: use of undeclared identifier 'render3DConsole'
+  164 |             render3DConsole();
+      |             ^~~~~~~~~~~~~~~
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseUI.cpp:166:14: error: use of undeclared identifier 'CreatorSection'; did you mean 'Ourverse::CreatorSection'?
+  166 |         case CreatorSection::Character:
+      |              ^~~~~~~~~~~~~~
+      |              Ourverse::CreatorSection
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.hpp:55:16: note: 'Ourverse::CreatorSection' declared here
+   55 |     enum class CreatorSection { Paint = 0, Create3D, Character, World, Assets, Relations, Zones };
+      |                ^
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseUI.cpp:166:14: error: value of type 'Ourverse::CreatorSection' is not implicitly convertible to 'int'
+  166 |         case CreatorSection::Character:
+      |              ^~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseUI.cpp:167:13: error: use of undeclared identifier 'renderCharacterConsole'
+  167 |             renderCharacterConsole();
+      |             ^~~~~~~~~~~~~~~~~~~~~~
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/OurverseUI.cpp:169:14: error: use of undeclared identifier 'CreatorSection'; did you mean 'Ourverse::CreatorSection'?
+  169 |         case CreatorSection::World:
+      |              ^~~~~~~~~~~~~~
+      |              Ourverse::CreatorSection
+/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth/Ourverse/Ourverse.hpp:55:16: note: 'Ourverse::CreatorSection' declared here
+   55 |     enum class CreatorSection { Paint = 0, Create3D, Character, World, Assets, Relations, Zones };
+      |                ^
+fatal error: too many errors emitted, stopping now [-ferror-limit=]
+13 warnings and 20 errors generated.
+make[3]: *** [CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/Ourverse/OurverseUI.cpp.o] Error 1
+13 warnings generated.
+make[2]: *** [CMakeFiles/earthcall_core.dir/all] Error 2
+make[1]: *** [CMakeFiles/earthcall.dir/rule] Error 2
+make: *** [earthcall] Error 2

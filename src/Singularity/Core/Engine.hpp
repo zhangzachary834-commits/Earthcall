@@ -1,8 +1,25 @@
+class ElementalToolHandler;
+#include "ZonesOfEarth/Ourverse/Ourverse.hpp"
+#include "ConstructedBeing/Object/Formation/Menu/Menu.hpp"
+#include <glm/glm.hpp>
 #pragma once
 
 #include <GLFW/glfw3.h>
+#include <memory>
+
+class Person;
+class Camera;
+class LawManager;
+class KeyboardHandler;
+class MouseHandler;
+class CursorTools;
+
 
 namespace Core {
+    enum class PotteryTool { Pinch, Pull, Push, Smooth, Flatten, Sharpen, Expand };
+    enum class RotationAxisMode { Free, X, Y, Z, FreeXY, AuthoritativeAxis };
+
+
 
 // The WebGPU device/surface/renderer, when built with -DEARTHCALL_WEBGPU.
 // Deliberately only forward-declared: defining it here would drag webgpu.h into
@@ -26,23 +43,150 @@ public:
 
     // Lifecycle -----------------------------------------------------------
     bool init(int argc = 0, char** argv = nullptr);
-    void run(class Game& game);
-    void tick(class Game& game, float dt);
+    void initLogic();
+    void run();
+    void tick(float dt);
     void shutdown();
 
     // Accessors -----------------------------------------------------------
     GLFWwindow* window() const { return _window; }
     bool running()   const { return _running; }
+    
+    // Core systems migrating from Game
+    Person* getPlayer();
+    Camera* getCamera();
+    LawManager* getLawManager();
+    KeyboardHandler* getKeyboardHandler();
+    MouseHandler* getMouseHandler();
+    CursorTools* getCursorTools();
+    bool getAdvanced2DBrush() const { return true; }
+
+    bool isMouseLeftPressedLast() const { return _mouseLeftPressedLast; }
+    void setMouseLeftPressedLast(bool v) { _mouseLeftPressedLast = v; }
+        
+    glm::vec2 get2DToolDragStart() const { return _dragStart; }
+    void update2DToolDrag(glm::vec2 pos) { _dragCurrent = pos; }
+    template<typename T> void begin2DToolDrag(T type, glm::vec2 pos) { _is2DToolDragging = true; _dragStart = pos; _dragCurrent = pos; }
+    void end2DToolDrag() { _is2DToolDragging = false; }
+    template<typename T> bool is2DToolDragging(T type) const { return _is2DToolDragging; }
+    bool getUseLegacy2DTools() const { return _useLegacy2DTools; }
+    
+    Ourverse& getWorld() { return _world; }
+    Menu& getMainMenu() { return _mainMenu; }
+    
+    void fuseObjects(Object* A, Object* B);
+    void blendRail(const Object* o, glm::vec3& start, glm::vec3& dir, float& length) const;
+    bool handleFieldGizmos(Object* o, bool pressEdge, bool mouseDown, double winX, double winY);
+    void registerCallbacks();
+
+    void setCurrentColor(int index, float val) {} // dummy for now
+    
+        
+    
+    double getWorldTime() const { return _worldTime; }
+    void setWorldTime(double t) { _worldTime = t; }
 
 private:
     Engine() = default;                       // use instance()
-    ~Engine() = default;
+    ~Engine();
     Engine(const Engine&)            = delete;
     Engine& operator=(const Engine&) = delete;
 
     GLFWwindow*     _window  = nullptr;
     bool            _running = false;
     WebGpuBackend*  _webgpu  = nullptr; // owned; only allocated in the WebGPU build
+    
+    // Systems migrated from Game
+    std::unique_ptr<Person> _player;
+    std::unique_ptr<Camera> _camera;
+    std::unique_ptr<LawManager> _lawManager;
+        std::unique_ptr<KeyboardHandler> _keyboardHandler;
+    std::unique_ptr<MouseHandler> _mouseHandler;
+    std::unique_ptr<CursorTools> _cursorTools;
+    std::unique_ptr<::ElementalToolHandler> _elementalToolHandler;
+    double _worldTime = 0.0;
+
+    bool _mouseLeftPressedLast = false;
+    bool _is2DToolDragging = false;
+    glm::vec2 _dragStart = {0,0};
+    glm::vec2 _dragCurrent = {0,0};
+    bool _useLegacy2DTools = false;
+    
+        // Callbacks
+    GLFWcursorposfun       _prevCursorPosCallback       = nullptr;
+    GLFWwindowfocusfun     _prevFocusCallback           = nullptr;
+    GLFWframebuffersizefun _prevFramebufferSizeCallback = nullptr;
+
+    static void onCursorPos(GLFWwindow* win, double xpos, double ypos);
+    static void onWindowFocus(GLFWwindow* win, int focused);
+    static void onFramebufferSize(GLFWwindow* win, int width, int height);
+
+        // Polyhedron and Tool
+    void buildCurrentPolyhedron() {} // dummy
+    int _polyhedron = 0; // dummy for now, wait we need drawingStraightLine
+    bool _drawingStraightLine = false;
+    float _straightLineStartX = 0;
+    float _straightLineStartY = 0;
+    
+    
+public:
+    // Missing rotation state
+    bool getRotateDragging() const { return false; }
+    double getRotateLastCursorX() const { return 0.0; }
+    double getRotateLastCursorY() const { return 0.0; }
+    void setRotateLastCursor(double x, double y) {}
+    void setRotateDragging(bool) {}
+    bool isAdvancedFacePaintEnabled() const { return false; }
+    void* getCurrentGradientSettings() const { return nullptr; }
+    void* getCurrentSmudgeSettings() const { return nullptr; }
+    float getCurrentColor(int) const { return 0.0f; }
+    int _currentTool = 0;
+    float _straightLineEndX = 0;
+    float _straightLineEndY = 0;
+    float getRotationToolSensitivity() const { return 1.0f; }
+    float getRotationToolSmoothness() const { return 1.0f; }
+    RotationAxisMode getRotationAxisMode() const { return RotationAxisMode::Free; }
+    
+    // Missing Pottery state
+    PotteryTool getCurrentPotteryTool() const { return PotteryTool::Pinch; }
+    float getPotteryStrength() const { return 1.0f; }
+    
+    // Missing 2D state
+    const std::vector<glm::vec2>& get2DToolDragPoints() const { static std::vector<glm::vec2> v; return v; }
+    
+    Ourverse _world;
+    int _patchCtrlIndex = 0;
+    float _currentColor[4] = {1,1,1,1};
+    struct DummyBrush { bool showCursor=false; bool cursorVisible=false; float previewSize=1.0f; }; DummyBrush _brush;
+        glm::vec3 rotation;
+    struct DummyFaceBrush { float radius=1.0f; bool soft=false; float softness=0.0f; }; DummyFaceBrush _faceBrush;
+    float _cubeAngle = 0;
+    double getCursorX() const { return 0; }
+    double getCursorY() const { return 0; }
+    float getFaceBrushUOffset() const { return 0; }
+    float getFaceBrushVOffset() const { return 0; }
+    void setBrushCursorPos(float, float) {}
+    void setBrushCursorVisible(bool) {}
+    float getCurrentPressure() const { return 1.0f; }
+    bool getUsePressureSimulation() const { return false; }
+    void render();
+    void renderNametags();
+    void onFramebufferSize(int width, int height);
+    Menu _mainMenu;
+    
+    // Combine tool state
+    Object* _combineOperandA = nullptr;
+    int _combineOp = 2;
+    float _combineBlend = 0.15f;
+    Object* _clayGrabbed = nullptr;
+    Object* _clayTarget = nullptr;
+    bool _fieldHandleDragging = false;
+    bool _blendHandleDragging = false;
+
+    // Perspective
+    Ourverse::PerspectiveMode _currentPerspective = Ourverse::PerspectiveMode::FirstPerson;
+
+    
 };
 
 } // namespace Core 

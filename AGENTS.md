@@ -65,8 +65,12 @@ All paths are under `docs/architecture/` unless noted.
 
 ```
 src/
-  ConstructedBeing/  Singular · Object · Concept · Formation · Property · Material
+  ConstructedBeing/  Singular · Object · ObjectConcept · Formation · Property · Material
                   (named `Form/` until 2a11f94; the docs corpus still says Form in places)
+                  ObjectConcept is the ONE set-to-set machine, for beings of
+                  every kind — do not add a second one. See §7 of
+                  `LAW_AND_CREATION_SYSTEM.md`; a `Concept`/`SynthesisSystem`
+                  pair lived beside it until 2026-08-11 and was deleted.
   Person/         Person · Soul · Body · Relationship
   Relation/       Relation — a first-class being, not an edge in someone's array
   ZonesOfEarth/   Zone · Home · World · Physics · AuthorsOfLaw (Law lives here)

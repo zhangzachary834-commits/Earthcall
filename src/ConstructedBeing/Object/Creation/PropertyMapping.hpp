@@ -18,7 +18,16 @@
 struct PropertyMapping {
     PropertyPath source;             // legacy single variable (often 'x')
     MathBindings bindings;           // multivariable bindings
-    CurveModel transform;            // y = f(x); identity = polynomial {0, 1}
+
+    // y = f(x), and an UNAUTHORED transform is the identity — "carry this
+    // property across" — not the zero it used to be. A default-constructed
+    // CurveModel is Constant with no coefficients, which evaluates to 0.0, so
+    // a mapping that named a source and a target and nothing else wrote a
+    // zero over the value it was asked to carry. Silent destruction is the
+    // worst available answer; carrying it unchanged is the only reading of
+    // "no transform" that means anything.
+    CurveModel transform = CurveModel::polynomial({0.0, 1.0});
+
     PropertyPath target;             // written on the newborn
 
     // When authored, the EXACT transform supersedes the curve: the full
@@ -33,6 +42,16 @@ struct PropertyMapping {
     // aggregates fold the whole source set into one domain value.
     enum class Aggregate { PerMember = 0, Mean = 1, Sum = 2, Max = 3 };
     Aggregate agg = Aggregate::PerMember;
+
+    // Every path this mapping READS off the source set — the multivariable
+    // bindings when authored, otherwise the legacy single source under its
+    // traditional name. One answer for both the governance gate and the
+    // evaluation, so the two can never disagree about what is being taken.
+    MathBindings readPaths() const {
+        if (!bindings.empty()) return bindings;
+        if (!source.empty()) return MathBindings{{"x", source}};
+        return {};
+    }
 
     // The transform applied: exact when authored (nullopt outside its
     // domain), otherwise the curve (total). The guard subject lets

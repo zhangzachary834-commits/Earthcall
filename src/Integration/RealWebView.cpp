@@ -8,7 +8,7 @@
 #include "../Legacy/DesignSystem.hpp"
 #include "../ZonesOfEarth/World/World.hpp"
 #include "../ZonesOfEarth/ZoneManager.hpp"
-#include "../Singularity/Core/Game.hpp"
+#include "../Singularity/Core/Engine.hpp"
 
 #ifdef __APPLE__
 #if TARGET_OS_MAC

@@ -152,9 +152,9 @@ inline bool isTimePath(const PropertyPath& path) {
 // passes through, and it briefly carried a hardcoded branch for
 // "world.occlusionToCamera" — a raycast, a camera lookup, and an
 // `#include "Integration/EarthcallAPI.hpp"` that dragged the foreign-software
-// surface into ActionModel, ConditionModel, Universe, PropertyMapping and
-// SynthesisSystem. A subsystem may not define what a thing is, and the
-// hottest path in the engine may not know what occlusion is.
+// surface into ActionModel, ConditionModel, Universe and the whole set-to-set
+// path. A subsystem may not define what a thing is, and the hottest path in
+// the engine may not know what occlusion is.
 //
 // Registration is idempotent-by-replacement and expected once, at channel
 // init. Nothing is registered by default: an unregistered reading simply does

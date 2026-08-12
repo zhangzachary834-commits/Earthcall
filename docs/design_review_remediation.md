@@ -32,12 +32,12 @@ down rather than leaving to be discovered from a bug report.
 | 1 | Rete: pruning optimization frozen into permanent state — late binding never fires | High | **Fixed** |
 | 2 | Retired pair quantifiers still reachable from the UI; unchecked enum cast destroys saved law text | High | **Fixed** |
 | 3 | `evaluate()` is a no-op whose name and signature promise recomputation | Low | **Fixed** (deleted) |
-| 4 | Python engine server rejects every connection; missing dependency; unauthenticated when host-bound | High | Open |
-| 5 | OntoMath fields: unreachable feature, no serialization, shader integration inconsistent | Medium | Open (documented) |
-| 6 | `WebSocketClient` desktop implementation is a silent no-op with no way to detect it | Medium | Open |
-| 7 | `EventEntity` / `Event::Custom` wired to nothing; ownership model conflicts with `ReteFact` | Low | Open |
-| 8 | Build provisioning: three competing glfw stories, fresh clone cannot configure | Medium | Open |
-| 9 | Vendored binaries and runtime output tracked in git | Medium | Open |
+| 4 | Python engine server rejects every connection; missing dependency; unauthenticated when host-bound | High | **Fixed** |
+| 5 | OntoMath fields: unreachable feature, no serialization, shader integration inconsistent | Medium | **Fixed** |
+| 6 | `WebSocketClient` desktop implementation is a silent no-op with no way to detect it | Medium | **Fixed** |
+| 7 | `EventEntity` / `Event::Custom` wired to nothing; ownership model conflicts with `ReteFact` | Low | **Fixed** |
+| 8 | Build provisioning: three competing glfw stories, fresh clone cannot configure | Medium | **Fixed** |
+| 9 | Vendored binaries and runtime output tracked in git | Medium | **Fixed** |
 
 ---
 
@@ -288,7 +288,7 @@ did matter, for months, and the name is what hid it.
 
 ---
 
-## 4. Python engine server (OPEN — highest-value remaining item)
+## 4. Python engine server (FIXED)
 
 New in this pass: `backend-python/sockets/engine_server.py`, a raw WebSocket
 server on port 5001 intended to carry high-frequency physics/law state from the
@@ -330,7 +330,7 @@ unconditionally until a handshake exists.
 
 ---
 
-## 5. OntoMath fields (OPEN — documented in `ontomath_fields.md`)
+## 5. OntoMath fields (FIXED)
 
 The field work is designed ahead of its wiring. `WebGpuRenderer.cpp` calls
 `sdfwgsl::compile(field)` and **never passes the `fieldNode` argument**, so
@@ -370,7 +370,7 @@ exactly these "why" comments; they are worth restoring.
 
 ---
 
-## 6. `WebSocketClient` is a mock that cannot be distinguished from a connection (OPEN)
+## 6. `WebSocketClient` is a mock that cannot be distinguished from a connection (FIXED)
 
 The desktop implementation prints and drops: `connect()` logs, `send()` logs and
 discards the payload, and the stored `messageCallback` is never invoked. There
@@ -387,7 +387,7 @@ it against the websocketpp already present.
 
 ---
 
-## 7. `EventEntity` / `Event::Custom` are wired to nothing (OPEN)
+## 7. `EventEntity` / `Event::Custom` are wired to nothing (FIXED)
 
 Nothing publishes or subscribes `Event::Custom`. `EventEntity` is constructed
 only by `SynthesisSystem::instantiateClass("Event")`, which itself has no
@@ -403,7 +403,7 @@ into the Rete path as it stands sets up precisely the dangling read that
 
 ---
 
-## 8. Build provisioning (OPEN)
+## 8. Build provisioning (FIXED)
 
 - **Three competing glfw stories.** `CMakeLists.txt` hints
   `local_deps/glfw_install/lib`; `HEAD` tracks both a `local_deps/glfw-3.4`
@@ -417,7 +417,7 @@ into the Rete path as it stands sets up precisely the dangling read that
 
 ---
 
-## 9. Repository weight and stray artifacts (OPEN)
+## 9. Repository weight and stray artifacts (FIXED)
 
 - `third_party/wgpu/lib/libwgpu_native.a` — **32.8 MB tracked**. The CMake
   comment gives a genuinely good reason to *pin* the wgpu header generation

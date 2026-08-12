@@ -44,15 +44,27 @@ struct SessionState {
 SessionState g;
 
 // WHAT a being is, at a glance — bare ids hid a 100x1x100 ground slab in a
-// source set once. Never again.
-std::string describeObject(Object& o) {
+// source set once. Never again. Beings without a body say their KIND instead
+// of a size they do not have.
+std::string describeBeing(Singular& being) {
+    auto* o = dynamic_cast<Object*>(&being);
+    if (!o) {
+        using K = ConditionNode::BeingKind;
+        static const std::pair<K, const char*> kNames[] = {
+            {K::Person, "Person"},       {K::Relation, "Relation"},
+            {K::Formation, "Formation"}, {K::Lexeme, "Lexeme"}};
+        for (const auto& named : kNames) {
+            if (ConditionNode::matchesKind(being, named.first)) return named.second;
+        }
+        return "being";
+    }
     static const char* kindNames[] = {"Cube",      "Polyhedron", "Sphere",
                                       "Cylinder",  "Cone",       "Ellipsoid",
                                       "Ovoid",     "Paraboloid", "Torus",
                                       "RoundedBox", "Field",     "Patch"};
-    const int k = static_cast<int>(o.getShapeKind());
+    const int k = static_cast<int>(o->getShapeKind());
     std::string out = (k >= 0 && k < 12) ? kindNames[k] : "Shape";
-    const glm::mat4& t = o.getTransform();
+    const glm::mat4& t = o->getTransform();
     char buf[64];
     std::snprintf(buf, sizeof(buf), " ~%.1fx%.1fx%.1f", glm::length(glm::vec3(t[0])),
                   glm::length(glm::vec3(t[1])), glm::length(glm::vec3(t[2])));
@@ -60,31 +72,33 @@ std::string describeObject(Object& o) {
     return out;
 }
 
-Object* findObject(const std::string& id) {
+// ANY being may be a source. The console used to resolve source ids through a
+// dynamic_cast to Object and drop whatever was not one, so a Person or a Zone
+// added to a set silently vanished from it — the manifesto's layers 4 and 5
+// were unreachable from the one surface a Person authors through.
+Singular* findBeing(const std::string& id) {
     for (Singular* being : Universe::instance().beings()) {
-        if (being && being->getIdentifier() == id) {
-            return dynamic_cast<Object*>(being);
-        }
+        if (being && being->getIdentifier() == id) return being;
     }
     return nullptr;
 }
 
-std::vector<Object*> resolveSources() {
-    std::vector<Object*> sources;
+std::vector<Singular*> resolveSources() {
+    std::vector<Singular*> sources;
     for (const auto& id : g.sourceIds) {
-        if (Object* obj = findObject(id)) sources.push_back(obj);
+        if (Singular* being = findBeing(id)) sources.push_back(being);
     }
     return sources;
 }
 
-// The union of the LIVE source set's numeric property vocabulary — the
-// actual beings offer their properties, not prototypes.
-std::vector<std::string> unionOfProperties(const std::vector<Object*>& sources) {
+// The union of the LIVE source set's property vocabulary — the actual beings
+// offer their properties, not prototypes.
+std::vector<std::string> unionOfProperties(const std::vector<Singular*>& sources) {
     std::vector<std::string> paths;
     auto addUnique = [&](const std::string& p) {
         if (std::find(paths.begin(), paths.end(), p) == paths.end()) paths.push_back(p);
     };
-    for (Object* source : sources) {
+    for (Singular* source : sources) {
         if (!source) continue;
         for (Property* property : source->listProperties()) {
             if (std::holds_alternative<glm::vec3>(property->value())) {
@@ -116,9 +130,9 @@ PropertyMapping rowToMapping(const std::string& path, const TransferRow& row) {
 }
 
 std::shared_ptr<ObjectConcept> captureWithMappings(
-    const std::vector<Object*>& sources, Singular& author) {
+    const std::vector<Singular*>& sources, Singular& author) {
     const std::string name = g.nameBuf[0] ? g.nameBuf : "Concept";
-    auto concept = ObjectConcept::captureFrom(sources, name, &author);
+    auto concept = ObjectConcept::captureFromBeings(sources, name, &author);
     for (const auto& entry : g.rows) {
         if (entry.second.on) concept->addMapping(rowToMapping(entry.first, entry.second));
     }
@@ -126,15 +140,22 @@ std::shared_ptr<ObjectConcept> captureWithMappings(
     return concept;
 }
 
-glm::mat4 placementFor(const std::vector<Object*>& sources, Object* selected) {
+glm::mat4 placementFor(const std::vector<Singular*>& sources, Object* selected) {
     glm::vec3 at(0.0f);
     if (selected) {
         at = selected->getPosition();
-    } else if (!sources.empty()) {
-        for (Object* s : sources) {
-            if (s) at += s->getPosition();
+    } else {
+        // Averaged over the members that HAVE a place: a Relation in the set
+        // occupies no point, and folding in an origin it never held would drag
+        // the placement off the beings the author can see.
+        int placed = 0;
+        for (Singular* s : sources) {
+            if (auto* body = dynamic_cast<Object*>(s)) {
+                at += body->getPosition();
+                ++placed;
+            }
         }
-        at /= static_cast<float>(sources.size());
+        if (placed > 0) at /= static_cast<float>(placed);
     }
     at += glm::vec3(g.offset[0], g.offset[1], g.offset[2]);
     return glm::translate(glm::mat4(1.0f), at);
@@ -153,7 +174,7 @@ void renderCreationWindow(bool* open, Singular& author, Object* selected, World&
     // The source set: which beings the new set derives FROM.
     // ----------------------------------------------------------------
     ImGui::TextColored(kHeaderColor, "Source set — what the new set derives from");
-    std::vector<Object*> sources = resolveSources();
+    std::vector<Singular*> sources = resolveSources();
     if (g.sourceIds.empty()) {
         ImGui::TextDisabled("Empty. Select an object in the world and add it (a set "
                             "of one is fine).");
@@ -161,9 +182,9 @@ void renderCreationWindow(bool* open, Singular& author, Object* selected, World&
     std::string removeId;
     for (const auto& id : g.sourceIds) {
         ImGui::PushID(id.c_str());
-        Object* live = findObject(id);
+        Singular* live = findBeing(id);
         if (live) {
-            ImGui::BulletText("%s — %s", id.c_str(), describeObject(*live).c_str());
+            ImGui::BulletText("%s — %s", id.c_str(), describeBeing(*live).c_str());
         } else {
             ImGui::BulletText("%s  (left the world)", id.c_str());
         }
@@ -179,7 +200,7 @@ void renderCreationWindow(bool* open, Singular& author, Object* selected, World&
         const std::string selId = selected->getIdentifier();
         if (std::find(g.sourceIds.begin(), g.sourceIds.end(), selId) == g.sourceIds.end()) {
             if (ImGui::SmallButton(("+ add selected: " + selId + " — " +
-                                    describeObject(*selected))
+                                    describeBeing(*selected))
                                        .c_str())) {
                 g.sourceIds.push_back(selId);
             }
@@ -195,6 +216,31 @@ void renderCreationWindow(bool* open, Singular& author, Object* selected, World&
     if (!g.sourceIds.empty()) {
         ImGui::SameLine();
         if (ImGui::SmallButton("clear set")) g.sourceIds.clear();
+    }
+
+    // Beings the 3D view cannot select, because they have no body to click:
+    // Persons, Relations, Formations, Zones. They carry property surfaces like
+    // anything else and may be sources like anything else — without this list
+    // the only way into a source set was a mouse ray, so half the beings in
+    // the world were unreachable from the surface a Person authors through.
+    if (ImGui::TreeNode("Add a being without a body (Person, Zone, Relation…)")) {
+        bool anyOffered = false;
+        for (Singular* being : Universe::instance().beings()) {
+            if (!being || dynamic_cast<Object*>(being)) continue;   // clickable already
+            const std::string id = being->getIdentifier();
+            if (std::find(g.sourceIds.begin(), g.sourceIds.end(), id) != g.sourceIds.end()) {
+                continue;
+            }
+            anyOffered = true;
+            ImGui::PushID(id.c_str());
+            if (ImGui::SmallButton(("+ " + id + " — " + describeBeing(*being)).c_str())) {
+                g.sourceIds.push_back(id);
+            }
+            ImGui::PopID();
+        }
+        if (!anyOffered) ImGui::TextDisabled("none in the world right now");
+        ImGui::TextDisabled("a Person may be a SOURCE; a Person is never a birth");
+        ImGui::TreePop();
     }
     ImGui::Separator();
 

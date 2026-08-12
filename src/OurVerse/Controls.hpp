@@ -2,7 +2,7 @@
 #include <GLFW/glfw3.h>
 
 // Forward declarations
-namespace Core { class Game; }
+namespace Core { class Engine; }
 
 namespace ControlPanel { class Controls; }
 
@@ -14,7 +14,7 @@ public:
     void init();
 
     // Update controls based on input
-    void update(float dt, Core::Game* game, GLFWwindow* window);
+    void update(float dt, Core::Engine* engine, GLFWwindow* window);
 
     // Handle key press events
     static void onKeyPress(int key, int action);

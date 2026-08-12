@@ -1,0 +1,7 @@
+{
+	"InstallScripts" : 
+	[
+		"/Users/zacharyzhang/Documents/GitHub/Earthcall/build_ag/_deps/websocketpp-subbuild/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

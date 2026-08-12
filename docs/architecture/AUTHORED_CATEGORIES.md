@@ -44,7 +44,7 @@ been happening.
 **The one-sentence thesis** — and it is the world author's own formulation, which this
 document builds out rather than invents:
 
-> *A category is an acyclic Formation whose root node is an authored Object; that root
+> *A category is an acyclic Singular-graph whose root node is an authored Object; that root
 > being holds the category's Material and its shared properties, and membership is a
 > directed Relation into it.*
 
@@ -436,13 +436,21 @@ carries a namespace prefix is addressable only because root resolution is longes
 ### 9b. Category beings need a home
 
 Category beings are extra-spatial Objects. They can live in the active World's object list
-like any other Object (and are then provided to the Universe automatically), but a Zone's
-object list is zone-scoped, and **categories are cross-zone the way materials are**
+like any other Object (and are then provided to the Universe automatically). 
+However, the inter-zone framework is not yet fully implemented, and a Zone's
+object list is zone-scoped. But switching between Zones in developer testing often require the same Materials.
+Thus materials have therefore been made as globals, 
+**and categories are also meta-object and therefore cross-zone the way materials are**
 (`globals.cpp`: *"Materials are cross-zone shared beings"*).
 
-Follow the Material precedent exactly: a global registry, saved in its own top-level save
+Later, Cross-zone will be handled by the Ourverse substrate and higher-level zones rather 
+than hardcoded globals. Real usage will use cross zones, but Singularity-level 
+developer tools can use the hardcoded globals. 
+Until or unless that is implemented, follow the Material precedent exactly: a global registry, saved in its own top-level save
 section, pushed into the Universe provider. `ConceptRegistry` and `MaterialManager` are
 both templates for this; do not invent a third shape.
+
+There are permissions implications for this in the future as to when concept and materials are allowed to cross over into other zones in case of Law conflicts that govern category and material jurisdiction. 
 
 **What is not needed:** a `Category` C++ class. A category being is an `Object` with a
 namespaced identifier and authored properties. `NEW_KIND_FRAMEWORK.md` Floor §1 applies to

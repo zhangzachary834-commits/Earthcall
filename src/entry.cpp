@@ -1,5 +1,4 @@
 #include "Singularity/Core/Engine.hpp"
-#include "Singularity/Core/Game.hpp"
 #include <iostream>
 
 int main(int argc, char** argv) {
@@ -10,13 +9,7 @@ int main(int argc, char** argv) {
         return -1;
     }
 
-    Game game;
-    if (!game.init()) {
-        engine.shutdown();
-        return -1;
-    }
-
-    engine.run(game);
+    engine.run();
 
     engine.shutdown();
     return 0;

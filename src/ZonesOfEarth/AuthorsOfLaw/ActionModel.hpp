@@ -84,7 +84,11 @@ struct ActionNode {
         RemoveProperty = 14,
         RemoveElement = 15,
         Destroy = 16,
-        Synthesize = 17, // invoke the Universal SynthesisSystem (Concept -> Singulars)
+        // Set-to-set from the LIVE INPUT SET the event names (subject and
+        // object) rather than from the concept alone: Spawn is a birth,
+        // Synthesize is a derivation from the beings the moment brought
+        // together. Both resolve the SAME ObjectConcept registry.
+        Synthesize = 17,
         PlayAudio = 18   // Trigger the procedural audio synthesizer via properties
     };
 

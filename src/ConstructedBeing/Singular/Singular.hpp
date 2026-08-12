@@ -139,6 +139,21 @@ protected:
     // Authored data structures and bounds (manifesto property framework)
     std::map<std::string, class DataStructure> _dataStructures;
     Formation* _property_formation = nullptr;
-    bool _propertiesBuilt = false;
+    // Subclasses will deserialize their own specific properties here.
     virtual void buildProperties() = 0;
-}; 
+    
+    // Dynamic property access helper
+    template<typename T>
+    T getDynamicPropertyOrDefault(const std::string& name, const T& defaultValue) const {
+        auto it = _dynamicProperties.find(name);
+        if (it != _dynamicProperties.end()) {
+            if (const T* val = std::get_if<T>(&it->second)) {
+                return *val;
+            }
+        }
+        return defaultValue;
+    }
+
+    std::string name;
+    bool _propertiesBuilt = false;
+};

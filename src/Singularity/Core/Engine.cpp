@@ -1,5 +1,4 @@
 #include "Singularity/Core/Engine.hpp"
-#include "Singularity/Core/Game.hpp"
 
 #include "../../../imgui/imgui.h"
 #include "../../../imgui/backends/imgui_impl_glfw.h"
@@ -24,6 +23,14 @@
 #include "Singularity/Audio/AudioSystem.hpp"
 #include "Singularity/Language/LanguageSystem.hpp"
 #include "Singularity/Core/EventBus.hpp"
+#include "Person/Person.hpp"
+#include "Singularity/Screen/Camera.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
+
+#include "Singularity/Input/KeyboardHandler.hpp"
+#include "Singularity/Input/MouseHandler.hpp"
+#include "OurVerse/CursorTools.hpp"
+#include "OurVerse/ElementalToolHandler.hpp"
 
 #include <iostream>
 
@@ -149,13 +156,14 @@ bool Engine::init(int /*argc*/, char** /*argv*/) {
     Core::Audio::AudioSystem::instance().init();
     Core::Audio::AudioSystem::instance().setupAudioEventListeners();
 
+    initLogic();
+
     return true;
 }
 
 #ifdef __EMSCRIPTEN__
 struct LoopContext {
     Engine* engine;
-    Game* game;
     double lastTime;
 };
 
@@ -170,8 +178,7 @@ static void emscripten_main_loop(void* arg) {
         // only in the browser -- entry.cpp's own post-loop call is
         // unreachable in this build (emscripten_set_main_loop_arg with
         // simulate_infinite_loop=1 never returns, it unwinds the stack).
-        ctx->game->shutdown();
-        ctx->engine->shutdown();
+                ctx->engine->shutdown();
         delete ctx;
         return;
     }
@@ -180,15 +187,15 @@ static void emscripten_main_loop(void* arg) {
     float dt = static_cast<float>(currentTime - ctx->lastTime);
     ctx->lastTime = currentTime;
     
-    ctx->engine->tick(*(ctx->game), dt);
+    ctx->engine->tick(dt);
 }
 #endif
 
-void Engine::run(Game& game) {
+void Engine::run() {
     double lastTime = glfwGetTime();
 
 #ifdef __EMSCRIPTEN__
-    LoopContext* ctx = new LoopContext{this, &game, lastTime};
+    LoopContext* ctx = new LoopContext{this, lastTime};
     emscripten_set_main_loop_arg(emscripten_main_loop, ctx, 0, 1);
 #else
     while (_running && _window && !glfwWindowShouldClose(_window)) {
@@ -196,14 +203,14 @@ void Engine::run(Game& game) {
         float  dt          = static_cast<float>(currentTime - lastTime);
         lastTime           = currentTime;
         
-        tick(game, dt);
+        tick(dt);
     }
     // Allow Game to perform shutdown logic before engine terminates
-    game.shutdown();
+    
 #endif
 }
 
-void Engine::tick(Game& game, float dt) {
+void Engine::tick(float dt) {
         glfwPollEvents();
 
 #ifdef EARTHCALL_WEBGPU
@@ -234,8 +241,6 @@ void Engine::tick(Game& game, float dt) {
         Core::EventBus::instance().tick();
 #endif
 
-        game.update(dt);
-        game.render(); // brackets itself with Renderer begin/endFrame
 
         // Render ImGui
         ImGui::Render();
@@ -292,3 +297,8 @@ void Engine::shutdown() {
 }
 
 } // namespace Core
+namespace Core {
+MouseHandler* Engine::getMouseHandler() { return _mouseHandler.get(); }
+Camera* Engine::getCamera() { return _camera.get(); }
+Engine::~Engine() {}
+}

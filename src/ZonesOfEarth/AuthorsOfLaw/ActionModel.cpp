@@ -2,7 +2,6 @@
 
 #include "ConstructedBeing/Object/Creation/ObjectConcept.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
-#include "ConstructedBeing/Singular/SynthesisSystem.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "ZonesOfEarth/World/World.hpp"
 #include "Person/Body/BodyPart/BodyPart.hpp"
@@ -930,21 +929,71 @@ ECA::ActionExecutor ActionNode::compile() const {
                 emitEffect("Destroy", true);
             };
         }
+        // ------------------------------------------------------------------
+        // Synthesis IS set-to-set creation. It was a second implementation of
+        // it — its own concept type, its own registry, its own mapping struct,
+        // its own governance — and being second it was also the poorer one:
+        // its concepts had uuid identities no law text could name, its
+        // registry was never saved, and its newborns were returned as
+        // shared_ptrs that the caller dropped on the floor, so every being it
+        // ever made was born and freed in the same statement.
+        //
+        // The distinction it was reaching for is real and is kept: SPAWN
+        // derives a new set from the concept alone (a birth), while SYNTHESIZE
+        // derives it from the LIVE INPUT SET the event names — subject and
+        // object, the two beings the moment brought together. One machine,
+        // two gestures.
+        // ------------------------------------------------------------------
         case Kind::Synthesize: {
             const std::string id = conceptId;
             return [id](const ECA::Event& event, Singular& target) {
-                auto concept = UniversalConceptRegistry::instance().findConcept(id);
+                World* world = dynamic_cast<World*>(&target);
+                if (!world) {
+                    for (auto* being : Universe::instance().beings()) {
+                        if (auto* w = dynamic_cast<World*>(being)) {
+                            world = w;
+                            break;
+                        }
+                    }
+                }
+                if (!world) {
+                    emitEffect("Synthesize", false, "no World to be born into");
+                    return;
+                }
+                auto concept = ConceptRegistry::instance().find(id);
                 if (!concept) {
                     emitEffect("Synthesize", false, "no such concept: " + id);
                     return;
                 }
-                // Call universal synthesis system
+
+                // The input set: every being this event brought together, of
+                // whatever kind. A Person, a Zone and a cube are all sources —
+                // reading a property is the same act whoever carries it, and
+                // the TransferPolicy gate decides what may be read.
                 std::vector<Singular*> inputs;
                 if (event.subject) inputs.push_back(event.subject);
                 if (event.object) inputs.push_back(event.object);
-                
-                auto outputs = SynthesisSystem::instance().synthesize(inputs, *concept, {}, nullptr, &target);
-                emitEffect("Synthesize", !outputs.empty(), outputs.empty() ? "synthesis produced nothing" : "");
+
+                glm::mat4 placement(1.0f);
+                if (auto* placed = dynamic_cast<Object*>(event.subject)) {
+                    placement = glm::translate(glm::mat4(1.0f), placed->getPosition());
+                }
+
+                auto newborns = concept->instantiate(
+                    placement, inputs.empty() ? nullptr : &inputs);
+                if (newborns.empty()) {
+                    emitEffect("Synthesize", false, "synthesis produced nothing");
+                    return;
+                }
+                for (auto& newborn : newborns) {
+                    Object* born = newborn.get();
+                    world->addObject(std::move(newborn));
+                    Core::EventBus::instance().publish(
+                        ECA::Event{"object-created", born, event.subject, std::time(nullptr)});
+                }
+                emitEffect("Synthesize", true);
+                Core::EventBus::instance().publish(
+                    ActionNode::ExecutedEvent{"Synthesize", &target, std::time(nullptr)});
             };
         }
     }

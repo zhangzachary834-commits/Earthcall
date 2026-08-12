@@ -1,0 +1,7 @@
+{
+	"InstallScripts" : 
+	[
+		"/Users/zacharyzhang/Documents/GitHub/Earthcall/build_agy/_deps/flatbuffers-subbuild/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

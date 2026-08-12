@@ -1,7 +1,7 @@
 #include "Controls.hpp"
 
 #include <GLFW/glfw3.h>
-#include "Singularity/Core/Game.hpp"
+#include "Singularity/Core/Engine.hpp"
 #include "imgui.h"
 
 using namespace ControlPanel;
@@ -24,7 +24,7 @@ void ControlPanel::Controls::init()
     // Initialize key bindings or other controls here if needed
 }
 
-void ControlPanel::Controls::update(float dt, Core::Game* game, GLFWwindow* window) {
+void ControlPanel::Controls::update(float dt, Core::Engine* engine, GLFWwindow* window) {
     // Update controls based on input
     // This is a placeholder - actual control logic is handled in Game::update()
 }

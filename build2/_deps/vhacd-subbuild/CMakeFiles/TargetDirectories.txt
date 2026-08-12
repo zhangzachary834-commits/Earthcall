@@ -1,0 +1,3 @@
+/Users/zacharyzhang/Documents/GitHub/Earthcall/build2/_deps/vhacd-subbuild/CMakeFiles/vhacd-populate.dir
+/Users/zacharyzhang/Documents/GitHub/Earthcall/build2/_deps/vhacd-subbuild/CMakeFiles/edit_cache.dir
+/Users/zacharyzhang/Documents/GitHub/Earthcall/build2/_deps/vhacd-subbuild/CMakeFiles/rebuild_cache.dir

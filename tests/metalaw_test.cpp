@@ -12,6 +12,7 @@
 #include "ConstructedBeing/Object/Object.hpp"
 
 #include <GLFW/glfw3.h>
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <cstdio>
@@ -157,6 +158,60 @@ int main() {
         const std::string prov = fused->provenance().toJson().dump();
         assert(prov.find(driftUp.getIdentifier()) != std::string::npos);
         assert(prov.find(driftUpMore.getIdentifier()) != std::string::npos);
+
+        // ... and it SURVIVES the world file. Provenance was written by
+        // toJson and never read back by fromJson, so a higher law forgot
+        // what it was made of at the next load — and "synthesized-from" is
+        // the only record there is.
+        auto fusedReborn = Law::fromJson(fused->toJson());
+        const std::string rebornProv = fusedReborn->provenance().toJson().dump();
+        assert(rebornProv.find(driftUp.getIdentifier()) != std::string::npos);
+        assert(rebornProv.find(driftUpMore.getIdentifier()) != std::string::npos);
+
+        // ------------------------------------------------------------------
+        // 6. A composition carries what makes a law A LAW — not only its
+        //    trees. Composition used to move conditions and actions alone,
+        //    producing a well-formed higher law with no targets, the default
+        //    activation and no drive flag: correct text nothing would ever
+        //    apply, wake, or tick.
+        // ------------------------------------------------------------------
+        Object referentA, referentB;
+        LawManager manager;
+
+        auto wide = manager.createLaw("wide", {&author});
+        wide->addTarget(referentA);
+        wide->setActivation(Law::Activation::WhileTrue);
+        wide->setScope(Law::Scope::Everyone);
+        wide->setDrives(true);
+        wide->setActionModel(ActionNode::add("position.y", 0.1));
+
+        auto narrow = manager.createLaw("narrow", {&author});
+        narrow->addTarget(referentB);
+        narrow->setActivation(Law::Activation::OnEvent);
+        narrow->setScope(Law::Scope::Subject);
+        narrow->setActionModel(ActionNode::add("position.x", 0.1));
+
+        manager.bindTrigger(wide->getIdentifier(), "object-touched");
+        manager.bindTrigger(narrow->getIdentifier(), "zone-entered");
+
+        auto bound = LawSynthesis::compose("wide-and-narrow", *wide, *narrow,
+                                           {&author}, true, true, &manager);
+
+        // The referents of both — a higher law governs what its parents did.
+        assert(bound->targets().getMembers().size() == 2);
+        // A fused Drive is itself a drive, or nothing ever ticks it.
+        assert(bound->drives());
+        // Disagreement narrows: never Everyone unless BOTH parents were, and
+        // never WhileTrue on a coin flip. A synthesis does not acquire
+        // authority neither parent had.
+        assert(bound->scope() == Law::Scope::Subject);
+        assert(bound->activation() == Law::Activation::OnEvent);
+
+        // Registered, and listening for everything either parent heard.
+        assert(manager.find(bound->getIdentifier()) != nullptr);
+        const auto& heard = manager.triggersOf(bound->getIdentifier());
+        assert(std::find(heard.begin(), heard.end(), "object-touched") != heard.end());
+        assert(std::find(heard.begin(), heard.end(), "zone-entered") != heard.end());
     }
 
     glfwDestroyWindow(window);

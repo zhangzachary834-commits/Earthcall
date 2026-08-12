@@ -592,6 +592,21 @@ UI build order already adopted for shapes: gizmos → node-graph → clay.
   watching; capture the **cumulative** trace; `fit()` a single new model. One
   process, natively owned, no delegation overhead at runtime.
 
+**What makes a law a law, carried across (landed 2026-08-11).** Both paths used
+to move the condition tree and the action tree and *nothing else*, producing a
+well-formed higher law that could never fire: no targets, so nothing to apply
+to; the default activation whatever the parents' were; no drive flag, so a
+fused `Drive` was never ticked; and no registration, so no manager held it and
+no trigger woke it. `compose` and `synthesizeByDemonstration` now carry
+activation, retrigger, scope, drives and the **union of the parents' targets**,
+and — given a `LawManager*` — register the law and bind the **union of what
+wakes its constituents** (triggers live in the manager's table, not on the
+law, so only the manager can answer that). Where the parents disagree the
+composition takes the **narrower** reading: `Everyone` only when both were,
+never `WhileTrue` on a coin flip. **Authority is never inherited** — otherwise
+synthesis is a ladder: compose two ordinary laws, receive a higher one, compose
+again.
+
 **Metalaws need zero new machinery.** Once `Law::buildProperties()` registers
 `enabled`, `conditionMode`, and its models' numeric leaves, a Law whose target is
 another Law *is* a Metalaw. The Singularity-level ceiling is one authority check
@@ -705,12 +720,54 @@ APPEND-ONLY): Absorb keeps the running process's clock (a block resting in
 constant collision cannot stack or reset it); Restart makes the new trigger
 a new t = 0 (re-kick mid-arc, re-arc). Edited beside the Drive checkbox.
 
-Still ahead (the user's layers 2/4/5): first-mover tools recorded mid-process
-(ChangeRecorder thread), cross-kind transference, and set-to-set over
-non-Object Singulars (Persons, BodyParts, Zones, Relations, Formations) —
-needs a Singular-kind-aware MemberTemplate; the property table and gates carry
-over unchanged. Law set-to-set arrives as the special case (Law extends
-Object) under Zone-level authorial permissions.
+**Singular-general sources (landed 2026-08-11).** `MemberTemplate` carries a
+`ConditionNode::BeingKind` and a per-member **property snapshot**, and
+`captureFromBeings(std::vector<Singular*>)` captures from beings of any kind —
+the manifesto's layers 4 and 5 on the reading side. Three consequences:
+
+- a concept remembers **values**, not only a recipe. It used to hold geometry
+  and pose alone, so a captured red clay sphere and blue stone sphere came back
+  as two identical grey ones, and `instantiate` with no live source set (what
+  `Spawn` does whenever the event's subject is not an Object) reproduced
+  nothing at all. The snapshot is gated at capture *and* at replay — a concept
+  never remembers what it may not take, and a gate closed afterwards still
+  holds;
+- **what may be born is narrower than what may be read**, deliberately. A
+  Person is never instantiated. Zone, Law and World births are refused *for
+  now* because their governance is undecided — a newborn Zone needs an owner
+  and a jurisdiction, a newborn Law needs authors and a trigger, and guessing
+  those is how a creation system quietly starts legislating. A refused member
+  is skipped and **said** (`concept-member-refused`), never downgraded into a
+  cube;
+- the **Creation Console** offers beings without a body (Person, Zone,
+  Relation, Formation) as sources, since the 3D view can only select what has
+  geometry to click.
+
+**One set-to-set machine (landed 2026-08-11).** `ConstructedBeing/Singular/
+{Concept,SynthesisSystem}.{hpp,cpp}` are **gone**. They were a second
+implementation of this section — a second concept type, registry, mapping
+struct and governance rule — and the poorer one: uuid identities no law text
+could name, a registry that never persisted, and newborns returned as
+`shared_ptr`s the caller dropped, so every being it made was born and freed in
+the same statement. `ActionNode::Synthesize` (17, kept — append-only) now
+resolves the **same** `ConceptRegistry` and births into the World like `Spawn`.
+The distinction it was reaching for survives: *Spawn* derives from the concept
+alone, *Synthesize* derives from the live input set the event names
+(`@event.subject`, `@event.object`). `Property.hpp`'s `PropertyGovernance` went
+with it — two permission systems that disagree are not twice the governance.
+**TransferPolicy is the one gate.**
+
+Still ahead: first-mover tools recorded mid-process (`ChangeRecorder` has no
+live capture UI — it is reached only by `LawSynthesis`), and the governance
+design that would admit Zone/Law births.
+
+Tests: `tests/singular_set_to_set_test.cpp` (replaces `synthesis_system_test`)
+— capture over beings of any kind, the property snapshot with no live source
+set, kind and snapshot through JSON, provenance surviving the round trip, the
+birth refusals, the gate over multivariable mappings, and `Synthesize`
+deriving from the live input set into the World. `tests/metalaw_test.cpp` §6
+covers the synthesis bindings. A regression probe for the five defects this
+work closed lives in `scratch/set_to_set_audit_probe.cpp`.
 
 ### 7c. `Spawn` — creation *is* a law application
 

@@ -8,7 +8,7 @@
 #include <glm/glm.hpp>
 
 // Forward declarations to avoid circular dependencies
-namespace Core { class Game; }
+namespace Core { class Engine; }
 class ZoneManager;
 class Zone;
 struct GLFWwindow;
@@ -25,7 +25,7 @@ struct SurfaceHit {
     int     sign = 1;  // cube only: +1/-1 (outward face direction)
 };
 
-bool buildMouseRay(GLFWwindow* window, Core::Game* game, glm::vec3& rayOrigin, glm::vec3& rayDir);
+bool buildMouseRay(GLFWwindow* window, Core::Engine* engine, glm::vec3& rayOrigin, glm::vec3& rayDir);
 bool pickSurface(const std::vector<Object*>& targets, const glm::vec3& rayOrigin, const glm::vec3& rayDir, SurfaceHit& out);
 
 class Tool {
@@ -114,23 +114,23 @@ public:
 
     Tool(Type type) : type(type) {}
 
-    static void use(GLFWwindow* window, ZoneManager& mgr, Zone& zone, Type type, Core::Game& game);
+    static void use(GLFWwindow* window, ZoneManager& mgr, Zone& zone, Type type, Core::Engine& engine);
 
 
-    static void Pottery3D(GLFWwindow* window, Core::Game* game, ZoneManager& mgr, float dt,
+    static void Pottery3D(GLFWwindow* window, Core::Engine* engine, ZoneManager& mgr, float dt,
                           const std::vector<Object*>& targets, const glm::mat4* avatarRoot);
-    static void Rotate3D(GLFWwindow* window, Core::Game* game, ZoneManager& mgr, float dt,
+    static void Rotate3D(GLFWwindow* window, Core::Engine* engine, ZoneManager& mgr, float dt,
                          const std::vector<Object*>& targets, const glm::mat4* avatarRoot);
-    static void FacePaint(GLFWwindow* window, Core::Game* game, ZoneManager& mgr, float dt,
+    static void FacePaint(GLFWwindow* window, Core::Engine* engine, ZoneManager& mgr, float dt,
                           const std::vector<Object*>& targets);
-    static void FaceBrush(GLFWwindow* window, Core::Game* game, ZoneManager& mgr, float dt,
+    static void FaceBrush(GLFWwindow* window, Core::Engine* engine, ZoneManager& mgr, float dt,
                           const std::vector<Object*>& targets);
-    static void Selection3D(GLFWwindow* window, Core::Game* game,
+    static void Selection3D(GLFWwindow* window, Core::Engine* engine,
                             const std::vector<Object*>& targets);
     // Pick the object under the cursor/crosshair and RETURN it (no side effects).
     // Shares the same ray/pick path as Selection3D; used by tools that need to
     // pick an operand without changing the current selection.
-    static Object* PickObject3D(GLFWwindow* window, Core::Game* game,
+    static Object* PickObject3D(GLFWwindow* window, Core::Engine* engine,
                                 const std::vector<Object*>& targets);
 
     Type getType() const;
