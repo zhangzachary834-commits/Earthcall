@@ -1,0 +1,70 @@
+{
+  "authoredLaws": {
+    "laws": [
+      {
+        "id": "semantic-inference-law",
+        "name": "Transitive Location Inference",
+        "enabled": true,
+        "authority": 0,
+        "activation": 1,
+        "scope": 1,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": ["antigravity"],
+        "conditionSubjects": [],
+        "targets": [],
+        "conditionModel": {
+          "kind": 4, 
+          "subConditions": [
+            {
+              "kind": 2,
+              "relationType": "belongs_to",
+              "otherId": "arthur"
+            },
+            {
+              "kind": 2,
+              "relationType": "is_in",
+              "otherId": "castle"
+            }
+          ]
+        },
+        "actionModel": {
+          "kind": 2,
+          "path": "relations",
+          "operand": {"t": "string", "v": "is_in-castle"}
+        },
+        "conditionDescriptions": ["Subject belongs to Arthur AND Arthur is in Castle"],
+        "actionDescriptions": ["Synthesize is_in Castle relation for Subject"],
+        "provenance": [
+          {
+            "type": "authored-by",
+            "entityA": "semantic-inference-law",
+            "entityB": "antigravity",
+            "directed": true,
+            "weight": 1.0,
+            "events": []
+          }
+        ],
+        "applicationLog": []
+      }
+    ],
+    "formationMembers": ["semantic-inference-law"],
+    "triggers": {
+      "semantic-inference-law": ["tick"]
+    },
+    "rete": {
+      "alphaNodes": [],
+      "betaNodes": [],
+      "facts": [],
+      "agenda": []
+    }
+  },
+  "injectedBy": {
+    "mover": "antigravity",
+    "onBehalfOf": "zacharyzhang",
+    "at": 1783903356,
+    "sections": ["authoredLaws.laws[semantic-inference-law]"],
+    "attestation": "Subconscious Inference Law"
+  }
+}

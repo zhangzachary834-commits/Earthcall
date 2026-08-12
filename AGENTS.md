@@ -104,13 +104,63 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
   -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.13/libssl.a"
 
 cmake --build build --target earthcall -j8
-ctest --test-dir build --output-on-failure -j4        # 36 tests, all should pass
+cmake --build build -j8                               # tests are NOT built by the line above
+ctest --test-dir build --output-on-failure -j4        # 37 registered; see below
 ```
+
+**`--target earthcall` does not build the tests.** `ctest` will then report every test as
+`Not Run`, which reads like a mass failure and is not one. Build the default target first.
+
+**As of 2026-08-12, 24 of 37 tests pass.** Twelve fail to compile and one aborts; all
+thirteen are broken at HEAD, not by local edits. The compile failures are stale tests
+still referencing fields the Directory-refactoring commit removed — `basic_cube_law_test`
+wants `Person::activeTool`, `active3DMode`, `activeShapeKind`, `placementMode`,
+`inFrontDistance`, none of which exist in `src/Person/` any more. That removal was refusal
+#1 being enforced (no hardcoded domain fields on `Person`); the tests were simply not
+migrated with it. `singular_set_to_set_test` aborts on a colour assertion at line 68.
+Do not read a red suite as evidence that your change broke something until you have
+checked it against this list.
 
 **Sources are globbed at configure time.** Add or remove a `.cpp` and you must re-run
 `cmake -S . -B build ...` or you will get a phantom link error.
 
 The Python backend starts from `src/Integration/py/app.py`.
+
+### Keeping the tree searchable
+
+Three files decide what tooling — ripgrep, fuzzy finders, agents — is allowed to walk.
+They exist because the repository was walking 17,134 tracked files to reach roughly 330
+`.cpp`/`.hpp` files of Earthcall source; it now walks 686.
+
+| File | Read by | Holds |
+|---|---|---|
+| `.gitignore` | git **and** ripgrep | build trees, `saves/games/`, and `local_deps/` (ignored but still tracked — the build needs it, searches do not) |
+| `.ignore` | ripgrep/fd only, never git | the `third_party/glm` submodule, and single vendored headers big enough to swamp a hit list (`miniaudio.h`, `json.hpp`) |
+| `.claude/settings.json` | agent tooling | `permissions.deny` on the same paths, so a direct `Read` of a 90 MB save is refused rather than merely un-searched |
+
+A path that must stay in git but out of searches goes in `.gitignore` while staying
+tracked. A **submodule** goes in `.ignore` instead — gitignoring a submodule path
+suppresses its status reporting. Saves older than the most recent 30 live outside the
+repository in `~/Earthcall-saves-archive/`; nothing was deleted.
+
+Note the deny rules name `build/CMakeFiles/**` and `build/_deps/**` rather than `build/**`
+wholesale: `build/compile_commands.json` has to stay readable. That file is the other half
+of the same problem — see below.
+
+### clangd
+
+`CMAKE_EXPORT_COMPILE_COMMANDS` is ON, so configuring writes `build/compile_commands.json`
+(410 translation units). The `clangd-lsp` plugin, and any editor's clangd, reads it to
+recover each file's real include paths — `local_deps/openssl-3.0.13/include`, `imgui/`,
+`build/_deps/{asio,websocketpp,flatbuffers,vhacd,glfw}-src/`, `third_party/wgpu/include`.
+
+Without it clangd cannot resolve a single vendored header, every file reports as one large
+error, and symbol lookup degrades to text search — which is the expensive path this whole
+section exists to avoid. The database is generated, so it is gitignored along with the rest
+of `build/`; it reappears on the next `cmake -S . -B build ...`. Verify with
+`clangd --check=<some .cpp>`: a working setup prints "Built preamble" and indexes the AST.
+Trailing `tweak: ExtractFunction ==> FAIL` lines are refactor-availability probes, not
+compile errors — `--check` reports them in its error tally regardless.
 
 ---
 

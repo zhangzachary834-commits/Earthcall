@@ -4,6 +4,17 @@ project(Earthcall VERSION 1.0 LANGUAGES CXX OBJCXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+# Emit build/compile_commands.json — the compilation database clangd reads to
+# learn each translation unit's real include paths and flags. Without it clangd
+# guesses, and on a tree with vendored OpenSSL, imgui, glm and wgpu headers it
+# guesses badly: every include resolves to nothing and the whole file reports as
+# errors, so symbol lookup silently falls back to text search.
+#
+# This matters beyond the editor. An agent that can ask "where is
+# ObjectConcept::apply defined" gets one answer from the language server; without
+# the database it greps, reads several candidate files, and pays for all of them.
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # Set compile options
 add_compile_options(-Wall -Wextra)
 if(NOT CMAKE_BUILD_TYPE)

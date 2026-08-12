@@ -1,0 +1,57 @@
+# ---------------------------------------------------------------------------
+# Search-tool exclusions. Read by ripgrep, fd, and the file-search layer of most
+# agent tooling; NOT read by git. Anything here stays fully tracked, fully
+# committed, and fully visible to `git status` — it is only kept out of
+# project-wide text searches and fuzzy file pickers.
+#
+# This file exists for the cases where .gitignore is the wrong instrument:
+# vendored trees that must stay in history, and submodules whose paths must
+# keep reporting their state to git.
+# ---------------------------------------------------------------------------
+
+# glm — a header-only math submodule, 1,670 files. Gitignoring a submodule path
+# would suppress its status reporting, so it is excluded here instead. Nothing
+# in Earthcall needs to grep glm's implementation; the API is documented
+# upstream and the headers are included, never edited.
+third_party/glm/
+
+# The vendored dependency sources, restated here so the exclusion holds even for
+# tools that read .ignore but not .gitignore.
+local_deps/
+third_party/asio/
+third_party/flatbuffers/
+third_party/glfw/
+third_party/websocketpp/
+
+# Generated / machine-local trees. Duplicated from .gitignore for the same
+# reason: a tool that honours only one of these two files should still skip them.
+build/
+build2/
+build_ag/
+build_agy/
+build-*/
+cmake-build-*/
+node_modules/
+venv/
+.venv/
+__pycache__/
+
+# Runtime save output — 2.0 GB, individual files up to 98 MB.
+saves/games/
+
+# Dear ImGui's bundled examples, per-backend demos and manual. The backends and
+# core headers stay searchable — Earthcall compiles against imgui.h and the
+# GLFW/Metal backends directly, and those are worth grepping. The example
+# applications (152 files, one per platform permutation) and the FAQ are not:
+# they are upstream reference material, they never appear in a build, and the
+# FAQ's 48 KB of prose matches almost any imgui-related search term.
+imgui/examples/
+imgui/docs/
+imgui/misc/
+
+# Single-file vendored headers that are large enough to dominate any search hit
+# list and are never edited by hand. miniaudio.h alone is 4.0 MB; json.hpp is
+# 898 KB. Both are upstream drops.
+src/Singularity/Audio/miniaudio.h
+src/json.hpp
+third_party/httplib/httplib.h

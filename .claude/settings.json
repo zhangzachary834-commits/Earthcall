@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "deny": [
+      "Read(./saves/games/**)",
+      "Read(./build/CMakeFiles/**)",
+      "Read(./build/_deps/**)",
+      "Read(./build2/**)",
+      "Read(./build_ag/**)",
+      "Read(./build_agy/**)",
+      "Read(./build-wasm/**)",
+      "Read(./build-asan/**)",
+      "Read(./cmake-build-debug/**)",
+      "Read(./cmake-build-debug-event-trace/**)",
+      "Read(./third_party/glm/**)",
+      "Read(./src/Singularity/Audio/miniaudio.h)",
+      "Read(./src/json.hpp)",
+      "Read(./third_party/httplib/httplib.h)",
+      "Read(./src/Singularity/Foreign/py/venv/**)",
+      "Read(./src/Singularity/Foreign/web_ui/node_modules/**)",
+      "Read(./**/__pycache__/**)"
+    ],
+    "ask": [
+      "Read(./local_deps/**)"
+    ],
+    "allow": [
+      "Bash(git status:*)",
+      "Bash(git log:*)",
+      "Bash(git diff:*)",
+      "Bash(git show:*)",
+      "Bash(git ls-files:*)",
+      "Bash(git check-ignore:*)",
+      "Bash(git branch:*)",
+      "Bash(rg:*)",
+      "Bash(ls:*)",
+      "Bash(du:*)",
+      "Bash(wc:*)",
+      "Bash(find:*)",
+      "Bash(file:*)",
+      "Bash(ctest --test-dir build:*)",
+      "Bash(cmake --build build:*)"
+    ]
+  }
+}

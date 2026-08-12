@@ -1,0 +1,60 @@
+{
+  "authoredLaws": {
+    "laws": [
+      {
+        "id": "semantic-physics-bridge",
+        "name": "Inventory Bridging Law",
+        "enabled": true,
+        "authority": 0,
+        "activation": 1,
+        "scope": 1,
+        "drives": true,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": ["antigravity"],
+        "conditionSubjects": [],
+        "targets": [],
+        "conditionModel": {
+          "kind": 2,
+          "relationType": "has_inventory",
+          "otherId": "sword"
+        },
+        "actionModel": {
+          "kind": 0,
+          "path": "position",
+          "operand": {"t": "vec3", "x": 0, "y": 2, "z": 0}
+        },
+        "conditionDescriptions": ["Subject has_inventory sword"],
+        "actionDescriptions": ["Teleport subject to Y=2"],
+        "provenance": [
+          {
+            "type": "authored-by",
+            "entityA": "semantic-physics-bridge",
+            "entityB": "antigravity",
+            "directed": true,
+            "weight": 1.0,
+            "events": []
+          }
+        ],
+        "applicationLog": []
+      }
+    ],
+    "formationMembers": ["semantic-physics-bridge"],
+    "triggers": {
+      "semantic-physics-bridge": ["tick"]
+    },
+    "rete": {
+      "alphaNodes": [],
+      "betaNodes": [],
+      "facts": [],
+      "agenda": []
+    }
+  },
+  "injectedBy": {
+    "mover": "antigravity",
+    "onBehalfOf": "zacharyzhang",
+    "at": 1783903356,
+    "sections": ["authoredLaws.laws[semantic-physics-bridge]"],
+    "attestation": "Semantic-to-Physics Bridge Law"
+  }
+}
