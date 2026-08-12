@@ -21,6 +21,11 @@ namespace Audio {
 struct SpatialSoundInstance {
     ma_sound* sound = nullptr;
     ma_waveform* waveform = nullptr;
+    // An OntoMath model sounded by playForm: miniaudio reads the samples for
+    // as long as the sound plays, so the buffer outlives this call and is
+    // released with the sound in tick().
+    ma_audio_buffer* pcm = nullptr;
+    std::vector<float>* samples = nullptr;
 };
 
 struct SoundEmitterInstance {
@@ -75,6 +80,11 @@ void AudioSystem::shutdown() {
                 ma_waveform_uninit(instance->waveform);
                 delete instance->waveform;
             }
+            if (instance->pcm) {
+                ma_audio_buffer_uninit(instance->pcm);
+                delete instance->pcm;
+            }
+            delete instance->samples;
             delete instance;
         }
         _state->activeSpatialSounds.clear();
@@ -124,6 +134,11 @@ void AudioSystem::tick() {
                 ma_waveform_uninit((*it)->waveform);
                 delete (*it)->waveform;
             }
+            if ((*it)->pcm) {
+                ma_audio_buffer_uninit((*it)->pcm);
+                delete (*it)->pcm;
+            }
+            delete (*it)->samples;
             delete *it;
             it = _state->activeSpatialSounds.erase(it);
         } else {
@@ -371,6 +386,110 @@ void AudioSystem::playProceduralCollisionSound(const glm::vec3& position, const 
         delete waveform;
         delete sound;
     }
+}
+
+// ---------------------------------------------------------------------------
+// OntoMath as sound. The mathematics is not translated into audio parameters —
+// no frequency, no wave type, no envelope preset. The authored expression IS
+// the waveform, sampled.
+// ---------------------------------------------------------------------------
+std::vector<float> renderForm(const OntoMath::Piecewise& form,
+                              const std::string& timeVariable,
+                              double seconds,
+                              int sampleRate,
+                              const std::map<std::string, double>& constants,
+                              std::size_t* undefinedSamples,
+                              std::size_t* clampedSamples) {
+    std::vector<float> samples;
+    if (undefinedSamples) *undefinedSamples = 0;
+    if (clampedSamples) *clampedSamples = 0;
+    if (seconds <= 0.0 || sampleRate <= 0) return samples;
+
+    const std::size_t count =
+        static_cast<std::size_t>(seconds * static_cast<double>(sampleRate));
+    samples.reserve(count);
+
+    // The constants are bound once; only the time variable moves.
+    std::map<std::string, PropertyValue> vars;
+    for (const auto& [name, value] : constants) vars[name] = PropertyValue(value);
+
+    for (std::size_t i = 0; i < count; ++i) {
+        const double t = static_cast<double>(i) / static_cast<double>(sampleRate);
+        vars[timeVariable] = PropertyValue(t);
+
+        // No subject: this is pure mathematics being sounded, so a piece that
+        // needs the world to testify is unproven and the model is undefined
+        // there. Undefined is silence THAT IS COUNTED, never silence passed
+        // off as a value the author wrote.
+        const auto value = form.evaluate(vars, nullptr);
+        double amplitude = 0.0;
+        if (!value || !propertyValueToNumber(*value, amplitude)) {
+            if (undefinedSamples) ++*undefinedSamples;
+            samples.push_back(0.0f);
+            continue;
+        }
+        if (amplitude > 1.0 || amplitude < -1.0) {
+            if (clampedSamples) ++*clampedSamples;
+            amplitude = amplitude > 1.0 ? 1.0 : -1.0;
+        }
+        samples.push_back(static_cast<float>(amplitude));
+    }
+    return samples;
+}
+
+bool AudioSystem::playForm(const OntoMath::Piecewise& form,
+                           const std::string& timeVariable,
+                           double seconds,
+                           float volume,
+                           const glm::vec3* position,
+                           const std::map<std::string, double>& constants) {
+    if (!_initialized || !_state) return false;
+
+    const ma_uint32 sampleRate = _state->engine.pDevice->sampleRate;
+    auto* samples = new std::vector<float>(renderForm(
+        form, timeVariable, seconds, static_cast<int>(sampleRate), constants));
+    if (samples->empty()) {
+        delete samples;
+        return false;
+    }
+
+    // One channel: a waveform authored as f(t) is mono by construction, and
+    // where it sits in the world is the spatializer's business, not the
+    // expression's.
+    ma_audio_buffer_config config = ma_audio_buffer_config_init(
+        ma_format_f32, 1, samples->size(), samples->data(), NULL);
+    config.sampleRate = sampleRate;
+
+    auto* pcm = new ma_audio_buffer();
+    if (ma_audio_buffer_init(&config, pcm) != MA_SUCCESS) {
+        delete pcm;
+        delete samples;
+        return false;
+    }
+
+    auto* sound = new ma_sound();
+    if (ma_sound_init_from_data_source(&_state->engine, pcm, 0, NULL, sound) != MA_SUCCESS) {
+        ma_audio_buffer_uninit(pcm);
+        delete pcm;
+        delete samples;
+        delete sound;
+        return false;
+    }
+
+    ma_sound_set_volume(sound, volume);
+    if (position) {
+        ma_sound_set_position(sound, position->x, position->y, position->z);
+    } else {
+        ma_sound_set_spatialization_enabled(sound, MA_FALSE);
+    }
+    ma_sound_start(sound);
+
+    auto* instance = new SpatialSoundInstance();
+    instance->sound = sound;
+    instance->pcm = pcm;
+    instance->samples = samples;
+    _state->activeSpatialSounds.push_back(instance);
+    return true;
 }
 
 void AudioSystem::playMusic(const std::string& filepath) {

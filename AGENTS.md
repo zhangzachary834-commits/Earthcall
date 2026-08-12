@@ -56,6 +56,8 @@ out of primitives every other subsystem can see.
 | add a directory | `DIRECTORY_ORDERING.md` §7 (checklist) | the tree is the ontology |
 | connect hardware, a device, or a foreign process | `NEW_KIND_FRAMEWORK.md` §7b | it is a *modality channel* under `Singularity/`, never a domain folder |
 | understand what a Law is at all | `LAW_AND_CREATION_SYSTEM.md` | the foundation the rest assumes |
+| undo a change, rewind, or ask whether something *can* be undone | `ONTOMATH_FRAMEWORK.md` §6 | the past is integrated in closed form, never replayed from a log; the refusals are the point |
+| render an authored expression to a channel (sound, shader, physics) | `ONTOMATH_FRAMEWORK.md` §1, §7 | a channel reads OntoMath; it never decides what the thing is |
 | ask "why is it like this?" | `core/EarthcallOurverse.md` (the manifesto), `SUBSTRATE_ORDERING.md` | the ends the architecture serves |
 
 All paths are under `docs/architecture/` unless noted.
@@ -105,13 +107,13 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
 
 cmake --build build --target earthcall -j8
 cmake --build build -j8                               # tests are NOT built by the line above
-ctest --test-dir build --output-on-failure -j4        # 37 registered; see below
+ctest --test-dir build --output-on-failure -j4        # 39 registered; see below
 ```
 
 **`--target earthcall` does not build the tests.** `ctest` will then report every test as
 `Not Run`, which reads like a mass failure and is not one. Build the default target first.
 
-**As of 2026-08-12, 24 of 37 tests pass.** Twelve fail to compile and one aborts; all
+**As of 2026-08-12, 26 of 39 tests pass.** Twelve fail to compile and one aborts; all
 thirteen are broken at HEAD, not by local edits. The compile failures are stale tests
 still referencing fields the Directory-refactoring commit removed — `basic_cube_law_test`
 wants `Person::activeTool`, `active3DMode`, `activeShapeKind`, `placementMode`,

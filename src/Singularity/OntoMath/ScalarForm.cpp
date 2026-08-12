@@ -1499,4 +1499,209 @@ Piecewise Piecewise::fromJson(const nlohmann::json& j) {
     return f;
 }
 
+// ===========================================================================
+// Exact integration over the AST and the piecewise model.
+// ===========================================================================
+namespace {
+
+void say(std::string* why, const std::string& text) {
+    if (why) *why = text;
+}
+
+// Every breakpoint a piecewise model has inside (a, b), so the interval can
+// be cut into stretches over which ONE piece governs.
+void collectBreakpoints(const Piecewise& model, double a, double b,
+                        std::vector<double>& out) {
+    for (const auto& piece : model.pieces) {
+        if (piece.hasLo && piece.lo > a && piece.lo < b) out.push_back(piece.lo);
+        if (piece.hasHi && piece.hi > a && piece.hi < b) out.push_back(piece.hi);
+    }
+    std::sort(out.begin(), out.end());
+    out.erase(std::unique(out.begin(), out.end()), out.end());
+}
+
+}   // namespace
+
+std::optional<ScalarForm> toScalarForm(const MathNode& node, std::string* why) {
+    switch (node.op) {
+        case MathNode::Op::ScalarLeaf:
+            return node.scalarForm;
+
+        // A named value is a scalar symbol here. If it is bound to a vector at
+        // evaluation time it simply will not appear in the double-valued
+        // variable map, and evaluation fails honestly rather than guessing.
+        case MathNode::Op::ValueLeaf:
+            if (node.variableName.empty()) {
+                say(why, "ValueLeaf with no variable name");
+                return std::nullopt;
+            }
+            return ScalarForm::variable(node.variableName);
+
+        case MathNode::Op::Add: {
+            if (node.children.empty()) {
+                say(why, "Add with no children");
+                return std::nullopt;
+            }
+            ScalarForm sum;
+            for (const auto& child : node.children) {
+                if (!child) { say(why, "Add with a null child"); return std::nullopt; }
+                const auto term = toScalarForm(*child, why);
+                if (!term) return std::nullopt;
+                sum = sum.plus(*term);
+            }
+            return sum.normalized();
+        }
+
+        case MathNode::Op::Sub: {
+            if (node.children.size() < 2) {
+                say(why, "Sub needs two children");
+                return std::nullopt;
+            }
+            const auto head = toScalarForm(*node.children[0], why);
+            if (!head) return std::nullopt;
+            ScalarForm diff = *head;
+            for (std::size_t i = 1; i < node.children.size(); ++i) {
+                if (!node.children[i]) { say(why, "Sub with a null child"); return std::nullopt; }
+                const auto term = toScalarForm(*node.children[i], why);
+                if (!term) return std::nullopt;
+                diff = diff.plus(term->scaled(-1.0));
+            }
+            return diff.normalized();
+        }
+
+        // Scalar·Scalar is ordinary multiplication (see evaluate()); the
+        // vector cases have no scalar form and fall out through the algebra
+        // when their operands do.
+        case MathNode::Op::Scale: {
+            if (node.children.size() != 2) {
+                say(why, "Scale needs two children");
+                return std::nullopt;
+            }
+            const auto lhs = toScalarForm(*node.children[0], why);
+            if (!lhs) return std::nullopt;
+            const auto rhs = toScalarForm(*node.children[1], why);
+            if (!rhs) return std::nullopt;
+            return lhs->times(*rhs).normalized();
+        }
+
+        default:
+            say(why, std::string("no scalar closed form for ") + mathOpName(node.op));
+            return std::nullopt;
+    }
+}
+
+std::optional<ScalarForm> antiderivative(const MathNode& node, const std::string& var,
+                                         std::string* why) {
+    const auto form = toScalarForm(node, why);
+    if (!form) return std::nullopt;
+    auto integrated = form->antiderivative(var);
+    if (!integrated) {
+        say(why, "∫" + form->print() + " d" + var +
+                     " needs integration by parts: not held in this algebra");
+        return std::nullopt;
+    }
+    return integrated;
+}
+
+bool integrable(const Piecewise& model, const std::string& var, std::string* why) {
+    if (model.pieces.empty()) {
+        say(why, "no pieces: nothing to integrate");
+        return false;
+    }
+    // Interval bounds cut ONE designated variable. If that is not the variable
+    // being integrated, the bounds decide applicability by something held
+    // constant here — answerable, but not by this quadrature, and guessing
+    // which piece governs is exactly the kind of guess this algebra refuses.
+    bool anyBounded = false;
+    for (const auto& piece : model.pieces) {
+        if (piece.hasLo || piece.hasHi) { anyBounded = true; break; }
+    }
+    if (anyBounded && model.inputVariable != var) {
+        say(why, "the bounds cut '" + model.inputVariable + "' but the integration is in '" +
+                     var + "'");
+        return false;
+    }
+    for (const auto& piece : model.pieces) {
+        // A guarded piece asks the world whether it applies. Integrating over
+        // a past interval would need that world's past to answer it, which is
+        // the very thing being computed.
+        if (piece.guard) {
+            say(why, "a piece is gated on a world guard: its past applicability is unknown");
+            return false;
+        }
+        if (piece.whereLEZero) {
+            say(why, "a piece is gated on a pure guard: its past applicability is unknown");
+            return false;
+        }
+        if (piece.call) {
+            say(why, "a piece's value is a function call: not integrated symbolically");
+            return false;
+        }
+        if (piece.fold) {
+            say(why, "a piece's value is a fold over the world: its past is not in the law text");
+            return false;
+        }
+        if (!piece.mathNode) {
+            say(why, "a piece has no expression");
+            return false;
+        }
+        if (!antiderivative(*piece.mathNode, var, why)) return false;
+    }
+    return true;
+}
+
+std::optional<double> definiteIntegral(const Piecewise& model, const std::string& var,
+                                       double a, double b,
+                                       const std::map<std::string, double>& vars,
+                                       std::string* why) {
+    if (!integrable(model, var, why)) return std::nullopt;
+    if (a == b) return 0.0;
+    if (b < a) {
+        const auto forward = definiteIntegral(model, var, b, a, vars, why);
+        if (!forward) return std::nullopt;
+        return -*forward;
+    }
+
+    std::vector<double> cuts;
+    collectBreakpoints(model, a, b, cuts);
+    cuts.insert(cuts.begin(), a);
+    cuts.push_back(b);
+
+    double total = 0.0;
+    for (std::size_t i = 0; i + 1 < cuts.size(); ++i) {
+        const double lo = cuts[i], hi = cuts[i + 1];
+        if (hi <= lo) continue;
+        const double mid = lo + (hi - lo) * 0.5;
+
+        // First applicable piece wins — the same rule evaluate() follows, so
+        // the integral is of the function the world actually ran.
+        const Piecewise::Piece* governing = nullptr;
+        for (const auto& piece : model.pieces) {
+            const bool bounded = piece.hasLo || piece.hasHi;
+            if (!bounded || piece.contains(mid)) { governing = &piece; break; }
+        }
+        if (!governing) {
+            say(why, "the rate is undefined on [" + std::to_string(lo) + ", " +
+                         std::to_string(hi) + "]: undefined is not zero");
+            return std::nullopt;
+        }
+
+        const auto F = antiderivative(*governing->mathNode, var, why);
+        if (!F) return std::nullopt;
+
+        std::map<std::string, double> at = vars;
+        at[var] = hi;
+        const auto upper = F->evaluate(at);
+        at[var] = lo;
+        const auto lower = F->evaluate(at);
+        if (!upper || !lower) {
+            say(why, "the antiderivative does not evaluate at the interval's ends "
+                     "(an unbound variable, or outside its domain)");
+            return std::nullopt;
+        }
+        total += *upper - *lower;
+    }
+    return total;
+}
+
 } // namespace OntoMath

@@ -1171,6 +1171,236 @@ void ActionNode::collectPaths(std::vector<PropertyPath>& out) const {
     for (const auto& c : children) c.collectPaths(out);
 }
 
+// ---------------------------------------------------------------------------
+// Reversal. See the note on ActionNode::Reversibility for what this judges and
+// — just as important — what it deliberately does not.
+// ---------------------------------------------------------------------------
+namespace {
+
+// The parameter a Map or Flow is a function OF: the one bound variable naming
+// the world clock. Exactly one is required. With none there is no time axis to
+// travel along; with several the model is a function of two clocks at once and
+// which one the reversal should walk is not written anywhere.
+const std::string* soleTimeVariable(const MathBindings& bindings, std::string& why) {
+    const std::string* found = nullptr;
+    for (const auto& entry : bindings) {
+        if (!isTimePath(entry.second)) continue;
+        if (found) {
+            why = "several bound variables name the clock: no single time axis to reverse along";
+            return nullptr;
+        }
+        found = &entry.first;
+    }
+    if (!found) why = "no bound variable names the clock: the model is not a function of time";
+    return found;
+}
+
+// Every property this tree WRITES (as opposed to merely reads). A rate that
+// reads what it writes is an ordinary differential equation, not a quadrature,
+// and its closed form is not the antiderivative of its own text.
+void collectWrittenPaths(const ActionNode& node, std::vector<std::string>& out) {
+    switch (node.kind) {
+        case ActionNode::Kind::Set:
+        case ActionNode::Kind::Add:
+        case ActionNode::Kind::Scale:
+        case ActionNode::Kind::Lerp:
+        case ActionNode::Kind::Drive:
+        case ActionNode::Kind::Map:
+        case ActionNode::Kind::Flow:
+            if (!node.path.empty()) out.push_back(node.path.toString());
+            break;
+        default:
+            break;
+    }
+    for (const auto& child : node.children) collectWrittenPaths(child, out);
+}
+
+// Does any bound variable other than the time parameter read a property this
+// tree writes?
+bool readsWhatItWrites(const MathBindings& bindings, const std::string& timeVar,
+                       const std::vector<std::string>& written, std::string& why) {
+    for (const auto& entry : bindings) {
+        if (entry.first == timeVar) continue;
+        const std::string path = entry.second.toString();
+        if (std::find(written.begin(), written.end(), path) == written.end()) continue;
+        why = "'" + entry.first + "' reads " + path + ", which this action also writes: "
+              "that is a differential equation, not a quadrature";
+        return true;
+    }
+    return false;
+}
+
+void judge(const ActionNode& node, const std::vector<std::string>& written,
+           std::vector<std::string>& obstacles) {
+    const std::string name = ActionNode::kindName(node.kind);
+    switch (node.kind) {
+        case ActionNode::Kind::Map:
+        case ActionNode::Kind::Flow: {
+            std::string why;
+            const std::string* timeVar = soleTimeVariable(node.bindings, why);
+            if (!timeVar) { obstacles.push_back(name + ": " + why); return; }
+            if (readsWhatItWrites(node.bindings, *timeVar, written, why)) {
+                obstacles.push_back(name + ": " + why);
+                return;
+            }
+            // Flow integrates its model; Map only re-evaluates it at the past
+            // time, so it needs the weaker property — that the model reads no
+            // world state whose past is unknown.
+            if (node.kind == ActionNode::Kind::Flow) {
+                if (!OntoMath::integrable(node.mapFunction, *timeVar, &why)) {
+                    obstacles.push_back("Flow on " + node.path.toString() + ": " + why);
+                }
+                return;
+            }
+            for (const auto& piece : node.mapFunction.pieces) {
+                if (piece.guard || piece.whereLEZero) {
+                    obstacles.push_back("Map on " + node.path.toString() +
+                                        ": a piece is gated on a guard, whose past "
+                                        "applicability is unknown");
+                    return;
+                }
+                if (piece.fold) {
+                    obstacles.push_back("Map on " + node.path.toString() +
+                                        ": a piece folds over the world, whose past is "
+                                        "not in the law text");
+                    return;
+                }
+            }
+            return;
+        }
+
+        case ActionNode::Kind::Drive:
+            // A CurveModel is symbolic (constant, polynomial, sinusoid), so
+            // the past value is simply the curve at the past input — provided
+            // the input IS time. Driven by anything else, the past of the
+            // input is the unknown, one level out.
+            if (!isTimePath(node.input)) {
+                obstacles.push_back("Drive on " + node.path.toString() +
+                                    ": its input is not the clock, so the past of the "
+                                    "input is itself unknown");
+            }
+            return;
+
+        case ActionNode::Kind::Sequence:
+        case ActionNode::Kind::Parallel:
+            for (const auto& child : node.children) judge(child, written, obstacles);
+            return;
+
+        // These write no property. They are not obstacles to carrying a value
+        // backwards — though the events they mint cascaded into laws this
+        // judgement cannot see, which is why the Zone-level fold is the honest
+        // scope for "can the world be rewound".
+        case ActionNode::Kind::Publish:
+        case ActionNode::Kind::PlayAudio:
+            return;
+
+        case ActionNode::Kind::Set:
+            obstacles.push_back("Set on " + node.path.toString() +
+                                ": the value it overwrote is not in the law text");
+            return;
+
+        case ActionNode::Kind::Add:
+        case ActionNode::Kind::Scale:
+        case ActionNode::Kind::Lerp:
+            obstacles.push_back(name + " on " + node.path.toString() +
+                                ": invertible per firing, but the law text does not "
+                                "record how many times it fired");
+            return;
+
+        case ActionNode::Kind::Destroy:
+            obstacles.push_back("Destroy: annihilation has no inverse in the law text");
+            return;
+
+        case ActionNode::Kind::Create:
+        case ActionNode::Kind::Spawn:
+        case ActionNode::Kind::Synthesize:
+            obstacles.push_back(name + ": bringing a being into the world is not a "
+                                       "quantity to integrate backwards");
+            return;
+
+        default:
+            obstacles.push_back(name + ": changes what a being IS, not what it holds");
+            return;
+    }
+}
+
+}   // namespace
+
+std::string ActionNode::Reversibility::summary() const {
+    if (exact) return "exactly reversible";
+    if (obstacles.empty()) return "not reversible";
+    std::string out = "not reversible: " + obstacles.front();
+    if (obstacles.size() > 1) {
+        out += " (and " + std::to_string(obstacles.size() - 1) + " more)";
+    }
+    return out;
+}
+
+ActionNode::Reversibility ActionNode::reversibility() const {
+    std::vector<std::string> written;
+    collectWrittenPaths(*this, written);
+    Reversibility result;
+    judge(*this, written, result.obstacles);
+    result.exact = result.obstacles.empty();
+    return result;
+}
+
+std::optional<PropertyValue> ActionNode::valueSecondsAgo(Singular& subject,
+                                                         double secondsAgo) const {
+    if (!reversibility().exact) return std::nullopt;
+    if (secondsAgo == 0.0) {
+        PropertyValue now;
+        if (!lawGetValue(subject, path, now)) return std::nullopt;
+        return now;
+    }
+
+    if (kind == Kind::Drive) {
+        // path := curve(input), and the input is the clock: evaluate the same
+        // curve one interval earlier.
+        PropertyValue inputNow;
+        double t = 0.0;
+        if (!lawGetValue(subject, input, inputNow) || !propertyValueToNumber(inputNow, t)) {
+            return std::nullopt;
+        }
+        return PropertyValue(curve.evaluate(t - secondsAgo));
+    }
+
+    if (kind != Kind::Map && kind != Kind::Flow) return std::nullopt;
+
+    std::string why;
+    const std::string* timeVar = soleTimeVariable(bindings, why);
+    if (!timeVar) return std::nullopt;
+
+    auto vars = readMathBindings(subject, bindings);
+    if (!vars) return std::nullopt;
+    const auto clock = vars->find(*timeVar);
+    if (clock == vars->end()) return std::nullopt;
+    const double now = clock->second;
+    const double then = now - secondsAgo;
+
+    if (kind == Kind::Map) {
+        // p = F(t): the past is the same function, one interval earlier.
+        std::map<std::string, PropertyValue> pVars;
+        for (const auto& [key, value] : *vars) pVars[key] = PropertyValue(value);
+        pVars[*timeVar] = PropertyValue(then);
+        return mapFunction.evaluate(pVars, &subject);
+    }
+
+    // dp/dt = f: subtract exactly what flowed over [then, now].
+    PropertyValue current;
+    double currentNum = 0.0;
+    if (!lawGetValue(subject, path, current) ||
+        !propertyValueToNumber(current, currentNum)) {
+        return std::nullopt;
+    }
+    std::map<std::string, double> others = *vars;
+    others.erase(*timeVar);
+    const auto travelled =
+        OntoMath::definiteIntegral(mapFunction, *timeVar, then, now, others, &why);
+    if (!travelled) return std::nullopt;
+    return PropertyValue(currentNum - *travelled);
+}
+
 ActionNode ActionNode::set(const std::string& dottedPath, PropertyValue v) {
     ActionNode n;
     n.kind = Kind::Set;

@@ -387,6 +387,56 @@ struct Piecewise {
 };
 
 // ============================================================================
+// Exact integration over the AST and the piecewise model — the other half of
+// ScalarForm::antiderivative, and what lets the world be read BACKWARDS.
+//
+// A law's Flow action authors dp/dt. Integrating that rate in CLOSED FORM
+// gives the past without a log: p(t−Δ) = p(t) − ∫[t−Δ,t] dp/dt, exact to the
+// arithmetic. Where the algebra cannot hold the integral the answer is
+// nullopt with a reason, never an approximation — and that refusal is the
+// interesting half. It is the substrate saying this stretch of the world is
+// irreversible, and saying WHY.
+//
+// The standing assumption of the quadrature: every variable other than the
+// integration variable is held CONSTANT across the interval. Whether that is
+// true of the world is the caller's to establish — ActionNode::reversibility
+// checks the part that is decidable from a law's own text (no bound variable
+// may be one the same action writes) and documents the rest.
+// ============================================================================
+
+// The linear-multiplicative subset of the AST, flattened into one exact
+// ScalarForm: leaves, sums, differences, and products (Scale). Everything
+// else — dot and cross products, gradients, SDF samples, stochastic draws —
+// has no scalar closed form here and answers nullopt naming the op.
+std::optional<ScalarForm> toScalarForm(const MathNode& node, std::string* why = nullptr);
+
+// ∫ node d(var), exact. toScalarForm, then the audited power/product rules.
+std::optional<ScalarForm> antiderivative(const MathNode& node, const std::string& var,
+                                         std::string* why = nullptr);
+
+// Can ∫ model d(var) be held in closed form at all — the judgement on the
+// TEXT, with nothing bound and nothing evaluated. This is what a Zone folds
+// over its laws to say which of them are reversible.
+//
+// Refused for: a piece whose integral needs by parts; a piece carrying a
+// world GUARD or a pure guard (a rate gated on the state of the world cannot
+// be integrated without that world's past); a piece whose value is a function
+// call or a fold over the world (same reason, one level out).
+bool integrable(const Piecewise& model, const std::string& var, std::string* why = nullptr);
+
+// ∫[a,b] model d(var), exact, honouring the piecewise structure with the same
+// first-applicable-piece-wins rule evaluate() uses. `vars` binds every other
+// variable, held constant across the interval. b < a integrates backwards and
+// returns the negated result, as it should.
+//
+// nullopt when integrable() refuses, or when part of [a,b] falls outside
+// every piece: the rate is undefined there, and undefined is not zero.
+std::optional<double> definiteIntegral(const Piecewise& model, const std::string& var,
+                                       double a, double b,
+                                       const std::map<std::string, double>& vars,
+                                       std::string* why = nullptr);
+
+// ============================================================================
 // FunctionRegistry — the words of mathematics. A Person names a function
 // once (parameters + a piecewise body, guards and calls included) and every
 // expression may call it: createTerm's recursion made durable. Bodies are

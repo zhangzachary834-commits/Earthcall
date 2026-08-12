@@ -273,6 +273,43 @@ struct ActionNode {
     // untargeted sweep down to the beings a law could possibly act on.
     void collectPaths(std::vector<PropertyPath>& out) const;
 
+    // ------------------------------------------------------------------
+    // Reversal — reading a law's writes BACKWARDS.
+    //
+    // Map authors p = F(t) and Flow authors dp/dt. Both are invertible in
+    // time by the exact algebra: F evaluates at t−Δ directly, and OntoMath's
+    // antiderivative gives ∫[t−Δ,t] dp/dt in closed form, so the past value
+    // is COMPUTED rather than replayed out of a log. Nothing is recorded and
+    // nothing is stored; the law text is the record.
+    //
+    // The refusals are the load-bearing half. A Set overwrote what was
+    // there. A rate needing integration by parts has no closed form. A piece
+    // guarded on the state of the world cannot be integrated without that
+    // world's past. Each of those makes a stretch of the world genuinely
+    // irreversible, and the substrate says so with the reason attached
+    // rather than approximating an answer.
+    //
+    // SCOPE, stated exactly: this judges whether THIS action's own writes
+    // can be carried backwards. It is decided from the law's text alone —
+    // no subject, no values, nothing run. What it cannot see is another law
+    // writing the same property; that is a Zone-level question, answered by
+    // folding reversibility over the Zone's whole law set.
+    // ------------------------------------------------------------------
+    struct Reversibility {
+        bool exact = false;                   // is the past computable in closed form?
+        std::vector<std::string> obstacles;   // every reason it is not, in tree order
+        std::string summary() const;          // one line, for the audit log and the UI
+    };
+
+    Reversibility reversibility() const;
+
+    // The exact value this action's target held `secondsAgo` seconds ago,
+    // read off the subject NOW and carried back through the authored
+    // mathematics. Call inside the law's application context, as with
+    // definedFor: that is where the time bindings resolve. Refuses (nullopt)
+    // wherever reversibility() does, and wherever the present cannot be read.
+    std::optional<PropertyValue> valueSecondsAgo(Singular& subject, double secondsAgo) const;
+
     // Factories.
     static ActionNode set(const std::string& dottedPath, PropertyValue v);
     static ActionNode add(const std::string& dottedPath, double delta);
