@@ -192,6 +192,12 @@ of `build/`; it reappears on the next `cmake -S . -B build ...`. Verify with
 Trailing `tweak: ExtractFunction ==> FAIL` lines are refactor-availability probes, not
 compile errors — `--check` reports them in its error tally regardless.
 
+clangd also writes its own index — `.cache/clangd/index/*.idx`, one per translation
+unit — separate from `compile_commands.json` and rewritten on nearly every reindex. As of
+2026-08-13 it is gitignored (`.cache/`); it was tracked for some prior stretch (582 files),
+which meant routine reindexing showed up as unrelated modified files in every `git status`.
+Untracking does not affect clangd — the index regenerates locally regardless.
+
 ---
 
 ## Non-negotiables
@@ -240,6 +246,14 @@ compile errors — `--check` reports them in its error tally regardless.
   pass per fold. If your design needs one raised, the design is in the wrong shape — see
   `ALGORITHMS_AS_LAW.md` §3.
 
-## Keeping Track of Progress
+## The Agenda
+- When relevant, look at the Agenda and its To Do List. The To-Do List is inside Earthcall/docs/Agenda/Tasks
+- For example, when a prompt says something like "What does Earthcall need to do next" or "next steps for Earthcall", you should look at the To-do list, unless the prompt specifically asks otherwise. 
+- Add to the Agenda items however you see fit. Do not delete anything from it, instead mark it with checkmarks and a "done and verified" note
+- If the To-Do List does not list a task that another document, you should add that task to the To-Do list  
 
-Once you're finished with everything else, update this very document if any relevant changes were made.
+## Extra Housekeeping notes
+-- If you 
+
+## Keeping Track of Progress
+- Once you're finished with everything else, update this very document if any relevant changes were made.

@@ -141,7 +141,8 @@ void ZoneManager::ensureHomeZone(const std::string& playerId) {
 }
 
 void ZoneManager::updateSaveFiles() {
-    _saveLoad.files = SaveSystem::listFiles(SaveSystem::SaveType::GAME);
+    _saveLoad.saveDirectory = SaveSystem::ensureSaveTypeFolder(SaveSystem::SaveType::WORLD);
+    _saveLoad.files = SaveSystem::listFiles(SaveSystem::SaveType::WORLD);
 }
 
 void ZoneManager::setSaveDirectory(const std::string& dir) {
@@ -282,9 +283,9 @@ void ZoneManager::saveStateWithLog(const std::string& customName, SaveContext& c
             actualName = SaveSystem::timestamp() + "_QuickSave";
         }
     }
-    SaveSystem::writeSaveDataAsync(j, actualName, SaveSystem::SaveType::GAME);
+    SaveSystem::writeSaveDataAsync(j, actualName, SaveSystem::SaveType::WORLD);
     if (ctx.unpackForAuthoring) {
-        std::string gameFolder = SaveSystem::ensureSaveTypeFolder(SaveSystem::SaveType::GAME);
+        std::string gameFolder = SaveSystem::ensureSaveTypeFolder(SaveSystem::SaveType::WORLD);
         std::string unpackedPath = gameFolder + "/" + actualName + "_unpacked";
         SaveSystem::unpackSaveToDirectory(j, unpackedPath);
     }
@@ -292,7 +293,7 @@ void ZoneManager::saveStateWithLog(const std::string& customName, SaveContext& c
     // Phase 4: Save dirty delta chunk as FlatBuffers
     std::vector<uint8_t> deltaChunk = buildSaveChunkFlatBuffer();
     if (!deltaChunk.empty()) {
-        SaveSystem::writeSaveDataAsync(deltaChunk, actualName + "_delta", ".ecsave", SaveSystem::SaveType::GAME);
+        SaveSystem::writeSaveDataAsync(deltaChunk, actualName + "_delta", ".ecsave", SaveSystem::SaveType::WORLD);
     }
     
     ECA::LawAuditLogger::instance().setActiveWorld(actualName);
@@ -344,12 +345,12 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
         using json = nlohmann::json;
         json j;
         
-        std::string gameFolder = SaveSystem::ensureSaveTypeFolder(SaveSystem::SaveType::GAME);
+        std::string gameFolder = SaveSystem::ensureSaveTypeFolder(SaveSystem::SaveType::WORLD);
         std::string unpackedPath = gameFolder + "/" + name + "_unpacked";
         if (SaveSystem::isUnpackedDirectoryNewer(unpackedPath, filename)) {
             j = SaveSystem::compileSaveFromDirectory(unpackedPath);
             // Overwrite the monolithic file and its delta chunk to ensure they match
-            SaveSystem::writeSaveDataAsync(j, name, SaveSystem::SaveType::GAME);
+            SaveSystem::writeSaveDataAsync(j, name, SaveSystem::SaveType::WORLD);
             std::cout << "[load] Compiled newer unpacked directory back into monolithic save.\n";
         } else {
             j = SaveSystem::readSaveData(filename);

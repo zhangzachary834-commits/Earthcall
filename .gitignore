@@ -97,6 +97,14 @@ build-*/
 cmake-build-*/
 
 # ---------------------------------------------------------------------------
+# clangd's index cache (see AGENTS.md "clangd"). Regenerated from
+# build/compile_commands.json on the next `clangd --check` or editor open, and
+# rewritten on nearly every keystroke/reindex — 582 tracked .idx files were
+# dirtying `git status` on every session with no diff worth reviewing.
+# ---------------------------------------------------------------------------
+.cache/
+
+# ---------------------------------------------------------------------------
 # Vendored dependency SOURCE. This is deliberately ignored but still TRACKED:
 # CLAUDE.md's build recipe points OPENSSL_ROOT_DIR at local_deps/openssl-3.0.13
 # and there is no system OpenSSL to fall back on, so a fresh clone must still

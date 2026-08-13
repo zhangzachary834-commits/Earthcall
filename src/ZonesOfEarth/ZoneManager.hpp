@@ -14,7 +14,7 @@ struct SaveLoadState {
     char customName[256] = "";
     std::string lastLoadReport;
     std::string loadedSaveName;
-    std::string saveDirectory = "saves/games/";
+    std::string saveDirectory = "saves/worlds/";
     bool unpackForAuthoring = false;
 };
 

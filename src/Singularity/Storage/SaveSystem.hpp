@@ -7,7 +7,7 @@ namespace SaveSystem {
 
 // Save types for organization
 enum class SaveType {
-    GAME,       // Game state saves
+    WORLD,       // World state saves
     AVATAR,     // Avatar saves
     PERSON,     // Registered Persons / user profiles
     DESIGN,     // Design system saves
@@ -21,7 +21,7 @@ std::string ensureSaveFolder();
 std::string ensureSaveTypeFolder(SaveType type);
 
 // Build filename with timestamp or custom label stored in organized folders
-std::string makeFilename(const std::string& customLabel = "", SaveType type = SaveType::GAME, const std::string& ext = ".json");
+std::string makeFilename(const std::string& customLabel = "", SaveType type = SaveType::WORLD, const std::string& ext = ".json");
 
 // Get a formatted timestamp string
 std::string timestamp();
@@ -34,12 +34,12 @@ std::string sanitizeLabel(const std::string& label);
 
 
 // Return list of files that still exist for a specific save type; also prunes stale entries from log
-std::vector<std::string> listFiles(SaveType type = SaveType::GAME);
+std::vector<std::string> listFiles(SaveType type = SaveType::WORLD);
 
 // Write JSON to disk via generated filename and log it; returns full path
 // For dry-run/parallel testing, this will also write a binary .ecsave alongside it.
-std::string writeSaveData(const nlohmann::json& j, const std::string& customLabel = "", SaveType type = SaveType::GAME);
-void writeSaveDataAsync(const nlohmann::json& j, const std::string& customLabel = "", SaveType type = SaveType::GAME);
+std::string writeSaveData(const nlohmann::json& j, const std::string& customLabel = "", SaveType type = SaveType::WORLD);
+void writeSaveDataAsync(const nlohmann::json& j, const std::string& customLabel = "", SaveType type = SaveType::WORLD);
 
 // Overloads for raw binary data (e.g. FlatBuffers)
 std::string writeSaveData(const std::vector<uint8_t>& data, const std::string& customLabel, const std::string& ext, SaveType type);
@@ -63,10 +63,10 @@ nlohmann::json compileSaveFromDirectory(const std::string& directoryPath);
 bool isUnpackedDirectoryNewer(const std::string& directoryPath, const std::string& monolithicFilePath);
 
 // Create backup of existing save
-std::string createBackup(const std::string& originalFile, SaveType type = SaveType::GAME);
+std::string createBackup(const std::string& originalFile, SaveType type = SaveType::WORLD);
 
 // Clean up old saves (keep only the most recent N saves)
-void cleanupOldSaves(SaveType type = SaveType::GAME, int keepCount = 10);
+void cleanupOldSaves(SaveType type = SaveType::WORLD, int keepCount = 10);
 
 // Get save metadata (creation time, size, etc.)
 struct SaveMetadata {
@@ -82,12 +82,12 @@ struct SaveMetadata {
     bool keepLocal = true;
 };
 
-std::vector<SaveMetadata> getSaveMetadata(SaveType type = SaveType::GAME);
+std::vector<SaveMetadata> getSaveMetadata(SaveType type = SaveType::WORLD);
 
 // Merge two save files (j2 takes precedence over j1 in conflicts)
 nlohmann::json mergeSaveFiles(const std::string& file1, const std::string& file2);
 
 // Merge two save files and save the result, returns the new filename
-std::string mergeAndSaveFiles(const std::string& file1, const std::string& file2, const std::string& outputLabel = "", SaveType type = SaveType::GAME);
+std::string mergeAndSaveFiles(const std::string& file1, const std::string& file2, const std::string& outputLabel = "", SaveType type = SaveType::WORLD);
 
-} // namespace SaveSystem 
+} // namespace SaveSystem

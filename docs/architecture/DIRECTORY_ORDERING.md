@@ -98,8 +98,13 @@ Earthcall/
   third_party/  local_deps/  imgui/                                 the foreign
   CMakeLists.txt  .gitmodules  Makefile.legacy                      the toolchain
   build/  logs/                                                     output (ignored)
-  TestLab/  TestLabAI/  migrate_saves.cpp                           strays (§6)
+  TestLab/  TestLabAI/                                               strays (§6)
 ```
+
+`migrate_saves.cpp`, formerly listed here as a root-level stray, was moved to
+`scratch/migrate_saves.cpp` on 2026-08-13 — it built no CMake target, so it was a
+one-off tool rather than live source, matching the same "move, never discard" precedent
+as `scratch/attic/` below.
 
 `scratch/attic/` holds what used to sit loose at `sight-cpp/`'s root — one-off
 probes (`test_parse.cpp`, `test_variant.cpp`), fixtures (`save.json`), logs, and

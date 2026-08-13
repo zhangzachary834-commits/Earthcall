@@ -64,7 +64,7 @@ std::vector<uint8_t> decompressData(const std::vector<uint8_t>& data) {
 
 std::string getSaveTypeFolderName(SaveType type) {
     switch (type) {
-        case SaveType::GAME: return "games";
+        case SaveType::WORLD: return "worlds";
         case SaveType::AVATAR: return "avatars";
         case SaveType::PERSON: return "persons";
         case SaveType::DESIGN: return "designs";
@@ -633,6 +633,23 @@ void unpackSaveToDirectory(const nlohmann::json& j, const std::string& directory
         meta["authoredLaws"].erase("laws");
     }
     
+    if (meta.contains("zones")) {
+        std::filesystem::create_directories(directoryPath + "/zones", ec);
+        const auto& zones = meta["zones"];
+        for (const auto& zone : zones) {
+            std::string zoneId = "unknown";
+            if (zone.contains("name")) {
+                zoneId = zone["name"].get<std::string>();
+            }
+            std::string zonePath = directoryPath + "/zones/zone_" + sanitizeLabel(zoneId) + ".json";
+            std::ofstream zoneFile(zonePath);
+            if (zoneFile.is_open()) {
+                zoneFile << std::setw(2) << zone << std::endl;
+            }
+        }
+        meta.erase("zones");
+    }
+    
     std::string metaPath = directoryPath + "/world_meta.json";
     std::ofstream metaFile(metaPath);
     if (metaFile.is_open()) {
@@ -694,6 +711,28 @@ nlohmann::json compileSaveFromDirectory(const std::string& directoryPath) {
             }
         }
         j["authoredLaws"]["laws"] = laws;
+    }
+    
+    nlohmann::json zones = nlohmann::json::array();
+    std::string zonesDir = directoryPath + "/zones";
+    if (std::filesystem::exists(zonesDir, ec)) {
+        for (const auto& entry : std::filesystem::directory_iterator(zonesDir, ec)) {
+            if (entry.path().extension() == ".json") {
+                std::ifstream zoneFile(entry.path());
+                if (zoneFile.is_open()) {
+                    try {
+                        nlohmann::json zoneJson;
+                        zoneFile >> zoneJson;
+                        zones.push_back(zoneJson);
+                    } catch (...) {
+                        std::cerr << "[SaveSystem] Failed to parse zone JSON: " << entry.path().string() << "\n";
+                    }
+                }
+            }
+        }
+    }
+    if (!zones.empty()) {
+        j["zones"] = zones;
     }
     
     return j;

@@ -1,0 +1,53 @@
+Architectural Actualization
+1. Ensure Relation and Formation ontology is load bearing.
+2. Ensure Singularity-level actions are done through Relations and Formations
+3. Have Relation store thing with Singular’s data structure framework and also Formations
+4. Define the Hierarchy of Joys precisely. Make it operationally load bearing.
+5. Turn the SDF and bezier patch geometry framework into manually adjustable properties with Laws instead of having pre-set templates. After that is done and verified, create a fully working version of those systems with the Law tool
+6. Fully realize Relationship and Community ontology. Right now they are placeholder stubs.
+7. Make Keys and KeyBind Singulars and integrate them into the Earthcall program
+8. Make the cursor a form of baseline necessary avatar
+9. Fully realize the Body and BodyPart vision
+10. Figure out and code the ontology of light so shaders aren’t a black box to Persons
+11. Zone jurisdiction resolution
+12. Fully realize the Ourverse vision
+13. Fully integrate the 2D capability into Singularity by decomposing its fundamental parts and exposing them to Laws that Persons can author, and
+14. Singular and Object set-to-set creation
+16. Ensure all properties are exposed to Earthcall through propertypaths except ones that are architecturally close enough to the metal that its better to leave them unexposed
+17. Finish Law synthesis
+18. Write Propertypath governance framework ontology Kernels, member ownership, Zone occurence, sacredness, ordering, hierarchy of joys, and Metalaws.
+19. Write Kernel boundaries
+20. Implement Voice, Sound, Audio. Primitives
+21. Work on README
+22. Finish migrating to webgpu
+23. 2d objects and singulars and complex UI created by 2d system
+24. Human Language-Symbolic processing Formations
+25. Work on Singularity external app integration if still needed
+26. Multi-device Earthcall for network and internet, need declare inter-device Earthcall paradigms
+
+
+Housekeeping:
+1. ✅ Organize the repo’s upper directories more. Build directory — done and verified (2026-08-13): moved the stray one-off scripts sitting at repo root (fix_concept.py, inject_concept.py, migrate_saves.cpp, rename_cmake.py, rename_includes.py) into scratch/, alongside the equivalent rename_engine*.py scripts already there — matches DIRECTORY_ORDERING.md's own "strays, move never discard" precedent (§6), and that doc's tree diagram + the migrate_saves.cpp mention in SAVE_SYSTEM_UPGRADE.md were updated to the new path. Deleted a stray untracked Object.o build byproduct at root. Moved build2/, build_ag/, build_agy/ (~2.4 GB, no CMakeCache.txt — broken/abandoned configures) to ~/.Trash. Left alone, on purpose: cmake-build-debug/ and cmake-build-debug-event-trace/ are live CLion build profiles (referenced in .idea/workspace.xml), build/ is the actively-used CLAUDE.md build target, and build-wasm/ + build_logs/ weren't flagged as dead — any further build-directory consolidation is a fresh decision, not a continuation of this item.
+2. ✅ Gitignore the cached clang — done and verified (2026-08-13): added `.cache/` to .gitignore and untracked the 582 previously-committed clangd index files via `git rm -r --cached` (still present on disk, clangd unaffected).
+3. moved to "Feature-sized" section below (2026-08-13) — this is feature work, not housekeeping.
+4. moved to "Feature-sized" section below (2026-08-13) — this is feature work, not housekeeping.
+5. moved to "Feature-sized" section below (2026-08-13) — this is feature work, not housekeeping.
+6. moved to "Feature-sized" section below (2026-08-13) — this is feature work, not housekeeping.
+7. moved to "Feature-sized" section below (2026-08-13) — this is feature work, not housekeeping.
+
+
+Feature-sized (split out of Housekeeping 2026-08-13 — these are full features, not quick cleanup):
+1. Restore the legacy 3D create tool functionality (it was disabled when trying to migrate to a law version) and keep it as a imgui develoepr tool, and promote it to a first mover. Make the law version use a different input to activate than the imgui button, like the python UI, a Person-authored button.
+2. Personally test 3d shape law and other laws
+3. Redesign the imgui developer tool for 2d and 3d objects, turn the non functional text features into actual Lexeme writers. Preset styles and fonts should be considered first movers.
+4. Implement a developer feature that lets me run and observe make-tests and scratch examples in-world so I can see and hear it with my own eyes and wars
+5. Make sure Lexeme is authorable and create the necessary fixtures to make it feasible (so they don't have to write letter/line/word spacing, paragraph length, line-by-line organization, etc. ). Must not be rigid enforcement but rather an open option available and Persons can create their own frameworks.
+
+
+R&D:
+1. Figures out best ML strategies for Integration classifiers
+2. Understand how Formations can incorporate ML and how the rich and fluid OntoMath ontology can bolster ML modeling precision.
+
+
+Basic design before creating fully working products with Earthcall
+1. I AM GONNA WRITE THIS I SWEAR

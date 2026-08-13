@@ -118,7 +118,7 @@ struct SaveMetadata {
 
 ### Automatic Migration
 
-The migration script (`migrate_saves.cpp`) automatically:
+The migration script (`scratch/migrate_saves.cpp`) automatically:
 
 1. Creates new folder structure
 2. Moves existing saves to appropriate folders
