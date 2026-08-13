@@ -19,7 +19,7 @@ We need to build an adapter that lives *behind* the channel. This adapter handle
 
 To see how the dual-granularity mapping actually works in practice, we need to prototype what the raw dump of an external app looks like when it becomes a `Zone` in Earthcall.
 
-#### [NEW] [foreign_zone_dump.json](file:///Users/zacharyzhang/Documents/GitHub/Earthcall/saves/fixtures/foreign_zone_dump.json)
+#### [NEW] [foreign_zone_dump.json](./examples/foreign_zone_dump.json) — illustrative only, does not load; see [examples/README.md](./examples/README.md)
 - **Content**: A mock JSON file showing how a Calendar app's UI tree translates into Earthcall's K0-K3 structures.
 - **Structure**: 
   - An isolated `Zone`.

@@ -89,6 +89,16 @@ third_party/ local_deps/ imgui/                     the foreign
 ontological region it belongs to — `Singularity/Network/py/` holds the backend half of the
 same channel whose C++ half is `WebSocketClient.cpp`. There is no `backend-python/`.
 
+**A framework name is not a directory name.** `docs/architecture/Integration/` and
+`src/Singularity/Foreign/` are the same effort at two different scopes, and neither is a
+misnaming of the other. *Integration* is the tentative name of the whole conceptual system
+— sensing an external app, projecting it into Zones, reconstructing its behavior, syncing
+back — and it names a **docs** directory, which is the workshop, not the ontology.
+*Foreign* is the Singularity-level modality layer holding the hardwired connectors to
+external software. So there is no `src/Integration/` (that would be refusal #2) and no
+`Singularity/Integration` either. Do not "fix" the mismatch by renaming one to the other;
+this has been attempted. See `docs/architecture/Integration/INTEGRATION_FRAMEWORK.md` §0.
+
 ---
 
 ## Build and test

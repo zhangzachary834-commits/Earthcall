@@ -36,7 +36,7 @@ To expose the Python First Mover's ML parameters to the world, we need a bridge.
 
 The Python First Mover reads the `dt` logs, but it must appeal to a Metalaw to propose K4 Laws for the external app.
 
-#### [NEW] [metalaw_behavior_synthesis.json](file:///Users/zacharyzhang/Documents/GitHub/Earthcall/saves/fixtures/metalaw_behavior_synthesis.json)
+#### [NEW] [metalaw_behavior_synthesis.json](./examples/metalaw_behavior_synthesis.json) — illustrative only, does not load; see [examples/README.md](./examples/README.md)
 - **Content**: A mock JSON file showing a Metalaw authored by "Zach".
 - **Structure**: Defines constraints on how the Python First Mover is allowed to generate K4 Laws for the Calendar App, preserving the "AI cannot be pope" rule.
 

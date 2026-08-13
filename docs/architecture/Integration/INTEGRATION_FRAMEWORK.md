@@ -4,14 +4,39 @@ The manifesto outlines a profound capability: bringing external software (like a
 
 Based on Earthcall's `NEW_KIND_FRAMEWORK.md` and `EarthcallOurverse.md`, here is a conceptual breakdown of how we can build this without violating the Five Refusals.
 
+## 0. Integration vs Foreign — two names, two scopes
+
+These are not synonyms and neither is a misnaming of the other:
+
+- **Integration** (this docs directory) is the tentative name of the *whole conceptual
+  system*: sensing an external app, projecting it into Zones, reconstructing its behavior,
+  and syncing changes back. It spans the channel, the ML First Mover, the metalaws that
+  vet what that First Mover proposes, and the authoring surface. It is a framework name,
+  and it lives in `docs/` — the workshop, not the ontology.
+- **Foreign** (`src/Singularity/Foreign/`) is narrower: the Singularity-level modality
+  layer holding the hardwired connectors to external software — `ForeignChannel`, the
+  protocol adapters, the sync manager.
+
+So: there is **no `src/Integration/`** and there will not be one — a top-level directory
+for a subsystem is refusal #2, and the C++ half of this system is already correctly placed
+under `Singularity/`. There is likewise no `Singularity/Integration`; at the Singularity
+level the name is Foreign. Integration names the idea, Foreign names the connectors.
+
 ## 1. The Channel (The only C++ allowed)
 
-The external application is a foreign device. We must not create `src/CalendarApp/`. Instead, we create a modality channel under `Singularity/Foreign` (or `Singularity/Integration`).
+The external application is a foreign device. We must not create `src/CalendarApp/`. Instead, we create a modality channel under `Singularity/Foreign`.
 
 **Path**: `src/Singularity/Foreign/ForeignChannel.hpp`
 - **Sense**: Reads the external application's state via OS Accessibility APIs, DOM inspection (for web apps), or native application APIs.
 - **Act**: Executes commands back to the external application (e.g., synthesizing clicks, API calls, or AppleScript commands).
-- **Governed**: A `PhysicsLawBridge` pattern is used here. Laws govern the channel via a stable identifier like `@foreign-channel.calendar.enabled`.
+- **Governed**: The `PhysicalChannel` pattern is used here — *not* `PhysicsLawBridge`. Both
+  are first-mover Laws, but only `PhysicalChannel` (`src/Singularity/Physical/PhysicalChannel.hpp:23`)
+  overrides `getIdentifier()` with a stable slug, and that override is the whole addressing
+  contract: `resolveBeingToken` (`ActionModel.cpp:196`) matches an `@token` against
+  `getIdentifier()`, and a first mover's generated `law-<N>` id differs every run because
+  first movers are excluded from the save. Laws govern the channel via a stable identifier
+  like `@foreign-channel.calendar.enabled`, which resolves only because `ForeignChannel`
+  overrides `getIdentifier()` to return `"foreign-channel." + _appName`.
 
 ## 2. Translating State & Mapping Granularity
 
