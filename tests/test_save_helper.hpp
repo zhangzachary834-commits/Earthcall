@@ -18,15 +18,15 @@ inline void dump_test_save(const std::string& test_name, World& testWorld, LawMa
     auto zone = std::make_shared<Zone>(test_name, "test");
     zone->setOwner(testPlayer.getIdentifier());
 
-    // Move objects from testWorld to the zone's world
+    // Temporarily move objects from testWorld to the zone's world for serialization
     for (auto& obj : testWorld.getOwnedObjectsMutable()) {
         if (obj) {
             zone->world().addObject(std::move(obj));
         }
     }
+    testWorld.getOwnedObjectsMutable().clear();
     
     mgr.addZone(zone);
-    mgr.switchTo(0);
 
     Core::Camera camera;
     camera.pos = testPlayer.cameraPos;
@@ -51,5 +51,13 @@ inline void dump_test_save(const std::string& test_name, World& testWorld, LawMa
     std::string filepath = "saves/tests/" + test_name + ".json";
     mgr.saveState(filepath, ctx);
     
+    // Restore objects back to testWorld so the test can continue using them
+    for (auto& obj : zone->world().getOwnedObjectsMutable()) {
+        if (obj) {
+            testWorld.addObject(std::move(obj));
+        }
+    }
+    zone->world().getOwnedObjectsMutable().clear();
+
     std::cout << "[TestSaveHelper] Saved test state to " << filepath << std::endl;
 }

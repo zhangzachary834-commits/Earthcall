@@ -82,7 +82,7 @@
               {
                 "deltaWeight": 1.0,
                 "description": "authored-by",
-                "timestamp": 1786650265
+                "timestamp": 1786651827
               }
             ],
             "type": "authored-by",
@@ -174,13 +174,6 @@
           "id": "fact-8",
           "subjectId": "law-2",
           "type": "law-registered",
-          "value": null
-        },
-        {
-          "attribute": "",
-          "id": "fact-9",
-          "subjectId": "basic_cube_law_test",
-          "type": "zone-entered",
           "value": null
         }
       ]

@@ -397,6 +397,9 @@ int main() {
     }
     std::cout << "============================================================" << std::endl;
 
+    // Generate final test save containing all the spawned objects
+    dump_test_save("basic_cube_law_test_final", world, lawManager, player);
+
     glfwDestroyWindow(window);
     glfwTerminate();
     return g_failures > 0 ? 1 : 0;

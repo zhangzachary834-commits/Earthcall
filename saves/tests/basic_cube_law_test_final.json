@@ -1,0 +1,6425 @@
+{
+  "authoredLaws": {
+    "formationMembers": [
+      "law-2"
+    ],
+    "laws": [
+      {
+        "actionDescriptions": [
+          "spawn(concept-1)"
+        ],
+        "actionModel": {
+          "conceptId": "concept-1",
+          "kind": 7,
+          "spawnColorPath": "activeColor",
+          "spawnPlacementPath": "cursorSpawnTransform",
+          "spawnShapeKindPath": "activeShapeKind"
+        },
+        "activation": 0,
+        "applicationLog": [
+          {
+            "actions": [
+              "spawn(concept-1)"
+            ],
+            "changed": false,
+            "conditions": [
+              "active3DMode == \"Create\""
+            ],
+            "lawId": "law-2",
+            "nodes": [],
+            "result": "conditions-failed",
+            "targetId": "creation-channel",
+            "timestamp": 1786651827
+          },
+          {
+            "actions": [
+              "spawn(concept-1)"
+            ],
+            "changed": false,
+            "conditions": [
+              "active3DMode == \"Create\""
+            ],
+            "lawId": "law-2",
+            "nodes": [],
+            "result": "conditions-failed",
+            "targetId": "creation-channel",
+            "timestamp": 1786651827
+          },
+          {
+            "actions": [
+              "spawn(concept-1)"
+            ],
+            "changed": true,
+            "conditions": [
+              "active3DMode == \"Create\""
+            ],
+            "lawId": "law-2",
+            "nodes": [
+              {
+                "action": "Spawn",
+                "wrote": true
+              }
+            ],
+            "result": "applied",
+            "targetId": "creation-channel",
+            "timestamp": 1786651827
+          },
+          {
+            "actions": [
+              "spawn(concept-1)"
+            ],
+            "changed": true,
+            "conditions": [
+              "active3DMode == \"Create\""
+            ],
+            "lawId": "law-2",
+            "nodes": [
+              {
+                "action": "Spawn",
+                "wrote": true
+              }
+            ],
+            "result": "applied",
+            "targetId": "creation-channel",
+            "timestamp": 1786651827
+          },
+          {
+            "actions": [
+              "spawn(concept-1)"
+            ],
+            "changed": true,
+            "conditions": [
+              "active3DMode == \"Create\""
+            ],
+            "lawId": "law-2",
+            "nodes": [
+              {
+                "action": "Spawn",
+                "wrote": true
+              }
+            ],
+            "result": "applied",
+            "targetId": "creation-channel",
+            "timestamp": 1786651827
+          },
+          {
+            "actions": [
+              "spawn(concept-1)"
+            ],
+            "changed": true,
+            "conditions": [
+              "active3DMode == \"Create\""
+            ],
+            "lawId": "law-2",
+            "nodes": [
+              {
+                "action": "Spawn",
+                "wrote": true
+              }
+            ],
+            "result": "applied",
+            "targetId": "creation-channel",
+            "timestamp": 1786651827
+          },
+          {
+            "actions": [
+              "spawn(concept-1)"
+            ],
+            "changed": true,
+            "conditions": [
+              "active3DMode == \"Create\""
+            ],
+            "lawId": "law-2",
+            "nodes": [
+              {
+                "action": "Spawn",
+                "wrote": true
+              }
+            ],
+            "result": "applied",
+            "targetId": "creation-channel",
+            "timestamp": 1786651827
+          }
+        ],
+        "authority": 0,
+        "authors": [
+          "Player"
+        ],
+        "conditionDescriptions": [
+          "active3DMode == \"Create\""
+        ],
+        "conditionMode": "all",
+        "conditionModel": {
+          "kind": 0,
+          "op": 0,
+          "operand": {
+            "t": "string",
+            "v": "Create"
+          },
+          "path": "active3DMode"
+        },
+        "conditionSubjects": [],
+        "drives": false,
+        "enabled": true,
+        "id": "law-2",
+        "name": "Tool: Shape Generator 3D",
+        "provenance": [
+          {
+            "attachment": {
+              "childAnchor": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "enabled": false,
+              "inheritRotation": true,
+              "inheritScale": true,
+              "inheritTranslation": true,
+              "localOffset": [
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "parentAnchor": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            "directed": true,
+            "entityA": "law-2",
+            "entityB": "Player",
+            "events": [
+              {
+                "deltaWeight": 1.0,
+                "description": "authored-by",
+                "timestamp": 1786651827
+              }
+            ],
+            "type": "authored-by",
+            "weight": 1.0
+          }
+        ],
+        "retrigger": 0,
+        "scope": 0,
+        "targets": []
+      }
+    ],
+    "rete": {
+      "agenda": [
+        {
+          "bindings": {
+            "subject": "creation-channel"
+          },
+          "factIds": [
+            "fact-424"
+          ],
+          "lawId": "law-2",
+          "timestamp": 1786651827
+        }
+      ],
+      "alphaNodes": [
+        {
+          "description": "type == onMouseClicked",
+          "id": 1,
+          "memorySize": 1
+        }
+      ],
+      "betaNodes": [],
+      "facts": [
+        {
+          "attribute": "type",
+          "id": "fact-3",
+          "subjectId": "law-2-authored-by-Player",
+          "type": "property-state",
+          "value": {
+            "t": "string",
+            "v": "authored-by"
+          }
+        },
+        {
+          "attribute": "directed",
+          "id": "fact-4",
+          "subjectId": "law-2-authored-by-Player",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": true
+          }
+        },
+        {
+          "attribute": "weight",
+          "id": "fact-5",
+          "subjectId": "law-2-authored-by-Player",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        {
+          "attribute": "entityA",
+          "id": "fact-6",
+          "subjectId": "law-2-authored-by-Player",
+          "type": "property-state",
+          "value": {
+            "t": "string",
+            "v": "law-2"
+          }
+        },
+        {
+          "attribute": "entityB",
+          "id": "fact-7",
+          "subjectId": "law-2-authored-by-Player",
+          "type": "property-state",
+          "value": {
+            "t": "string",
+            "v": "Player"
+          }
+        },
+        {
+          "attribute": "position",
+          "id": "fact-10",
+          "subjectId": "Player",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 0.0,
+            "y": 1.0,
+            "z": 0.0
+          }
+        },
+        {
+          "attribute": "name",
+          "id": "fact-11",
+          "subjectId": "Player",
+          "type": "property-state",
+          "value": {
+            "t": "string",
+            "v": "Player"
+          }
+        },
+        {
+          "attribute": "cameraPos",
+          "id": "fact-12",
+          "subjectId": "Player",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          }
+        },
+        {
+          "attribute": "cameraForward",
+          "id": "fact-13",
+          "subjectId": "Player",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 0.0,
+            "y": 0.0,
+            "z": -1.0
+          }
+        },
+        {
+          "attribute": "activeTool",
+          "id": "fact-14",
+          "subjectId": "creation-channel",
+          "type": "property-state",
+          "value": {
+            "t": "string",
+            "v": "Brush"
+          }
+        },
+        {
+          "attribute": "active3DMode",
+          "id": "fact-15",
+          "subjectId": "creation-channel",
+          "type": "property-state",
+          "value": {
+            "t": "string",
+            "v": "Select"
+          }
+        },
+        {
+          "attribute": "activeShapeKind",
+          "id": "fact-16",
+          "subjectId": "creation-channel",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "cursorHitPos",
+          "id": "fact-17",
+          "subjectId": "creation-channel",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          }
+        },
+        {
+          "attribute": "cursorHitNormal",
+          "id": "fact-18",
+          "subjectId": "creation-channel",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 0.0,
+            "y": 1.0,
+            "z": 0.0
+          }
+        },
+        {
+          "attribute": "cursorSpawnPos",
+          "id": "fact-19",
+          "subjectId": "creation-channel",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          }
+        },
+        {
+          "attribute": "cursorSpawnRot",
+          "id": "fact-20",
+          "subjectId": "creation-channel",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          }
+        },
+        {
+          "attribute": "cursorSpawnScale",
+          "id": "fact-21",
+          "subjectId": "creation-channel",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          }
+        },
+        {
+          "attribute": "cursorSpawnTransform",
+          "id": "fact-22",
+          "subjectId": "creation-channel",
+          "type": "property-state",
+          "value": {
+            "m": [
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "t": "mat4"
+          }
+        },
+        {
+          "attribute": "placementMode",
+          "id": "fact-23",
+          "subjectId": "creation-channel",
+          "type": "property-state",
+          "value": {
+            "t": "string",
+            "v": "InFront"
+          }
+        },
+        {
+          "attribute": "gridSnap",
+          "id": "fact-24",
+          "subjectId": "creation-channel",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "attribute": "gridSnapSize",
+          "id": "fact-25",
+          "subjectId": "creation-channel",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        {
+          "attribute": "inFrontDistance",
+          "id": "fact-26",
+          "subjectId": "creation-channel",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 2.0
+          }
+        },
+        {
+          "attribute": "manualOffset",
+          "id": "fact-27",
+          "subjectId": "creation-channel",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 0.0,
+            "y": 0.0,
+            "z": 2.0
+          }
+        },
+        {
+          "attribute": "manualAnchorValid",
+          "id": "fact-28",
+          "subjectId": "creation-channel",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "attribute": "manualAnchorPos",
+          "id": "fact-29",
+          "subjectId": "creation-channel",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          }
+        },
+        {
+          "attribute": "manualAnchorRight",
+          "id": "fact-30",
+          "subjectId": "creation-channel",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 1.0,
+            "y": 0.0,
+            "z": 0.0
+          }
+        },
+        {
+          "attribute": "manualAnchorUp",
+          "id": "fact-31",
+          "subjectId": "creation-channel",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 0.0,
+            "y": 1.0,
+            "z": 0.0
+          }
+        },
+        {
+          "attribute": "manualAnchorForward",
+          "id": "fact-32",
+          "subjectId": "creation-channel",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 0.0,
+            "y": 0.0,
+            "z": -1.0
+          }
+        },
+        {
+          "attribute": "cursorHoveredBodyPart",
+          "id": "fact-33",
+          "subjectId": "creation-channel",
+          "type": "property-state",
+          "value": {
+            "t": "string",
+            "v": ""
+          }
+        },
+        {
+          "attribute": "activeColor",
+          "id": "fact-34",
+          "subjectId": "creation-channel",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          }
+        },
+        {
+          "attribute": "activeTool",
+          "id": "fact-35",
+          "subjectId": "creation-channel",
+          "type": "property-state",
+          "value": {
+            "t": "string",
+            "v": "Brush"
+          }
+        },
+        {
+          "attribute": "active3DMode",
+          "id": "fact-36",
+          "subjectId": "creation-channel",
+          "type": "property-state",
+          "value": {
+            "t": "string",
+            "v": "Select"
+          }
+        },
+        {
+          "attribute": "activeShapeKind",
+          "id": "fact-37",
+          "subjectId": "creation-channel",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "cursorHitPos",
+          "id": "fact-38",
+          "subjectId": "creation-channel",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          }
+        },
+        {
+          "attribute": "cursorHitNormal",
+          "id": "fact-39",
+          "subjectId": "creation-channel",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 0.0,
+            "y": 1.0,
+            "z": 0.0
+          }
+        },
+        {
+          "attribute": "cursorSpawnPos",
+          "id": "fact-40",
+          "subjectId": "creation-channel",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          }
+        },
+        {
+          "attribute": "cursorSpawnRot",
+          "id": "fact-41",
+          "subjectId": "creation-channel",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          }
+        },
+        {
+          "attribute": "cursorSpawnScale",
+          "id": "fact-42",
+          "subjectId": "creation-channel",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          }
+        },
+        {
+          "attribute": "cursorSpawnTransform",
+          "id": "fact-43",
+          "subjectId": "creation-channel",
+          "type": "property-state",
+          "value": {
+            "m": [
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "t": "mat4"
+          }
+        },
+        {
+          "attribute": "placementMode",
+          "id": "fact-44",
+          "subjectId": "creation-channel",
+          "type": "property-state",
+          "value": {
+            "t": "string",
+            "v": "InFront"
+          }
+        },
+        {
+          "attribute": "gridSnap",
+          "id": "fact-45",
+          "subjectId": "creation-channel",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "attribute": "gridSnapSize",
+          "id": "fact-46",
+          "subjectId": "creation-channel",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        {
+          "attribute": "inFrontDistance",
+          "id": "fact-47",
+          "subjectId": "creation-channel",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 2.0
+          }
+        },
+        {
+          "attribute": "manualOffset",
+          "id": "fact-48",
+          "subjectId": "creation-channel",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 0.0,
+            "y": 0.0,
+            "z": 2.0
+          }
+        },
+        {
+          "attribute": "manualAnchorValid",
+          "id": "fact-49",
+          "subjectId": "creation-channel",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "attribute": "manualAnchorPos",
+          "id": "fact-50",
+          "subjectId": "creation-channel",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          }
+        },
+        {
+          "attribute": "manualAnchorRight",
+          "id": "fact-51",
+          "subjectId": "creation-channel",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 1.0,
+            "y": 0.0,
+            "z": 0.0
+          }
+        },
+        {
+          "attribute": "manualAnchorUp",
+          "id": "fact-52",
+          "subjectId": "creation-channel",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 0.0,
+            "y": 1.0,
+            "z": 0.0
+          }
+        },
+        {
+          "attribute": "manualAnchorForward",
+          "id": "fact-53",
+          "subjectId": "creation-channel",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 0.0,
+            "y": 0.0,
+            "z": -1.0
+          }
+        },
+        {
+          "attribute": "cursorHoveredBodyPart",
+          "id": "fact-54",
+          "subjectId": "creation-channel",
+          "type": "property-state",
+          "value": {
+            "t": "string",
+            "v": ""
+          }
+        },
+        {
+          "attribute": "activeColor",
+          "id": "fact-55",
+          "subjectId": "creation-channel",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          }
+        },
+        {
+          "attribute": "type",
+          "id": "fact-59",
+          "subjectId": "object-8-generated-from-concept-1",
+          "type": "property-state",
+          "value": {
+            "t": "string",
+            "v": "generated-from"
+          }
+        },
+        {
+          "attribute": "directed",
+          "id": "fact-60",
+          "subjectId": "object-8-generated-from-concept-1",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": true
+          }
+        },
+        {
+          "attribute": "weight",
+          "id": "fact-61",
+          "subjectId": "object-8-generated-from-concept-1",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        {
+          "attribute": "entityA",
+          "id": "fact-62",
+          "subjectId": "object-8-generated-from-concept-1",
+          "type": "property-state",
+          "value": {
+            "t": "string",
+            "v": "object-8"
+          }
+        },
+        {
+          "attribute": "entityB",
+          "id": "fact-63",
+          "subjectId": "object-8-generated-from-concept-1",
+          "type": "property-state",
+          "value": {
+            "t": "string",
+            "v": "concept-1"
+          }
+        },
+        {
+          "attribute": "position",
+          "id": "fact-66",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 0.0,
+            "y": 2.0,
+            "z": -2.0
+          }
+        },
+        {
+          "attribute": "rotation",
+          "id": "fact-67",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 0.0,
+            "y": -0.0,
+            "z": 0.0
+          }
+        },
+        {
+          "attribute": "transform",
+          "id": "fact-68",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "m": [
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              2.0,
+              -2.0,
+              1.0
+            ],
+            "t": "mat4"
+          }
+        },
+        {
+          "attribute": "center",
+          "id": "fact-69",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          }
+        },
+        {
+          "attribute": "material",
+          "id": "fact-70",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "string",
+            "v": "material.object-8"
+          }
+        },
+        {
+          "attribute": "shape.kind",
+          "id": "fact-71",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "shape.r",
+          "id": "fact-72",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 0.5
+          }
+        },
+        {
+          "attribute": "shape.ry",
+          "id": "fact-73",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 0.3199999928474426
+          }
+        },
+        {
+          "attribute": "shape.rz",
+          "id": "fact-74",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 0.5
+          }
+        },
+        {
+          "attribute": "shape.halfH",
+          "id": "fact-75",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 0.5
+          }
+        },
+        {
+          "attribute": "shape.majorR",
+          "id": "fact-76",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 0.3499999940395355
+          }
+        },
+        {
+          "attribute": "shape.minorR",
+          "id": "fact-77",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 0.15000000596046448
+          }
+        },
+        {
+          "attribute": "shape.paraboloidA",
+          "id": "fact-78",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 2.0
+          }
+        },
+        {
+          "attribute": "shape.ovoidAsym",
+          "id": "fact-79",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 0.25
+          }
+        },
+        {
+          "attribute": "shape.fillet",
+          "id": "fact-80",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 0.11999999731779099
+          }
+        },
+        {
+          "attribute": "shape.width2D",
+          "id": "fact-81",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 100.0
+          }
+        },
+        {
+          "attribute": "shape.height2D",
+          "id": "fact-82",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 100.0
+          }
+        },
+        {
+          "attribute": "textString",
+          "id": "fact-83",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "string",
+            "v": ""
+          }
+        },
+        {
+          "attribute": "physical",
+          "id": "fact-84",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": true
+          }
+        },
+        {
+          "attribute": "velocity",
+          "id": "fact-85",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          }
+        },
+        {
+          "attribute": "mass",
+          "id": "fact-86",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        {
+          "attribute": "color",
+          "id": "fact-87",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          }
+        },
+        {
+          "attribute": "face.0.color",
+          "id": "fact-88",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          }
+        },
+        {
+          "attribute": "face.0.layerCount",
+          "id": "fact-89",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 1
+          }
+        },
+        {
+          "attribute": "face.0.activeLayer",
+          "id": "fact-90",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.0.useLayers",
+          "id": "fact-91",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "attribute": "face.0.layerOpacity",
+          "id": "fact-92",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        {
+          "attribute": "face.0.blendMode",
+          "id": "fact-93",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.0.textureSize",
+          "id": "fact-94",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 64
+          }
+        },
+        {
+          "attribute": "face.1.color",
+          "id": "fact-95",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          }
+        },
+        {
+          "attribute": "face.1.layerCount",
+          "id": "fact-96",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 1
+          }
+        },
+        {
+          "attribute": "face.1.activeLayer",
+          "id": "fact-97",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.1.useLayers",
+          "id": "fact-98",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "attribute": "face.1.layerOpacity",
+          "id": "fact-99",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        {
+          "attribute": "face.1.blendMode",
+          "id": "fact-100",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.1.textureSize",
+          "id": "fact-101",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 64
+          }
+        },
+        {
+          "attribute": "face.2.color",
+          "id": "fact-102",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          }
+        },
+        {
+          "attribute": "face.2.layerCount",
+          "id": "fact-103",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 1
+          }
+        },
+        {
+          "attribute": "face.2.activeLayer",
+          "id": "fact-104",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.2.useLayers",
+          "id": "fact-105",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "attribute": "face.2.layerOpacity",
+          "id": "fact-106",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        {
+          "attribute": "face.2.blendMode",
+          "id": "fact-107",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.2.textureSize",
+          "id": "fact-108",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 64
+          }
+        },
+        {
+          "attribute": "face.3.color",
+          "id": "fact-109",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          }
+        },
+        {
+          "attribute": "face.3.layerCount",
+          "id": "fact-110",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 1
+          }
+        },
+        {
+          "attribute": "face.3.activeLayer",
+          "id": "fact-111",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.3.useLayers",
+          "id": "fact-112",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "attribute": "face.3.layerOpacity",
+          "id": "fact-113",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        {
+          "attribute": "face.3.blendMode",
+          "id": "fact-114",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.3.textureSize",
+          "id": "fact-115",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 64
+          }
+        },
+        {
+          "attribute": "face.4.color",
+          "id": "fact-116",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          }
+        },
+        {
+          "attribute": "face.4.layerCount",
+          "id": "fact-117",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 1
+          }
+        },
+        {
+          "attribute": "face.4.activeLayer",
+          "id": "fact-118",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.4.useLayers",
+          "id": "fact-119",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "attribute": "face.4.layerOpacity",
+          "id": "fact-120",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        {
+          "attribute": "face.4.blendMode",
+          "id": "fact-121",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.4.textureSize",
+          "id": "fact-122",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 64
+          }
+        },
+        {
+          "attribute": "face.5.color",
+          "id": "fact-123",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          }
+        },
+        {
+          "attribute": "face.5.layerCount",
+          "id": "fact-124",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 1
+          }
+        },
+        {
+          "attribute": "face.5.activeLayer",
+          "id": "fact-125",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.5.useLayers",
+          "id": "fact-126",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "attribute": "face.5.layerOpacity",
+          "id": "fact-127",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        {
+          "attribute": "face.5.blendMode",
+          "id": "fact-128",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.5.textureSize",
+          "id": "fact-129",
+          "subjectId": "object-8",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 64
+          }
+        },
+        {
+          "attribute": "type",
+          "id": "fact-132",
+          "subjectId": "object-9-generated-from-concept-1",
+          "type": "property-state",
+          "value": {
+            "t": "string",
+            "v": "generated-from"
+          }
+        },
+        {
+          "attribute": "directed",
+          "id": "fact-133",
+          "subjectId": "object-9-generated-from-concept-1",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": true
+          }
+        },
+        {
+          "attribute": "weight",
+          "id": "fact-134",
+          "subjectId": "object-9-generated-from-concept-1",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        {
+          "attribute": "entityA",
+          "id": "fact-135",
+          "subjectId": "object-9-generated-from-concept-1",
+          "type": "property-state",
+          "value": {
+            "t": "string",
+            "v": "object-9"
+          }
+        },
+        {
+          "attribute": "entityB",
+          "id": "fact-136",
+          "subjectId": "object-9-generated-from-concept-1",
+          "type": "property-state",
+          "value": {
+            "t": "string",
+            "v": "concept-1"
+          }
+        },
+        {
+          "attribute": "position",
+          "id": "fact-139",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 10.0,
+            "y": 3.5,
+            "z": -7.0
+          }
+        },
+        {
+          "attribute": "rotation",
+          "id": "fact-140",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 0.0,
+            "y": -0.0,
+            "z": 0.0
+          }
+        },
+        {
+          "attribute": "transform",
+          "id": "fact-141",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "m": [
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              10.0,
+              3.5,
+              -7.0,
+              1.0
+            ],
+            "t": "mat4"
+          }
+        },
+        {
+          "attribute": "center",
+          "id": "fact-142",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          }
+        },
+        {
+          "attribute": "material",
+          "id": "fact-143",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "string",
+            "v": "material.object-9"
+          }
+        },
+        {
+          "attribute": "shape.kind",
+          "id": "fact-144",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "shape.r",
+          "id": "fact-145",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 0.5
+          }
+        },
+        {
+          "attribute": "shape.ry",
+          "id": "fact-146",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 0.3199999928474426
+          }
+        },
+        {
+          "attribute": "shape.rz",
+          "id": "fact-147",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 0.5
+          }
+        },
+        {
+          "attribute": "shape.halfH",
+          "id": "fact-148",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 0.5
+          }
+        },
+        {
+          "attribute": "shape.majorR",
+          "id": "fact-149",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 0.3499999940395355
+          }
+        },
+        {
+          "attribute": "shape.minorR",
+          "id": "fact-150",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 0.15000000596046448
+          }
+        },
+        {
+          "attribute": "shape.paraboloidA",
+          "id": "fact-151",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 2.0
+          }
+        },
+        {
+          "attribute": "shape.ovoidAsym",
+          "id": "fact-152",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 0.25
+          }
+        },
+        {
+          "attribute": "shape.fillet",
+          "id": "fact-153",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 0.11999999731779099
+          }
+        },
+        {
+          "attribute": "shape.width2D",
+          "id": "fact-154",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 100.0
+          }
+        },
+        {
+          "attribute": "shape.height2D",
+          "id": "fact-155",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 100.0
+          }
+        },
+        {
+          "attribute": "textString",
+          "id": "fact-156",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "string",
+            "v": ""
+          }
+        },
+        {
+          "attribute": "physical",
+          "id": "fact-157",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": true
+          }
+        },
+        {
+          "attribute": "velocity",
+          "id": "fact-158",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          }
+        },
+        {
+          "attribute": "mass",
+          "id": "fact-159",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        {
+          "attribute": "color",
+          "id": "fact-160",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          }
+        },
+        {
+          "attribute": "face.0.color",
+          "id": "fact-161",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          }
+        },
+        {
+          "attribute": "face.0.layerCount",
+          "id": "fact-162",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 1
+          }
+        },
+        {
+          "attribute": "face.0.activeLayer",
+          "id": "fact-163",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.0.useLayers",
+          "id": "fact-164",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "attribute": "face.0.layerOpacity",
+          "id": "fact-165",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        {
+          "attribute": "face.0.blendMode",
+          "id": "fact-166",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.0.textureSize",
+          "id": "fact-167",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 64
+          }
+        },
+        {
+          "attribute": "face.1.color",
+          "id": "fact-168",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          }
+        },
+        {
+          "attribute": "face.1.layerCount",
+          "id": "fact-169",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 1
+          }
+        },
+        {
+          "attribute": "face.1.activeLayer",
+          "id": "fact-170",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.1.useLayers",
+          "id": "fact-171",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "attribute": "face.1.layerOpacity",
+          "id": "fact-172",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        {
+          "attribute": "face.1.blendMode",
+          "id": "fact-173",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.1.textureSize",
+          "id": "fact-174",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 64
+          }
+        },
+        {
+          "attribute": "face.2.color",
+          "id": "fact-175",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          }
+        },
+        {
+          "attribute": "face.2.layerCount",
+          "id": "fact-176",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 1
+          }
+        },
+        {
+          "attribute": "face.2.activeLayer",
+          "id": "fact-177",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.2.useLayers",
+          "id": "fact-178",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "attribute": "face.2.layerOpacity",
+          "id": "fact-179",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        {
+          "attribute": "face.2.blendMode",
+          "id": "fact-180",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.2.textureSize",
+          "id": "fact-181",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 64
+          }
+        },
+        {
+          "attribute": "face.3.color",
+          "id": "fact-182",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          }
+        },
+        {
+          "attribute": "face.3.layerCount",
+          "id": "fact-183",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 1
+          }
+        },
+        {
+          "attribute": "face.3.activeLayer",
+          "id": "fact-184",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.3.useLayers",
+          "id": "fact-185",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "attribute": "face.3.layerOpacity",
+          "id": "fact-186",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        {
+          "attribute": "face.3.blendMode",
+          "id": "fact-187",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.3.textureSize",
+          "id": "fact-188",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 64
+          }
+        },
+        {
+          "attribute": "face.4.color",
+          "id": "fact-189",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          }
+        },
+        {
+          "attribute": "face.4.layerCount",
+          "id": "fact-190",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 1
+          }
+        },
+        {
+          "attribute": "face.4.activeLayer",
+          "id": "fact-191",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.4.useLayers",
+          "id": "fact-192",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "attribute": "face.4.layerOpacity",
+          "id": "fact-193",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        {
+          "attribute": "face.4.blendMode",
+          "id": "fact-194",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.4.textureSize",
+          "id": "fact-195",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 64
+          }
+        },
+        {
+          "attribute": "face.5.color",
+          "id": "fact-196",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          }
+        },
+        {
+          "attribute": "face.5.layerCount",
+          "id": "fact-197",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 1
+          }
+        },
+        {
+          "attribute": "face.5.activeLayer",
+          "id": "fact-198",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.5.useLayers",
+          "id": "fact-199",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "attribute": "face.5.layerOpacity",
+          "id": "fact-200",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        {
+          "attribute": "face.5.blendMode",
+          "id": "fact-201",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.5.textureSize",
+          "id": "fact-202",
+          "subjectId": "object-9",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 64
+          }
+        },
+        {
+          "attribute": "type",
+          "id": "fact-205",
+          "subjectId": "object-10-generated-from-concept-1",
+          "type": "property-state",
+          "value": {
+            "t": "string",
+            "v": "generated-from"
+          }
+        },
+        {
+          "attribute": "directed",
+          "id": "fact-206",
+          "subjectId": "object-10-generated-from-concept-1",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": true
+          }
+        },
+        {
+          "attribute": "weight",
+          "id": "fact-207",
+          "subjectId": "object-10-generated-from-concept-1",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        {
+          "attribute": "entityA",
+          "id": "fact-208",
+          "subjectId": "object-10-generated-from-concept-1",
+          "type": "property-state",
+          "value": {
+            "t": "string",
+            "v": "object-10"
+          }
+        },
+        {
+          "attribute": "entityB",
+          "id": "fact-209",
+          "subjectId": "object-10-generated-from-concept-1",
+          "type": "property-state",
+          "value": {
+            "t": "string",
+            "v": "concept-1"
+          }
+        },
+        {
+          "attribute": "position",
+          "id": "fact-212",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 0.0,
+            "y": 2.0,
+            "z": -2.0
+          }
+        },
+        {
+          "attribute": "rotation",
+          "id": "fact-213",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 0.0,
+            "y": -0.0,
+            "z": 0.0
+          }
+        },
+        {
+          "attribute": "transform",
+          "id": "fact-214",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "m": [
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              2.0,
+              -2.0,
+              1.0
+            ],
+            "t": "mat4"
+          }
+        },
+        {
+          "attribute": "center",
+          "id": "fact-215",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          }
+        },
+        {
+          "attribute": "material",
+          "id": "fact-216",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "string",
+            "v": "material.object-10"
+          }
+        },
+        {
+          "attribute": "shape.kind",
+          "id": "fact-217",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "shape.r",
+          "id": "fact-218",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 0.5
+          }
+        },
+        {
+          "attribute": "shape.ry",
+          "id": "fact-219",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 0.3199999928474426
+          }
+        },
+        {
+          "attribute": "shape.rz",
+          "id": "fact-220",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 0.5
+          }
+        },
+        {
+          "attribute": "shape.halfH",
+          "id": "fact-221",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 0.5
+          }
+        },
+        {
+          "attribute": "shape.majorR",
+          "id": "fact-222",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 0.3499999940395355
+          }
+        },
+        {
+          "attribute": "shape.minorR",
+          "id": "fact-223",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 0.15000000596046448
+          }
+        },
+        {
+          "attribute": "shape.paraboloidA",
+          "id": "fact-224",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 2.0
+          }
+        },
+        {
+          "attribute": "shape.ovoidAsym",
+          "id": "fact-225",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 0.25
+          }
+        },
+        {
+          "attribute": "shape.fillet",
+          "id": "fact-226",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 0.11999999731779099
+          }
+        },
+        {
+          "attribute": "shape.width2D",
+          "id": "fact-227",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 100.0
+          }
+        },
+        {
+          "attribute": "shape.height2D",
+          "id": "fact-228",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 100.0
+          }
+        },
+        {
+          "attribute": "textString",
+          "id": "fact-229",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "string",
+            "v": ""
+          }
+        },
+        {
+          "attribute": "physical",
+          "id": "fact-230",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": true
+          }
+        },
+        {
+          "attribute": "velocity",
+          "id": "fact-231",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          }
+        },
+        {
+          "attribute": "mass",
+          "id": "fact-232",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        {
+          "attribute": "color",
+          "id": "fact-233",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          }
+        },
+        {
+          "attribute": "face.0.color",
+          "id": "fact-234",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          }
+        },
+        {
+          "attribute": "face.0.layerCount",
+          "id": "fact-235",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 1
+          }
+        },
+        {
+          "attribute": "face.0.activeLayer",
+          "id": "fact-236",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.0.useLayers",
+          "id": "fact-237",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "attribute": "face.0.layerOpacity",
+          "id": "fact-238",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        {
+          "attribute": "face.0.blendMode",
+          "id": "fact-239",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.0.textureSize",
+          "id": "fact-240",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 64
+          }
+        },
+        {
+          "attribute": "face.1.color",
+          "id": "fact-241",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          }
+        },
+        {
+          "attribute": "face.1.layerCount",
+          "id": "fact-242",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 1
+          }
+        },
+        {
+          "attribute": "face.1.activeLayer",
+          "id": "fact-243",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.1.useLayers",
+          "id": "fact-244",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "attribute": "face.1.layerOpacity",
+          "id": "fact-245",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        {
+          "attribute": "face.1.blendMode",
+          "id": "fact-246",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.1.textureSize",
+          "id": "fact-247",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 64
+          }
+        },
+        {
+          "attribute": "face.2.color",
+          "id": "fact-248",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          }
+        },
+        {
+          "attribute": "face.2.layerCount",
+          "id": "fact-249",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 1
+          }
+        },
+        {
+          "attribute": "face.2.activeLayer",
+          "id": "fact-250",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.2.useLayers",
+          "id": "fact-251",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "attribute": "face.2.layerOpacity",
+          "id": "fact-252",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        {
+          "attribute": "face.2.blendMode",
+          "id": "fact-253",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.2.textureSize",
+          "id": "fact-254",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 64
+          }
+        },
+        {
+          "attribute": "face.3.color",
+          "id": "fact-255",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          }
+        },
+        {
+          "attribute": "face.3.layerCount",
+          "id": "fact-256",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 1
+          }
+        },
+        {
+          "attribute": "face.3.activeLayer",
+          "id": "fact-257",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.3.useLayers",
+          "id": "fact-258",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "attribute": "face.3.layerOpacity",
+          "id": "fact-259",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        {
+          "attribute": "face.3.blendMode",
+          "id": "fact-260",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.3.textureSize",
+          "id": "fact-261",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 64
+          }
+        },
+        {
+          "attribute": "face.4.color",
+          "id": "fact-262",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          }
+        },
+        {
+          "attribute": "face.4.layerCount",
+          "id": "fact-263",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 1
+          }
+        },
+        {
+          "attribute": "face.4.activeLayer",
+          "id": "fact-264",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.4.useLayers",
+          "id": "fact-265",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "attribute": "face.4.layerOpacity",
+          "id": "fact-266",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        {
+          "attribute": "face.4.blendMode",
+          "id": "fact-267",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.4.textureSize",
+          "id": "fact-268",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 64
+          }
+        },
+        {
+          "attribute": "face.5.color",
+          "id": "fact-269",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          }
+        },
+        {
+          "attribute": "face.5.layerCount",
+          "id": "fact-270",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 1
+          }
+        },
+        {
+          "attribute": "face.5.activeLayer",
+          "id": "fact-271",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.5.useLayers",
+          "id": "fact-272",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "attribute": "face.5.layerOpacity",
+          "id": "fact-273",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        {
+          "attribute": "face.5.blendMode",
+          "id": "fact-274",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.5.textureSize",
+          "id": "fact-275",
+          "subjectId": "object-10",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 64
+          }
+        },
+        {
+          "attribute": "type",
+          "id": "fact-278",
+          "subjectId": "object-11-generated-from-concept-1",
+          "type": "property-state",
+          "value": {
+            "t": "string",
+            "v": "generated-from"
+          }
+        },
+        {
+          "attribute": "directed",
+          "id": "fact-279",
+          "subjectId": "object-11-generated-from-concept-1",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": true
+          }
+        },
+        {
+          "attribute": "weight",
+          "id": "fact-280",
+          "subjectId": "object-11-generated-from-concept-1",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        {
+          "attribute": "entityA",
+          "id": "fact-281",
+          "subjectId": "object-11-generated-from-concept-1",
+          "type": "property-state",
+          "value": {
+            "t": "string",
+            "v": "object-11"
+          }
+        },
+        {
+          "attribute": "entityB",
+          "id": "fact-282",
+          "subjectId": "object-11-generated-from-concept-1",
+          "type": "property-state",
+          "value": {
+            "t": "string",
+            "v": "concept-1"
+          }
+        },
+        {
+          "attribute": "position",
+          "id": "fact-285",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 0.0,
+            "y": 2.0,
+            "z": -12.0
+          }
+        },
+        {
+          "attribute": "rotation",
+          "id": "fact-286",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 0.0,
+            "y": -0.0,
+            "z": 0.0
+          }
+        },
+        {
+          "attribute": "transform",
+          "id": "fact-287",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "m": [
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              2.0,
+              -12.0,
+              1.0
+            ],
+            "t": "mat4"
+          }
+        },
+        {
+          "attribute": "center",
+          "id": "fact-288",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          }
+        },
+        {
+          "attribute": "material",
+          "id": "fact-289",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "string",
+            "v": "material.object-11"
+          }
+        },
+        {
+          "attribute": "shape.kind",
+          "id": "fact-290",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "shape.r",
+          "id": "fact-291",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 0.5
+          }
+        },
+        {
+          "attribute": "shape.ry",
+          "id": "fact-292",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 0.3199999928474426
+          }
+        },
+        {
+          "attribute": "shape.rz",
+          "id": "fact-293",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 0.5
+          }
+        },
+        {
+          "attribute": "shape.halfH",
+          "id": "fact-294",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 0.5
+          }
+        },
+        {
+          "attribute": "shape.majorR",
+          "id": "fact-295",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 0.3499999940395355
+          }
+        },
+        {
+          "attribute": "shape.minorR",
+          "id": "fact-296",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 0.15000000596046448
+          }
+        },
+        {
+          "attribute": "shape.paraboloidA",
+          "id": "fact-297",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 2.0
+          }
+        },
+        {
+          "attribute": "shape.ovoidAsym",
+          "id": "fact-298",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 0.25
+          }
+        },
+        {
+          "attribute": "shape.fillet",
+          "id": "fact-299",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 0.11999999731779099
+          }
+        },
+        {
+          "attribute": "shape.width2D",
+          "id": "fact-300",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 100.0
+          }
+        },
+        {
+          "attribute": "shape.height2D",
+          "id": "fact-301",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 100.0
+          }
+        },
+        {
+          "attribute": "textString",
+          "id": "fact-302",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "string",
+            "v": ""
+          }
+        },
+        {
+          "attribute": "physical",
+          "id": "fact-303",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": true
+          }
+        },
+        {
+          "attribute": "velocity",
+          "id": "fact-304",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          }
+        },
+        {
+          "attribute": "mass",
+          "id": "fact-305",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        {
+          "attribute": "color",
+          "id": "fact-306",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          }
+        },
+        {
+          "attribute": "face.0.color",
+          "id": "fact-307",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          }
+        },
+        {
+          "attribute": "face.0.layerCount",
+          "id": "fact-308",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 1
+          }
+        },
+        {
+          "attribute": "face.0.activeLayer",
+          "id": "fact-309",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.0.useLayers",
+          "id": "fact-310",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "attribute": "face.0.layerOpacity",
+          "id": "fact-311",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        {
+          "attribute": "face.0.blendMode",
+          "id": "fact-312",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.0.textureSize",
+          "id": "fact-313",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 64
+          }
+        },
+        {
+          "attribute": "face.1.color",
+          "id": "fact-314",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          }
+        },
+        {
+          "attribute": "face.1.layerCount",
+          "id": "fact-315",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 1
+          }
+        },
+        {
+          "attribute": "face.1.activeLayer",
+          "id": "fact-316",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.1.useLayers",
+          "id": "fact-317",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "attribute": "face.1.layerOpacity",
+          "id": "fact-318",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        {
+          "attribute": "face.1.blendMode",
+          "id": "fact-319",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.1.textureSize",
+          "id": "fact-320",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 64
+          }
+        },
+        {
+          "attribute": "face.2.color",
+          "id": "fact-321",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          }
+        },
+        {
+          "attribute": "face.2.layerCount",
+          "id": "fact-322",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 1
+          }
+        },
+        {
+          "attribute": "face.2.activeLayer",
+          "id": "fact-323",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.2.useLayers",
+          "id": "fact-324",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "attribute": "face.2.layerOpacity",
+          "id": "fact-325",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        {
+          "attribute": "face.2.blendMode",
+          "id": "fact-326",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.2.textureSize",
+          "id": "fact-327",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 64
+          }
+        },
+        {
+          "attribute": "face.3.color",
+          "id": "fact-328",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          }
+        },
+        {
+          "attribute": "face.3.layerCount",
+          "id": "fact-329",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 1
+          }
+        },
+        {
+          "attribute": "face.3.activeLayer",
+          "id": "fact-330",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.3.useLayers",
+          "id": "fact-331",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "attribute": "face.3.layerOpacity",
+          "id": "fact-332",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        {
+          "attribute": "face.3.blendMode",
+          "id": "fact-333",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.3.textureSize",
+          "id": "fact-334",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 64
+          }
+        },
+        {
+          "attribute": "face.4.color",
+          "id": "fact-335",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          }
+        },
+        {
+          "attribute": "face.4.layerCount",
+          "id": "fact-336",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 1
+          }
+        },
+        {
+          "attribute": "face.4.activeLayer",
+          "id": "fact-337",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.4.useLayers",
+          "id": "fact-338",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "attribute": "face.4.layerOpacity",
+          "id": "fact-339",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        {
+          "attribute": "face.4.blendMode",
+          "id": "fact-340",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.4.textureSize",
+          "id": "fact-341",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 64
+          }
+        },
+        {
+          "attribute": "face.5.color",
+          "id": "fact-342",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          }
+        },
+        {
+          "attribute": "face.5.layerCount",
+          "id": "fact-343",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 1
+          }
+        },
+        {
+          "attribute": "face.5.activeLayer",
+          "id": "fact-344",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.5.useLayers",
+          "id": "fact-345",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "attribute": "face.5.layerOpacity",
+          "id": "fact-346",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        {
+          "attribute": "face.5.blendMode",
+          "id": "fact-347",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.5.textureSize",
+          "id": "fact-348",
+          "subjectId": "object-11",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 64
+          }
+        },
+        {
+          "attribute": "type",
+          "id": "fact-351",
+          "subjectId": "object-12-generated-from-concept-1",
+          "type": "property-state",
+          "value": {
+            "t": "string",
+            "v": "generated-from"
+          }
+        },
+        {
+          "attribute": "directed",
+          "id": "fact-352",
+          "subjectId": "object-12-generated-from-concept-1",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": true
+          }
+        },
+        {
+          "attribute": "weight",
+          "id": "fact-353",
+          "subjectId": "object-12-generated-from-concept-1",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        {
+          "attribute": "entityA",
+          "id": "fact-354",
+          "subjectId": "object-12-generated-from-concept-1",
+          "type": "property-state",
+          "value": {
+            "t": "string",
+            "v": "object-12"
+          }
+        },
+        {
+          "attribute": "entityB",
+          "id": "fact-355",
+          "subjectId": "object-12-generated-from-concept-1",
+          "type": "property-state",
+          "value": {
+            "t": "string",
+            "v": "concept-1"
+          }
+        },
+        {
+          "attribute": "position",
+          "id": "fact-358",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 0.0,
+            "y": 0.0,
+            "z": -3.0
+          }
+        },
+        {
+          "attribute": "rotation",
+          "id": "fact-359",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 0.0,
+            "y": -0.0,
+            "z": 0.0
+          }
+        },
+        {
+          "attribute": "transform",
+          "id": "fact-360",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "m": [
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              -3.0,
+              1.0
+            ],
+            "t": "mat4"
+          }
+        },
+        {
+          "attribute": "center",
+          "id": "fact-361",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          }
+        },
+        {
+          "attribute": "material",
+          "id": "fact-362",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "string",
+            "v": "material.object-12"
+          }
+        },
+        {
+          "attribute": "shape.kind",
+          "id": "fact-363",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 2
+          }
+        },
+        {
+          "attribute": "shape.r",
+          "id": "fact-364",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 0.5
+          }
+        },
+        {
+          "attribute": "shape.ry",
+          "id": "fact-365",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 0.3199999928474426
+          }
+        },
+        {
+          "attribute": "shape.rz",
+          "id": "fact-366",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 0.5
+          }
+        },
+        {
+          "attribute": "shape.halfH",
+          "id": "fact-367",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 0.5
+          }
+        },
+        {
+          "attribute": "shape.majorR",
+          "id": "fact-368",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 0.3499999940395355
+          }
+        },
+        {
+          "attribute": "shape.minorR",
+          "id": "fact-369",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 0.15000000596046448
+          }
+        },
+        {
+          "attribute": "shape.paraboloidA",
+          "id": "fact-370",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 2.0
+          }
+        },
+        {
+          "attribute": "shape.ovoidAsym",
+          "id": "fact-371",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 0.25
+          }
+        },
+        {
+          "attribute": "shape.fillet",
+          "id": "fact-372",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 0.11999999731779099
+          }
+        },
+        {
+          "attribute": "shape.width2D",
+          "id": "fact-373",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 100.0
+          }
+        },
+        {
+          "attribute": "shape.height2D",
+          "id": "fact-374",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 100.0
+          }
+        },
+        {
+          "attribute": "textString",
+          "id": "fact-375",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "string",
+            "v": ""
+          }
+        },
+        {
+          "attribute": "physical",
+          "id": "fact-376",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": true
+          }
+        },
+        {
+          "attribute": "velocity",
+          "id": "fact-377",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          }
+        },
+        {
+          "attribute": "mass",
+          "id": "fact-378",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        {
+          "attribute": "color",
+          "id": "fact-379",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 1.0,
+            "y": 0.0,
+            "z": 0.0
+          }
+        },
+        {
+          "attribute": "face.0.color",
+          "id": "fact-380",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 1.0,
+            "y": 0.0,
+            "z": 0.0
+          }
+        },
+        {
+          "attribute": "face.0.layerCount",
+          "id": "fact-381",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 1
+          }
+        },
+        {
+          "attribute": "face.0.activeLayer",
+          "id": "fact-382",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.0.useLayers",
+          "id": "fact-383",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "attribute": "face.0.layerOpacity",
+          "id": "fact-384",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        {
+          "attribute": "face.0.blendMode",
+          "id": "fact-385",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.0.textureSize",
+          "id": "fact-386",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 64
+          }
+        },
+        {
+          "attribute": "face.1.color",
+          "id": "fact-387",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 1.0,
+            "y": 0.0,
+            "z": 0.0
+          }
+        },
+        {
+          "attribute": "face.1.layerCount",
+          "id": "fact-388",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.1.activeLayer",
+          "id": "fact-389",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.1.useLayers",
+          "id": "fact-390",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "attribute": "face.1.layerOpacity",
+          "id": "fact-391",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        {
+          "attribute": "face.1.blendMode",
+          "id": "fact-392",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.1.textureSize",
+          "id": "fact-393",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.2.color",
+          "id": "fact-394",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 0.0,
+            "y": 1.0,
+            "z": 0.0
+          }
+        },
+        {
+          "attribute": "face.2.layerCount",
+          "id": "fact-395",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.2.activeLayer",
+          "id": "fact-396",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.2.useLayers",
+          "id": "fact-397",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "attribute": "face.2.layerOpacity",
+          "id": "fact-398",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        {
+          "attribute": "face.2.blendMode",
+          "id": "fact-399",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.2.textureSize",
+          "id": "fact-400",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.3.color",
+          "id": "fact-401",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 0.0,
+            "y": 1.0,
+            "z": 0.0
+          }
+        },
+        {
+          "attribute": "face.3.layerCount",
+          "id": "fact-402",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.3.activeLayer",
+          "id": "fact-403",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.3.useLayers",
+          "id": "fact-404",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "attribute": "face.3.layerOpacity",
+          "id": "fact-405",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        {
+          "attribute": "face.3.blendMode",
+          "id": "fact-406",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.3.textureSize",
+          "id": "fact-407",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.4.color",
+          "id": "fact-408",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 0.0,
+            "y": 0.0,
+            "z": 1.0
+          }
+        },
+        {
+          "attribute": "face.4.layerCount",
+          "id": "fact-409",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.4.activeLayer",
+          "id": "fact-410",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.4.useLayers",
+          "id": "fact-411",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "attribute": "face.4.layerOpacity",
+          "id": "fact-412",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        {
+          "attribute": "face.4.blendMode",
+          "id": "fact-413",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.4.textureSize",
+          "id": "fact-414",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.5.color",
+          "id": "fact-415",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 0.0,
+            "y": 0.0,
+            "z": 1.0
+          }
+        },
+        {
+          "attribute": "face.5.layerCount",
+          "id": "fact-416",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.5.activeLayer",
+          "id": "fact-417",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.5.useLayers",
+          "id": "fact-418",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "attribute": "face.5.layerOpacity",
+          "id": "fact-419",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        {
+          "attribute": "face.5.blendMode",
+          "id": "fact-420",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.5.textureSize",
+          "id": "fact-421",
+          "subjectId": "object-12",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "",
+          "id": "fact-422",
+          "subjectId": "law-2",
+          "type": "law-registered",
+          "value": null
+        },
+        {
+          "attribute": "",
+          "id": "fact-424",
+          "subjectId": "creation-channel",
+          "type": "onMouseClicked",
+          "value": null
+        },
+        {
+          "attribute": "",
+          "id": "fact-792",
+          "subjectId": "object-14-generated-from-concept-1",
+          "type": "relation-formed",
+          "value": null
+        },
+        {
+          "attribute": "type",
+          "id": "fact-793",
+          "subjectId": "object-14-generated-from-concept-1",
+          "type": "property-state",
+          "value": {
+            "t": "string",
+            "v": "generated-from"
+          }
+        },
+        {
+          "attribute": "directed",
+          "id": "fact-794",
+          "subjectId": "object-14-generated-from-concept-1",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": true
+          }
+        },
+        {
+          "attribute": "weight",
+          "id": "fact-795",
+          "subjectId": "object-14-generated-from-concept-1",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        {
+          "attribute": "entityA",
+          "id": "fact-796",
+          "subjectId": "object-14-generated-from-concept-1",
+          "type": "property-state",
+          "value": {
+            "t": "string",
+            "v": "object-14"
+          }
+        },
+        {
+          "attribute": "entityB",
+          "id": "fact-797",
+          "subjectId": "object-14-generated-from-concept-1",
+          "type": "property-state",
+          "value": {
+            "t": "string",
+            "v": "concept-1"
+          }
+        },
+        {
+          "attribute": "",
+          "id": "fact-804",
+          "subjectId": "concept-1",
+          "type": "concept-instantiated",
+          "value": null
+        },
+        {
+          "attribute": "",
+          "id": "fact-806",
+          "subjectId": "object-14",
+          "type": "object-created",
+          "value": null
+        },
+        {
+          "attribute": "position",
+          "id": "fact-807",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 4.0,
+            "y": 2.5,
+            "z": -3.0
+          }
+        },
+        {
+          "attribute": "rotation",
+          "id": "fact-808",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 0.0,
+            "y": -0.0,
+            "z": 0.0
+          }
+        },
+        {
+          "attribute": "transform",
+          "id": "fact-809",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "m": [
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              4.0,
+              2.5,
+              -3.0,
+              1.0
+            ],
+            "t": "mat4"
+          }
+        },
+        {
+          "attribute": "center",
+          "id": "fact-810",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          }
+        },
+        {
+          "attribute": "material",
+          "id": "fact-811",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "string",
+            "v": "material.object-14"
+          }
+        },
+        {
+          "attribute": "shape.kind",
+          "id": "fact-812",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "shape.r",
+          "id": "fact-813",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 0.5
+          }
+        },
+        {
+          "attribute": "shape.ry",
+          "id": "fact-814",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 0.3199999928474426
+          }
+        },
+        {
+          "attribute": "shape.rz",
+          "id": "fact-815",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 0.5
+          }
+        },
+        {
+          "attribute": "shape.halfH",
+          "id": "fact-816",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 0.5
+          }
+        },
+        {
+          "attribute": "shape.majorR",
+          "id": "fact-817",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 0.3499999940395355
+          }
+        },
+        {
+          "attribute": "shape.minorR",
+          "id": "fact-818",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 0.15000000596046448
+          }
+        },
+        {
+          "attribute": "shape.paraboloidA",
+          "id": "fact-819",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 2.0
+          }
+        },
+        {
+          "attribute": "shape.ovoidAsym",
+          "id": "fact-820",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 0.25
+          }
+        },
+        {
+          "attribute": "shape.fillet",
+          "id": "fact-821",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 0.11999999731779099
+          }
+        },
+        {
+          "attribute": "shape.width2D",
+          "id": "fact-822",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 100.0
+          }
+        },
+        {
+          "attribute": "shape.height2D",
+          "id": "fact-823",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 100.0
+          }
+        },
+        {
+          "attribute": "textString",
+          "id": "fact-824",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "string",
+            "v": ""
+          }
+        },
+        {
+          "attribute": "physical",
+          "id": "fact-825",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": true
+          }
+        },
+        {
+          "attribute": "velocity",
+          "id": "fact-826",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          }
+        },
+        {
+          "attribute": "mass",
+          "id": "fact-827",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        {
+          "attribute": "color",
+          "id": "fact-828",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          }
+        },
+        {
+          "attribute": "face.0.color",
+          "id": "fact-829",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          }
+        },
+        {
+          "attribute": "face.0.layerCount",
+          "id": "fact-830",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 1
+          }
+        },
+        {
+          "attribute": "face.0.activeLayer",
+          "id": "fact-831",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.0.useLayers",
+          "id": "fact-832",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "attribute": "face.0.layerOpacity",
+          "id": "fact-833",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        {
+          "attribute": "face.0.blendMode",
+          "id": "fact-834",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.0.textureSize",
+          "id": "fact-835",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 64
+          }
+        },
+        {
+          "attribute": "face.1.color",
+          "id": "fact-836",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          }
+        },
+        {
+          "attribute": "face.1.layerCount",
+          "id": "fact-837",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 1
+          }
+        },
+        {
+          "attribute": "face.1.activeLayer",
+          "id": "fact-838",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.1.useLayers",
+          "id": "fact-839",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "attribute": "face.1.layerOpacity",
+          "id": "fact-840",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        {
+          "attribute": "face.1.blendMode",
+          "id": "fact-841",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.1.textureSize",
+          "id": "fact-842",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 64
+          }
+        },
+        {
+          "attribute": "face.2.color",
+          "id": "fact-843",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          }
+        },
+        {
+          "attribute": "face.2.layerCount",
+          "id": "fact-844",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 1
+          }
+        },
+        {
+          "attribute": "face.2.activeLayer",
+          "id": "fact-845",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.2.useLayers",
+          "id": "fact-846",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "attribute": "face.2.layerOpacity",
+          "id": "fact-847",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        {
+          "attribute": "face.2.blendMode",
+          "id": "fact-848",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.2.textureSize",
+          "id": "fact-849",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 64
+          }
+        },
+        {
+          "attribute": "face.3.color",
+          "id": "fact-850",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          }
+        },
+        {
+          "attribute": "face.3.layerCount",
+          "id": "fact-851",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 1
+          }
+        },
+        {
+          "attribute": "face.3.activeLayer",
+          "id": "fact-852",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.3.useLayers",
+          "id": "fact-853",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "attribute": "face.3.layerOpacity",
+          "id": "fact-854",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        {
+          "attribute": "face.3.blendMode",
+          "id": "fact-855",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.3.textureSize",
+          "id": "fact-856",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 64
+          }
+        },
+        {
+          "attribute": "face.4.color",
+          "id": "fact-857",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          }
+        },
+        {
+          "attribute": "face.4.layerCount",
+          "id": "fact-858",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 1
+          }
+        },
+        {
+          "attribute": "face.4.activeLayer",
+          "id": "fact-859",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.4.useLayers",
+          "id": "fact-860",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "attribute": "face.4.layerOpacity",
+          "id": "fact-861",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        {
+          "attribute": "face.4.blendMode",
+          "id": "fact-862",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.4.textureSize",
+          "id": "fact-863",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 64
+          }
+        },
+        {
+          "attribute": "face.5.color",
+          "id": "fact-864",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          }
+        },
+        {
+          "attribute": "face.5.layerCount",
+          "id": "fact-865",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 1
+          }
+        },
+        {
+          "attribute": "face.5.activeLayer",
+          "id": "fact-866",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.5.useLayers",
+          "id": "fact-867",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "attribute": "face.5.layerOpacity",
+          "id": "fact-868",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        {
+          "attribute": "face.5.blendMode",
+          "id": "fact-869",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "attribute": "face.5.textureSize",
+          "id": "fact-870",
+          "subjectId": "object-14",
+          "type": "property-state",
+          "value": {
+            "t": "int",
+            "v": 64
+          }
+        }
+      ]
+    },
+    "triggers": {
+      "law-2": [
+        "onMouseClicked"
+      ]
+    }
+  },
+  "cameraFront": [
+    0.0,
+    0.0,
+    -1.0
+  ],
+  "cameraPos": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "cameraUp": [
+    0.0,
+    1.0,
+    0.0
+  ],
+  "categories": [
+    {
+      "authoritativeAxis": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "center": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "faceColors": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "geometryType": 0,
+      "materialId": "material.default",
+      "objectID": "category.default",
+      "rotationResponsiveness": 10.0,
+      "shapeKind": 0,
+      "shapeParams": [
+        0.5,
+        0.3199999928474426,
+        0.5,
+        0.5,
+        0.3499999940395355,
+        0.15000000596046448,
+        2.0,
+        0.25,
+        0.11999999731779099
+      ],
+      "targetRotation": [
+        0.0,
+        -0.0,
+        0.0
+      ],
+      "transform": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "authoredProperties": {
+        "scale": {
+          "t": "vec3",
+          "x": 1.0,
+          "y": 1.0,
+          "z": 1.0
+        },
+        "size": {
+          "t": "double",
+          "v": 1.0
+        }
+      },
+      "authoritativeAxis": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "center": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "faceColors": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "geometryType": 0,
+      "materialId": "material.default",
+      "objectID": "category.tool.brush",
+      "rotationResponsiveness": 10.0,
+      "shapeKind": 0,
+      "shapeParams": [
+        0.5,
+        0.3199999928474426,
+        0.5,
+        0.5,
+        0.3499999940395355,
+        0.15000000596046448,
+        2.0,
+        0.25,
+        0.11999999731779099
+      ],
+      "targetRotation": [
+        0.0,
+        -0.0,
+        0.0
+      ],
+      "transform": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  ],
+  "concepts": {
+    "concepts": [
+      {
+        "attributes": {},
+        "authoredProperties": {},
+        "id": "concept-1",
+        "mappings": [],
+        "members": [
+          {
+            "beingKind": 1,
+            "hasGeometry": true,
+            "kind": 0,
+            "params": [
+              0.5,
+              0.3199999928474426,
+              0.5,
+              0.5,
+              0.3499999940395355,
+              0.15000000596046448,
+              2.0,
+              0.25,
+              0.11999999731779099
+            ],
+            "relativeTransform": [
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          }
+        ],
+        "name": "concept-shape-3d",
+        "provenance": [
+          {
+            "attachment": {
+              "childAnchor": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "enabled": false,
+              "inheritRotation": true,
+              "inheritScale": true,
+              "inheritTranslation": true,
+              "localOffset": [
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "parentAnchor": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            "directed": true,
+            "entityA": "object-8",
+            "entityB": "concept-1",
+            "events": [
+              {
+                "deltaWeight": 1.0,
+                "description": "generated-from",
+                "timestamp": 1786651827
+              }
+            ],
+            "type": "generated-from",
+            "weight": 1.0
+          },
+          {
+            "attachment": {
+              "childAnchor": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "enabled": false,
+              "inheritRotation": true,
+              "inheritScale": true,
+              "inheritTranslation": true,
+              "localOffset": [
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "parentAnchor": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            "directed": true,
+            "entityA": "object-9",
+            "entityB": "concept-1",
+            "events": [
+              {
+                "deltaWeight": 1.0,
+                "description": "generated-from",
+                "timestamp": 1786651827
+              }
+            ],
+            "type": "generated-from",
+            "weight": 1.0
+          },
+          {
+            "attachment": {
+              "childAnchor": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "enabled": false,
+              "inheritRotation": true,
+              "inheritScale": true,
+              "inheritTranslation": true,
+              "localOffset": [
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "parentAnchor": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            "directed": true,
+            "entityA": "object-10",
+            "entityB": "concept-1",
+            "events": [
+              {
+                "deltaWeight": 1.0,
+                "description": "generated-from",
+                "timestamp": 1786651827
+              }
+            ],
+            "type": "generated-from",
+            "weight": 1.0
+          },
+          {
+            "attachment": {
+              "childAnchor": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "enabled": false,
+              "inheritRotation": true,
+              "inheritScale": true,
+              "inheritTranslation": true,
+              "localOffset": [
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "parentAnchor": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            "directed": true,
+            "entityA": "object-11",
+            "entityB": "concept-1",
+            "events": [
+              {
+                "deltaWeight": 1.0,
+                "description": "generated-from",
+                "timestamp": 1786651827
+              }
+            ],
+            "type": "generated-from",
+            "weight": 1.0
+          },
+          {
+            "attachment": {
+              "childAnchor": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "enabled": false,
+              "inheritRotation": true,
+              "inheritScale": true,
+              "inheritTranslation": true,
+              "localOffset": [
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "parentAnchor": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            "directed": true,
+            "entityA": "object-12",
+            "entityB": "concept-1",
+            "events": [
+              {
+                "deltaWeight": 1.0,
+                "description": "generated-from",
+                "timestamp": 1786651827
+              }
+            ],
+            "type": "generated-from",
+            "weight": 1.0
+          },
+          {
+            "attachment": {
+              "childAnchor": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "enabled": false,
+              "inheritRotation": true,
+              "inheritScale": true,
+              "inheritTranslation": true,
+              "localOffset": [
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "parentAnchor": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            "directed": true,
+            "entityA": "object-14",
+            "entityB": "concept-1",
+            "events": [
+              {
+                "deltaWeight": 1.0,
+                "description": "generated-from",
+                "timestamp": 1786651827
+              }
+            ],
+            "type": "generated-from",
+            "weight": 1.0
+          }
+        ],
+        "relationTemplates": []
+      }
+    ]
+  },
+  "currentColor": [
+    1.0,
+    1.0,
+    1.0
+  ],
+  "currentTool": 0,
+  "currentZone": 0,
+  "flying": false,
+  "materials": [
+    {
+      "ambient": 0.20000000298023224,
+      "baseColor": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "diffuse": 0.800000011920929,
+      "name": "default",
+      "opacity": 1.0,
+      "shininess": 32.0,
+      "specular": 1.0
+    },
+    {
+      "ambient": 0.20000000298023224,
+      "baseColor": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "diffuse": 0.800000011920929,
+      "name": "object-8",
+      "opacity": 1.0,
+      "shininess": 32.0,
+      "specular": 1.0
+    },
+    {
+      "ambient": 0.20000000298023224,
+      "baseColor": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "diffuse": 0.800000011920929,
+      "name": "object-9",
+      "opacity": 1.0,
+      "shininess": 32.0,
+      "specular": 1.0
+    },
+    {
+      "ambient": 0.20000000298023224,
+      "baseColor": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "diffuse": 0.800000011920929,
+      "name": "object-10",
+      "opacity": 1.0,
+      "shininess": 32.0,
+      "specular": 1.0
+    },
+    {
+      "ambient": 0.20000000298023224,
+      "baseColor": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "diffuse": 0.800000011920929,
+      "name": "object-11",
+      "opacity": 1.0,
+      "shininess": 32.0,
+      "specular": 1.0
+    },
+    {
+      "ambient": 0.20000000298023224,
+      "baseColor": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "diffuse": 0.800000011920929,
+      "name": "object-12",
+      "opacity": 1.0,
+      "shininess": 32.0,
+      "specular": 1.0
+    },
+    {
+      "ambient": 0.20000000298023224,
+      "baseColor": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "diffuse": 0.800000011920929,
+      "name": "object-14",
+      "opacity": 1.0,
+      "shininess": 32.0,
+      "specular": 1.0
+    }
+  ],
+  "mathFunctions": {
+    "functions": []
+  },
+  "physicsLaws": [],
+  "pitch": 0.0,
+  "playerBody": {
+    "artStyle": "default",
+    "bodyParts": [],
+    "height": 1.7999999523162842,
+    "shape": "humanoid"
+  },
+  "transferPolicy": {
+    "open": {
+      "center": true,
+      "conditionMode": false,
+      "directed": false,
+      "drives": false,
+      "enabled": false,
+      "name": false,
+      "position": true,
+      "rotation": true,
+      "shape": true,
+      "type": false,
+      "weight": false
+    }
+  },
+  "worldTime": 0.0,
+  "yaw": -90.0,
+  "zones": [
+    {
+      "formationRelations": [],
+      "name": "basic_cube_law_test_final",
+      "owner": "Player",
+      "world": {
+        "objects": [
+          {
+            "authoritativeAxis": [
+              0.0,
+              1.0,
+              0.0
+            ],
+            "center": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "faceColors": [
+              [
+                1.0,
+                1.0,
+                1.0
+              ],
+              [
+                1.0,
+                1.0,
+                1.0
+              ],
+              [
+                1.0,
+                1.0,
+                1.0
+              ],
+              [
+                1.0,
+                1.0,
+                1.0
+              ],
+              [
+                1.0,
+                1.0,
+                1.0
+              ],
+              [
+                1.0,
+                1.0,
+                1.0
+              ]
+            ],
+            "geometryType": 0,
+            "materialId": "material.object-8",
+            "objectID": "object-8",
+            "rotationResponsiveness": 10.0,
+            "shapeKind": 0,
+            "shapeParams": [
+              0.5,
+              0.3199999928474426,
+              0.5,
+              0.5,
+              0.3499999940395355,
+              0.15000000596046448,
+              2.0,
+              0.25,
+              0.11999999731779099
+            ],
+            "targetRotation": [
+              0.0,
+              -0.0,
+              0.0
+            ],
+            "transform": [
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              2.0,
+              -2.0,
+              1.0
+            ]
+          },
+          {
+            "authoritativeAxis": [
+              0.0,
+              1.0,
+              0.0
+            ],
+            "center": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "faceColors": [
+              [
+                1.0,
+                1.0,
+                1.0
+              ],
+              [
+                1.0,
+                1.0,
+                1.0
+              ],
+              [
+                1.0,
+                1.0,
+                1.0
+              ],
+              [
+                1.0,
+                1.0,
+                1.0
+              ],
+              [
+                1.0,
+                1.0,
+                1.0
+              ],
+              [
+                1.0,
+                1.0,
+                1.0
+              ]
+            ],
+            "geometryType": 0,
+            "materialId": "material.object-9",
+            "objectID": "object-9",
+            "rotationResponsiveness": 10.0,
+            "shapeKind": 0,
+            "shapeParams": [
+              0.5,
+              0.3199999928474426,
+              0.5,
+              0.5,
+              0.3499999940395355,
+              0.15000000596046448,
+              2.0,
+              0.25,
+              0.11999999731779099
+            ],
+            "targetRotation": [
+              0.0,
+              -0.0,
+              0.0
+            ],
+            "transform": [
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              10.0,
+              3.5,
+              -7.0,
+              1.0
+            ]
+          },
+          {
+            "authoritativeAxis": [
+              0.0,
+              1.0,
+              0.0
+            ],
+            "center": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "faceColors": [
+              [
+                1.0,
+                1.0,
+                1.0
+              ],
+              [
+                1.0,
+                1.0,
+                1.0
+              ],
+              [
+                1.0,
+                1.0,
+                1.0
+              ],
+              [
+                1.0,
+                1.0,
+                1.0
+              ],
+              [
+                1.0,
+                1.0,
+                1.0
+              ],
+              [
+                1.0,
+                1.0,
+                1.0
+              ]
+            ],
+            "geometryType": 0,
+            "materialId": "material.object-10",
+            "objectID": "object-10",
+            "rotationResponsiveness": 10.0,
+            "shapeKind": 0,
+            "shapeParams": [
+              0.5,
+              0.3199999928474426,
+              0.5,
+              0.5,
+              0.3499999940395355,
+              0.15000000596046448,
+              2.0,
+              0.25,
+              0.11999999731779099
+            ],
+            "targetRotation": [
+              0.0,
+              -0.0,
+              0.0
+            ],
+            "transform": [
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              2.0,
+              -2.0,
+              1.0
+            ]
+          },
+          {
+            "authoritativeAxis": [
+              0.0,
+              1.0,
+              0.0
+            ],
+            "center": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "faceColors": [
+              [
+                1.0,
+                1.0,
+                1.0
+              ],
+              [
+                1.0,
+                1.0,
+                1.0
+              ],
+              [
+                1.0,
+                1.0,
+                1.0
+              ],
+              [
+                1.0,
+                1.0,
+                1.0
+              ],
+              [
+                1.0,
+                1.0,
+                1.0
+              ],
+              [
+                1.0,
+                1.0,
+                1.0
+              ]
+            ],
+            "geometryType": 0,
+            "materialId": "material.object-11",
+            "objectID": "object-11",
+            "rotationResponsiveness": 10.0,
+            "shapeKind": 0,
+            "shapeParams": [
+              0.5,
+              0.3199999928474426,
+              0.5,
+              0.5,
+              0.3499999940395355,
+              0.15000000596046448,
+              2.0,
+              0.25,
+              0.11999999731779099
+            ],
+            "targetRotation": [
+              0.0,
+              -0.0,
+              0.0
+            ],
+            "transform": [
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              2.0,
+              -12.0,
+              1.0
+            ]
+          },
+          {
+            "authoritativeAxis": [
+              0.0,
+              1.0,
+              0.0
+            ],
+            "center": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "faceColors": [
+              [
+                1.0,
+                0.0,
+                0.0
+              ],
+              [
+                1.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                1.0,
+                0.0
+              ],
+              [
+                0.0,
+                1.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                1.0
+              ],
+              [
+                0.0,
+                0.0,
+                1.0
+              ]
+            ],
+            "geometryType": 2,
+            "materialId": "material.object-12",
+            "objectID": "object-12",
+            "rotationResponsiveness": 10.0,
+            "shapeKind": 2,
+            "shapeParams": [
+              0.5,
+              0.3199999928474426,
+              0.5,
+              0.5,
+              0.3499999940395355,
+              0.15000000596046448,
+              2.0,
+              0.25,
+              0.11999999731779099
+            ],
+            "targetRotation": [
+              0.0,
+              -0.0,
+              0.0
+            ],
+            "transform": [
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              -3.0,
+              1.0
+            ]
+          },
+          {
+            "authoritativeAxis": [
+              0.0,
+              1.0,
+              0.0
+            ],
+            "center": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "faceColors": [
+              [
+                1.0,
+                1.0,
+                1.0
+              ],
+              [
+                1.0,
+                1.0,
+                1.0
+              ],
+              [
+                1.0,
+                1.0,
+                1.0
+              ],
+              [
+                1.0,
+                1.0,
+                1.0
+              ],
+              [
+                1.0,
+                1.0,
+                1.0
+              ],
+              [
+                1.0,
+                1.0,
+                1.0
+              ]
+            ],
+            "geometryType": 0,
+            "materialId": "material.object-14",
+            "objectID": "object-14",
+            "rotationResponsiveness": 10.0,
+            "shapeKind": 0,
+            "shapeParams": [
+              0.5,
+              0.3199999928474426,
+              0.5,
+              0.5,
+              0.3499999940395355,
+              0.15000000596046448,
+              2.0,
+              0.25,
+              0.11999999731779099
+            ],
+            "targetRotation": [
+              0.0,
+              -0.0,
+              0.0
+            ],
+            "transform": [
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              4.0,
+              2.5,
+              -3.0,
+              1.0
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
