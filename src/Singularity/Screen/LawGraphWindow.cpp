@@ -4,6 +4,7 @@
 #include "Singularity/Screen/MathEditors.hpp"
 #include "ConstructedBeing/Object/Creation/ObjectConcept.hpp"
 #include "ConstructedBeing/Object/Object.hpp"
+#include "Singularity/Core/CreationChannel.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 
 #include <imgui.h>
@@ -72,17 +73,42 @@ const std::vector<PathOption>& knownPathOptions() {
         options.push_back({"position.y", "Person — avatar", "number", false});
         options.push_back({"position.z", "Person — avatar", "number", false});
         options.push_back({"name", "Person — identity", "text", false});
-        options.push_back({"activeTool", "Channel — Creation", "text", false});
-        options.push_back({"cursorHitPos", "Channel — Creation", "vector", true});
-        options.push_back({"cursorHitPos.x", "Channel — Creation", "number", false});
-        options.push_back({"cursorHitPos.y", "Channel — Creation", "number", false});
-        options.push_back({"cursorHitPos.z", "Channel — Creation", "number", false});
-        options.push_back({"cursorHitNormal", "Channel — Creation", "vector", true});
-        options.push_back({"cursorHitNormal.x", "Channel — Creation", "number", false});
-        options.push_back({"cursorHitNormal.y", "Channel — Creation", "number", false});
-        options.push_back({"cursorHitNormal.z", "Channel — Creation", "number", false});
-        options.push_back({"cursorHoveredBodyPart", "Channel — Creation", "text", false});
-        options.push_back({"activeShapeKind", "Channel — Creation", "number", false});
+        // The Person's eye. Registered in Person::buildProperties beside
+        // `position`, and hand-listed here because a Person prototype is not a
+        // thing to conjure in a UI function — minting one has identity
+        // consequences an Object or a Law prototype does not.
+        options.push_back({"cameraPos", "Person — avatar", "vector", true});
+        options.push_back({"cameraPos.x", "Person — avatar", "number", false});
+        options.push_back({"cameraPos.y", "Person — avatar", "number", false});
+        options.push_back({"cameraPos.z", "Person — avatar", "number", false});
+        options.push_back({"cameraForward", "Person — avatar", "vector", true});
+        options.push_back({"cameraForward.x", "Person — avatar", "number", false});
+        options.push_back({"cameraForward.y", "Person — avatar", "number", false});
+        options.push_back({"cameraForward.z", "Person — avatar", "number", false});
+
+        // The creation channel, PROBED rather than typed out. It was a
+        // hand-written list of six paths against a registry of twenty-one, so
+        // fifteen governable properties — the whole manual-anchor and spawn
+        // frame, grid snapping, placement mode — were reachable only by a
+        // Person who already knew the path by heart. That is the reachability
+        // half of refusal #6 (NO_BLACK_BOX.md §7), and hand-listing is what
+        // burned `activeShapeKind` in the other direction. Probing ends both.
+        static Singularity::Core::CreationChannel channelPrototype;
+        for (Property* property : channelPrototype.listProperties()) {
+            const PropertyValue probe = property->value();
+            const bool isVec = std::holds_alternative<glm::vec3>(probe);
+            const char* type = "number";
+            if (isVec)                                            type = "vector";
+            else if (std::holds_alternative<glm::mat4>(probe))     type = "transform";
+            else if (std::holds_alternative<std::string>(probe))   type = "text";
+            else if (std::holds_alternative<bool>(probe))          type = "toggle";
+            options.push_back({property->name(), "Channel — Creation", type, isVec});
+            if (isVec) {
+                options.push_back({property->name() + ".x", "Channel — Creation", "number", false});
+                options.push_back({property->name() + ".y", "Channel — Creation", "number", false});
+                options.push_back({property->name() + ".z", "Channel — Creation", "number", false});
+            }
+        }
     }
     return options;
 }

@@ -16,7 +16,7 @@
         "targets": [],
         "conditionModel": {
           "kind": 4, 
-          "subConditions": [
+          "children": [
             {
               "kind": 2,
               "relationType": "belongs_to",

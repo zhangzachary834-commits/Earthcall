@@ -17,7 +17,7 @@ namespace {
 
 std::filesystem::path scratchRoot() {
     auto dir = std::filesystem::temp_directory_path() / "earthcall_fm_saves";
-    std::filesystem::create_directories(dir / "games");
+    std::filesystem::create_directories(dir / "worlds");
     std::filesystem::create_directories(dir / "fixtures");
     return dir;
 }
@@ -34,21 +34,21 @@ static void testModelWritesOnlyInsideItsScope() {
 
     assert(reg.recognize(zach, FirstMover::Kind::Person, model.id(),
                          FirstMover::Kind::Model, "claude-fable-5",
-                         {"fixtures/**", "games/test_*.ecsave"}, 1000));
+                         {"fixtures/**", "worlds/test_*.ecsave"}, 1000));
 
     // Inside the grant.
     assert(reg.mayWrite(model.id(), root / "fixtures" / "seed.ecsave"));
     assert(reg.mayWrite(model.id(), root / "fixtures" / "deep" / "nested.ecsave"));
-    assert(reg.mayWrite(model.id(), root / "games" / "test_world.ecsave"));
+    assert(reg.mayWrite(model.id(), root / "worlds" / "test_world.ecsave"));
 
     // Outside it. Recognition is not blanket permission -- this is the whole
     // point of scoping a model rather than merely trusting one.
-    assert(!reg.mayWrite(model.id(), root / "games" / "real_world.ecsave"));
+    assert(!reg.mayWrite(model.id(), root / "worlds" / "real_world.ecsave"));
     assert(!reg.mayWrite(model.id(), root / "persons" / "zach.json"));
 
-    // '*' must not span a separator, or "games/test_*" would reach anywhere
-    // below games/.
-    assert(!reg.mayWrite(model.id(), root / "games" / "sub" / "test_x.ecsave"));
+    // '*' must not span a separator, or "worlds/test_*" would reach anywhere
+    // below worlds/.
+    assert(!reg.mayWrite(model.id(), root / "worlds" / "sub" / "test_x.ecsave"));
 
     std::cout << "  model writes only inside its granted scopes OK\n";
 }
@@ -58,8 +58,8 @@ static void testUnknownMoverRefused() {
     reg.setSaveRoot(scratchRoot());
     PrivateKey stranger = PrivateKey::generate();
 
-    assert(!reg.mayWrite(stranger.id(), scratchRoot() / "games" / "anything.ecsave"));
-    assert(reg.explain(stranger.id(), scratchRoot() / "games" / "a.ecsave")
+    assert(!reg.mayWrite(stranger.id(), scratchRoot() / "worlds" / "anything.ecsave"));
+    assert(reg.explain(stranger.id(), scratchRoot() / "worlds" / "a.ecsave")
                .find("not in the First Mover Register") != std::string::npos);
 
     std::cout << "  unregistered mover refused OK\n";
@@ -116,7 +116,7 @@ static void testScopeWideningIsDetected() {
     assert(reloaded.movers().size() == 1);
     assert(reloaded.isQuarantined(model.id()));
     // ... and inert.
-    assert(!reloaded.mayWrite(model.id(), root / "games" / "real_world.ecsave"));
+    assert(!reloaded.mayWrite(model.id(), root / "worlds" / "real_world.ecsave"));
     assert(!reloaded.mayWrite(model.id(), root / "fixtures" / "seed.ecsave"));
 
     std::cout << "  scope widening detected, entry quarantined not dropped OK\n";
@@ -168,10 +168,10 @@ static void testCannotEscapeSaveRoot() {
     assert(reg.recognize(zach, FirstMover::Kind::Person, model.id(),
                          FirstMover::Kind::Model, "m", {"**"}, 1000));
 
-    assert(reg.mayWrite(model.id(), root / "games" / "ok.ecsave"));
+    assert(reg.mayWrite(model.id(), root / "worlds" / "ok.ecsave"));
 
     assert(!reg.mayWrite(model.id(), root / ".." / "src" / "main.cpp"));
-    assert(!reg.mayWrite(model.id(), root / "games" / ".." / ".." / "secret"));
+    assert(!reg.mayWrite(model.id(), root / "worlds" / ".." / ".." / "secret"));
     assert(!reg.mayWrite(model.id(), "/etc/passwd"));
     assert(!reg.mayWrite(model.id(), root)); // the root itself is not a file in it
 
@@ -191,17 +191,17 @@ static void testEmptyScopeGrantsNothing() {
                          FirstMover::Kind::Model, "m", {}, 1000));
 
     assert(!reg.isQuarantined(model.id()));
-    assert(!reg.mayWrite(model.id(), root / "games" / "x.ecsave"));
+    assert(!reg.mayWrite(model.id(), root / "worlds" / "x.ecsave"));
 
     std::cout << "  empty scope grants nothing OK\n";
 }
 
 static void testGlobSemantics() {
-    assert(matchesGlob("games/*.ecsave", "games/a.ecsave"));
-    assert(!matchesGlob("games/*.ecsave", "games/sub/a.ecsave"));
-    assert(matchesGlob("games/**", "games/sub/a.ecsave"));
+    assert(matchesGlob("worlds/*.ecsave", "worlds/a.ecsave"));
+    assert(!matchesGlob("worlds/*.ecsave", "worlds/sub/a.ecsave"));
+    assert(matchesGlob("worlds/**", "worlds/sub/a.ecsave"));
     assert(matchesGlob("**", "anything/at/all"));
-    assert(!matchesGlob("games/*", "games"));
+    assert(!matchesGlob("worlds/*", "worlds"));
     assert(matchesGlob("test_*.ecsave", "test_world.ecsave"));
     assert(!matchesGlob("test_*.ecsave", "real_world.ecsave"));
     std::cout << "  glob semantics OK\n";
@@ -225,7 +225,7 @@ static void testRoundTripPreservesGrants() {
     assert(reloaded.movers()[0].displayName == "claude");
     assert(!reloaded.isQuarantined(model.id()));
     assert(reloaded.mayWrite(model.id(), root / "fixtures" / "seed.ecsave"));
-    assert(!reloaded.mayWrite(model.id(), root / "games" / "x.ecsave"));
+    assert(!reloaded.mayWrite(model.id(), root / "worlds" / "x.ecsave"));
 
     std::cout << "  register round-trips through a save OK\n";
 }
@@ -300,7 +300,7 @@ static void testSaveSystemEnforcesTheRegister() {
     // 1. No session active: the engine's own save must be untouched by this
     //    layer. Fail-open when unset is the whole reason it can ship safely.
     std::string engineWrote = SaveSystem::writeSaveData(payload, "engine_save",
-                                                        SaveSystem::SaveType::GAME);
+                                                        SaveSystem::SaveType::WORLD);
     assert(!engineWrote.empty());
     assert(std::filesystem::exists(engineWrote));
 
@@ -310,22 +310,22 @@ static void testSaveSystemEnforcesTheRegister() {
     PrivateKey model = PrivateKey::generate();
     assert(reg.recognize(zach, FirstMover::Kind::Person, model.id(),
                          FirstMover::Kind::Model, "claude-fable-5",
-                         {"games/test_*.ecsave"}, 1000));
+                         {"worlds/test_*.ecsave"}, 1000));
 
     {
         Identity::FirstMoverSession session(reg, model.id());
 
         // 2. Inside its scope: allowed.
         std::string ok = SaveSystem::writeSaveData(payload, "test_fixture",
-                                                   SaveSystem::SaveType::GAME);
+                                                   SaveSystem::SaveType::WORLD);
         assert(!ok.empty());
         assert(std::filesystem::exists(ok));
 
         // 3. Outside its scope: refused, and nothing written.
         std::string refused = SaveSystem::writeSaveData(payload, "production_world",
-                                                        SaveSystem::SaveType::GAME);
+                                                        SaveSystem::SaveType::WORLD);
         assert(refused.empty());
-        assert(!std::filesystem::exists("saves/games/production_world.ecsave"));
+        assert(!std::filesystem::exists("saves/worlds/production_world.ecsave"));
 
         // 4. A different save TYPE is a different directory, so the scope
         //    does not reach it even with a matching stem.
@@ -337,7 +337,7 @@ static void testSaveSystemEnforcesTheRegister() {
     // 5. The session is scoped: once it ends the engine writes freely again.
     assert(!reg.hasActiveMover());
     std::string afterWrote = SaveSystem::writeSaveData(payload, "engine_again",
-                                                       SaveSystem::SaveType::GAME);
+                                                       SaveSystem::SaveType::WORLD);
     assert(!afterWrote.empty());
 
     std::filesystem::current_path(previousCwd);
@@ -365,7 +365,7 @@ static void testUnregisteredAgentCannotWriteAtAll() {
         // Never recognised by anyone. Every write refused, including one that
         // would match a scope had it held any.
         assert(SaveSystem::writeSaveData(nlohmann::json{{"a", 1}}, "test_x",
-                                         SaveSystem::SaveType::GAME).empty());
+                                         SaveSystem::SaveType::WORLD).empty());
     }
 
     std::filesystem::current_path(previousCwd);

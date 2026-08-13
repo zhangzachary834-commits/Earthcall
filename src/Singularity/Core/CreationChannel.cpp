@@ -8,9 +8,15 @@
 namespace Singularity {
 namespace Core {
 
-CreationChannel::CreationChannel() {
-    buildProperties();
-}
+// buildProperties is NOT called here — see the standing note in
+// ForeignChannel.cpp. Singular builds the registry lazily behind
+// _propertiesBuilt, which a constructor call does not set, so calling it here
+// registered every one of this channel's ~20 properties a SECOND time on first
+// access: the law-authoring picker offered each path twice, and every
+// listProperties() walk did double the work. PhysicsLawBridge, PhysicalChannel
+// and ForeignChannel all leave it to the lazy path; this one did not, and
+// no_black_box_test now holds all of them to it.
+CreationChannel::CreationChannel() = default;
 
 void CreationChannel::syncRegister(LawManager& laws) {
     bool bridged = false;
