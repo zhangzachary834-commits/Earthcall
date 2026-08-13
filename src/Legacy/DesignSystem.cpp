@@ -1078,7 +1078,7 @@ void DesignSystem::startDrawing(const glm::vec2& position) {
     if (_brushSystem && _zone) {
         _brushSystem->saveStrokeState();
         // Use the current color from the zone instead of hardcoded values
-        glm::vec3 currentColor = _zone->getCurrentColor();
+        glm::vec3 currentColor = glm::vec3(1.0f);
         _brushSystem->paintDab(position, currentColor);
     }
     
@@ -1089,7 +1089,7 @@ void DesignSystem::continueDrawing(const glm::vec2& position) {
     if (_isDrawing) {
         if (_brushSystem && _zone) {
             // Use the current color from the zone instead of hardcoded values
-            glm::vec3 currentColor = _zone->getCurrentColor();
+            glm::vec3 currentColor = glm::vec3(1.0f);
             _brushSystem->paintStroke(_currentPosition, position, currentColor);
         }
         _currentPosition = position;

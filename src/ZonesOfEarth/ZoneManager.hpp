@@ -19,14 +19,13 @@ struct SaveLoadState {
 };
 
 class ZoneManager {
-    std::vector<Zone> _zones;
+    std::vector<std::shared_ptr<Zone>> _zones;
     size_t _currentIndex = 0;
     std::vector<std::shared_ptr<Object>> globalObjects; // Repository of all objects
     SaveLoadState _saveLoad;
 
 public:
-    void addZone(Zone&& zone) noexcept;           // prefer move for temporaries
-    void addZone(const Zone& zone);               // copy retained for compatibility
+    void addZone(std::shared_ptr<Zone> zone);
     void switchTo(size_t index);
     void describeCurrent() const;
 
@@ -41,8 +40,8 @@ public:
     // New zones can be birthed from the synthesis of existing ones, use zone creation methods.
 
     // Accessors to iterate over all zones (needed for serialization)
-    std::vector<Zone>& zones();
-    const std::vector<Zone>& zones() const;
+    std::vector<std::shared_ptr<Zone>>& zones();
+    const std::vector<std::shared_ptr<Zone>>& zones() const;
 
     // Current active zone index
     size_t currentIndex() const { return _currentIndex; }

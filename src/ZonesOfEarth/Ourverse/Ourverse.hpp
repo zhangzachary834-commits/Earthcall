@@ -16,16 +16,6 @@
 
 class Ourverse : public Singular {
 public:
-
-
-    std::vector<Zone> zones;
-    std::vector<Home> homes;
-    std::vector<std::shared_ptr<Relation>> relations;
-
-    void addZone(Zone zone);
-    void addHome(Home home);
-    // void relate(Relation relation);
-    void relate(const std::shared_ptr<Relation>& relation);
     void display() const;
     void renderModeUI();
 
@@ -48,13 +38,20 @@ public:
     // Singular interface
     std::string getIdentifier() const override { return "Ourverse"; }
 
-    // UI methods and state moved out of ontology.
+    std::shared_ptr<Zone> getPrimaryGatheringZone() const { return primaryGatheringZone; }
+    void setPrimaryGatheringZone(std::shared_ptr<Zone> zone) { primaryGatheringZone = std::move(zone); }
+
+    Formation& getLaws() { return laws; }
+    const Formation& getLaws() const { return laws; }
 
 private:
     void buildProperties() override {}
 
     glm::vec3* cameraPos = nullptr;
+    // ownedObjects is used for physics integration.
     std::vector<std::shared_ptr<Object>> ownedObjects;
+    std::shared_ptr<Zone> primaryGatheringZone;
+    Formation laws;
 };
 
 struct InteractionEvent {

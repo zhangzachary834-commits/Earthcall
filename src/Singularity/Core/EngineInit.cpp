@@ -104,7 +104,7 @@ void Engine::initLogic() {
         // geography — laws quantify over them (ForAny Zone ...) and address
         // them by name (@Home.owner) even while unloaded.
         for (auto& zone : mgr.zones()) {
-            beings.push_back(&zone);
+            beings.push_back(zone.get());
         }
     });
 
@@ -129,10 +129,10 @@ void Engine::initLogic() {
     // --------------------------------------------------------------
     // Setup zones & menu
     // --------------------------------------------------------------
-    mgr.addZone(Zone("Sanctum of Beginnings", "default"));
-    mgr.addZone(Zone("Temple of Echoes", "default"));
-    mgr.addZone(Zone("Cavern of Light", "default"));
-    mgr.addZone(Zone("Character Architect Forge", "default"));
+    mgr.addZone(std::make_shared<Zone>("Sanctum of Beginnings", "default"));
+    mgr.addZone(std::make_shared<Zone>("Temple of Echoes", "default"));
+    mgr.addZone(std::make_shared<Zone>("Cavern of Light", "default"));
+    mgr.addZone(std::make_shared<Zone>("Character Architect Forge", "default"));
     mgr.ensureHomeZone(_player->getIdentifier());
 
     // Initialize elemental tool handler with zone manager
@@ -142,7 +142,7 @@ void Engine::initLogic() {
     // Debug: list zone names to validate memory integrity of strings
     for (size_t i = 0; i < mgr.zones().size(); ++i) {
         const auto& z = mgr.zones()[i];
-        printf("[Init] Zone[%zu]: %s | Q=%zu D=%zu\n", i, z.name().c_str(), z.getQualities().size(), z.getDeletability().size());
+        printf("[Init] Zone[%zu]: %s | Q=%zu D=%zu\n", i, z->name().c_str(), z->getQualities().size(), z->getDeletability().size());
     }
     fflush(stdout);
 
@@ -178,7 +178,7 @@ void Engine::initLogic() {
     _mainMenu.addOption("Character Architect Forge", GLFW_KEY_C, [this]() {
         const auto& zones = mgr.zones();
         for (size_t i = 0; i < zones.size(); ++i) {
-            if (zones[i].name().find("Character") != std::string::npos) {
+            if (zones[i]->name().find("Character") != std::string::npos) {
                 mgr.switchTo(i);
                 break;
             }
@@ -253,7 +253,7 @@ void Engine::initLogic() {
     _keyboardHandler->bindKey(GLFW_KEY_C, "switch_to_character_zone", [this]() {
         const auto& zones = mgr.zones();
         for (size_t i = 0; i < zones.size(); ++i) {
-            if (zones[i].name().find("Character") != std::string::npos) {
+            if (zones[i]->name().find("Character") != std::string::npos) {
                 mgr.switchTo(i);
                 break;
             }

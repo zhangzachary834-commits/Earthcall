@@ -23,8 +23,8 @@ LanguageSystem& LanguageSystem::instance() {
 // member behind in it.
 void LanguageSystem::detachFromAllZones(Lexeme* lexeme) {
     if (!lexeme) return;
-    for (Zone& z : mgr.zones()) {
-        z.removeFromFormation(lexeme);
+    for (auto& z : mgr.zones()) {
+        z->removeFromFormation(lexeme);
     }
 }
 

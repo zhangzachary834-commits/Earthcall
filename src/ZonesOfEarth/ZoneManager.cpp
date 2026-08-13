@@ -30,15 +30,9 @@
 extern MaterialManager materials;
 extern CategoryManager categories;
 
-void ZoneManager::addZone(Zone&& zone) noexcept
+void ZoneManager::addZone(std::shared_ptr<Zone> zone)
 {
-    // Avoid copy of potentially large internal members by moving in
     _zones.push_back(std::move(zone));
-}
-
-void ZoneManager::addZone(const Zone& zone)
-{
-    _zones.emplace_back(zone); // invokes Zone copy-ctor
 }
 
 void ZoneManager::switchTo(size_t index)
@@ -50,13 +44,13 @@ void ZoneManager::switchTo(size_t index)
         
         // Repopulate active zone's world with global objects that belong to it or its parents
         std::vector<std::string> activeZones;
-        std::string currentZoneId = _zones[_currentIndex].getIdentifier();
+        std::string currentZoneId = _zones[_currentIndex]->getIdentifier();
         while (!currentZoneId.empty()) {
             activeZones.push_back(currentZoneId);
             std::string parent = "";
             for (const auto& z : _zones) {
-                if (z.getIdentifier() == currentZoneId) {
-                    parent = z.getParentZone();
+                if (z->getIdentifier() == currentZoneId) {
+                    parent = z->getParentZone();
                     break;
                 }
             }
@@ -64,7 +58,7 @@ void ZoneManager::switchTo(size_t index)
             currentZoneId = parent;
         }
 
-        auto& worldObjs = _zones[_currentIndex].world().getOwnedObjectsMutable();
+        auto& worldObjs = _zones[_currentIndex]->world().getOwnedObjectsMutable();
         worldObjs.clear();
         for (const auto& obj : globalObjects) {
             bool matches = false;
@@ -79,11 +73,11 @@ void ZoneManager::switchTo(size_t index)
             }
         }
 
-        try { _zones[_currentIndex].load(); } catch (...) { std::cerr << "⚠️  Zone load failed." << std::endl; }
+        try { _zones[_currentIndex]->load(); } catch (...) { std::cerr << "⚠️  Zone load failed." << std::endl; }
         describeCurrent();
         // The zone is a being: laws hear arrival (subject: the zone itself).
         Core::EventBus::instance().publish(
-            ECA::Event{"zone-entered", &_zones[_currentIndex], nullptr, std::time(nullptr)});
+            ECA::Event{"zone-entered", _zones[_currentIndex].get(), nullptr, std::time(nullptr)});
     }
     else
     {
@@ -95,7 +89,7 @@ void ZoneManager::describeCurrent() const
 {
     if (!_zones.empty())
     {
-        _zones[_currentIndex].describe();
+        _zones[_currentIndex]->describe();
     }
     else
     {
@@ -108,7 +102,7 @@ void ZoneManager::loadZone()
     if (_currentIndex < _zones.size())
     {
         // Unload previous zone if necessary
-        _zones[_currentIndex].load();
+        _zones[_currentIndex]->load();
     }
     else
     {
@@ -116,11 +110,11 @@ void ZoneManager::loadZone()
     }
 }
 
-Zone& ZoneManager::active() { return ZoneManager::_zones[ZoneManager::_currentIndex]; }
+Zone& ZoneManager::active() { return *_zones[_currentIndex]; }
 
-std::vector<Zone>& ZoneManager::zones() { return _zones; }
+std::vector<std::shared_ptr<Zone>>& ZoneManager::zones() { return _zones; }
 
-const std::vector<Zone>& ZoneManager::zones() const { return _zones; }
+const std::vector<std::shared_ptr<Zone>>& ZoneManager::zones() const { return _zones; }
 
 // Save/Load methods moved from Game
 
@@ -128,19 +122,19 @@ void ZoneManager::ensureHomeZone(const std::string& playerId) {
     if (playerId.empty()) return;
 
     for (const auto& zone : _zones) {
-        if (zone.owner() == playerId) return;
+        if (zone->owner() == playerId) return;
     }
     // A save from before ownership existed may hold an unowned "Home" —
     // claim it instead of minting a name-twin (identifiers must stay unique).
     for (auto& zone : _zones) {
-        if (zone.name() == "Home" && zone.owner().empty()) {
-            zone.setOwner(playerId);
+        if (zone->name() == "Home" && zone->owner().empty()) {
+            zone->setOwner(playerId);
             return;
         }
     }
-    Zone home("Home", "strict", 0.08f, 0.06f, 0.12f);
-    home.setOwner(playerId);
-    home.setQuality("kind", "home");
+    auto home = std::make_shared<Zone>("Home", "strict");
+    home->setOwner(playerId);
+    home->setQuality("kind", "home");
     addZone(std::move(home));
     printf("[Init] Home established for '%s' (zone count now %zu)\n",
            playerId.c_str(), _zones.size());
@@ -182,18 +176,10 @@ nlohmann::json ZoneManager::buildSaveJson(const SaveContext& ctx) const {
     j["currentZone"] = _currentIndex;
     json zonesJson = json::array();
     for (const auto& z : _zones) {
-        json zj; zj["name"] = z.name();
-        zj["r"] = z.r; zj["g"] = z.g; zj["b"] = z.b;
-        zj["owner"] = z.owner();
-        BinaryPack::Writer bw;
-        bw.write(static_cast<uint32_t>(z.strokes.size()));
-        for (const auto& s : z.strokes) {
-            bw.write(s.r); bw.write(s.g); bw.write(s.b); bw.write(s.lineWidth);
-            bw.writeArray(s.points);
-        }
-        zj["strokesBinary"] = bw.toBinaryJson();
-        zj["world"] = z.world();
-        zj["formationRelations"] = z.formation().relations().toJson();
+        json zj; zj["name"] = z->name();
+        zj["owner"] = z->owner();
+        zj["world"] = z->world();
+        zj["formationRelations"] = z->formation().relations().toJson();
         zonesJson.push_back(zj);
     }
     j["zones"] = zonesJson;
@@ -388,35 +374,10 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
         if (j.contains("zones")) {
             for (const auto& zj : j["zones"]) {
                 std::string name = zj.value("name", "Untitled Zone");
-                Zone z(name, "strict");
-                z.r = zj.value("r", 0.05f);
-                z.g = zj.value("g", 0.05f);
-                z.b = zj.value("b", 0.1f);
-                z.setOwner(zj.value("owner", std::string{}));
-                if (zj.contains("strokesBinary")) {
-                    BinaryPack::Reader br(zj["strokesBinary"].get_binary());
-                    uint32_t numStrokes = br.read<uint32_t>();
-                    for (uint32_t i = 0; i < numStrokes; ++i) {
-                        Zone::Stroke s;
-                        s.r = br.read<float>();
-                        s.g = br.read<float>();
-                        s.b = br.read<float>();
-                        s.lineWidth = br.read<float>();
-                        br.readArray(s.points);
-                        z.strokes.push_back(std::move(s));
-                    }
-                } else if (zj.contains("strokes")) {
-                    for (const auto& sj : zj["strokes"]) {
-                        Zone::Stroke s;
-                        s.lineWidth = 1.0f;
-                        auto col = sj.value("color", std::vector<float>{1, 1, 1});
-                        if (col.size() >= 3) { s.r = col[0]; s.g = col[1]; s.b = col[2]; }
-                        s.points = sj.value("points", std::vector<float>{});
-                        z.strokes.push_back(std::move(s));
-                    }
-                }
+                auto z = std::make_shared<Zone>(name, "strict");
+                z->setOwner(zj.value("owner", std::string{}));
                 if (zj.contains("world")) {
-                    from_json(zj["world"], z.world());
+                    from_json(zj["world"], z->world());
                 }
                 if (zj.contains("formationRelations")) {
                     // MEMBERS BEFORE RELATIONS. Zone::syncFormationMembers does
@@ -427,15 +388,15 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
                     // again. Every world loaded from disk came up with set-to-set
                     // grouping already broken. The objects exist now — say so
                     // before the bonds between them are read.
-                    z.syncFormationMembers();
+                    z->syncFormationMembers();
                     size_t refused = 0;
                     for (const auto& relJson : zj["formationRelations"]) {
-                        if (!z.formation().add(std::make_shared<Relation>(Relation::fromJson(relJson)))) {
+                        if (!z->formation().add(std::make_shared<Relation>(Relation::fromJson(relJson)))) {
                             ++refused;
                         }
                     }
                     if (refused > 0) {
-                        std::cout << "⚠️  Zone '" << z.name() << "': " << refused
+                        std::cout << "⚠️  Zone '" << z->name() << "': " << refused
                                   << " saved formation relation(s) were REFUSED on load "
                                   << "(self-ground or a directed cycle). They are not in "
                                   << "the formation and will not be written back on the "
@@ -448,7 +409,7 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
         }
 
         if (zonesVec.empty()) {
-            zonesVec.push_back(Zone("Default Zone", "default"));
+            zonesVec.push_back(std::make_shared<Zone>("Default Zone", "default"));
         }
         // Home survives every load
         ensureHomeZone(ctx.player->getIdentifier());
@@ -563,7 +524,7 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
         // Build report
         std::size_t objectCount = 0;
         for (const auto& zone : _zones) {
-            objectCount += zone.world().getOwnedObjects().size();
+            objectCount += zone->world().getOwnedObjects().size();
         }
         std::size_t authoredCount = 0;
         for (const auto& law : ctx.lawManager->getAll()) {

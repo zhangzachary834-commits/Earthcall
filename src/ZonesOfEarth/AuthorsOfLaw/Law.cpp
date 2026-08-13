@@ -356,6 +356,8 @@ Law::ApplicationResult Law::applyTo(Singular& target) {
         result = ApplicationResult::AuthorityDenied;
     } else if (violatesKernelBoundary) {
         result = ApplicationResult::AuthorityDenied;
+    } else if (_jurisdiction && !_jurisdiction->getFormation().hasMember(&target)) {
+        result = ApplicationResult::AuthorityDenied;
     } else if (!conditionsSatisfied(target)) {
         result = ApplicationResult::ConditionsFailed;
         ECA::LawAuditLogger::instance().log("LAW", "Law \"" + getIdentifier() + "\" applied to \"" + target.getIdentifier() + "\" - CONDITIONS FAILED", {

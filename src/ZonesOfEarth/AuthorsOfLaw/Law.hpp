@@ -5,7 +5,9 @@
 #include "ConstructedBeing/Object/Object.hpp"
 #include "Relation/Relation.hpp"
 #include "Relation/RelationManager.hpp"
+#include "../Physics/Physics.hpp"
 #include "ConstructedBeing/Singular/Singular.hpp"
+#include "../Zone/Zone.hpp"
 #include "ECA.hpp"
 #include "ConditionModel.hpp"
 #include "ActionModel.hpp"
@@ -100,6 +102,9 @@ public:
 
     const std::string& name() const { return _name; }
     void setName(const std::string& name);
+
+    std::shared_ptr<Zone> jurisdiction() const { return _jurisdiction; }
+    void setJurisdiction(std::shared_ptr<Zone> zone) { _jurisdiction = std::move(zone); }
 
     bool isEnabled() const { return _enabled; }
     void setEnabled(bool enabled) { _enabled = enabled; }
@@ -370,6 +375,7 @@ private:
     int _authorityLevel = 0;
     Activation _activation = Activation::OnEvent;
     Scope _scope = Scope::Subject;
+    std::shared_ptr<Zone> _jurisdiction;
     bool _drives = false;
     Retrigger _retrigger = Retrigger::Absorb;
     std::unordered_map<std::string, bool> _conditionMemory;   // edge detection

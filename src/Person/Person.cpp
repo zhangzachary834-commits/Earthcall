@@ -477,7 +477,7 @@ void Person::logout(const std::string& sessionId) {
 // it as the event OBJECT — "@event.object.owner" etc. testify in laws.
 static Zone* zoneByName(const std::string& zoneName) {
     for (auto& z : mgr.zones()) {
-        if (z.name() == zoneName) return &z;
+        if (z->name() == zoneName) return z.get();
     }
     return nullptr;
 }
