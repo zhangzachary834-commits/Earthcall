@@ -54,13 +54,14 @@ int main() {
         const auto tone = everywhere(
             OntoMath::ScalarForm::sinusoid(0.8, a440, 0.0, 0.0, "t"), "t");
 
-        std::size_t undefined = 0, clamped = 0;
+        Core::Audio::SoundingReport report;
         const auto samples =
-            Core::Audio::renderForm(tone, "t", 0.25, rate, {}, &undefined, &clamped);
+            Core::Audio::renderForm(tone, "t", 0.25, rate, {}, &report);
 
         assert(samples.size() == static_cast<std::size_t>(0.25 * rate));
-        assert(undefined == 0);
-        assert(clamped == 0);
+        assert(report.undefinedSamples == 0);
+        assert(report.clampedSamples == 0);
+        assert(!report.refused);
 
         // Every sample is the authored function at that instant.
         for (std::size_t i = 0; i < samples.size(); i += 137) {
@@ -85,22 +86,22 @@ int main() {
             OntoMath::ScalarForm::sinusoid(0.5, 220.0, 0.0, 0.0, "t"));
         halfWritten.pieces.push_back(piece);
 
-        std::size_t undefined = 0;
+        Core::Audio::SoundingReport report;
         const auto samples =
-            Core::Audio::renderForm(halfWritten, "t", 0.2, 1000, {}, &undefined);
+            Core::Audio::renderForm(halfWritten, "t", 0.2, 1000, {}, &report);
         assert(samples.size() == 200);
         // t = 0.1 is INSIDE the piece (bounds are inclusive by default), so
         // 101 samples are written and 99 are not. The boundary is counted the
         // way the author wrote it, not rounded to the convenient number.
-        assert(undefined == 99);
+        assert(report.undefinedSamples == 99);
         assert(samples[150] == 0.0f);    // silent there, and the count says why
 
         // A model with no pieces says nothing anywhere: every sample silent,
         // every sample counted as undefined rather than reported as a signal.
-        std::size_t allUndefined = 0;
+        Core::Audio::SoundingReport muteReport;
         const auto mute =
-            Core::Audio::renderForm(OntoMath::Piecewise{}, "t", 0.1, 1000, {}, &allUndefined);
-        assert(mute.size() == 100 && allUndefined == 100);
+            Core::Audio::renderForm(OntoMath::Piecewise{}, "t", 0.1, 1000, {}, &muteReport);
+        assert(mute.size() == 100 && muteReport.undefinedSamples == 100);
     }
 
     // =====================================================================
@@ -108,13 +109,16 @@ int main() {
     //    is reported rather than hidden.
     // =====================================================================
     {
-        const auto loud = everywhere(OntoMath::ScalarForm::constant(4.0), "t");
-        std::size_t undefined = 0, clamped = 0;
-        const auto samples =
-            Core::Audio::renderForm(loud, "t", 0.01, 1000, {}, &undefined, &clamped);
-        assert(samples.size() == 10);
-        assert(clamped == 10);
-        assert(near(samples[0], 1.0));
+        // Loud, but ABOVE the infrasound floor — clamping a 440 Hz tone to
+        // [-1, 1] squares it off; it does not push energy under the floor.
+        const auto loud = everywhere(
+            OntoMath::ScalarForm::sinusoid(4.0, 440.0, 0.0, 0.0, "t"), "t");
+        Core::Audio::SoundingReport report;
+        const auto samples = Core::Audio::renderForm(loud, "t", 0.05, 48000, {}, &report);
+        assert(!samples.empty());
+        assert(!report.refused);
+        assert(report.clampedSamples > samples.size() / 2);   // most of a squared-off sine
+        assert(near(std::fabs(samples[24]), 1.0));
     }
 
     // =====================================================================

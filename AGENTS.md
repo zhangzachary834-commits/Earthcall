@@ -107,13 +107,13 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
 
 cmake --build build --target earthcall -j8
 cmake --build build -j8                               # tests are NOT built by the line above
-ctest --test-dir build --output-on-failure -j4        # 39 registered; see below
+ctest --test-dir build --output-on-failure -j4        # 40 registered; see below
 ```
 
 **`--target earthcall` does not build the tests.** `ctest` will then report every test as
 `Not Run`, which reads like a mass failure and is not one. Build the default target first.
 
-**As of 2026-08-12, 26 of 39 tests pass.** Twelve fail to compile and one aborts; all
+**As of 2026-08-12, 27 of 40 tests pass.** Twelve fail to compile and one aborts; all
 thirteen are broken at HEAD, not by local edits. The compile failures are stale tests
 still referencing fields the Directory-refactoring commit removed — `basic_cube_law_test`
 wants `Person::activeTool`, `active3DMode`, `activeShapeKind`, `placementMode`,
@@ -179,6 +179,12 @@ compile errors — `--check` reports them in its error tally regardless.
   higher one; it will be clamped, and the attempt is what gets noticed.
 - **Edges, not levels.** Events are past-tense `noun-verbed` and publish on transitions. A
   per-frame "still happening" event is a bug — that is what `WhileTrue` is for.
+- **Kernel guards on the body are not settings.** A modality channel that reaches a
+  Person's body enforces its Person guards in C++, unconditionally — no parameter, no flag,
+  and never as law text, which could be authored away. The audio channel's infrasound floor
+  (`ONTOMATH_FRAMEWORK.md` §7a) is the worked example: it refuses and says which frequency,
+  rather than silently filtering a Person's mathematics. Guards constrain the path to the
+  body, never the mathematics — a Person may still author and integrate a 7 Hz field.
 - **Say what you made.** If you write into a save file, or generate beings directly, tell
   the Person which file and which beings, and who is recorded as their author. This is the
   one rule with no technical enforcement at all.

@@ -120,12 +120,29 @@ int main() {
     // The same object, read by the audio channel.
     // ------------------------------------------------------------------
     std::printf("\n=== read as SOUND (the same astDefinition) ===\n");
-    std::size_t undefined = 0, clamped = 0;
+    Core::Audio::SoundingReport report;
     const auto chord =
-        Core::Audio::renderForm(arch.astDefinition, "t", 2.0, rate, {}, &undefined, &clamped);
+        Core::Audio::renderForm(arch.astDefinition, "t", 2.0, rate, {}, &report);
     std::printf("  %zu samples, %zu undefined, %zu clamped\n",
-                chord.size(), undefined, clamped);
+                chord.size(), report.undefinedSamples, report.clampedSamples);
+    std::printf("  lowest authored component: %.1f Hz; infrasonic RMS %.2e (ceiling %.2f)\n",
+                report.lowestAuthoredHz, report.infrasonicRms,
+                Core::Audio::kInfrasonicRmsCeiling);
     writeWav("scratch/vault.wav", chord, rate);
+
+    // The same channel, asked to sound a 7 Hz tone. It refuses — and the
+    // refusal is not a setting anyone can reach.
+    std::printf("\n=== the infrasound floor ===\n");
+    Core::Audio::SoundingReport blocked;
+    const auto felt = Core::Audio::renderForm(
+        everywhere(OntoMath::ScalarForm::sinusoid(0.9, 7.0, 0.0, 0.0, "t"), "t"),
+        "t", 1.0, rate, {}, &blocked);
+    std::printf("  7 Hz sine  -> %zu samples\n  %s\n", felt.size(), blocked.refusal.c_str());
+
+    Core::Audio::SoundingReport dc;
+    const auto offset = Core::Audio::renderForm(
+        everywhere(OntoMath::ScalarForm::constant(0.8), "t"), "t", 1.0, rate, {}, &dc);
+    std::printf("  DC offset  -> %zu samples\n  %s\n", offset.size(), dc.refusal.c_str());
 
     // ------------------------------------------------------------------
     // Read backwards. dy/dt = cos t, so y(t) = sin t; stand the world at

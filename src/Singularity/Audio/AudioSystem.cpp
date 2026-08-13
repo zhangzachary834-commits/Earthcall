@@ -324,7 +324,9 @@ void AudioSystem::playProceduralCollisionSound(const glm::vec3& position, const 
 
     frequency *= dopplerFactor;
 
-    if (frequency < 20.0) frequency = 20.0;
+    // The same infrasound floor renderForm enforces, on the path that HAS a
+    // frequency to clamp. One constant, so the two cannot drift apart.
+    if (frequency < kAudibleFloorHz) frequency = kAudibleFloorHz;
     if (frequency > 20000.0) frequency = 20000.0;
 
     if (amplitude > 1.0) amplitude = 1.0;
@@ -393,17 +395,244 @@ void AudioSystem::playProceduralCollisionSound(const glm::vec3& position, const 
 // no frequency, no wave type, no envelope preset. The authored expression IS
 // the waveform, sampled.
 // ---------------------------------------------------------------------------
+namespace {
+
+constexpr double kTau = 6.283185307179586476925286766559;
+
+// The lowest frequency one TERM actually produces.
+//
+// A TransFactor is kind(scale·var + shift), and OntoMath::sinusoid builds its
+// scale as 2π·frequency, so each factor's frequency is scale/2π exactly. But a
+// term is a PRODUCT of factors, and a product is not a mixture: by the
+// product-to-sum identities, sin(a)·sin(b) is energy at |a−b| and a+b, and at
+// neither a nor b. So the frequencies a term can reach are the combinations
+// ±f₁±f₂…±fₙ, and the lowest of those in absolute value is the one that
+// matters here.
+//
+// This is what separates a 2 Hz MODULATOR — sin(440t)·sin(2t), an ordinary
+// tremolo whose energy sits at 438 and 442 Hz — from 2 Hz CONTENT. It also
+// catches the reverse, which a per-factor reading would miss entirely:
+// sin(440t)·sin(430t) has all its factors comfortably audible and puts a
+// 10 Hz difference tone into the room.
+double lowestFrequencyOfTerm(const OntoMath::Term& term, const std::string& var) {
+    std::vector<double> frequencies;
+    for (const auto& factor : term.trans) {
+        if (factor.variable != var) continue;
+        if (factor.kind != OntoMath::TransFactor::Kind::Sin &&
+            factor.kind != OntoMath::TransFactor::Kind::Cos) {
+            continue;
+        }
+        const double hz = std::fabs(factor.scale) / kTau;
+        if (hz > 0.0) frequencies.push_back(hz);
+    }
+    if (frequencies.empty()) return 0.0;
+
+    // 2^n sign choices. Deeply nested products are not something an author
+    // writes by hand, and past the ceiling the measurement pass is the honest
+    // instrument anyway — so refuse to enumerate rather than take all day.
+    constexpr std::size_t kMaxFactors = 12;
+    if (frequencies.size() > kMaxFactors) return 0.0;
+
+    double lowest = -1.0;
+    const std::size_t combinations = std::size_t(1) << frequencies.size();
+    for (std::size_t mask = 0; mask < combinations; ++mask) {
+        double sum = 0.0;
+        for (std::size_t i = 0; i < frequencies.size(); ++i) {
+            sum += (mask & (std::size_t(1) << i)) ? -frequencies[i] : frequencies[i];
+        }
+        const double magnitude = std::fabs(sum);
+        if (lowest < 0.0 || magnitude < lowest) lowest = magnitude;
+    }
+    return lowest < 0.0 ? 0.0 : lowest;
+}
+
+// The lowest sinusoid in one ScalarForm, read straight off the text — no
+// spectrum estimation anywhere in the path. Terms whose coefficient is too
+// small to reach the body are skipped.
+double lowestSinusoidIn(const OntoMath::ScalarForm& form, const std::string& var,
+                        double minCoefficient) {
+    double lowest = 0.0;
+    for (const auto& term : form.terms) {
+        if (std::fabs(term.coefficient) < minCoefficient) continue;
+        const double hz = lowestFrequencyOfTerm(term, var);
+        if (hz <= 0.0) continue;
+        if (lowest == 0.0 || hz < lowest) lowest = hz;
+    }
+    return lowest;
+}
+
+void walkForLowest(const OntoMath::MathNode& node, const std::string& var,
+                   double minCoefficient, double& lowest) {
+    if (node.op == OntoMath::MathNode::Op::ScalarLeaf) {
+        const double hz = lowestSinusoidIn(node.scalarForm, var, minCoefficient);
+        if (hz > 0.0 && (lowest == 0.0 || hz < lowest)) lowest = hz;
+    }
+    for (const auto& child : node.children) {
+        if (child) walkForLowest(*child, var, minCoefficient, lowest);
+    }
+}
+
+// Where the MEASUREMENT band ends, which is deliberately not where the
+// doctrine line sits. Any Butterworth passes -3 dB at its own corner, so a
+// filter cornered at 20 Hz reads a legitimate 20-25 Hz bass note as half
+// infrasonic and the guard would refuse real music. The corner therefore sits
+// below the line, and the two passes divide the work:
+//
+//   * an authored SINUSOID anywhere below 20 Hz is caught exactly, by reading
+//     the text — no filter is involved and none of this applies;
+//   * the filter is the backstop for energy the text cannot describe (DC, a
+//     ramp, a step train, a fold), and it is aimed at the deep band where the
+//     physiological effects and the cone-destroying excursion actually live.
+//
+// Measured behaviour of the cascade below, on a 0.9-amplitude tone: DC through
+// 18 Hz is refused on energy alone, and 19.9 Hz upward passes. So the two
+// passes together leave no gap — the text-reader covers every authored
+// sinusoid below 20 Hz exactly, and the filter covers everything else down to
+// within a hair of the same line, without touching real bass.
+constexpr double kInfrasonicMeasureHz = 12.0;
+
+// One 2nd-order low-pass section, Direct Form I.
+struct Biquad {
+    double b0 = 0, b1 = 0, b2 = 0, a1 = 0, a2 = 0;
+
+    static Biquad lowPass(double cutoffHz, double sampleRate, double q) {
+        Biquad section;
+        const double w = kTau * cutoffHz / sampleRate;
+        const double cosw = std::cos(w);
+        const double alpha = std::sin(w) / (2.0 * q);
+        const double a0 = 1.0 + alpha;
+        section.b0 = ((1.0 - cosw) * 0.5) / a0;
+        section.b1 = (1.0 - cosw) / a0;
+        section.b2 = section.b0;
+        section.a1 = (-2.0 * cosw) / a0;
+        section.a2 = (1.0 - alpha) / a0;
+        return section;
+    }
+
+    void run(std::vector<double>& signal) const {
+        double x1 = 0, x2 = 0, y1 = 0, y2 = 0;
+        for (double& sample : signal) {
+            const double x0 = sample;
+            const double y0 = b0 * x0 + b1 * x1 + b2 * x2 - a1 * y1 - a2 * y2;
+            x2 = x1; x1 = x0;
+            y2 = y1; y1 = y0;
+            sample = y0;
+        }
+    }
+};
+
+}   // namespace
+
+double measureInfrasonicRms(const std::vector<float>& samples, int sampleRate) {
+    if (samples.empty() || sampleRate <= 0) return 0.0;
+
+    const auto rms = [](const std::vector<double>& signal) {
+        double sum = 0.0;
+        for (const double sample : signal) sum += sample * sample;
+        return std::sqrt(sum / static_cast<double>(signal.size()));
+    };
+
+    std::vector<double> band(samples.begin(), samples.end());
+    const double fs = static_cast<double>(sampleRate);
+
+    const double denominator = static_cast<double>(band.size() - 1);
+    const auto hann = [denominator](std::size_t i) {
+        return 0.5 * (1.0 - std::cos(kTau * static_cast<double>(i) / denominator));
+    };
+
+    // One cycle of the measurement corner is the shortest buffer in which
+    // sub-corner content is even a meaningful question — a filter cannot see a
+    // period it never contains. Below that the only honest low-frequency
+    // statistic is the offset, which is also the one that matters, since a
+    // short buffer's dangerous failure mode is DC holding the cone off centre.
+    //
+    // Weighted by the same window, deliberately. A raw mean of a short slice
+    // is dominated by whichever partial cycle the slice happens to end on, so
+    // an ordinary 110 Hz blip reads as a DC offset it does not have; weighting
+    // suppresses the ragged edges while leaving a true offset untouched.
+    const std::size_t cycle = static_cast<std::size_t>(fs / kInfrasonicMeasureHz);
+    if (band.size() <= cycle) {
+        if (band.size() < 2) return std::fabs(band.front());
+        double weighted = 0.0, weight = 0.0;
+        for (std::size_t i = 0; i < band.size(); ++i) {
+            weighted += hann(i) * band[i];
+            weight += hann(i);
+        }
+        return weight > 0.0 ? std::fabs(weighted / weight) : 0.0;
+    }
+
+    // Taper the buffer to zero at both ends before filtering (Hann). A buffer
+    // is a slice out of a longer sound, and its abrupt edges are an artifact
+    // of the slicing, not content: fed to a filter starting from rest, that
+    // step injects far more low-frequency energy than the signal contains —
+    // enough to read a clean 25 Hz bass note as infrasound. Reflecting the
+    // edges instead is worse, because reflecting about a non-zero endpoint
+    // lays down a DC pedestal the filter then smears back inward. A window
+    // MODULATES rather than adds, so a 4 kHz tone stays at 4 kHz and a DC
+    // offset stays at DC — which is exactly the distinction being measured.
+    for (std::size_t i = 0; i < band.size(); ++i) band[i] *= hann(i);
+
+    // Isolate the deep band. Two Butterworth sections (4th order) run forward
+    // and then backward — zero phase, 8th order effective, ~48 dB/octave — so
+    // a 25 Hz bass note is not mistaken for infrasound and a 7 Hz one cannot
+    // slip through a gentle rolloff. Doubles throughout: a 12 Hz corner at
+    // 48 kHz has coefficients far too small to survive in float.
+    const Biquad first = Biquad::lowPass(kInfrasonicMeasureHz, fs, 0.541196100146197);
+    const Biquad second = Biquad::lowPass(kInfrasonicMeasureHz, fs, 1.306562964876377);
+    for (const Biquad& section : {first, second}) {
+        section.run(band);
+        std::reverse(band.begin(), band.end());
+        section.run(band);
+        std::reverse(band.begin(), band.end());
+    }
+
+    // The window removed a known fraction of the signal's power (a Hann window
+    // has coherent power 3/8), so put it back — the answer must be the band's
+    // RMS in the original signal, not in the windowed copy.
+    constexpr double kHannPowerGain = 0.6123724356957945;   // sqrt(3/8)
+    return rms(band) / kHannPowerGain;
+}
+
+double lowestAuthoredFrequency(const OntoMath::Piecewise& form,
+                               const std::string& timeVariable,
+                               double minCoefficient) {
+    double lowest = 0.0;
+    for (const auto& piece : form.pieces) {
+        if (piece.mathNode) {
+            walkForLowest(*piece.mathNode, timeVariable, minCoefficient, lowest);
+        }
+    }
+    return lowest;
+}
+
 std::vector<float> renderForm(const OntoMath::Piecewise& form,
                               const std::string& timeVariable,
                               double seconds,
                               int sampleRate,
                               const std::map<std::string, double>& constants,
-                              std::size_t* undefinedSamples,
-                              std::size_t* clampedSamples) {
+                              SoundingReport* report) {
+    SoundingReport local;
+    SoundingReport& out = report ? *report : local;
+    out = SoundingReport{};
+
     std::vector<float> samples;
-    if (undefinedSamples) *undefinedSamples = 0;
-    if (clampedSamples) *clampedSamples = 0;
     if (seconds <= 0.0 || sampleRate <= 0) return samples;
+
+    // ------------------------------------------------------------------
+    // The floor, first pass: read the TEXT. An authored infrasonic sinusoid
+    // is refused before a single sample exists, and named exactly, because
+    // the waveform is symbolic rather than sampled.
+    // ------------------------------------------------------------------
+    out.lowestAuthoredHz = lowestAuthoredFrequency(form, timeVariable);
+    if (out.lowestAuthoredHz > 0.0 && out.lowestAuthoredHz < kAudibleFloorHz) {
+        out.refused = true;
+        out.refusal = "refused: the model authors a " +
+                      std::to_string(out.lowestAuthoredHz) +
+                      " Hz component, below the " + std::to_string(kAudibleFloorHz) +
+                      " Hz floor of human hearing. This channel does not sound "
+                      "infrasound; the mathematics is untouched.";
+        return samples;
+    }
 
     const std::size_t count =
         static_cast<std::size_t>(seconds * static_cast<double>(sampleRate));
@@ -424,15 +653,37 @@ std::vector<float> renderForm(const OntoMath::Piecewise& form,
         const auto value = form.evaluate(vars, nullptr);
         double amplitude = 0.0;
         if (!value || !propertyValueToNumber(*value, amplitude)) {
-            if (undefinedSamples) ++*undefinedSamples;
+            ++out.undefinedSamples;
             samples.push_back(0.0f);
             continue;
         }
         if (amplitude > 1.0 || amplitude < -1.0) {
-            if (clampedSamples) ++*clampedSamples;
+            ++out.clampedSamples;
             amplitude = amplitude > 1.0 ? 1.0 : -1.0;
         }
         samples.push_back(static_cast<float>(amplitude));
+    }
+
+    // ------------------------------------------------------------------
+    // The floor, second pass: measure what was actually produced. The
+    // symbolic pass sees sinusoids; this sees EVERYTHING — a DC offset, a
+    // slow ramp, a piecewise step train, a recursive function call, a fold
+    // over the world. Whatever the author's route to the speaker, the energy
+    // below the floor is measured on the samples themselves, so nothing
+    // reaches a Person's body by being authored in a form the text-reader
+    // could not interpret.
+    // ------------------------------------------------------------------
+    out.infrasonicRms = measureInfrasonicRms(samples, sampleRate);
+    if (out.infrasonicRms > kInfrasonicRmsCeiling) {
+        out.refused = true;
+        out.refusal = "refused: the rendered signal carries " +
+                      std::to_string(out.infrasonicRms) +
+                      " RMS below the " + std::to_string(kAudibleFloorHz) +
+                      " Hz floor of human hearing (ceiling " +
+                      std::to_string(kInfrasonicRmsCeiling) +
+                      "). This channel does not sound infrasound; the "
+                      "mathematics is untouched.";
+        samples.clear();
     }
     return samples;
 }
@@ -446,9 +697,13 @@ bool AudioSystem::playForm(const OntoMath::Piecewise& form,
     if (!_initialized || !_state) return false;
 
     const ma_uint32 sampleRate = _state->engine.pDevice->sampleRate;
+    SoundingReport report;
     auto* samples = new std::vector<float>(renderForm(
-        form, timeVariable, seconds, static_cast<int>(sampleRate), constants));
+        form, timeVariable, seconds, static_cast<int>(sampleRate), constants, &report));
     if (samples->empty()) {
+        // The floor refuses out loud. A guard that stops a Person's authored
+        // sound without saying so is indistinguishable from a broken channel.
+        if (report.refused) std::cerr << "AudioSystem::playForm " << report.refusal << std::endl;
         delete samples;
         return false;
     }
