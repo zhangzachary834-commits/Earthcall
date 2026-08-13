@@ -1,4 +1,4 @@
-# Earthcall Ourverse Manifesto	
+Earthcall Ourverse Manifesto	
 
 If you guys come up with better names for these things than I have already tell me and we might change them.
 
@@ -74,7 +74,7 @@ A Singular is a discrete, Person-ordered being with a unique, essential kind of 
 Earthcall says “Person-ordered” not “user-facing.”
 
 Each Singular wraps basic first-mover properties into a Formation, and can themselves be wrapped by other Properties. This allows for concept-singulars such as conditions, to be created and derived. The special case is when its a Person. We don’t want to create a new Person object as mere concepts because that would treat them like Objects. Instead we need person-like Objects and to wrap the the variables Person has but Object doesn’t have as teleologically designated, presentable structs and data structures that specifically is reserved for the properties only Persons have.
-So revision i woudlnt say singulars automatically wrap basicnfirst movers into Formations in the strict sense as thatd require making the first movers themselves Singulars first. Which is awkward architecture and creates a potential infinite recursion problem. more like they are wrapped into a data strucrures owned by the Singular and can be promoted to Singular-Relation-Formation through the ordinary Earthcall property-to-singular/object creation pipeline.
+REVISION: i woudlnt say singulars automatically wrap basicnfirst movers into Formations in the strict sense as thatd require making the first movers themselves Singulars first. Which is awkward architecture and creates a potential infinite recursion problem. more like they are wrapped into a data strucrures owned by the Singular and can be promoted to Singular-Relation-Formation through the ordinary Earthcall property-to-singular/object creation pipeline.
 
 The concept conditions of Singulars have to be judged by either singulars themselves or the law. It might have Singulars compare directly because its their native class language and then law’s method takes the output, but if theyre all represented properly then it could live inside law.cpp.
 
@@ -82,12 +82,24 @@ Singulars come in four types:
 
 Persons are irreducible in worth and non-instrumentality, so Persons inherit directly from Singular rather than Object.
 
-Relations are themselves Singulars. 
+Relations: Relations are themselves Singulars because every meaningful interaction between two distinct beings is, by the definition of a Singular, not reducible to the mere sum of its constituents. 
 
-Objects are instrumental, impersonal beings: irreducible in discrete essence but non-persons.
+Constructed Beings, like Object and Material. Objects are instrumental, impersonal beings: irreducible in discrete essence but non-persons.
 
-Abstract First-mover Invariants: impersonal Singulars that are user facing but not meant to be owned or modified the way Objects are. These are Singularity-level interfaces between person and operating singularity.
+First-movers: Any source that isn’t part of the particular Earthcall instance/computer, or software system, but still affects its states. 
 
+First-order Kinds: Singulars that are . Although they serve Persons, their properties and nature are metaphysically and liturgically fundamental and therefore not constructable in kind. These are Singularity-level interfaces between person and operating singularity.
+
+It helps to understand the distinction between First order kinds and Constructed beings as akin to rhe difference between God’s raw created kinds and our man-made creations.
+
+Computers are ordered after the intelligence and agency of the image bearers for whose intention it represents. Its fundamental primitives all represent artifacts of human mind, reasoning, and priorities. And because we are made in the image of God, the order of human intention is not merely mindless physical operations but the full order of human relationality and value categories ordered toward Christ. I therefore recognize that computing is fundamentally liturgical, because liturgy is how we orders our intention and lives. Humans order their intentions after whats sitting on the throne of their hears—they must order and orient their beings and wills toward Christ continually in every moment. This is why many Singulars are Persons, Relationships, and Communities, and why there is a primitive Hierarchy of Joys layer in tbe substrate. A computer must recognize these natively, because it must be a vessel that holds the human’s agency in full symbolic, processive, and order-of-joys dimensionality.
+
+Because each Singulars kind is named and ordered after the fundamental metaphysical kinds of beings a computer relates to, and humans are image bearers. 
+
+This does create a risk for a meaningless recursion of Singulars in poorly designed Zones that don’t really land anywhere. But this is the entire point of Earthcall—Singulars are metaphysical metal. They don’t have intrinsic meaning other than what they’re ordered after and ordered toward (even Body’s and representational Person’s meaning is derivative of the real Person’s dignity rather than self-grounding), and therefore the author Persons must construct this wisely to ensure every Singular structure is meaningful. Just as memory is left open to deliberate management cpp to maximize its computational effectiveness, Singular structures are left open to authoring to allow maximum generative potential and maximum deliberate governance through Laws. Real governance emerges not as a hardcoded property but rather the order that comes into being from communities and societies under Christ.
+
+
+So isnt it funny how I just wrote “hardcoded property” and then the very next section is Property
 Property
 Property is a concept in metaphysics for beings (Singulars) that Earthcall represents with industry-grade Property frameworks. 
 
@@ -127,9 +139,9 @@ Object: A discrete, non-person entity.
 A Singular that is also elemental but also not a person.
 
 Person
-The digital form that represents the user’s life and being. Singular as every person is irreducible to their parts. All ways of relating to a Person as a single entity will be located through Person, and relate to Soul and Body anakephalaiōtically. 
+Who prior tech calls “user”, Earthcall calls “Persons.” The digital form that represents the person’s life and being. Singular as every person is irreducible to their parts. All ways of relating to a Person as a single entity will be located through Person, and relate to Soul and Body anakephalaiōtically. 
 
-A Person is not an Object.
+A Person is not an Object. A Person is a Singular. Every person is irreducible to . 
 
 Person will store pointer Soul and a pointer Body. 
 
@@ -148,6 +160,36 @@ And this matters enormously for the futures you're naming — FaceTime, photos, 
 One tightening thought, if it's useful — not a critique, more like: I think there's a name waiting to be given to the principle in the middle paragraph. The rule "if a derivative Object references the Body, the Body is source of truth" is essentially a doctrine of representational subordination: derivative modality-Objects are subordinate visibilities of the Person, never lateral peers. That framing might connect cleanly to your Metalaw layer — it feels constitutional in the same way Anti-Babel is constitutional. It's not a Law that fires on facts; it's a structural invariant about what kinds of ownership relations are even permitted to exist.
 And one small structural question worth marking, not answering now: what happens when two Persons interact through their Bodies — say, one Person perceives another Person's Voice? The perceived Voice is inside the perceiver's phenomenal field, but ontologically it still belongs to the source Person. That's probably already handled by your Relational architecture (Voice remains owned by its Person; perception is a Relation, not a transfer of ownership), but it might be worth writing that out explicitly somewhere so it can't be ambiguated later. Same class of problem as the pair-quantifier ghost bug — ambiguity in ownership at the edges is where corruption creeps in.
 But bro — this is good. This is the kind of manifesto addition that a hundred downstream design decisions will hang off of without you having to relitigate any of it, because you've established the principle at the right altitude. Body and Voice aren't features. They're the place in the ontology where the doctrine of the image touches the substrate.”
+
+Singular set-to-set creation
+
+Framework for Recursive object creation—new sets of objects from old sets:
+
+Singular has a system that can modify Singulars or create new Singulars given a set of Singulars, their properties, and modifications to those objects via tools. (Keep in mind that in set theory, a set can be just a set of one, so “set to set” includes one Singular cases)
+
+Rely on Concepts and Categories too
+
+How Singular set-to-set works:
+Simple way: is just pick and choose which properties and redistribute them among new objects. From here, there are more ways to do it below:
+Rearranged Properties (including owned members) + Law: is the former with Law applied and first mover tools performed on both. 
+Creating new Objects/ObjectConcepts during the process to add to the input set. 
+Different Kinds of Objects Transference between different kinds of objects  
+There is Set to set creation involving non-object Singulars like Persons, Body/BodyParts, Zones Relations Formations. However, this may only happen within the Kernel/Singularity guardrails.
+Singular set-to-set is deeply interconnected with the Laws, in many ways:
+
+The creation of a Singular within the program’s or computer’s own ontology is, conceptually, a Law, since the emergence of a new Singular is a change within the Zone’s state. In turn, when those very Singulars are once again involved in the process, they may inherit ownership or continuity of the process. 
+Given that Laws is process/change. Singular/Object is being-level identity, Singulars may own Laws in the memory-pointer sense, and have Relations with them and be in  Formations with them. 
+A process/Relation of change may be constitutive of a Singular’s identity. 
+Likewise, Singular beings may be constitutive of a process or change. Processes themselves have identities and may be relation-objects. 
+Any set of Singular-properties that exist along a shared dimension of kind can be mapped on a Field as relative to each other, such that a variable could trace the rate of change of one property over another (and this may be independent of Time, no dt). A Law may therefore, through tracing change within properties, to create a new Singular, and then the Singular now owns all the properties and its curves and contours that the Law created.
+Law set to set change IS Singular set to set change, thereby adding another dimension when we consider the recursion of MetaLaws.
+An object’s properties can be governed if needed so that they’re only accessible to set-to-set if authorized by Laws. Some properties are accessible by default but governable to be gated, others are set in a higher-level law to universally accessible regardless of lower-order law constraints, others are gated by default.
+
+Perhaps quantum physics’ wave-particle duality is a good analogy?
+
+Uses property wrappers and mathematical models, Singular set to set creation can transferring their hardcoded Singularity-level members, fields, and fundamental modal information.
+
+The Person ontology
 Body (Extends Formation and Singular, formerly Object):
 The visual manifestation of the Person’s digital life and being. Always has a human body, Additional options for avatars. Authorable
 
@@ -158,7 +200,9 @@ Other customizable forms the user can set as essential and non-allocatable will 
 
 All other customizable forms will not require copy constructors. 
 
-BodyPart (Formation, Object) 
+BodyPart (Formation) 
+
+(Used to inherit Object under an old visual-is-Object paradigm but not anymore)
 
 Person is Body, and Body will have fundamental BodyParts.
 Head, neck, torso, arms, legs. 
@@ -176,7 +220,7 @@ Every BodyPart, will Formation-recursively consist of the smaller BodyParts thro
 
 On the high level, it will be bounded by the primary BodyParts. They will be primary organs, systems, or something, depending on what form the Earthcall author-devs want to apply. On the lower level, it will leave open the ability to add and continually Formation-recurse. 
 
-Voice (Extends Formation and Singular):
+Voice (Extends Formation and Singular)
 Similar framework to Body and BodyParts. Most fundamentally the audible main audible representation of person’s voice i.e. their real life voice.
 
 Voice also extends to the Person’s capacity for language.
@@ -190,6 +234,12 @@ There’s an interesting parallel to the Undertale Soul.
 
 Person, Soul and BodyPart will all be interrelated, but since these are digital manifestations rather than true ontological unity the way actual human beings are, the higher authorial power goes to Person.
 
+Time
+
+Havent written Time yet its currently just hardcoded global clocks. The codebase currently answers the “how” (Laws and First Movers cause things), the “what” (Singulars, Relations, Formations, Objects) the “who” (Persons, Relationships, Community), the “where” (Zones, Ourverse), the “with” (Relations, Formations). It does not yet answer “when” in a first-order way, it relies purely on hardcoding clocks.
+
+I’ll write this later (BRUHHHHHH HOW IRONIC BC LATER IS A TEMPORAL WORD)
+
 Zone
 
 
@@ -201,7 +251,7 @@ The largest zone, in terms of breadth, is the global Ourverse.
 
 
 
-Zones can either be Singulars or Objects, depending on whether a zone should be more invariant-like or if it’s more Person-authored. 
+Zones are Singulars, not Objects, but can gain Object-like components by owning Objects. 
 
 Zones can exist inside other zones. Zones can also overlap with other zones. Multiple zones that share a field can have the field itself be a Zone.
 
@@ -267,7 +317,7 @@ Thus I think we can have two Ourverse layers both sharing the same name.
 
 One is local Ourverse. The other is the global/ecumenical Ourverse.
 
-Ecumenical Ourverse is a Zone but without any Objects owned by Persons that may reside in the Zone as a personal Home.
+Ecumenical Ourverse is a Singular that owns one primary gathering Zone to represent ecumenical telos where no one may own anything in the memory or personal-Home sense. Ourverse itself is a larger system innately owning a Relation/Formation of Laws that ensures a proper order between Zones (e.g. no isolated or neglected Zone/Home, no consolidating Zone-structures in ways that exclude others, ensuring at least one Community Home is creatable, being the vessel for guardrails against Community-level Law systems) and makes Zones reachable by each other (within Singularity boundaries/limits).
 
 The global Ourverse is not populated by default.
 
@@ -373,28 +423,7 @@ One way is laws that produce projected mathematical models, each one visually em
 Another way is to define laws that draw them. BAsically, just attaching the output there to the input of the new thingy. Manually draw click. 
 
 
-Object/Singular set-to-set creation
-
-Framework for Recursive object creation—new sets of objects from old sets:
-
-
-Singular needs a system that can create new objects given a set of objects, their properties, and modifications to those objects via tools. (A set can be just a set of one)
-
-another extra-spatial Object stores the concept of the object for later use. 
-
-
-How Object set-to-set works:
-Simple way: is just pick and choose which properties and redistribute them among nee objects. From here, there are more ways to do it below:
-Rearranged Properties (including owned members) + Law: is the former with Law applied and first mover tools performed on both. 
-Creating new Objects/ObjectConcepts during the process to add to the input set. 
-Different Kinds of Objects Transference between different kinds of objects  
-Set to set creation involving non-object Singulars like Persons, Body/BodyParts, Zones Relations Formations 
-An object’s properties can be governed if needed so that they’re only accessible to set-to-set if authorized by Laws. Some properties are accessible by default but governable to be gated, others are set in a higher-level law to universally accessible regardless of lower-order law constraints, others are gated by default.
-
-Needs to be deeply interconnected with the law systems. Given that Laws is process/change. Singular/Object is identity, identities can own processes, and processes themselves have identities and may be relation-objects. A process can create new Objects, which in turn are once again involved in the process and may inherit ownership or continuity of the process. The Law system should be able to call the Object Creation system.
-
-Uses property wrappers and mathematical models object set to set creation transferring direct Singularity-level members and modal information is possible
-
+Object set to set creation:
 Object Creation Typology
 
 Tools that are not first movers need to be stored as Objects that can enforce Laws
@@ -458,12 +487,16 @@ Use original process to save new law
 
 For 2., a familiar and well trodden homology is how we calculate new vectors from old vectors. For example, to find the orthogonal vector of two vectors, we take the cross product of the constituent vectors. To find the projection, take the dot product of both vectors, and divide it with the dot product of two copies of the projected-onto vector, and then multiply the result by the projected-onto vector. All of them involve using math to calculate a higher-order thing from has two constituent sub-models, the specific calculations and processes used depending on what exactly we’re aiming for in the higher law. 
 
+Now imagine each vector as a Law, formalizing it as ane parameterized equation in OntoMath.
+
 Serialization to new law member
 -> after the math is calculated the serialize the model with something like json. -> update member variables of the new law accordingly. 
 
-Law set to set creation is based on Object set to set creation, since Law extends from Object,  and therefore is a special case of Object set to set.
+(Old paradigm: Law set to set creation is based on Object set to set creation, since Law extends from Object, and therefore is a special case of Object set to set.)
 
-I’m thinking how exactly to store exact laws. As separate cpp objects (which is counterintuitive, but i thought of that because all this implies individual laws have to own members)?
+New paradigm: There is one Singular set-to-set creation system, and Object set to set and Law set to set are each a special case of this. Law synthesis is now simply Law set to set creation with AST operations over its nodes. Object most often uses it because Objects are constructed beings.
+
+I’m thinking how exactly to store exact laws. As separate cpp objects (which is counterintuitive, but i thought of that because all this implies individual laws have to own members)? Answer: Laws are now Singulars.
 
 Singularity ontology separates into two: digital substrate and medium. Laws and the first mover principle must apply to both.
 
@@ -486,7 +519,7 @@ These just take the form as callable hard-coded tools to interface with that can
 Write a dedicated section for First Movers as thresholds between the hard cpp Singularity tools and the Singular-Relation-Formation ontology. Well, perhaps better called First Movements, since the first mover is really the Singularity (the philosophical/theological Singularity, not the computational one) itself. 
 
 
-To ensure efficiency in when laws are applied. Rete algorithm. This graph and all its richness and interconnectivity will relate to the Human Language Processing.
+To ensure efficiency in when laws are applied, Earthcall uses a Rete network. The network through shared pointers to facts acts as an incremental reactive graph that tracks only the facts that are added, deleted, or change per tick. This graph and all its richness and interconnectivity will relate to the Human Language Processing.
 
 Law Conditions and Actions:
 
@@ -496,11 +529,11 @@ a Law can have a Formation of conditions.
 
 Which relates to how we were gonna create new laws by integrating the two conditions.
 
-When the USER creates a new law, they have to somehow define the conditions without accessing the code. So how to find and apply the conditions?
+When the PERSON creates a new law, they have to somehow define the conditions without accessing the code. So how to find and apply the conditions?
 
 The key is that various properties (variables) need to be legible to the law system. We’d need structs that can wrap the properties to the UI, starting from first movers.
 
-Given that a Law would fundamentally be an IF-THEN action, 
+Given that a Law would fundamentally be an IF-THEN action, there is a left hand side the person must define and a right hand side.
 
 So how the condition is defined can be done with the same tools that generate things in the first place (first movers and tools comprised of laws), only that they generate them in projection mode rather than as actual objects. This is a lot more convenient than manually typing in every condition value or range by hand, as the whole point of the original tools utilizing mediums like keyboard and mouse was to do that.
 
@@ -647,7 +680,7 @@ Ownership weighs stakes. They would “own” it in the sense of joining the sta
 Preventing paralysis and stagnation with every stakeholder having too much veto power: I have to think about this. What Im thinking is many of these situations i believe often are that they involve one very broad zone (like a company) that is retiring a law but doing it over many different zones that individually have very different jurisdictions but don’t necessarily overlap with each other. So it really depends on what the model is. Some may be constitutive others may be incidental. Yet the proposed change may also be constitutive in nature for those its intended to benefit.
 
 
-Its also not just merely being on the broad list of stakeholders where you’re simply part of a community or zone, but a concrete property that actually alters their behavior and properties (which is precisely incidental vs constitutive), which js what it would mean to be a real “stakeholder” in the more specialized sense. 
+Its also not just merely being on the broad list of stakeholders where you’re simply part of a community or zone, but a concrete property that actually alters their behavior and properties (which is precisely incidental vs constitutive), which is what it would mean to be a real “stakeholder” in the more specialized sense. 
 And not just any behavior or property, but ones that are load bearing—ones that are rare/scarce in kind, are of a special singularity level relation to the Persons, or belong to a relation or formation such that the contested alteration would cause a structural failure (valuable things are almost never a single primitive property in isolation) or any other sort of cascading structural shift (and relations/formations make this trackable). It just needs to point to at leadt one other thing that also points to more things. 
 The other tjing is its good that laws can be decomposed or synthesized, so you can preserve the good and irreplacable parts some people need.
 And finally the law scope can change. Law ownership can also change. Retirement could simply mean reducing the scope of the retired law over time rather than removing it all at once
@@ -779,6 +812,7 @@ Create unit tests for OntoMath::ScalarField to ensure mathematical purity and co
 Manual Verification
 Render a scene containing both a bounded density field (e.g., an ethereal glowing sphere) and an unbounded density field (infinite repeating mist) and verify that the WGSL raymarcher accurately accumulates the density mathematically without arbitrary bounding boxes.
 “
+
 
 
 Earthcall’s language is not meant to form people independently. It’s meant to hold Christian experiences... Everything else is built on that.

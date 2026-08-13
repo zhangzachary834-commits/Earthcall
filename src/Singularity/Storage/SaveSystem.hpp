@@ -53,7 +53,14 @@ nlohmann::json readSaveData(const std::string& filepath);
 // Get save type folder name
 std::string getSaveTypeFolderName(SaveType type);
 
+// Unpack a monolithic JSON save into individual files in a directory
+void unpackSaveToDirectory(const nlohmann::json& j, const std::string& directoryPath);
 
+// Compile an unpacked directory back into a monolithic JSON save
+nlohmann::json compileSaveFromDirectory(const std::string& directoryPath);
+
+// Check if an unpacked directory exists and has been modified since the monolithic file was saved
+bool isUnpackedDirectoryNewer(const std::string& directoryPath, const std::string& monolithicFilePath);
 
 // Create backup of existing save
 std::string createBackup(const std::string& originalFile, SaveType type = SaveType::GAME);

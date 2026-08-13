@@ -297,6 +297,11 @@ void ZoneManager::saveStateWithLog(const std::string& customName, SaveContext& c
         }
     }
     SaveSystem::writeSaveDataAsync(j, actualName, SaveSystem::SaveType::GAME);
+    if (ctx.unpackForAuthoring) {
+        std::string gameFolder = SaveSystem::ensureSaveTypeFolder(SaveSystem::SaveType::GAME);
+        std::string unpackedPath = gameFolder + "/" + actualName + "_unpacked";
+        SaveSystem::unpackSaveToDirectory(j, unpackedPath);
+    }
     
     // Phase 4: Save dirty delta chunk as FlatBuffers
     std::vector<uint8_t> deltaChunk = buildSaveChunkFlatBuffer();
@@ -351,7 +356,19 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
     };
     try {
         using json = nlohmann::json;
-        json j = SaveSystem::readSaveData(filename);
+        json j;
+        
+        std::string gameFolder = SaveSystem::ensureSaveTypeFolder(SaveSystem::SaveType::GAME);
+        std::string unpackedPath = gameFolder + "/" + name + "_unpacked";
+        if (SaveSystem::isUnpackedDirectoryNewer(unpackedPath, filename)) {
+            j = SaveSystem::compileSaveFromDirectory(unpackedPath);
+            // Overwrite the monolithic file and its delta chunk to ensure they match
+            SaveSystem::writeSaveDataAsync(j, name, SaveSystem::SaveType::GAME);
+            std::cout << "[load] Compiled newer unpacked directory back into monolithic save.\n";
+        } else {
+            j = SaveSystem::readSaveData(filename);
+        }
+        
         if (j.is_null()) {
             _saveLoad.lastLoadReport = "COULD NOT OPEN OR READ: " + filename;
             std::cerr << "Could not open or read " << filename << "\n";

@@ -24,4 +24,5 @@ struct SaveContext {
     Person*       player       = nullptr;
     LawManager*   lawManager   = nullptr;
     double*       worldTime    = nullptr;
+    bool          unpackForAuthoring = false;
 };

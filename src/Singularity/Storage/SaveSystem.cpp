@@ -590,4 +590,136 @@ std::string mergeAndSaveFiles(const std::string& file1, const std::string& file2
     return writeSaveData(merged, label, type);
 }
 
+void unpackSaveToDirectory(const nlohmann::json& j, const std::string& directoryPath) {
+    std::error_code ec;
+    std::filesystem::create_directories(directoryPath, ec);
+    std::filesystem::create_directories(directoryPath + "/objects", ec);
+    
+    nlohmann::json meta = j;
+    if (meta.contains("objects")) {
+        const auto& objects = meta["objects"];
+        for (const auto& obj : objects) {
+            std::string objId = "unknown";
+            if (obj.contains("identifier")) {
+                objId = obj["identifier"].get<std::string>();
+            } else if (obj.contains("id")) {
+                objId = obj["id"].get<std::string>();
+            }
+            std::string objPath = directoryPath + "/objects/object_" + sanitizeLabel(objId) + ".json";
+            std::ofstream objFile(objPath);
+            if (objFile.is_open()) {
+                objFile << std::setw(2) << obj << std::endl;
+            }
+        }
+        meta.erase("objects");
+    }
+    
+    if (meta.contains("authoredLaws") && meta["authoredLaws"].contains("laws")) {
+        std::filesystem::create_directories(directoryPath + "/authored_laws", ec);
+        const auto& laws = meta["authoredLaws"]["laws"];
+        for (const auto& law : laws) {
+            std::string lawId = "unknown";
+            if (law.contains("identifier")) {
+                lawId = law["identifier"].get<std::string>();
+            } else if (law.contains("id")) {
+                lawId = law["id"].get<std::string>();
+            }
+            std::string lawPath = directoryPath + "/authored_laws/law_" + sanitizeLabel(lawId) + ".json";
+            std::ofstream lawFile(lawPath);
+            if (lawFile.is_open()) {
+                lawFile << std::setw(2) << law << std::endl;
+            }
+        }
+        meta["authoredLaws"].erase("laws");
+    }
+    
+    std::string metaPath = directoryPath + "/world_meta.json";
+    std::ofstream metaFile(metaPath);
+    if (metaFile.is_open()) {
+        metaFile << std::setw(2) << meta << std::endl;
+    }
+}
+
+nlohmann::json compileSaveFromDirectory(const std::string& directoryPath) {
+    std::string metaPath = directoryPath + "/world_meta.json";
+    std::ifstream metaFile(metaPath);
+    nlohmann::json j;
+    if (metaFile.is_open()) {
+        try {
+            metaFile >> j;
+        } catch (...) {
+            std::cerr << "[SaveSystem] Failed to parse world_meta.json\n";
+        }
+    }
+    
+    nlohmann::json objects = nlohmann::json::array();
+    std::string objectsDir = directoryPath + "/objects";
+    std::error_code ec;
+    if (std::filesystem::exists(objectsDir, ec)) {
+        for (const auto& entry : std::filesystem::directory_iterator(objectsDir, ec)) {
+            if (entry.path().extension() == ".json") {
+                std::ifstream objFile(entry.path());
+                if (objFile.is_open()) {
+                    try {
+                        nlohmann::json objJson;
+                        objFile >> objJson;
+                        objects.push_back(objJson);
+                    } catch (...) {
+                        std::cerr << "[SaveSystem] Failed to parse object JSON: " << entry.path().string() << "\n";
+                    }
+                }
+            }
+        }
+    }
+    
+    j["objects"] = objects;
+    
+    if (j.contains("authoredLaws")) {
+        nlohmann::json laws = nlohmann::json::array();
+        std::string lawsDir = directoryPath + "/authored_laws";
+        if (std::filesystem::exists(lawsDir, ec)) {
+            for (const auto& entry : std::filesystem::directory_iterator(lawsDir, ec)) {
+                if (entry.path().extension() == ".json") {
+                    std::ifstream lawFile(entry.path());
+                    if (lawFile.is_open()) {
+                        try {
+                            nlohmann::json lawJson;
+                            lawFile >> lawJson;
+                            laws.push_back(lawJson);
+                        } catch (...) {
+                            std::cerr << "[SaveSystem] Failed to parse authored law JSON: " << entry.path().string() << "\n";
+                        }
+                    }
+                }
+            }
+        }
+        j["authoredLaws"]["laws"] = laws;
+    }
+    
+    return j;
+}
+
+bool isUnpackedDirectoryNewer(const std::string& directoryPath, const std::string& monolithicFilePath) {
+    std::error_code ec;
+    if (!std::filesystem::exists(directoryPath, ec) || !std::filesystem::exists(monolithicFilePath, ec)) {
+        return false;
+    }
+    
+    auto monolithicTime = std::filesystem::last_write_time(monolithicFilePath, ec);
+    if (ec) return false;
+    
+    auto getNewestTime = [](const std::string& path) -> std::filesystem::file_time_type {
+        std::filesystem::file_time_type newest = std::filesystem::file_time_type::min();
+        std::error_code ec;
+        for (const auto& entry : std::filesystem::recursive_directory_iterator(path, ec)) {
+            auto time = std::filesystem::last_write_time(entry.path(), ec);
+            if (!ec && time > newest) newest = time;
+        }
+        return newest;
+    };
+    
+    auto dirNewestTime = getNewestTime(directoryPath);
+    return dirNewestTime > monolithicTime;
+}
+
 } // namespace SaveSystem 

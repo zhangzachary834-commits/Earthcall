@@ -3,8 +3,11 @@
 #include "Singularity/Foreign/SecurityManager.hpp"
 #include "../json.hpp"
 #include "Singularity/Storage/SaveSystem.hpp"
+#include "ZonesOfEarth/ZoneManager.hpp"
 #include <imgui.h>
 #include <iostream>
+
+extern ZoneManager mgr;
 
 namespace Integration {
 
@@ -162,6 +165,16 @@ void IntegrationManager::renderIntegrationUI() {
         
         if (ImGui::BeginTabItem("🔒 Security")) {
             _renderSecuritySettings();
+            ImGui::EndTabItem();
+        }
+        
+        if (ImGui::BeginTabItem("💾 Data & Saves")) {
+            auto& sl = mgr.getSaveLoadState();
+            ImGui::Checkbox("Unpack Saves for Authoring (JSON)", &sl.unpackForAuthoring);
+            if (ImGui::Button("Quick Save (Requires Engine Restart to Recompile)")) {
+                // To do this cleanly, we need SaveContext from the caller, but here we can just set the flag
+                // and let the next save use it.
+            }
             ImGui::EndTabItem();
         }
         

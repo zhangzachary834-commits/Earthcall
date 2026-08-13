@@ -15,6 +15,7 @@ struct SaveLoadState {
     std::string lastLoadReport;
     std::string loadedSaveName;
     std::string saveDirectory = "saves/games/";
+    bool unpackForAuthoring = false;
 };
 
 class ZoneManager {
