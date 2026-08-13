@@ -1,4 +1,4 @@
-#include "Util/Frontier.hpp"
+#include "Singularity/Storage/Frontier.hpp"
 #include <cassert>
 #include <cstdio>
 #include <string>

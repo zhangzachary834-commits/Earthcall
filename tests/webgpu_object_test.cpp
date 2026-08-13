@@ -11,11 +11,12 @@
 // texture upload goes through the Renderer boundary, so selecting the WebGPU
 // backend first means Object construction never calls into OpenGL.
 
+#include "ConstructedBeing/Material/MaterialManager.hpp"
 #include "ConstructedBeing/Object/Object.hpp"
 #include "ConstructedBeing/Object/Geometry/Sdf.hpp"
-#include "Rendering/Renderer.hpp"
-#include "Rendering/WebGPU/WebGpuRenderer.hpp"
-#include "Rendering/WebGPU/WgpuDevice.hpp"
+#include "Singularity/Screen/Renderer.hpp"
+#include "Singularity/Screen/WebGPU/WebGpuRenderer.hpp"
+#include "Singularity/Screen/WebGPU/WgpuDevice.hpp"
 
 #include <webgpu/wgpu.h>
 #include <glm/glm.hpp>
@@ -25,6 +26,8 @@
 #include <cstdlib>
 #include <cstdio>
 #include <vector>
+
+extern MaterialManager materials;   // global Material beings (globals.cpp)
 
 namespace {
 
@@ -104,10 +107,14 @@ int main() {
     const glm::mat4 view3d = glm::lookAt(eye, glm::vec3(0.0f), glm::vec3(0, 1, 0));
 
     // --- The actual subject: an Object painted red, drawn the way the app draws it.
+    // setFaceColor paints the object's OWN material — the first stroke
+    // diverges it from the shared material.default it was referencing, which
+    // is what makes "this object is red and that one is green" possible at
+    // all now that the per-face textures live on the Material being.
     Object cube;
-    cube.setGeometryType(Object::GeometryType::Cube);
-    for (size_t f = 0; f < cube.faceTextures.size(); ++f)
-        cube.fillFaceColor(static_cast<int>(f), 1.0f, 0.0f, 0.0f); // pure red paint
+    cube.setShapeKind(Object::ShapeKind::Cube);
+    for (int f = 0; f < cube.getFaces(); ++f)
+        cube.setFaceColor(f, 1.0f, 0.0f, 0.0f); // pure red paint
 
     renderer.setCamera(view3d, proj, eye);
     renderer.setModel(glm::mat4(1.0f));
@@ -132,9 +139,9 @@ int main() {
     // surface were tinted red by some shared state; this pins the paint to the
     // object. It also catches the per-draw texture upload leaking between draws.
     Object green;
-    green.setGeometryType(Object::GeometryType::Cube);
-    for (size_t f = 0; f < green.faceTextures.size(); ++f)
-        green.fillFaceColor(static_cast<int>(f), 0.0f, 1.0f, 0.0f);
+    green.setShapeKind(Object::ShapeKind::Cube);
+    for (int f = 0; f < green.getFaces(); ++f)
+        green.setFaceColor(f, 0.0f, 1.0f, 0.0f);
 
     renderer.setModel(glm::mat4(1.0f));
     renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
@@ -147,12 +154,20 @@ int main() {
     assert(q[1] > q[0] + 40 && q[1] > q[2] + 40 &&
            "second object did not get its own paint — albedo is shared or stale");
 
-    // An UNPAINTED cube is not white: initFaceTextures seeds a per-face palette
-    // (faces 0-1 red, 2-3 green, 4-5 blue), and the camera faces the +Z face. So
-    // the expected default here is blue — assert that rather than "not red",
-    // which would depend on face ordering.
+    // An UNPAINTED object has no face textures at all — paint lives on the
+    // Material being, and an object that has never been painted is still
+    // sharing one rather than owning one. What it shows is that material's
+    // baseColor, so assert THAT: give it a material tinted blue and read blue
+    // back. (It used to seed a per-face RGB palette on construction; that
+    // palette was a debug default which no longer has anywhere to live now
+    // that a material is shared by name, and an object which shows its
+    // material's colour is the more truthful default anyway.)
+    auto tint = materials.create("webgpu_object_tint");
+    tint->baseColor = glm::vec3(0.1f, 0.1f, 0.9f);
+
     Object plain;
-    plain.setGeometryType(Object::GeometryType::Cube);
+    plain.setShapeKind(Object::ShapeKind::Cube);
+    plain.setMaterialId("material.webgpu_object_tint");
     renderer.setModel(glm::mat4(1.0f));
     renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
     plain.drawObject();
@@ -160,12 +175,20 @@ int main() {
 
     unsigned char d[4];
     readCentre(d);
-    std::printf("default cube centre = (%d,%d,%d,%d)\n", d[0], d[1], d[2], d[3]);
+    std::printf("unpainted cube centre = (%d,%d,%d,%d)\n", d[0], d[1], d[2], d[3]);
     assert(d[2] > d[0] + 40 && d[2] > d[1] + 40 &&
-           "default face palette did not reach WebGPU (+Z face should be blue)");
+           "material baseColor did not reach WebGPU (+Z face should be blue)");
     // The original bug's signature: an all-white surface has r == g == b.
     assert(!(abs(int(d[0]) - int(d[1])) < 12 && abs(int(d[1]) - int(d[2])) < 12) &&
-           "surface is grey — albedo fell back to the 1x1 white texture");
+           "surface is grey — the material's colour never reached the shader");
+
+    // And painting it now DIVERGES it: the shared tint is untouched afterwards,
+    // which is the whole promise of copy-on-write over a shared being.
+    plain.setFaceColor(0, 1.0f, 0.0f, 0.0f);
+    assert(plain.materialId() != "material.webgpu_object_tint" &&
+           "painting an object must give it its own material, not repaint the shared one");
+    assert(tint->faceTextures.empty() &&
+           "the shared material took paint meant for one object");
 
     // Unhook before the renderer (a stack object) goes out of scope: globals such
     // as ZoneManager are destroyed after main returns and can still reach for the
@@ -183,6 +206,10 @@ int main() {
 
         Object field;
         field.setFieldShape(sphere, 1.0f);
+        // Painted explicitly: a field is one face, and nothing gives an object
+        // paint it was not given any more, so the colour under test has to be
+        // put there rather than inherited from a construction-time palette.
+        field.setFaceColor(0, 1.0f, 0.0f, 0.0f);
 
         renderer.setModel(glm::mat4(1.0f));
         renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
@@ -195,8 +222,8 @@ int main() {
     std::printf("field centre        = (%d,%d,%d,%d)  corner = (%d,%d,%d,%d)\n",
                 f0[0], f0[1], f0[2], f0[3], fcorner[0], fcorner[1], fcorner[2], fcorner[3]);
     assert(f0[0] > 30 && "raymarched field produced no surface at the centre");
-    // A field's default face-0 paint is RED, and tessellateSdf samples one texel,
-    // so the raymarched surface must be red too — not white. This is the check
+    // The field's face-0 paint is RED, and tessellateSdf samples one texel, so
+    // the raymarched surface must be red too — not white. This is the check
     // that catches a field silently changing colour with the backend.
     assert(f0[0] > f0[1] + 30 && f0[0] > f0[2] + 30 &&
            "field ignored its face paint — raymarch and mesh paths disagree on colour");

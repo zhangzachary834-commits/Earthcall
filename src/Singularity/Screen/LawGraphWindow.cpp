@@ -18,6 +18,75 @@
 
 namespace Rendering {
 
+// Declared in the header and deliberately OUTSIDE the anonymous namespace:
+// this list is the substrate's advertised vocabulary, and an entry that no
+// registry actually answers is a path the authoring window offers a Person and
+// their law then silently ignores. That is not a hypothetical — "activeShapeKind"
+// sat on this list unregistered, so every law reading it fell back without a
+// word. `channel_paths_test` walks these entries against live beings.
+const std::vector<PathOption>& knownPathOptions() {
+    static std::vector<PathOption> options;
+    if (options.empty()) {
+        static Object objectPrototype;   // registry probes (window renders in-app)
+        for (Property* property : objectPrototype.listProperties()) {
+            const PropertyValue probe = property->value();
+            const bool isVec = std::holds_alternative<glm::vec3>(probe);
+            const char* group = property->name().rfind("shape.", 0) == 0
+                                    ? "Object — shape"
+                                : property->name().rfind("face.", 0) == 0
+                                    ? "Object — surface (faces)"
+                                    : "Object — spatial";
+            // The label beside each path is what tells the author what the
+            // property HOLDS. Splitting only vec3 from "everything else is a
+            // number" told them `material` and `textString` were numbers and
+            // `transform` was one too — the Law loop below already classifies
+            // properly, and this is the same treatment.
+            const char* type = "number";
+            if (isVec)                                             type = "vector";
+            else if (std::holds_alternative<glm::mat4>(probe))      type = "transform";
+            else if (std::holds_alternative<std::string>(probe))    type = "text";
+            else if (std::holds_alternative<bool>(probe))           type = "toggle";
+            options.push_back({property->name(), group, type, isVec});
+            if (isVec) {
+                options.push_back({property->name() + ".x", group, "number", false});
+                options.push_back({property->name() + ".y", group, "number", false});
+                options.push_back({property->name() + ".z", group, "number", false});
+            }
+        }
+        static Law lawPrototype("prototype");
+        for (Property* property : lawPrototype.listProperties()) {
+            const char* type = "number";
+            if (std::holds_alternative<bool>(property->value())) type = "toggle";
+            else if (std::holds_alternative<std::string>(property->value())) type = "text";
+            options.push_back({property->name(), "Law — governance (metalaws)", type, false});
+        }
+        // The world clock — Singularity owns time. Read-only; bind these as
+        // math variables to author change OVER TIME (position := f(t)).
+        options.push_back({"time", "Time — Universe (read-only)", "seconds", false});
+        options.push_back({"time.delta", "Time — Universe (read-only)", "seconds", false});
+        options.push_back({"time.sinceApplied", "Time — Universe (read-only)", "seconds", false});
+
+        // Person / Avatar properties
+        options.push_back({"position", "Person — avatar", "vector", true});
+        options.push_back({"position.x", "Person — avatar", "number", false});
+        options.push_back({"position.y", "Person — avatar", "number", false});
+        options.push_back({"position.z", "Person — avatar", "number", false});
+        options.push_back({"name", "Person — identity", "text", false});
+        options.push_back({"activeTool", "Channel — Creation", "text", false});
+        options.push_back({"cursorHitPos", "Channel — Creation", "vector", true});
+        options.push_back({"cursorHitPos.x", "Channel — Creation", "number", false});
+        options.push_back({"cursorHitPos.y", "Channel — Creation", "number", false});
+        options.push_back({"cursorHitPos.z", "Channel — Creation", "number", false});
+        options.push_back({"cursorHitNormal", "Channel — Creation", "vector", true});
+        options.push_back({"cursorHitNormal.x", "Channel — Creation", "number", false});
+        options.push_back({"cursorHitNormal.y", "Channel — Creation", "number", false});
+        options.push_back({"cursorHitNormal.z", "Channel — Creation", "number", false});
+        options.push_back({"cursorHoveredBodyPart", "Channel — Creation", "text", false});
+        options.push_back({"activeShapeKind", "Channel — Creation", "number", false});
+    }
+    return options;
+}
+
 namespace {
 
 // ---------------------------------------------------------------------------
@@ -175,65 +244,6 @@ constexpr int kEngineEventCount = sizeof(kEngineEvents) / sizeof(kEngineEvents[0
 // Every property path the substrate actually registers, probed live from the
 // registries and annotated with WHO owns it and WHAT it holds — the picker
 // tells you which Singular a path belongs to instead of leaving you to guess.
-struct PathOption {
-    std::string path;
-    const char* group;         // owning Singular + facet
-    const char* type;          // what the property holds
-    bool wholeVector = false;  // vec3 as a whole: numbers won't apply to it
-};
-
-const std::vector<PathOption>& knownPathOptions() {
-    static std::vector<PathOption> options;
-    if (options.empty()) {
-        static Object objectPrototype;   // registry probes (window renders in-app)
-        for (Property* property : objectPrototype.listProperties()) {
-            const bool isVec = std::holds_alternative<glm::vec3>(property->value());
-            const char* group = property->name().rfind("shape.", 0) == 0
-                                    ? "Object — shape"
-                                : property->name().rfind("face.", 0) == 0
-                                    ? "Object — surface (faces)"
-                                    : "Object — spatial";
-            options.push_back({property->name(), group,
-                               isVec ? "vector" : "number", isVec});
-            if (isVec) {
-                options.push_back({property->name() + ".x", group, "number", false});
-                options.push_back({property->name() + ".y", group, "number", false});
-                options.push_back({property->name() + ".z", group, "number", false});
-            }
-        }
-        static Law lawPrototype("prototype");
-        for (Property* property : lawPrototype.listProperties()) {
-            const char* type = "number";
-            if (std::holds_alternative<bool>(property->value())) type = "toggle";
-            else if (std::holds_alternative<std::string>(property->value())) type = "text";
-            options.push_back({property->name(), "Law — governance (metalaws)", type, false});
-        }
-        // The world clock — Singularity owns time. Read-only; bind these as
-        // math variables to author change OVER TIME (position := f(t)).
-        options.push_back({"time", "Time — Universe (read-only)", "seconds", false});
-        options.push_back({"time.delta", "Time — Universe (read-only)", "seconds", false});
-        options.push_back({"time.sinceApplied", "Time — Universe (read-only)", "seconds", false});
-
-        // Person / Avatar properties
-        options.push_back({"position", "Person — avatar", "vector", true});
-        options.push_back({"position.x", "Person — avatar", "number", false});
-        options.push_back({"position.y", "Person — avatar", "number", false});
-        options.push_back({"position.z", "Person — avatar", "number", false});
-        options.push_back({"name", "Person — identity", "text", false});
-        options.push_back({"activeTool", "Channel — Creation", "text", false});
-        options.push_back({"cursorHitPos", "Channel — Creation", "vector", true});
-        options.push_back({"cursorHitPos.x", "Channel — Creation", "number", false});
-        options.push_back({"cursorHitPos.y", "Channel — Creation", "number", false});
-        options.push_back({"cursorHitPos.z", "Channel — Creation", "number", false});
-        options.push_back({"cursorHitNormal", "Channel — Creation", "vector", true});
-        options.push_back({"cursorHitNormal.x", "Channel — Creation", "number", false});
-        options.push_back({"cursorHitNormal.y", "Channel — Creation", "number", false});
-        options.push_back({"cursorHitNormal.z", "Channel — Creation", "number", false});
-        options.push_back({"cursorHoveredBodyPart", "Channel — Creation", "text", false});
-        options.push_back({"activeShapeKind", "Channel — Creation", "number", false});
-    }
-    return options;
-}
 
 const PathOption* findPathOption(const std::string& path) {
     for (const auto& option : knownPathOptions()) {
@@ -484,6 +494,7 @@ void flattenAction(const ActionNode& node, std::vector<LawCard>& cards,
 }
 
 } // namespace
+
 
 std::vector<LawCard> flattenLaw(const Law& law, const std::string& eventBinding) {
     std::vector<LawCard> cards;

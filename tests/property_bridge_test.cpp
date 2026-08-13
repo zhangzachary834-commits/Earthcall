@@ -6,6 +6,7 @@
 // PropertyRef (center, shape.* params), arithmetic coercion, and clean
 // failure on unknown paths.
 
+#include "ConstructedBeing/Material/MaterialManager.hpp"
 #include "ConstructedBeing/Object/Object.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
 #include "Person/Person.hpp"
@@ -18,6 +19,8 @@
 #include <cassert>
 #include <cmath>
 #include <cstdio>
+
+extern MaterialManager materials;   // global Material beings (globals.cpp)
 
 int main() {
     // Object's constructor initializes face textures (GL calls), so give the
@@ -103,6 +106,15 @@ int main() {
 
         // 5b. The paintable skin, face by face: color per face, and the
         //     layer structure legible (buffers/strokes stay code-only).
+        //
+        //     The paint lives on the Material being the object names, so give
+        //     this object its OWN material rather than painting the shared
+        //     material.default out from under every other object. The face
+        //     bridges resolve through materialId at access time.
+        auto skin = materials.create("property_bridge_skin");
+        skin->initFaceTextures(6);
+        obj.setMaterialId("material.property_bridge_skin");
+
         assert(PropertyPath::parse("face.2.color").setValue(
             obj, PropertyValue(glm::vec3(1.0f, 0.0f, 0.5f))) == PropertyPath::PathResult::Ok);
         assert(std::fabs(obj.faceColors[2][2] - 0.5f) < 1e-5f);
@@ -116,8 +128,8 @@ int main() {
                     .setValue(obj, PropertyValue(128)) != PropertyPath::PathResult::Ok);   // structure: tools, not slots
         assert(PropertyPath::parse("face.0.layerCount").getValue(obj, out) == PropertyPath::PathResult::Ok);
         // Layer controls engage once a face actually has layers.
-        obj.faceTextures[0].addLayer();
-        obj.faceTextures[0].addLayer();
+        skin->faceTextures[0].addLayer();
+        skin->faceTextures[0].addLayer();
         assert(PropertyPath::parse("face.0.useLayers").setValue(obj, PropertyValue(true)) == PropertyPath::PathResult::Ok);
         assert(PropertyPath::parse("face.0.activeLayer").setValue(obj, PropertyValue(1)) == PropertyPath::PathResult::Ok);
         assert(PropertyPath::parse("face.0.layerOpacity").setValue(obj, PropertyValue(0.25f)) == PropertyPath::PathResult::Ok);

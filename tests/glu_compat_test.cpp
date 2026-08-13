@@ -8,7 +8,7 @@
 //   2. project matches a hand-computed result for a known simple projection,
 //      so the two functions can't be wrong in a way that cancels out.
 
-#include "Rendering/GL/GluCompat.hpp"
+#include "Singularity/Screen/GL/GluCompat.hpp"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>

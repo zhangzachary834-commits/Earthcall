@@ -31,6 +31,13 @@ void CreationChannel::buildProperties() {
         "activeTool", this, &CreationChannel::activeTool));
     _propertyRegistry.push_back(std::make_unique<PropertyRef<CreationChannel, std::string>>(
         "active3DMode", this, &CreationChannel::active3DMode));
+    // The selected shape kind is law-readable like the rest of the selection:
+    // ActionNode::spawn's spawnShapeKindPath points at it, and the authoring
+    // window already offers "activeShapeKind" as a Creation-channel path. The
+    // field was here but never registered, so every such law silently kept the
+    // concept's template kind instead of the author's live choice.
+    _propertyRegistry.push_back(std::make_unique<PropertyRef<CreationChannel, int>>(
+        "activeShapeKind", this, &CreationChannel::activeShapeKind));
     _propertyRegistry.push_back(std::make_unique<PropertyRef<CreationChannel, glm::vec3>>(
         "cursorHitPos", this, &CreationChannel::cursorHitPos));
     _propertyRegistry.push_back(std::make_unique<PropertyRef<CreationChannel, glm::vec3>>(

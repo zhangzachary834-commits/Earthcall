@@ -201,6 +201,67 @@ FaceAlbedo Object::faceAlbedo(size_t face) const {
     return FaceAlbedo{ft.id, ft.pixels.data(), ft.size};
 }
 
+// ---------------------------------------------------------------------------
+// Paint: copy-on-write over the shared Material beings. See the note on
+// Object::ownMaterial in Object.hpp for why this is not simply "paint the
+// material you reference".
+// ---------------------------------------------------------------------------
+#include "ConstructedBeing/Material/PaintToolSurface.hpp"
+
+std::shared_ptr<Material> Object::ownMaterial() {
+    const std::string ownName = getIdentifier();
+    const std::string ownId   = "material." + ownName;
+    if (_materialId == ownId) {
+        if (auto mine = materials.get(ownId)) return mine;
+    }
+
+    // Carry over the appearance of whatever was being shared, so the first
+    // stroke changes the paint and nothing else: an object painted while it
+    // wore material.clay stays clay-coloured under the new paint.
+    auto shared = materials.resolveOrDefault(_materialId);
+    auto mine = materials.create(ownName);
+    if (shared && shared.get() != mine.get()) {
+        mine->baseColor    = shared->baseColor;
+        mine->opacity      = shared->opacity;
+        mine->shininess    = shared->shininess;
+        mine->specular     = shared->specular;
+        mine->ambient      = shared->ambient;
+        mine->diffuse      = shared->diffuse;
+        mine->faceTextures = shared->faceTextures;
+        // The copies are this material's own paint now; a texture handle
+        // belongs to the buffer the backend uploaded, so let each re-upload
+        // rather than two materials sharing one handle.
+        for (FaceTexture& ft : mine->faceTextures) ft.id = 0;
+    }
+    _materialId = ownId;
+    return mine;
+}
+
+void Object::initFaceTextures() {
+    auto mine = ownMaterial();
+    if (!mine) return;
+    const int faces = getFaces() > 0 ? getFaces() : 1;
+    mine->initFaceTextures(faces);
+}
+
+void Object::setFaceColor(int faceIndex, float r, float g, float b) {
+    if (faceIndex >= 0 && faceIndex < 6) {
+        faceColors[faceIndex][0] = r;
+        faceColors[faceIndex][1] = g;
+        faceColors[faceIndex][2] = b;
+    }
+    auto mine = ownMaterial();
+    if (!mine) return;
+    // A face can only be painted once there is paint to put it on. The
+    // textures follow the geometry's face count, so seeding them here is what
+    // keeps a shape change from leaving stale faces behind.
+    const int faces = getFaces() > 0 ? getFaces() : 1;
+    if (static_cast<int>(mine->faceTextures.size()) != faces) {
+        mine->initFaceTextures(faces);
+    }
+    PaintToolSurface(*mine).fillFaceColor(faceIndex, r, g, b);
+}
+
 void Object::drawSmoothModel() const {
     currentRenderer().drawMesh(_smoothMesh, resolveRenderMaterial(_materialId, faceAlbedo(0)));
 }

@@ -594,7 +594,10 @@ void Tool::FacePaint(GLFWwindow *window, Core::Engine *engine, ZoneManager &mgr,
                 void* smudgeSettings = engine->getCurrentSmudgeSettings();
                 
                 bool success = false;
-                if (auto mat = materials.resolveOrDefault(hitObj->materialId())) {
+                // Paint the object's OWN material, not the shared one it is
+                // referencing: ownMaterial() diverges it on the first
+                // stroke so a brush touches this object and no other.
+                if (auto mat = hitObj->ownMaterial()) {
                     PaintToolSurface pts(*mat);
                     success = AdvancedFacePaint::paintFaceAdvanced(hitObj, hitFace, hitUV, 
                                                                       nullptr, nullptr);
@@ -608,7 +611,10 @@ void Tool::FacePaint(GLFWwindow *window, Core::Engine *engine, ZoneManager &mgr,
             else
             {
                 // Use basic fill for FacePaint click
-                if (auto mat = materials.resolveOrDefault(hitObj->materialId())) {
+                // Paint the object's OWN material, not the shared one it is
+                // referencing: ownMaterial() diverges it on the first
+                // stroke so a brush touches this object and no other.
+                if (auto mat = hitObj->ownMaterial()) {
                     PaintToolSurface pts(*mat);
                     pts.fillFaceColor(hitFace, engine->getCurrentColor(0), engine->getCurrentColor(1), engine->getCurrentColor(2));
                 }
@@ -682,7 +688,10 @@ void Tool::FacePaint(GLFWwindow *window, Core::Engine *engine, ZoneManager &mgr,
             }
 
             // Apply brush based on type
-            if (auto mat = materials.resolveOrDefault(hitObj->materialId())) {
+            // Paint the object's OWN material, not the shared one it is
+                // referencing: ownMaterial() diverges it on the first
+                // stroke so a brush touches this object and no other.
+                if (auto mat = hitObj->ownMaterial()) {
                 PaintToolSurface pts(*mat);
                 switch (0)
                 {

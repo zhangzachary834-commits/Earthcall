@@ -20,7 +20,7 @@
 #include "WebGpuRenderer.hpp"
 #include "WgpuDevice.hpp"
 #include "ConstructedBeing/Object/Geometry/SmoothSurface.hpp"
-#include "Rendering/RenderMaterial.hpp"
+#include "Singularity/Screen/RenderMaterial.hpp"
 
 #include <webgpu/webgpu.h>
 #include <webgpu/wgpu.h>

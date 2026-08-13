@@ -87,12 +87,11 @@ glm::mat4 BodyPart::getRaycastTransform() const {
 // Shape management
 // -----------------------------------------------------------------
 void BodyPart::setPrimaryShape(Object::ShapeKind gt) {
-    setShapeKind(gt);   // reinitialises faceTextures via Object
-    for (int f = 0; f < 6; ++f) {
-        faceColors[f][0] = color[0];
-        faceColors[f][1] = color[1];
-        faceColors[f][2] = color[2];
-    }
+    setShapeKind(gt);
+    // Through setFaceColor, which reinitialises this part's own material's
+    // face textures to the new shape's face count and paints them — the
+    // reinit that setShapeKind used to do while paint still lived on Object.
+    for (int f = 0; f < 6; ++f) setFaceColor(f, color[0], color[1], color[2]);
 }
 
 bool BodyPart::hasCustomTextures() const {
@@ -109,11 +108,7 @@ Object* BodyPart::addSubObject(Object::ShapeKind kind, const glm::mat4& localOff
     // obj->setOwnerBodyPart(this);
     glm::mat4 worldT = getTransform() * localOffset;
     obj->setTransform(worldT);
-    for (int f = 0; f < 6; ++f) {
-        obj->faceColors[f][0] = color[0];
-        obj->faceColors[f][1] = color[1];
-        obj->faceColors[f][2] = color[2];
-    }
+    for (int f = 0; f < 6; ++f) obj->setFaceColor(f, color[0], color[1], color[2]);
     Object* raw = obj.get();
     _subObjects.push_back(std::move(obj));
     _subObjectLocalOffsets.push_back(localOffset);

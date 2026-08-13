@@ -41,9 +41,15 @@ int main() {
 
     {
         // ------------------------------------------------------------------
-        // 1. The truthful surface: name, color, drawColor, scope, owner.
+        // 1. The truthful surface: name, scope, owner.
+        //
+        // Background tint, draw colour, brush radius and strokes were removed
+        // from Zone when the Zone system was rearchitected (3e6015e): they were
+        // the state of a drawing TOOL, not of a space that is its own object,
+        // and a Zone is not a canvas. What a Zone truthfully has is identity,
+        // reach and ownership — so that is what this section asserts.
         // ------------------------------------------------------------------
-        Zone home("Home", "default", 0.08f, 0.06f, 0.12f);
+        Zone home("Home", "default");
         home.setOwner("zack");
 
         PropertyValue v;
@@ -54,15 +60,16 @@ int main() {
         assert(PropertyPath::parse("scope").getValue(home, v) == PropertyPath::PathResult::Ok);
         assert(std::get<std::string>(v) == "Local");
 
-        // Background tint is writable — and r/g/b components resolve.
-        assert(PropertyPath::parse("color").setValue(
-            home, PropertyValue(glm::vec3(0.5f, 0.25f, 0.75f))) == PropertyPath::PathResult::Ok);
-        assert(nearf(home.r, 0.5f) && nearf(home.g, 0.25f) && nearf(home.b, 0.75f));
-        assert(PropertyPath::parse("color.g").getValue(home, v) == PropertyPath::PathResult::Ok);
-        double num = 0.0;
-        assert(propertyValueToNumber(v, num) && nearf(static_cast<float>(num), 0.25f));
-        assert(PropertyPath::parse("drawColor.r").setValue(home, PropertyValue(0.9f)) == PropertyPath::PathResult::Ok);
-        assert(nearf(home.drawR, 0.9f));
+        // A Zone's spatial mathematics is part of its surface: the fields it
+        // carries are addressable, which is what lets a law read the space
+        // itself rather than only the beings standing in it.
+        assert(PropertyPath::parse("spatialField").getValue(home, v) == PropertyPath::PathResult::Ok);
+        assert(PropertyPath::parse("spatialVectorField").getValue(home, v) == PropertyPath::PathResult::Ok);
+
+        // A tool's state is not a Zone's: the drawing surface Zone used to
+        // carry is gone, and asking for it must MISS rather than resolve.
+        assert(PropertyPath::parse("color").getValue(home, v) == PropertyPath::PathResult::NoSuchProperty);
+        assert(PropertyPath::parse("drawColor").getValue(home, v) == PropertyPath::PathResult::NoSuchProperty);
 
         // Identity and title are NOT slots: writes refuse.
         assert(PropertyPath::parse("name").setValue(home, PropertyValue(std::string("X"))) != PropertyPath::PathResult::Ok);
@@ -75,12 +82,15 @@ int main() {
         assert(copied.owner() == "zack");
 
         // ------------------------------------------------------------------
-        // 2. Kind precision: Zone is an Object (extra-spatial), and the
-        //    ontology can still tell zones apart.
+        // 2. Kind precision: a Zone is a Singular of its own kind, NOT an
+        //    Object. It descended from Object until the Zone rearchitecture
+        //    (3e6015e); a space is not a thing standing in space, so a
+        //    quantifier over Objects must no longer sweep up the zones the
+        //    objects are standing in.
         // ------------------------------------------------------------------
         Object plain;
         assert(ConditionNode::matchesKind(home, ConditionNode::BeingKind::Zone));
-        assert(ConditionNode::matchesKind(home, ConditionNode::BeingKind::Object));
+        assert(!ConditionNode::matchesKind(home, ConditionNode::BeingKind::Object));
         assert(!ConditionNode::matchesKind(plain, ConditionNode::BeingKind::Zone));
 
         // ------------------------------------------------------------------
@@ -106,9 +116,9 @@ int main() {
         assert(someZoneOwned(probe, plain));    // Home is zack's
         assert(!allZonesOwned(probe, plain));   // the Commons is nobody's
 
-        // @Home.color.r reads the named zone's tint from ANY subject.
-        assert(lawGetValue(plain, PropertyPath::parse("@Home.color.r"), v));
-        assert(propertyValueToNumber(v, num) && nearf(static_cast<float>(num), 0.5f));
+        // @Home.owner reads the named zone's owner from ANY subject.
+        assert(lawGetValue(plain, PropertyPath::parse("@Home.owner"), v));
+        assert(std::get<std::string>(v) == "zack");
 
         // ------------------------------------------------------------------
         // 4. Zone events testify: person-joined-zone carries the zone as

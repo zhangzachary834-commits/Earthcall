@@ -18,10 +18,10 @@
 // any real transcription error would move.
 
 #include "ConstructedBeing/Object/Geometry/Sdf.hpp"
-#include "Rendering/Renderer.hpp"
-#include "Rendering/RenderMaterial.hpp"
-#include "Rendering/WebGPU/WebGpuRenderer.hpp"
-#include "Rendering/WebGPU/WgpuDevice.hpp"
+#include "Singularity/Screen/Renderer.hpp"
+#include "Singularity/Screen/RenderMaterial.hpp"
+#include "Singularity/Screen/WebGPU/WebGpuRenderer.hpp"
+#include "Singularity/Screen/WebGPU/WgpuDevice.hpp"
 
 #include <webgpu/wgpu.h>
 #include <glm/glm.hpp>

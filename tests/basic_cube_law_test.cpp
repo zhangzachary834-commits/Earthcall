@@ -3,7 +3,7 @@
 //
 // Capabilities tested:
 // 1. Triggers on "onMouseClicked" event.
-// 2. Evaluates condition: player's activeTool == "ShapeGenerator3D" or "Custom Shape" or active3DMode == "Create".
+// 2. Evaluates condition: the creation channel's active3DMode == "Create".
 // 3. Placement Mode: "InFront" - places shape at cursorHitPos.
 // 4. Placement Mode: "CursorSnap" - snaps shape placement to gridSnapSize increments.
 // 5. Placement Mode: "ManualDistance" - places shape at cameraPos + cameraForward * manualDistance.
@@ -13,6 +13,7 @@
 #include "ConstructedBeing/Object/Creation/ObjectConcept.hpp"
 #include "ConstructedBeing/Object/Object.hpp"
 #include "Person/Person.hpp"
+#include "Singularity/Core/CreationChannel.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
@@ -20,6 +21,7 @@
 
 #include <GLFW/glfw3.h>
 #include <cassert>
+#include <algorithm>
 #include <cmath>
 #include <iostream>
 #include <memory>
@@ -71,16 +73,28 @@ int main() {
     }
     glfwMakeContextCurrent(window);
 
-    // 1. Setup World, Player (author), and Universe
+    // 1. Setup World, Player (author), creation channel, and Universe.
+    //
+    // The tool selection and the placement arithmetic are the state of the
+    // CREATION CHANNEL, not of the Person. They lived on Person until the
+    // refusals audit took them off (a Person is not a Person's tool); they are
+    // now `Singularity::Core::CreationChannel`, a First Mover under
+    // Singularity/ whose fields are registered properties, so the law text
+    // below reads exactly the same paths it always read — only the being those
+    // paths are addressed against has changed. Person keeps cameraPos and
+    // cameraForward, which are facts about where the Person is looking from.
     World world;
     Soul soul("Player");
     Body body("humanoid", "default");
     Person player(std::move(soul), std::move(body), "default");
     player.position = glm::vec3(0.0f, 1.0f, 0.0f);
 
+    Singularity::Core::CreationChannel channel;
+
     Universe::instance().setProvider([&](std::vector<Singular*>& beings) {
         beings.push_back(&world);
         beings.push_back(&player);
+        beings.push_back(&channel);
         for (const auto& obj : world.getOwnedObjects()) {
             if (obj) beings.push_back(obj.get());
         }
@@ -138,12 +152,12 @@ int main() {
 
     // 4. Test Negative Case: not in Create mode
     std::cout << "\n[Test 1] Triggering event when activeTool = \"Brush\"..." << std::endl;
-    player.activeTool = "Brush";
-    player.active3DMode = "Select";
-    player.activeShapeKind = static_cast<int>(Object::ShapeKind::Cube);
-    player.activeColor = glm::vec3(1.0f, 1.0f, 1.0f);
+    channel.activeTool = "Brush";
+    channel.active3DMode = "Select";
+    channel.activeShapeKind = static_cast<int>(Object::ShapeKind::Cube);
+    channel.activeColor = glm::vec3(1.0f, 1.0f, 1.0f);
 
-    ECA::Event event1{"onMouseClicked", &player, nullptr, 0};
+    ECA::Event event1{"onMouseClicked", &channel, nullptr, 0};
     Core::EventBus::instance().publish(event1);
     lawManager.tick();
 
@@ -154,10 +168,10 @@ int main() {
     // Tool::Type::CustomShape, so every click while it was selected spawned a
     // cube regardless of mode -- even while drawing in 2D.
     std::cout << "\n[Test 1b] Triggering with the 2D \"Custom Shape\" tool outside Create mode..." << std::endl;
-    player.activeTool = "Custom Shape";
-    player.active3DMode = "Select";
+    channel.activeTool = "Custom Shape";
+    channel.active3DMode = "Select";
 
-    ECA::Event event1b{"onMouseClicked", &player, nullptr, 0};
+    ECA::Event event1b{"onMouseClicked", &channel, nullptr, 0};
     Core::EventBus::instance().publish(event1b);
     lawManager.tick();
 
@@ -167,16 +181,16 @@ int main() {
     // 5. Test Placement Mode: "InFront" -- camera position plus forward, the
     //    distance the tool hard-coded as 2.0. NOT the cursor hit point.
     std::cout << "\n[Test 2] Triggering event in Placement Mode \"InFront\"..." << std::endl;
-    player.activeTool = "Brush";          // irrelevant now: only the mode gates
-    player.active3DMode = "Create";
-    player.placementMode = "InFront";
+    channel.activeTool = "Brush";          // irrelevant now: only the mode gates
+    channel.active3DMode = "Create";
+    channel.placementMode = "InFront";
     player.cameraPos = glm::vec3(0.0f, 2.0f, 0.0f);
     player.cameraForward = glm::vec3(0.0f, 0.0f, -1.0f);
-    player.inFrontDistance = 2.0f;
-    player.cursorHitPos = glm::vec3(15.0f, 3.0f, -8.0f);   // must be ignored
-    player.updatePlacement();
+    channel.inFrontDistance = 2.0f;
+    channel.cursorHitPos = glm::vec3(15.0f, 3.0f, -8.0f);   // must be ignored
+    channel.updatePlacement(player.cameraPos, player.cameraForward);
 
-    ECA::Event event2{"onMouseClicked", &player, nullptr, 0};
+    ECA::Event event2{"onMouseClicked", &channel, nullptr, 0};
     Core::EventBus::instance().publish(event2);
     lawManager.tick();
 
@@ -193,14 +207,14 @@ int main() {
     //    cursor, pushed out along its normal by the shape's own half extent so
     //    it RESTS on the surface instead of sinking halfway into it.
     std::cout << "\n[Test 3] Triggering event in Placement Mode \"CursorSnap\" (surface placement)..." << std::endl;
-    player.placementMode = "CursorSnap";
-    player.gridSnap = false;
-    player.cursorSpawnScale = glm::vec3(1.0f);              // half extent 0.5
-    player.cursorHitPos = glm::vec3(10.0f, 3.0f, -7.0f);
-    player.cursorHitNormal = glm::vec3(0.0f, 1.0f, 0.0f);   // floor
-    player.updatePlacement();
+    channel.placementMode = "CursorSnap";
+    channel.gridSnap = false;
+    channel.cursorSpawnScale = glm::vec3(1.0f);              // half extent 0.5
+    channel.cursorHitPos = glm::vec3(10.0f, 3.0f, -7.0f);
+    channel.cursorHitNormal = glm::vec3(0.0f, 1.0f, 0.0f);   // floor
+    channel.updatePlacement(player.cameraPos, player.cameraForward);
 
-    ECA::Event event3{"onMouseClicked", &player, nullptr, 0};
+    ECA::Event event3{"onMouseClicked", &channel, nullptr, 0};
     Core::EventBus::instance().publish(event3);
     lawManager.tick();
 
@@ -217,15 +231,15 @@ int main() {
     //     produced. Proven here in InFront mode, which the old code could not
     //     snap at all because snapping only existed inside CursorSnap.
     std::cout << "\n[Test 3b] Grid snap applies to InFront placement too..." << std::endl;
-    player.placementMode = "InFront";
+    channel.placementMode = "InFront";
     player.cameraPos = glm::vec3(0.4f, 2.2f, 0.0f);
     player.cameraForward = glm::vec3(0.0f, 0.0f, -1.0f);
-    player.inFrontDistance = 2.3f;          // raw: (0.4, 2.2, -2.3)
-    player.gridSnap = true;
-    player.gridSnapSize = 1.0f;             // snapped: (0, 2, -2)
-    player.updatePlacement();
+    channel.inFrontDistance = 2.3f;          // raw: (0.4, 2.2, -2.3)
+    channel.gridSnap = true;
+    channel.gridSnapSize = 1.0f;             // snapped: (0, 2, -2)
+    channel.updatePlacement(player.cameraPos, player.cameraForward);
 
-    ECA::Event event3b{"onMouseClicked", &player, nullptr, 0};
+    ECA::Event event3b{"onMouseClicked", &channel, nullptr, 0};
     Core::EventBus::instance().publish(event3b);
     lawManager.tick();
 
@@ -234,21 +248,21 @@ int main() {
         check(nearVec3(world.getOwnedObjects()[2].get()->getPosition(), glm::vec3(0.0f, 2.0f, -2.0f)),
               "Grid snap rounded an InFront placement (0.4, 2.2, -2.3) to (0, 2, -2)");
     }
-    player.gridSnap = false;
+    channel.gridSnap = false;
 
     // 7. Test Placement Mode: "ManualDistance" -- measured from a FROZEN
     //    anchor, not the live camera, so the shape stays where it was put.
     std::cout << "\n[Test 4] Triggering event in Placement Mode \"ManualDistance\"..." << std::endl;
-    player.placementMode = "ManualDistance";
-    player.manualAnchorValid = true;
-    player.manualAnchorPos = glm::vec3(0.0f, 2.0f, 0.0f);
-    player.manualAnchorRight = glm::vec3(1.0f, 0.0f, 0.0f);
-    player.manualAnchorUp = glm::vec3(0.0f, 1.0f, 0.0f);
-    player.manualAnchorForward = glm::vec3(0.0f, 0.0f, -1.0f);
-    player.manualOffset = glm::vec3(0.0f, 0.0f, 12.0f);   // 12 along anchor forward
-    player.updatePlacement();                              // -> (0, 2, -12)
+    channel.placementMode = "ManualDistance";
+    channel.manualAnchorValid = true;
+    channel.manualAnchorPos = glm::vec3(0.0f, 2.0f, 0.0f);
+    channel.manualAnchorRight = glm::vec3(1.0f, 0.0f, 0.0f);
+    channel.manualAnchorUp = glm::vec3(0.0f, 1.0f, 0.0f);
+    channel.manualAnchorForward = glm::vec3(0.0f, 0.0f, -1.0f);
+    channel.manualOffset = glm::vec3(0.0f, 0.0f, 12.0f);   // 12 along anchor forward
+    channel.updatePlacement(player.cameraPos, player.cameraForward);                              // -> (0, 2, -12)
 
-    ECA::Event event4{"onMouseClicked", &player, nullptr, 0};
+    ECA::Event event4{"onMouseClicked", &channel, nullptr, 0};
     Core::EventBus::instance().publish(event4);
     lawManager.tick();
 
@@ -266,23 +280,23 @@ int main() {
     std::cout << "\n[Test 4b] Moving the camera must not move an anchored placement..." << std::endl;
     player.cameraPos = glm::vec3(50.0f, 40.0f, 30.0f);
     player.cameraForward = glm::vec3(1.0f, 0.0f, 0.0f);
-    player.updatePlacement();
-    check(nearVec3(player.cursorSpawnPos, glm::vec3(0.0f, 2.0f, -12.0f)),
+    channel.updatePlacement(player.cameraPos, player.cameraForward);
+    check(nearVec3(channel.cursorSpawnPos, glm::vec3(0.0f, 2.0f, -12.0f)),
           "Anchored placement stayed at (0, 2, -12) after the camera moved");
 
     // 7c. Shape kind and colour come from the author's live selection, the way
     //     the tool read getCurrentShapeKind()/getCurrentColor() every click.
     //     The concept's template still says Cube; the override wins.
     std::cout << "\n[Test 4c] Shape kind and colour follow the live selection..." << std::endl;
-    player.placementMode = "InFront";
+    channel.placementMode = "InFront";
     player.cameraPos = glm::vec3(0.0f, 0.0f, 0.0f);
     player.cameraForward = glm::vec3(0.0f, 0.0f, -1.0f);
-    player.inFrontDistance = 3.0f;
-    player.activeShapeKind = static_cast<int>(Object::ShapeKind::Sphere);
-    player.activeColor = glm::vec3(1.0f, 0.0f, 0.0f);
-    player.updatePlacement();
+    channel.inFrontDistance = 3.0f;
+    channel.activeShapeKind = static_cast<int>(Object::ShapeKind::Sphere);
+    channel.activeColor = glm::vec3(1.0f, 0.0f, 0.0f);
+    channel.updatePlacement(player.cameraPos, player.cameraForward);
 
-    ECA::Event event4c{"onMouseClicked", &player, nullptr, 0};
+    ECA::Event event4c{"onMouseClicked", &channel, nullptr, 0};
     Core::EventBus::instance().publish(event4c);
     lawManager.tick();
 
@@ -291,19 +305,31 @@ int main() {
         Object* obj = world.getOwnedObjects()[4].get();
         check(obj->getShapeKind() == Object::ShapeKind::Sphere,
               "Spawned a Sphere from activeShapeKind, overriding the concept's Cube template");
-        // Every face, not just the first: the tool coloured them all. Read the
-        // face TEXTURES, which is what setFaceColor actually paints -- the
-        // legacy faceColors array it does not touch.
-        bool allRed = !obj->faceTextures.empty();
-        for (const auto& tex : obj->faceTextures) {
-            if (tex.pixels.size() < 4) { allRed = false; break; }
-            allRed = allRed && tex.pixels[0] == 255 && tex.pixels[1] == 0 && tex.pixels[2] == 0;
+        // Every face the object actually HAS, not a fixed six: a Sphere is one
+        // smooth surface with one face, so colouring six slots would assert
+        // against slots the shape does not own. The face slots are the object's
+        // own colour — the per-face TEXTURES moved to Material with the rest of
+        // the paint system, and a material is shared by name, so an object's
+        // own selected colour is faceColors, which is what "color" reads back.
+        const int faces = std::min(obj->getFaces() > 0 ? obj->getFaces() : 6, 6);
+        bool allRed = faces > 0;
+        for (int f = 0; f < faces; ++f) {
+            allRed = allRed &&
+                     std::fabs(obj->faceColors[f][0] - 1.0f) < 1e-5f &&
+                     std::fabs(obj->faceColors[f][1] - 0.0f) < 1e-5f &&
+                     std::fabs(obj->faceColors[f][2] - 0.0f) < 1e-5f;
         }
         check(allRed, "Every face took activeColor (1, 0, 0), as the tool coloured them");
+
+        // And it reads back through the property surface a law would use.
+        PropertyValue live;
+        check(PropertyPath::parse("color").getValue(*obj, live) == PropertyPath::PathResult::Ok &&
+              nearVec3(std::get<glm::vec3>(live), glm::vec3(1.0f, 0.0f, 0.0f)),
+              "The spawned object's \"color\" property reads back the selected red");
     }
     // Put the selection back so the persistence case below stays a cube.
-    player.activeShapeKind = static_cast<int>(Object::ShapeKind::Cube);
-    player.activeColor = glm::vec3(1.0f, 1.0f, 1.0f);
+    channel.activeShapeKind = static_cast<int>(Object::ShapeKind::Cube);
+    channel.activeColor = glm::vec3(1.0f, 1.0f, 1.0f);
 
     // 8. Test JSON Serialization & Reloading (Persistence of placement law)
     std::cout << "\n[Test 5] Testing JSON Serialization and Persistence of Placement Law..." << std::endl;
@@ -335,15 +361,15 @@ int main() {
 
     // Trigger the reloaded law: surface placement with grid snap ON, i.e. both
     // of the things the old code could not combine.
-    player.placementMode = "CursorSnap";
-    player.cursorSpawnScale = glm::vec3(1.0f);
-    player.cursorHitPos = glm::vec3(4.24f, 1.76f, -3.12f);
-    player.cursorHitNormal = glm::vec3(0.0f, 1.0f, 0.0f);   // raw: (4.24, 2.26, -3.12)
-    player.gridSnap = true;
-    player.gridSnapSize = 0.5f;                              // snapped: (4.0, 2.5, -3.0)
-    player.updatePlacement();
+    channel.placementMode = "CursorSnap";
+    channel.cursorSpawnScale = glm::vec3(1.0f);
+    channel.cursorHitPos = glm::vec3(4.24f, 1.76f, -3.12f);
+    channel.cursorHitNormal = glm::vec3(0.0f, 1.0f, 0.0f);   // raw: (4.24, 2.26, -3.12)
+    channel.gridSnap = true;
+    channel.gridSnapSize = 0.5f;                              // snapped: (4.0, 2.5, -3.0)
+    channel.updatePlacement(player.cameraPos, player.cameraForward);
 
-    ECA::Event event5{"onMouseClicked", &player, nullptr, 0};
+    ECA::Event event5{"onMouseClicked", &channel, nullptr, 0};
     Core::EventBus::instance().publish(event5);
     reloadedManager.tick();
 

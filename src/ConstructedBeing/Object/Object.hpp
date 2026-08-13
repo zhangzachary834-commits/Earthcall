@@ -46,6 +46,9 @@
 
 // Forward declaration to break circular dependency
 class BodyPart;
+// Material includes FaceTexture, which includes Renderer.hpp; an Object only
+// ever holds its material by identifier, so the declaration is enough here.
+class Material;
 
 class Object : public Singular {
 
@@ -466,6 +469,28 @@ public:
     // property "material", so a Law can reassign an object's material by name.
     const std::string& materialId() const { return _materialId; }
     void setMaterialId(std::string id) { _materialId = std::move(id); }
+
+    // -----------------------------------------------------------------
+    // Paint. The per-face textures live on the Material being (they moved
+    // there with the rest of the paint system), and a Material is SHARED by
+    // identifier — every object naming "material.default" names the same
+    // being. So painting is copy-on-write: the first stroke gives this object
+    // its own Material, named after it, carrying over the appearance of the
+    // one it was sharing. Objects that are never painted keep sharing, which
+    // is the point of materials being beings in the first place.
+    //
+    // The own material's name is "material.<this object's identifier>", so an
+    // object with a volatile id gets a material with a volatile name — the
+    // same caveat the object already carries and already warns about.
+    // -----------------------------------------------------------------
+    std::shared_ptr<Material> ownMaterial();
+    // Resize this object's own material's face textures to the face count its
+    // current geometry actually has. Idempotent.
+    void initFaceTextures();
+    // Fill one face with a colour, through the object's own material, and
+    // record it in the object's own faceColors slot so the "color" property
+    // reads back what was painted.
+    void setFaceColor(int faceIndex, float r, float g, float b);
     const geom::SmoothSurfaceData& getSmoothData()  const { return smoothData; }
     const geom::ComplexShapeData&  getComplexData() const { return complexData; }
     const geom::SdfNode&           getFieldData()   const { return fieldData; }

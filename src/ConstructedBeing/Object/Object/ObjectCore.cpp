@@ -63,7 +63,12 @@ int Object::getFaces() const {
     if (_shapeKind == ShapeKind::Polyhedron) {
         return polyhedronData.getFaceCount();
     }
-    return _composition.faces;
+    if (_composition.faces > 0) return _composition.faces;   // authored count wins
+    // A cube has six faces whether or not anyone said so. Falling through to
+    // an unset _composition.faces reported ZERO for every freshly built cube,
+    // which is why each paint caller carried a "?: 6" fallback — and why a
+    // cube painted by looping to getFaces() was painted not at all.
+    return _shapeKind == ShapeKind::Cube ? 6 : 1;
 }
 
 void Object::setFaces(int f) {
@@ -225,6 +230,12 @@ void Object::setPosition(const glm::vec3& p) {
 
 // Property bridge: color
 
+// setFaceColor both paints the object's own material and records the colour in
+// the faceColors slot propColor reads back, so "color" round-trips through its
+// own surface AND reaches the screen. It used to paint the face textures only,
+// leaving the getter reporting the default forever; the two halves were split
+// apart when paint moved to Material and are joined again in setFaceColor.
 void Object::propSetColor(const glm::vec3& c) {
     const int faces = getFaces() > 0 ? getFaces() : 6;
+    for (int f = 0; f < faces; ++f) setFaceColor(f, c.x, c.y, c.z);
 }

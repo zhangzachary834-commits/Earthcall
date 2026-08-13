@@ -379,11 +379,6 @@ void from_json(const nlohmann::json& j, Object& obj){
             );
         }
     }
-    // if(j.contains("faceColors")){
-    //     const auto& faces = j["faceColors"];
-    //     for(size_t f=0; f<faces.size() && f<6; ++f){ obj.setFaceColor(static_cast<int>(f), faces[f][0], faces[f][1], faces[f][2]); }
-    // }
-
     // For polyhedron, restore geometry first so textures can size correctly
     if (obj.getShapeKind() == Object::ShapeKind::Polyhedron && j.contains("polyhedron")) {
         const auto& pj = j["polyhedron"];
@@ -433,6 +428,34 @@ void from_json(const nlohmann::json& j, Object& obj){
         if (!verts.empty() && !faces.empty()) {
             // Use setPolyhedronData so textures are resized appropriately
             obj.setPolyhedronData(PolyhedronData::createCustomPolyhedron(verts, faces));
+        }
+    }
+
+    // Face colours, AFTER the geometry restore: paint is sized from getFaces(),
+    // so a polyhedron coloured before its faces exist would size its textures
+    // for the wrong shape. This was written on save and silently never read
+    // back while setFaceColor did not exist — an object's colour did not
+    // survive a save/load at all.
+    //
+    // Loading is REINSTATEMENT, not a brush stroke, so the slots are written
+    // directly: setFaceColor diverges an object onto its own material, and
+    // doing that here would discard the materialId every object just loaded
+    // and mint a fresh material for each one in the file. Paint is put back
+    // only where the object already owned its surface when it was saved —
+    // an object that was sharing a material goes on sharing it, wearing that
+    // material's appearance exactly as it did before.
+    if (j.contains("faceColors")) {
+        const auto& faceCols = j["faceColors"];
+        const bool ownsItsSurface = obj.materialId() == "material." + obj.getIdentifier();
+        for (size_t f = 0; f < faceCols.size() && f < 6; ++f) {
+            obj.faceColors[f][0] = faceCols[f][0].get<float>();
+            obj.faceColors[f][1] = faceCols[f][1].get<float>();
+            obj.faceColors[f][2] = faceCols[f][2].get<float>();
+            if (ownsItsSurface) {
+                obj.setFaceColor(static_cast<int>(f),
+                                 obj.faceColors[f][0], obj.faceColors[f][1],
+                                 obj.faceColors[f][2]);
+            }
         }
     }
 

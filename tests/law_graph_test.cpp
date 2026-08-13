@@ -7,8 +7,8 @@
 // editor drives: copy the model, navigate by child indices, edit a field,
 // recommit, and the recompiled law behaves per the edit.
 
-#include "Rendering/CardTreeLayout.hpp"
-#include "Rendering/LawGraphWindow.hpp"
+#include "Singularity/Screen/CardTreeLayout.hpp"
+#include "Singularity/Screen/LawGraphWindow.hpp"
 #include "ConstructedBeing/Object/Object.hpp"
 
 #include <GLFW/glfw3.h>

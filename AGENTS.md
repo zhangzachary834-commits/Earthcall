@@ -107,26 +107,44 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
 
 cmake --build build --target earthcall -j8
 cmake --build build -j8                               # tests are NOT built by the line above
-ctest --test-dir build --output-on-failure -j4        # 40 registered; see below
+ctest --test-dir build --output-on-failure -j4        # 44 registered; see below
 ```
 
 **`--target earthcall` does not build the tests.** `ctest` will then report every test as
 `Not Run`, which reads like a mass failure and is not one. Build the default target first.
 
-**As of 2026-08-12, 27 of 40 tests pass.** Twelve fail to compile and one aborts; all
-thirteen are broken at HEAD, not by local edits. The compile failures are stale tests
-still referencing fields the Directory-refactoring commit removed — `basic_cube_law_test`
-wants `Person::activeTool`, `active3DMode`, `activeShapeKind`, `placementMode`,
-`inFrontDistance`, none of which exist in `src/Person/` any more. That removal was refusal
-#1 being enforced (no hardcoded domain fields on `Person`); the tests were simply not
-migrated with it. `singular_set_to_set_test` aborts on a colour assertion at line 68.
-Do not read a red suite as evidence that your change broke something until you have
-checked it against this list.
+**As of 2026-08-13, 43 of 44 tests pass and the default build is clean.** The thirteen
+that were broken were stale against three refactors, not against each other:
+`Rendering/` → `Singularity/Screen/` and `Util/` → `Singularity/Storage/`;
+`Object::GeometryType` → `ShapeKind`; the placement and tool fields off `Person` and onto
+`Singularity::Core::CreationChannel` (refusal #1 being enforced); `Zone` off `Object` and
+onto `Singular`, losing the tint and brush a canvas has and a space does not.
+
+The one remaining failure is **`webgpu_particle_test`, and it is deliberate**. It calls
+`WebGpuRenderer::drawParticles(FieldNode&, int)`, which has never existed in any commit —
+the test was written against an unbuilt feature and has never compiled. It is kept as that
+feature's specification, listed in `PENDING_FEATURE_TESTS` in `CMakeLists.txt`, and
+excluded from the default target so the build is not red for work nobody has started;
+`ctest` reports it `Not Run`. Take a name off that list when its feature lands. Do not read
+a red suite as evidence that your change broke something until you have checked it here.
+
+**Three tests exist because of what got past the suite, not to pad it.** Each guards a
+class of silent failure this repository has actually shipped, so keep them honest rather
+than convenient:
+
+| Test | Guards against |
+|---|---|
+| `paint_test` | paint written through a *shared* material (repaints the world), and a `color` property that does not read back what was written — `propSetColor` was an empty function for a month |
+| `object_roundtrip_test` | a field `to_json` writes and `from_json` drops. `faceColors` was write-only for a month with the write side making it look covered; `serialization_compat_test` covers the msgpack/Frontier *plumbing* and cannot see this |
+| `channel_paths_test` | the law-authoring picker offering a property path no registry answers. `CreationChannel::activeShapeKind` was advertised and unregistered, so every law reading it silently fell back |
+
+If you add a field to `Object` that `to_json` writes, add it to `object_roundtrip_test`. If
+you hand-list a path in `knownPathOptions()`, `channel_paths_test` will hold you to it.
 
 **Sources are globbed at configure time.** Add or remove a `.cpp` and you must re-run
 `cmake -S . -B build ...` or you will get a phantom link error.
 
-The Python backend starts from `src/Integration/py/app.py`.
+The Python backend starts from `src/Singularity/Foreign/py/app.py`.
 
 ### Keeping the tree searchable
 
@@ -185,6 +203,15 @@ compile errors — `--check` reports them in its error tally regardless.
   (`ONTOMATH_FRAMEWORK.md` §7a) is the worked example: it refuses and says which frequency,
   rather than silently filtering a Person's mathematics. Guards constrain the path to the
   body, never the mathematics — a Person may still author and integrate a 7 Hz field.
+- **Paint is on the Material, and materials are shared.** An Object's per-face textures
+  live on the `Material` being it names by identifier — `material.default` unless it says
+  otherwise — so writing paint through the material you *resolve* repaints every object
+  naming the same one. Painting therefore goes through `Object::setFaceColor` /
+  `Object::ownMaterial`, which diverge the object onto its own `material.<identifier>` on
+  the first stroke, carrying the shared appearance over. Do not reach for
+  `materials.resolveOrDefault(obj->materialId())` and paint into the result; that is the
+  bug, not the shortcut. `Object::faceColors` is the object's own colour and what the
+  `color` property reads; `setFaceColor` writes both halves so the property does not lie.
 - **Say what you made.** If you write into a save file, or generate beings directly, tell
   the Person which file and which beings, and who is recorded as their author. This is the
   one rule with no technical enforcement at all.

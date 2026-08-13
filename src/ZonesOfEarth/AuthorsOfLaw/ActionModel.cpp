@@ -157,17 +157,12 @@ void applySpawnOverrides(Object& newborn, Singular* source,
         if (lawGetValue(*source, colorPath, pv) &&
             std::holds_alternative<glm::vec3>(pv)) {
             const glm::vec3 c = std::get<glm::vec3>(pv);
-            // The smooth kinds (Sphere, Ellipsoid, ...) report zero faces, so
-            // looping to getFaces() would silently colour nothing. Fall back to
-            // the six texture slots every Object carries, matching propSetColor.
+            // Through setFaceColor, so the author's live colour both PAINTS
+            // the newborn (its own material, copy-on-write) and lands in the
+            // faceColors slots the "color" property reads back. Writing the
+            // slots directly left every spawned object unpainted on screen.
             const int faces = newborn.getFaces() > 0 ? newborn.getFaces() : 6;
-            for (int f = 0; f < faces; ++f) {
-                if (f < 6) {
-                    newborn.faceColors[f][0] = c.x;
-                    newborn.faceColors[f][1] = c.y;
-                    newborn.faceColors[f][2] = c.z;
-                }
-            }
+            for (int f = 0; f < faces; ++f) newborn.setFaceColor(f, c.x, c.y, c.z);
         }
     }
 

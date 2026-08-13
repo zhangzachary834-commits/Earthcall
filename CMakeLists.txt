@@ -236,9 +236,21 @@ if(NOT EMSCRIPTEN)
     enable_testing()
     file(GLOB_RECURSE TEST_FILES "tests/*.cpp")
 
+    # Tests written against an API that does not exist yet. They are KEPT as the
+    # specification of a feature still to be built, and are still configured as
+    # targets you can ask for by name — but they are excluded from the default
+    # target, so `cmake --build build` is not red for work nobody has started.
+    # ctest reports them "Not Run". Take a name off this list the moment the
+    # feature it describes lands.
+    #
+    #   webgpu_particle_test  wants WebGpuRenderer::drawParticles(FieldNode&, int),
+    #                         a GPU particle pipeline over a field. It has never
+    #                         existed in any commit; the test has never compiled.
+    set(PENDING_FEATURE_TESTS webgpu_particle_test)
+
     foreach(TEST_SOURCE ${TEST_FILES})
         get_filename_component(TEST_NAME ${TEST_SOURCE} NAME_WE)
-        
+
         if (${TEST_NAME} MATCHES "webgpu_.*")
             add_executable(${TEST_NAME} ${TEST_SOURCE} src/Singularity/Screen/WebGPU/WebGpuRenderer.cpp src/Singularity/Screen/WebGPU/SdfWgsl.cpp src/Singularity/Screen/WebGPU/WebGpuContext.mm)
             target_include_directories(${TEST_NAME} PRIVATE ${WGPU_NATIVE_DIR}/include)
@@ -274,6 +286,9 @@ if(NOT EMSCRIPTEN)
         endif()
 
         target_compile_options(${TEST_NAME} PRIVATE -UNDEBUG)
+        if (${TEST_NAME} IN_LIST PENDING_FEATURE_TESTS)
+            set_target_properties(${TEST_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
+        endif()
         add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
     endforeach()
 endif()

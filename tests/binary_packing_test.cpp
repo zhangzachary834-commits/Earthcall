@@ -4,7 +4,7 @@
 #include <string>
 #include <glm/glm.hpp>
 #include "json.hpp"
-#include "Util/BinaryPack.hpp"
+#include "Singularity/Storage/BinaryPack.hpp"
 #include "ConstructedBeing/Object/Geometry/Patch.hpp"
 
 using json = nlohmann::json;

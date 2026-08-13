@@ -9,7 +9,7 @@
 
 #include "ConstructedBeing/Object/Object.hpp"
 #include "ConstructedBeing/Material/MaterialManager.hpp"
-#include "Rendering/Renderer.hpp"
+#include "Singularity/Screen/Renderer.hpp"
 
 #include <GLFW/glfw3.h>
 #include <OpenGL/gl.h>
@@ -74,15 +74,15 @@ int main() {
 
     // Each legacy primitive reaches the framebuffer through the renderer boundary.
     {
-        struct { Object::GeometryType t; const char* name; } cases[] = {
-            {Object::GeometryType::Cube,     "cube"},
-            {Object::GeometryType::Sphere,   "sphere"},
-            {Object::GeometryType::Cylinder, "cylinder"},
-            {Object::GeometryType::Cone,     "cone"},
+        struct { Object::ShapeKind t; const char* name; } cases[] = {
+            {Object::ShapeKind::Cube,     "cube"},
+            {Object::ShapeKind::Sphere,   "sphere"},
+            {Object::ShapeKind::Cylinder, "cylinder"},
+            {Object::ShapeKind::Cone,     "cone"},
         };
         for (auto& c : cases) {
             Object obj;
-            obj.setGeometryType(c.t);
+            obj.setShapeKind(c.t);
             size_t px = coverage(obj);
             assert(px > 0);
             std::printf("  %-8s drew %zu px through the renderer\n", c.name, px);
@@ -108,7 +108,7 @@ int main() {
     // The primitive path honours materials: a dim material dims the cube.
     {
         Object obj; // default geometry is Cube
-        obj.setGeometryType(Object::GeometryType::Cube);
+        obj.setShapeKind(Object::ShapeKind::Cube);
         long long bright = brightness(obj);
 
         auto dim = materials.create("prim_dim");

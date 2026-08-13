@@ -23,6 +23,22 @@ struct LawCard {
 // the condition tree, and the action tree.
 std::vector<LawCard> flattenLaw(const Law& law, const std::string& eventBinding);
 
+// One entry in the path picker: a property path the authoring window offers a
+// Person, with who owns it and what it holds.
+struct PathOption {
+    std::string path;
+    const char* group;         // owning Singular + facet
+    const char* type;          // what the property holds
+    bool wholeVector = false;  // vec3 as a whole: numbers won't apply to it
+};
+
+// Every property path the substrate advertises to an author. Probed live from
+// the registries where it can be, hand-listed where the owning being is not a
+// prototype the window holds. Exposed because a hand-listed entry that no
+// registry answers is a promise the substrate does not keep — see
+// `tests/channel_paths_test.cpp`, which holds this list to its word.
+const std::vector<PathOption>& knownPathOptions();
+
 // Navigate a model tree by child indices (empty path = root). Null if invalid.
 // These are exactly the handles the editor mutates through — mutate a COPY,
 // then setConditionModel/setActionModel so the law recompiles.

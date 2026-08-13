@@ -1,9 +1,9 @@
 #include <iostream>
 #include <cassert>
-#include "Rendering/WebGPU/WebGpuRenderer.hpp"
+#include "Singularity/Screen/WebGPU/WebGpuRenderer.hpp"
 #include "ConstructedBeing/Object/Geometry/FieldNode.hpp"
 #include "Singularity/OntoMath/Field.hpp"
-#include "Rendering/WebGPU/WgpuDevice.hpp"
+#include "Singularity/Screen/WebGPU/WgpuDevice.hpp"
 
 int main() {
     std::cout << "Starting webgpu_particle_test..." << std::endl;
