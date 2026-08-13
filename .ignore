@@ -30,6 +30,7 @@ build2/
 build_ag/
 build_agy/
 build-*/
+build_logs/
 cmake-build-*/
 node_modules/
 venv/

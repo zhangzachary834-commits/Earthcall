@@ -47,6 +47,9 @@ a.out
 /migrate_saves
 /read_laws
 /*_test
+
+# Build log output — generated logs from compilation sessions.
+build_logs/
 # Binaries that got built next to their sources rather than at the root.
 src/earthcall
 tests/*_test

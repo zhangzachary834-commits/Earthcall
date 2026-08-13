@@ -11,6 +11,7 @@
       "Read(./build-wasm/**)",
       "Read(./build-asan/**)",
       "Read(./cmake-build-debug/**)",
+      "Read(./build_logs/**)",
       "Read(./cmake-build-debug-event-trace/**)",
       "Read(./third_party/glm/**)",
       "Read(./src/Singularity/Audio/miniaudio.h)",
