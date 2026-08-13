@@ -11,7 +11,7 @@
         "drives": true,
         "retrigger": 0,
         "conditionMode": "all",
-        "authors": ["antigravity"],
+        "authors": ["Zach"],
         "conditionSubjects": [],
         "targets": [],
         "conditionModel": {
@@ -30,7 +30,7 @@
           {
             "type": "authored-by",
             "entityA": "semantic-physics-bridge",
-            "entityB": "antigravity",
+            "entityB": "Zach",
             "directed": true,
             "weight": 1.0,
             "events": []
@@ -51,7 +51,7 @@
     }
   },
   "injectedBy": {
-    "mover": "antigravity",
+    "mover": "Zach",
     "onBehalfOf": "zacharyzhang",
     "at": 1783903356,
     "sections": ["authoredLaws.laws[semantic-physics-bridge]"],

@@ -1,0 +1,32 @@
+{
+  "zoneId": "metalaw-zone",
+  "name": "Metalaw: Calendar Behavior Synthesis",
+  "description": "A Metalaw authored by Zach governing how the Python ML First Mover generates laws.",
+  "authors": ["Zach"],
+  "laws": [
+    {
+      "id": "law-metalaw-ai-vetting",
+      "type": "metalaw",
+      "name": "Vetting AI-Generated Laws",
+      "conditions": [
+        {
+          "type": "property-match",
+          "target": "@inference.calendar_classifier.confidence",
+          "operator": ">",
+          "value": "@inference.calendar_classifier.confidence_threshold"
+        },
+        {
+          "type": "event-match",
+          "eventName": "ai-proposed-law"
+        }
+      ],
+      "actions": [
+        {
+          "type": "spawn-law",
+          "target": "ai-proposed-law.payload",
+          "author": "Zach"
+        }
+      ]
+    }
+  ]
+}
