@@ -1,14 +1,16 @@
 #include "ForeignChannel.hpp"
-#include "Property.hpp"
+#include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 
+// buildProperties is NOT called here: Singular builds the registry lazily
+// behind _propertiesBuilt, so calling it from the constructor registers every
+// property twice. PhysicsLawBridge and PhysicalChannel both leave it to the
+// lazy path.
 ForeignChannel::ForeignChannel(const std::string& foreignAppName)
-    : Law(foreignAppName, "foreign-channel." + foreignAppName), 
+    : Law("foreign: " + foreignAppName),
       _appName(foreignAppName),
       _enabled(true),
       _connected(false),
-      _rateLimit(1.0f) {
-    buildProperties();
-}
+      _rateLimit(1.0f) {}
 
 void ForeignChannel::buildProperties() {
     _propertyRegistry.push_back(std::make_unique<ComputedProperty<ForeignChannel, bool>>(

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "ZonesOfEarth/Universe.hpp"
-#include "ZonesOfEarth/AuthorsOfLaw/LawManager.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"   // LawManager is declared here
 #include <string>
 
 // 

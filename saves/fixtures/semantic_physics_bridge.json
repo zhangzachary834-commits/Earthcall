@@ -51,7 +51,7 @@
     }
   },
   "injectedBy": {
-    "mover": "Zach",
+    "mover": "antigravity",
     "onBehalfOf": "zacharyzhang",
     "at": 1783903356,
     "sections": ["authoredLaws.laws[semantic-physics-bridge]"],

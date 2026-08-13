@@ -1,13 +1,13 @@
 #include "InferenceLawBridge.hpp"
-#include "Property.hpp"
+#include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 
+// See ForeignChannel.cpp on why buildProperties is not called here.
 InferenceLawBridge::InferenceLawBridge(const std::string& bridgeName)
-    : Law(bridgeName, "inference." + bridgeName),
+    : Law("inference: " + bridgeName),
+      _bridgeName(bridgeName),
       _enabled(true),
       _confidenceThreshold(0.85f),
-      _activeClassifier("default_heuristic") {
-    buildProperties();
-}
+      _activeClassifier("default_heuristic") {}
 
 void InferenceLawBridge::buildProperties() {
     _propertyRegistry.push_back(std::make_unique<ComputedProperty<InferenceLawBridge, bool>>(
