@@ -22,6 +22,8 @@
 #include "ConstructedBeing/Material/MaterialManager.hpp"
 #include "ConstructedBeing/CategoryManager.hpp"
 #include "Person/Body/BodyPart/BodyPart.hpp"
+#include "Singularity/Screen/Camera.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 
 #include <GLFW/glfw3.h>
 #include <imgui.h>
@@ -37,6 +39,24 @@ extern CategoryManager categories;
 namespace Core {
 
 void Engine::initLogic() {
+    // These were declared on Engine but never constructed anywhere in the
+    // post-"Game" refactor: every line below that touches _lawManager,
+    // _player, _camera, _mouseHandler or _keyboardHandler was one call away
+    // from a null-pointer deref, starting with connectToEventBus() two lines
+    // down. Restoring Tool::ShapeGenerator3D as a developer tool (2026-08-13)
+    // is the first thing that actually calls getPlayer()/getLawManager(), so
+    // it is the first thing that hits this. Allocating them here is the
+    // minimum fix to make the engine boot at all -- not a redesign.
+    if (!_lawManager) _lawManager = std::make_unique<LawManager>();
+    if (!_camera) _camera = std::make_unique<Camera>();
+    if (!_mouseHandler) _mouseHandler = std::make_unique<MouseHandler>();
+    if (!_keyboardHandler) _keyboardHandler = std::make_unique<KeyboardHandler>();
+    if (!_player) {
+        Soul soul("Player");
+        Body body("humanoid", "default");
+        _player = std::make_unique<Person>(std::move(soul), std::move(body), "default");
+    }
+
     // Laws listen from the first frame: every ECA::Event published anywhere
     // in the engine becomes a fact the law network can act on.
     _lawManager->connectToEventBus();

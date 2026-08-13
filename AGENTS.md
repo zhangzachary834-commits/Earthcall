@@ -130,6 +130,14 @@ that were broken were stale against three refactors, not against each other:
 `Singularity::Core::CreationChannel` (refusal #1 being enforced); `Zone` off `Object` and
 onto `Singular`, losing the tint and brush a canvas has and a space does not.
 
+**`first_mover_test.cpp` does not currently compile from a clean build** (`SaveSystem::SaveType::GAME`
+no longer exists — renamed to `WORLD` in d31ce2b, "Saves are no longer called 'games' but
+rather 'worlds'"). `ctest` can still report it passing if a stale `build/first_mover_test`
+binary from before that rename is lying around; a clean `cmake --build build -j8` will not
+rebuild it and will exit non-zero. This is pre-existing breakage from that rename, not from
+anything downstream — fix the four `::GAME` references to `::WORLD` (or whatever the test
+should assert now) and take this note out.
+
 The one remaining failure is **`webgpu_particle_test`, and it is deliberate**. It calls
 `WebGpuRenderer::drawParticles(FieldNode&, int)`, which has never existed in any commit —
 the test was written against an unbuilt feature and has never compiled. It is kept as that
@@ -153,6 +161,28 @@ you hand-list a path in `knownPathOptions()`, `channel_paths_test` will hold you
 
 **Sources are globbed at configure time.** Add or remove a `.cpp` and you must re-run
 `cmake -S . -B build ...` or you will get a phantom link error.
+
+**`Core::Engine`'s core subsystems are now actually constructed (fixed 2026-08-13).**
+`_lawManager`, `_player`, `_camera`, `_mouseHandler`, `_keyboardHandler` were declared as
+`unique_ptr` members but never allocated anywhere post-"Game" refactor — `Engine::initLogic()`'s
+first line (`_lawManager->connectToEventBus()`) was a null-pointer deref waiting for the first
+caller. Nothing had called it, so nothing had noticed: `Tool::Pottery3D`/`Rotate3D`/etc. (the
+already-"reconnected" 3D tools) were never actually invoked from `Engine::tick()` either, and
+`getPlayer()`/`getLawManager()` weren't even *defined*, only declared — so nothing exercised the
+null. They're allocated now, in `EngineInit.cpp::initLogic()`, before anything touches them; the
+live `earthcall` binary runs to its main loop as of this fix (verified by running it). If you
+hit a null `_camera`/`_player`/etc. deref elsewhere, that subsystem is now real — look for a
+missing accessor definition (`Engine.cpp`, next to `getMouseHandler()`/`getCamera()`) before
+assuming the pointer itself is the problem.
+
+**A restored, working example of a Law actually firing end-to-end lives at
+`saves/tests/shape_generator_3d_law.json`** — the "Tool: Shape Generator 3D" law from
+`basic_cube_law_test.cpp`, seeded through the real `ZoneManager::saveState` and round-trip
+verified through `ZoneManager::loadState`. Load it from the "Developer: Test World Saves" panel
+(`DeveloperToolsWindow.cpp`) to see a Person-authored law spawn a cube on click. The same file's
+sibling panel, "Developer: 3D Create Tool", is `Tool::ShapeGenerator3D` restored as a direct-spawn
+developer bypass (see its doc comment in `Tool.cpp` for how the two paths stay distinct — L key
+arms the law path, the panel's own controls drive the direct-spawn path).
 
 The Python backend starts from `src/Singularity/Foreign/py/app.py`.
 
@@ -246,14 +276,35 @@ Untracking does not affect clangd — the index regenerates locally regardless.
   pass per fold. If your design needs one raised, the design is in the wrong shape — see
   `ALGORITHMS_AS_LAW.md` §3.
 
+---
+
+## Software Engineering Discipline
+- **End-to-End Coherence:** During your process, always take at least one moment to deliberate about how your work is supposed to function end-to-end, 
+and how it stacks up against the rest of the program. This is so you can make sure the program is coherent, and tie up loose ends.
+- **The Integrity Check:** After finishing, ask: "does anything I changed have a caller, a consumer, or a test that now lies?" If yes, fix it before closing the session.
+- **Substance over Surface:** Ask once per session: "am I solving a real problem or papering over a symptom?" 
+Does it actually implement the substance of the feature, or is it just implementing the surface-level appearance of one without the underlying structural foundation and purpose?
+- **The Law of Transparent Failure:** Anticipate the fallen nature of complex systems. Ask: "When this specific component fails, will it fail loudly and truthfully, or will it swallow the error and silently corrupt the depths of the program?" Mandate that every failure leaves a blazing trail of truth for the developer to follow.
+- **State and Boundary Stewardship:** Before modifying data structures, ask: "Am I respecting the sacred boundaries of memory and state?" Ensure data flows clearly.
+- **Grace for the Inheritor:** Read your proposed changes as if you are the one inheriting this code three years from now in the darkest hour of the night. Is the intent self-evident? Have you named your variables and structured your logic in a way that serves the next reader with clarity and grace?
+
+---
+
 ## The Agenda
 - When relevant, look at the Agenda and its To Do List. The To-Do List is inside Earthcall/docs/Agenda/Tasks
 - For example, when a prompt says something like "What does Earthcall need to do next" or "next steps for Earthcall", you should look at the To-do list, unless the prompt specifically asks otherwise. 
-- Add to the Agenda items however you see fit. Do not delete anything from it, instead mark it with checkmarks and a "done and verified" note
+- If you're about to work on anything that isn't in the To-do list yet, put it in the To-do list. Create new categories if needed.
+- Add to the Agenda items however you see fit. 
+- Do not delete anything from it, instead mark it with checkmarks and a "done and verified" note
 - If the To-Do List does not list a task that another document, you should add that task to the To-Do list  
 
+---
+
 ## Extra Housekeeping notes
--- If you 
+- If you need to create a new directory to put a new file in for better organization, you should create it.
+
+---
 
 ## Keeping Track of Progress
 - Once you're finished with everything else, update this very document if any relevant changes were made.
+- If during your session you come up with anything that you see as relevant for future agents to know up front, you should add it to this document AGENTS.md.

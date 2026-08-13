@@ -28,6 +28,8 @@
 #include <string>
 #include <utility>
 
+#include "test_save_helper.hpp"
+
 namespace {
 
 int g_checks = 0;
@@ -149,6 +151,9 @@ int main() {
     check(lawManager.triggersOf(lawId).size() == 1 &&
           lawManager.triggersOf(lawId)[0] == "onMouseClicked",
           "Law trigger bound to onMouseClicked");
+
+    // Generate test save
+    dump_test_save("basic_cube_law_test", world, lawManager, player);
 
     // 4. Test Negative Case: not in Create mode
     std::cout << "\n[Test 1] Triggering event when activeTool = \"Brush\"..." << std::endl;

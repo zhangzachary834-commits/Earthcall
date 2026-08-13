@@ -31,6 +31,7 @@
 #include "Singularity/Input/MouseHandler.hpp"
 #include "OurVerse/CursorTools.hpp"
 #include "OurVerse/ElementalToolHandler.hpp"
+#include "Singularity/Screen/DeveloperToolsWindow.hpp"
 
 #include <iostream>
 
@@ -241,6 +242,26 @@ void Engine::tick(float dt) {
         Core::EventBus::instance().tick();
 #endif
 
+        // The Person is the canonical source of "where the Person is looking
+        // from" (see tests/basic_cube_law_test.cpp's comment on why placement
+        // law text reads player.cameraPos, not the Camera object) -- but
+        // Camera is what the render path actually moves, so it has to be
+        // copied across each frame or Person's copy goes stale at its
+        // construction-time default.
+        if (Person* p = getPlayer()) {
+            if (Camera* cam = getCamera()) {
+                p->cameraPos = cam->getPos();
+                p->cameraForward = cam->getFront();
+            }
+        }
+
+        // Nothing fires an authored law without this: LawManager::tick()
+        // drains the Rete agenda queued by events published this frame (see
+        // Rendering::renderDeveloperToolsWindow, which publishes
+        // onMouseClicked while the CreationChannel's active3DMode == "Create").
+        if (_lawManager) _lawManager->tick();
+
+        Rendering::renderDeveloperToolsWindow(&_devToolsWindowOpen, _window, this);
 
         // Render ImGui
         ImGui::Render();
@@ -300,5 +321,9 @@ void Engine::shutdown() {
 namespace Core {
 MouseHandler* Engine::getMouseHandler() { return _mouseHandler.get(); }
 Camera* Engine::getCamera() { return _camera.get(); }
+Person* Engine::getPlayer() { return _player.get(); }
+LawManager* Engine::getLawManager() { return _lawManager.get(); }
+KeyboardHandler* Engine::getKeyboardHandler() { return _keyboardHandler.get(); }
+CursorTools* Engine::getCursorTools() { return _cursorTools.get(); }
 Engine::~Engine() {}
 }

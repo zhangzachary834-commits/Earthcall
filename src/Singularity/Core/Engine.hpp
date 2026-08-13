@@ -63,6 +63,8 @@ public:
 
     bool isMouseLeftPressedLast() const { return _mouseLeftPressedLast; }
     void setMouseLeftPressedLast(bool v) { _mouseLeftPressedLast = v; }
+
+    bool& devToolsWindowOpen() { return _devToolsWindowOpen; }
         
     glm::vec2 get2DToolDragStart() const { return _dragStart; }
     void update2DToolDrag(glm::vec2 pos) { _dragCurrent = pos; }
@@ -107,6 +109,7 @@ private:
     double _worldTime = 0.0;
 
     bool _mouseLeftPressedLast = false;
+    bool _devToolsWindowOpen = true;
     bool _is2DToolDragging = false;
     glm::vec2 _dragStart = {0,0};
     glm::vec2 _dragCurrent = {0,0};

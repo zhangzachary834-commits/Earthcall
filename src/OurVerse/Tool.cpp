@@ -2,6 +2,7 @@
 #include "../../Singularity/Input/MouseHandler.hpp"
 #include "Tool.hpp"
 #include "Singularity/Core/Engine.hpp"
+#include "Singularity/Core/CreationChannel.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "GLFW/glfw3.h"
@@ -383,6 +384,99 @@ std::string Tool::getTypeName() const
 
 void Tool::use(GLFWwindow* window, ZoneManager& mgr, Zone& zone, Type type, Core::Engine& engine) { (void)window; (void)mgr; (void)zone; (void)type; (void)engine; }
 
+
+// Restored from the pre-law implementation (Tool::ShapeGenerator3D, deleted in
+// 0da7237 when the tool's placement/shape/colour state moved to
+// Singularity::Core::CreationChannel). The placement arithmetic below is
+// unchanged from that recovery (see e9f4295); only the state it reads has
+// moved off local Game fields and onto `channel`, whose computeSpawnPosition/
+// getCursorSpawnTransform already carry the InFront/CursorSnap/ManualDistance
+// and grid-snap logic verified by basic_cube_law_test.cpp -- this function
+// intentionally duplicates none of that math, it only supplies the live
+// camera and raycast the channel's fields need each frame.
+//
+// This is the DEVELOPER bypass: it calls World::addObject directly and never
+// touches Law::applyTo, so it works regardless of whether any spawn law is
+// loaded. What it creates is not unauthored, though -- CreationChannel is a
+// registered First Mover (isFirstMover() == true, syncRegister'd in
+// EngineInit.cpp), and every Object this function spawns gets an
+// "authored-by" relation recording CreationChannel as its author, in the
+// channel's own (inherited from Law) provenance ledger. Promoting the
+// restored tool to a First Mover meant exactly this: giving it real authorial
+// standing to invoke, not inventing a new kind of author.
+void Tool::ShapeGenerator3D(GLFWwindow *window, Core::Engine *engine, ZoneManager &mgr,
+                            Singularity::Core::CreationChannel &channel,
+                            BodyPart* targetPart)
+{
+    if (!window || !engine) return;
+
+    static bool devToolMouseLeftPressedLast = false;
+    bool mouseLeftNow = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
+    bool justPressed = mouseLeftNow && !devToolMouseLeftPressedLast;
+    devToolMouseLeftPressedLast = mouseLeftNow;
+    if (!justPressed) return;
+
+    if (channel.activeShapeKind == static_cast<int>(Object::ShapeKind::Polyhedron)) {
+        // Polyhedron authoring needs a live polyhedron builder; Engine::
+        // buildCurrentPolyhedron() is still a stub ("dummy for now"), so
+        // refuse rather than spawn a shape with no topology.
+        return;
+    }
+
+    const glm::vec3 camPos = engine->getCamera() ? engine->getCamera()->getPos() : glm::vec3(0.0f);
+    const glm::vec3 camFront = engine->getCamera() ? engine->getCamera()->getFront() : glm::vec3(0.0f, 0.0f, -1.0f);
+
+    if (channel.placementMode == "CursorSnap") {
+        glm::vec3 rayO, rayDir;
+        std::vector<Object*> targets;
+        const auto &objects = mgr.active().world().objects();
+        targets.reserve(objects.size());
+        for (const auto &uptr : objects) if (uptr) targets.push_back(uptr.get());
+
+        SurfaceHit hit;
+        if (buildMouseRay(window, engine, rayO, rayDir) && pickSurface(targets, rayO, rayDir, hit)) {
+            channel.cursorHitPos = hit.point;
+            channel.cursorHitNormal = hit.normal;
+        }
+    } else if (channel.placementMode == "ManualDistance" && !channel.manualAnchorValid) {
+        channel.manualAnchorPos = camPos + camFront * 2.0f;
+        channel.manualAnchorRight = glm::normalize(glm::cross(camFront, engine->getCamera() ? engine->getCamera()->getUp() : glm::vec3(0.0f, 1.0f, 0.0f)));
+        channel.manualAnchorUp = engine->getCamera() ? engine->getCamera()->getUp() : glm::vec3(0.0f, 1.0f, 0.0f);
+        channel.manualAnchorForward = camFront;
+        channel.manualAnchorValid = true;
+    }
+
+    channel.updatePlacement(camPos, camFront);
+    glm::mat4 t = channel.getCursorSpawnTransform();
+
+    Object::ShapeKind kind = static_cast<Object::ShapeKind>(channel.activeShapeKind);
+
+    Object* newObj = nullptr;
+    if (targetPart) {
+        glm::mat4 partWorld = targetPart->getTransform();
+        glm::mat4 localT = glm::inverse(partWorld) * t;
+        Object* sub = targetPart->addSubObject(kind, localT);
+        if (sub) sub->setShape(kind);
+        if (sub) {
+            for (int f = 0; f < sub->getFaces(); ++f)
+                sub->setFaceColor(f, channel.activeColor.x, channel.activeColor.y, channel.activeColor.z);
+        }
+        newObj = sub;
+    } else {
+        auto obj = std::make_unique<Object>();
+        obj->setShape(kind);
+        obj->setTransform(t);
+        obj->updateCollisionZone(t);
+        for (int f = 0; f < obj->getFaces(); ++f)
+            obj->setFaceColor(f, channel.activeColor.x, channel.activeColor.y, channel.activeColor.z);
+        newObj = obj.get();
+        mgr.active().world().addObject(std::move(obj));
+    }
+
+    if (newObj) {
+        channel.recordProvenance("authored-by", *newObj, channel, true, 1.0f);
+    }
+}
 
 void Tool::Pottery3D(GLFWwindow *window, Core::Engine *engine, ZoneManager &mgr, float dt,
                      const std::vector<Object*>& targets, const glm::mat4* avatarRoot)

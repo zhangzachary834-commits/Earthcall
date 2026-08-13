@@ -9,6 +9,7 @@
 
 // Forward declarations to avoid circular dependencies
 namespace Core { class Engine; }
+namespace Singularity { namespace Core { class CreationChannel; } }
 class ZoneManager;
 class Zone;
 struct GLFWwindow;
@@ -116,6 +117,19 @@ public:
 
     static void use(GLFWwindow* window, ZoneManager& mgr, Zone& zone, Type type, Core::Engine& engine);
 
+    // Developer tool, restored from the raw pre-law implementation (deleted in
+    // 0da7237, recovered in AGENTS.md's 2026-08-13 restore). Direct-spawns the
+    // shape/placement/colour CreationChannel currently holds, bypassing
+    // Law::applyTo entirely -- this is the debug bypass, not the Person-facing
+    // creation path. That path is the "Tool: Shape Generator 3D" law
+    // (saves/fixtures/shape_generator_3d_law.json), which reads the SAME
+    // CreationChannel fields but fires off onMouseClicked only when
+    // active3DMode == "Create", armed by a distinct input
+    // (see DeveloperToolsWindow's law-mode key toggle) so the two paths never
+    // both fire off one click.
+    static void ShapeGenerator3D(GLFWwindow* window, Core::Engine* engine, ZoneManager& mgr,
+                                 Singularity::Core::CreationChannel& channel,
+                                 BodyPart* targetPart = nullptr);
 
     static void Pottery3D(GLFWwindow* window, Core::Engine* engine, ZoneManager& mgr, float dt,
                           const std::vector<Object*>& targets, const glm::mat4* avatarRoot);
