@@ -24,6 +24,7 @@
 #include "Person/Body/BodyPart/BodyPart.hpp"
 #include "Singularity/Screen/Camera.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
+#include "Singularity/Screen/CreatorConsoleWindow.hpp"
 
 #include <GLFW/glfw3.h>
 #include <imgui.h>
@@ -196,11 +197,27 @@ void Engine::initLogic() {
     });
     
     // Main Tools submenu
-    // _mainMenu.beginSubMenu("Main Tools");
-    _mainMenu.addOption("Brush Tool", GLFW_KEY_B, [this]() {  });
-    _mainMenu.addOption("Move Tool", GLFW_KEY_M, [this]() {  });
+    _mainMenu.addOption("Brush Tool", GLFW_KEY_B, [this]() {
+        _creatorConsoleOpen = true;
+        Rendering::getCreatorConsoleState().currentSection = Rendering::CreatorSection::Paint;
+        _mainMenu.close();
+        _keyboardHandler->setMenuOpen(false);
+        _mouseHandler->setMenuOpen(false);
+        if (_mouseHandler->isCursorLocked()) _mouseHandler->toggleCursorLock(_window);
+    });
+    _mainMenu.addOption("Move Tool", GLFW_KEY_V, [this]() {
+        _creatorConsoleOpen = true;
+        Rendering::getCreatorConsoleState().currentSection = Rendering::CreatorSection::Create3D;
+        Rendering::getCreatorConsoleState().current3DMode = Rendering::Mode3D::Selection;
+        _mainMenu.close();
+        _keyboardHandler->setMenuOpen(false);
+        _mouseHandler->setMenuOpen(false);
+        if (_mouseHandler->isCursorLocked()) _mouseHandler->toggleCursorLock(_window);
+    });
     _mainMenu.addOption("Controls / Keymap", GLFW_KEY_K, [this]() { /* _world.showKeymapWindow = true; */ });
     _mainMenu.addOption("Character Architect Forge", GLFW_KEY_C, [this]() {
+        _creatorConsoleOpen = true;
+        Rendering::getCreatorConsoleState().currentSection = Rendering::CreatorSection::Character;
         const auto& zones = mgr.zones();
         for (size_t i = 0; i < zones.size(); ++i) {
             if (zones[i]->name().find("Character") != std::string::npos) {
@@ -208,6 +225,10 @@ void Engine::initLogic() {
                 break;
             }
         }
+        _mainMenu.close();
+        _keyboardHandler->setMenuOpen(false);
+        _mouseHandler->setMenuOpen(false);
+        if (_mouseHandler->isCursorLocked()) _mouseHandler->toggleCursorLock(_window);
     });
 
     _mainMenu.addOption("Quit",   GLFW_KEY_Q, [this]() { glfwSetWindowShouldClose(_window, 1); });
@@ -262,14 +283,29 @@ void Engine::initLogic() {
         _mainMenu.toggle();
         _keyboardHandler->setMenuOpen(_mainMenu.isOpen());
         _mouseHandler->setMenuOpen(_mainMenu.isOpen());
+        // Manage cursor lock based on menu state
+        if (_mainMenu.isOpen()) {
+            if (_mouseHandler->isCursorLocked()) {
+                _mouseHandler->toggleCursorLock(_window); // unlock it
+            }
+        } else {
+            if (!_mouseHandler->isCursorLocked()) {
+                _mouseHandler->toggleCursorLock(_window); // lock it
+            }
+        }
     });
     _keyboardHandler->bindKey(GLFW_KEY_ESCAPE, "toggle_cursor_lock", [this]() {
-        _mouseHandler->toggleCursorLock(_window);
+        if (!_mainMenu.isOpen()) {
+            _mouseHandler->toggleCursorLock(_window);
+        }
     });
     _keyboardHandler->bindKey(GLFW_KEY_GRAVE_ACCENT, "toggle_dev_tools", [this]() {
         _devToolsWindowOpen = !_devToolsWindowOpen;
     });
-    _keyboardHandler->bindKey(GLFW_KEY_F8, "toggle_creator_console", [this]() {
+    _keyboardHandler->bindKey(GLFW_KEY_F8, "toggle_creation_console", [this]() {
+        _creatorConsoleOpen = !_creatorConsoleOpen;
+    });
+    _keyboardHandler->bindKey(GLFW_KEY_F9, "toggle_singular_set_to_set", [this]() {
         _creationConsoleOpen = !_creationConsoleOpen;
     });
     _keyboardHandler->bindKey(GLFW_KEY_H, "toggle_chat", [this]() { /* _world.showChatWindow = !_world.showChatWindow; */ });

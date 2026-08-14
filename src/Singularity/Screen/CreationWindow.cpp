@@ -165,7 +165,7 @@ glm::mat4 placementFor(const std::vector<Singular*>& sources, Object* selected) 
 
 void renderCreationWindow(bool* open, Singular& author, Object* selected, World& world) {
     ImGui::SetNextWindowSize(ImVec2(560, 620), ImGuiCond_FirstUseEver);
-    if (!ImGui::Begin("Creation Console", open)) {
+    if (!ImGui::Begin("Singular Set-to-Set Creation", open)) {
         ImGui::End();
         return;
     }

@@ -146,7 +146,6 @@ void Menu::processInput(GLFWwindow* win) {
     bool upNow = glfwGetKey(win, GLFW_KEY_UP) == GLFW_PRESS;
     bool downNow = glfwGetKey(win, GLFW_KEY_DOWN) == GLFW_PRESS;
     bool enterNow = glfwGetKey(win, GLFW_KEY_ENTER) == GLFW_PRESS || glfwGetKey(win, GLFW_KEY_KP_ENTER) == GLFW_PRESS;
-    bool escNow = glfwGetKey(win, GLFW_KEY_ESCAPE) == GLFW_PRESS;
 
     if (upNow && !_upPressedLast) {
         if (!options.empty()) {
@@ -165,16 +164,10 @@ void Menu::processInput(GLFWwindow* win) {
             return;
         }
     }
-    if (escNow && !_escapePressedLast) {
-        // Close menu on Esc
-        close();
-        _escapePressedLast = escNow;
-        return;
-    }
+    
     _upPressedLast = upNow;
     _downPressedLast = downNow;
     _enterPressedLast = enterNow;
-    _escapePressedLast = escNow;
 
     // Mouse hover and click selection inside the panel
     int winW, winH; glfwGetFramebufferSize(win, &winW, &winH);

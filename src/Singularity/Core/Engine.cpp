@@ -36,6 +36,7 @@
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 
+#include "Singularity/Screen/CreatorConsoleWindow.hpp"
 #include <iostream>
 
 extern ZoneManager mgr;
@@ -273,6 +274,10 @@ void Engine::tick(float dt) {
 
         if (_creationConsoleOpen) {
             Rendering::renderCreationWindow(&_creationConsoleOpen, *_player, nullptr, mgr.active().world());
+        }
+
+        if (_creatorConsoleOpen) {
+            Rendering::renderCreatorConsoleWindow(&_creatorConsoleOpen, _player.get(), nullptr, mgr);
         }
 
         // 2. Render 3D scene (must happen before ImGui::Render composites over it)

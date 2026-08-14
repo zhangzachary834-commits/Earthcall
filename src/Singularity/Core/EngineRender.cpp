@@ -8,6 +8,7 @@
 #include "../../Person/Person.hpp"
 #include "../../Person/Body/BodyPart/BodyPart.hpp"
 #include "../../ConstructedBeing/Object/Object.hpp"
+#include "../Screen/CreatorConsoleWindow.hpp"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -87,6 +88,10 @@ namespace Core {
             }
         }
         currentRenderer().setModel(glm::mat4(1.0f)); // back to world space
+
+        if (_creatorConsoleOpen) {
+            Rendering::renderCreatorConsole3DPreviews(_player.get(), nullptr);
+        }
 
         // Draw player avatar and nametag when not in first-person
         if (_currentPerspective != PerspectiveMode::FirstPerson) {

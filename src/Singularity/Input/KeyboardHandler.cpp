@@ -32,21 +32,21 @@ void KeyboardHandler::handleKeyPress(int key) {
     imguiWantsKeyboard = ImGui::GetIO().WantCaptureKeyboard;
 #endif
 
-    // Escape, M, F8 (Creator Console), and Grave Accent (Dev Tools) can always bypass ImGui capture
+    // Escape, F8 (Creator Console), and Grave Accent (Dev Tools) can always bypass ImGui capture
     if (imguiWantsKeyboard && 
         key != GLFW_KEY_ESCAPE && 
-        key != GLFW_KEY_M && 
         key != GLFW_KEY_F8 && 
+        key != GLFW_KEY_F9 && 
         key != GLFW_KEY_GRAVE_ACCENT) {
         return;
     }
     
     // Check _menuOpen logic inside the keybind itself, or just allow the callbacks to decide.
-    // wait, previously, most keys (except M and Esc) checked `!_menuOpen`!
+    // wait, previously, most keys (except Esc) checked `!_menuOpen`!
     // Since we don't have access to _menuOpen directly in handleKeyPress, we shouldn't worry about it,
     // the callbacks themselves can check if the menu is open! Wait, they don't right now.
     // Actually, KeyboardHandler has `_menuOpen`!
-    if (_menuOpen && key != GLFW_KEY_ESCAPE && key != GLFW_KEY_M) {
+    if (_menuOpen && key != GLFW_KEY_ESCAPE) {
         return;
     }
 
