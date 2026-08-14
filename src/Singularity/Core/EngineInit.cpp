@@ -191,6 +191,9 @@ void Engine::initLogic() {
     _mainMenu.addOption("Toggle Dev Mode", GLFW_KEY_GRAVE_ACCENT, [this]() {
         _devToolsWindowOpen = !_devToolsWindowOpen;
     });
+    _mainMenu.addOption("Toggle Creator Console", GLFW_KEY_F8, [this]() {
+        _creationConsoleOpen = !_creationConsoleOpen;
+    });
     
     // Main Tools submenu
     // _mainMenu.beginSubMenu("Main Tools");
@@ -265,6 +268,9 @@ void Engine::initLogic() {
     });
     _keyboardHandler->bindKey(GLFW_KEY_GRAVE_ACCENT, "toggle_dev_tools", [this]() {
         _devToolsWindowOpen = !_devToolsWindowOpen;
+    });
+    _keyboardHandler->bindKey(GLFW_KEY_F8, "toggle_creator_console", [this]() {
+        _creationConsoleOpen = !_creationConsoleOpen;
     });
     _keyboardHandler->bindKey(GLFW_KEY_H, "toggle_chat", [this]() { /* _world.showChatWindow = !_world.showChatWindow; */ });
     _keyboardHandler->bindKey(GLFW_KEY_I, "toggle_integration_ui", [this]() { /* _world.showIntegrationUI = !_world.showIntegrationUI; */ });

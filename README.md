@@ -20,6 +20,18 @@ The foundation of the project's architecture is thoroughly documented. You **mus
 
 ## Building
 
+### Start Earthcall with one click (macOS)
+
+In Finder, double-click [`Run Earthcall.command`](Run%20Earthcall.command). It opens a
+Terminal window, configures CMake with Earthcall's required dependencies, rebuilds the
+WebGPU app, and starts it. Leave that Terminal window open while Earthcall is running.
+
+From a Terminal, the same action is:
+
+```sh
+./scripts/build.sh webgpu run
+```
+
 Earthcall builds with CMake. The project requires linking a vendored OpenSSL and setting policy limits for dependencies. The following configuration is required:
 
 ```sh

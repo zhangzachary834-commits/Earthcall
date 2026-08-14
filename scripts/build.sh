@@ -3,6 +3,7 @@
 # Usage:
 #   ./scripts/build.sh              # configure + build
 #   ./scripts/build.sh run          # configure + build + run
+#   ./scripts/build.sh webgpu run   # configure + build the WebGPU app + run
 #   ./scripts/build.sh test         # configure + build + test
 #   ./scripts/build.sh quick        # build only (skip configure)
 #   ./scripts/build.sh quick run    # build only + run
@@ -26,8 +27,16 @@ build() {
   cmake --build "$BUILD" --target earthcall -j"$JOBS"
 }
 
+build_webgpu() {
+  cmake --build "$BUILD" --target earthcall_webgpu -j"$JOBS"
+}
+
 run() {
   exec "$BUILD/earthcall" "$@"
+}
+
+run_webgpu() {
+  exec "$BUILD/earthcall_webgpu" "$@"
 }
 
 test_all() {
@@ -53,6 +62,11 @@ case "$ACTION" in
     build
     run "$@"
     ;;
+  webgpu)
+    configure
+    build_webgpu
+    if [[ "${1:-}" == "run" ]]; then shift; run_webgpu "$@"; fi
+    ;;
   clean)
     rm -rf "$BUILD"
     configure
@@ -64,7 +78,7 @@ case "$ACTION" in
     ;;
   *)
     echo "Unknown action: $ACTION"
-    echo "Usage: $0 [run|test|quick|clean]"
+    echo "Usage: $0 [run|webgpu [run]|test|quick|clean]"
     exit 1
     ;;
 esac

@@ -32,8 +32,13 @@
 #include "OurVerse/CursorTools.hpp"
 #include "OurVerse/ElementalToolHandler.hpp"
 #include "Singularity/Screen/DeveloperToolsWindow.hpp"
+#include "Singularity/Screen/CreationWindow.hpp"
+#include "ZonesOfEarth/ZoneManager.hpp"
+#include "ZonesOfEarth/Zone/Zone.hpp"
 
 #include <iostream>
+
+extern ZoneManager mgr;
 
 namespace Core {
 
@@ -265,6 +270,10 @@ void Engine::tick(float dt) {
         if (_lawManager) _lawManager->tick();
 
         Rendering::renderDeveloperToolsWindow(&_devToolsWindowOpen, _window, this);
+
+        if (_creationConsoleOpen) {
+            Rendering::renderCreationWindow(&_creationConsoleOpen, *_player, nullptr, mgr.active().world());
+        }
 
         // 2. Render 3D scene (must happen before ImGui::Render composites over it)
         render();

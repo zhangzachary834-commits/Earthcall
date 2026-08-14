@@ -110,7 +110,8 @@ private:
     double _worldTime = 0.0;
 
     bool _mouseLeftPressedLast = false;
-    bool _devToolsWindowOpen = true;
+    bool _devToolsWindowOpen = false;
+    bool _creationConsoleOpen = false;
     bool _is2DToolDragging = false;
     glm::vec2 _dragStart = {0,0};
     glm::vec2 _dragCurrent = {0,0};

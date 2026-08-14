@@ -11,6 +11,14 @@ it describes the workshop, not the ontology.)*
 
 ## Build
 
+### One-click WebGPU launch (macOS)
+
+Double-click `Run Earthcall.command` at the repository root. It opens Terminal, configures
+CMake with the required dependency paths below, incrementally builds `earthcall_webgpu`,
+and launches it. Keep the Terminal window open while the app runs; it displays any build
+or launch failure instead of closing immediately. The same action from a terminal is
+`./scripts/build.sh webgpu run`.
+
 `find_package(OpenSSL)` has no hint and there is no system OpenSSL; the vendored, prebuilt
 copy is in `local_deps/`. CMake 4.x also rejects websocketpp's `cmake_minimum_required`.
 Both flags are required:
