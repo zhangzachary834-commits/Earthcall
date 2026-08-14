@@ -19,6 +19,22 @@ and launches it. Keep the Terminal window open while the app runs; it displays a
 or launch failure instead of closing immediately. The same action from a terminal is
 `./scripts/build.sh webgpu run`.
 
+### One-click WASM launch (macOS)
+
+Double-click `Run Earthcall WASM.command` at the repository root. It uses Emscripten from
+the Terminal environment (or the usual `~/emsdk/emsdk_env.sh` installation), configures and
+incrementally builds `earthcall_wasm`, then serves the tracked browser entry point at
+`http://localhost:8000/web_ui/wasm.html`. Keep the Terminal window open while using the app.
+If no Emscripten SDK is available, the launcher names that requirement and leaves the error
+visible.
+
+### One-click Python-backend launch (macOS)
+
+Double-click `Run Earthcall Python.command` at the repository root. It starts
+`src/Singularity/Foreign/py/app.py` using that application's `venv`. If the environment is
+absent, run `src/Singularity/Foreign/py/setup_env.sh` once first; the launcher reports this
+rather than falling back to an unpinned system Python.
+
 `find_package(OpenSSL)` has no hint and there is no system OpenSSL; the vendored, prebuilt
 copy is in `local_deps/`. CMake 4.x also rejects websocketpp's `cmake_minimum_required`.
 Both flags are required:

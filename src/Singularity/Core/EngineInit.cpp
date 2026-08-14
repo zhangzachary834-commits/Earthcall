@@ -348,6 +348,7 @@ void Engine::registerCallbacks() {
     _prevCursorPosCallback = glfwSetCursorPosCallback(_window, &Engine::onCursorPos);
     _prevFocusCallback     = glfwSetWindowFocusCallback(_window, &Engine::onWindowFocus);
     _prevFramebufferSizeCallback = glfwSetFramebufferSizeCallback(_window, &Engine::onFramebufferSize);
+    _prevKeyCallback       = glfwSetKeyCallback(_window, &Engine::onKey);
 
     // Set up mouse button callback that forwards to ImGui first, then our handler
     glfwSetMouseButtonCallback(_window, [](GLFWwindow* window, int button, int action, int mods) {
@@ -404,6 +405,24 @@ void Engine::onFramebufferSize(int /*width*/, int /*height*/) {
     // Nothing to do: render() passes the current framebuffer size to
     // beginFrame every frame, and the backend sets its own viewport from it.
     // (WebGPU additionally has to reconfigure its surface, which it does there.)
+}
+
+void Engine::onKey(GLFWwindow* win, int key, int scancode, int action, int mods) {
+    Engine* self = static_cast<Engine*>(glfwGetWindowUserPointer(win));
+    if (self && self->_prevKeyCallback) {
+        self->_prevKeyCallback(win, key, scancode, action, mods); // forward to ImGui
+    } else {
+        // Fallback direct call if no previous callback was stored
+        ImGui_ImplGlfw_KeyCallback(win, key, scancode, action, mods);
+    }
+    
+    if (self && self->_keyboardHandler) {
+        if (action == GLFW_PRESS) {
+            self->_keyboardHandler->handleKeyPress(key);
+        } else if (action == GLFW_RELEASE) {
+            self->_keyboardHandler->handleKeyRelease(key);
+        }
+    }
 }
 
 } // namespace Core

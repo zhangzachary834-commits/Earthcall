@@ -121,10 +121,12 @@ private:
     GLFWcursorposfun       _prevCursorPosCallback       = nullptr;
     GLFWwindowfocusfun     _prevFocusCallback           = nullptr;
     GLFWframebuffersizefun _prevFramebufferSizeCallback = nullptr;
+    GLFWkeyfun             _prevKeyCallback             = nullptr;
 
     static void onCursorPos(GLFWwindow* win, double xpos, double ypos);
     static void onWindowFocus(GLFWwindow* win, int focused);
     static void onFramebufferSize(GLFWwindow* win, int width, int height);
+    static void onKey(GLFWwindow* win, int key, int scancode, int action, int mods);
 
         // Polyhedron and Tool
     void buildCurrentPolyhedron() {} // dummy

@@ -94,6 +94,8 @@ namespace Core {
             _player->drawNametag();
         }
 
+        _mainMenu.draw(fbW, fbH);
+
         currentRenderer().endFrame();
     }
 }

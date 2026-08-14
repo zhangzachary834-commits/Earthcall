@@ -19,8 +19,11 @@ namespace Core {
         if (!_keyboardHandler || !_mouseHandler || !_camera || !_player) return;
 
         // Update input handlers
+        if (_mainMenu.isOpen()) {
+            _mainMenu.processInput(_window);
+        }
+        
         _keyboardHandler->update();
-        _keyboardHandler->updateGameInput(_window);
         _mouseHandler->update();
 
         // Update camera front from mouse handler

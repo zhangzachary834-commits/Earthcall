@@ -23,7 +23,7 @@ public:
     bool isOpen() const;
 
     // Manually called by main loop
-    void draw() const;       // <-- You fill this in with your OpenGL code
+    void draw(int winW, int winH) const;       // <-- You fill this in with your OpenGL code
     void processInput(GLFWwindow* win);     // <-- Handles hotkey logic
 
 private:

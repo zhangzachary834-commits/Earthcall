@@ -56,12 +56,10 @@ void Menu::close() { openState = false; }
 void Menu::toggle() { openState = !openState; }
 bool Menu::isOpen() const { return openState; }
 
-void Menu::draw() const {
+void Menu::draw(int winW, int winH) const {
     if (!openState) return;
 
     // --- Switch to 2-D screen space (depth off, alpha blending on) --------
-    int winW, winH;
-    glfwGetFramebufferSize(glfwGetCurrentContext(), &winW, &winH);
 
     Renderer& r = currentRenderer();
     r.begin2D(static_cast<uint32_t>(winW), static_cast<uint32_t>(winH));

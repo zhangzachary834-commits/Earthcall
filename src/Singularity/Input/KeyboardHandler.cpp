@@ -26,6 +26,30 @@ void KeyboardHandler::update() {
 void KeyboardHandler::handleKeyPress(int key) {
     if (!_isEnabled) return;
     
+    // Check if ImGui wants to capture keyboard (safe to call outside NewFrame/Render)
+    bool imguiWantsKeyboard = false;
+#if !defined(IMGUI_DISABLE) && !defined(HEADLESS)
+    imguiWantsKeyboard = ImGui::GetIO().WantCaptureKeyboard;
+#endif
+
+    // Escape, M, F8 (Creator Console), and Grave Accent (Dev Tools) can always bypass ImGui capture
+    if (imguiWantsKeyboard && 
+        key != GLFW_KEY_ESCAPE && 
+        key != GLFW_KEY_M && 
+        key != GLFW_KEY_F8 && 
+        key != GLFW_KEY_GRAVE_ACCENT) {
+        return;
+    }
+    
+    // Check _menuOpen logic inside the keybind itself, or just allow the callbacks to decide.
+    // wait, previously, most keys (except M and Esc) checked `!_menuOpen`!
+    // Since we don't have access to _menuOpen directly in handleKeyPress, we shouldn't worry about it,
+    // the callbacks themselves can check if the menu is open! Wait, they don't right now.
+    // Actually, KeyboardHandler has `_menuOpen`!
+    if (_menuOpen && key != GLFW_KEY_ESCAPE && key != GLFW_KEY_M) {
+        return;
+    }
+
     auto it = _keyBindings.find(key);
     if (it != _keyBindings.end() && it->second.isEnabled) {
         KeyBinding& binding = it->second;
@@ -237,145 +261,6 @@ void KeyboardHandler::setupGameBindings() {
 // This method contains Game-specific state tracking and should be migrated
 // to use EventBus for cross-component communication.
 void KeyboardHandler::updateGameInput(GLFWwindow* window) {
-    if (!_isEnabled || !window || _keyBindings.empty()) return;
-    
-    // Check if any text input is active (ImGui)
-    bool anyTextInputActive = false;
-#if !defined(IMGUI_DISABLE) && !defined(HEADLESS)
-    anyTextInputActive = ImGui::IsAnyItemActive() || ImGui::IsWindowFocused();
-#endif
-    
-    // Menu toggle with M (allowed even when menu is open)
-    bool mPressed = glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS;
-    static bool mPressedLast = false;
-    if (mPressed && !mPressedLast) {
-        auto it = _keyBindings.find(GLFW_KEY_M);
-        if (it != _keyBindings.end() && it->second.callback) {
-            it->second.callback();
-        }
-    }
-    mPressedLast = mPressed;
-
-    // Cursor lock/unlock with Escape
-    bool escapePressed = glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS;
-    static bool escapePressedLast = false;
-    if (!_menuOpen && escapePressed && !escapePressedLast) {
-        auto it = _keyBindings.find(GLFW_KEY_ESCAPE);
-        if (it != _keyBindings.end() && it->second.callback) {
-            it->second.callback();
-        }
-    }
-    escapePressedLast = escapePressed;
-
-    // Chat window toggle with H - only when not typing
-    bool hPressed = glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS;
-    static bool hPressedLast = false;
-    if (!_menuOpen && hPressed && !hPressedLast && !anyTextInputActive) {
-        auto it = _keyBindings.find(GLFW_KEY_H);
-        if (it != _keyBindings.end() && it->second.callback) {
-            it->second.callback();
-        }
-    }
-    hPressedLast = hPressed;
-
-    // Integration UI toggle with I - only when not typing
-    bool iPressed = glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS;
-    static bool iPressedLast = false;
-    if (!_menuOpen && iPressed && !iPressedLast && !anyTextInputActive) {
-        auto it = _keyBindings.find(GLFW_KEY_I);
-        if (it != _keyBindings.end() && it->second.callback) {
-            it->second.callback();
-        }
-    }
-    iPressedLast = iPressed;
-
-    // Toolbar visibility toggle with T - only when not typing
-    bool tPressed = glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS;
-    static bool tPressedLast = false;
-    if (!_menuOpen && tPressed && !tPressedLast && !anyTextInputActive) {
-        auto it = _keyBindings.find(GLFW_KEY_T);
-        if (it != _keyBindings.end() && it->second.callback) {
-            it->second.callback();
-        }
-    }
-    tPressedLast = tPressed;
-
-    // Perspective switching keys 1/2/3 - only when not typing
-    if (!_menuOpen && !anyTextInputActive) {
-        if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS) {
-            auto it = _keyBindings.find(GLFW_KEY_1);
-            if (it != _keyBindings.end() && it->second.callback) {
-                it->second.callback();
-            }
-        }
-        if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS) {
-            auto it = _keyBindings.find(GLFW_KEY_2);
-            if (it != _keyBindings.end() && it->second.callback) {
-                it->second.callback();
-            }
-        }
-        if (glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS) {
-            auto it = _keyBindings.find(GLFW_KEY_3);
-            if (it != _keyBindings.end() && it->second.callback) {
-                it->second.callback();
-            }
-        }
-    }
-
-    // Flight toggle (F) only when not typing
-    bool fPressed = glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS;
-    static bool fPressedLast = false;
-    if (!_menuOpen && fPressed && !fPressedLast && !anyTextInputActive) {
-        auto it = _keyBindings.find(GLFW_KEY_F);
-        if (it != _keyBindings.end() && it->second.callback) {
-            it->second.callback();
-        }
-    }
-    fPressedLast = fPressed;
-
-    // Quick switch to Character design zone via C key - only when not typing
-    bool cPressed = glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS;
-    static bool cPressedLast = false;
-    if (!_menuOpen && cPressed && !cPressedLast && !anyTextInputActive) {
-        auto it = _keyBindings.find(GLFW_KEY_C);
-        if (it != _keyBindings.end() && it->second.callback) {
-            it->second.callback();
-        }
-    }
-    cPressedLast = cPressed;
-
-    // Avatar demo toggle with O key - only when not typing
-    bool oPressed = glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS;
-    static bool oPressedLast = false;
-    if (!_menuOpen && oPressed && !oPressedLast && !anyTextInputActive) {
-        auto it = _keyBindings.find(GLFW_KEY_O);
-        if (it != _keyBindings.end() && it->second.callback) {
-            it->second.callback();
-        }
-    }
-    oPressedLast = oPressed;
-
-    // Handle keyboard shortcuts
-    bool ctrlPressed = glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS || 
-                      glfwGetKey(window, GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS;
-    bool zPressed = glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS;
-    bool yPressed = glfwGetKey(window, GLFW_KEY_Y) == GLFW_PRESS;
-    
-    static bool undoPressedLast = false;
-    if (!_menuOpen && ctrlPressed && zPressed && !undoPressedLast && !anyTextInputActive) {
-        auto it = _keyBindings.find(GLFW_KEY_Z);
-        if (it != _keyBindings.end() && it->second.callback) {
-            it->second.callback();
-        }
-    }
-    undoPressedLast = ctrlPressed && zPressed;
-    
-    static bool redoPressedLast = false;
-    if (!_menuOpen && ctrlPressed && yPressed && !redoPressedLast && !anyTextInputActive) {
-        auto it = _keyBindings.find(GLFW_KEY_Y);
-        if (it != _keyBindings.end() && it->second.callback) {
-            it->second.callback();
-        }
-    }
-    redoPressedLast = ctrlPressed && yPressed;
+    // Left empty: all edge detection has been migrated to handleKeyPress
+    // as per the "Edges, not levels" architecture principle.
 }

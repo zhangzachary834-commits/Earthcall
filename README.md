@@ -46,4 +46,4 @@ cmake --build build --target earthcall -j8
 ctest --test-dir build --output-on-failure -j4
 ```
 
-The Python backend starts from `src/Integration/py/app.py`.
+The Python backend starts from `src/Singularity/Foreign/py/app.py`.
