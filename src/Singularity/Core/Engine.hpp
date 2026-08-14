@@ -46,6 +46,7 @@ public:
     void initLogic();
     void run();
     void tick(float dt);
+    void update(float dt);
     void shutdown();
 
     // Accessors -----------------------------------------------------------

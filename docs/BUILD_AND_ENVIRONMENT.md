@@ -25,7 +25,7 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
 
 cmake --build build --target earthcall -j8
 cmake --build build -j8                               # tests are NOT built by the line above
-ctest --test-dir build --output-on-failure -j4        # 45 registered
+ctest --test-dir build --output-on-failure -j4        # 46 registered
 ```
 
 **`--target earthcall` does not build the tests.** `ctest` will then report every test as
@@ -42,7 +42,7 @@ The Python backend starts from `src/Singularity/Foreign/py/app.py`.
 
 ## The test suite
 
-**As of 2026-08-13, 44 of 45 tests pass and the default build is clean.** The thirteen
+**As of 2026-08-14, 45 of 46 tests pass and the default build is clean.** The thirteen
 that were broken were stale against three refactors, not against each other:
 `Rendering/` → `Singularity/Screen/` and `Util/` → `Singularity/Storage/`;
 `Object::GeometryType` → `ShapeKind`; the placement and tool fields off `Person` and onto
@@ -57,7 +57,7 @@ excluded from the default target so the build is not red for work nobody has sta
 `ctest` reports it `Not Run`. Take a name off that list when its feature lands. Do not read
 a red suite as evidence that your change broke something until you have checked it here.
 
-### Four tests exist because of what got past the suite, not to pad it
+### Five tests exist because of what got past the suite, not to pad it
 
 Each guards a class of silent failure this repository has actually shipped, so keep them
 honest rather than convenient:
@@ -68,6 +68,7 @@ honest rather than convenient:
 | `object_roundtrip_test` | a field `to_json` writes and `from_json` drops. `faceColors` was write-only for a month with the write side making it look covered; `serialization_compat_test` covers the msgpack/Frontier *plumbing* and cannot see this |
 | `channel_paths_test` | the law-authoring picker offering a property path no registry answers. `CreationChannel::activeShapeKind` was advertised and unregistered, so every law reading it silently fell back |
 | `no_black_box_test` | refusal #6 — a being that registers nothing, a registry built twice, a setter that accepts a write and drops it, and a registered property the picker never offers |
+| `ground_plane_test` | a subsystem deciding, by list index, which being is the floor. `World::update` fell back to `_objects[1]` when nothing carried `baseline=ground` — and a Zone's world starts empty, so the **second being a Person spawned** silently became the ground. `Physics::integrate` then clamped its *centre* to its own *top*, lifting it half a height per substep, raising the floor, lifting it again: the whole world climbed at 30 m/s and every later spawn was teleported up to it |
 
 If you add a field to `Object` that `to_json` writes, add it to `object_roundtrip_test`.
 

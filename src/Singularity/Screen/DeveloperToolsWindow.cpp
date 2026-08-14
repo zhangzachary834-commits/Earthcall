@@ -144,9 +144,13 @@ void renderDeveloperToolsWindow(bool* open, GLFWwindow* window, Core::Engine* en
         if (!scanned) {
             testSaves.clear();
             if (std::filesystem::exists("saves/tests")) {
-                for (const auto& entry : std::filesystem::directory_iterator("saves/tests")) {
-                    if (entry.path().extension() == ".json") {
-                        testSaves.push_back(entry.path().filename().string());
+                std::error_code ec;
+                auto it = std::filesystem::directory_iterator("saves/tests", std::filesystem::directory_options::skip_permission_denied, ec);
+                if (!ec) {
+                    for (const auto& entry : it) {
+                        if (entry.path().extension() == ".json") {
+                            testSaves.push_back(entry.path().filename().string());
+                        }
                     }
                 }
             }

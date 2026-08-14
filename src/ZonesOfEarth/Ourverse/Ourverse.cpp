@@ -29,13 +29,19 @@ void Ourverse::updateObjectCollisions(glm::vec3& position, const Object& obj, co
 
 void Ourverse::onUpdate(float deltaTime) {
     if (!cameraPos) return;
-    // Determine the visible ground height so physics collisions align with the rendered plane
+    // Determine the visible ground height so physics collisions align with the
+    // rendered plane. Found by its baseline attribute, matching World::update --
+    // NOT by index 1, which only happens to be the ground because EngineInit
+    // adds it second, and which named a Person-spawned being in any other list.
     float groundY = 0.0f;
-    if (ownedObjects.size() > 1 && ownedObjects[1]) {
-        const glm::mat4& gT = ownedObjects[1]->getTransform();
+    for (const auto& obj : ownedObjects) {
+        if (!obj || !obj->hasAttribute("baseline")) continue;
+        if (obj->getAttribute("baseline") != std::string("ground")) continue;
+        const glm::mat4& gT = obj->getTransform();
         // Column 1 represents the Y axis after scaling/rotation; its length is the current scale on Y
         float scaleY = glm::length(glm::vec3(gT[1]));
         groundY = gT[3][1] + 0.5f * scaleY; // translation Y + half the total height
+        break;
     }
 
     if (Physics::getLegacyEngineEnabled()) {

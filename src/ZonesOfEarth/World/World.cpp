@@ -20,16 +20,20 @@ void World::update(float dt){
     // so there is a single authoritative writer of the camera position. World
     // simulates only the world's own objects (rotations, automations, physics).
 
-    // ground Y based on object tagged as baseline ground if exists; fall back to index 1
+    // The floor is the object a First Mover TAGGED as the floor, or the y=0
+    // plane. There is no fall-back to "whatever is at index 1": a Zone's world
+    // is seeded with nothing (EngineInit's baseline cube+ground go to the
+    // Ourverse's list, not here), so index 1 was simply the second being a
+    // Person spawned -- conscripted as the ground without mark or consent, and
+    // then lifted into the sky by its own clamp in Physics::integrate.
     float groundY = 0.0f;
-    size_t groundIdx = 1;
-    for (size_t i = 0; i < _objects.size(); ++i) {
-        if (_objects[i] && _objects[i]->hasAttribute("baseline") && _objects[i]->getAttribute("baseline") == std::string("ground")) { groundIdx = i; break; }
-    }
-    if(_objects.size()>groundIdx && _objects[groundIdx]){
-        const glm::mat4& gT = _objects[groundIdx]->getTransform();
+    for (const auto& obj : _objects) {
+        if (!obj || !obj->hasAttribute("baseline")) continue;
+        if (obj->getAttribute("baseline") != std::string("ground")) continue;
+        const glm::mat4& gT = obj->getTransform();
         float scaleY = glm::length(glm::vec3(gT[1]));
-        groundY = gT[3][1] + 0.5f*scaleY;
+        groundY = gT[3][1] + 0.5f*scaleY;  // the floor's TOP surface
+        break;
     }
 
     // Sub-step large delta times to avoid physics explosions during blocking operations (e.g., saving).

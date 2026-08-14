@@ -110,6 +110,28 @@ namespace Physics {
         obj->setTransform(t);
     }
 
+    // Is this the being that DEFINES the floor? Matched by attribute, the way
+    // enforceCollisions already does it -- never by list index. Index 1 used to
+    // mean "the ground" here on the assumption that every world is seeded with
+    // the two baseline placeholders from EngineInit; a Zone's world is seeded
+    // with nothing, so index 1 was whatever a Person spawned SECOND.
+    static bool definesGround(const Object* obj) {
+        return obj && obj->hasAttribute("baseline") &&
+               obj->getAttribute("baseline") == std::string("ground");
+    }
+
+    // Distance from an object's transform origin DOWN to its lowest world-space
+    // point. groundY names the floor's top surface, so this is what separates
+    // "the object rests on the floor" from "the object's centre sits in it".
+    static float supportOffset(const Object* obj) {
+        if (!obj) return 0.0f;
+        obj->updateCollisionZone(obj->getTransform());
+        float lowest = obj->collisionZone.corners[0].y;
+        for (int i = 1; i < 8; ++i) lowest = std::min(lowest, obj->collisionZone.corners[i].y);
+        const float offset = getObjectPos(obj).y - lowest;
+        return (offset > 0.0f && std::isfinite(offset)) ? offset : 0.0f;
+    }
+
     void updateBodies(std::vector<std::shared_ptr<Object>>& objects,
                       float deltaTime,
                       float gravityAccel,
@@ -262,7 +284,31 @@ namespace Physics {
                 if (law.type != LawType::AirResistance) continue;
                 if (objectMatchesTarget(*obj, law.target)) { airLawForObject = true; break; }
             }
-            integrate(form, pos, deltaTime, airLawForObject ? 0.0f : airResistance, groundY);
+            // THE FLOOR IS NOT A FALLING BODY. The being that defines groundY is
+            // the frame everything else is measured against, so it is kinematic:
+            // not integrated, never accumulating velocity. It used to be
+            // integrated like anything else and held up only by its own ground
+            // clamp -- which is precisely what sent the world into the sky (see
+            // below). Exempting it from the clamp alone is not enough; without
+            // this it simply falls forever and drags groundY down with it.
+            if (definesGround(obj)) {
+                form.velocity = glm::vec3(0.0f);
+                clearForces(form);
+                continue;
+            }
+            // THE SELF-LIFTING FLOOR. integrate() clamps the point it is given,
+            // and the point here is the object's transform ORIGIN, while groundY
+            // names the floor's TOP surface. Passing groundY straight through
+            // buried every object's centre in the floor -- and for the being that
+            // DEFINED groundY it was a runaway: that being's origin is
+            // necessarily half its height below its own top, so the clamp lifted
+            // it by half a height every substep, which raised groundY, which
+            // lifted it again. Measured at +0.5/substep = 30 m/s straight up,
+            // with every other object clamped up to the same rising floor (which
+            // is why a freshly spawned cube appeared instantly at the top rather
+            // than falling). Everything now rests its BOTTOM on groundY.
+            const float floorForOrigin = groundY + supportOffset(obj);
+            integrate(form, pos, deltaTime, airLawForObject ? 0.0f : airResistance, floorForOrigin);
             setObjectPos(obj, pos);
         }
 
@@ -280,8 +326,13 @@ namespace Physics {
         std::set<std::pair<Object*, Object*>> currentTouching;
         for(size_t i = 0; i < objCount; ++i){
             if(!objects[i]) continue;
-            // Skip the ground placeholder at index 1 (handled separately by groundY plane)
-            if(i == 1) continue;
+            // Skip the ground placeholder (handled separately by the groundY plane).
+            // Identified by its baseline attribute, not by list index: `i == 1`
+            // meant "the ground" only in a world seeded with EngineInit's two
+            // placeholders, and silently meant "the second being a Person
+            // spawned" in a Zone's world, which starts empty -- so that cube
+            // passed through everything.
+            if(definesGround(objects[i].get())) continue;
             Object* a = objects[i].get();
             // Compute AABB for object A
             glm::vec3 minA( FLT_MAX), maxA(-FLT_MAX);
@@ -291,7 +342,7 @@ namespace Physics {
             }
             for(size_t j = i + 1; j < objCount; ++j){
                 if(!objects[j]) continue;
-                if(j == 1) continue; // skip ground
+                if(definesGround(objects[j].get())) continue; // skip ground
                 Object* b = objects[j].get();
                 glm::vec3 minB( FLT_MAX), maxB(-FLT_MAX);
                 for(const auto& corner : b->collisionZone.corners){

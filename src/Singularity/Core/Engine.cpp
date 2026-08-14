@@ -235,6 +235,9 @@ void Engine::tick(float dt) {
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
+        // 1. Process physical & logical simulation
+        update(dt);
+
         // Tick language modality
         Singularity::Language::LanguageSystem::instance().tick(dt);
         Core::Audio::AudioSystem::instance().tick();
@@ -262,6 +265,9 @@ void Engine::tick(float dt) {
         if (_lawManager) _lawManager->tick();
 
         Rendering::renderDeveloperToolsWindow(&_devToolsWindowOpen, _window, this);
+
+        // 2. Render 3D scene (must happen before ImGui::Render composites over it)
+        render();
 
         // Render ImGui
         ImGui::Render();

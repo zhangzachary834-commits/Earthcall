@@ -188,7 +188,9 @@ void Engine::initLogic() {
     _mainMenu.addOption("Toggle ImGui Demo", GLFW_KEY_F3, [this]() {  });
     _mainMenu.addOption("Toggle Placement Insp.", GLFW_KEY_F4, [this]() {  });
     _mainMenu.addOption("Toggle Selection Insp.", GLFW_KEY_F5, [this]() {  });
-    _mainMenu.addOption("Toggle Dev Mode", GLFW_KEY_GRAVE_ACCENT, [this]() {  });
+    _mainMenu.addOption("Toggle Dev Mode", GLFW_KEY_GRAVE_ACCENT, [this]() {
+        _devToolsWindowOpen = !_devToolsWindowOpen;
+    });
     
     // Main Tools submenu
     // _mainMenu.beginSubMenu("Main Tools");
@@ -260,6 +262,9 @@ void Engine::initLogic() {
     });
     _keyboardHandler->bindKey(GLFW_KEY_ESCAPE, "toggle_cursor_lock", [this]() {
         _mouseHandler->toggleCursorLock(_window);
+    });
+    _keyboardHandler->bindKey(GLFW_KEY_GRAVE_ACCENT, "toggle_dev_tools", [this]() {
+        _devToolsWindowOpen = !_devToolsWindowOpen;
     });
     _keyboardHandler->bindKey(GLFW_KEY_H, "toggle_chat", [this]() { /* _world.showChatWindow = !_world.showChatWindow; */ });
     _keyboardHandler->bindKey(GLFW_KEY_I, "toggle_integration_ui", [this]() { /* _world.showIntegrationUI = !_world.showIntegrationUI; */ });
