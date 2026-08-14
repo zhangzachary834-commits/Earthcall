@@ -115,6 +115,25 @@ public:
 
     void addEvent(const RelationEvent& e) { events.push_back(e); }
 
+    // Refusal 6 getters/setters
+    bool getAttachmentEnabled() const { return attachment.enabled; }
+    void setAttachmentEnabled(const bool& v) { attachment.enabled = v; }
+    glm::mat4 getAttachmentLocalOffset() const { return attachment.localOffset; }
+    void setAttachmentLocalOffset(const glm::mat4& v) { attachment.localOffset = v; }
+    glm::vec3 getAttachmentParentAnchor() const { return attachment.parentAnchor; }
+    void setAttachmentParentAnchor(const glm::vec3& v) { attachment.parentAnchor = v; }
+    glm::vec3 getAttachmentChildAnchor() const { return attachment.childAnchor; }
+    void setAttachmentChildAnchor(const glm::vec3& v) { attachment.childAnchor = v; }
+    bool getAttachmentInheritTranslation() const { return attachment.inheritTranslation; }
+    void setAttachmentInheritTranslation(const bool& v) { attachment.inheritTranslation = v; }
+    bool getAttachmentInheritRotation() const { return attachment.inheritRotation; }
+    void setAttachmentInheritRotation(const bool& v) { attachment.inheritRotation = v; }
+    bool getAttachmentInheritScale() const { return attachment.inheritScale; }
+    void setAttachmentInheritScale(const bool& v) { attachment.inheritScale = v; }
+
+    std::shared_ptr<PropertyList> getEventsList() const;
+    void setEventsList(const std::shared_ptr<PropertyList>& list);
+
 private:
     // A Relation is a legible Singular like any being: its semantic tag,
     // strength, direction, and endpoints address through PropertyPath —

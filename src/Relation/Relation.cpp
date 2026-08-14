@@ -152,6 +152,23 @@ void Relation::buildProperties() {
         "entityA", this, &Relation::propEntityA));
     _propertyRegistry.push_back(std::make_unique<ComputedProperty<Relation, std::string>>(
         "entityB", this, &Relation::propEntityB));
+
+    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Relation, bool>>(
+        "attachment.enabled", this, &Relation::getAttachmentEnabled, &Relation::setAttachmentEnabled));
+    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Relation, glm::mat4>>(
+        "attachment.localOffset", this, &Relation::getAttachmentLocalOffset, &Relation::setAttachmentLocalOffset));
+    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Relation, glm::vec3>>(
+        "attachment.parentAnchor", this, &Relation::getAttachmentParentAnchor, &Relation::setAttachmentParentAnchor));
+    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Relation, glm::vec3>>(
+        "attachment.childAnchor", this, &Relation::getAttachmentChildAnchor, &Relation::setAttachmentChildAnchor));
+    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Relation, bool>>(
+        "attachment.inheritTranslation", this, &Relation::getAttachmentInheritTranslation, &Relation::setAttachmentInheritTranslation));
+    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Relation, bool>>(
+        "attachment.inheritRotation", this, &Relation::getAttachmentInheritRotation, &Relation::setAttachmentInheritRotation));
+    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Relation, bool>>(
+        "attachment.inheritScale", this, &Relation::getAttachmentInheritScale, &Relation::setAttachmentInheritScale));
+    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Relation, std::shared_ptr<PropertyList>>>(
+        "events", this, &Relation::getEventsList, &Relation::setEventsList));
 }
 
 
@@ -171,4 +188,37 @@ float Relation::getWeight() const {
 
 void Relation::setWeight(const float& w) {
     setDynamicProperty("weight", PropertyValue(w));
+}
+
+std::shared_ptr<PropertyList> Relation::getEventsList() const {
+    auto list = std::make_shared<PropertyList>();
+    for (const auto& ev : events) {
+        auto dict = std::make_shared<PropertyDict>();
+        dict->elements["timestamp"] = PropertyValue(static_cast<long>(ev.timestamp));
+        dict->elements["description"] = PropertyValue(ev.description);
+        dict->elements["deltaWeight"] = PropertyValue(ev.deltaWeight);
+        list->elements.push_back(PropertyValue(dict));
+    }
+    return list;
+}
+
+void Relation::setEventsList(const std::shared_ptr<PropertyList>& list) {
+    if (!list) return;
+    events.clear();
+    for (const auto& item : list->elements) {
+        if (auto dict = std::get_if<std::shared_ptr<PropertyDict>>(&item)) {
+            RelationEvent ev;
+            if ((*dict)->elements.count("timestamp")) {
+                if (auto* v = std::get_if<long>(&(*dict)->elements["timestamp"])) ev.timestamp = *v;
+            }
+            if ((*dict)->elements.count("description")) {
+                if (auto* v = std::get_if<std::string>(&(*dict)->elements["description"])) ev.description = *v;
+            }
+            if ((*dict)->elements.count("deltaWeight")) {
+                if (auto* v = std::get_if<float>(&(*dict)->elements["deltaWeight"])) ev.deltaWeight = *v;
+                else if (auto* dv = std::get_if<double>(&(*dict)->elements["deltaWeight"])) ev.deltaWeight = static_cast<float>(*dv);
+            }
+            events.push_back(ev);
+        }
+    }
 }
