@@ -198,5 +198,5 @@ through 15 kHz, quiet infrasonic terms, and tremolo all pass), and it leaves the
 mathematics untouched.
 
 Verified by `tests/ontomath_sounding_test.cpp`; demonstrated audibly by
-`scratch/one_expression_two_senses.cpp`, which prints one expression as an ASCII arch,
+`scratch/probes/one_expression_two_senses.cpp`, which prints one expression as an ASCII arch,
 writes it as a playable `.wav`, and reverses a `Flow` governed by its derivative.

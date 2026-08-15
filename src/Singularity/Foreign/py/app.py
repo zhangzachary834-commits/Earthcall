@@ -29,7 +29,7 @@ socketio = SocketIO(app, cors_allowed_origins=["https://trusted.earthcall.com", 
 from web.routes import web_bp
 from api.routes import api_bp
 app.register_blueprint(web_bp)
-app.register_blueprint(api_bp)
+app.register_blueprint(api_bp)  
 
 # Register WebSocket events
 from events import register_socket_events

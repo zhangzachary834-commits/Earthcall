@@ -352,7 +352,7 @@ fact(n):
                                                                     the identity, = 1
 ```
 
-*(Verified: `scratch/algorithms_as_law_probe.cpp` evaluates this shape at n=5 and gets
+*(Verified: `scratch/probes/algorithms_as_law_probe.cpp` evaluates this shape at n=5 and gets
 **1**, not 120.)*
 
 The arithmetic must ride in the **arguments**, which are full `ScalarForm`s — which is

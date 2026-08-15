@@ -6,8 +6,8 @@
 //   c++ -std=c++17 -UNDEBUG -Isrc -Iimgui -Ithird_party/flatbuffers/include \
 //       -Ilocal_deps/include -Ibuild/_deps/asio-src/asio/include \
 //       -Ibuild/_deps/websocketpp-src -DASIO_STANDALONE \
-//       scratch/first_mover_doc_probe.cpp \
-//       $(find build/CMakeFiles/earthcall_core.dir -name '*.o') -o scratch/fm_probe
+//       scratch/probes/first_mover_doc_probe.cpp \
+//       $(find build/CMakeFiles/earthcall_core.dir -name '*.o') -o scratch/probes/fm_probe
 
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "json.hpp"

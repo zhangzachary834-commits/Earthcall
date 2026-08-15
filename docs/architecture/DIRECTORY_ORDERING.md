@@ -102,9 +102,10 @@ Earthcall/
 ```
 
 `migrate_saves.cpp`, formerly listed here as a root-level stray, was moved to
-`scratch/migrate_saves.cpp` on 2026-08-13 — it built no CMake target, so it was a
+`scratch/scripts/migrate/migrate_saves.cpp` on 2026-08-13 — it built no CMake target, so it was a
 one-off tool rather than live source, matching the same "move, never discard" precedent
-as `scratch/attic/` below.
+as `scratch/attic/` below. On 2026-08-14 the scratch root was subdivided (`probes/`,
+`legacy/`, `scripts/`, `fixtures/`, `audits/`, `experiments/`); see `scratch/README.md`.
 
 `scratch/attic/` holds what used to sit loose at `sight-cpp/`'s root — one-off
 probes (`test_parse.cpp`, `test_variant.cpp`), fixtures (`save.json`), logs, and

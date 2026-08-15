@@ -29,14 +29,14 @@
 
 #include "Singularity/Input/KeyboardHandler.hpp"
 #include "Singularity/Input/MouseHandler.hpp"
-#include "OurVerse/CursorTools.hpp"
-#include "OurVerse/ElementalToolHandler.hpp"
+#include "Singularity/FirstMoverWindowTools/CursorTools.hpp"
+#include "Singularity/FirstMoverWindowTools/ElementalToolHandler.hpp"
 #include "Singularity/Screen/DeveloperToolsWindow.hpp"
 #include "Singularity/Screen/CreationWindow.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 
-#include "Singularity/Screen/CreatorConsoleWindow.hpp"
+#include "Singularity/FirstMoverWindowTools/CreatorConsole/CreatorConsoleWindow.hpp"
 #include <iostream>
 
 extern ZoneManager mgr;

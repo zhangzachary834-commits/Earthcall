@@ -20,7 +20,7 @@ struct LawCard {
 };
 
 // Card 0 is the law itself; then the event card (when a binding is known),
-// the condition tree, and the action tree.
+// the condition tree, and the actio    n tree.
 std::vector<LawCard> flattenLaw(const Law& law, const std::string& eventBinding);
 
 // One entry in the path picker: a property path the authoring window offers a

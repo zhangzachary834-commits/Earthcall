@@ -5,13 +5,12 @@
 // Split from Game.cpp during refactor.
 
 #include "Singularity/Core/Engine.hpp"
-#include "../../OurVerse/ElementalToolHandler.hpp"
-#include "Singularity/Core/Engine.hpp"
-#include "../../OurVerse/ElementalToolHandler.hpp"
+#include "../../Singularity/FirstMoverWindowTools/ElementalToolHandler.hpp"
+#include "../../Singularity/FirstMoverWindowTools/CursorTools.hpp"
 #include "../../../imgui/backends/imgui_impl_glfw.h"
 #include "ConstructedBeing/Object/Object.hpp"
 #include "Singularity/Screen/ShadingSystem.hpp"
-#include "OurVerse/AdvancedFacePaint.hpp"
+#include "Singularity/FirstMoverWindowTools/AdvancedFacePaint.hpp"
 #include "ConstructedBeing/Object/Creation/ObjectConcept.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
@@ -24,7 +23,7 @@
 #include "Person/Body/BodyPart/BodyPart.hpp"
 #include "Singularity/Screen/Camera.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
-#include "Singularity/Screen/CreatorConsoleWindow.hpp"
+#include "Singularity/FirstMoverWindowTools/CreatorConsole/CreatorConsoleWindow.hpp"
 
 #include <GLFW/glfw3.h>
 #include <imgui.h>

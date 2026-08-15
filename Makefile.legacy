@@ -419,8 +419,8 @@ binary_packing_test: $(TEST_OBJECTS) $(BUILD_DIR)/tests/binary_packing_test.o
 migrate-saves: $(BUILD_DIR)/src/Util/SaveSystem.o $(BUILD_DIR)/src/Util/CloudStorage.o $(BUILD_DIR)/src/Util/MigrateSaves.o
 	$(CXX) $^ $(LDFLAGS) -o migrate_saves
 
-read-laws: $(BUILD_DIR)/src/Util/SaveSystem.o $(BUILD_DIR)/src/Util/CloudStorage.o scratch/read_laws.cpp
-	$(CXX) scratch/read_laws.cpp $(BUILD_DIR)/src/Util/SaveSystem.o $(BUILD_DIR)/src/Util/CloudStorage.o -I./src -I./src/Form -I./src/ZonesOfEarth -I./src/Person/Body -I../imgui $(LDFLAGS) -o read_laws
+read-laws: $(BUILD_DIR)/src/Util/SaveSystem.o $(BUILD_DIR)/src/Util/CloudStorage.o scratch/probes/read_laws.cpp
+	$(CXX) scratch/probes/read_laws.cpp $(BUILD_DIR)/src/Util/SaveSystem.o $(BUILD_DIR)/src/Util/CloudStorage.o -I./src -I./src/Form -I./src/ZonesOfEarth -I./src/Person/Body -I../imgui $(LDFLAGS) -o read_laws
 
 test-serialization: serialization_compat_test
 	./serialization_compat_test

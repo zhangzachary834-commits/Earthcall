@@ -74,7 +74,7 @@ build-asan/
 # see docs/WASM_FIX_NOTES.md.
 build-wasm/
 
-# node_modules, wherever it lands (e.g. scratch/puppeteer_test/node_modules,
+# node_modules, wherever it lands (e.g. scratch/experiments/puppeteer_test/node_modules,
 # 2,221 files committed by the same fc25329 above). Regenerates via `npm
 # install`.
 node_modules/

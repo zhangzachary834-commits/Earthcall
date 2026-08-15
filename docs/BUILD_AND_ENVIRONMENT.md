@@ -114,7 +114,7 @@ registered a second time on first access — the authoring picker then offers ev
 twice. `ForeignChannel.cpp` carries the standing note; `PhysicsLawBridge` and
 `PhysicalChannel` follow it; `CreationChannel` was the one channel that ignored it.
 
-**Scratch probes belong in `scratch/`, not `tests/`.** If you build one through the test
+**Scratch probes belong in `scratch/probes/`, not `tests/`.** If you build one through the test
 target for convenience, remove the copy from `tests/` *and reconfigure* when finished — an
 outside `git add -A` will otherwise commit it, and the stale CMake target will break the
 next full build.

@@ -52,13 +52,13 @@ every session, on top of the refusals in `AGENTS.md` and the workshop rules in
 
 ## Working notes
 
-- **Scratch probes** belong in `scratch/`, not `tests/`. If you build one through the test
+- **Scratch probes** belong in `scratch/probes/`, not `tests/` or loose at the `scratch/` root. If you build one through the test
   target for convenience, remove the copy from `tests/` **and reconfigure** when finished —
   an outside `git add -A` will otherwise commit it, and the stale CMake target breaks the
   next full build.
 
 - **Don't claim a doc is verified because you read the source.** Every framework doc in this
-  corpus has a probe in `scratch/` that executes its central claims. Two of those probes
+  corpus has a probe in `scratch/probes/` that executes its central claims. Two of those probes
   caught claims that were plainly wrong on inspection. Run things.
 
 - **Bounds are doctrine, not limits.** `kMaxChainRounds = 8`, `kMaxCallDepth = 32`, one pass

@@ -9,7 +9,7 @@ This document preserves the removed C++ logic. The goal is to reimplement these 
 ## Preserved Code
 
 ### 1. Morph, Combine, Clay: Field Gizmos & Blend Rails
-*From `scratch/GameUpdate.cpp` (Handle Logic) and `scratch/GameRender.cpp` (Rendering)*
+*From `scratch/legacy/GameUpdate.cpp` (Handle Logic) and `scratch/legacy/GameRender.cpp` (Rendering)*
 
 **Goal:** Migrate to a Law that observes `selectedObject.isBinaryField` and spawns a "gold cube" object at `operandBOffset`. Interactions should move the spawned object, which writes back to the field properties.
 
@@ -39,7 +39,7 @@ if (o->isMorphField()) {
 ```
 
 ### 2. Polyhedron Vertex Editing (Waterbending)
-*From `scratch/GameUpdate.cpp`*
+*From `scratch/legacy/GameUpdate.cpp`*
 
 **Goal:** Migrate the screen-space picking and projection of individual vertices out of the update loop. Instead, a tool should emit a targeted modification event on the geometry.
 
@@ -61,7 +61,7 @@ if (mouseLeftNow && !_mouseLeftPressedLast) {
 ```
 
 ### 3. Face Brush 2D Overlay
-*From `scratch/GameRender.cpp`*
+*From `scratch/legacy/GameRender.cpp`*
 
 **Goal:** Remove `currentRenderer().begin2D(...)` custom brush cursor from the core renderer. If a 2D brush is needed, the `OurVerse` tools should inject UI overlay draws explicitly, not via `Engine::render()`.
 
@@ -78,7 +78,7 @@ if (_current3DMode == Mode3D::FaceBrush && _brush.showCursor && _brush.cursorVis
 ```
 
 ### 4. Clay Target AABB Outline
-*From `scratch/GameRender.cpp`*
+*From `scratch/legacy/GameRender.cpp`*
 
 **Goal:** Make the targeted object pulse or change material via Law logic rather than hardcoding a yellow wireframe in `GameRender.cpp`.
 

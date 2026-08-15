@@ -116,7 +116,7 @@ bool isSealed(const std::string& being) {
 // legal value" from "the setter ignored my request", because it does not know
 // each property's legal domain. Where a human has established which it is, the
 // property is named here with what was measured. Verified by
-// scratch/no_black_box_probe.cpp, not by reading the setter.
+// scratch/probes/no_black_box_probe.cpp, not by reading the setter.
 // ---------------------------------------------------------------------------
 struct WriteExemption {
     const char* being;

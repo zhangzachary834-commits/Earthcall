@@ -767,7 +767,7 @@ set, kind and snapshot through JSON, provenance surviving the round trip, the
 birth refusals, the gate over multivariable mappings, and `Synthesize`
 deriving from the live input set into the World. `tests/metalaw_test.cpp` §6
 covers the synthesis bindings. A regression probe for the five defects this
-work closed lives in `scratch/set_to_set_audit_probe.cpp`.
+work closed lives in `scratch/probes/set_to_set_audit_probe.cpp`.
 
 ### 7c. `Spawn` — creation *is* a law application
 

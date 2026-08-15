@@ -497,7 +497,7 @@ Two consequences, and they point the opposite way from the obvious guess:
   the file is yours to guarantee; the counter only protects the boundary with
   future generated ids.
 
-*(Verified: `scratch/first_mover_doc_probe.cpp` — three `fromJson` calls with ids
+*(Verified: `scratch/probes/first_mover_doc_probe.cpp` — three `fromJson` calls with ids
 `law-1`, `law-2`, `my-cool-law` leave the next minted law at `law-4`.)*
 
 **d. `_authors` empty means the law is inert.** Not disabled — *unauthored*. It sits in

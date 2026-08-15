@@ -424,7 +424,7 @@ Root resolution now does what `PropertyPath::resolve` already documents one leve
 **longest dotted-name match, most specific wins** — so a being named `material.clay`
 beats one named `material`, and the segments it consumed never reach the property lookup.
 
-*(Verified: `scratch/material_addressing_probe.cpp` — resolves to `material.clay` with
+*(Verified: `scratch/probes/material_addressing_probe.cpp` — resolves to `material.clay` with
 remainder `baseColor`, reads `(0.70, 0.40, 0.20)` through the qualified path, picks the
 longer id when both exist regardless of provider order, still answers nothing for an
 unknown being. All 35 existing tests pass.)*

@@ -243,7 +243,7 @@ Added `build-wasm/` and `node_modules/` to `.gitignore`, in the existing file's 
   to a specific machine's emsdk path that breaks fresh-clone configure).
   **Exception: `build-wasm/index.html` should NOT simply be untracked-and-left** — see below.
 - `node_modules/`, wherever it appears — currently only
-  `scratch/puppeteer_test/node_modules/` (2,221 files).
+  `scratch/experiments/puppeteer_test/node_modules/` (2,221 files).
 
 **Not acted on, per instructions — recommendation only:** `build-wasm/index.html` is
 currently the *only* page that boots the wasm build (it's the only tracked file setting

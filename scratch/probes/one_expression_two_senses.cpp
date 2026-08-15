@@ -15,13 +15,13 @@
 //      a Zone's fold, in miniature.
 //
 // Build (the sanctioned convenience — see CLAUDE.md "Working notes"):
-//     cp scratch/one_expression_two_senses.cpp tests/
+//     cp scratch/probes/one_expression_two_senses.cpp tests/
 //     cmake -S . -B build ...   # sources are globbed at configure time
 //     cmake --build build --target one_expression_two_senses -j8
 //     ./build/one_expression_two_senses
 //     rm tests/one_expression_two_senses.cpp
 //
-// It writes scratch/vault.wav. Play it: the chord you hear and the arch
+// It writes scratch/fixtures/vault.wav. Play it: the chord you hear and the arch
 // printed above it are the same equation.
 
 #include "Singularity/Audio/AudioSystem.hpp"
@@ -128,7 +128,7 @@ int main() {
     std::printf("  lowest authored component: %.1f Hz; infrasonic RMS %.2e (ceiling %.2f)\n",
                 report.lowestAuthoredHz, report.infrasonicRms,
                 Core::Audio::kInfrasonicRmsCeiling);
-    writeWav("scratch/vault.wav", chord, rate);
+    writeWav("scratch/fixtures/vault.wav", chord, rate);
 
     // The same channel, asked to sound a 7 Hz tone. It refuses — and the
     // refusal is not a setting anyone can reach.
