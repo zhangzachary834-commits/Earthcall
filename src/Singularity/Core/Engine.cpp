@@ -31,6 +31,9 @@
 #include "Singularity/Input/MouseHandler.hpp"
 #include "Singularity/FirstMoverWindowTools/CursorTools.hpp"
 #include "Singularity/FirstMoverWindowTools/ElementalToolHandler.hpp"
+#include "Singularity/FirstMoverWindowTools/CreatorConsole/CreatorConsoleWindow.hpp"
+#include "Singularity/FirstMoverWindowTools/CreatorConsole/CreatorConsoleState.hpp"
+#include "Singularity/Screen/LawGraphWindow.hpp"
 #include "Singularity/Screen/DeveloperToolsWindow.hpp"
 #include "Singularity/Screen/CreationWindow.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
@@ -278,6 +281,10 @@ void Engine::tick(float dt) {
 
         if (_creatorConsoleOpen) {
             Rendering::renderCreatorConsoleWindow(&_creatorConsoleOpen, _player.get(), nullptr, mgr);
+        }
+
+        if (Rendering::getCreatorConsoleState().showLawAuthor) {
+            Rendering::renderLawGraphWindow(&Rendering::getCreatorConsoleState().showLawAuthor, *_lawManager, *_player);
         }
 
         // 2. Render 3D scene (must happen before ImGui::Render composites over it)

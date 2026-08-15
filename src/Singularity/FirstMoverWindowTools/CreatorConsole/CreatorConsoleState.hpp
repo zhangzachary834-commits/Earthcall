@@ -106,6 +106,7 @@ namespace Rendering {
 
         // World State
         bool cursorToolsOpen = false;
+        bool showLawAuthor = false;
     };
 
     CreatorConsoleState& getCreatorConsoleState();
