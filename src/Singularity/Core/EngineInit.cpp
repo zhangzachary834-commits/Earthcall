@@ -5,6 +5,7 @@
 // Split from Game.cpp during refactor.
 
 #include "Singularity/Core/Engine.hpp"
+#include "Singularity/Core/EventBus.hpp"
 #include "../../Singularity/FirstMoverWindowTools/ElementalToolHandler.hpp"
 #include "../../Singularity/FirstMoverWindowTools/CursorTools.hpp"
 #include "../../../imgui/backends/imgui_impl_glfw.h"
@@ -83,6 +84,38 @@ void Engine::initLogic() {
             _lawManager->bindTrigger(law->getIdentifier(), law->ecaLoop().eventType);
         }
     }
+
+    // Instantiate Shape Generator 3D Tool Law
+    auto shapeGenLaw = std::make_shared<FirstMoverLaw>("Tool: Shape Generator 3D");
+    shapeGenLaw->setObjectID("shape-generator-3d-law");
+    shapeGenLaw->setActivation(Law::Activation::OnEvent);
+    shapeGenLaw->ecaLoop().eventType = "onMouseClicked";
+    
+    ConditionNode shapeGenCond;
+    shapeGenCond.kind = ConditionNode::Kind::Compare;
+    shapeGenCond.path = PropertyPath::parse("type");
+    shapeGenCond.op = ConditionNode::Op::Eq;
+    shapeGenCond.operand = PropertyValue(std::string("onMouseClicked"));
+    shapeGenLaw->setConditionModel(shapeGenCond);
+    
+    ActionNode shapeGenAct;
+    shapeGenAct.kind = ActionNode::Kind::Spawn;
+    shapeGenAct.conceptId = "concept-shape-3d";
+    shapeGenAct.spawnPlacementPath = PropertyPath::parse("cursorSpawnTransform");
+    shapeGenAct.spawnColorPath = PropertyPath::parse("activeColor");
+    shapeGenAct.spawnShapeKindPath = PropertyPath::parse("activeShapeKind");
+    shapeGenLaw->setActionModel(shapeGenAct);
+    
+    auto shapeConcept = std::make_shared<ObjectConcept>("Shape 3D");
+    shapeConcept->setConceptId("concept-shape-3d");
+    ObjectConcept::MemberTemplate tmpl;
+    tmpl.beingKind = ConditionNode::BeingKind::Object;
+    tmpl.kind = Object::ShapeKind::Cube;
+    shapeConcept->members().push_back(tmpl);
+    ConceptRegistry::instance().add(shapeConcept);
+    
+    _lawManager->add(shapeGenLaw);
+    _lawManager->bindTrigger(shapeGenLaw->getIdentifier(), "onMouseClicked");
 
     // The Universe: what continuous laws watch and quantified conditions
     // (ForAny/ForAll) range over — the active world's objects, the laws
@@ -393,6 +426,19 @@ void Engine::registerCallbacks() {
             ImGui_ImplGlfw_MouseButtonCallback(window, button, action, mods);
             // Then handle game-specific mouse input
             self->_mouseHandler->handleMouseButton(button, action, mods);
+            
+            // Emit global onMouseClicked event
+            if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS && !ImGui::GetIO().WantCaptureMouse) {
+                Singularity::Core::CreationChannel* channel = nullptr;
+                if (self->getLawManager()) {
+                    for (const auto& law : self->getLawManager()->getAll()) {
+                        channel = dynamic_cast<Singularity::Core::CreationChannel*>(law.get());
+                        if (channel) break;
+                    }
+                }
+                ECA::Event ev{"onMouseClicked", channel, nullptr, std::time(nullptr)};
+                Core::EventBus::instance().publish(ev);
+            }
         }
     });
 

@@ -1,5 +1,5 @@
 #include "Singularity/Core/Engine.hpp"
-
+#include "Singularity/Core/CreationChannel.hpp"
 #include "../../../imgui/imgui.h"
 #include "../../../imgui/backends/imgui_impl_glfw.h"
 
@@ -280,11 +280,20 @@ void Engine::tick(float dt) {
         }
 
         if (_creatorConsoleOpen) {
-            Rendering::renderCreatorConsoleWindow(&_creatorConsoleOpen, _player.get(), nullptr, mgr);
+            Rendering::renderCreatorConsoleWindow(&_creatorConsoleOpen, _player.get(), nullptr, mgr, this);
         }
 
         if (Rendering::getCreatorConsoleState().showLawAuthor) {
-            Rendering::renderLawGraphWindow(&Rendering::getCreatorConsoleState().showLawAuthor, *_lawManager, *_player);
+            Singular* testSubject = nullptr;
+            if (_lawManager) {
+                for (const auto& law : _lawManager->getAll()) {
+                    if (auto channel = dynamic_cast<Singularity::Core::CreationChannel*>(law.get())) {
+                        testSubject = channel;
+                        break;
+                    }
+                }
+            }
+            Rendering::renderLawGraphWindow(&Rendering::getCreatorConsoleState().showLawAuthor, *_lawManager, *_player, testSubject);
         }
 
         // 2. Render 3D scene (must happen before ImGui::Render composites over it)

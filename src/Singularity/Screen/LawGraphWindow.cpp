@@ -756,7 +756,7 @@ bool editConditionNode(ConditionNode& node) {
             } else {
                 if (pathPicker("Against", node.operandPath)) changed = true;
                 ImGui::SameLine();
-                if (ImGui::SmallButton("use a number instead")) {
+                if (ImGui::SmallButton("use a primitive data type instead")) {
                     node.operandPath = PropertyPath{};
                     changed = true;
                 }
@@ -1249,6 +1249,26 @@ bool editActionNode(ActionNode& node) {
             break;
         }
     }
+    
+    ImGui::Separator();
+    ImGui::Separator();
+    if (g.testSubject) {
+        if (ImGui::Button("Debug: Run this action now")) {
+            ECA::Event event;
+            event.type = "debug-test";
+            event.subject = g.testSubject;
+            event.timestamp = std::time(nullptr);
+            node.compile()(event, *g.testSubject);
+        }
+    } else {
+        ImGui::BeginDisabled();
+        ImGui::Button("Debug: Run this action now");
+        ImGui::EndDisabled();
+        if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
+            ImGui::SetTooltip("Select a subject in the world to test this action against.");
+        }
+    }
+    
     return changed;
 }
 

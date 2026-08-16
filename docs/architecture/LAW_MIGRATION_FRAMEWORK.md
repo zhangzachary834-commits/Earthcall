@@ -1292,6 +1292,8 @@ claims `input.flight-toggle`:
 condition:  All( Identity("key-F"),
                  Compare(@ui.inputCaptured, Eq, false) )
 action:     Map( @player.flying, f = 1 - x, binds = { x -> @player.flying } )
+//NOTE: the property path reads as "player" right now, but since the idea is to have 
+Personalist ontology rather than game ontology, we must rename it according to the actual names.
 ```
 
 `1 − x` is how a boolean toggle is expressed with the action vocabulary as it stands

@@ -4,7 +4,7 @@
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "Singularity/Screen/Camera.hpp"
 #include "Singularity/Input/MouseHandler.hpp"
-#include "OurVerse/Tool.hpp"
+#include "Singularity/FirstMoverWindowTools/Tool.hpp"
 #include "Person/Person.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include <string>
@@ -41,7 +41,6 @@ inline void dump_test_save(const std::string& test_name, World& testWorld, LawMa
     ctx.camera = &camera;
     ctx.mouseHandler = &mouseHandler;
     ctx.currentColor = currentColor;
-    ctx.currentTool = &currentTool;
     ctx.player = &testPlayer;
     ctx.lawManager = &testLawManager;
     ctx.worldTime = &worldTime;

@@ -196,7 +196,6 @@ nlohmann::json ZoneManager::buildSaveJson(const SaveContext& ctx) const {
     j["pitch"] = ctx.mouseHandler->getPitch();
 
     j["currentColor"] = {ctx.currentColor[0], ctx.currentColor[1], ctx.currentColor[2]};
-    j["currentTool"]  = static_cast<int>(ctx.currentTool->getType());
 
     // Save physics laws
     {
@@ -434,7 +433,6 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
             ctx.currentColor[1] = j["currentColor"][1];
             ctx.currentColor[2] = j["currentColor"][2];
         }
-        *ctx.currentTool = Tool(static_cast<Tool::Type>(j.value("currentTool", static_cast<int>(Tool::Type::Brush))));
 
         Physics::setFlying(j.value("flying", false));
 

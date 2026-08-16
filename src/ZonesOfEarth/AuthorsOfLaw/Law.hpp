@@ -598,6 +598,12 @@ private:
     std::size_t _nextNodeId{1};
 };
 
+class FirstMoverLaw : public Law {
+public:
+    FirstMoverLaw(const std::string& name) : Law(name) {}
+    bool isFirstMover() const override { return true; }
+};
+
 class LawManager {
 public:
     std::shared_ptr<Law> createLaw(const std::string& name,

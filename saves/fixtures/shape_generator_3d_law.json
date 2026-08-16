@@ -1,0 +1,500 @@
+{
+  "authoredLaws": {
+    "formationMembers": [
+      "creation-channel",
+      "law-3"
+    ],
+    "laws": [
+      {
+        "actionDescriptions": [
+          "spawn(concept-shape-3d)"
+        ],
+        "actionModel": {
+          "conceptId": "concept-shape-3d",
+          "kind": 7,
+          "spawnColorPath": "activeColor",
+          "spawnPlacementPath": "cursorSpawnTransform",
+          "spawnShapeKindPath": "activeShapeKind"
+        },
+        "activation": 0,
+        "applicationLog": [],
+        "authority": 0,
+        "authors": [
+          "Player"
+        ],
+        "conditionDescriptions": [
+          "active3DMode == \"Create\""
+        ],
+        "conditionMode": "all",
+        "conditionModel": {
+          "kind": 0,
+          "op": 0,
+          "operand": {
+            "t": "string",
+            "v": "Create"
+          },
+          "path": "active3DMode"
+        },
+        "conditionSubjects": [],
+        "drives": false,
+        "enabled": true,
+        "id": "law-3",
+        "name": "Tool: Shape Generator 3D",
+        "provenance": [
+          {
+            "attachment": {
+              "childAnchor": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "enabled": false,
+              "inheritRotation": true,
+              "inheritScale": true,
+              "inheritTranslation": true,
+              "localOffset": [
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "parentAnchor": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            "directed": true,
+            "entityA": "law-3",
+            "entityB": "Player",
+            "events": [
+              {
+                "deltaWeight": 1.0,
+                "description": "authored-by",
+                "timestamp": 1786650532
+              }
+            ],
+            "type": "authored-by",
+            "weight": 1.0
+          }
+        ],
+        "retrigger": 0,
+        "scope": 0,
+        "targets": []
+      }
+    ],
+    "rete": {
+      "agenda": [],
+      "alphaNodes": [
+        {
+          "description": "type == onMouseClicked",
+          "id": 1,
+          "memorySize": 0
+        }
+      ],
+      "betaNodes": [],
+      "facts": [
+        {
+          "attribute": "",
+          "id": "fact-1",
+          "subjectId": "creation-channel",
+          "type": "law-registered",
+          "value": null
+        },
+        {
+          "attribute": "",
+          "id": "fact-2",
+          "subjectId": "concept-shape-3d",
+          "type": "concept-registered",
+          "value": null
+        },
+        {
+          "attribute": "",
+          "id": "fact-3",
+          "subjectId": "law-3-authored-by-Player",
+          "type": "relation-formed",
+          "value": null
+        },
+        {
+          "attribute": "type",
+          "id": "fact-4",
+          "subjectId": "law-3-authored-by-Player",
+          "type": "property-state",
+          "value": {
+            "t": "string",
+            "v": "authored-by"
+          }
+        },
+        {
+          "attribute": "directed",
+          "id": "fact-5",
+          "subjectId": "law-3-authored-by-Player",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": true
+          }
+        },
+        {
+          "attribute": "weight",
+          "id": "fact-6",
+          "subjectId": "law-3-authored-by-Player",
+          "type": "property-state",
+          "value": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        {
+          "attribute": "entityA",
+          "id": "fact-7",
+          "subjectId": "law-3-authored-by-Player",
+          "type": "property-state",
+          "value": {
+            "t": "string",
+            "v": "law-3"
+          }
+        },
+        {
+          "attribute": "entityB",
+          "id": "fact-8",
+          "subjectId": "law-3-authored-by-Player",
+          "type": "property-state",
+          "value": {
+            "t": "string",
+            "v": "Player"
+          }
+        },
+        {
+          "attribute": "",
+          "id": "fact-9",
+          "subjectId": "law-3",
+          "type": "law-registered",
+          "value": null
+        }
+      ]
+    },
+    "triggers": {
+      "law-3": [
+        "onMouseClicked"
+      ]
+    }
+  },
+  "cameraFront": [
+    0.0,
+    0.0,
+    -1.0
+  ],
+  "cameraPos": [
+    0.0,
+    0.0,
+    3.0
+  ],
+  "cameraUp": [
+    0.0,
+    1.0,
+    0.0
+  ],
+  "categories": [
+    {
+      "authoritativeAxis": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "center": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "faceColors": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "geometryType": 0,
+      "materialId": "material.default",
+      "objectID": "category.default",
+      "rotationResponsiveness": 10.0,
+      "shapeKind": 0,
+      "shapeParams": [
+        0.5,
+        0.3199999928474426,
+        0.5,
+        0.5,
+        0.3499999940395355,
+        0.15000000596046448,
+        2.0,
+        0.25,
+        0.11999999731779099
+      ],
+      "targetRotation": [
+        0.0,
+        -0.0,
+        0.0
+      ],
+      "transform": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "authoredProperties": {
+        "scale": {
+          "t": "vec3",
+          "x": 1.0,
+          "y": 1.0,
+          "z": 1.0
+        },
+        "size": {
+          "t": "double",
+          "v": 1.0
+        }
+      },
+      "authoritativeAxis": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "center": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "faceColors": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "geometryType": 0,
+      "materialId": "material.default",
+      "objectID": "category.tool.brush",
+      "rotationResponsiveness": 10.0,
+      "shapeKind": 0,
+      "shapeParams": [
+        0.5,
+        0.3199999928474426,
+        0.5,
+        0.5,
+        0.3499999940395355,
+        0.15000000596046448,
+        2.0,
+        0.25,
+        0.11999999731779099
+      ],
+      "targetRotation": [
+        0.0,
+        -0.0,
+        0.0
+      ],
+      "transform": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  ],
+  "concepts": {
+    "concepts": [
+      {
+        "attributes": {},
+        "authoredProperties": {},
+        "id": "concept-shape-3d",
+        "mappings": [],
+        "members": [
+          {
+            "beingKind": 1,
+            "hasGeometry": true,
+            "kind": 0,
+            "params": [
+              0.5,
+              0.3199999928474426,
+              0.5,
+              0.5,
+              0.3499999940395355,
+              0.15000000596046448,
+              2.0,
+              0.25,
+              0.11999999731779099
+            ],
+            "relativeTransform": [
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          }
+        ],
+        "name": "Shape Generator 3D Cube",
+        "provenance": [],
+        "relationTemplates": []
+      }
+    ]
+  },
+  "currentColor": [
+    1.0,
+    1.0,
+    1.0
+  ],
+  "currentTool": 12,
+  "currentZone": 0,
+  "flying": false,
+  "materials": [
+    {
+      "ambient": 0.20000000298023224,
+      "baseColor": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "diffuse": 0.800000011920929,
+      "name": "default",
+      "opacity": 1.0,
+      "shininess": 32.0,
+      "specular": 1.0
+    }
+  ],
+  "mathFunctions": {
+    "functions": []
+  },
+  "physicsLaws": [],
+  "pitch": 0.0,
+  "playerBody": {
+    "artStyle": "default",
+    "bodyParts": [],
+    "height": 1.7999999523162842,
+    "shape": "humanoid"
+  },
+  "transferPolicy": {
+    "open": {
+      "center": true,
+      "conditionMode": false,
+      "directed": false,
+      "drives": false,
+      "enabled": false,
+      "name": false,
+      "position": true,
+      "rotation": true,
+      "shape": true,
+      "type": false,
+      "weight": false
+    }
+  },
+  "worldTime": 0.0,
+  "yaw": -90.0,
+  "zones": [
+    {
+      "formationRelations": [],
+      "name": "Sanctum of Beginnings",
+      "owner": "",
+      "world": {
+        "objects": []
+      }
+    }
+  ]
+}

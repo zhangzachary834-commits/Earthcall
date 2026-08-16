@@ -73,70 +73,10 @@ void renderDeveloperToolsWindow(bool* open, GLFWwindow* window, Core::Engine* en
     lawModeKeyDownLast = lawModeKeyDown;
 
     if (channel->active3DMode == "Create") {
-        static bool lawClickDownLast = false;
-        bool lawClickDown = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
-        if (lawClickDown && !lawClickDownLast) {
-            ECA::Event ev{"onMouseClicked", channel, nullptr, 0};
-            Core::EventBus::instance().publish(ev);
-        }
-        lawClickDownLast = lawClickDown;
+        // Mode is active, tool logic executes when the global onMouseClicked event fires.
     }
 
-    if (ImGui::Begin("Developer: 3D Create Tool", open)) {
-        ImGui::TextWrapped(
-            "Restored pre-law spawn tool. Left-click below spawns directly, "
-            "authored by the CreationChannel First Mover.");
-        ImGui::Separator();
 
-        ImGui::TextColored(
-            channel->active3DMode == "Create" ? ImVec4(0.3f, 0.9f, 0.3f, 1.0f)
-                                               : ImVec4(0.6f, 0.6f, 0.6f, 1.0f),
-            "Law mode (press L): %s",
-            channel->active3DMode == "Create" ? "ARMED -- click fires the law" : "off");
-
-        ImGui::Separator();
-
-        static int shapeIndex = 0;
-        const int kShapeKindCount = static_cast<int>(sizeof(kDevToolShapeKinds) / sizeof(kDevToolShapeKinds[0]));
-        if (ImGui::BeginCombo("Shape", shapeKindLabel(channel->activeShapeKind))) {
-            for (int i = 0; i < kShapeKindCount; ++i) {
-                bool selected = channel->activeShapeKind == static_cast<int>(kDevToolShapeKinds[i]);
-                if (ImGui::Selectable(shapeKindLabel(static_cast<int>(kDevToolShapeKinds[i])), selected)) {
-                    channel->activeShapeKind = static_cast<int>(kDevToolShapeKinds[i]);
-                    shapeIndex = i;
-                }
-                if (selected) ImGui::SetItemDefaultFocus();
-            }
-            ImGui::EndCombo();
-        }
-        (void)shapeIndex;
-
-        ImGui::ColorEdit3("Colour", &channel->activeColor.x);
-
-        const char* placementModes[] = {"InFront", "CursorSnap", "ManualDistance"};
-        int placementIndex = 0;
-        for (int i = 0; i < 3; ++i) if (channel->placementMode == placementModes[i]) placementIndex = i;
-        if (ImGui::Combo("Placement", &placementIndex, placementModes, 3)) {
-            channel->placementMode = placementModes[placementIndex];
-            channel->manualAnchorValid = false;
-        }
-
-        if (channel->placementMode == "InFront") {
-            ImGui::SliderFloat("Distance", &channel->inFrontDistance, 0.5f, 10.0f);
-        } else if (channel->placementMode == "ManualDistance") {
-            ImGui::SliderFloat3("Offset (right/up/fwd)", &channel->manualOffset.x, -10.0f, 10.0f);
-            if (ImGui::Button("Reset Anchor")) channel->manualAnchorValid = false;
-        }
-
-        ImGui::Checkbox("Grid Snap", &channel->gridSnap);
-        if (channel->gridSnap) {
-            ImGui::SliderFloat("Grid Size", &channel->gridSnapSize, 0.1f, 5.0f);
-        }
-
-        ImGui::Separator();
-        ImGui::TextWrapped("Click anywhere in the 3D view to spawn.");
-    }
-    ImGui::End();
 
     if (ImGui::Begin("Developer: Test World Saves", open)) {
         static std::vector<std::string> testSaves;
@@ -165,12 +105,26 @@ void renderDeveloperToolsWindow(bool* open, GLFWwindow* window, Core::Engine* en
         
         for (const auto& saveName : testSaves) {
             if (ImGui::Button(("Load " + saveName).c_str())) {
+                // Find or create "Test Zone"
+                size_t testZoneIndex = static_cast<size_t>(-1);
+                for (size_t i = 0; i < mgr.zones().size(); ++i) {
+                    if (mgr.zones()[i]->getIdentifier() == "Test Zone") {
+                        testZoneIndex = i;
+                        break;
+                    }
+                }
+                if (testZoneIndex == static_cast<size_t>(-1)) {
+                    auto testZone = std::make_shared<Zone>("Test Zone", "test", Zone::Scope::Local);
+                    mgr.addZone(testZone);
+                    testZoneIndex = mgr.zones().size() - 1;
+                }
+                mgr.switchTo(testZoneIndex);
+
                 SaveContext ctx;
                 ctx.camera = engine->getCamera();
                 ctx.mouseHandler = engine->getMouseHandler();
                 static float dummyColor[3] = {1.0f, 1.0f, 1.0f};
                 ctx.currentColor = dummyColor;
-                ctx.currentTool = nullptr; // Engine might need a current tool, but test save loading usually doesn't strictly depend on it unless Tool state is serialized
                 ctx.player = engine->getPlayer();
                 ctx.lawManager = engine->getLawManager();
                 double t = 0;

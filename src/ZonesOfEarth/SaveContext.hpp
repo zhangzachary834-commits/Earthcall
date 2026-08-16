@@ -20,7 +20,6 @@ struct SaveContext {
     Core::Camera* camera       = nullptr;
     MouseHandler* mouseHandler = nullptr;
     float*        currentColor = nullptr;   // 3 floats
-    Tool*         currentTool  = nullptr;
     Person*       player       = nullptr;
     LawManager*   lawManager   = nullptr;
     double*       worldTime    = nullptr;
