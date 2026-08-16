@@ -1021,6 +1021,29 @@ void seedActionKind(ActionNode& node) {
                 node.bindings = MathBindings{{"t", PropertyPath::parse("time.sinceApplied")}};
             }
             break;
+        case ActionNode::Kind::Create:
+            // A newborn needs a shape; default to a cube.
+            break;
+        case ActionNode::Kind::AddProperty:
+            if (node.propertyName.empty()) node.propertyName = "custom.property";
+            break;
+        case ActionNode::Kind::AddElement:
+        case ActionNode::Kind::RemoveElement:
+            // Tokens default to empty = "the law's subject".
+            break;
+        case ActionNode::Kind::RemoveProperty:
+            if (node.propertyName.empty()) node.propertyName = "custom.property";
+            break;
+        case ActionNode::Kind::Destroy:
+            // Victim token defaults to empty = "the law's subject".
+            break;
+        case ActionNode::Kind::Synthesize:
+            // Same concept picker as Spawn; seed only when empty.
+            break;
+        case ActionNode::Kind::PlayAudio:
+            if (node.path.empty()) node.path = PropertyPath::parse("acoustic.frequency");
+            if (node.input.empty()) node.input = PropertyPath::parse("acoustic.amplitude");
+            break;
         default:
             break;
     }
@@ -1031,10 +1054,13 @@ bool editActionNode(ActionNode& node) {
 
     static const char* kinds[] = {"set", "add", "scale", "lerp", "drive (curve)",
                                   "sequence", "parallel", "spawn concept", "map (math)",
-                                  "flow (rate of change)", "publish event"};
+                                  "flow (rate of change)", "publish event",
+                                  "create object", "add property", "add element",
+                                  "remove property", "remove element", "destroy",
+                                  "synthesize (set-to-set)", "play audio"};
     int kind = static_cast<int>(node.kind);
-    ImGui::SetNextItemWidth(160.0f);
-    if (ImGui::Combo("Action type", &kind, kinds, 11)) {
+    ImGui::SetNextItemWidth(200.0f);
+    if (ImGui::Combo("Action type", &kind, kinds, 19)) {
         node.kind = static_cast<ActionNode::Kind>(kind);
         seedActionKind(node);
         changed = true;
@@ -1245,6 +1271,210 @@ bool editActionNode(ActionNode& node) {
             }
             if (pathPicker("Parent Path", node.spawnParentPath)) {
                 changed = true;
+            }
+            break;
+        }
+
+        // ----------------------------------------------------------------
+        // Creation, composition, and their counterparts.
+        // ----------------------------------------------------------------
+        case ActionNode::Kind::Create: {
+            ImGui::TextDisabled("Mint a new Object of the chosen shape and place it in the World.");
+            ImGui::TextDisabled("Children run WITH THE NEWBORN AS SUBJECT — Set, Map, AddProperty");
+            ImGui::TextDisabled("all shape the thing being born.");
+            static const char* shapeNames[] = {
+                "Cube", "Polyhedron", "Sphere", "Cylinder", "Cone",
+                "Ellipsoid", "Ovoid", "Paraboloid", "Torus", "RoundedBox",
+                "Field", "Patch", "Shape2D", "Text2D"};
+            ImGui::SetNextItemWidth(140.0f);
+            if (ImGui::Combo("Shape", &node.createShapeKind, shapeNames, 14)) {
+                changed = true;
+            }
+            char typeBuf[64];
+            copyToBuf(typeBuf, sizeof(typeBuf), node.createType);
+            ImGui::SetNextItemWidth(180.0f);
+            if (ImGui::InputText("Type label", typeBuf, sizeof(typeBuf))) {
+                node.createType = typeBuf;
+                changed = true;
+            }
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("Object type label (optional) — conditions can select \"all things of type X\"");
+            }
+            if (pathPicker("Placement", node.spawnPlacementPath)) changed = true;
+            if (pathPicker("Parent", node.spawnParentPath)) changed = true;
+            if (pathPicker("Shape override", node.spawnShapeKindPath)) changed = true;
+            if (pathPicker("Color override", node.spawnColorPath)) changed = true;
+            ImGui::TextDisabled("Steps that shape the newborn:");
+            if (ImGui::Button("+ set step##create")) {
+                ActionNode child;
+                child.kind = ActionNode::Kind::Set;
+                seedActionKind(child);
+                child.operand = PropertyValue(0.0);
+                node.children.push_back(std::move(child));
+                changed = true;
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("+ map step##create")) {
+                ActionNode child;
+                child.kind = ActionNode::Kind::Map;
+                seedActionKind(child);
+                node.children.push_back(std::move(child));
+                changed = true;
+            }
+            break;
+        }
+
+        case ActionNode::Kind::AddProperty: {
+            ImGui::TextDisabled("Grant a being a property it did not have. Refused where it");
+            ImGui::TextDisabled("would shadow a first-mover (registered) name.");
+            if (pathPicker("Owner", node.path)) changed = true;
+            char nameBuf[64];
+            copyToBuf(nameBuf, sizeof(nameBuf), node.propertyName);
+            ImGui::SetNextItemWidth(180.0f);
+            if (ImGui::InputText("Property name", nameBuf, sizeof(nameBuf))) {
+                node.propertyName = nameBuf;
+                changed = true;
+            }
+            double value = numericOr(node.operand, 0.0);
+            ImGui::SetNextItemWidth(120.0f);
+            if (ImGui::InputDouble("Initial value", &value)) {
+                node.operand = PropertyValue(value);
+                changed = true;
+            }
+            break;
+        }
+
+        case ActionNode::Kind::RemoveProperty: {
+            ImGui::TextDisabled("Take a granted property back. Authored properties are erased;");
+            ImGui::TextDisabled("first-mover properties are cleared to empty.");
+            if (pathPicker("Owner", node.path)) changed = true;
+            char nameBuf[64];
+            copyToBuf(nameBuf, sizeof(nameBuf), node.propertyName);
+            ImGui::SetNextItemWidth(180.0f);
+            if (ImGui::InputText("Property name", nameBuf, sizeof(nameBuf))) {
+                node.propertyName = nameBuf;
+                changed = true;
+            }
+            break;
+        }
+
+        case ActionNode::Kind::AddElement:
+        case ActionNode::Kind::RemoveElement: {
+            const bool adding = (node.kind == ActionNode::Kind::AddElement);
+            ImGui::TextDisabled(adding
+                ? "Compose: put a being inside another's element Formation."
+                : "Decompose: take a being out of a container. The element keeps living.");
+            // Participant token combos — same vocabulary as Publish.
+            const auto tokenCombo = [&](const char* label, std::string& token) {
+                const char* preview = token.empty() ? "the law's subject" : token.c_str();
+                ImGui::SetNextItemWidth(200.0f);
+                if (ImGui::BeginCombo(label, preview)) {
+                    if (ImGui::Selectable("the law's subject", token.empty())) {
+                        token.clear();
+                        changed = true;
+                    }
+                    if (ImGui::Selectable("@event.subject", token == "@event.subject")) {
+                        token = "@event.subject";
+                        changed = true;
+                    }
+                    if (ImGui::Selectable("@event.object", token == "@event.object")) {
+                        token = "@event.object";
+                        changed = true;
+                    }
+                    for (Singular* being : Universe::instance().beings()) {
+                        if (!being) continue;
+                        const std::string id = being->getIdentifier();
+                        if (ImGui::Selectable(id.c_str(), token == id)) {
+                            token = id;
+                            changed = true;
+                        }
+                    }
+                    ImGui::EndCombo();
+                }
+            };
+            tokenCombo("Container", node.containerToken);
+            tokenCombo("Element", node.elementToken);
+            break;
+        }
+
+        case ActionNode::Kind::Destroy: {
+            ImGui::TextDisabled("Remove an Object from the World — the delete tool as law-text.");
+            ImGui::TextDisabled("Every element Formation that held it releases it first.");
+            const auto tokenCombo = [&](const char* label, std::string& token) {
+                const char* preview = token.empty() ? "the law's subject" : token.c_str();
+                ImGui::SetNextItemWidth(200.0f);
+                if (ImGui::BeginCombo(label, preview)) {
+                    if (ImGui::Selectable("the law's subject", token.empty())) {
+                        token.clear();
+                        changed = true;
+                    }
+                    if (ImGui::Selectable("@event.subject", token == "@event.subject")) {
+                        token = "@event.subject";
+                        changed = true;
+                    }
+                    if (ImGui::Selectable("@event.object", token == "@event.object")) {
+                        token = "@event.object";
+                        changed = true;
+                    }
+                    for (Singular* being : Universe::instance().beings()) {
+                        if (!being) continue;
+                        const std::string id = being->getIdentifier();
+                        if (ImGui::Selectable(id.c_str(), token == id)) {
+                            token = id;
+                            changed = true;
+                        }
+                    }
+                    ImGui::EndCombo();
+                }
+            };
+            tokenCombo("Victim", node.elementToken);
+            break;
+        }
+
+        case ActionNode::Kind::Synthesize: {
+            ImGui::TextDisabled("Derive new beings from the LIVE INPUT SET the event names");
+            ImGui::TextDisabled("(subject + object). Uses the same ObjectConcept registry as Spawn,");
+            ImGui::TextDisabled("but the concept's mappings read the event participants as sources.");
+            const auto& concepts = ConceptRegistry::instance().getAll();
+            const char* preview = node.conceptId.empty() ? "(choose concept)"
+                                                         : node.conceptId.c_str();
+            ImGui::SetNextItemWidth(220.0f);
+            if (ImGui::BeginCombo("Concept##synth", preview)) {
+                if (concepts.empty()) {
+                    ImGui::TextDisabled("No concepts captured yet.");
+                }
+                for (const auto& concept : concepts) {
+                    if (!concept) continue;
+                    const std::string label =
+                        concept->name() + "  [" + concept->getIdentifier() + "]";
+                    if (ImGui::Selectable(label.c_str(),
+                                          concept->getIdentifier() == node.conceptId)) {
+                        node.conceptId = concept->getIdentifier();
+                        changed = true;
+                    }
+                }
+                ImGui::EndCombo();
+            }
+            if (pathPicker("Placement##synth", node.spawnPlacementPath)) changed = true;
+            if (pathPicker("Parent##synth", node.spawnParentPath)) changed = true;
+            if (pathPicker("Shape override##synth", node.spawnShapeKindPath)) changed = true;
+            if (pathPicker("Color override##synth", node.spawnColorPath)) changed = true;
+            break;
+        }
+
+        case ActionNode::Kind::PlayAudio: {
+            ImGui::TextDisabled("Trigger the procedural audio synthesizer via properties.");
+            if (pathPicker("Frequency path", node.path)) changed = true;
+            if (pathPicker("Amplitude path", node.input)) changed = true;
+            char waveBuf[64];
+            copyToBuf(waveBuf, sizeof(waveBuf), node.propertyName);
+            ImGui::SetNextItemWidth(140.0f);
+            if (ImGui::InputText("Wave type", waveBuf, sizeof(waveBuf))) {
+                node.propertyName = waveBuf;
+                changed = true;
+            }
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("material/waveType string (e.g. sine, square, sawtooth)");
             }
             break;
         }
