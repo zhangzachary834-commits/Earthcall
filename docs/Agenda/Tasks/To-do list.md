@@ -49,12 +49,13 @@ Propertypath exposure debt (tracked in `tests/no_black_box_test.cpp`):
 6. `Perspective` — `Perspective.cpp` is empty; implement constructor or retire stub.
 
 Housekeeping:
-0. ✅ **Fill in agent intercom** — done and verified (2026-08-15): Implemented `agent intercom/conversation_history_injection.py` and `agent intercom/README.md`.
+0. ✅ **Fill in agent intercom** — done and verified (2026-08-15): Implemented `agent intercom/conversation_history_injection.py` and `agent intercom/README.md`. *(Correction 2026-08-17: Both `conversation_history_injection.py` and `playpen.py` had SyntaxErrors from literal newlines inside string literals and had never executed. Rejoined broken lines with escaped `\n`; verified AST parsing on both and ran `conversation_history_injection.py self-test` successfully).*
 0. ✅ **One-click WebGPU launch** — done and verified (2026-08-14): Added root `Run Earthcall.command` invoking `scripts/build.sh webgpu run`.
 0a. ✅ **One-click WASM and Python launches** — done and verified (2026-08-14): Added `Run Earthcall WASM.command` and `Run Earthcall Python.command`; fixed import path in `src/Singularity/Foreign/py/app.py`.
 1. ✅ **Organize repo upper directories** — done and verified (2026-08-13): Moved root utility scripts to `scratch/` per `DIRECTORY_ORDERING.md`; cleaned abandoned build dirs.
 2. ✅ **Organize scratch folder** — done and verified (2026-08-14): Subdivided `scratch/` into `probes/`, `legacy/`, `scripts/`, `fixtures/`, `audits/`, and `experiments/`; added `scratch/README.md`.
 3. ✅ **Gitignore cached clang** — done and verified (2026-08-13): Added `.cache/` to `.gitignore` and untracked index files.
+4. ✅ **Cleanup pass: hygiene, dead code, ignore paths, and stable physics law identifiers** — done and verified (2026-08-17): Fixed miniaudio paths in `.ignore` and `.claude/settings.json`; untracked `build.log`, `.DS_Store`, `imgui.ini`, and `saves/tests/*_final.json`; deleted duplicate audit report and duplicate fixture save; removed dead `Core::Engine*` parameter from CreatorConsole; removed unused `shapeKindLabel`, `kDevToolShapeKinds`, and includes from `DeveloperToolsWindow.cpp`; removed dead `Tool currentTool` local in `tests/test_save_helper.hpp`; updated docs test count to 48 registered, 47 pass and To-do list path; switched `setObjectID` to `setLawIdentifier` in `DefaultPhysicsLaws.cpp`; full build and test suite verified (48 registered, 47 pass).
 
 Feature-sized (split out of Housekeeping 2026-08-13):
 1. ✅ **Restore legacy 3D create tool & author Law counterpart** — done and verified (2026-08-13): Restored `Tool::ShapeGenerator3D` in ImGui as First Mover (`CreationChannel`); authored Law version (`saves/tests/shape_generator_3d_law.json`) activated by `L` key; fixed `Engine::initLogic()` null dereference. See [Specific Tasks/Legacy_3D_Create_Tool_Restoration.md](Specific%20Tasks/Legacy_3D_Create_Tool_Restoration.md).

@@ -44,7 +44,7 @@ std::vector<std::shared_ptr<Law>> createDefaultPhysicsLaws() {
 
     // 1. Gravity: Flow action over velocity (velocity := velocity + g * dt)
     auto gravity = std::make_shared<Law>("physics: gravity");
-    gravity->setObjectID("physics-gravity");
+    gravity->setLawIdentifier("physics-gravity");
     gravity->setActivation(Law::Activation::WhileTrue);
     gravity->setScope(Law::Scope::Everyone);
 
@@ -68,7 +68,7 @@ std::vector<std::shared_ptr<Law>> createDefaultPhysicsLaws() {
 
     // 2. Integration: Flow action over position (position := position + velocity * dt)
     auto integration = std::make_shared<Law>("physics: kinematics");
-    integration->setObjectID("physics-kinematics");
+    integration->setLawIdentifier("physics-kinematics");
     integration->setActivation(Law::Activation::WhileTrue);
     integration->setScope(Law::Scope::Everyone);
 
@@ -108,7 +108,7 @@ std::vector<std::shared_ptr<Law>> createDefaultPhysicsLaws() {
     // intended trigger; it does not perform the binding.
     // -----------------------------------------------------------------------
     auto acoustics = std::make_shared<Law>("physics: acoustics");
-    acoustics->setObjectID("physics-acoustics");
+    acoustics->setLawIdentifier("physics-acoustics");
     acoustics->setActivation(Law::Activation::OnEvent);
     acoustics->ecaLoop().eventType = "contact-began";
     acoustics->setScope(Law::Scope::Subject);
@@ -137,7 +137,7 @@ std::vector<std::shared_ptr<Law>> createDefaultPhysicsLaws() {
     //                               which is the envelope ending, not failing.
     // -----------------------------------------------------------------------
     auto envelope = std::make_shared<Law>("physics: acoustics envelope");
-    envelope->setObjectID("physics-acoustics-envelope");
+    envelope->setLawIdentifier("physics-acoustics-envelope");
     envelope->setActivation(Law::Activation::WhileTrue);
     envelope->setScope(Law::Scope::Everyone);
     envelope->setConditionModel(isSoundEmitter());
@@ -180,7 +180,7 @@ std::vector<std::shared_ptr<Law>> createDefaultPhysicsLaws() {
     // so the read failed and the action wrote nothing on every tick.
     // -----------------------------------------------------------------------
     auto vibrato = std::make_shared<Law>("physics: acoustics vibrato");
-    vibrato->setObjectID("physics-acoustics-vibrato");
+    vibrato->setLawIdentifier("physics-acoustics-vibrato");
     vibrato->setActivation(Law::Activation::WhileTrue);
     vibrato->setScope(Law::Scope::Everyone);
     vibrato->setConditionModel(isSoundEmitter());
@@ -212,7 +212,7 @@ std::vector<std::shared_ptr<Law>> createDefaultPhysicsLaws() {
     // channel answers this name.
     // -----------------------------------------------------------------------
     auto occlusion = std::make_shared<Law>("physics: acoustics occlusion");
-    occlusion->setObjectID("physics-acoustics-occlusion");
+    occlusion->setLawIdentifier("physics-acoustics-occlusion");
     occlusion->setActivation(Law::Activation::WhileTrue);
     occlusion->setScope(Law::Scope::Everyone);
     occlusion->setConditionModel(isSoundEmitter());
@@ -248,7 +248,7 @@ std::vector<std::shared_ptr<Law>> createDefaultPhysicsLaws() {
     // parallel clock authored onto the emitter would collide with that fix.
     // -----------------------------------------------------------------------
     auto decay = std::make_shared<Law>("physics: acoustics decay");
-    decay->setObjectID("physics-acoustics-decay");
+    decay->setLawIdentifier("physics-acoustics-decay");
     decay->setActivation(Law::Activation::WhileTrue);
     decay->setScope(Law::Scope::Everyone);
 

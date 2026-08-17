@@ -20,25 +20,12 @@ class Formation;
 // ------------------------------------------------------------------
 class Singular {
 public:
-    Singular() = default;
-    Singular(const Singular&) {}
-    Singular& operator=(const Singular&) {
-        _propertyRegistry.clear();
-        _property_formation = nullptr;
-        _propertiesBuilt = false;
-        return *this;
-    }
-    // Moves do NOT carry the property registry: registered properties hold
-    // owner pointers into the source object. The registry is derived state
-    // and lazily rebuilds against the new address on next findProperty().
-    Singular(Singular&&) noexcept {}
-    Singular& operator=(Singular&&) noexcept {
-        _propertyRegistry.clear();
-        _property_formation = nullptr;
-        _propertiesBuilt = false;
-        return *this;
-    }
-    virtual ~Singular() = default;
+    Singular();
+    Singular(const Singular&);
+    Singular& operator=(const Singular&);
+    Singular(Singular&&) noexcept;
+    Singular& operator=(Singular&&) noexcept;
+    virtual ~Singular();
     virtual std::string getIdentifier() const = 0;
 
     // Checks if this Singular satisfies the strict Kernel bounds required for set-to-set synthesis.

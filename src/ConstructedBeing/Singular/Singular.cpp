@@ -1,7 +1,24 @@
 #include "ConstructedBeing/Singular/Singular.hpp"
-
+#include "ConstructedBeing/Object/Formation/Formation.hpp"
 #include "ConstructedBeing/Singular/Property/Property.hpp"
 #include "ConstructedBeing/Singular/Property/DataStructure.hpp"
+
+Singular::Singular() = default;
+Singular::~Singular() = default;
+Singular::Singular(const Singular&) {}
+Singular& Singular::operator=(const Singular&) {
+    _propertyRegistry.clear();
+    _property_formation = nullptr;
+    _propertiesBuilt = false;
+    return *this;
+}
+Singular::Singular(Singular&&) noexcept {}
+Singular& Singular::operator=(Singular&&) noexcept {
+    _propertyRegistry.clear();
+    _property_formation = nullptr;
+    _propertiesBuilt = false;
+    return *this;
+}
 
 static Singular::PropertyChangeCallback s_propertyChangeCallback = nullptr;
 
