@@ -16,7 +16,7 @@ The philosophy is load-bearing and encoded as the very fabric of the program: th
 For maximum generativity and expressiveness, Earthcall Law system enables people to author unique behavior at runtime. Instead of hardcoded collisions and generic physics engines, Earthcall relies on a deeply integrated ruleset governed by dynamic 'Laws'. People author the conditions the Laws activate under, and author the mathematical functions and operations that Law executes upon their Person-designated targets.
 
 
-Laws are executed with math operations because math is the universal language of logic. Math represents everything from arithmetic, algebra, change (calculus), probability, and sets. With this, there is no need to ship hardcoded functions for things like “move Object X to Y location”, “change Color hexcode of Object X “, and “set Camera’s pitch/yaw/roll to ____.“ Instead, you realize those things are all variations of either a “set” operation or an “add value” operation, and author them as Laws during runtime.
+Laws are executed with math operations because math is the universal language of logic. Mathematics provides a universal language for expressing logic, relationships, quantities, change, uncertainty, and structure. With this capacity, there is no need to ship hardcoded functions within Earthcal for things like “move Object X to Y location”, “change Color hexcode of Object X “, and “set Camera’s pitch/yaw/roll to ____.“ Instead, we realize those things are all variations of either a “set” operation or an “add value” operation, and author them as Laws during runtime.
 
 
 ## Core Philosophy
