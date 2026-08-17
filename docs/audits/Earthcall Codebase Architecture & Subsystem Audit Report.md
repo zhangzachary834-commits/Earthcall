@@ -1,4 +1,5 @@
-Earthcall Codebase Architecture & Subsystem Audit Report
+## Earthcall Codebase Architecture & Subsystem Audit Report
+
 Document: docs/audits/2026-08-16_codebase_audit_report.md
 Date: August 16, 2026
 Auditor: Gemini Spark Research Assistant

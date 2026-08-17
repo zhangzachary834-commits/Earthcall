@@ -46,12 +46,12 @@ endif()
 # Include directories
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/src
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/s
+	${CMAKE_CURRENT_SOURCE_DIR}/src/s
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ZonesOfEarth
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Person/Body
     ${CMAKE_CURRENT_SOURCE_DIR}/imgui
     ${CMAKE_CURRENT_SOURCE_DIR}/local_deps/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/third_party/miniaudio
+	${CMAKE_CURRENT_SOURCE_DIR}/third_party/miniaudio
 )
 
 # Fetch standalone ASIO, WebSocketPP, and GLFW
@@ -248,6 +248,7 @@ if(NOT EMSCRIPTEN)
     #                         a GPU particle pipeline over a field. It has never
     #                         existed in any commit; the test has never compiled.
     set(PENDING_FEATURE_TESTS webgpu_particle_test)
+    set(ALL_ACTIVE_TEST_TARGETS "")
 
     foreach(TEST_SOURCE ${TEST_FILES})
         get_filename_component(TEST_NAME ${TEST_SOURCE} NAME_WE)
@@ -289,9 +290,18 @@ if(NOT EMSCRIPTEN)
         target_compile_options(${TEST_NAME} PRIVATE -UNDEBUG)
         if (${TEST_NAME} IN_LIST PENDING_FEATURE_TESTS)
             set_target_properties(${TEST_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
+        else()
+            list(APPEND ALL_ACTIVE_TEST_TARGETS ${TEST_NAME})
         endif()
         add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
     endforeach()
+
+    add_custom_target(test_all
+        COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
+        DEPENDS ${ALL_ACTIVE_TEST_TARGETS}
+        COMMENT "Building and running all active Earthcall test suites"
+    )
+    add_custom_target(check DEPENDS test_all)
 endif()
 
 # --- WebAssembly / Emscripten Build ---

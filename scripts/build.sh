@@ -31,6 +31,10 @@ build_webgpu() {
   cmake --build "$BUILD" --target earthcall_webgpu -j"$JOBS"
 }
 
+build_tests() {
+  cmake --build "$BUILD" -j"$JOBS"
+}
+
 run() {
   exec "$BUILD/earthcall" "$@"
 }
@@ -40,6 +44,7 @@ run_webgpu() {
 }
 
 test_all() {
+  build_tests
   ctest --test-dir "$BUILD" --output-on-failure -j4
 }
 
@@ -54,7 +59,6 @@ case "$ACTION" in
     ;;
   test)
     configure
-    build
     test_all
     ;;
   run)

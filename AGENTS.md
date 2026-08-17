@@ -186,7 +186,7 @@ lies.**
 - Anything you work on that isn't listed goes in it — create categories as needed, and add
   tasks any other document implies but the list omits.
 - **Never delete from it.** Mark completed items with a checkmark and a "done and verified"
-  note describing what was actually verified.
+  note describing what was actually verified. If two or more independent sessions mark it as verified, you may move it to an archive folder inside the Agenda directory.
 
 ---
 
@@ -196,3 +196,4 @@ lies.**
   here went stale. Keep this file **under 200 lines** — move detail into the companions
   rather than growing it.
 - If during your session you come up with anything that you see as relevant for future agents to know up front, you should add it to this document AGENTS.md or the relevant companion documents.
+- If you are doing a task: When you're done with your pass, if there's anything from the original plan left unfinished, make sure to note that explicitly for another pass.

@@ -40,6 +40,9 @@ CurveModel fitLinear(const std::vector<std::pair<float, double>>& s) {
         m = (n * stv - st * sv) / denom;
         b = (sv - m * st) / n;
     }
+    if (!std::isfinite(m) || !std::isfinite(b)) {
+        return CurveModel::constant(sv / n);
+    }
     return CurveModel::polynomial({b, m});
 }
 
@@ -97,7 +100,10 @@ bool fitSinusoid(const std::vector<std::pair<float, double>>& s, CurveModel& out
         const double C = det3(MC) / d;
         const double A = det3(MA) / d;
         const double B = det3(MB) / d;
-        model = CurveModel::sinusoid(std::sqrt(A * A + B * B), freq, std::atan2(B, A), C);
+        if (!std::isfinite(A) || !std::isfinite(B) || !std::isfinite(C)) return false;
+        const double amp = std::sqrt(A * A + B * B);
+        if (!std::isfinite(amp)) return false;
+        model = CurveModel::sinusoid(amp, freq, std::atan2(B, A), C);
         return true;
     };
 
@@ -109,6 +115,7 @@ bool fitSinusoid(const std::vector<std::pair<float, double>>& s, CurveModel& out
         CurveModel candidate;
         if (!solveAt(freq, candidate)) continue;
         const double err = rmse(s, candidate);
+        if (!std::isfinite(err)) continue;
         if (!found || err < bestErr) {
             found = true;
             bestErr = err;
@@ -178,7 +185,10 @@ CurveModel ChangeRecorder::fitSeries(const std::vector<std::pair<float, double>>
     const bool haveSin = fitSinusoid(samples, sinusoid);
 
     if (!haveSin) return linear;
-    return rmse(samples, sinusoid) < rmse(samples, linear) ? sinusoid : linear;
+    const double errSin = rmse(samples, sinusoid);
+    const double errLin = rmse(samples, linear);
+    if (!std::isfinite(errSin) || errLin < errSin) return linear;
+    return sinusoid;
 }
 
 ActionModel ChangeRecorder::fit() const {
