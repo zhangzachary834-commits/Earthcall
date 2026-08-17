@@ -4,7 +4,7 @@
 Earthcall is **a Person-centered ontology that orders the engine attached to it.** The engine here is not the order of truth in Earthcall—the ontology is, and the engine serves as the vessel for that.
 
 
-Unlike most of software history, Earthcall is built on a foundational conviction that all beings must be represented not as illusions, but rather according to what they are—their actual, innate structure in reality. Instead of hardcoding everything as mere entities and behavior, Earthcall distills all conceivable creaturely beings down to their most fundamental primitives, delegating the real-world substance to be created and governed by real human beings.
+Unlike most of software history, Earthcall is built on a foundational conviction that all beings must be represented not by illusions hiding a teleologically indifferent operating system, but rather according to what they are—their actual, innate structure in reality. Instead of hardcoding everything as mere entities and behavior, Earthcall distills all conceivable creaturely beings down to their most fundamental primitives, delegating the real-world substance to be created and governed by real human beings.
 
 
 Earthcall is not just an app limited to merely simulating physics, creating art, or building software, even though it is capable of all of those things. Earthcall is instead built as a vessel capable of holding any artifact of human thought. People can represent their thoughts, ideas, and intentions within dedicated primitives that compile, execute, and represent them faithfully on the hardware substrate.
