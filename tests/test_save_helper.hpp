@@ -4,7 +4,6 @@
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "Singularity/Screen/Camera.hpp"
 #include "Singularity/Input/MouseHandler.hpp"
-#include "Singularity/FirstMoverWindowTools/Tool.hpp"
 #include "Person/Person.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include <string>
@@ -34,7 +33,6 @@ inline void dump_test_save(const std::string& test_name, World& testWorld, LawMa
     
     MouseHandler mouseHandler;
     float currentColor[3] = {1.0f, 1.0f, 1.0f};
-    Tool currentTool(Tool::Type::Brush);
     double worldTime = 0.0;
 
     SaveContext ctx;

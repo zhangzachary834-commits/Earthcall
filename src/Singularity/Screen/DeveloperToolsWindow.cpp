@@ -6,9 +6,7 @@
 #include "Singularity/FirstMoverWindowTools/Tool.hpp"
 #include "Singularity/Core/Engine.hpp"
 #include "Singularity/Core/CreationChannel.hpp"
-#include "Singularity/Core/EventBus.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
-#include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "ZonesOfEarth/SaveContext.hpp"
 #include <filesystem>
@@ -33,25 +31,6 @@ Singularity::Core::CreationChannel* findCreationChannel(Core::Engine* engine) {
     }
     return nullptr;
 }
-
-const char* shapeKindLabel(int kind) {
-    switch (static_cast<Object::ShapeKind>(kind)) {
-        case Object::ShapeKind::Cube:       return "Cube";
-        case Object::ShapeKind::Sphere:     return "Sphere";
-        case Object::ShapeKind::Cylinder:   return "Cylinder";
-        case Object::ShapeKind::Cone:       return "Cone";
-        case Object::ShapeKind::Ellipsoid:  return "Ellipsoid";
-        case Object::ShapeKind::Ovoid:      return "Ovoid";
-        case Object::ShapeKind::Paraboloid: return "Paraboloid";
-        default:                            return "Unsupported";
-    }
-}
-
-const Object::ShapeKind kDevToolShapeKinds[] = {
-    Object::ShapeKind::Cube,   Object::ShapeKind::Sphere,     Object::ShapeKind::Cylinder,
-    Object::ShapeKind::Cone,   Object::ShapeKind::Ellipsoid,  Object::ShapeKind::Ovoid,
-    Object::ShapeKind::Paraboloid,
-};
 
 } // namespace
 

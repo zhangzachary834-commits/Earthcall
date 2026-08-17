@@ -82,7 +82,7 @@
               {
                 "deltaWeight": 1.0,
                 "description": "authored-by",
-                "timestamp": 1786651827
+                "timestamp": 1787001036
               }
             ],
             "type": "authored-by",
@@ -170,8 +170,127 @@
           }
         },
         {
-          "attribute": "",
+          "attribute": "attachment.enabled",
           "id": "fact-8",
+          "subjectId": "law-2-authored-by-Player",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "attribute": "attachment.localOffset",
+          "id": "fact-9",
+          "subjectId": "law-2-authored-by-Player",
+          "type": "property-state",
+          "value": {
+            "m": [
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "t": "mat4"
+          }
+        },
+        {
+          "attribute": "attachment.parentAnchor",
+          "id": "fact-10",
+          "subjectId": "law-2-authored-by-Player",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          }
+        },
+        {
+          "attribute": "attachment.childAnchor",
+          "id": "fact-11",
+          "subjectId": "law-2-authored-by-Player",
+          "type": "property-state",
+          "value": {
+            "t": "vec3",
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          }
+        },
+        {
+          "attribute": "attachment.inheritTranslation",
+          "id": "fact-12",
+          "subjectId": "law-2-authored-by-Player",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": true
+          }
+        },
+        {
+          "attribute": "attachment.inheritRotation",
+          "id": "fact-13",
+          "subjectId": "law-2-authored-by-Player",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": true
+          }
+        },
+        {
+          "attribute": "attachment.inheritScale",
+          "id": "fact-14",
+          "subjectId": "law-2-authored-by-Player",
+          "type": "property-state",
+          "value": {
+            "t": "bool",
+            "v": true
+          }
+        },
+        {
+          "attribute": "events",
+          "id": "fact-15",
+          "subjectId": "law-2-authored-by-Player",
+          "type": "property-state",
+          "value": {
+            "t": "list",
+            "v": [
+              {
+                "t": "dict",
+                "v": {
+                  "deltaWeight": {
+                    "t": "float",
+                    "v": 1.0
+                  },
+                  "description": {
+                    "t": "string",
+                    "v": "authored-by"
+                  },
+                  "timestamp": {
+                    "t": "long",
+                    "v": 1787001036
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "attribute": "",
+          "id": "fact-16",
           "subjectId": "law-2",
           "type": "law-registered",
           "value": null
@@ -433,7 +552,6 @@
     1.0,
     1.0
   ],
-  "currentTool": 0,
   "currentZone": 0,
   "flying": false,
   "materials": [

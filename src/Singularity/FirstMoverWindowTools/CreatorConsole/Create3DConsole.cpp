@@ -55,7 +55,7 @@ namespace Rendering {
         }
     }
 
-    void render3DConsole(Person* player, Object* selectedObject3D, Core::Engine* engine) {
+    void render3DConsole(Person* player, Object* selectedObject3D) {
         auto& state = getCreatorConsoleState();
 
         struct Mode3DDef {

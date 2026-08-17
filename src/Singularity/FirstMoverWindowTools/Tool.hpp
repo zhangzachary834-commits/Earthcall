@@ -122,7 +122,7 @@ public:
     // shape/placement/colour CreationChannel currently holds, bypassing
     // Law::applyTo entirely -- this is the debug bypass, not the Person-facing
     // creation path. That path is the "Tool: Shape Generator 3D" law
-    // (saves/fixtures/shape_generator_3d_law.json), which reads the SAME
+    // (saves/tests/shape_generator_3d_law.json), which reads the SAME
     // CreationChannel fields but fires off onMouseClicked only when
     // active3DMode == "Create", armed by a distinct input
     // (see DeveloperToolsWindow's law-mode key toggle) so the two paths never

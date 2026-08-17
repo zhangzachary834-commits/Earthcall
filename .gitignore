@@ -137,6 +137,7 @@ third_party/websocketpp/
 # silently took those three directories with it — hence the narrow path here.
 # ---------------------------------------------------------------------------
 saves/games/
+saves/tests/*_final.json
 
 # The law audit trail (LawAuditLogger). Regenerated every run, and at Verbose
 # it grows fast enough that committing it would be its own problem.

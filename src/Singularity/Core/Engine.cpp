@@ -282,7 +282,7 @@ void Engine::tick(float dt) {
         }
 
         if (_creatorConsoleOpen) {
-            Rendering::renderCreatorConsoleWindow(&_creatorConsoleOpen, _player.get(), nullptr, mgr, this);
+            Rendering::renderCreatorConsoleWindow(&_creatorConsoleOpen, _player.get(), nullptr, mgr);
         }
 
         if (Rendering::getCreatorConsoleState().showLawAuthor) {

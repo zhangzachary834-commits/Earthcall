@@ -54,6 +54,10 @@ subsystem define what a thing's state *means* by keeping it where no law can loo
 
 ---
 
+---
+TODO: add a section about First Movers, listing them and pointing to them. Section should be fully expounded on in a dedicated companiondoc.
+---
+
 ## Router — find your task, read that section first
 
 | You are about to… | Read | Why |
@@ -141,10 +145,9 @@ which a constructor call does not set, so the whole vocabulary registers twice.
 - **Append-only enums**, serialized as ints. Never renumber, never reuse a burned value.
 - **Nothing enters the world without an author.** `Law::applyTo` returns `Unauthored` and
   refuses to fire when `authors` is empty. This is structural, not conventional.
-- **Authority is clamped to 0** on every path that reads a file. Do not try to write a
-  higher one; it will be clamped, and the attempt is what gets noticed.
-- **Edges, not levels.** Events are past-tense `noun-verbed` and publish on transitions. A
-  per-frame "still happening" event is a bug — that is what `WhileTrue` is for.
+- **Authority is clamped to 0** on every path that reads a file. Do not try to write an authority value below 0; it will be clamped, and the attempt is what gets noticed.
+- **Event-transitions must be edges, not levels.** Events are past-tense `noun-verbed` and publish on transitions. A
+  per-frame "still happening" event is a bug—that is what `WhileTrue` is for. Continuous per-frame logic must use a separate framework.
 - **Kernel guards on the body are not settings.** A modality channel that reaches a
   Person's body enforces its Person guards in C++, unconditionally — no parameter, no flag,
   and never as law text, which could be authored away. The audio channel's infrasound floor

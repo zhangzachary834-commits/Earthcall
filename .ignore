@@ -53,6 +53,6 @@ imgui/misc/
 # Single-file vendored headers that are large enough to dominate any search hit
 # list and are never edited by hand. miniaudio.h alone is 4.0 MB; json.hpp is
 # 898 KB. Both are upstream drops.
-third_party/miniaudio.h
+third_party/miniaudio/miniaudio.h
 src/json.hpp
 third_party/httplib/httplib.h

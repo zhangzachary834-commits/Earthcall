@@ -4,7 +4,7 @@
 // Include the individual console tabs
 namespace Rendering {
     void renderPaintConsole(ZoneManager& zoneMgr);
-    void render3DConsole(Person* player, Object* selectedObject3D, Core::Engine* engine);
+    void render3DConsole(Person* player, Object* selectedObject3D);
     void renderCharacterConsole(Person* player);
     void renderWorldConsole();
     void renderAssetsConsole();
@@ -14,7 +14,7 @@ namespace Rendering {
 
 namespace Rendering {
 
-    void renderCreatorConsoleWindow(bool* open, Person* player, Object* selected, ZoneManager& zoneMgr, Core::Engine* engine) {
+    void renderCreatorConsoleWindow(bool* open, Person* player, Object* selected, ZoneManager& zoneMgr) {
         ImGui::SetNextWindowSize(ImVec2(400, 600), ImGuiCond_FirstUseEver);
         if (ImGui::Begin("Creator Console [F8]", open, ImGuiWindowFlags_MenuBar)) {
             
@@ -52,7 +52,7 @@ namespace Rendering {
                     renderPaintConsole(zoneMgr);
                     break;
                 case CreatorSection::Create3D:
-                    render3DConsole(player, selected, engine);
+                    render3DConsole(player, selected);
                     break;
                 case CreatorSection::Character:
                     renderCharacterConsole(player);

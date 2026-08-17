@@ -14,7 +14,7 @@
       "Read(./build_logs/**)",
       "Read(./cmake-build-debug-event-trace/**)",
       "Read(./third_party/glm/**)",
-      "Read(./third_party/miniaudio.h)",
+      "Read(./third_party/miniaudio/miniaudio.h)",
       "Read(./src/json.hpp)",
       "Read(./third_party/httplib/httplib.h)",
       "Read(./src/Singularity/Foreign/py/venv/**)",

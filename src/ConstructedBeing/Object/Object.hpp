@@ -61,18 +61,8 @@ public:
 
     std::string screenMode() const;
 
-    /**
-    Recursive Object Creation:
-    1. 
-    2. 
-    3. 
-    4. 
-
-    another extra-spatial Object stores the concept of the object for later use.
-    
-    Needs to be deeply interconnected with the law systems. Law is process/change. Singular/Object is identity/being. When one cross into the bounds of hte other it should move fluidly etween  both.
-
-    */
+    /*There was previously a comment block here about 'recursive Object set to set creation.'
+     *That's now retired, since it's simply a case witin Singular set-to-set. */
 
     // Get the dimensions of the object.
     int getDimensions() const;
@@ -147,15 +137,9 @@ private:
     std::string objectType;
     std::string objectID;
 
-    // Parent Formation instances that this Object is a part of
-    std::vector<Formation> parentFormationInstances;
-
-    // Child Formation instances that are within this object
-    std::vector<Formation> childFormationInstances;
-
     // BodyPart* part = nullptr; // MOVED to elementFormation or removed
 
-    // The primitive shape this Object represents. Default is Cube for compatibility.
+    // The primitive shape this Object represents. Default is Cube for compatibility and easy testing.
     ShapeKind _shapeKind = ShapeKind::Cube;
 
     // Polyhedron data for arbitrary polyhedrons

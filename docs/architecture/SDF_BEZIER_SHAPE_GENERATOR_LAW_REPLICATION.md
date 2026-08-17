@@ -54,6 +54,8 @@ In accordance with `AGENTS.md`, `NEW_KIND_FRAMEWORK.md`, `NO_BLACK_BOX.md`, `LAW
   - `person-clicked-mouse` (subject: `@person`, button: 0)
   - `tool-selected` (subject: `@person`, tool: string)
   - `placement-mode-changed` (subject: `@person`, mode: string)
+- **Objects**
+  - 
 
 ### Phase 2: Set-to-Set Template Authoring via `ObjectConcept` (Rung R3)
 - **`concept-bezier-patch`:**

@@ -15,7 +15,7 @@ namespace Rendering {
 // panel's spawn button: pressing L (edge-triggered, independent of whatever
 // ImGui window has focus) toggles the CreationChannel's active3DMode between
 // "Create" and "", and publishes onMouseClicked on left-click while armed so
-// a loaded "Tool: Shape Generator 3D" law (saves/fixtures/
+// a loaded "Tool: Shape Generator 3D" law (saves/tests/
 // shape_generator_3d_law.json) can fire through Law::applyTo instead of the
 // direct spawn below. Two different inputs, two different authorship
 // stories: this window's button is the CreationChannel First Mover acting
