@@ -2,10 +2,10 @@
 
 Fixes for AUDIT_2026-08-10.md §1.4, §2.6, §2.7, and part of §4, plus two adjacent bugs
 (§Renderer null deref, §Game::shutdown skipped) named in the same work order. Scope was
-`src/Identity/**`, `src/Integration/WebBindings.cpp`, `src/Singularity/Network/
-WebSocketClient_wasm.cpp`, `src/Util/SaveSystem.{cpp,hpp}`, `src/Util/CloudStorage.cpp`,
-`src/Rendering/Renderer.cpp`, `src/Singularity/Core/Engine.cpp`,
-`src/Rendering/GL/GluCompat.cpp`, `.gitignore`. No build was run (five agents share one
+`src/Identity/**`, `src/Singularity/Foreign/WebBindings.cpp`, `src/Singularity/Network/
+WebSocketClient_wasm.cpp`, `src/Singularity/Storage/SaveSystem.{cpp,hpp}`, `src/Singularity/Storage/CloudStorage.cpp`,
+`src/Singularity/Screen/Renderer.cpp`, `src/Singularity/Core/Engine.cpp`,
+`src/Singularity/Screen/GL/GluCompat.cpp`, `.gitignore`. No build was run (five agents share one
 build tree); everything below was verified by reading, not by compiling.
 
 ## What a later agent must know about the wasm platform's real capabilities

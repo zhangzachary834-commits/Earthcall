@@ -8,7 +8,7 @@ The Unified Brush System is a powerful, professional-grade painting system that 
 
 ### Core Components
 
-1. **BrushSystem Class** (`src/Rendering/BrushSystem.hpp/cpp`)
+1. **BrushSystem Class** (`src/Singularity/Screen/BrushSystem.hpp/cpp`)
    - Central brush engine that handles all brush operations
    - Manages brush types, dynamics, pressure simulation, and layer system
    - Provides unified API for both 2D and 3D painting
@@ -18,7 +18,7 @@ The Unified Brush System is a powerful, professional-grade painting system that 
    - Maintains backward compatibility with legacy stroke system
    - Integrates BrushSystem for professional 2D painting
 
-3. **Object Integration** (`../../src/ConstructedBeing/Object/Object.hpp/cpp`)
+3. **Object Integration** (`src/ConstructedBeing/Object/Object.hpp/cpp`)
    - Enhanced 3D face painting with advanced brush features
    - Uses BrushSystem for texture painting on 3D objects
    - Provides layer system and advanced effects
@@ -266,7 +266,7 @@ public:
 - `Object::paintStroke()`: Handles stroke interpolation
 - `Object::FaceTexture`: Manages texture layers and compositing
 
-#### Game Integration (UI)
+#### Tool & Channel Integration
 - Advanced brush settings panels
 - Preset management
 - Real-time parameter adjustment

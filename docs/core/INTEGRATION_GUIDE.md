@@ -98,7 +98,7 @@ earthcall.modifyAvatar({
 External applications can use the C++ API:
 
 ```cpp
-#include "Integration/EarthcallAPI.hpp"
+#include "Singularity/Foreign/EarthcallAPI.hpp"
 
 // Get the API instance
 auto& api = Integration::getEarthcallAPI();
@@ -150,27 +150,22 @@ api.createDesignElement(element);
 - Camera control
 - Physics interactions
 
-## 🔒 Security & Permissions
+## 🔒 Security & Governance
 
-The integration system includes a comprehensive security model:
+The integration system combines transport-level security with native Earthcall property governance:
 
-### **Permission Levels**
-- **Low**: Basic read access
-- **Medium**: Standard creative access (default)
-- **High**: Full system access
+### **Transport & Sandbox Security (`SecurityManager`)**
+- **URL Validation & Whitelisting**: HTTPS enforcement, domain whitelisting/blacklisting
+- **Content Security Policy (CSP)**: Prevents XSS and unauthorized frame embedding
+- **JavaScript Sanitization**: Restricts unsafe eval, document.write, or script injection
+- **Rate Limiting & Threat Detection**: Detects abnormal event floods and automatically blocks rogue sources
+- **Activity Logging**: Full audit trail of foreign API calls and permission events
 
-### **Available Permissions**
-- `brush_system`: Access to brush tools
-- `design_system`: Access to design tools
-- `avatar_system`: Access to avatar customization
-- `world_access`: Access to world creation
-- `file_system`: Access to file operations
-
-### **Security Features**
-- Permission-based access control
-- Activity logging
-- Sandboxed execution
-- Input validation
+### **Authority & Property Governance (`TransferPolicy`)**
+Rather than building an ad-hoc second permission system inside the engine, property mutation and data transfer are governed by `Singularity/TransferPolicy`'s three tiers:
+- **Kernel**: Universally transferable and accessible; immune to lower-order law constraints.
+- **Governable**: Accessible by default, but can be gated/closed by authored Laws.
+- **Gated**: Closed by default; requires explicit Law authorization to access.
 
 ## 🌐 Example Web Integration
 
@@ -187,6 +182,8 @@ The example includes:
 ## 🪟 Example External Window Integration
 
 ```cpp
+#include "Singularity/Foreign/IntegrationManager.hpp"
+
 // Register an external window
 Integration::ExternalWindow::Config config;
 config.name = "My App";
@@ -269,18 +266,18 @@ The integration system provides detailed logging:
 
 ## 📚 Additional Resources
 
-- **API Documentation**: See header files in `src/Integration/`
+- **API Documentation**: See header files in `src/Singularity/Foreign/`
 - **Examples**: Check `examples/` directory
-- **Source Code**: Integration system in `src/Integration/`
+- **Source Code**: Integration modality code in `src/Singularity/Foreign/`
 - **Web Demo**: `examples/web_integration_example.html`
 
 ## 🤝 Contributing
 
 To extend the integration system:
 
-1. **Add new API methods** in `EarthcallAPI.hpp`
-2. **Implement features** in `EarthcallAPI.cpp`
-3. **Update UI** in `IntegrationManager.cpp`
+1. **Add new API methods** in `src/Singularity/Foreign/EarthcallAPI.hpp`
+2. **Implement features** in `src/Singularity/Foreign/EarthcallAPI.cpp`
+3. **Update UI** in `src/Singularity/Foreign/IntegrationManager.cpp`
 4. **Add examples** in `examples/` directory
 5. **Update documentation** in this guide
 
@@ -292,4 +289,4 @@ Whether you're building a web-based design tool, integrating with existing appli
 
 ---
 
-*For more information, see the source code in `src/Integration/` or run the example web application.* 
+*For more information, see the source code in `src/Singularity/Foreign/` or run the example web application.*

@@ -112,7 +112,7 @@ void removeHighlight(const ObjectHoverExitEvent& event) {
 void showTooltip(const ObjectHoverEvent& event) {
     // Show tooltip with object information
     std::string info = "Object: " + event.object.getIdentifier() + 
-                      "\nType: " + event.object.getObjectType() +
+                      
                       "\nPosition: (" + std::to_string(event.hoverPoint.x) + 
                       ", " + std::to_string(event.hoverPoint.y) + 
                       ", " + std::to_string(event.hoverPoint.z) + ")";
@@ -135,7 +135,7 @@ void handleObjectSelection(const ObjectHoverEnterEvent& event) {
 void debugObjectInfo(const ObjectHoverEvent& event) {
     // Log detailed object information for debugging
     std::cout << "Debug: Hovering over object " << event.object.getIdentifier() << std::endl;
-    std::cout << "  Geometry Type: " << static_cast<int>(event.object.getGeometryType()) << std::endl;
+    std::cout << "  Geometry Type: " << static_cast<int>(static_cast<int>(event.object.shapeKind())) << std::endl;
     std::cout << "  Transform: " << glm::to_string(event.object.getTransform()) << std::endl;
 }
 ```

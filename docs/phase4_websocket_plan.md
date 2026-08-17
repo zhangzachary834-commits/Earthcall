@@ -29,7 +29,7 @@ Both paths will push a unified `Event::Utterance` to the `EventBus`.
   - Parses incoming JSON (`{"type": "utterance", "payload": "Joy"}`) and pushes `Event::Utterance` to the `EventBus`.
 
 ### 3. Path B: Emscripten WASM Bindings
-- **[NEW] `src/Integration/WebBindings.cpp`**:
+- **[NEW] `src/Singularity/Foreign/WebBindings.cpp`**:
   - Uses `#ifdef EMSCRIPTEN` and `<emscripten/bind.h>`.
   - Exposes a global C++ function `Earthcall_EmitUtterance(std::string text)` to JavaScript.
   - Pushes `Event::Utterance` to the `EventBus` directly.

@@ -7,7 +7,7 @@ Successfully upgraded the Object.hpp/cpp system to support polyhedrons while mai
 ## Key Changes Made
 
 ### 1. Object.hpp Enhancements
-- Added `Polyhedron` to the `GeometryType` enum
+- Added `Polyhedron` to the `ShapeKind` enum (formerly `GeometryType`)
 - Created `PolyhedronData` structure to store:
   - Vertices (3D points)
   - Faces (lists of vertex indices)
@@ -66,8 +66,8 @@ Successfully upgraded the Object.hpp/cpp system to support polyhedrons while mai
 
 ## Files Modified
 
-1. **src/Form/Object/Object.hpp** - Added polyhedron data structures and methods
-2. **src/Form/Object/Object.cpp** - Implemented polyhedron functionality
+1. **src/ConstructedBeing/Object/Object.hpp** - Added polyhedron data structures and methods
+2. **src/ConstructedBeing/Object/Object.cpp** - Implemented polyhedron functionality
 3. **src/Singularity/Core/Game.hpp** - Added polyhedron type selection
 4. **src/Singularity/Core/Game.cpp** - Updated UI and object creation
 5. **POLYHEDRON_GUIDE.md** - User documentation

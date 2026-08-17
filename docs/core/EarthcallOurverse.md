@@ -33,7 +33,7 @@ Priority Ordering:
 Singularity orders much of the compute via priority queues, including the one in event bus. 
 The Perspective of the substrate itself combined with Person Perspective is for this. 
 
-Singularity includes the basic engine too. Game.cpp and Engine.cpp and the event bus for example.
+Singularity includes the basic engine too. Engine.cpp and the event bus for example.
 
 I can do that on Singularity since it represents ground-of-being it would be the place to have it.
 
@@ -759,7 +759,7 @@ and add that implementation to a doc inside /docs as well as updates throughout 
 
 and then I Discucsed the other part of what it said “3. WGSL Field Evaluation & Volumetric Raymarching
 The raymarcher will compile the OntoMath::ScalarField down to WGSL to integrate the field along the ray.
-[MODIFY] sight-cpp/src/Rendering/WebGPU/SdfWgsl.cpp
+[MODIFY] src/Singularity/Screen/WebGPU/SdfWgsl.cpp
 Compiler: Extend the WGSL compiler to generate a fieldEval(p: vec3<f32>) -> f32 function based on the FieldNode mathematical definitions.
 Raymarcher (kMarcher):
 After or during the sphere-tracing loop, if the ray passes through a region with density > 0, we accumulate absorption and scattering.
@@ -784,18 +784,18 @@ Track 3: Elevate WebGPU Rendering Pipeline (OntoMath Volumetrics)
 Instead of using standard "graphics engine" shortcuts for volumetrics (like bounded fog boxes), we will treat participating fields as mathematical density scalar fields that are evaluated at any point in space. This logic will be strictly divided between pure mathematics (OntoMath), spatial placement (Geometry), and rendering (WebGPU).
 1. Pure Mathematics (OntoMath)
 We will introduce a mathematical framework for evaluating spatial fields inside the modular OntoMath system.
-[NEW] sight-cpp/src/Singularity/OntoMath/Field.hpp
-[NEW] sight-cpp/src/Singularity/OntoMath/Field.cpp
+[NEW] src/Singularity/OntoMath/Field.hpp
+[NEW] src/Singularity/OntoMath/Field.cpp
 Define OntoMath::ScalarField and OntoMath::VectorField mathematically.
 Implement rules for unbounded space, bounded domains, and infinite repetition using vector calculus principles.
 2. Spatial Placement and Law Integration (Geometry)
 Geometry will place the field within the scene and expose it to the Law system.
-[NEW] sight-cpp/src/Form/Object/Geometry/FieldNode.hpp
+[NEW] src/ConstructedBeing/Object/Geometry/FieldNode.hpp
 Defines geom::FieldNode which holds an OntoMath::ScalarField and provides a spatial transform within the OurVerse.
 Singular Integration: FieldNode will inherit from Singular (or have its properties registered as Property), exposing its variables (origin, scale, density multipliers) as PropertyPaths. This ensures the Law system can modulate these variables dynamically over time.
 3. WGSL Field Evaluation & Dual-Path Compilation (WebGPU)
 The raymarcher will compile the OntoMath::ScalarField down to WGSL, providing two execution paths.
-[MODIFY] sight-cpp/src/Rendering/WebGPU/SdfWgsl.cpp
+[MODIFY] src/Singularity/Screen/WebGPU/SdfWgsl.cpp
 Dual-Path Compiler:
 Path A (Hardcoded): Generates traditional, highly optimized, hardcoded WGSL mathematics.
 Path B (AST-Driven): Compiles the OntoMath::Piecewise or OntoMath::MathNode Abstract Syntax Trees directly into WGSL functions. By using the same underlying variables via PropertyPath, this path allows the Law system to literally rewrite or modulate the field's mathematical structure at runtime.

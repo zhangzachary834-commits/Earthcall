@@ -8,7 +8,7 @@ here" for continuing the OpenGL→WebGPU migration in a fresh conversation.
 ## TL;DR — where we are
 
 > **UPDATE (session 2):** Milestones **A–C below are DONE.** There is now **zero raw
-> GL outside `src/Rendering/GL/`** — the whole app draws through the `Renderer`
+> GL outside `src/Singularity/Screen/GL/`** — the whole app draws through the `Renderer`
 > boundary, still running on OpenGL. What remains is Phase D (implement the new
 > verbs in `WebGpuRenderer`), E (imgui backend swap), F (the flip). See
 > "Boundary as it stands now" and "Remaining work" below, which supersede the
@@ -33,7 +33,7 @@ here" for continuing the OpenGL→WebGPU migration in a fresh conversation.
 - **wgpu-native v29.0.1.1** vendored at `third_party/wgpu/` (`.a` committed, `.dylib`
   gitignored). Static-link recipe + v29 API gotchas are in `OPENGL_MIGRATION_PLAN.md`
   Milestone 5.
-- **`src/Rendering/WebGPU/WebGpuRenderer.{hpp,cpp}`** — implements the `Renderer`
+- **`src/Singularity/Screen/WebGPU/WebGpuRenderer.{hpp,cpp}`** — implements the `Renderer`
   interface: `drawMesh` (real), `drawImplicit` (stub → M6 raymarcher), `drawLines`,
   `drawOverlay`. Plus frame lifecycle: `beginFrame(w,h,clear)` [interface, live —
   currently a no-op stub], `beginFrameOffscreen(targetView,w,h,clear)` [real, tests
@@ -42,9 +42,9 @@ here" for continuing the OpenGL→WebGPU migration in a fresh conversation.
   albedo (uploads `RenderMaterial.albedoPixels`), two-sided lighting, and a flat-colour
   pipeline (additive/alpha/line-list) for overlays. `init(gpu, colorFormat)` — format
   must match the target (RGBA8Unorm offscreen, BGRA8Unorm surface).
-- **`src/Rendering/WebGPU/WgpuDevice.hpp`** — header-only instance/adapter/device/queue
+- **`src/Singularity/Screen/WebGPU/WgpuDevice.hpp`** — header-only instance/adapter/device/queue
   bring-up (synchronous via processEvents).
-- **`src/Rendering/WebGPU/smoke_window.mm`** — the working on-screen demo (GLFW
+- **`src/Singularity/Screen/WebGPU/smoke_window.mm`** — the working on-screen demo (GLFW
   `GLFW_NO_API` + `CAMetalLayer` + surface + swapchain + spinning cube). This is the
   reference for moving the surface into `Engine`.
 - **Verify anytime:** `make webgpu-renderer` (5 offscreen scenes: depth, albedo,
@@ -52,7 +52,7 @@ here" for continuing the OpenGL→WebGPU migration in a fresh conversation.
 
 ## Architecture facts you need
 
-- **`src/Rendering/Renderer.hpp`** is the boundary. `currentRenderer()` returns the
+- **`src/Singularity/Screen/Renderer.hpp`** is the boundary. `currentRenderer()` returns the
   active backend (defaults to a static `OpenGLRenderer`). `setCurrentRenderer(Renderer*)`
   swaps it. `beginFrame`/`endFrame` are virtual with **empty defaults** (OpenGL inherits
   no-ops; only WebGPU overrides). `GameRender::render()` already brackets its drawing
@@ -185,7 +185,7 @@ The first thing this migration UNLOCKS rather than preserves. `drawImplicit` was
 an unused stub; it now compiles a `geom::SdfNode` tree to WGSL and sphere-traces
 it, so a field is exact at any zoom instead of being a mesh at some resolution.
 
-**`src/Rendering/WebGPU/SdfWgsl.{hpp,cpp}` — the codegen.** The key split, and the
+**`src/Singularity/Screen/WebGPU/SdfWgsl.{hpp,cpp}` — the codegen.** The key split, and the
 reason this is not string concatenation:
 - **Tree STRUCTURE becomes generated code** (which primitives, which operators).
 - **Numeric PARAMETERS become entries in a storage buffer.**
@@ -343,7 +343,7 @@ Move the surface setup from `smoke_window.mm` into `Engine` behind a flag (e.g.
 
 ## Verify / gotchas
 
-- `make` → OpenGL app builds (**must stay green through all prep**).
+- `cmake --build build` or `./scripts/build.sh webgpu run` (**must stay green through all prep**).
 - `make webgpu-renderer` → 5 offscreen scenes pass. `make webgpu-window` → user runs.
 - `make test` currently **fails to compile `property_bridge_test.cpp:222`** — this is
   the USER's parallel Person/Body WIP (`BodyPart._subObjects` = `vector<unique_ptr<Object>>`
@@ -351,12 +351,12 @@ Move the surface setup from `smoke_window.mm` into `Engine` behind a flag (e.g.
 
 ## File map
 ```
-src/Rendering/Renderer.hpp            the boundary (4 verbs + frame lifecycle)
-src/Rendering/RenderMaterial.{hpp,cpp} flat GPU material (+ albedoPixels) & resolver
-src/Rendering/GL/OpenGLRenderer.*     OpenGL backend (live today)
-src/Rendering/WebGPU/WebGpuRenderer.* WebGPU backend (done, offscreen+onscreen proven)
-src/Rendering/WebGPU/WgpuDevice.hpp   device bring-up
-src/Rendering/WebGPU/smoke_*.{cpp,mm} verification: offscreen, mesh, renderer, window
+src/Singularity/Screen/Renderer.hpp            the boundary (4 verbs + frame lifecycle)
+src/Singularity/Screen/RenderMaterial.{hpp,cpp} flat GPU material (+ albedoPixels) & resolver
+src/Singularity/Screen/GL/OpenGLRenderer.*     OpenGL backend (live today)
+src/Singularity/Screen/WebGPU/WebGpuRenderer.* WebGPU backend (done, offscreen+onscreen proven)
+src/Singularity/Screen/WebGPU/WgpuDevice.hpp   device bring-up
+src/Singularity/Screen/WebGPU/smoke_*.{cpp,mm} verification: offscreen, mesh, renderer, window
 third_party/wgpu/                     vendored wgpu-native v29.0.1.1 (.a committed)
 OPENGL_MIGRATION_PLAN.md              full plan + all v29 API notes + decisions
 ```

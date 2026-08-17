@@ -17,11 +17,11 @@ The architecture is divided into three responsibilities:
      something the header currently provides.
    - Responsible for the raw mathematical definitions (unbounded space, repeating domains, bounded intersections).
 
-2. **Spatial Placement (`Form/Object/Geometry/FieldNode.hpp`)**
+2. **Spatial Placement (`ConstructedBeing/Object/Geometry/FieldNode.hpp`)**
    - Integrates the `OntoMath::Field` into the 3D scene (providing origin, rotation, and scale transformations).
    - Inherits from `Singular`, mapping mathematical variables (like base density, frequency, or amplitude) to `PropertyPath`s.
 
-3. **WGSL Evaluation (`Rendering/WebGPU/SdfWgsl.cpp`)**
+3. **WGSL Evaluation (`Singularity/Screen/WebGPU/SdfWgsl.cpp`)**
    - Compiles the mathematical definition into highly concurrent WebGPU Shading Language (WGSL).
    - Raymarches the field to accumulate visual properties (transmittance, scattering, emission).
 

@@ -4,13 +4,15 @@
 implementation details and never appear at the top level.**
 
 **Status:** Stage 1 executed (the `sight-cpp` / `backend-python` split is gone; one
-source root). Stage 2 — routing the non-ontological regions into the modality layer —
-is specified in §5 and deliberately deferred.
+source root). Stage 2 executed (non-ontological regions relocated into the `Singularity/`
+modality layer: `Rendering/` → `Singularity/Screen/`, `Integration/` → `Singularity/Foreign/`,
+`Perspective/` → `Singularity/Input/` & `Person/Perspective/`, `Util/` → `Singularity/Storage/`,
+and `Form/` renamed to `ConstructedBeing/`).
 **Companion docs:** `NEW_KIND_FRAMEWORK.md` (the same refusal applied to types rather
 than folders), `SUBSTRATE_ORDERING.md` (why this is not cosmetic),
 `LAW_MIGRATION_FRAMEWORK.md`, `EarthcallOurverse.md`.
 
----
+---\
 
 ## 0. What this document is for
 
@@ -41,11 +43,11 @@ kind of being or a mode of the machine — never by naming a tool, a language, a
 or a team.*
 
 **The test, applied to any proposed directory:** *would this folder still exist, with
-this name, if the whole system were rewritten in one language tomorrow?* `Form/` would.
+this name, if the whole system were rewritten in one language tomorrow?* `ConstructedBeing/` would.
 `Person/` would. `Singularity/Network/` would. `sight-cpp/` and `backend-python/` would
 not — which is the proof they were never directories, only shipping labels.
 
----
+---\
 
 ## 1. The rule
 
@@ -53,7 +55,7 @@ not — which is the proof they were never directories, only shipping labels.
 TOP LEVEL = the ontology + the modality layer.
 
   A directory may sit at the top level if and only if it names
-    (a) a kind of being        — Form, Person, Relation, ZonesOfEarth
+    (a) a kind of being        — ConstructedBeing, Person, Relation, ZonesOfEarth
     (b) a mode of the machine  — Singularity (and its modalities beneath)
     (c) the Person-facing surface through which beings are authored — OurVerse
 
@@ -71,28 +73,34 @@ for a folder of vendored OpenSSL. `SUBSTRATE_ORDERING.md` §2 makes the same dis
 quantitative: an artifact without provenance counts as hand-written, and *the ratio
 never flatters itself.*
 
----
+---\
 
-## 2. The top level, as of stage 1
+## 2. The top level, as of Stage 2
 
 ```
 Earthcall/
   src/                     the one source root — all languages
-    Form/                  Singular · Object · Concept · Formation · Property · Material
-    Person/                Person · Soul · Body · Relationship
+    ConstructedBeing/      Singular · Object · ObjectConcept · Formation · Property · Material
+    Person/                Person · Soul · Body · Relationship · Perspective
     Relation/              Relation · RelationManager
     ZonesOfEarth/          Zone · Home · World · Physics · AuthorsOfLaw (Law)
     Singularity/           the modality layer — where language stops mattering
-      Core/                Engine · Game · EventBus
-      Audio/               the Sound modality
-      Language/            the Symbolic modality (Lexeme)
+      Core/                Engine · EventBus · CreationChannel
+      Audio/               the Sound modality (AudioSystem)
+      Language/            the Symbolic modality (Lexeme, LanguageSystem)
       Network/             WebSocketClient.cpp · WebSocketServer.cpp
                              py/  engine_server.py · events.py
-      OntoMath/            authored mathematics
-    OurVerse/              ⟂ stage 2 (§4)
-    Identity/              ⟂ stage 2 (§4)
-    Legacy/                ⟂ stage 2 (§5)
-    Util/                  ⟂ stage 2 (§5)
+      OntoMath/            authored mathematics (Field, Function, CurveModel, Operations)
+      Foreign/             the Foreign software modality (ForeignChannel, EarthcallAPI, SecurityManager)
+                             py/  app.py
+      Input/               the Input modality (KeyboardHandler, MouseHandler)
+      Screen/              the Screen/Light modality (Renderer, WebGPU, GL, BrushSystem)
+      Storage/             the Storage modality (SaveSystem, CloudStorage, BinaryPack, Frontier)
+      Physical/            the Physical hardware modality (PhysicalChannel)
+      FirstMoverWindowTools/ CreatorConsole, Controls, Chat, Tools
+    OurVerse/              the Person-facing authorship surface
+    Identity/              First Mover register, identity ledger, key pairs, claims
+    Legacy/                the graveyard — not yet ontologically placed
 
   docs/  tests/  examples/  scripts/  saves/  scratch/  web_ui/     the workshop
   third_party/  local_deps/  imgui/                                 the foreign
@@ -114,11 +122,7 @@ five stale compiled binaries that were tracked (`dump_save`, `pack_save`,
 deleted: a refactor may relocate, never discard. Untracking the binaries is a
 separate decision for a separate commit.
 
-`⟂` marks a region whose placement is decided but not yet performed (§5). Marking them
-is the point: a deferred decision that is written down is a plan, and one that is not is
-a lie the tree tells every new reader.
-
----
+---\
 
 ## 3. Where language goes
 
@@ -150,7 +154,7 @@ message about the world — property writes, `ECA` events, Relation assertions. 
 schema names the language, the process, or the domain, the split has grown back inside
 the protocol where the directory tree can no longer show it to you.
 
----
+---\
 
 ## 4. Where processes go
 
@@ -163,27 +167,26 @@ The reason is the same as for language: the beings on both sides of a process bo
 are frequently the *same* beings. A Zone that exists in the engine and is mirrored to
 the web UI is one Zone. Two folders would make it two.
 
----
+---\
 
-## 5. Stage 2 — the deferred placements
+## 5. Stage 2 — the completed placements
 
-Four regions at `src/` are not ontological and have decided homes. They are not moved
-yet, by choice: the Physical channel (`NEW_KIND_FRAMEWORK.md` §7b) should land first and
-prove the modality-folder pattern on a channel built *knowing* the rule, before four
-existing subsystems are reshaped to fit it.
+The four non-ontological regions formerly at `src/` top-level have been fully relocated
+into their proper ontological homes:
 
-| Region | Goes to | Why |
+| Former Region | Relocated To | Status & Rationale |
 |---|---|---|
-| `Rendering/` | `Singularity/Screen/` | It is the Screen modality's output channel. `Singularity.hpp` names the element `Light` — "changed from 'screen' to 'light' because light is more fundamental than screens in robotics." Rendering is how Earthcall *acts* in the light modality, precisely as `Audio/` is how it acts in sound. |
-| `Integration/` | `Singularity/Foreign/` | The manifesto's own words: the prototype "must interface the rest of the computer treating its softwares as Singularity too — which in mundane terms, is API calls, standard files, going through OS permissions, terminal commands." `RealWebView`, `WindowManager`, `SecurityManager` and the Flask backend are all one thing: the channel to foreign software. |
-| `Perspective/` | split | `KeyboardHandler`, `MouseHandler` → `Singularity/Input/` (they are the `Mouse` / `Keyboard` input elements). `PersonPerspective`, `AvatarHandler` → `Person/Perspective/` — a Person's situated view is not a device, it is part of what a Person is. |
-| `Util/` | dissolve | Each utility moves to the region that uses it, or to `Singularity/Core/` if it is genuinely substrate. "Util" is the name a tree gives a decision it has not made. |
+| `Rendering/` | `Singularity/Screen/` | **Done.** Output channel for the Screen/Light modality. Rendering is how Earthcall acts in the light modality. |
+| `Integration/` | `Singularity/Foreign/` | **Done.** The Singularity-level modality holding hardwired connectors to external applications (`ForeignChannel`, `EarthcallAPI`, `SecurityManager`). |
+| `Perspective/` | split | **Done.** `KeyboardHandler`, `MouseHandler` → `Singularity/Input/`; `PersonPerspective`, `AvatarHandler` → `Person/Perspective/`. |
+| `Util/` | `Singularity/Storage/` | **Done.** Persistence and serialization moved to the Storage channel (`SaveSystem`, `CloudStorage`, `BinaryPack`, `Frontier`). |
+| `Form/` | `ConstructedBeing/` | **Done.** Renamed to clarify domain of constructed entities (`Singular`, `Object`, `ObjectConcept`, `Formation`, `Property`, `Material`). |
 
 | Subsystem | Action | Why |
 |---|---|---|
 | `Legacy/` | dissolve | the graveyard; burn down gradually. |
 
-**Stage 2's exit test:** nothing at `src/` top level is named after a technology.
+**Stage 2's exit test achieved:** nothing at `src/` top level is named after a technology.
 
 **Stage 3, further out:** `src/` itself dissolves and the repository root *is* the
 ontology, with the workshop and the foreign as its only non-ontological neighbours.
@@ -191,7 +194,7 @@ That is a one-line CMake change whenever it is wanted; it is held back only beca
 root with 200 entries is worse to navigate than a root with 20 until the stage-2
 regrouping has thinned it.
 
----
+---\
 
 ## 6. The not-yet-ordered, named honestly
 
@@ -203,7 +206,7 @@ regrouping has thinned it.
 | `Legacy/`, `Legacy Depricated/` | superseded code, retained | temporary by intent. Named honestly, which is why it is tolerable. |
 | `TestLab/`, `TestLabAI/` | standalone experiments with their own `main` | temporary. Fold in or retire. |
 
----
+---\
 
 ## 6b. Building from the new root
 
@@ -237,14 +240,10 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
 cmake --build build --target earthcall -j8
 ```
 
-Both belong in a `CMakePresets.json` or as fallback hints in `CMakeLists.txt` so a
-fresh checkout configures unaided — a separate change from this one, deliberately not
-folded in.
-
-The Python backend now starts from `src/Integration/py/`:
+The Python backend now starts from `src/Singularity/Foreign/py/`:
 
 ```sh
-python3 src/Integration/py/app.py
+python3 src/Singularity/Foreign/py/app.py
 ```
 
 `app.py` puts `src/Singularity/Network/py/` on `sys.path` and imports
@@ -253,7 +252,7 @@ and it exists precisely because the two halves of the Network channel are now
 correctly separated by a modality boundary instead of incorrectly joined by a
 language one.
 
----
+---\
 
 ## 7. Adding a directory — the checklist
 
@@ -274,7 +273,7 @@ language one.
              Never a peer, never a root.
 ```
 
----
+---\
 
 ## 8. Why this is not housekeeping
 

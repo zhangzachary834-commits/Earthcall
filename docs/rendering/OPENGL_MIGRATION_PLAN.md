@@ -12,7 +12,7 @@
 
 ## Purpose
 
-This document plans the migration of `sight-cpp` away from legacy OpenGL while
+This document plans the migration of Earthcall away from legacy OpenGL while
 preserving Earthcall's own mathematical and ontological architecture.
 
 The goal is not to replace Earthcall's object model with a normal game-engine
@@ -36,7 +36,7 @@ Offload or vendor:
 
 The build is a small custom C++ app with a hand-written `Makefile`. It links
 directly against GLFW, OpenGL, WebKit, and Cocoa, and compiles ImGui sources from
-outside the `sight-cpp` folder.
+within the repository.
 
 Current dependency shape:
 
@@ -130,7 +130,7 @@ treated the symptom. The disease is rebuilding unchanged geometry.
 
 **2. `GL3Renderer` is a dead stub. — FIXED (deleted).**
 
-`src/Rendering/GL/GL3Renderer.cpp` drew one triangle, gated behind `USE_GL3_RENDERER`
+`src/Singularity/Screen/GL/GL3Renderer.cpp` drew one triangle, gated behind `USE_GL3_RENDERER`
 which the `Makefile` never defined, so it compiled to nothing. `Game.hpp` held it as a
 concrete member; `Engine.cpp` and `GameRender.cpp` branched on the same dead define. It
 was not a beachhead — a fake renderer would have confused the real renderer boundary
@@ -140,7 +140,7 @@ where `imgui_impl_wgpu` plugs in at Milestone 5).
 
 ### What the WebKit dependency is
 
-`src/Integration/RealWebView.cpp` imports Cocoa and WebKit and allocates an
+`src/Singularity/Foreign/RealWebView.cpp` imports Cocoa and WebKit and allocates an
 `NSWindow`, compiled `-ObjC++`. **This is a test program for cross-app/web
 integration, not architecture.** It does not constrain the renderer decision and
 it is not a portability blocker. Earlier drafts of this document overweighted it.
@@ -270,7 +270,7 @@ versions, with licenses tracked.
 Recommended vendor layout:
 
 ```text
-sight-cpp/
+Earthcall/
   third_party/
     glm/
     imgui/
@@ -865,7 +865,7 @@ Reasons:
 Target layout:
 
 ```text
-sight-cpp/
+Earthcall/
   CMakeLists.txt
   cmake/
   third_party/
@@ -912,12 +912,12 @@ OpenGL still renders the app, but all raw GL is behind an Earthcall Renderer int
 
 Deliverables:
 
-- ~~`Renderer.hpp` with both `drawMesh` and `drawImplicit`~~ — DONE (`src/Rendering/Renderer.hpp`;
+- ~~`Renderer.hpp` with both `drawMesh` and `drawImplicit`~~ — DONE (`src/Singularity/Screen/Renderer.hpp`;
   `currentRenderer()` holds the single active backend, swappable at M5).
-- ~~`OpenGLRenderer`~~ — DONE (`src/Rendering/GL/OpenGLRenderer.{hpp,cpp}`).
+- ~~`OpenGLRenderer`~~ — DONE (`src/Singularity/Screen/GL/OpenGLRenderer.{hpp,cpp}`).
 - ~~`RenderMesh`, `Material`~~ — DONE. `Material` is a **being** (`Material : Singular`, owned by
   `MaterialManager`, Law-addressable) resolved at draw into a flat `RenderMaterial`
-  (`src/Rendering/RenderMaterial.hpp`); the mesh view is `geom::TessMesh`.
+  (`src/Singularity/Screen/RenderMaterial.hpp`); the mesh view is `geom::TessMesh`.
 - migrated draw paths — DONE for **every object surface path**: the topology/TessMesh paths
   (smooth / complex / field / patch) AND the legacy immediate-mode primitives, now built as
   TessMeshes and routed through `currentRenderer().drawMesh`. Cube/sphere/cylinder/cone are unit
@@ -1019,7 +1019,7 @@ Deliverables:
   version constant returned is `0x1D000101`. `wgpuGetVersion` lives in `wgpu.h`
   (the native extension header), not `webgpu.h`. GIT: the `.a` is committed
   (consistent with the repo committing build artifacts); the `.dylib` is gitignored.
-- **Offscreen render PROVEN** — `src/Rendering/WebGPU/smoke_offscreen.cpp` (run via
+- **Offscreen render PROVEN** — `src/Singularity/Screen/WebGPU/smoke_offscreen.cpp` (run via
   `make webgpu-smoke`) brings up instance → adapter → device → queue, clears a 4×4
   RGBA8 texture to (0.25,0.5,0.75), copies it to a mappable buffer, and reads back
   `(64,128,191,255)`. So device + queue + render pass + texture + buffer-map — the
@@ -1032,14 +1032,14 @@ Deliverables:
   `depthSlice` must be `WGPU_DEPTH_SLICE_UNDEFINED`. The Makefile carries
   `WGPU_INC` / `WGPU_LIB` / `WGPU_FRAMEWORKS`; WebGPU sources are excluded from the
   default (OpenGL) build via `\! -path "*/WebGPU/*"`.
-- **Mesh pipeline PROVEN** — `make webgpu-mesh` (`src/Rendering/WebGPU/smoke_mesh.cpp`
+- **Mesh pipeline PROVEN** — `make webgpu-mesh` (`src/Singularity/Screen/WebGPU/smoke_mesh.cpp`
   + reusable `WgpuDevice.hpp`) compiles a WGSL shader, builds a render pipeline with a
   vertex buffer and a **uniform buffer standing in for `RenderMaterial.baseColor`** + a bind
   group, draws a triangle, and reads back exactly the uniform colour `(255,128,64,255)`.
   So shader-compile + pipeline + vertex/uniform buffers + bind groups + draw all work.
   `WgpuDevice.hpp` (header-only device/adapter/queue bring-up) is the shared foundation the
   real `WebGpuRenderer` will use.
-- **`WebGpuRenderer` class PROVEN** — `src/Rendering/WebGPU/WebGpuRenderer.{hpp,cpp}`
+- **`WebGpuRenderer` class PROVEN** — `src/Singularity/Screen/WebGPU/WebGpuRenderer.{hpp,cpp}`
   implements the `Renderer` interface (drawMesh real; drawImplicit/drawLines/drawOverlay
   stubbed) plus a WebGPU frame lifecycle (`beginFrame`/`endFrame`, `setCamera`/`setModel`).
   `make webgpu-renderer` (`smoke_renderer.cpp`) drives it exactly as the app will —
@@ -1085,7 +1085,7 @@ Deliverables:
   `beginFrameOffscreen(target,...)` (used by tests); its interface `beginFrame(w,h,clear)` is a
   no-op stub until the surface exists. So the call seam the WebGPU swap needs is already live and
   exercised by the running OpenGL app.
-  INTEGRATION — **on-screen surface demo WRITTEN** (`src/Rendering/WebGPU/smoke_window.mm`,
+  INTEGRATION — **on-screen surface demo WRITTEN** (`src/Singularity/Screen/WebGPU/smoke_window.mm`,
   `make webgpu-window` → `./webgpu_window`). Objective-C++: GLFW window in `GLFW_NO_API` mode,
   a `CAMetalLayer` attached to the Cocoa contentView, `WGPUSurfaceSourceMetalLayer` → surface,
   surface-compatible adapter, `wgpuSurfaceConfigure` (BGRA8Unorm / Fifo), then a loop that acquires
@@ -1241,7 +1241,7 @@ Earthcall's categories talk *through*.
 
 ## Source Notes
 
-Recommendations are based on the current `sight-cpp` structure, the Earthcall
+Recommendations are based on the Earthcall structure, the Earthcall
 Ourverse Manifesto, and the following public documentation:
 
 - WebGPU specification: https://www.w3.org/TR/webgpu/
