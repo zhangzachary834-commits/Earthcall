@@ -214,13 +214,18 @@ void Object::createCustomPolyhedron(const std::vector<glm::vec3>& vertices,
 // stand here only forwarded to ObjectIdentity::claimIdentifierAtLeast and had
 // no callers — a non-static member shadowing the namespace function it wrapped.
 
-Object::Object() {
-    if (objectID.empty()) {
+Object::Object(std::string explicitId) {
+    if (!explicitId.empty()) {
+        objectID = std::move(explicitId);
+        ObjectIdentity::claimIdentifierAtLeast(objectID);
+    } else {
         objectID = ObjectIdentity::generateObjectId();
         printf("WARNING: Object initialized without a stable string identifier. Assigned volatile ID '%s'. This object should not be reliably targeted by Law text.\n", objectID.c_str());
     }
     syncRotationStateFromTransform(transform);
 }
+
+Object::Object() : Object("") {}
 
 void Object::setPosition(const glm::vec3& p) {
     glm::mat4 t = transform;

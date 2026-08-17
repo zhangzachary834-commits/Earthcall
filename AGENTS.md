@@ -104,8 +104,7 @@ either. Details in `docs/BUILD_AND_ENVIRONMENT.md` § The tree, in detail.
 
 ## Build and test
 
-**`docs/BUILD_AND_ENVIRONMENT.md` is required reading before you build, add a test, or
-search the tree.** The short version:
+**`docs/BUILD_AND_ENVIRONMENT.md` is required reading before you build, add a test, or search the tree.** The short version:
 
 ```sh
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
@@ -195,5 +194,7 @@ lies.**
 - When finished, update this document (and its two required-reading companions) if anything
   here went stale. Keep this file **under 200 lines** — move detail into the companions
   rather than growing it.
+- Every now and then, add relevant directories/files to the gitignore and claudeignores/agentignores. If you ever, by chance, happen to catch a directory or file that should be ignored by either git or the agents.
 - If during your session you come up with anything that you see as relevant for future agents to know up front, you should add it to this document AGENTS.md or the relevant companion documents.
 - If you are doing a task: When you're done with your pass, if there's anything from the original plan left unfinished, make sure to note that explicitly for another pass.
+- Use the Agent Intercom system to leave notes for other AI agents. A feature in the intercom system that allows you to communicate with other agents and ping each other in real time is being implemented. 

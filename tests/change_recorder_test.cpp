@@ -9,7 +9,6 @@
 #include "ZonesOfEarth/AuthorsOfLaw/ChangeRecorder.hpp"
 #include "ConstructedBeing/Object/Object.hpp"
 
-#include <GLFW/glfw3.h>
 #include <cassert>
 #include <cmath>
 #include <cstdio>
@@ -23,19 +22,6 @@ bool neard(double a, double b, double eps) { return std::fabs(a - b) < eps; }
 } // namespace
 
 int main() {
-    if (!glfwInit()) {
-        std::fprintf(stderr, "change_recorder_test: glfwInit failed\n");
-        return 1;
-    }
-    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-    GLFWwindow* window = glfwCreateWindow(64, 64, "change_recorder_test", nullptr, nullptr);
-    if (!window) {
-        std::fprintf(stderr, "change_recorder_test: no GL context\n");
-        glfwTerminate();
-        return 1;
-    }
-    glfwMakeContextCurrent(window);
-
     {
         // ------------------------------------------------------------------
         // 1. fitSeries recovers the three model families from raw traces.
@@ -123,8 +109,6 @@ int main() {
         assert(neard(clip.tracks[0].frequency, 0.5, 0.05));
     }
 
-    glfwDestroyWindow(window);
-    glfwTerminate();
     std::puts("change_recorder_test: ALL OK");
     return 0;
 }

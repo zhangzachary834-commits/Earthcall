@@ -302,6 +302,7 @@ public:
     void drawSymbolicForm(); // or drawAsGeometry, drawPhysicalShell
 
     Object();
+    explicit Object(std::string explicitId);
     Object(Object&&) = default;
     Object& operator=(Object&&) = default;
     Object(const Object&) = delete;

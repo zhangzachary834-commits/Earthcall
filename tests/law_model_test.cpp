@@ -16,7 +16,6 @@
 #include "ConstructedBeing/Object/Creation/ObjectConcept.hpp"
 #include "ZonesOfEarth/World/World.hpp"
 
-#include <GLFW/glfw3.h>
 #include <cassert>
 #include <cmath>
 #include <cstdio>
@@ -28,20 +27,6 @@ bool nearf(float a, float b, float eps = 1e-4f) { return std::fabs(a - b) < eps;
 } // namespace
 
 int main() {
-    // Object's constructor initializes face textures (GL calls) — hidden context.
-    if (!glfwInit()) {
-        std::fprintf(stderr, "law_model_test: glfwInit failed\n");
-        return 1;
-    }
-    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-    GLFWwindow* window = glfwCreateWindow(64, 64, "law_model_test", nullptr, nullptr);
-    if (!window) {
-        std::fprintf(stderr, "law_model_test: no GL context\n");
-        glfwTerminate();
-        return 1;
-    }
-    glfwMakeContextCurrent(window);
-
     {
         Object author;   // any Singular can author (Person governance comes later)
 
@@ -330,8 +315,6 @@ int main() {
 
     }
 
-    glfwDestroyWindow(window);
-    glfwTerminate();
     std::puts("law_model_test: ALL OK");
     return 0;
 }

@@ -426,7 +426,8 @@ std::vector<std::unique_ptr<Object>> ObjectConcept::instantiate(
             continue;
         }
 
-        auto newborn = std::make_unique<Object>();
+        std::string newbornSlug = getIdentifier() + ".member-" + std::to_string(i);
+        auto newborn = std::make_unique<Object>(newbornSlug);
         if (member.hasGeometry) {
             if (member.hasField) {
                 newborn->setFieldShape(member.field, member.fieldExtent);

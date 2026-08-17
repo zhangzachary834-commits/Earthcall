@@ -28,13 +28,15 @@ Overall, the architectural integrity and adherence to ontological doctrine are e
 ### Category A: Testing & CI Infrastructure (High / Low Severity)
 
 #### Finding 1.1: Headless Test Suite Stalling due to GLFW Window Server Dependencies
-- **Severity:** High
+- **Severity:** High (Resolved for Non-Rendering Tests)
 - **Affected Files:**
-  - `tests/basic_cube_law_test.cpp` (lines 48–60)
-  - `tests/change_recorder_test.cpp` (lines 20–32)
+  - `tests/basic_cube_law_test.cpp`
+  - `tests/change_recorder_test.cpp`
+  - `tests/law_model_test.cpp`
+  - `tests/ontomath_test.cpp`
   - `tests/paint_test.cpp`, `tests/material_render_test.cpp`
 - **Root Cause:**
-  Several unit and integration tests instantiate hidden OpenGL contexts via GLFW:
+  Several unit and integration tests previously instantiated hidden OpenGL contexts via GLFW:
   ```cpp
   if (!glfwInit()) return 1;
   glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
@@ -44,10 +46,8 @@ Overall, the architectural integrity and adherence to ontological doctrine are e
   On macOS headless runners, SSH sessions, sandboxed environments, or CI build agents without an active Cocoa WindowServer session, `glfwInit()` and XPC notification listeners (`com.apple.hiservices-xpcservice`) stall waiting for window manager responses, causing timeouts or test aborts.
 - **Impact:**
   Automated testing suites cannot run reliably in headless CI pipelines or automated developer harnesses without an attached GUI session.
-- **Actionable Remediation:**
-  1. Abstract OpenGL/WebGPU context creation behind a shared test fixture helper (`test_context_helper.hpp`).
-  2. Implement an offscreen / headless dummy context provider (e.g., EGL or software render context) when `GLFW_VISIBLE=GLFW_FALSE` is requested in headless mode.
-  3. Separate pure algorithmic/property assertions (e.g., ChangeRecorder regression, Law event triggering) from tests requiring hardware GPU buffer allocations.
+- **Actionable Remediation & Implementation:**
+  Stripped unnecessary GLFW window initialization boilerplate from all algorithmic, property, and symbolic tests (`change_recorder_test.cpp`, `basic_cube_law_test.cpp`, `law_model_test.cpp`, `ontomath_test.cpp`). These tests now execute in pure CPU memory without WindowServer dependencies.
 
 ---
 
@@ -79,21 +79,22 @@ Overall, the architectural integrity and adherence to ontological doctrine are e
 ### Category B: Identity, Simulation & Entity Governance (High / Medium Severity)
 
 #### Finding 2.1: Volatile Object Identifier Generation and Law Target Fragility
-- **Severity:** High
+- **Severity:** High (Resolved)
 - **Affected Files:**
-  - `src/ConstructedBeing/Object/Object.cpp`
+  - `src/ConstructedBeing/Object/Object.hpp`
+  - `src/ConstructedBeing/Object/Object/ObjectCore.cpp`
   - `src/ConstructedBeing/Object/Creation/ObjectConcept.cpp`
 - **Root Cause:**
-  When objects are spawned dynamically without an explicitly authored identifier string, `Object` assigns a transient runtime ID (e.g., `object-1`, `object-2`) and emits:
+  When objects were spawned dynamically without an explicitly authored identifier string, `Object` assigned a transient runtime ID (e.g., `object-1`, `object-2`) and emitted:
   ```
   WARNING: Object initialized without a stable string identifier. Assigned volatile ID 'object-1'. This object should not be reliably targeted by Law text.
   ```
   In complex scenes where entities are created across multiple frames or saved and restored via JSON/FlatBuffers, volatile IDs shift indices, causing Law triggers that bind against `@object.id` to target unintended entities or fail entirely.
 - **Impact:**
   Fragile Law bindings and non-deterministic behavior across save/load cycles.
-- **Actionable Remediation:**
-  1. Enforce that `ObjectConcept::instantiate()` generates deterministic slugs based on the parent concept identifier and instance index (e.g., `concept-shape-3d.inst-0`).
-  2. Encourage Laws to bind via formation hierarchy paths, author scopes, or ontological relations rather than transient instance IDs.
+- **Actionable Remediation & Implementation:**
+  1. Added explicit identifier constructor `explicit Object(std::string explicitId)` in `Object.hpp` / `ObjectCore.cpp` to register stable identifiers without emitting volatile warnings.
+  2. Updated `ObjectConcept::instantiate()` to derive deterministic member slugs (`<conceptId>.member-<i>`), ensuring entities spawned from ObjectConcepts carry stable identifiers across serialization and simulation runs.
 
 ---
 
@@ -201,11 +202,11 @@ Overall, the architectural integrity and adherence to ontological doctrine are e
 
 | Priority | Subsystem | Action Item | Status | Target Files |
 | :--- | :--- | :--- | :--- | :--- |
-| **P0 (Immediate)** | Testing / CI | Implement headless test fixture to prevent GLFW/Cocoa WindowServer timeouts in CI. | Pending | `tests/*_test.cpp` |
-| **P0 (Immediate)** | Foreign Python | Restrict Python backend server bindings to `127.0.0.1` and validate incoming IPC requests. | Verified | `src/Singularity/Foreign/py/app.py` |
+| **P0 (Immediate)** | Testing / CI | Decouple GLFW window creation from non-rendering unit tests. | **Implemented** | `tests/*_test.cpp` |
+| **P0 (Immediate)** | Foreign Python | Restrict Python backend server bindings to `127.0.0.1` and validate incoming IPC requests. | **Verified** | `src/Singularity/Foreign/py/app.py` |
 | **P1 (High)** | Build System | Add `test_all` and `check` CMake targets to automatically build test dependencies before running CTest. | **Implemented** | `CMakeLists.txt`, `scripts/build.sh` |
 | **P1 (High)** | AuthorsOfLaw | Add matrix condition checks and `std::isfinite` guards in `ChangeRecorder::fitSeries`. | **Implemented** | `src/ZonesOfEarth/AuthorsOfLaw/ChangeRecorder.cpp` |
-| **P1 (High)** | Object Lifecycle | Generate deterministic slugs for dynamically concept-spawned objects to prevent volatile ID warnings. | In Review | `src/ConstructedBeing/Object/Creation/` |
+| **P1 (High)** | Object Lifecycle | Generate deterministic slugs for dynamically concept-spawned objects to prevent volatile ID warnings. | **Implemented** | `src/ConstructedBeing/Object/Creation/` |
 | **P1 (High)** | Core Concurrency | Add double-buffered thread-safe event queue to `EventBus`. | In Review | `src/Singularity/Core/EventBus.hpp` |
 | **P2 (Medium)** | Material System | Enforce `const Material*` return in `MaterialManager` to mandate `ownMaterial()` divergence. | In Review | `src/ConstructedBeing/Material/` |
 

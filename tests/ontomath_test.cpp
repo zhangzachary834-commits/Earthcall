@@ -14,7 +14,6 @@
 #include "Singularity/OntoMath/Operations.hpp"
 #include "ConstructedBeing/Object/Object.hpp"
 
-#include <GLFW/glfw3.h>
 #include <cassert>
 #include <cmath>
 #include <cstdio>
@@ -51,19 +50,6 @@ bool neard(const PropertyValue& a, const PropertyValue& b, double eps = 1e-9) {
 }
 
 int main() {
-    if (!glfwInit()) {
-        std::fprintf(stderr, "ontomath_test: glfwInit failed\n");
-        return 1;
-    }
-    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-    GLFWwindow* window = glfwCreateWindow(64, 64, "ontomath_test", nullptr, nullptr);
-    if (!window) {
-        std::fprintf(stderr, "ontomath_test: no GL context\n");
-        glfwTerminate();
-        return 1;
-    }
-    glfwMakeContextCurrent(window);
-
     {
         using OntoMath::ScalarForm;
         using OntoMath::Piecewise;
@@ -520,7 +506,7 @@ int main() {
             positive.whereLEZero = OntoMath::MathNode::fromLegacyExpression(
                 ScalarForm::variable("x", 1.0, -1.0));            // -x <= 0
             positive.mathNode = OntoMath::MathNode::fromLegacyExpression(ScalarForm::variable("x"));
-            Piecewise::Piece negative;
+            Piecewise::Piece negative;                       // bare catch-all
             negative.whereLEZero = OntoMath::MathNode::fromLegacyExpression(
                 ScalarForm::variable("x"));                       // x <= 0
             negative.mathNode = OntoMath::MathNode::fromLegacyExpression(ScalarForm::variable("x", 1.0, -1.0));
@@ -647,8 +633,6 @@ int main() {
         registry.loadFromJson(nlohmann::json::object());      // leave it clean
     }
 
-    glfwDestroyWindow(window);
-    glfwTerminate();
     std::puts("ontomath_test: ALL OK");
     return 0;
 }

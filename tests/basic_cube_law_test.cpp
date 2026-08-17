@@ -19,7 +19,6 @@
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ZonesOfEarth/World/World.hpp"
 
-#include <GLFW/glfw3.h>
 #include <cassert>
 #include <algorithm>
 #include <cmath>
@@ -60,20 +59,6 @@ int main() {
     std::cout << "============================================================" << std::endl;
     std::cout << "Running Basic Cube 3D Custom Shape Generator Law Test..." << std::endl;
     std::cout << "============================================================" << std::endl;
-
-    // Headless OpenGL initialization required for Object face textures & shaders
-    if (!glfwInit()) {
-        std::cerr << "basic_cube_law_test: glfwInit failed" << std::endl;
-        return 1;
-    }
-    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-    GLFWwindow* window = glfwCreateWindow(64, 64, "basic_cube_law_test", nullptr, nullptr);
-    if (!window) {
-        std::cerr << "basic_cube_law_test: window creation failed" << std::endl;
-        glfwTerminate();
-        return 1;
-    }
-    glfwMakeContextCurrent(window);
 
     // 1. Setup World, Player (author), creation channel, and Universe.
     //
@@ -400,7 +385,5 @@ int main() {
     // Generate final test save containing all the spawned objects
     dump_test_save("basic_cube_law_test_final", world, lawManager, player);
 
-    glfwDestroyWindow(window);
-    glfwTerminate();
     return g_failures > 0 ? 1 : 0;
 }
