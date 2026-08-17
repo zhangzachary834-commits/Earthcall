@@ -51,6 +51,7 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Person/Body
     ${CMAKE_CURRENT_SOURCE_DIR}/imgui
     ${CMAKE_CURRENT_SOURCE_DIR}/local_deps/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/third_party/miniaudio
 )
 
 # Fetch standalone ASIO, WebSocketPP, and GLFW

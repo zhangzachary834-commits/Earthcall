@@ -37,6 +37,9 @@ Architectural Actualization
 25. Resolve Singularity external app integration.
 26. Multi-device Earthcall networking and inter-device paradigms.
 
+Things to explore and deliberate on:
+1. To what extent should Earthcall use OOP versus ECS?
+
 Propertypath exposure debt (tracked in `tests/no_black_box_test.cpp`):
 1. `World` — `World::buildProperties()` is `{}`; resolve retirement into `Zone` before populating properties.
 2. `Ourverse` — `Ourverse::buildProperties()` is `{}`; expose `ownedObjects`, `primaryGatheringZone`, and `laws`.
