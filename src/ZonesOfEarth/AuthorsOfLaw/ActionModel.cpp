@@ -245,8 +245,7 @@ nlohmann::json ActionNode::toJson() const {
             j["children"] = kids;
             break;
         }
-        case Kind::Spawn:
-        case Kind::Synthesize: {
+        case Kind::Spawn: {
             j["conceptId"] = conceptId;
             if (!spawnParentPath.empty()) j["spawnParentPath"] = spawnParentPath.toString();
             if (!spawnPlacementPath.empty()) j["spawnPlacementPath"] = spawnPlacementPath.toString();
@@ -257,6 +256,24 @@ nlohmann::json ActionNode::toJson() const {
                 for (const auto& c : children) kids.push_back(c.toJson());
                 j["children"] = kids;
             }
+            break;
+        }
+        case Kind::Synthesize: {
+            // Kind 17 used to carry an ObjectConcept id. Synthesis is now
+            // expressed in its visible action tree, so no hidden registry
+            // dependency is serialized for new law text. Preserve old text
+            // verbatim, though: silently dropping an un-migrated law on its
+            // next save would make its refusal into data loss.
+            if (children.empty() && !conceptId.empty()) {
+                j["conceptId"] = conceptId;
+                if (!spawnParentPath.empty()) j["spawnParentPath"] = spawnParentPath.toString();
+                if (!spawnPlacementPath.empty()) j["spawnPlacementPath"] = spawnPlacementPath.toString();
+                if (!spawnShapeKindPath.empty()) j["spawnShapeKindPath"] = spawnShapeKindPath.toString();
+                if (!spawnColorPath.empty()) j["spawnColorPath"] = spawnColorPath.toString();
+            }
+            nlohmann::json kids = nlohmann::json::array();
+            for (const auto& c : children) kids.push_back(c.toJson());
+            j["children"] = kids;
             break;
         }
         case Kind::PlayAudio:
@@ -931,70 +948,41 @@ ECA::ActionExecutor ActionNode::compile() const {
             };
         }
         // ------------------------------------------------------------------
-        // Synthesis IS set-to-set creation. It was a second implementation of
-        // it — its own concept type, its own registry, its own mapping struct,
-        // its own governance — and being second it was also the poorer one:
-        // its concepts had uuid identities no law text could name, its
-        // registry was never saved, and its newborns were returned as
-        // shared_ptrs that the caller dropped on the floor, so every being it
-        // ever made was born and freed in the same statement.
-        //
-        // The distinction it was reaching for is real and is kept: SPAWN
-        // derives a new set from the concept alone (a birth), while SYNTHESIZE
-        // derives it from the LIVE INPUT SET the event names — subject and
-        // object, the two beings the moment brought together. One machine,
-        // two gestures.
+        // Synthesis is the visible composition of ordinary actions. A Create
+        // child establishes a newborn subject; its Map bindings can read the
+        // event participants through @event.subject / @event.object, and its
+        // Set/AddProperty/AddElement children shape that newborn. Nothing is
+        // hidden in an ObjectConcept or a registry here.
         // ------------------------------------------------------------------
         case Kind::Synthesize: {
-            const std::string id = conceptId;
-            return [id](const ECA::Event& event, Singular& target) {
-                World* world = dynamic_cast<World*>(&target);
-                if (!world) {
-                    for (auto* being : Universe::instance().beings()) {
-                        if (auto* w = dynamic_cast<World*>(being)) {
-                            world = w;
-                            break;
-                        }
+            std::vector<ECA::ActionExecutor> compiled;
+            compiled.reserve(children.size());
+            for (const auto& child : children) compiled.push_back(child.compile());
+            return [compiled](const ECA::Event& event, Singular& target) {
+                if (compiled.empty()) {
+                    emitEffect("Synthesize", false,
+                               "no composed creation actions authored; migrate this legacy "
+                               "Synthesize into Create plus property actions");
+                    return;
+                }
+                const std::size_t before =
+                    ActionNode::activeTrace() ? ActionNode::activeTrace()->nodes.size() : 0;
+                for (const auto& run : compiled) {
+                    if (run) run(event, target);
+                }
+                bool anyChildWrote = false;
+                if (auto* trace = ActionNode::activeTrace()) {
+                    for (std::size_t i = before; i < trace->nodes.size(); ++i) {
+                        if (trace->nodes[i].wrote) { anyChildWrote = true; break; }
                     }
+                } else {
+                    // Direct callers still executed a non-empty authored tree.
+                    anyChildWrote = !compiled.empty();
                 }
-                if (!world) {
-                    emitEffect("Synthesize", false, "no World to be born into");
-                    return;
-                }
-                auto concept = ConceptRegistry::instance().find(id);
-                if (!concept) {
-                    emitEffect("Synthesize", false, "no such concept: " + id);
-                    return;
-                }
-
-                // The input set: every being this event brought together, of
-                // whatever kind. A Person, a Zone and a cube are all sources —
-                // reading a property is the same act whoever carries it, and
-                // the TransferPolicy gate decides what may be read.
-                std::vector<Singular*> inputs;
-                if (event.subject) inputs.push_back(event.subject);
-                if (event.object) inputs.push_back(event.object);
-
-                glm::mat4 placement(1.0f);
-                if (auto* placed = dynamic_cast<Object*>(event.subject)) {
-                    placement = glm::translate(glm::mat4(1.0f), placed->getPosition());
-                }
-
-                auto newborns = concept->instantiate(
-                    placement, inputs.empty() ? nullptr : &inputs);
-                if (newborns.empty()) {
-                    emitEffect("Synthesize", false, "synthesis produced nothing");
-                    return;
-                }
-                for (auto& newborn : newborns) {
-                    Object* born = newborn.get();
-                    world->addObject(std::move(newborn));
+                if (anyChildWrote) {
                     Core::EventBus::instance().publish(
-                        ECA::Event{"object-created", born, event.subject, std::time(nullptr)});
+                        ActionNode::ExecutedEvent{"Synthesize", &target, std::time(nullptr)});
                 }
-                emitEffect("Synthesize", true);
-                Core::EventBus::instance().publish(
-                    ActionNode::ExecutedEvent{"Synthesize", &target, std::time(nullptr)});
             };
         }
     }
@@ -1032,7 +1020,7 @@ std::string ActionNode::describe() const {
         case Kind::Destroy:
             return "destroy " + (elementToken.empty() ? std::string("subject") : elementToken);
         case Kind::Synthesize:
-            return "synthesize(" + conceptId + ")";
+            return "synthesize(" + std::to_string(children.size()) + " composed actions)";
         case Kind::PlayAudio:
             return kindName(kind);
     }

@@ -4,10 +4,9 @@
 // This file replaces synthesis_system_test.cpp. The system it tested — a
 // second Concept type, a second registry, a second mapping struct and a second
 // governance rule, all reached through ActionNode::Synthesize — was a parallel
-// implementation of what ObjectConcept already does, and the poorer of the two:
-// uuid identities no law text could name, a registry that never persisted, and
-// newborns returned as shared_ptrs that the caller dropped. The gesture it
-// stood for is kept and tested here against the ONE set-to-set machine.
+// implementation of what ObjectConcept already does. Synthesize is now a
+// visible composition of Create and the ordinary property actions; its live
+// inputs are ordinary @event paths, not a hidden ObjectConcept invocation.
 //
 // Exercises: capture over beings of any kind, the per-member property
 // snapshot (a concept remembers VALUES, not only a recipe), the birth
@@ -175,38 +174,143 @@ void testClosedGateRefusesCapture() {
     std::cout << "  a Gated property is not remembered by a concept OK\n";
 }
 
-// Synthesize: a derivation from the LIVE input set the event names, born into
-// the World. The old implementation returned its newborns to a caller that
-// dropped them; nothing it ever made reached the world.
+// Synthesize is no longer an ObjectConcept shortcut. A Create child establishes
+// the newborn; its Map child reads the LIVE input set with an @event-qualified
+// PropertyPath and writes directly to that newborn. AddProperty demonstrates
+// that the newborn's vocabulary is shaped by the same ordinary action tree.
 void testSynthesizeBirthsIntoWorld() {
-    Object prototype;
-    prototype.setShape(Object::ShapeKind::Cube, Object::ShapeParams{});
-    auto concept = ObjectConcept::captureFrom({&prototype}, "synth-target");
-    PropertyMapping m;
-    m.source = PropertyPath::parse("position.x");
-    m.target = PropertyPath::parse("position.z");
-    concept->addMapping(m);
-    ConceptRegistry::instance().add(concept);
-
     World world;
     Object subject;
     subject.setPosition(glm::vec3(7.0f, 0.0f, 0.0f));
 
+    ActionNode map;
+    map.kind = ActionNode::Kind::Map;
+    map.path = PropertyPath::parse("derived-from-x");
+    map.bindings["x"] = PropertyPath::parse("@event.subject.position.x");
+    map.mapFunction = OntoMath::Piecewise::continuous(
+        OntoMath::MathNode::fromLegacyExpression(OntoMath::ScalarForm::variable("x")));
+
+    ActionNode grant = ActionNode::addProperty("", "derived-from-x", PropertyValue(0.0));
+    ActionNode create = ActionNode::create(0, "derived", {grant, map});
     ActionNode node;
     node.kind = ActionNode::Kind::Synthesize;
-    node.conceptId = concept->getIdentifier();
+    node.children.push_back(create);
+    const nlohmann::json persisted = node.toJson();
+    assert(persisted.contains("children"));
+    assert(!persisted.contains("conceptId"));
+    assert(ActionNode::fromJson(persisted).children.size() == 1);
+
+    // Opening and saving an old kind-17 law must not erase the concept text
+    // that needs deliberate re-authoring into this visible composition.
+    ActionNode legacy;
+    legacy.kind = ActionNode::Kind::Synthesize;
+    legacy.conceptId = "old-concept";
+    const nlohmann::json preservedLegacy = legacy.toJson();
+    assert(preservedLegacy.value("conceptId", std::string()) == "old-concept");
+    assert(ActionNode::fromJson(preservedLegacy).conceptId == "old-concept");
     auto executor = node.compile();
 
     const std::size_t before = world.getOwnedObjects().size();
     ECA::Event event{"beings-met", &subject, nullptr, 0};
+    Universe::EventScope eventScope(event.subject, event.object);
     executor(event, world);
 
     assert(world.getOwnedObjects().size() == before + 1);
-    // Derived from the live subject: z took the subject's x through the
-    // mapping, and the placement came from the subject's position.
     const auto& born = world.getOwnedObjects().back();
-    assert(nearf(born->getPosition().z, 7.0f));
-    std::cout << "  Synthesize derives from the live input set and births into the World OK\n";
+    PropertyValue derived;
+    assert(PropertyPath::parse("derived-from-x").getValue(*born, derived) ==
+           PropertyPath::PathResult::Ok);
+    assert(nearf(static_cast<float>(std::get<double>(derived)), 7.0f));
+    std::cout << "  Synthesize composes Create, AddProperty, and Map over live inputs OK\n";
+}
+
+// An un-migrated (or simply empty) Synthesize has no composed Create to run.
+// It must refuse loudly and do nothing — no newborn, no ExecutedEvent — never
+// guess at a legacy concept that isn't there.
+void testSynthesizeRefusesWithNoChildren() {
+    World world;
+    Object subject;
+
+    ActionNode node;
+    node.kind = ActionNode::Kind::Synthesize;   // no children, no conceptId
+    auto executor = node.compile();
+
+    ActionNode::TraceScope trace;
+    const std::size_t before = world.getOwnedObjects().size();
+    ECA::Event event{"beings-met", &subject, nullptr, 0};
+    Universe::EventScope eventScope(event.subject, event.object);
+    executor(event, world);
+
+    assert(world.getOwnedObjects().size() == before);
+    assert(!trace.trace().anyWrote());
+    std::cout << "  Synthesize with no composed Create refuses and births nothing OK\n";
+}
+
+// One Synthesize, several Create children: the composition is not limited to
+// a single newborn. Each Create is an independent birth into the same World.
+void testSynthesizeComposesMultipleCreates() {
+    World world;
+    Object subject;
+
+    ActionNode labelFirst = ActionNode::addProperty("", "label", PropertyValue(std::string("first")));
+    ActionNode labelSecond = ActionNode::addProperty("", "label", PropertyValue(std::string("second")));
+    ActionNode first = ActionNode::create(0, "", {labelFirst});
+    ActionNode second = ActionNode::create(0, "", {labelSecond});
+    ActionNode node;
+    node.kind = ActionNode::Kind::Synthesize;
+    node.children.push_back(first);
+    node.children.push_back(second);
+    auto executor = node.compile();
+
+    const std::size_t before = world.getOwnedObjects().size();
+    ECA::Event event{"beings-met", &subject, nullptr, 0};
+    Universe::EventScope eventScope(event.subject, event.object);
+    executor(event, world);
+
+    assert(world.getOwnedObjects().size() == before + 2);
+    PropertyValue labelA, labelB;
+    assert(PropertyPath::parse("label").getValue(*world.getOwnedObjects()[before], labelA) ==
+           PropertyPath::PathResult::Ok);
+    assert(PropertyPath::parse("label").getValue(*world.getOwnedObjects()[before + 1], labelB) ==
+           PropertyPath::PathResult::Ok);
+    assert(std::get<std::string>(labelA) == "first");
+    assert(std::get<std::string>(labelB) == "second");
+    std::cout << "  Synthesize composes multiple Create children into multiple newborns OK\n";
+}
+
+// The live input set is BOTH event participants, not only the subject.
+// A Map bound to @event.object must read the OTHER being the moment brought
+// together, exactly as @event.subject does.
+void testSynthesizeReadsEventObject() {
+    World world;
+    Object subject;
+    Object object;
+    object.setPosition(glm::vec3(0.0f, 5.0f, 0.0f));
+
+    ActionNode map;
+    map.kind = ActionNode::Kind::Map;
+    map.path = PropertyPath::parse("derived-from-object-y");
+    map.bindings["y"] = PropertyPath::parse("@event.object.position.y");
+    map.mapFunction = OntoMath::Piecewise::continuous(
+        OntoMath::MathNode::fromLegacyExpression(OntoMath::ScalarForm::variable("y")));
+    ActionNode grant = ActionNode::addProperty("", "derived-from-object-y", PropertyValue(0.0));
+    ActionNode create = ActionNode::create(0, "derived-from-object", {grant, map});
+
+    ActionNode node;
+    node.kind = ActionNode::Kind::Synthesize;
+    node.children.push_back(create);
+    auto executor = node.compile();
+
+    ECA::Event event{"beings-met", &subject, &object, 0};
+    Universe::EventScope eventScope(event.subject, event.object);
+    executor(event, world);
+
+    const auto& born = world.getOwnedObjects().back();
+    PropertyValue derived;
+    assert(PropertyPath::parse("derived-from-object-y").getValue(*born, derived) ==
+           PropertyPath::PathResult::Ok);
+    assert(nearf(static_cast<float>(std::get<double>(derived)), 5.0f));
+    std::cout << "  Synthesize reads @event.object through a composed Map OK\n";
 }
 
 } // namespace
@@ -220,6 +324,9 @@ int main() {
     testBindingsOnlyMappingTransfers();
     testClosedGateRefusesCapture();
     testSynthesizeBirthsIntoWorld();
+    testSynthesizeRefusesWithNoChildren();
+    testSynthesizeComposesMultipleCreates();
+    testSynthesizeReadsEventObject();
     std::cout << "All Singular set-to-set tests passed.\n";
     return 0;
 }

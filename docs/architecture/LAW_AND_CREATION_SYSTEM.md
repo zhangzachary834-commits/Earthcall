@@ -743,19 +743,23 @@ the manifesto's layers 4 and 5 on the reading side. Three consequences:
   Relation, Formation) as sources, since the 3D view can only select what has
   geometry to click.
 
-**One set-to-set machine (landed 2026-08-11).** `ConstructedBeing/Singular/
-{Concept,SynthesisSystem}.{hpp,cpp}` are **gone**. They were a second
-implementation of this section — a second concept type, registry, mapping
-struct and governance rule — and the poorer one: uuid identities no law text
-could name, a registry that never persisted, and newborns returned as
-`shared_ptr`s the caller dropped, so every being it made was born and freed in
-the same statement. `ActionNode::Synthesize` (17, kept — append-only) now
-resolves the **same** `ConceptRegistry` and births into the World like `Spawn`.
-The distinction it was reaching for survives: *Spawn* derives from the concept
-alone, *Synthesize* derives from the live input set the event names
-(`@event.subject`, `@event.object`). `Property.hpp`'s `PropertyGovernance` went
-with it — two permission systems that disagree are not twice the governance.
-**TransferPolicy is the one gate.**
+**One set-to-set machine (landed 2026-08-11; completed 2026-08-16).**
+`ConstructedBeing/Singular/{Concept,SynthesisSystem}.{hpp,cpp}` are **gone**.
+They were a second implementation of this section — a second concept type,
+registry, mapping struct and governance rule — and the poorer one: uuid
+identities no law text could name, a registry that never persisted, and
+newborns returned as `shared_ptr`s the caller dropped.
+
+`ActionNode::Synthesize` (17, kept — append-only) is now a **composition
+marker**, not an `ObjectConcept` invocation. Its child `Create` actions birth
+ordinary beings into the World; their `Set`, `AddProperty`, `AddElement`, and
+`Map` children shape the newborn. `Map` bindings read the live input set through
+ordinary `@event.subject` / `@event.object` PropertyPaths, so input, derivation,
+and conflict math stay legible in authored law text. Existing kind-17 JSON that
+only names a concept is preserved on save and refuses loudly until re-authored;
+it is never silently reinterpreted. `Property.hpp`'s `PropertyGovernance` went
+with the second machine — two permission systems that disagree are not twice the
+governance. **TransferPolicy is the one gate.**
 
 Still ahead: first-mover tools recorded mid-process (`ChangeRecorder` has no
 live capture UI — it is reached only by `LawSynthesis`), and the governance
@@ -765,7 +769,8 @@ Tests: `tests/singular_set_to_set_test.cpp` (replaces `synthesis_system_test`)
 — capture over beings of any kind, the property snapshot with no live source
 set, kind and snapshot through JSON, provenance surviving the round trip, the
 birth refusals, the gate over multivariable mappings, and `Synthesize`
-deriving from the live input set into the World. `tests/metalaw_test.cpp` §6
+composing `Create`/`AddProperty`/`Map` over the live input set into the World.
+`tests/metalaw_test.cpp` §6
 covers the synthesis bindings. A regression probe for the five defects this
 work closed lives in `scratch/probes/set_to_set_audit_probe.cpp`.
 

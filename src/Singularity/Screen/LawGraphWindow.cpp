@@ -1038,7 +1038,8 @@ void seedActionKind(ActionNode& node) {
             // Victim token defaults to empty = "the law's subject".
             break;
         case ActionNode::Kind::Synthesize:
-            // Same concept picker as Spawn; seed only when empty.
+            // No fields to seed: a composition marker starts empty and is
+            // built up by adding Create/Sequence children in the editor.
             break;
         case ActionNode::Kind::PlayAudio:
             if (node.path.empty()) node.path = PropertyPath::parse("acoustic.frequency");
@@ -1432,33 +1433,24 @@ bool editActionNode(ActionNode& node) {
         }
 
         case ActionNode::Kind::Synthesize: {
-            ImGui::TextDisabled("Derive new beings from the LIVE INPUT SET the event names");
-            ImGui::TextDisabled("(subject + object). Uses the same ObjectConcept registry as Spawn,");
-            ImGui::TextDisabled("but the concept's mappings read the event participants as sources.");
-            const auto& concepts = ConceptRegistry::instance().getAll();
-            const char* preview = node.conceptId.empty() ? "(choose concept)"
-                                                         : node.conceptId.c_str();
-            ImGui::SetNextItemWidth(220.0f);
-            if (ImGui::BeginCombo("Concept##synth", preview)) {
-                if (concepts.empty()) {
-                    ImGui::TextDisabled("No concepts captured yet.");
-                }
-                for (const auto& concept : concepts) {
-                    if (!concept) continue;
-                    const std::string label =
-                        concept->name() + "  [" + concept->getIdentifier() + "]";
-                    if (ImGui::Selectable(label.c_str(),
-                                          concept->getIdentifier() == node.conceptId)) {
-                        node.conceptId = concept->getIdentifier();
-                        changed = true;
-                    }
-                }
-                ImGui::EndCombo();
+            ImGui::TextDisabled("Set-to-set creation is composed in the ordinary action language.");
+            ImGui::TextDisabled("Add Create steps; their Map bindings can read @event.subject/object,");
+            ImGui::TextDisabled("and their children shape the newborn with Set, Map, and AddProperty.");
+            if (ImGui::Button("+ create step##synthesize")) {
+                ActionNode child;
+                child.kind = ActionNode::Kind::Create;
+                seedActionKind(child);
+                node.children.push_back(std::move(child));
+                changed = true;
             }
-            if (pathPicker("Placement##synth", node.spawnPlacementPath)) changed = true;
-            if (pathPicker("Parent##synth", node.spawnParentPath)) changed = true;
-            if (pathPicker("Shape override##synth", node.spawnShapeKindPath)) changed = true;
-            if (pathPicker("Color override##synth", node.spawnColorPath)) changed = true;
+            ImGui::SameLine();
+            if (ImGui::Button("+ sequence step##synthesize")) {
+                ActionNode child;
+                child.kind = ActionNode::Kind::Sequence;
+                seedActionKind(child);
+                node.children.push_back(std::move(child));
+                changed = true;
+            }
             break;
         }
 

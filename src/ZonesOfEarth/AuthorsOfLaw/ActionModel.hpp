@@ -84,10 +84,12 @@ struct ActionNode {
         RemoveProperty = 14,
         RemoveElement = 15,
         Destroy = 16,
-        // Set-to-set from the LIVE INPUT SET the event names (subject and
-        // object) rather than from the concept alone: Spawn is a birth,
-        // Synthesize is a derivation from the beings the moment brought
-        // together. Both resolve the SAME ObjectConcept registry.
+        // Set-to-set creation is a COMPOSITION, not a second creation
+        // machine: its children contain Create plus ordinary Set/Map/
+        // AddProperty/AddElement actions. Map bindings may read
+        // @event.subject / @event.object while the child writes to the
+        // newborn Create supplies as its subject. The value is retained
+        // because ActionNode kinds are serialized append-only.
         Synthesize = 17,
         PlayAudio = 18   // Trigger the procedural audio synthesizer via properties
     };
@@ -234,7 +236,11 @@ struct ActionNode {
     std::string containerToken;
     std::string elementToken;
 
-    std::vector<ActionNode> children;   // Sequence / Parallel; Create (on the newborn)
+    // Sequence / Parallel / Synthesize; Create runs these with its newborn
+    // as subject. Thus a Synthesize tree is ordinary creation vocabulary
+    // composed around one or more Create leaves, never an ObjectConcept
+    // registry invocation.
+    std::vector<ActionNode> children;
 
     nlohmann::json toJson() const;
     static ActionNode fromJson(const nlohmann::json& j);
