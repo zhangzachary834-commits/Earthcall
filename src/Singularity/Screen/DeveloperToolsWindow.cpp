@@ -56,15 +56,22 @@ const Object::ShapeKind kDevToolShapeKinds[] = {
 } // namespace
 
 void renderDeveloperToolsWindow(bool* open, GLFWwindow* window, Core::Engine* engine) {
-    if (!open || !*open || !window || !engine) return;
+    if (!window || !engine) return;
 
     auto* channel = findCreationChannel(engine);
     if (!channel) return;
 
     // The law path's activation input: a keyboard edge, not an ImGui button,
-    // so it stays a genuinely different input from this window's spawn
-    // button below. Deliberately not gated on `*open` -- arming the law path
-    // shouldn't require this developer window to be visible.
+    // so it stays a genuinely different input from this window's panels below.
+    // Deliberately not gated on `*open` -- arming the law path shouldn't
+    // require this developer window to be visible. That is why it sits ABOVE
+    // the `*open` return: the comment said so from the day it was written
+    // (8c9a725b) while a `!*open` early return at the top of the function made
+    // it false, so L did nothing unless the window happened to be open.
+    //
+    // Setting active3DMode to "Create" is the whole arming gesture: the law
+    // ("Tool: Shape Generator 3D") conditions on exactly this property, and
+    // the click itself is published globally from the GLFW mouse callback.
     static bool lawModeKeyDownLast = false;
     bool lawModeKeyDown = glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS;
     if (lawModeKeyDown && !lawModeKeyDownLast) {
@@ -72,11 +79,7 @@ void renderDeveloperToolsWindow(bool* open, GLFWwindow* window, Core::Engine* en
     }
     lawModeKeyDownLast = lawModeKeyDown;
 
-    if (channel->active3DMode == "Create") {
-        // Mode is active, tool logic executes when the global onMouseClicked event fires.
-    }
-
-
+    if (!open || !*open) return;   // panels below are the window; arming is not
 
     if (ImGui::Begin("Developer: Test World Saves", open)) {
         static std::vector<std::string> testSaves;

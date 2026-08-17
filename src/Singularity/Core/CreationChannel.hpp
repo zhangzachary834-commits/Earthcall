@@ -48,5 +48,24 @@ private:
     std::string _name{"creation-channel"};
 };
 
+// The Shape Generator 3D tool, as law.
+//
+// A FACTORY rather than a block inlined in Engine::initLogic, for the reason
+// Physics::createDefaultPhysicsLaws() is one: a law built inside the engine's
+// boot path can only be exercised by booting a window, so nothing tested it,
+// and it shipped for a day unable to fire at all -- unauthored (Law::applyTo
+// refuses with Unauthored) and conditioned on a "type" property the
+// CreationChannel does not carry. tests/shape_generator_law_test.cpp now
+// exercises exactly what boot instantiates.
+//
+// The author is the Person the law is made for: "Nothing enters the world
+// without an author" is structural, not decorative, and a first mover is not
+// exempt -- isFirstMover() governs SERIALIZATION (engine truth is not written
+// into world saves), never the authorship gate.
+//
+// Registers concept "concept-shape-3d" into the ConceptRegistry as a side
+// effect if it is not already there; the law's Spawn action resolves it by id.
+std::shared_ptr<Law> createShapeGenerator3DLaw(Singular& author);
+
 } // namespace Core
 } // namespace Singularity

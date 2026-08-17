@@ -144,7 +144,15 @@ void applySpawnOverrides(Object& newborn, Singular* source,
             const int k = static_cast<int>(raw);
             // Out-of-range would be undefined behaviour on the enum, and a
             // saved law from a build with more kinds is an ordinary event.
-            if (k >= 0 && k <= static_cast<int>(Object::ShapeKind::Text2D)) {
+            if (k == static_cast<int>(Object::ShapeKind::Patch)) {
+                if (!newborn.hasPatch()) {
+                    newborn.setBezierPatch(geom::makeBezierGrid(3, 3, 0.5f));
+                }
+            } else if (k == static_cast<int>(Object::ShapeKind::Field)) {
+                if (!newborn.hasField()) {
+                    newborn.setFieldShape(geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(0.5f)), 1.0f);
+                }
+            } else if (k >= 0 && k <= static_cast<int>(Object::ShapeKind::Text2D)) {
                 // Keep the template's params: they describe radii and fillets
                 // the kind still needs, and the selection carries no params.
                 newborn.setShape(static_cast<Object::ShapeKind>(k), newborn.getShapeParams());

@@ -1,5 +1,6 @@
 #include "CreationChannel.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
+#include "ConstructedBeing/Object/Creation/ObjectConcept.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 #include <glm/gtc/matrix_transform.hpp>
@@ -133,6 +134,48 @@ glm::mat4 CreationChannel::getCursorSpawnTransform() const {
     t = glm::rotate(t, glm::radians(cursorSpawnRot.z), glm::vec3(0.0f, 0.0f, 1.0f));
     t = glm::scale(t, cursorSpawnScale);
     return t;
+}
+
+std::shared_ptr<Law> createShapeGenerator3DLaw(Singular& author) {
+    auto law = std::make_shared<FirstMoverLaw>("Tool: Shape Generator 3D");
+    law->setLawIdentifier("shape-generator-3d-law");   // NOT setObjectID -- see Law.hpp
+    law->setActivation(Law::Activation::OnEvent);
+    law->ecaLoop().eventType = "onMouseClicked";
+    law->addAuthor(author);
+
+    // THE MODE GATE. The click that reaches this law is published globally
+    // from the GLFW mouse callback (EngineInit::registerCallbacks) for every
+    // left press outside ImGui, so the law's own condition is the only thing
+    // standing between "the Person clicked" and "a cube is born". It used to
+    // read `type == "onMouseClicked"` -- a path the CreationChannel does not
+    // carry, so it was never satisfiable, and had it been, it would have been
+    // trivially true and spawned on every click in every mode.
+    //
+    // The channel's active3DMode is the tool selection itself, which is what
+    // the pre-law tool actually branched on and what the authored twin in
+    // saves/tests/shape_generator_3d_law.json says.
+    law->setConditionModel(ConditionNode::compare(
+        "active3DMode", ConditionNode::Op::Eq, PropertyValue(std::string("Create"))));
+
+    ActionNode spawn = ActionNode::spawn("concept-shape-3d");
+    spawn.spawnPlacementPath = PropertyPath::parse("cursorSpawnTransform");
+    spawn.spawnColorPath     = PropertyPath::parse("activeColor");
+    spawn.spawnShapeKindPath = PropertyPath::parse("activeShapeKind");
+    law->setActionModel(spawn);
+
+    // ConceptRegistry::add is first-wins and silent, so this is a no-op when a
+    // world save has already brought its own concept-shape-3d.
+    if (!ConceptRegistry::instance().find("concept-shape-3d")) {
+        auto concept = std::make_shared<ObjectConcept>("Shape Generator 3D Cube");
+        concept->setConceptId("concept-shape-3d");
+        ObjectConcept::MemberTemplate tmpl;
+        tmpl.beingKind = ConditionNode::BeingKind::Object;
+        tmpl.kind = Object::ShapeKind::Cube;
+        concept->members().push_back(tmpl);
+        ConceptRegistry::instance().add(concept);
+    }
+
+    return law;
 }
 
 } // namespace Core

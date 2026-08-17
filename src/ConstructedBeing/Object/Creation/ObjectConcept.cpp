@@ -1,6 +1,7 @@
 #include "ConstructedBeing/Object/Creation/ObjectConcept.hpp"
 
 #include "ConstructedBeing/Object/Geometry/SdfJson.hpp"
+#include "ConstructedBeing/Object/Object/ObjectIdentity.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "Singularity/TransferPolicy.hpp"
@@ -82,6 +83,17 @@ nlohmann::json ObjectConcept::MemberTemplate::toJson() const {
         j["field"] = geom::sdfToJson(field);
         j["fieldExtent"] = fieldExtent;
     }
+    if (hasPatch) {
+        nlohmann::json pj{
+            {"du", patch.du},
+            {"dv", patch.dv},
+            {"ctrl", nlohmann::json::array()}
+        };
+        for (const auto& pt : patch.ctrl) {
+            pj["ctrl"].push_back({pt.x, pt.y, pt.z});
+        }
+        j["patch"] = pj;
+    }
     if (!captured.empty()) {
         nlohmann::json state = nlohmann::json::object();
         for (const auto& entry : captured) {
@@ -121,6 +133,20 @@ ObjectConcept::MemberTemplate ObjectConcept::MemberTemplate::fromJson(const nloh
         m.hasField = true;
         m.field = geom::sdfFromJson(j["field"]);
         m.fieldExtent = j.value("fieldExtent", 1.0f);
+    }
+    if (j.contains("patch") && j["patch"].is_object()) {
+        m.hasPatch = true;
+        const auto& pj = j["patch"];
+        m.patch.du = pj.value("du", 3);
+        m.patch.dv = pj.value("dv", 3);
+        if (pj.contains("ctrl") && pj["ctrl"].is_array()) {
+            m.patch.ctrl.clear();
+            for (const auto& ptj : pj["ctrl"]) {
+                if (ptj.is_array() && ptj.size() == 3) {
+                    m.patch.ctrl.emplace_back(ptj[0].get<float>(), ptj[1].get<float>(), ptj[2].get<float>());
+                }
+            }
+        }
     }
     if (j.contains("relativeTransform")) {
         m.relativeTransform = mat4FromJson(j["relativeTransform"]);
@@ -299,6 +325,10 @@ std::shared_ptr<ObjectConcept> ObjectConcept::captureFromBeings(
                 member.field = embodied->getFieldData();   // deep copy — its own being
                 member.fieldExtent = embodied->getFieldExtent();
             }
+            member.hasPatch = embodied->hasPatch();
+            if (member.hasPatch) {
+                member.patch = embodied->getPatchData();   // deep copy
+            }
             member.relativeTransform = toCentroid * embodied->getTransform();
         } else {
             member.hasGeometry = false;
@@ -426,11 +456,16 @@ std::vector<std::unique_ptr<Object>> ObjectConcept::instantiate(
             continue;
         }
 
-        std::string newbornSlug = getIdentifier() + ".member-" + std::to_string(i);
-        auto newborn = std::make_unique<Object>(newbornSlug);
+        // Named for the concept AND the birth, never for the slot alone --
+        // see ObjectIdentity::generateConceptMemberId. Two spawns of one
+        // concept are two beings; a slug that repeats is not an identity.
+        auto newborn = std::make_unique<Object>(
+            ObjectIdentity::generateConceptMemberId(getIdentifier(), i));
         if (member.hasGeometry) {
             if (member.hasField) {
                 newborn->setFieldShape(member.field, member.fieldExtent);
+            } else if (member.hasPatch) {
+                newborn->setBezierPatch(member.patch);
             } else {
                 newborn->setShape(member.kind, member.params);
             }

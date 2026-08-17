@@ -85,35 +85,11 @@ void Engine::initLogic() {
         }
     }
 
-    // Instantiate Shape Generator 3D Tool Law
-    auto shapeGenLaw = std::make_shared<FirstMoverLaw>("Tool: Shape Generator 3D");
-    shapeGenLaw->setObjectID("shape-generator-3d-law");
-    shapeGenLaw->setActivation(Law::Activation::OnEvent);
-    shapeGenLaw->ecaLoop().eventType = "onMouseClicked";
-    
-    ConditionNode shapeGenCond;
-    shapeGenCond.kind = ConditionNode::Kind::Compare;
-    shapeGenCond.path = PropertyPath::parse("type");
-    shapeGenCond.op = ConditionNode::Op::Eq;
-    shapeGenCond.operand = PropertyValue(std::string("onMouseClicked"));
-    shapeGenLaw->setConditionModel(shapeGenCond);
-    
-    ActionNode shapeGenAct;
-    shapeGenAct.kind = ActionNode::Kind::Spawn;
-    shapeGenAct.conceptId = "concept-shape-3d";
-    shapeGenAct.spawnPlacementPath = PropertyPath::parse("cursorSpawnTransform");
-    shapeGenAct.spawnColorPath = PropertyPath::parse("activeColor");
-    shapeGenAct.spawnShapeKindPath = PropertyPath::parse("activeShapeKind");
-    shapeGenLaw->setActionModel(shapeGenAct);
-    
-    auto shapeConcept = std::make_shared<ObjectConcept>("Shape 3D");
-    shapeConcept->setConceptId("concept-shape-3d");
-    ObjectConcept::MemberTemplate tmpl;
-    tmpl.beingKind = ConditionNode::BeingKind::Object;
-    tmpl.kind = Object::ShapeKind::Cube;
-    shapeConcept->members().push_back(tmpl);
-    ConceptRegistry::instance().add(shapeConcept);
-    
+    // The Shape Generator 3D tool, as law. Built by a factory next to the
+    // CreationChannel whose properties it reads, so a test can exercise the
+    // very thing boot instantiates -- see the note on
+    // Singularity::Core::createShapeGenerator3DLaw.
+    auto shapeGenLaw = Singularity::Core::createShapeGenerator3DLaw(*_player);
     _lawManager->add(shapeGenLaw);
     _lawManager->bindTrigger(shapeGenLaw->getIdentifier(), "onMouseClicked");
 

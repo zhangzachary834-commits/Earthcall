@@ -268,9 +268,11 @@ void Engine::tick(float dt) {
         }
 
         // Nothing fires an authored law without this: LawManager::tick()
-        // drains the Rete agenda queued by events published this frame (see
-        // Rendering::renderDeveloperToolsWindow, which publishes
-        // onMouseClicked while the CreationChannel's active3DMode == "Create").
+        // drains the Rete agenda queued by events published this frame.
+        // onMouseClicked is published from the GLFW mouse callback
+        // (EngineInit::registerCallbacks) for every left press outside ImGui;
+        // the MODE gate lives in the law's own condition
+        // (active3DMode == "Create"), not in the publisher.
         if (_lawManager) _lawManager->tick();
 
         Rendering::renderDeveloperToolsWindow(&_devToolsWindowOpen, _window, this);

@@ -100,6 +100,21 @@ public:
 
     std::string getIdentifier() const override { return _lawId; }
 
+    // Give an engine-instantiated law the stable slug law text names it by.
+    //
+    // setObjectID() is NOT this. Law inherits Object but overrides
+    // getIdentifier() to return _lawId, so setObjectID("physics-gravity")
+    // writes a field nothing reads back and leaves the law answering to the
+    // generated "law-N" -- an id that changes between runs, which is exactly
+    // what the Stable Identifiers rule forbids for anything a save file or a
+    // law text names. Every first mover built in C++ called setObjectID and
+    // got that silent no-op.
+    //
+    // Renames the three group formations too, for the reason
+    // nameGroupFormations() exists: an id decided anywhere has to carry its
+    // formations' names with it.
+    void setLawIdentifier(const std::string& id);
+
     const std::string& name() const { return _name; }
     void setName(const std::string& name);
 

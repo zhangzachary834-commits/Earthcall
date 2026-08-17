@@ -89,10 +89,18 @@ void Law::initializeLawIdentity() {
     nameGroupFormations();
 }
 
+void Law::setLawIdentifier(const std::string& id) {
+    if (id.empty()) return;
+    _lawId = id;
+    setObjectID(_lawId);      // keep the inherited Object field in step
+    claimLawIdAtLeast(_lawId);
+    nameGroupFormations();
+}
+
 // The three groups are beings, so they need names a Person can write, not the
-// generated `formation-N` that changes every run. Called from both places the
-// law id is decided — construction and load — because an id restored from a
-// save must carry its formations' names back with it.
+// generated `formation-N` that changes every run. Called from all three places
+// the law id is decided — construction, load, and setLawIdentifier — because
+// an id decided anywhere must carry its formations' names with it.
 void Law::nameGroupFormations() {
     _authors.setIdentifier(_lawId + ".authors");
     _conditions.setIdentifier(_lawId + ".conditions");

@@ -15,10 +15,10 @@ Architectural Actualization
 2. Ensure Singularity-level actions are done through `Relation`s and `Formation`s.
 3. Have `Relation` store things with `Singular`'s data structure framework and `Formation`s.
 4. Define the Hierarchy of Joys precisely; make it operationally load bearing.
-5. Convert SDF and Bezier patch geometry frameworks to Law-adjustable properties; verify via Law tool.
+5. ✅ **Convert SDF and Bezier patch geometry frameworks to Law-adjustable properties & set-to-set replication** — done and verified (2026-08-16): Extended `ObjectConcept::MemberTemplate` with Bézier patch support (`hasPatch`, `patch`, deep copy in `captureFromBeings`, instantiation, and JSON serialization); added live shape kind override support for `ShapeKind::Patch` and `ShapeKind::Field` in `ActionModel.cpp`; authored `concept-bezier-patch`, `concept-complex-sdf`, generation laws, and MetaLaws (rate-limiting / cooldown and zone grid snapping). Verified in `tests/bezier_patch_law_test.cpp` (30 checks). (Ref: `docs/architecture/SDF_BEZIER_SHAPE_GENERATOR_LAW_REPLICATION.md`). **Verification correction (2026-08-17):** the first "done and verified" note was written while `tests/bezier_patch_law_test.cpp` did not compile — seven `std::cout << "\n[Test N]..."` lines had been written with literal newlines inside the string literal, so the file had never been built and the claim rested on reading the source. Literals repaired; the test now builds and all 30 checks pass. The implementation work described above was sound as written — only the verification was fictional.
 6. Fully realize `Relationship` and `Community` ontologies (replace placeholder stubs).
 7. Make `Key` and `KeyBind` `Singular`s and integrate into Earthcall.
-8. Make cursor a baseline avatar.
+8. Register the cursor a first mover avatar.
 9. Fully realize `Body` and `BodyPart` vision.
 10. Define light ontology to expose shaders to Persons.
 11. Zone jurisdiction resolution.
@@ -58,13 +58,15 @@ Housekeeping:
 
 Feature-sized (split out of Housekeeping 2026-08-13):
 1. ✅ **Restore legacy 3D create tool & author Law counterpart** — done and verified (2026-08-13): Restored `Tool::ShapeGenerator3D` in ImGui as First Mover (`CreationChannel`); authored Law version (`saves/tests/shape_generator_3d_law.json`) activated by `L` key; fixed `Engine::initLogic()` null dereference. See [Specific Tasks/Legacy_3D_Create_Tool_Restoration.md](Specific%20Tasks/Legacy_3D_Create_Tool_Restoration.md).
-2. Personally test 3D shape law and other laws.
+1a. ✅ **Make the booted Shape Generator 3D law able to fire at all** — done and verified (2026-08-17): the law `Engine::initLogic` instantiated (added 2026-08-16, `aa6bf9ba`) could never fire for three independent reasons, each proven with a probe against the real construction: it was never authored (`Law::applyTo` returns `Unauthored` and refuses; `isFirstMover()` governs serialization, not the authorship gate); its condition compared a `type` path the `CreationChannel` does not carry, so it was unsatisfiable — and had it resolved it would have been trivially true and spawned on every click in every mode, because the mode gate that used to live in `DeveloperToolsWindow`'s publish site was deleted when the click moved to a global GLFW callback; and `setObjectID("shape-generator-3d-law")` was a silent no-op, since `Law` overrides `getIdentifier()` to return `_lawId`, leaving the law answering to a generated `law-N`. Extracted the construction into `Singularity::Core::createShapeGenerator3DLaw` (next to the `CreationChannel` whose properties it reads, mirroring `Physics::createDefaultPhysicsLaws`) so a test can exercise what boot instantiates; added `Law::setLawIdentifier`; guarded by `tests/shape_generator_law_test.cpp` (19 checks). Also fixed the `L` arming key, which sat below a `!*open` early return and so only worked while the developer window happened to be open — contradicting the comment directly above it.
+2. Personally test 3D shape law and other laws. **(Still open — everything above was verified headlessly; nobody has clicked in the running app.)**
 3. Redesign ImGui developer tool for 2D and 3D objects; turn text features into `Lexeme` writers with preset font First Movers.
 4. ✅ **In-world test observation feature** — done and verified (2026-08-13): Created `dump_test_save` helper (`saves/tests/`) and developer UI panel for in-engine test loading.
 5. Make `Lexeme` authorable with flexible layout/spacing fixtures.
 
 Bugs:
 1. ✅ **The self-lifting floor** — done and verified (2026-08-14): Fixed ungrounded list index fallbacks in `World.cpp`/`Ourverse.cpp`, fixed origin vs. `supportOffset` clamping in `Physics.cpp`, and filtered ground by `baseline` attribute in collision loop; guarded by `tests/ground_plane_test.cpp`. Open sub-issue: `Tool::ShapeGenerator3D` cursor hit fallback on miss. See [Specific Tasks/Self_Lifting_Floor_Bug.md](Specific%20Tasks/Self_Lifting_Floor_Bug.md).
+2. ✅ **Concept newborns all shared one identifier** — done and verified (2026-08-17): `ObjectConcept::instantiate` named each newborn `<conceptId>.member-<slot>` (added 2026-08-16, `790c5c85`, replacing the generated `object-N`). A slot is not an identity: every spawn of a concept produced beings answering to the same name, and every identifier lookup in the engine is first-match (`World::removeObject`, `Formation::hasMember`, `Serialization.cpp`'s reattachment), so deleting one spawned cube by name removed an arbitrary sibling. Newborns are now named by concept **and birth** via `ObjectIdentity::generateConceptMemberId`, drawing the birth number from the same counter as `generateObjectId`; `claimIdentifierAtLeast` learned the `.birth-N.` form so a reloaded world cannot reissue a live identity. Guarded by `tests/shape_generator_law_test.cpp`.
 
 R&D:
 1. Determine best ML strategies for Integration classifiers.
