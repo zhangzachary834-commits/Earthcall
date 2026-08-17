@@ -199,3 +199,92 @@ secrets/
 .env
 .env.*
 !.env.example
+
+# ---------------------------------------------------------------------------
+# Operating System metadata.
+# ---------------------------------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ---------------------------------------------------------------------------
+# Dear ImGui runtime layout / state file.
+# ---------------------------------------------------------------------------
+imgui.ini
+
+# ---------------------------------------------------------------------------
+# Logs and runtime session output.
+# ---------------------------------------------------------------------------
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ---------------------------------------------------------------------------
+# Editors and IDEs.
+# ---------------------------------------------------------------------------
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/c_cpp_properties.json
+!.vscode/extensions.json
+*.code-workspace
+xcuserdata/
+DerivedData/
+*.swp
+*.swo
+*~
+*.bak
+*.orig
+*.rej
+*.tmp
+
+# ---------------------------------------------------------------------------
+# Python caches, test outputs, and packaging artifacts.
+# ---------------------------------------------------------------------------
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+*.egg-info/
+.eggs/
+.ipynb_checkpoints/
+env/
+ENV/
+
+# ---------------------------------------------------------------------------
+# Web and frontend build outputs.
+# ---------------------------------------------------------------------------
+dist/
+dist-ssr/
+.vite/
+.parcel-cache/
+.turbo/
+
+# ---------------------------------------------------------------------------
+# Additional C/C++ / CMake / Compiler build artifacts and probe binaries.
+# ---------------------------------------------------------------------------
+*.obj
+*.pch
+*.pdb
+*.idb
+*.ilk
+CMakeUserPresets.json
+/compile_commands.json
+Testing/
+/TestLabAI/testlab_ai
+/scratch/attic/earthcall_webgpu
+/scratch/attic/pack_save
+/scratch/attic/dump_save
+/scratch/attic/test_parse
+/scratch/attic/test_parse2
