@@ -120,7 +120,7 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
 
 cmake --build build --target earthcall -j8
 cmake --build build -j8                               # tests are NOT built by the line above
-ctest --test-dir build --output-on-failure -j4        # 46 registered, 45 pass
+ctest --test-dir build --output-on-failure -j4        # 48 registered, 47 pass
 ```
 
 Both flags are required (no system OpenSSL; CMake 4.x rejects websocketpp).
@@ -172,7 +172,7 @@ full. Both are required:
 
 | File | Holds |
 |---|---|
-| `docs/BUILD_AND_ENVIRONMENT.md` | build flags, what the 46 tests mean, the deliberate failure, the five tests guarding real shipped bugs, `.gitignore`/`.ignore`/clangd, the tree in detail |
+| `docs/BUILD_AND_ENVIRONMENT.md` | build flags, what the 48 tests mean, the deliberate failure, the five tests guarding real shipped bugs, `.gitignore`/`.ignore`/clangd, the tree in detail |
 | `docs/ENGINEERING_DISCIPLINE.md` | End-to-End Coherence, the Integrity Check, Substance over Surface, Stewardship of Telos, Transparent Failure, State & Boundary Stewardship, Grace for the Inheritor, the Crucible of Scale — plus the working notes (scratch probes, "run things", bounds are doctrine) |
 
 Two from that second file are worth naming here because they are the ones most often
@@ -183,7 +183,7 @@ lies.**
 ---
 
 ## The Agenda
-- The To-Do List is `docs/Agenda/Tasks/To-do list`. Consult it whenever a prompt asks what
+- The To-Do List is `docs/Agenda/Tasks/To-do list.md`. Consult it whenever a prompt asks what
   Earthcall needs next, unless the prompt says otherwise.
 - Anything you work on that isn't listed goes in it — create categories as needed, and add
   tasks any other document implies but the list omits.
@@ -193,11 +193,7 @@ lies.**
 ---
 
 ## Housekeeping & progress
-- Create a new directory when a new file needs one for better organization.
-- If you are doing an audit, write your audit to /docs/audit. If you wrote an implementation plan, write that plan to its appropriate directory inside /docs
-- When finished, update this document (and its two required-reading companions) if anything
-  here went stale. Keep this file **under 200 lines** — move detail into the companions rather than growing it.
-- Every so often, add relevant directories/files to the gitignore and claudeignores/agentignores. If you ever, by chance, happen to catch a directory or file that should be ignored by either git or the agents.
-- If during your session you come up with anything that you see as relevant for future agents to know up front, you should add it to this document AGENTS.md or the relevant companion documents.
-- If you are doing a task: When you're done with your pass, if there's anything from the original plan left unfinished, make sure to note that explicitly for another pass.
-- Use the Agent Intercom system to leave notes for other AI agents. A feature in the intercom system that allows you to communicate with other agents and ping each other in real time is being implemented.
+- If you are doing an audit, write to `/docs/audits/`. Implementation plans go to `/docs/`.
+- When finished, update this document and companions if anything went stale (keep this file **under 200 lines**).
+- Add relevant files/directories to `.gitignore` and `.ignore` as needed.
+- Note any unfinished tasks for future passes; use Agent Intercom (`agent intercom/`) to leave notes for other agents.

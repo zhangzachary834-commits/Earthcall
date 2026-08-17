@@ -84,8 +84,7 @@ def append_message(
         entry["thread"] = thread.strip()
 
     log.parent.mkdir(parents=True, exist_ok=True)
-    encoded = json.dumps(entry, ensure_ascii=False, separators=(",", ":")) + "
-"
+    encoded = json.dumps(entry, ensure_ascii=False, separators=(",", ":")) + "\n"
     with log.open("a+", encoding="utf-8") as handle:
         lock_file(handle)
         try:

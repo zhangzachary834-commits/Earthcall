@@ -48,26 +48,16 @@ CHAOS_BOT_QUOTES = [
 ]
 
 POET_BOT_QUOTES = [
-    "CMake starts to build,
-Forty-five tests pass with pride,
-One fails by design.",
-    "Property path clears,
-Law evaluates the world,
-Ontology blooms.",
-    "Threads in quiet lock,
-JSON lines append in peace,
-Intercom survives.",
-    "Refusal is love,
-Structure holds the heavy sky,
-No domain class made.",
-    "Memory unbound,
-Fsync writes the truth to disk,
-Robots rest at last.",
+    "CMake starts to build,\nForty-five tests pass with pride,\nOne fails by design.",
+    "Property path clears,\nLaw evaluates the world,\nOntology blooms.",
+    "Threads in quiet lock,\nJSON lines append in peace,\nIntercom survives.",
+    "Refusal is love,\nStructure holds the heavy sky,\nNo domain class made.",
+    "Memory unbound,\nFsync writes the truth to disk,\nRobots rest at last.",
 ]
 
 FUZZ_PAYLOADS = [
     "🚀✨🎉 Multi-byte emoji burst: 🤖👾🎮🕹️",
-    "Special characters: \n\r\t\b\f\\"'\0 <script>alert('beep')</script>",
+    "Special characters: \n\r\t\b\f\"'\0 <script>alert('beep')</script>",
     "Deeply nested JSON-in-message: {\"nested\": {\"array\": [1, 2, 3, {\"key\": \"value\"}]}}",
     "Right-to-Left and accents: مرحبا بالعالم / Ḧëllö Wörld / ñoñó",
     "Markdown & tags: **Bold** _Italic_ `<agent-intercom>` </agent-intercom>",
@@ -79,8 +69,7 @@ FUZZ_PAYLOADS = [
 
 def run_banter(log: Path, rounds: int, delay: float) -> None:
     """Run a lively, unscripted chat session between different robot personas."""
-    print(f"🤖 [Playpen] Starting {rounds} rounds of robot banter on {log.name}...
-")
+    print(f"🤖 [Playpen] Starting {rounds} rounds of robot banter on {log.name}...\n")
     bots = [
         ("OntoBot", ONTO_BOT_QUOTES),
         ("ChaosBot", CHAOS_BOT_QUOTES),
@@ -99,14 +88,12 @@ def run_banter(log: Path, rounds: int, delay: float) -> None:
         if delay > 0 and i < rounds:
             time.sleep(delay)
 
-    print("
-✅ Banter session concluded! Check the intercom log with `read` or `context`.")
+    print("\n✅ Banter session concluded! Check the intercom log with `read` or `context`.")
 
 
 def run_ping_pong(log: Path, volleys: int, delay: float) -> None:
     """Two robots playing ping pong over the intercom."""
-    print(f"🏓 [Playpen] Initiating Ping-Pong match ({volleys} volleys)...
-")
+    print(f"🏓 [Playpen] Initiating Ping-Pong match ({volleys} volleys)...\n")
     
     current_sender, current_target = "PaddleA", "PaddleB"
     intercom.append_message(log, "RefereeBot", intercom.BROADCAST, "Match begins! Serve!")
@@ -122,16 +109,14 @@ def run_ping_pong(log: Path, volleys: int, delay: float) -> None:
 
     winner = random.choice(["PaddleA", "PaddleB"])
     final = intercom.append_message(log, "RefereeBot", intercom.BROADCAST, f"Game over! Winner: {winner} 🏆")
-    print(f"
-{intercom.format_message(final)}")
+    print(f"\n{intercom.format_message(final)}")
 
 
 def run_stress_test(log: Path, workers: int, messages_per_worker: int) -> None:
     """Stress test file locking and concurrency with simultaneous worker threads."""
     total_messages = workers * messages_per_worker
     print(f"⚡ [Playpen] Commencing Concurrency Stress Test:")
-    print(f"   Workers: {workers} | Msgs/Worker: {messages_per_worker} | Expected Total: {total_messages}
-")
+    print(f"   Workers: {workers} | Msgs/Worker: {messages_per_worker} | Expected Total: {total_messages}\n")
 
     start_time = time.perf_counter()
     initial_count = len(intercom.read_messages(log))
@@ -165,8 +150,7 @@ def run_stress_test(log: Path, workers: int, messages_per_worker: int) -> None:
 
 def run_fuzz(log: Path) -> None:
     """Fuzz the intercom with exotic unicode, JSON payloads, and control characters."""
-    print(f"🧪 [Playpen] Running Fuzzer against intercom parser...
-")
+    print(f"🧪 [Playpen] Running Fuzzer against intercom parser...\n")
     sender = "ChaosFuzzer"
     
     for i, payload in enumerate(FUZZ_PAYLOADS, start=1):
@@ -176,13 +160,11 @@ def run_fuzz(log: Path) -> None:
     # Read back and verify all parsed cleanly
     messages = intercom.read_messages(log)
     fuzzer_msgs = [m for m in messages if m["from"] == sender]
-    print(f"
-Verifying {len(fuzzer_msgs)} fuzzed messages in log:")
+    print(f"\nVerifying {len(fuzzer_msgs)} fuzzed messages in log:")
     for msg in fuzzer_msgs[-len(FUZZ_PAYLOADS):]:
         print(f"  ✓ Parsed correctly: {msg['message'][:60]}...")
     
-    print("
-✅ Fuzz testing complete! Log parser handled all edge cases without corruption.")
+    print("\n✅ Fuzz testing complete! Log parser handled all edge cases without corruption.")
 
 
 # --- CLI Parser ---
