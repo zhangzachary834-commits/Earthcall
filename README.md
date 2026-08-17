@@ -16,10 +16,13 @@ The philosophy is load-bearing and encoded as the very fabric of the program: th
 For maximum generativity and expressiveness, Earthcall Law system enables people to author unique behavior at runtime. Instead of hardcoded collisions and generic physics engines, Earthcall relies on a deeply integrated ruleset governed by dynamic 'Laws'. People author the conditions the Laws activate under, and author the mathematical functions and operations that Law executes upon their Person-designated targets.
 
 
+Laws are executed with math operations because math is the universal language of logic. Math represents everything from arithmetic, algebra, change (calculus), probability, and sets. With this, there is no need to ship hardcoded functions for things like “move Object X to Y location”, “change Color hexcode of Object X “, and “set Camera’s pitch/yaw/roll to ____.“ Instead, you realize those things are all variations of either a “set” operation or an “add value” operation, and author them as Laws during runtime.
+
+
 ## Core Philosophy
 
 
-- **Ontology First:** The top-level directory structure reflects the ontology of the universe (`ConstructedBeing`, `Person`, `Relation`, `Singularity`, `ZonesOfEarth`, `OurVerse`). It does not organize by technical subsystems.
+- **Ontology First:** The top-level directory structure reflects the ontology of the substrate categories (`ConstructedBeing`, `Person`, `Relation`, `Singularity`, `ZonesOfEarth`, `OurVerse`). It does not organize by technical subsystems.
 - **Law-Driven Simulation:** Beings interact through a network of active Laws rather than hardcoded C++ logic. C++ provides the execution substrate for these Laws.
 - **First Mover Authoring:** The world is authored dynamically. Beings are data, not classes. We don't define a `Tree` class; we define the components and laws that comprise a tree.
 - **Web First Architecture:** Earthcall embraces a modern WebUI built via embedded React/Vite, integrating directly with a high-performance C++ backend. Modalities (Audio, Language, Network) act as channels under the `Singularity` directory.
