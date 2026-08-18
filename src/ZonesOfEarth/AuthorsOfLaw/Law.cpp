@@ -352,6 +352,13 @@ Law::ApplicationResult Law::applyTo(Singular& target) {
                     violatesKernelBoundary = true;
                     break;
                 }
+                // Local Ourverse gathering: no one may own it. Owner is
+                // already read-only on Zone; this refuses any write path
+                // that would seat a Singular over the gathering place.
+                if (targetZone->isOurverseGathering() && root == "owner") {
+                    violatesKernelBoundary = true;
+                    break;
+                }
             }
         }
     }

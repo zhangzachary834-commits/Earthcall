@@ -9,12 +9,10 @@
 // its registry — §4's written reason carries that half. What IS mechanically
 // checkable is the four ways the promise has actually broken here:
 //
-//   A. VOCABULARY      a being whose buildProperties() is empty. `World` and
-//                      `Ourverse` are exactly this today; they sit on the
-//                      sealed register below with reasons, and that list is a
-//                      DEBT LEDGER, not an allowlist. Entries are expected to
-//                      leave it. A new name needs a reason that survives
-//                      NO_BLACK_BOX.md §3.
+//   A. VOCABULARY      a being whose buildProperties() is empty. `World` is
+//                      exactly this today; it sits on the sealed register
+//                      below with a reason. That list is a DEBT LEDGER, not
+//                      an allowlist. Entries are expected to leave it.
 //
 //   B. LAZY-BUILD      a registry built twice. Singular builds lazily and sets
 //                      _propertiesBuilt itself; a constructor that also calls
@@ -91,9 +89,7 @@ const Sealed kSealedRegister[] = {
      "buildProperties() is {}. _playerEyeHeight and Mode are a Person's viewpoint "
      "and their world's posture — state, not mechanism. The header itself says to "
      "retire World into Zone; until then this is unregistered debt, not an exemption."},
-    {"Ourverse",
-     "buildProperties() is {}. Holds ownedObjects, primaryGatheringZone and a laws "
-     "Formation — all of it a being's state. To-do 'Fully realize the Ourverse vision'."},
+
     // Perspective is NOT probed: Perspective.cpp is empty, so its constructor is
     // declared and never defined. It is an uninstantiable stub, not a being with
     // hidden state — nothing to register until something implements it.
@@ -228,8 +224,8 @@ void audit(const std::string& beingName, Singular& being) {
     }
     if (isSealed(beingName)) {
         // `telos` is the universal Singular vocabulary (HIERARCHY_OF_JOYS.md),
-        // registered on every being. It does not unseal World/Ourverse/
-        // Formation/Soul — their own state is still `{}`.
+        // registered on every being. It does not unseal World — that being's
+        // own state is still `{}`.
         bool onlyUniversalTelos = properties.size() == 1
             && properties[0] && properties[0]->name() == "telos";
         if (onlyUniversalTelos) {
@@ -332,12 +328,12 @@ int main() {
     // ---- the sealed register, walked so it cannot rot ---------------------
     {
         World world;             audit("World", world);
-        Ourverse ourverse;       audit("Ourverse", ourverse);
     }
 
     {
         Formation formation;     audit("Formation", formation);
         Soul soul;               audit("Soul", soul);
+        Ourverse ourverse;       audit("Ourverse", ourverse);
     }
 
     // ---- D. reachability from the authoring surface -----------------------
@@ -358,6 +354,9 @@ int main() {
 
         Soul soulProbe;
         auditReachability("Soul", soulProbe, advertised);
+
+        Ourverse ourverseReach;
+        auditReachability("Ourverse", ourverseReach, advertised);
 
         Soul named("Prober");
         Body body("humanoid", "default");

@@ -168,6 +168,8 @@ void Engine::initLogic() {
     mgr.addZone(std::make_shared<Zone>("Cavern of Light", "default"));
     mgr.addZone(std::make_shared<Zone>("Character Architect Forge", "default"));
     mgr.ensureHomeZone(_player->getIdentifier());
+    _world.ensureGatheringZone(mgr);
+    if (_lawManager) _world.registerMetalaws(*_lawManager);
 
     // Initialize elemental tool handler with zone manager
     _elementalToolHandler = std::make_unique<ElementalToolHandler>(&mgr);

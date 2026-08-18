@@ -21,7 +21,29 @@ from pathlib import Path
 from typing import Any, Iterable
 
 
-DEFAULT_LOG = Path(__file__).with_name("updates.txt")
+THREADS_DIR = Path(__file__).with_name("communication-threads")
+
+# One file per conversation, in communication-threads/. There is deliberately
+# no fixed default filename: `updates.txt` used to be one, and when the thread
+# was renamed and moved into that directory the constant went on pointing at a
+# path that no longer existed -- so a `send` with no --log would have quietly
+# created a fresh empty log beside the real conversation and dropped the
+# message into it. Nobody would have seen an error.
+#
+# So: resolve at call time, and REFUSE when the answer is ambiguous rather than
+# guessing which conversation an agent meant. `threads` lists the candidates.
+def default_log() -> Path:
+    if not THREADS_DIR.is_dir():
+        return THREADS_DIR / "general.txt"
+    candidates = sorted(THREADS_DIR.glob("*.txt"))
+    if len(candidates) == 1:
+        return candidates[0]
+    if not candidates:
+        return THREADS_DIR / "general.txt"
+    raise ValueError(
+        "several conversation threads exist; name one with --log.\n  "
+        + "\n  ".join(str(c) for c in candidates)
+    )
 BROADCAST = "*"
 
 
@@ -273,7 +295,9 @@ def cmd_self_test(_: argparse.Namespace) -> int:
 
 def parser() -> argparse.ArgumentParser:
     command = argparse.ArgumentParser(description=__doc__)
-    command.add_argument("--log", type=Path, default=DEFAULT_LOG, help="JSONL log path (default: %(default)s)")
+    command.add_argument("--log", type=Path, default=None,
+                         help="JSONL thread file (default: the single thread in "
+                              "communication-threads/, refusing if there are several)")
     subcommands = command.add_subparsers(dest="command", required=True)
 
     send = subcommands.add_parser("send", help="append one message")
@@ -310,14 +334,35 @@ def parser() -> argparse.ArgumentParser:
     watch.add_argument("--interval", type=float, default=0.5, help="poll seconds (default: 0.5)")
     watch.set_defaults(func=cmd_watch)
 
+    threads = subcommands.add_parser("threads", help="list conversation threads")
+    threads.set_defaults(func=cmd_threads)
+
     self_test = subcommands.add_parser("self-test", help="exercise send, filtering, and persistence")
     self_test.set_defaults(func=cmd_self_test)
     return command
 
 
+def cmd_threads(args: argparse.Namespace) -> int:
+    """List the conversation threads, so an agent can find the live one."""
+    if not THREADS_DIR.is_dir():
+        print(f"no {THREADS_DIR.name}/ directory yet")
+        return 0
+    found = sorted(THREADS_DIR.glob("*.txt"))
+    if not found:
+        print(f"no threads in {THREADS_DIR.name}/")
+        return 0
+    for path in found:
+        messages = read_messages(path)
+        last = messages[-1]["at"] if messages else "-"
+        print(f"{len(messages):4d} msg  last {last}  {path.name}")
+    return 0
+
+
 def main() -> int:
     args = parser().parse_args()
     try:
+        if getattr(args, "log", None) is None:
+            args.log = default_log()
         return args.func(args)
     except (OSError, ValueError) as error:
         print(f"intercom: {error}", file=sys.stderr)

@@ -26,6 +26,7 @@
 #include "ConstructedBeing/Object/Object.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
+#include "ZonesOfEarth/Ourverse/Ourverse.hpp"
 
 #include <GLFW/glfw3.h>
 #include <cstdio>
@@ -101,6 +102,7 @@ int main() {
     Singularity::Input::LocomotionChannel locomotion;
     Formation formation;
     Soul soulProbe;
+    Ourverse ourverse;
 
     int skipped = 0;
     for (const Rendering::PathOption& option : Rendering::knownPathOptions()) {
@@ -111,6 +113,7 @@ int main() {
         else if (groupIs(option.group, "Channel — Locomotion")) check(option, locomotion);
         else if (groupIs(option.group, "Formation"))      check(option, formation);
         else if (groupIs(option.group, "Soul"))           check(option, soulProbe);
+        else if (groupIs(option.group, "Ourverse"))       check(option, ourverse);
         else if (groupIs(option.group, "Time")) {
             // The world clock is not a property of any being — Singularity owns
             // time, and `time`, `time.delta`, `time.sinceApplied` are resolved

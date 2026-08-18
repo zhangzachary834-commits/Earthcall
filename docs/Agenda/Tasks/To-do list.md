@@ -25,10 +25,10 @@ Architectural Actualization
 9. Fully realize `Body` and `BodyPart` vision. **Note (2026-08-18):** `Arm`/`Finger`/… are still C++ classes under `src/Person/Body/BodyPart/Limb/`. Manifesto wants Formation-recursive parts down to tissue. Keep the human-form exception; do not grow new domain nouns here.
 10. Define light ontology to expose shaders to Persons.
 11. Zone jurisdiction resolution.
-12. Fully realize the Ourverse vision.
+12. Fully realize the Ourverse vision. **First rung (2026-08-18):** vessel of unity — unowned gathering Zone, mutual filaments, shared Joys, first-mover metalaws, `convenesToward` empty. See [docs/architecture/OURVERSE.md](../../architecture/OURVERSE.md). Remaining: retire Engine object bag; populate ecumenical layer; Community auto-gathering at birth.
 13. Integrate 2D capability into Singularity by decomposing fundamental parts for Person-authored Laws.
 14. ✅ **Singular and Object set-to-set creation** — done and verified (2026-08-16): Exposed all 19 `ActionNode::Kind` values in `LawGraphWindow.cpp`; reworked kind 17 (`Synthesize`) into composed child actions (`Create`, `AddProperty`, `Map`); verified via `tests/singular_set_to_set_test.cpp` (45/45 pass). See [Specific Tasks/Singular_and_Object_Set_to_Set_Creation.md](Specific%20Tasks/Singular_and_Object_Set_to_Set_Creation.md).
-16. **Ensure properties are exposed via PropertyPaths (Refusal #6)** — PARTIAL (2026-08-18): Enforced via `docs/architecture/NO_BLACK_BOX.md` and `tests/no_black_box_test.cpp`. Two beings remain on sealed debt register (`World`, `Ourverse`). `Formation` and `Soul` unsealed 2026-08-18.
+16. **Ensure properties are exposed via PropertyPaths (Refusal #6)** — PARTIAL (2026-08-18): Enforced via `docs/architecture/NO_BLACK_BOX.md` and `tests/no_black_box_test.cpp`. One being remains on the sealed debt register (`World`). `Ourverse`, `Formation`, and `Soul` unsealed.
 17. Finish Law synthesis.
 18. **Write Propertypath governance framework ontology** — PARTIAL (2026-08-13): Governance spine established in `docs/architecture/NO_BLACK_BOX.md` §2. Unwritten: member ownership, Zone occurrence, sacredness, ordering, Hierarchy of Joys access, and Metalaws.
 19. **Write Kernel boundaries** — PARTIAL (2026-08-13): Channel refusal requirements defined in `docs/architecture/NO_BLACK_BOX.md` §2a/§2b. Unwritten: general boundary doc and implementation of `Singular::satisfiesKernelBounds()`.
@@ -52,7 +52,7 @@ Things to explore and deliberate on:
 
 Propertypath exposure debt (tracked in `tests/no_black_box_test.cpp`):
 1. `World` — `World::buildProperties()` is `{}`; resolve retirement into `Zone` before populating properties.
-2. `Ourverse` — `Ourverse::buildProperties()` is `{}`; expose `ownedObjects`, `primaryGatheringZone`, and `laws`.
+2. ✅ `Ourverse` — unsealed 2026-08-18 as the vessel of unity (`gatheringZone`, `joys`, `filamentCount`, `metalaws`, `convenesToward`). `ownedObjects` is Engine-bag debt, not registered. See OURVERSE.md.
 3. ✅ `Formation` — unsealed 2026-08-18: `relationTypeTag`, `root`, `memberCount`, `members`.
 4. ✅ `Soul` — unsealed 2026-08-18: no separate identity; `person` is read-only belonging. Identity is the Person's.
 5. `Object::rotation` — Round-trips lossily via Euler angle conversion; recorded in `kWriteExemptions`.

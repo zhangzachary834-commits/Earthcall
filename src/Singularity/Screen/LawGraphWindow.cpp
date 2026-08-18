@@ -6,6 +6,7 @@
 #include "ConstructedBeing/Object/Formation/Formation.hpp"
 #include "ConstructedBeing/Object/Object.hpp"
 #include "Person/Soul/Soul.hpp"
+#include "ZonesOfEarth/Ourverse/Ourverse.hpp"
 #include "Singularity/Core/CreationChannel.hpp"
 #include "Singularity/Input/LocomotionChannel.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
@@ -151,6 +152,15 @@ const std::vector<PathOption>& knownPathOptions() {
             const PropertyValue probe = property->value();
             const char* type = std::holds_alternative<std::string>(probe) ? "text" : "number";
             options.push_back({property->name(), "Soul", type, false});
+        }
+
+        static Ourverse ourversePrototype;
+        for (Property* property : ourversePrototype.listProperties()) {
+            const PropertyValue probe = property->value();
+            const char* type = "number";
+            if (std::holds_alternative<std::string>(probe)) type = "text";
+            else if (std::holds_alternative<int>(probe)) type = "number";
+            options.push_back({property->name(), "Ourverse", type, false});
         }
     }
     return options;

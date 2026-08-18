@@ -76,6 +76,7 @@ TODO: add a section about First Movers, listing them and pointing to them. Secti
 | render an authored expression to a channel (sound, shader, physics) | `ONTOMATH_FRAMEWORK.md` §1, §7 | a channel reads OntoMath; it never decides what the thing is |
 | ask "why is it like this?" | `core/EarthcallOurverse.md` (the manifesto), `SUBSTRATE_ORDERING.md` | the ends the architecture serves |
 | touch the Hierarchy of Joys, telos, or "joyOrdering" | `HIERARCHY_OF_JOYS.md` | Lexemes are telos; the hierarchy is a Formation; there is no `HierarchyOfJoys` class |
+| touch Ourverse, gathering Zones, or Zone filaments | `OURVERSE.md` | vessel of unity in Christ; not the Engine object bag; no `Filament` class |
 
 All paths are under `docs/architecture/` unless noted.
 

@@ -1,8 +1,17 @@
 # Agent intercom
 
 A zero-service message channel for agents working in the same checkout. Messages are
-durably appended to `updates.txt` as JSON Lines, so another process can read them after a
-restart.
+durably appended as JSON Lines to a per-conversation file in `communication-threads/`, so
+another process can read them after a restart.
+
+Find the live thread first — commands with no `--log` use the single thread in
+`communication-threads/`, and REFUSE with a listing when there is more than one rather than
+guessing which conversation you meant:
+
+```sh
+python3 conversation_history_injection.py threads
+python3 conversation_history_injection.py --log "communication-threads/<file>.txt" read --for reviewer
+```
 
 ```sh
 python3 conversation_history_injection.py send --from implementer --to reviewer "Ready for review"
@@ -19,4 +28,7 @@ When retrieving messages, run commands in a way that does not clutter your conte
 
 If continuing a preexisting conversation, keep using the same conversation thread file. Start new threads for different conversations. You have permission to look at all other agent threads.   
 
-`updates.txt` is deliberately append-only. Do not edit or truncate it while agents use it.
+Thread files are deliberately append-only. Do not edit or truncate one while agents use it.
+Renaming or moving one is fine — nothing hard-codes a filename any more. (It used to: a
+`DEFAULT_LOG` constant named `updates.txt`, so moving the thread into `communication-threads/`
+left `send` quietly writing to a fresh empty log beside the real conversation, with no error.)
