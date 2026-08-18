@@ -7,6 +7,7 @@
 
 #include "ConstructedBeing/Object/Object.hpp"
 #include "ConstructedBeing/Object/Formation/Formation.hpp"
+#include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
 #include "Person/Person.hpp"
 #include "Person/Soul/Soul.hpp"
 #include "Relation/Relation.hpp"
@@ -51,6 +52,14 @@ int main() {
     assert(person.joys().isJoyHierarchy());
     assert(person.joys().root() == christ.get());
     assert(person.telosId() == LanguageSystem::kFoundationId);
+    assert(person.getDisplayName() == "Zach");
+    // Soul has no second name. After bind, it answers as this Person.
+    assert(person.soul().getIdentifier() == person.getIdentifier());
+    assert(person.soul().constructionName().empty());
+    assert(person.soul().person() == &person);
+    Soul unbound("hint");
+    assert(unbound.getIdentifier().empty());
+    assert(unbound.constructionName() == "hint");
 
     // 3. Empty foundation refuses a root. The being exists; the bound fails.
     Person unrooted(Soul("Guest"), Body::createBasicAvatar("Voxel"), "");
@@ -81,6 +90,17 @@ int main() {
     assert(!ladder.addRelation(std::make_shared<Relation>(
         Formation::kGroundsType, *knowledge, *christ, true)));
     assert(ladder.satisfiesJoyBounds());
+    assert(ladder.getRelationTypeTag() == Formation::kJoyHierarchyTag);
+    PropertyValue tag, rootId, count;
+    assert(PropertyPath::parse("relationTypeTag").getValue(ladder, tag)
+           == PropertyPath::PathResult::Ok);
+    assert(std::get<std::string>(tag) == Formation::kJoyHierarchyTag);
+    assert(PropertyPath::parse("root").getValue(ladder, rootId)
+           == PropertyPath::PathResult::Ok);
+    assert(std::get<std::string>(rootId) == christ->getIdentifier());
+    assert(PropertyPath::parse("memberCount").getValue(ladder, count)
+           == PropertyPath::PathResult::Ok);
+    assert(std::get<int>(count) == 3);
     assert(ladder.rankOf(*christ) == 0);
     assert(ladder.rankOf(*love) == 1);
     assert(ladder.rankOf(*knowledge) == 2);

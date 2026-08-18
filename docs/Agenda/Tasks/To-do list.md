@@ -7,7 +7,7 @@
 Near-term priorities (2026-08-14 — from architecture review):
 1. **Remove `EventEntity` (Ontological debt / Refusal #1)**: Delete `src/Singularity/Core/EventEntity.hpp` and `.cpp`; translate `EventBus` custom events to Relation-based representations with `type` field; remove `_activeCustomEvents` / `Universe::addActiveEvent` in `Law.cpp`. (Ref: `scratch/audits/audit_report_2026-08-13.md`).
 2. **One Person-facing creation path, end-to-end**: Prove full loop (Law fires → object exists → save → reload → re-target by stable identifier) using Shape Generator 3D law seed (`saves/tests/shape_generator_3d_law.json`).
-3. **Unseal `Soul` and `Formation` properties**: Expose membership and `relationTypeTag` in `Formation::buildProperties()`; expose `_identity` as read-only `ComputedProperty` in `Soul::buildProperties()`.
+3. ✅ **Unseal `Formation` and `Soul`** — done and verified (2026-08-18): `Formation` registers `relationTypeTag`, `root`, `memberCount`, `members` (read-only list of identifiers). `Soul` has no separate identity — `getIdentifier()` is the Person's after bind; construction name is a display-name hint Person consumes. Registered `person` is read-only belonging. Taken off the sealed register. Verified: `hierarchy_of_joys_test`; `channel_paths_test`; `no_black_box_test`.
 4. **Hierarchy of Joys (Lexeme-telos, not a string)** — PARTIAL (2026-08-18). **Done and verified:** telos is a Lexeme (`Singular::telos`); the hierarchy is a rooted Formation of Lexemes tagged `hierarchy-of-joys` with directed `grounds` Relations; Person/Zone seed that Formation instead of storing a discarded string; empty foundation fails `satisfiesJoyBounds`; first-mover seed is `lexeme.christ` (ordering, not a skinned Object); Formations/Relations of other beings order via `orderMembersBy` / `orderRelationsBy`. No `HierarchyOfJoys` class. Guarded by `tests/hierarchy_of_joys_test.cpp`. See [docs/architecture/HIERARCHY_OF_JOYS.md](../../architecture/HIERARCHY_OF_JOYS.md). **Remaining:** kernel-tick enforcement of the bound; authored liturgical substance above the seed; ranking-as-Law.
 5. An external audit from Claude Opus 5 found that Earthcall currently has many competing sources of truth for Time. We need to have one unified philosophical framework for Time. **Direction (2026-08-18):** do not start by unifying clocks (`deltaTime`, `world-clock`, physics `integrate`). Write what a *when* is first — the way `Formation` already says what a set and a category are. Closed-form reversal (`ONTOMATH_FRAMEWORK.md` §6), event-as-edge, and `WhileTrue` are waiting on that.
 6. **Retire `World` into `Zone`, then unseal `Ourverse`**: `World` is already marked for retirement (`World.hpp`); it still carries `Creative`/`Survival`/`Spectator`. The beings that name the whole (`World`, `Ourverse`) are the ones no law can see (`buildProperties()` is `{}` on both). Do not populate `World` properties — fold it, then expose `Ourverse` (`ownedObjects`, `primaryGatheringZone`, `laws`). 
@@ -28,7 +28,7 @@ Architectural Actualization
 12. Fully realize the Ourverse vision.
 13. Integrate 2D capability into Singularity by decomposing fundamental parts for Person-authored Laws.
 14. ✅ **Singular and Object set-to-set creation** — done and verified (2026-08-16): Exposed all 19 `ActionNode::Kind` values in `LawGraphWindow.cpp`; reworked kind 17 (`Synthesize`) into composed child actions (`Create`, `AddProperty`, `Map`); verified via `tests/singular_set_to_set_test.cpp` (45/45 pass). See [Specific Tasks/Singular_and_Object_Set_to_Set_Creation.md](Specific%20Tasks/Singular_and_Object_Set_to_Set_Creation.md).
-16. **Ensure properties are exposed via PropertyPaths (Refusal #6)** — PARTIAL (2026-08-13): Enforced via `docs/architecture/NO_BLACK_BOX.md` and `tests/no_black_box_test.cpp`. Four beings remain on sealed debt register (`World`, `Ourverse`, `Formation`, `Soul`).
+16. **Ensure properties are exposed via PropertyPaths (Refusal #6)** — PARTIAL (2026-08-18): Enforced via `docs/architecture/NO_BLACK_BOX.md` and `tests/no_black_box_test.cpp`. Two beings remain on sealed debt register (`World`, `Ourverse`). `Formation` and `Soul` unsealed 2026-08-18.
 17. Finish Law synthesis.
 18. **Write Propertypath governance framework ontology** — PARTIAL (2026-08-13): Governance spine established in `docs/architecture/NO_BLACK_BOX.md` §2. Unwritten: member ownership, Zone occurrence, sacredness, ordering, Hierarchy of Joys access, and Metalaws.
 19. **Write Kernel boundaries** — PARTIAL (2026-08-13): Channel refusal requirements defined in `docs/architecture/NO_BLACK_BOX.md` §2a/§2b. Unwritten: general boundary doc and implementation of `Singular::satisfiesKernelBounds()`.
@@ -53,8 +53,8 @@ Things to explore and deliberate on:
 Propertypath exposure debt (tracked in `tests/no_black_box_test.cpp`):
 1. `World` — `World::buildProperties()` is `{}`; resolve retirement into `Zone` before populating properties.
 2. `Ourverse` — `Ourverse::buildProperties()` is `{}`; expose `ownedObjects`, `primaryGatheringZone`, and `laws`.
-3. `Formation` — `Formation::buildProperties()` is `{}`; expose membership and `relationTypeTag`.
-4. `Soul` — `Soul::buildProperties()` is `{}`; expose `_identity` as read-only `ComputedProperty`.
+3. ✅ `Formation` — unsealed 2026-08-18: `relationTypeTag`, `root`, `memberCount`, `members`.
+4. ✅ `Soul` — unsealed 2026-08-18: no separate identity; `person` is read-only belonging. Identity is the Person's.
 5. `Object::rotation` — Round-trips lossily via Euler angle conversion; recorded in `kWriteExemptions`.
 6. `Perspective` — `Perspective.cpp` is empty; implement constructor or retire stub.
 

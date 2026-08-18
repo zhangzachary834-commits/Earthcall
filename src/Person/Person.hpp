@@ -37,6 +37,8 @@ public:
 
     Formation& joys() { return _joys; }
     const Formation& joys() const { return _joys; }
+    Soul& soul() { return _soul; }
+    const Soul& soul() const { return _soul; }
     bool satisfiesJoyBounds() const { return _joys.satisfiesJoyBounds(); }
     std::string propJoys() const { return _joys.getIdentifier(); }
     void express() const;

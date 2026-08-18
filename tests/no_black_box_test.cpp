@@ -9,12 +9,12 @@
 // its registry — §4's written reason carries that half. What IS mechanically
 // checkable is the four ways the promise has actually broken here:
 //
-//   A. VOCABULARY      a being whose buildProperties() is empty. `World`,
-//                      `Ourverse`, `Formation`, `Soul` are exactly this today;
-//                      they sit on the sealed register below with reasons, and
-//                      that list is a DEBT LEDGER, not an allowlist. Entries
-//                      are expected to leave it. A new name needs a reason
-//                      that survives NO_BLACK_BOX.md §3.
+//   A. VOCABULARY      a being whose buildProperties() is empty. `World` and
+//                      `Ourverse` are exactly this today; they sit on the
+//                      sealed register below with reasons, and that list is a
+//                      DEBT LEDGER, not an allowlist. Entries are expected to
+//                      leave it. A new name needs a reason that survives
+//                      NO_BLACK_BOX.md §3.
 //
 //   B. LAZY-BUILD      a registry built twice. Singular builds lazily and sets
 //                      _propertiesBuilt itself; a constructor that also calls
@@ -94,12 +94,6 @@ const Sealed kSealedRegister[] = {
     {"Ourverse",
      "buildProperties() is {}. Holds ownedObjects, primaryGatheringZone and a laws "
      "Formation — all of it a being's state. To-do 'Fully realize the Ourverse vision'."},
-    {"Formation",
-     "buildProperties() is {}. Membership and relationTypeTag are the being's whole "
-     "content; a law can traverse a Formation but cannot address it as properties."},
-    {"Soul",
-     "buildProperties() is {}. _identity only, and identity is properly read-only "
-     "rather than absent — this wants one ComputedProperty with a null setter."},
     // Perspective is NOT probed: Perspective.cpp is empty, so its constructor is
     // declared and never defined. It is an uninstantiable stub, not a being with
     // hidden state — nothing to register until something implements it.
@@ -339,8 +333,11 @@ int main() {
     {
         World world;             audit("World", world);
         Ourverse ourverse;       audit("Ourverse", ourverse);
+    }
+
+    {
         Formation formation;     audit("Formation", formation);
-        Soul soul("Prober");     audit("Soul", soul);
+        Soul soul;               audit("Soul", soul);
     }
 
     // ---- D. reachability from the authoring surface -----------------------
@@ -356,9 +353,15 @@ int main() {
         Singularity::Input::LocomotionChannel locomotion;
         auditReachability("LocomotionChannel", locomotion, advertised);
 
-        Soul soul("Prober");
+        Formation formation;
+        auditReachability("Formation", formation, advertised);
+
+        Soul soulProbe;
+        auditReachability("Soul", soulProbe, advertised);
+
+        Soul named("Prober");
         Body body("humanoid", "default");
-        Person person(std::move(soul), std::move(body), "default");
+        Person person(std::move(named), std::move(body), "default");
         auditReachability("Person", person, advertised);
     }
 

@@ -19,6 +19,7 @@
 
 #include "Person/Person.hpp"
 #include "Person/Soul/Soul.hpp"
+#include "ConstructedBeing/Object/Formation/Formation.hpp"
 #include "Singularity/Core/CreationChannel.hpp"
 #include "Singularity/Input/LocomotionChannel.hpp"
 #include "Singularity/Screen/LawGraphWindow.hpp"
@@ -98,6 +99,8 @@ int main() {
     Person person(std::move(soul), std::move(body), "default");
     Singularity::Core::CreationChannel channel;
     Singularity::Input::LocomotionChannel locomotion;
+    Formation formation;
+    Soul soulProbe;
 
     int skipped = 0;
     for (const Rendering::PathOption& option : Rendering::knownPathOptions()) {
@@ -106,6 +109,8 @@ int main() {
         else if (groupIs(option.group, "Person"))         check(option, person);
         else if (groupIs(option.group, "Channel — Creation")) check(option, channel);
         else if (groupIs(option.group, "Channel — Locomotion")) check(option, locomotion);
+        else if (groupIs(option.group, "Formation"))      check(option, formation);
+        else if (groupIs(option.group, "Soul"))           check(option, soulProbe);
         else if (groupIs(option.group, "Time")) {
             // The world clock is not a property of any being — Singularity owns
             // time, and `time`, `time.delta`, `time.sinceApplied` are resolved

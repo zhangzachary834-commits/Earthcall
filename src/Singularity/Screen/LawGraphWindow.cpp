@@ -3,7 +3,9 @@
 #include "Singularity/Screen/CardTreeLayout.hpp"
 #include "Singularity/Screen/MathEditors.hpp"
 #include "ConstructedBeing/Object/Creation/ObjectConcept.hpp"
+#include "ConstructedBeing/Object/Formation/Formation.hpp"
 #include "ConstructedBeing/Object/Object.hpp"
+#include "Person/Soul/Soul.hpp"
 #include "Singularity/Core/CreationChannel.hpp"
 #include "Singularity/Input/LocomotionChannel.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
@@ -132,6 +134,23 @@ const std::vector<PathOption>& knownPathOptions() {
                 options.push_back({property->name() + ".y", "Channel — Locomotion", "number", false});
                 options.push_back({property->name() + ".z", "Channel — Locomotion", "number", false});
             }
+        }
+
+        static Formation formationPrototype;
+        for (Property* property : formationPrototype.listProperties()) {
+            const PropertyValue probe = property->value();
+            const char* type = "number";
+            if (std::holds_alternative<std::string>(probe)) type = "text";
+            else if (std::holds_alternative<bool>(probe)) type = "toggle";
+            else if (std::holds_alternative<std::shared_ptr<PropertyList>>(probe)) type = "list";
+            options.push_back({property->name(), "Formation", type, false});
+        }
+
+        static Soul soulPrototype;
+        for (Property* property : soulPrototype.listProperties()) {
+            const PropertyValue probe = property->value();
+            const char* type = std::holds_alternative<std::string>(probe) ? "text" : "number";
+            options.push_back({property->name(), "Soul", type, false});
         }
     }
     return options;
