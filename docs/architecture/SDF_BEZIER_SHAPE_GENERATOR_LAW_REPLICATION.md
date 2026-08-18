@@ -66,7 +66,7 @@ In accordance with `AGENTS.md`, `NEW_KIND_FRAMEWORK.md`, `NO_BLACK_BOX.md`, `LAW
   - `MemberTemplate`: `ShapeKind::SdfField` (composite `geom::SdfNode` tree, smooth-min/union blends).
   - `PropertyMapping`: Derivation transforms mapping scale/curvature.
 
-NOTE from Zach: This is not sufficient. If a shape uses an implicit SDF to calculate its surface, we need OntoMath to actually host that SDF
+NOTE from Zach: This is not sufficient by itself. If a shape uses an implicit SDF to calculate its surface, we need OntoMath to actually host that SDF
 and expose the OntoMath variables as properties so the Person can physically modify the properties. 
 Beizer patch likewise should use OntoMath. No black boxes.
 

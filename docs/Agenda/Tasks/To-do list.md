@@ -1,6 +1,6 @@
 ## INSTRUCTIONS GUIDE FOR WRITING HERE:
 1. Make each point on the list as concise as possible.
-2. If you need to write a longer paragraph, put it in a separate file or create a new directory for it inside the Specific Tasks folder.
+2. If you need to write a paragraph significantly longer than the rest here, put it in a separate file or create a new directory for it inside the Specific Tasks folder.
 3. Judge what parts you want to write are more suited for the Agenda and what is more suitable for a separate, dedicated doc that is not inside Agenda.
 4. Ensure you always link up relevant docs, files, and classes. Only do so if the directory is already in your context—-do not spend compute trying to search for it.
 
@@ -9,6 +9,7 @@ Near-term priorities (2026-08-14 — from architecture review):
 2. **One Person-facing creation path, end-to-end**: Prove full loop (Law fires → object exists → save → reload → re-target by stable identifier) using Shape Generator 3D law seed (`saves/tests/shape_generator_3d_law.json`).
 3. **Unseal `Soul` and `Formation` properties**: Expose membership and `relationTypeTag` in `Formation::buildProperties()`; expose `_identity` as read-only `ComputedProperty` in `Soul::buildProperties()`.
 4. **Hierarchy of Joys (Operational requirement)**: Add minimal load-bearing constraint (e.g. `Singular::satisfiesJoyBounds()` or First Mover seed law requiring explicit joy ordering).
+5. An external audit from Claude Opus 5 found that Earthcall currently has many competing sources of truth for Time. We need to have one unified philosophical framework for Time. 
 
 Architectural Actualization
 1. Ensure `Relation` and `Formation` ontology is load bearing.
@@ -36,9 +37,12 @@ Architectural Actualization
 24. Human Language-Symbolic processing `Formation`s.
 25. Resolve Singularity external app integration.
 26. Multi-device Earthcall networking and inter-device paradigms.
+27. Enable the code to support robust multi-Person architecture. 
 
 Things to explore and deliberate on:
 1. To what extent should Earthcall use OOP versus ECS?
+2. How should Time be represented in Earthcall 
+3. 
 
 Propertypath exposure debt (tracked in `tests/no_black_box_test.cpp`):
 1. `World` — `World::buildProperties()` is `{}`; resolve retirement into `Zone` before populating properties.
@@ -64,10 +68,6 @@ Feature-sized (split out of Housekeeping 2026-08-13):
 3. Redesign ImGui developer tool for 2D and 3D objects; turn text features into `Lexeme` writers with preset font First Movers.
 4. ✅ **In-world test observation feature** — done and verified (2026-08-13): Created `dump_test_save` helper (`saves/tests/`) and developer UI panel for in-engine test loading.
 5. Make `Lexeme` authorable with flexible layout/spacing fixtures.
-
-Bugs:
-1. ✅ **The self-lifting floor** — done and verified (2026-08-14): Fixed ungrounded list index fallbacks in `World.cpp`/`Ourverse.cpp`, fixed origin vs. `supportOffset` clamping in `Physics.cpp`, and filtered ground by `baseline` attribute in collision loop; guarded by `tests/ground_plane_test.cpp`. Open sub-issue: `Tool::ShapeGenerator3D` cursor hit fallback on miss. See [Specific Tasks/Self_Lifting_Floor_Bug.md](Specific%20Tasks/Self_Lifting_Floor_Bug.md).
-2. ✅ **Concept newborns all shared one identifier** — done and verified (2026-08-17): `ObjectConcept::instantiate` named each newborn `<conceptId>.member-<slot>` (added 2026-08-16, `790c5c85`, replacing the generated `object-N`). A slot is not an identity: every spawn of a concept produced beings answering to the same name, and every identifier lookup in the engine is first-match (`World::removeObject`, `Formation::hasMember`, `Serialization.cpp`'s reattachment), so deleting one spawned cube by name removed an arbitrary sibling. Newborns are now named by concept **and birth** via `ObjectIdentity::generateConceptMemberId`, drawing the birth number from the same counter as `generateObjectId`; `claimIdentifierAtLeast` learned the `.birth-N.` form so a reloaded world cannot reissue a live identity. Guarded by `tests/shape_generator_law_test.cpp`.
 
 R&D:
 1. Determine best ML strategies for Integration classifiers.

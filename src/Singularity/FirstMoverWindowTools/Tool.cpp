@@ -6,6 +6,7 @@
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "GLFW/glfw3.h"
+#include "imgui.h"
 #include "Singularity/Screen/GL/GluCompat.hpp"
 #include "AdvancedFacePaint.hpp"
 #include "ConstructedBeing/Material/MaterialManager.hpp"
@@ -410,11 +411,32 @@ void Tool::ShapeGenerator3D(GLFWwindow *window, Core::Engine *engine, ZoneManage
 {
     if (!window || !engine) return;
 
+    // The edge is tracked BEFORE any gate below, and unconditionally. A gate
+    // that returns early without updating it leaves the tracker stale, so the
+    // first poll after the gate opens reads a button that has been held down
+    // for a while as a fresh press -- disarming the law mid-hold, or dragging
+    // off an ImGui window, would spawn on release of nothing.
     static bool devToolMouseLeftPressedLast = false;
-    bool mouseLeftNow = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
-    bool justPressed = mouseLeftNow && !devToolMouseLeftPressedLast;
+    const bool mouseLeftNow = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
+    const bool justPressed = mouseLeftNow && !devToolMouseLeftPressedLast;
     devToolMouseLeftPressedLast = mouseLeftNow;
     if (!justPressed) return;
+
+    // THE MUTUAL EXCLUSION. The contract in Tool.hpp reads "so the two paths
+    // never both fire off one click", and until 2026-08-17 nothing enforced
+    // it -- which stayed invisible only because the law path could not fire at
+    // all (unauthored, and conditioned on a property the channel never
+    // carried). With the law working, an armed click reached BOTH paths and
+    // made two objects: one through Law::applyTo, one through this bypass.
+    //
+    // Armed means the law owns the click. The bypass steps aside.
+    if (channel.active3DMode == "Create") return;
+
+    // The law path's publisher (EngineInit::registerCallbacks) skips clicks
+    // ImGui has captured; this one polls GLFW directly and did not, so
+    // pressing this window's own "Refresh Test Saves" button spawned a cube
+    // behind it.
+    if (ImGui::GetIO().WantCaptureMouse) return;
 
     if (channel.activeShapeKind == static_cast<int>(Object::ShapeKind::Polyhedron)) {
         // Polyhedron authoring needs a live polyhedron builder; Engine::

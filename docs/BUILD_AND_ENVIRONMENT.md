@@ -66,7 +66,7 @@ The Python backend starts from `src/Singularity/Foreign/py/app.py`.
 
 ## The test suite
 
-**As of 2026-08-16, 47 of 48 tests pass and the default build is clean.** The thirteen
+**As of 2026-08-17, 47 of 48 tests pass and the default build is clean.** The thirteen
 that were broken were stale against three refactors, not against each other:
 `Rendering/` → `Singularity/Screen/` and `Util/` → `Singularity/Storage/`;
 `Object::GeometryType` → `ShapeKind`; the placement and tool fields off `Person` and onto
