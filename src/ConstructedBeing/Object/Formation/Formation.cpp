@@ -1,6 +1,8 @@
 #include "Singularity/Language/Lexeme.hpp"
 #include "Formation.hpp"
 #include "ConstructedBeing/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
+#include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
 #include <GLFW/glfw3.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
@@ -11,7 +13,35 @@
 #include <map>
 #include <queue>
 #include <set>
+#include <utility>
 #include "Singularity/Screen/Renderer.hpp"
+
+void Formation::buildProperties() {
+    _propertyRegistry.push_back(std::make_unique<PropertyRef<Formation, std::string>>(
+        "relationTypeTag", this, &Formation::relationTypeTag));
+    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Formation, std::string>>(
+        "root", this, &Formation::propRoot, nullptr));
+    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Formation, int>>(
+        "memberCount", this, &Formation::propMemberCount, nullptr));
+    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Formation, std::shared_ptr<PropertyList>>>(
+        "members", this, &Formation::propMembers, nullptr));
+}
+
+std::string Formation::propRoot() const {
+    return _root ? _root->getIdentifier() : std::string{};
+}
+
+int Formation::propMemberCount() const {
+    return static_cast<int>(members.size());
+}
+
+std::shared_ptr<PropertyList> Formation::propMembers() const {
+    auto list = std::make_shared<PropertyList>();
+    for (const Singular* member : members) {
+        if (member) list->elements.emplace_back(member->getIdentifier());
+    }
+    return list;
+}
 
 std::string Formation::nextFormationId() {
     static std::atomic<unsigned long long> next{1};
@@ -864,6 +894,40 @@ std::vector<std::shared_ptr<Relation>> Formation::relationsOrderedByTelos() cons
             const int bSpan = std::abs((rankOf(b->entityA) < 0 ? 100000 : rankOf(b->entityA))
                                      - (rankOf(b->entityB) < 0 ? 100000 : rankOf(b->entityB)));
             return aSpan < bSpan;
+        });
+    return ordered;
+}
+
+std::vector<Singular*> Formation::orderMembersBy(const Formation& joys) const {
+    std::vector<Singular*> ordered = members;
+    std::stable_sort(ordered.begin(), ordered.end(),
+        [&joys](const Singular* a, const Singular* b) {
+            const int ra = a ? joys.rankOf(*a) : -1;
+            const int rb = b ? joys.rankOf(*b) : -1;
+            const int ka = ra < 0 ? 100000 : ra;
+            const int kb = rb < 0 ? 100000 : rb;
+            return ka < kb;
+        });
+    return ordered;
+}
+
+std::vector<std::shared_ptr<Relation>> Formation::orderRelationsBy(const Formation& joys) const {
+    auto ordered = relationMgr.getAll();
+    auto endpointRank = [this, &joys](const std::string& id) {
+        if (const Singular* s = findMemberByIdentifier(id)) return joys.rankOf(*s);
+        return joys.rankOf(id);
+    };
+    auto key = [&](const std::shared_ptr<Relation>& r) {
+        if (!r) return std::pair<int, int>{100000, 100000};
+        const int ra = endpointRank(r->entityA);
+        const int rb = endpointRank(r->entityB);
+        const int ka = ra < 0 ? 100000 : ra;
+        const int kb = rb < 0 ? 100000 : rb;
+        return std::pair<int, int>{std::min(ka, kb), std::abs(ka - kb)};
+    };
+    std::stable_sort(ordered.begin(), ordered.end(),
+        [&](const std::shared_ptr<Relation>& a, const std::shared_ptr<Relation>& b) {
+            return key(a) < key(b);
         });
     return ordered;
 }

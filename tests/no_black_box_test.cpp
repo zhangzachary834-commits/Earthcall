@@ -233,9 +233,19 @@ void audit(const std::string& beingName, Singular& being) {
         return;
     }
     if (isSealed(beingName)) {
-        fail(beingName, "(sealed register)",
-             "now registers properties — take it OFF kSealedRegister, the ledger is "
-             "meant to shrink");
+        // `telos` is the universal Singular vocabulary (HIERARCHY_OF_JOYS.md),
+        // registered on every being. It does not unseal World/Ourverse/
+        // Formation/Soul — their own state is still `{}`.
+        bool onlyUniversalTelos = properties.size() == 1
+            && properties[0] && properties[0]->name() == "telos";
+        if (onlyUniversalTelos) {
+            std::printf("  sealed  %-22s only universal `telos`; own state still {}\n",
+                        beingName.c_str());
+        } else {
+            fail(beingName, "(sealed register)",
+                 "now registers properties — take it OFF kSealedRegister, the ledger is "
+                 "meant to shrink");
+        }
     }
 
     // --- B. lazy-build contract -------------------------------------------

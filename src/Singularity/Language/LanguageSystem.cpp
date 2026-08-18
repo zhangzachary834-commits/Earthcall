@@ -5,6 +5,7 @@
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "Singularity/Language/SyntacticParser.hpp"
 #include <iostream>
+#include <cstddef>
 
 extern ZoneManager mgr;
 

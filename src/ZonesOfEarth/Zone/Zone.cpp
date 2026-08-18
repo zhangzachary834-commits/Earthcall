@@ -1,6 +1,7 @@
 #include "Zone.hpp"
 #include "../World/World.hpp"
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
+#include "Singularity/Language/JoyHierarchy.hpp"
 #include <iostream>
 #include <algorithm>
 #include <unordered_set>
@@ -29,6 +30,8 @@ void Zone::buildProperties() {
         "scope", this, &Zone::scopeName));
     _propertyRegistry.push_back(std::make_unique<ComputedProperty<Zone, std::string>>(
         "owner", this, &Zone::propOwner));
+    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Zone, std::string>>(
+        "joys", this, &Zone::propJoys, nullptr));
 
     _propertyRegistry.push_back(std::make_unique<PropertyRef<Zone, std::shared_ptr<OntoMath::ScalarField>>>(
         "spatialField", this, &Zone::_spatialField));
@@ -69,8 +72,8 @@ void Zone::applyFormationRelations() {
     _formation.applyAttachmentRelations();
 }
 
-Zone::Zone(const std::string& name, const std::string& joyOrdering, Scope scope)
-    : _name(name), _scope(scope), _joyOrdering(joyOrdering), _world(std::make_unique<World>()), _formation(),
+Zone::Zone(const std::string& name, const std::string& foundationSymbol, Scope scope)
+    : _name(name), _scope(scope), _world(std::make_unique<World>()), _formation(),
       _spatialRootObject(std::make_shared<geom::FieldNode>(name + "_spatialRoot"))
 {
     _spatialField = _spatialRootObject->field;
@@ -78,10 +81,14 @@ Zone::Zone(const std::string& name, const std::string& joyOrdering, Scope scope)
 
     _formation.addMember(_world.get());
     _formation.addMember(_spatialRootObject.get());
+    _joys.setIdentifier(name + ".joys");
+    Singularity::Language::seedJoyHierarchy(_joys, foundationSymbol);
+    if (_joys.root()) setTelosId(_joys.root()->getIdentifier());
 }
 
 Zone::Zone(const Zone& other)
-    : _name(other._name), _scope(other._scope), _qualities(other._qualities), _deletable(other._deletable), _joyOrdering(other._joyOrdering), _ownerId(other._ownerId), _world(std::make_unique<World>()), _formation(),
+    : _name(other._name), _scope(other._scope), _qualities(other._qualities), _deletable(other._deletable),
+      _joys(other._joys), _ownerId(other._ownerId), _world(std::make_unique<World>()), _formation(),
       _spatialRootObject(std::make_shared<geom::FieldNode>(other._name + "_spatialRoot"))
 {
     _spatialField = _spatialRootObject->field;
@@ -89,6 +96,7 @@ Zone::Zone(const Zone& other)
 
     _formation.addMember(_world.get());
     _formation.addMember(_spatialRootObject.get());
+    if (_joys.root()) setTelosId(_joys.root()->getIdentifier());
 }
 
 Zone& Zone::operator=(const Zone& other)
@@ -99,7 +107,7 @@ Zone& Zone::operator=(const Zone& other)
     std::swap(_scope, tmp._scope);
     std::swap(_qualities, tmp._qualities);
     std::swap(_deletable, tmp._deletable);
-    std::swap(_joyOrdering, tmp._joyOrdering);
+    std::swap(_joys, tmp._joys);
     std::swap(_ownerId, tmp._ownerId);
     std::swap(_world, tmp._world);
     std::swap(_formation, tmp._formation);

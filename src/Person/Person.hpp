@@ -5,6 +5,7 @@
 #include "Body.hpp"
 #include <glm/glm.hpp>
 #include "ConstructedBeing/Singular/Singular.hpp"
+#include "ConstructedBeing/Object/Formation/Formation.hpp"
 #include "Identity/SingularId.hpp"
 #include "Soul/Soul.hpp"
 #include <json.hpp>
@@ -29,7 +30,15 @@ public:
     nlohmann::json serialize() const;
     void deserialize(const nlohmann::json& j);
 
-    Person(Soul soul, Body body, const std::string& joyOrdering);
+    // `foundationSymbol` seeds this Person's Hierarchy of Joys (a Formation
+    // of Lexemes, not a stored string). Empty refuses a root.
+    // "default"/"strict" seed the first-mover foundation (lexeme.christ).
+    Person(Soul soul, Body body, const std::string& foundationSymbol);
+
+    Formation& joys() { return _joys; }
+    const Formation& joys() const { return _joys; }
+    bool satisfiesJoyBounds() const { return _joys.satisfiesJoyBounds(); }
+    std::string propJoys() const { return _joys.getIdentifier(); }
     void express() const;
     void draw() const;
     void drawNametag() const;
@@ -103,11 +112,10 @@ private:
     void buildProperties() override;
     std::string propName() const { return displayName; }
 
-    // A Soul is what a Person worships and orders their joy by. It is
-    // deliberately no longer the source of identity: a Soul's identifier was a
-    // plain chosen string, so deriving the Person's identity from it meant
-    // anyone who typed the same string became the same Person.
+    // Soul is this Person considered as a composite, not a second someone.
+    // Its identifier is this Person's. See Soul.hpp.
     Soul _soul;
+    Formation _joys;
     Identity::SingularId _personId;
     std::vector<Body> bodies;
     int activeBodyIndex = 0;

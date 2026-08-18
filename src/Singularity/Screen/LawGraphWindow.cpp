@@ -90,6 +90,8 @@ const std::vector<PathOption>& knownPathOptions() {
         options.push_back({"velocity.x", "Person — avatar", "number", false});
         options.push_back({"velocity.y", "Person — avatar", "number", false});
         options.push_back({"velocity.z", "Person — avatar", "number", false});
+        options.push_back({"telos", "Person — telos", "text", false});
+        options.push_back({"joys", "Person — telos", "text", false});
 
         // The creation channel, PROBED rather than typed out. It was a
         // hand-written list of six paths against a registry of twenty-one, so

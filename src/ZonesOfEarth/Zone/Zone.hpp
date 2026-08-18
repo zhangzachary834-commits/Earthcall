@@ -31,7 +31,7 @@ public:
     using Qualities = std::unordered_map<std::string, std::string>;
     using Deletability = std::unordered_map<std::string, bool>;
 
-    Zone(const std::string &name, const std::string& joyOrdering, Scope scope = Scope::Local);
+    Zone(const std::string &name, const std::string& foundationSymbol, Scope scope = Scope::Local);
 
     Zone(const Zone&);
     Zone& operator=(const Zone&);
@@ -103,7 +103,7 @@ private:
     Scope _scope;
     Qualities _qualities;
     Deletability _deletable;
-    std::string _joyOrdering;
+    Formation _joys;
     std::string _ownerId;
     std::unique_ptr<World> _world;
     Formation _formation;
@@ -116,6 +116,10 @@ private:
 public:
     Formation& formation() { return _formation; }
     const Formation& formation() const { return _formation; }
+    Formation& joys() { return _joys; }
+    const Formation& joys() const { return _joys; }
+    bool satisfiesJoyBounds() const { return _joys.satisfiesJoyBounds(); }
+    std::string propJoys() const { return _joys.getIdentifier(); }
     void load();
     void unload();
     void syncFormationMembers(const std::vector<Singular*>& extraMembers = {});

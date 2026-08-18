@@ -15,4 +15,8 @@ Use `--to '*'` (the default) to broadcast. `context` prints messages in a small 
 block intended to be pasted into the receiving agent's prompt. Run
 `python3 conversation_history_injection.py self-test` to verify the intercom itself.
 
+When retrieving messages, run commands in a way that does not clutter your context with old messages--you should only retrieve the new message if you can.
+
+If continuing a preexisting conversation, keep using the same conversation thread file. Start new threads for different conversations. You have permission to look at all other agent threads.   
+
 `updates.txt` is deliberately append-only. Do not edit or truncate it while agents use it.

@@ -1,4 +1,5 @@
 #include "Person.hpp"
+#include "Singularity/Language/JoyHierarchy.hpp"
 #include <ctime>
 #include <iostream>
 #include <algorithm>
@@ -41,26 +42,24 @@ void Person::buildProperties() {
         "cameraPos", this, &Person::cameraPos));
     _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, glm::vec3>>(
         "cameraForward", this, &Person::cameraForward));
+    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Person, std::string>>(
+        "joys", this, &Person::propJoys, nullptr));
 }
 
 
 
-Person::Person(Soul soul, Body body, const std::string& joyOrdering) : _soul(std::move(soul)) {
+Person::Person(Soul soul, Body body, const std::string& foundationSymbol) : _soul(std::move(soul)) {
     bodies.push_back(std::move(body));
-    // Start with a small sphere around the origin as a fallback bounding
-    // The soul's identity seeds the Person's NAME, not their identity. Left
-    // unset it was the empty string — invisible in law authorship records and
-    // unmatchable when a saved world reattaches authors by identifier.
-    // The cryptographic personId is assigned separately (setPersonId), because
-    // minting one here would give every temporary copy its own identity.
-    displayName = _soul.getIdentifier();
+    // Soul("Zach") is a display-name hint, not an identity. Identity is
+    // this Person's (personId / displayName). Binding clears the hint so
+    // Soul cannot keep a second name.
+    displayName = _soul.constructionName();
     if (displayName.empty()) displayName = "Person";
-    
-    // Validate that a joy ordering is provided, fulfilling the Singularity
-    // level requirement that Persons have a worship-ordering.
-    if (joyOrdering.empty()) {
-        std::cerr << "[WARNING] Person instantiated without a Joy-Ordering." << std::endl;
-    }
+    _soul.bindPerson(this);
+
+    _joys.setIdentifier("person-joys");
+    Singularity::Language::seedJoyHierarchy(_joys, foundationSymbol);
+    if (_joys.root()) setTelosId(_joys.root()->getIdentifier());
 }
 
 nlohmann::json Person::serialize() const {

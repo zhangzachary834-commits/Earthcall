@@ -8,6 +8,7 @@
 #include <glm/glm.hpp>
 #include "Relation/RelationManager.hpp"
 #include "ConstructedBeing/Singular/Singular.hpp"
+#include "ConstructedBeing/Singular/Property/PropertyValue.hpp"
 
 
 // A Formation is how a *set* of beings, and how a *category* of beings, are the
@@ -211,8 +212,13 @@ public:
     int rankOf(const Singular& being) const;
 
     // Views — membership and the relation list are not rewritten.
+    // `...ByTelos` ranks this Formation as if it WERE the hierarchy.
+    // `order*By` ranks THIS Formation's members/relations against another
+    // joy hierarchy (the usual case: order a Zone's beings by a Person's joys).
     std::vector<Singular*> membersOrderedByTelos() const;
     std::vector<std::shared_ptr<Relation>> relationsOrderedByTelos() const;
+    std::vector<Singular*> orderMembersBy(const Formation& joys) const;
+    std::vector<std::shared_ptr<Relation>> orderRelationsBy(const Formation& joys) const;
 
     // Implement the pure virtual method from Singular. Unique per instance —
     // identity-keyed systems (Rete bindings, provenance) depend on it.
@@ -234,7 +240,10 @@ private:
     static std::string nextFormationId();
     std::string _formationId = nextFormationId();
 
-    void buildProperties() override {}
+    void buildProperties() override;
+    std::string propRoot() const;
+    int propMemberCount() const;
+    std::shared_ptr<PropertyList> propMembers() const;
 
     // Raw admission: the checks and the push_back, with no relation
     // re-integration. Used for subformations, which are derived views and must
