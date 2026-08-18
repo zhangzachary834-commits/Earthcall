@@ -1,18 +1,9 @@
 #include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
-// OntoMath milestone test: Earthcall is driven by math in the program.
-//
-// The exact symbolic core (multivariate terms, algebra, calculus, piecewise
-// with open/closed bounds), and the two authorable kinds wired into laws:
-// Zone conditions (input satisfies the designated zone of the function) and
-// Map actions (output governed by an authored function of authored inputs).
-// Every primitive — variables, bindings, coefficients, exponents, bounds —
-// is model data, so authoring and modification ride the same serialization
-// as all law text.
-
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "Singularity/OntoMath/ScalarForm.hpp"
 #include "Singularity/OntoMath/Operations.hpp"
 #include "ConstructedBeing/Object/Object.hpp"
+#include "ConstructedBeing/Object/Geometry/SmoothSurface.hpp"
 
 #include <cassert>
 #include <cmath>
@@ -631,7 +622,83 @@ int main() {
 
         Universe::instance().setProvider({});
         registry.loadFromJson(nlohmann::json::object());      // leave it clean
+
+        // ------------------------------------------------------------------
+        // 14. POLYNOMIAL BASIS & GEOMETRIC PRIMITIVE EXTENSIONS (Rung 0)
+        // ------------------------------------------------------------------
+        // Combinatorics
+        assert(neard(Operations::binom(4, 0), 1.0));
+        assert(neard(Operations::binom(4, 1), 4.0));
+        assert(neard(Operations::binom(4, 2), 6.0));
+        assert(neard(Operations::binom(4, 3), 4.0));
+        assert(neard(Operations::binom(4, 4), 1.0));
+
+        // Bernstein basis polynomial B_{1,3}(t) = 3t(1-t)^2 = 3t - 6t^2 + 3t^3
+        ScalarForm b13 = ScalarForm::bernsteinBasis(3, 1, "t");
+        assert(neard(b13.evaluate({{"t", 0.0}}), 0.0));
+        assert(neard(b13.evaluate({{"t", 1.0}}), 0.0));
+        assert(neard(b13.evaluate({{"t", 0.5}}), 3.0 * 0.5 * 0.25));
+
+        // 1D Bernstein curve with control points [1, 2, 3, 4] -> linear 1 + 3t
+        ScalarForm b1d = ScalarForm::fromBernstein(3, {1.0, 2.0, 3.0, 4.0}, "t");
+        assert(neard(b1d.evaluate({{"t", 0.0}}), 1.0));
+        assert(neard(b1d.evaluate({{"t", 0.5}}), 2.5));
+        assert(neard(b1d.evaluate({{"t", 1.0}}), 4.0));
+
+        // 2D Bivariate Bernstein surface round-trip
+        int du = 2, dv = 2;
+        std::vector<double> grid = {
+            1.0, 2.0, 3.0,
+            2.0, 4.0, 6.0,
+            3.0, 6.0, 9.0
+        };
+        ScalarForm patchForm = ScalarForm::fromBivariateBernstein(du, dv, grid, "u", "v");
+        assert(neard(patchForm.evaluate({{"u", 0.0}, {"v", 0.0}}), 1.0));
+        assert(neard(patchForm.evaluate({{"u", 1.0}, {"v", 1.0}}), 9.0));
+        assert(neard(patchForm.evaluate({{"u", 0.5}, {"v", 0.5}}), 4.0));
+
+        std::vector<double> recoveredGrid = ScalarForm::toBivariateBernstein(patchForm, du, dv, "u", "v");
+        assert(recoveredGrid.size() == grid.size());
+        for (size_t i = 0; i < grid.size(); ++i) {
+            assert(neard(recoveredGrid[i], grid[i], 1e-6));
+        }
+
+        // Geometric primitive MathNodes
+        auto sphereNode = OntoMath::MathNode::sphere(2.0, "p");
+        std::map<std::string, PropertyValue> sphereVars;
+        sphereVars["p"] = PropertyValue(glm::vec3(2.0f, 0.0f, 0.0f));
+        auto sphereVal = sphereNode->evaluate(sphereVars);
+        assert(sphereVal.has_value());
+        assert(neard(*sphereVal, 0.0));
+
+        sphereVars["p"] = PropertyValue(glm::vec3(5.0f, 0.0f, 0.0f));
+        sphereVal = sphereNode->evaluate(sphereVars);
+        assert(sphereVal.has_value());
+        assert(neard(*sphereVal, 3.0));
+
+        // CSG MathNodes
+        auto sphere2 = OntoMath::MathNode::sphere(1.0, "p");
+        auto unionAst = OntoMath::MathNode::unionOp(std::move(sphereNode), std::move(sphere2));
+        auto unionVal = unionAst->evaluate(sphereVars);
+        assert(unionVal.has_value());
+        assert(neard(*unionVal, 3.0));
     }
+
+    
+        // Quadric algebra <-> ScalarForm conversions (Rung 3)
+        glm::mat4 Qsphere = geom::Quadric::sphere(2.0f);
+        OntoMath::ScalarForm spherePoly = geom::Quadric::toScalarForm(Qsphere);
+        // x^2 + y^2 + z^2 - 4 = 0
+        assert(neard(spherePoly.evaluate({{"x", 2.0}, {"y", 0.0}, {"z", 0.0}}), 0.0));
+        assert(neard(spherePoly.evaluate({{"x", 0.0}, {"y", 2.0}, {"z", 0.0}}), 0.0));
+        assert(neard(spherePoly.evaluate({{"x", 0.0}, {"y", 0.0}, {"z", 0.0}}), -4.0));
+
+        glm::mat4 Qrecovered = geom::Quadric::fromScalarForm(spherePoly);
+        for (int i = 0; i < 4; ++i) {
+            for (int j = 0; j < 4; ++j) {
+                assert(nearf(Qsphere[j][i], Qrecovered[j][i]));
+            }
+        }
 
     std::puts("ontomath_test: ALL OK");
     return 0;

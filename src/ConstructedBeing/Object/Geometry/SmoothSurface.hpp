@@ -2,6 +2,7 @@
 
 #include <glm/glm.hpp>
 #include <vector>
+#include "Singularity/OntoMath/ScalarForm.hpp"
 
 // Geometry kernel — pure smooth surfaces (manifolds).
 //
@@ -47,6 +48,8 @@ struct SmoothSurfaceData {
     glm::vec3 axes{0.5f};          // semi-axes (sphere/ellipsoid); axes.x = radius (cyl/cone)
     glm::vec2 zTrim{-0.5f, 0.5f};  // z bounds for open quadrics (cyl/cone/paraboloid side)
     std::vector<float> params;     // torus {majorR, minorR}; ovoid {r, asym}; ...
+
+    OntoMath::ScalarForm toScalarForm() const;
 };
 
 // --- Quadric algebra -------------------------------------------------------
@@ -57,6 +60,10 @@ namespace Quadric {
     glm::mat4 cone(float k);        // x² + y² = k² z²  (apex at origin)
     glm::mat4 paraboloid(float a);  // a(x² + y²) − z = 0
     glm::mat4 translate(const glm::mat4& Q, const glm::vec3& t); // shift the quadric
+
+    // OntoMath algebraic conversions
+    OntoMath::ScalarForm toScalarForm(const glm::mat4& Q);
+    glm::mat4 fromScalarForm(const OntoMath::ScalarForm& form);
 
     // (o + t·d)ᵀ Q (o + t·d) = 0. Returns true on real roots, with t0 ≤ t1.
     bool raycast(const glm::mat4& Q, const glm::vec3& o, const glm::vec3& d, float& t0, float& t1);

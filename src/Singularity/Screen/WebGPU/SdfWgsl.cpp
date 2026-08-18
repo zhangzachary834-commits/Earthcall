@@ -424,8 +424,13 @@ std::string emitNode(const geom::SdfNode& n, Emit& e) {
                 // value, not a true distance, so sphere tracing must take damped
                 // steps through it — see the marcher's use of kExprDamping.
                 e.sawExpr = true;
-                if (n.rpn.empty()) { e.line("let " + out + " = 1e9;"); break; }
-                e.line("let " + out + " = " + emitRpn(n.rpn, e, lp) + ";");
+                if (n.mathNode) {
+                    e.line("let " + out + " = " + emitMathNode(*n.mathNode, e, lp) + ";");
+                } else if (!n.rpn.empty()) {
+                    e.line("let " + out + " = " + emitRpn(n.rpn, e, lp) + ";");
+                } else {
+                    e.line("let " + out + " = 1e9;");
+                }
                 break;
             }
             case geom::SdfPrim::Convex: {

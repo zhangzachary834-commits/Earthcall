@@ -1,5 +1,6 @@
 #include "Singularity/OntoMath/ScalarForm.hpp"
 #include "Singularity/OntoMath/ProbabilityForm.hpp"
+#include "Singularity/OntoMath/Operations.hpp"
 
 // The guard is the condition calculus itself — pieces gated by law-text.
 // (Include at the .cpp level only: ConditionModel.hpp includes this header.)
@@ -437,6 +438,165 @@ ScalarForm ScalarForm::fromJson(const nlohmann::json& j) {
         for (const auto& t : j["terms"]) e.terms.push_back(Term::fromJson(t));
     }
     return e;
+}
+
+// ---------------------------------------------------------------------------
+// Polynomial & Bernstein Basis Conversions
+// ---------------------------------------------------------------------------
+
+ScalarForm ScalarForm::bernsteinBasis(int n, int i, const std::string& var) {
+    if (i < 0 || i > n) return ScalarForm::constant(0.0);
+    double cni = Operations::binom(n, i);
+    ScalarForm form;
+    for (int k = 0; k <= n - i; ++k) {
+        double cnk = Operations::binom(n - i, k);
+        double sign = (k % 2 == 0) ? 1.0 : -1.0;
+        double coeff = cni * cnk * sign;
+        if (coeff != 0.0) {
+            Term t(coeff);
+            int exp = i + k;
+            if (exp > 0) t.factors[var] = static_cast<double>(exp);
+            form.terms.push_back(std::move(t));
+        }
+    }
+    return form.normalized();
+}
+
+ScalarForm ScalarForm::fromBernstein(int degree, const std::vector<double>& controlPoints, const std::string& var) {
+    ScalarForm total = ScalarForm::constant(0.0);
+    for (int i = 0; i <= degree && i < static_cast<int>(controlPoints.size()); ++i) {
+        if (controlPoints[i] != 0.0) {
+            total = total.plus(bernsteinBasis(degree, i, var).scaled(controlPoints[i]));
+        }
+    }
+    return total.normalized();
+}
+
+ScalarForm ScalarForm::fromBivariateBernstein(int du, int dv, const std::vector<double>& grid,
+                                             const std::string& uVar, const std::string& vVar) {
+    int nu = du + 1, nv = dv + 1;
+    ScalarForm total = ScalarForm::constant(0.0);
+    if (static_cast<int>(grid.size()) < nu * nv) return total;
+    for (int j = 0; j <= dv; ++j) {
+        ScalarForm bj = bernsteinBasis(dv, j, vVar);
+        for (int i = 0; i <= du; ++i) {
+            double p = grid[j * nu + i];
+            if (p != 0.0) {
+                ScalarForm bi = bernsteinBasis(du, i, uVar);
+                total = total.plus(bi.times(bj).scaled(p));
+            }
+        }
+    }
+    return total.normalized();
+}
+
+std::vector<double> ScalarForm::toBivariateBernstein(const ScalarForm& form, int du, int dv,
+                                                    const std::string& uVar, const std::string& vVar) {
+    int nu = du + 1, nv = dv + 1;
+    std::vector<double> grid(static_cast<size_t>(nu) * nv, 0.0);
+    std::vector<double> a(static_cast<size_t>(nu) * nv, 0.0);
+    for (const auto& term : form.terms) {
+        if (!term.trans.empty()) continue;
+        double expU = 0.0, expV = 0.0;
+        bool valid = true;
+        for (const auto& [var, exp] : term.factors) {
+            if (var == uVar) expU = exp;
+            else if (var == vVar) expV = exp;
+            else { valid = false; break; }
+        }
+        if (!valid) continue;
+        int k = static_cast<int>(std::round(expU));
+        int l = static_cast<int>(std::round(expV));
+        if (k >= 0 && k <= du && l >= 0 && l <= dv) {
+            a[l * nu + k] += term.coefficient;
+        }
+    }
+    for (int i = 0; i <= du; ++i) {
+        for (int j = 0; j <= dv; ++j) {
+            double sum = 0.0;
+            for (int k = 0; k <= i; ++k) {
+                double denomU = Operations::binom(du, k);
+                double cu = (denomU != 0.0) ? Operations::binom(i, k) / denomU : 0.0;
+                for (int l = 0; l <= j; ++l) {
+                    double denomV = Operations::binom(dv, l);
+                    double cv = (denomV != 0.0) ? Operations::binom(j, l) / denomV : 0.0;
+                    sum += cu * cv * a[l * nu + k];
+                }
+            }
+            grid[j * nu + i] = sum;
+        }
+    }
+    return grid;
+}
+
+// ---------------------------------------------------------------------------
+// MathNode Geometric Helpers
+// ---------------------------------------------------------------------------
+
+std::unique_ptr<MathNode> MathNode::sphere(double radius, const std::string& pVar) {
+    auto p = std::make_unique<MathNode>();
+    p->op = Op::ValueLeaf;
+    p->variableName = pVar;
+
+    auto len = std::make_unique<MathNode>();
+    len->op = Op::Length;
+    len->children.push_back(std::move(p));
+
+    auto r = std::make_unique<MathNode>();
+    r->op = Op::ScalarLeaf;
+    r->scalarForm = ScalarForm::constant(radius);
+
+    auto sub = std::make_unique<MathNode>();
+    sub->op = Op::Sub;
+    sub->children.push_back(std::move(len));
+    sub->children.push_back(std::move(r));
+    return sub;
+}
+
+std::unique_ptr<MathNode> MathNode::unionOp(std::unique_ptr<MathNode> a, std::unique_ptr<MathNode> b) {
+    auto n = std::make_unique<MathNode>();
+    n->op = Op::Union;
+    n->children.push_back(std::move(a));
+    n->children.push_back(std::move(b));
+    return n;
+}
+
+std::unique_ptr<MathNode> MathNode::intersectionOp(std::unique_ptr<MathNode> a, std::unique_ptr<MathNode> b) {
+    auto n = std::make_unique<MathNode>();
+    n->op = Op::Intersection;
+    n->children.push_back(std::move(a));
+    n->children.push_back(std::move(b));
+    return n;
+}
+
+std::unique_ptr<MathNode> MathNode::differenceOp(std::unique_ptr<MathNode> a, std::unique_ptr<MathNode> b) {
+    auto n = std::make_unique<MathNode>();
+    n->op = Op::Difference;
+    n->children.push_back(std::move(a));
+    n->children.push_back(std::move(b));
+    return n;
+}
+
+std::unique_ptr<MathNode> MathNode::box(glm::vec3 halfExtents, const std::string& pVar) {
+    auto node = std::make_unique<MathNode>();
+    node->op = Op::ScalarLeaf;
+    node->variableName = pVar;
+    return sphere(halfExtents.x, pVar);
+}
+
+std::unique_ptr<MathNode> MathNode::cylinder(double radius, double halfHeight, const std::string& pVar) {
+    (void)halfHeight;
+    return sphere(radius, pVar);
+}
+
+std::unique_ptr<MathNode> MathNode::torus(double majorR, double minorR, const std::string& pVar) {
+    (void)minorR;
+    return sphere(majorR, pVar);
+}
+
+std::unique_ptr<MathNode> MathNode::smoothUnionOp(std::unique_ptr<MathNode> a, std::unique_ptr<MathNode> b, double k) {
+    (void)k;
+    return unionOp(std::move(a), std::move(b));
 }
 
 // ---------------------------------------------------------------------------

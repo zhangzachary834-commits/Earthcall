@@ -3,6 +3,7 @@
 #include <glm/glm.hpp>
 #include <vector>
 #include "SmoothSurface.hpp" // TessMesh
+#include "Singularity/OntoMath/ScalarForm.hpp"
 
 // Geometry kernel — freeform control-net surfaces (Bezier patch).
 //
@@ -40,11 +41,17 @@ TessMesh tessellateBezier(const BezierPatch& p, int resU = 24, int resV = 24);
 void elevateU(BezierPatch& p);
 void elevateV(BezierPatch& p);
 
-// --- The "same coin": geometry <-> algebra -------------------------------
-// A Bezier patch S(u,v) = ΣΣ a_kl u^k v^l. The control points ARE the
-// coefficients in the Bernstein basis; these convert to/from the monomial
-// (power) basis so the user can edit the exact polynomial coefficients and the
-// control net interchangeably. Layout matches ctrl: index = l*(du+1) + k.
+// --- The "same coin": geometry <-> OntoMath algebra -----------------------
+// Convert Bezier patch to three multivariate ScalarForms in u and v.
+struct PatchForms {
+    OntoMath::ScalarForm x;
+    OntoMath::ScalarForm y;
+    OntoMath::ScalarForm z;
+};
+PatchForms patchToScalarForms(const BezierPatch& p);
+BezierPatch scalarFormsToPatch(const PatchForms& forms, int du, int dv);
+
+// Monomial (power) basis coefficients: index = l*(du+1) + k
 std::vector<glm::vec3> patchToMonomial(const BezierPatch& p);
 BezierPatch monomialToPatch(const std::vector<glm::vec3>& coeff, int du, int dv);
 

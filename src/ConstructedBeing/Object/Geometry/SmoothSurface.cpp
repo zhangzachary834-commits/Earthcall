@@ -60,6 +60,49 @@ glm::mat4 translate(const glm::mat4& Q, const glm::vec3& t) {
     return glm::transpose(M) * Q * M;
 }
 
+OntoMath::ScalarForm toScalarForm(const glm::mat4& Q) {
+    OntoMath::ScalarForm form;
+    const char* names[3] = {"x", "y", "z"};
+    for (int i = 0; i < 4; ++i) {
+        for (int j = 0; j < 4; ++j) {
+            double c = static_cast<double>(Q[j][i]);
+            if (c == 0.0) continue;
+            OntoMath::Term t(c);
+            if (i < 3) t.factors[names[i]] += 1.0;
+            if (j < 3) t.factors[names[j]] += 1.0;
+            form.terms.push_back(std::move(t));
+        }
+    }
+    return form.normalized();
+}
+
+glm::mat4 fromScalarForm(const OntoMath::ScalarForm& form) {
+    glm::mat4 Q(0.0f);
+    for (const auto& term : form.terms) {
+        if (!term.trans.empty()) continue;
+        double expX = 0.0, expY = 0.0, expZ = 0.0;
+        for (const auto& [var, exp] : term.factors) {
+            if (var == "x") expX = exp;
+            else if (var == "y") expY = exp;
+            else if (var == "z") expZ = exp;
+        }
+        double totalExp = expX + expY + expZ;
+        if (totalExp > 2.0) continue;
+        float c = static_cast<float>(term.coefficient);
+        if (expX == 2.0) Q[0][0] += c;
+        else if (expY == 2.0) Q[1][1] += c;
+        else if (expZ == 2.0) Q[2][2] += c;
+        else if (expX == 1.0 && expY == 1.0) { Q[0][1] += c * 0.5f; Q[1][0] += c * 0.5f; }
+        else if (expX == 1.0 && expZ == 1.0) { Q[0][2] += c * 0.5f; Q[2][0] += c * 0.5f; }
+        else if (expY == 1.0 && expZ == 1.0) { Q[1][2] += c * 0.5f; Q[2][1] += c * 0.5f; }
+        else if (expX == 1.0 && totalExp == 1.0) { Q[0][3] += c * 0.5f; Q[3][0] += c * 0.5f; }
+        else if (expY == 1.0 && totalExp == 1.0) { Q[1][3] += c * 0.5f; Q[3][1] += c * 0.5f; }
+        else if (expZ == 1.0 && totalExp == 1.0) { Q[2][3] += c * 0.5f; Q[3][2] += c * 0.5f; }
+        else if (totalExp == 0.0) Q[3][3] += c;
+    }
+    return Q;
+}
+
 bool raycast(const glm::mat4& Q, const glm::vec3& o, const glm::vec3& d, float& t0, float& t1) {
     glm::vec4 P(o, 1.0f);
     glm::vec4 D(d, 0.0f);
@@ -87,6 +130,13 @@ glm::vec3 gradient(const glm::mat4& Q, const glm::vec3& p) {
 }
 
 } // namespace Quadric
+
+OntoMath::ScalarForm SmoothSurfaceData::toScalarForm() const {
+    if (model == Model::Quadric) {
+        return Quadric::toScalarForm(Q);
+    }
+    return OntoMath::ScalarForm::constant(0.0);
+}
 
 // ---------------------------------------------------------------------------
 // Factories

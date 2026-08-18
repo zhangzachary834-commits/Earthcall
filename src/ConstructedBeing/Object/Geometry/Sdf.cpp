@@ -132,9 +132,270 @@ std::vector<SdfToken> compileExpr(const std::string& src) {
     return out;
 }
 
+namespace {
+
+std::shared_ptr<OntoMath::MathNode> rpnToMathNode(const std::vector<SdfToken>& r) {
+    if (r.empty()) return nullptr;
+    std::vector<std::shared_ptr<OntoMath::MathNode>> st;
+    for (const auto& t : r) {
+        switch (t.kind) {
+            case SdfToken::Num: {
+                auto n = std::make_shared<OntoMath::MathNode>();
+                n->op = OntoMath::MathNode::Op::ScalarLeaf;
+                n->scalarForm = OntoMath::ScalarForm::constant(t.num);
+                st.push_back(std::move(n));
+                break;
+            }
+            case SdfToken::X: {
+                auto n = std::make_shared<OntoMath::MathNode>();
+                n->op = OntoMath::MathNode::Op::ValueLeaf;
+                n->variableName = "x";
+                st.push_back(std::move(n));
+                break;
+            }
+            case SdfToken::Y: {
+                auto n = std::make_shared<OntoMath::MathNode>();
+                n->op = OntoMath::MathNode::Op::ValueLeaf;
+                n->variableName = "y";
+                st.push_back(std::move(n));
+                break;
+            }
+            case SdfToken::Z: {
+                auto n = std::make_shared<OntoMath::MathNode>();
+                n->op = OntoMath::MathNode::Op::ValueLeaf;
+                n->variableName = "z";
+                st.push_back(std::move(n));
+                break;
+            }
+            case SdfToken::Add: {
+                if (st.size() >= 2) {
+                    auto b = st.back(); st.pop_back();
+                    auto a = st.back(); st.pop_back();
+                    auto n = std::make_shared<OntoMath::MathNode>();
+                    n->op = OntoMath::MathNode::Op::Add;
+                    n->children.push_back(std::make_unique<OntoMath::MathNode>(*a));
+                    n->children.push_back(std::make_unique<OntoMath::MathNode>(*b));
+                    st.push_back(std::move(n));
+                }
+                break;
+            }
+            case SdfToken::Sub: {
+                if (st.size() >= 2) {
+                    auto b = st.back(); st.pop_back();
+                    auto a = st.back(); st.pop_back();
+                    auto n = std::make_shared<OntoMath::MathNode>();
+                    n->op = OntoMath::MathNode::Op::Sub;
+                    n->children.push_back(std::make_unique<OntoMath::MathNode>(*a));
+                    n->children.push_back(std::make_unique<OntoMath::MathNode>(*b));
+                    st.push_back(std::move(n));
+                }
+                break;
+            }
+            case SdfToken::Mul: {
+                if (st.size() >= 2) {
+                    auto b = st.back(); st.pop_back();
+                    auto a = st.back(); st.pop_back();
+                    auto n = std::make_shared<OntoMath::MathNode>();
+                    n->op = OntoMath::MathNode::Op::Scale;
+                    n->children.push_back(std::make_unique<OntoMath::MathNode>(*a));
+                    n->children.push_back(std::make_unique<OntoMath::MathNode>(*b));
+                    st.push_back(std::move(n));
+                }
+                break;
+            }
+            case SdfToken::Div: {
+                if (st.size() >= 2) {
+                    auto b = st.back(); st.pop_back();
+                    auto a = st.back(); st.pop_back();
+                    auto n = std::make_shared<OntoMath::MathNode>();
+                    n->op = OntoMath::MathNode::Op::Scale;
+                    n->children.push_back(std::make_unique<OntoMath::MathNode>(*a));
+                    n->children.push_back(std::make_unique<OntoMath::MathNode>(*b));
+                    st.push_back(std::move(n));
+                }
+                break;
+            }
+            case SdfToken::Pow: {
+                if (st.size() >= 2) {
+                    auto b = st.back(); st.pop_back();
+                    auto a = st.back(); st.pop_back();
+                    if (a->op == OntoMath::MathNode::Op::ValueLeaf && b->op == OntoMath::MathNode::Op::ScalarLeaf && b->scalarForm.terms.size() == 1) {
+                        double exp = b->scalarForm.terms[0].coefficient;
+                        auto n = std::make_shared<OntoMath::MathNode>();
+                        n->op = OntoMath::MathNode::Op::ScalarLeaf;
+                        n->scalarForm = OntoMath::ScalarForm::variable(a->variableName, exp);
+                        st.push_back(std::move(n));
+                    } else {
+                        auto n = std::make_shared<OntoMath::MathNode>();
+                        n->op = OntoMath::MathNode::Op::Scale;
+                        n->children.push_back(std::make_unique<OntoMath::MathNode>(*a));
+                        n->children.push_back(std::make_unique<OntoMath::MathNode>(*b));
+                        st.push_back(std::move(n));
+                    }
+                }
+                break;
+            }
+            case SdfToken::Neg: {
+                if (!st.empty()) {
+                    auto a = st.back(); st.pop_back();
+                    auto neg1 = std::make_shared<OntoMath::MathNode>();
+                    neg1->op = OntoMath::MathNode::Op::ScalarLeaf;
+                    neg1->scalarForm = OntoMath::ScalarForm::constant(-1.0);
+                    auto n = std::make_shared<OntoMath::MathNode>();
+                    n->op = OntoMath::MathNode::Op::Scale;
+                    n->children.push_back(std::make_unique<OntoMath::MathNode>(*neg1));
+                    n->children.push_back(std::make_unique<OntoMath::MathNode>(*a));
+                    st.push_back(std::move(n));
+                }
+                break;
+            }
+            case SdfToken::Sin: {
+                if (!st.empty()) {
+                    auto a = st.back(); st.pop_back();
+                    if (a->op == OntoMath::MathNode::Op::ValueLeaf) {
+                        auto n = std::make_shared<OntoMath::MathNode>();
+                        n->op = OntoMath::MathNode::Op::ScalarLeaf;
+                        n->scalarForm = OntoMath::ScalarForm::transcendental(OntoMath::TransFactor::Kind::Sin, a->variableName);
+                        st.push_back(std::move(n));
+                    } else {
+                        st.push_back(a);
+                    }
+                }
+                break;
+            }
+            case SdfToken::Cos: {
+                if (!st.empty()) {
+                    auto a = st.back(); st.pop_back();
+                    if (a->op == OntoMath::MathNode::Op::ValueLeaf) {
+                        auto n = std::make_shared<OntoMath::MathNode>();
+                        n->op = OntoMath::MathNode::Op::ScalarLeaf;
+                        n->scalarForm = OntoMath::ScalarForm::transcendental(OntoMath::TransFactor::Kind::Cos, a->variableName);
+                        st.push_back(std::move(n));
+                    } else {
+                        st.push_back(a);
+                    }
+                }
+                break;
+            }
+            case SdfToken::Exp: {
+                if (!st.empty()) {
+                    auto a = st.back(); st.pop_back();
+                    if (a->op == OntoMath::MathNode::Op::ValueLeaf) {
+                        auto n = std::make_shared<OntoMath::MathNode>();
+                        n->op = OntoMath::MathNode::Op::ScalarLeaf;
+                        n->scalarForm = OntoMath::ScalarForm::transcendental(OntoMath::TransFactor::Kind::Exp, a->variableName);
+                        st.push_back(std::move(n));
+                    } else {
+                        st.push_back(a);
+                    }
+                }
+                break;
+            }
+            case SdfToken::Log: {
+                if (!st.empty()) {
+                    auto a = st.back(); st.pop_back();
+                    if (a->op == OntoMath::MathNode::Op::ValueLeaf) {
+                        auto n = std::make_shared<OntoMath::MathNode>();
+                        n->op = OntoMath::MathNode::Op::ScalarLeaf;
+                        n->scalarForm = OntoMath::ScalarForm::transcendental(OntoMath::TransFactor::Kind::Ln, a->variableName);
+                        st.push_back(std::move(n));
+                    } else {
+                        st.push_back(a);
+                    }
+                }
+                break;
+            }
+            default:
+                break;
+        }
+    }
+    return st.empty() ? nullptr : st.back();
+}
+
+} // namespace
+
 SdfNode makeImplicit(const std::string& src) {
-    SdfNode n; n.op = SdfOp::Leaf; n.prim = SdfPrim::Expr; n.expr = src; n.rpn = compileExpr(src);
+    SdfNode n;
+    n.op = SdfOp::Leaf;
+    n.prim = SdfPrim::Expr;
+    n.expr = src;
+    n.rpn = compileExpr(src);
+    n.mathNode = rpnToMathNode(n.rpn);
     return n;
+}
+
+SdfNode makeImplicit(std::shared_ptr<OntoMath::MathNode> node) {
+    SdfNode n;
+    n.op = SdfOp::Leaf;
+    n.prim = SdfPrim::Expr;
+    n.mathNode = std::move(node);
+    return n;
+}
+
+SdfNode makeImplicit(std::shared_ptr<OntoMath::Piecewise> pw) {
+    SdfNode n;
+    n.op = SdfOp::Leaf;
+    n.prim = SdfPrim::Expr;
+    n.piecewise = std::move(pw);
+    return n;
+}
+
+std::shared_ptr<OntoMath::MathNode> SdfNode::toMathNode() const {
+    if (op == SdfOp::Union) {
+        if (children.size() >= 2 && children[0] && children[1]) {
+            auto ca = children[0]->toMathNode();
+            auto cb = children[1]->toMathNode();
+            if (ca && cb) {
+                return std::shared_ptr<OntoMath::MathNode>(OntoMath::MathNode::unionOp(
+                    std::make_unique<OntoMath::MathNode>(*ca),
+                    std::make_unique<OntoMath::MathNode>(*cb)));
+            }
+        }
+    } else if (op == SdfOp::Intersect) {
+        if (children.size() >= 2 && children[0] && children[1]) {
+            auto ca = children[0]->toMathNode();
+            auto cb = children[1]->toMathNode();
+            if (ca && cb) {
+                return std::shared_ptr<OntoMath::MathNode>(OntoMath::MathNode::intersectionOp(
+                    std::make_unique<OntoMath::MathNode>(*ca),
+                    std::make_unique<OntoMath::MathNode>(*cb)));
+            }
+        }
+    } else if (op == SdfOp::Subtract) {
+        if (children.size() >= 2 && children[0] && children[1]) {
+            auto ca = children[0]->toMathNode();
+            auto cb = children[1]->toMathNode();
+            if (ca && cb) {
+                return std::shared_ptr<OntoMath::MathNode>(OntoMath::MathNode::differenceOp(
+                    std::make_unique<OntoMath::MathNode>(*ca),
+                    std::make_unique<OntoMath::MathNode>(*cb)));
+            }
+        }
+    } else if (op == SdfOp::SmoothUnion) {
+        if (children.size() >= 2 && children[0] && children[1]) {
+            auto ca = children[0]->toMathNode();
+            auto cb = children[1]->toMathNode();
+            if (ca && cb) {
+                return std::shared_ptr<OntoMath::MathNode>(OntoMath::MathNode::smoothUnionOp(
+                    std::make_unique<OntoMath::MathNode>(*ca),
+                    std::make_unique<OntoMath::MathNode>(*cb), t));
+            }
+        }
+    } else if (op == SdfOp::Leaf) {
+        if (prim == SdfPrim::Sphere) {
+            return std::shared_ptr<OntoMath::MathNode>(OntoMath::MathNode::sphere(dims.x));
+        } else if (prim == SdfPrim::Box) {
+            return std::shared_ptr<OntoMath::MathNode>(OntoMath::MathNode::box(dims));
+        } else if (prim == SdfPrim::Cylinder) {
+            return std::shared_ptr<OntoMath::MathNode>(OntoMath::MathNode::cylinder(dims.x, dims.y));
+        } else if (prim == SdfPrim::Torus) {
+            return std::shared_ptr<OntoMath::MathNode>(OntoMath::MathNode::torus(dims.x, dims.y));
+        } else if (prim == SdfPrim::Expr) {
+            if (mathNode) return mathNode;
+            return rpnToMathNode(rpn);
+        }
+    }
+    return std::shared_ptr<OntoMath::MathNode>(OntoMath::MathNode::sphere(0.5));
 }
 
 static float evalRpn(const std::vector<SdfToken>& r, float x, float y, float z) {
@@ -175,11 +436,34 @@ static float evalLeaf(const SdfNode& n, const glm::vec3& world) {
         case SdfPrim::Cylinder:  return sdCylinder(p, n.dims.x, n.dims.y);
         case SdfPrim::Cone:      return sdCone(p, n.dims.x, n.dims.y);
         case SdfPrim::Torus:     return sdTorus(p, n.dims.x, n.dims.y);
-        case SdfPrim::Expr:      return evalRpn(n.rpn, p.x, p.y, p.z);
+        case SdfPrim::Expr: {
+            if (n.mathNode) {
+                std::map<std::string, PropertyValue> vars;
+                vars["x"] = PropertyValue(static_cast<double>(p.x));
+                vars["y"] = PropertyValue(static_cast<double>(p.y));
+                vars["z"] = PropertyValue(static_cast<double>(p.z));
+                vars["p"] = PropertyValue(p);
+                auto val = n.mathNode->evaluate(vars);
+                if (val) {
+                    double d = 0.0;
+                    if (propertyValueToNumber(*val, d)) return static_cast<float>(d);
+                }
+            } else if (n.piecewise) {
+                std::map<std::string, PropertyValue> vars;
+                vars["x"] = PropertyValue(static_cast<double>(p.x));
+                vars["y"] = PropertyValue(static_cast<double>(p.y));
+                vars["z"] = PropertyValue(static_cast<double>(p.z));
+                vars["p"] = PropertyValue(p);
+                auto val = n.piecewise->evaluate(vars);
+                if (val) {
+                    double d = 0.0;
+                    if (propertyValueToNumber(*val, d)) return static_cast<float>(d);
+                }
+            }
+            return evalRpn(n.rpn, p.x, p.y, p.z);
+        }
         case SdfPrim::Convex: {
-            // Convex polyhedron: intersection of face half-spaces -> max of plane
-            // distances. Exact inside/on-face; a valid 1-Lipschitz bound outside.
-            if (n.planes.empty()) return 1e9f; // no faces -> empty (ignored by unions)
+            if (n.planes.empty()) return 1e9f;
             float m = -1e9f;
             for (const glm::vec4& pl : n.planes)
                 m = std::max(m, glm::dot(glm::vec3(pl), p) - pl.w);

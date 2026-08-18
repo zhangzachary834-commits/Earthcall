@@ -330,6 +330,28 @@ int main() {
     }
     std::cout << "============================================================" << std::endl;
 
+        // =========================================================================
+    // Test 7: Algebraic OntoMath Round-Trip & Exact Normals (Rung 2)
+    // =========================================================================
+    std::cout << "\n[Test 7] Testing Algebraic OntoMath Round-Trip & Exact Normals..." << std::endl;
+    {
+        geom::BezierPatch testPatch = geom::makeBezierGrid(3, 3, 1.0f);
+        geom::PatchForms forms = geom::patchToScalarForms(testPatch);
+        geom::BezierPatch recovered = geom::scalarFormsToPatch(forms, 3, 3);
+        bool roundTripOk = true;
+        for (size_t i = 0; i < testPatch.ctrl.size(); ++i) {
+            if (!nearVec3(testPatch.ctrl[i], recovered.ctrl[i], 1e-4f)) {
+                roundTripOk = false;
+                break;
+            }
+        }
+        check(roundTripOk, "Bézier patch <-> OntoMath ScalarForms round-trip preserves control points");
+
+        glm::vec3 normalCenter = geom::bezierNormal(testPatch, 0.5f, 0.5f);
+        check(nearVec3(normalCenter, glm::vec3(0.0f, 0.0f, 1.0f), 1e-4f),
+              "Exact OntoMath symbolic normal at patch center is (0, 0, 1)");
+    }
+
     dump_test_save("bezier_patch_law_test_final", world, lawManager, player);
 
     return g_failures > 0 ? 1 : 0;

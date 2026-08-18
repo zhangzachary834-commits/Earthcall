@@ -14,6 +14,9 @@ namespace geom {
 // By inheriting from Singular, it maps the field's mathematical variables into the 
 // PropertyPath system, allowing the Law system to modulate the field dynamically.
 class FieldNode : public Singular {
+private:
+    std::string _id;
+
 public:
     FieldNode(std::string id = "field_node") 
         : _id(std::move(id)), 
@@ -59,9 +62,6 @@ protected:
             _propertyRegistry.push_back(std::make_unique<PropertyRef<OntoMath::VectorField, float>>("vectorField.amplitude", vectorField.get(), &OntoMath::VectorField::amplitude));
         }
     }
-
-private:
-    std::string _id;
 };
 
 } // namespace geom

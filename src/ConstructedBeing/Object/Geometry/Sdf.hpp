@@ -5,6 +5,7 @@
 #include <string>
 #include <memory>
 #include "SmoothSurface.hpp" // TessMesh
+#include "Singularity/OntoMath/ScalarForm.hpp"
 
 // Geometry kernel — the SDF spine.
 //
@@ -56,6 +57,8 @@ struct SdfNode {
     // Implicit-expression payload (prim == Expr).
     std::string expr;               // source f(x,y,z); 0 iso-surface is the shape
     std::vector<SdfToken> rpn;      // compiled form (derived from expr)
+    std::shared_ptr<OntoMath::MathNode> mathNode; // OntoMath algebraic AST
+    std::shared_ptr<OntoMath::Piecewise> piecewise; // OntoMath piecewise function
 
     // Convex-polyhedron payload (prim == Convex): one plane per face, stored as
     // (n.x, n.y, n.z, d) with outward unit normal n and offset d (plane: n·x = d).
@@ -77,7 +80,10 @@ struct SdfNode {
     // Deep-clone copy (preserve value semantics — independent subtree).
     SdfNode(const SdfNode& o)
         : op(o.op), prim(o.prim), dims(o.dims), offset(o.offset), p0(o.p0), p1(o.p1),
-          expr(o.expr), rpn(o.rpn), planes(o.planes), t(o.t) {
+          expr(o.expr), rpn(o.rpn),
+          mathNode(o.mathNode ? std::make_shared<OntoMath::MathNode>(*o.mathNode) : nullptr),
+          piecewise(o.piecewise ? std::make_shared<OntoMath::Piecewise>(*o.piecewise) : nullptr),
+          planes(o.planes), t(o.t) {
         children.reserve(o.children.size());
         for (const auto& c : o.children)
             children.push_back(c ? std::make_shared<SdfNode>(*c) : nullptr);
@@ -88,6 +94,8 @@ struct SdfNode {
     }
     SdfNode(SdfNode&&) = default;
     SdfNode& operator=(SdfNode&&) = default;
+
+    std::shared_ptr<OntoMath::MathNode> toMathNode() const;
 
     static SdfNode leaf(SdfPrim prim, glm::vec3 dims, float p0 = 0.0f, float p1 = 0.0f) {
         SdfNode n; n.op = SdfOp::Leaf; n.prim = prim; n.dims = dims; n.p0 = p0; n.p1 = p1; return n;
@@ -107,6 +115,8 @@ struct SdfNode {
 std::vector<SdfToken> compileExpr(const std::string& src);
 // Build an implicit-surface leaf node from an expression.
 SdfNode makeImplicit(const std::string& src);
+SdfNode makeImplicit(std::shared_ptr<OntoMath::MathNode> node);
+SdfNode makeImplicit(std::shared_ptr<OntoMath::Piecewise> pw);
 
 // Evaluate the signed distance of the tree at a local-space point.
 float evalSdf(const SdfNode& n, const glm::vec3& p);

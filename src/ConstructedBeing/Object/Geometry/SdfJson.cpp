@@ -14,6 +14,7 @@ nlohmann::json sdfToJson(const SdfNode& n) {
         {"t", n.t}
     };
     if (!n.expr.empty()) j["expr"] = n.expr;
+    if (n.mathNode) j["mathNode"] = n.mathNode->toJson();
     if (!n.planes.empty()) {
         BinaryPack::Writer w;
         w.writeArray(n.planes);
@@ -50,6 +51,9 @@ SdfNode sdfFromJson(const nlohmann::json& j) {
     if (j.contains("expr")) {
         n.expr = j["expr"].get<std::string>();
         n.rpn = compileExpr(n.expr);   // derived, never serialized
+    }
+    if (j.contains("mathNode")) {
+        n.mathNode = OntoMath::MathNode::fromJson(j["mathNode"]);
     }
     if (j.contains("planesBinary")) {
         BinaryPack::Reader r(j["planesBinary"].get_binary());

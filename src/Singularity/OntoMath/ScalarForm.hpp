@@ -140,6 +140,14 @@ struct ScalarForm {
     ScalarForm derivative(const std::string& var) const;
     std::optional<ScalarForm> antiderivative(const std::string& var) const;
 
+    // --- Polynomial & Bernstein Basis Conversions ---
+    static ScalarForm bernsteinBasis(int n, int i, const std::string& var = "t");
+    static ScalarForm fromBernstein(int degree, const std::vector<double>& controlPoints, const std::string& var = "t");
+    static ScalarForm fromBivariateBernstein(int du, int dv, const std::vector<double>& grid,
+                                            const std::string& uVar = "u", const std::string& vVar = "v");
+    static std::vector<double> toBivariateBernstein(const ScalarForm& form, int du, int dv,
+                                                   const std::string& uVar = "u", const std::string& vVar = "v");
+
     bool empty() const { return terms.empty(); }
     std::string print() const;
     nlohmann::json toJson() const;
@@ -293,6 +301,25 @@ struct MathNode {
     // Unsupported payload: the node's original JSON, kept verbatim.
     std::shared_ptr<nlohmann::json> unsupported;
 
+    MathNode() = default;
+    MathNode(const MathNode& o)
+        : op(o.op), scalarForm(o.scalarForm), variableName(o.variableName),
+          stringArg(o.stringArg), unsupported(o.unsupported) {
+        children.reserve(o.children.size());
+        for (const auto& c : o.children) {
+            children.push_back(c ? std::make_unique<MathNode>(*c) : nullptr);
+        }
+    }
+    MathNode& operator=(const MathNode& o) {
+        if (this != &o) {
+            MathNode tmp(o);
+            *this = std::move(tmp);
+        }
+        return *this;
+    }
+    MathNode(MathNode&&) = default;
+    MathNode& operator=(MathNode&&) = default;
+
     // The judgement on an authored tree. `allowUnbound` is for the seams that
     // have no binding environment yet (deserialization): an unbound ValueLeaf
     // answers Unknown, which unifies with everything, instead of failing.
@@ -308,6 +335,16 @@ struct MathNode {
     void collectDependencies(std::set<std::string>& outDeps) const;
 
     std::optional<PropertyValue> evaluate(const std::map<std::string, PropertyValue>& vars, const Singular* subject = nullptr) const;
+
+    // --- Canonical Geometric Primitive & CSG Helpers ---
+    static std::unique_ptr<MathNode> sphere(double radius, const std::string& pVar = kAmbientPointVar);
+    static std::unique_ptr<MathNode> box(glm::vec3 halfExtents, const std::string& pVar = kAmbientPointVar);
+    static std::unique_ptr<MathNode> cylinder(double radius, double halfHeight, const std::string& pVar = kAmbientPointVar);
+    static std::unique_ptr<MathNode> torus(double majorR, double minorR, const std::string& pVar = kAmbientPointVar);
+    static std::unique_ptr<MathNode> unionOp(std::unique_ptr<MathNode> a, std::unique_ptr<MathNode> b);
+    static std::unique_ptr<MathNode> intersectionOp(std::unique_ptr<MathNode> a, std::unique_ptr<MathNode> b);
+    static std::unique_ptr<MathNode> differenceOp(std::unique_ptr<MathNode> a, std::unique_ptr<MathNode> b);
+    static std::unique_ptr<MathNode> smoothUnionOp(std::unique_ptr<MathNode> a, std::unique_ptr<MathNode> b, double k);
 
     nlohmann::json toJson() const;
     static std::unique_ptr<MathNode> fromJson(const nlohmann::json& j);
