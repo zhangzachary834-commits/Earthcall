@@ -68,6 +68,27 @@ namespace Quadric {
     // (o + t·d)ᵀ Q (o + t·d) = 0. Returns true on real roots, with t0 ≤ t1.
     bool raycast(const glm::mat4& Q, const glm::vec3& o, const glm::vec3& d, float& t0, float& t1);
     glm::vec3 gradient(const glm::mat4& Q, const glm::vec3& p); // unnormalised surface normal
+
+    // --- Rung 3: OntoMath is the source of truth; the matrix is its evaluation.
+    //
+    // `gradient` and `raycast` above are NOT a second mathematics. They are the
+    // closed-form evaluation of exactly the ScalarForm `toScalarForm(Q)` names:
+    // ∇(pᵀQp) = 2Qp is the analytic derivative of that polynomial, and raycast's
+    // A/B/C are the coefficients of f(o + t·d) as a polynomial in t. The pair
+    // below computes both the long way, straight off ScalarForm::derivative, and
+    // geometry_ontomath_test holds the fast path to agreeing with them for every
+    // quadric the factories make.
+    //
+    // They are the REFERENCE, not the hot path, and deliberately so. Rung 2 put
+    // symbolic re-expansion inside a per-vertex loop and cost 920x; raycast runs
+    // per ray per frame. What the rung actually requires is that the mathematics
+    // be authored and legible in OntoMath -- "a channel reads OntoMath; it never
+    // decides what the thing is" (ONTOMATH_FRAMEWORK.md §1) -- not that every
+    // evaluation walk an AST.
+    glm::vec3 gradientFromForm(const OntoMath::ScalarForm& f, const glm::vec3& p);
+    // Coefficients of f(o + t·d) = A t² + B t + C, taken symbolically.
+    bool raycastCoefficientsFromForm(const OntoMath::ScalarForm& f, const glm::vec3& o,
+                                     const glm::vec3& d, double& A, double& B, double& C);
 }
 
 // --- Factories (fill a full SmoothSurfaceData) -----------------------------

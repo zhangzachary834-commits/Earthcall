@@ -14,8 +14,40 @@ so "implementing" one means turning a passing refusal check into a passing behav
   tested to 1e-6.
 - **Rung 2.** Bézier patches carry three `ScalarForm` coordinate polynomials; normals are
   exact symbolic `T_u × T_v` via `ScalarForm::derivative`.
+- **Rung 3.** `ScalarForm` is the quadrics' source of truth. `Quadric::gradientFromForm` and
+  `raycastCoefficientsFromForm` compute the gradient and the ray quadratic straight off
+  `ScalarForm::derivative`, and the test holds the fast matrix path (`2Qp`, and raycast's
+  A/B/C) to agreeing with them for every quadric the factories make, at several sample
+  points. The matrix stays in the hot path **deliberately** — the rung requires the
+  mathematics be authored and legible in OntoMath ("a channel reads OntoMath; it never
+  decides what the thing is", `ONTOMATH_FRAMEWORK.md` §1), not that every evaluation walk
+  an AST. Rung 2's 920× lesson applies directly: `raycast` runs per ray per frame.
+- **Rung 5.** The sculpted geometry is law-addressable at last. On `Object`:
+  `field.extent/op/prim/dims/offset/p0/p1/blend` and a **writable** `field.expr` (assigning
+  an implicit expression reshapes the being; an unparseable one is refused and the old shape
+  stands), plus `patch.degreeU/degreeV/controlCount` and `patch.ctrl.0..15` — the control
+  points *are* the Bernstein coefficients, so a law can animate the polynomial weights and
+  the surface follows. On `geom::FieldNode`: `field.ast` and `vectorField.ast`, the
+  `Piecewise` exposed as the JSON it already round-trips, replacing a comment that said the
+  AST could only be rewritten "via specialized OntoMath endpoints or over the network" —
+  i.e. not by law at all. `ObjectConcept` capture of a Field shape is verified to survive
+  instantiation.
 
-## Not done — recorded as done in error
+  Two things to know if you touch this. Bridges must return a **well-typed** value even when
+  the payload is absent, never monostate: `knownPathOptions()` probes a bare prototype
+  `Object` to decide whether a path is a vector, a string or a number, so a property reading
+  as "nothing" gets mislabelled and its `.x/.y/.z` sub-paths never offered — that is what
+  `channel_paths_test` catches. And the sixteen `patch.ctrl.N` slots are a fixed count for
+  the same reason the six `face.N` slots are: `buildProperties` runs before the object has a
+  patch. A net elevated past bicubic (`geom::elevateU`/`elevateV`) has control points beyond
+  index 15 that no path yet names.
+
+## Not done
+
+All three below are blocked on ONE decision: extending `MathNode::Op` and
+`TransFactor::Kind`. Both are append-only and serialized as ints, so appending is the
+sanctioned move (Refusal 3 forbids renumbering and reuse, not growth) — but it is a real
+ontological addition and wants its own pass with its own tests, not a drive-by.
 
 ### Rung 0, primitives half
 `MathNode::box`, `cylinder`, `torus`, and `smoothUnionOp` shipped as stubs returning
@@ -48,21 +80,9 @@ Note for whoever does this: `tests/webgpu_sdf_parity_test.cpp` **cannot** catch 
 Both `evalSdf` and `emitNode` prefer `mathNode`, so a wrong AST is read identically on both
 sides and the test agrees with itself. Parity is not correctness here.
 
-### Rung 3 — quadric unification
-Not started. `Quadric::toScalarForm` / `fromScalarForm` were added and round-trip tested,
-but have **no production callers**; the 4×4 matrix algebra in `SmoothSurface.cpp` is
-untouched. The rung is the migration, not the converter.
-
 ### Rung 4 — WebGPU transpiler consolidation
 Not started. `emitNode` (`SdfWgsl.cpp:391`) and `emitRpn` (`:127`) both remain. What landed
 is a fallback chain `mathNode → rpn → 1e9`, not a consolidation. Blocked on Rung 1.
-
-### Rung 5 — law reflection & property-path governance
-Not attempted. `ObjectProperties.cpp`, `no_black_box_test.cpp`, and
-`singular_set_to_set_test.cpp` were not touched. This is the rung that actually delivers
-Zach's note in `SDF_BEZIER_SHAPE_GENERATOR_LAW_REPLICATION.md` — that a Person must be able
-to reach an SDF's variables as properties — so it is the one with ontological stakes, and it
-is the one nothing was done on.
 
 ## Performance note
 

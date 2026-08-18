@@ -3,7 +3,6 @@
 #include "imgui.h"
 #include "GLFW/glfw3.h"
 
-#include "Singularity/FirstMoverWindowTools/Tool.hpp"
 #include "Singularity/Core/Engine.hpp"
 #include "Singularity/Core/CreationChannel.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
@@ -118,8 +117,6 @@ void renderDeveloperToolsWindow(bool* open, GLFWwindow* window, Core::Engine* en
         }
     }
     ImGui::End();
-
-    Tool::ShapeGenerator3D(window, engine, mgr, *channel);
 }
 
 } // namespace Rendering

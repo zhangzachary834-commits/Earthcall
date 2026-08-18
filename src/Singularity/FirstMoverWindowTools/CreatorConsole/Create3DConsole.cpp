@@ -1,11 +1,30 @@
 #include "CreatorConsoleState.hpp"
 #include <imgui.h>
+#include <GLFW/glfw3.h>
 #include "Person/Person.hpp"
 #include "ConstructedBeing/Object/Geometry/ComplexShape.hpp"
+#include "Singularity/FirstMoverWindowTools/Tool.hpp"
+#include "Singularity/Core/Engine.hpp"
+#include "Singularity/Core/CreationChannel.hpp"
+#include "ZonesOfEarth/ZoneManager.hpp"
+#include "ZonesOfEarth/Zone/Zone.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
+#include <vector>
+#include <string>
+#include <algorithm>
 
 namespace Rendering {
 
     namespace {
+        Singularity::Core::CreationChannel* findCreationChannel(Core::Engine* engine) {
+            if (!engine || !engine->getLawManager()) return nullptr;
+            for (const auto& law : engine->getLawManager()->getAll()) {
+                auto* channel = dynamic_cast<Singularity::Core::CreationChannel*>(law.get());
+                if (channel) return channel;
+            }
+            return nullptr;
+        }
+
         void set3DMode(Mode3D mode) {
             auto& state = getCreatorConsoleState();
             state.current3DMode = mode;
@@ -17,6 +36,8 @@ namespace Rendering {
                 state.currentTool = Tool(Tool::Type::FacePaint);
             } else if (mode == Mode3D::FaceBrush) {
                 state.currentTool = Tool(Tool::Type::FaceBrush);
+            } else if (mode == Mode3D::Graph) {
+                state.showLawAuthor = true;
             }
         }
 
@@ -44,10 +65,27 @@ namespace Rendering {
             }
         }
 
-        void renderPlacementInspector() {
-            // Stub for placement inspector from old_GameToolbar.cpp
+        void renderPlacementInspector(Singularity::Core::CreationChannel* channel) {
             ImGui::Separator();
             ImGui::TextUnformatted("Placement Settings");
+            if (!channel) return;
+
+            const char* placementModes[] = {"InFront", "CursorSnap", "ManualDistance"};
+            int placementIndex = 0;
+            for (int i = 0; i < 3; ++i) {
+                if (channel->placementMode == placementModes[i]) placementIndex = i;
+            }
+            if (ImGui::Combo("Placement##Create3D", &placementIndex, placementModes, 3)) {
+                channel->placementMode = placementModes[placementIndex];
+                channel->manualAnchorValid = false;
+            }
+
+            if (channel->placementMode == "InFront") {
+                ImGui::SliderFloat("Distance##Create3D", &channel->inFrontDistance, 0.5f, 10.0f);
+            } else if (channel->placementMode == "ManualDistance") {
+                ImGui::SliderFloat3("Offset (right/up/fwd)##Create3D", &channel->manualOffset.x, -10.0f, 10.0f);
+                if (ImGui::Button("Reset Anchor##Create3D")) channel->manualAnchorValid = false;
+            }
         }
 
         void clearSelection3D() {
@@ -55,8 +93,10 @@ namespace Rendering {
         }
     }
 
-    void render3DConsole(Person* player, Object* selectedObject3D) {
+    void render3DConsole(Person* player, Object* selectedObject3D, ZoneManager& zoneMgr, GLFWwindow* window, Core::Engine* engine) {
         auto& state = getCreatorConsoleState();
+        auto* channel = findCreationChannel(engine);
+        float dt = ImGui::GetIO().DeltaTime;
 
         struct Mode3DDef {
             Mode3D mode;
@@ -151,7 +191,9 @@ namespace Rendering {
             ImGui::SliderFloat("Grid Size", &state.brush.gridSize, 0.1f, 5.0f, "%.2f");
         }
 
-        renderPlacementInspector();
+        ImGui::ColorEdit3("Material Color", &state.createColor.x);
+
+        renderPlacementInspector(channel);
 
         if (state.polyhedron.shapeKind == ObjectTypes::ShapeKind::Polyhedron) {
             ImGui::Separator();
@@ -355,6 +397,109 @@ namespace Rendering {
                     }
                 }
             }
+        }
+
+        // --------------------------------------------------------------------
+        // Activate each 3D tool based on the currently selected 3D mode
+        // --------------------------------------------------------------------
+        auto collectTargets = [&]() {
+            std::vector<Object*> targets;
+            for (const auto& up : zoneMgr.active().world().getOwnedObjects()) {
+                if (up && !(up->hasAttribute("baseline") && up->getAttribute("baseline") == std::string("ground"))) {
+                    targets.push_back(up.get());
+                }
+            }
+            return targets;
+        };
+
+        switch (state.current3DMode) {
+            case Mode3D::BrushCreate: {
+                if (channel) {
+                    channel->activeShapeKind = static_cast<int>(state.polyhedron.shapeKind);
+                    channel->cursorSpawnRot = state.brush.rotation;
+                    channel->cursorSpawnScale = state.brush.scale * state.brush.size;
+                    channel->gridSnap = state.brush.gridSnap;
+                    channel->gridSnapSize = state.brush.gridSize;
+                    channel->activeColor = state.createColor;
+                    Tool::ShapeGenerator3D(window, engine, zoneMgr, *channel, nullptr);
+                }
+                break;
+            }
+            case Mode3D::Selection: {
+                std::vector<Object*> targets = collectTargets();
+                Tool::Selection3D(window, engine, targets);
+                break;
+            }
+            case Mode3D::FaceBrush: {
+                std::vector<Object*> targets = collectTargets();
+                Tool::FaceBrush(window, engine, zoneMgr, dt, targets);
+                break;
+            }
+            case Mode3D::FacePaint: {
+                std::vector<Object*> targets = collectTargets();
+                Tool::FacePaint(window, engine, zoneMgr, dt, targets);
+                break;
+            }
+            case Mode3D::Pottery: {
+                std::vector<Object*> targets = collectTargets();
+                Tool::Pottery3D(window, engine, zoneMgr, dt, targets, nullptr);
+                break;
+            }
+            case Mode3D::Rotation: {
+                std::vector<Object*> targets = collectTargets();
+                Tool::Rotate3D(window, engine, zoneMgr, dt, targets, nullptr);
+                break;
+            }
+            case Mode3D::Morph: {
+                break;
+            }
+            case Mode3D::Combine: {
+                std::vector<Object*> targets = collectTargets();
+                if (window && glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
+                    state.combineOperandA = nullptr;
+                }
+                if (window && !ImGui::GetIO().WantCaptureMouse) {
+                    static bool combineMouseLeftPressedLast = false;
+                    const bool mouseLeftNow = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
+                    if (mouseLeftNow && !combineMouseLeftPressedLast) {
+                        Object* pick = Tool::PickObject3D(window, engine, targets);
+                        if (pick) {
+                            if (!state.combineOperandA) {
+                                state.combineOperandA = pick;
+                            } else if (pick != state.combineOperandA) {
+                                if (engine) engine->fuseObjects(state.combineOperandA, pick);
+                            }
+                        }
+                    }
+                    combineMouseLeftPressedLast = mouseLeftNow;
+                }
+                break;
+            }
+            case Mode3D::Sculpt: {
+                std::vector<Object*> targets = collectTargets();
+                if (window && !ImGui::GetIO().WantCaptureMouse) {
+                    static bool clayMouseLeftPressedLast = false;
+                    const bool mouseLeftNow = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
+                    if (mouseLeftNow && !clayMouseLeftPressedLast) {
+                        state.clayGrabbed = Tool::PickObject3D(window, engine, targets);
+                    }
+                    if (!mouseLeftNow && state.clayGrabbed) {
+                        if (state.clayTarget && state.clayTarget != state.clayGrabbed) {
+                            if (engine) engine->fuseObjects(state.clayTarget, state.clayGrabbed);
+                        }
+                        state.clayGrabbed = nullptr;
+                        state.clayTarget = nullptr;
+                    }
+                    clayMouseLeftPressedLast = mouseLeftNow;
+                }
+                break;
+            }
+            case Mode3D::Graph: {
+                state.showLawAuthor = true;
+                break;
+            }
+            default:
+                break;
         }
     }
 

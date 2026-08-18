@@ -1,10 +1,11 @@
 #include "CreatorConsoleWindow.hpp"
 #include <imgui.h>
+#include "Singularity/Core/Engine.hpp"
 
 // Include the individual console tabs
 namespace Rendering {
     void renderPaintConsole(ZoneManager& zoneMgr);
-    void render3DConsole(Person* player, Object* selectedObject3D);
+    void render3DConsole(Person* player, Object* selectedObject3D, ZoneManager& zoneMgr, GLFWwindow* window, Core::Engine* engine);
     void renderCharacterConsole(Person* player);
     void renderWorldConsole();
     void renderAssetsConsole();
@@ -14,7 +15,12 @@ namespace Rendering {
 
 namespace Rendering {
 
-    void renderCreatorConsoleWindow(bool* open, Person* player, Object* selected, ZoneManager& zoneMgr) {
+    void renderCreatorConsoleWindow(bool* open, Person* player, Object* selected, ZoneManager& zoneMgr, GLFWwindow* window, Core::Engine* engine) {
+        if (!open || !*open) return;
+
+        if (!engine) engine = &Core::Engine::instance();
+        if (!window && engine) window = engine->window();
+
         ImGui::SetNextWindowSize(ImVec2(400, 600), ImGuiCond_FirstUseEver);
         if (ImGui::Begin("Creator Console [F8]", open, ImGuiWindowFlags_MenuBar)) {
             
@@ -52,7 +58,7 @@ namespace Rendering {
                     renderPaintConsole(zoneMgr);
                     break;
                 case CreatorSection::Create3D:
-                    render3DConsole(player, selected);
+                    render3DConsole(player, selected, zoneMgr, window, engine);
                     break;
                 case CreatorSection::Character:
                     renderCharacterConsole(player);
@@ -79,8 +85,6 @@ namespace Rendering {
         auto& state = getCreatorConsoleState();
         if (state.currentSection == CreatorSection::Create3D && state.current3DMode == Mode3D::BrushCreate) {
             // Render primitive preview...
-            // Note: Keep it as hardcoded OpenGL fixed-function drawing or similar
-            // per user request: "If youre talking about the 3D tool's visual representation shape preview, it should just be the old hardcoded preview logic"
         }
     }
 

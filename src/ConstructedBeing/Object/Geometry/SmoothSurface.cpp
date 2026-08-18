@@ -129,6 +129,39 @@ glm::vec3 gradient(const glm::mat4& Q, const glm::vec3& p) {
     return glm::vec3(g);
 }
 
+// --- Rung 3 reference implementations (see the note in SmoothSurface.hpp) ---
+
+glm::vec3 gradientFromForm(const OntoMath::ScalarForm& f, const glm::vec3& p) {
+    const std::map<std::string, double> at{
+        {"x", p.x}, {"y", p.y}, {"z", p.z}};
+    const auto part = [&](const char* var) {
+        return f.derivative(var).evaluate(at).value_or(0.0);
+    };
+    // Halved to match Quadric::gradient, which returns ½∇ (the spatial part of
+    // Q·(p,1)) rather than the full gradient.
+    return glm::vec3(static_cast<float>(part("x") * 0.5),
+                     static_cast<float>(part("y") * 0.5),
+                     static_cast<float>(part("z") * 0.5));
+}
+
+bool raycastCoefficientsFromForm(const OntoMath::ScalarForm& f, const glm::vec3& o,
+                                 const glm::vec3& d, double& A, double& B, double& C) {
+    // f is degree 2, so f(o + t·d) is a quadratic in t and three samples
+    // determine it exactly -- no fitting, no tolerance. C = f(o), and the
+    // other two fall out of f at t = ±1.
+    const auto at = [&](double t) {
+        return f.evaluate({{"x", o.x + t * d.x},
+                           {"y", o.y + t * d.y},
+                           {"z", o.z + t * d.z}});
+    };
+    const auto f0 = at(0.0), fp = at(1.0), fm = at(-1.0);
+    if (!f0 || !fp || !fm) return false;
+    C = *f0;
+    A = (*fp + *fm) * 0.5 - *f0;
+    B = (*fp - *fm) * 0.5;
+    return true;
+}
+
 } // namespace Quadric
 
 OntoMath::ScalarForm SmoothSurfaceData::toScalarForm() const {
