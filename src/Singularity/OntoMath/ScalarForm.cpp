@@ -577,26 +577,47 @@ std::unique_ptr<MathNode> MathNode::differenceOp(std::unique_ptr<MathNode> a, st
     return n;
 }
 
+// box / cylinder / torus / smoothUnion: NOT YET EXPRESSIBLE -- they refuse.
+//
+// These three shipped as stubs that returned `sphere(...)`: box discarded two
+// of its three half-extents, cylinder discarded its height, torus discarded its
+// minor radius, and smoothUnion discarded its blend parameter and became a hard
+// union. Nothing tested them, so a box silently WAS a sphere everywhere the
+// AST was consulted -- and SdfNode::toMathNode consults it for exactly these
+// kinds.
+//
+// Writing them honestly needs vocabulary this build does not have. The
+// canonical SDFs are
+//     box:      length(max(|p| - b, 0)) + min(max(qx, qy, qz), 0)
+//     cylinder: max(length(p.xz) - r, |p.y| - h)
+//     torus:    length(vec2(length(p.xz) - R, p.y)) - r
+//     smin:     the polynomial blend, which needs clamp
+// and MathNode::Op has no componentwise absolute value, no clamp, and no
+// scalar min/max (Union/Intersection are the CSG booleans over whole distance
+// fields, not general min/max). Op is APPEND-ONLY and serialized as ints, so
+// widening it is a deliberate ontological act with its own tests -- not
+// something to smuggle into a factory.
+//
+// Until then: refuse. A caller gets nullptr and knows it got nothing, which is
+// the outcome a sphere-shaped lie was hiding.
 std::unique_ptr<MathNode> MathNode::box(glm::vec3 halfExtents, const std::string& pVar) {
-    auto node = std::make_unique<MathNode>();
-    node->op = Op::ScalarLeaf;
-    node->variableName = pVar;
-    return sphere(halfExtents.x, pVar);
+    (void)halfExtents; (void)pVar;
+    return nullptr;
 }
 
 std::unique_ptr<MathNode> MathNode::cylinder(double radius, double halfHeight, const std::string& pVar) {
-    (void)halfHeight;
-    return sphere(radius, pVar);
+    (void)radius; (void)halfHeight; (void)pVar;
+    return nullptr;
 }
 
 std::unique_ptr<MathNode> MathNode::torus(double majorR, double minorR, const std::string& pVar) {
-    (void)minorR;
-    return sphere(majorR, pVar);
+    (void)majorR; (void)minorR; (void)pVar;
+    return nullptr;
 }
 
 std::unique_ptr<MathNode> MathNode::smoothUnionOp(std::unique_ptr<MathNode> a, std::unique_ptr<MathNode> b, double k) {
-    (void)k;
-    return unionOp(std::move(a), std::move(b));
+    (void)a; (void)b; (void)k;
+    return nullptr;
 }
 
 // ---------------------------------------------------------------------------
@@ -1029,24 +1050,38 @@ std::optional<PropertyValue> MathNode::evaluate(const std::map<std::string, Prop
             auto a = children[0]->evaluate(vars, subject);
             auto b = children[1]->evaluate(vars, subject);
             if (!a || !b) return std::nullopt;
-            if (std::holds_alternative<double>(*a) && std::holds_alternative<double>(*b)) {
-                return PropertyValue(std::get<double>(*a) + std::get<double>(*b));
-            } else if (std::holds_alternative<glm::vec3>(*a) && std::holds_alternative<glm::vec3>(*b)) {
+            const bool aVec = std::holds_alternative<glm::vec3>(*a);
+            const bool bVec = std::holds_alternative<glm::vec3>(*b);
+            if (aVec && bVec) {
                 return PropertyValue(std::get<glm::vec3>(*a) + std::get<glm::vec3>(*b));
             }
-            return std::nullopt;
+            if (aVec != bVec) return std::nullopt;   // vector + scalar is not addition
+            // COERCING, like Op::Scale below. PropertyValue carries `float` and
+            // `double` as SEPARATE alternatives, and plenty of scalars arrive as
+            // float -- every PropertyRef<T, float> on a being, and (until this
+            // same commit) Length/Dot/Distance, which returned glm's float. A
+            // strict holds_alternative<double> pair therefore refused ordinary
+            // arithmetic and returned nullopt, which poisons every enclosing
+            // node silently. That is what made MathNode::sphere -- Sub(Length(p),
+            // ScalarLeaf(r)) -- undefined for every input it was ever given.
+            double da = 0.0, db = 0.0;
+            if (!propertyValueToNumber(*a, da) || !propertyValueToNumber(*b, db)) return std::nullopt;
+            return PropertyValue(da + db);
         }
         case Op::Sub: {
             if (children.size() != 2) return std::nullopt;
             auto a = children[0]->evaluate(vars, subject);
             auto b = children[1]->evaluate(vars, subject);
             if (!a || !b) return std::nullopt;
-            if (std::holds_alternative<double>(*a) && std::holds_alternative<double>(*b)) {
-                return PropertyValue(std::get<double>(*a) - std::get<double>(*b));
-            } else if (std::holds_alternative<glm::vec3>(*a) && std::holds_alternative<glm::vec3>(*b)) {
+            const bool aVec = std::holds_alternative<glm::vec3>(*a);
+            const bool bVec = std::holds_alternative<glm::vec3>(*b);
+            if (aVec && bVec) {
                 return PropertyValue(std::get<glm::vec3>(*a) - std::get<glm::vec3>(*b));
             }
-            return std::nullopt;
+            if (aVec != bVec) return std::nullopt;   // vector - scalar is not subtraction
+            double da = 0.0, db = 0.0;   // coercing, see Op::Add above
+            if (!propertyValueToNumber(*a, da) || !propertyValueToNumber(*b, db)) return std::nullopt;
+            return PropertyValue(da - db);
         }
         case Op::Scale: {
             if (children.size() != 2) return std::nullopt;
@@ -1083,7 +1118,8 @@ std::optional<PropertyValue> MathNode::evaluate(const std::map<std::string, Prop
             auto a = children[0]->evaluate(vars, subject);
             auto b = children[1]->evaluate(vars, subject);
             if (!a || !b || !std::holds_alternative<glm::vec3>(*a) || !std::holds_alternative<glm::vec3>(*b)) return std::nullopt;
-            return PropertyValue(glm::dot(std::get<glm::vec3>(*a), std::get<glm::vec3>(*b)));
+            return PropertyValue(static_cast<double>(
+                glm::dot(std::get<glm::vec3>(*a), std::get<glm::vec3>(*b))));
         }
         case Op::Cross: {
             if (children.size() != 2) return std::nullopt;
@@ -1111,7 +1147,7 @@ std::optional<PropertyValue> MathNode::evaluate(const std::map<std::string, Prop
             if (children.size() != 1) return std::nullopt;
             auto v = children[0]->evaluate(vars, subject);
             if (!v || !std::holds_alternative<glm::vec3>(*v)) return std::nullopt;
-            return PropertyValue(glm::length(std::get<glm::vec3>(*v)));
+            return PropertyValue(static_cast<double>(glm::length(std::get<glm::vec3>(*v))));
         }
         case Op::Map: {
             if (children.size() != 1) return std::nullopt;
@@ -1156,7 +1192,8 @@ std::optional<PropertyValue> MathNode::evaluate(const std::map<std::string, Prop
             auto a = children[0]->evaluate(vars, subject);
             auto b = children[1]->evaluate(vars, subject);
             if (!a || !b || !std::holds_alternative<glm::vec3>(*a) || !std::holds_alternative<glm::vec3>(*b)) return std::nullopt;
-            return PropertyValue(glm::distance(std::get<glm::vec3>(*a), std::get<glm::vec3>(*b)));
+            return PropertyValue(static_cast<double>(
+                glm::distance(std::get<glm::vec3>(*a), std::get<glm::vec3>(*b))));
         }
         // --- The CSG booleans over signed distance -------------------------
         // These ARE geom::SdfOp::Union / Intersect / Subtract (Sdf.cpp's

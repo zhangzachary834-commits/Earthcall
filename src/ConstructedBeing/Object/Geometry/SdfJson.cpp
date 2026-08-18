@@ -15,6 +15,11 @@ nlohmann::json sdfToJson(const SdfNode& n) {
     };
     if (!n.expr.empty()) j["expr"] = n.expr;
     if (n.mathNode) j["mathNode"] = n.mathNode->toJson();
+    // The piecewise arm was writable (makeImplicit takes a Piecewise) but never
+    // written, so a piecewise-authored shape survived in memory and vanished on
+    // save: sdfFromJson rebuilt a node with neither mathNode nor rpn, and
+    // evalSdf's empty-rpn fallback returns 1e9 -- empty space, silently.
+    if (n.piecewise) j["piecewise"] = n.piecewise->toJson();
     if (!n.planes.empty()) {
         BinaryPack::Writer w;
         w.writeArray(n.planes);
@@ -54,6 +59,10 @@ SdfNode sdfFromJson(const nlohmann::json& j) {
     }
     if (j.contains("mathNode")) {
         n.mathNode = OntoMath::MathNode::fromJson(j["mathNode"]);
+    }
+    if (j.contains("piecewise")) {
+        n.piecewise = std::make_shared<OntoMath::Piecewise>(
+            OntoMath::Piecewise::fromJson(j["piecewise"]));
     }
     if (j.contains("planesBinary")) {
         BinaryPack::Reader r(j["planesBinary"].get_binary());

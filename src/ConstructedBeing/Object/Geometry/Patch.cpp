@@ -73,25 +73,46 @@ glm::vec3 evalBezier(const BezierPatch& p, float u, float v) {
     return sum;
 }
 
-glm::vec3 bezierNormal(const BezierPatch& p, float u, float v) {
-    if (!p.valid()) return glm::vec3(0, 0, 1);
-    // Exact symbolic derivatives via OntoMath
+PatchDerivatives patchDerivatives(const BezierPatch& p) {
+    PatchDerivatives d;
+    if (!p.valid()) return d;
     PatchForms forms = patchToScalarForms(p);
-    auto dx_du = forms.x.derivative("u").evaluate({{"u", u}, {"v", v}}).value_or(0.0);
-    auto dy_du = forms.y.derivative("u").evaluate({{"u", u}, {"v", v}}).value_or(0.0);
-    auto dz_du = forms.z.derivative("u").evaluate({{"u", u}, {"v", v}}).value_or(0.0);
+    d.dxdu = forms.x.derivative("u");
+    d.dydu = forms.y.derivative("u");
+    d.dzdu = forms.z.derivative("u");
+    d.dxdv = forms.x.derivative("v");
+    d.dydv = forms.y.derivative("v");
+    d.dzdv = forms.z.derivative("v");
+    return d;
+}
 
-    auto dx_dv = forms.x.derivative("v").evaluate({{"u", u}, {"v", v}}).value_or(0.0);
-    auto dy_dv = forms.y.derivative("v").evaluate({{"u", u}, {"v", v}}).value_or(0.0);
-    auto dz_dv = forms.z.derivative("v").evaluate({{"u", u}, {"v", v}}).value_or(0.0);
+glm::vec3 bezierNormal(const BezierPatch& p, const PatchDerivatives& d, float u, float v) {
+    if (!p.valid()) return glm::vec3(0, 0, 1);
+    const std::map<std::string, double> at{{"u", u}, {"v", v}};
 
-    glm::vec3 du(static_cast<float>(dx_du), static_cast<float>(dy_du), static_cast<float>(dz_du));
-    glm::vec3 dv(static_cast<float>(dx_dv), static_cast<float>(dy_dv), static_cast<float>(dz_dv));
-    glm::vec3 n = glm::cross(du, dv);
-    float len = glm::length(n);
-    if (len > 1e-8f) return n / len;
+    // An undefined partial is NOT zero. value_or(0.0) here would fabricate a
+    // flat tangent and hand back a plausible-looking wrong normal; falling
+    // through to the finite-difference path below gives an answer that is
+    // merely approximate instead of invented.
+    const auto ex = [&](const OntoMath::ScalarForm& f, bool& ok) {
+        auto v0 = f.evaluate(at);
+        if (!v0) { ok = false; return 0.0; }
+        return *v0;
+    };
+    bool ok = true;
+    glm::vec3 du(static_cast<float>(ex(d.dxdu, ok)),
+                 static_cast<float>(ex(d.dydu, ok)),
+                 static_cast<float>(ex(d.dzdu, ok)));
+    glm::vec3 dv(static_cast<float>(ex(d.dxdv, ok)),
+                 static_cast<float>(ex(d.dydv, ok)),
+                 static_cast<float>(ex(d.dzdv, ok)));
+    if (ok) {
+        glm::vec3 n = glm::cross(du, dv);
+        float len = glm::length(n);
+        if (len > 1e-8f) return n / len;
+    }
 
-    // Fallback in degenerate boundary corner
+    // Degenerate corner (or an undefined partial): central differences.
     const float e = 1e-3f;
     glm::vec3 fdu = evalBezier(p, std::min(1.0f, u + e), v) - evalBezier(p, std::max(0.0f, u - e), v);
     glm::vec3 fdv = evalBezier(p, u, std::min(1.0f, v + e)) - evalBezier(p, u, std::max(0.0f, v - e));
@@ -100,13 +121,18 @@ glm::vec3 bezierNormal(const BezierPatch& p, float u, float v) {
     return flen > 1e-8f ? fn / flen : glm::vec3(0, 0, 1);
 }
 
+glm::vec3 bezierNormal(const BezierPatch& p, float u, float v) {
+    return bezierNormal(p, patchDerivatives(p), u, v);
+}
+
 TessMesh tessellateBezier(const BezierPatch& p, int resU, int resV) {
     TessMesh m;
     if (!p.valid()) return m;
+    const PatchDerivatives d = patchDerivatives(p);   // once, not per vertex
     auto vert = [&](float u, float v) {
         TessVertex tv;
         tv.pos = evalBezier(p, u, v);
-        tv.normal = bezierNormal(p, u, v);
+        tv.normal = bezierNormal(p, d, u, v);
         tv.uv = glm::vec2(u, v);
         return tv;
     };

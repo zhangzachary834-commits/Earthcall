@@ -49,7 +49,7 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
 
 cmake --build build --target earthcall -j8
 cmake --build build -j8                               # tests are NOT built by the line above
-ctest --test-dir build --output-on-failure -j4        # 48 registered, 47 pass
+ctest --test-dir build --output-on-failure -j4        # 49 registered, 48 pass
 ```
 
 **`--target earthcall` does not build the tests.** `ctest` will then report every test as
@@ -66,7 +66,7 @@ The Python backend starts from `src/Singularity/Foreign/py/app.py`.
 
 ## The test suite
 
-**As of 2026-08-17, 47 of 48 tests pass and the default build is clean.** The thirteen
+**As of 2026-08-17, 48 of 49 tests pass and the default build is clean.** The thirteen
 that were broken were stale against three refactors, not against each other:
 `Rendering/` → `Singularity/Screen/` and `Util/` → `Singularity/Storage/`;
 `Object::GeometryType` → `ShapeKind`; the placement and tool fields off `Person` and onto

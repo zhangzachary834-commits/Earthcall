@@ -31,6 +31,24 @@ BezierPatch makeBezierGrid(int du = 3, int dv = 3, float size = 0.5f);
 
 // Surface point / normal at parameter (u, v) in [0,1]^2 (Bernstein basis).
 glm::vec3 evalBezier(const BezierPatch& p, float u, float v);
+// The six partial derivatives of a patch's coordinate polynomials, taken ONCE.
+//
+// bezierNormal used to call patchToScalarForms and derivative() itself, so
+// tessellating a patch re-expanded the whole surface into Bernstein-basis
+// ScalarForms and re-differentiated it six times FOR EVERY VERTEX. Measured on
+// one 4x4 patch at 24x24: 1530 ms against 1.66 ms for the finite-difference
+// normal it replaced -- 920x, in the path that runs whenever a control point
+// moves. The symbolic normal is the right answer; recomputing the symbols per
+// vertex was the mistake.
+struct PatchDerivatives {
+    OntoMath::ScalarForm dxdu, dydu, dzdu;
+    OntoMath::ScalarForm dxdv, dydv, dzdv;
+};
+PatchDerivatives patchDerivatives(const BezierPatch& p);
+
+// Exact symbolic normal from derivatives already taken. Prefer this in loops.
+glm::vec3 bezierNormal(const BezierPatch& p, const PatchDerivatives& d, float u, float v);
+// Convenience for a single sample: takes the derivatives, then delegates.
 glm::vec3 bezierNormal(const BezierPatch& p, float u, float v);
 
 // Triangulate the patch for GL (local space).

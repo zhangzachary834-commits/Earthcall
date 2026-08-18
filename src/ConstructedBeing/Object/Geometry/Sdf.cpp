@@ -134,182 +134,138 @@ std::vector<SdfToken> compileExpr(const std::string& src) {
 
 namespace {
 
+// Lift a compiled implicit expression into an OntoMath AST -- or REFUSE.
+//
+// Returning nullptr is a real answer here, not a failure to try: makeImplicit
+// leaves mathNode null, and evalSdf falls back to evalRpn, which computes the
+// expression correctly. An APPROXIMATE MathNode is the one outcome that must
+// never be produced, because evalSdf and the WGSL emitter both prefer mathNode
+// when it exists -- so a wrong tree is not caught by webgpu_sdf_parity_test
+// either, which reads the same tree on both sides and agrees with itself.
+//
+// This is what the first version of this function did, and the shapes it
+// silently changed were:
+//   x / 2            -> Op::Scale, i.e. x * 2      (there is no division op)
+//   x ^ y            -> Op::Scale, i.e. x * y
+//   sqrt(e), tan(e), abs(e)  -> e                  (no such token case at all)
+//   sin(e) where e is compound -> e                (the call was dropped)
+//
+// What IS faithfully representable, and so is lifted:
+//   numbers, x/y/z, + - *, unary minus,
+//   var ^ constant                       -> ScalarForm::variable(var, exp)
+//   sin/cos/exp/log OF A BARE VARIABLE   -> ScalarForm::transcendental
+//
+// Everything else refuses. TransFactor::Kind carries only Sin/Cos/Exp/Ln and
+// is append-only and serialized as ints, so widening it to reach tan/sqrt/abs
+// is a deliberate ontological act, not something to slip into a converter.
 std::shared_ptr<OntoMath::MathNode> rpnToMathNode(const std::vector<SdfToken>& r) {
     if (r.empty()) return nullptr;
-    std::vector<std::shared_ptr<OntoMath::MathNode>> st;
+
+    using MN = OntoMath::MathNode;
+    const auto scalar = [](double v) {
+        auto n = std::make_shared<MN>();
+        n->op = MN::Op::ScalarLeaf;
+        n->scalarForm = OntoMath::ScalarForm::constant(v);
+        return n;
+    };
+    const auto value = [](const std::string& name) {
+        auto n = std::make_shared<MN>();
+        n->op = MN::Op::ValueLeaf;
+        n->variableName = name;
+        return n;
+    };
+    const auto binary = [](MN::Op op, const std::shared_ptr<MN>& a,
+                           const std::shared_ptr<MN>& b) {
+        auto n = std::make_shared<MN>();
+        n->op = op;
+        n->children.push_back(std::make_unique<MN>(*a));
+        n->children.push_back(std::make_unique<MN>(*b));
+        return n;
+    };
+
+    std::vector<std::shared_ptr<MN>> st;
+    const auto pop2 = [&st](std::shared_ptr<MN>& a, std::shared_ptr<MN>& b) {
+        if (st.size() < 2) return false;      // malformed RPN: refuse, never guess
+        b = st.back(); st.pop_back();
+        a = st.back(); st.pop_back();
+        return true;
+    };
+
     for (const auto& t : r) {
+        std::shared_ptr<MN> a, b;
         switch (t.kind) {
-            case SdfToken::Num: {
-                auto n = std::make_shared<OntoMath::MathNode>();
-                n->op = OntoMath::MathNode::Op::ScalarLeaf;
-                n->scalarForm = OntoMath::ScalarForm::constant(t.num);
-                st.push_back(std::move(n));
+            case SdfToken::Num: st.push_back(scalar(t.num)); break;
+            case SdfToken::X:   st.push_back(value("x")); break;
+            case SdfToken::Y:   st.push_back(value("y")); break;
+            case SdfToken::Z:   st.push_back(value("z")); break;
+
+            case SdfToken::Add:
+                if (!pop2(a, b)) return nullptr;
+                st.push_back(binary(MN::Op::Add, a, b));
                 break;
-            }
-            case SdfToken::X: {
-                auto n = std::make_shared<OntoMath::MathNode>();
-                n->op = OntoMath::MathNode::Op::ValueLeaf;
-                n->variableName = "x";
-                st.push_back(std::move(n));
+            case SdfToken::Sub:
+                if (!pop2(a, b)) return nullptr;
+                st.push_back(binary(MN::Op::Sub, a, b));
                 break;
-            }
-            case SdfToken::Y: {
-                auto n = std::make_shared<OntoMath::MathNode>();
-                n->op = OntoMath::MathNode::Op::ValueLeaf;
-                n->variableName = "y";
-                st.push_back(std::move(n));
+            case SdfToken::Mul:
+                if (!pop2(a, b)) return nullptr;
+                st.push_back(binary(MN::Op::Scale, a, b));
                 break;
-            }
-            case SdfToken::Z: {
-                auto n = std::make_shared<OntoMath::MathNode>();
-                n->op = OntoMath::MathNode::Op::ValueLeaf;
-                n->variableName = "z";
-                st.push_back(std::move(n));
-                break;
-            }
-            case SdfToken::Add: {
-                if (st.size() >= 2) {
-                    auto b = st.back(); st.pop_back();
-                    auto a = st.back(); st.pop_back();
-                    auto n = std::make_shared<OntoMath::MathNode>();
-                    n->op = OntoMath::MathNode::Op::Add;
-                    n->children.push_back(std::make_unique<OntoMath::MathNode>(*a));
-                    n->children.push_back(std::make_unique<OntoMath::MathNode>(*b));
-                    st.push_back(std::move(n));
-                }
-                break;
-            }
-            case SdfToken::Sub: {
-                if (st.size() >= 2) {
-                    auto b = st.back(); st.pop_back();
-                    auto a = st.back(); st.pop_back();
-                    auto n = std::make_shared<OntoMath::MathNode>();
-                    n->op = OntoMath::MathNode::Op::Sub;
-                    n->children.push_back(std::make_unique<OntoMath::MathNode>(*a));
-                    n->children.push_back(std::make_unique<OntoMath::MathNode>(*b));
-                    st.push_back(std::move(n));
-                }
-                break;
-            }
-            case SdfToken::Mul: {
-                if (st.size() >= 2) {
-                    auto b = st.back(); st.pop_back();
-                    auto a = st.back(); st.pop_back();
-                    auto n = std::make_shared<OntoMath::MathNode>();
-                    n->op = OntoMath::MathNode::Op::Scale;
-                    n->children.push_back(std::make_unique<OntoMath::MathNode>(*a));
-                    n->children.push_back(std::make_unique<OntoMath::MathNode>(*b));
-                    st.push_back(std::move(n));
-                }
-                break;
-            }
-            case SdfToken::Div: {
-                if (st.size() >= 2) {
-                    auto b = st.back(); st.pop_back();
-                    auto a = st.back(); st.pop_back();
-                    auto n = std::make_shared<OntoMath::MathNode>();
-                    n->op = OntoMath::MathNode::Op::Scale;
-                    n->children.push_back(std::make_unique<OntoMath::MathNode>(*a));
-                    n->children.push_back(std::make_unique<OntoMath::MathNode>(*b));
-                    st.push_back(std::move(n));
-                }
-                break;
-            }
-            case SdfToken::Pow: {
-                if (st.size() >= 2) {
-                    auto b = st.back(); st.pop_back();
-                    auto a = st.back(); st.pop_back();
-                    if (a->op == OntoMath::MathNode::Op::ValueLeaf && b->op == OntoMath::MathNode::Op::ScalarLeaf && b->scalarForm.terms.size() == 1) {
-                        double exp = b->scalarForm.terms[0].coefficient;
-                        auto n = std::make_shared<OntoMath::MathNode>();
-                        n->op = OntoMath::MathNode::Op::ScalarLeaf;
-                        n->scalarForm = OntoMath::ScalarForm::variable(a->variableName, exp);
-                        st.push_back(std::move(n));
-                    } else {
-                        auto n = std::make_shared<OntoMath::MathNode>();
-                        n->op = OntoMath::MathNode::Op::Scale;
-                        n->children.push_back(std::make_unique<OntoMath::MathNode>(*a));
-                        n->children.push_back(std::make_unique<OntoMath::MathNode>(*b));
-                        st.push_back(std::move(n));
-                    }
-                }
-                break;
-            }
+
             case SdfToken::Neg: {
-                if (!st.empty()) {
-                    auto a = st.back(); st.pop_back();
-                    auto neg1 = std::make_shared<OntoMath::MathNode>();
-                    neg1->op = OntoMath::MathNode::Op::ScalarLeaf;
-                    neg1->scalarForm = OntoMath::ScalarForm::constant(-1.0);
-                    auto n = std::make_shared<OntoMath::MathNode>();
-                    n->op = OntoMath::MathNode::Op::Scale;
-                    n->children.push_back(std::make_unique<OntoMath::MathNode>(*neg1));
-                    n->children.push_back(std::make_unique<OntoMath::MathNode>(*a));
-                    st.push_back(std::move(n));
-                }
+                if (st.empty()) return nullptr;
+                a = st.back(); st.pop_back();
+                st.push_back(binary(MN::Op::Scale, scalar(-1.0), a));
                 break;
             }
-            case SdfToken::Sin: {
-                if (!st.empty()) {
-                    auto a = st.back(); st.pop_back();
-                    if (a->op == OntoMath::MathNode::Op::ValueLeaf) {
-                        auto n = std::make_shared<OntoMath::MathNode>();
-                        n->op = OntoMath::MathNode::Op::ScalarLeaf;
-                        n->scalarForm = OntoMath::ScalarForm::transcendental(OntoMath::TransFactor::Kind::Sin, a->variableName);
-                        st.push_back(std::move(n));
-                    } else {
-                        st.push_back(a);
-                    }
-                }
+
+            case SdfToken::Pow: {
+                if (!pop2(a, b)) return nullptr;
+                // Only var^constant is expressible; a general power is not.
+                if (a->op != MN::Op::ValueLeaf) return nullptr;
+                if (b->op != MN::Op::ScalarLeaf) return nullptr;
+                if (b->scalarForm.terms.size() != 1) return nullptr;
+                if (!b->scalarForm.terms[0].factors.empty()) return nullptr;   // not a constant
+                auto n = std::make_shared<MN>();
+                n->op = MN::Op::ScalarLeaf;
+                n->scalarForm = OntoMath::ScalarForm::variable(
+                    a->variableName, b->scalarForm.terms[0].coefficient);
+                st.push_back(std::move(n));
                 break;
             }
-            case SdfToken::Cos: {
-                if (!st.empty()) {
-                    auto a = st.back(); st.pop_back();
-                    if (a->op == OntoMath::MathNode::Op::ValueLeaf) {
-                        auto n = std::make_shared<OntoMath::MathNode>();
-                        n->op = OntoMath::MathNode::Op::ScalarLeaf;
-                        n->scalarForm = OntoMath::ScalarForm::transcendental(OntoMath::TransFactor::Kind::Cos, a->variableName);
-                        st.push_back(std::move(n));
-                    } else {
-                        st.push_back(a);
-                    }
-                }
-                break;
-            }
-            case SdfToken::Exp: {
-                if (!st.empty()) {
-                    auto a = st.back(); st.pop_back();
-                    if (a->op == OntoMath::MathNode::Op::ValueLeaf) {
-                        auto n = std::make_shared<OntoMath::MathNode>();
-                        n->op = OntoMath::MathNode::Op::ScalarLeaf;
-                        n->scalarForm = OntoMath::ScalarForm::transcendental(OntoMath::TransFactor::Kind::Exp, a->variableName);
-                        st.push_back(std::move(n));
-                    } else {
-                        st.push_back(a);
-                    }
-                }
-                break;
-            }
+
+            case SdfToken::Sin:
+            case SdfToken::Cos:
+            case SdfToken::Exp:
             case SdfToken::Log: {
-                if (!st.empty()) {
-                    auto a = st.back(); st.pop_back();
-                    if (a->op == OntoMath::MathNode::Op::ValueLeaf) {
-                        auto n = std::make_shared<OntoMath::MathNode>();
-                        n->op = OntoMath::MathNode::Op::ScalarLeaf;
-                        n->scalarForm = OntoMath::ScalarForm::transcendental(OntoMath::TransFactor::Kind::Ln, a->variableName);
-                        st.push_back(std::move(n));
-                    } else {
-                        st.push_back(a);
-                    }
-                }
+                if (st.empty()) return nullptr;
+                a = st.back(); st.pop_back();
+                // ScalarForm::transcendental takes a VARIABLE, not a subtree.
+                if (a->op != MN::Op::ValueLeaf) return nullptr;
+                OntoMath::TransFactor::Kind kind = OntoMath::TransFactor::Kind::Sin;
+                if (t.kind == SdfToken::Cos)      kind = OntoMath::TransFactor::Kind::Cos;
+                else if (t.kind == SdfToken::Exp) kind = OntoMath::TransFactor::Kind::Exp;
+                else if (t.kind == SdfToken::Log) kind = OntoMath::TransFactor::Kind::Ln;
+                auto n = std::make_shared<MN>();
+                n->op = MN::Op::ScalarLeaf;
+                n->scalarForm = OntoMath::ScalarForm::transcendental(kind, a->variableName);
+                st.push_back(std::move(n));
                 break;
             }
+
+            // No division, power, tangent, square-root or absolute-value op
+            // exists in MathNode::Op or TransFactor::Kind. Refuse.
+            case SdfToken::Div:
+            case SdfToken::Tan:
+            case SdfToken::Sqrt:
+            case SdfToken::Abs:
             default:
-                break;
+                return nullptr;
         }
     }
-    return st.empty() ? nullptr : st.back();
+    // A well-formed expression leaves exactly one value on the stack.
+    if (st.size() != 1) return nullptr;
+    return st.back();
 }
 
 } // namespace
@@ -384,18 +340,22 @@ std::shared_ptr<OntoMath::MathNode> SdfNode::toMathNode() const {
     } else if (op == SdfOp::Leaf) {
         if (prim == SdfPrim::Sphere) {
             return std::shared_ptr<OntoMath::MathNode>(OntoMath::MathNode::sphere(dims.x));
-        } else if (prim == SdfPrim::Box) {
-            return std::shared_ptr<OntoMath::MathNode>(OntoMath::MathNode::box(dims));
-        } else if (prim == SdfPrim::Cylinder) {
-            return std::shared_ptr<OntoMath::MathNode>(OntoMath::MathNode::cylinder(dims.x, dims.y));
-        } else if (prim == SdfPrim::Torus) {
-            return std::shared_ptr<OntoMath::MathNode>(OntoMath::MathNode::torus(dims.x, dims.y));
+        } else if (prim == SdfPrim::Box || prim == SdfPrim::Cylinder ||
+                   prim == SdfPrim::Torus) {
+            // These refuse today -- see MathNode::box in ScalarForm.cpp for the
+            // vocabulary they are waiting on. Falls through to the refusal.
         } else if (prim == SdfPrim::Expr) {
             if (mathNode) return mathNode;
             return rpnToMathNode(rpn);
         }
     }
-    return std::shared_ptr<OntoMath::MathNode>(OntoMath::MathNode::sphere(0.5));
+    // REFUSE, do not substitute. This used to `return sphere(0.5)`, which
+    // turned every kind the branches above do not cover -- Cone, Ellipsoid,
+    // Ovoid, Paraboloid, RoundedBox, Convex (a whole polyhedron), and the
+    // Morph operator -- into a unit sphere, silently and with no diagnostic.
+    // A caller that cannot get a faithful AST must learn that, not receive a
+    // different shape that evaluates cleanly.
+    return nullptr;
 }
 
 static float evalRpn(const std::vector<SdfToken>& r, float x, float y, float z) {
