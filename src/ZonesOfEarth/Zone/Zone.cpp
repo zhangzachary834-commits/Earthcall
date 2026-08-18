@@ -3,6 +3,7 @@
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 #include "Singularity/Language/JoyHierarchy.hpp"
 #include <iostream>
+#include <cstdio>
 #include <algorithm>
 #include <unordered_set>
 #include "Singularity/OntoMath/Field.hpp"
@@ -37,6 +38,34 @@ void Zone::buildProperties() {
         "spatialField", this, &Zone::_spatialField));
     _propertyRegistry.push_back(std::make_unique<PropertyRef<Zone, std::shared_ptr<OntoMath::VectorField>>>(
         "spatialVectorField", this, &Zone::_spatialVectorField));
+}
+
+bool Zone::isOurverseGathering() const {
+    auto it = _qualities.find("kind");
+    return it != _qualities.end() && it->second == kGatheringKind;
+}
+
+void Zone::markOurverseGathering() {
+    _qualities["kind"] = kGatheringKind;
+    if (!_ownerId.empty()) {
+        std::fprintf(stderr,
+            "Zone '%s': REFUSED to remain owned after becoming an Ourverse "
+            "gathering. No one may own the gathering place (OURVERSE.md).\n",
+            _name.c_str());
+        _ownerId.clear();
+    }
+}
+
+void Zone::setOwner(const std::string& personId) {
+    if (isOurverseGathering() && !personId.empty()) {
+        std::fprintf(stderr,
+            "Zone '%s': REFUSED owner '%s'. A local Ourverse gathering is "
+            "unowned — all may participate equally (OURVERSE.md).\n",
+            _name.c_str(), personId.c_str());
+        return;
+    }
+    _ownerId = personId;
+    if (!personId.empty()) _deletable[personId] = true;
 }
 
 void Zone::load() {

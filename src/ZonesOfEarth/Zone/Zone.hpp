@@ -70,10 +70,13 @@ public:
 
     const std::string& owner() const { return _ownerId; }
     std::string propOwner() const { return _ownerId; }
-    void setOwner(const std::string& personId) {
-        _ownerId = personId;
-        if (!personId.empty()) _deletable[personId] = true;
-    }
+    // Gathering Zones (local Ourverse) may not be owned. setOwner is
+    // refused loudly and leaves the Zone unowned — OURVERSE.md.
+    void setOwner(const std::string& personId);
+
+    static constexpr const char* kGatheringKind = "ourverse-gathering";
+    bool isOurverseGathering() const;
+    void markOurverseGathering();
 
     World& world() { return *_world; }
     const World& world() const { return *_world; }
