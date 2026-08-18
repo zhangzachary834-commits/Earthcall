@@ -8,8 +8,9 @@ Near-term priorities (2026-08-14 — from architecture review):
 1. **Remove `EventEntity` (Ontological debt / Refusal #1)**: Delete `src/Singularity/Core/EventEntity.hpp` and `.cpp`; translate `EventBus` custom events to Relation-based representations with `type` field; remove `_activeCustomEvents` / `Universe::addActiveEvent` in `Law.cpp`. (Ref: `scratch/audits/audit_report_2026-08-13.md`).
 2. **One Person-facing creation path, end-to-end**: Prove full loop (Law fires → object exists → save → reload → re-target by stable identifier) using Shape Generator 3D law seed (`saves/tests/shape_generator_3d_law.json`).
 3. **Unseal `Soul` and `Formation` properties**: Expose membership and `relationTypeTag` in `Formation::buildProperties()`; expose `_identity` as read-only `ComputedProperty` in `Soul::buildProperties()`.
-4. **Hierarchy of Joys (Operational requirement)**: Add minimal load-bearing constraint (e.g. `Singular::satisfiesJoyBounds()` or First Mover seed law requiring explicit joy ordering).
-5. An external audit from Claude Opus 5 found that Earthcall currently has many competing sources of truth for Time. We need to have one unified philosophical framework for Time. 
+4. **Hierarchy of Joys (Operational requirement)**: Add minimal load-bearing constraint (e.g. `Singular::satisfiesJoyBounds()` or First Mover seed law requiring explicit joy ordering). **First gap (2026-08-18):** `Person` takes `joyOrdering`, warns if empty, then drops it (`Person.cpp`); `Zone` stores `_joyOrdering` and never reads it. Keep the ordering on the being and refuse an empty one before inventing a new bound API.
+5. An external audit from Claude Opus 5 found that Earthcall currently has many competing sources of truth for Time. We need to have one unified philosophical framework for Time. **Direction (2026-08-18):** do not start by unifying clocks (`deltaTime`, `world-clock`, physics `integrate`). Write what a *when* is first — the way `Formation` already says what a set and a category are. Closed-form reversal (`ONTOMATH_FRAMEWORK.md` §6), event-as-edge, and `WhileTrue` are waiting on that.
+6. **Retire `World` into `Zone`, then unseal `Ourverse`**: `World` is already marked for retirement (`World.hpp`); it still carries `Creative`/`Survival`/`Spectator`. The beings that name the whole (`World`, `Ourverse`) are the ones no law can see (`buildProperties()` is `{}` on both). Do not populate `World` properties — fold it, then expose `Ourverse` (`ownedObjects`, `primaryGatheringZone`, `laws`). 
 
 Architectural Actualization
 1. Ensure `Relation` and `Formation` ontology is load bearing.
@@ -21,7 +22,7 @@ Architectural Actualization
 6. Fully realize `Relationship` and `Community` ontologies (replace placeholder stubs).
 7. Make `Key` and `KeyBind` `Singular`s and integrate into Earthcall.
 8. Register the cursor a first mover avatar.
-9. Fully realize `Body` and `BodyPart` vision.
+9. Fully realize `Body` and `BodyPart` vision. **Note (2026-08-18):** `Arm`/`Finger`/… are still C++ classes under `src/Person/Body/BodyPart/Limb/`. Manifesto wants Formation-recursive parts down to tissue. Keep the human-form exception; do not grow new domain nouns here.
 10. Define light ontology to expose shaders to Persons.
 11. Zone jurisdiction resolution.
 12. Fully realize the Ourverse vision.
@@ -38,12 +39,15 @@ Architectural Actualization
 24. Human Language-Symbolic processing `Formation`s.
 25. Resolve Singularity external app integration.
 26. Multi-device Earthcall networking and inter-device paradigms.
-27. Enable the code to support robust multi-Person architecture. 
+27. Enable the code to support robust multi-Person architecture.
+28. **Stop `Body` inheriting `Object`**: manifesto revised this away (`docs/core/EarthcallOurverse.md` Body section — old visual-is-Object paradigm); `src/Person/Body/Body.hpp` still has `class Body : public Object`. Body stays a Person vessel (Singular/Formation); geometry stays on visual components. (Refusal #4.)
+29. **Strip game-controller leftovers from `Person`**: `grounded`, `jumpKeyDownLast`, walk/idle automation, keyframes. `Person.hpp` already asks to move these to an Avatar split. Game class is gone; this is the leftover. (Ref: `docs/architecture/GAME_ELIMINATION_PLAN.md`.) 
 
 Things to explore and deliberate on:
 1. To what extent should Earthcall use OOP versus ECS?
-2. How should Time be represented in Earthcall 
-3. 
+2. How should Time be represented in Earthcall. Start from *when* as a first-order category, not from clock unification. (See near-term 5.)
+3. How far should substrate ordering / origination ratio (`docs/architecture/SUBSTRATE_ORDERING.md`) steer week-to-week work versus the Person-facing creation loop (near-term 2 / feature-sized 2). The ratio is already non-zero (authored SDF → WGSL); it should not displace clicking the running app.
+4. Whether `src/OurVerse/` should exist as a top-level region or stay a class under `ZonesOfEarth/Ourverse/` with the Person-facing surface remaining ImGui under `Singularity/FirstMoverWindowTools/`. (`AGENTS.md` tree currently names a directory that is not on disk.) 
 
 Propertypath exposure debt (tracked in `tests/no_black_box_test.cpp`):
 1. `World` — `World::buildProperties()` is `{}`; resolve retirement into `Zone` before populating properties.
@@ -62,6 +66,7 @@ Housekeeping:
 3. ✅ **Gitignore cached clang** — done and verified (2026-08-13): Added `.cache/` to `.gitignore` and untracked index files.
 4. ✅ **Cleanup pass: hygiene, dead code, ignore paths, and stable physics law identifiers** — done and verified (2026-08-17): Fixed miniaudio paths in `.ignore` and `.claude/settings.json`; untracked `build.log`, `.DS_Store`, `imgui.ini`, and `saves/tests/*_final.json`; deleted duplicate audit report and duplicate fixture save; removed dead `Core::Engine*` parameter from CreatorConsole; removed unused `shapeKindLabel`, `kDevToolShapeKinds`, and includes from `DeveloperToolsWindow.cpp`; removed dead `Tool currentTool` local in `tests/test_save_helper.hpp`; updated docs test count to 48 registered, 47 pass and To-do list path; switched `setObjectID` to `setLawIdentifier` in `DefaultPhysicsLaws.cpp`; full build and test suite verified (48 registered, 47 pass).
 5. ✅ **Sandbox-to-terminal bridge for the Gemini Spark agent** — done and verified (2026-08-17): built `~/Documents/sandbox-to-terminal-bridge/` (outside this repo; stdlib Python, no service). A sandboxed agent writes `inbox/request.md`; the bridge classifies the command under a default-deny policy, requires a typed approval at the terminal for anything not read-only (retyping the full command for critical categories), runs it, and appends command + exit code + stdout/stderr to `outbox/transcript.md`. Verified: 57/57 classifier cases; all four approval branches driven over a real pty with side effects checked; watch loop, 300s timeout kill, and 120 KB output cap exercised end to end. Five evasions found and fixed during probing (`xargs rm`, `bash -c` payloads, loop bodies, `../` escapes to `/etc`, symlinked `/tmp` root). Notification decision (2026-08-17): nothing can push into a sandbox, and automating the Gemini app was rejected as a ToS gray area — so the agent polls `outbox/latest.md`, which is now rewritten at every transition (not only on completion) so a poll during an open approval prompt cannot read the previous command's result as its own. See its `README.md` § What this does not protect you from.
+6. **Reconcile `AGENTS.md` tree with disk**: it lists `src/OurVerse/`; that directory does not exist. Ourverse lives at `src/ZonesOfEarth/Ourverse/`. Decide with explore 4, then make the tree match.
 
 Feature-sized (split out of Housekeeping 2026-08-13):
 1. ✅ **Restore legacy 3D create tool & author Law counterpart** — done and verified (2026-08-13): Restored `Tool::ShapeGenerator3D` in ImGui as First Mover (`CreationChannel`); authored Law version (`saves/tests/shape_generator_3d_law.json`) activated by `L` key; fixed `Engine::initLogic()` null dereference. See [Specific Tasks/Legacy_3D_Create_Tool_Restoration.md](Specific%20Tasks/Legacy_3D_Create_Tool_Restoration.md).
