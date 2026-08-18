@@ -1,18 +1,15 @@
 #include "Person.hpp"
+#include <ctime>
 #include <iostream>
 #include <algorithm>
-#include <cmath>
 #include <functional>
 #include <unordered_map>
-#include <GLFW/glfw3.h>
 #include "Singularity/Screen/GL/GluCompat.hpp"
 #include "Singularity/Screen/Renderer.hpp"
 #include "ConstructedBeing/Object/Formation/Menu/stb_easy_font.h"
 #include "Singularity/Storage/Serialization.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
-#include "Singularity/Screen/Camera.hpp"
-#include "ZonesOfEarth/Physics/Physics.hpp"
 #include "PersonEvents.hpp"
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
@@ -35,6 +32,8 @@ extern ZoneManager mgr;
 void Person::buildProperties() {
     _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, glm::vec3>>(
         "position", this, &Person::position));
+    _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, glm::vec3>>(
+        "velocity", this, &Person::velocity));
     _propertyRegistry.push_back(std::make_unique<ComputedProperty<Person, std::string>>(
         "name", this, &Person::propName));   // read-only: identity is not a slot
     // --- Law System Perception Properties ---
@@ -74,10 +73,6 @@ nlohmann::json Person::serialize() const {
     if (_personId.canAuthenticate()) j["personId"] = _personId.toString();
     j["position"] = {position.x, position.y, position.z};
     j["velocity"] = {velocity.x, velocity.y, velocity.z};
-    j["grounded"] = grounded;
-    j["wasGrounded"] = wasGrounded;
-    j["wasMoving"] = wasMoving;
-    j["jumpKeyDownLast"] = jumpKeyDownLast;
     
     // Save body and body parts
     j["body"] = ::bodyToJson(getBody());
@@ -111,18 +106,9 @@ void Person::deserialize(const nlohmann::json& j) {
     if (j.contains("velocity") && j["velocity"].is_array() && j["velocity"].size() >= 3) {
         velocity = glm::vec3(j["velocity"][0], j["velocity"][1], j["velocity"][2]);
     }
-    if (j.contains("grounded") && j["grounded"].is_boolean()) {
-        grounded = j["grounded"].get<bool>();
-    }
-    if (j.contains("wasGrounded") && j["wasGrounded"].is_boolean()) {
-        wasGrounded = j["wasGrounded"].get<bool>();
-    }
-    if (j.contains("wasMoving") && j["wasMoving"].is_boolean()) {
-        wasMoving = j["wasMoving"].get<bool>();
-    }
-    if (j.contains("jumpKeyDownLast") && j["jumpKeyDownLast"].is_boolean()) {
-        jumpKeyDownLast = j["jumpKeyDownLast"].get<bool>();
-    }
+    // grounded / wasGrounded / wasMoving / jumpKeyDownLast used to serialize
+    // here as Game leftovers. They live on LocomotionChannel now (and the
+    // edge bits are kernel). Old saves may still carry the keys; ignore them.
     
     // Load body and body parts
     if (j.contains("body")) {
@@ -132,46 +118,6 @@ void Person::deserialize(const nlohmann::json& j) {
 
 
 
-
-void Person::createDefaultAnimations() {
-    // Idle animation
-    Animation idle;
-    idle.name = "Idle";
-    idle.duration = 2.0f;
-    idle.isLooping = true;
-    
-    // Simple breathing motion
-    idle.keyframes["Torso"] = {
-        glm::vec3(0.0f, 0.3f, 0.0f),
-        glm::vec3(0.0f, 0.32f, 0.0f),
-        glm::vec3(0.0f, 0.3f, 0.0f)
-    };
-    
-    animations.push_back(idle);
-    
-    // Walk animation
-    Animation walk;
-    walk.name = "Walk";
-    walk.duration = 1.0f;
-    walk.isLooping = true;
-    
-    // Arm swing
-    walk.keyframes["LeftArm"] = {
-        glm::vec3(-0.35f, 0.25f, 0.0f),
-        glm::vec3(-0.35f, 0.25f, 0.1f),
-        glm::vec3(-0.35f, 0.25f, 0.0f),
-        glm::vec3(-0.35f, 0.25f, -0.1f)
-    };
-    
-    walk.keyframes["RightArm"] = {
-        glm::vec3(0.35f, 0.25f, 0.0f),
-        glm::vec3(0.35f, 0.25f, -0.1f),
-        glm::vec3(0.35f, 0.25f, 0.0f),
-        glm::vec3(0.35f, 0.25f, 0.1f)
-    };
-    
-    animations.push_back(walk);
-}
 
 void Person::express() const {
     std::cout << "\n✨ Person: " << displayName << std::endl;
@@ -301,148 +247,6 @@ void Person::updatePose() {
     }
 }
 
-void Person::updateBodyAutomations(float deltaTime) {
-    for (auto* part : getBody().parts) {
-        if (!part || !part->hasAutomations()) continue;
-        // The authored local pose is the rest that animated channels build on.
-        part->setAutomationRest(part->localTransform());
-        part->advanceAutomations(deltaTime);
-    }
-}
-
-void Person::stopBodyAutomations() {
-    for (auto* part : getBody().parts) {
-        if (part) part->clearAutomations();
-    }
-    _idleActive = false;
-    _walkActive = false;
-}
-
-void Person::playIdleAutomation() {
-    stopBodyAutomations();
-    _idleActive = true;
-
-    for (auto* part : getBody().parts) {
-        if (!part) continue;
-        const float sideX = part->localTransform()[3].x;  // <0 left, >0 right
-        Automation::Clip clip;
-        clip.name = "idle";
-        clip.loop = true;
-
-        switch (part->getType()) {
-            case BodyPart::Type::Torso: {
-                // Slow breathing: chest rises and swells a touch.
-                Automation::Track sclY{Automation::Channel::SclY, Automation::Wave::Sine, 0.025f, 0.3f, 0.0f, 0.0f};
-                Automation::Track posY{Automation::Channel::PosY, Automation::Wave::Sine, 0.015f, 0.3f, 0.0f, 0.0f};
-                clip.tracks = {sclY, posY};
-                break;
-            }
-            case BodyPart::Type::Head: {
-                Automation::Track sway{Automation::Channel::RotY, Automation::Wave::Sine, 5.0f, 0.18f, 0.0f, 0.0f};
-                clip.tracks = {sway};
-                break;
-            }
-            case BodyPart::Type::Arm: {
-                // Arms drift gently outward/in, opposite on each side.
-                Automation::Track sway{Automation::Channel::RotZ, Automation::Wave::Sine, 3.0f, 0.25f, sideX < 0.0f ? 0.0f : 0.5f, 0.0f};
-                clip.tracks = {sway};
-                break;
-            }
-            default:
-                continue;  // legs/feet stay planted while idle
-        }
-
-        part->addAutomation(clip);
-        part->setAutomationRest(part->localTransform());
-    }
-}
-
-void Person::playWalkAutomation(float speed) {
-    // Map metres/second of travel to a stride tempo (cycles per second).
-    const float tempo = glm::clamp(speed * 0.9f, 0.8f, 3.2f);
-
-    if (!_walkActive) {
-        stopBodyAutomations();
-        _walkActive = true;
-
-        for (auto* part : getBody().parts) {
-            if (!part) continue;
-            const float sideX = part->localTransform()[3].x;  // <0 left, >0 right
-            Automation::Clip clip;
-            clip.name = "walk";
-            clip.loop = true;
-
-            switch (part->getType()) {
-                case BodyPart::Type::Leg: {
-                    Automation::Track swing{Automation::Channel::RotX, Automation::Wave::Sine, 26.0f, 1.0f, sideX < 0.0f ? 0.0f : 0.5f, 0.0f};
-                    clip.tracks = {swing};
-                    break;
-                }
-                case BodyPart::Type::Foot: {
-                    Automation::Track swing{Automation::Channel::RotX, Automation::Wave::Sine, 12.0f, 1.0f, sideX < 0.0f ? 0.0f : 0.5f, 0.0f};
-                    clip.tracks = {swing};
-                    break;
-                }
-                case BodyPart::Type::Arm: {
-                    // Arms swing opposite to the same-side leg.
-                    Automation::Track swing{Automation::Channel::RotX, Automation::Wave::Sine, 18.0f, 1.0f, sideX < 0.0f ? 0.5f : 0.0f, 0.0f};
-                    clip.tracks = {swing};
-                    break;
-                }
-                case BodyPart::Type::Torso: {
-                    // Subtle vertical bob in step with the stride (twice per cycle).
-                    Automation::Track bob{Automation::Channel::PosY, Automation::Wave::Sine, 0.02f, 2.0f, 0.0f, 0.0f};
-                    clip.tracks = {bob};
-                    break;
-                }
-                default:
-                    continue;
-            }
-
-            part->addAutomation(clip);
-            part->setAutomationRest(part->localTransform());
-        }
-    }
-
-    // Keep the stride tempo in sync with current travel speed without
-    // rebuilding (which would reset the clip clocks and stutter the cycle).
-    for (auto* part : getBody().parts) {
-        if (!part) continue;
-        for (auto& clip : part->automationState().clips) {
-            if (clip.name == "walk") clip.speed = tempo;
-        }
-    }
-}
-
-void Person::setLocomotion(bool moving, float speed) {
-    if (moving) {
-        playWalkAutomation(speed);
-    } else if (_walkActive || !_idleActive) {
-        // Only rebuild on the walk->idle transition; otherwise leave the idle
-        // clocks running so the breathing cycle doesn't restart every frame.
-        playIdleAutomation();
-    }
-}
-
-void Person::installLocomotionRouting() {
-    static bool installed = false;
-    if (installed) return;
-    installed = true;
-    // One subscription for all Persons: the event names its own target, so we
-    // avoid per-Person subscriptions (Core::EventBus has no unsubscribe).
-    Core::EventBus::instance().subscribe<LocomotionChanged>([](const LocomotionChanged& e) {
-        if (e.person) e.person->setLocomotion(e.moving, e.speed);
-    });
-}
-
-void Person::update(float deltaTime) {
-    updateAnimation(deltaTime);
-    updateBodyAutomations(deltaTime);
-    updatePhysics(deltaTime);
-    updatePose();
-}
-
-// Session and Zone Management Methods
 void Person::login(const std::string& sessionId) {
     if (!_isLoggedIn) {
         _isLoggedIn = true;
@@ -509,242 +313,6 @@ void Person::leaveZone(const std::string& zoneName) {
 
         std::cout << "👤 " << displayName << " left zone: " << zoneName << std::endl;
     }
-}
-
-
-
-void Person::addAnimation(const Animation& anim) {
-    animations.push_back(anim);
-}
-
-void Person::playAnimation(const std::string& name, bool loop) {
-    for (auto& anim : animations) {
-        if (anim.name == name) {
-            currentAnimation = &anim;
-            anim.isPlaying = true;
-            anim.isLooping = loop;
-            anim.currentTime = 0.0f;
-            return;
-        }
-    }
-}
-
-void Person::stopAnimation() {
-    if (currentAnimation) {
-        currentAnimation->isPlaying = false;
-        currentAnimation = nullptr;
-    }
-}
-
-void Person::updateAnimation(float deltaTime) {
-    if (!currentAnimation || !currentAnimation->isPlaying) return;
-    
-    currentAnimation->currentTime += deltaTime;
-    
-    if (currentAnimation->currentTime >= currentAnimation->duration) {
-        if (currentAnimation->isLooping) {
-            currentAnimation->currentTime = 0.0f;
-        } else {
-            stopAnimation();
-            return;
-        }
-    }
-    
-    // Apply animation to body parts
-    float progress = currentAnimation->currentTime / currentAnimation->duration;
-    
-    for (auto& part : getBody().parts) {
-        if (!part) continue;
-        
-        auto keyframeIt = currentAnimation->keyframes.find(part->getName());
-        if (keyframeIt != currentAnimation->keyframes.end()) {
-            const auto& keyframes = keyframeIt->second;
-            if (keyframes.size() > 1) {
-                // Interpolate between keyframes
-                float keyframeIndex = progress * (keyframes.size() - 1);
-                int index1 = static_cast<int>(keyframeIndex);
-                int index2 = std::min(index1 + 1, static_cast<int>(keyframes.size() - 1));
-                float t = keyframeIndex - index1;
-                
-                glm::vec3 pos = glm::mix(keyframes[index1], keyframes[index2], t);
-                glm::mat4 newTransform = glm::translate(glm::mat4(1.0f), pos);
-                part->setLocalTransform(newTransform);
-            }
-        }
-    }
-}
-
-
-void Person::applyForce(const glm::vec3& force) {
-    acceleration += force / 70.0f;  // F = ma (assuming 70kg)
-}
-
-void Person::setVelocity(const glm::vec3& vel) {
-    velocity = vel;
-}
-
-void Person::updatePhysics(float deltaTime) {
-    // Update velocity
-    velocity += acceleration * deltaTime;
-    
-    // Apply damping
-    velocity *= 0.95f;
-    
-    // Update position
-    position += velocity * deltaTime;
-    
-    // Reset acceleration
-    acceleration = glm::vec3(0.0f);
-    
-    // Simple ground collision
-    if (position.y < 0.0f) {
-        position.y = 0.0f;
-        velocity.y = 0.0f;
-    }
-}
-
-// ---------------------------------------------------------------------------
-// Movement integration (previously Game::stepMovement)
-//
-// Order each frame:
-//   1. horizontal intent (WASD, pitch-flattened)  -> move on XZ
-//   2. resolve object collisions HORIZONTALLY ONLY -> can't walk through walls
-//   3. find the support height under the feet      -> floor or object top
-//   4. vertical: fly input, or gravity + jump, clamped so feet never sink
-//      below the support (this is what kills the gravity-vs-collision fight)
-//   5. write camera.pos once, then pose the body parts from it
-//
-// Vertical contact is owned solely here; collisions never push the player up.
-// ---------------------------------------------------------------------------
-void Person::stepMovement(float dt, GLFWwindow* window, Core::Camera* camera, 
-                          ZoneManager* mgr, bool flying, bool canMove) {
-    const auto& objects = mgr->active().world().getOwnedObjects();
-    const float eyeH = getBody().getEyeHeight();
-
-    // Check if the person position was explicitly teleported (e.g. by a Law).
-    // At the end of the last stepMovement, position was exactly camera->pos - eyeH.
-    // If it's different now, we adopt the new position before resolving this frame's movement.
-    glm::vec3 expectedPersonPos = camera->pos - glm::vec3(0.0f, eyeH, 0.0f);
-    if (glm::distance(position, expectedPersonPos) > 1e-4f) {
-        camera->pos = position + glm::vec3(0.0f, eyeH, 0.0f);
-        velocity.y = 0.0f; // kill falling momentum on teleport
-    }
-    const glm::vec3 posBefore = camera->pos;
-    const bool wasGrounded = this->wasGrounded; // captured before this frame's resolve, for the landed edge
-
-    float actualSpeed = camera->speed;
-    if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS) actualSpeed *= 2.5f;       // sprint
-    if (glfwGetKey(window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS) actualSpeed *= 0.3f; // slow
-
-    // 1. Horizontal intent (ignores pitch so WASD behaves like Minecraft).
-    if (canMove) {
-        glm::vec3 forwardXZ = glm::normalize(glm::vec3(camera->front.x, 0.0f, camera->front.z));
-        if (glm::length(forwardXZ) < 1e-3f) forwardXZ = glm::vec3(0.0f, 0.0f, -1.0f);
-        glm::vec3 rightXZ = glm::normalize(glm::cross(forwardXZ, camera->up));
-
-        glm::vec3 move(0.0f);
-        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) move += forwardXZ;
-        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) move -= forwardXZ;
-        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) move += rightXZ;
-        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) move -= rightXZ;
-        if (glm::length(move) > 1e-4f) camera->pos += glm::normalize(move) * actualSpeed;
-    }
-
-    // 2. Resolve object collisions horizontally only. We let enforceCollisions
-    //    compute the push-out, then discard its vertical component so resting on
-    //    a surface never shoves the player up (that was the jitter).
-    {
-        constexpr float RADIUS = 0.3f;
-        glm::vec3 rightVec  = glm::normalize(glm::cross(camera->front, camera->up));
-        glm::vec3 forwardXZ = glm::normalize(glm::vec3(camera->front.x, 0.0f, camera->front.z));
-        if (glm::length(forwardXZ) < 1e-3f) forwardXZ = glm::vec3(0.0f, 0.0f, 1.0f);
-        glm::vec3 offsets[5] = { glm::vec3(0), rightVec*RADIUS, -rightVec*RADIUS,
-                                 forwardXZ*RADIUS, -forwardXZ*RADIUS };
-        for (const auto& off : offsets) {
-            // sample at eye and feet so both head-height and leg-height walls block us
-            for (float h : { 0.0f, eyeH }) {
-                glm::vec3 sample = camera->pos + off - glm::vec3(0.0f, h, 0.0f);
-                glm::vec3 before = sample;
-                Physics::enforceCollisions(sample, objects);
-                glm::vec3 d = sample - before;
-                d.y = 0.0f;                                   // horizontal push-out only
-                camera->pos += d;
-            }
-        }
-    }
-
-    // 3. Support height under the feet: global ground, raised to the top of any
-    //    object the player is standing within the XZ footprint of.
-    float supportY = 0.0f; // global floor; matches World ground plane
-    {
-        const float feetY = camera->pos.y - eyeH;
-        const float standTol = 0.05f; // top must be at/below the feet to be a floor
-        for (const auto& up : objects) {
-            if (!up) continue;
-            up->updateCollisionZone(up->getTransform());
-            glm::vec3 mn = up->collisionZone.corners[0], mx = mn;
-            for (int i = 1; i < 8; ++i) {
-                mn = glm::min(mn, up->collisionZone.corners[i]);
-                mx = glm::max(mx, up->collisionZone.corners[i]);
-            }
-            if (camera->pos.x < mn.x || camera->pos.x > mx.x) continue;
-            if (camera->pos.z < mn.z || camera->pos.z > mx.z) continue;
-            if (mx.y <= feetY + standTol) supportY = std::max(supportY, mx.y);
-        }
-    }
-    const float minEyeY = supportY + eyeH;
-
-    // 4. Vertical resolve.
-    const bool jumpKeyDown = canMove && glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS;
-    if (flying) {
-        float vy = 0.0f;
-        if (jumpKeyDown) vy += actualSpeed;
-        if (canMove && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) vy -= actualSpeed;
-        camera->pos.y += vy;
-        velocity.y = 0.0f;
-        grounded = false;
-    } else {
-        constexpr float GRAVITY = 9.81f;
-        constexpr float JUMP_SPEED = 5.0f;
-        if (jumpKeyDown && !jumpKeyDownLast && grounded) {
-            velocity.y = JUMP_SPEED;   // jump impulse
-            grounded = false;
-            Core::EventBus::instance().publish(ECA::Event{"jump-started", this, nullptr, std::time(nullptr)});
-        }
-        velocity.y -= GRAVITY * dt;     // integrate gravity
-        camera->pos.y += velocity.y * dt;
-    }
-    jumpKeyDownLast = jumpKeyDown;
-
-    // Floor constraint: feet can never sink below the support surface.
-    if (camera->pos.y <= minEyeY) {
-        camera->pos.y = minEyeY;
-        if (velocity.y < 0.0f) velocity.y = 0.0f;
-        grounded = true;
-    } else {
-        grounded = !flying && (camera->pos.y - minEyeY) <= 1e-3f;
-    }
-    if (grounded && !wasGrounded) {
-        Core::EventBus::instance().publish(ECA::Event{"landed", this, nullptr, std::time(nullptr)});
-        this->wasGrounded = grounded; // Update for next frame
-    }
-
-    // 5. Locomotion event + animation clocks, then a single pose from the camera.
-    glm::vec3 horizDelta = camera->pos - posBefore;
-    horizDelta.y = 0.0f;
-    const float distance = glm::length(horizDelta);
-    const bool moving = distance > 1e-5f;
-    const float speedPerSec = (moving && dt > 1e-5f) ? distance / dt : 0.0f;
-    Core::EventBus::instance().publish(LocomotionChanged{this, moving, speedPerSec});
-    if (moving && !wasMoving) {
-        Core::EventBus::instance().publish(ECA::Event{"locomotion-started", this, nullptr, std::time(nullptr)});
-    } else if (!moving && wasMoving) {
-        Core::EventBus::instance().publish(ECA::Event{"locomotion-stopped", this, nullptr, std::time(nullptr)});
-    }
-    wasMoving = moving;
-
-    position = camera->pos - glm::vec3(0.0f, eyeH, 0.0f);
-    updatePose();
 }
 
 void Person::requestAIAction(const std::string& context, const std::string& targetObjectId) {

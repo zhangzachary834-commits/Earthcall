@@ -1,19 +1,22 @@
 #include "ConstructedBeing/Singular/Singular.hpp"
 #include "ConstructedBeing/Object/Formation/Formation.hpp"
 #include "ConstructedBeing/Singular/Property/Property.hpp"
+#include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
 #include "ConstructedBeing/Singular/Property/DataStructure.hpp"
 
 Singular::Singular() = default;
 Singular::~Singular() = default;
-Singular::Singular(const Singular&) {}
-Singular& Singular::operator=(const Singular&) {
+Singular::Singular(const Singular& o) : _telosId(o._telosId) {}
+Singular& Singular::operator=(const Singular& o) {
+    if (this != &o) _telosId = o._telosId;
     _propertyRegistry.clear();
     _property_formation = nullptr;
     _propertiesBuilt = false;
     return *this;
 }
-Singular::Singular(Singular&&) noexcept {}
-Singular& Singular::operator=(Singular&&) noexcept {
+Singular::Singular(Singular&& o) noexcept : _telosId(std::move(o._telosId)) {}
+Singular& Singular::operator=(Singular&& o) noexcept {
+    if (this != &o) _telosId = std::move(o._telosId);
     _propertyRegistry.clear();
     _property_formation = nullptr;
     _propertiesBuilt = false;
@@ -61,10 +64,19 @@ public:
     }
 };
 
+void Singular::registerTelosProperty() {
+    for (const auto& property : _propertyRegistry) {
+        if (property && property->name() == "telos") return;
+    }
+    _propertyRegistry.push_back(std::make_unique<PropertyRef<Singular, std::string>>(
+        "telos", this, &Singular::_telosId));
+}
+
 Property* Singular::findProperty(const std::string& name) {
     if (!_propertiesBuilt) {
         _propertiesBuilt = true;   // set first: buildProperties may itself query
         buildProperties();
+        registerTelosProperty();
     }
     for (auto& property : _propertyRegistry) {
         if (property && property->name() == name) return property.get();
@@ -84,6 +96,7 @@ std::vector<Property*> Singular::listProperties() {
     if (!_propertiesBuilt) {
         _propertiesBuilt = true;
         buildProperties();
+        registerTelosProperty();
     }
     std::vector<Property*> out;
     out.reserve(_propertyRegistry.size());

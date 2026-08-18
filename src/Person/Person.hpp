@@ -1,19 +1,14 @@
 #pragma once
 #include <string>
-#include <map>
 #include <vector>
 #include <memory>
 #include "Body.hpp"
 #include <glm/glm.hpp>
-#include <GLFW/glfw3.h>
 #include "ConstructedBeing/Singular/Singular.hpp"
 #include "Identity/SingularId.hpp"
 #include "Soul/Soul.hpp"
-#include "Singularity/Core/EventBus.hpp"
-#include "Singularity/Screen/Camera.hpp"
 #include <json.hpp>
 
-// Forward declarations for Person events (defined in PersonEvents.hpp)
 struct PersonJoinedEvent;
 struct PersonLeftZoneEvent;
 struct PersonLoginEvent;
@@ -21,110 +16,36 @@ struct PersonLogoutEvent;
 
 class Person : public Singular {
 public:
-
-    /* NOTE: Refactor the "game-like" aspects of Person added by Cursor to a separate Avatar system.
-    It's first and foremost a digital metaverse, not a game.
-    We need to focus on the Earthcall essentials before adding game-like features. */
-
-
-
-    // Animation System
-    struct Animation {
-        std::string name;
-        float duration;
-        float currentTime = 0.0f;
-        bool isPlaying = false;
-        bool isLooping = false;
-        std::map<std::string, std::vector<glm::vec3>> keyframes;  // bodyPart -> positions
-        std::map<std::string, std::vector<glm::vec3>> rotations; // bodyPart -> rotations
-    };
-
     std::string displayName;
 
     glm::vec3 position{0.0f, 0.0f, 0.0f};
     glm::vec3 velocity{0.0f, 0.0f, 0.0f};
-    glm::vec3 acceleration{0.0f, 0.0f, 0.0f};
-    bool grounded = false;  // Whether the person is resting on a surface
-    bool wasGrounded = false; // Previous frame's grounded state, for landing detection
-    bool wasMoving = false;  // Previous frame's locomotion state, for locomotion events
-    bool jumpKeyDownLast = false; // Previous frame's jump key state, for jump edge detection
-    // --- Law System Perception Properties --- 
 
+    // Where this Person is looking from — facts about the Person, not the
+    // window. The Input modality writes them through LocomotionChannel.
     glm::vec3 cameraPos{0.0f, 0.0f, 0.0f};
     glm::vec3 cameraForward{0.0f, 0.0f, -1.0f};
 
-
-    
-    // Serialization
     nlohmann::json serialize() const;
     void deserialize(const nlohmann::json& j);
 
-    // Constructors
     Person(Soul soul, Body body, const std::string& joyOrdering);
-    // Person(std::string displayName, Body&& body, glm::vec3 pos = {0.0f,0.0f,0.0f});  // Commented out - needs Soul reference
     void express() const;
     void draw() const;
     void drawNametag() const;
-    void update(float deltaTime);
 
     const std::string& getDisplayName() const { return displayName; }
 
-
-
-    // Update all body part world transforms based on current position
+    // Rebuild body-part world transforms from position. Joint inheritance is
+    // still a temporary parent-name chain; Relations should own it later.
     void updatePose();
 
-
-    
-    // Animation System
-    void addAnimation(const Animation& anim);
-    void playAnimation(const std::string& name, bool loop = false);
-    void stopAnimation();
-    void updateAnimation(float deltaTime);
-
-    // Automation System (time-driven body-part motion on top of the rest pose).
-    // Advance every body part's automation clocks once per frame; updatePose()
-    // then samples them. Keeping advance separate from sampling lets updatePose
-    // run several times per frame without over-advancing the clips.
-    void updateBodyAutomations(float deltaTime);
-    // Author clip libraries onto the body parts.
-    void playIdleAutomation();              // gentle breathing / sway
-    void playWalkAutomation(float speed);   // swing legs & arms; speed scales tempo
-    void stopBodyAutomations();
-
-    // Apply a locomotion intent: walking swaps in the walk cycle (tempo tracks
-    // speed), standing still settles into idle. Holds the transition guard so it
-    // is safe to call every frame. Normally driven via the LocomotionChanged
-    // event (see PersonEvents.hpp) rather than called directly.
-    void setLocomotion(bool moving, float speed);
-
-    // Install the single EventBus router that dispatches LocomotionChanged to
-    // its target Person. Idempotent; call once at startup.
-    static void installLocomotionRouting();
-    
-
-    
-    // Physics and Movement
-    void applyForce(const glm::vec3& force);
-    void setVelocity(const glm::vec3& vel);
-    void updatePhysics(float deltaTime);
-    
-    // Movement integration (previously Game::stepMovement)
-    // Takes external dependencies: camera, window for input, zone manager for collisions
-    void stepMovement(float dt, struct GLFWwindow* window, 
-                      Core::Camera* camera, 
-                      class ZoneManager* mgr, 
-                      bool flying, bool canMove);
-    
-    // Body access methods
     Body& getBody() { return bodies[activeBodyIndex]; }
     const Body& getBody() const { return bodies[activeBodyIndex]; }
-    
-    // Multiple bodies management
-    void addBody(Body&& newBody) { bodies.push_back(std::move(newBody)); }
-    void setActiveBody(int index) { if(index >= 0 && index < bodies.size()) activeBodyIndex = index; }
 
-    // Session and Zone Management
+    void addBody(Body&& newBody) { bodies.push_back(std::move(newBody)); }
+    void setActiveBody(int index) { if(index >= 0 && index < static_cast<int>(bodies.size())) activeBodyIndex = index; }
+
     void login(const std::string& sessionId = "");
     void logout(const std::string& sessionId = "");
     void joinZone(const std::string& zoneName);
@@ -133,7 +54,6 @@ public:
     const std::string& getCurrentSession() const { return _currentSession; }
     const std::vector<std::string>& getJoinedZones() const { return _joinedZones; }
 
-    // AI Network Request
     void requestAIAction(const std::string& context, const std::string& targetObjectId);
 
     // ------------------------------------------------------------------
@@ -180,9 +100,6 @@ public:
     }
 
 private:
-    // A Person is a legible Singular too: laws can ask about (and, where
-    // authorized, act on) a person's position; the name is read-only —
-    // identity is not a writable slot.
     void buildProperties() override;
     std::string propName() const { return displayName; }
 
@@ -195,20 +112,7 @@ private:
     std::vector<Body> bodies;
     int activeBodyIndex = 0;
 
-    // Helper method for creating default animations
-    void createDefaultAnimations();
-    
-    // Session and zone state
     bool _isLoggedIn = false;
     std::string _currentSession;
     std::vector<std::string> _joinedZones;
-    
-
-    
-    // Transient animation state
-    bool _walkActive = false;
-    bool _idleActive = false;
-    std::vector<Animation> animations;
-    Animation* currentAnimation = nullptr;
-
 };

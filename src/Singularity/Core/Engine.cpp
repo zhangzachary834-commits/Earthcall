@@ -1,5 +1,6 @@
 #include "Singularity/Core/Engine.hpp"
 #include "Singularity/Core/CreationChannel.hpp"
+#include "Singularity/Screen/Camera.hpp"
 #include "../../../imgui/imgui.h"
 #include "../../../imgui/backends/imgui_impl_glfw.h"
 

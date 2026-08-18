@@ -359,6 +359,14 @@ public:
 
     static const char* resultName(ApplicationResult result);
 
+protected:
+    // Subclasses that override buildProperties replace the registry. Call this
+    // so `@<id>.enabled` still resolves — otherwise the Law Graph checkbox
+    // writes Law::_enabled and law-text cannot see it. First-mover channels
+    // (Creation, Locomotion) must call this; their actuation also reads
+    // isEnabled() so setting the first mover down actually stops it.
+    void registerEnabledProperty();
+
 private:
     void initializeLawIdentity();
     // Stable, law-derived names for the three group Formations (see the .cpp).

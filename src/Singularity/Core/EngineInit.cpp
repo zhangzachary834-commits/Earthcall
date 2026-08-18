@@ -31,6 +31,7 @@
 #include <glm/glm.hpp>
 #include <iostream>
 #include "CreationChannel.hpp"
+#include "Singularity/Input/LocomotionChannel.hpp"
 #include <memory>
 
 extern ZoneManager mgr;
@@ -73,6 +74,10 @@ void Engine::initLogic() {
 
     // Register first-mover CreationChannel
     Singularity::Core::CreationChannel::syncRegister(*_lawManager);
+
+    // Register first-mover LocomotionChannel (WASD / jump / vessel clips).
+    // Must exist before playIdle below — the clips live on the channel now.
+    Singularity::Input::LocomotionChannel::syncRegister(*_lawManager);
 
     // Inject default physics laws (gravity and kinematics)
     for (const auto& law : Physics::createDefaultPhysicsLaws()) {
@@ -263,11 +268,13 @@ void Engine::initLogic() {
     // Ensure _player initial position matches _camera.pos
     glm::vec3 anchor = _camera->pos - glm::vec3(0.0f, _player->getBody().getEyeHeight(), 0.0f);
     _player->position = anchor;
-    // Route LocomotionChanged events to their target Person (once), then settle
-    // the avatar into a living idle by default; movement publishes the event
-    // that swaps this for a walk cycle (see Engine::update).
-    Person::installLocomotionRouting();
-    _player->playIdleAutomation();
+    // Route LocomotionChanged to the channel's clip libraries, then settle
+    // the vessel into idle. Movement publishes the event that swaps idle
+    // for a walk cycle (see Engine::update).
+    if (auto* locomotion = Singularity::Input::LocomotionChannel::find(*_lawManager)) {
+        locomotion->installRouting();
+        locomotion->playIdle(*_player);
+    }
     _player->updatePose();
 
     // --------------------------------------------------------------

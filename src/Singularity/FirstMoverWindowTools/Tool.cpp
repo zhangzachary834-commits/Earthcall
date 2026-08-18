@@ -422,6 +422,11 @@ void Tool::ShapeGenerator3D(GLFWwindow *window, Core::Engine *engine, ZoneManage
     devToolMouseLeftPressedLast = mouseLeftNow;
     if (!justPressed) return;
 
+    // First mover set down: the developer bypass does not spawn. The
+    // authored shape-generator law is a different being and has its own
+    // enabled bit.
+    if (!channel.isEnabled()) return;
+
     // THE MUTUAL EXCLUSION. The contract in Tool.hpp reads "so the two paths
     // never both fire off one click", and until 2026-08-17 nothing enforced
     // it -- which stayed invisible only because the law path could not fire at

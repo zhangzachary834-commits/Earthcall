@@ -23,6 +23,13 @@ public:
     // Instantiate or retrieve a Lexeme for a given string
     std::shared_ptr<Lexeme> resolve(const std::string& symbol);
 
+    // The first-mover foundation Lexeme (`lexeme.christ`). Created once.
+    // God shows up as the root of the seed hierarchy, not as a skinned Object.
+    std::shared_ptr<Lexeme> foundation();
+
+    static constexpr const char* kFoundationId     = "lexeme.christ";
+    static constexpr const char* kFoundationSymbol = "Christ";
+
     // Get an exact Lexeme by its Singular ID
     std::shared_ptr<Lexeme> findById(const std::string& id) const;
 

@@ -8,11 +8,12 @@ class ElementalToolHandler;
 #include <memory>
 
 class Person;
-class Camera;
 class LawManager;
 class KeyboardHandler;
 class MouseHandler;
 class CursorTools;
+
+namespace Core { class Camera; }
 
 
 namespace Core {

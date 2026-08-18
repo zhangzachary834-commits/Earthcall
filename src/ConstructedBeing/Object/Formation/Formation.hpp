@@ -190,6 +190,30 @@ public:
     // an instance points at its category without the category pointing back.
     bool isCoreMember(const Singular* s) const;
 
+    // Hierarchy of Joys — this Formation IS the hierarchy when tagged so.
+    // Members are Lexemes; directed `grounds` edges are the order
+    // (A grounds B: A is more foundational). No new C++ kind.
+    // See docs/architecture/HIERARCHY_OF_JOYS.md.
+    static constexpr const char* kGroundsType      = "grounds";
+    static constexpr const char* kJoyHierarchyTag  = "hierarchy-of-joys";
+
+    bool isJoyHierarchy() const {
+        return relationTypeTag == kJoyHierarchyTag;
+    }
+    void markJoyHierarchy() { relationTypeTag = kJoyHierarchyTag; }
+
+    // Rooted, tagged, every member is a Lexeme. Orphans are not invented.
+    bool satisfiesJoyBounds() const;
+
+    // Rank of a Lexeme (or of a being's telos) in this hierarchy.
+    // Root = 0. Unranked / not in the graph = -1. Depth-bounded.
+    int rankOf(const std::string& identifier) const;
+    int rankOf(const Singular& being) const;
+
+    // Views — membership and the relation list are not rewritten.
+    std::vector<Singular*> membersOrderedByTelos() const;
+    std::vector<std::shared_ptr<Relation>> relationsOrderedByTelos() const;
+
     // Implement the pure virtual method from Singular. Unique per instance —
     // identity-keyed systems (Rete bindings, provenance) depend on it.
     std::string getIdentifier() const override { return _formationId; }

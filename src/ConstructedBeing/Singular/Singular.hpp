@@ -117,7 +117,18 @@ public:
     const std::vector<std::string>& getDesignatedZones() const { return designatedZones; }
     std::vector<std::string>& getDesignatedZonesMutable() { return designatedZones; }
 
+    // Telos: the Lexeme this being is ordered toward. Stored as that Lexeme's
+    // identifier. Empty means unranked in any joy hierarchy. Not a slogan and
+    // not a skinned Object — see HIERARCHY_OF_JOYS.md.
+    const std::string& telosId() const { return _telosId; }
+    void setTelosId(const std::string& id) { _telosId = id; }
+    std::string propTelos() const { return _telosId; }
+    void propSetTelos(const std::string& id) { _telosId = id; }
+
 protected:
+    // Registered on every Singular after the subclass vocabulary, so a being
+    // that forgets to mention telos is not a black box.
+    void registerTelosProperty();
     std::vector<std::string> designatedZones;
     std::vector<StakeholderRecord> _stakeholders;
     std::vector<std::unique_ptr<Property>> _propertyRegistry;
@@ -143,6 +154,7 @@ protected:
 
     std::string name;
     bool _propertiesBuilt = false;
+    std::string _telosId;
 
     /*
      * RELATION AND FORMATION OWNERSHIP AND POINTERS

@@ -50,6 +50,7 @@
 #include "Person/Soul/Soul.hpp"
 #include "Relation/Relation.hpp"
 #include "Singularity/Core/CreationChannel.hpp"
+#include "Singularity/Input/LocomotionChannel.hpp"
 #include "Singularity/Core/EventEntity.hpp"
 #include "Singularity/Language/Lexeme.hpp"
 #include "Singularity/Screen/LawGraphWindow.hpp"
@@ -315,6 +316,7 @@ int main() {
         Core::EventEntity event("probe-happened");       audit("EventEntity", event);
         geom::FieldNode field("probe-field");            audit("FieldNode", field);
         Singularity::Core::CreationChannel channel;      audit("CreationChannel", channel);
+        Singularity::Input::LocomotionChannel locomotion; audit("LocomotionChannel", locomotion);
         audit("TransferPolicy", TransferPolicy::instance());
 
         Soul soul("Prober");
@@ -340,6 +342,9 @@ int main() {
     {
         Singularity::Core::CreationChannel channel;
         auditReachability("CreationChannel", channel, advertised);
+
+        Singularity::Input::LocomotionChannel locomotion;
+        auditReachability("LocomotionChannel", locomotion, advertised);
 
         Soul soul("Prober");
         Body body("humanoid", "default");

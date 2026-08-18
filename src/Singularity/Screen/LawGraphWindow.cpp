@@ -5,6 +5,7 @@
 #include "ConstructedBeing/Object/Creation/ObjectConcept.hpp"
 #include "ConstructedBeing/Object/Object.hpp"
 #include "Singularity/Core/CreationChannel.hpp"
+#include "Singularity/Input/LocomotionChannel.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 
 #include <imgui.h>
@@ -85,6 +86,10 @@ const std::vector<PathOption>& knownPathOptions() {
         options.push_back({"cameraForward.x", "Person — avatar", "number", false});
         options.push_back({"cameraForward.y", "Person — avatar", "number", false});
         options.push_back({"cameraForward.z", "Person — avatar", "number", false});
+        options.push_back({"velocity", "Person — avatar", "vector", true});
+        options.push_back({"velocity.x", "Person — avatar", "number", false});
+        options.push_back({"velocity.y", "Person — avatar", "number", false});
+        options.push_back({"velocity.z", "Person — avatar", "number", false});
 
         // The creation channel, PROBED rather than typed out. It was a
         // hand-written list of six paths against a registry of twenty-one, so
@@ -107,6 +112,23 @@ const std::vector<PathOption>& knownPathOptions() {
                 options.push_back({property->name() + ".x", "Channel — Creation", "number", false});
                 options.push_back({property->name() + ".y", "Channel — Creation", "number", false});
                 options.push_back({property->name() + ".z", "Channel — Creation", "number", false});
+            }
+        }
+
+        static Singularity::Input::LocomotionChannel locomotionPrototype;
+        for (Property* property : locomotionPrototype.listProperties()) {
+            const PropertyValue probe = property->value();
+            const bool isVec = std::holds_alternative<glm::vec3>(probe);
+            const char* type = "number";
+            if (isVec)                                            type = "vector";
+            else if (std::holds_alternative<glm::mat4>(probe))     type = "transform";
+            else if (std::holds_alternative<std::string>(probe))   type = "text";
+            else if (std::holds_alternative<bool>(probe))          type = "toggle";
+            options.push_back({property->name(), "Channel — Locomotion", type, isVec});
+            if (isVec) {
+                options.push_back({property->name() + ".x", "Channel — Locomotion", "number", false});
+                options.push_back({property->name() + ".y", "Channel — Locomotion", "number", false});
+                options.push_back({property->name() + ".z", "Channel — Locomotion", "number", false});
             }
         }
     }
@@ -1702,7 +1724,13 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player,
     }
     if (firstMoverCount > 0) {
         ImGui::Spacing();
-        ImGui::TextDisabled("First movers — the engine, legible:");
+        ImGui::TextDisabled("First movers — the engine's bootstrap, not a lock:");
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip(
+                "Uncheck to set a first mover down so authored law can take over.\n"
+                "The engine keeps the channel; only its actuation stops.\n"
+                "Same as writing @<slug>.enabled := false.");
+        }
         for (const auto& law : laws.getAll()) {
             if (law && law->isFirstMover() && passesFilter(*law)) lawRow(law);
         }

@@ -6,8 +6,10 @@
 #include <algorithm>
 #include <atomic>
 #include <cstdio>
+#include <unordered_map>
 #include <unordered_set>
 #include <map>
+#include <queue>
 #include <set>
 #include "Singularity/Screen/Renderer.hpp"
 
@@ -768,4 +770,100 @@ std::shared_ptr<Formation> Formation::fromJson(const nlohmann::json& json,
     }
 
     return f;
+}
+
+bool Formation::satisfiesJoyBounds() const {
+    if (!isJoyHierarchy()) return false;
+    if (!hasRoot()) return false;
+    if (!dynamic_cast<const Singularity::Language::Lexeme*>(_root)) return false;
+    for (const Singular* member : members) {
+        if (!member) continue;
+        if (!dynamic_cast<const Singularity::Language::Lexeme*>(member)) return false;
+    }
+    return true;
+}
+
+int Formation::rankOf(const std::string& identifier) const {
+    if (identifier.empty() || !hasRoot()) return -1;
+
+    std::unordered_map<std::string, std::vector<std::string>> children;
+    for (const auto& rel : relationMgr.getAll()) {
+        if (!rel || !rel->directed) continue;
+        if (rel->type != kGroundsType) continue;
+        if (rel->entityA.empty() || rel->entityB.empty()) continue;
+        children[rel->entityA].push_back(rel->entityB);
+    }
+
+    const std::string rootId = _root->getIdentifier();
+    std::unordered_map<std::string, int> rank;
+    std::queue<std::string> walk;
+    rank[rootId] = 0;
+    walk.push(rootId);
+    int depth = 0;
+    while (!walk.empty() && depth < kMaxFormationDepth) {
+        const size_t layer = walk.size();
+        for (size_t i = 0; i < layer; ++i) {
+            const std::string curr = walk.front();
+            walk.pop();
+            auto it = children.find(curr);
+            if (it == children.end()) continue;
+            for (const auto& child : it->second) {
+                if (rank.count(child)) continue;
+                rank[child] = rank[curr] + 1;
+                walk.push(child);
+            }
+        }
+        ++depth;
+    }
+
+    auto found = rank.find(identifier);
+    return found == rank.end() ? -1 : found->second;
+}
+
+int Formation::rankOf(const Singular& being) const {
+    const std::string& telos = being.telosId();
+    if (!telos.empty()) return rankOf(telos);
+    return rankOf(being.getIdentifier());
+}
+
+std::vector<Singular*> Formation::membersOrderedByTelos() const {
+    std::vector<Singular*> ordered = members;
+    std::stable_sort(ordered.begin(), ordered.end(),
+        [this](const Singular* a, const Singular* b) {
+            const int ra = a ? rankOf(*a) : -1;
+            const int rb = b ? rankOf(*b) : -1;
+            const int ka = ra < 0 ? 100000 : ra;
+            const int kb = rb < 0 ? 100000 : rb;
+            return ka < kb;
+        });
+    return ordered;
+}
+
+std::vector<std::shared_ptr<Relation>> Formation::relationsOrderedByTelos() const {
+    auto ordered = relationMgr.getAll();
+    std::stable_sort(ordered.begin(), ordered.end(),
+        [this](const std::shared_ptr<Relation>& a, const std::shared_ptr<Relation>& b) {
+            if (!a || !b) return bool(a) && !b;
+            const int aMin = [&] {
+                const int ra = rankOf(a->entityA);
+                const int rb = rankOf(a->entityB);
+                const int ka = ra < 0 ? 100000 : ra;
+                const int kb = rb < 0 ? 100000 : rb;
+                return std::min(ka, kb);
+            }();
+            const int bMin = [&] {
+                const int ra = rankOf(b->entityA);
+                const int rb = rankOf(b->entityB);
+                const int ka = ra < 0 ? 100000 : ra;
+                const int kb = rb < 0 ? 100000 : rb;
+                return std::min(ka, kb);
+            }();
+            if (aMin != bMin) return aMin < bMin;
+            const int aSpan = std::abs((rankOf(a->entityA) < 0 ? 100000 : rankOf(a->entityA))
+                                     - (rankOf(a->entityB) < 0 ? 100000 : rankOf(a->entityB)));
+            const int bSpan = std::abs((rankOf(b->entityA) < 0 ? 100000 : rankOf(b->entityA))
+                                     - (rankOf(b->entityB) < 0 ? 100000 : rankOf(b->entityB)));
+            return aSpan < bSpan;
+        });
+    return ordered;
 }

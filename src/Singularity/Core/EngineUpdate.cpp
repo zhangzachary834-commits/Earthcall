@@ -3,10 +3,12 @@
 #include "../Screen/Camera.hpp"
 #include "../Input/KeyboardHandler.hpp"
 #include "../Input/MouseHandler.hpp"
+#include "../Input/LocomotionChannel.hpp"
 #include "../../Person/Person.hpp"
 #include "../../ZonesOfEarth/ZoneManager.hpp"
 #include "../../ZonesOfEarth/Physics/Physics.hpp"
 #include "../../ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
+#include "../../ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include <imgui.h>
 
 extern ZoneManager mgr;
@@ -16,7 +18,7 @@ namespace Core {
     void Engine::blendRail(const Object* o, glm::vec3& start, glm::vec3& dir, float& length) const {}
     
     void Engine::update(float dt) {
-        if (!_keyboardHandler || !_mouseHandler || !_camera || !_player) return;
+        if (!_keyboardHandler || !_mouseHandler || !_camera || !_player || !_lawManager) return;
 
         // Update input handlers
         if (_mainMenu.isOpen()) {
@@ -32,10 +34,12 @@ namespace Core {
         // Check if any text input is active (ImGui)
         bool anyTextInputActive = ImGui::IsAnyItemActive() || ImGui::IsWindowFocused();
 
-        // Player movement
+        // Vessel movement — Input first mover, not Person.
         const bool canMove = _mouseHandler->isCursorLocked() && !_mainMenu.isOpen() && !anyTextInputActive;
         const bool flying  = Physics::getFlying();
-        _player->stepMovement(dt, _window, _camera.get(), &mgr, flying, canMove);
+        if (auto* locomotion = Singularity::Input::LocomotionChannel::find(*_lawManager)) {
+            locomotion->step(*_player, *_camera, _window, mgr, dt, flying, canMove);
+        }
 
         // Update world (physics etc.)
         mgr.active().world().update(dt);

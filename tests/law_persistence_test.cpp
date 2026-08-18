@@ -12,6 +12,12 @@
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ConstructedBeing/Object/Creation/ObjectConcept.hpp"
 #include "ConstructedBeing/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
+#include "Person/Person.hpp"
+#include "Person/Soul/Soul.hpp"
+#include "Singularity/Input/LocomotionChannel.hpp"
+#include "Singularity/Screen/Camera.hpp"
+#include "ZonesOfEarth/ZoneManager.hpp"
 
 #include <GLFW/glfw3.h>
 #include <cassert>
@@ -194,6 +200,52 @@ int main() {
         }
         assert(re1->applicationLog().size() <= 256);
         assert(re1->toJson()["applicationLog"].size() <= 16);
+
+        // ------------------------------------------------------------------
+        // 8. First movers can be set down. Their C++ stays in the engine;
+        //    only the enabled bit is world state, and actuation honors it.
+        // ------------------------------------------------------------------
+        {
+            LawManager movers;
+            Singularity::Input::LocomotionChannel::syncRegister(movers);
+            auto* loco = Singularity::Input::LocomotionChannel::find(movers);
+            assert(loco);
+            assert(loco->isFirstMover());
+            assert(loco->isEnabled());   // bootstrap default is on
+
+            PropertyValue enabledVal;
+            assert(PropertyPath::parse("enabled").getValue(*loco, enabledVal)
+                   == PropertyPath::PathResult::Ok);
+            assert(std::get<bool>(enabledVal) == true);
+            assert(PropertyPath::parse("enabled").setValue(*loco, PropertyValue(false))
+                   == PropertyPath::PathResult::Ok);
+            assert(!loco->isEnabled());
+
+            Soul soul("walker");
+            Body body = Body::createBasicAvatar("Voxel");
+            Person person(std::move(soul), std::move(body), "default");
+            person.position = glm::vec3(3.0f, 4.0f, 5.0f);
+            ::Core::Camera camera;
+            ZoneManager zones;
+            loco->step(person, camera, window, zones, 0.016f, false, true);
+            assert(nearf(person.position.x, 3.0f) && nearf(person.position.y, 4.0f)
+                   && nearf(person.position.z, 5.0f));
+
+            nlohmann::json savedMovers = movers.toJson();
+            assert(savedMovers.contains("firstMoverEnabled"));
+            assert(savedMovers["firstMoverEnabled"]["locomotion-channel"] == false);
+            for (const auto& lawJson : savedMovers["laws"]) {
+                assert(lawJson.value("id", "") != "locomotion-channel");
+            }
+
+            LawManager reloaded;
+            Singularity::Input::LocomotionChannel::syncRegister(reloaded);
+            assert(Singularity::Input::LocomotionChannel::find(reloaded)->isEnabled());
+            reloaded.loadFromJson(savedMovers);
+            auto* restored = Singularity::Input::LocomotionChannel::find(reloaded);
+            assert(restored);
+            assert(!restored->isEnabled());
+        }
 
         Universe::instance().setProvider({});               // leave no dangling refs
     }

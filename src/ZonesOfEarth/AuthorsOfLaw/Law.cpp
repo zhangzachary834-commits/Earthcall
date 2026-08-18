@@ -596,9 +596,13 @@ const char* Law::resultName(ApplicationResult result) {
 // PropertyPath like anything else, so a law targeting a law IS a metalaw.
 // authorityLevel is deliberately absent — the ceiling is Singularity-granted,
 // never law-modifiable.
-void Law::buildProperties() {
+void Law::registerEnabledProperty() {
     _propertyRegistry.push_back(std::make_unique<ComputedProperty<Law, bool>>(
         "enabled", this, &Law::propEnabled, &Law::propSetEnabled));
+}
+
+void Law::buildProperties() {
+    registerEnabledProperty();
     _propertyRegistry.push_back(std::make_unique<ComputedProperty<Law, int>>(
         "conditionMode", this, &Law::propConditionMode, &Law::propSetConditionMode));
     _propertyRegistry.push_back(std::make_unique<ComputedProperty<Law, std::string>>(
@@ -2169,6 +2173,18 @@ void LawManager::loadFromJson(const nlohmann::json& j) {
         }
     }
 
+    // Re-apply the Person's first-mover gates onto the engine-owned survivors.
+    // Missing keys leave the first mover at its boot default (on, except
+    // channels that opt in disabled). A first mover that is not in this
+    // world yet cannot be addressed — that is the same covenant as authors.
+    if (j.contains("firstMoverEnabled") && j["firstMoverEnabled"].is_object()) {
+        for (auto it = j["firstMoverEnabled"].begin(); it != j["firstMoverEnabled"].end(); ++it) {
+            Law* law = find(it.key());
+            if (!law || !law->isFirstMover()) continue;
+            if (it.value().is_boolean()) law->setEnabled(it.value().get<bool>());
+        }
+    }
+
     // Compile continuous laws' conditions into Rete terminals.
     // This must happen after add() and after trigger binding, because the
     // condition model needs to be set and the Rete network populated.
@@ -2225,10 +2241,19 @@ std::vector<Law::ApplicationRecord> LawManager::applyAllToTargets() {
 
 nlohmann::json LawManager::toJson() const {
     nlohmann::json arr = nlohmann::json::array();
+    nlohmann::json firstMoverEnabled = nlohmann::json::object();
     for (const auto& law : _laws) {
+        if (!law) continue;
         // First movers' truth lives in the engine (physics laws persist in
         // their own save section); serializing the bridge would forge it.
-        if (law && !law->isFirstMover()) arr.push_back(law->toJson());
+        // Their ENABLED bit is not engine truth — it is the Person's choice
+        // to set a first mover down so authored law can take over. Persist
+        // only that bit, keyed by the stable slug.
+        if (law->isFirstMover()) {
+            firstMoverEnabled[law->getIdentifier()] = law->isEnabled();
+            continue;
+        }
+        arr.push_back(law->toJson());
     }
     nlohmann::json triggersJson = nlohmann::json::object();
     for (const auto& entry : _triggers) {
@@ -2238,6 +2263,7 @@ nlohmann::json LawManager::toJson() const {
         {"laws", arr},
         {"triggers", triggersJson},
         {"formationMembers", formationMemberIds(_lawFormation)},
-        {"rete", _rete.toJson()}
+        {"rete", _rete.toJson()},
+        {"firstMoverEnabled", firstMoverEnabled}
     };
 }

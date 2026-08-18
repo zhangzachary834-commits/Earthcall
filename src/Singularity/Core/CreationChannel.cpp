@@ -34,6 +34,7 @@ void CreationChannel::syncRegister(LawManager& laws) {
 }
 
 void CreationChannel::buildProperties() {
+    registerEnabledProperty();
     _propertyRegistry.push_back(std::make_unique<PropertyRef<CreationChannel, std::string>>(
         "activeTool", this, &CreationChannel::activeTool));
     _propertyRegistry.push_back(std::make_unique<PropertyRef<CreationChannel, std::string>>(

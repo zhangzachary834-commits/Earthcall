@@ -14,6 +14,9 @@ Lexeme::Lexeme(const std::string& symbol) : _symbol(symbol) {
     _id = "lexeme_" + std::string(uuid_str);
 }
 
+Lexeme::Lexeme(const std::string& symbol, const std::string& stableId)
+    : _id(stableId), _symbol(symbol) {}
+
 std::string Lexeme::getIdentifier() const {
     return _id;
 }

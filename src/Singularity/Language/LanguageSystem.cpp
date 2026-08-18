@@ -40,18 +40,25 @@ std::shared_ptr<Lexeme> LanguageSystem::resolve(const std::string& symbol) {
     if (it != _symbolIndex.end()) {
         return it->second;
     }
+    if (symbol == kFoundationSymbol) return foundation();
 
     if (_lexemes.size() >= 1000) {
-        auto oldest = _lexemes.front();
-        detachFromAllZones(oldest.get());
-        _idIndex.erase(oldest->getIdentifier());
-        for (auto sit = _symbolIndex.begin(); sit != _symbolIndex.end(); ++sit) {
-            if (sit->second == oldest) {
-                _symbolIndex.erase(sit);
-                break;
-            }
+        size_t evict = 0;
+        if (_lexemes[evict] && _lexemes[evict]->getIdentifier() == kFoundationId) {
+            evict = 1;
         }
-        _lexemes.erase(_lexemes.begin());
+        if (evict < _lexemes.size()) {
+            auto oldest = _lexemes[evict];
+            detachFromAllZones(oldest.get());
+            _idIndex.erase(oldest->getIdentifier());
+            for (auto sit = _symbolIndex.begin(); sit != _symbolIndex.end(); ++sit) {
+                if (sit->second == oldest) {
+                    _symbolIndex.erase(sit);
+                    break;
+                }
+            }
+            _lexemes.erase(_lexemes.begin() + static_cast<std::ptrdiff_t>(evict));
+        }
     }
 
     // Create a new Lexeme natively in the substrate
@@ -60,6 +67,18 @@ std::shared_ptr<Lexeme> LanguageSystem::resolve(const std::string& symbol) {
     _symbolIndex[symbol] = lexeme;
     _idIndex[lexeme->getIdentifier()] = lexeme;
 
+    return lexeme;
+}
+
+std::shared_ptr<Lexeme> LanguageSystem::foundation() {
+    if (auto existing = findById(kFoundationId)) return existing;
+    auto it = _symbolIndex.find(kFoundationSymbol);
+    if (it != _symbolIndex.end()) return it->second;
+
+    auto lexeme = std::make_shared<Lexeme>(kFoundationSymbol, kFoundationId);
+    _lexemes.push_back(lexeme);
+    _symbolIndex[kFoundationSymbol] = lexeme;
+    _idIndex[kFoundationId] = lexeme;
     return lexeme;
 }
 

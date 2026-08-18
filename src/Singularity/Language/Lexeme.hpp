@@ -13,6 +13,9 @@ namespace Language {
 class Lexeme : public Singular {
 public:
     explicit Lexeme(const std::string& symbol);
+    // First-mover seed: a stable slug law-text can name (`lexeme.christ`).
+    // Ordinary resolve() still mints a uuid so authored words do not collide.
+    Lexeme(const std::string& symbol, const std::string& stableId);
     ~Lexeme() override = default;
 
     // Singular interface
