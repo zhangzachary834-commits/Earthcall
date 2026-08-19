@@ -1,5 +1,9 @@
 # Polyhedron System Guide
 
+> **Stale as Person-facing instruction (2026-08-19).** The "Shape" dropdown
+> and in-world click-to-create flow this describes is the old tool surface.
+> See [`README.md`](README.md).
+
 ## What's New
 
 The Object system has been upgraded to support polyhedrons (3D shapes with flat faces) instead of just cubes. This means you can now create and work with different types of 3D shapes like tetrahedrons, octahedrons, dodecahedrons, and icosahedrons.

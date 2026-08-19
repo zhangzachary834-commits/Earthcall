@@ -1,5 +1,8 @@
 # Convex/Concave Polyhedron Implementation Summary
 
+> Historical implementation note. Not the math architecture (that is OntoMath
+> as of 2026-08-18). See [`README.md`](README.md).
+
 ## Overview
 
 Successfully implemented a comprehensive convex/concave polyhedron system that extends the existing polyhedron functionality with advanced shape analysis and variant generation capabilities.

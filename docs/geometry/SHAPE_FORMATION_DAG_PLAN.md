@@ -1,5 +1,10 @@
 # Shape‑as‑Formation: staging the geometry graph from Tree → DAG → Formation
 
+> **Still open, and a different question from the 2026-08-18 math unification.**
+> That work made `SdfNode` evaluate through `OntoMath::MathNode` (RPN is fallback).
+> It did not turn the shape *graph* into a Formation. This plan is about
+> identity and sharing of parts, not about who owns `sqrt`.
+
 > A manifesto‑aligned plan for moving the SDF shape spine (`geom::SdfNode`) from a
 > containment **tree** to a relational **DAG**, and ultimately toward a **Formation**
 > of geometric **Singulars** related by operation‑**Relations**.

@@ -6,6 +6,24 @@
 **Target Subsystems:** `src/ConstructedBeing/Object/Geometry/`, `src/Singularity/OntoMath/`, `src/Singularity/Screen/WebGPU/`, `src/ZonesOfEarth/AuthorsOfLaw/`  
 **Prerequisite Audit:** [`docs/audits/GEOMETRY_ONTOMATH_AUDIT_2026-08-17.md`](../audits/GEOMETRY_ONTOMATH_AUDIT_2026-08-17.md)  
 
+**Status as of 2026-08-19:** the six rungs landed on 2026-08-18. This file is the
+*plan that was executed*, not a backlog. Empty checkboxes in §4 are historical
+— do not implement from them. The executed record, including what was *not*
+done the way the plan first said, is
+[`Geometry_OntoMath_Remaining_Rungs.md`](../Agenda/Tasks/Specific%20Tasks/Geometry_OntoMath_Remaining_Rungs.md).
+The 2026-08-17 audit below it describes the world *before* this work.
+
+What landed differently from the text below:
+
+- `TransFactor::Kind` stayed frozen (`Sin`, `Cos`, `Exp`, `Ln`). Tan / Sqrt / Abs
+  live on `MathNode::Op` only (23–28). There is no `Op::Min` / `Op::Max`;
+  `Union` / `Intersection` were widened to componentwise min/max instead.
+- `emitNode` / `emitRpn` / `evalRpn` were **not deleted**. `emitNode` prefers
+  `n.mathNode` then falls back to `emitRpn`; CPU `evalSdf` prefers `MathNode`
+  then `evalRpn`. The isolated engine is a fallback, not the source of truth.
+- Placement / tool state is on `CreationChannel`, not `@person` (see the
+  Shape Generator 3D law audit).
+
 ---
 
 ## 0. Executive Summary & Ontological Motivation
@@ -226,27 +244,30 @@ abla(p^T Q p) = 2 Q p$.
 
 ## 4. Prioritized Execution Checklist
 
-- [ ] **Rung 0: OntoMath Primitives & Basis Expansion**
-  - [ ] Add geometric primitives (`sphere`, `box`, `cylinder`, `torus`) to `OntoMath::MathNode`.
-  - [ ] Implement Bernstein $\leftrightarrow$ Monomial basis conversions in `OntoMath::ScalarForm`.
-  - [ ] Add unit tests in `tests/ontomath_test.cpp`.
-- [ ] **Rung 1: Unified Symbolic SDF Engine**
-  - [ ] Replace `geom::ExprParser` / `evalRpn` with `OntoMath::ScalarForm` / `MathNode`.
-  - [ ] Update `geom::evalSdf` to evaluate `MathNode` AST.
-  - [ ] Update `tests/webgpu_sdf_parity_test.cpp`.
-- [ ] **Rung 2: Bézier Patch Algebraic Unification**
-  - [ ] Express `geom::BezierPatch` via 3 coordinate `OntoMath::ScalarForm` polynomials.
-  - [ ] Replace finite-difference normals with symbolic derivatives ($\mathbf{T}_u 	imes \mathbf{T}_v$).
-  - [ ] Verify `tests/bezier_patch_law_test.cpp`.
-- [ ] **Rung 3: Quadric Manifold Unification**
-  - [ ] Migrate `SmoothSurface.cpp` quadrics into degree-2 `OntoMath::ScalarForm` expressions.
-  - [ ] Replace matrix gradient with symbolic `ScalarForm::derivative()`.
-- [ ] **Rung 4: WebGPU Transpiler Consolidation**
-  - [ ] Remove `emitNode()` and `emitRpn()` from `SdfWgsl.cpp`.
-  - [ ] Route all shape shaders through `emitMathNode()` and `emitPiecewise()`.
-- [ ] **Rung 5: Law Reflection & Property Path Governance**
-  - [ ] Expose geometric `MathNode` / `ScalarForm` parameters in `Object::buildProperties()`.
-  - [ ] Verify `tests/no_black_box_test.cpp` and full test suite.
+Historical. All six rungs are done as of 2026-08-18. Deviations are in the
+status banner at the top; do not treat an unchecked box here as remaining work.
+
+- [x] **Rung 0: OntoMath Primitives & Basis Expansion**
+  - [x] Add geometric primitives (`sphere`, `box`, `cylinder`, `torus`) to `OntoMath::MathNode`.
+  - [x] Implement Bernstein $\leftrightarrow$ Monomial basis conversions in `OntoMath::ScalarForm`.
+  - [x] Add unit tests in `tests/ontomath_test.cpp` / `tests/geometry_ontomath_test.cpp`.
+- [x] **Rung 1: Unified Symbolic SDF Engine**
+  - [x] Lift expressions through `rpnToMathNode`; `evalRpn` remains fallback only.
+  - [x] `geom::evalSdf` prefers `MathNode::evaluate`.
+  - [x] Ground-truth primitive tests (not self-agreeing parity) in `geometry_ontomath_test`.
+- [x] **Rung 2: Bézier Patch Algebraic Unification**
+  - [x] `geom::BezierPatch` carries 3 coordinate `OntoMath::ScalarForm` polynomials.
+  - [x] Replace finite-difference normals with symbolic derivatives ($\mathbf{T}_u 	imes \mathbf{T}_v$).
+  - [x] `tests/bezier_patch_law_test.cpp` (30 checks). Symbolic normals via `patchDerivatives()`.
+- [x] **Rung 3: Quadric Manifold Unification**
+  - [x] `Quadric::toScalarForm` / `fromScalarForm`; matrix path held to the form.
+  - [x] Gradient / raycast coefficients checked against `ScalarForm::derivative`.
+- [x] **Rung 4: WebGPU Transpiler Consolidation**
+  - [x] New ops compile through `emitMathNode` to WGSL builtins.
+  - [ ] `emitNode` / `emitRpn` **not deleted** — wrappers that prefer the MathNode. Do not "finish" this by deleting them without a migration of remaining Expr/RPN saves.
+- [x] **Rung 5: Law Reflection & Property Path Governance**
+  - [x] `field.*`, `patch.*`, `field.ast`, `vectorField.ast` registered.
+  - [x] `tests/geometry_ontomath_test.cpp`, `tests/test_field.cpp`.
 
 ---
 

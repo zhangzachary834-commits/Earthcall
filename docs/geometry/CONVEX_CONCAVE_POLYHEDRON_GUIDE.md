@@ -1,5 +1,9 @@
 # Convex/Concave Polyhedron System Guide
 
+> **Stale as Person-facing instruction (2026-08-19).** The "3D Shape Generator"
+> tool named here is not the current path (law vs Creator Console bypass).
+> Variant sliders live on ImGui state, not OntoMath. See [`README.md`](README.md).
+
 ## Overview
 
 The polyhedron system has been enhanced to support both convex and concave shapes, giving you much more creative freedom in 3D object creation. This guide explains how to use these new features.

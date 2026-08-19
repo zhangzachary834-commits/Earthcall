@@ -1,5 +1,10 @@
 # Polyhedron Generator Guide
 
+> **Stale as Person-facing instruction (2026-08-19).** There is no "3D button"
+> / "SubMode dropdown" / "Shape Generator" submode as written here. Math is
+> OntoMath, not a generator class. The law path refuses `ShapeKind::Polyhedron`
+> (`buildCurrentPolyhedron` is still a stub). See [`README.md`](README.md).
+
 ## Overview
 
 The Polyhedron Generator is a powerful new feature integrated into the existing 3D Shape Generator tool. It allows you to create and customize various types of polyhedrons (3D shapes with flat faces) with advanced generation options.

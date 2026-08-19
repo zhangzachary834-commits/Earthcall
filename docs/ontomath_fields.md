@@ -12,9 +12,10 @@ A field is a mathematical function that maps any coordinate in space $(x, y, z)$
 The architecture is divided into three responsibilities:
 
 1. **Pure Mathematics (`Singularity/OntoMath/Field.hpp`)**
-   - Defines the `Field` base and the `ScalarField` class. **`VectorField` is not
-     implemented yet** — force/flow fields are the intended next step, not
-     something the header currently provides.
+   - Defines `ScalarField` and `VectorField`. Both carry an `EvaluationMode`
+     (`Procedural` / `AST`) and a `Piecewise astDefinition`. Geometry after the
+     2026-08-18 unification evaluates SDFs and Bézier through `OntoMath::MathNode`
+     / `ScalarForm`; `FieldNode` exposes `field.ast` and `vectorField.ast`.
    - Responsible for the raw mathematical definitions (unbounded space, repeating domains, bounded intersections).
 
 2. **Spatial Placement (`ConstructedBeing/Object/Geometry/FieldNode.hpp`)**
@@ -47,8 +48,8 @@ the 2026-08-03 design review (`design_review_remediation.md` §5):
 
 | Piece | Status |
 |---|---|
-| `OntoMath::ScalarField`, `geom::FieldNode` | Exist; `FieldNode` properties are reachable by `PropertyPath` and covered by `tests/test_field.cpp` |
-| `OntoMath::VectorField` | **Not implemented** |
+| `OntoMath::ScalarField`, `geom::FieldNode` | Exist; `FieldNode` properties (including `field.ast`) are reachable by `PropertyPath` and covered by `tests/test_field.cpp` / `tests/geometry_ontomath_test.cpp` |
+| `OntoMath::VectorField` | **Exists** (`Field.hpp`); `vectorField.ast` and flow parameters registered on `FieldNode`. Volumetric *rendering* of it is still the open item below. |
 | `sdfwgsl::compile(root, fieldNode)` | Parameter exists, **no caller passes it** — `WebGpuRenderer.cpp` calls the one-argument form, so `fieldEval` always compiles to `return 0.0` and no field reaches the screen |
 | Path A (hardcoded procedural) | Emitted when a `fieldNode` IS passed; untested in the real render path |
 | Path B (AST-driven WGSL) | **Not implemented** — `compile` always takes Path A; the `astDefinition` is never walked |

@@ -18,10 +18,13 @@ The foundation of `OntoMath` is exact symbolic math, avoiding approximations whe
 ### `MathNode` (AST)
 When we need complex vector calculations (Dot products, Cross products) or structured combinations of scalars, we construct a tree of `MathNode`s. 
 
-Supported Operations:
-- `ScalarLeaf`: Contains a `ScalarForm`.
-- `VectorConstruct`: Builds a vector from scalar children.
-- Math ops: `Add`, `Sub`, `Scale`, `Dot`, `Cross`, `Normalize`, `Length`, `Map`.
+Supported Operations (append-only `MathNode::Op`, serialized as ints):
+- Leaves: `ScalarLeaf` (a `ScalarForm`), `ValueLeaf`, `VectorConstruct`, `Component`.
+- Linear algebra: `Add`, `Sub`, `Scale`, `Dot`, `Cross`, `Hadamard`, `Normalize`, `Length`, `Project`, `Distance`, `Map`.
+- CSG (one vocabulary with `geom::SdfOp`, also componentwise min/max on vectors): `Union` (20), `Intersection` (21), `Difference` (22). There is no `Op::Min` / `Op::Max`.
+- Rational / non-smooth, added 2026-08-18: `Div` (23), `Pow` (24), `Abs` (25), `Clamp` (26), `Sqrt` (27), `Tan` (28). `Div` is guarded by shared `kDegenerateDivisor`; CPU and WGSL both return `0.0` below the threshold. `Abs` / `Clamp` / `Sqrt` are Scalar→Scalar and Vector→Vector (componentwise).
+- Declared, not implemented: `Raycast` (16), `LineIntegral` (19). See §5.
+- `TransFactor::Kind` on `ScalarForm` is frozen at `Sin`, `Cos`, `Exp`, `Ln`. Tan / Sqrt / Abs are `MathNode` ops only — putting them on `TransFactor` would break the exact-calculus contract (`derivative()` cannot refuse).
 
 ### `Piecewise`
 Mathematical laws in reality often only apply under certain conditions (e.g., gravity changes beyond the atmosphere). `Piecewise` functions define the interval or *condition* bounds where a specific `MathNode` AST applies.

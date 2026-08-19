@@ -1,5 +1,8 @@
 # Polyhedron System Upgrade Summary
 
+> Historical implementation note. Not the math architecture (that is OntoMath
+> as of 2026-08-18). See [`README.md`](README.md).
+
 ## What Was Accomplished
 
 Successfully upgraded the Object.hpp/cpp system to support polyhedrons while maintaining full backward compatibility with existing cube functionality.

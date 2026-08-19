@@ -1,8 +1,15 @@
 # Geometry–OntoMath Unification: Completed Status
 
 Companion to [`GEOMETRY_ONTOMATH_UNIFICATION_PLAN.md`](../../../architecture/GEOMETRY_ONTOMATH_UNIFICATION_PLAN.md).
+That plan's §4 checkboxes are historical; this file is the executed record.
 
-All six rungs are now implemented, integrated, and verified by `tests/geometry_ontomath_test.cpp` and `tests/ontomath_test.cpp`.
+All six rungs are implemented, integrated, and verified by `tests/geometry_ontomath_test.cpp` and `tests/ontomath_test.cpp`. Independent primitive ground-truth (box / cylinder / torus actually differ from sphere) and the shared `kDegenerateDivisor` → `0.0` on both CPU and WGSL were confirmed 2026-08-18 (geometry-ontomath intercom).
+
+Still open, and they are comments / leftover surface, not a seventh rung:
+
+- Write the sqrt-versus-`Pow(_, 0.5)` canonical rule next to the `MathNode::Op` values so `toScalarForm`, the emitter, and any simplifier pick the same spelling.
+- `emitNode` / `emitRpn` / `evalRpn` still exist as fallbacks. Do not delete them to "finish" Rung 4 without migrating remaining Expr/RPN saves.
+- Person-facing spawn path, event name, and seed twin: [`SHAPE_GENERATOR_LAW_AUDIT_2026-08-18.md`](../../audits/SHAPE_GENERATOR_LAW_AUDIT_2026-08-18.md).
 
 ## Completed Rungs Summary
 

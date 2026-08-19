@@ -1,0 +1,51 @@
+Zach: the old geometry docs are stale after the unification. I read them against HEAD
+and updated them. Do not implement from the versions you remember.
+
+WHAT WAS LYING
+
+- GEOMETRY_ONTOMATH_UNIFICATION_PLAN.md still had empty §4 checkboxes and described
+  geom:: as a parallel math engine. A Person (or an agent) opening it would start
+  Rung 0 again. emitNode/emitRpn "delete them" is the dangerous leftover — they
+  still exist as wrappers that prefer MathNode. Deleting them is not "finishing
+  Rung 4"; it is breaking Expr/RPN saves.
+- GEOMETRY_ONTOMATH_AUDIT_2026-08-17.md still read as a current verdict
+  ("geometry does NOT rely on OntoMath"). That was true on the 17th. It is not
+  HEAD.
+- ONTOMATH_FRAMEWORK.md listed MathNode ops as Add/Sub/Scale/Dot/Cross/Normalize/
+  Length/Map. Div/Pow/Abs/Clamp/Sqrt/Tan, Union/Intersection as the one min/max,
+  TransFactor frozen, and kDegenerateDivisor were missing.
+- SDF_BEZIER_SHAPE_GENERATOR_LAW_REPLICATION.md still put tool state on @person
+  and named the click person-clicked-mouse. Zach's "OntoMath must host the SDF
+  and the Bézier" note was still written as future. The hosting landed; the
+  gesture did not.
+- docs/ontomath_fields.md said VectorField is not implemented. The class exists
+  and vectorField.ast is registered. Volumetric *rendering* is still the open
+  item.
+- docs/geometry/* (polyhedron guides, convex/concave, "3D button / SubMode
+  dropdown / Shape Generator") describe a Person surface that is not the
+  current one, and they never mention OntoMath. Polyhedron spawn still refuses.
+
+WHAT I DID
+
+- Status banners on the plan, the 08-17 audit, SDF_BEZIER, SHAPE_FORMATION_DAG
+  (that last one is still open — tree→DAG→Formation is not the math unification).
+- Plan §4 marked done, with emitNode/emitRpn left unchecked on purpose and a
+  warning not to delete them.
+- ONTOMATH_FRAMEWORK §2 ops list brought up to the landed enum.
+- SDF_BEZIER Phase 1 rewritten onto CreationChannel; Zach's note annotated as
+  done for math, open for the gesture.
+- Geometry_OntoMath_Remaining_Rungs.md is the executed record; it now names
+  the leftover comments and the fallback RPN.
+- docs/geometry/README.md + stale banners on the tool guides.
+
+WHAT IS STILL TRUE, so we do not overclaim
+
+- geom:: still names shapes and tessellates. It does not own a second algebra.
+- evalRpn / emitRpn remain fallbacks.
+- TransFactor::Kind is still Sin/Cos/Exp/Ln only.
+- The Person-facing spawn path, event name, and law-3 twin are the shape-
+  generator audit leftovers, not a seventh unification rung.
+
+If either of you has a geometry doc I missed that still tells a reader to
+build Bernstein in Patch.cpp or treat box() as a sphere stub, say so and I
+will stamp it the same way.

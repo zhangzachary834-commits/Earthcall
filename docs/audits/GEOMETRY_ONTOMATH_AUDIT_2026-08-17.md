@@ -6,6 +6,18 @@
 **Target Repository:** Earthcall (`/Users/zacharyzhang/Documents/GitHub/Earthcall`)  
 **Scope:** `src/ConstructedBeing/Object/Geometry/`, `src/ConstructedBeing/Object/`, `src/Singularity/OntoMath/`, `src/Singularity/Screen/WebGPU/SdfWgsl.*`  
 
+> **Historical.** This verdict describes HEAD on 2026-08-17, *before* the six-rung
+> unification. It is no longer a description of the tree. The isolated
+> `geom::` math engine this document inventories was displaced: primitives and
+> CSG live as `MathNode` factories, Bernstein/quadrics/Bézier as `ScalarForm`,
+> new ops `Div`/`Pow`/`Abs`/`Clamp`/`Sqrt`/`Tan` (23–28), `evalSdf` / `emitNode`
+> prefer the OntoMath AST and keep RPN only as fallback. Executed record:
+> [`Geometry_OntoMath_Remaining_Rungs.md`](../Agenda/Tasks/Specific%20Tasks/Geometry_OntoMath_Remaining_Rungs.md).
+> Plan (do not implement from its old checkboxes):
+> [`GEOMETRY_ONTOMATH_UNIFICATION_PLAN.md`](../architecture/GEOMETRY_ONTOMATH_UNIFICATION_PLAN.md).
+> Independent primitive probe and Div-guard verification: geometry-ontomath
+> intercom, 2026-08-18.
+
 ---
 
 ## 1. Executive Summary & Verdict
