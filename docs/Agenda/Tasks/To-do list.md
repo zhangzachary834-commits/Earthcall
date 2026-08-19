@@ -86,6 +86,8 @@ Original numbers kept so near-term and other sections can still say "item 7" wit
 5. `Object::rotation` — Round-trips lossily via Euler angle conversion; recorded in `kWriteExemptions`.
 6. `Perspective` — `Perspective.cpp` is empty; implement constructor or retire stub.
 
+7. ✅ **Restore Creator Console tools lost in the First Mover modularity split** — done and verified (2026-08-19): Select writes `selectedObject3D` + HighlightSystem; Morph vertex/patch/field gizmos run from `stepCreationTools`; implicit/surface spawn; Face Brush/Pottery/Rotate inspectors; fuseObjects restored; Save As / Load / Save Manager windows render from menu A/L/G and Assets. 2D Paint belt still detached (no Zone BrushSystem). Verified: `earthcall` build.
+
 ## Housekeeping:
 0. ✅ **Fill in agent intercom** — done and verified (2026-08-15): Implemented `agent intercom/conversation_history_injection.py` and `agent intercom/README.md`. *(Correction 2026-08-17: Both `conversation_history_injection.py` and `playpen.py` had SyntaxErrors from literal newlines inside string literals and had never executed. Rejoined broken lines with escaped `\n`; verified AST parsing on both and ran `conversation_history_injection.py self-test` successfully).*
 0. ✅ **One-click WebGPU launch** — done and verified (2026-08-14): Added root `Run Earthcall.command` invoking `scripts/build.sh webgpu run`.

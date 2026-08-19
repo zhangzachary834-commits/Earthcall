@@ -11,6 +11,9 @@
 #include "AdvancedFacePaint.hpp"
 #include "ConstructedBeing/Material/MaterialManager.hpp"
 #include "ConstructedBeing/Material/PaintToolSurface.hpp"
+#include "Singularity/FirstMoverWindowTools/CreatorConsole/CreatorConsoleState.hpp"
+#include "Singularity/Screen/HighlightSystem.hpp"
+#include <unordered_set>
 #include <algorithm>
 
 extern MaterialManager materials;
@@ -536,7 +539,7 @@ void Tool::Pottery3D(GLFWwindow *window, Core::Engine *engine, ZoneManager &mgr,
             int hitSign = hit.sign;
             bool hitIsCube = hit.isCube;
             // Determine scale delta
-            float dir = (true) ? 1.0f : -1.0f;
+            float dir = (engine->getCurrentPotteryTool() == Core::PotteryTool::Expand) ? 1.0f : -1.0f;
             float delta = dir * engine->getPotteryStrength() * (firstFrame ? 1.0f : dt); // full step on click, smaller continuous after
 
             glm::mat4 t = hitObj->getTransform();
@@ -818,75 +821,70 @@ void Tool::FacePaint(GLFWwindow *window, Core::Engine *engine, ZoneManager &mgr,
                 // engine->setLastBrushTime(currentTime);
             }
 
+            auto& st = Rendering::getCreatorConsoleState();
             // Apply brush based on type
             // Paint the object's OWN material, not the shared one it is
                 // referencing: ownMaterial() diverges it on the first
                 // stroke so a brush touches this object and no other.
                 if (auto mat = hitObj->ownMaterial()) {
                 PaintToolSurface pts(*mat);
-                switch (0)
+                const float radius = st.faceBrushRadius * pressure;
+                const float softness = st.faceBrushSoftness;
+                const int brushType = st.faceBrushType;
+                switch (brushType)
                 {
-                case 0:
-                    // Interpolate only if staying on the same object and face
-                    if (false &&
-                        glm::vec2(0).x >= 0.0f &&
-                        nullptr == hitObj &&
-                        0 == hitFace)
+                case 1: // Airbrush
+                     pts.airbrushFace(hitFace, uv,
+                                          engine->getCurrentColor(0), engine->getCurrentColor(1), engine->getCurrentColor(2),
+                                          radius, /*density*/ 0.5f, softness);
+                    break;
+                case 2: // Chalk
+                    pts.paintFaceAdvanced(hitFace, uv,
+                                              engine->getCurrentColor(0), engine->getCurrentColor(1), engine->getCurrentColor(2),
+                                              radius, softness,
+                                              0.0f, 0.0f, 2);
+                    break;
+                case 3: // Spray
+                    pts.paintFaceAdvanced(hitFace, uv,
+                                              engine->getCurrentColor(0), engine->getCurrentColor(1), engine->getCurrentColor(2),
+                                              radius, softness,
+                                              0.0f, 0.0f, 3);
+                    break;
+                case 4: // Smudge
+                     pts.smudgeFace(hitFace, uv,
+                                        radius, /*strength*/ 0.5f);
+                    break;
+                case 5: // Clone
+                    if (st.lastBrushUV.x >= 0.0f)
                     {
-                        pts.paintStroke(hitFace, glm::vec2(0), uv,
+                        pts.cloneFace(hitFace, uv, st.lastBrushUV,
+                                          radius, softness);
+                    }
+                    break;
+                default: // Normal
+                    if (st.lastBrushUV.x >= 0.0f &&
+                        st.lastBrushObject == hitObj &&
+                        st.lastBrushFace == hitFace)
+                    {
+                        pts.paintStroke(hitFace, st.lastBrushUV, uv,
                                             engine->getCurrentColor(0), engine->getCurrentColor(1), engine->getCurrentColor(2),
-                                            0.0f * pressure, 0.0f,
+                                            radius, softness,
                                             0.0f, 0.0f);
                     }
                     else
                     {
                         pts.paintFaceAdvanced(hitFace, uv,
                                                   engine->getCurrentColor(0), engine->getCurrentColor(1), engine->getCurrentColor(2),
-                                                  0.0f * pressure, 0.0f,
+                                                  radius, softness,
                                                   0.0f, 0.0f, 0);
-                    }
-                    break;
-
-                case 4:
-                     pts.airbrushFace(hitFace, uv,
-                                          engine->getCurrentColor(0), engine->getCurrentColor(1), engine->getCurrentColor(2),
-                                          0.0f * pressure, /*density*/ 0.5f, 0.0f);
-                    break;
-
-                case 5:
-                    pts.paintFaceAdvanced(hitFace, uv,
-                                              engine->getCurrentColor(0), engine->getCurrentColor(1), engine->getCurrentColor(2),
-                                              0.0f * pressure, 0.0f,
-                                              0.0f, 0.0f, 2);
-                    break;
-
-                case 6:
-                    pts.paintFaceAdvanced(hitFace, uv,
-                                              engine->getCurrentColor(0), engine->getCurrentColor(1), engine->getCurrentColor(2),
-                                              0.0f * pressure, 0.0f,
-                                              0.0f, 0.0f, 3);
-                    break;
-
-                case 1:
-                     pts.smudgeFace(hitFace, uv,
-                                        0.0f * pressure, /*strength*/ 0.5f);
-                    break;
-
-                case 2:
-                    if (false)
-                    {
-                        glm::vec2 sourceUV = uv + glm::vec2(0);
-                        pts.cloneFace(hitFace, uv, sourceUV,
-                                          0.0f * pressure, 0.0f);
                     }
                     break;
                 }
             }
 
-            // Remember last stroke context
-            // engine->setLastBrushUV(uv);
-            // engine->setLastBrushFace(hitFace);
-            // engine->setLastBrushObject(hitObj);
+            st.lastBrushUV = uv;
+            st.lastBrushFace = hitFace;
+            st.lastBrushObject = hitObj;
         }
         else
         {
@@ -895,10 +893,10 @@ void Tool::FacePaint(GLFWwindow *window, Core::Engine *engine, ZoneManager &mgr,
     }
     else
     {
-        // Mouse released - reset stroke state
-        // engine->setLastBrushUV(glm::vec2(-1.0f, -1.0f));
-        // engine->setLastBrushFace(-1);
-        // engine->setLastBrushObject(nullptr);
+        auto& st = Rendering::getCreatorConsoleState();
+        st.lastBrushUV = glm::vec2(-1.0f, -1.0f);
+        st.lastBrushFace = -1;
+        st.lastBrushObject = nullptr;
         engine->setBrushCursorVisible(false);
     }
 }
@@ -906,12 +904,25 @@ void Tool::FacePaint(GLFWwindow *window, Core::Engine *engine, ZoneManager &mgr,
 void Tool::Selection3D(GLFWwindow *window, Core::Engine *engine,
                        const std::vector<Object*>& targets)
 {
-    // Pick the object under the cursor (or crosshair when locked) and select it.
-    // Uses the cached camera matrices via buildMouseRay rather than reading GL
-    // matrix state during update().
+    if (!window) return;
+    if (ImGui::GetIO().WantCaptureMouse) return;
+    static bool selectMouseLeftPressedLast = false;
+    const bool mouseLeftNow = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
+    const bool justPressed = mouseLeftNow && !selectMouseLeftPressedLast;
+    selectMouseLeftPressedLast = mouseLeftNow;
+    if (!justPressed) return;
+
     glm::vec3 rayO, rayDir;
     if (!buildMouseRay(window, engine, rayO, rayDir)) return;
-    // engine->setSelectedObject3D(pickNearestObject(targets, rayO, rayDir));
+    Object* hit = pickNearestObject(targets, rayO, rayDir);
+    auto& state = Rendering::getCreatorConsoleState();
+    state.selectedObject3D = hit;
+    Rendering::HighlightSystem::setSelected(hit);
+    if (hit) {
+        Rendering::HighlightSystem::setSelectedIds({hit->getIdentifier()});
+    } else {
+        Rendering::HighlightSystem::setSelectedIds({});
+    }
 }
 
 Object* Tool::PickObject3D(GLFWwindow *window, Core::Engine *engine,

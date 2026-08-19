@@ -145,26 +145,26 @@ private:
     
     
 public:
-    // Missing rotation state
-    bool getRotateDragging() const { return false; }
-    double getRotateLastCursorX() const { return 0.0; }
-    double getRotateLastCursorY() const { return 0.0; }
-    void setRotateLastCursor(double x, double y) {}
-    void setRotateDragging(bool) {}
-    bool isAdvancedFacePaintEnabled() const { return false; }
+    // Missing rotation state — bodies in Engine.cpp, chrome on CreatorConsoleState
+    bool getRotateDragging() const;
+    double getRotateLastCursorX() const;
+    double getRotateLastCursorY() const;
+    void setRotateLastCursor(double x, double y);
+    void setRotateDragging(bool);
+    bool isAdvancedFacePaintEnabled() const;
     void* getCurrentGradientSettings() const { return nullptr; }
     void* getCurrentSmudgeSettings() const { return nullptr; }
-    float getCurrentColor(int) const { return 0.0f; }
+    float getCurrentColor(int) const;
     int _currentTool = 0;
     float _straightLineEndX = 0;
     float _straightLineEndY = 0;
-    float getRotationToolSensitivity() const { return 1.0f; }
-    float getRotationToolSmoothness() const { return 1.0f; }
-    RotationAxisMode getRotationAxisMode() const { return RotationAxisMode::Free; }
+    float getRotationToolSensitivity() const;
+    float getRotationToolSmoothness() const;
+    RotationAxisMode getRotationAxisMode() const;
     
     // Missing Pottery state
-    PotteryTool getCurrentPotteryTool() const { return PotteryTool::Pinch; }
-    float getPotteryStrength() const { return 1.0f; }
+    PotteryTool getCurrentPotteryTool() const;
+    float getPotteryStrength() const;
     
     // Missing 2D state
     const std::vector<glm::vec2>& get2DToolDragPoints() const { static std::vector<glm::vec2> v; return v; }
@@ -176,10 +176,10 @@ public:
         glm::vec3 rotation;
     struct DummyFaceBrush { float radius=1.0f; bool soft=false; float softness=0.0f; }; DummyFaceBrush _faceBrush;
     float _cubeAngle = 0;
-    double getCursorX() const { return 0; }
-    double getCursorY() const { return 0; }
-    float getFaceBrushUOffset() const { return 0; }
-    float getFaceBrushVOffset() const { return 0; }
+    double getCursorX() const;
+    double getCursorY() const;
+    float getFaceBrushUOffset() const;
+    float getFaceBrushVOffset() const;
     void setBrushCursorPos(float, float) {}
     void setBrushCursorVisible(bool) {}
     float getCurrentPressure() const { return 1.0f; }

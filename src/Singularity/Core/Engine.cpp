@@ -284,8 +284,13 @@ void Engine::tick(float dt) {
         }
 
         if (_creatorConsoleOpen) {
-            Rendering::renderCreatorConsoleWindow(&_creatorConsoleOpen, _player.get(), nullptr, mgr, _window, this);
+            Rendering::renderCreatorConsoleWindow(
+                &_creatorConsoleOpen, _player.get(),
+                Rendering::getCreatorConsoleState().selectedObject3D,
+                mgr, _window, this);
         }
+
+        Rendering::renderSaveLoadWindows(this);
 
         if (_showKeymapWindow) {
             ImGui::SetNextWindowSize(ImVec2(420, 420), ImGuiCond_FirstUseEver);
@@ -409,4 +414,64 @@ void Engine::ensureCursorUnlocked() {
     }
 }
 Engine::~Engine() {}
+
+bool Engine::getRotateDragging() const {
+    return Rendering::getCreatorConsoleState().rotateDragging;
+}
+void Engine::setRotateDragging(bool v) {
+    Rendering::getCreatorConsoleState().rotateDragging = v;
+}
+double Engine::getRotateLastCursorX() const {
+    return Rendering::getCreatorConsoleState().rotateLastCursorX;
+}
+double Engine::getRotateLastCursorY() const {
+    return Rendering::getCreatorConsoleState().rotateLastCursorY;
+}
+void Engine::setRotateLastCursor(double x, double y) {
+    auto& s = Rendering::getCreatorConsoleState();
+    s.rotateLastCursorX = x;
+    s.rotateLastCursorY = y;
+}
+bool Engine::isAdvancedFacePaintEnabled() const {
+    return Rendering::getCreatorConsoleState().advancedFacePaint;
+}
+float Engine::getCurrentColor(int i) const {
+    auto& s = Rendering::getCreatorConsoleState();
+    if (i >= 0 && i < 3) return s.createColor[i];
+    return 1.0f;
+}
+float Engine::getRotationToolSensitivity() const {
+    return Rendering::getCreatorConsoleState().rotationSensitivity;
+}
+float Engine::getRotationToolSmoothness() const {
+    return Rendering::getCreatorConsoleState().rotationSmoothness;
+}
+RotationAxisMode Engine::getRotationAxisMode() const {
+    switch (Rendering::getCreatorConsoleState().rotationAxisMode) {
+        case 1: return RotationAxisMode::X;
+        case 2: return RotationAxisMode::Y;
+        case 3: return RotationAxisMode::Z;
+        case 4: return RotationAxisMode::AuthoritativeAxis;
+        default: return RotationAxisMode::FreeXY;
+    }
+}
+PotteryTool Engine::getCurrentPotteryTool() const {
+    return Rendering::getCreatorConsoleState().potteryTool == 0
+        ? PotteryTool::Pinch : PotteryTool::Expand;
+}
+float Engine::getPotteryStrength() const {
+    return Rendering::getCreatorConsoleState().potteryStrength;
+}
+double Engine::getCursorX() const {
+    return _mouseHandler ? _mouseHandler->getCursorX() : 0.0;
+}
+double Engine::getCursorY() const {
+    return _mouseHandler ? _mouseHandler->getCursorY() : 0.0;
+}
+float Engine::getFaceBrushUOffset() const {
+    return Rendering::getCreatorConsoleState().faceBrushUOffset;
+}
+float Engine::getFaceBrushVOffset() const {
+    return Rendering::getCreatorConsoleState().faceBrushVOffset;
+}
 }

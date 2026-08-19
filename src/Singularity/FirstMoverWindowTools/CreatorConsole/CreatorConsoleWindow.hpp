@@ -17,4 +17,9 @@ namespace Rendering {
     // Hardcoded preview rendering for First Mover 3D tools
     void renderCreatorConsole3DPreviews(Person* player, Object* selected);
 
+    // Save As / Load / Save Manager windows. Menu A/L/G and the Assets
+    // tab only flip flags; this is the chrome those flags used to have
+    // before the Game.hpp split.
+    void renderSaveLoadWindows(Core::Engine* engine);
+
 } // namespace Rendering

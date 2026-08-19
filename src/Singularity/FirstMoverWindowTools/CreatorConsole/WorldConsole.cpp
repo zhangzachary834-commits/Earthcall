@@ -12,6 +12,10 @@ namespace Rendering {
 
         ImGui::TextDisabled("Global wireframe is not wired to the renderer.");
 
+        if (ImGui::Button("Open Cursor Tools")) {
+            state.cursorToolsOpen = true;
+        }
+
         ImGui::Checkbox("Cursor Tools Open", &state.cursorToolsOpen);
         if (state.cursorToolsOpen) {
             if (engine && engine->getCursorTools()) {

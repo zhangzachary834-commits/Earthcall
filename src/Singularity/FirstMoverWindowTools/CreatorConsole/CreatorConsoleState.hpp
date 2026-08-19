@@ -4,6 +4,7 @@
 #include <vector>
 #include "Singularity/FirstMoverWindowTools/Tool.hpp"
 #include "ConstructedBeing/Object/Object.hpp"
+class BodyPart;
 
 #include <imgui.h>
 
@@ -102,6 +103,40 @@ namespace Rendering {
         // Morph State
         int morphVertexIndex = -1;
         int patchCtrlIndex = -1;
+        bool fieldHandleDragging = false;
+        bool blendHandleDragging = false;
+
+        // Live 3D selection (Select mode). Not a being's standing state —
+        // HighlightSystem mirrors it for the renderer.
+        Object* selectedObject3D = nullptr;
+
+        // Pottery / Rotate / Face Brush — the tools already read these
+        // through Engine getters. Chrome lives here so collapsing the
+        // console does not invent a second copy on Engine.
+        int potteryTool = 1; // 0 Chisel, 1 Expand
+        float potteryStrength = 0.2f;
+        int rotationAxisMode = 0; // Free XY, X, Y, Z, Authoritative
+        float rotationSensitivity = 1.0f;
+        float rotationSmoothness = 8.0f;
+        int faceBrushType = 0;
+        float faceBrushRadius = 0.05f;
+        float faceBrushSoftness = 0.3f;
+        float faceBrushUOffset = 0.0f;
+        float faceBrushVOffset = 0.0f;
+        int faceBrushUAxis = 0;
+        int faceBrushVAxis = 1;
+        bool faceBrushInvertU = false;
+        bool faceBrushInvertV = false;
+        bool advancedFacePaint = false;
+        glm::vec2 lastBrushUV{-1.0f, -1.0f};
+        int lastBrushFace = -1;
+        Object* lastBrushObject = nullptr;
+
+        // Rotate drag latch (used to live as dummy Engine getters that
+        // always returned false, so Rotate never started).
+        bool rotateDragging = false;
+        double rotateLastCursorX = 0.0;
+        double rotateLastCursorY = 0.0;
 
         // Paint State
         Tool currentTool = Tool(Tool::Type::Brush);
@@ -111,6 +146,7 @@ namespace Rendering {
 
         // Character State
         bool characterDesignLocked = false;
+        BodyPart* selectedCharacterPart = nullptr;
 
         // World State
         bool cursorToolsOpen = false;

@@ -6,18 +6,115 @@
 #include "../Input/LocomotionChannel.hpp"
 #include "../Input/InteractionChannel.hpp"
 #include "Singularity/FirstMoverWindowTools/CreationTools.hpp"
+#include "Singularity/FirstMoverWindowTools/CreatorConsole/CreatorConsoleState.hpp"
+#include "Singularity/Core/SdfBuild.hpp"
+#include "Singularity/Screen/GL/GluCompat.hpp"
 #include "../../Person/Person.hpp"
 #include "../../ZonesOfEarth/ZoneManager.hpp"
 #include "../../ZonesOfEarth/Physics/Physics.hpp"
 #include "../../ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "../../ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include <imgui.h>
+#include <glm/gtc/matrix_transform.hpp>
+#include <algorithm>
+#include <cmath>
 
 extern ZoneManager mgr;
 
 namespace Core {
-    void Engine::fuseObjects(Object* A, Object* B) {}
-    void Engine::blendRail(const Object* o, glm::vec3& start, glm::vec3& dir, float& length) const {}
+    void Engine::fuseObjects(Object* A, Object* B) {
+        if (!A || !B || A == B) return;
+        const glm::mat4 Ta = A->getTransform();
+        const glm::mat4 Tb = B->getTransform();
+        geom::SdfNode an = objectToSdfNode(*A);
+        geom::SdfNode bn = objectToSdfNode(*B);
+        bn.offset = glm::vec3(glm::inverse(Ta) * glm::vec4(glm::vec3(Tb[3]), 1.0f));
+        const geom::SdfOp ops[] = { geom::SdfOp::Union, geom::SdfOp::Intersect,
+                                    geom::SdfOp::Subtract, geom::SdfOp::SmoothUnion,
+                                    geom::SdfOp::Morph };
+        auto& state = Rendering::getCreatorConsoleState();
+        int oi = state.combineOp;
+        if (oi < 0 || oi > 4) oi = 2;
+        const float blend = (oi >= 3) ? state.combineBlend : 0.5f;
+        A->setFieldShape(geom::SdfNode::binary(ops[oi], an, bn, blend), 1.6f);
+        mgr.active().world().removeObject(B);
+        if (state.selectedObject3D == B) state.selectedObject3D = A;
+        if (state.combineOperandA == B) state.combineOperandA = nullptr;
+        if (state.clayGrabbed == B) state.clayGrabbed = nullptr;
+        if (state.clayTarget == B) state.clayTarget = nullptr;
+    }
+
+    void Engine::blendRail(const Object* o, glm::vec3& start, glm::vec3& dir, float& length) const {
+        if (!o) return;
+        const glm::mat4 xf = o->getTransform();
+        const glm::vec3 C = glm::vec3(xf[3]);
+        const float scale = (glm::length(glm::vec3(xf[0])) +
+                             glm::length(glm::vec3(xf[1])) +
+                             glm::length(glm::vec3(xf[2]))) / 3.0f;
+        length = std::max(0.4f, scale * 0.8f);
+        start = C + glm::vec3(0.0f, scale * 0.7f, 0.0f);
+        dir = glm::vec3(1.0f, 0.0f, 0.0f);
+        if (_camera) {
+            glm::vec3 right = glm::normalize(glm::cross(_camera->getFront(), _camera->getUp()));
+            if (glm::length(right) > 1e-4f) dir = right;
+        }
+    }
+
+    bool Engine::handleFieldGizmos(Object* o, bool pressEdge, bool mouseDown, double winX, double winY) {
+        auto& state = Rendering::getCreatorConsoleState();
+        if (!o || !o->isBinaryField() || !_camera) {
+            state.blendHandleDragging = false;
+            state.fieldHandleDragging = false;
+            return false;
+        }
+        const GLdouble* mv = _camera->getModelview();
+        const GLdouble* pr = _camera->getProjection();
+        const int* vp = _camera->getViewport();
+        const glm::mat4 xf = o->getTransform();
+
+        const glm::vec3 hbW = glm::vec3(xf * glm::vec4(o->getFieldOperandBOffset(), 1.0f));
+        GLdouble bx, by, bz;
+        const bool bProj = ecgl::project(hbW.x, hbW.y, hbW.z, mv, pr, vp, &bx, &by, &bz);
+
+        const bool blendable = o->isMorphField();
+        glm::vec3 rs(0.0f), rd(0.0f); float rl = 1.0f;
+        GLdouble cx = 0, cy = 0, cz = 0; bool cProj = false;
+        if (blendable) {
+            blendRail(o, rs, rd, rl);
+            const glm::vec3 beadW = rs + rd * (o->getMorphParam() * rl);
+            cProj = ecgl::project(beadW.x, beadW.y, beadW.z, mv, pr, vp, &cx, &cy, &cz);
+        }
+
+        if (!mouseDown) {
+            state.blendHandleDragging = false;
+            state.fieldHandleDragging = false;
+        }
+        if (pressEdge) {
+            const double dB = bProj ? (bx - winX) * (bx - winX) + (by - winY) * (by - winY) : 1e18;
+            const double dC = cProj ? (cx - winX) * (cx - winX) + (cy - winY) * (cy - winY) : 1e18;
+            const double R = 22.0 * 22.0;
+            if (blendable && dC < R && dC <= dB) state.blendHandleDragging = true;
+            else if (dB < R) state.fieldHandleDragging = true;
+        }
+        if (mouseDown && state.blendHandleDragging && blendable) {
+            GLdouble nx, ny, nz;
+            if (ecgl::unProject(winX, winY, cz, mv, pr, vp, &nx, &ny, &nz)) {
+                const glm::vec3 P((float)nx, (float)ny, (float)nz);
+                const float t = glm::clamp(glm::dot(P - rs, rd) / (rl > 1e-6f ? rl : 1.0f), 0.0f, 1.0f);
+                o->setMorphParam(t);
+            }
+            return true;
+        }
+        if (mouseDown && state.fieldHandleDragging && bProj) {
+            GLdouble nx, ny, nz;
+            if (ecgl::unProject(winX, winY, bz, mv, pr, vp, &nx, &ny, &nz)) {
+                const glm::vec3 local = glm::vec3(glm::inverse(xf) * glm::vec4((float)nx, (float)ny, (float)nz, 1.0f));
+                o->setFieldOperandBOffset(local);
+            }
+            return true;
+        }
+        return state.blendHandleDragging || state.fieldHandleDragging;
+    }
     
     void Engine::update(float dt) {
         if (!_keyboardHandler || !_mouseHandler || !_camera || !_player || !_lawManager) return;

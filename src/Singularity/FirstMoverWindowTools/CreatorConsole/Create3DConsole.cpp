@@ -10,9 +10,17 @@
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
+#include "Singularity/Core/SdfBuild.hpp"
+#include "ConstructedBeing/Object/Geometry/Sdf.hpp"
+#include "ConstructedBeing/Object/Geometry/Patch.hpp"
+#include "Singularity/Screen/HighlightSystem.hpp"
+#include "Singularity/Screen/Camera.hpp"
+#include <glm/gtc/matrix_transform.hpp>
 #include <vector>
 #include <string>
 #include <algorithm>
+#include <cstdio>
+#include <cstring>
 
 namespace Rendering {
 
@@ -71,14 +79,45 @@ namespace Rendering {
         }
 
         void clearSelection3D() {
-            // Call into system to clear selection
+            auto& state = getCreatorConsoleState();
+            state.selectedObject3D = nullptr;
+            HighlightSystem::setSelected(nullptr);
+            HighlightSystem::setSelectedIds({});
+        }
+
+        void paintNewObject(Object& obj, const glm::vec3& color) {
+            for (int f = 0; f < obj.getFaces(); ++f)
+                obj.setFaceColor(f, color.x, color.y, color.z);
+        }
+
+        glm::mat4 spawnTransform(Singularity::Core::CreationChannel* channel,
+                                 Core::Engine* engine) {
+            if (channel) return channel->getCursorSpawnTransform();
+            glm::vec3 pos(0.0f, 0.0f, -2.0f);
+            if (engine && engine->getCamera()) {
+                pos = engine->getCamera()->getPos() + engine->getCamera()->getFront() * 3.0f;
+            }
+            return glm::translate(glm::mat4(1.0f), pos);
+        }
+
+        Object* spawnAuthoredObject(ZoneManager& zoneMgr,
+                                    Singularity::Core::CreationChannel* channel,
+                                    Core::Engine* engine,
+                                    const glm::vec3& color) {
+            auto obj = std::make_shared<Object>();
+            obj->setTransform(spawnTransform(channel, engine));
+            obj->updateCollisionZone(obj->getTransform());
+            paintNewObject(*obj, color);
+            Object* raw = obj.get();
+            zoneMgr.active().world().addObject(obj);
+            if (channel) channel->recordProvenance("authored-by", *raw, *channel, true, 1.0f);
+            return raw;
         }
     }
 
     void render3DConsole(Person* player, Object* selectedObject3D, ZoneManager& zoneMgr, GLFWwindow* window, Core::Engine* engine) {
         (void)player;
         (void)window;
-        (void)zoneMgr;
         auto& state = getCreatorConsoleState();
         auto* channel = channelOf(engine);
 
@@ -268,6 +307,45 @@ namespace Rendering {
             }
         }
 
+        {
+            ImGui::Separator();
+            ImGui::TextUnformatted("Implicit  f(x,y,z) = 0");
+            static char implicitBuf[256] = "x*x + y*y + z*z - 0.25";
+            ImGui::InputText("f(x,y,z)", implicitBuf, sizeof(implicitBuf));
+            ImGui::TextDisabled("ops + - * / ^   funcs sin cos tan sqrt abs exp log   consts pi e");
+            if (ImGui::SmallButton("Sphere##imp")) std::snprintf(implicitBuf, sizeof(implicitBuf), "x*x + y*y + z*z - 0.25");
+            ImGui::SameLine();
+            if (ImGui::SmallButton("Gyroid")) std::snprintf(implicitBuf, sizeof(implicitBuf), "sin(8*x)*cos(8*y) + sin(8*y)*cos(8*z) + sin(8*z)*cos(8*x)");
+            ImGui::SameLine();
+            if (ImGui::SmallButton("Torus##imp")) std::snprintf(implicitBuf, sizeof(implicitBuf), "(sqrt(x*x + y*y) - 0.3)^2 + z*z - 0.01");
+            ImGui::SameLine();
+            if (ImGui::SmallButton("Heart")) std::snprintf(implicitBuf, sizeof(implicitBuf), "(x*x + 2.25*z*z + y*y - 0.25)^3 - x*x*y*y*y - 0.1125*z*z*y*y*y");
+            if (ImGui::Button("Create Implicit")) {
+                geom::SdfNode node = geom::makeImplicit(implicitBuf);
+                Object* o = spawnAuthoredObject(zoneMgr, channel, engine, state.createColor);
+                if (o) {
+                    o->setFieldShape(node, 1.1f);
+                    paintNewObject(*o, state.createColor);
+                }
+            }
+        }
+
+        {
+            ImGui::Separator();
+            ImGui::TextUnformatted("Surface (control net)");
+            static int du = 3, dv = 3;
+            ImGui::SliderInt("Degree U", &du, 1, 6);
+            ImGui::SliderInt("Degree V", &dv, 1, 6);
+            if (ImGui::Button("Create Surface")) {
+                Object* o = spawnAuthoredObject(zoneMgr, channel, engine, state.createColor);
+                if (o) {
+                    o->setBezierPatch(geom::makeBezierGrid(du, dv, 0.5f));
+                    paintNewObject(*o, state.createColor);
+                }
+            }
+            ImGui::TextDisabled("Then use Morph mode to drag the control points.");
+        }
+
         if (state.current3DMode == Mode3D::Combine || state.current3DMode == Mode3D::Sculpt) {
             const bool clay = (state.current3DMode == Mode3D::Sculpt);
             ImGui::Separator();
@@ -386,6 +464,72 @@ namespace Rendering {
                     }
                 }
             }
+        }
+
+        if (state.current3DMode == Mode3D::FaceBrush) {
+            ImGui::Separator();
+            ImGui::TextUnformatted("Face Brush");
+            const char* brushTypeNames[] = {"Normal", "Airbrush", "Chalk", "Spray", "Smudge", "Clone"};
+            ImGui::Combo("Brush Type##3d", &state.faceBrushType, brushTypeNames, IM_ARRAYSIZE(brushTypeNames));
+            ImGui::SliderFloat("Brush Radius", &state.faceBrushRadius, 0.01f, 2.0f, "%.2f");
+            ImGui::SliderFloat("Softness", &state.faceBrushSoftness, 0.0f, 2.0f, "%.2f");
+            if (ImGui::CollapsingHeader("UV Mapping")) {
+                ImGui::SliderFloat("U Offset", &state.faceBrushUOffset, -2.0f, 2.0f, "%.2f");
+                ImGui::SliderFloat("V Offset", &state.faceBrushVOffset, -2.0f, 2.0f, "%.2f");
+            }
+        }
+
+        if (state.current3DMode == Mode3D::FacePaint) {
+            ImGui::Separator();
+            ImGui::Checkbox("Advanced Face Paint", &state.advancedFacePaint);
+        }
+
+        if (state.current3DMode == Mode3D::Pottery) {
+            ImGui::Separator();
+            bool chisel = state.potteryTool == 0;
+            if (ImGui::RadioButton("Chisel", chisel)) state.potteryTool = 0;
+            ImGui::SameLine();
+            if (ImGui::RadioButton("Expand", !chisel)) state.potteryTool = 1;
+            ImGui::SliderFloat("Strength", &state.potteryStrength, 0.01f, 2.0f, "%.2f");
+        }
+
+        if (state.current3DMode == Mode3D::Rotation) {
+            ImGui::Separator();
+            const char* axisModeNames[] = {"Free XY", "X", "Y", "Z", "Authoritative Axis"};
+            ImGui::Combo("Axis Mode", &state.rotationAxisMode, axisModeNames, IM_ARRAYSIZE(axisModeNames));
+            ImGui::SliderFloat("Sensitivity", &state.rotationSensitivity, 0.05f, 2.0f, "%.2f");
+            ImGui::SliderFloat("Smoothness", &state.rotationSmoothness, 1.0f, 20.0f, "%.2f");
+        }
+
+        if (state.current3DMode == Mode3D::Graph) {
+            ImGui::Separator();
+            ImGui::TextUnformatted("Graph");
+            ImGui::TextDisabled("Law Author opens from this mode (Graph button).");
+            if (ImGui::Button("Open Law Author")) state.showLawAuthor = true;
+        }
+
+        ImGui::Separator();
+        ImGui::TextUnformatted("Selection");
+        Object* sel = selectedObject3D ? selectedObject3D : state.selectedObject3D;
+        if (sel) {
+            ImGui::TextWrapped("%s", sel->getIdentifier().c_str());
+            glm::vec3 center = sel->getCenter();
+            if (ImGui::DragFloat3("Center", &center.x, 0.01f, -100.0f, 100.0f, "%.2f")) {
+                sel->setCenter(center);
+            }
+            glm::vec3 targetRotation = sel->getTargetRotationEulerDegrees();
+            if (ImGui::DragFloat3("Target Rotation", &targetRotation.x, 0.5f, -720.0f, 720.0f, "%.1f")) {
+                sel->setTargetRotationEulerDegrees(targetRotation);
+            }
+            if (ImGui::Button("Snap Rotation")) {
+                sel->setRotationEulerDegrees(sel->getTargetRotationEulerDegrees());
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Clear Selection")) {
+                clearSelection3D();
+            }
+        } else {
+            ImGui::TextDisabled("No object selected. Use Select mode and click.");
         }
 
         // Tools run in Rendering::stepCreationTools (Engine::update), not

@@ -8,9 +8,13 @@
 #include "ConstructedBeing/Object/Object.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "ZonesOfEarth/World/World.hpp"
+#include "Singularity/Screen/Camera.hpp"
+#include "Singularity/Screen/GL/GluCompat.hpp"
+#include "Singularity/Screen/HighlightSystem.hpp"
 
 #include <imgui.h>
 #include <GLFW/glfw3.h>
+#include <glm/gtc/matrix_transform.hpp>
 
 #include <string>
 #include <vector>
@@ -112,6 +116,90 @@ void handleCreateLawKey(GLFWwindow* window, Core::Engine& engine,
     lawModeKeyDownLast = lawModeKeyDown;
 }
 
+void stepMorphTool(GLFWwindow* window, Core::Engine* engine,
+                   CreatorConsoleState& state) {
+    Object* obj = state.selectedObject3D;
+    if (!obj || !window || !engine || !engine->getCamera()) return;
+    if (ImGui::GetIO().WantCaptureMouse) return;
+
+    static bool morphMouseLeftPressedLast = false;
+    const bool mouseLeftNow = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
+    const bool pressEdge = mouseLeftNow && !morphMouseLeftPressedLast;
+    morphMouseLeftPressedLast = mouseLeftNow;
+
+    double xpos = 0.0, ypos = 0.0;
+    glfwGetCursorPos(window, &xpos, &ypos);
+    const int* vp = engine->getCamera()->getViewport();
+    const GLdouble* mv = engine->getCamera()->getModelview();
+    const GLdouble* pr = engine->getCamera()->getProjection();
+    double winX = xpos;
+    double winY = vp[3] - ypos;
+
+    if (obj->isBinaryField()) {
+        engine->handleFieldGizmos(obj, pressEdge, mouseLeftNow, winX, winY);
+        return;
+    }
+
+    glm::mat4 xf = obj->getTransform();
+    if (obj->getShapeKind() == ObjectTypes::ShapeKind::Polyhedron &&
+        obj->getPolyhedronVertexCount() > 0) {
+        if (pressEdge) {
+            int best = -1; double bestD = 1e18;
+            for (int i = 0; i < obj->getPolyhedronVertexCount(); ++i) {
+                glm::vec3 w = glm::vec3(xf * glm::vec4(obj->getPolyhedronVertexLocal(i), 1.0f));
+                GLdouble sx, sy, sz;
+                if (ecgl::project(w.x, w.y, w.z, mv, pr, vp, &sx, &sy, &sz)) {
+                    double d = (sx - winX) * (sx - winX) + (sy - winY) * (sy - winY);
+                    if (d < bestD) { bestD = d; best = i; }
+                }
+            }
+            if (best >= 0 && bestD < 40.0 * 40.0) state.morphVertexIndex = best;
+        }
+        if (mouseLeftNow && state.morphVertexIndex >= 0 &&
+            state.morphVertexIndex < obj->getPolyhedronVertexCount()) {
+            glm::vec3 wv = glm::vec3(xf * glm::vec4(obj->getPolyhedronVertexLocal(state.morphVertexIndex), 1.0f));
+            GLdouble sx, sy, sz;
+            if (ecgl::project(wv.x, wv.y, wv.z, mv, pr, vp, &sx, &sy, &sz)) {
+                GLdouble nx, ny, nz;
+                if (ecgl::unProject(winX, winY, sz, mv, pr, vp, &nx, &ny, &nz)) {
+                    glm::vec3 local = glm::vec3(glm::inverse(xf) *
+                        glm::vec4((float)nx, (float)ny, (float)nz, 1.0f));
+                    obj->setPolyhedronVertexLocal(state.morphVertexIndex, local);
+                }
+            }
+        }
+        return;
+    }
+
+    if (obj->isPatch() && obj->getPatchControlCount() > 0) {
+        if (pressEdge) {
+            int best = -1; double bestD = 1e18;
+            for (int i = 0; i < obj->getPatchControlCount(); ++i) {
+                glm::vec3 w = glm::vec3(xf * glm::vec4(obj->getPatchControlLocal(i), 1.0f));
+                GLdouble sx, sy, sz;
+                if (ecgl::project(w.x, w.y, w.z, mv, pr, vp, &sx, &sy, &sz)) {
+                    double d = (sx - winX) * (sx - winX) + (sy - winY) * (sy - winY);
+                    if (d < bestD) { bestD = d; best = i; }
+                }
+            }
+            if (best >= 0 && bestD < 40.0 * 40.0) state.patchCtrlIndex = best;
+        }
+        if (mouseLeftNow && state.patchCtrlIndex >= 0 &&
+            state.patchCtrlIndex < obj->getPatchControlCount()) {
+            glm::vec3 wv = glm::vec3(xf * glm::vec4(obj->getPatchControlLocal(state.patchCtrlIndex), 1.0f));
+            GLdouble sx, sy, sz;
+            if (ecgl::project(wv.x, wv.y, wv.z, mv, pr, vp, &sx, &sy, &sz)) {
+                GLdouble nx, ny, nz;
+                if (ecgl::unProject(winX, winY, sz, mv, pr, vp, &nx, &ny, &nz)) {
+                    glm::vec3 local = glm::vec3(glm::inverse(xf) *
+                        glm::vec4((float)nx, (float)ny, (float)nz, 1.0f));
+                    obj->setPatchControlLocal(state.patchCtrlIndex, local);
+                }
+            }
+        }
+    }
+}
+
 void dispatchActiveTool(GLFWwindow* window, Core::Engine* engine,
                         ZoneManager& zoneMgr, float dt,
                         CreatorConsoleState& state,
@@ -144,6 +232,7 @@ void dispatchActiveTool(GLFWwindow* window, Core::Engine* engine,
             break;
         }
         case Mode3D::Morph:
+            stepMorphTool(window, engine, state);
             break;
         case Mode3D::Combine: {
             std::vector<Object*> targets = collectWorldTargets(zoneMgr);
