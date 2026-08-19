@@ -3,7 +3,7 @@
 // Telos is a Lexeme. The hierarchy is a rooted Formation of Lexemes with
 // directed `grounds` Relations. Formations and Relations of other beings
 // are ordered by those ranks. There is no HierarchyOfJoys class.
-// See docs/architecture/HIERARCHY_OF_JOYS.md.
+// See docs/architecture/ontology/HIERARCHY_OF_JOYS.md.
 
 #include "ConstructedBeing/Object/Object.hpp"
 #include "ConstructedBeing/Object/Formation/Formation.hpp"

@@ -1,16 +1,16 @@
 # Geometry–OntoMath Unification Implementation Plan
 
-**Document:** `docs/architecture/GEOMETRY_ONTOMATH_UNIFICATION_PLAN.md`  
+**Document:** `docs/architecture/mathematics/GEOMETRY_ONTOMATH_UNIFICATION_PLAN.md`  
 **Date:** August 17, 2026  
 **Author:** Gemini Spark + Zachary Zhang  
 **Target Subsystems:** `src/ConstructedBeing/Object/Geometry/`, `src/Singularity/OntoMath/`, `src/Singularity/Screen/WebGPU/`, `src/ZonesOfEarth/AuthorsOfLaw/`  
-**Prerequisite Audit:** [`docs/audits/GEOMETRY_ONTOMATH_AUDIT_2026-08-17.md`](../audits/GEOMETRY_ONTOMATH_AUDIT_2026-08-17.md)  
+**Prerequisite Audit:** [`docs/audits/GEOMETRY_ONTOMATH_AUDIT_2026-08-17.md`](../../audits/GEOMETRY_ONTOMATH_AUDIT_2026-08-17.md)  
 
 **Status as of 2026-08-19:** the six rungs landed on 2026-08-18. This file is the
 *plan that was executed*, not a backlog. Empty checkboxes in §4 are historical
 — do not implement from them. The executed record, including what was *not*
 done the way the plan first said, is
-[`Geometry_OntoMath_Remaining_Rungs.md`](../Agenda/Tasks/Specific%20Tasks/Geometry_OntoMath_Remaining_Rungs.md).
+[`Geometry_OntoMath_Remaining_Rungs.md`](../../Agenda/Tasks/Specific%20Tasks/Geometry_OntoMath_Remaining_Rungs.md).
 The 2026-08-17 audit below it describes the world *before* this work.
 
 What landed differently from the text below:
@@ -33,7 +33,7 @@ Earthcall is an **ontology with an engine prototype attached**, not a traditiona
 2. **No Black Box (Refusal 6):** All mathematical structures and parameters defining geometry must be legible, introspectable, and governable by Law text via `PropertyPath`s.
 3. **Exact Symbolic Integration & Reversibility:** Mathematics must be represented symbolically (`ScalarForm`, `MathNode`, `Piecewise`) so that time flow ($dp/dt$) can be integrated in closed form without event logs ($p(t-\Delta) = p(t) - \int dp/dt$).
 
-The recent audit ([`GEOMETRY_ONTOMATH_AUDIT_2026-08-17.md`](../audits/GEOMETRY_ONTOMATH_AUDIT_2026-08-17.md)) revealed that the geometry framework (`geom::`) maintains a parallel, isolated mathematical engine from scratch (custom RPN parser/evaluator, quadric matrix algebra, Bernstein polynomials, numerical finite-difference normals, and duplicate WebGPU shader generators).
+The recent audit ([`GEOMETRY_ONTOMATH_AUDIT_2026-08-17.md`](../../audits/GEOMETRY_ONTOMATH_AUDIT_2026-08-17.md)) revealed that the geometry framework (`geom::`) maintains a parallel, isolated mathematical engine from scratch (custom RPN parser/evaluator, quadric matrix algebra, Bernstein polynomials, numerical finite-difference normals, and duplicate WebGPU shader generators).
 
 **Goal of this Plan:** Systematically eliminate the isolated math in `geom::` and unify all geometry representations under `OntoMath` without breaking simulation state, tests, or render pipelines.
 
@@ -271,4 +271,4 @@ status banner at the top; do not treat an unchecked box here as remaining work.
 
 ---
 
-*Plan compiled and saved to `docs/architecture/GEOMETRY_ONTOMATH_UNIFICATION_PLAN.md`.*
+*Plan compiled and saved to `docs/architecture/mathematics/GEOMETRY_ONTOMATH_UNIFICATION_PLAN.md`.*

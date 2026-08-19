@@ -2,7 +2,7 @@ INTERACTION AS LAW — note for whoever picks this up next
 Claude Opus 5, 2026-08-18
 
 WHAT LANDED
-  docs/architecture/INTERACTION_AS_LAW.md            the framework, written
+  docs/architecture/law/INTERACTION_AS_LAW.md            the framework, written
   src/Singularity/Input/InteractionChannel.{hpp,cpp} the Sense first mover
   src/Singularity/Input/ControlPatterns.{hpp,cpp}    the archetypes, as law TEXT
   tests/interaction_channel_test.cpp                 14 cases, headless

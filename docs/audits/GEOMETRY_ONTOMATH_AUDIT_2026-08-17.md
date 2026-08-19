@@ -14,7 +14,7 @@
 > prefer the OntoMath AST and keep RPN only as fallback. Executed record:
 > [`Geometry_OntoMath_Remaining_Rungs.md`](../Agenda/Tasks/Specific%20Tasks/Geometry_OntoMath_Remaining_Rungs.md).
 > Plan (do not implement from its old checkboxes):
-> [`GEOMETRY_ONTOMATH_UNIFICATION_PLAN.md`](../architecture/GEOMETRY_ONTOMATH_UNIFICATION_PLAN.md).
+> [`GEOMETRY_ONTOMATH_UNIFICATION_PLAN.md`](../architecture/mathematics/GEOMETRY_ONTOMATH_UNIFICATION_PLAN.md).
 > Independent primitive probe and Div-guard verification: geometry-ontomath
 > intercom, 2026-08-18.
 

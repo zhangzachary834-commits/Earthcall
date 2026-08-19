@@ -13,7 +13,7 @@ namespace Identity {
 // ---------------------------------------------------------------------------
 // The First Mover Register.
 //
-// Implements docs/architecture/FIRST_MOVER_AUTHORING.md 8a-8d, which specified
+// Implements docs/architecture/law/FIRST_MOVER_AUTHORING.md 8a-8d, which specified
 // this and left it unbuilt. A First Mover is any author who writes being
 // directly into the serialization rather than causing it through in-world
 // process: the engine, a human with a text editor, or a language model

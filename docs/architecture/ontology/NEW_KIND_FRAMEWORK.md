@@ -528,7 +528,7 @@ NEW KIND PROPOSAL
 
 > **Reject the `RobotEntity` / `RobotController` / `src/Robotics/` proposal.** It
 > violates Earthcall's anti-Babel constraint: no subsystem may define what a thing
-> *is*. See `sight-cpp/docs/architecture/NEW_KIND_FRAMEWORK.md`.
+> *is*. See `sight-cpp/docs/architecture/ontology/NEW_KIND_FRAMEWORK.md`.
 >
 > **A robot is not a new kind of being.** In Earthcall it is:
 > - **Objects** — links, base, gripper — with visual components (geometry, fields,

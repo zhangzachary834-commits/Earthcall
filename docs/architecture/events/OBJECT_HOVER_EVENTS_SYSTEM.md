@@ -9,7 +9,7 @@ This document explains the event system for Object hover detection, which trigge
 > compared against `_wasHoveredLastFrame`, a field written one frame behind `_isHovered`.
 > Both are fixed. The caller is `Singularity::Input::InteractionChannel::observe`, stepped
 > once per frame from `Engine::update`; read
-> [INTERACTION_AS_LAW.md](INTERACTION_AS_LAW.md) §4 before writing anything that hovers.
+> [INTERACTION_AS_LAW.md](../law/INTERACTION_AS_LAW.md) §4 before writing anything that hovers.
 >
 > Two things changed with it: `updateHoverState` now takes the hit point and screen
 > position (they were hard-coded to zero because no caller had them), and `hovered` /

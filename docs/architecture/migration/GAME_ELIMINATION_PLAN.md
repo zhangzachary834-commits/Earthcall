@@ -358,7 +358,7 @@ Rung 6: Delete Game (depends on all above)
 
 1. **Add freeze comment to Game.hpp:**
    ```cpp
-   // FROZEN: No new code. See docs/architecture/GAME_ELIMINATION_PLAN.md
+   // FROZEN: No new code. See docs/architecture/migration/GAME_ELIMINATION_PLAN.md
    // This class is being eliminated. All new features must go to their
    // ontological home, not here.
    ```
@@ -482,7 +482,7 @@ ctest is **35/35**. Five test executables previously failed to compile and did n
 
 ### Files Created
 
-- `docs/architecture/GAME_ELIMINATION_PLAN.md` - This document
+- `docs/architecture/migration/GAME_ELIMINATION_PLAN.md` - This document
 - `src/ZonesOfEarth/SaveContext.hpp` - Carries save/load state across the layer boundary so `ZonesOfEarth` need not know `Core::Game` exists
 - `src/Singularity/Input/KeyboardHandler.hpp`
 - `src/Singularity/Input/KeyboardHandler.cpp`

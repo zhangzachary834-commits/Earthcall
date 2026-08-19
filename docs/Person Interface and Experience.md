@@ -38,4 +38,4 @@ locomotion channels, and the shape-generator factory all belong there. A
 second "physics laws" list was a second register. Authored laws appear above
 that heading only once a Person writes one.
 
-Inventory: `docs/architecture/FIRST_MOVER_AUTHORING.md` §1.
+Inventory: `docs/architecture/law/FIRST_MOVER_AUTHORING.md` §1.

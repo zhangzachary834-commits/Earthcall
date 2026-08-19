@@ -33,7 +33,7 @@ Laws are executed with math operations because math is the universal language of
 
 The foundation of the project's architecture is thoroughly documented. You **must** read the documentation before writing code.
 - Start with the manifesto in `docs/core/EarthcallOurverse.md`.
-- See `docs/architecture/` for the complete architectural guidelines (e.g. `NEW_KIND_FRAMEWORK.md`, `DIRECTORY_ORDERING.md`).
+- See `docs/architecture/` for the architectural corpus (index: `docs/architecture/README.md`).
 - For AI agents, see `AGENTS.md` in the repository root for a quick reference router and non-negotiables.
 
 

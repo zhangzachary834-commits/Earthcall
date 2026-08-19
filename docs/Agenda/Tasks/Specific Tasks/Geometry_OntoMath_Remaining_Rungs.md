@@ -1,6 +1,6 @@
 # Geometry–OntoMath Unification: Completed Status
 
-Companion to [`GEOMETRY_ONTOMATH_UNIFICATION_PLAN.md`](../../../architecture/GEOMETRY_ONTOMATH_UNIFICATION_PLAN.md).
+Companion to [`GEOMETRY_ONTOMATH_UNIFICATION_PLAN.md`](../../../architecture/mathematics/GEOMETRY_ONTOMATH_UNIFICATION_PLAN.md).
 That plan's §4 checkboxes are historical; this file is the executed record.
 
 All six rungs are implemented, integrated, and verified by `tests/geometry_ontomath_test.cpp` and `tests/ontomath_test.cpp`. Independent primitive ground-truth (box / cylinder / torus actually differ from sphere) and the shared `kDegenerateDivisor` → `0.0` on both CPU and WGSL were confirmed 2026-08-18 (geometry-ontomath intercom).

@@ -1,4 +1,4 @@
-// Probe: the load-bearing claims of docs/architecture/AUTHORED_CATEGORIES.md.
+// Probe: the load-bearing claims of docs/architecture/ontology/AUTHORED_CATEGORIES.md.
 //
 //   §5  Related is ONE HOP — inherited membership is NOT answered by it.
 //   §5a a materialized "in-category" edge answers it in one hop.

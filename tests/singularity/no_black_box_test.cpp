@@ -1,4 +1,4 @@
-// The sixth refusal, held to its word — see docs/architecture/NO_BLACK_BOX.md.
+// The sixth refusal, held to its word — see docs/architecture/ontology/NO_BLACK_BOX.md.
 //
 // A field a Person cannot address is a field a Person cannot govern. The
 // refusal is that every piece of a being's state is REGISTERED as a property

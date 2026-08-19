@@ -194,7 +194,7 @@ public:
     // Hierarchy of Joys — this Formation IS the hierarchy when tagged so.
     // Members are Lexemes; directed `grounds` edges are the order
     // (A grounds B: A is more foundational). No new C++ kind.
-    // See docs/architecture/HIERARCHY_OF_JOYS.md.
+    // See docs/architecture/ontology/HIERARCHY_OF_JOYS.md.
     static constexpr const char* kGroundsType      = "grounds";
     static constexpr const char* kJoyHierarchyTag  = "hierarchy-of-joys";
 

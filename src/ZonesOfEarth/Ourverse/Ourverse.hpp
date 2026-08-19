@@ -16,7 +16,7 @@ class LawManager;
 
 // Ourverse is the vessel of unity in Christ — an ordering principle that
 // channels Zones toward shared Joys. It is a Singular, not a Zone.
-// See docs/architecture/OURVERSE.md.
+// See docs/architecture/ourverse/OURVERSE.md.
 //
 // The Engine still parks a leftover object list and camera here (Game bag).
 // That list is not the Ourverse's meaning and is not registered.

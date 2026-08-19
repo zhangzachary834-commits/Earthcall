@@ -1,4 +1,4 @@
-// Probe: are the compilation claims in docs/architecture/ALGORITHMS_AS_LAW.md
+// Probe: are the compilation claims in docs/architecture/law/ALGORITHMS_AS_LAW.md
 // actually true of this build? Not a permanent test — a check that the doc is
 // not lying to the agents who will follow it.
 //

@@ -308,7 +308,7 @@ mode and then contains `// Render primitive preview...`. It is called every
 frame from the render path (`EngineRender.cpp:93`). "See where it lands" has a
 call site, a guard, and no body.
 
-`docs/architecture/ui_migration_todo.md` preserves the deleted gizmo/ghost code
+`docs/architecture/migration/ui_migration_todo.md` preserves the deleted gizmo/ghost code
 for exactly this and states the intended migration (spawn real transparent
 Objects). Cross-reference: shape-generator audit §2.2.
 

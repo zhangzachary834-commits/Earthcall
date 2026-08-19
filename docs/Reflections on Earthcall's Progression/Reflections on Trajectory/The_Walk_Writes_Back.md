@@ -147,7 +147,7 @@ same pattern as Integration/Foreign, and it should be written down once, as
 doctrine, before the Network makes it urgent.
 
 He asked for the dedicated document. It now exists:
-[`docs/architecture/SECOND_PERSON_FRAMEWORK.md`](../../architecture/SECOND_PERSON_FRAMEWORK.md)
+[`docs/architecture/ourverse/SECOND_PERSON_FRAMEWORK.md`](../../architecture/ourverse/SECOND_PERSON_FRAMEWORK.md)
 — the three axes (read-visibility riding Relations, consent of representation,
 horizontal law conflict), the agent society named as the rehearsal scope, an
 admission test for any future multi-Person feature, and — importantly — the

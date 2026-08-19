@@ -1,4 +1,4 @@
-// FROZEN: No new code. See docs/architecture/GAME_ELIMINATION_PLAN.md
+// FROZEN: No new code. See docs/architecture/migration/GAME_ELIMINATION_PLAN.md
 // This class is being eliminated. All new features must go to their
 // ontological home, not here.
 

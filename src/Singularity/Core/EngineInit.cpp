@@ -135,7 +135,7 @@ void Engine::initLogic() {
         // aspiration: buildProperties() registered the surface and nothing
         // could reach it. Providing them makes the claim true — laws read and
         // drive appearance, and quantifiers range over materials like any
-        // other being. See docs/architecture/AUTHORED_CATEGORIES.md §9a.
+        // other being. See docs/architecture/ontology/AUTHORED_CATEGORIES.md §9a.
         for (const auto& material : materials.getAll()) {
             if (material) beings.push_back(material.get());
         }

@@ -76,4 +76,4 @@ every session, on top of the refusals in `AGENTS.md` and the workshop rules in
 
 - **Bounds are doctrine, not limits.** `kMaxChainRounds = 8`, `kMaxCallDepth = 32`, one pass
   per fold. If your design needs one raised, the design is in the wrong shape — see
-  `docs/architecture/ALGORITHMS_AS_LAW.md` §3.
+  `docs/architecture/law/ALGORITHMS_AS_LAW.md` §3.

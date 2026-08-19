@@ -17,8 +17,8 @@ here:
   developer bypass (rung R6 not deleted).
 
 Math architecture: [`ONTOMATH_FRAMEWORK.md`](ONTOMATH_FRAMEWORK.md),
-[`Geometry_OntoMath_Remaining_Rungs.md`](../Agenda/Tasks/Specific%20Tasks/Geometry_OntoMath_Remaining_Rungs.md).
-Person-facing path: [`SHAPE_GENERATOR_LAW_AUDIT_2026-08-18.md`](../audits/SHAPE_GENERATOR_LAW_AUDIT_2026-08-18.md).
+[`Geometry_OntoMath_Remaining_Rungs.md`](../../Agenda/Tasks/Specific%20Tasks/Geometry_OntoMath_Remaining_Rungs.md).
+Person-facing path: [`SHAPE_GENERATOR_LAW_AUDIT_2026-08-18.md`](../../audits/SHAPE_GENERATOR_LAW_AUDIT_2026-08-18.md).
 
 ## 1. Executive Summary & Ontological Mandate
 

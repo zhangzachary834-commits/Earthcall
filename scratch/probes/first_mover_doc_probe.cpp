@@ -1,5 +1,5 @@
 // Probe: does the law JSON printed verbatim in
-// docs/architecture/FIRST_MOVER_AUTHORING.md §4d actually load into a working
+// docs/architecture/law/FIRST_MOVER_AUTHORING.md §4d actually load into a working
 // law? Not a permanent test — a check that the onboarding doc is true.
 //
 // Build (from repo root, after the ordinary cmake configure):

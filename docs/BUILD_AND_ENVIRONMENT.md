@@ -99,7 +99,7 @@ If you add a field to `Object` that `to_json` writes, add it to `object_roundtri
 `channel_paths_test` and `no_black_box_test` are **inverses, and neither implies the
 other**: the first walks advertised → registered (nothing is offered that cannot answer),
 the second walks registered → advertised (nothing governable goes unoffered). A path can
-fail either direction independently. See `docs/architecture/NO_BLACK_BOX.md` §7.
+fail either direction independently. See `docs/architecture/ontology/NO_BLACK_BOX.md` §7.
 
 `no_black_box_test`'s first run found two live bugs, which is the argument for it existing:
 `CreationChannel` registered all 21 of its properties **twice**, and 15 of those 21 were

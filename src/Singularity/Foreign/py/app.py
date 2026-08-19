@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 
 # The socket handlers live with the rest of the Network modality, beside the
 # engine's WebSocketClient/WebSocketServer — they are two halves of one channel,
-# not two subsystems (docs/architecture/DIRECTORY_ORDERING.md §3).
+# not two subsystems (docs/architecture/ontology/DIRECTORY_ORDERING.md §3).
 _SRC = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(_SRC / "Singularity" / "Network" / "py"))
 
