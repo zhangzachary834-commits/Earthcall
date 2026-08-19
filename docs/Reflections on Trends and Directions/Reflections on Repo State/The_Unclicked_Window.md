@@ -37,7 +37,9 @@ This is the right work. It is also still chrome. `Tool::Type` remains a fifty-va
 
 A recurring failure in this tree is a test that reconstructs the construction it is supposed to judge. The factory test stayed green while the booted shape-generator law could not fire. `ontomath_test` and the geometry suite agreed with themselves while the live spawn sat at the origin. Two Python scripts in the intercom were claimed verified while they would not parse. The Bézier law test's first "done and verified" was written against a file that had never compiled.
 
-The discipline is now named (`ENGINEERING_DISCIPLINE.md`: do not claim a doc is verified because you read the source; run things). New seams have tests that call the factory boot calls, that resolve advertised paths against live beings, that refuse an empty `buildProperties()`. That is real.
+That list is why End-to-End Coherence is the first rule in `ENGINEERING_DISCIPLINE.md` — not a style preference, the tombstones of self-agreement, written by the Person after watching this exact class of failure land as "done." A check that rebuilds its own subject will agree with itself forever. The live path is the only path. The working notes in that file ("don't claim a doc is verified because you read the source — run things"; "does anything I changed have a caller, a consumer, or a test that now lies?") are the same rule at two distances.
+
+New seams have tests that call the factory boot calls, that resolve advertised paths against live beings, that refuse an empty `buildProperties()`. That is real, and it is that discipline starting to compile.
 
 It is not the same as a Person opening the window. **The first version of this essay then made the opposite error:** it treated the absence of a *documented* walk as the absence of a walk.
 

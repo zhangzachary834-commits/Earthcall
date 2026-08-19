@@ -9,7 +9,20 @@ every session, on top of the refusals in `AGENTS.md` and the workshop rules in
 - **End-to-End Coherence:** During your process, always take at least one moment to
   deliberate about how your work is supposed to function end-to-end, and how it stacks up
   against the rest of the program. This is so you can make sure the program is coherent, and
-  tie up loose ends.
+  tie up loose ends. This rule is first because this tree's most expensive failures were
+  *self-agreement*: a test or a "done and verified" that reconstructed the construction it
+  was supposed to judge, and so stayed green while the live path was dead.
+  - `tests/shape_generator_law_test.cpp` was green while the *booted* law could not fire
+    (unauthored; conditioned on a `type` path the channel does not carry). The factory
+    test now calls what boot instantiates — that is the point of it.
+  - `ontomath_test` and the geometry suite agreed with themselves while the live
+    shape-generator spawn sat at the origin (`docs/audits/SHAPE_GENERATOR_LAW_AUDIT_2026-08-18.md`).
+  - `agent intercom/conversation_history_injection.py` and `playpen.py` were claimed
+    verified while they would not parse (literal newlines inside string literals).
+  - `tests/bezier_patch_law_test.cpp`'s first "done and verified" was written against a
+    file that had never compiled (the same literal-newline break).
+  A check that does not exercise the live path is not end-to-end. It is a second office
+  for the same claim, and this repository has already learned what that costs.
 
 - **The Integrity Check:** After finishing, ask: "does anything I changed have a caller, a
   consumer, or a test that now lies?" If yes, fix it before closing the session.
