@@ -601,23 +601,167 @@ std::unique_ptr<MathNode> MathNode::differenceOp(std::unique_ptr<MathNode> a, st
 // Until then: refuse. A caller gets nullptr and knows it got nothing, which is
 // the outcome a sphere-shaped lie was hiding.
 std::unique_ptr<MathNode> MathNode::box(glm::vec3 halfExtents, const std::string& pVar) {
-    (void)halfExtents; (void)pVar;
-    return nullptr;
+    auto p = std::make_unique<MathNode>();
+    p->op = Op::ValueLeaf;
+    p->variableName = pVar;
+
+    auto absP = std::make_unique<MathNode>();
+    absP->op = Op::Abs;
+    absP->children.push_back(std::move(p));
+
+    auto b = std::make_unique<MathNode>();
+    b->op = Op::VectorConstruct;
+    auto bx = std::make_unique<MathNode>(); bx->op = Op::ScalarLeaf; bx->scalarForm = ScalarForm::constant(halfExtents.x);
+    auto by = std::make_unique<MathNode>(); by->op = Op::ScalarLeaf; by->scalarForm = ScalarForm::constant(halfExtents.y);
+    auto bz = std::make_unique<MathNode>(); bz->op = Op::ScalarLeaf; bz->scalarForm = ScalarForm::constant(halfExtents.z);
+    b->children.push_back(std::move(bx));
+    b->children.push_back(std::move(by));
+    b->children.push_back(std::move(bz));
+
+    auto q = std::make_unique<MathNode>();
+    q->op = Op::Sub;
+    q->children.push_back(std::move(absP));
+    q->children.push_back(std::move(b));
+
+    auto zeroVec = std::make_unique<MathNode>();
+    zeroVec->op = Op::VectorConstruct;
+    auto z0 = std::make_unique<MathNode>(); z0->op = Op::ScalarLeaf; z0->scalarForm = ScalarForm::constant(0.0);
+    auto z1 = std::make_unique<MathNode>(); z1->op = Op::ScalarLeaf; z1->scalarForm = ScalarForm::constant(0.0);
+    auto z2 = std::make_unique<MathNode>(); z2->op = Op::ScalarLeaf; z2->scalarForm = ScalarForm::constant(0.0);
+    zeroVec->children.push_back(std::move(z0));
+    zeroVec->children.push_back(std::move(z1));
+    zeroVec->children.push_back(std::move(z2));
+
+    auto qClone1 = std::make_unique<MathNode>(*q);
+    auto maxQ0 = std::make_unique<MathNode>();
+    maxQ0->op = Op::Intersection;
+    maxQ0->children.push_back(std::move(qClone1));
+    maxQ0->children.push_back(std::move(zeroVec));
+
+    auto outer = std::make_unique<MathNode>();
+    outer->op = Op::Length;
+    outer->children.push_back(std::move(maxQ0));
+
+    auto qClone2 = std::make_unique<MathNode>(*q);
+    auto qClone3 = std::make_unique<MathNode>(*q);
+    auto qClone4 = std::make_unique<MathNode>(*q);
+
+    auto qx = std::make_unique<MathNode>(); qx->op = Op::Component; qx->stringArg = "x"; qx->children.push_back(std::move(qClone2));
+    auto qy = std::make_unique<MathNode>(); qy->op = Op::Component; qy->stringArg = "y"; qy->children.push_back(std::move(qClone3));
+    auto qz = std::make_unique<MathNode>(); qz->op = Op::Component; qz->stringArg = "z"; qz->children.push_back(std::move(qClone4));
+
+    auto maxQyz = std::make_unique<MathNode>(); maxQyz->op = Op::Intersection; maxQyz->children.push_back(std::move(qy)); maxQyz->children.push_back(std::move(qz));
+    auto maxQxyz = std::make_unique<MathNode>(); maxQxyz->op = Op::Intersection; maxQxyz->children.push_back(std::move(qx)); maxQxyz->children.push_back(std::move(maxQyz));
+
+    auto zeroScalar = std::make_unique<MathNode>(); zeroScalar->op = Op::ScalarLeaf; zeroScalar->scalarForm = ScalarForm::constant(0.0);
+    auto inner = std::make_unique<MathNode>(); inner->op = Op::Union; inner->children.push_back(std::move(maxQxyz)); inner->children.push_back(std::move(zeroScalar));
+
+    auto result = std::make_unique<MathNode>();
+    result->op = Op::Add;
+    result->children.push_back(std::move(outer));
+    result->children.push_back(std::move(inner));
+    return result;
 }
 
 std::unique_ptr<MathNode> MathNode::cylinder(double radius, double halfHeight, const std::string& pVar) {
-    (void)radius; (void)halfHeight; (void)pVar;
-    return nullptr;
+    auto p1 = std::make_unique<MathNode>(); p1->op = Op::ValueLeaf; p1->variableName = pVar;
+    auto p2 = std::make_unique<MathNode>(); p2->op = Op::ValueLeaf; p2->variableName = pVar;
+    auto p3 = std::make_unique<MathNode>(); p3->op = Op::ValueLeaf; p3->variableName = pVar;
+
+    auto px = std::make_unique<MathNode>(); px->op = Op::Component; px->stringArg = "x"; px->children.push_back(std::move(p1));
+    auto py = std::make_unique<MathNode>(); py->op = Op::Component; py->stringArg = "y"; py->children.push_back(std::move(p2));
+    auto pz = std::make_unique<MathNode>(); pz->op = Op::Component; pz->stringArg = "z"; pz->children.push_back(std::move(p3));
+
+    auto zeroScalar = std::make_unique<MathNode>(); zeroScalar->op = Op::ScalarLeaf; zeroScalar->scalarForm = ScalarForm::constant(0.0);
+    auto pxz = std::make_unique<MathNode>(); pxz->op = Op::VectorConstruct;
+    pxz->children.push_back(std::move(px));
+    pxz->children.push_back(std::move(zeroScalar));
+    pxz->children.push_back(std::move(pz));
+
+    auto lenXZ = std::make_unique<MathNode>(); lenXZ->op = Op::Length; lenXZ->children.push_back(std::move(pxz));
+    auto r = std::make_unique<MathNode>(); r->op = Op::ScalarLeaf; r->scalarForm = ScalarForm::constant(radius);
+    auto d_xz = std::make_unique<MathNode>(); d_xz->op = Op::Sub; d_xz->children.push_back(std::move(lenXZ)); d_xz->children.push_back(std::move(r));
+
+    auto absPy = std::make_unique<MathNode>(); absPy->op = Op::Abs; absPy->children.push_back(std::move(py));
+    auto h = std::make_unique<MathNode>(); h->op = Op::ScalarLeaf; h->scalarForm = ScalarForm::constant(halfHeight);
+    auto d_y = std::make_unique<MathNode>(); d_y->op = Op::Sub; d_y->children.push_back(std::move(absPy)); d_y->children.push_back(std::move(h));
+
+    auto result = std::make_unique<MathNode>();
+    result->op = Op::Intersection;
+    result->children.push_back(std::move(d_xz));
+    result->children.push_back(std::move(d_y));
+    return result;
 }
 
 std::unique_ptr<MathNode> MathNode::torus(double majorR, double minorR, const std::string& pVar) {
-    (void)majorR; (void)minorR; (void)pVar;
-    return nullptr;
+    auto p1 = std::make_unique<MathNode>(); p1->op = Op::ValueLeaf; p1->variableName = pVar;
+    auto p2 = std::make_unique<MathNode>(); p2->op = Op::ValueLeaf; p2->variableName = pVar;
+    auto p3 = std::make_unique<MathNode>(); p3->op = Op::ValueLeaf; p3->variableName = pVar;
+
+    auto px = std::make_unique<MathNode>(); px->op = Op::Component; px->stringArg = "x"; px->children.push_back(std::move(p1));
+    auto py = std::make_unique<MathNode>(); py->op = Op::Component; py->stringArg = "y"; py->children.push_back(std::move(p2));
+    auto pz = std::make_unique<MathNode>(); pz->op = Op::Component; pz->stringArg = "z"; pz->children.push_back(std::move(p3));
+
+    auto zeroScalar1 = std::make_unique<MathNode>(); zeroScalar1->op = Op::ScalarLeaf; zeroScalar1->scalarForm = ScalarForm::constant(0.0);
+    auto pxz = std::make_unique<MathNode>(); pxz->op = Op::VectorConstruct;
+    pxz->children.push_back(std::move(px));
+    pxz->children.push_back(std::move(zeroScalar1));
+    pxz->children.push_back(std::move(pz));
+
+    auto lenXZ = std::make_unique<MathNode>(); lenXZ->op = Op::Length; lenXZ->children.push_back(std::move(pxz));
+    auto majR = std::make_unique<MathNode>(); majR->op = Op::ScalarLeaf; majR->scalarForm = ScalarForm::constant(majorR);
+    auto qX = std::make_unique<MathNode>(); qX->op = Op::Sub; qX->children.push_back(std::move(lenXZ)); qX->children.push_back(std::move(majR));
+
+    auto zeroScalar2 = std::make_unique<MathNode>(); zeroScalar2->op = Op::ScalarLeaf; zeroScalar2->scalarForm = ScalarForm::constant(0.0);
+    auto qVec = std::make_unique<MathNode>(); qVec->op = Op::VectorConstruct;
+    qVec->children.push_back(std::move(qX));
+    qVec->children.push_back(std::move(py));
+    qVec->children.push_back(std::move(zeroScalar2));
+
+    auto lenQ = std::make_unique<MathNode>(); lenQ->op = Op::Length; lenQ->children.push_back(std::move(qVec));
+    auto minR = std::make_unique<MathNode>(); minR->op = Op::ScalarLeaf; minR->scalarForm = ScalarForm::constant(minorR);
+    auto result = std::make_unique<MathNode>(); result->op = Op::Sub; result->children.push_back(std::move(lenQ)); result->children.push_back(std::move(minR));
+    return result;
 }
 
 std::unique_ptr<MathNode> MathNode::smoothUnionOp(std::unique_ptr<MathNode> a, std::unique_ptr<MathNode> b, double k) {
-    (void)a; (void)b; (void)k;
-    return nullptr;
+    if (k <= 1e-5) return unionOp(std::move(a), std::move(b));
+    auto aClone1 = std::make_unique<MathNode>(*a);
+    auto bClone1 = std::make_unique<MathNode>(*b);
+    auto aClone2 = std::make_unique<MathNode>(*a);
+    auto bClone2 = std::make_unique<MathNode>(*b);
+
+    auto bMinusA = std::make_unique<MathNode>(); bMinusA->op = Op::Sub; bMinusA->children.push_back(std::move(bClone1)); bMinusA->children.push_back(std::move(aClone1));
+    auto scaleTerm = std::make_unique<MathNode>(); scaleTerm->op = Op::Scale;
+    auto coeff = std::make_unique<MathNode>(); coeff->op = Op::ScalarLeaf; coeff->scalarForm = ScalarForm::constant(0.5 / k);
+    scaleTerm->children.push_back(std::move(coeff));
+    scaleTerm->children.push_back(std::move(bMinusA));
+
+    auto halfVal = std::make_unique<MathNode>(); halfVal->op = Op::ScalarLeaf; halfVal->scalarForm = ScalarForm::constant(0.5);
+    auto halfPlus = std::make_unique<MathNode>(); halfPlus->op = Op::Add; halfPlus->children.push_back(std::move(halfVal)); halfPlus->children.push_back(std::move(scaleTerm));
+
+    auto lo = std::make_unique<MathNode>(); lo->op = Op::ScalarLeaf; lo->scalarForm = ScalarForm::constant(0.0);
+    auto hi = std::make_unique<MathNode>(); hi->op = Op::ScalarLeaf; hi->scalarForm = ScalarForm::constant(1.0);
+    auto h = std::make_unique<MathNode>(); h->op = Op::Clamp; h->children.push_back(std::move(halfPlus)); h->children.push_back(std::move(lo)); h->children.push_back(std::move(hi));
+
+    auto hClone1 = std::make_unique<MathNode>(*h);
+    auto hClone2 = std::make_unique<MathNode>(*h);
+    auto hClone3 = std::make_unique<MathNode>(*h);
+
+    auto oneVal = std::make_unique<MathNode>(); oneVal->op = Op::ScalarLeaf; oneVal->scalarForm = ScalarForm::constant(1.0);
+    auto oneMinusH = std::make_unique<MathNode>(); oneMinusH->op = Op::Sub; oneMinusH->children.push_back(std::move(oneVal)); oneMinusH->children.push_back(std::move(hClone1));
+    auto oneMinusHClone = std::make_unique<MathNode>(*oneMinusH);
+
+    auto termB = std::make_unique<MathNode>(); termB->op = Op::Scale; termB->children.push_back(std::move(oneMinusH)); termB->children.push_back(std::move(bClone2));
+    auto termA = std::make_unique<MathNode>(); termA->op = Op::Scale; termA->children.push_back(std::move(hClone2)); termA->children.push_back(std::move(aClone2));
+    auto mixBA = std::make_unique<MathNode>(); mixBA->op = Op::Add; mixBA->children.push_back(std::move(termB)); mixBA->children.push_back(std::move(termA));
+
+    auto hTimesOneMinusH = std::make_unique<MathNode>(); hTimesOneMinusH->op = Op::Scale; hTimesOneMinusH->children.push_back(std::move(hClone3)); hTimesOneMinusH->children.push_back(std::move(oneMinusHClone));
+    auto kCoeff = std::make_unique<MathNode>(); kCoeff->op = Op::ScalarLeaf; kCoeff->scalarForm = ScalarForm::constant(k);
+    auto kBlend = std::make_unique<MathNode>(); kBlend->op = Op::Scale; kBlend->children.push_back(std::move(kCoeff)); kBlend->children.push_back(std::move(hTimesOneMinusH));
+
+    auto result = std::make_unique<MathNode>(); result->op = Op::Sub; result->children.push_back(std::move(mixBA)); result->children.push_back(std::move(kBlend));
+    return result;
 }
 
 // ---------------------------------------------------------------------------
@@ -687,6 +831,12 @@ const char* mathOpName(MathNode::Op op) {
         case MathNode::Op::Union:           return "Union";
         case MathNode::Op::Intersection:    return "Intersection";
         case MathNode::Op::Difference:      return "Difference";
+        case MathNode::Op::Div:             return "Div";
+        case MathNode::Op::Pow:             return "Pow";
+        case MathNode::Op::Abs:             return "Abs";
+        case MathNode::Op::Clamp:           return "Clamp";
+        case MathNode::Op::Sqrt:            return "Sqrt";
+        case MathNode::Op::Tan:             return "Tan";
         case MathNode::Op::Unsupported:     return "Unsupported";
     }
     return "Unsupported";
@@ -721,6 +871,12 @@ bool isKnownMathOp(int raw) {
         case MathNode::Op::Union:
         case MathNode::Op::Intersection:
         case MathNode::Op::Difference:
+        case MathNode::Op::Div:
+        case MathNode::Op::Pow:
+        case MathNode::Op::Abs:
+        case MathNode::Op::Clamp:
+        case MathNode::Op::Sqrt:
+        case MathNode::Op::Tan:
             return true;
         // Unsupported is where unknown ops LAND; it is never a stored value an
         // author picked, so it does not read back as known.
@@ -952,7 +1108,15 @@ TypeResult MathNode::typeOf(const TypeEnv& env, const std::string& path,
             return TypeResult::ok(ValueKind::Scalar);
         }
         case Op::Union:
-        case Op::Intersection:
+        case Op::Intersection: {
+            if (children.size() != 2) return arity(path, op, children.size(), 2);
+            auto t0 = sub(0); if (!t0) return t0;
+            auto t1 = sub(1); if (!t1) return t1;
+            if (*t0 == ValueKind::Unknown || *t1 == ValueKind::Unknown) return TypeResult::ok(ValueKind::Unknown);
+            if (scalarLike(*t0) && scalarLike(*t1)) return TypeResult::ok(widerScalar(*t0, *t1));
+            if (vectorLike(*t0) || vectorLike(*t1)) return TypeResult::ok(ValueKind::Vector);
+            return TypeResult::ok(widerScalar(*t0, *t1));
+        }
         case Op::Difference: {
             if (children.size() != 2) return arity(path, op, children.size(), 2);
             auto t0 = sub(0); if (!t0) return t0;
@@ -960,6 +1124,39 @@ TypeResult MathNode::typeOf(const TypeEnv& env, const std::string& path,
             if (!scalarLike(*t0)) return mismatch(path, op, 0, "ScalarField", *t0);
             if (!scalarLike(*t1)) return mismatch(path, op, 1, "ScalarField", *t1);
             return TypeResult::ok(widerScalar(*t0, *t1));
+        }
+        case Op::Div:
+        case Op::Pow: {
+            if (children.size() != 2) return arity(path, op, children.size(), 2);
+            auto t0 = sub(0); if (!t0) return t0;
+            auto t1 = sub(1); if (!t1) return t1;
+            if (*t0 == ValueKind::Unknown || *t1 == ValueKind::Unknown) return TypeResult::ok(ValueKind::Unknown);
+            if (scalarLike(*t0) && scalarLike(*t1)) return TypeResult::ok(widerScalar(*t0, *t1));
+            if (vectorLike(*t0)) return TypeResult::ok(ValueKind::Vector);
+            return TypeResult::ok(widerScalar(*t0, *t1));
+        }
+        case Op::Abs:
+        case Op::Sqrt: {
+            if (children.size() != 1) return arity(path, op, children.size(), 1);
+            auto t = sub(0); if (!t) return t;
+            if (*t == ValueKind::Unknown) return TypeResult::ok(ValueKind::Unknown);
+            if (vectorLike(*t)) return TypeResult::ok(ValueKind::Vector);
+            return TypeResult::ok(widerScalar(*t, *t));
+        }
+        case Op::Clamp: {
+            if (children.size() != 3) return arity(path, op, children.size(), 3);
+            auto t0 = sub(0); if (!t0) return t0;
+            auto t1 = sub(1); if (!t1) return t1;
+            auto t2 = sub(2); if (!t2) return t2;
+            if (*t0 == ValueKind::Unknown) return TypeResult::ok(ValueKind::Unknown);
+            if (vectorLike(*t0)) return TypeResult::ok(ValueKind::Vector);
+            return TypeResult::ok(widerScalar(*t0, widerScalar(*t1, *t2)));
+        }
+        case Op::Tan: {
+            if (children.size() != 1) return arity(path, op, children.size(), 1);
+            auto t = sub(0); if (!t) return t;
+            if (!scalarLike(*t)) return mismatch(path, op, 0, "Scalar", *t);
+            return TypeResult::ok(widerScalar(*t, *t));
         }
         case Op::Unsupported:
             return TypeResult::error(TypeDiagnostic{
@@ -1195,24 +1392,151 @@ std::optional<PropertyValue> MathNode::evaluate(const std::map<std::string, Prop
             return PropertyValue(static_cast<double>(
                 glm::distance(std::get<glm::vec3>(*a), std::get<glm::vec3>(*b))));
         }
-        // --- The CSG booleans over signed distance -------------------------
-        // These ARE geom::SdfOp::Union / Intersect / Subtract (Sdf.cpp's
-        // evalSdf), formula for formula. One vocabulary, two places it can be
-        // written: a shape tree, or a field expression.
+        // --- The CSG booleans / min / max ----------------------------------
         case Op::Union:
-        case Op::Intersection:
+        case Op::Intersection: {
+            if (children.size() != 2) return std::nullopt;
+            auto a = children[0]->evaluate(vars, subject);
+            auto b = children[1]->evaluate(vars, subject);
+            if (!a || !b) return std::nullopt;
+            const bool aVec = std::holds_alternative<glm::vec3>(*a);
+            const bool bVec = std::holds_alternative<glm::vec3>(*b);
+            if (aVec && bVec) {
+                glm::vec3 va = std::get<glm::vec3>(*a);
+                glm::vec3 vb = std::get<glm::vec3>(*b);
+                return PropertyValue((op == Op::Union) ? glm::min(va, vb) : glm::max(va, vb));
+            }
+            if (aVec && !bVec) {
+                glm::vec3 va = std::get<glm::vec3>(*a);
+                double db = 0.0;
+                if (!propertyValueToNumber(*b, db)) return std::nullopt;
+                float fb = static_cast<float>(db);
+                return PropertyValue((op == Op::Union) ? glm::min(va, glm::vec3(fb)) : glm::max(va, glm::vec3(fb)));
+            }
+            if (!aVec && bVec) {
+                double da = 0.0;
+                if (!propertyValueToNumber(*a, da)) return std::nullopt;
+                float fa = static_cast<float>(da);
+                glm::vec3 vb = std::get<glm::vec3>(*b);
+                return PropertyValue((op == Op::Union) ? glm::min(glm::vec3(fa), vb) : glm::max(glm::vec3(fa), vb));
+            }
+            double da = 0.0, db = 0.0;
+            if (!propertyValueToNumber(*a, da) || !propertyValueToNumber(*b, db)) return std::nullopt;
+            return PropertyValue((op == Op::Union) ? std::min(da, db) : std::max(da, db));
+        }
         case Op::Difference: {
             if (children.size() != 2) return std::nullopt;
             auto a = children[0]->evaluate(vars, subject);
             auto b = children[1]->evaluate(vars, subject);
             if (!a || !b) return std::nullopt;
             double da = 0.0, db = 0.0;
-            if (!propertyValueToNumber(*a, da) || !propertyValueToNumber(*b, db)) {
+            if (!propertyValueToNumber(*a, da) || !propertyValueToNumber(*b, db)) return std::nullopt;
+            return PropertyValue(std::max(da, -db));
+        }
+        case Op::Div: {
+            if (children.size() != 2) return std::nullopt;
+            auto a = children[0]->evaluate(vars, subject);
+            auto b = children[1]->evaluate(vars, subject);
+            if (!a || !b) return std::nullopt;
+            const bool aVec = std::holds_alternative<glm::vec3>(*a);
+            const bool bVec = std::holds_alternative<glm::vec3>(*b);
+            if (aVec && bVec) {
+                glm::vec3 va = std::get<glm::vec3>(*a);
+                glm::vec3 vb = std::get<glm::vec3>(*b);
+                glm::vec3 res;
+                for (int i = 0; i < 3; ++i) {
+                    res[i] = (std::abs(vb[i]) < static_cast<float>(kDegenerateDivisor)) ? 0.0f : va[i] / vb[i];
+                }
+                return PropertyValue(res);
+            }
+            if (aVec && !bVec) {
+                glm::vec3 va = std::get<glm::vec3>(*a);
+                double db = 0.0;
+                if (!propertyValueToNumber(*b, db)) return std::nullopt;
+                if (std::abs(db) < kDegenerateDivisor) return PropertyValue(glm::vec3(0.0f));
+                return PropertyValue(va / static_cast<float>(db));
+            }
+            if (!aVec && !bVec) {
+                double da = 0.0, db = 0.0;
+                if (!propertyValueToNumber(*a, da) || !propertyValueToNumber(*b, db)) return std::nullopt;
+                if (std::abs(db) < kDegenerateDivisor) return PropertyValue(0.0);
+                return PropertyValue(da / db);
+            }
+            return std::nullopt;
+        }
+        case Op::Pow: {
+            if (children.size() != 2) return std::nullopt;
+            auto a = children[0]->evaluate(vars, subject);
+            auto b = children[1]->evaluate(vars, subject);
+            if (!a || !b) return std::nullopt;
+            const bool aVec = std::holds_alternative<glm::vec3>(*a);
+            double db = 0.0;
+            if (!propertyValueToNumber(*b, db)) return std::nullopt;
+            if (aVec) {
+                glm::vec3 va = std::get<glm::vec3>(*a);
+                float fb = static_cast<float>(db);
+                return PropertyValue(glm::vec3(
+                    (va.x < 0.0f && std::floor(fb) != fb) ? 0.0f : std::pow(va.x, fb),
+                    (va.y < 0.0f && std::floor(fb) != fb) ? 0.0f : std::pow(va.y, fb),
+                    (va.z < 0.0f && std::floor(fb) != fb) ? 0.0f : std::pow(va.z, fb)
+                ));
+            }
+            double da = 0.0;
+            if (!propertyValueToNumber(*a, da)) return std::nullopt;
+            if (da < 0.0 && std::floor(db) != db) return PropertyValue(0.0);
+            return PropertyValue(std::pow(da, db));
+        }
+        case Op::Abs: {
+            if (children.size() != 1) return std::nullopt;
+            auto a = children[0]->evaluate(vars, subject);
+            if (!a) return std::nullopt;
+            if (std::holds_alternative<glm::vec3>(*a)) {
+                return PropertyValue(glm::abs(std::get<glm::vec3>(*a)));
+            }
+            double da = 0.0;
+            if (!propertyValueToNumber(*a, da)) return std::nullopt;
+            return PropertyValue(std::abs(da));
+        }
+        case Op::Clamp: {
+            if (children.size() != 3) return std::nullopt;
+            auto val = children[0]->evaluate(vars, subject);
+            auto lo = children[1]->evaluate(vars, subject);
+            auto hi = children[2]->evaluate(vars, subject);
+            if (!val || !lo || !hi) return std::nullopt;
+            if (std::holds_alternative<glm::vec3>(*val)) {
+                glm::vec3 v = std::get<glm::vec3>(*val);
+                glm::vec3 vlo(0.0f), vhi(1.0f);
+                if (std::holds_alternative<glm::vec3>(*lo)) vlo = std::get<glm::vec3>(*lo);
+                else { double d = 0.0; propertyValueToNumber(*lo, d); vlo = glm::vec3(static_cast<float>(d)); }
+                if (std::holds_alternative<glm::vec3>(*hi)) vhi = std::get<glm::vec3>(*hi);
+                else { double d = 1.0; propertyValueToNumber(*hi, d); vhi = glm::vec3(static_cast<float>(d)); }
+                return PropertyValue(glm::clamp(v, vlo, vhi));
+            }
+            double dval = 0.0, dlo = 0.0, dhi = 0.0;
+            if (!propertyValueToNumber(*val, dval) || !propertyValueToNumber(*lo, dlo) || !propertyValueToNumber(*hi, dhi)) {
                 return std::nullopt;
             }
-            if (op == Op::Union)        return PropertyValue(std::min(da, db));
-            if (op == Op::Intersection) return PropertyValue(std::max(da, db));
-            return PropertyValue(std::max(da, -db));   // Difference == Subtract
+            return PropertyValue(std::clamp(dval, dlo, dhi));
+        }
+        case Op::Sqrt: {
+            if (children.size() != 1) return std::nullopt;
+            auto a = children[0]->evaluate(vars, subject);
+            if (!a) return std::nullopt;
+            if (std::holds_alternative<glm::vec3>(*a)) {
+                glm::vec3 va = std::get<glm::vec3>(*a);
+                return PropertyValue(glm::sqrt(glm::max(va, glm::vec3(0.0f))));
+            }
+            double da = 0.0;
+            if (!propertyValueToNumber(*a, da)) return std::nullopt;
+            return PropertyValue(std::sqrt(std::max(0.0, da)));
+        }
+        case Op::Tan: {
+            if (children.size() != 1) return std::nullopt;
+            auto a = children[0]->evaluate(vars, subject);
+            if (!a) return std::nullopt;
+            double da = 0.0;
+            if (!propertyValueToNumber(*a, da)) return std::nullopt;
+            return PropertyValue(std::tan(da));
         }
 
         // --- Sampling a field expression at a point ------------------------

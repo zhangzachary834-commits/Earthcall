@@ -31,6 +31,7 @@
 #include "Singularity/Input/KeyboardHandler.hpp"
 #include "Singularity/Input/MouseHandler.hpp"
 #include "Singularity/FirstMoverWindowTools/CursorTools.hpp"
+#include "Singularity/FirstMoverWindowTools/Chat.hpp"
 #include "Singularity/FirstMoverWindowTools/ElementalToolHandler.hpp"
 #include "Singularity/FirstMoverWindowTools/CreatorConsole/CreatorConsoleWindow.hpp"
 #include "Singularity/FirstMoverWindowTools/CreatorConsole/CreatorConsoleState.hpp"
@@ -286,6 +287,50 @@ void Engine::tick(float dt) {
             Rendering::renderCreatorConsoleWindow(&_creatorConsoleOpen, _player.get(), nullptr, mgr, _window, this);
         }
 
+        if (_showKeymapWindow) {
+            ImGui::SetNextWindowSize(ImVec2(420, 420), ImGuiCond_FirstUseEver);
+            if (ImGui::Begin("Controls / Keymap", &_showKeymapWindow,
+                             ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize)) {
+                ImGui::TextUnformatted("Core");
+                ImGui::Separator();
+                ImGui::BulletText("M: Toggle Main Menu");
+                ImGui::BulletText("Esc: Toggle Cursor Lock");
+                ImGui::BulletText("H: Toggle Chat");
+                ImGui::BulletText("K: Controls / Keymap");
+                ImGui::BulletText("`: Toggle Dev Tools");
+                ImGui::BulletText("F8: Creator Console");
+                ImGui::BulletText("F9: Singular Set-to-Set Creation");
+                ImGui::BulletText("C: Character Architect Forge Zone");
+                ImGui::Separator();
+                ImGui::TextUnformatted("Saves");
+                ImGui::Separator();
+                ImGui::BulletText("S: Quick Save (from the menu)");
+                ImGui::BulletText("A: Save As...  L: Load  G: Save Manager");
+                ImGui::Separator();
+                ImGui::TextUnformatted("Camera");
+                ImGui::Separator();
+                ImGui::BulletText("WASD: Move");
+                ImGui::BulletText("Space: Up");
+                ImGui::BulletText("Shift: Down");
+                ImGui::BulletText("V: Sprint");
+                ImGui::BulletText("Alt: Slow");
+                ImGui::Separator();
+                ImGui::TextUnformatted("Create");
+                ImGui::Separator();
+                ImGui::BulletText("L: Arm 3D create law (when the menu is closed)");
+                ImGui::BulletText("F4: 3D Create tab   F5: 3D Select tab");
+            }
+            ImGui::End();
+        }
+
+        if (_showChatWindow && _chat) {
+            _chat->renderUI(&_showChatWindow);
+        }
+
+        if (_showImGuiDemo) {
+            ImGui::ShowDemoWindow(&_showImGuiDemo);
+        }
+
         if (Rendering::getCreatorConsoleState().showLawAuthor) {
             Singular* testSubject = nullptr;
             if (_lawManager) {
@@ -364,5 +409,10 @@ Person* Engine::getPlayer() { return _player.get(); }
 LawManager* Engine::getLawManager() { return _lawManager.get(); }
 KeyboardHandler* Engine::getKeyboardHandler() { return _keyboardHandler.get(); }
 CursorTools* Engine::getCursorTools() { return _cursorTools.get(); }
+void Engine::ensureCursorUnlocked() {
+    if (_mouseHandler && _window && _mouseHandler->isCursorLocked()) {
+        _mouseHandler->toggleCursorLock(_window);
+    }
+}
 Engine::~Engine() {}
 }

@@ -92,11 +92,11 @@ int main() {
             {"x * y",                      true,  {0.3f, 0.4f, 0.0f}, 0.12f},
             {"x^3",                        true,  {0.3f, 0.4f, 0.0f}, 0.027f},
             {"sin(x)",                     true,  {0.3f, 0.4f, 0.0f}, std::sin(0.3f)},
-            {"x/2",                        false, {0.3f, 0.4f, 0.0f}, 0.15f},
-            {"sqrt(x*x + y*y + z*z) - 0.55", false, {0.3f, 0.4f, 0.0f}, -0.05f},
+            {"x/2",                        true,  {0.3f, 0.4f, 0.0f}, 0.15f},
+            {"sqrt(x*x + y*y + z*z) - 0.55", true, {0.3f, 0.4f, 0.0f}, -0.05f},
             {"sin(x*2)",                   false, {0.3f, 0.4f, 0.0f}, std::sin(0.6f)},
-            {"tan(x)",                     false, {0.3f, 0.4f, 0.0f}, std::tan(0.3f)},
-            {"abs(x)",                     false, {-0.3f, 0.0f, 0.0f}, 0.3f},
+            {"tan(x)",                     true,  {0.3f, 0.4f, 0.0f}, std::tan(0.3f)},
+            {"abs(x)",                     true,  {-0.3f, 0.0f, 0.0f}, 0.3f},
         };
         for (const auto& c : cases) {
             geom::SdfNode n = geom::makeImplicit(c.expr);
@@ -114,15 +114,39 @@ int main() {
     //    radius, smoothUnion its blend -- all four silently WERE spheres.
     // -----------------------------------------------------------------------
     {
-        check(OntoMath::MathNode::box(glm::vec3(0.5f)) == nullptr,
-              "MathNode::box refuses rather than returning a sphere");
-        check(OntoMath::MathNode::cylinder(0.5, 2.0) == nullptr,
-              "MathNode::cylinder refuses rather than discarding its height");
-        check(OntoMath::MathNode::torus(0.5, 0.1) == nullptr,
-              "MathNode::torus refuses rather than discarding its minor radius");
-        check(OntoMath::MathNode::smoothUnionOp(OntoMath::MathNode::sphere(1.0),
-                                                OntoMath::MathNode::sphere(2.0), 0.3) == nullptr,
-              "MathNode::smoothUnionOp refuses rather than dropping its blend");
+        auto boxNode = OntoMath::MathNode::box(glm::vec3(0.5f), "p");
+        check(boxNode != nullptr, "MathNode::box is genuinely implemented");
+        if (boxNode) {
+            std::map<std::string, PropertyValue> bv;
+            bv["p"] = PropertyValue(glm::vec3(0.8f, 0.0f, 0.0f));
+            bool ok = false;
+            double dBox = evalNum(*boxNode, bv, ok);
+            check(ok && nearf(static_cast<float>(dBox), 0.3f), "box evaluated at (0.8,0,0) equals 0.3");
+        }
+
+        auto cylNode = OntoMath::MathNode::cylinder(0.5, 2.0, "p");
+        check(cylNode != nullptr, "MathNode::cylinder is genuinely implemented");
+        if (cylNode) {
+            std::map<std::string, PropertyValue> cv;
+            cv["p"] = PropertyValue(glm::vec3(0.0f, 2.5f, 0.0f));
+            bool ok = false;
+            double dCyl = evalNum(*cylNode, cv, ok);
+            check(ok && nearf(static_cast<float>(dCyl), 0.5f), "cylinder evaluated at (0,2.5,0) equals 0.5");
+        }
+
+        auto torNode = OntoMath::MathNode::torus(0.5, 0.1, "p");
+        check(torNode != nullptr, "MathNode::torus is genuinely implemented");
+        if (torNode) {
+            std::map<std::string, PropertyValue> tv;
+            tv["p"] = PropertyValue(glm::vec3(0.5f, 0.0f, 0.0f));
+            bool ok = false;
+            double dTor = evalNum(*torNode, tv, ok);
+            check(ok && nearf(static_cast<float>(dTor), -0.1f), "torus evaluated at ring center is inside (-0.1)");
+        }
+
+        auto sminNode = OntoMath::MathNode::smoothUnionOp(OntoMath::MathNode::sphere(1.0),
+                                                          OntoMath::MathNode::sphere(2.0), 0.3);
+        check(sminNode != nullptr, "MathNode::smoothUnionOp is genuinely implemented");
         check(OntoMath::MathNode::sphere(1.0) != nullptr, "sphere is genuinely implemented");
     }
 
@@ -138,9 +162,13 @@ int main() {
         check(cone.toMathNode()  == nullptr, "toMathNode refuses a Cone");
         check(conv.toMathNode()  == nullptr, "toMathNode refuses a Convex polyhedron");
         check(morph.toMathNode() == nullptr, "toMathNode refuses a Morph");
-        check(box.toMathNode()   == nullptr, "toMathNode refuses a Box while box() is unimplemented");
+        check(box.toMathNode()   != nullptr, "toMathNode lifts a Box");
         geom::SdfNode sph = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(0.5f));
         check(sph.toMathNode() != nullptr, "toMathNode lifts a Sphere");
+        geom::SdfNode cyl = geom::SdfNode::leaf(geom::SdfPrim::Cylinder, glm::vec3(0.5f, 1.0f, 0.0f));
+        check(cyl.toMathNode() != nullptr, "toMathNode lifts a Cylinder");
+        geom::SdfNode tor = geom::SdfNode::leaf(geom::SdfPrim::Torus, glm::vec3(0.5f, 0.1f, 0.0f));
+        check(tor.toMathNode() != nullptr, "toMathNode lifts a Torus");
     }
 
     // -----------------------------------------------------------------------

@@ -25,6 +25,8 @@
 #include "Singularity/Screen/Camera.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "Singularity/FirstMoverWindowTools/CreatorConsole/CreatorConsoleWindow.hpp"
+#include "Singularity/FirstMoverWindowTools/Chat.hpp"
+#include "ZonesOfEarth/SaveContext.hpp"
 
 #include <GLFW/glfw3.h>
 #include <imgui.h>
@@ -58,6 +60,8 @@ void Engine::initLogic() {
         Body body("humanoid", "default");
         _player = std::make_unique<Person>(std::move(soul), std::move(body), "default");
     }
+    if (!_chat) _chat = std::make_unique<Chat>();
+    if (!_cursorTools) _cursorTools = std::make_unique<CursorTools>();
 
     // Laws listen from the first frame: every ECA::Event published anywhere
     // in the engine becomes a fact the law network can act on.
@@ -193,22 +197,50 @@ void Engine::initLogic() {
     });
     printf("[Init] Checkpoint B2: after menu addOption(Resume)\n");
 
-    // Enhanced main menu options (non-destructive; all previous features intact)
-    _mainMenu.addOption("Quick Save", GLFW_KEY_S, [this]() {  });
+    // Menu options answer or they are not on the menu. Dead Settings/Toolbar
+    // entries were deleted rather than shown empty. Placement/Selection
+    // inspectors point at the living Create3D console, not the pre-split ones.
+    _mainMenu.addOption("Quick Save", GLFW_KEY_S, [this]() {
+        SaveContext ctx;
+        ctx.camera = getCamera();
+        ctx.mouseHandler = getMouseHandler();
+        ctx.currentColor = Rendering::getCreatorConsoleState().currentColor;
+        ctx.player = getPlayer();
+        ctx.lawManager = getLawManager();
+        ctx.worldTime = &_worldTime;
+        ctx.unpackForAuthoring = mgr.getSaveLoadState().unpackForAuthoring;
+        mgr.saveStateWithLog("", ctx);
+    });
     _mainMenu.addOption("Save As...", GLFW_KEY_A, [this]() { mgr.getSaveLoadState().showSaveWindow = true; });
     _mainMenu.addOption("Load", GLFW_KEY_L, [this]() { mgr.updateSaveFiles(); mgr.getSaveLoadState().showLoadWindow = true; });
     _mainMenu.addOption("Save Manager", GLFW_KEY_G, [this]() { mgr.getSaveLoadState().showManager = true; });
-    _mainMenu.addOption("Toggle Chat", GLFW_KEY_H, [this]() { /* _world.showChatWindow = !_world.showChatWindow; */ });
-    _mainMenu.addOption("Toggle Toolbar", GLFW_KEY_T, [this]() { /* _world.showToolbar = !_world.showToolbar; */ });
-    _mainMenu.addOption("Settings", GLFW_KEY_F2, [this]() {  });
-    _mainMenu.addOption("Toggle ImGui Demo", GLFW_KEY_F3, [this]() {  });
-    _mainMenu.addOption("Toggle Placement Insp.", GLFW_KEY_F4, [this]() {  });
-    _mainMenu.addOption("Toggle Selection Insp.", GLFW_KEY_F5, [this]() {  });
+    _mainMenu.addOption("Toggle Chat", GLFW_KEY_H, [this]() {
+        _showChatWindow = !_showChatWindow;
+        if (_showChatWindow) ensureCursorUnlocked();
+    });
+    _mainMenu.addOption("Toggle ImGui Demo", GLFW_KEY_F3, [this]() {
+        _showImGuiDemo = !_showImGuiDemo;
+        if (_showImGuiDemo) ensureCursorUnlocked();
+    });
+    _mainMenu.addOption("3D Create", GLFW_KEY_F4, [this]() {
+        _creatorConsoleOpen = true;
+        Rendering::getCreatorConsoleState().currentSection = Rendering::CreatorSection::Create3D;
+        Rendering::getCreatorConsoleState().current3DMode = Rendering::Mode3D::BrushCreate;
+        ensureCursorUnlocked();
+    });
+    _mainMenu.addOption("3D Select", GLFW_KEY_F5, [this]() {
+        _creatorConsoleOpen = true;
+        Rendering::getCreatorConsoleState().currentSection = Rendering::CreatorSection::Create3D;
+        Rendering::getCreatorConsoleState().current3DMode = Rendering::Mode3D::Selection;
+        ensureCursorUnlocked();
+    });
     _mainMenu.addOption("Toggle Dev Mode", GLFW_KEY_GRAVE_ACCENT, [this]() {
         _devToolsWindowOpen = !_devToolsWindowOpen;
+        if (_devToolsWindowOpen) ensureCursorUnlocked();
     });
     _mainMenu.addOption("Toggle Creator Console", GLFW_KEY_F8, [this]() {
-        _creationConsoleOpen = !_creationConsoleOpen;
+        _creatorConsoleOpen = !_creatorConsoleOpen;
+        if (_creatorConsoleOpen) ensureCursorUnlocked();
     });
     
     // Main Tools submenu
@@ -229,7 +261,10 @@ void Engine::initLogic() {
         _mouseHandler->setMenuOpen(false);
         if (_mouseHandler->isCursorLocked()) _mouseHandler->toggleCursorLock(_window);
     });
-    _mainMenu.addOption("Controls / Keymap", GLFW_KEY_K, [this]() { /* _world.showKeymapWindow = true; */ });
+    _mainMenu.addOption("Controls / Keymap", GLFW_KEY_K, [this]() {
+        _showKeymapWindow = !_showKeymapWindow;
+        if (_showKeymapWindow) ensureCursorUnlocked();
+    });
     _mainMenu.addOption("Character Architect Forge", GLFW_KEY_C, [this]() {
         _creatorConsoleOpen = true;
         Rendering::getCreatorConsoleState().currentSection = Rendering::CreatorSection::Character;
@@ -318,16 +353,24 @@ void Engine::initLogic() {
     });
     _keyboardHandler->bindKey(GLFW_KEY_GRAVE_ACCENT, "toggle_dev_tools", [this]() {
         _devToolsWindowOpen = !_devToolsWindowOpen;
+        if (_devToolsWindowOpen) ensureCursorUnlocked();
     });
     _keyboardHandler->bindKey(GLFW_KEY_F8, "toggle_creation_console", [this]() {
         _creatorConsoleOpen = !_creatorConsoleOpen;
+        if (_creatorConsoleOpen) ensureCursorUnlocked();
     });
     _keyboardHandler->bindKey(GLFW_KEY_F9, "toggle_singular_set_to_set", [this]() {
         _creationConsoleOpen = !_creationConsoleOpen;
+        if (_creationConsoleOpen) ensureCursorUnlocked();
     });
-    _keyboardHandler->bindKey(GLFW_KEY_H, "toggle_chat", [this]() { /* _world.showChatWindow = !_world.showChatWindow; */ });
-    _keyboardHandler->bindKey(GLFW_KEY_I, "toggle_integration_ui", [this]() { /* _world.showIntegrationUI = !_world.showIntegrationUI; */ });
-    _keyboardHandler->bindKey(GLFW_KEY_T, "toggle_toolbar", [this]() { /* _world.showToolbar = !_world.showToolbar; */ });
+    _keyboardHandler->bindKey(GLFW_KEY_H, "toggle_chat", [this]() {
+        _showChatWindow = !_showChatWindow;
+        if (_showChatWindow) ensureCursorUnlocked();
+    });
+    _keyboardHandler->bindKey(GLFW_KEY_K, "toggle_keymap", [this]() {
+        _showKeymapWindow = !_showKeymapWindow;
+        if (_showKeymapWindow) ensureCursorUnlocked();
+    });
     _keyboardHandler->bindKey(GLFW_KEY_1, "perspective_first_person", [this]() { _currentPerspective = PerspectiveMode::FirstPerson; });
     _keyboardHandler->bindKey(GLFW_KEY_2, "perspective_second_person", [this]() { _currentPerspective = PerspectiveMode::SecondPerson; });
     _keyboardHandler->bindKey(GLFW_KEY_3, "perspective_third_person", [this]() { _currentPerspective = PerspectiveMode::ThirdPerson; });
@@ -362,13 +405,6 @@ void Engine::initLogic() {
             Physics::PhysicsLaw newLaw; newLaw.name = "Gravity Field"; newLaw.type = Physics::LawType::GravityField; newLaw.enabled = true; newLaw.target.allObjects = true; Physics::addLaw(newLaw);
         }
     });
-    _keyboardHandler->bindKey(GLFW_KEY_Z, "undo", [this]() {
-        // Undo functionality temporarily disabled due to UI migration
-    });
-    _keyboardHandler->bindKey(GLFW_KEY_Y, "redo", [this]() {
-        // Redo functionality temporarily disabled due to UI migration
-    });
-
     // Camera movement bindings (these are handled in the update loop for continuous movement)
     _keyboardHandler->bindKey(GLFW_KEY_W, "camera_forward", [](){});
     _keyboardHandler->bindKey(GLFW_KEY_S, "camera_backward", [](){});

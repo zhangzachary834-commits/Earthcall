@@ -244,6 +244,9 @@ inline constexpr double kGradientEpsilon = 1e-3;
 // 1e-3, which is nowhere near degenerate.
 inline constexpr float kDegenerateVectorLength = 1e-6f;
 
+// Degenerate-divisor threshold for Div, shared by CPU and GPU paths.
+inline constexpr double kDegenerateDivisor = 1e-6;
+
 struct MathNode {
     // Serialized as ints — APPEND-ONLY
     enum class Op {
@@ -282,6 +285,12 @@ struct MathNode {
         Union = 20,
         Intersection = 21,
         Difference = 22,
+        Div = 23,      // binary division (Scalar/Scalar, Vector/Scalar, Vector/Vector) guarded by kDegenerateDivisor
+        Pow = 24,      // binary general power (Scalar/Scalar, Vector/Scalar)
+        Abs = 25,      // unary componentwise/scalar absolute value (Scalar->Scalar, Vector->Vector)
+        Clamp = 26,    // ternary clamp(val, lo, hi) (Scalar/Scalar/Scalar, Vector/Vector/Vector, Vector/Scalar/Scalar)
+        Sqrt = 27,     // unary square root (Scalar->Scalar, Vector->Vector)
+        Tan = 28,      // unary tangent (Scalar->Scalar)
 
         // Not a kind an author picks — the landing place for an op THIS BUILD
         // does not know: a save written by another version. It never

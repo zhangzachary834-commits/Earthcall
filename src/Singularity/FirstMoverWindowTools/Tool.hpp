@@ -127,6 +127,23 @@ public:
     // active3DMode == "Create", armed by a distinct input
     // (see DeveloperToolsWindow's law-mode key toggle) so the two paths never
     // both fire off one click.
+    // Refresh the CreationChannel's cursor placement cache from the live
+    // camera and cursor. Runs EVERY FRAME, for both consumers.
+    //
+    // This used to live inside ShapeGenerator3D, below its early returns, which
+    // made the placement a side effect of the developer bypass deciding to
+    // spawn. The 2026-08-17 mutual-exclusion guard then returned before it
+    // whenever the law was armed -- so the law read a cursorSpawnPos that
+    // nothing had ever written, got the identity transform, and birthed every
+    // cube at the origin while reporting Applied. Spawn refuses an UNREADABLE
+    // placement; it cannot refuse a readable wrong one.
+    //
+    // Sensing where the cursor is, and acting on it, are two different things.
+    // Only the second belongs behind the arming gate.
+    static void UpdateShapeGeneratorPlacement(GLFWwindow* window, Core::Engine* engine,
+                                              ZoneManager& mgr,
+                                              Singularity::Core::CreationChannel& channel);
+
     static void ShapeGenerator3D(GLFWwindow* window, Core::Engine* engine, ZoneManager& mgr,
                                  Singularity::Core::CreationChannel& channel,
                                  BodyPart* targetPart = nullptr);

@@ -281,6 +281,15 @@ std::string emitMathNode(const OntoMath::MathNode& node, Emit& e, const std::str
                    wgslLiteral(OntoMath::kDegenerateVectorLength) + ")";
         }
         case Op::Distance: return "distance(" + arg(0) + ", " + arg(1) + ")";
+        case Op::Div: {
+            const std::string b = arg(1);
+            return "select(0.0, ((" + arg(0) + ") / (" + b + ")), abs(" + b + ") >= " + wgslLiteral(OntoMath::kDegenerateDivisor) + ")";
+        }
+        case Op::Pow:   return "pow((" + arg(0) + "), (" + arg(1) + "))";
+        case Op::Abs:   return "abs(" + arg(0) + ")";
+        case Op::Clamp: return "clamp((" + arg(0) + "), (" + arg(1) + "), (" + arg(2) + "))";
+        case Op::Sqrt:  return "sqrt(max((" + arg(0) + "), 0.0))";
+        case Op::Tan:   return "tan(" + arg(0) + ")";
 
         // --- CSG over signed distance --------------------------------------
         // Character-identical to what emitNode() below emits for

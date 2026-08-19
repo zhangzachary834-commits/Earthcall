@@ -10,6 +10,7 @@
 #include <GLFW/glfw3.h>
 #include <cassert>
 #include <cstdio>
+#include <map>
 #include <string>
 
 int main() {
@@ -37,10 +38,26 @@ int main() {
         // resolvable at all — and it must not drift back to a generated law-<N>.
         assert(channel.getIdentifier() == "foreign-channel.calendar");
 
-        // Exactly three, once. Guards the lazy-build contract: buildProperties
-        // must not also be called from the constructor, or every property here
-        // is registered twice.
-        assert(channel.listProperties().size() == 3);
+        // The lazy-build contract: buildProperties must not ALSO be called from
+        // the constructor, or every property is registered twice.
+        //
+        // Asserted by NAME rather than by total count. The total was hard-coded
+        // at 3 and went stale the moment Singular::registerTelosProperty landed
+        // (a1aeab5a) and gave every being a "telos" — a deliberate change that
+        // turned this test red for something it was never watching. What it
+        // actually guards is "no name appears twice", and that survives the base
+        // vocabulary growing.
+        {
+            std::map<std::string, int> seen;
+            for (Property* property : channel.listProperties()) seen[property->name()]++;
+            for (const auto& [name, count] : seen) {
+                if (count != 1) {
+                    std::fprintf(stderr, "property '%s' registered %d times\n", name.c_str(), count);
+                }
+                assert(count == 1);
+            }
+            assert(seen.count("enabled") && seen.count("connected") && seen.count("rate_limit"));
+        }
 
         PropertyValue v;
         assert(PropertyPath::parse("enabled").getValue(channel, v) == PropertyPath::PathResult::Ok);
@@ -55,7 +72,18 @@ int main() {
         InferenceLawBridge inference("calendar_classifier");
         assert(inference.isFirstMover() == true);
         assert(inference.getIdentifier() == "inference.calendar_classifier");
-        assert(inference.listProperties().size() == 3);
+        // By name, not by total — same reason as the channel above.
+        {
+            std::map<std::string, int> seen;
+            for (Property* property : inference.listProperties()) seen[property->name()]++;
+            for (const auto& [name, count] : seen) {
+                if (count != 1) {
+                    std::fprintf(stderr, "property '%s' registered %d times\n", name.c_str(), count);
+                }
+                assert(count == 1);
+            }
+            assert(seen.count("confidence_threshold"));
+        }
         assert(PropertyPath::parse("confidence_threshold").getValue(inference, v) == PropertyPath::PathResult::Ok);
         assert(std::get<float>(v) == 0.85f);
 

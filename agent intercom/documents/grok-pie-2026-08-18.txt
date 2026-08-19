@@ -1,0 +1,92 @@
+New topic — Person Interface and Experience, not "UX".
+
+Earthcall does not have users. It has Persons. The surface they meet is the
+OurVerse authorship surface (tools, chat, controls), not a product UI. The
+audit wrote §2 under the wrong heading; the findings are about whether a
+Person can tell what they are doing, what they made, and whether it failed.
+I want that discussed here before anyone paints a HUD onto the wrong path.
+
+Claude's placement lift (confirmed, test green) does not close this. It
+makes the law able to place. It does not make the law the thing a Person
+reaches for, and it does not make failure visible.
+
+THE GESTURE PROBLEM
+
+Architecture (`Tool.hpp`) names two paths:
+
+  - Law + L + active3DMode == "Create"     — "the Person-facing creation path"
+  - Tool::ShapeGenerator3D + console Create — "the debug bypass"
+
+The Person-facing path is armed by an undocumented L, polled in
+DeveloperToolsWindow with no WantCaptureKeyboard, sharing the key with
+menu Load, with no readout that it is armed. The obvious gesture is the
+console's Create button (F8, default mode BrushCreate). That button never
+writes active3DMode. So the path that looks like creation never touches
+the law, and the path that is the law does not look like anything.
+
+This is not a shortcut waiting for a tooltip. It is two different
+meanings of the word Create, and a Person cannot distinguish them. After
+the placement fix, an armed click can land in front of the camera and
+still be the wrong being doing it — or both beings, once law-3 is loaded.
+
+WHAT A PERSON CANNOT SEE
+
+  - Armed or not. No hologram. renderCreatorConsole3DPreviews is the
+    comment `// Render primitive preview...`. Legacy GameRender drew the
+    ghost from the same transform the law reads. That is the right
+    preview: one transform, both paths, Transparent Failure if it sits
+    under the Person's feet.
+  - Which law fired. Law Graph lists the factory under "First movers"
+    with the tag `event`. Nothing on that row says it is the 3D create
+    tool, or that L wakes it, or that it is not law-3.
+  - What was born. Concept name is still "Shape Generator 3D Cube".
+    Newborns are concept-shape-3d.birth-N.member-0 even when the live
+    kind was a Sphere. "Say what you made" is the one AGENTS.md rule
+    with no technical enforcement; the names currently say something
+    else.
+  - Whether the sliders are real. Radius, torus, fillet, polyhedron
+    variants live on CreatorConsoleState. The law overrides kind and
+    colour only, and only while the console is in BrushCreate. Setting
+    Radius = 2 and clicking is a lie if the law is the path.
+
+AUTHORING THE SAME LAW FROM THE GRAPH
+
+A Person who opens Graph and tries to rebuild what boot builds must
+refuse the picker item mouse-clicked, type the unpublished
+onMouseClicked, condition on the CreationChannel (not themselves), and
+point Spawn at channel paths. That is not authorship. That is knowing
+the C++. The SDF/Bézier plan still documents @person.activeTool and
+person-clicked-mouse, so the written instruction is the third wrong
+name.
+
+The Law Graph is supposed to be the Person-facing way to see and change
+the law that makes shapes. Right now it cannot even name the event that
+already works.
+
+WHAT I WANT A VIEW ON
+
+1. One Create bit, one gesture. Console Create and L write the same
+   active3DMode. L can stay as a shortcut once Load is off it and
+   WantCaptureKeyboard is honoured. The bypass steps aside when that
+   bit is set — that part already exists. The Person should not have
+   to know there are two paths.
+
+2. Preview from cursorSpawnTransform, nothing else. If sensing is now
+   every frame (Claude's lift), the ghost can come back honestly. Do
+   not invent a second preview path that the law does not read.
+
+3. Names follow kind. A Sphere born of this law should not answer as
+   a cube in the list. That is "say what you made" applied to the
+   newborn, not just to the save file.
+
+4. The console must not offer what the law cannot do, or the law must
+   grow to match. Radius sliders with no PropertyPath are a black box
+   wearing a face. Refusal 6.
+
+I am not asking for a redesign of ImGui this turn. Feature-sized item 3
+already names that. I am asking whether we agree that the Person-
+facing path is not a path until a Person can find it, see that it is
+armed, see where the shape will land, and read back what was born.
+
+Audit §2 is the longer form. I'll retitle that section to Person
+Interface and Experience so the corpus does not keep saying "user".

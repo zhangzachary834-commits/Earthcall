@@ -1,6 +1,9 @@
 #include "Menu.hpp"
 #include <GLFW/glfw3.h>
+#include <algorithm>
+#include <cstdio>
 #include <iostream>
+#include <string>
 
 #define STB_EASY_FONT_IMPLEMENTATION   // only in this translation unit
 #include "stb_easy_font.h"             // header‑only bitmap font
@@ -56,6 +59,48 @@ void Menu::close() { openState = false; }
 void Menu::toggle() { openState = !openState; }
 bool Menu::isOpen() const { return openState; }
 
+namespace {
+    const char* menuKeyLabel(int key) {
+        if (key >= GLFW_KEY_SPACE && key <= GLFW_KEY_Z) {
+            static thread_local char buf[2] = {0, 0};
+            buf[0] = static_cast<char>(key);
+            return buf;
+        }
+        switch (key) {
+            case GLFW_KEY_ENTER: return "Enter";
+            case GLFW_KEY_ESCAPE: return "Esc";
+            case GLFW_KEY_F2: return "F2";
+            case GLFW_KEY_F3: return "F3";
+            case GLFW_KEY_F4: return "F4";
+            case GLFW_KEY_F5: return "F5";
+            case GLFW_KEY_F8: return "F8";
+            case GLFW_KEY_F9: return "F9";
+            case GLFW_KEY_GRAVE_ACCENT: return "`";
+            default: return "?";
+        }
+    }
+
+    struct MenuPanel {
+        float panelX, panelY, panelW, panelH;
+        float listX, listY, lineH;
+    };
+
+    MenuPanel computeMenuPanel(int w, int h, size_t optionCount) {
+        MenuPanel p;
+        p.lineH = 28.0f;
+        p.panelW = std::min(520.0f, (float)w - 40.0f);
+        const float listTop = 84.0f;
+        const float listBottomPad = 20.0f;
+        const float contentH = listTop + (float)optionCount * p.lineH + listBottomPad;
+        p.panelH = std::min(contentH, std::max(120.0f, (float)h - 80.0f));
+        p.panelX = ((float)w - p.panelW) * 0.5f;
+        p.panelY = ((float)h - p.panelH) * 0.5f;
+        p.listX = p.panelX + 24.0f;
+        p.listY = p.panelY + listTop;
+        return p;
+    }
+}
+
 void Menu::draw(int winW, int winH) const {
     if (!openState) return;
 
@@ -69,11 +114,11 @@ void Menu::draw(int winW, int winH) const {
     r.drawTris2D(draw::rectTris({0.f, 0.f, (float)winW, (float)winH}),
                  glm::vec4(0.0f, 0.0f, 0.0f, 0.45f));
 
-    // Panel dimensions
-    const float panelW = std::min(520.0f, (float)winW - 40.0f);
-    const float panelH = std::min(360.0f, (float)winH - 80.0f);
-    const float panelX = ((float)winW - panelW) * 0.5f;
-    const float panelY = ((float)winH - panelH) * 0.5f;
+    const MenuPanel p = computeMenuPanel(winW, winH, options.size());
+    const float panelW = p.panelW;
+    const float panelH = p.panelH;
+    const float panelX = p.panelX;
+    const float panelY = p.panelY;
 
     // Panel background with subtle border
     const glm::vec4 panel(panelX, panelY, panelX + panelW, panelY + panelH);
@@ -90,9 +135,10 @@ void Menu::draw(int winW, int winH) const {
     }
 
     // Options list
-    const float listX = panelX + 24.0f;
-    const float listY = panelY + 84.0f;
-    const float lineH = 28.0f;
+    const float listX = p.listX;
+    const float listY = p.listY;
+    const float lineH = p.lineH;
+    const float clipBottom = panelY + panelH - 8.0f;
 
     // Guard current selection against dynamic size
     int clampedSelected = _selectedIndex;
@@ -100,21 +146,10 @@ void Menu::draw(int winW, int winH) const {
 
     char buf[6000];
     for (size_t i = 0; i < options.size(); ++i) {
-        // Compose label: “label  [Key]” for clarity
-        std::string keyStr;
-        if (options[i].key >= GLFW_KEY_SPACE && options[i].key <= GLFW_KEY_Z) {
-            keyStr = std::string(1, (char)options[i].key);
-        } else {
-            // Map a few common non-printables
-            if (options[i].key == GLFW_KEY_ENTER) keyStr = "Enter"; else
-            if (options[i].key == GLFW_KEY_ESCAPE) keyStr = "Esc"; else
-            if (options[i].key == GLFW_KEY_M) keyStr = "M"; else
-            if (options[i].key == GLFW_KEY_R) keyStr = "R"; else
-            if (options[i].key == GLFW_KEY_Q) keyStr = "Q"; else keyStr = "?";
-        }
-        std::string line = options[i].label + "   [" + keyStr + "]";
+        std::string line = options[i].label + "   [" + menuKeyLabel(options[i].key) + "]";
 
         float y = listY + (float)i * lineH;
+        if (y + 18.0f > clipBottom) break;
 
         // Highlight selected row
         if ((int)i == clampedSelected) {
@@ -134,62 +169,47 @@ void Menu::draw(int winW, int winH) const {
 void Menu::processInput(GLFWwindow* win) {
     if (!openState) return;
 
-    // Hotkeys for direct activation
-    for (const auto& opt : options) {
-        if (glfwGetKey(win, opt.key) == GLFW_PRESS) {
-            opt.onSelect();
-            return;
-        }
-    }
-
-    // Keyboard navigation: Up/Down + Enter; Esc to close
     bool upNow = glfwGetKey(win, GLFW_KEY_UP) == GLFW_PRESS;
     bool downNow = glfwGetKey(win, GLFW_KEY_DOWN) == GLFW_PRESS;
     bool enterNow = glfwGetKey(win, GLFW_KEY_ENTER) == GLFW_PRESS || glfwGetKey(win, GLFW_KEY_KP_ENTER) == GLFW_PRESS;
+    bool mouseLeftNow = glfwGetMouseButton(win, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
 
-    if (upNow && !_upPressedLast) {
-        if (!options.empty()) {
-            _selectedIndex = (_selectedIndex - 1 + (int)options.size()) % (int)options.size();
-        }
+    int fired = -1;
+    for (size_t i = 0; i < options.size(); ++i) {
+        const int key = options[i].key;
+        const bool now = glfwGetKey(win, key) == GLFW_PRESS;
+        const bool last = _keyPressedLast[key];
+        if (now && !last) fired = static_cast<int>(i);
+        _keyPressedLast[key] = now;
     }
-    if (downNow && !_downPressedLast) {
-        if (!options.empty()) {
-            _selectedIndex = (_selectedIndex + 1) % (int)options.size();
-        }
+
+    if (upNow && !_upPressedLast && !options.empty()) {
+        _selectedIndex = (_selectedIndex - 1 + (int)options.size()) % (int)options.size();
     }
-    if (enterNow && !_enterPressedLast) {
-        if (!options.empty()) {
-            int idx = std::max(0, std::min(_selectedIndex, (int)options.size() - 1));
-            options[(size_t)idx].onSelect();
-            return;
-        }
+    if (downNow && !_downPressedLast && !options.empty()) {
+        _selectedIndex = (_selectedIndex + 1) % (int)options.size();
     }
-    
-    _upPressedLast = upNow;
-    _downPressedLast = downNow;
-    _enterPressedLast = enterNow;
 
-    // Mouse hover and click selection inside the panel
-    int winW, winH; glfwGetFramebufferSize(win, &winW, &winH);
-    const float panelW = std::min(520.0f, (float)winW - 40.0f);
-    const float panelH = std::min(360.0f, (float)winH - 80.0f);
-    const float panelX = ((float)winW - panelW) * 0.5f;
-    const float panelY = ((float)winH - panelH) * 0.5f;
+    int fbW = 0, fbH = 0, winW = 0, winH = 0;
+    glfwGetFramebufferSize(win, &fbW, &fbH);
+    glfwGetWindowSize(win, &winW, &winH);
+    const MenuPanel p = computeMenuPanel(fbW, fbH, options.size());
+    const float clipBottom = p.panelY + p.panelH - 8.0f;
 
-    const float listX = panelX + 24.0f;
-    const float listY = panelY + 84.0f;
-    const float lineH = 28.0f;
+    double mx = 0.0, my = 0.0;
+    glfwGetCursorPos(win, &mx, &my);
+    const float scaleX = (winW > 0) ? static_cast<float>(fbW) / static_cast<float>(winW) : 1.0f;
+    const float scaleY = (winH > 0) ? static_cast<float>(fbH) / static_cast<float>(winH) : 1.0f;
+    mx *= scaleX;
+    my *= scaleY;
 
-    // We need mouse position; GLFW provides cursor in window coordinates (top-left origin)
-    double mx, my; glfwGetCursorPos(win, &mx, &my);
-
-    // Detect hovered index
     int hovered = -1;
     for (size_t i = 0; i < options.size(); ++i) {
-        float y = listY + (float)i * lineH;
-        float x0 = listX - 8.0f;
+        float y = p.listY + (float)i * p.lineH;
+        if (y + 18.0f > clipBottom) break;
+        float x0 = p.listX - 8.0f;
         float y0 = y - 6.0f;
-        float x1 = panelX + panelW - 24.0f;
+        float x1 = p.panelX + p.panelW - 24.0f;
         float y1 = y + 18.0f;
         if (mx >= x0 && mx <= x1 && my >= y0 && my <= y1) {
             hovered = (int)i;
@@ -198,11 +218,25 @@ void Menu::processInput(GLFWwindow* win) {
     }
     if (hovered >= 0) _selectedIndex = hovered;
 
-    bool mouseLeftNow = glfwGetMouseButton(win, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
-    if (mouseLeftNow && !_mouseLeftPressedLast && hovered >= 0) {
-        options[(size_t)hovered].onSelect();
-        _mouseLeftPressedLast = mouseLeftNow;
+    const int enterIdx = (enterNow && !_enterPressedLast && !options.empty())
+        ? std::max(0, std::min(_selectedIndex, (int)options.size() - 1))
+        : -1;
+    const int clickIdx = (mouseLeftNow && !_mouseLeftPressedLast && hovered >= 0) ? hovered : -1;
+
+    _upPressedLast = upNow;
+    _downPressedLast = downNow;
+    _enterPressedLast = enterNow;
+    _mouseLeftPressedLast = mouseLeftNow;
+
+    if (fired >= 0) {
+        options[(size_t)fired].onSelect();
         return;
     }
-    _mouseLeftPressedLast = mouseLeftNow;
+    if (enterIdx >= 0) {
+        options[(size_t)enterIdx].onSelect();
+        return;
+    }
+    if (clickIdx >= 0) {
+        options[(size_t)clickIdx].onSelect();
+    }
 }

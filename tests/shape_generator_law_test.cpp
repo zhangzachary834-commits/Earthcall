@@ -129,10 +129,47 @@ int main() {
               "the newborn is placed at cursorSpawnTransform");
     }
 
+    // ---- 3b. the placement the law reads must be LIVE ----------------------
+    // cursorSpawnTransform only composes a cached cursorSpawnPos. That cache
+    // used to be written from inside Tool::ShapeGenerator3D, BELOW the
+    // 2026-08-17 mutual-exclusion guard -- so arming the law made the only
+    // writer return early, the law read a never-written default, and every
+    // cube was born at the origin while the record said Applied. Spawn refuses
+    // an unreadable placement; it cannot refuse a readable wrong one.
+    //
+    // Sensing is now Tool::UpdateShapeGeneratorPlacement, run every frame for
+    // both paths. What this test can hold headlessly is the consequence: given
+    // live placement, the law puts the newborn where the placement says.
+    {
+        const std::size_t before = world.getOwnedObjects().size();
+        channel.placementMode = "InFront";
+        channel.inFrontDistance = 2.0f;
+        channel.gridSnap = false;
+        const glm::vec3 camPos(0.0f, 1.6f, 3.0f);
+        const glm::vec3 camFwd(0.0f, 0.0f, -1.0f);
+        channel.updatePlacement(camPos, camFwd);          // what sensing does
+        check(!nearf(channel.cursorSpawnPos.z, 0.0f) || !nearf(channel.cursorSpawnPos.y, 0.0f),
+              "updatePlacement moves the cache off its default");
+        click();
+        check(world.getOwnedObjects().size() == before + 1, "the armed click still births one");
+        if (world.getOwnedObjects().size() > before) {
+            const glm::vec3 at = world.getOwnedObjects().back()->getPosition();
+            check(nearf(at.x, 0.0f) && nearf(at.y, 1.6f) && nearf(at.z, 1.0f),
+                  "the newborn lands at cameraPos + forward * distance, NOT the origin");
+            const bool atOrigin = nearf(at.x, 0.0f) && nearf(at.y, 0.0f) && nearf(at.z, 0.0f);
+            check(!atOrigin, "the newborn is not at the origin");
+        }
+    }
+
     // ---- 4. every birth is its own being -----------------------------------
-    click();
-    click();
-    check(world.getOwnedObjects().size() == 3, "three clicks, three Objects");
+    // Counted relatively, not against a literal, so inserting a case above does
+    // not silently move this one's goalposts.
+    {
+        const std::size_t before = world.getOwnedObjects().size();
+        click();
+        click();
+        check(world.getOwnedObjects().size() == before + 2, "two more clicks, two more Objects");
+    }
 
     std::set<std::string> ids;
     for (const auto& obj : world.getOwnedObjects()) {

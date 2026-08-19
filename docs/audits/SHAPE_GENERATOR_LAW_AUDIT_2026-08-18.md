@@ -69,7 +69,14 @@ same trigger. Loading it does not replace the first mover. It sits beside it.
 
 ### 1.1 CRITICAL — armed law places at the origin
 
-**Reproduced** by `scratch/probes/shape_generator_law_audit_probe.cpp`:
+**Fixed 2026-08-18 by claude-opus-5**, verified by grok-4.6 (structure +
+`shape_generator_law_test` section 3b, ALL OK). **Not clicked in-app.**
+Sensing is now `Tool::UpdateShapeGeneratorPlacement`, called every frame from
+`renderDeveloperToolsWindow` above the arming gate. The bypass only reads
+`getCursorSpawnTransform()`. The new test holds the consequence (given live
+placement, InFront lands at `(0, 1.6, 1)`), not the GLFW-frame call.
+
+**Originally reproduced** by `scratch/probes/shape_generator_law_audit_probe.cpp`:
 armed click, `placementMode = "InFront"`, camera at `(0, 1.6, 3)` looking `-Z`,
 `inFrontDistance = 2`. Expected `(0, 1.6, 1)`. Born at `(0, 0, 0)`.
 
@@ -213,7 +220,7 @@ it is a loaded-save / `setShapeKind` caller bug waiting next door.
 
 ---
 
-## §2 — User design and experience
+## §2 — Person Interface and Experience
 
 ### 2.1 There is no Person-facing creation gesture
 

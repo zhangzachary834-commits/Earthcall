@@ -3,6 +3,7 @@
 #include "imgui.h"
 #include "GLFW/glfw3.h"
 
+#include "Singularity/FirstMoverWindowTools/Tool.hpp"
 #include "Singularity/Core/Engine.hpp"
 #include "Singularity/Core/CreationChannel.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
@@ -50,6 +51,12 @@ void renderDeveloperToolsWindow(bool* open, GLFWwindow* window, Core::Engine* en
     // Setting active3DMode to "Create" is the whole arming gesture: the law
     // ("Tool: Shape Generator 3D") conditions on exactly this property, and
     // the click itself is published globally from the GLFW mouse callback.
+    // Sense before either path decides anything. Both the law and the developer
+    // bypass read the channel's placement cache, and only one of them used to
+    // write it -- from below its own arming gate, so arming the law left the
+    // cache frozen at its default and the law spawned at the origin.
+    Tool::UpdateShapeGeneratorPlacement(window, engine, mgr, *channel);
+
     static bool lawModeKeyDownLast = false;
     bool lawModeKeyDown = glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS;
     if (lawModeKeyDown && !lawModeKeyDownLast) {

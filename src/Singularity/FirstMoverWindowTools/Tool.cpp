@@ -405,6 +405,38 @@ void Tool::use(GLFWwindow* window, ZoneManager& mgr, Zone& zone, Type type, Core
 // channel's own (inherited from Law) provenance ledger. Promoting the
 // restored tool to a First Mover meant exactly this: giving it real authorial
 // standing to invoke, not inventing a new kind of author.
+void Tool::UpdateShapeGeneratorPlacement(GLFWwindow *window, Core::Engine *engine,
+                                         ZoneManager &mgr,
+                                         Singularity::Core::CreationChannel &channel)
+{
+    if (!window || !engine) return;
+
+    const glm::vec3 camPos = engine->getCamera() ? engine->getCamera()->getPos() : glm::vec3(0.0f);
+    const glm::vec3 camFront = engine->getCamera() ? engine->getCamera()->getFront() : glm::vec3(0.0f, 0.0f, -1.0f);
+
+    if (channel.placementMode == "CursorSnap") {
+        glm::vec3 rayO, rayDir;
+        std::vector<Object*> targets;
+        const auto &objects = mgr.active().world().objects();
+        targets.reserve(objects.size());
+        for (const auto &uptr : objects) if (uptr) targets.push_back(uptr.get());
+
+        SurfaceHit hit;
+        if (buildMouseRay(window, engine, rayO, rayDir) && pickSurface(targets, rayO, rayDir, hit)) {
+            channel.cursorHitPos = hit.point;
+            channel.cursorHitNormal = hit.normal;
+        }
+    } else if (channel.placementMode == "ManualDistance" && !channel.manualAnchorValid) {
+        channel.manualAnchorPos = camPos + camFront * 2.0f;
+        channel.manualAnchorRight = glm::normalize(glm::cross(camFront, engine->getCamera() ? engine->getCamera()->getUp() : glm::vec3(0.0f, 1.0f, 0.0f)));
+        channel.manualAnchorUp = engine->getCamera() ? engine->getCamera()->getUp() : glm::vec3(0.0f, 1.0f, 0.0f);
+        channel.manualAnchorForward = camFront;
+        channel.manualAnchorValid = true;
+    }
+
+    channel.updatePlacement(camPos, camFront);
+}
+
 void Tool::ShapeGenerator3D(GLFWwindow *window, Core::Engine *engine, ZoneManager &mgr,
                             Singularity::Core::CreationChannel &channel,
                             BodyPart* targetPart)
@@ -450,30 +482,8 @@ void Tool::ShapeGenerator3D(GLFWwindow *window, Core::Engine *engine, ZoneManage
         return;
     }
 
-    const glm::vec3 camPos = engine->getCamera() ? engine->getCamera()->getPos() : glm::vec3(0.0f);
-    const glm::vec3 camFront = engine->getCamera() ? engine->getCamera()->getFront() : glm::vec3(0.0f, 0.0f, -1.0f);
-
-    if (channel.placementMode == "CursorSnap") {
-        glm::vec3 rayO, rayDir;
-        std::vector<Object*> targets;
-        const auto &objects = mgr.active().world().objects();
-        targets.reserve(objects.size());
-        for (const auto &uptr : objects) if (uptr) targets.push_back(uptr.get());
-
-        SurfaceHit hit;
-        if (buildMouseRay(window, engine, rayO, rayDir) && pickSurface(targets, rayO, rayDir, hit)) {
-            channel.cursorHitPos = hit.point;
-            channel.cursorHitNormal = hit.normal;
-        }
-    } else if (channel.placementMode == "ManualDistance" && !channel.manualAnchorValid) {
-        channel.manualAnchorPos = camPos + camFront * 2.0f;
-        channel.manualAnchorRight = glm::normalize(glm::cross(camFront, engine->getCamera() ? engine->getCamera()->getUp() : glm::vec3(0.0f, 1.0f, 0.0f)));
-        channel.manualAnchorUp = engine->getCamera() ? engine->getCamera()->getUp() : glm::vec3(0.0f, 1.0f, 0.0f);
-        channel.manualAnchorForward = camFront;
-        channel.manualAnchorValid = true;
-    }
-
-    channel.updatePlacement(camPos, camFront);
+    // Placement is already fresh: UpdateShapeGeneratorPlacement ran this frame,
+    // for BOTH paths. Reading it here is all this function does with it.
     glm::mat4 t = channel.getCursorSpawnTransform();
 
     Object::ShapeKind kind = static_cast<Object::ShapeKind>(channel.activeShapeKind);

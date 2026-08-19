@@ -361,7 +361,11 @@ def cmd_threads(args: argparse.Namespace) -> int:
 def main() -> int:
     args = parser().parse_args()
     try:
-        if getattr(args, "log", None) is None:
+        # `threads` and `self-test` do not read the conversation log, and
+        # `threads` is the command you run precisely BECAUSE the default is
+        # ambiguous -- resolving it first made the disambiguator refuse to run
+        # whenever there was something to disambiguate.
+        if getattr(args, "log", None) is None and args.command not in ("threads", "self-test"):
             args.log = default_log()
         return args.func(args)
     except (OSError, ValueError) as error:

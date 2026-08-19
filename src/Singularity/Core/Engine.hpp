@@ -12,6 +12,7 @@ class LawManager;
 class KeyboardHandler;
 class MouseHandler;
 class CursorTools;
+class Chat;
 
 namespace Core { class Camera; }
 
@@ -61,6 +62,7 @@ public:
     KeyboardHandler* getKeyboardHandler();
     MouseHandler* getMouseHandler();
     CursorTools* getCursorTools();
+    void ensureCursorUnlocked();
     bool getAdvanced2DBrush() const { return true; }
 
     bool isMouseLeftPressedLast() const { return _mouseLeftPressedLast; }
@@ -107,6 +109,7 @@ private:
         std::unique_ptr<KeyboardHandler> _keyboardHandler;
     std::unique_ptr<MouseHandler> _mouseHandler;
     std::unique_ptr<CursorTools> _cursorTools;
+    std::unique_ptr<Chat> _chat;
     std::unique_ptr<::ElementalToolHandler> _elementalToolHandler;
     double _worldTime = 0.0;
 
@@ -114,6 +117,9 @@ private:
     bool _devToolsWindowOpen = false;
     bool _creationConsoleOpen = false;
     bool _creatorConsoleOpen = false;
+    bool _showKeymapWindow = false;
+    bool _showChatWindow = false;
+    bool _showImGuiDemo = false;
     bool _is2DToolDragging = false;
     glm::vec2 _dragStart = {0,0};
     glm::vec2 _dragCurrent = {0,0};

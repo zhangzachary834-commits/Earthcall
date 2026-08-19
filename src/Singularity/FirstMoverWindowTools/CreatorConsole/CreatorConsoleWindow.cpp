@@ -7,10 +7,10 @@ namespace Rendering {
     void renderPaintConsole(ZoneManager& zoneMgr);
     void render3DConsole(Person* player, Object* selectedObject3D, ZoneManager& zoneMgr, GLFWwindow* window, Core::Engine* engine);
     void renderCharacterConsole(Person* player);
-    void renderWorldConsole();
-    void renderAssetsConsole();
-    void renderRelationsConsole();
-    void renderZonesConsole();
+    void renderWorldConsole(Core::Engine* engine);
+    void renderAssetsConsole(Core::Engine* engine);
+    void renderRelationsConsole(ZoneManager& zoneMgr);
+    void renderZonesConsole(ZoneManager& zoneMgr);
 }
 
 namespace Rendering {
@@ -64,16 +64,16 @@ namespace Rendering {
                     renderCharacterConsole(player);
                     break;
                 case CreatorSection::World:
-                    renderWorldConsole();
+                    renderWorldConsole(engine);
                     break;
                 case CreatorSection::Assets:
-                    renderAssetsConsole();
+                    renderAssetsConsole(engine);
                     break;
                 case CreatorSection::Relations:
-                    renderRelationsConsole();
+                    renderRelationsConsole(zoneMgr);
                     break;
                 case CreatorSection::Zones:
-                    renderZonesConsole();
+                    renderZonesConsole(zoneMgr);
                     break;
             }
         }

@@ -1,26 +1,28 @@
 #include "CreatorConsoleState.hpp"
+#include "Singularity/Core/Engine.hpp"
+#include "Singularity/FirstMoverWindowTools/CursorTools.hpp"
 #include <imgui.h>
 
 namespace Rendering {
 
-    void renderWorldConsole() {
+    void renderWorldConsole(Core::Engine* engine) {
         auto& state = getCreatorConsoleState();
         ImGui::TextUnformatted("World & Environment");
         ImGui::Separator();
-        
-        ImGui::Checkbox("Wireframe (Global)", &state.wireframe);
+
+        ImGui::TextDisabled("Global wireframe is not wired to the renderer.");
 
         ImGui::Checkbox("Cursor Tools Open", &state.cursorToolsOpen);
         if (state.cursorToolsOpen) {
-            ImGui::Indent();
-            ImGui::Text("Cursor tool options...");
-            ImGui::Unindent();
+            if (engine && engine->getCursorTools()) {
+                engine->getCursorTools()->renderUI(state.cursorToolsOpen);
+            } else {
+                ImGui::TextDisabled("Cursor tools are not constructed.");
+            }
         }
 
         ImGui::Separator();
-        ImGui::TextDisabled("Physics & Atmosphere");
-        ImGui::Button("Reset Day/Night Cycle");
-        ImGui::Button("Adjust Gravity");
+        ImGui::TextDisabled("Day/night cycle and gravity adjust are not wired yet.");
     }
 
 } // namespace Rendering

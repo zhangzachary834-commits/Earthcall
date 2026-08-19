@@ -1,25 +1,34 @@
 #include "CreatorConsoleState.hpp"
+#include "ZonesOfEarth/ZoneManager.hpp"
 #include <imgui.h>
 
 namespace Rendering {
 
-    void renderRelationsConsole() {
+    void renderRelationsConsole(ZoneManager& zoneMgr) {
         auto& state = getCreatorConsoleState();
-        ImGui::TextUnformatted("Relations Window");
+        ImGui::TextUnformatted("Relations");
         ImGui::Separator();
-        
-        ImGui::TextDisabled("Relations are first-class beings.");
-        ImGui::Button("Create New Relation");
-        
-        ImGui::Separator();
+        ImGui::TextDisabled("Relations are first-class beings in the active zone.");
+
         if (ImGui::Button("Open Law Author")) {
             state.showLawAuthor = true;
         }
-        
+
         ImGui::Separator();
-        if (ImGui::CollapsingHeader("Active Relations", ImGuiTreeNodeFlags_DefaultOpen)) {
-            ImGui::Text("Relation: Player <-> Zone_1");
-            ImGui::Text("Relation: Player <-> Sun");
+        const auto& rels = zoneMgr.active().formation().relations().getAll();
+        if (rels.empty()) {
+            ImGui::TextDisabled("No relations in the active zone.");
+            return;
+        }
+        ImGui::TextDisabled("%zu relation(s).", rels.size());
+        for (const auto& r : rels) {
+            if (!r) continue;
+            ImGui::TextUnformatted(r->getIdentifier().c_str());
+            ImGui::SameLine();
+            ImGui::TextDisabled("(%s%s%s)",
+                                r->entityA.c_str(),
+                                r->directed ? " -> " : " <-> ",
+                                r->entityB.c_str());
         }
     }
 

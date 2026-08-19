@@ -38,4 +38,5 @@ private:
     bool _enterPressedLast = false;       // edge detection for Enter key
     bool _mouseLeftPressedLast = false;   // edge detection for mouse click on option
     bool _escapePressedLast = false;      // edge detection for Esc key (close menu)
+    std::map<int, bool> _keyPressedLast;  // edge detection for option hotkeys
 };
