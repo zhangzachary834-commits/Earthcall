@@ -55,9 +55,12 @@ not — which is the proof they were never directories, only shipping labels.
 TOP LEVEL = the ontology + the modality layer.
 
   A directory may sit at the top level if and only if it names
-    (a) a kind of being        — ConstructedBeing, Person, Relation, ZonesOfEarth
+    (a) a kind of being        — ConstructedBeing, Person, Relation, ZonesOfEarth, Identity
     (b) a mode of the machine  — Singularity (and its modalities beneath)
-    (c) the Person-facing surface through which beings are authored — OurVerse
+
+  The Person-facing authorship surface is not a top-level region. Tools, chat,
+  and controls live in Singularity/FirstMoverWindowTools/. Ourverse the being
+  lives in ZonesOfEarth/Ourverse/. There is no src/OurVerse/.
 
   Everything else is either
     (d) inside one of those, or
@@ -83,7 +86,7 @@ Earthcall/
     ConstructedBeing/      Singular · Object · ObjectConcept · Formation · Property · Material
     Person/                Person · Soul · Body · Relationship · Perspective
     Relation/              Relation · RelationManager
-    ZonesOfEarth/          Zone · Home · World · Physics · AuthorsOfLaw (Law)
+    ZonesOfEarth/          Zone · Home · World · Physics · AuthorsOfLaw (Law) · Ourverse
     Singularity/           the modality layer — where language stops mattering
       Core/                Engine · EventBus · CreationChannel
       Audio/               the Sound modality (AudioSystem)
@@ -98,7 +101,6 @@ Earthcall/
       Storage/             the Storage modality (SaveSystem, CloudStorage, BinaryPack, Frontier)
       Physical/            the Physical hardware modality (PhysicalChannel)
       FirstMoverWindowTools/ CreatorConsole, CreationTools, Controls, Chat, Tools
-    OurVerse/              the Person-facing authorship surface
     Identity/              First Mover register, identity ledger, key pairs, claims
     Legacy/                the graveyard — not yet ontologically placed
 

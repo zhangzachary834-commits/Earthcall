@@ -21,8 +21,8 @@ These come up constantly. Learn them cold; everything else is detail.
    *(Exception: The human form. `BodyPart` and constitutive members for the `Person` vessel are invariant ontological structures, not domain nouns, and thus admitted in C++).*
 
 2. **No new top-level directory for a subsystem.** The top level is the ontology
-   (`Form`, `Person`, `Relation`, `Singularity`, `ZonesOfEarth`, `OurVerse`). A channel to
-   hardware or foreign software goes *inside* `Singularity/`. → `DIRECTORY_ORDERING.md`
+   (`ConstructedBeing`, `Person`, `Relation`, `Singularity`, `ZonesOfEarth`, `Identity`).
+   A channel to hardware or foreign software goes *inside* `Singularity/`. → `DIRECTORY_ORDERING.md`
 
 3. **No new enum value for a kind of thing.** `BeingKind`, `ShapeKind`,
    `ConditionNode::Kind`, `ActionNode::Kind` are **append-only and serialized as
@@ -87,9 +87,8 @@ src/
                   (was `Form/`; ObjectConcept is the ONE set-to-set machine)
   Person/         Person · Soul · Body · Relationship
   Relation/       Relation — a first-class being, not an edge in someone's array
-  ZonesOfEarth/   Zone · Home · World · Physics · AuthorsOfLaw (Law lives here)
-  Singularity/    the modality layer: Core · Audio · Language · Network · Physical · OntoMath · Foreign · Input · Screen · Storage
-  OurVerse/       the Person-facing authorship surface (tools, chat, controls)
+  ZonesOfEarth/   Zone · Home · World · Physics · AuthorsOfLaw (Law lives here) · Ourverse
+  Singularity/    the modality layer: Core · Audio · Language · Network · Physical · OntoMath · Foreign · Input · Screen · Storage · FirstMoverWindowTools
   Identity/       First Mover register, identity ledger, keys
   Legacy/         not yet ontologically placed
 docs/ tests/ examples/ scripts/ saves/ scratch/     the workshop
@@ -119,7 +118,7 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
 
 cmake --build build --target earthcall -j8
 cmake --build build -j8                               # tests are NOT built by the line above
-ctest --test-dir build --output-on-failure -j4        # 51 registered, 50 pass
+ctest --test-dir build --output-on-failure -j4        # 55 registered, 54 pass
 ```
 
 Both flags are required (no system OpenSSL; CMake 4.x rejects websocketpp).
@@ -171,7 +170,7 @@ full. Both are required:
 
 | File | Holds |
 |---|---|
-| `docs/BUILD_AND_ENVIRONMENT.md` | build flags, what the 49 tests mean, the deliberate failure, the five tests guarding real shipped bugs, `.gitignore`/`.ignore`/clangd, the tree in detail |
+| `docs/BUILD_AND_ENVIRONMENT.md` | build flags, what the 55 tests mean, the deliberate failure, the five tests guarding real shipped bugs, `.gitignore`/`.ignore`/clangd, the tree in detail |
 | `docs/ENGINEERING_DISCIPLINE.md` | End-to-End Coherence, the Integrity Check, Substance over Surface, Stewardship of Telos, Transparent Failure, State & Boundary Stewardship, Grace for the Inheritor, the Crucible of Scale — plus the working notes (scratch probes, "run things", bounds are doctrine) |
 
 Two from that second file are worth naming here because they are the ones most often
