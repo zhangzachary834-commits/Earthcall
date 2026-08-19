@@ -68,12 +68,31 @@ public:
     // attached to beam-0" once, and every instantiation gets its own
     // attachment. Captured from the world's relation graph wherever both
     // endpoints are inside the source set.
+    //
+    // ...and, since INTERACTION_AS_LAW.md §7, a relation from a member to a
+    // being OUTSIDE the set — an ANCHOR, remembered by identifier and
+    // resolved in the Universe at instantiation.
+    //
+    // The index-only form dropped every such edge silently, and the cost was
+    // not theoretical: a control's membership in its category
+    // ("instance-of -> category.control.button") is exactly an edge whose far
+    // end is deliberately not part of the control. Capturing a button and
+    // instantiating it a hundred times produced a hundred beings that were
+    // not buttons, that no archetype law could see, and that looked correct
+    // in every other respect. What a thing IS lives in those edges; a concept
+    // that forgets them remembers only how the thing looked.
+    //
+    // An anchor that has left the world by instantiation time is SKIPPED, not
+    // guessed — the same rule the index form follows, for the same reason.
     struct RelationTemplate {
         int aIndex = 0;
-        int bIndex = 0;
+        int bIndex = 0;                  // ignored when bAnchorId is set
+        std::string bAnchorId;           // "" = inter-member; else an identifier
         std::string type;
         bool directed = false;
         float weight = 1.0f;
+
+        bool isAnchored() const { return !bAnchorId.empty(); }
 
         nlohmann::json toJson() const;
         static RelationTemplate fromJson(const nlohmann::json& j);

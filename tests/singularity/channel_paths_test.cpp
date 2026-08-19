@@ -22,10 +22,12 @@
 #include "ConstructedBeing/Object/Formation/Formation.hpp"
 #include "Singularity/Core/CreationChannel.hpp"
 #include "Singularity/Input/LocomotionChannel.hpp"
+#include "Singularity/Input/InteractionChannel.hpp"
 #include "Singularity/Screen/LawGraphWindow.hpp"
 #include "ConstructedBeing/Object/Object.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp"
 #include "ZonesOfEarth/Ourverse/Ourverse.hpp"
 
 #include <GLFW/glfw3.h>
@@ -100,6 +102,10 @@ int main() {
     Person person(std::move(soul), std::move(body), "default");
     Singularity::Core::CreationChannel channel;
     Singularity::Input::LocomotionChannel locomotion;
+    Singularity::Input::InteractionChannel interaction;
+    // The readings must be installed before the picker's "@world.*" entries can
+    // be answered for — that is the whole point of checking them.
+    interaction.installWorldReadings();
     Formation formation;
     Soul soulProbe;
     Ourverse ourverse;
@@ -111,6 +117,23 @@ int main() {
         else if (groupIs(option.group, "Person"))         check(option, person);
         else if (groupIs(option.group, "Channel — Creation")) check(option, channel);
         else if (groupIs(option.group, "Channel — Locomotion")) check(option, locomotion);
+        else if (groupIs(option.group, "Channel — Interaction")) check(option, interaction);
+        else if (groupIs(option.group, "Reading —")) {
+            // A world reading has no owning being to resolve against: it is a
+            // closure a modality channel registered, answering ABOUT whatever
+            // subject it is handed. So the promise to check is REGISTRATION —
+            // a picker entry naming a reading nobody registered is exactly the
+            // silent failure this test exists for. Whether it answers for a
+            // particular subject depends on the frame (@world.pointerDistance
+            // is deliberately undefined while nothing is under the pointer),
+            // and interaction_channel_test case 11 is where that is held.
+            ++g_checked;
+            if (worldReadings().count(option.path) == 0) {
+                fail(option.path, option.group,
+                     "names a world reading no channel registered — the picker "
+                     "offers it, the law binds it, and the read fails silently");
+            }
+        }
         else if (groupIs(option.group, "Formation"))      check(option, formation);
         else if (groupIs(option.group, "Soul"))           check(option, soulProbe);
         else if (groupIs(option.group, "Ourverse"))       check(option, ourverse);

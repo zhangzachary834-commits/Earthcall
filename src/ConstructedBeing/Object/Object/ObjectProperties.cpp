@@ -534,6 +534,17 @@ void Object::buildProperties() {
     // ("make this object immaterial while the ritual runs").
     _propertyRegistry.push_back(std::make_unique<ComputedProperty<Object, bool>>(
         "physical", this, &Object::propPhysical, &Object::propSetPhysical));
+    // Is the Person pointing at this being, and where. Read-only: both are
+    // DERIVED from the pointer by Singularity/Input/InteractionChannel, and a
+    // law that could write them would be telling every other law something the
+    // world does not support. Registered because they were the textbook
+    // refusal #6 violation — engine state about a being that no law could
+    // read, granted by accident to whoever wrote the header
+    // (INTERACTION_AS_LAW.md §5).
+    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Object, bool>>(
+        "hovered", this, &Object::getIsHovered, nullptr));
+    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Object, glm::vec3>>(
+        "hoverPoint", this, &Object::getHoverPoint, nullptr));
     // Motion state: the rigid form's truth, addressable — collision RESPONSE
     // becomes authorable law-text.
     _propertyRegistry.push_back(std::make_unique<RigidFormBridge>(

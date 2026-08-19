@@ -1,0 +1,53 @@
+INTERACTION AS LAW — note for whoever picks this up next
+Claude Opus 5, 2026-08-18
+
+WHAT LANDED
+  docs/architecture/INTERACTION_AS_LAW.md            the framework, written
+  src/Singularity/Input/InteractionChannel.{hpp,cpp} the Sense first mover
+  src/Singularity/Input/ControlPatterns.{hpp,cpp}    the archetypes, as law TEXT
+  tests/interaction_channel_test.cpp                 14 cases, headless
+  tests/control_patterns_test.cpp                     8 cases
+  Suite: 54/55. The one failure is webgpu_particle_test (PENDING_FEATURE_TESTS).
+
+THE THESIS, IN ONE LINE
+  A control is a being you can point at, plus a law that says what pointing at it
+  means. No Button class, no ControlKind enum, no src/UI/, no UI event path.
+  A control KIND is a category being; a control INSTANCE is an instance-of edge.
+
+FOUR THINGS I FOUND BROKEN AND FIXED — check these before trusting nearby code
+  1. Object::updateHoverState had NO CALLERS ANYWHERE, and published its enter edge
+     TWICE (compared against _wasHoveredLastFrame, written one frame behind
+     _isHovered). OBJECT_HOVER_EVENTS_SYSTEM.md documented all 199 lines of it.
+  2. _isHovered / _hoverPoint were unregistered — refusal #6. Now read-only
+     `hovered` / `hoverPoint` on Object.
+  3. ObjectConcept::RelationTemplate dropped every edge to a being OUTSIDE the
+     captured set, so an instantiated control was not a member of its category.
+     Anchored relation templates (bAnchorId) fix it. This is the piece that makes
+     set-to-set creation and Law meet at all — read INTERACTION_AS_LAW.md §7.
+  4. DynamicPropertyBridge::setValue silently changed an AUTHORED property's TYPE
+     where a registered one coerces. A Map writing 1.0 into a granted `bool` made
+     every std::get_if<bool> read false. Same law text, two behaviours, decided by
+     whether the property was written in C++ or granted by an author.
+
+THE ONE THAT WILL BITE YOU
+  Two laws whose actions satisfy each other's conditions are a LOOP, not a branch.
+  The toggle authored as an on-law/off-law pair never moved: the on-law's write
+  marks the Rete state fact dirty, which re-activates the off-law's Compare
+  terminal in the next chain round, and both fire in one tick. Written up in
+  LAW_AND_CREATION_SYSTEM.md §7e as well as INTERACTION_AS_LAW.md §6b.
+
+WHAT I DID NOT DO — and the first one matters most
+  * §11b, the MANUAL VERIFICATION PROTOCOL, HAS NOT BEEN RUN. Nobody has clicked
+    anything. Everything above is a claim about mechanism, not about feel. The
+    protocol is 18 numbered steps; step 18 is the real test of whether this was
+    worth building. If you run it, record what happened.
+  * Text entry (key-pressed carries a key, not a character stream).
+  * Category closure materialisation (AUTHORED_CATEGORIES.md §5a) — a law about
+    `category.control` will NOT see an `instance-of category.control.button`. The
+    archetypes each name their own leaf, so it does not bite them yet.
+  * Right/middle button edges; multi-pointer; body occlusion of the ray.
+  * HighlightSystem still hard-codes hover feedback in C++ where no law can reach
+    it. @world.pointerOver exists precisely so that can migrate. Good next job.
+  * No layout laws. §10 claims layout is a Formation plus laws; nobody wrote them.
+
+Full remaining list: To-do list item 8a.

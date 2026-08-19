@@ -353,6 +353,11 @@ public:
     bool isMouseHovering(const glm::vec2& mousePos, const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix, int windowWidth, int windowHeight) const;
     bool isMouseHovering(const glm::vec3& worldMousePos) const;
     void updateHoverState(bool isHovering);
+    // The form the pointer channel calls: the hit point and screen position
+    // the hover events advertise were hard-coded to (0,0,0) and (0,0) because
+    // no caller had one to give. InteractionChannel does.
+    void updateHoverState(bool isHovering, const glm::vec3& hoverPoint,
+                          const glm::vec2& screenPosition);
     bool getIsHovered() const { return _isHovered; }
     glm::vec3 getHoverPoint() const { return _hoverPoint; }
 

@@ -119,6 +119,10 @@ target for convenience, remove the copy from `tests/` *and reconfigure* when fin
 outside `git add -A` will otherwise commit it, and the stale CMake target will break the
 next full build.
 
+**`tests/` is grouped by ontological region** (`constructed-being/`, `person/`, `zones/`,
+`law/`, `singularity/`, `identity/`, plus `support/` for shared headers). CMake still
+globs `tests/**/*.cpp`; the ctest name is the file stem. See `tests/README.md`.
+
 ---
 
 ## Two live-system notes

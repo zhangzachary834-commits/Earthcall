@@ -35,6 +35,8 @@
 #include <iostream>
 #include "CreationChannel.hpp"
 #include "Singularity/Input/LocomotionChannel.hpp"
+#include "Singularity/Input/InteractionChannel.hpp"
+#include "Singularity/Input/ControlPatterns.hpp"
 #include <memory>
 
 extern ZoneManager mgr;
@@ -83,6 +85,14 @@ void Engine::initLogic() {
     // Register first-mover LocomotionChannel (WASD / jump / vessel clips).
     // Must exist before playIdle below — the clips live on the channel now.
     Singularity::Input::LocomotionChannel::syncRegister(*_lawManager);
+
+    // Register first-mover InteractionChannel (pointer / wheel / keys) and the
+    // archetype control laws that read it. INTERACTION_AS_LAW.md: a GUI in
+    // Earthcall is this channel's sense plus authored law text, and nothing
+    // else. The patterns are registered first-wins, so a loaded world's edited
+    // version of any of them survives.
+    Singularity::Input::InteractionChannel::syncRegister(*_lawManager);
+    Singularity::Input::syncRegisterControlPatterns(*_lawManager, ::categories, *_player);
 
     // Inject default physics laws (gravity and kinematics)
     for (const auto& law : Physics::createDefaultPhysicsLaws()) {
@@ -478,6 +488,18 @@ void Engine::registerCallbacks() {
             ImGui_ImplGlfw_ScrollCallback(window, xoffset, yoffset);
             // Then handle game-specific scroll input
             self->_mouseHandler->handleMouseScroll(xoffset, yoffset);
+
+            // The wheel has no level to poll: what this callback reports is
+            // all there is, so the interaction channel accumulates it here and
+            // drains it on its step. Vetoed while an ImGui surface owns the
+            // pointer, the same rule the buttons follow.
+            if (self->getLawManager() && !ImGui::GetIO().WantCaptureMouse) {
+                if (auto* interaction =
+                        Singularity::Input::InteractionChannel::find(*self->getLawManager())) {
+                    interaction->noteScroll(static_cast<float>(xoffset),
+                                            static_cast<float>(yoffset));
+                }
+            }
         }
     });
 }
@@ -530,6 +552,23 @@ void Engine::onKey(GLFWwindow* win, int key, int scancode, int action, int mods)
             self->_keyboardHandler->handleKeyPress(key);
         } else if (action == GLFW_RELEASE) {
             self->_keyboardHandler->handleKeyRelease(key);
+        }
+    }
+
+    // The key, as a law-addressable event aimed at whatever holds focus.
+    // GLFW_REPEAT is deliberately not forwarded: a held key repeating through
+    // this callback is a LEVEL, and republishing key-pressed on every repeat
+    // would make an event out of a state. `keyDown` is the level.
+    //
+    // Suppressed while ImGui wants the keyboard, so typing in a text box does
+    // not also fire the world's key-command laws.
+    if (self && self->getLawManager() && !ImGui::GetIO().WantCaptureKeyboard &&
+        (action == GLFW_PRESS || action == GLFW_RELEASE)) {
+        if (auto* interaction =
+                Singularity::Input::InteractionChannel::find(*self->getLawManager())) {
+            const char* named = glfwGetKeyName(key, scancode);
+            interaction->noteKey(named ? named : std::to_string(key), key,
+                                 action == GLFW_PRESS);
         }
     }
 }

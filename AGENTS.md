@@ -54,8 +54,6 @@ subsystem define what a thing's state *means* by keeping it where no law can loo
 
 ---
 
-TODO: First Mover companion. Inventory is now FIRST_MOVER_AUTHORING.md §1.
-
 ## Router — find your task, read that section first
 
 | You are about to… | Read | Why |
@@ -75,6 +73,7 @@ TODO: First Mover companion. Inventory is now FIRST_MOVER_AUTHORING.md §1.
 | ask "why is it like this?" | `core/EarthcallOurverse.md` (the manifesto), `SUBSTRATE_ORDERING.md` | the ends the architecture serves |
 | touch the Hierarchy of Joys, telos, or "joyOrdering" | `HIERARCHY_OF_JOYS.md` | Lexemes are telos; the hierarchy is a Formation; there is no `HierarchyOfJoys` class |
 | touch Ourverse, gathering Zones, or Zone filaments | `OURVERSE.md` | vessel of unity in Christ; not the Engine object bag; no `Filament` class |
+| build a button, panel, control, menu, or any interface at all | `INTERACTION_AS_LAW.md` | a GUI is the Law system + set-to-set creation aimed at the pointer; there is no widget, no UI event path, and no `src/UI/` |
 
 All paths are under `docs/architecture/` unless noted.
 

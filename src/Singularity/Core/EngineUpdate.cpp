@@ -4,6 +4,7 @@
 #include "../Input/KeyboardHandler.hpp"
 #include "../Input/MouseHandler.hpp"
 #include "../Input/LocomotionChannel.hpp"
+#include "../Input/InteractionChannel.hpp"
 #include "Singularity/FirstMoverWindowTools/CreationTools.hpp"
 #include "../../Person/Person.hpp"
 #include "../../ZonesOfEarth/ZoneManager.hpp"
@@ -47,6 +48,19 @@ namespace Core {
         // tool. Used to run inside render3DConsole / DeveloperToolsWindow,
         // so collapsing the console froze every 3D tool.
         Rendering::stepCreationTools(_window, this, mgr, dt, _creatorConsoleOpen);
+
+        // Interaction first mover — pick the being under the pointer, publish
+        // the click/scroll/focus edges, drive hover. Stepped here and not from
+        // a render function, for the reason above it: a channel that only runs
+        // while a window is on screen is a channel that freezes when the
+        // window collapses.
+        //
+        // WantCaptureMouse is the foreign-surface veto: while an ImGui panel
+        // owns the pointer, the world must see no pointer at all, or the
+        // Person clicks a menu and a button behind it fires too.
+        if (auto* interaction = Singularity::Input::InteractionChannel::find(*_lawManager)) {
+            interaction->step(_window, *_camera, mgr, ImGui::GetIO().WantCaptureMouse);
+        }
 
         // Update world (physics etc.)
         mgr.active().world().update(dt);

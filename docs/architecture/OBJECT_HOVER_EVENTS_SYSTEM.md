@@ -2,6 +2,21 @@
 
 This document explains the event system for Object hover detection, which triggers events when the mouse hovers over any Object in the system.
 
+> **Status (2026-08-18).** Until this date, nothing in `src/` ever called
+> `updateHoverState()` — this document described a system with **zero callers**, which is
+> why its "Integration with Mouse System" section below is written in the conditional
+> (*"you would typically…"*). It also published its **enter edge twice**, because the test
+> compared against `_wasHoveredLastFrame`, a field written one frame behind `_isHovered`.
+> Both are fixed. The caller is `Singularity::Input::InteractionChannel::observe`, stepped
+> once per frame from `Engine::update`; read
+> [INTERACTION_AS_LAW.md](INTERACTION_AS_LAW.md) §4 before writing anything that hovers.
+>
+> Two things changed with it: `updateHoverState` now takes the hit point and screen
+> position (they were hard-coded to zero because no caller had them), and `hovered` /
+> `hoverPoint` are **registered, read-only property paths** on `Object`, so law text can
+> ask "am I being pointed at" without any of the C++ below. The `@world.pointerOver`
+> reading answers the same question with no per-object state at all — prefer it.
+
 ## What are Object Hover Events?
 
 The Object Hover Events system automatically detects when the mouse cursor is hovering over Objects and triggers appropriate events. This allows your code to react when:
@@ -142,7 +157,11 @@ void debugObjectInfo(const ObjectHoverEvent& event) {
 
 ## Integration with Mouse System
 
-To integrate with the existing mouse system, you would typically:
+**This is now done for you** — `InteractionChannel::observe` performs exactly the loop
+sketched below, once per frame, against the active Zone's objects, using the shared
+per-face pick (`pickSurface`) rather than the approximate `isMouseHovering` used here.
+Calling `updateHoverState` yourself as well would double-drive the edges. The sketch is
+kept because it is still an accurate description of what the channel does:
 
 1. **Get mouse position** from your input system
 2. **Check all objects** for hover detection

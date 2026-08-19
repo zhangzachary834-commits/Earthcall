@@ -40,27 +40,40 @@ bool Object::isMouseHovering(const glm::vec3& worldMousePos) const {
 }
 
 void Object::updateHoverState(bool isHovering) {
-    bool wasHovered = _wasHoveredLastFrame;
+    updateHoverState(isHovering, _hoverPoint, glm::vec2(0.0f));
+}
+
+void Object::updateHoverState(bool isHovering, const glm::vec3& hoverPoint,
+                              const glm::vec2& screenPosition) {
+    // THE EDGE IS AGAINST LAST FRAME, not the frame before it.
+    //
+    // This read `_wasHoveredLastFrame` — a field written one frame BEHIND
+    // `_isHovered` — so the enter test compared against the state from two
+    // frames ago and `object-hover-entered` published TWICE for one entry.
+    // That is an event-as-level, the bug CLAUDE.md names outright, and it
+    // stayed invisible for as long as it did because nothing in the tree ever
+    // called this function: the hover system had a document and no caller.
+    // Singularity/Input/InteractionChannel is the caller now, so the edge has
+    // to be a real one.
+    const bool wasHovered = _isHovered;
     _wasHoveredLastFrame = _isHovered;
     _isHovered = isHovering;
-    
+    _hoverPoint = hoverPoint;
+
     // Trigger events based on hover state changes. Enter/exit also echo as
     // string-typed ECA::Events so Person-authored laws can bind to them; the
     // continuous per-frame hover does not (only discrete edges travel as
     // events — same rule as AutomationEvents.hpp).
     if (isHovering && !wasHovered) {
-        // Mouse entered the object
-        ObjectHoverEnterEvent event(*this, _hoverPoint, glm::vec2(0, 0)); // Screen pos would be passed in
+        ObjectHoverEnterEvent event(*this, _hoverPoint, screenPosition);
         Core::EventBus::instance().publish(event);
         Core::EventBus::instance().publish(ECA::Event{"object-hover-entered", this, nullptr, std::time(nullptr)});
     } else if (!isHovering && wasHovered) {
-        // Mouse exited the object
-        ObjectHoverExitEvent event(*this, _hoverPoint, glm::vec2(0, 0)); // Screen pos would be passed in
+        ObjectHoverExitEvent event(*this, _hoverPoint, screenPosition);
         Core::EventBus::instance().publish(event);
         Core::EventBus::instance().publish(ECA::Event{"object-hover-exited", this, nullptr, std::time(nullptr)});
     } else if (isHovering) {
-        // Mouse is hovering over the object
-        ObjectHoverEvent event(*this, _hoverPoint, glm::vec2(0, 0)); // Screen pos would be passed in
+        ObjectHoverEvent event(*this, _hoverPoint, screenPosition);
         Core::EventBus::instance().publish(event);
     }
 }

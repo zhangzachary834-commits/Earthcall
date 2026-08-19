@@ -287,6 +287,9 @@ if(NOT EMSCRIPTEN)
             target_link_libraries(${TEST_NAME} PRIVATE earthcall_core)
         endif()
 
+        # Shared fixtures (test_save_helper.hpp). Source files live under
+        # tests/<region>/; ctest target names stay NAME_WE of the .cpp.
+        target_include_directories(${TEST_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/tests/support)
         target_compile_options(${TEST_NAME} PRIVATE -UNDEBUG)
         if (${TEST_NAME} IN_LIST PENDING_FEATURE_TESTS)
             set_target_properties(${TEST_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)

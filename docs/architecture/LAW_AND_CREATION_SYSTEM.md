@@ -816,6 +816,28 @@ Chaos is unbounded recursion; Babel is one law claiming every target. Both are
 Metalaw predicates — no new machinery. (The theological Anti-Babel section itself
 lives in the Ourverse Manifesto; this is only its enforcement surface.)
 
+### 7e. Two laws are not a branch
+
+A cascade that needs no recursion and no Spawn, found while authoring the control
+archetypes (`INTERACTION_AS_LAW.md` §6b), and general enough to belong here:
+
+> **Two laws whose actions satisfy each other's conditions are a loop, not a branch.**
+
+The natural way to author a toggle is a pair — "if off, turn on" and "if on, turn off",
+one law each, the branch living in the condition calculus where it looks like it belongs.
+It does not work. The on-law writes the property; the write marks the Rete state fact
+dirty; the dirty fact re-activates the off-law's `Compare` terminal in the **next chain
+round**; the off-law fires within the same tick. One trigger, both laws, no net change.
+`kMaxChainRounds` bounds the loop; it does not make it wrong less often.
+
+A branch needs a condition its own action **cannot invalidate**. Where the flip *is* the
+action — a toggle, a swap, an alternation — there is no such condition, and the branch
+must move into the mathematics (`Map p := 1 - p`), where writing the value re-triggers
+nothing. The tell to watch for, before writing the second law: *does law B's condition
+become true because law A acted?* If so you have authored a cycle in the network, and
+the Law Graph will not draw it, because the edge runs through the world rather than
+through the laws.
+
 There is a **third** Babel shape these predicates cannot reach, because it happens
 before any law runs: a subsystem defining in C++ what a thing *is*, and so opening a
 second ontology beside this one. Its enforcement surface is a refusal procedure rather

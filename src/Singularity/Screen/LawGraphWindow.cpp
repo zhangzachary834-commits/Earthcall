@@ -9,6 +9,7 @@
 #include "ZonesOfEarth/Ourverse/Ourverse.hpp"
 #include "Singularity/Core/CreationChannel.hpp"
 #include "Singularity/Input/LocomotionChannel.hpp"
+#include "Singularity/Input/InteractionChannel.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 
 #include <imgui.h>
@@ -136,6 +137,39 @@ const std::vector<PathOption>& knownPathOptions() {
                 options.push_back({property->name() + ".z", "Channel — Locomotion", "number", false});
             }
         }
+
+        // The interaction channel — probed, never hand-listed. Hand-listing
+        // is what burned `activeShapeKind` on the creation channel: the picker
+        // offered a path nobody had registered, the law read it, the read
+        // failed silently, and the law did something subtly other than what it
+        // said. channel_paths_test walks whatever this produces.
+        static Singularity::Input::InteractionChannel interactionPrototype;
+        for (Property* property : interactionPrototype.listProperties()) {
+            const PropertyValue probe = property->value();
+            const bool isVec = std::holds_alternative<glm::vec3>(probe);
+            const char* type = "number";
+            if (isVec)                                            type = "vector";
+            else if (std::holds_alternative<glm::mat4>(probe))     type = "transform";
+            else if (std::holds_alternative<std::string>(probe))   type = "text";
+            else if (std::holds_alternative<bool>(probe))          type = "toggle";
+            options.push_back({property->name(), "Channel — Interaction", type, isVec});
+            if (isVec) {
+                options.push_back({property->name() + ".x", "Channel — Interaction", "number", false});
+                options.push_back({property->name() + ".y", "Channel — Interaction", "number", false});
+                options.push_back({property->name() + ".z", "Channel — Interaction", "number", false});
+            }
+        }
+
+        // Readings ABOUT the subject, answered by the interaction channel
+        // rather than carried on the being. Hand-listed because there is no
+        // registry to probe: registerWorldReading is a map of closures, and a
+        // reading has no owning being to instantiate. channel_paths_test
+        // cannot check these the way it checks the rest — the manual protocol
+        // (INTERACTION_AS_LAW.md §11b step 1) is what holds them.
+        options.push_back({"@world.pointerOver", "Reading — Interaction (read-only)", "toggle", false});
+        options.push_back({"@world.pointerPressedOn", "Reading — Interaction (read-only)", "toggle", false});
+        options.push_back({"@world.pointerFocused", "Reading — Interaction (read-only)", "toggle", false});
+        options.push_back({"@world.pointerDistance", "Reading — Interaction (read-only)", "number", false});
 
         static Formation formationPrototype;
         for (Property* property : formationPrototype.listProperties()) {

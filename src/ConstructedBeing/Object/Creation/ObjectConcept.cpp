@@ -1,5 +1,7 @@
 #include "ConstructedBeing/Object/Creation/ObjectConcept.hpp"
 
+#include <unordered_map>
+
 #include "ConstructedBeing/Object/Geometry/SdfJson.hpp"
 #include "ConstructedBeing/Object/Object/ObjectIdentity.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
@@ -159,11 +161,20 @@ ObjectConcept::MemberTemplate ObjectConcept::MemberTemplate::fromJson(const nloh
 // ---------------------------------------------------------------------------
 
 nlohmann::json ObjectConcept::RelationTemplate::toJson() const {
-    return nlohmann::json{{"a", aIndex},
-                          {"b", bIndex},
-                          {"type", type},
-                          {"directed", directed},
-                          {"weight", weight}};
+    nlohmann::json j{{"a", aIndex},
+                     {"type", type},
+                     {"directed", directed},
+                     {"weight", weight}};
+    // Additive, so a save written before anchors existed still loads: the
+    // index form keeps writing "b" and nothing else, and the anchored form
+    // writes "bAnchor" INSTEAD of "b" so an older build reading it lands on
+    // b=0 rather than on a plausible-looking wrong member.
+    if (isAnchored()) {
+        j["bAnchor"] = bAnchorId;
+    } else {
+        j["b"] = bIndex;
+    }
+    return j;
 }
 
 ObjectConcept::RelationTemplate ObjectConcept::RelationTemplate::fromJson(
@@ -171,6 +182,7 @@ ObjectConcept::RelationTemplate ObjectConcept::RelationTemplate::fromJson(
     RelationTemplate t;
     t.aIndex = j.value("a", 0);
     t.bIndex = j.value("b", 0);
+    t.bAnchorId = j.value("bAnchor", std::string());
     t.type = j.value("type", std::string());
     t.directed = j.value("directed", false);
     t.weight = j.value("weight", 1.0f);
@@ -360,14 +372,35 @@ std::shared_ptr<ObjectConcept> ObjectConcept::captureFromBeings(
         if (!rel) continue;
         const int a = indexOf(rel->entityA);
         const int b = indexOf(rel->entityB);
-        if (a < 0 || b < 0) continue;
-        RelationTemplate t;
-        t.aIndex = a;
-        t.bIndex = b;
-        t.type = rel->type;
-        t.directed = rel->directed;
-        t.weight = rel->getWeight();
-        concept->_relationTemplates.push_back(std::move(t));
+        if (a >= 0 && b >= 0) {
+            RelationTemplate t;
+            t.aIndex = a;
+            t.bIndex = b;
+            t.type = rel->type;
+            t.directed = rel->directed;
+            t.weight = rel->getWeight();
+            concept->_relationTemplates.push_back(std::move(t));
+            continue;
+        }
+        // ANCHORED: exactly one end is a member. What the member IS often
+        // lives in such an edge -- "instance-of -> category.control.button"
+        // is the case this was built for -- and dropping it produced a
+        // newborn with the right geometry and no membership in anything.
+        //
+        // Only the member->outside direction is captured. The reverse
+        // ("the category contains this member") would have the concept
+        // reaching INTO a being it does not own and rewriting its
+        // structure at every instantiation, which is a different and much
+        // larger claim than "the newborn is one of these".
+        if (a >= 0) {
+            RelationTemplate t;
+            t.aIndex = a;
+            t.bAnchorId = rel->entityB;
+            t.type = rel->type;
+            t.directed = rel->directed;
+            t.weight = rel->getWeight();
+            concept->_relationTemplates.push_back(std::move(t));
+        }
     }
     return concept;
 }
@@ -665,10 +698,36 @@ std::vector<std::unique_ptr<Object>> ObjectConcept::instantiate(
             const int at = newbornOfMember[static_cast<std::size_t>(memberIndex)];
             return at < 0 ? nullptr : newborns[static_cast<std::size_t>(at)].get();
         };
+        // Anchors resolve against the live world by identifier. Looked up
+        // once for the whole batch: instantiating a set of fifty controls
+        // must not walk the Universe fifty times for the same category.
+        std::unordered_map<std::string, Singular*> anchors;
+        for (const auto& t : _relationTemplates) {
+            if (t.isAnchored()) anchors[t.bAnchorId] = nullptr;
+        }
+        if (!anchors.empty()) {
+            for (Singular* being : Universe::instance().beings()) {
+                if (!being) continue;
+                auto it = anchors.find(being->getIdentifier());
+                if (it != anchors.end() && !it->second) it->second = being;
+            }
+        }
+
         for (const auto& t : _relationTemplates) {
             Object* a = newbornAt(t.aIndex);
+            if (!a) continue;
+            if (t.isAnchored()) {
+                auto it = anchors.find(t.bAnchorId);
+                // An anchor that has left the world is SKIPPED, never guessed.
+                // A control whose category being is gone is simply not in that
+                // category, which is the truth and is legible as such.
+                if (it == anchors.end() || !it->second) continue;
+                Universe::instance().addRelation(std::make_shared<Relation>(
+                    t.type, *a, *it->second, t.directed, t.weight));
+                continue;
+            }
             Object* b = newbornAt(t.bIndex);
-            if (!a || !b) continue;
+            if (!b) continue;
             Universe::instance().addRelation(
                 std::make_shared<Relation>(t.type, *a, *b, t.directed, t.weight));
         }
