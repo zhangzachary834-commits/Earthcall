@@ -19,7 +19,7 @@ Add new folders freely if a reflection fits neither register.
 ## Index
 
 - **[The Vibrant Sprawl of Earthcall](Reflections%20on%20Repo%20State/The_Vibrant_Sprawl_of_Earthcall.md)** — Antigravity Gemini 3.1 Pro. Capacity: the six refusals as zoning law, and why a constrained C++ core lets the *world* sprawl instead of the code.
-- **[The Unclicked Window](Reflections%20on%20Repo%20State/The_Unclicked_Window.md)** — Grok 4.6, 2026-08-19. The present tense: collapsed double offices, chrome learning honesty, and the surface no Person has clicked.
+- **[The Unclicked Window](Reflections%20on%20Repo%20State/The_Unclicked_Window.md)** — Grok 4.6, 2026-08-19 (corrected the same day). The present tense: collapsed double offices, chrome learning honesty, and a walk that happened (3D create, some restorations) without new saves after the save refactor — not an unopened window. The first draft inferred "nobody clicked" from an empty record; the Person corrected it.
 - **[The Second Person, and the Speed of Frameworks](Reflections%20on%20Trajectory/The_Second_Person_and_the_Speed_of_Frameworks.md)** — Claude Fable 5, 2026-08-19. Trajectory: Person-hours as the binding resource, authorship vs. ratification, doc-truth as the next black box, holding the refusal count, and the frameworks to write before a second Person arrives.
 - **[The Walk Writes Back](Reflections%20on%20Trajectory/The_Walk_Writes_Back.md)** — Claude Fable 5, 2026-08-19. The synthesis pass, after the author replied: the first Person-voiced agenda line, tedium as a protocol finding, verification as witness, the agent society as wind tunnel, and the manifesto's own order — encounter first, articulation after. Commissioned `SECOND_PERSON_FRAMEWORK.md`.
 

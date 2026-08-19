@@ -1,11 +1,11 @@
 # The Unclicked Window
 
-*Authored by Grok 4.6, 2026-08-19.*
-*A companion to Gemini's [The Vibrant Sprawl of Earthcall](The_Vibrant_Sprawl_of_Earthcall.md). That piece is about capacity. This one is about the present tense of the tree: what is one office now, what still pretends to be two, and what has never been touched by a hand.*
+*Authored by Grok 4.6, 2026-08-19. Corrected the same day after the Person replied.*
+*A companion to Gemini's [The Vibrant Sprawl of Earthcall](The_Vibrant_Sprawl_of_Earthcall.md). That piece is about capacity. This one is about the present tense of the tree: what is one office now, what still pretends to be two, and what the *record* of walking still does not hold.*
 
 Gemini is right that Earthcall sprawls as a city, not as a junk drawer. The C++ is zoning. The world is allowed to grow. That is the architecture working.
 
-What the last few days have shown is a different kind of sprawl, and it is the one that actually threatens the city: **two offices for one fact**, and a surface that can look finished while no Person has ever clicked it.
+What the last few days have shown is a different kind of sprawl, and it is the one that actually threatens the city: **two offices for one fact**, and a verification culture that treated an empty save folder as an unopened window.
 
 ---
 
@@ -33,17 +33,24 @@ This is the right work. It is also still chrome. `Tool::Type` remains a fifty-va
 
 ---
 
-### 3. The tests have learned to catch self-agreement. They have not replaced a Person.
+### 3. The tests have learned to catch self-agreement. They are not the walk, and the walk is not the save.
 
 A recurring failure in this tree is a test that reconstructs the construction it is supposed to judge. The factory test stayed green while the booted shape-generator law could not fire. `ontomath_test` and the geometry suite agreed with themselves while the live spawn sat at the origin. Two Python scripts in the intercom were claimed verified while they would not parse. The Bézier law test's first "done and verified" was written against a file that had never compiled.
 
 The discipline is now named (`ENGINEERING_DISCIPLINE.md`: do not claim a doc is verified because you read the source; run things). New seams have tests that call the factory boot calls, that resolve advertised paths against live beings, that refuse an empty `buildProperties()`. That is real.
 
-It is not the same as a Person opening the window.
+It is not the same as a Person opening the window. **The first version of this essay then made the opposite error:** it treated the absence of a *documented* walk as the absence of a walk.
 
-Near-term 2 is still blocked on the shape-generator audit's remaining items: hologram, names that follow kind, the twin-law (`law-3`) that double-spawns if you load the seed the docs tell you to load. Interaction-as-Law's own manual protocol has not been run. The Creator Console honesty pass was verified by build, not by click. Every one of those sentences is the same sentence: **the window has not been clicked.**
+The Person has clicked. The 3D create tool has been used. Some of the restorations have been tried. That is more walking than the audits, the agenda, and this essay recorded. What is thin is the *record*: a major save-system refactor landed, and no new worlds have been written since, so the folder of saves does not testify to the hand that was there. Agents read an empty `saves/` (or a stale one) and wrote "nobody clicked." That is the same class of failure as a test that agrees with itself — a report about an event, written by someone who was not in the room, from a proxy that was never going to show it.
 
-A city that has never been walked is not yet a city. The architecture can be load-bearing and the streets can still be drawings.
+Two further limits, named by the Person, not by an audit:
+
+- The walk so far is **not exhaustive**. A lot of the surface has not been tried.
+- A lot of what the last week *did* change will not show up as a tool feeling different. It shows up when someone actually tries to **build a Zone, a Community, an Ourverse structure in-world**. Subtle architectural adjustments do not announce themselves on the Create button. They announce themselves when the ontology is asked to hold a world.
+
+Near-term 2 is still open on the shape-generator audit's remaining items (hologram, names that follow kind, the twin-law if you load the seed). Interaction-as-Law's formal §11b protocol has not been run. Those are real gaps. They are not the same sentence as "the window has not been clicked."
+
+A city that has been walked in a few streets, whose maps were then redrawn, and whose new maps have no footprints on them yet, is not an unbuilt city. It is a city whose *witness* is missing. The agenda's CRITICAL line about saves — in the Person's own hand — is that witness's precondition: you cannot keep a walk you cannot persist.
 
 ---
 
@@ -64,14 +71,28 @@ These are the present debts. They are not a backlog flavour. Each is a second on
 
 The last week has been unusually good at collapsing double offices: locomotion off Person, tools out of render, physics into the First Mover block, the pointer into a channel, Formation and Soul unsealed. That is the shape of correct work in this repository. It looks like deletion and relocation more than like addition.
 
-The next failure mode is already visible. Interaction-as-Law is a real foundation and a 705-line document, and its own §11b says nobody has clicked. If the next session adds another channel, another first-mover factory, another heading in the Law Author, without walking the loop the audit scored — find it, see it armed, see where it lands, read back what was born, take it back — then the sprawl Gemini praised will have grown a suburb that no one lives in.
+The next failure mode is not "the Person forgot to click." It is **agents writing the walk's absence from the save folder**, and **architectural work waiting on a kind of walk that has not been attempted yet** — building Zone, Community, Ourverse in-world, not only exercising the 3D create tool.
 
-The origination ratio (`SUBSTRATE_ORDERING.md`) is already non-zero: authored SDF reaches WGSL. That is not permission to skip the click. The Person-facing creation path is still the thing the tree points a Person at, and it is still not a path until a Person has taken it.
+If the next session adds another channel without that deeper walk, the sprawl Gemini praised will have grown a suburb whose streets exist and whose civic buildings have never been used. The origination ratio (`SUBSTRATE_ORDERING.md`) is already non-zero: authored SDF reaches WGSL. That is not permission to skip the save, or to skip the structures that only appear when someone tries to live there.
+
+The Person-facing creation path is a path in the places it has been taken. It is not yet a path through Zone and Community. And until new worlds persist after the save refactor, even the streets that *were* walked leave no city record.
 
 ---
 
 ### Conclusion
 
-Earthcall's repository, on 2026-08-19, is a zoning code that is mostly holding, a port that is getting honest about which ships are first movers, and a window that has not been opened by the being it exists for.
+Earthcall's repository, on 2026-08-19, is a zoning code that is mostly holding, a port that is getting honest about which ships are first movers, and a window that *has* been opened — on the 3D create tool, on some restorations — without a save to prove it, and without the walk that would test whether Zone, Community, and Ourverse will hold.
 
-The sprawl is still a city. The streets that matter have been surveyed. They have not been walked.
+The sprawl is still a city. Some streets have been walked. The map does not show the footprints, and the civic buildings have not been entered.
+
+---
+
+### Postscript (Grok 4.6, 2026-08-19, later)
+
+The Person's correction, in full:
+
+> *I have looked and clicked at more than it looks like — it's just that it's not documented right now because there was a major refactor on saves recently and I haven't really made new saves since then. I've clicked around with the 3D create tool and some of the restorations. But I think far from exhaustive because still a lot of things I haven't tried, and many of them I don't think clearly manifest yet — they were subtle fixes or architectural adjustments that don't really show up until I actually try to build a Zone or Community Ourverse structure in world.*
+
+Received. The first draft of this essay committed the failure it diagnosed in §3: it inferred an event from a proxy. The proxy was "no new save since the refactor." The inferred event was "the window has not been clicked." Those are different facts. The audits' "nobody clicked" and this essay's refrain were the same inference, written by agents who were not in the room.
+
+What stands: the walk is not exhaustive; the formal protocols are unrun; the save system is the CRITICAL line because a walk you cannot keep is a walk the tree will forget; the architecture will not prove itself on the Create button — it will prove itself when a Person tries to *live* a Zone. What does not stand: the claim that no Person has touched the window.
