@@ -25,6 +25,7 @@
 #include "Singularity/Screen/Camera.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "Singularity/FirstMoverWindowTools/CreatorConsole/CreatorConsoleWindow.hpp"
+#include "Singularity/FirstMoverWindowTools/CreationTools.hpp"
 #include "Singularity/FirstMoverWindowTools/Chat.hpp"
 #include "ZonesOfEarth/SaveContext.hpp"
 
@@ -225,13 +226,17 @@ void Engine::initLogic() {
     _mainMenu.addOption("3D Create", GLFW_KEY_F4, [this]() {
         _creatorConsoleOpen = true;
         Rendering::getCreatorConsoleState().currentSection = Rendering::CreatorSection::Create3D;
-        Rendering::getCreatorConsoleState().current3DMode = Rendering::Mode3D::BrushCreate;
+        Rendering::apply3DMode(Rendering::getCreatorConsoleState(),
+                              _lawManager ? Singularity::Core::CreationChannel::find(*_lawManager) : nullptr,
+                              Rendering::Mode3D::BrushCreate);
         ensureCursorUnlocked();
     });
     _mainMenu.addOption("3D Select", GLFW_KEY_F5, [this]() {
         _creatorConsoleOpen = true;
         Rendering::getCreatorConsoleState().currentSection = Rendering::CreatorSection::Create3D;
-        Rendering::getCreatorConsoleState().current3DMode = Rendering::Mode3D::Selection;
+        Rendering::apply3DMode(Rendering::getCreatorConsoleState(),
+                              _lawManager ? Singularity::Core::CreationChannel::find(*_lawManager) : nullptr,
+                              Rendering::Mode3D::Selection);
         ensureCursorUnlocked();
     });
     _mainMenu.addOption("Toggle Dev Mode", GLFW_KEY_GRAVE_ACCENT, [this]() {
@@ -255,7 +260,9 @@ void Engine::initLogic() {
     _mainMenu.addOption("Move Tool", GLFW_KEY_V, [this]() {
         _creatorConsoleOpen = true;
         Rendering::getCreatorConsoleState().currentSection = Rendering::CreatorSection::Create3D;
-        Rendering::getCreatorConsoleState().current3DMode = Rendering::Mode3D::Selection;
+        Rendering::apply3DMode(Rendering::getCreatorConsoleState(),
+                              _lawManager ? Singularity::Core::CreationChannel::find(*_lawManager) : nullptr,
+                              Rendering::Mode3D::Selection);
         _mainMenu.close();
         _keyboardHandler->setMenuOpen(false);
         _mouseHandler->setMenuOpen(false);

@@ -54,9 +54,7 @@ subsystem define what a thing's state *means* by keeping it where no law can loo
 
 ---
 
----
-TODO: add a section about First Movers, listing them and pointing to them. Section should be fully expounded on in a dedicated companiondoc.
----
+TODO: First Mover companion. Inventory is now FIRST_MOVER_AUTHORING.md §1.
 
 ## Router — find your task, read that section first
 
@@ -122,7 +120,7 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
 
 cmake --build build --target earthcall -j8
 cmake --build build -j8                               # tests are NOT built by the line above
-ctest --test-dir build --output-on-failure -j4        # 49 registered, 48 pass
+ctest --test-dir build --output-on-failure -j4        # 50 registered, 49 pass
 ```
 
 Both flags are required (no system OpenSSL; CMake 4.x rejects websocketpp).

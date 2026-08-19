@@ -75,7 +75,12 @@ namespace Rendering {
         CreatorSection currentSection = CreatorSection::Create3D;
         
         // 3D Create State
-        Mode3D current3DMode = Mode3D::BrushCreate;
+        // None until a Person arms a tool (console 3D tab, F4/F5, or a
+        // mode button). Defaulting to BrushCreate made the developer
+        // bypass fire on every click from boot, even with the console
+        // never opened — the opposite of "tools run because they were
+        // selected", which is the reason dispatch left render.
+        Mode3D current3DMode = Mode3D::None;
         ToolTarget3D current3DTarget = ToolTarget3D::WorldObjects;
         ObjectTypes::ShapeKind currentShapeKind = ObjectTypes::ShapeKind::Cube;
         glm::vec3 createColor = glm::vec3(1.0f);
@@ -87,6 +92,9 @@ namespace Rendering {
         // Combine / Clay State
         int combineOp = 0;
         float combineBlend = 0.0f;
+        // BENEATH THE KERNEL: per-gesture pick operands. They name Objects
+        // the Person already holds; the next click recomputes them. Not a
+        // being's standing state — the live tool is @creation-channel.activeTool.
         Object* combineOperandA = nullptr;
         Object* clayGrabbed = nullptr;
         Object* clayTarget = nullptr;

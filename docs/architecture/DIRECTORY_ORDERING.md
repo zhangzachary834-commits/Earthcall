@@ -97,7 +97,7 @@ Earthcall/
       Screen/              the Screen/Light modality (Renderer, WebGPU, GL, BrushSystem)
       Storage/             the Storage modality (SaveSystem, CloudStorage, BinaryPack, Frontier)
       Physical/            the Physical hardware modality (PhysicalChannel)
-      FirstMoverWindowTools/ CreatorConsole, Controls, Chat, Tools
+      FirstMoverWindowTools/ CreatorConsole, CreationTools, Controls, Chat, Tools
     OurVerse/              the Person-facing authorship surface
     Identity/              First Mover register, identity ledger, key pairs, claims
     Legacy/                the graveyard — not yet ontologically placed

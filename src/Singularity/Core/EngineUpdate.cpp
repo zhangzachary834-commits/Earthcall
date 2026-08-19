@@ -4,6 +4,7 @@
 #include "../Input/KeyboardHandler.hpp"
 #include "../Input/MouseHandler.hpp"
 #include "../Input/LocomotionChannel.hpp"
+#include "Singularity/FirstMoverWindowTools/CreationTools.hpp"
 #include "../../Person/Person.hpp"
 #include "../../ZonesOfEarth/ZoneManager.hpp"
 #include "../../ZonesOfEarth/Physics/Physics.hpp"
@@ -40,6 +41,12 @@ namespace Core {
         if (auto* locomotion = Singularity::Input::LocomotionChannel::find(*_lawManager)) {
             locomotion->step(*_player, *_camera, _window, mgr, dt, flying, canMove);
         }
+
+        // Creation first mover — sense placement, honour L, push the
+        // console's live selection onto the channel, actuate the armed
+        // tool. Used to run inside render3DConsole / DeveloperToolsWindow,
+        // so collapsing the console froze every 3D tool.
+        Rendering::stepCreationTools(_window, this, mgr, dt, _creatorConsoleOpen);
 
         // Update world (physics etc.)
         mgr.active().world().update(dt);

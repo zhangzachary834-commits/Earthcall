@@ -62,6 +62,24 @@ law is one whose truth lives in the engine rather than in the world's data:
 reason in a comment: *"First movers' truth lives in the engine (physics laws persist in
 their own save section); serializing the bridge would forge it."*
 
+The in-engine first movers, each a Law with a stable identifier, located by
+`find` / `syncRegister` rather than a cached pointer:
+
+| Identifier | Where | What it senses / acts |
+|---|---|---|
+| `creation-channel` | `Singularity/Core/CreationChannel` | live tool, shape, colour, placement. Stepped from `Engine::update` via `Rendering::stepCreationTools`. |
+| `shape-generator-3d-law` | `CreationChannel.cpp` (`createShapeGenerator3DLaw`) | the Person-facing 3D spawn law. Conditions on `@creation-channel.active3DMode`. |
+| `locomotion-channel` | `Singularity/Input/LocomotionChannel` | WASD / jump / vessel clips. `LocomotionChannel::step`. |
+| physics bridges | `ZonesOfEarth/AuthorsOfLaw/PhysicsLawBridge` | gravity and the other C++ physics facts. |
+| `physical-channel` | `Singularity/Physical/PhysicalChannel` | the hardware modality. |
+| foreign / inference bridges | `Singularity/Foreign/` | a foreign process as first mover. |
+| Ourverse metalaws | `ZonesOfEarth/Ourverse/Ourverse.cpp` | the vessel-of-unity ceiling. |
+
+A first mover's per-frame work belongs on that channel's step (or the one
+function `Engine::update` calls for it), never inside a render function.
+`CreationChannel` is the worked example: collapsing the Creator Console used
+to freeze every 3D tool because dispatch lived in `render3DConsole`.
+
 **The wide sense — the one this document adds.** `LAW_MIGRATION_FRAMEWORK.md` §1 cuts
 every subsystem into three seams, and assigns two of them to the engine permanently:
 

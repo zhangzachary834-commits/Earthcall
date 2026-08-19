@@ -3,10 +3,7 @@
 #include "imgui.h"
 #include "GLFW/glfw3.h"
 
-#include "Singularity/FirstMoverWindowTools/Tool.hpp"
 #include "Singularity/Core/Engine.hpp"
-#include "Singularity/Core/CreationChannel.hpp"
-#include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "ZonesOfEarth/SaveContext.hpp"
 #include <filesystem>
@@ -16,55 +13,14 @@ extern ZoneManager mgr;
 
 namespace Rendering {
 
-namespace {
-
-// CreationChannel is registered once (EngineInit.cpp, syncRegister) and never
-// removed -- it is a First Mover, so LawManager::loadFromJson keeps it across
-// every load. Finding it by dynamic_cast each frame, rather than caching the
-// pointer, matches CreationChannel::syncRegister's own lookup and stays
-// correct even if a save reload ever rebuilds the law list.
-Singularity::Core::CreationChannel* findCreationChannel(Core::Engine* engine) {
-    if (!engine || !engine->getLawManager()) return nullptr;
-    for (const auto& law : engine->getLawManager()->getAll()) {
-        auto* channel = dynamic_cast<Singularity::Core::CreationChannel*>(law.get());
-        if (channel) return channel;
-    }
-    return nullptr;
-}
-
-} // namespace
-
 void renderDeveloperToolsWindow(bool* open, GLFWwindow* window, Core::Engine* engine) {
     if (!window || !engine) return;
+    if (!open || !*open) return;
 
-    auto* channel = findCreationChannel(engine);
-    if (!channel) return;
-
-    // The law path's activation input: a keyboard edge, not an ImGui button,
-    // so it stays a genuinely different input from this window's panels below.
-    // Deliberately not gated on `*open` -- arming the law path shouldn't
-    // require this developer window to be visible. That is why it sits ABOVE
-    // the `*open` return: the comment said so from the day it was written
-    // (8c9a725b) while a `!*open` early return at the top of the function made
-    // it false, so L did nothing unless the window happened to be open.
-    //
-    // Setting active3DMode to "Create" is the whole arming gesture: the law
-    // ("Tool: Shape Generator 3D") conditions on exactly this property, and
-    // the click itself is published globally from the GLFW mouse callback.
-    // Sense before either path decides anything. Both the law and the developer
-    // bypass read the channel's placement cache, and only one of them used to
-    // write it -- from below its own arming gate, so arming the law left the
-    // cache frozen at its default and the law spawned at the origin.
-    Tool::UpdateShapeGeneratorPlacement(window, engine, mgr, *channel);
-
-    static bool lawModeKeyDownLast = false;
-    bool lawModeKeyDown = glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS;
-    if (lawModeKeyDown && !lawModeKeyDownLast) {
-        channel->active3DMode = (channel->active3DMode == "Create") ? "" : "Create";
-    }
-    lawModeKeyDownLast = lawModeKeyDown;
-
-    if (!open || !*open) return;   // panels below are the window; arming is not
+    // Placement sensing and the L-key that arms the shape-generator law
+    // used to live here, above the `*open` return. They now run in
+    // Rendering::stepCreationTools from Engine::update — this window is
+    // the test-save loader, not a first-mover step hiding in a render.
 
     if (ImGui::Begin("Developer: Test World Saves", open)) {
         static std::vector<std::string> testSaves;

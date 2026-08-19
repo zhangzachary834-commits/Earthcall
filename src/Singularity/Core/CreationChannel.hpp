@@ -16,6 +16,20 @@ public:
     const std::string& name() const { return _name; }
 
     static void syncRegister(LawManager& laws);
+    static CreationChannel* find(LawManager& laws);
+
+    // Push the console's live selection onto the registered paths spawn
+    // laws already read. Called from the first-mover step
+    // (Rendering::stepCreationTools), never from a render function — the
+    // six fields used to be copied only while render3DConsole was on
+    // screen in BrushCreate, so collapsing the window froze the channel.
+    void writeLiveSelection(const std::string& tool,
+                            int shapeKind,
+                            const glm::vec3& spawnRot,
+                            const glm::vec3& spawnScale,
+                            bool gridSnap,
+                            float gridSnapSize,
+                            const glm::vec3& color);
 
     std::string activeTool;
     std::string active3DMode;

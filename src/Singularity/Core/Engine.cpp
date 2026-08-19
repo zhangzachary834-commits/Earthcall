@@ -332,15 +332,9 @@ void Engine::tick(float dt) {
         }
 
         if (Rendering::getCreatorConsoleState().showLawAuthor) {
-            Singular* testSubject = nullptr;
-            if (_lawManager) {
-                for (const auto& law : _lawManager->getAll()) {
-                    if (auto channel = dynamic_cast<Singularity::Core::CreationChannel*>(law.get())) {
-                        testSubject = channel;
-                        break;
-                    }
-                }
-            }
+            Singular* testSubject = _lawManager
+                ? Singularity::Core::CreationChannel::find(*_lawManager)
+                : nullptr;
             Rendering::renderLawGraphWindow(&Rendering::getCreatorConsoleState().showLawAuthor, *_lawManager, *_player, testSubject);
         }
 

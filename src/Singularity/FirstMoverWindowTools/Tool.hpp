@@ -125,8 +125,8 @@ public:
     // (saves/tests/shape_generator_3d_law.json), which reads the SAME
     // CreationChannel fields but fires off onMouseClicked only when
     // active3DMode == "Create", armed by a distinct input
-    // (see DeveloperToolsWindow's law-mode key toggle) so the two paths never
-    // both fire off one click.
+    // (see Rendering::stepCreationTools — L toggles active3DMode) so the two
+    // paths never both fire off one click.
     // Refresh the CreationChannel's cursor placement cache from the live
     // camera and cursor. Runs EVERY FRAME, for both consumers.
     //
@@ -139,7 +139,9 @@ public:
     // placement; it cannot refuse a readable wrong one.
     //
     // Sensing where the cursor is, and acting on it, are two different things.
-    // Only the second belongs behind the arming gate.
+    // Only the second belongs behind the arming gate. The first-mover step
+    // (Rendering::stepCreationTools, from Engine::update) is what calls this
+    // now — not a render function.
     static void UpdateShapeGeneratorPlacement(GLFWwindow* window, Core::Engine* engine,
                                               ZoneManager& mgr,
                                               Singularity::Core::CreationChannel& channel);

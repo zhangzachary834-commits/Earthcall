@@ -20,17 +20,33 @@ namespace Core {
 CreationChannel::CreationChannel() = default;
 
 void CreationChannel::syncRegister(LawManager& laws) {
-    bool bridged = false;
+    if (find(laws)) return;
+    laws.add(std::make_shared<CreationChannel>());
+}
+
+CreationChannel* CreationChannel::find(LawManager& laws) {
     for (const auto& law : laws.getAll()) {
-        auto* bridge = dynamic_cast<CreationChannel*>(law.get());
-        if (bridge && bridge->name() == "creation-channel") {
-            bridged = true;
-            break;
+        if (auto* channel = dynamic_cast<CreationChannel*>(law.get())) {
+            return channel;
         }
     }
-    if (!bridged) {
-        laws.add(std::make_shared<CreationChannel>());
-    }
+    return nullptr;
+}
+
+void CreationChannel::writeLiveSelection(const std::string& tool,
+                                         int shapeKind,
+                                         const glm::vec3& spawnRot,
+                                         const glm::vec3& spawnScale,
+                                         bool gridSnap,
+                                         float gridSnapSize,
+                                         const glm::vec3& color) {
+    activeTool = tool;
+    activeShapeKind = shapeKind;
+    cursorSpawnRot = spawnRot;
+    cursorSpawnScale = spawnScale;
+    this->gridSnap = gridSnap;
+    this->gridSnapSize = gridSnapSize;
+    activeColor = color;
 }
 
 void CreationChannel::buildProperties() {
