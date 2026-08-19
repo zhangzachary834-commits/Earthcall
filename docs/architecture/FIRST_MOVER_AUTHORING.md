@@ -68,9 +68,10 @@ The in-engine first movers, each a Law with a stable identifier, located by
 | Identifier | Where | What it senses / acts |
 |---|---|---|
 | `creation-channel` | `Singularity/Core/CreationChannel` | live tool, shape, colour, placement. Stepped from `Engine::update` via `Rendering::stepCreationTools`. |
-| `shape-generator-3d-law` | `CreationChannel.cpp` (`createShapeGenerator3DLaw`) | the Person-facing 3D spawn law. Conditions on `@creation-channel.active3DMode`. |
+| `shape-generator-3d-law` | `CreationChannel.cpp` (`createShapeGenerator3DLaw`) | the Person-facing 3D spawn law. Conditions on `@creation-channel.active3DMode`. Console Create and L write that same bit. |
 | `locomotion-channel` | `Singularity/Input/LocomotionChannel` | WASD / jump / vessel clips. `LocomotionChannel::step`. |
-| physics bridges | `ZonesOfEarth/AuthorsOfLaw/PhysicsLawBridge` | gravity and the other C++ physics facts. |
+| `physics-gravity`, `physics-kinematics`, `physics-acoustics*` | `Physics::createDefaultPhysicsLaws` | engine-seeded physics, as `FirstMoverLaw`. The Law Author lists them under First movers, not as a second authored block. |
+| physics bridges | `ZonesOfEarth/AuthorsOfLaw/PhysicsLawBridge` | gravity and the other C++ physics facts, when the legacy integrator is on. |
 | `physical-channel` | `Singularity/Physical/PhysicalChannel` | the hardware modality. |
 | foreign / inference bridges | `Singularity/Foreign/` | a foreign process as first mover. |
 | Ourverse metalaws | `ZonesOfEarth/Ourverse/Ourverse.cpp` | the vessel-of-unity ceiling. |

@@ -6,8 +6,9 @@
 
 namespace Physics {
 
-// Creates and returns the default set of physics laws (Gravity, Air Resistance, etc.)
-// modeled purely through ActionNode::flow and ActionNode::add over properties.
+// Engine-seeded physics, as first movers. Gravity, kinematics, and the
+// acoustic suite are bootstrap — they belong in the Law Author's First
+// Mover block, not in the authored-law list a Person writes into.
 std::vector<std::shared_ptr<Law>> createDefaultPhysicsLaws();
 
 } // namespace Physics

@@ -1,11 +1,23 @@
+
+
+
+
+
+
+
+
 Earthcall Ourverse Manifesto
 
-https://github.com/zhangzachary834-commits/Earthcall/tree/sync-from-earthcall-main
 
 
-If you guys come up with better names for these things than I have already tell me and we might change them.
+Manifesto authors: Zachary Zhang
 
-The Ourverse is an ontologically-birthed digital existence meant to represent life and meaning as humanity lives it.
+Repository: https://github.com/zhangzachary834-commits/Earthcall
+
+
+If you guys come up with better names for these things than I have already, tell me and we might change them.
+
+The Earthcall Ourverse is an ontologically-birthed digital existence meant to represent life and meaning as humanity lives it, a liturgical vessel ordered according to the true our ordo amoris in  Christ.
 
 I named it the “Ourverse” because digital existence is fundamentally, and ultimately relational, first in relation to God as Our Father, and second in relation to each other. It derives its meaning through how the elements relate to each other, a person relates to the elements, and how a person relates to another person. They, altogether, comprise an ever-evolving formation. Whereas “meta-verse” would imply merely a substrate overlaid on top of ours, “our” verse declares that it is fundamentally “ours”—a creation God gave us the scepter over to fill with His glory, birthed through incarnated humanity together in profound, shared and selfless life.
 

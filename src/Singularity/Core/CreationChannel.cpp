@@ -34,6 +34,7 @@ CreationChannel* CreationChannel::find(LawManager& laws) {
 }
 
 void CreationChannel::writeLiveSelection(const std::string& tool,
+                                         const std::string& mode,
                                          int shapeKind,
                                          const glm::vec3& spawnRot,
                                          const glm::vec3& spawnScale,
@@ -41,6 +42,7 @@ void CreationChannel::writeLiveSelection(const std::string& tool,
                                          float gridSnapSize,
                                          const glm::vec3& color) {
     activeTool = tool;
+    active3DMode = mode;
     activeShapeKind = shapeKind;
     cursorSpawnRot = spawnRot;
     cursorSpawnScale = spawnScale;

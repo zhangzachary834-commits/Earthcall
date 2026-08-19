@@ -42,8 +42,13 @@ ConditionNode isSoundEmitter() {
 std::vector<std::shared_ptr<Law>> createDefaultPhysicsLaws() {
     std::vector<std::shared_ptr<Law>> laws;
 
+    // Engine bootstrap, not Person-authored text. They used to be minted as
+    // ordinary Law, so the Law Author showed a "physics laws" block above
+    // "First movers" — two registers for one office. isFirstMover() is
+    // serialization AND the register's heading: these seed the world the
+    // same way creation-channel does.
     // 1. Gravity: Flow action over velocity (velocity := velocity + g * dt)
-    auto gravity = std::make_shared<Law>("physics: gravity");
+    auto gravity = std::make_shared<FirstMoverLaw>("physics: gravity");
     gravity->setLawIdentifier("physics-gravity");
     gravity->setActivation(Law::Activation::WhileTrue);
     gravity->setScope(Law::Scope::Everyone);
@@ -67,7 +72,7 @@ std::vector<std::shared_ptr<Law>> createDefaultPhysicsLaws() {
     laws.push_back(gravity);
 
     // 2. Integration: Flow action over position (position := position + velocity * dt)
-    auto integration = std::make_shared<Law>("physics: kinematics");
+    auto integration = std::make_shared<FirstMoverLaw>("physics: kinematics");
     integration->setLawIdentifier("physics-kinematics");
     integration->setActivation(Law::Activation::WhileTrue);
     integration->setScope(Law::Scope::Everyone);
@@ -107,7 +112,7 @@ std::vector<std::shared_ptr<Law>> createDefaultPhysicsLaws() {
     // applyTo and never fires). ecaLoop().eventType below records the
     // intended trigger; it does not perform the binding.
     // -----------------------------------------------------------------------
-    auto acoustics = std::make_shared<Law>("physics: acoustics");
+    auto acoustics = std::make_shared<FirstMoverLaw>("physics: acoustics");
     acoustics->setLawIdentifier("physics-acoustics");
     acoustics->setActivation(Law::Activation::OnEvent);
     acoustics->ecaLoop().eventType = "contact-began";
@@ -136,7 +141,7 @@ std::vector<std::shared_ptr<Law>> createDefaultPhysicsLaws() {
     //   outside                     UNDEFINED — the Piecewise writes nothing,
     //                               which is the envelope ending, not failing.
     // -----------------------------------------------------------------------
-    auto envelope = std::make_shared<Law>("physics: acoustics envelope");
+    auto envelope = std::make_shared<FirstMoverLaw>("physics: acoustics envelope");
     envelope->setLawIdentifier("physics-acoustics-envelope");
     envelope->setActivation(Law::Activation::WhileTrue);
     envelope->setScope(Law::Scope::Everyone);
@@ -179,7 +184,7 @@ std::vector<std::shared_ptr<Law>> createDefaultPhysicsLaws() {
     // concept now actually seeds — the law bound it before anything set it,
     // so the read failed and the action wrote nothing on every tick.
     // -----------------------------------------------------------------------
-    auto vibrato = std::make_shared<Law>("physics: acoustics vibrato");
+    auto vibrato = std::make_shared<FirstMoverLaw>("physics: acoustics vibrato");
     vibrato->setLawIdentifier("physics-acoustics-vibrato");
     vibrato->setActivation(Law::Activation::WhileTrue);
     vibrato->setScope(Law::Scope::Everyone);
@@ -211,7 +216,7 @@ std::vector<std::shared_ptr<Law>> createDefaultPhysicsLaws() {
     // substrate does not know what occlusion is; it knows only that some
     // channel answers this name.
     // -----------------------------------------------------------------------
-    auto occlusion = std::make_shared<Law>("physics: acoustics occlusion");
+    auto occlusion = std::make_shared<FirstMoverLaw>("physics: acoustics occlusion");
     occlusion->setLawIdentifier("physics-acoustics-occlusion");
     occlusion->setActivation(Law::Activation::WhileTrue);
     occlusion->setScope(Law::Scope::Everyone);
@@ -247,7 +252,7 @@ std::vector<std::shared_ptr<Law>> createDefaultPhysicsLaws() {
     // unmade. Reported, deliberately not worked around here: a second,
     // parallel clock authored onto the emitter would collide with that fix.
     // -----------------------------------------------------------------------
-    auto decay = std::make_shared<Law>("physics: acoustics decay");
+    auto decay = std::make_shared<FirstMoverLaw>("physics: acoustics decay");
     decay->setLawIdentifier("physics-acoustics-decay");
     decay->setActivation(Law::Activation::WhileTrue);
     decay->setScope(Law::Scope::Everyone);

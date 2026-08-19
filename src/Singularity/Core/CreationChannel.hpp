@@ -24,6 +24,7 @@ public:
     // six fields used to be copied only while render3DConsole was on
     // screen in BrushCreate, so collapsing the window froze the channel.
     void writeLiveSelection(const std::string& tool,
+                            const std::string& mode,
                             int shapeKind,
                             const glm::vec3& spawnRot,
                             const glm::vec3& spawnScale,

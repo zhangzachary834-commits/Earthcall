@@ -7,8 +7,8 @@
 // Rendering::stepCreationTools (Engine::update), never from a render
 // function. This test cannot boot the window; it holds the door itself:
 // find() is how every caller locates the first mover, writeLiveSelection
-// is how the chrome writes registered paths, apply3DMode writes activeTool
-// without arming the spawn law's "Create" bit.
+// is how the chrome writes registered paths, apply3DMode writes the one
+// Create bit (active3DMode == "Create") that L also writes.
 
 #include "ConstructedBeing/Object/Object.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
@@ -57,6 +57,7 @@ int main() {
     // ---- writeLiveSelection is the door onto registered paths --------------
     channel->writeLiveSelection(
         "ShapeGenerator3D",
+        "Create",
         static_cast<int>(Object::ShapeKind::Sphere),
         glm::vec3(10.0f, 20.0f, 30.0f),
         glm::vec3(2.0f, 3.0f, 4.0f),
@@ -72,6 +73,8 @@ int main() {
     PropertyValue v;
     check(read("activeTool", v) && std::get<std::string>(v) == "ShapeGenerator3D",
           "activeTool is registered and holds the written slug");
+    check(read("active3DMode", v) && std::get<std::string>(v) == "Create",
+          "active3DMode is registered and holds the written Create bit");
     check(read("activeShapeKind", v) &&
               std::get<int>(v) == static_cast<int>(Object::ShapeKind::Sphere),
           "activeShapeKind is registered and holds the written kind");
@@ -89,13 +92,19 @@ int main() {
               std::get<glm::vec3>(v) == glm::vec3(0.25f, 0.5f, 0.75f),
           "activeColor is registered and holds the written colour");
 
-    // ---- apply3DMode writes the tool, not the law's Create bit -------------
+    // ---- one Create bit: console Create and L write the same mode ----------
     check(std::string(Rendering::toolNameForMode(Rendering::Mode3D::BrushCreate)) ==
               "ShapeGenerator3D",
-          "console Create maps to the ShapeGenerator3D slug, not \"Create\"");
+          "console Create maps to the ShapeGenerator3D tool slug");
+    check(std::string(Rendering::activeModeFor(Rendering::Mode3D::BrushCreate)) ==
+              "Create",
+          "console Create maps to active3DMode \"Create\" — the spawn law's gate");
     check(std::string(Rendering::toolNameForMode(Rendering::Mode3D::Selection)) ==
               "Selection3D",
           "console Select maps to Selection3D");
+    check(std::string(Rendering::activeModeFor(Rendering::Mode3D::Selection)) ==
+              "Select",
+          "Select is not Create — the spawn law stays down");
 
     Rendering::CreatorConsoleState state;
     check(state.current3DMode == Rendering::Mode3D::None,
@@ -106,12 +115,14 @@ int main() {
           "apply3DMode writes the chrome mode");
     check(channel->activeTool == "ShapeGenerator3D",
           "apply3DMode writes @creation-channel.activeTool");
-    check(channel->active3DMode.empty(),
-          "apply3DMode does not arm the spawn law — that bit is still L");
+    check(channel->active3DMode == "Create",
+          "console Create arms the spawn law — same bit L writes");
 
     Rendering::apply3DMode(state, channel, Rendering::Mode3D::Selection);
     check(channel->activeTool == "Selection3D",
           "switching mode updates the registered tool");
+    check(channel->active3DMode == "Select",
+          "leaving Create takes the spawn law down");
     check(state.combineOperandA == nullptr && state.clayGrabbed == nullptr,
           "switching mode clears per-gesture pick operands");
 

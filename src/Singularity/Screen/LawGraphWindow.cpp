@@ -1741,17 +1741,17 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player,
         }
         ImGui::PopID();
     };
-    if (authoredCount == 0) {
+    // Boot has no authored laws — only first movers (channels, the
+    // shape-generator factory, the default physics suite). A second
+    // heading above an empty list, or a list of physics laws that are
+    // themselves first movers, was a second register. Authored laws
+    // appear here once a Person writes one.
+    if (authoredCount > 0) {
         ImGui::Spacing();
-        ImGui::TextDisabled("No authored laws yet. To make one:");
-        ImGui::TextDisabled(" 1. + New Law above");
-        ImGui::TextDisabled(" 2. bind a trigger (the WHEN)");
-        ImGui::TextDisabled(" 3. shape the IF and THEN cards");
-        ImGui::TextDisabled(" 4. watch it fire in Recent events");
-        ImGui::Spacing();
-    }
-    for (const auto& law : laws.getAll()) {
-        if (law && !law->isFirstMover() && passesFilter(*law)) lawRow(law);
+        ImGui::TextDisabled("Authored");
+        for (const auto& law : laws.getAll()) {
+            if (law && !law->isFirstMover() && passesFilter(*law)) lawRow(law);
+        }
     }
     if (firstMoverCount > 0) {
         ImGui::Spacing();

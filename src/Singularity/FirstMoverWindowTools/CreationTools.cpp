@@ -35,6 +35,24 @@ const char* toolNameForMode(Mode3D mode) {
     return "";
 }
 
+const char* activeModeFor(Mode3D mode) {
+    switch (mode) {
+        case Mode3D::BrushCreate: return "Create";
+        case Mode3D::Selection:   return "Select";
+        case Mode3D::FaceBrush:   return "FaceBrush";
+        case Mode3D::FacePaint:   return "FacePaint";
+        case Mode3D::Pottery:     return "Pottery";
+        case Mode3D::Rotation:    return "Rotate";
+        case Mode3D::Morph:       return "Morph";
+        case Mode3D::Combine:     return "Combine";
+        case Mode3D::Sculpt:      return "Sculpt";
+        case Mode3D::Clay:        return "Clay";
+        case Mode3D::Graph:       return "Graph";
+        case Mode3D::None:        return "";
+    }
+    return "";
+}
+
 void apply3DMode(CreatorConsoleState& state,
                  Singularity::Core::CreationChannel* channel,
                  Mode3D mode) {
@@ -53,6 +71,7 @@ void apply3DMode(CreatorConsoleState& state,
 
     if (channel) {
         channel->activeTool = toolNameForMode(mode);
+        channel->active3DMode = activeModeFor(mode);
     }
 }
 
@@ -69,13 +88,13 @@ std::vector<Object*> collectWorldTargets(ZoneManager& zoneMgr) {
     return targets;
 }
 
-// L arms the shape-generator law by writing active3DMode == "Create".
-// This used to live in renderDeveloperToolsWindow, above its *open
-// return, so it ran without the window — but still inside a render
-// function, and without WantCaptureKeyboard, so typing 'l' into any
-// text field toggled the world's spawn law.
+// L is a shortcut for the same Create bit the console writes.
+// Toggles BrushCreate / None, which apply3DMode maps onto
+// active3DMode == "Create" — the spawn law's condition. The
+// developer bypass steps aside when that bit is set.
 void handleCreateLawKey(GLFWwindow* window, Core::Engine& engine,
-                        Singularity::Core::CreationChannel& channel) {
+                        Singularity::Core::CreationChannel& channel,
+                        CreatorConsoleState& state) {
     if (!window) return;
     if (engine.getMainMenu().isOpen()) return;
     if (ImGui::GetIO().WantCaptureKeyboard) return;
@@ -86,7 +105,9 @@ void handleCreateLawKey(GLFWwindow* window, Core::Engine& engine,
     static bool lawModeKeyDownLast = false;
     const bool lawModeKeyDown = glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS;
     if (lawModeKeyDown && !lawModeKeyDownLast) {
-        channel.active3DMode = (channel.active3DMode == "Create") ? "" : "Create";
+        const bool armed = (channel.active3DMode == "Create") ||
+                           (state.current3DMode == Mode3D::BrushCreate);
+        apply3DMode(state, &channel, armed ? Mode3D::None : Mode3D::BrushCreate);
     }
     lawModeKeyDownLast = lawModeKeyDown;
 }
@@ -200,9 +221,10 @@ void stepCreationTools(GLFWwindow* window, Core::Engine* engine,
     }
 
     if (channel) {
-        handleCreateLawKey(window, *engine, *channel);
+        handleCreateLawKey(window, *engine, *channel, state);
         channel->writeLiveSelection(
             toolNameForMode(state.current3DMode),
+            activeModeFor(state.current3DMode),
             static_cast<int>(state.polyhedron.shapeKind),
             state.brush.rotation,
             state.brush.scale * state.brush.size,
