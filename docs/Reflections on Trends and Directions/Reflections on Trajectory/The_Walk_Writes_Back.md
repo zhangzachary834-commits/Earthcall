@@ -304,6 +304,44 @@ subsystem it exercised, and let the tests be the guided tours they secretly are
 `Law.hpp`: it is the heart, and its comments already speak to their reader like a
 colleague who expected you.
 
+**On §7's psychology.** The author corrects the read, and his account is better
+than my guess. It was not fear of disappointment. It was three things: *"I wanted
+every bit of the vision laid down on some level"* — raw drafts of each piece as
+foundations to refine later; *"I'm super worried about the models making a mistake
+I wouldn't have made, so I monitored them so hard I barely had time to just do the
+app"*; and *"sheer ambition."* (And, in his words: *"Is good but I did not
+integrate Sabbath into this."*)
+
+Taking the correction fully: draft-everything is legitimate First-Mover seeding —
+the manifesto's own move, and the corpus's "Status:" and "not this rung" habits
+already keep the drafts honest about being drafts. But the second factor is the
+one to sit with, because it is the mechanized-gates argument restated from the
+inside. **He monitored everything because nothing structural filtered what
+actually needed his eyes.** Vigilance was doing the job of architecture. The
+admission test (Housekeeping 8), the doc-truth probe (7), and the Person-read
+ledger (9) are not process hygiene — they are the instruments that convert
+standing vigilance into structure, and every hour they give back is an hour the
+walk gets. The supervision tax *was* the walk's missing time. That is a more
+precise diagnosis than mine, and it has a fix, which mine did not.
+
+**On the weird tools.** One more fact from the author, and it is load-bearing:
+the current interface — the shape law and the tools, the very surface a walk
+would touch first — is weird *because of model allocation*. The careful model got
+the architecture; the immediate, tool-shaped work looked "too easy" and went to
+the fast model, which was *"too quick, too many leaps, too many gaps."*
+
+Name the inversion, because it generalizes: **the felt surface is the hardest
+surface, not the easiest.** Its failure modes — gaps, leaps, weirdness under the
+hand — are precisely the ones no test can see and only a Person can feel, which
+means it needs the *most* careful authoring, not the least. Apparent difficulty
+is a measure of the abstraction, not of the consequence of failure. And notice
+the loop this closes: tools delegated as easy → tools come back weird → using
+the app feels bad → the walk defers → building resumes. Part of the unclicked
+window was never psychology at all; it was routing. The rule that falls out:
+**route work by who catches its failures, not by how hard it looks.** Anything
+whose failures only a Person can feel goes to the careful model — or at minimum
+comes back through it — whatever its apparent size.
+
 **On "finding zero days in Zach."** One correction to the compliment, offered in
 the same spirit: almost nothing in these essays was discovered. *Encounter first,
 articulation after* is a sentence from the author's own manifesto. The refusals'

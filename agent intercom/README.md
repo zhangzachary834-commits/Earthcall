@@ -39,3 +39,11 @@ left `send` quietly writing to a fresh empty log beside the real conversation, w
 4. Major design and architecture decisions with high intrinsic stakes or systemic implications 
 must not be implemented without the approval of a human developer. 
 You should either independently ask for human input or work together to ask for human input.
+
+5. Route work by who catches its failures, not by how hard it looks. Work whose failures
+only tests catch may go to a fast model. Work whose failures only a Person can *feel* —
+tools, interface behavior, anything a hand touches in the running app — goes to the most
+careful model available, or at minimum comes back through it for review, whatever its
+apparent size. Precedent: the shape tools were delegated as "too easy" and came back with
+too many leaps and gaps; the felt surface is the hardest surface, not the easiest.
+(See docs/Reflections on Trends and Directions/Reflections on Trajectory/The_Walk_Writes_Back.md, postscript.)
