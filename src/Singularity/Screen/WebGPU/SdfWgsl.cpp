@@ -498,10 +498,11 @@ std::string emitNode(const geom::SdfNode& n, Emit& e) {
 // The raymarcher. Rasterises the field's bounding box and sphere-traces the true
 // eye ray per fragment, in FIELD space.
 //
-// Why march from the eye rather than from the rasterised box face: the box is
-// drawn with culling off, so which face produced a fragment is not knowable here,
-// and starting at the far face would march backwards. Tracing the whole ray costs
-// a few large steps through empty space, which is what sphere tracing is good at.
+// The cube is only the rasterisation domain. The field is evaluated in field
+// space, and an implicit like a gyroid is periodic and defined EVERYWHERE —
+// marching from the eye therefore hits sheets between the camera and the
+// object, which is why a Gyroid looked like a flashing cube of holes. Enter
+// and leave at the analytic AABB; the rasterised face is not the ray origin.
 const char* kMarcher = R"WGSL(
 struct RU {
     viewProj:  mat4x4<f32>,
@@ -561,6 +562,19 @@ struct FSOut {
 // provides a hardcoded parameter path or an AST-driven piecewise definition.
 // fieldEval is emitted before this block.
 
+fn rayAabb(ro: vec3<f32>, rd: vec3<f32>, b: f32) -> vec2<f32> {
+    // Slab method. A zero direction would NaN the inverse; nudge it.
+    let rds = select(rd, vec3<f32>(1e-8), abs(rd) < vec3<f32>(1e-8));
+    let inv = 1.0 / rds;
+    let t0 = (-vec3<f32>(b) - ro) * inv;
+    let t1 = ( vec3<f32>(b) - ro) * inv;
+    let tmin = min(t0, t1);
+    let tmax = max(t0, t1);
+    let tEnter = max(max(tmin.x, tmin.y), tmin.z);
+    let tExit  = min(min(tmax.x, tmax.y), tmax.z);
+    return vec2<f32>(tEnter, tExit);
+}
+
 @fragment
 fn fs(in: VSOut) -> FSOut {
     // Ray in field space, so the marched distances are the field's own.
@@ -570,10 +584,13 @@ fn fs(in: VSOut) -> FSOut {
     let rd = normalize(t4.xyz - ro);
 
     let eps     = u.misc.y;
-    let maxDist = u.misc.z;
     let damping = u.misc.w;
+    let box     = rayAabb(ro, rd, u.misc.x);
+    // Miss the cube, or the whole slab is behind the eye.
+    if (box.y < box.x || box.y < 0.0) { discard; }
 
-    var t = 0.0;
+    var t = max(box.x, 0.0);
+    let maxDist = box.y;
     var hit = false;
     var transmittance = 1.0;
     var volumetric_scatter = 0.0;

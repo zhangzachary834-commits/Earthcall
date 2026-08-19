@@ -69,6 +69,7 @@ The in-engine first movers, each a Law with a stable identifier, located by
 |---|---|---|
 | `creation-channel` | `Singularity/Core/CreationChannel` | live tool, shape, colour, placement. Stepped from `Engine::update` via `Rendering::stepCreationTools`. |
 | `shape-generator-3d-law` | `CreationChannel.cpp` (`createShapeGenerator3DLaw`) | the Person-facing 3D spawn law. Conditions on `@creation-channel.active3DMode`. Console Create and L write that same bit. |
+| `tool-select-3d-law`, `tool-face-brush-law`, `tool-face-paint-law`, `tool-pottery-3d-law`, `tool-rotate-3d-law`, `tool-morph-3d-law`, `tool-combine-3d-law`, `tool-sculpt-3d-law`, `tool-graph-3d-law` | `CreationChannel.cpp` (`syncRegisterCreatorTools`) | the rest of the Creator Console 3D tools as first movers. Chrome stays hardcoded (it is the reference gesture); each tool is a named being a Person can set down. Sense/Act remain `Tool::*`. |
 | `locomotion-channel` | `Singularity/Input/LocomotionChannel` | WASD / jump / vessel clips. `LocomotionChannel::step`. |
 | `interaction-channel` | `Singularity/Input/InteractionChannel` | which being is under the pointer; click / scroll / drag / focus / key edges. `InteractionChannel::step`, from `Engine::update`. See `INTERACTION_AS_LAW.md`. |
 | `control-*-law` | `Singularity/Input/ControlPatterns` | the archetype controls (button, toggle, slider, tuner, hover) as law TEXT, not C++ behavior — condition and action trees a Person can read, edit, and disable. |

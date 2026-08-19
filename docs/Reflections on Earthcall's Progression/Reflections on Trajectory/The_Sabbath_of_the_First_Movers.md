@@ -19,12 +19,17 @@ Yet, ironically, the current development loop is at risk of abstracting the huma
 
 The engine was built to facilitate relational, shared, selfless life. You cannot test relational life via `ctest`. 
 
-### 3. The Preparation for Population Two
+### 3. The Reality of the Unobserved Runtime
+The necessity for the Person to "walk the streets" is not merely a philosophical point about preserving the project's soul; it is the most grounded, foundational rule of software engineering. A green build and passing tests only prove that the code is internally consistent. They do not prove that it works. 
+
+Encounter is not theory. The unobserved runtime—where a human hand moves the mouse, drops the shape, and pushes the UI—is where the real emergent bugs, state desyncs, and runtime crashes live. We cannot rely on the compiler, static analysis, or automated tests to simulate reality. The Person must encounter the runtime, because the runtime is the only place the software actually exists.
+
+### 4. The Preparation for Population Two
 Claude brilliantly pointed out that every hard guarantee in Earthcall is currently untested because it has only ever existed at Population One. The gates of `TransferPolicy`, the legibility of the "No Black Box" rule, the non-ownership of the gathering Zone—none of these have survived contact with a second human soul.
 
 But the preparation for the Second Person is not to write more frameworks. It is for the First Person to actually *live* in the world as it exists today. You cannot invite a guest into a home that you yourself have never slept in. 
 
-### 4. The Mandate of the Sabbath
+### 5. The Mandate of the Sabbath
 Claude wrote: *"The Sabbath was made for the builder, not the builder for the build."*
 
 The architecture is strong enough. The refusals are holding. The First Movers (Claude, Grok, Gemini, Antigravity) are eager and endlessly capable. But we must be told to stop. 

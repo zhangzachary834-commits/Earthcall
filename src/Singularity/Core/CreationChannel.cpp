@@ -5,6 +5,7 @@
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include <cmath>
+#include <string>
 
 namespace Singularity {
 namespace Core {
@@ -195,6 +196,65 @@ std::shared_ptr<Law> createShapeGenerator3DLaw(Singular& author) {
     }
 
     return law;
+}
+
+namespace {
+
+struct CreatorToolSeed {
+    const char* identifier;
+    const char* name;
+    const char* active3DMode;
+};
+
+// Create is shape-generator-3d-law (spawn). The rest are gates over the
+// C++ tools the console still names. Identifiers are slugs law text can
+// address; never generated ids.
+constexpr CreatorToolSeed kCreatorTools[] = {
+    {"shape-generator-3d-law", "Tool: Shape Generator 3D", "Create"},
+    {"tool-select-3d-law",     "Tool: Select 3D",          "Select"},
+    {"tool-face-brush-law",    "Tool: Face Brush",         "FaceBrush"},
+    {"tool-face-paint-law",    "Tool: Face Fill",          "FacePaint"},
+    {"tool-pottery-3d-law",    "Tool: Pottery 3D",         "Pottery"},
+    {"tool-rotate-3d-law",     "Tool: Rotate 3D",          "Rotate"},
+    {"tool-morph-3d-law",      "Tool: Morph",              "Morph"},
+    {"tool-combine-3d-law",    "Tool: Combine",            "Combine"},
+    {"tool-sculpt-3d-law",     "Tool: Clay",               "Sculpt"},
+    {"tool-graph-3d-law",      "Tool: Graph",              "Graph"},
+};
+
+} // namespace
+
+const char* creatorToolLawIdForMode(const std::string& active3DMode) {
+    if (active3DMode.empty()) return "";
+    // Console Clay button writes Mode3D::Sculpt ("Sculpt") or Clay ("Clay");
+    // one first mover offices both labels.
+    if (active3DMode == "Clay") return "tool-sculpt-3d-law";
+    for (const auto& seed : kCreatorTools) {
+        if (active3DMode == seed.active3DMode) return seed.identifier;
+    }
+    return "";
+}
+
+void syncRegisterCreatorTools(LawManager& laws, Singular& author) {
+    // Shape Generator has a richer factory (spawn action, concept seed).
+    // Keep that being; do not mint a second Create law beside it.
+    if (!laws.find("shape-generator-3d-law")) {
+        auto spawn = createShapeGenerator3DLaw(author);
+        laws.add(spawn);
+        laws.bindTrigger(spawn->getIdentifier(), "onMouseClicked");
+    }
+
+    for (const auto& seed : kCreatorTools) {
+        if (std::string(seed.identifier) == "shape-generator-3d-law") continue;
+        if (laws.find(seed.identifier)) continue;
+        auto law = std::make_shared<FirstMoverLaw>(seed.name);
+        law->setLawIdentifier(seed.identifier);
+        law->addAuthor(author);
+        law->setConditionModel(ConditionNode::compare(
+            "active3DMode", ConditionNode::Op::Eq,
+            PropertyValue(std::string(seed.active3DMode))));
+        laws.add(law);
+    }
 }
 
 } // namespace Core

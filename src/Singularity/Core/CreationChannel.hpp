@@ -82,5 +82,17 @@ private:
 // effect if it is not already there; the law's Spawn action resolves it by id.
 std::shared_ptr<Law> createShapeGenerator3DLaw(Singular& author);
 
+// The rest of the Creator Console 3D tools, as first movers. The console
+// stays hardcoded chrome — it is the reference gesture that writes
+// @creation-channel.active3DMode. Each tool is a named FirstMoverLaw so a
+// Person can set it down, and so Law Author lists it with Shape Generator
+// rather than as anonymous C++. Sense/Act stay in Tool::*; enabled is the
+// gate stepCreationTools already honours for the spawn law.
+void syncRegisterCreatorTools(LawManager& laws, Singular& author);
+
+// Stable identifier for the first-mover law that owns this active3DMode
+// string ("Create", "Select", ...). Empty when no tool is armed.
+const char* creatorToolLawIdForMode(const std::string& active3DMode);
+
 } // namespace Core
 } // namespace Singularity

@@ -636,4 +636,28 @@ TessMesh tessellateSdf(const SdfNode& n, float extent, int res) {
     return m;
 }
 
+SdfNode sdfFromSmooth(const SmoothSurfaceData& s) {
+    if (s.model == SmoothSurfaceData::Model::Parametric) {
+        if (s.pkind == SmoothSurfaceData::ParametricKind::Torus) {
+            float R = s.params.size() > 0 ? s.params[0] : s.axes.x;
+            float r = s.params.size() > 1 ? s.params[1] : 0.15f;
+            return SdfNode::leaf(SdfPrim::Torus, glm::vec3(R, r, 0.0f));
+        }
+        float rad = s.axes.x > 1e-6f ? s.axes.x : 0.5f;
+        return SdfNode::leaf(SdfPrim::Sphere, glm::vec3(rad));
+    }
+    switch (s.form) {
+        case SmoothSurfaceData::QuadricForm::Ellipsoid:
+            return SdfNode::leaf(SdfPrim::Ellipsoid, s.axes);
+        case SmoothSurfaceData::QuadricForm::CylinderSide:
+            return SdfNode::leaf(SdfPrim::Cylinder, glm::vec3(s.axes.x, s.zTrim.y, 0.0f));
+        case SmoothSurfaceData::QuadricForm::ConeSide:
+            return SdfNode::leaf(SdfPrim::Cone, glm::vec3(s.axes.x, s.zTrim.y, 0.0f));
+        case SmoothSurfaceData::QuadricForm::Paraboloid:
+        case SmoothSurfaceData::QuadricForm::Sphere:
+        default:
+            return SdfNode::leaf(SdfPrim::Sphere, glm::vec3(s.axes.x > 1e-6f ? s.axes.x : 0.5f));
+    }
+}
+
 } // namespace geom

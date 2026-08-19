@@ -117,6 +117,9 @@ std::vector<SdfToken> compileExpr(const std::string& src);
 SdfNode makeImplicit(const std::string& src);
 SdfNode makeImplicit(std::shared_ptr<OntoMath::MathNode> node);
 SdfNode makeImplicit(std::shared_ptr<OntoMath::Piecewise> pw);
+// Named smooth surface as an SDF leaf — same mathematics the quadric
+// names, so a marching backend does not draw a UV tessellation instead.
+SdfNode sdfFromSmooth(const SmoothSurfaceData& s);
 
 // Evaluate the signed distance of the tree at a local-space point.
 float evalSdf(const SdfNode& n, const glm::vec3& p);

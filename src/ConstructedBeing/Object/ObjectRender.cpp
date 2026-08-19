@@ -263,7 +263,19 @@ void Object::setFaceColor(int faceIndex, float r, float g, float b) {
 }
 
 void Object::drawSmoothModel() const {
-    currentRenderer().drawMesh(_smoothMesh, resolveRenderMaterial(_materialId, faceAlbedo(0)));
+    Renderer& r = currentRenderer();
+    const RenderMaterial mat = resolveRenderMaterial(_materialId, faceAlbedo(0));
+    // Identity is the quadric / parametric surface. The cached mesh is a
+    // drawing approximation for backends that cannot march it. Routing
+    // OpenGL through drawImplicit would re-tessellate every frame.
+    if (r.rendersImplicitExactly()) {
+        const float extent = std::max(std::max(std::abs(smoothData.axes.x),
+                                               std::abs(smoothData.axes.y)),
+                                      std::abs(smoothData.axes.z)) + 0.25f;
+        r.drawImplicit(geom::sdfFromSmooth(smoothData), std::max(extent, 0.6f), mat, nullptr);
+        return;
+    }
+    r.drawMesh(_smoothMesh, mat);
 }
 
 void Object::drawComplexModel() const {
@@ -301,6 +313,26 @@ void Object::drawPatchModel() const {
 }
 
 void Object::drawObject() const {
+    // Identity is topology (quadric / complex / field / patch). The 16-slice
+    // glu sphere/cylinder/cone meshes are a render cache of last resort for
+    // objects that lost _hasSmooth — they must not BE the sphere. Rebuild
+    // the named kind instead of drawing that tessellation.
+    if (!_hasField && !_hasComplex && !_hasSmooth && !_hasPatch) {
+        switch (_shapeKind) {
+            case ShapeKind::Sphere:
+            case ShapeKind::Ellipsoid:
+            case ShapeKind::Ovoid:
+            case ShapeKind::Paraboloid:
+            case ShapeKind::Torus:
+            case ShapeKind::Cylinder:
+            case ShapeKind::Cone:
+            case ShapeKind::RoundedBox:
+                const_cast<Object*>(this)->setShape(_shapeKind, _shapeParams);
+                break;
+            default:
+                break;
+        }
+    }
     if (_hasField)   { drawFieldModel();   return; }
     if (_hasComplex) { drawComplexModel(); return; }
     if (_hasSmooth)  { drawSmoothModel();  return; }
@@ -309,28 +341,10 @@ void Object::drawObject() const {
         case ShapeKind::Cube:
             drawCube();
             break;
-        case ShapeKind::Sphere:
-            currentRenderer().drawMesh(sphereUnitMesh(),
-                resolveRenderMaterial(_materialId, faceAlbedo(0)));
-            break;
-        case ShapeKind::Cylinder:
-            // Side (face 0) then both caps (face 1) — geometry pre-centred on Z.
-            currentRenderer().drawMesh(cylinderSideMesh(),
-                resolveRenderMaterial(_materialId, faceAlbedo(0)));
-            currentRenderer().drawMesh(capBottomMesh(),
-                resolveRenderMaterial(_materialId, faceAlbedo(1)));
-            currentRenderer().drawMesh(capTopMesh(),
-                resolveRenderMaterial(_materialId, faceAlbedo(1)));
-            break;
-        case ShapeKind::Cone:
-            // Side (face 0) then base cap (face 1).
-            currentRenderer().drawMesh(coneSideMesh(),
-                resolveRenderMaterial(_materialId, faceAlbedo(0)));
-            currentRenderer().drawMesh(capBottomMesh(),
-                resolveRenderMaterial(_materialId, faceAlbedo(1)));
-            break;
         case ShapeKind::Polyhedron:
             drawPolyhedron();
+            break;
+        default:
             break;
     }
 }

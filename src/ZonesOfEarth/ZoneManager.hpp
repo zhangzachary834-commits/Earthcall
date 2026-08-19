@@ -13,6 +13,7 @@ struct SaveLoadState {
     bool showManager = false;
     char customName[256] = "";
     std::string lastLoadReport;
+    std::string lastSaveReport;
     std::string loadedSaveName;
     std::string saveDirectory = "saves/worlds/";
     bool unpackForAuthoring = false;

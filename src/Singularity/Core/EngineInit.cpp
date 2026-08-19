@@ -105,13 +105,10 @@ void Engine::initLogic() {
         }
     }
 
-    // The Shape Generator 3D tool, as law. Built by a factory next to the
-    // CreationChannel whose properties it reads, so a test can exercise the
-    // very thing boot instantiates -- see the note on
-    // Singularity::Core::createShapeGenerator3DLaw.
-    auto shapeGenLaw = Singularity::Core::createShapeGenerator3DLaw(*_player);
-    _lawManager->add(shapeGenLaw);
-    _lawManager->bindTrigger(shapeGenLaw->getIdentifier(), "onMouseClicked");
+    // Shape Generator 3D plus the rest of the Creator Console tools, as
+    // first movers. The console remains the chrome; these are the named
+    // beings it arms. See CreationChannel::syncRegisterCreatorTools.
+    Singularity::Core::syncRegisterCreatorTools(*_lawManager, *_player);
 
     // The Universe: what continuous laws watch and quantified conditions
     // (ForAny/ForAll) range over — the active world's objects, the laws

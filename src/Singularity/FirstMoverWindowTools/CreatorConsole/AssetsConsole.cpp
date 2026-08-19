@@ -35,7 +35,10 @@ namespace Rendering {
         auto& sl = mgr.getSaveLoadState();
 
         if (sl.showSaveWindow) {
+            if (engine) engine->ensureCursorUnlocked();
             ImGui::SetNextWindowSize(ImVec2(420, 180), ImGuiCond_FirstUseEver);
+            ImGui::SetNextWindowPos(ImVec2(80, 80), ImGuiCond_Appearing);
+            ImGui::SetNextWindowFocus();
             if (ImGui::Begin("Save As", &sl.showSaveWindow)) {
                 ImGui::InputText("Name", sl.customName, IM_ARRAYSIZE(sl.customName));
                 ImGui::Checkbox("Unpack for authoring", &sl.unpackForAuthoring);
@@ -46,6 +49,9 @@ namespace Rendering {
                     ctx.unpackForAuthoring = sl.unpackForAuthoring;
                     mgr.saveStateWithLog(sl.customName, ctx);
                     sl.showSaveWindow = false;
+                }
+                if (!sl.lastSaveReport.empty()) {
+                    ImGui::TextWrapped("%s", sl.lastSaveReport.c_str());
                 }
             }
             ImGui::End();
@@ -140,13 +146,19 @@ namespace Rendering {
             mgr.saveStateWithLog(saveName, ctx);
         }
         ImGui::SameLine();
-        if (ImGui::Button("Save As")) {
+        if (ImGui::Button("Save As") && engine) {
+            // The name is already on this tab. Opening a second window
+            // behind the Creator Console looked like a dead button.
             auto& sl = mgr.getSaveLoadState();
-            sl.showSaveWindow = true;
             if (saveName[0] != '\0') {
                 std::strncpy(sl.customName, saveName, sizeof(sl.customName) - 1);
                 sl.customName[sizeof(sl.customName) - 1] = '\0';
             }
+            SaveContext ctx = makeSaveContext(engine);
+            double t = engine->getWorldTime();
+            ctx.worldTime = &t;
+            ctx.unpackForAuthoring = sl.unpackForAuthoring;
+            mgr.saveStateWithLog(sl.customName, ctx);
         }
         ImGui::SameLine();
         if (ImGui::Button("Load")) {
@@ -161,6 +173,15 @@ namespace Rendering {
         if (ImGui::Button("Save Manager")) {
             mgr.updateSaveFiles();
             mgr.getSaveLoadState().showManager = true;
+            if (engine) engine->ensureCursorUnlocked();
+        }
+
+        {
+            auto& sl = mgr.getSaveLoadState();
+            if (!sl.lastSaveReport.empty()) {
+                ImGui::TextWrapped("%s", sl.lastSaveReport.c_str());
+            }
+            ImGui::Checkbox("Unpack for authoring", &sl.unpackForAuthoring);
         }
 
         ImGui::Separator();

@@ -126,6 +126,31 @@ int main() {
     check(state.combineOperandA == nullptr && state.clayGrabbed == nullptr,
           "switching mode clears per-gesture pick operands");
 
+    // ---- Creator Console tools as first movers -----------------------------
+    Object author("creator-tools-author");
+    Singularity::Core::syncRegisterCreatorTools(laws, author);
+    check(laws.find("shape-generator-3d-law") != nullptr,
+          "Shape Generator remains the Create first mover");
+    check(laws.find("tool-select-3d-law") != nullptr,
+          "Select is a first mover the console arms");
+    check(laws.find("tool-morph-3d-law") != nullptr,
+          "Morph is a first mover the console arms");
+    check(std::string(Singularity::Core::creatorToolLawIdForMode("Select")) ==
+              "tool-select-3d-law",
+          "active3DMode Select maps to the Select first mover slug");
+    check(std::string(Singularity::Core::creatorToolLawIdForMode("Create")) ==
+              "shape-generator-3d-law",
+          "active3DMode Create maps to the spawn first mover, not a twin");
+    const size_t afterFirst = laws.getAll().size();
+    Singularity::Core::syncRegisterCreatorTools(laws, author);
+    check(laws.getAll().size() == afterFirst,
+          "syncRegisterCreatorTools is idempotent");
+    Law* selectLaw = laws.find("tool-select-3d-law");
+    check(selectLaw && selectLaw->isFirstMover(),
+          "Select is first-mover — engine truth, not a world save");
+    check(selectLaw && selectLaw->isEnabled(),
+          "a tool first mover boots up — set-down is a Person choice");
+
     std::printf(g_failures == 0 ? "creation_tools_test: ALL OK\n"
                                 : "creation_tools_test: FAILURES\n");
     return g_failures > 0 ? 1 : 0;

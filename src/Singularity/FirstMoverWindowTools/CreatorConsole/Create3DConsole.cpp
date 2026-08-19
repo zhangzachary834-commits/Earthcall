@@ -315,11 +315,17 @@ namespace Rendering {
             ImGui::TextDisabled("ops + - * / ^   funcs sin cos tan sqrt abs exp log   consts pi e");
             if (ImGui::SmallButton("Sphere##imp")) std::snprintf(implicitBuf, sizeof(implicitBuf), "x*x + y*y + z*z - 0.25");
             ImGui::SameLine();
-            if (ImGui::SmallButton("Gyroid")) std::snprintf(implicitBuf, sizeof(implicitBuf), "sin(8*x)*cos(8*y) + sin(8*y)*cos(8*z) + sin(8*z)*cos(8*x)");
+            // The raw gyroid sin(kx)cos(ky)+… = 0 is a paper-thin periodic sheet,
+            // defined everywhere. Frequency 8 packed ~3 cells into the box and
+            // the marcher, starting at the eye, hit sheets between the camera
+            // and the object — a flashing cube of holes. abs(f)-t is the
+            // thickened lattice people mean by "gyroid"; one cell fits the box.
+            if (ImGui::SmallButton("Gyroid")) std::snprintf(implicitBuf, sizeof(implicitBuf), "abs(sin(pi*x)*cos(pi*y) + sin(pi*y)*cos(pi*z) + sin(pi*z)*cos(pi*x)) - 0.2");
             ImGui::SameLine();
             if (ImGui::SmallButton("Torus##imp")) std::snprintf(implicitBuf, sizeof(implicitBuf), "(sqrt(x*x + y*y) - 0.3)^2 + z*z - 0.01");
             ImGui::SameLine();
             if (ImGui::SmallButton("Heart")) std::snprintf(implicitBuf, sizeof(implicitBuf), "(x*x + 2.25*z*z + y*y - 0.25)^3 - x*x*y*y*y - 0.1125*z*z*y*y*y");
+            ImGui::TextDisabled("Gyroid is a thickened lattice (abs(f)-t). The raw f=0 sheet is paper-thin.");
             if (ImGui::Button("Create Implicit")) {
                 geom::SdfNode node = geom::makeImplicit(implicitBuf);
                 Object* o = spawnAuthoredObject(zoneMgr, channel, engine, state.createColor);

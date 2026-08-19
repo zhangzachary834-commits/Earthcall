@@ -282,11 +282,31 @@ void ZoneManager::saveStateWithLog(const std::string& customName, SaveContext& c
             actualName = SaveSystem::timestamp() + "_QuickSave";
         }
     }
-    SaveSystem::writeSaveDataAsync(j, actualName, SaveSystem::SaveType::WORLD);
+    // Console / menu Save As used to fire-and-forget async, so a Person
+    // who pressed the button and looked at saves/worlds/ saw nothing and
+    // concluded the gesture failed. Write on this thread; report the path.
+    const std::string path = SaveSystem::writeSaveData(j, actualName, SaveSystem::SaveType::WORLD);
+    if (path.empty()) {
+        _saveLoad.lastSaveReport = "Save refused or failed for '" + actualName + "'.";
+        logIo("SAVE FAILED '" + actualName + "'");
+        return;
+    }
+    // The console Save As path is authoring: write the readable JSON next to
+    // the binary .ecsave so looking in saves/worlds/ is not a blank folder
+    // of opaque files.
+    {
+        std::filesystem::path jsonPath(path);
+        jsonPath.replace_extension(".json");
+        std::ofstream jsonOut(jsonPath);
+        if (jsonOut) jsonOut << j.dump(2);
+    }
+    _saveLoad.lastSaveReport = "Wrote " + path;
+    _saveLoad.loadedSaveName = actualName;
     if (ctx.unpackForAuthoring) {
         std::string gameFolder = SaveSystem::ensureSaveTypeFolder(SaveSystem::SaveType::WORLD);
         std::string unpackedPath = gameFolder + "/" + actualName + "_unpacked";
         SaveSystem::unpackSaveToDirectory(j, unpackedPath);
+        _saveLoad.lastSaveReport += " (unpacked " + unpackedPath + ")";
     }
     
     // Phase 4: Save dirty delta chunk as FlatBuffers
@@ -296,7 +316,7 @@ void ZoneManager::saveStateWithLog(const std::string& customName, SaveContext& c
     }
     
     ECA::LawAuditLogger::instance().setActiveWorld(actualName);
-    logIo("SAVE (log) '" + actualName + "': " +
+    logIo("SAVE (log) '" + actualName + "' -> " + path + ": " +
           std::to_string(ctx.lawManager->getAll().size()) + " law(s), " +
           std::to_string(ConceptRegistry::instance().getAll().size()) + " concept(s)");
 }

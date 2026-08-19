@@ -368,27 +368,23 @@ public:
     //   Cone     → ComplexShape (round side + flat base, Hard rim)
     //   Cube/Polyhedron keep the flat-faced path. This is also the legacy-save
     //   migration point (from_json calls setShapeKind).
-    void setShapeKind(ShapeKind t) {
-        _shapeKind = t;
-        _hasSmooth = false;
-        _hasComplex = false;
-        _hasField = false;
-        _hasPatch = false;
-        switch (t) {
-            case ShapeKind::Cube:       _shapeKind = ShapeKind::Cube;       break;
-            case ShapeKind::Polyhedron: _shapeKind = ShapeKind::Polyhedron; break;
-            case ShapeKind::Sphere:     _shapeKind = ShapeKind::Sphere;     setSmoothSurface(geom::makeSphere());     break;
-            case ShapeKind::Cylinder:   _shapeKind = ShapeKind::Cylinder;   setComplexShape(geom::cappedCylinder());  break;
-            case ShapeKind::Cone:       _shapeKind = ShapeKind::Cone;       setComplexShape(geom::cappedCone());       break;
-        }
-    }
+    // Named kinds rebuild topology. setShapeKind used to switch only Cube /
+    // Polyhedron / Sphere / Cylinder / Cone — Ellipsoid and the rest cleared
+    // _hasSmooth and then drew the 16-slice glu tessellation fallback. One
+    // door: setShape. Cube/Polyhedron stay flat-faced; they do not recurse.
+    void setShapeKind(ShapeKind t) { setShape(t, ShapeParams{}); }
 
     // Build any named shape in the framework (superset of setShapeKind).
     void setShape(ShapeKind k) { setShape(k, ShapeParams{}); }
     void setShape(ShapeKind k, const ShapeParams& p) {
+        _hasSmooth = false;
+        _hasComplex = false;
+        _hasField = false;
+        _hasPatch = false;
         switch (k) {
-            case ShapeKind::Cube:       setShapeKind(ShapeKind::Cube);       break;
-            case ShapeKind::Polyhedron: setShapeKind(ShapeKind::Polyhedron); break;
+            case ShapeKind::Cube:
+            case ShapeKind::Polyhedron:
+                break;
             case ShapeKind::Sphere:     setSmoothSurface(geom::makeSphere(p.r));   break;
             case ShapeKind::Cylinder:   setComplexShape(geom::cappedCylinder(p.r, p.halfH)); break;
             case ShapeKind::Cone:       setComplexShape(geom::cappedCone(p.r, p.halfH));      break;
@@ -399,14 +395,12 @@ public:
             case ShapeKind::RoundedBox: setComplexShape(geom::roundedBox(0.5f, p.fillet));      break;
             case ShapeKind::Shape2D:
             case ShapeKind::Text2D:
-                // No 3D geometry generated for 2D UI elements.
                 break;
             case ShapeKind::Field:
             case ShapeKind::Patch:
-                // Generated externally (VoxelSystem / Bezier patches)
                 break;
         }
-        _shapeKind = k;      // assert after setShapeKind may have set a legacy value
+        _shapeKind = k;
         _shapeParams = p;
     }
     ShapeKind getShapeKind() const { return _shapeKind; }

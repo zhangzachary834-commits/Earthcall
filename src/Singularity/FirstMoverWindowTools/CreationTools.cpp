@@ -5,6 +5,7 @@
 
 #include "Singularity/Core/CreationChannel.hpp"
 #include "Singularity/Core/Engine.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ConstructedBeing/Object/Object.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "ZonesOfEarth/World/World.hpp"
@@ -200,10 +201,19 @@ void stepMorphTool(GLFWwindow* window, Core::Engine* engine,
     }
 }
 
+bool creatorToolIsUp(Core::Engine* engine, Mode3D mode) {
+    if (!engine || !engine->getLawManager()) return true;
+    const char* id = Singularity::Core::creatorToolLawIdForMode(activeModeFor(mode));
+    if (!id || !*id) return true;
+    Law* law = engine->getLawManager()->find(id);
+    return !law || law->isEnabled();
+}
+
 void dispatchActiveTool(GLFWwindow* window, Core::Engine* engine,
                         ZoneManager& zoneMgr, float dt,
                         CreatorConsoleState& state,
                         Singularity::Core::CreationChannel* channel) {
+    if (!creatorToolIsUp(engine, state.current3DMode)) return;
     switch (state.current3DMode) {
         case Mode3D::BrushCreate: {
             if (channel) {

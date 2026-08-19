@@ -62,6 +62,15 @@ int main() {
         assert(!sameCloud(small, big));
         std::printf("  smooth:  rebuilt on radius edit (%zu -> %zu pts)\n",
                     small.size(), big.size());
+
+        Object ellipsoid;
+        ellipsoid.setShapeKind(Object::ShapeKind::Ellipsoid);
+        assert(ellipsoid.hasSmoothSurface());
+        std::printf("  ellipsoid via setShapeKind is a SmoothSurface, not a tessellation leftover\n");
+
+        geom::SdfNode asField = geom::sdfFromSmooth(o.getSmoothData());
+        assert(asField.prim == geom::SdfPrim::Sphere);
+        std::printf("  sphere quadric lowers to an SDF sphere leaf, not a UV mesh\n");
     }
 
     // --- Complex shape: per-patch caches must follow an edit -----------------
