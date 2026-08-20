@@ -9,6 +9,8 @@
 #include "Singularity/Input/MouseHandler.hpp"
 #include <cstring>
 #include <filesystem>
+#include <map>
+#include <vector>
 #include <imgui.h>
 
 extern ZoneManager mgr;
@@ -25,9 +27,49 @@ namespace Rendering {
             ctx.currentColor = getCreatorConsoleState().currentColor;
             ctx.player = engine->getPlayer();
             ctx.lawManager = engine->getLawManager();
-            ctx.worldTime = nullptr; // filled by callers that keep a live double
+            ctx.worldTime = engine->worldTimePtr();
             ctx.unpackForAuthoring = mgr.getSaveLoadState().unpackForAuthoring;
             return ctx;
+        }
+
+        struct WorldSave {
+            std::string label;
+            std::string path;
+        };
+
+        // One row per world. json + ecsave + _delta are the same save written
+        // three ways; listing them as independent loads is how none of them
+        // felt like they worked. Prefer the readable json; never offer delta.
+        std::vector<WorldSave> listWorldSaves() {
+            mgr.updateSaveFiles();
+            std::map<std::string, WorldSave> byStem;
+            for (const auto& path : mgr.getSaveLoadState().files) {
+                std::filesystem::path p(path);
+                const std::string stem = p.stem().string();
+                const std::string ext = p.extension().string();
+                if (stem.size() >= 6 && stem.compare(stem.size() - 6, 6, "_delta") == 0)
+                    continue;
+                std::error_code ec;
+                if (!std::filesystem::exists(p, ec)) continue;
+                if (std::filesystem::file_size(p, ec) == 0) continue;
+                WorldSave row{stem, path};
+                auto it = byStem.find(stem);
+                if (it == byStem.end()) {
+                    byStem.emplace(stem, std::move(row));
+                } else if (ext == ".json") {
+                    it->second.path = path;
+                }
+            }
+            std::vector<WorldSave> out;
+            out.reserve(byStem.size());
+            for (auto& kv : byStem) out.push_back(std::move(kv.second));
+            return out;
+        }
+
+        void loadWorld(Core::Engine* engine, const std::string& path) {
+            if (!engine || path.empty()) return;
+            SaveContext ctx = makeSaveContext(engine);
+            mgr.loadState(path, ctx);
         }
     }
 
@@ -58,32 +100,32 @@ namespace Rendering {
         }
 
         if (sl.showLoadWindow) {
+            if (engine) engine->ensureCursorUnlocked();
             ImGui::SetNextWindowSize(ImVec2(520, 360), ImGuiCond_FirstUseEver);
+            ImGui::SetNextWindowPos(ImVec2(80, 80), ImGuiCond_Appearing);
+            ImGui::SetNextWindowFocus();
             if (ImGui::Begin("Load World", &sl.showLoadWindow)) {
                 if (ImGui::Button("Refresh")) mgr.updateSaveFiles();
                 ImGui::SameLine();
                 ImGui::Checkbox("Unpack for authoring", &sl.unpackForAuthoring);
                 ImGui::Separator();
-                if (sl.files.empty()) {
+                ImGui::TextDisabled("One entry per world. Binary twins and delta chunks are not listed.");
+                auto worlds = listWorldSaves();
+                if (worlds.empty()) {
                     ImGui::TextDisabled("No world saves in saves/worlds/.");
                 }
-                for (const auto& path : sl.files) {
-                    std::string label = std::filesystem::path(path).filename().string();
-                    if (ImGui::Selectable(label.c_str(), sl.loadedSaveName == path)) {
-                        sl.loadedSaveName = path;
+                for (const auto& w : worlds) {
+                    ImGui::PushID(w.path.c_str());
+                    if (ImGui::Button("Load")) {
+                        loadWorld(engine, w.path);
                     }
-                    if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", path.c_str());
-                }
-                ImGui::Separator();
-                if (ImGui::Button("Load selected") && engine && !sl.loadedSaveName.empty()) {
-                    SaveContext ctx = makeSaveContext(engine);
-                    double t = engine->getWorldTime();
-                    ctx.worldTime = &t;
-                    ctx.unpackForAuthoring = sl.unpackForAuthoring;
-                    mgr.loadState(sl.loadedSaveName, ctx);
-                    sl.showLoadWindow = false;
+                    ImGui::SameLine();
+                    ImGui::TextUnformatted(w.label.c_str());
+                    if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", w.path.c_str());
+                    ImGui::PopID();
                 }
                 if (!sl.lastLoadReport.empty()) {
+                    ImGui::Separator();
                     ImGui::TextWrapped("%s", sl.lastLoadReport.c_str());
                 }
             }
@@ -105,15 +147,13 @@ namespace Rendering {
                     ImGui::TextDisabled("No world saves.");
                 }
                 for (const auto& m : meta) {
+                    if (m.filename.find("_delta") != std::string::npos) continue;
                     ImGui::PushID(m.fullPath.c_str());
                     ImGui::TextUnformatted(m.filename.c_str());
                     ImGui::SameLine();
                     ImGui::TextDisabled("%zu bytes", m.fileSize);
                     if (ImGui::SmallButton("Load") && engine) {
-                        SaveContext ctx = makeSaveContext(engine);
-                        double t = engine->getWorldTime();
-                        ctx.worldTime = &t;
-                        mgr.loadState(m.fullPath, ctx);
+                        loadWorld(engine, m.fullPath);
                     }
                     ImGui::SameLine();
                     if (ImGui::SmallButton("Backup")) {
@@ -141,33 +181,36 @@ namespace Rendering {
 
         if (ImGui::Button("Quick Save") && engine) {
             SaveContext ctx = makeSaveContext(engine);
-            double t = engine->getWorldTime();
-            ctx.worldTime = &t;
             mgr.saveStateWithLog(saveName, ctx);
         }
         ImGui::SameLine();
         if (ImGui::Button("Save As") && engine) {
-            // The name is already on this tab. Opening a second window
-            // behind the Creator Console looked like a dead button.
             auto& sl = mgr.getSaveLoadState();
             if (saveName[0] != '\0') {
                 std::strncpy(sl.customName, saveName, sizeof(sl.customName) - 1);
                 sl.customName[sizeof(sl.customName) - 1] = '\0';
             }
             SaveContext ctx = makeSaveContext(engine);
-            double t = engine->getWorldTime();
-            ctx.worldTime = &t;
-            ctx.unpackForAuthoring = sl.unpackForAuthoring;
             mgr.saveStateWithLog(sl.customName, ctx);
         }
-        ImGui::SameLine();
-        if (ImGui::Button("Load")) {
-            mgr.updateSaveFiles();
-            auto& sl = mgr.getSaveLoadState();
-            sl.showLoadWindow = true;
-            if (saveName[0] != '\0') {
-                std::strncpy(sl.customName, saveName, sizeof(sl.customName) - 1);
-                sl.customName[sizeof(sl.customName) - 1] = '\0';
+
+        ImGui::Separator();
+        ImGui::TextUnformatted("Load a world");
+        ImGui::TextDisabled("Click Load on a name. json/ecsave/_delta of the same world are one entry.");
+        {
+            auto worlds = listWorldSaves();
+            if (worlds.empty()) {
+                ImGui::TextDisabled("No world saves in saves/worlds/ yet.");
+            }
+            for (const auto& w : worlds) {
+                ImGui::PushID(w.path.c_str());
+                if (ImGui::Button("Load") && engine) {
+                    loadWorld(engine, w.path);
+                }
+                ImGui::SameLine();
+                ImGui::TextUnformatted(w.label.c_str());
+                if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", w.path.c_str());
+                ImGui::PopID();
             }
         }
         if (ImGui::Button("Save Manager")) {
@@ -180,6 +223,9 @@ namespace Rendering {
             auto& sl = mgr.getSaveLoadState();
             if (!sl.lastSaveReport.empty()) {
                 ImGui::TextWrapped("%s", sl.lastSaveReport.c_str());
+            }
+            if (!sl.lastLoadReport.empty()) {
+                ImGui::TextWrapped("%s", sl.lastLoadReport.c_str());
             }
             ImGui::Checkbox("Unpack for authoring", &sl.unpackForAuthoring);
         }

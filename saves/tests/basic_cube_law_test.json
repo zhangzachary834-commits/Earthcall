@@ -1,5 +1,6 @@
 {
   "authoredLaws": {
+    "firstMoverEnabled": {},
     "formationMembers": [
       "law-2"
     ],
@@ -22,17 +23,17 @@
           "Player"
         ],
         "conditionDescriptions": [
-          "active3DMode == \"Create\""
+          "spawnLawArmed == true"
         ],
         "conditionMode": "all",
         "conditionModel": {
           "kind": 0,
           "op": 0,
           "operand": {
-            "t": "string",
-            "v": "Create"
+            "t": "bool",
+            "v": true
           },
-          "path": "active3DMode"
+          "path": "spawnLawArmed"
         },
         "conditionSubjects": [],
         "drives": false,
@@ -82,7 +83,7 @@
               {
                 "deltaWeight": 1.0,
                 "description": "authored-by",
-                "timestamp": 1787023242
+                "timestamp": 1787191050
               }
             ],
             "type": "authored-by",
@@ -281,7 +282,7 @@
                   },
                   "timestamp": {
                     "t": "long",
-                    "v": 1787023242
+                    "v": 1787191050
                   }
                 }
               }
@@ -289,8 +290,18 @@
           }
         },
         {
-          "attribute": "",
+          "attribute": "telos",
           "id": "fact-16",
+          "subjectId": "law-2-authored-by-Player",
+          "type": "property-state",
+          "value": {
+            "t": "string",
+            "v": ""
+          }
+        },
+        {
+          "attribute": "",
+          "id": "fact-17",
           "subjectId": "law-2",
           "type": "law-registered",
           "value": null

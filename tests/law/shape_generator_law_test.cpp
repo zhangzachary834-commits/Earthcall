@@ -10,9 +10,10 @@
 //
 // Covers:
 //   1. The law is authored -- the structural gate, not a convention.
-//   2. It refuses in every mode but "Create": the click is published globally
-//      now, so the law's condition is the ONLY mode gate left.
-//   3. It spawns in "Create" mode, taking the live shape kind and colour.
+//   2. It refuses unless spawnLawArmed: console Create is a different latch.
+//      A click with active3DMode == "Create" and the law down births nothing.
+//   3. It spawns when spawnLawArmed, taking the live shape kind and colour,
+//      even if the console is not in Create.
 //   4. Each newborn gets its OWN identifier. Concept members are named by
 //      slot, and a slot is not an identity.
 //   5. Being a first mover, it stays out of world saves and survives a load.
@@ -90,14 +91,20 @@ int main() {
     check(ConceptRegistry::instance().find("concept-shape-3d") != nullptr,
           "concept-shape-3d is registered by the factory");
 
-    // ---- 2. the condition is the mode gate ---------------------------------
+    // ---- 2. the condition is spawnLawArmed, not console Create --------------
     check(!law->conditionsSatisfied(channel),
-          "condition is unsatisfied while no 3D mode is active");
+          "condition is unsatisfied while the spawn law is down");
+
+    channel.active3DMode = "Create";
+    channel.spawnLawArmed = false;
+    click();
+    check(world.getOwnedObjects().empty(),
+          "console Create alone does not fire the spawn law");
 
     channel.active3DMode = "Select";
     click();
     check(world.getOwnedObjects().empty(),
-          "a click in Select mode spawns nothing");
+          "a click with the law down spawns nothing");
 
     // A property that does not exist must not read as a satisfied condition.
     // (The shipped condition compared a "type" path the channel never had.)
@@ -106,18 +113,19 @@ int main() {
               PropertyPath::PathResult::Ok,
           "the CreationChannel carries no 'type' property");
 
-    // ---- 3. it spawns in Create mode, reading the live selection -----------
-    channel.active3DMode = "Create";
+    // ---- 3. it spawns when armed, even outside console Create --------------
+    channel.active3DMode = "Select";
+    channel.spawnLawArmed = true;
     channel.activeShapeKind = static_cast<int>(Object::ShapeKind::Sphere);
     channel.activeColor = glm::vec3(0.25f, 0.5f, 0.75f);
     channel.placementMode = "InFront";
     channel.cursorSpawnPos = glm::vec3(3.0f, 1.0f, -2.0f);
 
     check(law->conditionsSatisfied(channel),
-          "condition is satisfied once active3DMode is Create");
+          "condition is satisfied once spawnLawArmed, without console Create");
 
     click();
-    check(world.getOwnedObjects().size() == 1, "a click in Create mode births one Object");
+    check(world.getOwnedObjects().size() == 1, "an armed click births one Object");
 
     if (!world.getOwnedObjects().empty()) {
         const Object* born = world.getOwnedObjects().back().get();

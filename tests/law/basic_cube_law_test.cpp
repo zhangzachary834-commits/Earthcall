@@ -3,7 +3,7 @@
 //
 // Capabilities tested:
 // 1. Triggers on "onMouseClicked" event.
-// 2. Evaluates condition: the creation channel's active3DMode == "Create".
+// 2. Evaluates condition: the creation channel's spawnLawArmed.
 // 3. Placement Mode: "InFront" - places shape at cursorHitPos.
 // 4. Placement Mode: "CursorSnap" - snaps shape placement to gridSnapSize increments.
 // 5. Placement Mode: "ManualDistance" - places shape at cameraPos + cameraForward * manualDistance.
@@ -103,8 +103,8 @@ int main() {
 
     // 3. Create the Law replicating the 3D Custom Shape Generator Tool.
     //
-    // Condition: active3DMode == "Create", and nothing else. The tool only
-    // ever ran inside Mode3D::BrushCreate. Two conditions that were here are
+    // Condition: spawnLawArmed, and nothing else. Console Create is a
+    // different latch (the developer bypass). Two conditions that were here are
     // deliberately gone:
     //   - activeTool == "ShapeGenerator3D" is unsatisfiable. Tool::Type has no
     //     such member since the hard-coded tool was deleted, so getTypeName()
@@ -113,7 +113,7 @@ int main() {
     //     tool. OR-ed in, it fired the law on any click with that tool
     //     selected -- including while drawing in 2D, or in Selection mode.
     ConditionNode toolCondition =
-        ConditionNode::compare("active3DMode", ConditionNode::Op::Eq, PropertyValue("Create"));
+        ConditionNode::compare("spawnLawArmed", ConditionNode::Op::Eq, PropertyValue(true));
 
     // Action: spawn the concept at cursorSpawnTransform, taking the shape kind
     // and colour from the author's live selection the way the tool read
@@ -171,8 +171,9 @@ int main() {
     // 5. Test Placement Mode: "InFront" -- camera position plus forward, the
     //    distance the tool hard-coded as 2.0. NOT the cursor hit point.
     std::cout << "\n[Test 2] Triggering event in Placement Mode \"InFront\"..." << std::endl;
-    channel.activeTool = "Brush";          // irrelevant now: only the mode gates
-    channel.active3DMode = "Create";
+    channel.activeTool = "Brush";          // irrelevant now: spawnLawArmed gates
+    channel.active3DMode = "Select";       // console Create is not this law
+    channel.spawnLawArmed = true;
     channel.placementMode = "InFront";
     player.cameraPos = glm::vec3(0.0f, 2.0f, 0.0f);
     player.cameraForward = glm::vec3(0.0f, 0.0f, -1.0f);

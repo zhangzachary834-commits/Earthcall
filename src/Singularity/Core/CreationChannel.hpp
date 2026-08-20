@@ -33,7 +33,21 @@ public:
                             const glm::vec3& color);
 
     std::string activeTool;
+    // LATCH — console 3D mode only ("Create", "Select", …).
+    //   writers: Rendering::apply3DMode (mode buttons / F4 / F5)
+    //   readers: creatorToolLawIdForMode, Create3DConsole mode chrome,
+    //            the per-mode first movers (tool-create-3d-law, …)
+    // Does NOT arm shape-generator-3d-law. That is spawnLawArmed.
     std::string active3DMode;
+    // LATCH — the spawn law only.
+    //   writers: Rendering::handleCreateLawKey (L),
+    //            Create3DConsole "Spawn as law" checkbox
+    //   readers: createShapeGenerator3DLaw (condition),
+    //            Tool::ShapeGenerator3D (steps aside so one click is not two)
+    // Decoupled from active3DMode so the console Create tool and the law
+    // can be tested independently. See ENGINEERING_DISCIPLINE.md
+    // "Name the latch, name every caller".
+    bool spawnLawArmed{false};
     int activeShapeKind = 0;
     glm::vec3 cursorHitPos{0.0f, 0.0f, 0.0f};
     glm::vec3 cursorHitNormal{0.0f, 1.0f, 0.0f};
@@ -82,12 +96,10 @@ private:
 // effect if it is not already there; the law's Spawn action resolves it by id.
 std::shared_ptr<Law> createShapeGenerator3DLaw(Singular& author);
 
-// The rest of the Creator Console 3D tools, as first movers. The console
-// stays hardcoded chrome — it is the reference gesture that writes
-// @creation-channel.active3DMode. Each tool is a named FirstMoverLaw so a
-// Person can set it down, and so Law Author lists it with Shape Generator
-// rather than as anonymous C++. Sense/Act stay in Tool::*; enabled is the
-// gate stepCreationTools already honours for the spawn law.
+// The rest of the Creator Console 3D tools, as first movers. Console
+// Create is tool-create-3d-law (bypass). The spawn law is a different
+// being and arms on spawnLawArmed. Each tool is a named FirstMoverLaw
+// so a Person can set it down. Sense/Act stay in Tool::*.
 void syncRegisterCreatorTools(LawManager& laws, Singular& author);
 
 // Stable identifier for the first-mover law that owns this active3DMode

@@ -91,6 +91,7 @@ public:
     
     double getWorldTime() const { return _worldTime; }
     void setWorldTime(double t) { _worldTime = t; }
+    double* worldTimePtr() { return &_worldTime; }
 
 private:
     Engine() = default;                       // use instance()

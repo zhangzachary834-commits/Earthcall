@@ -27,6 +27,18 @@ every session, on top of the refusals in `AGENTS.md` and the workshop rules in
 - **The Integrity Check:** After finishing, ask: "does anything I changed have a caller, a
   consumer, or a test that now lies?" If yes, fix it before closing the session.
 
+- **Name the latch, name every caller.** A condition, a key, a mode string, or an event
+  that more than one office reads or writes is a collision. Before you reuse a bit,
+  list every writer and every reader in a comment at the field **and** at each
+  consumer, pointing at the others. "Nobody linked it yet" is the same failure as
+  "nobody registered it yet" (Refusal 6): the next session cannot see the other
+  office, and will treat the bit as theirs.
+  Worked example: `shape-generator-3d-law` used to condition on
+  `@creation-channel.active3DMode == "Create"`, which is also the Creator
+  Console's Create mode. They are two latches now: `active3DMode` is the
+  console tool; `spawnLawArmed` is the spawn law (L / "Spawn as law").
+  The field comments are the register; every consumer points there.
+
 - **Substance over Surface:** Ask once per session: "am I solving a real problem or papering
   over a symptom?" Does it actually implement the substance of the feature, or is it just
   implementing the surface-level appearance of one without the underlying structural

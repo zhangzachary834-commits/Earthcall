@@ -25,9 +25,8 @@ void stepCreationTools(GLFWwindow* window, Core::Engine* engine,
                        bool creatorConsoleOpen);
 
 // Write the console's 3D mode onto the chrome state and the channel.
-// BrushCreate writes active3DMode == "Create" — the same bit L writes,
-// which is the spawn law's condition. Shared by the mode buttons, F4/F5,
-// and the L shortcut.
+// BrushCreate writes active3DMode == "Create" (console bypass only).
+// Does not touch spawnLawArmed. Callers: mode buttons, F4/F5.
 void apply3DMode(CreatorConsoleState& state,
                  Singularity::Core::CreationChannel* channel,
                  Mode3D mode);
@@ -35,9 +34,8 @@ void apply3DMode(CreatorConsoleState& state,
 // Slug a law can read on @creation-channel.activeTool for this mode.
 const char* toolNameForMode(Mode3D mode);
 
-// The spawn law's mode gate. BrushCreate is "Create"; everything else
-// is a distinct string so the law stays down when the Person is selecting
-// or painting.
+// Console mode string. BrushCreate is "Create" — the bypass, not the
+// spawn law. The spawn law reads spawnLawArmed.
 const char* activeModeFor(Mode3D mode);
 
 } // namespace Rendering

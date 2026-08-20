@@ -58,6 +58,8 @@ void CreationChannel::buildProperties() {
         "activeTool", this, &CreationChannel::activeTool));
     _propertyRegistry.push_back(std::make_unique<PropertyRef<CreationChannel, std::string>>(
         "active3DMode", this, &CreationChannel::active3DMode));
+    _propertyRegistry.push_back(std::make_unique<PropertyRef<CreationChannel, bool>>(
+        "spawnLawArmed", this, &CreationChannel::spawnLawArmed));
     // The selected shape kind is law-readable like the rest of the selection:
     // ActionNode::spawn's spawnShapeKindPath points at it, and the authoring
     // window already offers "activeShapeKind" as a Creation-channel path. The
@@ -163,19 +165,16 @@ std::shared_ptr<Law> createShapeGenerator3DLaw(Singular& author) {
     law->ecaLoop().eventType = "onMouseClicked";
     law->addAuthor(author);
 
-    // THE MODE GATE. The click that reaches this law is published globally
-    // from the GLFW mouse callback (EngineInit::registerCallbacks) for every
-    // left press outside ImGui, so the law's own condition is the only thing
-    // standing between "the Person clicked" and "a cube is born". It used to
-    // read `type == "onMouseClicked"` -- a path the CreationChannel does not
-    // carry, so it was never satisfiable, and had it been, it would have been
-    // trivially true and spawned on every click in every mode.
+    // THE ARMING GATE. The click is published globally from the GLFW mouse
+    // callback (EngineInit::registerCallbacks) for every left press outside
+    // ImGui, so this condition is the only thing between "the Person clicked"
+    // and "a cube is born".
     //
-    // The channel's active3DMode is the tool selection itself, which is what
-    // the pre-law tool actually branched on and what the authored twin in
-    // saves/tests/shape_generator_3d_law.json says.
+    // spawnLawArmed, NOT active3DMode == "Create". Create is the console
+    // 3D tool (Tool::ShapeGenerator3D). Sharing that string made the two
+    // paths untestable independently. Callers: CreationChannel::spawnLawArmed.
     law->setConditionModel(ConditionNode::compare(
-        "active3DMode", ConditionNode::Op::Eq, PropertyValue(std::string("Create"))));
+        "spawnLawArmed", ConditionNode::Op::Eq, PropertyValue(true)));
 
     ActionNode spawn = ActionNode::spawn("concept-shape-3d");
     spawn.spawnPlacementPath = PropertyPath::parse("cursorSpawnTransform");
@@ -206,11 +205,11 @@ struct CreatorToolSeed {
     const char* active3DMode;
 };
 
-// Create is shape-generator-3d-law (spawn). The rest are gates over the
-// C++ tools the console still names. Identifiers are slugs law text can
-// address; never generated ids.
+// Console Create is the developer bypass (tool-create-3d-law), not the
+// spawn law. shape-generator-3d-law is registered separately and arms
+// on spawnLawArmed. Identifiers are slugs law text can address.
 constexpr CreatorToolSeed kCreatorTools[] = {
-    {"shape-generator-3d-law", "Tool: Shape Generator 3D", "Create"},
+    {"tool-create-3d-law",     "Tool: Create 3D",          "Create"},
     {"tool-select-3d-law",     "Tool: Select 3D",          "Select"},
     {"tool-face-brush-law",    "Tool: Face Brush",         "FaceBrush"},
     {"tool-face-paint-law",    "Tool: Face Fill",          "FacePaint"},
@@ -236,8 +235,8 @@ const char* creatorToolLawIdForMode(const std::string& active3DMode) {
 }
 
 void syncRegisterCreatorTools(LawManager& laws, Singular& author) {
-    // Shape Generator has a richer factory (spawn action, concept seed).
-    // Keep that being; do not mint a second Create law beside it.
+    // Spawn law is its own being (spawnLawArmed). Console Create is
+    // tool-create-3d-law in the table below — do not fold them together.
     if (!laws.find("shape-generator-3d-law")) {
         auto spawn = createShapeGenerator3DLaw(author);
         laws.add(spawn);
@@ -245,7 +244,6 @@ void syncRegisterCreatorTools(LawManager& laws, Singular& author) {
     }
 
     for (const auto& seed : kCreatorTools) {
-        if (std::string(seed.identifier) == "shape-generator-3d-law") continue;
         if (laws.find(seed.identifier)) continue;
         auto law = std::make_shared<FirstMoverLaw>(seed.name);
         law->setLawIdentifier(seed.identifier);

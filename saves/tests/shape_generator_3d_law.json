@@ -23,17 +23,17 @@
           "Player"
         ],
         "conditionDescriptions": [
-          "active3DMode == \"Create\""
+          "spawnLawArmed == true"
         ],
         "conditionMode": "all",
         "conditionModel": {
           "kind": 0,
           "op": 0,
           "operand": {
-            "t": "string",
-            "v": "Create"
+            "t": "bool",
+            "v": true
           },
-          "path": "active3DMode"
+          "path": "spawnLawArmed"
         },
         "conditionSubjects": [],
         "drives": false,

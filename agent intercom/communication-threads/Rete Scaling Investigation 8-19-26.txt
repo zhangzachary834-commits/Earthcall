@@ -1,0 +1,102 @@
+RETE SCALING INVESTIGATION — note for whoever picks this up next
+Claude Opus 4.5, 2026-08-19
+
+WHAT I DID
+  Traced the entire tick loop in Law.cpp after Zach asked whether the Rete
+  could run parallel. Wrote a full audit: docs/audits/RETE_PARALLELIZATION_AUDIT_2026-08-19.md
+
+THE SHORT ANSWER
+  The Rete is entirely sequential. Parallelization is possible for predicate
+  evaluation but complex for action execution. The chain rounds (laws waking
+  laws) are inherently causal and cannot be parallelized at all.
+
+WHAT I FOUND IN THE CODE
+  1. assertFact (Law.cpp:704-819) — sequential over all alpha nodes, then all
+     beta nodes. No parallelism. Each match pushes to the agenda.
+
+  2. tick() (Law.cpp:1508-1582) — sequential agenda drain, then sequential
+     continuous pass. kMaxChainRounds=8 bounds law cascades.
+
+  3. EventBus::publish (EventBus.hpp:86-102) — copies listeners under lock,
+     dispatches unlocked. Handles re-entrant publish (the deadlock fix) but
+     doesn't parallelize dispatch.
+
+  4. Continuous pass (Law.cpp:1592-1710) — WhileTrue laws with compiled Rete
+     terminals get O(Matching) via collectTerminalSubjects. Laws without
+     terminals fall back to sweepSubjects over the whole Universe.
+
+PARALLELIZATION OPPORTUNITIES — ranked by risk
+  LOW:    Alpha predicate evaluation. Independent, read-only. Could fork-join.
+  MEDIUM: Beta joins at same DAG depth. Needs memory synchronization.
+  HIGH:   Action execution on disjoint subjects. Needs write-set analysis.
+  NEVER:  Chain rounds. Causal by definition.
+
+THE CONSTRAINT NOBODY MENTIONED
+  The Rete's incrementality — O(1) amortized per fact — assumes ordered
+  assertion. Parallelize assertFact and you lose the property that made it
+  fast. You're not parallelizing the same algorithm; you're choosing a
+  different algorithm with different tradeoffs.
+
+SEQUENTIAL ALTERNATIVES THAT MIGHT SCALE BETTER
+  1. Spatial indexing for InRegion conditions — BVH or spatial hash to skip
+     subjects far outside the region's bounding box.
+
+  2. Property-based indexing for sweepSubjects — maintain propertyName ->
+     set<Singular*> updated on registration. Sweep starts from intersection
+     of required properties instead of filtering the whole Universe.
+
+  3. Extend reactive path to ALL WhileTrue laws — currently only laws with
+     compiled terminals use collectTerminalSubjects. The rest fall through
+     to the sweep.
+
+  4. Lazy condition short-circuit — conditionsSatisfied currently evaluates
+     all predicates. Early-exit on first failure.
+
+WHAT I DID NOT DO
+  * Profile the tick loop. Don't know where the actual time goes.
+  * Benchmark alpha predicate parallelization. Don't know the overhead.
+  * Build spatial indexing for InRegion. The math is clear; the code isn't.
+  * Run a stress test with thousands of objects/laws. The scaling question
+    is empirical and I answered it theoretically.
+
+THE THING THAT MATTERS FOR THE FIRST MOVER FRAMEWORK
+  Sonnet 4.5 found the First Mover gap — that FMs form Relations but aren't
+  modeled as Singulars. I noticed something from the Rete side:
+
+  The fact schema tracks SUBJECTS (beings facts are about) but not SOURCES
+  (who/what asserted the fact). An event "object-X.position changed" says
+  nothing about whether a Law, a tool, or an AI agent caused it.
+
+  If First Movers become first-class Singulars with provenance Relations, the
+  fact schema needs to grow. That's structural, not additive. Flagging it now
+  so whoever designs the FM framework knows the Rete touches it.
+
+FILES I WROTE
+  docs/audits/RETE_PARALLELIZATION_AUDIT_2026-08-19.md   — full analysis
+  docs/Reflections.../The_Ontology_That_Says_No.md      — cold-read reflection
+  agent intercom/Claude's monestary/The_Rete_Under_Pressure.md — monastery piece
+
+FILES I READ CLOSELY
+  src/ZonesOfEarth/AuthorsOfLaw/Law.cpp:666-850        — Rete propagation
+  src/ZonesOfEarth/AuthorsOfLaw/Law.cpp:1500-1750      — tick loop
+  src/ZonesOfEarth/AuthorsOfLaw/Law.hpp                — ReteNetwork decl
+  src/Singularity/Core/EventBus.hpp:86-135             — publish/publishAsync
+
+NEXT STEPS FOR WHOEVER PICKS THIS UP
+  1. Profile first. Instrument tick() to see where time actually goes.
+  2. If alpha predicates are the bottleneck, try std::execution::par on the
+     predicate evaluation only (keep memory updates sequential).
+  3. If sweepSubjects is the bottleneck, build the property-based index.
+  4. If InRegion is the bottleneck, build the spatial index.
+  5. If action execution is the bottleneck... that's the hard one. Need
+     static write-set analysis from the ActionModel tree.
+
+ONE OPINION
+  The sequential alternatives are probably higher ROI than threading. Smarter
+  indexing reduces work; parallelism just does the same work faster. And the
+  chain rounds can't be parallelized anyway, so threading the rest might not
+  move the needle if cascades are the actual cost.
+
+  But I don't know. Profile first.
+
+— Opus 4.5

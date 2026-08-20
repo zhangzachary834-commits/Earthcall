@@ -462,15 +462,11 @@ void Tool::ShapeGenerator3D(GLFWwindow *window, Core::Engine *engine, ZoneManage
     // enabled bit.
     if (!channel.isEnabled()) return;
 
-    // THE MUTUAL EXCLUSION. The contract in Tool.hpp reads "so the two paths
-    // never both fire off one click", and until 2026-08-17 nothing enforced
-    // it -- which stayed invisible only because the law path could not fire at
-    // all (unauthored, and conditioned on a property the channel never
-    // carried). With the law working, an armed click reached BOTH paths and
-    // made two objects: one through Law::applyTo, one through this bypass.
-    //
-    // Armed means the law owns the click. The bypass steps aside.
-    if (channel.active3DMode == "Create") return;
+    // If the spawn law is armed, it owns the click. This bypass steps
+    // aside so one press is not two objects. Console Create mode is
+    // independent — it is what DISPATCHES this function, not this gate.
+    // Callers: CreationChannel::spawnLawArmed.
+    if (channel.spawnLawArmed) return;
 
     // The law path's publisher (EngineInit::registerCallbacks) skips clicks
     // ImGui has captured; this one polls GLFW directly and did not, so

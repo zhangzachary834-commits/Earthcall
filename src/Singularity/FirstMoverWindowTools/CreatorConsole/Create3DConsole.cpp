@@ -127,6 +127,7 @@ namespace Rendering {
         };
 
         static const Mode3DDef modeDefs[] = {
+            // Console Create: developer bypass. Does not arm the spawn law.
             {Mode3D::BrushCreate, "Create"},
             {Mode3D::Selection, "Select"},
             {Mode3D::FaceBrush, "Face Brush"},
@@ -143,10 +144,15 @@ namespace Rendering {
             render3DModeButton(modeDefs[i].mode, modeDefs[i].label, channel);
             sameLineEvery(i, 3);
         }
-        if (channel && channel->active3DMode == "Create") {
-            ImGui::TextUnformatted("Create law armed  (L to set down)");
-        } else {
-            ImGui::TextDisabled("Create law down  (Create or L to arm)");
+        if (channel) {
+            bool armed = channel->spawnLawArmed;
+            if (ImGui::Checkbox("Spawn as law (L)", &armed)) {
+                channel->spawnLawArmed = armed;
+            }
+            if (armed) {
+                ImGui::SameLine();
+                ImGui::TextUnformatted("law owns the click");
+            }
         }
 
         ImGui::Separator();

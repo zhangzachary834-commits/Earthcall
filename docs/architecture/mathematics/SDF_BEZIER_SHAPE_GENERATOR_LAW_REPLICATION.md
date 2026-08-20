@@ -65,7 +65,8 @@ In accordance with `AGENTS.md`, `NEW_KIND_FRAMEWORK.md`, `NO_BLACK_BOX.md`, `LAW
 - **Person** (facts about where the Person is looking from):
   - `@person.cameraPos` (`vec3`), `@person.cameraForward` (`vec3`)
 - **CreationChannel** (the tool; identifier `creation-channel`):
-  - `@creation-channel.active3DMode` (`std::string`: `"Create"` arms the spawn law)
+  - `@creation-channel.active3DMode` (`std::string`: `"Create"` is the console bypass)
+  - `@creation-channel.spawnLawArmed` (`bool`: arms the spawn law)
   - `@creation-channel.activeShapeKind` (`int`)
   - `@creation-channel.placementMode` (`std::string`: `"InFront"`, `"CursorSnap"`, `"ManualDistance"`)
   - `@creation-channel.gridSnap` / `gridSnapSize`

@@ -7,8 +7,8 @@
 // Rendering::stepCreationTools (Engine::update), never from a render
 // function. This test cannot boot the window; it holds the door itself:
 // find() is how every caller locates the first mover, writeLiveSelection
-// is how the chrome writes registered paths, apply3DMode writes the one
-// Create bit (active3DMode == "Create") that L also writes.
+// is how the chrome writes registered paths. apply3DMode writes console
+// Create (active3DMode); L writes spawnLawArmed. Two latches.
 
 #include "ConstructedBeing/Object/Object.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
@@ -75,6 +75,8 @@ int main() {
           "activeTool is registered and holds the written slug");
     check(read("active3DMode", v) && std::get<std::string>(v) == "Create",
           "active3DMode is registered and holds the written Create bit");
+    check(read("spawnLawArmed", v) && std::get<bool>(v) == false,
+          "spawnLawArmed is registered and boots down");
     check(read("activeShapeKind", v) &&
               std::get<int>(v) == static_cast<int>(Object::ShapeKind::Sphere),
           "activeShapeKind is registered and holds the written kind");
@@ -92,13 +94,13 @@ int main() {
               std::get<glm::vec3>(v) == glm::vec3(0.25f, 0.5f, 0.75f),
           "activeColor is registered and holds the written colour");
 
-    // ---- one Create bit: console Create and L write the same mode ----------
+    // ---- two latches: console Create is not the spawn law -------------------
     check(std::string(Rendering::toolNameForMode(Rendering::Mode3D::BrushCreate)) ==
               "ShapeGenerator3D",
           "console Create maps to the ShapeGenerator3D tool slug");
     check(std::string(Rendering::activeModeFor(Rendering::Mode3D::BrushCreate)) ==
               "Create",
-          "console Create maps to active3DMode \"Create\" — the spawn law's gate");
+          "console Create maps to active3DMode \"Create\" — the bypass, not the spawn law");
     check(std::string(Rendering::toolNameForMode(Rendering::Mode3D::Selection)) ==
               "Selection3D",
           "console Select maps to Selection3D");
@@ -116,13 +118,17 @@ int main() {
     check(channel->activeTool == "ShapeGenerator3D",
           "apply3DMode writes @creation-channel.activeTool");
     check(channel->active3DMode == "Create",
-          "console Create arms the spawn law — same bit L writes");
+          "console Create writes the bypass mode");
+    check(channel->spawnLawArmed == false,
+          "console Create does not arm the spawn law");
 
     Rendering::apply3DMode(state, channel, Rendering::Mode3D::Selection);
     check(channel->activeTool == "Selection3D",
           "switching mode updates the registered tool");
     check(channel->active3DMode == "Select",
-          "leaving Create takes the spawn law down");
+          "leaving Create does not touch spawnLawArmed");
+    check(channel->spawnLawArmed == false,
+          "spawn law stays down when the console leaves Create");
     check(state.combineOperandA == nullptr && state.clayGrabbed == nullptr,
           "switching mode clears per-gesture pick operands");
 
@@ -130,7 +136,9 @@ int main() {
     Object author("creator-tools-author");
     Singularity::Core::syncRegisterCreatorTools(laws, author);
     check(laws.find("shape-generator-3d-law") != nullptr,
-          "Shape Generator remains the Create first mover");
+          "the spawn law is registered as its own being");
+    check(laws.find("tool-create-3d-law") != nullptr,
+          "console Create is a first mover distinct from the spawn law");
     check(laws.find("tool-select-3d-law") != nullptr,
           "Select is a first mover the console arms");
     check(laws.find("tool-morph-3d-law") != nullptr,
@@ -139,8 +147,8 @@ int main() {
               "tool-select-3d-law",
           "active3DMode Select maps to the Select first mover slug");
     check(std::string(Singularity::Core::creatorToolLawIdForMode("Create")) ==
-              "shape-generator-3d-law",
-          "active3DMode Create maps to the spawn first mover, not a twin");
+              "tool-create-3d-law",
+          "active3DMode Create maps to the console bypass, not the spawn law");
     const size_t afterFirst = laws.getAll().size();
     Singularity::Core::syncRegisterCreatorTools(laws, author);
     check(laws.getAll().size() == afterFirst,

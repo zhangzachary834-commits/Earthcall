@@ -13,6 +13,11 @@ an instantiated control a member of its category — are built on `ObjectConcept
 failure being the deliberate `webgpu_particle_test`. **§11b, the manual protocol, has not
 been run** — nothing below is a claim about how any of this feels in the window.
 
+The spawn law (`shape-generator-3d-law`) arms on `@creation-channel.spawnLawArmed`
+(L / "Spawn as law"). Console Create is a different being (`tool-create-3d-law`)
+and a different bit (`active3DMode`). A later step is to replace the L/checkbox
+chrome with a control authored as a being + a law (this document).
+
 **Companion docs:** `LAW_AND_CREATION_SYSTEM.md` (what a Law is),
 `AUTHORED_CATEGORIES.md` (what a control *kind* is), `NO_BLACK_BOX.md` (why the pointer's
 state is registered), `LAW_MIGRATION_FRAMEWORK.md` (the Sense/Decide/Act seam this whole

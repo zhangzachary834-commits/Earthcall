@@ -93,13 +93,10 @@ std::vector<Object*> collectWorldTargets(ZoneManager& zoneMgr) {
     return targets;
 }
 
-// L is a shortcut for the same Create bit the console writes.
-// Toggles BrushCreate / None, which apply3DMode maps onto
-// active3DMode == "Create" — the spawn law's condition. The
-// developer bypass steps aside when that bit is set.
+// L arms the spawn law only. Does not change console Create mode.
+// Callers of spawnLawArmed: CreationChannel::spawnLawArmed.
 void handleCreateLawKey(GLFWwindow* window, Core::Engine& engine,
-                        Singularity::Core::CreationChannel& channel,
-                        CreatorConsoleState& state) {
+                        Singularity::Core::CreationChannel& channel) {
     if (!window) return;
     if (engine.getMainMenu().isOpen()) return;
     if (ImGui::GetIO().WantCaptureKeyboard) return;
@@ -110,9 +107,7 @@ void handleCreateLawKey(GLFWwindow* window, Core::Engine& engine,
     static bool lawModeKeyDownLast = false;
     const bool lawModeKeyDown = glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS;
     if (lawModeKeyDown && !lawModeKeyDownLast) {
-        const bool armed = (channel.active3DMode == "Create") ||
-                           (state.current3DMode == Mode3D::BrushCreate);
-        apply3DMode(state, &channel, armed ? Mode3D::None : Mode3D::BrushCreate);
+        channel.spawnLawArmed = !channel.spawnLawArmed;
     }
     lawModeKeyDownLast = lawModeKeyDown;
 }
@@ -320,7 +315,7 @@ void stepCreationTools(GLFWwindow* window, Core::Engine* engine,
     }
 
     if (channel) {
-        handleCreateLawKey(window, *engine, *channel, state);
+        handleCreateLawKey(window, *engine, *channel);
         channel->writeLiveSelection(
             toolNameForMode(state.current3DMode),
             activeModeFor(state.current3DMode),

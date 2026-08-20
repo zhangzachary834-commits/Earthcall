@@ -13,8 +13,8 @@ tessellates them; it does not own a second algebra. Start at
 The 2026-08-17 audit that said otherwise is historical.
 
 **Making a shape.** The Person-facing path is the `shape-generator-3d-law`
-(L arms `creation-channel.active3DMode == "Create"`). The Creator Console
-Create button is the developer bypass. Polyhedron spawn still refuses
+(L / "Spawn as law" arms `creation-channel.spawnLawArmed`). The Creator Console
+Create button is the developer bypass (`active3DMode == "Create"`). Polyhedron spawn still refuses
 (`buildCurrentPolyhedron` is a stub). See
 [`SHAPE_GENERATOR_LAW_AUDIT_2026-08-18.md`](../audits/SHAPE_GENERATOR_LAW_AUDIT_2026-08-18.md).
 

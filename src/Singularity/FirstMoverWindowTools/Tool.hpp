@@ -124,9 +124,11 @@ public:
     // creation path. That path is the "Tool: Shape Generator 3D" law
     // (saves/tests/shape_generator_3d_law.json), which reads the SAME
     // CreationChannel fields but fires off onMouseClicked only when
-    // active3DMode == "Create", armed by a distinct input
-    // (see Rendering::stepCreationTools — L toggles active3DMode) so the two
-    // paths never both fire off one click.
+    // spawnLawArmed. Console Create (active3DMode) dispatches THIS
+    // function. Two latches so the paths can be tested apart. If both
+    // are on, this function steps aside (spawnLawArmed). Callers:
+    // CreationChannel::spawnLawArmed.
+
     // Refresh the CreationChannel's cursor placement cache from the live
     // camera and cursor. Runs EVERY FRAME, for both consumers.
     //

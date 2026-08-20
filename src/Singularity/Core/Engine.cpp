@@ -317,8 +317,8 @@ void Engine::tick(float dt) {
         // drains the Rete agenda queued by events published this frame.
         // onMouseClicked is published from the GLFW mouse callback
         // (EngineInit::registerCallbacks) for every left press outside ImGui;
-        // the MODE gate lives in the law's own condition
-        // (active3DMode == "Create"), not in the publisher.
+        // the spawn law's gate is spawnLawArmed, not the publisher and not
+        // console Create. See CreationChannel::spawnLawArmed.
         if (_lawManager) _lawManager->tick();
 
         Rendering::renderDeveloperToolsWindow(&_devToolsWindowOpen, _window, this);

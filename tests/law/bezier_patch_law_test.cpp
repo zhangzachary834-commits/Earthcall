@@ -118,9 +118,9 @@ int main() {
           "ConceptRegistry registered concept-complex-sdf");
 
     // 4. Create Law for Bezier Patch Generation: "law-bezier-generator"
-    // Condition: active3DMode == "Create" && activeShapeKind == ShapeKind::Patch
+    // Condition: spawnLawArmed && activeShapeKind == ShapeKind::Patch
     ConditionNode bezierCondition = ConditionNode::all({
-        ConditionNode::compare("active3DMode", ConditionNode::Op::Eq, PropertyValue("Create")),
+        ConditionNode::compare("spawnLawArmed", ConditionNode::Op::Eq, PropertyValue(true)),
         ConditionNode::compare("activeShapeKind", ConditionNode::Op::Eq, PropertyValue(static_cast<int>(Object::ShapeKind::Patch)))
     });
 
@@ -137,9 +137,9 @@ int main() {
     check(bezierLaw->isAuthored(), "Bezier law is authored by player");
 
     // 5. Create Law for Complex SDF Generation: "law-complex-sdf-generator"
-    // Condition: active3DMode == "Create" && activeShapeKind == ShapeKind::Field
+    // Condition: spawnLawArmed && activeShapeKind == ShapeKind::Field
     ConditionNode sdfCondition = ConditionNode::all({
-        ConditionNode::compare("active3DMode", ConditionNode::Op::Eq, PropertyValue("Create")),
+        ConditionNode::compare("spawnLawArmed", ConditionNode::Op::Eq, PropertyValue(true)),
         ConditionNode::compare("activeShapeKind", ConditionNode::Op::Eq, PropertyValue(static_cast<int>(Object::ShapeKind::Field)))
     });
 
@@ -172,7 +172,7 @@ int main() {
     // Test 2: Bezier Patch InFront Placement Mode
     // =========================================================================
     std::cout << "\n[Test 2] Spawning Bezier Patch in InFront placement mode..." << std::endl;
-    channel.active3DMode = "Create";
+    channel.spawnLawArmed = true;
     channel.activeShapeKind = static_cast<int>(Object::ShapeKind::Patch);
     channel.placementMode = "InFront";
     channel.inFrontDistance = 3.0f;
@@ -205,7 +205,7 @@ int main() {
     // Test 3: Complex SDF in CursorSnap Mode with Grid Snapping
     // =========================================================================
     std::cout << "\n[Test 3] Spawning Complex SDF in CursorSnap placement mode with Grid Snapping..." << std::endl;
-    channel.active3DMode = "Create";
+    channel.spawnLawArmed = true;
     channel.activeShapeKind = static_cast<int>(Object::ShapeKind::Field);
     channel.placementMode = "CursorSnap";
     channel.cursorHitPos = glm::vec3(2.35f, 0.0f, -4.72f);
@@ -238,7 +238,7 @@ int main() {
     // Test 4: Bezier Patch in ManualDistance Mode
     // =========================================================================
     std::cout << "\n[Test 4] Spawning Bezier Patch in ManualDistance placement mode..." << std::endl;
-    channel.active3DMode = "Create";
+    channel.spawnLawArmed = true;
     channel.activeShapeKind = static_cast<int>(Object::ShapeKind::Patch);
     channel.placementMode = "ManualDistance";
     channel.manualAnchorValid = true;
@@ -301,7 +301,7 @@ int main() {
     check(reloadedSdfLaw->isAuthored(), "Author reattached to reloaded SDF law");
 
     // Test execution with reloaded law
-    channel.active3DMode = "Create";
+    channel.spawnLawArmed = true;
     channel.activeShapeKind = static_cast<int>(Object::ShapeKind::Patch);
     channel.placementMode = "InFront";
     channel.inFrontDistance = 4.0f;

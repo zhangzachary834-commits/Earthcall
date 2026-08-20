@@ -431,8 +431,34 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
         if (zonesVec.empty()) {
             zonesVec.push_back(std::make_shared<Zone>("Default Zone", "default"));
         }
+
+        // saveStateWithLog also writes a top-level objects array. If a
+        // zone's world came in empty, fold those into the active zone so
+        // a Person's spawned shapes survive the round-trip.
+        if (j.contains("objects") && j["objects"].is_array() && !zonesVec.empty()) {
+            auto& world = zonesVec[std::min(currentZoneIdx, zonesVec.size() - 1)]->world();
+            if (world.getOwnedObjects().empty()) {
+                from_json(j, world);
+            }
+        }
+
         // Home survives every load
         ensureHomeZone(ctx.player->getIdentifier());
+
+        // switchTo CLEARS the active world's objects and refills from
+        // globalObjects. Load used to skip this catalog, so every successful
+        // read then wiped the world. Stamp zone membership and fill the
+        // catalog BEFORE switching.
+        globalObjects.clear();
+        for (const auto& z : _zones) {
+            if (!z) continue;
+            for (const auto& obj : z->world().getOwnedObjects()) {
+                if (!obj) continue;
+                obj->addZoneDesignation(z->name());
+                obj->addZoneDesignation(z->getIdentifier());
+                globalObjects.push_back(obj);
+            }
+        }
         switchTo(std::min(currentZoneIdx, zonesVec.size() - 1));
 
         // Load camera and player view
@@ -516,8 +542,10 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
 
         // The authored register
         stage("world-clock", [&] {
-            *ctx.worldTime = j.value("worldTime", 0.0);
-            Universe::instance().setClock(*ctx.worldTime, 0.0);
+            if (ctx.worldTime) {
+                *ctx.worldTime = j.value("worldTime", 0.0);
+                Universe::instance().setClock(*ctx.worldTime, 0.0);
+            }
         });
         stage("concepts", [&] {
             if (j.contains("concepts")) {
@@ -554,7 +582,8 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
             std::to_string(ctx.lawManager->getAll().size()) + " law(s) (" +
             std::to_string(authoredCount) + " authored), " +
             std::to_string(ConceptRegistry::instance().getAll().size()) +
-            " concept(s), worldTime " + std::to_string(*ctx.worldTime);
+            " concept(s), worldTime " +
+            std::to_string(ctx.worldTime ? *ctx.worldTime : 0.0);
         if (!failures.empty()) {
             _saveLoad.lastLoadReport += "  |  FAILED stages: " + failures;
         }

@@ -473,7 +473,13 @@ nlohmann::json readSaveData(const std::string& filepath) {
     } else {
         // Fallback to plain JSON
         nlohmann::json j;
-        in >> j;
+        try {
+            in >> j;
+        } catch (const std::exception& e) {
+            std::cerr << "[SaveSystem] Failed to parse JSON " << filepath
+                      << ": " << e.what() << "\n";
+            return nlohmann::json();
+        }
         return j;
     }
 }
