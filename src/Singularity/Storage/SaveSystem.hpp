@@ -43,6 +43,17 @@ std::string sanitizeLabel(const std::string& label);
 // Return list of files that still exist for a specific save type; also prunes stale entries from log
 std::vector<std::string> listFiles(SaveType type = SaveType::WORLD);
 
+// One row per world. json + ecsave + _delta are the same save written three
+// ways; listing them as independent loads is how switching worlds felt like
+// a pile of twins. Prefer the readable json; never offer delta or empty files.
+struct WorldEntry {
+    std::string label;
+    std::string path;
+};
+std::vector<WorldEntry> listWorlds(SaveType type = SaveType::WORLD);
+// Remove json, ecsave, and delta of one stem so a delete does not leave a twin.
+void removeWorld(const std::string& stem, SaveType type = SaveType::WORLD);
+
 // Write JSON to disk via generated filename and log it; returns full path
 // For dry-run/parallel testing, this will also write a binary .ecsave alongside it.
 std::string writeSaveData(const nlohmann::json& j, const std::string& customLabel = "", SaveType type = SaveType::WORLD);

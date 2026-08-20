@@ -8,6 +8,9 @@ class BodyPart;
 
 #include <imgui.h>
 
+class ZoneManager;
+class Person;
+
 namespace Rendering {
 
     enum class CreatorSection {
@@ -96,6 +99,9 @@ namespace Rendering {
         // BENEATH THE KERNEL: per-gesture pick operands. They name Objects
         // the Person already holds; the next click recomputes them. Not a
         // being's standing state — the live tool is @creation-channel.activeTool.
+        // Stale after ZoneManager::loadState (those Objects die). Callers of
+        // forgetStaleObjectHandles: AssetsConsole::loadWorld,
+        // DeveloperToolsWindow observation load.
         Object* combineOperandA = nullptr;
         Object* clayGrabbed = nullptr;
         Object* clayTarget = nullptr;
@@ -107,7 +113,8 @@ namespace Rendering {
         bool blendHandleDragging = false;
 
         // Live 3D selection (Select mode). Not a being's standing state —
-        // HighlightSystem mirrors it for the renderer.
+        // HighlightSystem mirrors it for the renderer. Same stale-on-load
+        // latch as combineOperandA — forgetStaleObjectHandles.
         Object* selectedObject3D = nullptr;
 
         // Pottery / Rotate / Face Brush — the tools already read these
@@ -154,6 +161,11 @@ namespace Rendering {
     };
 
     CreatorConsoleState& getCreatorConsoleState();
+    // Drop Object* the tools hold if those beings are no longer in any Zone.
+    // loadState replaces every Zone; observation replaces one. Without this,
+    // Select/Morph/Combine/Clay keep a pointer into freed memory and switching
+    // worlds goes funky. Safe to call after a refused load (live objects stay).
+    void forgetStaleObjectHandles(ZoneManager& mgr, Person* player = nullptr);
     
     // Shared styling helpers
     void pushActiveButtonStyle(bool active, const ImVec4& color, const ImVec4& hoverColor);

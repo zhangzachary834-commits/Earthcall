@@ -4,6 +4,7 @@
 #include "GLFW/glfw3.h"
 
 #include "Singularity/Core/Engine.hpp"
+#include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleState.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "ZonesOfEarth/SaveContext.hpp"
 #include "json.hpp"
@@ -108,6 +109,7 @@ void renderDeveloperToolsWindow(bool* open, GLFWwindow* window, Core::Engine* en
                 ctx.worldTime = engine->worldTimePtr();
                 ctx.unpackForAuthoring = false;
                 mgr.loadTestObservation("saves/tests/" + row.filename, ctx);
+                forgetStaleObjectHandles(mgr, engine->getPlayer());
             }
             ImGui::SameLine();
             ImGui::TextUnformatted(row.filename.c_str());

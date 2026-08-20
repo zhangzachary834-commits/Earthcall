@@ -62,6 +62,12 @@ public:
     void saveState(const std::string& filename, SaveContext& ctx);
     void loadState(const std::string& filename, SaveContext& ctx);
     void saveStateWithLog(const std::string& customName, SaveContext& ctx);
+    // Dedicated slot loadState writes the live world into before replacing
+    // it. Stem is "before-load"; folder is SaveType::BACKUP. Loading that
+    // path itself does not re-stash (or recovery would overwrite the stash
+    // with the world being left). Callers of the path: loadState,
+    // AssetsConsole Restore unsaved, unsaved_preserve_test.
+    static std::string beforeLoadSnapshotPath();
     // Load a test dump into an isolated observation Zone without replacing
     // Home or the Person's other zones. DeveloperToolsWindow is the caller;
     // loadState is the replace-all office and must not be used for this.

@@ -39,3 +39,16 @@ second "physics laws" list was a second register. Authored laws appear above
 that heading only once a Person writes one.
 
 Inventory: `docs/architecture/law/FIRST_MOVER_AUTHORING.md` §1.
+
+{ Zach here: The fork is a false binary. Think of the ImGui as Hardcoded First Movers 
+that has a threefold purpose: 
+1. serve as a first mover for configuring visual/audio/linguistic/legal states.  
+2. It's also a kind of constant reference point with real functionality to compare other UI to.
+3. And finally, it allows a constant for Persons to anchor to when they're authoring dynamically 
+changing functionality via Laws. Laws might be chaotic 
+4. mid-development——it helps to have something like an ImGUI ensure there's a invariant case things get messy.
+After all, ImGUI is traditionally known as always great for cpp debugging and testing. 
+It's kind of similar here except that role is 
+explicitly dignified as First Mover ontology. 
+
+HOWEVER, the ImGUI must respect other people's Singularity/Kernel guards/rights and Zone jurisdiction}

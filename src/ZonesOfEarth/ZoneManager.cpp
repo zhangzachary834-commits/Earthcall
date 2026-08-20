@@ -28,6 +28,7 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
+#include <cstring>
 #include <unordered_set>
 #include <algorithm>
 
@@ -244,7 +245,32 @@ bool cameraIsDumpDefault(const nlohmann::json& j) {
 std::string observationZoneName(const std::string& stem) {
     return "test." + stem;
 }
+
+bool isBeforeLoadSnapshot(const std::string& filename) {
+    std::error_code ec;
+    const auto incoming = std::filesystem::weakly_canonical(std::filesystem::path(filename), ec);
+    const auto stash = std::filesystem::weakly_canonical(
+        std::filesystem::path(ZoneManager::beforeLoadSnapshotPath()), ec);
+    if (!ec && incoming == stash) return true;
+    const auto p = std::filesystem::path(filename);
+    return p.stem() == "before-load" &&
+           p.parent_path().filename() == "backups";
+}
+
+std::size_t liveObjectCount(const ZoneManager& mgr) {
+    std::size_t n = 0;
+    for (const auto& z : mgr.zones()) {
+        if (!z) continue;
+        n += z->world().getOwnedObjects().size();
+    }
+    return n;
+}
 } // namespace
+
+std::string ZoneManager::beforeLoadSnapshotPath() {
+    return SaveSystem::ensureSaveTypeFolder(SaveSystem::SaveType::BACKUP) +
+           "/before-load.json";
+}
 
 // ------------------------------------------------------------------
 // buildSaveJson - moved from Game
@@ -341,12 +367,15 @@ void ZoneManager::saveState(const std::string& filename, SaveContext& ctx) {
 void ZoneManager::saveStateWithLog(const std::string& customName, SaveContext& ctx) {
     nlohmann::json j = buildSaveJson(ctx);
 
-    // Dynamic objects (skip baseline 0 & 1) – only added by the "log" variant
+    // Top-level objects: the active zone's whole world. This used to skip
+    // index 0 and 1 as "baseline cube & ground", but those live on Ourverse
+    // now (EngineInit), so the skip ate the first two beings a Person
+    // spawned. Zone JSON still had them; the top-level array is the fallback
+    // for empty zone worlds (legacy saves). Write what is actually there.
     auto& zoneWorld = active().world();
     nlohmann::json objArr = nlohmann::json::array();
-    const auto& objs = zoneWorld.getOwnedObjects();
-    for (size_t i = 2; i < objs.size(); ++i) {
-        const auto& o = objs[i];
+    for (const auto& o : zoneWorld.getOwnedObjects()) {
+        if (!o) continue;
         nlohmann::json oj = *o;
         objArr.push_back(std::move(oj));
     }
@@ -407,23 +436,10 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
     ECA::LawAuditLogger::instance().setActiveWorld(filename);
     
     std::filesystem::path path(filename);
-    std::string name = path.filename().string();
-    if (name.length() > 5 && name.substr(name.length() - 5) == ".json") {
-        name = name.substr(0, name.length() - 5);
-    }
-    if (name.length() >= 15 && name[8] == '_') {
-        if (name.length() > 16) {
-            _saveLoad.loadedSaveName = name.substr(16);
-        } else {
-            _saveLoad.loadedSaveName = "";
-        }
-    } else {
-        _saveLoad.loadedSaveName = name;
-    }
-    if (!_saveLoad.loadedSaveName.empty()) {
-        std::strncpy(_saveLoad.customName, _saveLoad.loadedSaveName.c_str(), sizeof(_saveLoad.customName) - 1);
-        _saveLoad.customName[sizeof(_saveLoad.customName) - 1] = '\0';
-    }
+    std::string name = path.stem().string();
+    // Strip a YYYYMMDD_HHMMSS_ prefix if Quick Save stamped one. Do not
+    // commit loadedSaveName until the read actually succeeds — a refused
+    // load of an empty twin used to retitle the live world as that file.
 
     // Loading is LOUD: every stage reports, and one stage's failure never
     // silently discards the stages after it (a swallowed exception between
@@ -446,7 +462,59 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
         if (j.is_null()) {
             _saveLoad.lastLoadReport = "COULD NOT OPEN OR READ: " + filename;
             std::cerr << "Could not open or read " << filename << "\n";
+            logIo("LOAD end:   " + _saveLoad.lastLoadReport);
             return;
+        }
+        // An empty file, a delta chunk, or a non-world JSON must not clear
+        // the live Zones. Callers: AssetsConsole loadWorld (the Person's
+        // Load / Save Manager). Switching worlds went funky when
+        // saves/worlds/ourverse.json (0 bytes) and .ecsave twins were
+        // offered as independent worlds and a failed read still replaced
+        // nothing — or, worse, a `{}` would have wiped every Zone.
+        const bool looksLikeWorld =
+            j.is_object() &&
+            ((j.contains("zones") && j["zones"].is_array()) ||
+             (j.contains("objects") && j["objects"].is_array()));
+        if (!looksLikeWorld) {
+            _saveLoad.lastLoadReport =
+                "REFUSED: '" + filename + "' is not a world save (no zones, no objects). "
+                "The current world was not replaced.";
+            std::cerr << "[load] " << _saveLoad.lastLoadReport << "\n";
+            logIo("LOAD end:   " + _saveLoad.lastLoadReport);
+            return;
+        }
+
+        // Preserve unsaved live work BEFORE zonesVec.clear(). The CRITICAL
+        // save-system fear: load used to erase the present world with no
+        // copy. The dedicated slot is backups/before-load.json — one place,
+        // overwritten each load, recoverable by loading that path. Skip when
+        // the incoming file IS that slot, or recovery would stash the loaded
+        // world on top of the unsaved one. Skip when there is nothing to
+        // keep (empty boot). If the write fails, refuse the load rather than
+        // overwrite anyway.
+        std::string preservedPath;
+        if (!isBeforeLoadSnapshot(filename) && liveObjectCount(*this) > 0) {
+            const std::string stash = beforeLoadSnapshotPath();
+            if (stash.empty()) {
+                _saveLoad.lastLoadReport =
+                    "REFUSED load: could not create the before-load save zone. "
+                    "The current world was not replaced.";
+                std::cerr << "[load] " << _saveLoad.lastLoadReport << "\n";
+                logIo("LOAD end:   " + _saveLoad.lastLoadReport);
+                return;
+            }
+            saveState(stash, ctx);
+            std::ifstream probe(stash);
+            if (!probe) {
+                _saveLoad.lastLoadReport =
+                    "REFUSED load: could not preserve unsaved work to " + stash +
+                    ". The current world was not replaced.";
+                std::cerr << "[load] " << _saveLoad.lastLoadReport << "\n";
+                logIo("LOAD end:   " + _saveLoad.lastLoadReport);
+                return;
+            }
+            preservedPath = stash;
+            logIo("PRESERVE unsaved -> " + stash);
         }
 
         // Reset physics registries
@@ -651,13 +719,29 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
         for (const auto& law : ctx.lawManager->getAll()) {
             if (law && law->isAuthored()) ++authoredCount;
         }
+        if (name.length() >= 15 && name[8] == '_') {
+            _saveLoad.loadedSaveName = (name.length() > 16) ? name.substr(16) : std::string{};
+        } else {
+            _saveLoad.loadedSaveName = name;
+        }
+        if (!_saveLoad.loadedSaveName.empty()) {
+            std::strncpy(_saveLoad.customName, _saveLoad.loadedSaveName.c_str(), sizeof(_saveLoad.customName) - 1);
+            _saveLoad.customName[sizeof(_saveLoad.customName) - 1] = '\0';
+        }
+
+        const std::string zoneName = _zones.empty() ? std::string("?") : _zones[_currentIndex]->name();
         _saveLoad.lastLoadReport =
-            "Loaded: " + std::to_string(objectCount) + " object(s), " +
+            "Loaded world '" + _saveLoad.loadedSaveName + "' into " + zoneName + ": " +
+            std::to_string(objectCount) + " object(s), " +
             std::to_string(ctx.lawManager->getAll().size()) + " law(s) (" +
             std::to_string(authoredCount) + " authored), " +
             std::to_string(ConceptRegistry::instance().getAll().size()) +
             " concept(s), worldTime " +
             std::to_string(ctx.worldTime ? *ctx.worldTime : 0.0);
+        if (!preservedPath.empty()) {
+            _saveLoad.lastLoadReport +=
+                "  Unsaved work preserved to " + preservedPath + ".";
+        }
         if (!failures.empty()) {
             _saveLoad.lastLoadReport += "  |  FAILED stages: " + failures;
         }

@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <sstream>
 #include <iomanip>
+#include <map>
 #include "Singularity/Storage/CloudStorage.hpp"
 #include "Identity/FirstMoverRegister.hpp"
 
@@ -200,6 +201,43 @@ std::vector<std::string> listFiles(SaveType type) {
     }
     
     return valid;
+}
+
+std::vector<WorldEntry> listWorlds(SaveType type) {
+    std::map<std::string, WorldEntry> byStem;
+    for (const auto& path : listFiles(type)) {
+        std::filesystem::path p(path);
+        const std::string stem = p.stem().string();
+        const std::string ext = p.extension().string();
+        if (stem.size() >= 6 && stem.compare(stem.size() - 6, 6, "_delta") == 0)
+            continue;
+        std::error_code ec;
+        if (!std::filesystem::exists(p, ec)) continue;
+        if (std::filesystem::file_size(p, ec) == 0) continue;
+        WorldEntry row{stem, path};
+        auto it = byStem.find(stem);
+        if (it == byStem.end()) {
+            byStem.emplace(stem, std::move(row));
+        } else if (ext == ".json") {
+            it->second.path = path;
+        }
+    }
+    std::vector<WorldEntry> out;
+    out.reserve(byStem.size());
+    for (auto& kv : byStem) out.push_back(std::move(kv.second));
+    return out;
+}
+
+void removeWorld(const std::string& stem, SaveType type) {
+    if (stem.empty()) return;
+    std::string folder = ensureSaveTypeFolder(type);
+    if (folder.empty()) return;
+    const std::string safe = sanitizeLabel(stem);
+    if (safe.empty()) return;
+    std::error_code ec;
+    std::filesystem::remove(folder + "/" + safe + ".json", ec);
+    std::filesystem::remove(folder + "/" + safe + ".ecsave", ec);
+    std::filesystem::remove(folder + "/" + safe + "_delta.ecsave", ec);
 }
 
 // The single gate every write passes through. Returns true when the write may
