@@ -101,7 +101,7 @@ static std::vector<glm::vec3> diskPolygon(float radius, float z, int segments) {
     return poly;
 }
 
-static SurfacePatch planarDisk(float radius, float z, const glm::vec3& outwardN, int segments = 32) {
+static SurfacePatch planarDisk(float radius, float z, const glm::vec3& outwardN, int segments = 64) {
     SurfacePatch p;
     p.type = SurfacePatch::Type::Planar;
     p.polygon = diskPolygon(radius, z, segments);

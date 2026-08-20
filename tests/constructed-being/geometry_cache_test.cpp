@@ -89,6 +89,17 @@ int main() {
         assert(!sameCloud(thin, fat));
         std::printf("  complex: rebuilt on radius edit (%zu -> %zu pts)\n",
                     thin.size(), fat.size());
+
+        geom::SdfNode cyl;
+        assert(geom::sdfFromComplex(o.getComplexData(), cyl));
+        assert(cyl.prim == geom::SdfPrim::Cylinder);
+        Object cone;
+        cone.setShape(Object::ShapeKind::Cone, p);
+        geom::SdfNode cn;
+        assert(cone.hasComplexShape());
+        assert(geom::sdfFromComplex(cone.getComplexData(), cn));
+        assert(cn.prim == geom::SdfPrim::Cone);
+        std::printf("  cylinder/cone lower to SDF primitives, not UV tessellations\n");
     }
 
     // --- Field: the pre-existing cache still works --------------------------

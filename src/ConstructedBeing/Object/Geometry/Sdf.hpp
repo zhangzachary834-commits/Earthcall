@@ -5,6 +5,7 @@
 #include <string>
 #include <memory>
 #include "SmoothSurface.hpp" // TessMesh
+#include "ComplexShape.hpp"
 #include "Singularity/OntoMath/ScalarForm.hpp"
 
 // Geometry kernel — the SDF spine.
@@ -120,6 +121,11 @@ SdfNode makeImplicit(std::shared_ptr<OntoMath::Piecewise> pw);
 // Named smooth surface as an SDF leaf — same mathematics the quadric
 // names, so a marching backend does not draw a UV tessellation instead.
 SdfNode sdfFromSmooth(const SmoothSurfaceData& s);
+// Capped cylinder / cone (one round quadric + planar caps) as the matching
+// SDF primitive. Mesh-fillet complexes (rounded box) return false — those
+// are not a single leaf. The round side's UV tessellation is a drawing
+// cache, not the shape.
+bool sdfFromComplex(const ComplexShapeData& c, SdfNode& out);
 
 // Evaluate the signed distance of the tree at a local-space point.
 float evalSdf(const SdfNode& n, const glm::vec3& p);

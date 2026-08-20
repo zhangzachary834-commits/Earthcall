@@ -16,6 +16,13 @@ enum class SaveType {
     INTEGRATION // Integration system saves (web apps, external windows, etc.)
 };
 
+// Pin every relative save path to this directory (the repository `saves/`
+// folder). Empty means "saves" under the process cwd, which is what tests
+// use. The engine sets this at boot so a launch from `build/` or Finder
+// does not write a second, invisible tree.
+void setSaveRoot(const std::string& absoluteSavesDir);
+std::string saveRoot();
+
 // Ensure organized save folder structure exists
 std::string ensureSaveFolder();
 std::string ensureSaveTypeFolder(SaveType type);

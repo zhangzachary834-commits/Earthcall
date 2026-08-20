@@ -40,9 +40,16 @@
 #include "Singularity/Screen/CreationWindow.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
+#include "Singularity/Storage/SaveSystem.hpp"
 
 #include "Singularity/FirstMoverWindowTools/CreatorConsole/CreatorConsoleWindow.hpp"
 #include <iostream>
+#include <filesystem>
+#include <vector>
+#include <climits>
+#ifdef __APPLE__
+#include <mach-o/dyld.h>
+#endif
 
 extern ZoneManager mgr;
 
@@ -61,8 +68,45 @@ Engine& Engine::instance() {
     return s_instance;
 }
 
+namespace {
+std::filesystem::path findRepoRoot() {
+    std::error_code ec;
+    std::vector<std::filesystem::path> seeds;
+    if (auto cwd = std::filesystem::current_path(ec); !ec) seeds.push_back(cwd);
+#ifdef __APPLE__
+    char buf[PATH_MAX];
+    uint32_t sz = sizeof(buf);
+    if (_NSGetExecutablePath(buf, &sz) == 0) {
+        auto exe = std::filesystem::weakly_canonical(std::filesystem::path(buf), ec);
+        if (!ec) seeds.push_back(exe.parent_path());
+    }
+#endif
+    for (auto dir : seeds) {
+        for (int i = 0; i < 8 && !dir.empty() && dir != dir.root_path(); ++i) {
+            if (std::filesystem::exists(dir / "AGENTS.md", ec) &&
+                std::filesystem::is_directory(dir / "saves", ec)) {
+                return dir;
+            }
+            dir = dir.parent_path();
+        }
+    }
+    return {};
+}
+} // namespace
+
 bool Engine::init(int /*argc*/, char** /*argv*/) {
     std::cout << "Engine::init starting" << std::endl;
+    {
+        const auto root = findRepoRoot();
+        if (!root.empty()) {
+            std::error_code ec;
+            std::filesystem::current_path(root, ec);
+            const auto saves = (root / "saves").string();
+            SaveSystem::setSaveRoot(saves);
+            std::cout << "[Engine] repo root: " << root.string()
+                      << "  saves: " << saves << std::endl;
+        }
+    }
     if (glfwInit() == GLFW_FALSE) {
         std::cerr << "⚠️  Failed to initialise GLFW!" << std::endl;
         return false;

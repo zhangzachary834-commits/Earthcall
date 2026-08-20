@@ -15,6 +15,18 @@
 
 namespace SaveSystem {
 
+namespace {
+std::string g_saveRoot;
+}
+
+void setSaveRoot(const std::string& absoluteSavesDir) {
+    g_saveRoot = absoluteSavesDir;
+}
+
+std::string saveRoot() {
+    return g_saveRoot;
+}
+
 // Helper to compress a byte vector using zlib
 std::vector<uint8_t> compressData(const std::vector<uint8_t>& data) {
     uLongf compressedLen = compressBound(data.size());
@@ -78,10 +90,11 @@ std::string getSaveTypeFolderName(SaveType type) {
 
 
 std::string ensureSaveFolder() {
-    std::filesystem::path p = "saves";
+    std::filesystem::path p = g_saveRoot.empty() ? std::filesystem::path("saves")
+                                                 : std::filesystem::path(g_saveRoot);
     std::error_code ec;
     if (!std::filesystem::exists(p, ec)) {
-        if (!std::filesystem::create_directory(p, ec)) {
+        if (!std::filesystem::create_directories(p, ec)) {
             std::cerr << "[SaveSystem] Failed to create saves folder: " << ec.message() << "\n";
             return "";
         }
@@ -314,7 +327,18 @@ std::string writeSaveData(const nlohmann::json& j, const std::string& customLabe
         return "";
     }
     out.write(reinterpret_cast<const char*>(compressed.data()), compressed.size());
+    out.flush();
+    const bool wroteOk = static_cast<bool>(out);
     out.close();
+    if (!wroteOk) {
+        std::cerr << "[SaveSystem] Failed to write " << filename << "\n";
+        return "";
+    }
+    std::error_code ec;
+    if (!std::filesystem::exists(filename, ec) || std::filesystem::file_size(filename, ec) == 0) {
+        std::cerr << "[SaveSystem] Write reported success but " << filename << " is missing or empty\n";
+        return "";
+    }
 
 #ifdef __EMSCRIPTEN__
     ensureIdbMounted();
@@ -327,7 +351,7 @@ std::string writeSaveData(const nlohmann::json& j, const std::string& customLabe
         // Here we would check keepLocal and potentially delete the local file
     });
 
-    return filename;
+    return std::filesystem::absolute(filename).string();
 }
 
 std::string writeSaveData(const std::vector<uint8_t>& data, const std::string& customLabel, const std::string& ext, SaveType type) {

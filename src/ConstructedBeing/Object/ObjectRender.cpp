@@ -279,11 +279,36 @@ void Object::drawSmoothModel() const {
 }
 
 void Object::drawComplexModel() const {
+    Renderer& r = currentRenderer();
+    // A capped cylinder / cone IS the round quadric plus planar caps.
+    // The UV side mesh and N-gon disks are a drawing cache. Backends that
+    // can march an SDF draw the primitive instead, same door as spheres.
+    if (r.rendersImplicitExactly()) {
+        geom::SdfNode field;
+        if (geom::sdfFromComplex(complexData, field)) {
+            const float rExt = std::max(_shapeParams.r, _shapeParams.halfH) + 0.25f;
+            r.drawImplicit(field, std::max(rExt, 0.6f),
+                           resolveRenderMaterial(_materialId, faceAlbedo(0)), nullptr);
+            return;
+        }
+        for (size_t i = 0; i < complexData.patches.size(); ++i) {
+            const auto& patch = complexData.patches[i];
+            const RenderMaterial mat = resolveRenderMaterial(_materialId, faceAlbedo(static_cast<int>(i)));
+            if (patch.type == geom::SurfacePatch::Type::Smooth) {
+                const float extent = std::max(std::abs(patch.smooth.axes.x),
+                    std::max(std::abs(patch.smooth.zTrim.x), std::abs(patch.smooth.zTrim.y))) + 0.25f;
+                r.drawImplicit(geom::sdfFromSmooth(patch.smooth), std::max(extent, 0.6f), mat, nullptr);
+            } else if (i < _complexMeshes.size()) {
+                r.drawMesh(_complexMeshes[i], mat);
+            }
+        }
+        return;
+    }
     // Each patch is a real face, drawn with its own face texture so the round side
     // and the flat caps can be painted independently.
     for (size_t i = 0; i < _complexMeshes.size(); ++i)
-        currentRenderer().drawMesh(_complexMeshes[i],
-                                   resolveRenderMaterial(_materialId, faceAlbedo(i)));
+        r.drawMesh(_complexMeshes[i],
+                   resolveRenderMaterial(_materialId, faceAlbedo(static_cast<int>(i))));
 }
 
 void Object::drawFieldModel() const {

@@ -636,6 +636,34 @@ TessMesh tessellateSdf(const SdfNode& n, float extent, int res) {
     return m;
 }
 
+bool sdfFromComplex(const ComplexShapeData& c, SdfNode& out) {
+    const SurfacePatch* side = nullptr;
+    int smoothN = 0, planarN = 0;
+    for (const auto& p : c.patches) {
+        if (p.type == SurfacePatch::Type::Smooth) {
+            ++smoothN;
+            side = &p;
+        } else if (p.type == SurfacePatch::Type::Planar) {
+            ++planarN;
+        } else {
+            return false; // fillet mesh patches are not a single SDF leaf
+        }
+    }
+    if (!side || smoothN != 1) return false;
+    const SmoothSurfaceData& s = side->smooth;
+    const float r = s.axes.x > 1e-6f ? s.axes.x : 0.5f;
+    const float halfH = std::max(std::abs(s.zTrim.x), std::abs(s.zTrim.y));
+    if (s.form == SmoothSurfaceData::QuadricForm::CylinderSide && planarN == 2) {
+        out = SdfNode::leaf(SdfPrim::Cylinder, glm::vec3(r, halfH, 0.0f));
+        return true;
+    }
+    if (s.form == SmoothSurfaceData::QuadricForm::ConeSide && planarN == 1) {
+        out = SdfNode::leaf(SdfPrim::Cone, glm::vec3(r, halfH, 0.0f));
+        return true;
+    }
+    return false;
+}
+
 SdfNode sdfFromSmooth(const SmoothSurfaceData& s) {
     if (s.model == SmoothSurfaceData::Model::Parametric) {
         if (s.pkind == SmoothSurfaceData::ParametricKind::Torus) {

@@ -177,10 +177,20 @@ void Object::rebuildGeometryCaches() {
         m = _fieldMesh; // render and collision share it: marching tets are too costly to repeat
     }
     else if (_hasComplex) {
-        _complexMeshes.reserve(complexData.patches.size());
-        for (const auto& patch : complexData.patches)
-            _complexMeshes.push_back(geom::tessellatePatch(patch));
-        m = geom::tessellateComplex(complexData, 16);
+        geom::SdfNode asField;
+        if (geom::sdfFromComplex(complexData, asField)) {
+            // Display mesh of the SDF primitive (capped cylinder/cone), not
+            // a 24-slice UV side plus N-gon caps. Collision still uses the
+            // coarser cloud below.
+            const float ext = std::max(_shapeParams.r, _shapeParams.halfH) + 0.25f;
+            _complexMeshes.push_back(geom::tessellateSdf(asField, std::max(ext, 0.6f), 32));
+            m = _complexMeshes.front();
+        } else {
+            _complexMeshes.reserve(complexData.patches.size());
+            for (const auto& patch : complexData.patches)
+                _complexMeshes.push_back(geom::tessellatePatch(patch));
+            m = geom::tessellateComplex(complexData, 16);
+        }
     }
     else if (_hasSmooth) {
         _smoothMesh = geom::tessellateSmooth(smoothData);
