@@ -7,14 +7,15 @@
 #include "Singularity/Storage/BinaryPack.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/LawAuditLogger.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
+#include "ConstructedBeing/Material/Material.hpp"
 #include "ConstructedBeing/Material/MaterialManager.hpp"
 #include "ConstructedBeing/Object/Creation/ObjectConcept.hpp"
 #include "Singularity/OntoMath/ScalarForm.hpp"
 #include "Singularity/TransferPolicy.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "Singularity/Screen/Camera.hpp"
-#include "Singularity/Input/MouseHandler.hpp"
-#include "Singularity/FirstMoverWindowTools/Tool.hpp"
+#include "Singularity/Input/Mouse/MouseHandler.hpp"
+#include "Singularity/FirstMoverOntology/FirstMoverWindowTools/Tool.hpp"
 #include "Person/Person.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "Singularity/Storage/Schema/Earthcall_generated.h"
@@ -26,6 +27,9 @@
 #include <ctime>
 #include <iostream>
 #include <vector>
+#include <cmath>
+#include <unordered_set>
+#include <algorithm>
 
 extern MaterialManager materials;
 extern CategoryManager categories;
@@ -164,6 +168,81 @@ void logIo(const std::string& line) {
     char stamp[32];
     std::strftime(stamp, sizeof(stamp), "%Y-%m-%d %H:%M:%S", std::localtime(&now));
     log << stamp << "  " << line << "\n";
+}
+
+nlohmann::json readSaveJsonFile(const std::string& filename) {
+    std::filesystem::path path(filename);
+    std::string name = path.stem().string();
+    std::string gameFolder = SaveSystem::ensureSaveTypeFolder(SaveSystem::SaveType::WORLD);
+    std::string unpackedPath = gameFolder + "/" + name + "_unpacked";
+    if (SaveSystem::isUnpackedDirectoryNewer(unpackedPath, filename)) {
+        nlohmann::json j = SaveSystem::compileSaveFromDirectory(unpackedPath);
+        SaveSystem::writeSaveDataAsync(j, name, SaveSystem::SaveType::WORLD);
+        std::cout << "[load] Compiled newer unpacked directory back into monolithic save.\n";
+        return j;
+    }
+    return SaveSystem::readSaveData(filename);
+}
+
+// Latch: person.position vs camera.pos - eyeHeight.
+// LocomotionChannel::step treats a mismatch as a teleport and SNAPS THE
+// CAMERA BACK onto the Person. Writers that move the camera without writing
+// person.position (this helper's callers: loadState, loadTestObservation)
+// look like a no-op — the next frame undoes them. Keep both sides in step.
+void settlePersonToCamera(SaveContext& ctx) {
+    if (!ctx.player || !ctx.camera) return;
+    const float eyeH = ctx.player->getBody().getEyeHeight();
+    ctx.player->position = ctx.camera->pos - glm::vec3(0.0f, eyeH, 0.0f);
+    ctx.player->cameraPos = ctx.camera->pos;
+    ctx.player->cameraForward = ctx.camera->front;
+    ctx.player->velocity = glm::vec3(0.0f);
+    ctx.player->updatePose();
+}
+
+void applyLook(SaveContext& ctx, const glm::vec3& eye, const glm::vec3& target) {
+    if (!ctx.camera) return;
+    ctx.camera->pos = eye;
+    glm::vec3 dir = target - eye;
+    if (glm::length(dir) < 1e-4f) dir = glm::vec3(0.0f, 0.0f, -1.0f);
+    else dir = glm::normalize(dir);
+    ctx.camera->front = dir;
+    if (ctx.mouseHandler) {
+        const float rad2deg = 57.2957795f;
+        ctx.mouseHandler->setPitch(std::asin(glm::clamp(dir.y, -0.999f, 0.999f)) * rad2deg);
+        ctx.mouseHandler->setYaw(std::atan2(dir.z, dir.x) * rad2deg);
+    }
+    settlePersonToCamera(ctx);
+}
+
+void lookAtWorld(SaveContext& ctx, const World& world) {
+    glm::vec3 minP(1e9f), maxP(-1e9f);
+    int n = 0;
+    for (const auto& obj : world.getOwnedObjects()) {
+        if (!obj) continue;
+        const glm::vec3 p = obj->getPosition();
+        minP = glm::min(minP, p);
+        maxP = glm::max(maxP, p);
+        ++n;
+    }
+    if (n == 0) return;
+    const glm::vec3 center = 0.5f * (minP + maxP);
+    float radius = 0.5f * glm::length(maxP - minP);
+    if (radius < 1.5f) radius = 1.5f;
+    const glm::vec3 eye = center + glm::vec3(0.0f, radius * 0.45f + 1.6f, radius * 2.2f + 3.0f);
+    applyLook(ctx, eye, center);
+}
+
+bool cameraIsDumpDefault(const nlohmann::json& j) {
+    if (!j.contains("cameraPos") || !j["cameraPos"].is_array() || j["cameraPos"].size() < 3)
+        return true;
+    const float x = j["cameraPos"][0].get<float>();
+    const float y = j["cameraPos"][1].get<float>();
+    const float z = j["cameraPos"][2].get<float>();
+    return std::fabs(x) < 1e-4f && std::fabs(y) < 1e-4f && std::fabs(z) < 1e-4f;
+}
+
+std::string observationZoneName(const std::string& stem) {
+    return "test." + stem;
 }
 } // namespace
 
@@ -362,18 +441,7 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
     };
     try {
         using json = nlohmann::json;
-        json j;
-        
-        std::string gameFolder = SaveSystem::ensureSaveTypeFolder(SaveSystem::SaveType::WORLD);
-        std::string unpackedPath = gameFolder + "/" + name + "_unpacked";
-        if (SaveSystem::isUnpackedDirectoryNewer(unpackedPath, filename)) {
-            j = SaveSystem::compileSaveFromDirectory(unpackedPath);
-            // Overwrite the monolithic file and its delta chunk to ensure they match
-            SaveSystem::writeSaveDataAsync(j, name, SaveSystem::SaveType::WORLD);
-            std::cout << "[load] Compiled newer unpacked directory back into monolithic save.\n";
-        } else {
-            j = SaveSystem::readSaveData(filename);
-        }
+        json j = readSaveJsonFile(filename);
         
         if (j.is_null()) {
             _saveLoad.lastLoadReport = "COULD NOT OPEN OR READ: " + filename;
@@ -473,6 +541,12 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
         }
         ctx.mouseHandler->setYaw(j.value("yaw", -90.0f));
         ctx.mouseHandler->setPitch(j.value("pitch", 0.0f));
+        // Engine::update overwrites camera.front from yaw/pitch each frame, so
+        // the JSON front is only a hint; the mouse handler is the look office.
+        if (ctx.camera) {
+            ctx.camera->front = ctx.mouseHandler->calculateCameraFront();
+        }
+        settlePersonToCamera(ctx);
 
         if (j.contains("currentColor")) {
             ctx.currentColor[0] = j["currentColor"][0];
@@ -594,6 +668,211 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
         _saveLoad.lastLoadReport = std::string("LOAD FAILED: ") + e.what();
         std::cerr << "Error loading state: " << e.what() << "\n";
         logIo("LOAD end:   " + _saveLoad.lastLoadReport);
+    }
+}
+
+// ------------------------------------------------------------------
+// loadTestObservation
+//
+// Caller: DeveloperToolsWindow (grave / Toggle Dev Mode).
+// Not loadState: that clears _zones and would erase Home, which is the
+// CRITICAL fear at the top of the agenda. Observation puts the dump's
+// beings into a Zone named test.<stem>, merges missing materials /
+// concepts / laws, switches the Person into that Zone, and aims them
+// at the cluster so they can see it.
+// ------------------------------------------------------------------
+void ZoneManager::loadTestObservation(const std::string& filename, SaveContext& ctx) {
+    _saveLoad.lastLoadReport.clear();
+    logIo("OBSERVE begin: " + filename);
+    try {
+        using json = nlohmann::json;
+        json j = readSaveJsonFile(filename);
+        if (j.is_null()) {
+            _saveLoad.lastLoadReport = "COULD NOT OPEN OR READ: " + filename;
+            std::cerr << "[observe] " << _saveLoad.lastLoadReport << "\n";
+            logIo("OBSERVE end: " + _saveLoad.lastLoadReport);
+            return;
+        }
+
+        const std::string stem = std::filesystem::path(filename).stem().string();
+        const std::string zoneName = observationZoneName(stem);
+
+        int materialsAdded = 0;
+        if (j.contains("materials") && j["materials"].is_array()) {
+            for (const auto& e : j["materials"]) {
+                auto m = std::make_shared<Material>(Material::fromJson(e));
+                if (!m) continue;
+                if (materials.get(m->getIdentifier())) continue;
+                materials.add(m);
+                ++materialsAdded;
+            }
+        }
+
+        int conceptsAdded = 0;
+        if (j.contains("concepts")) {
+            const auto& cj = j["concepts"];
+            const auto& arr = (cj.is_object() && cj.contains("concepts")) ? cj["concepts"] : cj;
+            if (arr.is_array()) {
+                for (const auto& c : arr) {
+                    auto concept = ObjectConcept::fromJson(c);
+                    if (!concept) continue;
+                    if (ConceptRegistry::instance().find(concept->getIdentifier())) continue;
+                    ConceptRegistry::instance().add(concept);
+                    ++conceptsAdded;
+                }
+            }
+        }
+
+        int lawsAdded = 0;
+        int lawsReauthored = 0;
+        if (ctx.lawManager && j.contains("authoredLaws")) {
+            const auto& al = j["authoredLaws"];
+            const auto findBeing = [](const std::string& id) -> Singular* {
+                for (Singular* being : Universe::instance().beings()) {
+                    if (being && being->getIdentifier() == id) return being;
+                }
+                return nullptr;
+            };
+            if (al.contains("laws") && al["laws"].is_array()) {
+                for (const auto& lj : al["laws"]) {
+                    auto law = Law::fromJson(lj);
+                    if (!law) continue;
+                    if (ctx.lawManager->find(law->getIdentifier())) continue;
+                    if (lj.contains("authors")) {
+                        for (const auto& idJson : lj["authors"]) {
+                            if (!idJson.is_string()) continue;
+                            if (Singular* being = findBeing(idJson.get<std::string>())) {
+                                law->addAuthor(*being);
+                            }
+                        }
+                    }
+                    if (law->authors().getMembers().empty() && ctx.player) {
+                        law->addAuthor(*ctx.player);
+                        ++lawsReauthored;
+                    }
+                    ctx.lawManager->add(law);
+                    ++lawsAdded;
+                }
+            }
+            if (al.contains("triggers") && al["triggers"].is_object()) {
+                for (auto it = al["triggers"].begin(); it != al["triggers"].end(); ++it) {
+                    if (!ctx.lawManager->find(it.key())) continue;
+                    for (const auto& type : it.value()) {
+                        if (type.is_string()) {
+                            ctx.lawManager->bindTrigger(it.key(), type.get<std::string>());
+                        }
+                    }
+                }
+            }
+        }
+
+        std::shared_ptr<Zone> zone;
+        size_t zoneIndex = static_cast<size_t>(-1);
+        for (size_t i = 0; i < _zones.size(); ++i) {
+            if (_zones[i] && _zones[i]->getIdentifier() == zoneName) {
+                zone = _zones[i];
+                zoneIndex = i;
+                break;
+            }
+        }
+        if (!zone) {
+            zone = std::make_shared<Zone>(zoneName, "default", Zone::Scope::Local);
+            zone->setQuality("kind", "test-observation");
+            addZone(zone);
+            zoneIndex = _zones.size() - 1;
+        }
+
+        std::unordered_set<Object*> retiring;
+        for (const auto& obj : zone->world().getOwnedObjects()) {
+            if (obj) retiring.insert(obj.get());
+        }
+        zone->world().getOwnedObjectsMutable().clear();
+        globalObjects.erase(
+            std::remove_if(globalObjects.begin(), globalObjects.end(),
+                           [&](const std::shared_ptr<Object>& obj) {
+                               if (!obj) return true;
+                               return retiring.count(obj.get()) > 0 || obj->belongsToZone(zoneName);
+                           }),
+            globalObjects.end());
+
+        if (j.contains("zones") && j["zones"].is_array()) {
+            for (const auto& zj : j["zones"]) {
+                if (zj.contains("world")) {
+                    from_json(zj["world"], zone->world());
+                }
+            }
+        }
+        if (j.contains("objects") && j["objects"].is_array() &&
+            zone->world().getOwnedObjects().empty()) {
+            from_json(j, zone->world());
+        }
+
+        for (const auto& obj : zone->world().getOwnedObjects()) {
+            if (!obj) continue;
+            obj->addZoneDesignation(zone->name());
+            obj->addZoneDesignation(zone->getIdentifier());
+            globalObjects.push_back(obj);
+        }
+
+        switchTo(zoneIndex);
+
+        const std::size_t objectCount = zone->world().getOwnedObjects().size();
+        if (objectCount > 0 && cameraIsDumpDefault(j)) {
+            lookAtWorld(ctx, zone->world());
+        } else if (j.contains("cameraPos") && ctx.camera) {
+            ctx.camera->pos = glm::vec3(j["cameraPos"][0], j["cameraPos"][1], j["cameraPos"][2]);
+            if (ctx.mouseHandler) {
+                ctx.mouseHandler->setYaw(j.value("yaw", -90.0f));
+                ctx.mouseHandler->setPitch(j.value("pitch", 0.0f));
+                ctx.camera->front = ctx.mouseHandler->calculateCameraFront();
+            }
+            settlePersonToCamera(ctx);
+            if (objectCount > 0) {
+                // Even a non-default dump camera may be looking past the
+                // cluster (eye at y=0, cubes at y=2). If the camera is more
+                // than a few metres from the cluster, aim at it.
+                glm::vec3 minP(1e9f), maxP(-1e9f);
+                for (const auto& obj : zone->world().getOwnedObjects()) {
+                    if (!obj) continue;
+                    const glm::vec3 p = obj->getPosition();
+                    minP = glm::min(minP, p);
+                    maxP = glm::max(maxP, p);
+                }
+                const glm::vec3 center = 0.5f * (minP + maxP);
+                if (glm::distance(ctx.camera->pos, center) > 12.0f) {
+                    lookAtWorld(ctx, zone->world());
+                }
+            }
+        } else if (objectCount > 0) {
+            lookAtWorld(ctx, zone->world());
+        }
+
+        _saveLoad.lastLoadReport =
+            "Observing '" + zoneName + "': " +
+            std::to_string(objectCount) + " object(s) in the active Zone. Home is still here. " +
+            std::to_string(materialsAdded) + " material(s) merged, " +
+            std::to_string(conceptsAdded) + " concept(s) merged, " +
+            std::to_string(lawsAdded) + " law(s) added";
+        if (lawsReauthored > 0) {
+            _saveLoad.lastLoadReport +=
+                " (" + std::to_string(lawsReauthored) +
+                " re-authored onto this Person so they can fire)";
+        }
+        _saveLoad.lastLoadReport += ".";
+        if (objectCount == 0) {
+            _saveLoad.lastLoadReport +=
+                " This dump has no objects — it is a law seed. Load a *_final.json "
+                "to see spawned beings, or arm the loaded law and click.";
+        } else {
+            _saveLoad.lastLoadReport +=
+                " Close this window and look around; you are facing the loaded beings.";
+        }
+        std::cerr << "[observe] " << _saveLoad.lastLoadReport << "\n";
+        logIo("OBSERVE end: " + _saveLoad.lastLoadReport);
+    } catch (const std::exception& e) {
+        _saveLoad.lastLoadReport = std::string("OBSERVE FAILED: ") + e.what();
+        std::cerr << "[observe] " << _saveLoad.lastLoadReport << "\n";
+        logIo("OBSERVE end: " + _saveLoad.lastLoadReport);
     }
 }
 

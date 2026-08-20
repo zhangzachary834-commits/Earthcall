@@ -10,8 +10,8 @@ We will tackle this by extending our existing adapter and scaffolding a Sync Man
 
 We need a system that subscribes to native Earthcall changes (like a Property update or an ECA event) and routes them back to the correct external channel.
 
-#### [NEW] [ForeignSyncManager.hpp](file:///Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Foreign/ForeignSyncManager.hpp)
-#### [NEW] [ForeignSyncManager.cpp](file:///Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Foreign/ForeignSyncManager.cpp)
+#### [NEW] [ForeignSyncManager.hpp](file:///Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Foreign/Sync/ForeignSyncManager.hpp)
+#### [NEW] [ForeignSyncManager.cpp](file:///Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Foreign/Sync/ForeignSyncManager.cpp)
 - **Role**: Hooks into Earthcall's `Universe` and `LawManager`. It listens for specific ECA events (e.g., "object-dragged" or "button-clicked") that target `Object`s belonging to a `foreign-zone`.
 - **Action**: When an event occurs, it translates the Earthcall identifier back into the external app's ID and delegates the action to the adapter.
 

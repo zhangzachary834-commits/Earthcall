@@ -141,11 +141,13 @@ set(IMGUI_SOURCES
     ${IMGUI_DIR}/imgui_widgets.cpp
     ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp
     ${IMGUI_DIR}/backends/imgui_impl_opengl2.cpp
+        src/Time/Time.cpp
+        src/Time/Time.h
 )
 
 # Compile WebIntegration and RealWebView as Objective-C++ since they use macOS APIs
-set_source_files_properties(src/Singularity/Foreign/RealWebView.cpp PROPERTIES LANGUAGE OBJCXX)
-set_source_files_properties(src/Singularity/Foreign/WebIntegration.cpp PROPERTIES LANGUAGE OBJCXX)
+set_source_files_properties(src/Singularity/Foreign/Web/RealWebView.cpp PROPERTIES LANGUAGE OBJCXX)
+set_source_files_properties(src/Singularity/Foreign/Web/WebIntegration.cpp PROPERTIES LANGUAGE OBJCXX)
 
 # Object library for shared code
 add_library(earthcall_core OBJECT ${SRC_FILES} ${IMGUI_SOURCES})
@@ -312,8 +314,8 @@ if (EMSCRIPTEN)
     set(WASM_APP_SOURCES ${SRC_FILES})
     list(FILTER WASM_APP_SOURCES EXCLUDE REGEX "src/Singularity/Screen/WebGPU/smoke_.*")
     # Exclude macOS specific webviews
-    list(FILTER WASM_APP_SOURCES EXCLUDE REGEX "src/Singularity/Foreign/RealWebView.*")
-    list(FILTER WASM_APP_SOURCES EXCLUDE REGEX "src/Singularity/Foreign/WebIntegration.*")
+    list(FILTER WASM_APP_SOURCES EXCLUDE REGEX "src/Singularity/Foreign/Web/RealWebView.*")
+    list(FILTER WASM_APP_SOURCES EXCLUDE REGEX "src/Singularity/Foreign/Web/WebIntegration.*")
     # Exclude Legacy OpenGL renderer but keep GluCompat
     list(FILTER WASM_APP_SOURCES EXCLUDE REGEX "src/Singularity/Screen/GL/OpenGLRenderer.cpp")
     # Also exclude native AudioToolbox/CoreAudio dependencies if needed

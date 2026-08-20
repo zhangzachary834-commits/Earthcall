@@ -6,7 +6,7 @@
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/SaveContext.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
-#include "Singularity/Input/MouseHandler.hpp"
+#include "Singularity/Input/Mouse/MouseHandler.hpp"
 #include <cstring>
 #include <filesystem>
 #include <map>

@@ -72,8 +72,8 @@ Do not attempt to delete Game in one commit. Use this incremental ladder:
 but Game owns instances of them and they have back-pointers to Game.
 
 **Target State:**
-- `Singularity/Input/KeyboardHandler.hpp/cpp` — standalone, no Game dependency
-- `Singularity/Input/MouseHandler.hpp/cpp` — standalone, no Game dependency  
+- `Singularity/Input/Keyboard/KeyboardHandler.hpp/cpp` — standalone, no Game dependency
+- `Singularity/Input/Mouse/MouseHandler.hpp/cpp` — standalone, no Game dependency  
 - Input state accessed through EventBus, not direct Game members
 
 **Migration Steps:**
@@ -84,10 +84,10 @@ but Game owns instances of them and they have back-pointers to Game.
 5. Delete `_keyboardHandler`, `_mouseHandler` from Game
 
 **Files to Create:**
-- `src/Singularity/Input/KeyboardHandler.hpp`
-- `src/Singularity/Input/KeyboardHandler.cpp`
-- `src/Singularity/Input/MouseHandler.hpp`
-- `src/Singularity/Input/MouseHandler.cpp`
+- `src/Singularity/Input/Keyboard/KeyboardHandler.hpp`
+- `src/Singularity/Input/Keyboard/KeyboardHandler.cpp`
+- `src/Singularity/Input/Mouse/MouseHandler.hpp`
+- `src/Singularity/Input/Mouse/MouseHandler.cpp`
 
 **Files to Modify:**
 - `src/Perspective/KeyboardHandler.hpp/cpp` — redirect to new location or delete
@@ -483,10 +483,10 @@ ctest is **35/35**. Five test executables previously failed to compile and did n
 
 - `docs/architecture/migration/GAME_ELIMINATION_PLAN.md` - This document
 - `src/ZonesOfEarth/SaveContext.hpp` - Carries save/load state across the layer boundary so `ZonesOfEarth` need not know `Core::Game` exists
-- `src/Singularity/Input/KeyboardHandler.hpp`
-- `src/Singularity/Input/KeyboardHandler.cpp`
-- `src/Singularity/Input/MouseHandler.hpp`
-- `src/Singularity/Input/MouseHandler.cpp`
+- `src/Singularity/Input/Keyboard/KeyboardHandler.hpp`
+- `src/Singularity/Input/Keyboard/KeyboardHandler.cpp`
+- `src/Singularity/Input/Mouse/MouseHandler.hpp`
+- `src/Singularity/Input/Mouse/MouseHandler.cpp`
 - `src/Singularity/Screen/Camera.hpp`
 - `src/Singularity/Screen/Camera.cpp`
 

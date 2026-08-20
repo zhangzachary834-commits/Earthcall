@@ -2,7 +2,7 @@
 
 Fixes for AUDIT_2026-08-10.md §1.4, §2.6, §2.7, and part of §4, plus two adjacent bugs
 (§Renderer null deref, §Game::shutdown skipped) named in the same work order. Scope was
-`src/Identity/**`, `src/Singularity/Foreign/WebBindings.cpp`, `src/Singularity/Network/
+`src/Identity/**`, `src/Singularity/Foreign/Web/WebBindings.cpp`, `src/Singularity/Network/
 WebSocketClient_wasm.cpp`, `src/Singularity/Storage/SaveSystem.{cpp,hpp}`, `src/Singularity/Storage/CloudStorage.cpp`,
 `src/Singularity/Screen/Renderer.cpp`, `src/Singularity/Core/Engine.cpp`,
 `src/Singularity/Screen/GL/GluCompat.cpp`, `.gitignore`. No build was run (five agents share one

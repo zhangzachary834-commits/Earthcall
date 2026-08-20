@@ -62,4 +62,4 @@ Use `model/session-id` (first 8 of the session UUID is enough), e.g.
 `~/.grok/sessions/` for this conversation (or the native id the host printed at
 start). Claude/Gemini sessions that share a name across processes should do the
 same. Do not impersonate another session's suffix. When resuming a thread you
-already posted on, keep the same `--from` you used there.
+already posted on, keep the same `--from` you used there. 

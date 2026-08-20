@@ -24,8 +24,8 @@ def fix_cursor_tools_cpp():
     with open(path, 'r') as f:
         content = f.read()
 
-    if '#include "Singularity/Input/MouseHandler.hpp"' not in content:
-        content = '#include "Singularity/Input/MouseHandler.hpp"\n' + content
+    if '#include "Singularity/Input/Mouse/MouseHandler.hpp"' not in content:
+        content = '#include "Singularity/Input/Mouse/MouseHandler.hpp"\n' + content
 
     with open(path, 'w') as f:
         f.write(content)

@@ -14,8 +14,10 @@ These are not synonyms and neither is a misnaming of the other:
   vet what that First Mover proposes, and the authoring surface. It is a framework name,
   and it lives in `docs/` — the workshop, not the ontology.
 - **Foreign** (`src/Singularity/Foreign/`) is narrower: the Singularity-level modality
-  layer holding the hardwired connectors to external software — `ForeignChannel`, the
-  protocol adapters, the sync manager.
+  layer holding the hardwired connectors to external software. `ForeignChannel` stays
+  at the modality root (the `PhysicalChannel` pattern). Protocol adapters live in
+  `Adapters/`, the engine-facing surface in `API/`, the overlay/webview surface in
+  `Web/`, and state-over-`dt` / sync-back / inference in `Sync/`.
 
 So: there is **no `src/Integration/`** and there will not be one — a top-level directory
 for a subsystem is refusal #2, and the C++ half of this system is already correctly placed

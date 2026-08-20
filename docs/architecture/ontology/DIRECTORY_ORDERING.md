@@ -94,9 +94,17 @@ Earthcall/
       Network/             WebSocketClient.cpp · WebSocketServer.cpp
                              py/  engine_server.py · events.py
       OntoMath/            authored mathematics (Field, Function, CurveModel, Operations)
-      Foreign/             the Foreign software modality (ForeignChannel, EarthcallAPI, SecurityManager)
-                             py/  app.py
-      Input/               the Input modality (KeyboardHandler, MouseHandler)
+      Foreign/             the Foreign software modality (ForeignChannel at the root)
+                             Adapters/  MacOSAccessibilityAdapter
+                             API/       EarthcallAPI, SecurityManager
+                             Web/       WebIntegration, RealWebView, WindowManager, IntegrationManager, web_ui
+                             Sync/      AsyncStateLogger, ForeignSyncManager, InferenceLawBridge
+                             py/        app.py
+      Input/               the Input modality
+                             Keyboard/     KeyboardHandler
+                             Mouse/        MouseHandler
+                             Locomotion/   LocomotionChannel
+                             Interaction/  InteractionChannel, ControlPatterns
       Screen/              the Screen/Light modality (Renderer, WebGPU, GL, BrushSystem)
       Storage/             the Storage modality (SaveSystem, CloudStorage, BinaryPack, Frontier)
       Physical/            the Physical hardware modality (PhysicalChannel)

@@ -48,7 +48,7 @@
 #include "Person/Soul/Soul.hpp"
 #include "Relation/Relation.hpp"
 #include "Singularity/Core/CreationChannel.hpp"
-#include "Singularity/Input/LocomotionChannel.hpp"
+#include "Singularity/Input/Locomotion/LocomotionChannel.hpp"
 #include "Singularity/Core/EventEntity.hpp"
 #include "Singularity/Language/Lexeme.hpp"
 #include "Singularity/Screen/LawGraphWindow.hpp"

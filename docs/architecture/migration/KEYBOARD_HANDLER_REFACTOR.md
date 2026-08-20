@@ -1,13 +1,13 @@
 # Keyboard Handler Architecture & Refactoring
 
-This document explains the centralized keyboard handling architecture in `src/Singularity/Input/KeyboardHandler.{hpp,cpp}` and its integration with `Core::Engine`.
+This document explains the centralized keyboard handling architecture in `src/Singularity/Input/Keyboard/KeyboardHandler.{hpp,cpp}` and its integration with `Core::Engine`.
 
 ## Architecture Overview
 
 Keyboard functionality is isolated into the `Singularity/Input` modality rather than scattered across the core simulation loop.
 
 ### Core Responsibilities
-- Centralized keyboard state tracking in `KeyboardHandler` (`src/Singularity/Input/KeyboardHandler.hpp`).
+- Centralized keyboard state tracking in `KeyboardHandler` (`src/Singularity/Input/Keyboard/KeyboardHandler.hpp`).
 - Clean separation of concerns with callback-based key bindings.
 - Owned and initialized directly by `Core::Engine` (`_keyboardHandler`), accessible via `Engine::getKeyboardHandler()`.
 

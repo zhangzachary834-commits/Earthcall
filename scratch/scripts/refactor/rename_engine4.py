@@ -7,7 +7,7 @@ def process(filepath):
     
     # Missing includes
     if 'getMouseHandler()' in content and 'MouseHandler.hpp' not in content:
-        content = '#include "Singularity/Input/MouseHandler.hpp"\n' + content
+        content = '#include "Singularity/Input/Mouse/MouseHandler.hpp"\n' + content
     if 'getCamera()' in content and 'Camera.hpp' not in content:
         content = '#include "Singularity/Screen/Camera.hpp"\n' + content
             

@@ -8,7 +8,7 @@ def fix_tool_cpp():
 
     # Includes
     if "MouseHandler.hpp" not in content:
-        content = '#include "../../Singularity/Input/MouseHandler.hpp"\n' + content
+        content = '#include "../../Singularity/Input/Mouse/MouseHandler.hpp"\n' + content
         content = '#include "../../Singularity/Screen/Camera.hpp"\n' + content
 
     # Engine rename

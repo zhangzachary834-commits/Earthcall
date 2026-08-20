@@ -1,4 +1,4 @@
-#include "Singularity/Foreign/SecurityManager.hpp"
+#include "Singularity/Foreign/API/SecurityManager.hpp"
 #include "Singularity/Storage/SaveSystem.hpp"
 #include <iostream>
 #include <fstream>

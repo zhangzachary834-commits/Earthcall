@@ -8,7 +8,7 @@
 #include <memory>
 #include <mutex>
 #include <regex>
-#include "../json.hpp"
+#include "json.hpp"
 
 namespace Integration {
 

@@ -30,12 +30,12 @@ def fix_engine_update():
         content = f.read()
 
     # includes
-    includes = """#include "Singularity/Input/KeyboardHandler.hpp"
-#include "Singularity/Input/MouseHandler.hpp"
+    includes = """#include "Singularity/Input/Keyboard/KeyboardHandler.hpp"
+#include "Singularity/Input/Mouse/MouseHandler.hpp"
 #include "Person/Person.hpp"
 #include "OurVerse/ElementalToolHandler.hpp"
 """
-    if '#include "Singularity/Input/KeyboardHandler.hpp"' not in content:
+    if '#include "Singularity/Input/Keyboard/KeyboardHandler.hpp"' not in content:
         content = includes + content
 
     content = content.replace("void Engine::update", "void Engine::tick")

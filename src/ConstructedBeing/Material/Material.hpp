@@ -10,6 +10,10 @@
 #include <string>
 
 // ---------------------------------------------------------------------------
+// Material is the bridge between Singulars and raw Singularity metal.
+// It gathers the Singularity into a defined shape and value order, calls it a Material,
+// and then a Singular is comprised of it.
+//
 // A Material is a being. It owns how a surface *appears* — not a GL concept but
 // authorable appearance data: an albedo tint plus a Blinn-Phong response. Like
 // every Singular it registers its fields as Properties, so the Law system can

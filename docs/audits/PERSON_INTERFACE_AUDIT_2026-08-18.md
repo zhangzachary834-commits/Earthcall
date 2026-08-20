@@ -540,7 +540,7 @@ There are three Person-facing front ends in the tree, each with its own
 independently hardcoded list of what a tool is:
 
 1. **ImGui console** — `Tool::Type`, ~50 values (`Tool.hpp`).
-2. **React app** — `src/Singularity/Foreign/web_ui/src/App.jsx:6`, a `TOOLS`
+2. **React app** — `src/Singularity/Foreign/Web/web_ui/src/App.jsx:6`, a `TOOLS`
    array of five (`brush`, `eraser`, `select`, `magic`, `clone`) and an
    eight-swatch `COLORS` array, talking socket.io to `localhost:5005`.
 3. **WASM page** — `web_ui/` at the repo root (`app.js`, `wasm.html`).

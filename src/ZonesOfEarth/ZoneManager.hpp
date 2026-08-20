@@ -62,6 +62,10 @@ public:
     void saveState(const std::string& filename, SaveContext& ctx);
     void loadState(const std::string& filename, SaveContext& ctx);
     void saveStateWithLog(const std::string& customName, SaveContext& ctx);
+    // Load a test dump into an isolated observation Zone without replacing
+    // Home or the Person's other zones. DeveloperToolsWindow is the caller;
+    // loadState is the replace-all office and must not be used for this.
+    void loadTestObservation(const std::string& filename, SaveContext& ctx);
     std::vector<uint8_t> buildSaveChunkFlatBuffer();
     void loadSaveChunkFlatBuffer(const std::vector<uint8_t>& buffer);
 };

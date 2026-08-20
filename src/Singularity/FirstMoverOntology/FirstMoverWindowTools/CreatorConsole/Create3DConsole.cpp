@@ -3,8 +3,8 @@
 #include <GLFW/glfw3.h>
 #include "Person/Person.hpp"
 #include "ConstructedBeing/Object/Geometry/ComplexShape.hpp"
-#include "Singularity/FirstMoverWindowTools/Tool.hpp"
-#include "Singularity/FirstMoverWindowTools/CreationTools.hpp"
+#include "Singularity/FirstMoverOntology/FirstMoverWindowTools/Tool.hpp"
+#include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreationTools.hpp"
 #include "Singularity/Core/Engine.hpp"
 #include "Singularity/Core/CreationChannel.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"

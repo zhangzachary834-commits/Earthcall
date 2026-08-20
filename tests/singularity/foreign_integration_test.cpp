@@ -1,7 +1,7 @@
 #include "Singularity/Foreign/ForeignChannel.hpp"
-#include "Singularity/Foreign/AsyncStateLogger.hpp"
-#include "Singularity/Foreign/InferenceLawBridge.hpp"
-#include "Singularity/Foreign/ForeignSyncManager.hpp"
+#include "Singularity/Foreign/Sync/AsyncStateLogger.hpp"
+#include "Singularity/Foreign/Sync/InferenceLawBridge.hpp"
+#include "Singularity/Foreign/Sync/ForeignSyncManager.hpp"
 #include "Singularity/Foreign/Adapters/MacOSAccessibilityAdapter.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"   // LawManager is declared here

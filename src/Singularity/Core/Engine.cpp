@@ -28,13 +28,13 @@
 #include "Singularity/Screen/Camera.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 
-#include "Singularity/Input/KeyboardHandler.hpp"
-#include "Singularity/Input/MouseHandler.hpp"
-#include "Singularity/FirstMoverWindowTools/CursorTools.hpp"
-#include "Singularity/FirstMoverWindowTools/Chat.hpp"
-#include "Singularity/FirstMoverWindowTools/ElementalToolHandler.hpp"
-#include "Singularity/FirstMoverWindowTools/CreatorConsole/CreatorConsoleWindow.hpp"
-#include "Singularity/FirstMoverWindowTools/CreatorConsole/CreatorConsoleState.hpp"
+#include "Singularity/Input/Keyboard/KeyboardHandler.hpp"
+#include "Singularity/Input/Mouse/MouseHandler.hpp"
+#include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CursorTools.hpp"
+#include "Singularity/FirstMoverOntology/FirstMoverWindowTools/Chat.hpp"
+#include "Singularity/FirstMoverOntology/FirstMoverWindowTools/ElementalToolHandler.hpp"
+#include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleWindow.hpp"
+#include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleState.hpp"
 #include "Singularity/Screen/LawGraphWindow.hpp"
 #include "Singularity/Screen/DeveloperToolsWindow.hpp"
 #include "Singularity/Screen/CreationWindow.hpp"
@@ -42,7 +42,7 @@
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "Singularity/Storage/SaveSystem.hpp"
 
-#include "Singularity/FirstMoverWindowTools/CreatorConsole/CreatorConsoleWindow.hpp"
+#include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleWindow.hpp"
 #include <iostream>
 #include <filesystem>
 #include <vector>

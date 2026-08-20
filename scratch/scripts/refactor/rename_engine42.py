@@ -7,7 +7,7 @@ def fix_tool_cpp():
         content = f.read()
 
     if "MouseHandler.hpp" not in content:
-        content = '#include "../Singularity/Input/MouseHandler.hpp"\n' + content
+        content = '#include "../Singularity/Input/Mouse/MouseHandler.hpp"\n' + content
 
     content = content.replace("engine->PotteryTool", "// engine->PotteryTool")
     content = content.replace("engine->setSelectedObject3D", "// engine->setSelectedObject3D")

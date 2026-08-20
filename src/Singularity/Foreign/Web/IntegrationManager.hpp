@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Singularity/Foreign/WebIntegration.hpp"
-#include "Singularity/Foreign/WindowManager.hpp"
-#include "Singularity/Foreign/EarthcallAPI.hpp"
+#include "Singularity/Foreign/Web/WebIntegration.hpp"
+#include "Singularity/Foreign/Web/WindowManager.hpp"
+#include "Singularity/Foreign/API/EarthcallAPI.hpp"
 #include <memory>
 
 namespace Integration {

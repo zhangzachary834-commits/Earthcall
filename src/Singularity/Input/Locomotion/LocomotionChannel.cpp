@@ -204,9 +204,11 @@ void LocomotionChannel::step(Person& person, ::Core::Camera& camera, GLFWwindow*
     const auto& objects = mgr.active().world().getOwnedObjects();
     const float eyeH = person.getBody().getEyeHeight();
 
-    // A Law that wrote person.position since last frame is a teleport: adopt it
-    // before resolving this frame's input. At the end of the last step,
-    // position was exactly camera.pos - eyeH.
+    // Latch: person.position vs camera.pos - eyeH. A mismatch is a teleport:
+    // this step adopts it by snapping the camera onto the Person. Writers that
+    // move the camera without writing person.position (loadState,
+    // loadTestObservation — see settlePersonToCamera in ZoneManager.cpp)
+    // look like a no-op: the next frame undoes them. EngineInit writes both.
     glm::vec3 expectedPersonPos = camera.pos - glm::vec3(0.0f, eyeH, 0.0f);
     if (glm::distance(person.position, expectedPersonPos) > 1e-4f) {
         camera.pos = person.position + glm::vec3(0.0f, eyeH, 0.0f);

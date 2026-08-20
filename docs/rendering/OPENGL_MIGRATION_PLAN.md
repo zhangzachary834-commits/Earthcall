@@ -140,7 +140,7 @@ where `imgui_impl_wgpu` plugs in at Milestone 5).
 
 ### What the WebKit dependency is
 
-`src/Singularity/Foreign/RealWebView.cpp` imports Cocoa and WebKit and allocates an
+`src/Singularity/Foreign/Web/RealWebView.cpp` imports Cocoa and WebKit and allocates an
 `NSWindow`, compiled `-ObjC++`. **This is a test program for cross-app/web
 integration, not architecture.** It does not constrain the renderer decision and
 it is not a portability blocker. Earlier drafts of this document overweighted it.

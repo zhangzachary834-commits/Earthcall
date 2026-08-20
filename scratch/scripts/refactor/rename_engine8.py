@@ -23,8 +23,8 @@ def fix_engine_init_cpp():
         content = f.read()
 
     includes = """#include "Person/Person.hpp"
-#include "Singularity/Input/KeyboardHandler.hpp"
-#include "Singularity/Input/MouseHandler.hpp"
+#include "Singularity/Input/Keyboard/KeyboardHandler.hpp"
+#include "Singularity/Input/Mouse/MouseHandler.hpp"
 """
     if '#include "Person/Person.hpp"' not in content:
         content = includes + content

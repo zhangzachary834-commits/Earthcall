@@ -102,21 +102,13 @@ void World::drawGround(){
 }
 
 void World::load() {
-    // Load the world
+    // Load is not a draw. switchTo used to call this, and this used to
+    // call drawGround() — a renderer call outside any frame, which
+    // segfaulted any path that entered a Zone without a live GPU
+    // (test observation, headless load). The ground quad is still on
+    // the method if a render path wants it; load only settles mode.
     std::cout << "🌍 World::load() - Starting world initialization..." << std::endl;
-    
     mode = Mode::Creative;
-    // Initialize physics system
-
-    
-    // Create a basic ground plane 
-    drawGround();
-    
-    // TODO: Load world configuration from save file
-    // TODO: Load saved objects and their states
-    // TODO: Set up environment settings (lighting, atmosphere, etc.)
-    // TODO: Initialize any world-specific systems
-    
     std::cout << "🌍 World::load() - World loaded successfully with " << _objects.size() << " objects" << std::endl;
 }
 

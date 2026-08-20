@@ -6,7 +6,7 @@
 #include <unordered_map>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include "Singularity/FirstMoverWindowTools/Tool.hpp"
+#include "Singularity/FirstMoverOntology/FirstMoverWindowTools/Tool.hpp"
 #include "Singularity/Screen/BrushSystem.hpp"
 
 // Forward declarations

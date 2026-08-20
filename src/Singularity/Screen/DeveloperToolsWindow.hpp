@@ -5,8 +5,10 @@ namespace Core { class Engine; }
 
 namespace Rendering {
 
-// Developer test saves runner window ("Developer: Test World Saves").
-// Scans saves/tests/ and allows loading test world saves.
+// Developer test-observation window ("Developer: Test World Saves").
+// Scans saves/tests/ and loads a dump into an isolated observation Zone
+// via ZoneManager::loadTestObservation — never loadState, which would
+// replace Home.
 //
 // Also owns the LAW path's activation input, which is deliberately NOT an
 // ImGui button: pressing L (edge-triggered, independent of whatever

@@ -1,7 +1,7 @@
 #include "Singularity/Screen/Camera.hpp"
 #include "CursorTools.hpp"
 #include "Singularity/Core/Engine.hpp"
-#include "Singularity/Input/MouseHandler.hpp"
+#include "Singularity/Input/Mouse/MouseHandler.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"

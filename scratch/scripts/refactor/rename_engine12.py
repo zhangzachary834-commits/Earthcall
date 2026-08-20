@@ -19,8 +19,8 @@ def fix_engine_init_cpp():
     # Add missing headers to EngineInit
     includes = """#include "Singularity/Screen/Camera.hpp"
 #include "Singularity/Network/Chat.hpp"
-#include "Singularity/Input/KeyboardHandler.hpp"
-#include "Singularity/Input/MouseHandler.hpp"
+#include "Singularity/Input/Keyboard/KeyboardHandler.hpp"
+#include "Singularity/Input/Mouse/MouseHandler.hpp"
 #include "OurVerse/CursorTools.hpp"
 #include "OurVerse/ElementalToolHandler.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"

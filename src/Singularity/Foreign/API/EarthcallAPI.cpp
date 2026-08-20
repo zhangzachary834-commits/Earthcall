@@ -1,5 +1,5 @@
-#include "Singularity/Foreign/EarthcallAPI.hpp"
-#include "Singularity/Foreign/SecurityManager.hpp"
+#include "Singularity/Foreign/API/EarthcallAPI.hpp"
+#include "Singularity/Foreign/API/SecurityManager.hpp"
 #include "Singularity/Screen/BrushSystem.hpp"
 #include "Legacy/DesignSystem.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"

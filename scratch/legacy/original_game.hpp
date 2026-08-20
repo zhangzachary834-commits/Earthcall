@@ -19,8 +19,8 @@
 #include "Person/Soul/Soul.hpp"
 #include "Person/Body/Body.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
-#include "Singularity/Input/KeyboardHandler.hpp"
-#include "Singularity/Input/MouseHandler.hpp"
+#include "Singularity/Input/Keyboard/KeyboardHandler.hpp"
+#include "Singularity/Input/Mouse/MouseHandler.hpp"
 
 #include "ConstructedBeing/Object/Tool/BrushSettings.hpp"
 #include "Singularity/Screen/Camera.hpp"

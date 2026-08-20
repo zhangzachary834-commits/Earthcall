@@ -1,5 +1,5 @@
-#include "../../Singularity/Screen/Camera.hpp"
-#include "../../Singularity/Input/MouseHandler.hpp"
+#include "Singularity/Screen/Camera.hpp"
+#include "Singularity/Input/Mouse/MouseHandler.hpp"
 #include "Tool.hpp"
 #include "Singularity/Core/Engine.hpp"
 #include "Singularity/Core/CreationChannel.hpp"
@@ -11,7 +11,7 @@
 #include "AdvancedFacePaint.hpp"
 #include "ConstructedBeing/Material/MaterialManager.hpp"
 #include "ConstructedBeing/Material/PaintToolSurface.hpp"
-#include "Singularity/FirstMoverWindowTools/CreatorConsole/CreatorConsoleState.hpp"
+#include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleState.hpp"
 #include "Singularity/Screen/HighlightSystem.hpp"
 #include <unordered_set>
 #include <algorithm>

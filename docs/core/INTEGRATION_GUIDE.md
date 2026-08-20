@@ -98,7 +98,7 @@ earthcall.modifyAvatar({
 External applications can use the C++ API:
 
 ```cpp
-#include "Singularity/Foreign/EarthcallAPI.hpp"
+#include "Singularity/Foreign/API/EarthcallAPI.hpp"
 
 // Get the API instance
 auto& api = Integration::getEarthcallAPI();
@@ -182,7 +182,7 @@ The example includes:
 ## 🪟 Example External Window Integration
 
 ```cpp
-#include "Singularity/Foreign/IntegrationManager.hpp"
+#include "Singularity/Foreign/Web/IntegrationManager.hpp"
 
 // Register an external window
 Integration::ExternalWindow::Config config;
@@ -275,9 +275,9 @@ The integration system provides detailed logging:
 
 To extend the integration system:
 
-1. **Add new API methods** in `src/Singularity/Foreign/EarthcallAPI.hpp`
-2. **Implement features** in `src/Singularity/Foreign/EarthcallAPI.cpp`
-3. **Update UI** in `src/Singularity/Foreign/IntegrationManager.cpp`
+1. **Add new API methods** in `src/Singularity/Foreign/API/EarthcallAPI.hpp`
+2. **Implement features** in `src/Singularity/Foreign/API/EarthcallAPI.cpp`
+3. **Update UI** in `src/Singularity/Foreign/Web/IntegrationManager.cpp`
 4. **Add examples** in `examples/` directory
 5. **Update documentation** in this guide
 

@@ -1,4 +1,4 @@
-#include "Singularity/Foreign/WebIntegration.hpp"
+#include "Singularity/Foreign/Web/WebIntegration.hpp"
 #include "Singularity/Storage/SaveSystem.hpp"
 #include <iostream>
 #include <fstream>
@@ -6,7 +6,7 @@
 
 // Real web view implementation using native WebKit
 #ifndef __EMSCRIPTEN__
-#include "Singularity/Foreign/RealWebView.hpp"
+#include "Singularity/Foreign/Web/RealWebView.hpp"
 #else
 #include <emscripten.h>
 #endif

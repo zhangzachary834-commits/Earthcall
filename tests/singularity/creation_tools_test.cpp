@@ -13,8 +13,8 @@
 #include "ConstructedBeing/Object/Object.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
 #include "Singularity/Core/CreationChannel.hpp"
-#include "Singularity/FirstMoverWindowTools/CreationTools.hpp"
-#include "Singularity/FirstMoverWindowTools/CreatorConsole/CreatorConsoleState.hpp"
+#include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreationTools.hpp"
+#include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleState.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 
 #include <cstdio>

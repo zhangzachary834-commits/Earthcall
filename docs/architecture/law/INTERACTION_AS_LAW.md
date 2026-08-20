@@ -5,8 +5,8 @@ Singular set-to-set creation aimed at the pointer, the wheel, the keys — and t
 every other modality Singularity holds.**
 
 **Status:** The Sense half is built and stepped from `Engine::update`
-(`Singularity/Input/InteractionChannel`). The archetype laws are built as first-mover
-factories (`Singularity/Input/ControlPatterns`). Anchored relation templates — what makes
+(`Singularity/Input/Interaction/InteractionChannel`). The archetype laws are built as first-mover
+factories (`Singularity/Input/Interaction/ControlPatterns`). Anchored relation templates — what makes
 an instantiated control a member of its category — are built on `ObjectConcept`. Tests:
 `tests/interaction_channel_test.cpp` (14 cases, headless) and
 `tests/control_patterns_test.cpp` (8 cases) pass; the full suite is 54/55, the one
@@ -123,7 +123,7 @@ a much larger set of modalities. §9 is that.
 ```
 Sense    which being is under the pointer; is the button down; what key came in
          → ENGINE, FOREVER. Raycasts, GLFW, the window's captured-pointer veto.
-         → Singularity/Input/InteractionChannel
+         → Singularity/Input/Interaction/InteractionChannel
 
 Decide   is this being a control; is it enabled; does the Person have standing;
          is the value in range
@@ -283,7 +283,7 @@ pointer; a law that could write them would be lying to every other law).
 ## 6. The archetypes, as law text
 
 These are the five shapes of control every GUI has ever had. Each is given below in the
-vocabulary a Person authors in — `Singularity/Input/ControlPatterns` builds exactly
+vocabulary a Person authors in — `Singularity/Input/Interaction/ControlPatterns` builds exactly
 these, as first-mover laws, so a test can exercise them without a window.
 
 Five of the six are registered on boot by `syncRegisterControlPatterns`. **The key
@@ -496,8 +496,8 @@ different path in the binding.
 
 | Modality | Channel | What a control could be aimed by |
 |---|---|---|
-| pointer / wheel / keys | `Singularity/Input/InteractionChannel` | §4 — the traditional triad |
-| the vessel's body | `Singularity/Input/LocomotionChannel` | a control activated by standing on it, by approach speed, by looking |
+| pointer / wheel / keys | `Singularity/Input/Interaction/InteractionChannel` | §4 — the traditional triad |
+| the vessel's body | `Singularity/Input/Locomotion/LocomotionChannel` | a control activated by standing on it, by approach speed, by looking |
 | sound | `Singularity/Audio`, `OntoMath` acoustics | a control tuned by a sung pitch; a dial whose value *is* an amplitude |
 | hardware | `Singularity/Physical/PhysicalChannel` | a real sensor as a slider, with no adapter layer |
 | language | `Singularity/Language`, `Logos` | a control activated by being *named* — `Publish` from a language law |

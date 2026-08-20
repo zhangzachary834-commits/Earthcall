@@ -4,7 +4,7 @@
 #include <memory>
 #include <functional>
 #include <map>
-#include "../json.hpp"
+#include "json.hpp"
 
 #ifdef __APPLE__
 #include <TargetConditionals.h>

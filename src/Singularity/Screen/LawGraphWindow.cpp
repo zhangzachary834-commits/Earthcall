@@ -8,8 +8,8 @@
 #include "Person/Soul/Soul.hpp"
 #include "ZonesOfEarth/Ourverse/Ourverse.hpp"
 #include "Singularity/Core/CreationChannel.hpp"
-#include "Singularity/Input/LocomotionChannel.hpp"
-#include "Singularity/Input/InteractionChannel.hpp"
+#include "Singularity/Input/Locomotion/LocomotionChannel.hpp"
+#include "Singularity/Input/Interaction/InteractionChannel.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 
 #include <imgui.h>

@@ -1,7 +1,7 @@
-#include "Singularity/Foreign/IntegrationManager.hpp"
-#include "Singularity/Foreign/WebIntegration.hpp"
-#include "Singularity/Foreign/SecurityManager.hpp"
-#include "../json.hpp"
+#include "Singularity/Foreign/Web/IntegrationManager.hpp"
+#include "Singularity/Foreign/Web/WebIntegration.hpp"
+#include "Singularity/Foreign/API/SecurityManager.hpp"
+#include "json.hpp"
 #include "Singularity/Storage/SaveSystem.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include <imgui.h>

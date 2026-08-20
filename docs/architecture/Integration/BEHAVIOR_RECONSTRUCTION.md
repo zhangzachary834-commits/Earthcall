@@ -18,8 +18,8 @@ We will tackle this in three parts: C++ Async Logging, the Python First Mover Br
 
 We need a lightweight buffer that captures the stream of OS accessibility events from our adapter and packages them over time (`dt`).
 
-#### [NEW] [AsyncStateLogger.hpp](file:///Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Foreign/AsyncStateLogger.hpp)
-#### [NEW] [AsyncStateLogger.cpp](file:///Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Foreign/AsyncStateLogger.cpp)
+#### [NEW] [AsyncStateLogger.hpp](file:///Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Foreign/Sync/AsyncStateLogger.hpp)
+#### [NEW] [AsyncStateLogger.cpp](file:///Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Foreign/Sync/AsyncStateLogger.cpp)
 - **Role**: Sits beside the `MacOSAccessibilityAdapter`. As the adapter polls events, the logger buffers these state changes and flushes them to the Python First Mover.
 - **Rule Enforcement**: Holds no domain logic. Strictly an IO buffer for the Foreign channel.
 
@@ -27,8 +27,8 @@ We need a lightweight buffer that captures the stream of OS accessibility events
 
 To expose the Python First Mover's ML parameters to the world, we need a bridge.
 
-#### [NEW] [InferenceLawBridge.hpp](file:///Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Foreign/InferenceLawBridge.hpp)
-#### [NEW] [InferenceLawBridge.cpp](file:///Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Foreign/InferenceLawBridge.cpp)
+#### [NEW] [InferenceLawBridge.hpp](file:///Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Foreign/Sync/InferenceLawBridge.hpp)
+#### [NEW] [InferenceLawBridge.cpp](file:///Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Foreign/Sync/InferenceLawBridge.cpp)
 - **Role**: Functions similarly to the `PhysicsLawBridge`. It represents the external Python ML system as a first mover `Law`.
 - **Properties**: Exposes properties like `model_type`, `confidence_threshold`, or `active_classifier`. Persons can write K4 Laws to govern these properties.
 

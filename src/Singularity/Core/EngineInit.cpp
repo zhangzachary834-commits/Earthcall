@@ -1,17 +1,17 @@
 #include "Person/Person.hpp"
-#include "Singularity/Input/KeyboardHandler.hpp"
-#include "Singularity/Input/MouseHandler.hpp"
+#include "Singularity/Input/Keyboard/KeyboardHandler.hpp"
+#include "Singularity/Input/Mouse/MouseHandler.hpp"
 // GameInit.cpp – Game initialisation, GLFW callbacks
 // Split from Game.cpp during refactor.
 
 #include "Singularity/Core/Engine.hpp"
 #include "Singularity/Core/EventBus.hpp"
-#include "../../Singularity/FirstMoverWindowTools/ElementalToolHandler.hpp"
-#include "../../Singularity/FirstMoverWindowTools/CursorTools.hpp"
+#include "../../Singularity/FirstMoverOntology/FirstMoverWindowTools/ElementalToolHandler.hpp"
+#include "../../Singularity/FirstMoverOntology/FirstMoverWindowTools/CursorTools.hpp"
 #include "../../../imgui/backends/imgui_impl_glfw.h"
 #include "ConstructedBeing/Object/Object.hpp"
 #include "Singularity/Screen/ShadingSystem.hpp"
-#include "Singularity/FirstMoverWindowTools/AdvancedFacePaint.hpp"
+#include "Singularity/FirstMoverOntology/FirstMoverWindowTools/AdvancedFacePaint.hpp"
 #include "ConstructedBeing/Object/Creation/ObjectConcept.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
@@ -24,9 +24,9 @@
 #include "Person/Body/BodyPart/BodyPart.hpp"
 #include "Singularity/Screen/Camera.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
-#include "Singularity/FirstMoverWindowTools/CreatorConsole/CreatorConsoleWindow.hpp"
-#include "Singularity/FirstMoverWindowTools/CreationTools.hpp"
-#include "Singularity/FirstMoverWindowTools/Chat.hpp"
+#include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleWindow.hpp"
+#include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreationTools.hpp"
+#include "Singularity/FirstMoverOntology/FirstMoverWindowTools/Chat.hpp"
 #include "ZonesOfEarth/SaveContext.hpp"
 
 #include <GLFW/glfw3.h>
@@ -34,9 +34,9 @@
 #include <glm/glm.hpp>
 #include <iostream>
 #include "CreationChannel.hpp"
-#include "Singularity/Input/LocomotionChannel.hpp"
-#include "Singularity/Input/InteractionChannel.hpp"
-#include "Singularity/Input/ControlPatterns.hpp"
+#include "Singularity/Input/Locomotion/LocomotionChannel.hpp"
+#include "Singularity/Input/Interaction/InteractionChannel.hpp"
+#include "Singularity/Input/Interaction/ControlPatterns.hpp"
 #include <memory>
 
 extern ZoneManager mgr;

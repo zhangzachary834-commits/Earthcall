@@ -83,7 +83,7 @@
               {
                 "deltaWeight": 1.0,
                 "description": "authored-by",
-                "timestamp": 1787191050
+                "timestamp": 1787209027
               }
             ],
             "type": "authored-by",
@@ -282,7 +282,7 @@
                   },
                   "timestamp": {
                     "t": "long",
-                    "v": 1787191050
+                    "v": 1787209027
                   }
                 }
               }
@@ -321,7 +321,7 @@
   ],
   "cameraPos": [
     0.0,
-    0.0,
+    1.899999976158142,
     0.0
   ],
   "cameraUp": [

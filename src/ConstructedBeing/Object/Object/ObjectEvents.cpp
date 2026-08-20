@@ -53,7 +53,7 @@ void Object::updateHoverState(bool isHovering, const glm::vec3& hoverPoint,
     // That is an event-as-level, the bug CLAUDE.md names outright, and it
     // stayed invisible for as long as it did because nothing in the tree ever
     // called this function: the hover system had a document and no caller.
-    // Singularity/Input/InteractionChannel is the caller now, so the edge has
+    // Singularity/Input/Interaction/InteractionChannel is the caller now, so the edge has
     // to be a real one.
     const bool wasHovered = _isHovered;
     _wasHoveredLastFrame = _isHovered;

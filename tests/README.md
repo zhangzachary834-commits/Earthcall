@@ -23,7 +23,8 @@ tests/
 **Scratch probes belong in `scratch/probes/`, not here.** If you build a probe
 through a test target for convenience, remove the copy and reconfigure.
 
-The five tests that guard shipped bugs (`paint_test`, `object_roundtrip_test`,
-`channel_paths_test`, `no_black_box_test`, `ground_plane_test`) are described in
+The tests that guard shipped bugs (`paint_test`, `object_roundtrip_test`,
+`channel_paths_test`, `no_black_box_test`, `ground_plane_test`,
+`test_observation_load_test`) are described in
 `docs/BUILD_AND_ENVIRONMENT.md`. `webgpu_particle_test` is a pending-feature
 target (excluded from the default build).

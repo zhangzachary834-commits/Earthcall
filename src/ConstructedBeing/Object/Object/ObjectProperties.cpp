@@ -535,7 +535,7 @@ void Object::buildProperties() {
     _propertyRegistry.push_back(std::make_unique<ComputedProperty<Object, bool>>(
         "physical", this, &Object::propPhysical, &Object::propSetPhysical));
     // Is the Person pointing at this being, and where. Read-only: both are
-    // DERIVED from the pointer by Singularity/Input/InteractionChannel, and a
+    // DERIVED from the pointer by Singularity/Input/Interaction/InteractionChannel, and a
     // law that could write them would be telling every other law something the
     // world does not support. Registered because they were the textbook
     // refusal #6 violation — engine state about a being that no law could

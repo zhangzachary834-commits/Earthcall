@@ -172,7 +172,7 @@ security.logEvent(SecurityEventType::URL_ACCESS, "URL accessed", source);
 ### Basic Security Setup
 
 ```cpp
-#include "Singularity/Foreign/SecurityManager.hpp"
+#include "Singularity/Foreign/API/SecurityManager.hpp"
 
 // Initialize security
 auto& security = SecurityManager::instance();
@@ -310,7 +310,7 @@ Run the security test to verify all features:
 
 ```bash
 cd examples
-g++ -o security_test security_test.cpp ../src/Singularity/Foreign/SecurityManager.cpp -I../src
+g++ -o security_test security_test.cpp ../src/Singularity/Foreign/API/SecurityManager.cpp -I../src
 ./security_test
 ```
 

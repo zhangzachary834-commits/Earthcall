@@ -15,7 +15,7 @@
 #include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
 #include "Person/Person.hpp"
 #include "Person/Soul/Soul.hpp"
-#include "Singularity/Input/LocomotionChannel.hpp"
+#include "Singularity/Input/Locomotion/LocomotionChannel.hpp"
 #include "Singularity/Screen/Camera.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 

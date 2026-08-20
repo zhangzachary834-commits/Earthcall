@@ -1,14 +1,14 @@
-#include "Singularity/Foreign/RealWebView.hpp"
-#include "Singularity/Foreign/EarthcallAPI.hpp"
-#include "Singularity/Foreign/SecurityManager.hpp"
+#include "Singularity/Foreign/Web/RealWebView.hpp"
+#include "Singularity/Foreign/API/EarthcallAPI.hpp"
+#include "Singularity/Foreign/API/SecurityManager.hpp"
 #include <iostream>
 #include <map>
-#include "../json.hpp"
-#include "../Singularity/Screen/BrushSystem.hpp"
-#include "../Legacy/DesignSystem.hpp"
-#include "../ZonesOfEarth/World/World.hpp"
-#include "../ZonesOfEarth/ZoneManager.hpp"
-#include "../Singularity/Core/Engine.hpp"
+#include "json.hpp"
+#include "Singularity/Screen/BrushSystem.hpp"
+#include "Legacy/DesignSystem.hpp"
+#include "ZonesOfEarth/World/World.hpp"
+#include "ZonesOfEarth/ZoneManager.hpp"
+#include "Singularity/Core/Engine.hpp"
 
 #ifdef __APPLE__
 #if TARGET_OS_MAC

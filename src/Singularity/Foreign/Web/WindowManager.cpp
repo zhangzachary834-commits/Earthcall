@@ -1,4 +1,4 @@
-#include "Singularity/Foreign/WindowManager.hpp"
+#include "Singularity/Foreign/Web/WindowManager.hpp"
 #include <iostream>
 
 namespace Integration {

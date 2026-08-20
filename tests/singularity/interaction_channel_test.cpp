@@ -14,7 +14,7 @@
 #include "ConstructedBeing/Object/Object.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
 #include "Singularity/Core/EventBus.hpp"
-#include "Singularity/Input/InteractionChannel.hpp"
+#include "Singularity/Input/Interaction/InteractionChannel.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
