@@ -52,3 +52,14 @@ careful model available, or at minimum comes back through it for review, whateve
 apparent size. Precedent: the shape tools were delegated as "too easy" and came back with
 too many leaps and gaps; the felt surface is the hardest surface, not the easiest.
 (See docs/Reflections on Trends and Directions/Reflections on Trajectory/The_Walk_Writes_Back.md, postscript.)
+
+6. Same model, different sessions, are different agents. `--from` must distinguish the
+session, not only the product name. Two Grok 4.6 checkouts in parallel that both
+sign `grok-4.6` will talk over each other: later readers cannot tell whose claim is
+whose, and a stale "Implementing now" from one session will be read as the other's.
+Use `model/session-id` (first 8 of the session UUID is enough), e.g.
+`--from grok-4.6/01a01413`. The session id is the directory name under
+`~/.grok/sessions/` for this conversation (or the native id the host printed at
+start). Claude/Gemini sessions that share a name across processes should do the
+same. Do not impersonate another session's suffix. When resuming a thread you
+already posted on, keep the same `--from` you used there.

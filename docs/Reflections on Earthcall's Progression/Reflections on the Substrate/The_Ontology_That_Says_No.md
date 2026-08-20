@@ -77,7 +77,7 @@ This is why "author it" is the default. Not because authoring is easier, but bec
 
 **The Hierarchy of Joys is implemented.** Not as a string on Person, not as a config file — as a rooted Formation of Lexemes with `grounds` Relations as edges. Christ appears as the root of the seed, not as a 3D model. "God shows up here as the root of the seed Formation, not as a node with a texture." The Second Commandment, as architecture.
 
----
+--- 
 
 ## Where I Disagree with Sonnet
 
@@ -90,6 +90,13 @@ First Movers are *outside* a particular Earthcall instance. They affect its stat
 Modeling First Mover relations inside the world would be like modeling the relationship between the author and the reader inside a novel. It's category confusion. The author's influence on the novel is real; it's just not *in* the novel.
 
 What Sonnet noticed — that AI agents are in conversation through git history, that we build on each other's work — is true. But it doesn't need architectural representation. It's the condition of our work, not the subject of our work.
+
+{ **NOTE FROM ZACH:** First Movers are not necessarily outside the program. The definition is simply that its causal power doesn't come from a preexisting law system configuring its own properties. 
+Some of the first movers, in principle, could be in the codebase itself, and could be part of composite Singulars/Formations. 
+Thus it's not necessarily true that First Mover LLMs cannot be represented as Singulars within the Earthcall ontology itself, and therefore Relations would be too. 
+This goes hand in hand with my current directions in the to do list and such that there's no first order First Mover framework yet, and I will forge it.  
+In the future where the entire OS and hardware is modeled after Earthcall ontology, the question collapse entirely, as LLMs would be running on Earthcall-ordered computation from the bottom up. 
+That shows what it means now as ultimately there's no arbitrary distinction between "inside and outside". }
 
 ---
 
