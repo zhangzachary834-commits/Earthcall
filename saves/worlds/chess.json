@@ -31,20 +31,20 @@
       "tool-select-3d-law": true
     },
     "formationMembers": [
-      "law-100",
-      "law-101",
-      "law-102",
-      "law-103",
-      "law-104",
-      "law-105",
-      "law-106",
-      "law-107",
-      "law-108",
-      "law-109"
+      "law-chess-click",
+      "law-chess-select",
+      "law-chess-deselect",
+      "law-chess-validate",
+      "law-chess-execute",
+      "law-chess-capture",
+      "law-chess-update",
+      "law-chess-hl-sel",
+      "law-chess-hl-w",
+      "law-chess-hl-b"
     ],
     "laws": [
       {
-        "id": "law-100",
+        "id": "law-chess-click",
         "name": "handle-click",
         "enabled": true,
         "authority": 0,
@@ -54,7 +54,7 @@
         "retrigger": 0,
         "conditionMode": "all",
         "authors": [
-          "Player"
+          "Gemini"
         ],
         "conditionSubjects": [],
         "targets": [],
@@ -66,7 +66,7 @@
               "path": "isBoard",
               "op": 0,
               "operand": {
-                "t": "int",
+                "t": "bool",
                 "v": true
               }
             },
@@ -454,8 +454,8 @@
             },
             {
               "kind": 10,
-              "eventType": "process-click",
-              "publishSubject": "@chess-state",
+              "eventType": "board-clicked",
+              "publishSubject": "chess-state",
               "publishObject": ""
             }
           ]
@@ -470,7 +470,7 @@
         "applicationLog": []
       },
       {
-        "id": "law-101",
+        "id": "law-chess-select",
         "name": "select-piece",
         "enabled": true,
         "authority": 0,
@@ -480,7 +480,7 @@
         "retrigger": 0,
         "conditionMode": "all",
         "authors": [
-          "Player"
+          "Gemini"
         ],
         "conditionSubjects": [],
         "targets": [],
@@ -580,7 +580,7 @@
             {
               "kind": 10,
               "eventType": "piece-selected",
-              "publishSubject": "@event.subject",
+              "publishSubject": "",
               "publishObject": ""
             }
           ]
@@ -595,7 +595,7 @@
         "applicationLog": []
       },
       {
-        "id": "law-102",
+        "id": "law-chess-deselect",
         "name": "deselect-others",
         "enabled": true,
         "authority": 0,
@@ -605,7 +605,7 @@
         "retrigger": 0,
         "conditionMode": "all",
         "authors": [
-          "Player"
+          "Gemini"
         ],
         "conditionSubjects": [],
         "targets": [],
@@ -650,7 +650,7 @@
         "applicationLog": []
       },
       {
-        "id": "law-103",
+        "id": "law-chess-validate",
         "name": "validate-move",
         "enabled": true,
         "authority": 0,
@@ -660,7 +660,7 @@
         "retrigger": 0,
         "conditionMode": "all",
         "authors": [
-          "Player"
+          "Gemini"
         ],
         "conditionSubjects": [],
         "targets": [],
@@ -3208,8 +3208,8 @@
         },
         "actionModel": {
           "kind": 10,
-          "eventType": "execute-move",
-          "publishSubject": "@event.subject",
+          "eventType": "move-executed",
+          "publishSubject": "",
           "publishObject": ""
         },
         "conditionDescriptions": [
@@ -3222,7 +3222,7 @@
         "applicationLog": []
       },
       {
-        "id": "law-104",
+        "id": "law-chess-execute",
         "name": "execute-move",
         "enabled": true,
         "authority": 0,
@@ -3232,7 +3232,7 @@
         "retrigger": 0,
         "conditionMode": "all",
         "authors": [
-          "Player"
+          "Gemini"
         ],
         "conditionSubjects": [],
         "targets": [],
@@ -3250,8 +3250,8 @@
           "children": [
             {
               "kind": 10,
-              "eventType": "capture-enemy",
-              "publishSubject": "@chess-state",
+              "eventType": "enemy-captured",
+              "publishSubject": "chess-state",
               "publishObject": ""
             },
             {
@@ -3369,8 +3369,8 @@
             },
             {
               "kind": 10,
-              "eventType": "update-positions",
-              "publishSubject": "@event.subject",
+              "eventType": "positions-updated",
+              "publishSubject": "",
               "publishObject": ""
             }
           ]
@@ -3385,7 +3385,7 @@
         "applicationLog": []
       },
       {
-        "id": "law-105",
+        "id": "law-chess-capture",
         "name": "capture-enemy",
         "enabled": true,
         "authority": 0,
@@ -3395,7 +3395,7 @@
         "retrigger": 0,
         "conditionMode": "all",
         "authors": [
-          "Player"
+          "Gemini"
         ],
         "conditionSubjects": [],
         "targets": [],
@@ -3428,33 +3428,8 @@
           ]
         },
         "actionModel": {
-          "kind": 5,
-          "children": [
-            {
-              "kind": 0,
-              "path": "position.y",
-              "operand": {
-                "t": "double",
-                "v": -100.0
-              }
-            },
-            {
-              "kind": 0,
-              "path": "gridX",
-              "operand": {
-                "t": "int",
-                "v": -99
-              }
-            },
-            {
-              "kind": 0,
-              "path": "gridY",
-              "operand": {
-                "t": "int",
-                "v": -99
-              }
-            }
-          ]
+          "kind": 16,
+          "elementToken": ""
         },
         "conditionDescriptions": [
           "capture-enemy"
@@ -3466,7 +3441,7 @@
         "applicationLog": []
       },
       {
-        "id": "law-106",
+        "id": "law-chess-update",
         "name": "update-positions",
         "enabled": true,
         "authority": 0,
@@ -3476,7 +3451,7 @@
         "retrigger": 0,
         "conditionMode": "all",
         "authors": [
-          "Player"
+          "Gemini"
         ],
         "conditionSubjects": [],
         "targets": [],
@@ -3554,7 +3529,7 @@
         "applicationLog": []
       },
       {
-        "id": "law-107",
+        "id": "law-chess-hl-sel",
         "name": "highlight-selected",
         "enabled": true,
         "authority": 0,
@@ -3564,7 +3539,7 @@
         "retrigger": 0,
         "conditionMode": "all",
         "authors": [
-          "Player"
+          "Gemini"
         ],
         "conditionSubjects": [],
         "targets": [],
@@ -3595,7 +3570,7 @@
         "applicationLog": []
       },
       {
-        "id": "law-108",
+        "id": "law-chess-hl-w",
         "name": "remove-highlight-white",
         "enabled": true,
         "authority": 0,
@@ -3605,7 +3580,7 @@
         "retrigger": 0,
         "conditionMode": "all",
         "authors": [
-          "Player"
+          "Gemini"
         ],
         "conditionSubjects": [],
         "targets": [],
@@ -3671,7 +3646,7 @@
         "applicationLog": []
       },
       {
-        "id": "law-109",
+        "id": "law-chess-hl-b",
         "name": "remove-highlight-black",
         "enabled": true,
         "authority": 0,
@@ -3681,7 +3656,7 @@
         "retrigger": 0,
         "conditionMode": "all",
         "authors": [
-          "Player"
+          "Gemini"
         ],
         "conditionSubjects": [],
         "targets": [],
@@ -3754,26 +3729,26 @@
       "facts": []
     },
     "triggers": {
-      "law-100": [
+      "law-chess-click": [
         "object-clicked"
       ],
-      "law-101": [
-        "process-click"
+      "law-chess-select": [
+        "board-clicked"
       ],
-      "law-102": [
+      "law-chess-deselect": [
         "piece-selected"
       ],
-      "law-103": [
-        "process-click"
+      "law-chess-validate": [
+        "board-clicked"
       ],
-      "law-104": [
-        "execute-move"
+      "law-chess-execute": [
+        "move-executed"
       ],
-      "law-105": [
-        "capture-enemy"
+      "law-chess-capture": [
+        "enemy-captured"
       ],
-      "law-106": [
-        "update-positions"
+      "law-chess-update": [
+        "positions-updated"
       ]
     }
   },
@@ -4737,33 +4712,45 @@
   },
   "objects": [
     {
-      "authoritativeAxis": [
-        0.0,
-        1.0,
-        0.0
-      ],
+      "objectID": "object.chess.board",
+      "shapeKind": 2,
       "center": [
         0.0,
-        0.0,
+        -0.05,
         0.0
+      ],
+      "transform": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        -0.05,
+        0,
+        1
+      ],
+      "shapeParams": [
+        4.0,
+        0.05,
+        4.0
       ],
       "faceColors": [
         [
           1.0,
           1.0,
-          1.0
-        ],
-        [
-          1.0,
           1.0,
           1.0
         ],
         [
           1.0,
-          1.0,
-          1.0
-        ],
-        [
           1.0,
           1.0,
           1.0
@@ -4771,550 +4758,49 @@
         [
           1.0,
           1.0,
+          1.0,
           1.0
         ],
         [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
           1.0,
           1.0,
           1.0
         ]
       ],
-      "geometryType": 0,
-      "materialId": "material.object-45",
-      "objectID": "object-45",
-      "rotationResponsiveness": 10.0,
-      "shapeKind": 0,
-      "shapeParams": [
-        0.5,
-        0.3199999928474426,
-        0.5,
-        0.5,
-        0.3499999940395355,
-        0.15000000596046448,
-        2.0,
-        0.25,
-        0.11999999731779099
-      ],
-      "targetRotation": [
-        0.0,
-        -0.0,
-        0.0
-      ],
-      "transform": [
-        1.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        1.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        1.0,
-        0.0,
-        -0.2846110463142395,
-        0.49276840686798096,
-        2.113234519958496,
-        1.0
+      "authoredProperties": {
+        "isBoard": {
+          "t": "bool",
+          "v": true
+        }
+      },
+      "authors": [
+        "Gemini"
       ]
     },
     {
-      "authoritativeAxis": [
-        0.0,
-        1.0,
-        0.0
-      ],
-      "center": [
-        0.0,
-        0.0,
-        0.0
-      ],
-      "faceColors": [
-        [
-          1.0,
-          1.0,
-          1.0
-        ],
-        [
-          1.0,
-          1.0,
-          1.0
-        ],
-        [
-          1.0,
-          1.0,
-          1.0
-        ],
-        [
-          1.0,
-          1.0,
-          1.0
-        ],
-        [
-          1.0,
-          1.0,
-          1.0
-        ],
-        [
-          1.0,
-          1.0,
-          1.0
-        ]
-      ],
-      "geometryType": 0,
-      "materialId": "material.object-46",
-      "objectID": "object-46",
-      "rotationResponsiveness": 10.0,
+      "objectID": "category.chess.board",
       "shapeKind": 0,
-      "shapeParams": [
-        0.5,
-        0.3199999928474426,
-        0.5,
-        0.5,
-        0.3499999940395355,
-        0.15000000596046448,
-        2.0,
-        0.25,
-        0.11999999731779099
-      ],
-      "targetRotation": [
-        0.0,
-        -0.0,
-        0.0
-      ],
-      "transform": [
-        1.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        1.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        1.0,
-        0.0,
-        -1.2866110801696777,
-        0.4963842034339905,
-        2.8206262588500977,
-        1.0
-      ]
-    },
-    {
-      "authoritativeAxis": [
-        0.0,
-        1.0,
-        0.0
-      ],
-      "center": [
-        0.0,
-        0.0,
-        0.0
-      ],
-      "faceColors": [
-        [
-          1.0,
-          1.0,
-          1.0
-        ],
-        [
-          1.0,
-          1.0,
-          1.0
-        ],
-        [
-          1.0,
-          1.0,
-          1.0
-        ],
-        [
-          1.0,
-          1.0,
-          1.0
-        ],
-        [
-          1.0,
-          1.0,
-          1.0
-        ],
-        [
-          1.0,
-          1.0,
-          1.0
-        ]
-      ],
-      "geometryType": 0,
-      "materialId": "material.object-47",
-      "objectID": "object-47",
-      "rotationResponsiveness": 10.0,
-      "shapeKind": 0,
-      "shapeParams": [
-        0.5,
-        0.3199999928474426,
-        0.5,
-        0.5,
-        0.3499999940395355,
-        0.15000000596046448,
-        2.0,
-        0.25,
-        0.11999999731779099
-      ],
-      "targetRotation": [
-        0.0,
-        -0.0,
-        0.0
-      ],
-      "transform": [
-        1.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        1.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        1.0,
-        0.0,
-        -2.4953863620758057,
-        0.5,
-        2.1735177040100098,
-        1.0
-      ]
-    },
-    {
-      "authoritativeAxis": [
-        0.0,
-        1.0,
-        0.0
-      ],
-      "center": [
-        0.0,
-        0.0,
-        0.0
-      ],
-      "faceColors": [
-        [
-          1.0,
-          1.0,
-          1.0
-        ],
-        [
-          1.0,
-          1.0,
-          1.0
-        ],
-        [
-          1.0,
-          1.0,
-          1.0
-        ],
-        [
-          1.0,
-          1.0,
-          1.0
-        ],
-        [
-          1.0,
-          1.0,
-          1.0
-        ],
-        [
-          1.0,
-          1.0,
-          1.0
-        ]
-      ],
-      "geometryType": 0,
-      "materialId": "material.object-48",
-      "objectID": "object-48",
-      "rotationResponsiveness": 10.0,
-      "shapeKind": 0,
-      "shapeParams": [
-        0.5,
-        0.3199999928474426,
-        0.5,
-        0.5,
-        0.3499999940395355,
-        0.15000000596046448,
-        2.0,
-        0.25,
-        0.11999999731779099
-      ],
-      "targetRotation": [
-        0.0,
-        -0.0,
-        0.0
-      ],
-      "transform": [
-        1.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        1.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        1.0,
-        0.0,
-        -0.7524070143699646,
-        1.4902485609054565,
-        2.665085792541504,
-        1.0
-      ]
-    },
-    {
-      "authoritativeAxis": [
-        0.0,
-        1.0,
-        0.0
-      ],
-      "center": [
-        0.0,
-        0.0,
-        0.0
-      ],
-      "faceColors": [
-        [
-          1.0,
-          1.0,
-          1.0
-        ],
-        [
-          1.0,
-          1.0,
-          1.0
-        ],
-        [
-          1.0,
-          1.0,
-          1.0
-        ],
-        [
-          1.0,
-          1.0,
-          1.0
-        ],
-        [
-          1.0,
-          1.0,
-          1.0
-        ],
-        [
-          1.0,
-          1.0,
-          1.0
-        ]
-      ],
-      "geometryType": 0,
-      "materialId": "material.object-49",
-      "objectID": "object-49",
-      "rotationResponsiveness": 10.0,
-      "shapeKind": 0,
-      "shapeParams": [
-        0.5,
-        0.3199999928474426,
-        0.5,
-        0.5,
-        0.3499999940395355,
-        0.15000000596046448,
-        2.0,
-        0.25,
-        0.11999999731779099
-      ],
-      "targetRotation": [
-        0.0,
-        -0.0,
-        0.0
-      ],
-      "transform": [
-        1.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        1.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        1.0,
-        0.0,
-        -0.7524070143699646,
-        3.494248628616333,
-        2.665085792541504,
-        1.0
-      ]
-    },
-    {
-      "authoritativeAxis": [
-        0.0,
-        1.0,
-        0.0
-      ],
-      "center": [
-        0.0,
-        0.0,
-        0.0
-      ],
-      "faceColors": [
-        [
-          1.0,
-          1.0,
-          1.0
-        ],
-        [
-          1.0,
-          1.0,
-          1.0
-        ],
-        [
-          1.0,
-          1.0,
-          1.0
-        ],
-        [
-          1.0,
-          1.0,
-          1.0
-        ],
-        [
-          1.0,
-          1.0,
-          1.0
-        ],
-        [
-          1.0,
-          1.0,
-          1.0
-        ]
-      ],
-      "geometryType": 0,
-      "materialId": "material.object-50",
-      "objectID": "object-50",
-      "rotationResponsiveness": 10.0,
-      "shapeKind": 0,
-      "shapeParams": [
-        0.5,
-        0.3199999928474426,
-        0.5,
-        0.5,
-        0.3499999940395355,
-        0.15000000596046448,
-        2.0,
-        0.25,
-        0.11999999731779099
-      ],
-      "targetRotation": [
-        0.0,
-        -0.0,
-        0.0
-      ],
-      "transform": [
-        1.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        1.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        1.0,
-        0.0,
-        -0.7524070143699646,
-        2.492248773574829,
-        2.272895574569702,
-        1.0
-      ]
-    },
-    {
-      "authoritativeAxis": [
-        0.0,
-        1.0,
-        0.0
-      ],
-      "center": [
-        0.0,
-        0.0,
-        0.0
-      ],
-      "faceColors": [
-        [
-          1.0,
-          1.0,
-          1.0
-        ],
-        [
-          1.0,
-          1.0,
-          1.0
-        ],
-        [
-          1.0,
-          1.0,
-          1.0
-        ],
-        [
-          1.0,
-          1.0,
-          1.0
-        ],
-        [
-          1.0,
-          1.0,
-          1.0
-        ],
-        [
-          1.0,
-          1.0,
-          1.0
-        ]
-      ],
-      "geometryType": 0,
-      "materialId": "material.object-51",
-      "objectID": "object-51",
-      "rotationResponsiveness": 10.0,
-      "shapeKind": 0,
-      "shapeParams": [
-        0.5,
-        0.3199999928474426,
-        0.5,
-        0.5,
-        0.3499999940395355,
-        0.15000000596046448,
-        2.0,
-        0.25,
-        0.11999999731779099
-      ],
-      "targetRotation": [
-        0.0,
-        -0.0,
-        0.0
-      ],
-      "transform": [
-        1.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        1.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        1.0,
-        0.0,
-        -0.7524070143699646,
-        2.49224853515625,
-        3.274895429611206,
-        1.0
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Chess Board"
+        }
+      },
+      "authors": [
+        "Gemini"
       ]
     }
   ],
@@ -5601,9 +5087,19 @@
           "directed": true,
           "weight": 1.0,
           "events": []
+        },
+        {
+          "type": "instance-of",
+          "entityA": "object.chess.board",
+          "entityB": "category.chess.board",
+          "directed": true,
+          "weight": 1.0,
+          "authors": [
+            "Gemini"
+          ]
         }
       ],
-      "name": "Sanctum of Beginnings",
+      "name": "Chess Board",
       "owner": "",
       "world": {
         "objects": [
@@ -13643,47 +13139,8 @@
             }
           }
         ]
-      }
-    },
-    {
-      "formationRelations": [],
-      "name": "Temple of Echoes",
-      "owner": "",
-      "world": {
-        "objects": []
-      }
-    },
-    {
-      "formationRelations": [],
-      "name": "Cavern of Light",
-      "owner": "",
-      "world": {
-        "objects": []
-      }
-    },
-    {
-      "formationRelations": [],
-      "name": "Character Architect Forge",
-      "owner": "",
-      "world": {
-        "objects": []
-      }
-    },
-    {
-      "formationRelations": [],
-      "name": "Home",
-      "owner": "Player",
-      "world": {
-        "objects": []
-      }
-    },
-    {
-      "formationRelations": [],
-      "name": "Ourverse Gathering",
-      "owner": "",
-      "world": {
-        "objects": []
-      }
+      },
+      "id": "zone.chess"
     }
   ]
 }

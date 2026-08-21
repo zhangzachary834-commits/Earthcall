@@ -60,7 +60,7 @@ THEN IT IMMEDIATELY UNSAVED THE ONTOLOGY
 11. Board is "solid white" because paint went through a material / a buffer that does not serialize. That is the paint-on-Material bug, documented, shipped, re-enacted as a feature note.
 
 12. engine_out*.txt: default boot. Never a chess load line. The probe is "Engine::init did not throw."
-
+\
 THE TELL
 
 scratch/walkthrough.md: "Try playing! The logic has been completely baked into the OntoMath engine."
