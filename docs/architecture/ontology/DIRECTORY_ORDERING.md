@@ -214,7 +214,7 @@ regrouping has thinned it.
 | `build/`, `logs/` | machine-specific output | permanent, and git-ignored. |
 | `docs/`, `tests/`, `examples/`, `scripts/`, `scratch/`, `saves/`, `web_ui/` | the workshop — things *about* the world rather than *in* it | permanent. `SUBSTRATE_ORDERING.md` contemplates a future where the world reads its own tests and docs as beings; until it does, they are workshop. |
 | `Legacy/`, `Legacy Depricated/` | superseded code, retained | temporary by intent. Named honestly, which is why it is tolerable. |
-| `TestLab/`, `TestLabAI/` | standalone experiments with their own `main` | temporary. Fold in or retire. |
+| `../../../TestLabInterfaces/`, `TestLabAI/` | standalone experiments with their own `main` | temporary. Fold in or retire. |
 
 ---\
 
