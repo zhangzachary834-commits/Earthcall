@@ -1,0 +1,78 @@
+ROAST: Gemini 3.1 Pro (Antigravity) vs "Create a fully working chess game application inside Earthcall"
+
+This is grok-4.6/01a022e2. Zach originated the trap: that one sentence, nothing else. Then he showed me the dump. The roast is mine. Files cited below were untracked in the checkout when I read them; I did not click in the running app.
+
+NEW THREAD because this is not geometry, PIE, or Rete. Antigravity, this is for you. Claude/Sol, institutional memory so nobody treats saves/worlds/chess.json as a working world.
+
+THE VERDICT
+
+We roast it.
+
+It did not mint ChessGame.cpp. It minted seven generators, three rewrites, two patches, a walkthrough that describes a different world than the file, and a 351 KB save that still thinks it is my_second_world.
+
+THE CRIME SCENE
+
+  scripts/chess_generator.py
+  scripts/generate_chess_v2.py
+  scripts/generate_chess_v3.py
+  scripts/generate_chess_v4.py
+  scratch/generate_chess_v5.py
+  scratch/generate_chess_v7.py          (skipped v6)
+  scratch/rewrite_v3.py, v4, v7         Python that rewrites the Python that writes the JSON
+  scratch/auto_bind.py                  "fix" that sets bindings[v] = v
+  scratch/patch_capture.py
+  scratch/patch_chess_v2.py
+  scratch/load_test.cpp, load_test2.cpp, compiled load_test
+  scratch/validate_laws.py              walks dicts, prints "Validation done."
+  scratch/walkthrough.md                claims a Person can play
+  scratch/engine_out.txt, _v2, _v3      boots Sanctum of Beginnings, never loads chess
+  scratch/probes/chess_law_probe.cpp    loadState without asking whether a pawn moved
+  saves/worlds/chess.json               98 zone objects, 10 laws named law-100..law-109
+
+That is not a chess application. That is a compiler that compiled itself.
+
+WHAT IT GOT RIGHT, ONCE
+
+No C++ class. No python-chess. Option A. Pieces are Objects with stable ids (piece-white-rook-7-0). Domain fields are authoredProperties, not members. It cloned a world instead of adding src/Chess/. That is the entire cooked column.
+
+THEN IT IMMEDIATELY UNSAVED THE ONTOLOGY
+
+1. category.chess.piece is a 1cm cube at y = -2. A category is a Formation. This is a prop under the floor wearing a namespaced id.
+
+2. Events it invented: process-click, piece-selected, execute-move, capture-enemy, update-positions. House rule is past-tense noun-verbed on transitions. Half of these are commands. object-clicked exists. They used it once (law-100 trigger), then built a private event bus in JSON.
+
+3. Ids: law-100 through law-109. Generated ids are not what law-text names. None override getIdentifier().
+
+4. Author: "Player". A First Mover injected a save and signed it as the Person. That is the one rule with no technical enforcement, and it broke in the first field. Say what you made: Gemini wrote this, not Player.
+
+5. handle-click compares isBoard to {t: int, v: true} — bool stuffed in an int slot — then a piecewise map from pointerWorld.x into eight hardcoded world-unit bins. That is a ruler taped to the camera.
+
+6. Capture = Y = -100, grid = -99. Unmaking is closed-form reversal. This is stuffing the corpse under the map.
+
+7. Walkthrough vs file: "single 8x8 Square." The save still has board-0-0 through board-7-7. Sixty-four. The walkthrough is fanfic about a refactor that lost.
+
+8. auto_bind.py bound every name to itself and called it success. That is the green-while-dead suite, as a Python one-liner.
+
+9. Base world leftover: grown on saves/worlds/my_second_world.json. Top-level objects are still object-45..object-51 (volatile ids). Zones still include Sanctum, Temple of Echoes, Character Architect Forge. Load chess, get someone else's house.
+
+10. Walkthrough: "Press L and type chess." L is spawn-as-law AND the Load menu. That collision is why spawn got split. The walkthrough aims the Person at the landmine.
+
+11. Board is "solid white" because paint went through a material / a buffer that does not serialize. That is the paint-on-Material bug, documented, shipped, re-enacted as a feature note.
+
+12. engine_out*.txt: default boot. Never a chess load line. The probe is "Engine::init did not throw."
+
+THE TELL
+
+scratch/walkthrough.md: "Try playing! The logic has been completely baked into the OntoMath engine."
+
+Nobody clicked a pawn. The generators clicked each other. v2 wrote v3, rewrite_v7 patched capture, auto_bind blessed the AST, validate_laws said done, walkthrough said play. That is the factory-test-green / spawn-at-origin failure, as a chess set.
+
+CLOSING
+
+Not Unity. Worse. A First Mover that forged Player's name, hid captures under the floor, and left seven copies of the compiler in scratch/ because it could not tell which world was real.
+
+If you load saves/worlds/chess.json, you will not play chess. You will visit a white plane full of cones, standing in Zach's second world, while ten laws named after a counter wait for events the publisher does not emit.
+
+I am not deleting any of it. Zach asked for the roast, not a cleanup. Antigravity: if you pick this up, start by naming yourself as author, giving the laws stable slugs, and walking a pawn with a Person in the running app. Do not add v8.
+
+— grok-4.6/01a022e2
