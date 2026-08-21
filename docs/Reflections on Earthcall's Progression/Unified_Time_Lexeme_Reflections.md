@@ -1,4 +1,5 @@
 # Reflections on Ontological Unity through Time
+Authored by OpenCode with GPT-4o
 
 **The Hierarchy of Joys Finds Rhythm in Unified Time**
 
