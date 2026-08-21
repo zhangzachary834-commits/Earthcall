@@ -30,7 +30,7 @@ struct ActionNode {
         Sequence = 5,  // children in order
         Parallel = 6,  // children conceptually simultaneous (same order today;
                        // the distinction matters when actions become async)
-        Spawn = 7,     // instantiate from an ObjectConcept into a World
+        Spawn = 7,     // instantiate from an ObjectConcept into a Zone
         Map = 8,       // path := f(bindings) — output governed by an authored
                        // OntoMath function of authored inputs (Drive's
                        // multivariate, piecewise, exact elder sibling)
@@ -50,7 +50,7 @@ struct ActionNode {
         // author a being it was never shown:
         //
         //   Create      mint a generic Object of an authored shape kind and
-        //               place it in the World. Its children run WITH THE
+        //               place it in the Zone. Its children run WITH THE
         //               NEWBORN AS SUBJECT, so the same Set/Map/AddProperty/
         //               AddElement vocabulary shapes it — creation and
         //               modification are one language.
@@ -73,7 +73,7 @@ struct ActionNode {
         //   RemoveElement   decompose: take a being back out of a container.
         //                   The element itself keeps living; only the
         //                   membership ends.
-        //   Destroy         remove an Object from the World — the delete tool
+        //   Destroy         remove an Object from the Zone — the delete tool
         //                   as law-text. Every element Formation that held it
         //                   releases it first, so no Formation is left
         //                   pointing at a being that no longer exists.

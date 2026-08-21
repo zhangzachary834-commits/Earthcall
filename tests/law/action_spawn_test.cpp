@@ -1,6 +1,6 @@
 #include <cassert>
 #include <iostream>
-#include "ZonesOfEarth/World/World.hpp"
+#include "ZonesOfEarth/Zone/Zone.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp"
 #include "ConstructedBeing/Object/Creation/ObjectConcept.hpp"
 #include "Person/Person.hpp"
@@ -22,7 +22,7 @@ int main() {
     ConceptRegistry::instance().add(concept);
     
     // 2. Create world and player
-    World world;
+    Zone world("test-zone", "default");
     Object player;
     
     // 3. Create a Spawn ActionNode

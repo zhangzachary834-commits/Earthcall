@@ -776,21 +776,20 @@ work closed lives in `scratch/probes/set_to_set_audit_probe.cpp`.
 
 ### 7c. `Spawn` — creation *is* a law application
 
-`World : public Singular` (`World.hpp`) makes the unification nearly free. The
-`Spawn` ActionNode compiles to:
+The Zone is the womb. `Spawn` compiles to (simplified):
 
 ```cpp
 return [conceptId, mappings](const ECA::Event& e, Singular& target) {
-    auto* world   = dynamic_cast<World*>(&target);       // law's TARGET is the container
+    auto* zone    = dynamic_cast<Zone*>(&target);        // law's TARGET is the container
     auto  concept = ConceptRegistry::instance().find(conceptId);
-    if (!world || !concept) return;
+    if (!zone || !concept) return;
     for (auto& obj : concept->instantiate(placementFrom(e), sourcesFrom(e)))
-        world->addObject(std::move(obj));                // existing ownership path
+        zone->addObject(std::move(obj));                 // existing ownership path
 };
 ```
 
-A generation law's *target* is the World/Zone that receives the newborn objects —
-the container is the womb. `applyTo(world)` runs the full existing gauntlet:
+A generation law's *target* is the Zone that receives the newborn objects —
+the container is the womb. `applyTo(zone)` runs the full existing gauntlet:
 
 - **authorship check** — `Unauthored` laws cannot create; *nothing enters the
   world without an author*, enforced structurally;

@@ -19,7 +19,6 @@
 #include "Singularity/Storage/SaveSystem.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/SaveContext.hpp"
-#include "ZonesOfEarth/World/World.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "json.hpp"
@@ -59,7 +58,7 @@ std::size_t countId(const ZoneManager& mgr, const std::string& id) {
     std::size_t n = 0;
     for (const auto& z : mgr.zones()) {
         if (!z) continue;
-        for (const auto& o : z->world().getOwnedObjects()) {
+        for (const auto& o : z->getOwnedObjects()) {
             if (o && o->getIdentifier() == id) ++n;
         }
     }
@@ -69,7 +68,7 @@ std::size_t countId(const ZoneManager& mgr, const std::string& id) {
 glm::vec3 objectPos(const ZoneManager& mgr, const std::string& id) {
     for (const auto& z : mgr.zones()) {
         if (!z) continue;
-        for (const auto& o : z->world().getOwnedObjects()) {
+        for (const auto& o : z->getOwnedObjects()) {
             if (o && o->getIdentifier() == id) return o->getPosition();
         }
     }
@@ -107,9 +106,9 @@ int main() {
 
     ZoneManager mgr;
     auto sanctum = std::make_shared<Zone>("Sanctum of Beginnings", "default");
-    sanctum->world().addObject(makeCube("first-spawned", glm::vec3(1.0f, 0.0f, 0.0f)));
-    sanctum->world().addObject(makeCube("second-spawned", glm::vec3(2.0f, 0.0f, 0.0f)));
-    sanctum->world().addObject(makeCube("third-spawned", glm::vec3(3.0f, 0.0f, 0.0f)));
+    sanctum->addObject(makeCube("first-spawned", glm::vec3(1.0f, 0.0f, 0.0f)));
+    sanctum->addObject(makeCube("second-spawned", glm::vec3(2.0f, 0.0f, 0.0f)));
+    sanctum->addObject(makeCube("third-spawned", glm::vec3(3.0f, 0.0f, 0.0f)));
     mgr.addZone(sanctum);
     auto home = std::make_shared<Zone>("Home", "default");
     home->setOwner(player.getIdentifier());

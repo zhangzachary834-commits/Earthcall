@@ -3,12 +3,11 @@
 #include <vector>
 #include <unordered_map>
 #include <memory>
-#include "../World/World.hpp"
+#include "ConstructedBeing/Object/Object.hpp"
 #include "ConstructedBeing/Object/Formation/Formation.hpp"
 #include "ConstructedBeing/Singular/Singular.hpp"
 #include <glm/glm.hpp>
 
-class World; // forward decl
 namespace OntoMath {
     class ScalarField;
     class VectorField;
@@ -78,8 +77,17 @@ public:
     bool isOurverseGathering() const;
     void markOurverseGathering();
 
-    World& world() { return *_world; }
-    const World& world() const { return *_world; }
+    // Scene — objects live on the Zone. `World` was a Singular bag around
+    // this list (plus leftover Creative/Survival/Spectator) and has been
+    // folded here. Spawn's womb is the Zone. Save JSON still writes the
+    // list under `zones[].world.objects` so existing files load.
+    void addObject(std::shared_ptr<Object> obj);
+    bool removeObject(Object* obj);
+    bool removeObjectById(const std::string& identifier);
+    const std::vector<std::shared_ptr<Object>>& objects() const { return _objects; }
+    const std::vector<std::shared_ptr<Object>>& getOwnedObjects() const { return _objects; }
+    std::vector<std::shared_ptr<Object>>& getOwnedObjectsMutable() { return _objects; }
+    void update(float dt = 0.016f);
 
     const std::string& getParentZone() const { return _parentZoneName; }
     void setParentZone(const std::string& pZone) { _parentZoneName = pZone; }
@@ -108,7 +116,7 @@ private:
     Deletability _deletable;
     Formation _joys;
     std::string _ownerId;
-    std::unique_ptr<World> _world;
+    std::vector<std::shared_ptr<Object>> _objects;
     Formation _formation;
     
     std::shared_ptr<OntoMath::ScalarField> _spatialField;

@@ -30,10 +30,8 @@ namespace Core {
         if (fbH == 0) fbH = 1;
         float aspect = static_cast<float>(fbW) / fbH;
 
-        // Current active zone's 3-D world
-        auto& zoneWorld = mgr.active().world();
-        zoneWorld.setCamera(&_camera->pos);
-        zoneWorld.setPlayerEyeHeight(_player->getBody().getEyeHeight());
+        // Current active Zone's objects
+        auto& zone = mgr.active();
 
         // Projection
         float fov = 45.0f;
@@ -79,7 +77,7 @@ namespace Core {
         }
 
         // Draw all owned objects cleanly (no hardcoded baseline mutation or skipping ground)
-        const auto& objects = zoneWorld.getOwnedObjects();
+        const auto& objects = zone.getOwnedObjects();
         for (const auto& obj : objects) {
             if (obj) {
                 currentRenderer().setModel(obj->getTransform());

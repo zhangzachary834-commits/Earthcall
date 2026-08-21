@@ -707,31 +707,34 @@ void bodyFromJson(const nlohmann::json& j, Body& body) {
 }
 
 // ------------------------------------------------------------------
-// World
+// Zone object bag — on disk still `{"objects":[...]}` (the old World shape).
 // ------------------------------------------------------------------
-void to_json(nlohmann::json& j, const World& world){
-    j = nlohmann::json{};
+nlohmann::json zoneObjectsToJson(const Zone& zone) {
+    nlohmann::json j = nlohmann::json{};
     nlohmann::json arr = nlohmann::json::array();
-    for(const auto& ptr : world.objects()){
-        if(ptr) arr.push_back(*ptr); // relies on Object to_json
+    for (const auto& ptr : zone.objects()) {
+        if (ptr) arr.push_back(*ptr);
     }
     j["objects"] = arr;
+    return j;
 }
 
-void from_json(const nlohmann::json& j, World& world){
-    if(!j.contains("objects")) return;
-    const auto& arr = j["objects"];
-    for(const auto& oj : arr){
+void zoneObjectsFromJson(const nlohmann::json& j, Zone& zone) {
+    const nlohmann::json* arr = nullptr;
+    if (j.contains("objects") && j["objects"].is_array()) arr = &j["objects"];
+    else if (j.is_array()) arr = &j;
+    if (!arr) return;
+    for (const auto& oj : *arr) {
         std::shared_ptr<Object> obj = std::make_shared<Object>();
         from_json(oj, *obj);
-        world.addObject(std::move(obj));
+        zone.addObject(std::move(obj));
     }
 
     // Re-link composition once every object exists. Elements are remembered by
     // identifier, so this pass is order-independent; an element that is not in
-    // the world is simply not re-linked (composition is a covenant between
+    // the Zone is simply not re-linked (composition is a covenant between
     // beings that are present, never a pointer to something absent).
-    auto& owned = world.getOwnedObjectsMutable();
+    auto& owned = zone.getOwnedObjectsMutable();
     for (auto& holder : owned) {
         if (!holder || holder->getPendingElementIds().empty()) continue;
         for (const auto& id : holder->getPendingElementIds()) {

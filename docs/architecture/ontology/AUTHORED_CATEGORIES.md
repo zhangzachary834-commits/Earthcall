@@ -61,7 +61,7 @@ each fails specifies what the real mechanism has to provide.
 
 | Existing | What it is | Why it is not a category |
 |---|---|---|
-| `ConditionNode::BeingKind` | `Object · Person · Relation · Formation · Law · World · Zone · Lexeme` | **ontological** categories, not domain ones. Eight values, append-only, and adding a ninth for "Chair" is the schism `NEW_KIND_FRAMEWORK.md` Floor §3 refuses |
+| `ConditionNode::BeingKind` | `Object · Person · Relation · Formation · Law · Zone · Lexeme` (`World = 6` burned) | **ontological** categories, not domain ones. Append-only; adding a new value for "Chair" is the schism `NEW_KIND_FRAMEWORK.md` Floor §3 refuses |
 | `Object::objectType` (a string) | a free-form label | a string is not a being: nothing owns it, nothing authors it, it has no properties, no parent, and two objects agreeing on a spelling is not a relation |
 | `Object` tags / attributes | `addTag`, `setAttribute` | same defect, plus no structure — tags cannot have supertags |
 | `ObjectConcept` | a captured template | a **factory** (§0). No membership, no hierarchy, no way to ask "is this one" |

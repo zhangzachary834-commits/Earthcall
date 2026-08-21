@@ -10,7 +10,7 @@
 #include "Singularity/TransferPolicy.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
-#include "ZonesOfEarth/World/World.hpp"
+#include "ZonesOfEarth/Zone/Zone.hpp"
 
 #include <GLFW/glfw3.h>
 #include <cmath>
@@ -80,7 +80,7 @@ int main() {
         auto concept = ObjectConcept::captureFrom({&prototype}, "synth-probe", nullptr);
         ConceptRegistry::instance().add(concept);
 
-        World world;
+        Zone world("test-zone", "default");
         Object subject;
         ActionNode node;
         node.kind = ActionNode::Kind::Synthesize;

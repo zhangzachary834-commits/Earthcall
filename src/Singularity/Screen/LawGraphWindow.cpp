@@ -725,14 +725,37 @@ void seedConditionKind(ConditionNode& node) {
     }
 }
 
-const char* kBeingKindNames[] = {"any being", "Object", "Person", "Relation",
-                                 "Formation", "Law", "World", "Zone"};
+const struct {
+    ConditionNode::BeingKind kind;
+    const char* name;
+} kOfferedBeingKinds[] = {
+    {ConditionNode::BeingKind::AnyBeing, "any being"},
+    {ConditionNode::BeingKind::Object, "Object"},
+    {ConditionNode::BeingKind::Person, "Person"},
+    {ConditionNode::BeingKind::Relation, "Relation"},
+    {ConditionNode::BeingKind::Formation, "Formation"},
+    {ConditionNode::BeingKind::Law, "Law"},
+    {ConditionNode::BeingKind::Zone, "Zone"},
+    {ConditionNode::BeingKind::Lexeme, "Lexeme"},
+};
 
 bool beingKindCombo(ConditionNode& node) {
-    int kind = static_cast<int>(node.beingKind);
+    if (node.beingKind == ConditionNode::BeingKind::World) {
+        ImGui::TextDisabled("World (burned — never matches)");
+    }
+    int current = 0;
+    const int n = static_cast<int>(sizeof(kOfferedBeingKinds) / sizeof(kOfferedBeingKinds[0]));
+    for (int i = 0; i < n; ++i) {
+        if (kOfferedBeingKinds[i].kind == node.beingKind) {
+            current = i;
+            break;
+        }
+    }
+    const char* names[8];
+    for (int i = 0; i < n; ++i) names[i] = kOfferedBeingKinds[i].name;
     ImGui::SetNextItemWidth(130.0f);
-    if (ImGui::Combo("Being kind", &kind, kBeingKindNames, 8)) {
-        node.beingKind = static_cast<ConditionNode::BeingKind>(kind);
+    if (ImGui::Combo("Being kind", &current, names, n)) {
+        node.beingKind = kOfferedBeingKinds[current].kind;
         return true;
     }
     return false;
@@ -1335,8 +1358,8 @@ bool editActionNode(ActionNode& node) {
             break;
         }
         case ActionNode::Kind::Spawn: {
-            ImGui::TextDisabled("Births the concept's objects into the law's target World.");
-            ImGui::TextDisabled("Bind the law to an event whose SUBJECT is the World.");
+            ImGui::TextDisabled("Births the concept's objects into the law's target Zone.");
+            ImGui::TextDisabled("Bind the law to an event whose SUBJECT is the Zone.");
             const auto& concepts = ConceptRegistry::instance().getAll();
             const char* preview = node.conceptId.empty() ? "(choose concept)"
                                                          : node.conceptId.c_str();
@@ -1367,7 +1390,7 @@ bool editActionNode(ActionNode& node) {
         // Creation, composition, and their counterparts.
         // ----------------------------------------------------------------
         case ActionNode::Kind::Create: {
-            ImGui::TextDisabled("Mint a new Object of the chosen shape and place it in the World.");
+            ImGui::TextDisabled("Mint a new Object of the chosen shape and place it in the Zone.");
             ImGui::TextDisabled("Children run WITH THE NEWBORN AS SUBJECT — Set, Map, AddProperty");
             ImGui::TextDisabled("all shape the thing being born.");
             static const char* shapeNames[] = {
@@ -1486,7 +1509,7 @@ bool editActionNode(ActionNode& node) {
         }
 
         case ActionNode::Kind::Destroy: {
-            ImGui::TextDisabled("Remove an Object from the World — the delete tool as law-text.");
+            ImGui::TextDisabled("Remove an Object from the Zone — the delete tool as law-text.");
             ImGui::TextDisabled("Every element Formation that held it releases it first.");
             const auto tokenCombo = [&](const char* label, std::string& token) {
                 const char* preview = token.empty() ? "the law's subject" : token.c_str();

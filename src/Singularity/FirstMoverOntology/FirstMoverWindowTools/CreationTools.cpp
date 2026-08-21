@@ -8,7 +8,7 @@
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ConstructedBeing/Object/Object.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
-#include "ZonesOfEarth/World/World.hpp"
+#include "ZonesOfEarth/Zone/Zone.hpp"
 #include "Singularity/Screen/Camera.hpp"
 #include "Singularity/Screen/GL/GluCompat.hpp"
 #include "Singularity/Screen/HighlightSystem.hpp"
@@ -84,7 +84,7 @@ namespace {
 
 std::vector<Object*> collectWorldTargets(ZoneManager& zoneMgr) {
     std::vector<Object*> targets;
-    for (const auto& up : zoneMgr.active().world().getOwnedObjects()) {
+    for (const auto& up : zoneMgr.active().getOwnedObjects()) {
         if (up && !(up->hasAttribute("baseline") &&
                     up->getAttribute("baseline") == std::string("ground"))) {
             targets.push_back(up.get());

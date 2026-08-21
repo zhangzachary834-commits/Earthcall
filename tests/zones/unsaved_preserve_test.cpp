@@ -14,7 +14,6 @@
 #include "Singularity/Storage/SaveSystem.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/SaveContext.hpp"
-#include "ZonesOfEarth/World/World.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "json.hpp"
@@ -52,7 +51,7 @@ std::shared_ptr<Object> makeCube(const std::string& id, const glm::vec3& p) {
 bool hasObject(const ZoneManager& mgr, const std::string& id) {
     for (const auto& z : mgr.zones()) {
         if (!z) continue;
-        for (const auto& o : z->world().getOwnedObjects()) {
+        for (const auto& o : z->getOwnedObjects()) {
             if (o && o->getIdentifier() == id) return true;
         }
     }
@@ -91,14 +90,14 @@ int main() {
     {
         ZoneManager writer;
         auto z = std::make_shared<Zone>("Sanctum of Beginnings", "default");
-        z->world().addObject(makeCube("saved-cube", glm::vec3(9.0f, 0.0f, 0.0f)));
+        z->addObject(makeCube("saved-cube", glm::vec3(9.0f, 0.0f, 0.0f)));
         writer.addZone(z);
         writer.saveState(otherPath, ctx);
     }
 
     ZoneManager live;
     auto liveZone = std::make_shared<Zone>("Sanctum of Beginnings", "default");
-    liveZone->world().addObject(makeCube("unsaved-cube", glm::vec3(1.0f, 0.0f, 0.0f)));
+    liveZone->addObject(makeCube("unsaved-cube", glm::vec3(1.0f, 0.0f, 0.0f)));
     live.addZone(liveZone);
 
     check(hasObject(live, "unsaved-cube"), "live world holds unsaved work");

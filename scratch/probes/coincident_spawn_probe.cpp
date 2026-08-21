@@ -14,7 +14,7 @@
 
 #include "ConstructedBeing/Object/Object.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
-#include "ZonesOfEarth/World/World.hpp"
+#include "ZonesOfEarth/Zone/Zone.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <cstdio>
@@ -32,11 +32,11 @@ std::shared_ptr<Object> makeCube(const glm::vec3& p) {
     return obj;
 }
 
-void step(World& w, int frames) {
+void step(Zone& w, int frames) {
     for (int i = 0; i < frames; ++i) w.update(1.0f / 60.0f);
 }
 
-void report(const World& w, const char* label) {
+void report(const Zone& w, const char* label) {
     std::printf("  %-28s ", label);
     for (std::size_t i = 0; i < w.objects().size(); ++i)
         std::printf("[%zu]y=%8.2f ", i, w.objects()[i]->getPosition().y);
@@ -52,7 +52,7 @@ void clickSequence(int clicks, int framesBetween) {
     Physics::clearBonds();
     Physics::setLegacyEngineEnabled(true);
 
-    World world; // a fresh zone world: empty, no baseline ground
+    Zone world("test-zone", "default"); // a fresh zone world: empty, no baseline ground
     for (int c = 0; c < clicks; ++c) {
         world.addObject(makeCube(kSpawn));
         step(world, framesBetween);
@@ -73,7 +73,7 @@ int main() {
         Physics::resetRigidBodies();
         Physics::clearBonds();
         Physics::setLegacyEngineEnabled(true);
-        World world;
+        Zone world("test-zone", "default");
         for (int c = 0; c < 4; ++c) {
             world.addObject(makeCube(glm::vec3(2.0f * c, 1.6f, 1.0f)));
             step(world, 30);
@@ -88,7 +88,7 @@ int main() {
         Physics::resetRigidBodies();
         Physics::clearBonds();
         Physics::setLegacyEngineEnabled(true);
-        World world;
+        Zone world("test-zone", "default");
         world.addObject(makeCube(glm::vec3(0.0f, 5.0f, 0.0f)));
         auto ground = makeCube(glm::vec3(0.0f, 0.0f, 0.0f));
         ground->setAttribute("baseline", "ground");
@@ -109,7 +109,7 @@ int main() {
         Physics::resetRigidBodies();
         Physics::clearBonds();
         Physics::setLegacyEngineEnabled(true);
-        World world;
+        Zone world("test-zone", "default");
         for (int c = 0; c < 4; ++c) world.addObject(makeCube(kSpawn));
         for (int s = 0; s < 6; ++s) {
             step(world, 30);

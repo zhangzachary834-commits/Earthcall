@@ -3,7 +3,7 @@
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 #include "Universe.hpp"
 #include "LawAuditLogger.hpp"
-#include "ZonesOfEarth/World/World.hpp"
+#include "ZonesOfEarth/Zone/Zone.hpp"
 #include "Singularity/Core/EventEntity.hpp"
 
 #include <algorithm>
@@ -15,7 +15,6 @@
 
 #include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
 #include "Person/Person.hpp"
-#include "ZonesOfEarth/Zone/Zone.hpp"
 
 namespace {
 std::vector<std::string> formationMemberIds(const Formation& formation) {
@@ -1777,7 +1776,7 @@ std::vector<Singular*> LawManager::sweepSubjects(const Law& law) const {
 // activation, and no applyTo stack frame still holds a pointer to a victim.
 // Only now is it safe to free — and before freeing, every Formation that
 // names the victim must let go, because Formations hold RAW pointers and
-// World::removeObject only releases the ones held by other Objects. A law
+// Zone::removeObject only releases the ones held by other Objects. A law
 // targeting a destroyed object used to dereference freed memory every tick
 // for the rest of the session.
 // ---------------------------------------------------------------------------
@@ -1812,18 +1811,18 @@ void reapUnmadeBeings() {
     if (!Universe::instance().hasUnmakings()) return;
     std::vector<Singular*> victims = Universe::instance().takeUnmakings();
 
-    // Collect the worlds BEFORE any removal: beings() rebuilds from the
-    // provider each call, and a World is not what we are freeing anyway.
-    std::vector<World*> worlds;
+    // Collect the Zones BEFORE any removal: beings() rebuilds from the
+    // provider each call, and a Zone is not what we are freeing anyway.
+    std::vector<Zone*> zones;
     for (Singular* being : Universe::instance().beings()) {
-        if (auto* world = dynamic_cast<World*>(being)) worlds.push_back(world);
+        if (auto* zone = dynamic_cast<Zone*>(being)) zones.push_back(zone);
     }
 
     for (Singular* victim : victims) {
         auto* asObject = dynamic_cast<Object*>(victim);
         if (!asObject) continue;
-        for (World* world : worlds) {
-            if (world->removeObject(asObject)) break;   // publishes object-destroyed
+        for (Zone* zone : zones) {
+            if (zone->removeObject(asObject)) break;   // publishes object-destroyed
         }
     }
 }

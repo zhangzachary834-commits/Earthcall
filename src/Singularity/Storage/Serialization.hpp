@@ -2,7 +2,7 @@
 
 #include "json.hpp"
 #include "ConstructedBeing/Object/Object.hpp"
-#include "ZonesOfEarth/World/World.hpp"
+#include "ZonesOfEarth/Zone/Zone.hpp"
 #include "Person/Body/BodyPart/BodyPart.hpp"
 #include "Person/Body/Body.hpp"
 #include <glm/gtc/type_ptr.hpp>
@@ -12,8 +12,10 @@
 void to_json(nlohmann::json& j, const Object& obj);
 void from_json(const nlohmann::json& j, Object& obj);
 
-void to_json(nlohmann::json& j, const World& world);
-void from_json(const nlohmann::json& j, World& world);
+// The on-disk bag is still `{"objects":[...]}` under `zones[].world`.
+// That key is not the ontology; it is the shape existing Person saves carry.
+nlohmann::json zoneObjectsToJson(const Zone& zone);
+void zoneObjectsFromJson(const nlohmann::json& j, Zone& zone);
 
 // BodyPart serialization (includes faceTextures from Object)
 nlohmann::json bodyPartToJson(const BodyPart& part);

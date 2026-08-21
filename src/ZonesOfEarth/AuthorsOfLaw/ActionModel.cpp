@@ -3,7 +3,8 @@
 #include "ConstructedBeing/Object/Creation/ObjectConcept.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
 #include "Singularity/Core/EventBus.hpp"
-#include "ZonesOfEarth/World/World.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
+#include "ZonesOfEarth/Zone/Zone.hpp"
 #include "Person/Body/BodyPart/BodyPart.hpp"
 
 #include <ctime>
@@ -86,7 +87,7 @@ namespace {
     // A node whose effect is not a property write (Publish, Create, Spawn,
     // Destroy, the composition family) reports the same way: what it was,
     // whether it landed, and — when it didn't — why, in words, because no
-    // PathResult describes "there was no World to be born into".
+    // PathResult describes "there was no Zone to be born into".
     void emitEffect(const std::string& actionName, bool landed, const std::string& note = {}) {
         ActionNode::record(ActionNode::NodeOutcome{
             actionName, {}, landed, PropertyPath::PathResult::Ok, landed ? std::string() : note});
@@ -203,12 +204,19 @@ Singular* resolveBeingToken(const std::string& token, Singular& subject) {
     return nullptr;
 }
 
-// The World a creation law writes into: the law's target when it IS a world
-// (the container is the womb), otherwise the first World in the Universe.
-World* resolveWorld(Singular& target) {
-    if (auto* asWorld = dynamic_cast<World*>(&target)) return asWorld;
+// The Zone a creation law writes into: the law's target when it IS a Zone
+// (the container is the womb), otherwise the first Zone in the Universe.
+// Identifier "World" (the old bag's slug) resolves the same way — to the
+// first Zone the provider listed, which is the active one at boot.
+Zone* resolveZone(Singular& target) {
+    if (auto* asZone = dynamic_cast<Zone*>(&target)) return asZone;
     for (Singular* being : Universe::instance().beings()) {
-        if (auto* w = dynamic_cast<World*>(being)) return w;
+        if (being && being->getIdentifier() == "World") {
+            if (auto* z = dynamic_cast<Zone*>(being)) return z;
+        }
+    }
+    for (Singular* being : Universe::instance().beings()) {
+        if (auto* z = dynamic_cast<Zone*>(being)) return z;
     }
     return nullptr;
 }
@@ -477,21 +485,10 @@ ECA::ActionExecutor ActionNode::compile() const {
 
             return [id, pPath, placementPath, shapeKindPath, colorPath,
                     compiledChildren](const ECA::Event& event, Singular& target) {
-                World* world = nullptr;
-                if (auto* tWorld = dynamic_cast<World*>(&target)) {
-                    world = tWorld;
-                }
-                if (!world) {
-                    for (auto* being : Universe::instance().beings()) {
-                        if (auto* w = dynamic_cast<World*>(being)) {
-                            world = w;
-                            break;
-                        }
-                    }
-                }
+                Zone* world = resolveZone(target);
                 auto concept = ConceptRegistry::instance().find(id);
                 if (!world) {
-                    emitEffect("Spawn", false, "no World to be born into");
+                    emitEffect("Spawn", false, "no Zone to be born into");
                     return;
                 }
                 if (!concept) {
@@ -761,9 +758,9 @@ ECA::ActionExecutor ActionNode::compile() const {
 
             return [shapeKind, type, parentPath, placementPath, shapeKindPath, colorPath,
                     compiledChildren](const ECA::Event& event, Singular& target) {
-                World* world = resolveWorld(target);
+                Zone* world = resolveZone(target);
                 if (!world) {   // nowhere to be born: nothing happens
-                    emitEffect("Create", false, "no World to be born into");
+                    emitEffect("Create", false, "no Zone to be born into");
                     return;
                 }
 
@@ -807,7 +804,7 @@ ECA::ActionExecutor ActionNode::compile() const {
                 }
 
                 // An authored parent takes it as an element; otherwise the
-                // World does. Either way something owns it.
+                // Zone does. Either way something owns it.
                 Object* parent = nullptr;
                 if (!parentPath.empty()) {
                     PropertyValue pv;

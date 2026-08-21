@@ -14,7 +14,7 @@
 #include "ConstructedBeing/Object/Object.hpp"
 #include "Person/Person.hpp"
 #include "ConstructedBeing/Object/Creation/ObjectConcept.hpp"
-#include "ZonesOfEarth/World/World.hpp"
+#include "ZonesOfEarth/Zone/Zone.hpp"
 
 #include <cassert>
 #include <cmath>
@@ -213,7 +213,7 @@ int main() {
             std::string conceptId = cubeConcept->getIdentifier();
             
             // Create a world
-            World testWorld;
+            Zone testWorld("test-zone", "default");
             size_t initialSize = testWorld.getOwnedObjects().size();
             
             // Spawn action: target is the world

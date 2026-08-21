@@ -25,7 +25,7 @@
 #include "Singularity/Core/EventBus.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
-#include "ZonesOfEarth/World/World.hpp"
+#include "ZonesOfEarth/Zone/Zone.hpp"
 
 #include <cmath>
 #include <cstdio>
@@ -54,7 +54,7 @@ bool nearf(float a, float b, float eps = 1e-4f) { return std::fabs(a - b) < eps;
 int main() {
     std::printf("Running Shape Generator 3D law (as booted) test...\n");
 
-    World world;
+    Zone world("test-zone", "default");
     Soul soul("Player");
     Body body("humanoid", "default");
     Person player(std::move(soul), std::move(body), "default");

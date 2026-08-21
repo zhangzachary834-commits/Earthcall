@@ -441,12 +441,12 @@ Nesting **is** parenthesization: `All(Any(a,b), Not(c))` is `(a || b) && !c`.
 ```
 Op:        0 Eq · 1 Ne · 2 Lt · 3 Le · 4 Gt · 5 Ge · 6 Near · 7 InRange
 BeingKind: 0 AnyBeing · 1 Object · 2 Person · 3 Relation · 4 Formation
-           5 Law · 6 World · 7 Zone · 8 Lexeme
+           5 Law · ~~6 World~~ (burned — folded into Zone) · 7 Zone · 8 Lexeme
 ```
 
 **Precision note from the source:** a Law *is* an Object (extra-spatial), and a Zone
 *is* an Object, so `BeingKind::Object` matches both. Use `Law` / `Zone` when you mean
-them.
+them. `BeingKind::World = 6` never matches; do not reuse the integer.
 
 ### 5c. `ActionNode::Kind`
 

@@ -10,7 +10,6 @@
 #include "Relation/Relation.hpp"
 #include "Universe.hpp"
 #include "ZonesOfEarth/Physics/CollisionDispatcher.hpp"
-#include "ZonesOfEarth/World/World.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "Singularity/Language/Lexeme.hpp"
 
@@ -43,7 +42,7 @@ bool matchesKindImpl(const Singular& being, ConditionNode::BeingKind kind) {
         case ConditionNode::BeingKind::Relation:  return dynamic_cast<const Relation*>(&being) != nullptr;
         case ConditionNode::BeingKind::Formation: return dynamic_cast<const Formation*>(&being) != nullptr;
         case ConditionNode::BeingKind::Law:       return dynamic_cast<const Law*>(&being) != nullptr;
-        case ConditionNode::BeingKind::World:     return dynamic_cast<const World*>(&being) != nullptr;
+        case ConditionNode::BeingKind::World:     return false; // burned — World folded into Zone
         case ConditionNode::BeingKind::Zone:      return dynamic_cast<const Zone*>(&being) != nullptr;
         case ConditionNode::BeingKind::Lexeme:    return dynamic_cast<const Singularity::Language::Lexeme*>(&being) != nullptr;
     }

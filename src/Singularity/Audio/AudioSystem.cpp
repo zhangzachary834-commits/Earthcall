@@ -8,7 +8,7 @@
 #include "ZonesOfEarth/Physics/Physics.hpp"
 #include "Singularity/Foreign/API/EarthcallAPI.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
-#include "ZonesOfEarth/World/World.hpp"
+#include "ZonesOfEarth/Zone/Zone.hpp"
 #include "ConstructedBeing/Object/Object.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp"
@@ -147,7 +147,7 @@ void AudioSystem::tick() {
     }
 
     // Process SoundEmitters
-    auto& objects = mgr.active().world().getOwnedObjects();
+    auto& objects = mgr.active().getOwnedObjects();
     
     // Find missing emitters (objects destroyed)
     for (auto it = _state->activeEmitters.begin(); it != _state->activeEmitters.end(); ) {

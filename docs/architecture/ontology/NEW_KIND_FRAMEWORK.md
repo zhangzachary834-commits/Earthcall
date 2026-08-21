@@ -328,7 +328,7 @@ guidelines; an agent encountering them stops and asks the world's author.
 
 1. **No new subclass of `Singular` or `Object` for a domain noun.** Not `Robot`, not
    `Vehicle`, not `Tree`, not `Instrument`. The existing subclasses are ontological
-   categories (`Person`, `Relation`, `Formation`, `Law`, `Zone`, `World`,
+   categories (`Person`, `Relation`, `Formation`, `Law`, `Zone`,
    `ObjectConcept`, `Body`), and the list closes to domain nouns permanently.
    *(Exception: The human form. `BodyPart` and constitutive members for the `Person` vessel are invariant ontological structures, not domain nouns, and thus admitted in C++).*
 
@@ -341,12 +341,13 @@ guidelines; an agent encountering them stops and asks the world's author.
    by accumulating decision loops.
 
 3. **`ConditionModel::BeingKind` is append-only and an ontology event.** Adding a
-   value means asserting a new category of being exists. There are eight, and every
-   one is a structural category — `Object`, `Person`, `Relation`, `Formation`, `Law`,
-   `World`, `Zone`, `Lexeme`. A ninth for a domain noun is a schism with a version
+   value means asserting a new category of being exists. The live structural
+   categories are `Object`, `Person`, `Relation`, `Formation`, `Law`,
+   `Zone`, `Lexeme`. `BeingKind::World = 6` is burned (World folded into Zone;
+   never reuse 6). A new value for a domain noun is a schism with a version
    number.
 
-4. **No `*Manager` for a domain noun.** The world owns Objects; `LawManager` owns
+4. **No `*Manager` for a domain noun.** The Zone owns Objects; `LawManager` owns
    Laws; `ConceptRegistry` owns concepts; `RelationManager` owns relations. A
    `RobotController` that "tracks all instances and updates their state every tick" is
    a second world with a second update loop and a second lifetime model — the purest
@@ -384,7 +385,7 @@ guidelines; an agent encountering them stops and asks the world's author.
 | taught motion | `ChangeRecorder`, or an `Automation::Clip` layered on the rest pose | K4 |
 | a safety envelope | an `InRegion` condition over an authored SDF region | K4 |
 | a camera that sees | a sensor-**Object** standing in an `observes` Relation to what it sees — the observation is an edge in the world's graph, addressable and weighable | K3 |
-| spawning a fleet | `Spawn` action on the World/Zone — the container is the womb; authorship is checked structurally | K2 |
+| spawning a fleet | `Spawn` action on the Zone — the container is the womb; authorship is checked structurally | K2 |
 
 Everything Gemini's `RobotEntity` and `RobotController` were for is in this table, and
 all of it is already built.
@@ -463,7 +464,7 @@ schism crossed the language boundary.
 |---|---|---|
 | `src/Robotics/` top-level | **rejected** | `src/Singularity/Physical/` — a modality, inside the ontology (Floor §6) |
 | `RobotEntity.hpp/.cpp` | **rejected** | `ObjectConcept` + Objects + Relations + Formation (§7a). Floor §1, §5 |
-| `RobotController.hpp/.cpp` | **rejected** | the World already owns Objects; per-tick behavior is Law and Automation. Floor §4 |
+| `RobotController.hpp/.cpp` | **rejected** | the Zone already owns Objects; per-tick behavior is Law and Automation. Floor §4 |
 | `RoboticsBridge.hpp/.cpp` | **admitted, rescoped** | `PhysicalChannel` + `Adapters/` — a channel for a declared modality, not a robot system (§7b) |
 | CMake: add `src/Robotics` to `include_directories` "so other systems can interface with the robots" | **rejected** | nothing outside the channel may include the channel. That sentence is the tell: it plans for the rest of the engine to depend on robot types (§5d) |
 | `backend-python/robotics/` | **admitted with constraints** | see §7c |

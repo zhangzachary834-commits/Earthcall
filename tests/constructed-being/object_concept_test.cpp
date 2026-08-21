@@ -11,7 +11,7 @@
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ConstructedBeing/Object/Creation/ObjectConcept.hpp"
 #include "Singularity/TransferPolicy.hpp"
-#include "ZonesOfEarth/World/World.hpp"
+#include "ZonesOfEarth/Zone/Zone.hpp"
 
 #include <GLFW/glfw3.h>
 #include <cassert>
@@ -106,7 +106,7 @@ int main() {
         ConceptRegistry::instance().add(concept);
         assert(ConceptRegistry::instance().find(concept->getIdentifier()) == concept);
 
-        World world;
+        Zone world("test-zone", "default");
         LawManager mgr;
         mgr.connectToEventBus();
 

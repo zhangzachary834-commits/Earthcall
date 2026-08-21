@@ -324,7 +324,7 @@ void Engine::tick(float dt) {
         Rendering::renderDeveloperToolsWindow(&_devToolsWindowOpen, _window, this);
 
         if (_creationConsoleOpen) {
-            Rendering::renderCreationWindow(&_creationConsoleOpen, *_player, nullptr, mgr.active().world());
+            Rendering::renderCreationWindow(&_creationConsoleOpen, *_player, nullptr, mgr.active());
         }
 
         if (_creatorConsoleOpen) {

@@ -17,7 +17,7 @@
 #include "Singularity/Core/EventBus.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
-#include "ZonesOfEarth/World/World.hpp"
+#include "ZonesOfEarth/Zone/Zone.hpp"
 
 #include <cassert>
 #include <algorithm>
@@ -70,7 +70,7 @@ int main() {
     // below reads exactly the same paths it always read — only the being those
     // paths are addressed against has changed. Person keeps cameraPos and
     // cameraForward, which are facts about where the Person is looking from.
-    World world;
+    Zone world("test-zone", "default");
     Soul soul("Player");
     Body body("humanoid", "default");
     Person player(std::move(soul), std::move(body), "default");

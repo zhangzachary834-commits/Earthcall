@@ -37,7 +37,7 @@ namespace Core {
         if (oi < 0 || oi > 4) oi = 2;
         const float blend = (oi >= 3) ? state.combineBlend : 0.5f;
         A->setFieldShape(geom::SdfNode::binary(ops[oi], an, bn, blend), 1.6f);
-        mgr.active().world().removeObject(B);
+        mgr.active().removeObject(B);
         if (state.selectedObject3D == B) state.selectedObject3D = A;
         if (state.combineOperandA == B) state.combineOperandA = nullptr;
         if (state.clayGrabbed == B) state.clayGrabbed = nullptr;
@@ -160,7 +160,7 @@ namespace Core {
         }
 
         // Update world (physics etc.)
-        mgr.active().world().update(dt);
+        mgr.active().update(dt);
         mgr.active().applyFormationRelations();
 
         // Advance time

@@ -5,7 +5,7 @@
 #include "ConstructedBeing/Object/Object.hpp"
 #include "Singularity/TransferPolicy.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
-#include "ZonesOfEarth/World/World.hpp"
+#include "ZonesOfEarth/Zone/Zone.hpp"
 
 #include <imgui.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -163,7 +163,7 @@ glm::mat4 placementFor(const std::vector<Singular*>& sources, Object* selected) 
 
 } // namespace
 
-void renderCreationWindow(bool* open, Singular& author, Object* selected, World& world) {
+void renderCreationWindow(bool* open, Singular& author, Object* selected, Zone& zone) {
     ImGui::SetNextWindowSize(ImVec2(560, 620), ImGuiCond_FirstUseEver);
     if (!ImGui::Begin("Singular Set-to-Set Creation", open)) {
         ImGui::End();
@@ -343,7 +343,7 @@ void renderCreationWindow(bool* open, Singular& author, Object* selected, World&
             g.lastCreatedIds.clear();
             for (auto& newborn : newborns) {
                 g.lastCreatedIds.push_back(newborn->getIdentifier());
-                world.addObject(std::move(newborn));
+                zone.addObject(std::move(newborn));
             }
         }
         if (!g.lastCreatedIds.empty()) {
@@ -381,7 +381,7 @@ void renderCreationWindow(bool* open, Singular& author, Object* selected, World&
             g.lastCreatedIds.clear();
             for (auto& newborn : newborns) {
                 g.lastCreatedIds.push_back(newborn->getIdentifier());
-                world.addObject(std::move(newborn));
+                zone.addObject(std::move(newborn));
             }
         }
         if (ImGui::IsItemHovered()) {

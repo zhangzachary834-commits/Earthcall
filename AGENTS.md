@@ -88,7 +88,7 @@ src/
                   (was `Form/`; ObjectConcept is the ONE set-to-set machine)
   Person/         Person · Soul · Body · Relationship
   Relation/       Relation — a first-class being, not an edge in someone's array
-  ZonesOfEarth/   Zone · Home · World · Physics · AuthorsOfLaw (Law lives here) · Ourverse
+  ZonesOfEarth/   Zone · Home · Physics · AuthorsOfLaw (Law lives here) · Ourverse
   Singularity/    the modality layer: Core · Audio · Language · Network · Physical · OntoMath · Foreign · Input · Screen · Storage · FirstMoverWindowTools
   Identity/       First Mover register, identity ledger, keys
   Legacy/         not yet ontologically placed

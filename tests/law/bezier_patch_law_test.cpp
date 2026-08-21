@@ -18,7 +18,7 @@
 #include "Singularity/Core/EventBus.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
-#include "ZonesOfEarth/World/World.hpp"
+#include "ZonesOfEarth/Zone/Zone.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -59,7 +59,7 @@ int main() {
     std::cout << "============================================================" << std::endl;
 
     // 1. Setup World, Person (Player), CreationChannel, and Universe
-    World world;
+    Zone world("test-zone", "default");
     Soul soul("Creator");
     Body body("humanoid", "default");
     Person player(std::move(soul), std::move(body), "default");

@@ -8,7 +8,6 @@
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
-#include "ZonesOfEarth/World/World.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 
@@ -344,7 +343,7 @@ void InteractionChannel::step(GLFWwindow* window, ::Core::Camera& camera,
     }
 
     std::vector<Object*> reachable;
-    const auto& owned = mgr.active().world().objects();
+    const auto& owned = mgr.active().objects();
     reachable.reserve(owned.size());
     for (const auto& obj : owned) {
         if (obj) reachable.push_back(obj.get());

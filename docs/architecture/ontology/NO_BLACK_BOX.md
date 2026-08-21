@@ -106,9 +106,10 @@ The test for exemption is **not** "is it a pointer" or "is it hard to expose." I
 If a Person could mean something by it, it is state, and it is registered — *even if it is
 a pointer, even if it is expensive, even if the only sane tier is Kernel read-only.*
 
-`World::_playerEyeHeight` is a float that decides where a Person's viewpoint sits relative to
-their feet. There is no reading of "beneath the Kernel" that covers it. It is unregistered
-today because `World::buildProperties()` is `{}` — the accident this refusal exists to name.
+`World::_playerEyeHeight` was a float that decided where a Person's viewpoint sits relative to
+their feet. There is no reading of "beneath the Kernel" that covers it. It sat unregistered
+because `World::buildProperties()` was `{}` — the accident this refusal exists to name.
+World folded into Zone on 2026-08-20; do not resurrect the bag to "register" it.
 
 ---
 
@@ -243,8 +244,9 @@ particular drift cannot recur.
 
 Both lists in that test are **debt ledgers, not allowlists.** Entries are expected to leave.
 
-`kSealedRegister` names beings that register nothing. As of 2026-08-13: `World`, `Ourverse`,
-`Formation`, `Soul`. (`Perspective` is *not* on it — `Perspective.cpp` is empty, so its
+`kSealedRegister` names beings that register nothing. As of 2026-08-20 the live ledger is
+empty: `Ourverse`, `Formation`, and `Soul` unsealed 2026-08-18; `World` folded into `Zone`
+2026-08-20. (`Perspective` is *not* on it — `Perspective.cpp` is empty, so its
 constructor is declared and never defined. It is an uninstantiable stub, not a being with
 hidden state.) Taking a name off is the work; adding one requires a reason that survives §3.
 

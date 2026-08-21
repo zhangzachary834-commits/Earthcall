@@ -63,7 +63,7 @@ void ZoneManager::switchTo(size_t index)
             currentZoneId = parent;
         }
 
-        auto& worldObjs = _zones[_currentIndex]->world().getOwnedObjectsMutable();
+        auto& worldObjs = _zones[_currentIndex]->getOwnedObjectsMutable();
         worldObjs.clear();
         for (const auto& obj : globalObjects) {
             bool matches = false;
@@ -215,10 +215,10 @@ void applyLook(SaveContext& ctx, const glm::vec3& eye, const glm::vec3& target) 
     settlePersonToCamera(ctx);
 }
 
-void lookAtWorld(SaveContext& ctx, const World& world) {
+void lookAtWorld(SaveContext& ctx, const Zone& zone) {
     glm::vec3 minP(1e9f), maxP(-1e9f);
     int n = 0;
-    for (const auto& obj : world.getOwnedObjects()) {
+    for (const auto& obj : zone.getOwnedObjects()) {
         if (!obj) continue;
         const glm::vec3 p = obj->getPosition();
         minP = glm::min(minP, p);
@@ -261,7 +261,7 @@ std::size_t liveObjectCount(const ZoneManager& mgr) {
     std::size_t n = 0;
     for (const auto& z : mgr.zones()) {
         if (!z) continue;
-        n += z->world().getOwnedObjects().size();
+        n += z->getOwnedObjects().size();
     }
     return n;
 }
@@ -284,7 +284,7 @@ nlohmann::json ZoneManager::buildSaveJson(const SaveContext& ctx) const {
     for (const auto& z : _zones) {
         json zj; zj["name"] = z->name();
         zj["owner"] = z->owner();
-        zj["world"] = z->world();
+        zj["world"] = zoneObjectsToJson(*z);
         zj["formationRelations"] = z->formation().relations().toJson();
         zonesJson.push_back(zj);
     }
@@ -372,9 +372,9 @@ void ZoneManager::saveStateWithLog(const std::string& customName, SaveContext& c
     // now (EngineInit), so the skip ate the first two beings a Person
     // spawned. Zone JSON still had them; the top-level array is the fallback
     // for empty zone worlds (legacy saves). Write what is actually there.
-    auto& zoneWorld = active().world();
+    auto& zone = active();
     nlohmann::json objArr = nlohmann::json::array();
-    for (const auto& o : zoneWorld.getOwnedObjects()) {
+    for (const auto& o : zone.getOwnedObjects()) {
         if (!o) continue;
         nlohmann::json oj = *o;
         objArr.push_back(std::move(oj));
@@ -533,7 +533,10 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
                 auto z = std::make_shared<Zone>(name, "strict");
                 z->setOwner(zj.value("owner", std::string{}));
                 if (zj.contains("world")) {
-                    from_json(zj["world"], z->world());
+                    zoneObjectsFromJson(zj["world"], *z);
+                }
+                if (z->getOwnedObjects().empty() && zj.contains("objects")) {
+                    zoneObjectsFromJson(zj, *z);
                 }
                 if (zj.contains("formationRelations")) {
                     // MEMBERS BEFORE RELATIONS. Zone::syncFormationMembers does
@@ -572,9 +575,9 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
         // zone's world came in empty, fold those into the active zone so
         // a Person's spawned shapes survive the round-trip.
         if (j.contains("objects") && j["objects"].is_array() && !zonesVec.empty()) {
-            auto& world = zonesVec[std::min(currentZoneIdx, zonesVec.size() - 1)]->world();
-            if (world.getOwnedObjects().empty()) {
-                from_json(j, world);
+            auto& loadZone = *zonesVec[std::min(currentZoneIdx, zonesVec.size() - 1)];
+            if (loadZone.getOwnedObjects().empty()) {
+                zoneObjectsFromJson(j, loadZone);
             }
         }
 
@@ -588,7 +591,7 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
         globalObjects.clear();
         for (const auto& z : _zones) {
             if (!z) continue;
-            for (const auto& obj : z->world().getOwnedObjects()) {
+            for (const auto& obj : z->getOwnedObjects()) {
                 if (!obj) continue;
                 obj->addZoneDesignation(z->name());
                 obj->addZoneDesignation(z->getIdentifier());
@@ -713,7 +716,7 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
         // Build report
         std::size_t objectCount = 0;
         for (const auto& zone : _zones) {
-            objectCount += zone->world().getOwnedObjects().size();
+            objectCount += zone->getOwnedObjects().size();
         }
         std::size_t authoredCount = 0;
         for (const auto& law : ctx.lawManager->getAll()) {
@@ -867,10 +870,10 @@ void ZoneManager::loadTestObservation(const std::string& filename, SaveContext& 
         }
 
         std::unordered_set<Object*> retiring;
-        for (const auto& obj : zone->world().getOwnedObjects()) {
+        for (const auto& obj : zone->getOwnedObjects()) {
             if (obj) retiring.insert(obj.get());
         }
-        zone->world().getOwnedObjectsMutable().clear();
+        zone->getOwnedObjectsMutable().clear();
         globalObjects.erase(
             std::remove_if(globalObjects.begin(), globalObjects.end(),
                            [&](const std::shared_ptr<Object>& obj) {
@@ -882,16 +885,16 @@ void ZoneManager::loadTestObservation(const std::string& filename, SaveContext& 
         if (j.contains("zones") && j["zones"].is_array()) {
             for (const auto& zj : j["zones"]) {
                 if (zj.contains("world")) {
-                    from_json(zj["world"], zone->world());
+                    zoneObjectsFromJson(zj["world"], *zone);
                 }
             }
         }
         if (j.contains("objects") && j["objects"].is_array() &&
-            zone->world().getOwnedObjects().empty()) {
-            from_json(j, zone->world());
+            zone->getOwnedObjects().empty()) {
+            zoneObjectsFromJson(j, *zone);
         }
 
-        for (const auto& obj : zone->world().getOwnedObjects()) {
+        for (const auto& obj : zone->getOwnedObjects()) {
             if (!obj) continue;
             obj->addZoneDesignation(zone->name());
             obj->addZoneDesignation(zone->getIdentifier());
@@ -900,9 +903,9 @@ void ZoneManager::loadTestObservation(const std::string& filename, SaveContext& 
 
         switchTo(zoneIndex);
 
-        const std::size_t objectCount = zone->world().getOwnedObjects().size();
+        const std::size_t objectCount = zone->getOwnedObjects().size();
         if (objectCount > 0 && cameraIsDumpDefault(j)) {
-            lookAtWorld(ctx, zone->world());
+            lookAtWorld(ctx, *zone);
         } else if (j.contains("cameraPos") && ctx.camera) {
             ctx.camera->pos = glm::vec3(j["cameraPos"][0], j["cameraPos"][1], j["cameraPos"][2]);
             if (ctx.mouseHandler) {
@@ -916,7 +919,7 @@ void ZoneManager::loadTestObservation(const std::string& filename, SaveContext& 
                 // cluster (eye at y=0, cubes at y=2). If the camera is more
                 // than a few metres from the cluster, aim at it.
                 glm::vec3 minP(1e9f), maxP(-1e9f);
-                for (const auto& obj : zone->world().getOwnedObjects()) {
+                for (const auto& obj : zone->getOwnedObjects()) {
                     if (!obj) continue;
                     const glm::vec3 p = obj->getPosition();
                     minP = glm::min(minP, p);
@@ -924,11 +927,11 @@ void ZoneManager::loadTestObservation(const std::string& filename, SaveContext& 
                 }
                 const glm::vec3 center = 0.5f * (minP + maxP);
                 if (glm::distance(ctx.camera->pos, center) > 12.0f) {
-                    lookAtWorld(ctx, zone->world());
+                    lookAtWorld(ctx, *zone);
                 }
             }
         } else if (objectCount > 0) {
-            lookAtWorld(ctx, zone->world());
+            lookAtWorld(ctx, *zone);
         }
 
         _saveLoad.lastLoadReport =
@@ -967,8 +970,7 @@ std::vector<uint8_t> ZoneManager::buildSaveChunkFlatBuffer() {
     flatbuffers::FlatBufferBuilder builder(1024);
     
     std::vector<flatbuffers::Offset<Earthcall::Schema::Entity>> entity_offsets;
-    auto& zoneWorld = active().world();
-    const auto& objs = zoneWorld.getOwnedObjects();
+    const auto& objs = active().getOwnedObjects();
     
     for (size_t i = 2; i < objs.size(); ++i) {
         const auto& o = objs[i];

@@ -18,7 +18,7 @@ namespace Rendering {
             if (!p) return nullptr;
             for (const auto& z : mgr.zones()) {
                 if (!z) continue;
-                for (const auto& o : z->world().getOwnedObjects()) {
+                for (const auto& o : z->getOwnedObjects()) {
                     if (o.get() == p) return p;
                 }
             }

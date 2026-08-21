@@ -4,7 +4,7 @@
 **Asked by Zach:** whether `World` and `Universe` were already retired; if not, whether they violate the six refusals.
 **Answer:** **Neither is retired.** `World` violates refusals 1 and 6, and has already committed refusal 3's append-only slot. `Universe` does not violate as a kind of being — it is law-kernel mechanism wearing a name that collides with the vessel. The wrong fix for either is to register their leftovers as properties.
 
-This audit is the map. The fold itself is not this document.
+This audit is the map. **Postscript (same day):** the fold landed — `class World` is gone, `BeingKind::World = 6` is burned, objects live on `Zone`, save JSON still dual-reads `zones[].world.objects`, `LawContext.hpp` is deleted, Universe remains a non-being. The body of this audit describes the tree *before* that change.
 
 **Companions:** `ontology/NEW_KIND_FRAMEWORK.md` Floor §1–§4, `ontology/NO_BLACK_BOX.md` §2b / §4 / sealed register, `ontology/AUTHORED_CATEGORIES.md` §1, `law/LAW_AND_CREATION_SYSTEM.md` §7c, `ourverse/OURVERSE.md`, `migration/GAME_ELIMINATION_PLAN.md`, [OURVERSE_GAME_ELIMINATION_AUDIT_2026-08-19.md](OURVERSE_GAME_ELIMINATION_AUDIT_2026-08-19.md). Agenda: near-term 6, property-path debt 1.
 

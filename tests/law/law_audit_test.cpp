@@ -22,7 +22,7 @@
 #include "Singularity/Core/EventBus.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
-#include "ZonesOfEarth/World/World.hpp"
+#include "ZonesOfEarth/Zone/Zone.hpp"
 
 #include <GLFW/glfw3.h>
 #include <cassert>
@@ -95,7 +95,7 @@ int main() {
     // ------------------------------------------------------------------
     std::cout << "\n[1] Destroy is deferred to the end of the tick" << std::endl;
     {
-        World world;
+        Zone world("test-zone", "default");
         Object author;
         // Deliberately NOT connectToEventBus(): the bus has no unsubscribe, so
         // a connected manager must be engine-lifetime. Releasing an unmade

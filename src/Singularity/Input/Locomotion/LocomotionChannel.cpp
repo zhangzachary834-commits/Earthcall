@@ -201,7 +201,7 @@ void LocomotionChannel::step(Person& person, ::Core::Camera& camera, GLFWwindow*
     flying  = flyingNow;
     canMove = canMoveNow;
 
-    const auto& objects = mgr.active().world().getOwnedObjects();
+    const auto& objects = mgr.active().getOwnedObjects();
     const float eyeH = person.getBody().getEyeHeight();
 
     // Latch: person.position vs camera.pos - eyeH. A mismatch is a teleport:

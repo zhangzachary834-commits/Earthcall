@@ -420,7 +420,7 @@ void Tool::UpdateShapeGeneratorPlacement(GLFWwindow *window, Core::Engine *engin
     if (channel.placementMode == "CursorSnap") {
         glm::vec3 rayO, rayDir;
         std::vector<Object*> targets;
-        const auto &objects = mgr.active().world().objects();
+        const auto &objects = mgr.active().objects();
         targets.reserve(objects.size());
         for (const auto &uptr : objects) if (uptr) targets.push_back(uptr.get());
 
@@ -506,7 +506,7 @@ void Tool::ShapeGenerator3D(GLFWwindow *window, Core::Engine *engine, ZoneManage
         for (int f = 0; f < obj->getFaces(); ++f)
             obj->setFaceColor(f, channel.activeColor.x, channel.activeColor.y, channel.activeColor.z);
         newObj = obj.get();
-        mgr.active().world().addObject(std::move(obj));
+        mgr.active().addObject(std::move(obj));
     }
 
     if (newObj) {

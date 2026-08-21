@@ -24,7 +24,7 @@
 
 #include "ConstructedBeing/Object/Object.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
-#include "ZonesOfEarth/World/World.hpp"
+#include "ZonesOfEarth/Zone/Zone.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <cmath>
@@ -64,11 +64,11 @@ void freshPhysics() {
     Physics::setLegacyEngineEnabled(true);
 }
 
-void step(World& w, int frames) {
+void step(Zone& w, int frames) {
     for (int i = 0; i < frames; ++i) w.update(1.0f / 60.0f);
 }
 
-float highestY(const World& w) {
+float highestY(const Zone& w) {
     float highest = -1e9f;
     for (const auto& obj : w.objects())
         if (obj) highest = std::max(highest, obj->getPosition().y);
@@ -84,7 +84,7 @@ const glm::vec3 kSpawn(0.0f, 1.6f, 1.0f);
 void testNoBeingIsConscriptedAsTheFloor() {
     std::cout << "\n[1] An empty world's second being is not the ground" << std::endl;
     freshPhysics();
-    World world;
+    Zone world("test-zone", "default");
 
     // Four clicks, a beat of physics between each -- the reported reproduction.
     for (int click = 0; click < 4; ++click) {
@@ -109,7 +109,7 @@ void testNoBeingIsConscriptedAsTheFloor() {
 void testObjectsRestOnTheFloorNotInIt() {
     std::cout << "\n[2] An object rests its BOTTOM on groundY, not its centre" << std::endl;
     freshPhysics();
-    World world;
+    Zone world("test-zone", "default");
     world.addObject(makeCube(glm::vec3(0.0f, 6.0f, 0.0f)));
     step(world, 120);
 
@@ -126,7 +126,7 @@ void testObjectsRestOnTheFloorNotInIt() {
 void testTaggedGroundHoldsStill() {
     std::cout << "\n[3] A being tagged baseline=ground neither rises nor falls" << std::endl;
     freshPhysics();
-    World world;
+    Zone world("test-zone", "default");
     auto ground = makeCube(glm::vec3(0.0f, 0.0f, 0.0f));
     ground->setAttribute("baseline", "ground");
     world.addObject(ground);
@@ -150,7 +150,7 @@ void testTaggedGroundHoldsStill() {
 void testSecondBeingIsNotAGhost() {
     std::cout << "\n[4] The second being spawned still collides" << std::endl;
     freshPhysics();
-    World world;
+    Zone world("test-zone", "default");
     world.addObject(makeCube(glm::vec3(0.0f, 0.5f, 0.0f)));
     world.addObject(makeCube(glm::vec3(0.3f, 0.5f, 0.0f))); // index 1: overlaps the first
     const float before =

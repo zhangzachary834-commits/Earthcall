@@ -446,7 +446,7 @@ bool birthKind(ConditionNode::BeingKind kind, std::string& refusal) {
             refusal = "a Law's birth needs authors and a trigger (undecided)";
             return false;
         case ConditionNode::BeingKind::World:
-            refusal = "a World is not instantiated";
+            refusal = "World is burned — objects are born into a Zone";
             return false;
         case ConditionNode::BeingKind::Relation:
             refusal = "relations are reborn from RelationTemplates, not member templates";

@@ -115,10 +115,11 @@ void Engine::initLogic() {
     // themselves (so metalaws can quantify over laws), and the player.
     // Evaluated lazily each tick, well after zones exist.
     Universe::instance().setProvider([this](std::vector<Singular*>& beings) {
-        // Provide the active World itself so laws can target it or spawn into it
-        beings.push_back(&mgr.active().world());
-        
-        for (const auto& obj : mgr.active().world().getOwnedObjects()) {
+        // Active Zone first: Spawn/Create fall back to the first Zone in the
+        // domain, which must be the one in front of the Person (the old
+        // World bag was only the active world's).
+        beings.push_back(&mgr.active());
+        for (const auto& obj : mgr.active().getOwnedObjects()) {
             if (obj) beings.push_back(obj.get());
         }
         for (const auto& law : _lawManager->getAll()) {
@@ -146,11 +147,11 @@ void Engine::initLogic() {
         // access by writing @transfer-policy.gate.* properties.
         beings.push_back(&TransferPolicy::instance());
         beings.push_back(_player.get());
-        // ALL zones, not just the active one: zones are the governance
-        // geography — laws quantify over them (ForAny Zone ...) and address
-        // them by name (@Home.owner) even while unloaded.
+        // Other Zones: governance geography — laws quantify over them
+        // (ForAny Zone ...) and address them by name (@Home.owner) even
+        // while unloaded. Active was already pushed as the Spawn womb.
         for (auto& zone : mgr.zones()) {
-            beings.push_back(zone.get());
+            if (zone.get() != &mgr.active()) beings.push_back(zone.get());
         }
     });
 

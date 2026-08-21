@@ -15,7 +15,7 @@
 #include "Singularity/Core/EventBus.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
-#include "ZonesOfEarth/World/World.hpp"
+#include "ZonesOfEarth/Zone/Zone.hpp"
 
 #include <GLFW/glfw3.h>
 #include <cassert>
@@ -35,7 +35,7 @@ void check(bool condition, const std::string& what) {
     std::cout << "  ok: " << what << std::endl;
 }
 
-Object* findByType(World& world, const std::string& type) {
+Object* findByType(Zone& world, const std::string& type) {
     for (const auto& obj : world.getOwnedObjects()) {
         if (obj && obj->getObjectType() == type) return obj.get();
     }
@@ -63,7 +63,7 @@ int main() {
     }
     glfwMakeContextCurrent(window);
 
-    World world;
+    Zone world("test-zone", "default");
     Object subject;
     subject.setObjectType("subject");
     subject.setPosition(glm::vec3(2.0f, 3.0f, 4.0f));

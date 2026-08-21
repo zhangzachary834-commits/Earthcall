@@ -79,7 +79,7 @@ public:
     // Formation's own identity makes the composition addressable.
     //
     // Ownership: the Formation holds NON-OWNING pointers, exactly like every
-    // other Formation. A newborn created by a law is owned by the World; its
+    // other Formation. A newborn created by a law is owned by the Zone; its
     // element membership is a second, relational fact about it.
     // ------------------------------------------------------------------
     Formation& elementFormation() { return _composition._elementFormation; }

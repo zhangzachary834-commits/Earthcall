@@ -18,7 +18,6 @@
 #include "Singularity/Storage/SaveSystem.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/SaveContext.hpp"
-#include "ZonesOfEarth/World/World.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 
@@ -56,7 +55,7 @@ std::shared_ptr<Object> makeCube(const std::string& id, const glm::vec3& p) {
 bool hasObject(const ZoneManager& mgr, const std::string& id) {
     for (const auto& z : mgr.zones()) {
         if (!z) continue;
-        for (const auto& o : z->world().getOwnedObjects()) {
+        for (const auto& o : z->getOwnedObjects()) {
             if (o && o->getIdentifier() == id) return true;
         }
     }
@@ -66,7 +65,7 @@ bool hasObject(const ZoneManager& mgr, const std::string& id) {
 Object* findObject(ZoneManager& mgr, const std::string& id) {
     for (const auto& z : mgr.zones()) {
         if (!z) continue;
-        for (const auto& o : z->world().getOwnedObjects()) {
+        for (const auto& o : z->getOwnedObjects()) {
             if (o && o->getIdentifier() == id) return o.get();
         }
     }
@@ -103,13 +102,13 @@ int main() {
 
     ZoneManager mgr;
     auto zoneA = std::make_shared<Zone>("Sanctum of Beginnings", "default");
-    zoneA->world().addObject(makeCube("cube-world-a", glm::vec3(1.0f, 0.0f, 0.0f)));
+    zoneA->addObject(makeCube("cube-world-a", glm::vec3(1.0f, 0.0f, 0.0f)));
     mgr.addZone(zoneA);
     worldTime = 11.0;
     mgr.saveState((sandbox / "worlds" / "alpha.json").string(), ctx);
 
-    zoneA->world().getOwnedObjectsMutable().clear();
-    zoneA->world().addObject(makeCube("cube-world-b", glm::vec3(9.0f, 0.0f, 0.0f)));
+    zoneA->getOwnedObjectsMutable().clear();
+    zoneA->addObject(makeCube("cube-world-b", glm::vec3(9.0f, 0.0f, 0.0f)));
     worldTime = 22.0;
     mgr.saveState((sandbox / "worlds" / "beta.json").string(), ctx);
 

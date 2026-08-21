@@ -57,7 +57,7 @@ Object* CursorTools::pickObjectAtCursor3D(Core::Engine& engine) const {
     glm::vec3 origin = glm::vec3(nearWorld4);
     glm::vec3 dir    = glm::normalize(glm::vec3(farWorld4 - nearWorld4));
 
-    auto& objects = _mgr->active().world().getOwnedObjects();
+    auto& objects = _mgr->active().getOwnedObjects();
     float bestT = 1e9f; Object* best = nullptr;
     for (const auto& up : objects) {
         if (!up) continue; Object* obj = up.get();

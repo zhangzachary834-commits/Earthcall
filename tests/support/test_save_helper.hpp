@@ -12,7 +12,7 @@
 #include <filesystem>
 #include <iostream>
 
-inline void dump_test_save(const std::string& test_name, World& testWorld, LawManager& testLawManager, Person& testPlayer,
+inline void dump_test_save(const std::string& test_name, Zone& testWorld, LawManager& testLawManager, Person& testPlayer,
                            const std::string& filepathOverride = "") {
     std::cout << "[TestSaveHelper] Generating test save: " << test_name << "...\n";
 
@@ -23,7 +23,7 @@ inline void dump_test_save(const std::string& test_name, World& testWorld, LawMa
     // Temporarily move objects from testWorld to the zone's world for serialization
     for (auto& obj : testWorld.getOwnedObjectsMutable()) {
         if (obj) {
-            zone->world().addObject(std::move(obj));
+            zone->addObject(std::move(obj));
         }
     }
     testWorld.getOwnedObjectsMutable().clear();
@@ -33,7 +33,7 @@ inline void dump_test_save(const std::string& test_name, World& testWorld, LawMa
     Core::Camera camera;
     glm::vec3 minP(1e9f), maxP(-1e9f);
     int objectCount = 0;
-    for (const auto& obj : zone->world().getOwnedObjects()) {
+    for (const auto& obj : zone->getOwnedObjects()) {
         if (!obj) continue;
         obj->addZoneDesignation(zone->name());
         const glm::vec3 p = obj->getPosition();
@@ -84,12 +84,12 @@ inline void dump_test_save(const std::string& test_name, World& testWorld, LawMa
     mgr.saveState(filepath, ctx);
     
     // Restore objects back to testWorld so the test can continue using them
-    for (auto& obj : zone->world().getOwnedObjectsMutable()) {
+    for (auto& obj : zone->getOwnedObjectsMutable()) {
         if (obj) {
             testWorld.addObject(std::move(obj));
         }
     }
-    zone->world().getOwnedObjectsMutable().clear();
+    zone->getOwnedObjectsMutable().clear();
 
     std::cout << "[TestSaveHelper] Saved test state to " << filepath << std::endl;
 }

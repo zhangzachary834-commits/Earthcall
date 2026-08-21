@@ -333,7 +333,8 @@ bool editPiecewise(OntoMath::Piecewise& f, const MathBindings& bindings) {
             static const char* foldOps[] = {"sum", "mean", "min", "max", "count"};
             static const char* foldKinds[] = {"any being", "Object",    "Person",
                                               "Relation",  "Formation", "Law",
-                                              "World",     "Zone"};
+                                              "Zone"};
+            static const int foldKindEnums[] = {0, 1, 2, 3, 4, 5, 7};
             ImGui::TextColored(kHeaderColor, "  folds over the world:");
             ImGui::SameLine();
             if (ImGui::SmallButton("remove fold")) {
@@ -365,7 +366,15 @@ bool editPiecewise(OntoMath::Piecewise& f, const MathBindings& bindings) {
                 ImGui::TextDisabled("across every");
                 ImGui::SameLine();
                 ImGui::SetNextItemWidth(110.0f);
-                if (ImGui::Combo("##foldkind", &piece.fold->beingKind, foldKinds, 8)) {
+                int foldDisplay = 0;
+                for (int i = 0; i < 7; ++i) {
+                    if (foldKindEnums[i] == piece.fold->beingKind) {
+                        foldDisplay = i;
+                        break;
+                    }
+                }
+                if (ImGui::Combo("##foldkind", &foldDisplay, foldKinds, 7)) {
+                    piece.fold->beingKind = foldKindEnums[foldDisplay];
                     changed = true;
                 }
             }

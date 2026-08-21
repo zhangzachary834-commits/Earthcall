@@ -9,10 +9,10 @@
 // its registry — §4's written reason carries that half. What IS mechanically
 // checkable is the four ways the promise has actually broken here:
 //
-//   A. VOCABULARY      a being whose buildProperties() is empty. `World` is
-//                      exactly this today; it sits on the sealed register
-//                      below with a reason. That list is a DEBT LEDGER, not
-//                      an allowlist. Entries are expected to leave it.
+//   A. VOCABULARY      a being whose buildProperties() is empty. The sealed
+//                      register below is a DEBT LEDGER, not an allowlist.
+//                      Entries are expected to leave it. World left it when
+//                      it folded into Zone (2026-08-20).
 //
 //   B. LAZY-BUILD      a registry built twice. Singular builds lazily and sets
 //                      _propertiesBuilt itself; a constructor that also calls
@@ -55,7 +55,6 @@
 #include "Singularity/TransferPolicy.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/Ourverse/Ourverse.hpp"
-#include "ZonesOfEarth/World/World.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 
 #include <GLFW/glfw3.h>
@@ -85,10 +84,9 @@ struct Sealed {
 };
 
 const Sealed kSealedRegister[] = {
-    {"World",
-     "buildProperties() is {}. _playerEyeHeight and Mode are a Person's viewpoint "
-     "and their world's posture — state, not mechanism. The header itself says to "
-     "retire World into Zone; until then this is unregistered debt, not an exemption."},
+    // World folded into Zone 2026-08-20. Empty name is skipped by isSealed;
+    // the slot keeps this a valid array so the walk below still compiles.
+    {"", "ledger empty — World folded into Zone"},
 
     // Perspective is NOT probed: Perspective.cpp is empty, so its constructor is
     // declared and never defined. It is an uninstantiable stub, not a being with
@@ -96,7 +94,9 @@ const Sealed kSealedRegister[] = {
 };
 
 bool isSealed(const std::string& being) {
+    if (being.empty()) return false;
     for (const Sealed& s : kSealedRegister) {
+        if (!s.being || s.being[0] == '\0') continue;
         if (being == s.being) return true;
     }
     return false;
@@ -224,8 +224,8 @@ void audit(const std::string& beingName, Singular& being) {
     }
     if (isSealed(beingName)) {
         // `telos` is the universal Singular vocabulary (HIERARCHY_OF_JOYS.md),
-        // registered on every being. It does not unseal World — that being's
-        // own state is still `{}`.
+        // registered on every being. It does not unseal a being whose own
+        // state is still {}.
         bool onlyUniversalTelos = properties.size() == 1
             && properties[0] && properties[0]->name() == "telos";
         if (onlyUniversalTelos) {
@@ -325,11 +325,7 @@ int main() {
         audit("Person", person);
     }
 
-    // ---- the sealed register, walked so it cannot rot ---------------------
-    {
-        World world;             audit("World", world);
-    }
-
+    // ---- previously sealed beings, walked so the ledger cannot rot --------
     {
         Formation formation;     audit("Formation", formation);
         Soul soul;               audit("Soul", soul);

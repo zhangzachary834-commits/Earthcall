@@ -16,7 +16,6 @@
 #include "Singularity/Screen/Camera.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/SaveContext.hpp"
-#include "ZonesOfEarth/World/World.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "test_save_helper.hpp"
@@ -79,7 +78,7 @@ int main() {
 
     const glm::vec3 cubePos(0.0f, 2.0f, -2.0f);
     {
-        World dumpWorld;
+        Zone dumpWorld("test-observation", "default");
         dumpWorld.addObject(makeCube("witness-cube", cubePos));
         Person dumpPlayer = makePlayer();
         LawManager dumpLaws;
@@ -91,7 +90,7 @@ int main() {
     auto home = std::make_shared<Zone>("Home", "default");
     home->setOwner("Player");
     auto precious = makeCube("home-precious", glm::vec3(4.0f, 0.5f, 4.0f));
-    home->world().addObject(precious);
+    home->addObject(precious);
     precious->addZoneDesignation(home->name());
     live.addZone(home);
 
@@ -120,7 +119,7 @@ int main() {
         if (!z) continue;
         if (z->name() == "Home") {
             homeStillHere = true;
-            for (const auto& obj : z->world().getOwnedObjects()) {
+            for (const auto& obj : z->getOwnedObjects()) {
                 if (obj && obj->getIdentifier() == "home-precious") preciousStill = obj;
             }
         }
@@ -132,7 +131,7 @@ int main() {
 
     bool cubeInObservation = false;
     if (observation) {
-        for (const auto& obj : observation->world().getOwnedObjects()) {
+        for (const auto& obj : observation->getOwnedObjects()) {
             if (obj && obj->getIdentifier() == "witness-cube") cubeInObservation = true;
         }
     }
@@ -142,7 +141,7 @@ int main() {
 
     bool cubeInActive = false;
     glm::vec3 loadedPos(0.0f);
-    for (const auto& obj : live.active().world().getOwnedObjects()) {
+    for (const auto& obj : live.active().getOwnedObjects()) {
         if (obj && obj->getIdentifier() == "witness-cube") {
             cubeInActive = true;
             loadedPos = obj->getPosition();
@@ -178,7 +177,7 @@ int main() {
         live.loadTestObservation(fixture.string(), ctx);
         check(live.active().getIdentifier() == "test.basic_cube_law_test_final",
               "fixture observation Zone is active");
-        check(!live.active().world().getOwnedObjects().empty(),
+        check(!live.active().getOwnedObjects().empty(),
               "fixture dumped objects into the world a Person would see");
         bool homeAfterFixture = false;
         for (const auto& z : live.zones()) {

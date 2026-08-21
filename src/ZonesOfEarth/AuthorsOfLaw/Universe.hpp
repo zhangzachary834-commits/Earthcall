@@ -9,20 +9,24 @@
 class Singular;
 class Relation;
 
-// The universe of beings that CONTINUOUS laws watch and quantified conditions
-// (ForAny / ForAll) range over.
+// The law engine's working set — not a being, not the vessel (Ourverse),
+// not the womb that receives newborns (Zone). Continuous laws and quantified
+// conditions (ForAny / ForAll) range over the beings this singleton yields.
 //
 // The ECA loop is edge-triggered: conditions are checked at the discrete
 // moments events fire. But some laws are level-triggered — their condition
 // phase must monitor the program at all times ("whenever y sinks below the
 // ground", with no event announcing it), and quantified conditions ("if ANY
 // object...", "ALL instances except...") need a domain to range over. Both
-// need the same thing: the set of beings currently in the world.
+// need the same thing: the set of beings currently present.
 //
-// The engine supplies the provider (the active world's objects, the
+// The engine supplies the provider (the active Zone's objects, the
 // registered laws, the player); tests supply their own. No provider = empty
-// universe: continuous untargeted laws watch nothing, ForAny is false,
+// domain: continuous untargeted laws watch nothing, ForAny is false,
 // ForAll is vacuously true.
+//
+// Do not make this a Singular. Do not register @universe. Kernel is not a
+// being (WORLD_UNIVERSE_REFUSALS_AUDIT_2026-08-20).
 class Universe {
 public:
     static Universe& instance() {
@@ -264,7 +268,7 @@ private:
 };
 
 // Free every being whose unmaking has been requested, releasing it from the
-// World that owns it (which announces "object-destroyed" while it still
+// Zone that owns it (which announces "object-destroyed" while it still
 // exists, so listeners can read who it was).
 //
 // LawManager::tick() calls this once its every pass is done. Anyone who fires

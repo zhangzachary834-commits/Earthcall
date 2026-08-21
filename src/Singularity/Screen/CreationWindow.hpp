@@ -2,7 +2,7 @@
 
 class Singular;
 class Object;
-class World;
+class Zone;
 
 namespace Rendering {
 
@@ -13,7 +13,7 @@ namespace Rendering {
 // new set. Every transfer passes the Singularity TransferPolicy gate.
 //
 // `selected` is the 3D selection (source-set building + placement);
-// `author` signs captured concepts; newborns join `world`.
-void renderCreationWindow(bool* open, Singular& author, Object* selected, World& world);
+// `author` signs captured concepts; newborns join the Zone.
+void renderCreationWindow(bool* open, Singular& author, Object* selected, Zone& zone);
 
 } // namespace Rendering

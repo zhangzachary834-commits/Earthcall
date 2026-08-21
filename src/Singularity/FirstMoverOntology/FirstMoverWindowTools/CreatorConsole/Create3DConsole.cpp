@@ -109,7 +109,7 @@ namespace Rendering {
             obj->updateCollisionZone(obj->getTransform());
             paintNewObject(*obj, color);
             Object* raw = obj.get();
-            zoneMgr.active().world().addObject(obj);
+            zoneMgr.active().addObject(obj);
             if (channel) channel->recordProvenance("authored-by", *raw, *channel, true, 1.0f);
             return raw;
         }

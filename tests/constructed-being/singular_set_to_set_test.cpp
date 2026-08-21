@@ -20,7 +20,7 @@
 #include "Singularity/TransferPolicy.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
-#include "ZonesOfEarth/World/World.hpp"
+#include "ZonesOfEarth/Zone/Zone.hpp"
 
 #include <cassert>
 #include <cmath>
@@ -179,7 +179,7 @@ void testClosedGateRefusesCapture() {
 // PropertyPath and writes directly to that newborn. AddProperty demonstrates
 // that the newborn's vocabulary is shaped by the same ordinary action tree.
 void testSynthesizeBirthsIntoWorld() {
-    World world;
+    Zone world("test-zone", "default");
     Object subject;
     subject.setPosition(glm::vec3(7.0f, 0.0f, 0.0f));
 
@@ -228,7 +228,7 @@ void testSynthesizeBirthsIntoWorld() {
 // It must refuse loudly and do nothing — no newborn, no ExecutedEvent — never
 // guess at a legacy concept that isn't there.
 void testSynthesizeRefusesWithNoChildren() {
-    World world;
+    Zone world("test-zone", "default");
     Object subject;
 
     ActionNode node;
@@ -249,7 +249,7 @@ void testSynthesizeRefusesWithNoChildren() {
 // One Synthesize, several Create children: the composition is not limited to
 // a single newborn. Each Create is an independent birth into the same World.
 void testSynthesizeComposesMultipleCreates() {
-    World world;
+    Zone world("test-zone", "default");
     Object subject;
 
     ActionNode labelFirst = ActionNode::addProperty("", "label", PropertyValue(std::string("first")));
@@ -282,7 +282,7 @@ void testSynthesizeComposesMultipleCreates() {
 // A Map bound to @event.object must read the OTHER being the moment brought
 // together, exactly as @event.subject does.
 void testSynthesizeReadsEventObject() {
-    World world;
+    Zone world("test-zone", "default");
     Object subject;
     Object object;
     object.setPosition(glm::vec3(0.0f, 5.0f, 0.0f));

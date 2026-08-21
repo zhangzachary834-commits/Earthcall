@@ -86,7 +86,7 @@ Earthcall/
     ConstructedBeing/      Singular · Object · ObjectConcept · Formation · Property · Material
     Person/                Person · Soul · Body · Relationship · Perspective
     Relation/              Relation · RelationManager
-    ZonesOfEarth/          Zone · Home · World · Physics · AuthorsOfLaw (Law) · Ourverse
+    ZonesOfEarth/          Zone · Home · Physics · AuthorsOfLaw (Law) · Ourverse
     Singularity/           the modality layer — where language stops mattering
       Core/                Engine · EventBus · CreationChannel
       Audio/               the Sound modality (AudioSystem)
