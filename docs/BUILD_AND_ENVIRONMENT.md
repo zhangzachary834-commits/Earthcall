@@ -49,7 +49,7 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
 
 cmake --build build --target earthcall -j8
 cmake --build build -j8                               # tests are NOT built by the line above
-ctest --test-dir build --output-on-failure -j4        # 59 registered, 58 pass
+ctest --test-dir build --output-on-failure -j4        # 60 registered, 59 pass
 ```
 
 **`--target earthcall` does not build the tests.** `ctest` will then report every test as
@@ -66,7 +66,7 @@ The Python backend starts from `src/Singularity/Foreign/py/app.py`.
 
 ## The test suite
 
-**As of 2026-08-20, 58 of 59 tests pass and the default build is clean.** The thirteen
+**As of 2026-08-21, 59 of 60 tests pass and the default build is clean.** The thirteen
 that were broken were stale against three refactors, not against each other:
 `Rendering/` → `Singularity/Screen/` and `Util/` → `Singularity/Storage/`;
 `Object::GeometryType` → `ShapeKind`; the placement and tool fields off `Person` and onto
@@ -94,9 +94,10 @@ honest rather than convenient:
 | `no_black_box_test` | refusal #6 — a being that registers nothing, a registry built twice, a setter that accepts a write and drops it, and a registered property the picker never offers |
 | `ground_plane_test` | a subsystem deciding, by list index, which being is the floor. `Zone::update` (formerly `World::update`) fell back to `_objects[1]` when nothing carried `baseline=ground` — and a Zone starts empty, so the **second being a Person spawned** silently became the ground. `Physics::integrate` then clamped its *centre* to its own *top*, lifting it half a height per substep, raising the floor, lifting it again: the whole world climbed at 30 m/s and every later spawn was teleported up to it |
 | `test_observation_load_test` | loading a test dump so a Person can see it. The Developer window called `loadState`, which erases Home, and never wrote `Person.position`, so `LocomotionChannel` snapped the camera back onto wherever the Person was standing. The live office is `ZoneManager::loadTestObservation` |
-| `world_switch_test` | two saved worlds mixing. json/.ecsave twins and a 0-byte file listed as separate worlds; a refused load retitled the live world; Select kept `Object*` into the previous world's freed beings |
+| `world_switch_test` | two saved sessions mixing. json/.ecsave twins and a 0-byte file listed as separate worlds; a refused load retitled the live world; same-named Zones share identity (loading the other session does not rewind the Zone) |
 | `save_roundtrip_test` | Person Save As / Load. `saveStateWithLog` used to skip the first two Zone objects; `loadState` used to move the camera and not `Person.position`. json+.ecsave of one stem must list as one world; objects in a non-active Zone must survive |
-| `unsaved_preserve_test` | load used to erase unsaved work. Before overwrite, `loadState` writes `saves/backups/before-load.json`; loading that slot restores it and does not re-stash over itself |
+| `unsaved_preserve_test` | load used to erase unsaved work. Identity-stable Zones are kept across session load; `loadState` also writes `saves/backups/before-load.json` so Restore unsaved can rewind, and loading that slot does not re-stash over itself |
+| `zone_identity_test` | Home was copied into every "world" file, so loading another session showed an empty Home. Zones now have `saves/zones/<id>/zone.json`; sessions reference them; fork/diff are first-class |
 
 If you add a field to `Object` that `to_json` writes, add it to `object_roundtrip_test`.
 

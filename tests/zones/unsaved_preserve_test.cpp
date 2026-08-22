@@ -1,10 +1,12 @@
 // Load used to replace the live world with no copy. The CRITICAL save-system
-// line at the top of the agenda is the fear of that erasure. loadState now
-// writes the unsaved present world to a dedicated slot
-// (saves/backups/before-load.json) BEFORE it clears Zones, then overwrites.
-// Loading that slot itself must not re-stash, or recovery would destroy the
-// stash. This test drives ZoneManager::loadState — the same office the
-// Load / Restore unsaved buttons call.
+// line at the top of the agenda is the fear of that erasure. Two rails now:
+// identity-stable Zones (Home, Sanctum, …) are kept across session load so
+// unsaved work in that Zone is not replaced by another file's snapshot;
+// loadState also writes the unsaved present to
+// saves/backups/before-load.json so Restore unsaved can rewind. Loading that
+// slot itself must not re-stash, or recovery would destroy the stash. This
+// test drives ZoneManager::loadState — the same office the Load / Restore
+// unsaved buttons call.
 
 #include "ConstructedBeing/Object/Object.hpp"
 #include "Person/Person.hpp"
@@ -106,8 +108,10 @@ int main() {
 
     live.loadState(otherPath, ctx);
 
-    check(hasObject(live, "saved-cube"), "load replaced the present world with the file");
-    check(!hasObject(live, "unsaved-cube"), "unsaved cube is not in the overwritten world");
+    check(hasObject(live, "unsaved-cube"),
+          "loading another session does not replace the live Zone — unsaved work stays");
+    check(!hasObject(live, "saved-cube"),
+          "the other file's snapshot of the same Zone is not applied over live beings");
     const std::string stash = ZoneManager::beforeLoadSnapshotPath();
     check(std::filesystem::exists(stash) && std::filesystem::file_size(stash) > 0,
           "unsaved work was written to the dedicated before-load slot");
@@ -142,13 +146,13 @@ int main() {
 
     const auto stashTime = std::filesystem::last_write_time(stash);
     live.loadState((sandbox / "worlds" / "missing-empty.json").string(), ctx);
-    check(hasObject(live, "saved-cube"), "a refused load leaves the present world");
+    check(hasObject(live, "unsaved-cube"), "a refused load leaves the present Zone");
     check(std::filesystem::last_write_time(stash) == stashTime,
           "a refused load does not overwrite the before-load slot");
 
     live.loadState(stash, ctx);
     check(hasObject(live, "unsaved-cube"), "loading before-load restores the unsaved cube");
-    check(!hasObject(live, "saved-cube"), "restored world does not keep the overwritten world's cube");
+    check(!hasObject(live, "saved-cube"), "snapshot restore does not import the other file's cube");
     {
         std::ifstream in(stash);
         nlohmann::json j;

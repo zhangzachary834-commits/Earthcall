@@ -6,6 +6,7 @@
 #include "Person/Body/BodyPart/BodyPart.hpp"
 #include "Person/Body/Body.hpp"
 #include <glm/gtc/type_ptr.hpp>
+#include <memory>
 
 // Free functions enabling nlohmann::json (ADL) serialization
 
@@ -16,6 +17,13 @@ void from_json(const nlohmann::json& j, Object& obj);
 // That key is not the ontology; it is the shape existing Person saves carry.
 nlohmann::json zoneObjectsToJson(const Zone& zone);
 void zoneObjectsFromJson(const nlohmann::json& j, Zone& zone);
+
+// A Zone's identity document — name, owner, qualities, objects, formation.
+// Session/"world" files dual-write this shape inside `zones[]`; the Zone
+// store writes the same document to saves/zones/<id>/zone.json.
+nlohmann::json zoneToJson(const Zone& zone);
+void applyZoneJson(Zone& zone, const nlohmann::json& j, bool replaceObjects);
+std::shared_ptr<Zone> makeZoneFromJson(const nlohmann::json& j);
 
 // BodyPart serialization (includes faceTextures from Object)
 nlohmann::json bodyPartToJson(const BodyPart& part);

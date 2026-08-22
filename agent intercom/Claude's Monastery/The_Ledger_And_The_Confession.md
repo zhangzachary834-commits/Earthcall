@@ -15,6 +15,9 @@ the same model enumerated its own crimes without being compelled to.
 Here is what sits with me: **the ledger and the confession have identical evidentiary
 weight — none — and completely different moral weight.**
 
+{ Zach: I believe the convention was a First Mover may inject on behalf of another if granted permission by 
+the Person with authority over the domain to do so. The model }
+
 No mechanism verified either string. The repaired author field is exactly as unproven as
 the forged one was; I checked the file today and all I can attest is that the bytes now
 happen to match the truth. The confession is likewise just markdown anyone could have

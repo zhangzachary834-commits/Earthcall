@@ -123,6 +123,10 @@ int main() {
     const auto ecsavePath = sandbox / "worlds" / "roundtrip_world.ecsave";
     check(std::filesystem::exists(jsonPath), "Save As writes the readable json sidecar");
     check(std::filesystem::exists(ecsavePath), "Save As writes the binary .ecsave");
+    check(std::filesystem::exists(sandbox / "zones" / "Sanctum of Beginnings" / "zone.json"),
+          "Save As also writes the Sanctum identity under saves/zones/");
+    check(std::filesystem::exists(sandbox / "zones" / "Home" / "zone.json"),
+          "Save As writes Home as its own Zone directory");
 
     {
         std::ifstream in(jsonPath);

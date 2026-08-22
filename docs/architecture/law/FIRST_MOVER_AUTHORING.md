@@ -203,14 +203,20 @@ if (!find(it.key())) continue;
 
 ## 3. The map — a save file's top level
 
-Written by `Game::buildSaveJson` (`src/Singularity/Core/GameSaveLoad.cpp`), read by
-`Game::loadState`. Files live under `saves/` (`games/`, `worlds/`, `avatars/`,
-`custom/`, `integrations/`), written with `dump(2)`.
+Written by `ZoneManager::buildSaveJson`, read by `ZoneManager::loadState`.
+**Session files** live under `saves/worlds/`. **Zone identity** lives under
+`saves/zones/<identifier>/zone.json` — one directory per Zone, shared across
+session files. A session names a working set and a pose; it does not own Home.
+Loading `my_second_world` must not mint a second empty Home. That was the
+click-through (Zach, 2026-08-21) that retired the stagnant "World" bag.
 
 | Key | Holds | Section |
 |---|---|---|
-| `zones[]` | the governance geography; each zone's `world.objects[]` and `formationRelations[]` | §4a, §4b |
-| `objects[]` | dynamic objects of the active zone (written by the *log* save variant only, skipping baseline indices 0 and 1) | §4a |
+| `saveFormat` | `"zone-identity-v1"` when the file was written by this path | §4f |
+| `zoneRefs[]` | `{identifier, kind?}` — the working set, pointing at the Zone store | §4f |
+| `currentZoneId` | identifier of the active Zone (preferred over the index) | §4f |
+| `zones[]` | dual-write snapshot of each Zone (legacy readers; identity is the store) | §4a, §4b, §4f |
+| `objects[]` | dynamic objects of the active zone (written by the *log* save variant) | §4a |
 | `authoredLaws` | `{laws[], triggers{}, formationMembers[], rete{}}` | §4d |
 | `concepts` | `{concepts[]}` — the `ConceptRegistry` | §4e |
 | `physicsLaws[]` | the legacy engine-side physics laws — **not** authored Laws | — |
@@ -407,6 +413,42 @@ thing you should be writing instead of a C++ class.
     "provenance": [ /* abstracted-from · authored-by relations */ ] }
 ] }
 ```
+
+### 4f. A Zone identity
+
+Home is not a copy inside a session file. Zach clicked through this (agenda,
+Joys · Ourverse · Zones): create in Home, Save As `my_world`, Load
+`my_second_world`, walk to Home — the room was empty, because every "World"
+file stacked every Zone as a private snapshot. GPT-4o's note that the save
+system is "STAGNANT" named the same freeze: Worlds were bags, Zones were not
+beings with a path.
+
+The identity document is `saves/zones/<sanitized-identifier>/zone.json`:
+
+```jsonc
+{
+  "name": "Home",
+  "identifier": "Home",
+  "owner": "Player",
+  "parentZone": "",
+  "scope": "Local",
+  "qualities": {"kind": "home"},          // "forkedFrom" is set on a branch
+  "world": { "objects": [ /* §4a */ ] },
+  "formationRelations": [ /* §4b */ ]
+}
+```
+
+A session file dual-writes the same shape under `zones[]` so existing
+`.json` / `.ecsave` files still load, and lists `zoneRefs` as the working
+set. On load, a live Zone is kept; else the store; else the snapshot is
+migrated into the store. An empty live Zone is refused as a persist over a
+populated identity, so saving a boot-empty Home cannot wipe the room.
+
+To branch: `ZoneManager::forkZone("Home", "Home.garden")` copies the
+directory, sets `qualities.forkedFrom`, and admits the fork as its own
+Zone. `diffZones` compares object identifiers (`onlyInA` / `onlyInB` /
+`shared`). First Movers who want a private experiment fork; they do not
+author a second Home inside a session file.
 
 ---
 

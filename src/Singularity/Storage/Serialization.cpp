@@ -1,8 +1,10 @@
 #include "Singularity/Storage/Serialization.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
+#include "Relation/Relation.hpp"
 #include "Singularity/Storage/BinaryPack.hpp"
 #include <cstring>
 #include <glm/gtc/type_ptr.hpp>
+#include <iostream>
 #include <string>
 #include <vector>
 #include <memory>
@@ -748,4 +750,90 @@ void zoneObjectsFromJson(const nlohmann::json& j, Zone& zone) {
         }
         holder->getPendingElementIds().clear();
     }
+}
+
+namespace {
+Zone::Scope scopeFromName(const std::string& name) {
+    if (name == "Global") return Zone::Scope::Global;
+    if (name == "World") return Zone::Scope::World;
+    if (name == "Regional") return Zone::Scope::Regional;
+    if (name == "UI") return Zone::Scope::UI;
+    return Zone::Scope::Local;
+}
+
+void applyFormationRelations(Zone& zone, const nlohmann::json& zj) {
+    if (!zj.contains("formationRelations") || !zj["formationRelations"].is_array()) return;
+    // MEMBERS BEFORE RELATIONS. Zone::syncFormationMembers does not run
+    // until the frame loop, so a relation added here used to find neither
+    // of its endpoints.
+    zone.syncFormationMembers();
+    size_t refused = 0;
+    for (const auto& relJson : zj["formationRelations"]) {
+        if (!zone.formation().add(std::make_shared<Relation>(Relation::fromJson(relJson)))) {
+            ++refused;
+        }
+    }
+    if (refused > 0) {
+        std::cout << "⚠️  Zone '" << zone.name() << "': " << refused
+                  << " saved formation relation(s) were REFUSED on load "
+                  << "(self-ground or a directed cycle). They are not in "
+                  << "the formation and will not be written back on the "
+                  << "next save. Fix them in the save file to keep them."
+                  << std::endl;
+    }
+}
+} // namespace
+
+nlohmann::json zoneToJson(const Zone& zone) {
+    nlohmann::json zj;
+    zj["name"] = zone.name();
+    zj["identifier"] = zone.getIdentifier();
+    zj["owner"] = zone.owner();
+    zj["parentZone"] = zone.getParentZone();
+    zj["scope"] = zone.scopeName();
+    nlohmann::json qualities = nlohmann::json::object();
+    for (const auto& kv : zone.getQualities()) {
+        qualities[kv.first] = kv.second;
+    }
+    zj["qualities"] = qualities;
+    zj["world"] = zoneObjectsToJson(zone);
+    zj["formationRelations"] = zone.formation().relations().toJson();
+    return zj;
+}
+
+void applyZoneJson(Zone& zone, const nlohmann::json& zj, bool replaceObjects) {
+    if (zj.contains("owner")) {
+        zone.setOwner(zj.value("owner", std::string{}));
+    }
+    if (zj.contains("parentZone")) {
+        zone.setParentZone(zj.value("parentZone", std::string{}));
+    }
+    if (zj.contains("scope") && zj["scope"].is_string()) {
+        zone.setScope(scopeFromName(zj["scope"].get<std::string>()));
+    }
+    if (zj.contains("qualities") && zj["qualities"].is_object()) {
+        for (auto it = zj["qualities"].begin(); it != zj["qualities"].end(); ++it) {
+            if (it.value().is_string()) {
+                zone.setQuality(it.key(), it.value().get<std::string>());
+            }
+        }
+    }
+    if (replaceObjects) {
+        zone.getOwnedObjectsMutable().clear();
+    }
+    if (zone.getOwnedObjects().empty()) {
+        if (zj.contains("world")) {
+            zoneObjectsFromJson(zj["world"], zone);
+        } else if (zj.contains("objects")) {
+            zoneObjectsFromJson(zj, zone);
+        }
+        applyFormationRelations(zone, zj);
+    }
+}
+
+std::shared_ptr<Zone> makeZoneFromJson(const nlohmann::json& zj) {
+    const std::string name = zj.value("name", zj.value("identifier", "Untitled Zone"));
+    auto zone = std::make_shared<Zone>(name, "strict");
+    applyZoneJson(*zone, zj, true);
+    return zone;
 }

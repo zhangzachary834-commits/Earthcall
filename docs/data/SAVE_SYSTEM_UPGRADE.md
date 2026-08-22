@@ -2,17 +2,18 @@
 
 ## Overview
 
-The save system has been completely reorganized to provide structured storage, easier management, and improved persistence across Earthcall's ontology. Saves are categorized as **Worlds** rather than games, with dedicated folders and logs under `src/Singularity/Storage/SaveSystem.hpp`.
+The save system has been completely reorganized to provide structured storage, easier management, and improved persistence across Earthcall's ontology. **Session** files still live under `saves/worlds/` (the historical "World" type). **Zone identity** lives under `saves/zones/<identifier>/zone.json` — one directory per Zone, shared across sessions. Loading another session does not mint a second Home. See `FIRST_MOVER_AUTHORING.md` §4f.
 
 ## Folder Structure
 
 ```
 saves/
-├── worlds/         # World and Zone state saves (.json / .ecsave)
+├── worlds/         # Session snapshots (camera, laws, zoneRefs)
+├── zones/          # Zone identity — one directory per Zone (Home/zone.json, …)
 ├── avatars/        # Avatar saves
 ├── persons/        # Registered Person / user profiles
 ├── designs/        # Design system saves
-├── backups/        # Automatic backups
+├── backups/        # Automatic backups (including before-load.json)
 ├── logs/           # Save logs and metadata
 ├── formations/     # Formation saves (legacy)
 ├── integration/    # Integration and external adapter saves
@@ -23,7 +24,8 @@ saves/
 
 Defined in `SaveSystem::SaveType`:
 
-- **`WORLD`**: World and Zone state saves (objects, laws, zones, physics)
+- **`WORLD`**: Session snapshots (camera, laws, working-set refs). Not the Zone identity.
+- **`ZONE`**: Per-Zone identity directory under `saves/zones/<id>/`
 - **`AVATAR`**: Avatar saves (character data, body parts, mesh customizations)
 - **`PERSON`**: Registered Person profiles and identity ledgers
 - **`DESIGN`**: Design system saves (layers, tool states)
@@ -55,13 +57,14 @@ Defined in `SaveSystem::SaveType`:
 namespace SaveSystem {
 
 enum class SaveType {
-    WORLD,       // World state saves
+    WORLD,       // Session snapshots (not Zone identity)
     AVATAR,      // Avatar saves
     PERSON,      // Registered Persons / user profiles
     DESIGN,      // Design system saves
     BACKUP,      // Automatic backups
     CUSTOM,      // Custom saves
-    INTEGRATION  // Integration system saves
+    INTEGRATION, // Integration system saves
+    ZONE         // Per-Zone identity directory
 };
 
 // Folder and filename utilities

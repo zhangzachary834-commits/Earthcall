@@ -1,10 +1,14 @@
-// Switching between two saved worlds must replace one world with the other.
+// Switching between two saved sessions must restore session pose without
+// minting a second copy of the same Zone.
 //
 // What went funky for a Person with my_world + my_second_world:
 //   1. json / .ecsave / empty files listed as independent worlds, so Load
 //      jumped between twins and a 0-byte ourverse.json.
 //   2. A refused read did not log an end, and loadedSaveName still changed.
 //   3. Select/Morph kept Object* into the previous world's freed beings.
+//   4. (2026-08-21) Home/Sanctum were copied into each session file, so
+//      loading the other file replaced the Zone. Same-named Zones now share
+//      an identity under saves/zones/; the last save evolves that identity.
 // This test drives ZoneManager::loadState — the same office AssetsConsole
 // Load calls — and SaveSystem::listWorlds, the listing both windows share.
 
@@ -120,25 +124,28 @@ int main() {
     }
 
     mgr.loadState((sandbox / "worlds" / "alpha.json").string(), ctx);
-    check(hasObject(mgr, "cube-world-a"), "alpha load has cube-world-a");
-    check(!hasObject(mgr, "cube-world-b"), "alpha load does not carry beta's cube");
+    check(hasObject(mgr, "cube-world-b"),
+          "alpha load keeps the live Sanctum — beta's save already evolved that Zone");
+    check(!hasObject(mgr, "cube-world-a"),
+          "alpha's snapshot does not rewind Sanctum; the identity moved on");
     check(mgr.getSaveLoadState().loadedSaveName == "alpha", "loaded name is alpha");
+    check(worldTime == 11.0, "session pose (worldTime) still comes from the loaded file");
 
-    Object* liveA = findObject(mgr, "cube-world-a");
-    check(liveA != nullptr, "alpha cube pointer is live");
+    Object* liveB = findObject(mgr, "cube-world-b");
+    check(liveB != nullptr, "Sanctum cube pointer is live");
     auto& state = Rendering::getCreatorConsoleState();
-    state.selectedObject3D = liveA;
-    Rendering::HighlightSystem::setSelected(liveA);
+    state.selectedObject3D = liveB;
+    Rendering::HighlightSystem::setSelected(liveB);
 
     mgr.loadState((sandbox / "worlds" / "beta.json").string(), ctx);
     Rendering::forgetStaleObjectHandles(mgr, &player);
-    check(hasObject(mgr, "cube-world-b"), "beta load has cube-world-b");
-    check(!hasObject(mgr, "cube-world-a"), "beta load dropped alpha's cube");
+    check(hasObject(mgr, "cube-world-b"), "beta load still has the same Sanctum cube");
+    check(!hasObject(mgr, "cube-world-a"), "Sanctum was not replaced with a snapshot copy");
     check(mgr.getSaveLoadState().loadedSaveName == "beta", "loaded name is beta");
-    check(state.selectedObject3D == nullptr,
-          "Select does not keep a pointer into the previous world's cube");
-    check(Rendering::HighlightSystem::getSelected() == nullptr,
-          "HighlightSystem does not keep a pointer into the previous world");
+    check(state.selectedObject3D == liveB,
+          "Select keeps the pointer: the Zone was not torn down by loading another session");
+    check(Rendering::HighlightSystem::getSelected() == liveB,
+          "HighlightSystem keeps the pointer into the same Zone identity");
 
     const std::string beforeRefuse = mgr.getSaveLoadState().loadedSaveName;
     mgr.loadState((sandbox / "worlds" / "ourverse.json").string(), ctx);

@@ -84,6 +84,7 @@ std::string getSaveTypeFolderName(SaveType type) {
         case SaveType::BACKUP: return "backups";
         case SaveType::CUSTOM: return "custom";
         case SaveType::INTEGRATION: return "integrations";
+        case SaveType::ZONE: return "zones";
         default: return "games";
     }
 }
@@ -827,6 +828,90 @@ bool isUnpackedDirectoryNewer(const std::string& directoryPath, const std::strin
     
     auto dirNewestTime = getNewestTime(directoryPath);
     return dirNewestTime > monolithicTime;
+}
+
+std::string zoneDirectory(const std::string& identifier) {
+    std::string folder = ensureSaveTypeFolder(SaveType::ZONE);
+    if (folder.empty()) return "";
+    const std::string safe = sanitizeLabel(identifier);
+    if (safe.empty()) return "";
+    const std::filesystem::path dir = std::filesystem::path(folder) / safe;
+    std::error_code ec;
+    std::filesystem::create_directories(dir, ec);
+    if (ec) {
+        std::cerr << "[SaveSystem] Failed to create zone directory "
+                  << dir.string() << ": " << ec.message() << "\n";
+        return "";
+    }
+    return dir.string();
+}
+
+std::string zoneIdentityPath(const std::string& identifier) {
+    const std::string dir = zoneDirectory(identifier);
+    if (dir.empty()) return "";
+    return dir + "/zone.json";
+}
+
+bool zoneIdentityExists(const std::string& identifier) {
+    if (identifier.empty()) return false;
+    std::string folder = ensureSaveTypeFolder(SaveType::ZONE);
+    if (folder.empty()) return false;
+    const std::string safe = sanitizeLabel(identifier);
+    if (safe.empty()) return false;
+    std::error_code ec;
+    const auto path = std::filesystem::path(folder) / safe / "zone.json";
+    return std::filesystem::exists(path, ec) && std::filesystem::file_size(path, ec) > 0;
+}
+
+bool writeZoneIdentity(const std::string& identifier, const nlohmann::json& j) {
+    const std::string path = zoneIdentityPath(identifier);
+    if (path.empty()) return false;
+    if (!permitted(path)) return false;
+    std::ofstream out(path);
+    if (!out) {
+        std::cerr << "[SaveSystem] Failed to open zone identity for writing: "
+                  << path << "\n";
+        return false;
+    }
+    out << j.dump(2);
+    out.flush();
+    if (!out) {
+        std::cerr << "[SaveSystem] Failed to write zone identity: " << path << "\n";
+        return false;
+    }
+    return true;
+}
+
+nlohmann::json readZoneIdentity(const std::string& identifier) {
+    if (!zoneIdentityExists(identifier)) return nlohmann::json();
+    std::string folder = ensureSaveTypeFolder(SaveType::ZONE);
+    if (folder.empty()) return nlohmann::json();
+    const std::string safe = sanitizeLabel(identifier);
+    const auto path = (std::filesystem::path(folder) / safe / "zone.json").string();
+    return readSaveData(path);
+}
+
+std::vector<std::string> listZoneIdentities() {
+    std::vector<std::string> out;
+    std::string folder = ensureSaveTypeFolder(SaveType::ZONE);
+    if (folder.empty()) return out;
+    std::error_code ec;
+    if (!std::filesystem::exists(folder, ec)) return out;
+    for (const auto& entry : std::filesystem::directory_iterator(folder, ec)) {
+        if (!entry.is_directory()) continue;
+        const auto zoneFile = entry.path() / "zone.json";
+        if (!std::filesystem::exists(zoneFile, ec)) continue;
+        if (std::filesystem::file_size(zoneFile, ec) == 0) continue;
+        nlohmann::json j = readSaveData(zoneFile.string());
+        std::string id;
+        if (j.is_object()) {
+            id = j.value("identifier", j.value("name", std::string{}));
+        }
+        if (id.empty()) id = entry.path().filename().string();
+        out.push_back(std::move(id));
+    }
+    std::sort(out.begin(), out.end());
+    return out;
 }
 
 } // namespace SaveSystem 

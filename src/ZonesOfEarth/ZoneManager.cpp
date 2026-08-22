@@ -31,6 +31,8 @@
 #include <cstring>
 #include <unordered_set>
 #include <algorithm>
+#include <set>
+#include <functional>
 
 extern MaterialManager materials;
 extern CategoryManager categories;
@@ -265,11 +267,173 @@ std::size_t liveObjectCount(const ZoneManager& mgr) {
     }
     return n;
 }
+
+bool isObservationZone(const Zone& zone) {
+    const auto& q = zone.getQualities();
+    auto it = q.find("kind");
+    return it != q.end() && it->second == "test-observation";
+}
+
+std::string zoneIdFromJson(const nlohmann::json& zj) {
+    return zj.value("identifier", zj.value("name", std::string{}));
+}
+
+const char* kZoneIdentityFormat = "zone-identity-v1";
 } // namespace
 
 std::string ZoneManager::beforeLoadSnapshotPath() {
     return SaveSystem::ensureSaveTypeFolder(SaveSystem::SaveType::BACKUP) +
            "/before-load.json";
+}
+
+void ZoneManager::persistZones() const {
+    for (const auto& z : _zones) {
+        if (!z) continue;
+        if (isObservationZone(*z)) continue;
+        const std::string id = z->getIdentifier();
+        if (id.empty()) continue;
+        // An empty live Zone must not erase a populated identity. Boot
+        // mints empty Home/Sanctum; a session save of that empty bag
+        // used to be how loading another "world" wiped Home.
+        if (z->getOwnedObjects().empty() && SaveSystem::zoneIdentityExists(id)) {
+            nlohmann::json existing = SaveSystem::readZoneIdentity(id);
+            std::size_t stored = 0;
+            if (existing.is_object()) {
+                if (existing.contains("world") && existing["world"].contains("objects") &&
+                    existing["world"]["objects"].is_array()) {
+                    stored = existing["world"]["objects"].size();
+                } else if (existing.contains("objects") && existing["objects"].is_array()) {
+                    stored = existing["objects"].size();
+                }
+            }
+            if (stored > 0) {
+                std::cerr << "[zones] REFUSED to persist empty Zone '" << id
+                          << "' over a stored identity that still has "
+                          << stored << " being(s).\n";
+                continue;
+            }
+        }
+        if (!SaveSystem::writeZoneIdentity(id, zoneToJson(*z))) {
+            std::cerr << "[zones] REFUSED or failed to persist Zone '" << id << "'\n";
+        }
+    }
+}
+
+void ZoneManager::hydrateFromZoneStore() {
+    const auto stored = SaveSystem::listZoneIdentities();
+    for (const auto& id : stored) {
+        nlohmann::json zj = SaveSystem::readZoneIdentity(id);
+        if (!zj.is_object()) continue;
+        std::shared_ptr<Zone> live;
+        for (auto& z : _zones) {
+            if (z && z->getIdentifier() == id) {
+                live = z;
+                break;
+            }
+        }
+        if (live) {
+            if (live->getOwnedObjects().empty()) {
+                applyZoneJson(*live, zj, true);
+            }
+            continue;
+        }
+        addZone(makeZoneFromJson(zj));
+    }
+    globalObjects.clear();
+    for (const auto& z : _zones) {
+        if (!z) continue;
+        for (const auto& obj : z->getOwnedObjects()) {
+            if (!obj) continue;
+            obj->addZoneDesignation(z->name());
+            obj->addZoneDesignation(z->getIdentifier());
+            globalObjects.push_back(obj);
+        }
+    }
+}
+
+bool ZoneManager::forkZone(const std::string& sourceId, const std::string& newId) {
+    if (sourceId.empty() || newId.empty() || sourceId == newId) return false;
+    if (SaveSystem::sanitizeLabel(newId).empty()) return false;
+    for (const auto& z : _zones) {
+        if (z && z->getIdentifier() == newId) {
+            std::cerr << "[zones] REFUSED fork: '" << newId << "' already lives here.\n";
+            return false;
+        }
+    }
+    persistZones();
+    nlohmann::json src;
+    for (const auto& z : _zones) {
+        if (z && z->getIdentifier() == sourceId) {
+            src = zoneToJson(*z);
+            break;
+        }
+    }
+    if (src.is_null() || src.empty()) {
+        src = SaveSystem::readZoneIdentity(sourceId);
+    }
+    if (!src.is_object()) {
+        std::cerr << "[zones] REFUSED fork: source '" << sourceId << "' not found.\n";
+        return false;
+    }
+    src["name"] = newId;
+    src["identifier"] = newId;
+    nlohmann::json qualities = src.value("qualities", nlohmann::json::object());
+    qualities["forkedFrom"] = sourceId;
+    src["qualities"] = qualities;
+    if (!SaveSystem::writeZoneIdentity(newId, src)) return false;
+    auto forked = makeZoneFromJson(src);
+    addZone(forked);
+    for (const auto& obj : forked->getOwnedObjects()) {
+        if (!obj) continue;
+        obj->addZoneDesignation(forked->name());
+        obj->addZoneDesignation(forked->getIdentifier());
+        globalObjects.push_back(obj);
+    }
+    return true;
+}
+
+nlohmann::json ZoneManager::diffZones(const std::string& aId, const std::string& bId) const {
+    auto objectIds = [this](const std::string& id) -> std::set<std::string> {
+        std::set<std::string> ids;
+        for (const auto& z : _zones) {
+            if (!z || z->getIdentifier() != id) continue;
+            for (const auto& o : z->getOwnedObjects()) {
+                if (o) ids.insert(o->getIdentifier());
+            }
+            return ids;
+        }
+        nlohmann::json zj = SaveSystem::readZoneIdentity(id);
+        if (zj.is_object()) {
+            const nlohmann::json* arr = nullptr;
+            if (zj.contains("world") && zj["world"].contains("objects"))
+                arr = &zj["world"]["objects"];
+            else if (zj.contains("objects"))
+                arr = &zj["objects"];
+            if (arr && arr->is_array()) {
+                for (const auto& o : *arr) {
+                    if (o.contains("objectID")) ids.insert(o["objectID"].get<std::string>());
+                    else if (o.contains("identifier")) ids.insert(o["identifier"].get<std::string>());
+                }
+            }
+        }
+        return ids;
+    };
+    const auto a = objectIds(aId);
+    const auto b = objectIds(bId);
+    nlohmann::json d;
+    d["a"] = aId;
+    d["b"] = bId;
+    d["onlyInA"] = nlohmann::json::array();
+    d["onlyInB"] = nlohmann::json::array();
+    d["shared"] = nlohmann::json::array();
+    for (const auto& id : a) {
+        if (b.count(id)) d["shared"].push_back(id);
+        else d["onlyInA"].push_back(id);
+    }
+    for (const auto& id : b) {
+        if (!a.count(id)) d["onlyInB"].push_back(id);
+    }
+    return d;
 }
 
 // ------------------------------------------------------------------
@@ -279,16 +443,26 @@ nlohmann::json ZoneManager::buildSaveJson(const SaveContext& ctx) const {
     using json = nlohmann::json;
     json j;
 
+    j["saveFormat"] = kZoneIdentityFormat;
     j["currentZone"] = _currentIndex;
+    if (_currentIndex < _zones.size() && _zones[_currentIndex]) {
+        j["currentZoneId"] = _zones[_currentIndex]->getIdentifier();
+    }
     json zonesJson = json::array();
+    json zoneRefs = json::array();
     for (const auto& z : _zones) {
-        json zj; zj["name"] = z->name();
-        zj["owner"] = z->owner();
-        zj["world"] = zoneObjectsToJson(*z);
-        zj["formationRelations"] = z->formation().relations().toJson();
+        if (!z) continue;
+        json zj = zoneToJson(*z);
         zonesJson.push_back(zj);
+        json ref;
+        ref["identifier"] = z->getIdentifier();
+        const auto& q = z->getQualities();
+        auto kind = q.find("kind");
+        if (kind != q.end()) ref["kind"] = kind->second;
+        zoneRefs.push_back(std::move(ref));
     }
     j["zones"] = zonesJson;
+    j["zoneRefs"] = zoneRefs;
 
     j["materials"] = materials.toJson();
     j["categories"] = categories.toJson();
@@ -353,6 +527,10 @@ nlohmann::json ZoneManager::buildSaveJson(const SaveContext& ctx) const {
 // saveState
 // ------------------------------------------------------------------
 void ZoneManager::saveState(const std::string& filename, SaveContext& ctx) {
+    // A before-load stash is a snapshot of the previous session, not an
+    // evolution of Zone identity. Writing it into saves/zones/ would let a
+    // load rewind Home as a side effect.
+    if (!isBeforeLoadSnapshot(filename)) persistZones();
     nlohmann::json j = buildSaveJson(ctx);
     std::ofstream out(filename);
     out << j.dump(2);
@@ -365,6 +543,7 @@ void ZoneManager::saveState(const std::string& filename, SaveContext& ctx) {
 // saveStateWithLog
 // ------------------------------------------------------------------
 void ZoneManager::saveStateWithLog(const std::string& customName, SaveContext& ctx) {
+    persistZones();
     nlohmann::json j = buildSaveJson(ctx);
 
     // Top-level objects: the active zone's whole world. This used to skip
@@ -474,7 +653,9 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
         const bool looksLikeWorld =
             j.is_object() &&
             ((j.contains("zones") && j["zones"].is_array()) ||
-             (j.contains("objects") && j["objects"].is_array()));
+             (j.contains("objects") && j["objects"].is_array()) ||
+             (j.contains("zoneRefs") && j["zoneRefs"].is_array()) ||
+             j.value("saveFormat", std::string{}) == kZoneIdentityFormat);
         if (!looksLikeWorld) {
             _saveLoad.lastLoadReport =
                 "REFUSED: '" + filename + "' is not a world save (no zones, no objects). "
@@ -526,63 +707,93 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
         if (j.contains("categories")) categories.loadFromJson(j["categories"]);
 
         size_t currentZoneIdx = j.value("currentZone", 0);
-        auto& zonesVec = _zones; zonesVec.clear();
-        if (j.contains("zones")) {
-            for (const auto& zj : j["zones"]) {
-                std::string name = zj.value("name", "Untitled Zone");
-                auto z = std::make_shared<Zone>(name, "strict");
-                z->setOwner(zj.value("owner", std::string{}));
-                if (zj.contains("world")) {
-                    zoneObjectsFromJson(zj["world"], *z);
+        std::string currentZoneId = j.value("currentZoneId", std::string{});
+        const bool snapshotRestore = isBeforeLoadSnapshot(filename);
+
+        // Snapshot restore (before-load) rewinds the working set from the
+        // embedded copy. Every other load treats Zones as identities: a
+        // live Zone is kept, else the Zone store, else the snapshot is
+        // migrated into the store. Home is never replaced by a session
+        // file's private copy — EarthcallOurverse.md: one Singularity-fixed
+        // Home, evolved across files, not minted per snapshot.
+        auto findLive = [this](const std::string& id) -> std::shared_ptr<Zone> {
+            if (id.empty()) return nullptr;
+            for (auto& z : _zones) {
+                if (z && z->getIdentifier() == id) return z;
+            }
+            return nullptr;
+        };
+        auto admitFromJson = [&](const nlohmann::json& zj) {
+            const std::string id = zoneIdFromJson(zj);
+            if (id.empty()) return;
+            if (auto live = findLive(id)) {
+                if (snapshotRestore) applyZoneJson(*live, zj, true);
+                return;
+            }
+            if (!snapshotRestore && SaveSystem::zoneIdentityExists(id)) {
+                nlohmann::json identity = SaveSystem::readZoneIdentity(id);
+                if (identity.is_object()) {
+                    addZone(makeZoneFromJson(identity));
+                    return;
                 }
-                if (z->getOwnedObjects().empty() && zj.contains("objects")) {
-                    zoneObjectsFromJson(zj, *z);
-                }
-                if (zj.contains("formationRelations")) {
-                    // MEMBERS BEFORE RELATIONS. Zone::syncFormationMembers does
-                    // not run until the frame loop, so a relation added here used
-                    // to find neither of its endpoints: it got a subformation with
-                    // no members, and since subformations were matched only by
-                    // member lookup, that empty set could never match anything
-                    // again. Every world loaded from disk came up with set-to-set
-                    // grouping already broken. The objects exist now — say so
-                    // before the bonds between them are read.
-                    z->syncFormationMembers();
-                    size_t refused = 0;
-                    for (const auto& relJson : zj["formationRelations"]) {
-                        if (!z->formation().add(std::make_shared<Relation>(Relation::fromJson(relJson)))) {
-                            ++refused;
-                        }
-                    }
-                    if (refused > 0) {
-                        std::cout << "⚠️  Zone '" << z->name() << "': " << refused
-                                  << " saved formation relation(s) were REFUSED on load "
-                                  << "(self-ground or a directed cycle). They are not in "
-                                  << "the formation and will not be written back on the "
-                                  << "next save. Fix them in the save file to keep them."
-                                  << std::endl;
-                    }
-                }
-                zonesVec.push_back(std::move(z));
+            }
+            auto z = makeZoneFromJson(zj);
+            addZone(z);
+            if (!snapshotRestore && !isObservationZone(*z)) {
+                SaveSystem::writeZoneIdentity(id, zoneToJson(*z));
+            }
+        };
+
+        if (snapshotRestore) {
+            _zones.clear();
+        }
+
+        if (j.contains("zones") && j["zones"].is_array()) {
+            for (const auto& zj : j["zones"]) admitFromJson(zj);
+        }
+        if (j.contains("zoneRefs") && j["zoneRefs"].is_array()) {
+            for (const auto& ref : j["zoneRefs"]) {
+                std::string id;
+                if (ref.is_string()) id = ref.get<std::string>();
+                else if (ref.is_object()) id = ref.value("identifier", std::string{});
+                if (id.empty() || findLive(id)) continue;
+                nlohmann::json identity = SaveSystem::readZoneIdentity(id);
+                if (identity.is_object()) addZone(makeZoneFromJson(identity));
             }
         }
 
-        if (zonesVec.empty()) {
-            zonesVec.push_back(std::make_shared<Zone>("Default Zone", "default"));
+        if (_zones.empty()) {
+            _zones.push_back(std::make_shared<Zone>("Default Zone", "default"));
+        }
+
+        if (currentZoneId.empty() && j.contains("zones") && j["zones"].is_array() &&
+            currentZoneIdx < j["zones"].size()) {
+            currentZoneId = zoneIdFromJson(j["zones"][currentZoneIdx]);
         }
 
         // saveStateWithLog also writes a top-level objects array. If a
         // zone's world came in empty, fold those into the active zone so
-        // a Person's spawned shapes survive the round-trip.
-        if (j.contains("objects") && j["objects"].is_array() && !zonesVec.empty()) {
-            auto& loadZone = *zonesVec[std::min(currentZoneIdx, zonesVec.size() - 1)];
+        // a Person's spawned shapes survive the round-trip. Identity-stable
+        // Zones that already have beings are left alone.
+        if (j.contains("objects") && j["objects"].is_array() && !_zones.empty()) {
+            size_t foldIdx = std::min(currentZoneIdx, _zones.size() - 1);
+            if (!currentZoneId.empty()) {
+                for (size_t i = 0; i < _zones.size(); ++i) {
+                    if (_zones[i] && _zones[i]->getIdentifier() == currentZoneId) {
+                        foldIdx = i;
+                        break;
+                    }
+                }
+            }
+            auto& loadZone = *_zones[foldIdx];
             if (loadZone.getOwnedObjects().empty()) {
                 zoneObjectsFromJson(j, loadZone);
             }
         }
 
-        // Home survives every load
-        ensureHomeZone(ctx.player->getIdentifier());
+        if (!snapshotRestore) hydrateFromZoneStore();
+        if (ctx.player) ensureHomeZone(ctx.player->getIdentifier());
+        if (snapshotRestore) persistZones();
 
         // switchTo CLEARS the active world's objects and refills from
         // globalObjects. Load used to skip this catalog, so every successful
@@ -598,7 +809,16 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
                 globalObjects.push_back(obj);
             }
         }
-        switchTo(std::min(currentZoneIdx, zonesVec.size() - 1));
+        size_t switchIdx = std::min(currentZoneIdx, _zones.size() - 1);
+        if (!currentZoneId.empty()) {
+            for (size_t i = 0; i < _zones.size(); ++i) {
+                if (_zones[i] && _zones[i]->getIdentifier() == currentZoneId) {
+                    switchIdx = i;
+                    break;
+                }
+            }
+        }
+        switchTo(switchIdx);
 
         // Load camera and player view
         if (j.contains("cameraPos")) {
@@ -734,7 +954,9 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
 
         const std::string zoneName = _zones.empty() ? std::string("?") : _zones[_currentIndex]->name();
         _saveLoad.lastLoadReport =
-            "Loaded world '" + _saveLoad.loadedSaveName + "' into " + zoneName + ": " +
+            "Loaded session '" + _saveLoad.loadedSaveName + "' (Zones of Earth stay "
+            "identity-stable under saves/zones/). Now in " + zoneName + ": " +
+            std::to_string(_zones.size()) + " zone(s), " +
             std::to_string(objectCount) + " object(s), " +
             std::to_string(ctx.lawManager->getAll().size()) + " law(s) (" +
             std::to_string(authoredCount) + " authored), " +

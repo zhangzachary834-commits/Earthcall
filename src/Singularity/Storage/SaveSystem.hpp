@@ -7,13 +7,14 @@ namespace SaveSystem {
 
 // Save types for organization
 enum class SaveType {
-    WORLD,       // World state saves
+    WORLD,       // Session snapshot (camera, laws, working-set refs). Not the Zone identity.
     AVATAR,     // Avatar saves
     PERSON,     // Registered Persons / user profiles
     DESIGN,     // Design system saves
     BACKUP,     // Automatic backups
     CUSTOM,     // Custom saves
-    INTEGRATION // Integration system saves (web apps, external windows, etc.)
+    INTEGRATION, // Integration system saves (web apps, external windows, etc.)
+    ZONE         // Per-Zone identity directory under saves/zones/<id>/
 };
 
 // Pin every relative save path to this directory (the repository `saves/`
@@ -107,5 +108,19 @@ nlohmann::json mergeSaveFiles(const std::string& file1, const std::string& file2
 
 // Merge two save files and save the result, returns the new filename
 std::string mergeAndSaveFiles(const std::string& file1, const std::string& file2, const std::string& outputLabel = "", SaveType type = SaveType::WORLD);
+
+// ------------------------------------------------------------------
+// Zone identity store. A Zone is not a copy inside a session/"world"
+// file: it lives at saves/zones/<sanitized-identifier>/zone.json and
+// is named, forked, and evolved across sessions. Session files
+// (SaveType::WORLD) reference these identities.
+// ------------------------------------------------------------------
+std::string zoneDirectory(const std::string& identifier);
+std::string zoneIdentityPath(const std::string& identifier);
+bool zoneIdentityExists(const std::string& identifier);
+bool writeZoneIdentity(const std::string& identifier, const nlohmann::json& j);
+nlohmann::json readZoneIdentity(const std::string& identifier);
+// Identifiers as stored (from zone.json `identifier`/`name`, else the folder).
+std::vector<std::string> listZoneIdentities();
 
 } // namespace SaveSystem

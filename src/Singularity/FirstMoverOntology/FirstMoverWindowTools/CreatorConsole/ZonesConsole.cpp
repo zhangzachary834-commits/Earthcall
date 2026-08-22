@@ -10,11 +10,11 @@ namespace Rendering {
 
         const auto& zones = zoneMgr.zones();
         if (zones.empty()) {
-            ImGui::TextDisabled("No zones in the world.");
+            ImGui::TextDisabled("No Zones loaded.");
             return;
         }
 
-        ImGui::TextDisabled("%zu zone(s). Click to switch.", zones.size());
+        ImGui::TextDisabled("%zu zone(s). Click to switch. Identity lives in saves/zones/, shared across sessions.", zones.size());
         for (size_t i = 0; i < zones.size(); ++i) {
             const auto& z = zones[i];
             if (!z) continue;

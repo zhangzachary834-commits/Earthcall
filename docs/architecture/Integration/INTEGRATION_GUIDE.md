@@ -169,7 +169,7 @@ Rather than building an ad-hoc second permission system inside the engine, prope
 
 ## 🌐 Example Web Integration
 
-See `examples/web_integration_example.html` for a complete example of a web application that integrates with Earthcall.
+See `../../../examples/web_integration_example.html` for a complete example of a web application that integrates with Earthcall.
 
 The example includes:
 - Connection management
@@ -266,19 +266,19 @@ The integration system provides detailed logging:
 
 ## 📚 Additional Resources
 
-- **API Documentation**: See header files in `src/Singularity/Foreign/`
-- **Examples**: Check `examples/` directory
-- **Source Code**: Integration modality code in `src/Singularity/Foreign/`
-- **Web Demo**: `examples/web_integration_example.html`
+- **API Documentation**: See header files in `../../../src/Singularity/Foreign`
+- **Examples**: Check `../../../examples` directory
+- **Source Code**: Integration modality code in `../../../src/Singularity/Foreign`
+- **Web Demo**: `../../../examples/web_integration_example.html`
 
 ## 🤝 Contributing
 
 To extend the integration system:
 
-1. **Add new API methods** in `src/Singularity/Foreign/API/EarthcallAPI.hpp`
-2. **Implement features** in `src/Singularity/Foreign/API/EarthcallAPI.cpp`
-3. **Update UI** in `src/Singularity/Foreign/Web/IntegrationManager.cpp`
-4. **Add examples** in `examples/` directory
+1. **Add new API methods** in `../../../src/Singularity/Foreign/API/EarthcallAPI.hpp`
+2. **Implement features** in `../../../src/Singularity/Foreign/API/EarthcallAPI.cpp`
+3. **Update UI** in `../../../src/Singularity/Foreign/Web/IntegrationManager.cpp`
+4. **Add examples** in `../../../examples` directory
 5. **Update documentation** in this guide
 
 ## 🎉 Conclusion
@@ -289,4 +289,6 @@ Whether you're building a web-based design tool, integrating with existing appli
 
 ---
 
-*For more information, see the source code in `src/Singularity/Foreign/` or run the example web application.*
+*For more information, see the source code in `../../../src/Singularity/Foreign` or run the example web application.*
+
+Zach: I think this is from 2025 and if I recall correctly, it was written by GPT-4o

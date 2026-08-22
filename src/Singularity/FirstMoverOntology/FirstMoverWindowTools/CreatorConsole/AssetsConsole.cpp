@@ -35,8 +35,8 @@ namespace Rendering {
             if (!engine || path.empty()) return;
             SaveContext ctx = makeSaveContext(engine);
             mgr.loadState(path, ctx);
-            // Zones from the previous world are gone. Drop Object* the
-            // tools still hold or Morph/Combine/Clay run on freed memory.
+            // Session pose changed; identity-stable Zones (Home, …) were
+            // kept. Drop Object* only if that being is no longer live.
             forgetStaleObjectHandles(mgr, engine->getPlayer());
         }
     }
@@ -77,7 +77,20 @@ namespace Rendering {
                 ImGui::SameLine();
                 ImGui::Checkbox("Unpack for authoring", &sl.unpackForAuthoring);
                 ImGui::Separator();
-                ImGui::TextDisabled("One entry per world. Binary twins, empty files, and delta chunks are not listed.");
+                ImGui::TextDisabled("Sessions (camera, laws, working set). Home and other Zones live in saves/zones/ and are shared across sessions — loading a file does not mint a second Home.");
+                {
+                    auto zoneIds = SaveSystem::listZoneIdentities();
+                    if (!zoneIds.empty()) {
+                        std::string listed = "Zones of Earth: ";
+                        for (size_t i = 0; i < zoneIds.size(); ++i) {
+                            if (i) listed += ", ";
+                            listed += zoneIds[i];
+                        }
+                        ImGui::TextWrapped("%s", listed.c_str());
+                    }
+                }
+                ImGui::Separator();
+                ImGui::TextDisabled("One entry per session. Binary twins, empty files, and delta chunks are not listed.");
                 {
                     const std::string stash = ZoneManager::beforeLoadSnapshotPath();
                     std::error_code ec;
@@ -178,8 +191,8 @@ namespace Rendering {
         }
 
         ImGui::Separator();
-        ImGui::TextUnformatted("Load a world");
-        ImGui::TextDisabled("One name per world. json and .ecsave of the same name are the same world.");
+        ImGui::TextUnformatted("Load a session");
+        ImGui::TextDisabled("One name per session. json and .ecsave of the same name are the same session. Zones (Home included) persist in saves/zones/.");
         {
             auto worlds = SaveSystem::listWorlds(SaveSystem::SaveType::WORLD);
             if (worlds.empty()) {

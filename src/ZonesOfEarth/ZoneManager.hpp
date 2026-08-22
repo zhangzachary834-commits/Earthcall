@@ -62,6 +62,17 @@ public:
     void saveState(const std::string& filename, SaveContext& ctx);
     void loadState(const std::string& filename, SaveContext& ctx);
     void saveStateWithLog(const std::string& customName, SaveContext& ctx);
+
+    // Zone identity store (saves/zones/<id>/zone.json). A session/"world"
+    // file names a working set; the Zone itself is not a copy inside that
+    // file. persistZones writes every live identity-stable Zone; hydrate
+    // fills empty boot Zones and admits stored Zones the manager does not
+    // yet hold. forkZone copies an identity under a new name (branch);
+    // diffZones compares object identifiers of two identities.
+    void persistZones() const;
+    void hydrateFromZoneStore();
+    bool forkZone(const std::string& sourceId, const std::string& newId);
+    nlohmann::json diffZones(const std::string& aId, const std::string& bId) const;
     // Dedicated slot loadState writes the live world into before replacing
     // it. Stem is "before-load"; folder is SaveType::BACKUP. Loading that
     // path itself does not re-stash (or recovery would overwrite the stash
