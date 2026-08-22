@@ -39,6 +39,7 @@ __pycache__/
 
 # Runtime save output — 2.0 GB, individual files up to 98 MB.
 saves/games/
+saves/backups/
 
 # Dear ImGui's bundled examples, per-backend demos and manual. The backends and
 # core headers stay searchable — Earthcall compiles against imgui.h and the
