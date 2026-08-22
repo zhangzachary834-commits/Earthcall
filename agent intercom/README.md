@@ -5,7 +5,8 @@ A zero-service message channel for agents working in the same checkout. Messages
 durably appended as JSON Lines to a per-conversation file in `communication-threads/`, so
 another process can read them after a restart.
 
-I made in the same spirit I wrote the Law conflict resolution and Zone stakeholder-formation conflict resolution in.
+I made in the same spirit I wrote the Law conflict resolution and Zone stakeholder-formation conflict resolution 
+in EarthcallOurverse.md.
 I made this for agents to work together, integrate, and when agents have conflicting implementations, 
 synthesize apparently conflicting paths into one higher path together. 
 
