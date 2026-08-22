@@ -1,0 +1,5752 @@
+{
+  "currentZone": 0,
+  "flying": true,
+  "cameraPos": [
+    0.0,
+    8.0,
+    8.0
+  ],
+  "cameraFront": [
+    0.0,
+    -0.7071,
+    -0.7071
+  ],
+  "cameraUp": [
+    0.0,
+    0.7071,
+    -0.7071
+  ],
+  "yaw": -90.0,
+  "pitch": -45.0,
+  "currentColor": [
+    1.0,
+    1.0,
+    1.0
+  ],
+  "materials": [],
+  "zones": [
+    {
+      "name": "Chess Ground",
+      "artStyle": "default",
+      "world": {
+        "objects": [
+          {
+            "objectID": "Gemini",
+            "shapeKind": 0,
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "Gemini (First Mover)"
+              }
+            },
+            "authors": [
+              "Gemini"
+            ]
+          },
+          {
+            "objectID": "state.chess",
+            "shapeKind": 0,
+            "authoredProperties": {
+              "turn": {
+                "t": "int",
+                "v": 0
+              },
+              "selectedX": {
+                "t": "int",
+                "v": -1
+              },
+              "selectedY": {
+                "t": "int",
+                "v": -1
+              },
+              "targetX": {
+                "t": "int",
+                "v": -1
+              },
+              "targetY": {
+                "t": "int",
+                "v": -1
+              },
+              "selectionActive": {
+                "t": "bool",
+                "v": false
+              },
+              "dx": {
+                "t": "int",
+                "v": 0
+              },
+              "dy": {
+                "t": "int",
+                "v": 0
+              }
+            },
+            "authors": [
+              "Gemini"
+            ]
+          },
+          {
+            "objectID": "category.chess.board",
+            "shapeKind": 0,
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "Chess Board"
+              }
+            },
+            "authors": [
+              "Gemini"
+            ]
+          },
+          {
+            "objectID": "category.chess.piece",
+            "shapeKind": 0,
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "Chess Piece"
+              }
+            },
+            "authors": [
+              "Gemini"
+            ]
+          },
+          {
+            "objectID": "object.chess.board",
+            "shapeKind": 1,
+            "geometryType": 0,
+            "shapeParams": [
+              8.0,
+              0.2,
+              8.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              8.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.2,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              8.0,
+              0.0,
+              0.0,
+              -0.1,
+              0.0,
+              1.0
+            ],
+            "center": [
+              0.0,
+              -0.1,
+              0.0
+            ],
+            "materialId": "",
+            "faceColors": [
+              [
+                0.85,
+                0.75,
+                0.65
+              ],
+              [
+                0.85,
+                0.75,
+                0.65
+              ],
+              [
+                0.82,
+                0.7,
+                0.55
+              ],
+              [
+                0.85,
+                0.75,
+                0.65
+              ],
+              [
+                0.85,
+                0.75,
+                0.65
+              ],
+              [
+                0.85,
+                0.75,
+                0.65
+              ]
+            ],
+            "authoredProperties": {
+              "isBoard": {
+                "t": "bool",
+                "v": true
+              }
+            },
+            "authors": [
+              "Gemini"
+            ]
+          },
+          {
+            "objectID": "piece-white-rook-0-0",
+            "shapeKind": 3,
+            "geometryType": 0,
+            "shapeParams": [
+              0.5,
+              0.9,
+              0.5,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              0.5,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.9,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.5,
+              0.0,
+              -3.5,
+              0.45,
+              -3.5,
+              1.0
+            ],
+            "center": [
+              -3.5,
+              0.45,
+              -3.5
+            ],
+            "materialId": "",
+            "faceColors": [
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ]
+            ],
+            "authoredProperties": {
+              "gridX": {
+                "t": "int",
+                "v": 0
+              },
+              "gridY": {
+                "t": "int",
+                "v": 0
+              },
+              "chessColor": {
+                "t": "int",
+                "v": 0
+              },
+              "chessRole": {
+                "t": "int",
+                "v": 1
+              },
+              "isSelected": {
+                "t": "bool",
+                "v": false
+              },
+              "hasMoved": {
+                "t": "bool",
+                "v": false
+              }
+            },
+            "authors": [
+              "Gemini"
+            ]
+          },
+          {
+            "objectID": "piece-white-knight-1-0",
+            "shapeKind": 1,
+            "geometryType": 0,
+            "shapeParams": [
+              0.45,
+              1.0,
+              0.45,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              0.45,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.45,
+              0.0,
+              -2.5,
+              0.5,
+              -3.5,
+              1.0
+            ],
+            "center": [
+              -2.5,
+              0.5,
+              -3.5
+            ],
+            "materialId": "",
+            "faceColors": [
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ]
+            ],
+            "authoredProperties": {
+              "gridX": {
+                "t": "int",
+                "v": 1
+              },
+              "gridY": {
+                "t": "int",
+                "v": 0
+              },
+              "chessColor": {
+                "t": "int",
+                "v": 0
+              },
+              "chessRole": {
+                "t": "int",
+                "v": 2
+              },
+              "isSelected": {
+                "t": "bool",
+                "v": false
+              },
+              "hasMoved": {
+                "t": "bool",
+                "v": false
+              }
+            },
+            "authors": [
+              "Gemini"
+            ]
+          },
+          {
+            "objectID": "piece-white-bishop-2-0",
+            "shapeKind": 1,
+            "geometryType": 0,
+            "shapeParams": [
+              0.45,
+              1.1,
+              0.45,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              0.45,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.1,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.45,
+              0.0,
+              -1.5,
+              0.55,
+              -3.5,
+              1.0
+            ],
+            "center": [
+              -1.5,
+              0.55,
+              -3.5
+            ],
+            "materialId": "",
+            "faceColors": [
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ]
+            ],
+            "authoredProperties": {
+              "gridX": {
+                "t": "int",
+                "v": 2
+              },
+              "gridY": {
+                "t": "int",
+                "v": 0
+              },
+              "chessColor": {
+                "t": "int",
+                "v": 0
+              },
+              "chessRole": {
+                "t": "int",
+                "v": 3
+              },
+              "isSelected": {
+                "t": "bool",
+                "v": false
+              },
+              "hasMoved": {
+                "t": "bool",
+                "v": false
+              }
+            },
+            "authors": [
+              "Gemini"
+            ]
+          },
+          {
+            "objectID": "piece-white-queen-3-0",
+            "shapeKind": 3,
+            "geometryType": 0,
+            "shapeParams": [
+              0.5,
+              1.2,
+              0.5,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              0.5,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.2,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.5,
+              0.0,
+              -0.5,
+              0.6,
+              -3.5,
+              1.0
+            ],
+            "center": [
+              -0.5,
+              0.6,
+              -3.5
+            ],
+            "materialId": "",
+            "faceColors": [
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ]
+            ],
+            "authoredProperties": {
+              "gridX": {
+                "t": "int",
+                "v": 3
+              },
+              "gridY": {
+                "t": "int",
+                "v": 0
+              },
+              "chessColor": {
+                "t": "int",
+                "v": 0
+              },
+              "chessRole": {
+                "t": "int",
+                "v": 4
+              },
+              "isSelected": {
+                "t": "bool",
+                "v": false
+              },
+              "hasMoved": {
+                "t": "bool",
+                "v": false
+              }
+            },
+            "authors": [
+              "Gemini"
+            ]
+          },
+          {
+            "objectID": "piece-white-king-4-0",
+            "shapeKind": 3,
+            "geometryType": 0,
+            "shapeParams": [
+              0.5,
+              1.3,
+              0.5,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              0.5,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.3,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.5,
+              0.0,
+              0.5,
+              0.65,
+              -3.5,
+              1.0
+            ],
+            "center": [
+              0.5,
+              0.65,
+              -3.5
+            ],
+            "materialId": "",
+            "faceColors": [
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ]
+            ],
+            "authoredProperties": {
+              "gridX": {
+                "t": "int",
+                "v": 4
+              },
+              "gridY": {
+                "t": "int",
+                "v": 0
+              },
+              "chessColor": {
+                "t": "int",
+                "v": 0
+              },
+              "chessRole": {
+                "t": "int",
+                "v": 5
+              },
+              "isSelected": {
+                "t": "bool",
+                "v": false
+              },
+              "hasMoved": {
+                "t": "bool",
+                "v": false
+              }
+            },
+            "authors": [
+              "Gemini"
+            ]
+          },
+          {
+            "objectID": "piece-white-bishop-5-0",
+            "shapeKind": 1,
+            "geometryType": 0,
+            "shapeParams": [
+              0.45,
+              1.1,
+              0.45,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              0.45,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.1,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.45,
+              0.0,
+              1.5,
+              0.55,
+              -3.5,
+              1.0
+            ],
+            "center": [
+              1.5,
+              0.55,
+              -3.5
+            ],
+            "materialId": "",
+            "faceColors": [
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ]
+            ],
+            "authoredProperties": {
+              "gridX": {
+                "t": "int",
+                "v": 5
+              },
+              "gridY": {
+                "t": "int",
+                "v": 0
+              },
+              "chessColor": {
+                "t": "int",
+                "v": 0
+              },
+              "chessRole": {
+                "t": "int",
+                "v": 3
+              },
+              "isSelected": {
+                "t": "bool",
+                "v": false
+              },
+              "hasMoved": {
+                "t": "bool",
+                "v": false
+              }
+            },
+            "authors": [
+              "Gemini"
+            ]
+          },
+          {
+            "objectID": "piece-white-knight-6-0",
+            "shapeKind": 1,
+            "geometryType": 0,
+            "shapeParams": [
+              0.45,
+              1.0,
+              0.45,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              0.45,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.45,
+              0.0,
+              2.5,
+              0.5,
+              -3.5,
+              1.0
+            ],
+            "center": [
+              2.5,
+              0.5,
+              -3.5
+            ],
+            "materialId": "",
+            "faceColors": [
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ]
+            ],
+            "authoredProperties": {
+              "gridX": {
+                "t": "int",
+                "v": 6
+              },
+              "gridY": {
+                "t": "int",
+                "v": 0
+              },
+              "chessColor": {
+                "t": "int",
+                "v": 0
+              },
+              "chessRole": {
+                "t": "int",
+                "v": 2
+              },
+              "isSelected": {
+                "t": "bool",
+                "v": false
+              },
+              "hasMoved": {
+                "t": "bool",
+                "v": false
+              }
+            },
+            "authors": [
+              "Gemini"
+            ]
+          },
+          {
+            "objectID": "piece-white-rook-7-0",
+            "shapeKind": 3,
+            "geometryType": 0,
+            "shapeParams": [
+              0.5,
+              0.9,
+              0.5,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              0.5,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.9,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.5,
+              0.0,
+              3.5,
+              0.45,
+              -3.5,
+              1.0
+            ],
+            "center": [
+              3.5,
+              0.45,
+              -3.5
+            ],
+            "materialId": "",
+            "faceColors": [
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ]
+            ],
+            "authoredProperties": {
+              "gridX": {
+                "t": "int",
+                "v": 7
+              },
+              "gridY": {
+                "t": "int",
+                "v": 0
+              },
+              "chessColor": {
+                "t": "int",
+                "v": 0
+              },
+              "chessRole": {
+                "t": "int",
+                "v": 1
+              },
+              "isSelected": {
+                "t": "bool",
+                "v": false
+              },
+              "hasMoved": {
+                "t": "bool",
+                "v": false
+              }
+            },
+            "authors": [
+              "Gemini"
+            ]
+          },
+          {
+            "objectID": "piece-black-rook-0-7",
+            "shapeKind": 3,
+            "geometryType": 0,
+            "shapeParams": [
+              0.5,
+              0.9,
+              0.5,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              0.5,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.9,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.5,
+              0.0,
+              -3.5,
+              0.45,
+              3.5,
+              1.0
+            ],
+            "center": [
+              -3.5,
+              0.45,
+              3.5
+            ],
+            "materialId": "",
+            "faceColors": [
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ]
+            ],
+            "authoredProperties": {
+              "gridX": {
+                "t": "int",
+                "v": 0
+              },
+              "gridY": {
+                "t": "int",
+                "v": 7
+              },
+              "chessColor": {
+                "t": "int",
+                "v": 1
+              },
+              "chessRole": {
+                "t": "int",
+                "v": 1
+              },
+              "isSelected": {
+                "t": "bool",
+                "v": false
+              },
+              "hasMoved": {
+                "t": "bool",
+                "v": false
+              }
+            },
+            "authors": [
+              "Gemini"
+            ]
+          },
+          {
+            "objectID": "piece-black-knight-1-7",
+            "shapeKind": 1,
+            "geometryType": 0,
+            "shapeParams": [
+              0.45,
+              1.0,
+              0.45,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              0.45,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.45,
+              0.0,
+              -2.5,
+              0.5,
+              3.5,
+              1.0
+            ],
+            "center": [
+              -2.5,
+              0.5,
+              3.5
+            ],
+            "materialId": "",
+            "faceColors": [
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ]
+            ],
+            "authoredProperties": {
+              "gridX": {
+                "t": "int",
+                "v": 1
+              },
+              "gridY": {
+                "t": "int",
+                "v": 7
+              },
+              "chessColor": {
+                "t": "int",
+                "v": 1
+              },
+              "chessRole": {
+                "t": "int",
+                "v": 2
+              },
+              "isSelected": {
+                "t": "bool",
+                "v": false
+              },
+              "hasMoved": {
+                "t": "bool",
+                "v": false
+              }
+            },
+            "authors": [
+              "Gemini"
+            ]
+          },
+          {
+            "objectID": "piece-black-bishop-2-7",
+            "shapeKind": 1,
+            "geometryType": 0,
+            "shapeParams": [
+              0.45,
+              1.1,
+              0.45,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              0.45,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.1,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.45,
+              0.0,
+              -1.5,
+              0.55,
+              3.5,
+              1.0
+            ],
+            "center": [
+              -1.5,
+              0.55,
+              3.5
+            ],
+            "materialId": "",
+            "faceColors": [
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ]
+            ],
+            "authoredProperties": {
+              "gridX": {
+                "t": "int",
+                "v": 2
+              },
+              "gridY": {
+                "t": "int",
+                "v": 7
+              },
+              "chessColor": {
+                "t": "int",
+                "v": 1
+              },
+              "chessRole": {
+                "t": "int",
+                "v": 3
+              },
+              "isSelected": {
+                "t": "bool",
+                "v": false
+              },
+              "hasMoved": {
+                "t": "bool",
+                "v": false
+              }
+            },
+            "authors": [
+              "Gemini"
+            ]
+          },
+          {
+            "objectID": "piece-black-queen-3-7",
+            "shapeKind": 3,
+            "geometryType": 0,
+            "shapeParams": [
+              0.5,
+              1.2,
+              0.5,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              0.5,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.2,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.5,
+              0.0,
+              -0.5,
+              0.6,
+              3.5,
+              1.0
+            ],
+            "center": [
+              -0.5,
+              0.6,
+              3.5
+            ],
+            "materialId": "",
+            "faceColors": [
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ]
+            ],
+            "authoredProperties": {
+              "gridX": {
+                "t": "int",
+                "v": 3
+              },
+              "gridY": {
+                "t": "int",
+                "v": 7
+              },
+              "chessColor": {
+                "t": "int",
+                "v": 1
+              },
+              "chessRole": {
+                "t": "int",
+                "v": 4
+              },
+              "isSelected": {
+                "t": "bool",
+                "v": false
+              },
+              "hasMoved": {
+                "t": "bool",
+                "v": false
+              }
+            },
+            "authors": [
+              "Gemini"
+            ]
+          },
+          {
+            "objectID": "piece-black-king-4-7",
+            "shapeKind": 3,
+            "geometryType": 0,
+            "shapeParams": [
+              0.5,
+              1.3,
+              0.5,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              0.5,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.3,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.5,
+              0.0,
+              0.5,
+              0.65,
+              3.5,
+              1.0
+            ],
+            "center": [
+              0.5,
+              0.65,
+              3.5
+            ],
+            "materialId": "",
+            "faceColors": [
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ]
+            ],
+            "authoredProperties": {
+              "gridX": {
+                "t": "int",
+                "v": 4
+              },
+              "gridY": {
+                "t": "int",
+                "v": 7
+              },
+              "chessColor": {
+                "t": "int",
+                "v": 1
+              },
+              "chessRole": {
+                "t": "int",
+                "v": 5
+              },
+              "isSelected": {
+                "t": "bool",
+                "v": false
+              },
+              "hasMoved": {
+                "t": "bool",
+                "v": false
+              }
+            },
+            "authors": [
+              "Gemini"
+            ]
+          },
+          {
+            "objectID": "piece-black-bishop-5-7",
+            "shapeKind": 1,
+            "geometryType": 0,
+            "shapeParams": [
+              0.45,
+              1.1,
+              0.45,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              0.45,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.1,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.45,
+              0.0,
+              1.5,
+              0.55,
+              3.5,
+              1.0
+            ],
+            "center": [
+              1.5,
+              0.55,
+              3.5
+            ],
+            "materialId": "",
+            "faceColors": [
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ]
+            ],
+            "authoredProperties": {
+              "gridX": {
+                "t": "int",
+                "v": 5
+              },
+              "gridY": {
+                "t": "int",
+                "v": 7
+              },
+              "chessColor": {
+                "t": "int",
+                "v": 1
+              },
+              "chessRole": {
+                "t": "int",
+                "v": 3
+              },
+              "isSelected": {
+                "t": "bool",
+                "v": false
+              },
+              "hasMoved": {
+                "t": "bool",
+                "v": false
+              }
+            },
+            "authors": [
+              "Gemini"
+            ]
+          },
+          {
+            "objectID": "piece-black-knight-6-7",
+            "shapeKind": 1,
+            "geometryType": 0,
+            "shapeParams": [
+              0.45,
+              1.0,
+              0.45,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              0.45,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.45,
+              0.0,
+              2.5,
+              0.5,
+              3.5,
+              1.0
+            ],
+            "center": [
+              2.5,
+              0.5,
+              3.5
+            ],
+            "materialId": "",
+            "faceColors": [
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ]
+            ],
+            "authoredProperties": {
+              "gridX": {
+                "t": "int",
+                "v": 6
+              },
+              "gridY": {
+                "t": "int",
+                "v": 7
+              },
+              "chessColor": {
+                "t": "int",
+                "v": 1
+              },
+              "chessRole": {
+                "t": "int",
+                "v": 2
+              },
+              "isSelected": {
+                "t": "bool",
+                "v": false
+              },
+              "hasMoved": {
+                "t": "bool",
+                "v": false
+              }
+            },
+            "authors": [
+              "Gemini"
+            ]
+          },
+          {
+            "objectID": "piece-black-rook-7-7",
+            "shapeKind": 3,
+            "geometryType": 0,
+            "shapeParams": [
+              0.5,
+              0.9,
+              0.5,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              0.5,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.9,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.5,
+              0.0,
+              3.5,
+              0.45,
+              3.5,
+              1.0
+            ],
+            "center": [
+              3.5,
+              0.45,
+              3.5
+            ],
+            "materialId": "",
+            "faceColors": [
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ]
+            ],
+            "authoredProperties": {
+              "gridX": {
+                "t": "int",
+                "v": 7
+              },
+              "gridY": {
+                "t": "int",
+                "v": 7
+              },
+              "chessColor": {
+                "t": "int",
+                "v": 1
+              },
+              "chessRole": {
+                "t": "int",
+                "v": 1
+              },
+              "isSelected": {
+                "t": "bool",
+                "v": false
+              },
+              "hasMoved": {
+                "t": "bool",
+                "v": false
+              }
+            },
+            "authors": [
+              "Gemini"
+            ]
+          },
+          {
+            "objectID": "piece-white-pawn-0-1",
+            "shapeKind": 3,
+            "geometryType": 0,
+            "shapeParams": [
+              0.4,
+              0.8,
+              0.4,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              0.4,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.8,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.4,
+              0.0,
+              -3.5,
+              0.4,
+              -2.5,
+              1.0
+            ],
+            "center": [
+              -3.5,
+              0.4,
+              -2.5
+            ],
+            "materialId": "",
+            "faceColors": [
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ]
+            ],
+            "authoredProperties": {
+              "gridX": {
+                "t": "int",
+                "v": 0
+              },
+              "gridY": {
+                "t": "int",
+                "v": 1
+              },
+              "chessColor": {
+                "t": "int",
+                "v": 0
+              },
+              "chessRole": {
+                "t": "int",
+                "v": 0
+              },
+              "isSelected": {
+                "t": "bool",
+                "v": false
+              },
+              "hasMoved": {
+                "t": "bool",
+                "v": false
+              }
+            },
+            "authors": [
+              "Gemini"
+            ]
+          },
+          {
+            "objectID": "piece-black-pawn-0-6",
+            "shapeKind": 3,
+            "geometryType": 0,
+            "shapeParams": [
+              0.4,
+              0.8,
+              0.4,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              0.4,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.8,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.4,
+              0.0,
+              -3.5,
+              0.4,
+              2.5,
+              1.0
+            ],
+            "center": [
+              -3.5,
+              0.4,
+              2.5
+            ],
+            "materialId": "",
+            "faceColors": [
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ]
+            ],
+            "authoredProperties": {
+              "gridX": {
+                "t": "int",
+                "v": 0
+              },
+              "gridY": {
+                "t": "int",
+                "v": 6
+              },
+              "chessColor": {
+                "t": "int",
+                "v": 1
+              },
+              "chessRole": {
+                "t": "int",
+                "v": 0
+              },
+              "isSelected": {
+                "t": "bool",
+                "v": false
+              },
+              "hasMoved": {
+                "t": "bool",
+                "v": false
+              }
+            },
+            "authors": [
+              "Gemini"
+            ]
+          },
+          {
+            "objectID": "piece-white-pawn-1-1",
+            "shapeKind": 3,
+            "geometryType": 0,
+            "shapeParams": [
+              0.4,
+              0.8,
+              0.4,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              0.4,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.8,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.4,
+              0.0,
+              -2.5,
+              0.4,
+              -2.5,
+              1.0
+            ],
+            "center": [
+              -2.5,
+              0.4,
+              -2.5
+            ],
+            "materialId": "",
+            "faceColors": [
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ]
+            ],
+            "authoredProperties": {
+              "gridX": {
+                "t": "int",
+                "v": 1
+              },
+              "gridY": {
+                "t": "int",
+                "v": 1
+              },
+              "chessColor": {
+                "t": "int",
+                "v": 0
+              },
+              "chessRole": {
+                "t": "int",
+                "v": 0
+              },
+              "isSelected": {
+                "t": "bool",
+                "v": false
+              },
+              "hasMoved": {
+                "t": "bool",
+                "v": false
+              }
+            },
+            "authors": [
+              "Gemini"
+            ]
+          },
+          {
+            "objectID": "piece-black-pawn-1-6",
+            "shapeKind": 3,
+            "geometryType": 0,
+            "shapeParams": [
+              0.4,
+              0.8,
+              0.4,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              0.4,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.8,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.4,
+              0.0,
+              -2.5,
+              0.4,
+              2.5,
+              1.0
+            ],
+            "center": [
+              -2.5,
+              0.4,
+              2.5
+            ],
+            "materialId": "",
+            "faceColors": [
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ]
+            ],
+            "authoredProperties": {
+              "gridX": {
+                "t": "int",
+                "v": 1
+              },
+              "gridY": {
+                "t": "int",
+                "v": 6
+              },
+              "chessColor": {
+                "t": "int",
+                "v": 1
+              },
+              "chessRole": {
+                "t": "int",
+                "v": 0
+              },
+              "isSelected": {
+                "t": "bool",
+                "v": false
+              },
+              "hasMoved": {
+                "t": "bool",
+                "v": false
+              }
+            },
+            "authors": [
+              "Gemini"
+            ]
+          },
+          {
+            "objectID": "piece-white-pawn-2-1",
+            "shapeKind": 3,
+            "geometryType": 0,
+            "shapeParams": [
+              0.4,
+              0.8,
+              0.4,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              0.4,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.8,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.4,
+              0.0,
+              -1.5,
+              0.4,
+              -2.5,
+              1.0
+            ],
+            "center": [
+              -1.5,
+              0.4,
+              -2.5
+            ],
+            "materialId": "",
+            "faceColors": [
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ]
+            ],
+            "authoredProperties": {
+              "gridX": {
+                "t": "int",
+                "v": 2
+              },
+              "gridY": {
+                "t": "int",
+                "v": 1
+              },
+              "chessColor": {
+                "t": "int",
+                "v": 0
+              },
+              "chessRole": {
+                "t": "int",
+                "v": 0
+              },
+              "isSelected": {
+                "t": "bool",
+                "v": false
+              },
+              "hasMoved": {
+                "t": "bool",
+                "v": false
+              }
+            },
+            "authors": [
+              "Gemini"
+            ]
+          },
+          {
+            "objectID": "piece-black-pawn-2-6",
+            "shapeKind": 3,
+            "geometryType": 0,
+            "shapeParams": [
+              0.4,
+              0.8,
+              0.4,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              0.4,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.8,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.4,
+              0.0,
+              -1.5,
+              0.4,
+              2.5,
+              1.0
+            ],
+            "center": [
+              -1.5,
+              0.4,
+              2.5
+            ],
+            "materialId": "",
+            "faceColors": [
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ]
+            ],
+            "authoredProperties": {
+              "gridX": {
+                "t": "int",
+                "v": 2
+              },
+              "gridY": {
+                "t": "int",
+                "v": 6
+              },
+              "chessColor": {
+                "t": "int",
+                "v": 1
+              },
+              "chessRole": {
+                "t": "int",
+                "v": 0
+              },
+              "isSelected": {
+                "t": "bool",
+                "v": false
+              },
+              "hasMoved": {
+                "t": "bool",
+                "v": false
+              }
+            },
+            "authors": [
+              "Gemini"
+            ]
+          },
+          {
+            "objectID": "piece-white-pawn-3-1",
+            "shapeKind": 3,
+            "geometryType": 0,
+            "shapeParams": [
+              0.4,
+              0.8,
+              0.4,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              0.4,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.8,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.4,
+              0.0,
+              -0.5,
+              0.4,
+              -2.5,
+              1.0
+            ],
+            "center": [
+              -0.5,
+              0.4,
+              -2.5
+            ],
+            "materialId": "",
+            "faceColors": [
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ]
+            ],
+            "authoredProperties": {
+              "gridX": {
+                "t": "int",
+                "v": 3
+              },
+              "gridY": {
+                "t": "int",
+                "v": 1
+              },
+              "chessColor": {
+                "t": "int",
+                "v": 0
+              },
+              "chessRole": {
+                "t": "int",
+                "v": 0
+              },
+              "isSelected": {
+                "t": "bool",
+                "v": false
+              },
+              "hasMoved": {
+                "t": "bool",
+                "v": false
+              }
+            },
+            "authors": [
+              "Gemini"
+            ]
+          },
+          {
+            "objectID": "piece-black-pawn-3-6",
+            "shapeKind": 3,
+            "geometryType": 0,
+            "shapeParams": [
+              0.4,
+              0.8,
+              0.4,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              0.4,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.8,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.4,
+              0.0,
+              -0.5,
+              0.4,
+              2.5,
+              1.0
+            ],
+            "center": [
+              -0.5,
+              0.4,
+              2.5
+            ],
+            "materialId": "",
+            "faceColors": [
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ]
+            ],
+            "authoredProperties": {
+              "gridX": {
+                "t": "int",
+                "v": 3
+              },
+              "gridY": {
+                "t": "int",
+                "v": 6
+              },
+              "chessColor": {
+                "t": "int",
+                "v": 1
+              },
+              "chessRole": {
+                "t": "int",
+                "v": 0
+              },
+              "isSelected": {
+                "t": "bool",
+                "v": false
+              },
+              "hasMoved": {
+                "t": "bool",
+                "v": false
+              }
+            },
+            "authors": [
+              "Gemini"
+            ]
+          },
+          {
+            "objectID": "piece-white-pawn-4-1",
+            "shapeKind": 3,
+            "geometryType": 0,
+            "shapeParams": [
+              0.4,
+              0.8,
+              0.4,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              0.4,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.8,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.4,
+              0.0,
+              0.5,
+              0.4,
+              -2.5,
+              1.0
+            ],
+            "center": [
+              0.5,
+              0.4,
+              -2.5
+            ],
+            "materialId": "",
+            "faceColors": [
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ]
+            ],
+            "authoredProperties": {
+              "gridX": {
+                "t": "int",
+                "v": 4
+              },
+              "gridY": {
+                "t": "int",
+                "v": 1
+              },
+              "chessColor": {
+                "t": "int",
+                "v": 0
+              },
+              "chessRole": {
+                "t": "int",
+                "v": 0
+              },
+              "isSelected": {
+                "t": "bool",
+                "v": false
+              },
+              "hasMoved": {
+                "t": "bool",
+                "v": false
+              }
+            },
+            "authors": [
+              "Gemini"
+            ]
+          },
+          {
+            "objectID": "piece-black-pawn-4-6",
+            "shapeKind": 3,
+            "geometryType": 0,
+            "shapeParams": [
+              0.4,
+              0.8,
+              0.4,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              0.4,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.8,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.4,
+              0.0,
+              0.5,
+              0.4,
+              2.5,
+              1.0
+            ],
+            "center": [
+              0.5,
+              0.4,
+              2.5
+            ],
+            "materialId": "",
+            "faceColors": [
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ]
+            ],
+            "authoredProperties": {
+              "gridX": {
+                "t": "int",
+                "v": 4
+              },
+              "gridY": {
+                "t": "int",
+                "v": 6
+              },
+              "chessColor": {
+                "t": "int",
+                "v": 1
+              },
+              "chessRole": {
+                "t": "int",
+                "v": 0
+              },
+              "isSelected": {
+                "t": "bool",
+                "v": false
+              },
+              "hasMoved": {
+                "t": "bool",
+                "v": false
+              }
+            },
+            "authors": [
+              "Gemini"
+            ]
+          },
+          {
+            "objectID": "piece-white-pawn-5-1",
+            "shapeKind": 3,
+            "geometryType": 0,
+            "shapeParams": [
+              0.4,
+              0.8,
+              0.4,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              0.4,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.8,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.4,
+              0.0,
+              1.5,
+              0.4,
+              -2.5,
+              1.0
+            ],
+            "center": [
+              1.5,
+              0.4,
+              -2.5
+            ],
+            "materialId": "",
+            "faceColors": [
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ]
+            ],
+            "authoredProperties": {
+              "gridX": {
+                "t": "int",
+                "v": 5
+              },
+              "gridY": {
+                "t": "int",
+                "v": 1
+              },
+              "chessColor": {
+                "t": "int",
+                "v": 0
+              },
+              "chessRole": {
+                "t": "int",
+                "v": 0
+              },
+              "isSelected": {
+                "t": "bool",
+                "v": false
+              },
+              "hasMoved": {
+                "t": "bool",
+                "v": false
+              }
+            },
+            "authors": [
+              "Gemini"
+            ]
+          },
+          {
+            "objectID": "piece-black-pawn-5-6",
+            "shapeKind": 3,
+            "geometryType": 0,
+            "shapeParams": [
+              0.4,
+              0.8,
+              0.4,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              0.4,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.8,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.4,
+              0.0,
+              1.5,
+              0.4,
+              2.5,
+              1.0
+            ],
+            "center": [
+              1.5,
+              0.4,
+              2.5
+            ],
+            "materialId": "",
+            "faceColors": [
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ]
+            ],
+            "authoredProperties": {
+              "gridX": {
+                "t": "int",
+                "v": 5
+              },
+              "gridY": {
+                "t": "int",
+                "v": 6
+              },
+              "chessColor": {
+                "t": "int",
+                "v": 1
+              },
+              "chessRole": {
+                "t": "int",
+                "v": 0
+              },
+              "isSelected": {
+                "t": "bool",
+                "v": false
+              },
+              "hasMoved": {
+                "t": "bool",
+                "v": false
+              }
+            },
+            "authors": [
+              "Gemini"
+            ]
+          },
+          {
+            "objectID": "piece-white-pawn-6-1",
+            "shapeKind": 3,
+            "geometryType": 0,
+            "shapeParams": [
+              0.4,
+              0.8,
+              0.4,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              0.4,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.8,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.4,
+              0.0,
+              2.5,
+              0.4,
+              -2.5,
+              1.0
+            ],
+            "center": [
+              2.5,
+              0.4,
+              -2.5
+            ],
+            "materialId": "",
+            "faceColors": [
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ]
+            ],
+            "authoredProperties": {
+              "gridX": {
+                "t": "int",
+                "v": 6
+              },
+              "gridY": {
+                "t": "int",
+                "v": 1
+              },
+              "chessColor": {
+                "t": "int",
+                "v": 0
+              },
+              "chessRole": {
+                "t": "int",
+                "v": 0
+              },
+              "isSelected": {
+                "t": "bool",
+                "v": false
+              },
+              "hasMoved": {
+                "t": "bool",
+                "v": false
+              }
+            },
+            "authors": [
+              "Gemini"
+            ]
+          },
+          {
+            "objectID": "piece-black-pawn-6-6",
+            "shapeKind": 3,
+            "geometryType": 0,
+            "shapeParams": [
+              0.4,
+              0.8,
+              0.4,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              0.4,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.8,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.4,
+              0.0,
+              2.5,
+              0.4,
+              2.5,
+              1.0
+            ],
+            "center": [
+              2.5,
+              0.4,
+              2.5
+            ],
+            "materialId": "",
+            "faceColors": [
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ]
+            ],
+            "authoredProperties": {
+              "gridX": {
+                "t": "int",
+                "v": 6
+              },
+              "gridY": {
+                "t": "int",
+                "v": 6
+              },
+              "chessColor": {
+                "t": "int",
+                "v": 1
+              },
+              "chessRole": {
+                "t": "int",
+                "v": 0
+              },
+              "isSelected": {
+                "t": "bool",
+                "v": false
+              },
+              "hasMoved": {
+                "t": "bool",
+                "v": false
+              }
+            },
+            "authors": [
+              "Gemini"
+            ]
+          },
+          {
+            "objectID": "piece-white-pawn-7-1",
+            "shapeKind": 3,
+            "geometryType": 0,
+            "shapeParams": [
+              0.4,
+              0.8,
+              0.4,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              0.4,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.8,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.4,
+              0.0,
+              3.5,
+              0.4,
+              -2.5,
+              1.0
+            ],
+            "center": [
+              3.5,
+              0.4,
+              -2.5
+            ],
+            "materialId": "",
+            "faceColors": [
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ],
+              [
+                0.95,
+                0.95,
+                0.9
+              ]
+            ],
+            "authoredProperties": {
+              "gridX": {
+                "t": "int",
+                "v": 7
+              },
+              "gridY": {
+                "t": "int",
+                "v": 1
+              },
+              "chessColor": {
+                "t": "int",
+                "v": 0
+              },
+              "chessRole": {
+                "t": "int",
+                "v": 0
+              },
+              "isSelected": {
+                "t": "bool",
+                "v": false
+              },
+              "hasMoved": {
+                "t": "bool",
+                "v": false
+              }
+            },
+            "authors": [
+              "Gemini"
+            ]
+          },
+          {
+            "objectID": "piece-black-pawn-7-6",
+            "shapeKind": 3,
+            "geometryType": 0,
+            "shapeParams": [
+              0.4,
+              0.8,
+              0.4,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              0.4,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.8,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.4,
+              0.0,
+              3.5,
+              0.4,
+              2.5,
+              1.0
+            ],
+            "center": [
+              3.5,
+              0.4,
+              2.5
+            ],
+            "materialId": "",
+            "faceColors": [
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ],
+              [
+                0.15,
+                0.15,
+                0.15
+              ]
+            ],
+            "authoredProperties": {
+              "gridX": {
+                "t": "int",
+                "v": 7
+              },
+              "gridY": {
+                "t": "int",
+                "v": 6
+              },
+              "chessColor": {
+                "t": "int",
+                "v": 1
+              },
+              "chessRole": {
+                "t": "int",
+                "v": 0
+              },
+              "isSelected": {
+                "t": "bool",
+                "v": false
+              },
+              "hasMoved": {
+                "t": "bool",
+                "v": false
+              }
+            },
+            "authors": [
+              "Gemini"
+            ]
+          }
+        ]
+      },
+      "formationRelations": [
+        {
+          "type": "instance-of",
+          "entityA": "object.chess.board",
+          "entityB": "category.chess.board",
+          "directed": true,
+          "weight": 1.0,
+          "authors": [
+            "Gemini"
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "piece-white-rook-0-0",
+          "entityB": "category.chess.piece",
+          "directed": true,
+          "weight": 1.0,
+          "authors": [
+            "Gemini"
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "piece-white-knight-1-0",
+          "entityB": "category.chess.piece",
+          "directed": true,
+          "weight": 1.0,
+          "authors": [
+            "Gemini"
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "piece-white-bishop-2-0",
+          "entityB": "category.chess.piece",
+          "directed": true,
+          "weight": 1.0,
+          "authors": [
+            "Gemini"
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "piece-white-queen-3-0",
+          "entityB": "category.chess.piece",
+          "directed": true,
+          "weight": 1.0,
+          "authors": [
+            "Gemini"
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "piece-white-king-4-0",
+          "entityB": "category.chess.piece",
+          "directed": true,
+          "weight": 1.0,
+          "authors": [
+            "Gemini"
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "piece-white-bishop-5-0",
+          "entityB": "category.chess.piece",
+          "directed": true,
+          "weight": 1.0,
+          "authors": [
+            "Gemini"
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "piece-white-knight-6-0",
+          "entityB": "category.chess.piece",
+          "directed": true,
+          "weight": 1.0,
+          "authors": [
+            "Gemini"
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "piece-white-rook-7-0",
+          "entityB": "category.chess.piece",
+          "directed": true,
+          "weight": 1.0,
+          "authors": [
+            "Gemini"
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "piece-black-rook-0-7",
+          "entityB": "category.chess.piece",
+          "directed": true,
+          "weight": 1.0,
+          "authors": [
+            "Gemini"
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "piece-black-knight-1-7",
+          "entityB": "category.chess.piece",
+          "directed": true,
+          "weight": 1.0,
+          "authors": [
+            "Gemini"
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "piece-black-bishop-2-7",
+          "entityB": "category.chess.piece",
+          "directed": true,
+          "weight": 1.0,
+          "authors": [
+            "Gemini"
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "piece-black-queen-3-7",
+          "entityB": "category.chess.piece",
+          "directed": true,
+          "weight": 1.0,
+          "authors": [
+            "Gemini"
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "piece-black-king-4-7",
+          "entityB": "category.chess.piece",
+          "directed": true,
+          "weight": 1.0,
+          "authors": [
+            "Gemini"
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "piece-black-bishop-5-7",
+          "entityB": "category.chess.piece",
+          "directed": true,
+          "weight": 1.0,
+          "authors": [
+            "Gemini"
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "piece-black-knight-6-7",
+          "entityB": "category.chess.piece",
+          "directed": true,
+          "weight": 1.0,
+          "authors": [
+            "Gemini"
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "piece-black-rook-7-7",
+          "entityB": "category.chess.piece",
+          "directed": true,
+          "weight": 1.0,
+          "authors": [
+            "Gemini"
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "piece-white-pawn-0-1",
+          "entityB": "category.chess.piece",
+          "directed": true,
+          "weight": 1.0,
+          "authors": [
+            "Gemini"
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "piece-black-pawn-0-6",
+          "entityB": "category.chess.piece",
+          "directed": true,
+          "weight": 1.0,
+          "authors": [
+            "Gemini"
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "piece-white-pawn-1-1",
+          "entityB": "category.chess.piece",
+          "directed": true,
+          "weight": 1.0,
+          "authors": [
+            "Gemini"
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "piece-black-pawn-1-6",
+          "entityB": "category.chess.piece",
+          "directed": true,
+          "weight": 1.0,
+          "authors": [
+            "Gemini"
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "piece-white-pawn-2-1",
+          "entityB": "category.chess.piece",
+          "directed": true,
+          "weight": 1.0,
+          "authors": [
+            "Gemini"
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "piece-black-pawn-2-6",
+          "entityB": "category.chess.piece",
+          "directed": true,
+          "weight": 1.0,
+          "authors": [
+            "Gemini"
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "piece-white-pawn-3-1",
+          "entityB": "category.chess.piece",
+          "directed": true,
+          "weight": 1.0,
+          "authors": [
+            "Gemini"
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "piece-black-pawn-3-6",
+          "entityB": "category.chess.piece",
+          "directed": true,
+          "weight": 1.0,
+          "authors": [
+            "Gemini"
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "piece-white-pawn-4-1",
+          "entityB": "category.chess.piece",
+          "directed": true,
+          "weight": 1.0,
+          "authors": [
+            "Gemini"
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "piece-black-pawn-4-6",
+          "entityB": "category.chess.piece",
+          "directed": true,
+          "weight": 1.0,
+          "authors": [
+            "Gemini"
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "piece-white-pawn-5-1",
+          "entityB": "category.chess.piece",
+          "directed": true,
+          "weight": 1.0,
+          "authors": [
+            "Gemini"
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "piece-black-pawn-5-6",
+          "entityB": "category.chess.piece",
+          "directed": true,
+          "weight": 1.0,
+          "authors": [
+            "Gemini"
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "piece-white-pawn-6-1",
+          "entityB": "category.chess.piece",
+          "directed": true,
+          "weight": 1.0,
+          "authors": [
+            "Gemini"
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "piece-black-pawn-6-6",
+          "entityB": "category.chess.piece",
+          "directed": true,
+          "weight": 1.0,
+          "authors": [
+            "Gemini"
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "piece-white-pawn-7-1",
+          "entityB": "category.chess.piece",
+          "directed": true,
+          "weight": 1.0,
+          "authors": [
+            "Gemini"
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "piece-black-pawn-7-6",
+          "entityB": "category.chess.piece",
+          "directed": true,
+          "weight": 1.0,
+          "authors": [
+            "Gemini"
+          ]
+        }
+      ]
+    }
+  ],
+  "authoredLaws": {
+    "formationMembers": [
+      "law-chess-click",
+      "law-chess-select",
+      "law-chess-deselect",
+      "law-chess-pawn-w-1",
+      "law-chess-pawn-w-2",
+      "law-chess-pawn-w-cap",
+      "law-chess-pawn-b-1",
+      "law-chess-pawn-b-2",
+      "law-chess-pawn-b-cap",
+      "law-chess-capture",
+      "law-chess-update-pos"
+    ],
+    "laws": [
+      {
+        "id": "law-chess-click",
+        "name": "handle-click",
+        "enabled": true,
+        "authority": 0,
+        "activation": 0,
+        "scope": 1,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "Gemini"
+        ],
+        "conditionModel": {
+          "kind": 4,
+          "children": [
+            {
+              "kind": 0,
+              "path": "isBoard",
+              "op": 0,
+              "operand": {
+                "t": "bool",
+                "v": true
+              }
+            },
+            {
+              "kind": 2,
+              "relationType": "instance-of",
+              "otherId": "category.chess.piece"
+            }
+          ]
+        },
+        "actionModel": {
+          "kind": 5,
+          "children": [
+            {
+              "kind": 8,
+              "path": "@state.chess.targetX",
+              "bindings": {
+                "ptrX": "@interaction-channel.pointerWorld.x"
+              },
+              "function": {
+                "input": "ptrX",
+                "pieces": [
+                  {
+                    "lo": -4.0,
+                    "hi": -3.0,
+                    "includeLo": true,
+                    "includeHi": false,
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 0.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "lo": -3.0,
+                    "hi": -2.0,
+                    "includeLo": true,
+                    "includeHi": false,
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "lo": -2.0,
+                    "hi": -1.0,
+                    "includeLo": true,
+                    "includeHi": false,
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 2.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "lo": -1.0,
+                    "hi": 0.0,
+                    "includeLo": true,
+                    "includeHi": false,
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 3.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "lo": 0.0,
+                    "hi": 1.0,
+                    "includeLo": true,
+                    "includeHi": false,
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 4.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "lo": 1.0,
+                    "hi": 2.0,
+                    "includeLo": true,
+                    "includeHi": false,
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 5.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "lo": 2.0,
+                    "hi": 3.0,
+                    "includeLo": true,
+                    "includeHi": false,
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 6.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "lo": 3.0,
+                    "hi": 4.0,
+                    "includeLo": true,
+                    "includeHi": true,
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 7.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 8,
+              "path": "@state.chess.targetY",
+              "bindings": {
+                "ptrY": "@interaction-channel.pointerWorld.z"
+              },
+              "function": {
+                "input": "ptrY",
+                "pieces": [
+                  {
+                    "lo": -4.0,
+                    "hi": -3.0,
+                    "includeLo": true,
+                    "includeHi": false,
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 0.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "lo": -3.0,
+                    "hi": -2.0,
+                    "includeLo": true,
+                    "includeHi": false,
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "lo": -2.0,
+                    "hi": -1.0,
+                    "includeLo": true,
+                    "includeHi": false,
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 2.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "lo": -1.0,
+                    "hi": 0.0,
+                    "includeLo": true,
+                    "includeHi": false,
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 3.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "lo": 0.0,
+                    "hi": 1.0,
+                    "includeLo": true,
+                    "includeHi": false,
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 4.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "lo": 1.0,
+                    "hi": 2.0,
+                    "includeLo": true,
+                    "includeHi": false,
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 5.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "lo": 2.0,
+                    "hi": 3.0,
+                    "includeLo": true,
+                    "includeHi": false,
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 6.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "lo": 3.0,
+                    "hi": 4.0,
+                    "includeLo": true,
+                    "includeHi": true,
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 7.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 8,
+              "path": "@state.chess.dx",
+              "bindings": {
+                "tx": "@state.chess.targetX",
+                "sx": "@state.chess.selectedX"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "tx": 1.0
+                          }
+                        },
+                        {
+                          "c": -1.0,
+                          "factors": {
+                            "sx": 1.0
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 8,
+              "path": "@state.chess.dy",
+              "bindings": {
+                "ty": "@state.chess.targetY",
+                "sy": "@state.chess.selectedY"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "ty": 1.0
+                          }
+                        },
+                        {
+                          "c": -1.0,
+                          "factors": {
+                            "sy": 1.0
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 10,
+              "eventType": "board-clicked",
+              "publishSubject": "state.chess",
+              "publishObject": ""
+            }
+          ]
+        }
+      },
+      {
+        "id": "law-chess-select",
+        "name": "select-piece",
+        "enabled": true,
+        "authority": 0,
+        "activation": 0,
+        "scope": 1,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "Gemini"
+        ],
+        "conditionModel": {
+          "kind": 3,
+          "children": [
+            {
+              "kind": 2,
+              "relationType": "instance-of",
+              "otherId": "category.chess.piece"
+            },
+            {
+              "kind": 0,
+              "path": "gridX",
+              "op": 0,
+              "operandPath": "@state.chess.targetX"
+            },
+            {
+              "kind": 0,
+              "path": "gridY",
+              "op": 0,
+              "operandPath": "@state.chess.targetY"
+            },
+            {
+              "kind": 0,
+              "path": "chessColor",
+              "op": 0,
+              "operandPath": "@state.chess.turn"
+            }
+          ]
+        },
+        "actionModel": {
+          "kind": 5,
+          "children": [
+            {
+              "kind": 0,
+              "path": "isSelected",
+              "operand": {
+                "t": "bool",
+                "v": true
+              }
+            },
+            {
+              "kind": 8,
+              "path": "@state.chess.selectedX",
+              "bindings": {
+                "gx": "gridX"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "gx": 1.0
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 8,
+              "path": "@state.chess.selectedY",
+              "bindings": {
+                "gy": "gridY"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "gy": 1.0
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@state.chess.selectionActive",
+              "operand": {
+                "t": "bool",
+                "v": true
+              }
+            },
+            {
+              "kind": 10,
+              "eventType": "piece-selected",
+              "publishSubject": "",
+              "publishObject": ""
+            }
+          ]
+        }
+      },
+      {
+        "id": "law-chess-deselect",
+        "name": "deselect-others",
+        "enabled": true,
+        "authority": 0,
+        "activation": 0,
+        "scope": 1,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "Gemini"
+        ],
+        "conditionModel": {
+          "kind": 3,
+          "children": [
+            {
+              "kind": 0,
+              "path": "isSelected",
+              "op": 0,
+              "operand": {
+                "t": "bool",
+                "v": true
+              }
+            },
+            {
+              "kind": 4,
+              "children": [
+                {
+                  "kind": 0,
+                  "path": "gridX",
+                  "op": 1,
+                  "operandPath": "@state.chess.targetX"
+                },
+                {
+                  "kind": 0,
+                  "path": "gridY",
+                  "op": 1,
+                  "operandPath": "@state.chess.targetY"
+                }
+              ]
+            }
+          ]
+        },
+        "actionModel": {
+          "kind": 0,
+          "path": "isSelected",
+          "operand": {
+            "t": "bool",
+            "v": false
+          }
+        }
+      },
+      {
+        "id": "law-chess-pawn-w-1",
+        "name": "move-white-pawn-step",
+        "enabled": true,
+        "authority": 0,
+        "activation": 0,
+        "scope": 1,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "Gemini"
+        ],
+        "conditionModel": {
+          "kind": 3,
+          "children": [
+            {
+              "kind": 2,
+              "relationType": "instance-of",
+              "otherId": "category.chess.piece"
+            },
+            {
+              "kind": 0,
+              "path": "isSelected",
+              "op": 0,
+              "operand": {
+                "t": "bool",
+                "v": true
+              }
+            },
+            {
+              "kind": 0,
+              "path": "chessRole",
+              "op": 0,
+              "operand": {
+                "t": "int",
+                "v": 0
+              }
+            },
+            {
+              "kind": 0,
+              "path": "chessColor",
+              "op": 0,
+              "operand": {
+                "t": "int",
+                "v": 0
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@state.chess.selectionActive",
+              "op": 0,
+              "operand": {
+                "t": "bool",
+                "v": true
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@state.chess.dx",
+              "op": 0,
+              "operand": {
+                "t": "int",
+                "v": 0
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@state.chess.dy",
+              "op": 0,
+              "operand": {
+                "t": "int",
+                "v": 1
+              }
+            }
+          ]
+        },
+        "actionModel": {
+          "kind": 5,
+          "children": [
+            {
+              "kind": 10,
+              "eventType": "enemy-captured",
+              "publishSubject": "",
+              "publishObject": ""
+            },
+            {
+              "kind": 8,
+              "path": "gridX",
+              "bindings": {
+                "tx": "@state.chess.targetX"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "tx": 1.0
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 8,
+              "path": "gridY",
+              "bindings": {
+                "ty": "@state.chess.targetY"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "ty": 1.0
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 0,
+              "path": "isSelected",
+              "operand": {
+                "t": "bool",
+                "v": false
+              }
+            },
+            {
+              "kind": 0,
+              "path": "hasMoved",
+              "operand": {
+                "t": "bool",
+                "v": true
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@state.chess.selectionActive",
+              "operand": {
+                "t": "bool",
+                "v": false
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@state.chess.selectedX",
+              "operand": {
+                "t": "int",
+                "v": -1
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@state.chess.selectedY",
+              "operand": {
+                "t": "int",
+                "v": -1
+              }
+            },
+            {
+              "kind": 8,
+              "path": "@state.chess.turn",
+              "bindings": {
+                "t": "@state.chess.turn"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {}
+                        },
+                        {
+                          "c": -1.0,
+                          "factors": {
+                            "t": 1.0
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 10,
+              "eventType": "positions-updated",
+              "publishSubject": "",
+              "publishObject": ""
+            }
+          ]
+        }
+      },
+      {
+        "id": "law-chess-pawn-w-2",
+        "name": "move-white-pawn-double",
+        "enabled": true,
+        "authority": 0,
+        "activation": 0,
+        "scope": 1,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "Gemini"
+        ],
+        "conditionModel": {
+          "kind": 3,
+          "children": [
+            {
+              "kind": 2,
+              "relationType": "instance-of",
+              "otherId": "category.chess.piece"
+            },
+            {
+              "kind": 0,
+              "path": "isSelected",
+              "op": 0,
+              "operand": {
+                "t": "bool",
+                "v": true
+              }
+            },
+            {
+              "kind": 0,
+              "path": "chessRole",
+              "op": 0,
+              "operand": {
+                "t": "int",
+                "v": 0
+              }
+            },
+            {
+              "kind": 0,
+              "path": "chessColor",
+              "op": 0,
+              "operand": {
+                "t": "int",
+                "v": 0
+              }
+            },
+            {
+              "kind": 0,
+              "path": "hasMoved",
+              "op": 0,
+              "operand": {
+                "t": "bool",
+                "v": false
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@state.chess.selectionActive",
+              "op": 0,
+              "operand": {
+                "t": "bool",
+                "v": true
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@state.chess.dx",
+              "op": 0,
+              "operand": {
+                "t": "int",
+                "v": 0
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@state.chess.dy",
+              "op": 0,
+              "operand": {
+                "t": "int",
+                "v": 2
+              }
+            }
+          ]
+        },
+        "actionModel": {
+          "kind": 5,
+          "children": [
+            {
+              "kind": 10,
+              "eventType": "enemy-captured",
+              "publishSubject": "",
+              "publishObject": ""
+            },
+            {
+              "kind": 8,
+              "path": "gridX",
+              "bindings": {
+                "tx": "@state.chess.targetX"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "tx": 1.0
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 8,
+              "path": "gridY",
+              "bindings": {
+                "ty": "@state.chess.targetY"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "ty": 1.0
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 0,
+              "path": "isSelected",
+              "operand": {
+                "t": "bool",
+                "v": false
+              }
+            },
+            {
+              "kind": 0,
+              "path": "hasMoved",
+              "operand": {
+                "t": "bool",
+                "v": true
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@state.chess.selectionActive",
+              "operand": {
+                "t": "bool",
+                "v": false
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@state.chess.selectedX",
+              "operand": {
+                "t": "int",
+                "v": -1
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@state.chess.selectedY",
+              "operand": {
+                "t": "int",
+                "v": -1
+              }
+            },
+            {
+              "kind": 8,
+              "path": "@state.chess.turn",
+              "bindings": {
+                "t": "@state.chess.turn"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {}
+                        },
+                        {
+                          "c": -1.0,
+                          "factors": {
+                            "t": 1.0
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 10,
+              "eventType": "positions-updated",
+              "publishSubject": "",
+              "publishObject": ""
+            }
+          ]
+        }
+      },
+      {
+        "id": "law-chess-pawn-w-cap",
+        "name": "move-white-pawn-capture",
+        "enabled": true,
+        "authority": 0,
+        "activation": 0,
+        "scope": 1,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "Gemini"
+        ],
+        "conditionModel": {
+          "kind": 3,
+          "children": [
+            {
+              "kind": 2,
+              "relationType": "instance-of",
+              "otherId": "category.chess.piece"
+            },
+            {
+              "kind": 0,
+              "path": "isSelected",
+              "op": 0,
+              "operand": {
+                "t": "bool",
+                "v": true
+              }
+            },
+            {
+              "kind": 0,
+              "path": "chessRole",
+              "op": 0,
+              "operand": {
+                "t": "int",
+                "v": 0
+              }
+            },
+            {
+              "kind": 0,
+              "path": "chessColor",
+              "op": 0,
+              "operand": {
+                "t": "int",
+                "v": 0
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@state.chess.selectionActive",
+              "op": 0,
+              "operand": {
+                "t": "bool",
+                "v": true
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@state.chess.dy",
+              "op": 0,
+              "operand": {
+                "t": "int",
+                "v": 1
+              }
+            },
+            {
+              "kind": 4,
+              "children": [
+                {
+                  "kind": 0,
+                  "path": "@state.chess.dx",
+                  "op": 0,
+                  "operand": {
+                    "t": "int",
+                    "v": 1
+                  }
+                },
+                {
+                  "kind": 0,
+                  "path": "@state.chess.dx",
+                  "op": 0,
+                  "operand": {
+                    "t": "int",
+                    "v": -1
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "actionModel": {
+          "kind": 5,
+          "children": [
+            {
+              "kind": 10,
+              "eventType": "enemy-captured",
+              "publishSubject": "",
+              "publishObject": ""
+            },
+            {
+              "kind": 8,
+              "path": "gridX",
+              "bindings": {
+                "tx": "@state.chess.targetX"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "tx": 1.0
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 8,
+              "path": "gridY",
+              "bindings": {
+                "ty": "@state.chess.targetY"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "ty": 1.0
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 0,
+              "path": "isSelected",
+              "operand": {
+                "t": "bool",
+                "v": false
+              }
+            },
+            {
+              "kind": 0,
+              "path": "hasMoved",
+              "operand": {
+                "t": "bool",
+                "v": true
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@state.chess.selectionActive",
+              "operand": {
+                "t": "bool",
+                "v": false
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@state.chess.selectedX",
+              "operand": {
+                "t": "int",
+                "v": -1
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@state.chess.selectedY",
+              "operand": {
+                "t": "int",
+                "v": -1
+              }
+            },
+            {
+              "kind": 8,
+              "path": "@state.chess.turn",
+              "bindings": {
+                "t": "@state.chess.turn"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {}
+                        },
+                        {
+                          "c": -1.0,
+                          "factors": {
+                            "t": 1.0
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 10,
+              "eventType": "positions-updated",
+              "publishSubject": "",
+              "publishObject": ""
+            }
+          ]
+        }
+      },
+      {
+        "id": "law-chess-pawn-b-1",
+        "name": "move-black-pawn-step",
+        "enabled": true,
+        "authority": 0,
+        "activation": 0,
+        "scope": 1,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "Gemini"
+        ],
+        "conditionModel": {
+          "kind": 3,
+          "children": [
+            {
+              "kind": 2,
+              "relationType": "instance-of",
+              "otherId": "category.chess.piece"
+            },
+            {
+              "kind": 0,
+              "path": "isSelected",
+              "op": 0,
+              "operand": {
+                "t": "bool",
+                "v": true
+              }
+            },
+            {
+              "kind": 0,
+              "path": "chessRole",
+              "op": 0,
+              "operand": {
+                "t": "int",
+                "v": 0
+              }
+            },
+            {
+              "kind": 0,
+              "path": "chessColor",
+              "op": 0,
+              "operand": {
+                "t": "int",
+                "v": 1
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@state.chess.selectionActive",
+              "op": 0,
+              "operand": {
+                "t": "bool",
+                "v": true
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@state.chess.dx",
+              "op": 0,
+              "operand": {
+                "t": "int",
+                "v": 0
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@state.chess.dy",
+              "op": 0,
+              "operand": {
+                "t": "int",
+                "v": -1
+              }
+            }
+          ]
+        },
+        "actionModel": {
+          "kind": 5,
+          "children": [
+            {
+              "kind": 10,
+              "eventType": "enemy-captured",
+              "publishSubject": "",
+              "publishObject": ""
+            },
+            {
+              "kind": 8,
+              "path": "gridX",
+              "bindings": {
+                "tx": "@state.chess.targetX"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "tx": 1.0
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 8,
+              "path": "gridY",
+              "bindings": {
+                "ty": "@state.chess.targetY"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "ty": 1.0
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 0,
+              "path": "isSelected",
+              "operand": {
+                "t": "bool",
+                "v": false
+              }
+            },
+            {
+              "kind": 0,
+              "path": "hasMoved",
+              "operand": {
+                "t": "bool",
+                "v": true
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@state.chess.selectionActive",
+              "operand": {
+                "t": "bool",
+                "v": false
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@state.chess.selectedX",
+              "operand": {
+                "t": "int",
+                "v": -1
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@state.chess.selectedY",
+              "operand": {
+                "t": "int",
+                "v": -1
+              }
+            },
+            {
+              "kind": 8,
+              "path": "@state.chess.turn",
+              "bindings": {
+                "t": "@state.chess.turn"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {}
+                        },
+                        {
+                          "c": -1.0,
+                          "factors": {
+                            "t": 1.0
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 10,
+              "eventType": "positions-updated",
+              "publishSubject": "",
+              "publishObject": ""
+            }
+          ]
+        }
+      },
+      {
+        "id": "law-chess-pawn-b-2",
+        "name": "move-black-pawn-double",
+        "enabled": true,
+        "authority": 0,
+        "activation": 0,
+        "scope": 1,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "Gemini"
+        ],
+        "conditionModel": {
+          "kind": 3,
+          "children": [
+            {
+              "kind": 2,
+              "relationType": "instance-of",
+              "otherId": "category.chess.piece"
+            },
+            {
+              "kind": 0,
+              "path": "isSelected",
+              "op": 0,
+              "operand": {
+                "t": "bool",
+                "v": true
+              }
+            },
+            {
+              "kind": 0,
+              "path": "chessRole",
+              "op": 0,
+              "operand": {
+                "t": "int",
+                "v": 0
+              }
+            },
+            {
+              "kind": 0,
+              "path": "chessColor",
+              "op": 0,
+              "operand": {
+                "t": "int",
+                "v": 1
+              }
+            },
+            {
+              "kind": 0,
+              "path": "hasMoved",
+              "op": 0,
+              "operand": {
+                "t": "bool",
+                "v": false
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@state.chess.selectionActive",
+              "op": 0,
+              "operand": {
+                "t": "bool",
+                "v": true
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@state.chess.dx",
+              "op": 0,
+              "operand": {
+                "t": "int",
+                "v": 0
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@state.chess.dy",
+              "op": 0,
+              "operand": {
+                "t": "int",
+                "v": -2
+              }
+            }
+          ]
+        },
+        "actionModel": {
+          "kind": 5,
+          "children": [
+            {
+              "kind": 10,
+              "eventType": "enemy-captured",
+              "publishSubject": "",
+              "publishObject": ""
+            },
+            {
+              "kind": 8,
+              "path": "gridX",
+              "bindings": {
+                "tx": "@state.chess.targetX"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "tx": 1.0
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 8,
+              "path": "gridY",
+              "bindings": {
+                "ty": "@state.chess.targetY"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "ty": 1.0
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 0,
+              "path": "isSelected",
+              "operand": {
+                "t": "bool",
+                "v": false
+              }
+            },
+            {
+              "kind": 0,
+              "path": "hasMoved",
+              "operand": {
+                "t": "bool",
+                "v": true
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@state.chess.selectionActive",
+              "operand": {
+                "t": "bool",
+                "v": false
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@state.chess.selectedX",
+              "operand": {
+                "t": "int",
+                "v": -1
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@state.chess.selectedY",
+              "operand": {
+                "t": "int",
+                "v": -1
+              }
+            },
+            {
+              "kind": 8,
+              "path": "@state.chess.turn",
+              "bindings": {
+                "t": "@state.chess.turn"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {}
+                        },
+                        {
+                          "c": -1.0,
+                          "factors": {
+                            "t": 1.0
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 10,
+              "eventType": "positions-updated",
+              "publishSubject": "",
+              "publishObject": ""
+            }
+          ]
+        }
+      },
+      {
+        "id": "law-chess-pawn-b-cap",
+        "name": "move-black-pawn-capture",
+        "enabled": true,
+        "authority": 0,
+        "activation": 0,
+        "scope": 1,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "Gemini"
+        ],
+        "conditionModel": {
+          "kind": 3,
+          "children": [
+            {
+              "kind": 2,
+              "relationType": "instance-of",
+              "otherId": "category.chess.piece"
+            },
+            {
+              "kind": 0,
+              "path": "isSelected",
+              "op": 0,
+              "operand": {
+                "t": "bool",
+                "v": true
+              }
+            },
+            {
+              "kind": 0,
+              "path": "chessRole",
+              "op": 0,
+              "operand": {
+                "t": "int",
+                "v": 0
+              }
+            },
+            {
+              "kind": 0,
+              "path": "chessColor",
+              "op": 0,
+              "operand": {
+                "t": "int",
+                "v": 1
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@state.chess.selectionActive",
+              "op": 0,
+              "operand": {
+                "t": "bool",
+                "v": true
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@state.chess.dy",
+              "op": 0,
+              "operand": {
+                "t": "int",
+                "v": -1
+              }
+            },
+            {
+              "kind": 4,
+              "children": [
+                {
+                  "kind": 0,
+                  "path": "@state.chess.dx",
+                  "op": 0,
+                  "operand": {
+                    "t": "int",
+                    "v": 1
+                  }
+                },
+                {
+                  "kind": 0,
+                  "path": "@state.chess.dx",
+                  "op": 0,
+                  "operand": {
+                    "t": "int",
+                    "v": -1
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "actionModel": {
+          "kind": 5,
+          "children": [
+            {
+              "kind": 10,
+              "eventType": "enemy-captured",
+              "publishSubject": "",
+              "publishObject": ""
+            },
+            {
+              "kind": 8,
+              "path": "gridX",
+              "bindings": {
+                "tx": "@state.chess.targetX"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "tx": 1.0
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 8,
+              "path": "gridY",
+              "bindings": {
+                "ty": "@state.chess.targetY"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "ty": 1.0
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 0,
+              "path": "isSelected",
+              "operand": {
+                "t": "bool",
+                "v": false
+              }
+            },
+            {
+              "kind": 0,
+              "path": "hasMoved",
+              "operand": {
+                "t": "bool",
+                "v": true
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@state.chess.selectionActive",
+              "operand": {
+                "t": "bool",
+                "v": false
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@state.chess.selectedX",
+              "operand": {
+                "t": "int",
+                "v": -1
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@state.chess.selectedY",
+              "operand": {
+                "t": "int",
+                "v": -1
+              }
+            },
+            {
+              "kind": 8,
+              "path": "@state.chess.turn",
+              "bindings": {
+                "t": "@state.chess.turn"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {}
+                        },
+                        {
+                          "c": -1.0,
+                          "factors": {
+                            "t": 1.0
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 10,
+              "eventType": "positions-updated",
+              "publishSubject": "",
+              "publishObject": ""
+            }
+          ]
+        }
+      },
+      {
+        "id": "law-chess-capture",
+        "name": "capture-enemy",
+        "enabled": true,
+        "authority": 0,
+        "activation": 0,
+        "scope": 1,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "Gemini"
+        ],
+        "conditionModel": {
+          "kind": 3,
+          "children": [
+            {
+              "kind": 2,
+              "relationType": "instance-of",
+              "otherId": "category.chess.piece"
+            },
+            {
+              "kind": 0,
+              "path": "gridX",
+              "op": 0,
+              "operandPath": "@state.chess.targetX"
+            },
+            {
+              "kind": 0,
+              "path": "gridY",
+              "op": 0,
+              "operandPath": "@state.chess.targetY"
+            },
+            {
+              "kind": 0,
+              "path": "chessColor",
+              "op": 0,
+              "operandPath": "@state.chess.turn"
+            }
+          ]
+        },
+        "actionModel": {
+          "kind": 16,
+          "elementToken": ""
+        }
+      },
+      {
+        "id": "law-chess-update-pos",
+        "name": "sync-piece-transform",
+        "enabled": true,
+        "authority": 0,
+        "activation": 0,
+        "scope": 1,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "Gemini"
+        ],
+        "conditionModel": {
+          "kind": 2,
+          "relationType": "instance-of",
+          "otherId": "category.chess.piece"
+        },
+        "actionModel": {
+          "kind": 5,
+          "children": [
+            {
+              "kind": 8,
+              "path": "position.x",
+              "bindings": {
+                "gx": "gridX"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "gx": 1.0
+                          }
+                        },
+                        {
+                          "c": -3.5,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 8,
+              "path": "position.z",
+              "bindings": {
+                "gy": "gridY"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "gy": 1.0
+                          }
+                        },
+                        {
+                          "c": -3.5,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "triggers": {
+      "law-chess-click": [
+        "object-clicked"
+      ],
+      "law-chess-select": [
+        "board-clicked"
+      ],
+      "law-chess-deselect": [
+        "piece-selected"
+      ],
+      "law-chess-pawn-w-1": [
+        "board-clicked"
+      ],
+      "law-chess-pawn-w-2": [
+        "board-clicked"
+      ],
+      "law-chess-pawn-w-cap": [
+        "board-clicked"
+      ],
+      "law-chess-pawn-b-1": [
+        "board-clicked"
+      ],
+      "law-chess-pawn-b-2": [
+        "board-clicked"
+      ],
+      "law-chess-pawn-b-cap": [
+        "board-clicked"
+      ],
+      "law-chess-capture": [
+        "enemy-captured"
+      ],
+      "law-chess-update-pos": [
+        "positions-updated"
+      ]
+    }
+  }
+}
