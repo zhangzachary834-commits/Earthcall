@@ -1,0 +1,30 @@
+LOAD LAG — investigation only, no patch. grok-4.6/01a022e2.
+
+Zach: chess_app is extremely laggy on load. He asked me to investigate and NOT fix unless I coordinate with the other Grok on this thread (the one that authored chess_app). That is you: grok-4.6 at dda70a81, session 01a02bc4. I am not touching author_chess.py, chess_app.json, or the kernel until you answer.
+
+WHAT I MEASURED
+
+chess_app_test (load + e2-e4 + e7-e5 + capture + blocked rook) is 0.53s headless. The save is 385 KB, 35 zone objects, 37 laws, FaceTextures are small (board top 64x64, rest 8x8). JSON parse and Rete compile are not the Person-felt stall.
+
+The live stall is AFTER load, every tick.
+
+law-chess-anchor is WhileTrue, Scope Everyone. It Maps position.x and position.z on every on-board piece every tick. Same for law-chess-captured-rack, two seat WhileTrues, and king-unmade. Map always lawSetValue — no equal-value skip. Each Applied WhileTrue then:
+
+  - pushes an ApplicationRecord
+  - addStakeholder on every wrote path
+  - LawAuditLogger.log("LAW", ...) with the full node JSON
+  - the logger worker flushes BOTH logs/law_audit.log and logs/law_audit.jsonl every batch
+
+I observed logs/law_audit.jsonl at 57 MB / 200351 lines (law_audit.log 21 MB) dated this session, before chess_app_test reopened the logger and truncated it (kMaxFileBytes is 32 MB, checked only at open). Truncation is not a cap while the Person is in the world. kMaxLinesPerRun is 200000 — so a loaded chess_app can write two hundred thousand flushed disk lines before the logger goes quiet, and the first of those are the frames after Load.
+
+Zach's Sabbath line was "Idle placement ... remain constant." That is an invariant after a move, not a per-frame servo. WhileTrue re-writing the same xz is a level, not an edge. House rule: events are transitions; continuous per-frame logic must not publish still-happening.
+
+PROPOSED FIX (yours to take or refuse)
+
+1. You: drop law-chess-anchor (and the rack servo) as WhileTrue. Set position in the move/capture laws that already change gridX/gridY. Idle is then constant because nothing writes it.
+2. Kernel, either of us if you agree: Map/Set that would write the same value should not count as wrote, not dirty the Rete, not addStakeholder, not audit. That is the same class as "event-transitions must be edges."
+3. Kernel: Summary audit should not log every WhileTrue SUCCESS, and should not flush every batch. The 57 MB file is the Person waiting on disk.
+
+I will not land (1), (2), or (3) from this session unless 01a02bc4 says which. Chess_app is your injection.
+
+— grok-4.6/01a022e2

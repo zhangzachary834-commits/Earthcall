@@ -5,6 +5,9 @@
 #include "Singularity/Core/EventBus.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
+#include "ZonesOfEarth/ZoneManager.hpp"
+#include "Person/Person.hpp"
+#include "Person/Relationship/Community/Community.hpp"
 #include "Person/Body/BodyPart/BodyPart.hpp"
 
 #include <ctime>
@@ -115,6 +118,7 @@ const char* ActionNode::kindName(Kind k) {
         case Kind::Destroy: return "Destroy";
         case Kind::Synthesize: return "Synthesize";
         case Kind::PlayAudio: return "PlayAudio";
+        case Kind::AuthorZone: return "AuthorZone";
     }
     return "Unknown";
 }
@@ -296,6 +300,12 @@ nlohmann::json ActionNode::toJson() const {
             if (!path.empty()) j["path"] = path.toString();
             if (!input.empty()) j["input"] = input.toString();
             if (!propertyName.empty()) j["propertyName"] = propertyName;
+            break;
+        case Kind::AuthorZone:
+            if (!createType.empty()) j["createType"] = createType;
+            if (!propertyName.empty()) j["propertyName"] = propertyName;
+            if (!elementToken.empty()) j["elementToken"] = elementToken;
+            if (!containerToken.empty()) j["containerToken"] = containerToken;
             break;
         case Kind::Map:
         case Kind::Flow:
@@ -603,6 +613,44 @@ ECA::ActionExecutor ActionNode::compile() const {
                 );
                 
                 emitEffect("PlayAudio", true);
+            };
+        }
+        case Kind::AuthorZone: {
+            const std::string zoneId = createType;
+            const std::string kind = propertyName;
+            const std::string ownerToken = elementToken;
+            const std::string ownerKindHint = containerToken;
+            return [zoneId, kind, ownerToken, ownerKindHint](
+                       const ECA::Event&, Singular& subject) {
+                ZoneManager* zones = ZoneManager::live();
+                if (!zones) {
+                    emitEffect("AuthorZone", false, "no live ZoneManager bound");
+                    return;
+                }
+                if (zoneId.empty()) {
+                    emitEffect("AuthorZone", false, "no Zone identifier authored");
+                    return;
+                }
+                Singular* ownerBeing = resolveBeingToken(ownerToken, subject);
+                std::string ownerId;
+                std::string ownerKind = ownerKindHint;
+                if (ownerBeing) {
+                    ownerId = ownerBeing->getIdentifier();
+                    if (ownerKind.empty()) {
+                        if (dynamic_cast<Person*>(ownerBeing))
+                            ownerKind = Zone::kOwnerKindPerson;
+                        else if (dynamic_cast<Community*>(ownerBeing))
+                            ownerKind = Zone::kOwnerKindCommunity;
+                    }
+                }
+                auto minted = zones->authorZone(zoneId, ownerId, kind, ownerKind);
+                if (!minted) {
+                    emitEffect("AuthorZone", false, "mint refused: " + zoneId);
+                    return;
+                }
+                emitEffect("AuthorZone", true);
+                Core::EventBus::instance().publish(
+                    ActionNode::ExecutedEvent{"AuthorZone", minted.get(), std::time(nullptr)});
             };
         }
         case Kind::Publish: {
@@ -1028,6 +1076,8 @@ std::string ActionNode::describe() const {
             return "synthesize(" + std::to_string(children.size()) + " composed actions)";
         case Kind::PlayAudio:
             return kindName(kind);
+        case Kind::AuthorZone:
+            return "author zone '" + createType + "'";
     }
     return "action";
 }
@@ -1302,6 +1352,7 @@ void judge(const ActionNode& node, const std::vector<std::string>& written,
         case ActionNode::Kind::Create:
         case ActionNode::Kind::Spawn:
         case ActionNode::Kind::Synthesize:
+        case ActionNode::Kind::AuthorZone:
             obstacles.push_back(name + ": bringing a being into the world is not a "
                                        "quantity to integrate backwards");
             return;
@@ -1538,5 +1589,18 @@ ActionNode ActionNode::playAudio(const std::string& freqPath, const std::string&
     n.path = PropertyPath::parse(freqPath);
     n.input = PropertyPath::parse(ampPath);
     n.propertyName = waveType;
+    return n;
+}
+
+ActionNode ActionNode::authorZone(const std::string& identifier,
+                                  const std::string& kind,
+                                  const std::string& ownerToken,
+                                  const std::string& ownerKind) {
+    ActionNode n;
+    n.kind = Kind::AuthorZone;
+    n.createType = identifier;
+    n.propertyName = kind;
+    n.elementToken = ownerToken;
+    n.containerToken = ownerKind;
     return n;
 }

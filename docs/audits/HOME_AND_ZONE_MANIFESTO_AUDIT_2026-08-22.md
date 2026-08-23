@@ -238,3 +238,14 @@ Until (1), “every Person has a Home they fully own” is a boot print, not a
 guard. Until (4), “create as many as they want” is a sentence in the
 manifesto. Until (2) and the Community stub is a being that can own, Community
 Homes are a name without a holder.
+
+---
+
+## 5. One-pass implementation (2026-08-22)
+
+Rungs 1–4 are in the tree and under `tests/zones/zone_home_ontology_test.cpp`.
+Rung 5 (will / forced entry) is still ⚑ AUTHOR. `class Home` is gone; Home is
+`kind=home` on `Zone`. `ActionNode::AuthorZone = 19` (append-only) mints into
+the identity store. `Relationship.cpp` is still empty — a Relationship may
+own a Zone *as an identifier* (`ownerKind=relationship`); there is no live
+Relationship being to resolve from Universe yet.

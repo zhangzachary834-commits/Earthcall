@@ -91,7 +91,13 @@ struct ActionNode {
         // newborn Create supplies as its subject. The value is retained
         // because ActionNode kinds are serialized append-only.
         Synthesize = 17,
-        PlayAudio = 18   // Trigger the procedural audio synthesizer via properties
+        PlayAudio = 18,  // Trigger the procedural audio synthesizer via properties
+        // Mint a Zone into the live working set and the Zone identity store.
+        // Not a new being-kind enum: the Zone already exists as a kind.
+        // createType = identifier, propertyName = authored kind (home /
+        // community-home / community-zone / empty), elementToken = owner
+        // being ("" = the law's subject), containerToken = ownerKind.
+        AuthorZone = 19
     };
 
     struct ExecutedEvent {
@@ -356,6 +362,10 @@ struct ActionNode {
     //   input: where to read the amplitude value
     //   propertyName: material/waveType string
     static ActionNode playAudio(const std::string& freqPath, const std::string& ampPath, const std::string& waveType = "");
+    static ActionNode authorZone(const std::string& identifier,
+                                 const std::string& kind = "",
+                                 const std::string& ownerToken = "",
+                                 const std::string& ownerKind = "");
 };
 
 // A law's action model is the root of one such tree.

@@ -49,7 +49,7 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
 
 cmake --build build --target earthcall -j8
 cmake --build build -j8                               # tests are NOT built by the line above
-ctest --test-dir build --output-on-failure -j4        # 61 registered, 60 pass
+ctest --test-dir build --output-on-failure -j4        # 62 registered, 61 pass
 ```
 
 **`--target earthcall` does not build the tests.** `ctest` will then report every test as
@@ -66,7 +66,7 @@ The Python backend starts from `src/Singularity/Foreign/py/app.py`.
 
 ## The test suite
 
-**As of 2026-08-22, 60 of 61 tests pass and the default build is clean.** `chess_app_test` guards the authored chess world (`saves/worlds/chess_app.json`). The thirteen
+**As of 2026-08-22, 61 of 62 tests pass and the default build is clean.** `chess_app_test` guards the authored chess world (`saves/worlds/chess_app.json`). The thirteen
 that were broken were stale against three refactors, not against each other:
 `Rendering/` → `Singularity/Screen/` and `Util/` → `Singularity/Storage/`;
 `Object::GeometryType` → `ShapeKind`; the placement and tool fields off `Person` and onto
@@ -98,6 +98,7 @@ honest rather than convenient:
 | `save_roundtrip_test` | Person Save As / Load. `saveStateWithLog` used to skip the first two Zone objects; `loadState` used to move the camera and not `Person.position`. json+.ecsave of one stem must list as one world; objects in a non-active Zone must survive |
 | `unsaved_preserve_test` | load used to erase unsaved work. Identity-stable Zones are kept across session load; `loadState` also writes `saves/backups/before-load.json` so Restore unsaved can rewind, and loading that slot does not re-stash over itself |
 | `zone_identity_test` | Home was copied into every "world" file, so loading another session showed an empty Home. Zones now have `saves/zones/<id>/zone.json`; sessions reference them; fork/diff are first-class |
+| `zone_home_ontology_test` | manifesto Home/Zone: primary Home kernel-locked per Person (not "any owned Zone"); owner is Person/Relationship/Community; community-home / community-zone authored kinds; AuthorZone mints extras; unused `class Home` retired |
 
 If you add a field to `Object` that `to_json` writes, add it to `object_roundtrip_test`.
 

@@ -1,0 +1,12 @@
+{
+  "formationRelations": [],
+  "identifier": "Character Architect Forge",
+  "name": "Character Architect Forge",
+  "owner": "",
+  "parentZone": "",
+  "qualities": {},
+  "scope": "Local",
+  "world": {
+    "objects": []
+  }
+}

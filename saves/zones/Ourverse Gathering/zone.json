@@ -1,0 +1,14 @@
+{
+  "formationRelations": [],
+  "identifier": "Ourverse Gathering",
+  "name": "Ourverse Gathering",
+  "owner": "",
+  "parentZone": "",
+  "qualities": {
+    "kind": "ourverse-gathering"
+  },
+  "scope": "Global",
+  "world": {
+    "objects": []
+  }
+}

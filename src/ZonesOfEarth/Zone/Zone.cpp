@@ -36,6 +36,12 @@ void Zone::buildProperties() {
     _propertyRegistry.push_back(std::make_unique<ComputedProperty<Zone, std::string>>(
         "owner", this, &Zone::propOwner));
     _propertyRegistry.push_back(std::make_unique<ComputedProperty<Zone, std::string>>(
+        "ownerKind", this, &Zone::propOwnerKind));
+    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Zone, std::string>>(
+        "kind", this, &Zone::propKind));
+    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Zone, bool>>(
+        "primary", this, &Zone::propPrimary));
+    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Zone, std::string>>(
         "joys", this, &Zone::propJoys, nullptr));
 
     _propertyRegistry.push_back(std::make_unique<PropertyRef<Zone, std::shared_ptr<OntoMath::ScalarField>>>(
@@ -44,9 +50,22 @@ void Zone::buildProperties() {
         "spatialVectorField", this, &Zone::_spatialVectorField));
 }
 
+namespace {
+std::string qualityOf(const Zone::Qualities& q, const std::string& key) {
+    auto it = q.find(key);
+    return it == q.end() ? std::string{} : it->second;
+}
+
+bool validOwnerKind(const std::string& kind) {
+    return kind.empty()
+        || kind == Zone::kOwnerKindPerson
+        || kind == Zone::kOwnerKindRelationship
+        || kind == Zone::kOwnerKindCommunity;
+}
+} // namespace
+
 bool Zone::isOurverseGathering() const {
-    auto it = _qualities.find("kind");
-    return it != _qualities.end() && it->second == kGatheringKind;
+    return qualityOf(_qualities, "kind") == kGatheringKind;
 }
 
 void Zone::markOurverseGathering() {
@@ -57,19 +76,172 @@ void Zone::markOurverseGathering() {
             "gathering. No one may own the gathering place (OURVERSE.md).\n",
             _name.c_str());
         _ownerId.clear();
+        _qualities.erase("ownerKind");
     }
 }
 
-void Zone::setOwner(const std::string& personId) {
-    if (isOurverseGathering() && !personId.empty()) {
+std::string Zone::propKind() const { return qualityOf(_qualities, "kind"); }
+
+bool Zone::propPrimary() const { return isPrimaryHome(); }
+
+std::string Zone::propOwnerKind() const { return qualityOf(_qualities, "ownerKind"); }
+
+bool Zone::isPersonalHome() const {
+    return qualityOf(_qualities, "kind") == kHomeKind;
+}
+
+bool Zone::isCommunityHome() const {
+    return qualityOf(_qualities, "kind") == kCommunityHomeKind;
+}
+
+bool Zone::isCommunityZone() const {
+    return qualityOf(_qualities, "kind") == kCommunityZoneKind;
+}
+
+bool Zone::isHome() const {
+    return isPersonalHome() || isCommunityHome();
+}
+
+bool Zone::isPrimaryHome() const {
+    if (isOurverseGathering() || isCommunityHome() || isCommunityZone()) return false;
+    if (qualityOf(_qualities, "primary") == "true" && isPersonalHome()) return true;
+    // Pre-primary saves: the slug Home with kind=home is the locked dwelling.
+    return _name == "Home" && isPersonalHome();
+}
+
+void Zone::markPrimaryHome() {
+    if (isOurverseGathering()) {
         std::fprintf(stderr,
-            "Zone '%s': REFUSED owner '%s'. A local Ourverse gathering is "
-            "unowned — all may participate equally (OURVERSE.md).\n",
-            _name.c_str(), personId.c_str());
+            "Zone '%s': REFUSED to become a Home. A gathering place is not a "
+            "dwelling (EarthcallOurverse.md).\n",
+            _name.c_str());
         return;
     }
-    _ownerId = personId;
-    if (!personId.empty()) _deletable[personId] = true;
+    _qualities["kind"] = kHomeKind;
+    _qualities["primary"] = "true";
+}
+
+void Zone::markCommunityHome() {
+    if (isOurverseGathering() || isPrimaryHome()) {
+        std::fprintf(stderr,
+            "Zone '%s': REFUSED community-home. Gathering and a Person's "
+            "primary Home cannot be re-kinded.\n",
+            _name.c_str());
+        return;
+    }
+    _qualities["kind"] = kCommunityHomeKind;
+    _qualities.erase("primary");
+}
+
+void Zone::markCommunityZone() {
+    if (isOurverseGathering() || isPrimaryHome()) {
+        std::fprintf(stderr,
+            "Zone '%s': REFUSED community-zone. Gathering and a Person's "
+            "primary Home cannot be re-kinded.\n",
+            _name.c_str());
+        return;
+    }
+    _qualities["kind"] = kCommunityZoneKind;
+    _qualities.erase("primary");
+}
+
+void Zone::setQuality(const std::string& key, const std::string& value) {
+    if (isPrimaryHome() && (key == "primary" || key == "kind")) {
+        const bool demotePrimary = (key == "primary" && value != "true");
+        const bool demoteKind = (key == "kind" && value != kHomeKind);
+        if (demotePrimary || demoteKind) {
+            std::fprintf(stderr,
+                "Zone '%s': REFUSED to change %s. A Person's primary Home is "
+                "kernel-locked (EarthcallOurverse.md).\n",
+                _name.c_str(), key.c_str());
+            return;
+        }
+    }
+    if (isOurverseGathering() && key == "kind" && value != kGatheringKind) {
+        std::fprintf(stderr,
+            "Zone '%s': REFUSED to change kind. The gathering place stays "
+            "unowned and un-homed (OURVERSE.md).\n",
+            _name.c_str());
+        return;
+    }
+    _qualities[key] = value;
+}
+
+void Zone::setDeletable(const std::string& person, bool flag) {
+    if (isPrimaryHome() && flag) {
+        std::fprintf(stderr,
+            "Zone '%s': REFUSED deletable. A Person's primary Home is not "
+            "erased (EarthcallOurverse.md).\n",
+            _name.c_str());
+        return;
+    }
+    _deletable[person] = flag;
+}
+
+bool Zone::isDeletable(const std::string& person) const {
+    if (isPrimaryHome()) return false;
+    auto it = _deletable.find(person);
+    return it != _deletable.end() ? it->second : false;
+}
+
+void Zone::setOwner(const std::string& ownerId) {
+    std::string kind = qualityOf(_qualities, "ownerKind");
+    if (kind.empty() && !ownerId.empty()) {
+        if (isCommunityHome() || isCommunityZone()) kind = kOwnerKindCommunity;
+        else kind = kOwnerKindPerson;
+    }
+    setOwner(ownerId, kind);
+}
+
+void Zone::setOwner(const std::string& ownerId, const std::string& ownerKind) {
+    if (isOurverseGathering() && !ownerId.empty()) {
+        std::fprintf(stderr,
+            "Zone '%s': REFUSED owner '%s'. A local Ourverse gathering is "
+            "unowned — Person, Relationship, and Community alike "
+            "(OURVERSE.md / EarthcallOurverse.md).\n",
+            _name.c_str(), ownerId.c_str());
+        return;
+    }
+    if (!validOwnerKind(ownerKind)) {
+        std::fprintf(stderr,
+            "Zone '%s': REFUSED ownerKind '%s'. Owner is a Person, a "
+            "Relationship, or a Community.\n",
+            _name.c_str(), ownerKind.c_str());
+        return;
+    }
+    if (isPrimaryHome()) {
+        if (ownerKind == kOwnerKindRelationship || ownerKind == kOwnerKindCommunity) {
+            std::fprintf(stderr,
+                "Zone '%s': REFUSED owner '%s' (%s). A Person's primary Home "
+                "is fully owned by that Person, not a Relationship or "
+                "Community (EarthcallOurverse.md).\n",
+                _name.c_str(), ownerId.c_str(), ownerKind.c_str());
+            return;
+        }
+        if (!_ownerId.empty() && ownerId != _ownerId) {
+            std::fprintf(stderr,
+                "Zone '%s': REFUSED to transfer primary Home from '%s' to "
+                "'%s'. Highest ownership priority is kernel-locked to the "
+                "Person who owns this dwelling.\n",
+                _name.c_str(), _ownerId.c_str(), ownerId.c_str());
+            return;
+        }
+        if (_ownerId.empty() && ownerId.empty()) return;
+    }
+    if ((isCommunityHome() || isCommunityZone()) && !ownerId.empty()
+        && ownerKind != kOwnerKindCommunity) {
+        std::fprintf(stderr,
+            "Zone '%s': REFUSED owner '%s' (%s). A Community Home/Zone is "
+            "owned by a Community (EarthcallOurverse.md).\n",
+            _name.c_str(), ownerId.c_str(), ownerKind.c_str());
+        return;
+    }
+
+    _ownerId = ownerId;
+    if (ownerId.empty()) _qualities.erase("ownerKind");
+    else if (!ownerKind.empty()) _qualities["ownerKind"] = ownerKind;
+
+    if (!ownerId.empty() && !isPrimaryHome()) _deletable[ownerId] = true;
 }
 
 void Zone::load() {

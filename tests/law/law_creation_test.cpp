@@ -248,7 +248,8 @@ int main() {
 
         for (ActionNode n : {ActionNode::removeProperty("", "glow"),
                              ActionNode::removeElement("a", "b"),
-                             ActionNode::destroy("@event.object")}) {
+                             ActionNode::destroy("@event.object"),
+                             ActionNode::authorZone("Workshop", "home", "", "person")}) {
             ActionNode back = ActionNode::fromJson(n.toJson());
             check(back.kind == n.kind && back.describe() == n.describe(),
                   std::string("round-trip: ") + ActionNode::kindName(n.kind));

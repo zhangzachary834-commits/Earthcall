@@ -69,13 +69,39 @@ public:
 
     const std::string& owner() const { return _ownerId; }
     std::string propOwner() const { return _ownerId; }
-    // Gathering Zones (local Ourverse) may not be owned. setOwner is
-    // refused loudly and leaves the Zone unowned — OURVERSE.md.
-    void setOwner(const std::string& personId);
+    // Owner is a being identifier: a Person, a Relationship, or a
+    // Community. Gathering Zones refuse every owner. A Person's primary
+    // Home refuses transfer once claimed (kernel; not a second permission
+    // system). ownerKind is stored as a quality, not a new C++ field.
+    void setOwner(const std::string& ownerId);
+    void setOwner(const std::string& ownerId, const std::string& ownerKind);
 
     static constexpr const char* kGatheringKind = "ourverse-gathering";
+    static constexpr const char* kHomeKind = "home";
+    static constexpr const char* kCommunityHomeKind = "community-home";
+    static constexpr const char* kCommunityZoneKind = "community-zone";
+    static constexpr const char* kOwnerKindPerson = "person";
+    static constexpr const char* kOwnerKindRelationship = "relationship";
+    static constexpr const char* kOwnerKindCommunity = "community";
+
     bool isOurverseGathering() const;
     void markOurverseGathering();
+
+    // Authored kinds — Home is a Zone whose telos is dwelling, not a C++
+    // subclass (NEW_KIND_FRAMEWORK.md). primary Home is the Singularity-fixed
+    // one each Person fully owns; extra Homes are ordinary kind=home Zones.
+    bool isHome() const;
+    bool isPersonalHome() const;
+    bool isCommunityHome() const;
+    bool isCommunityZone() const;
+    bool isPrimaryHome() const;
+    void markPrimaryHome();
+    void markCommunityHome();
+    void markCommunityZone();
+
+    std::string propKind() const;
+    bool propPrimary() const;
+    std::string propOwnerKind() const;
 
     // Scene — objects live on the Zone. `World` was a Singular bag around
     // this list (plus leftover Creative/Survival/Spectator) and has been
@@ -95,15 +121,12 @@ public:
     void setScope(Scope scope) { _scope = scope; }
     Scope scope() const { return _scope; }
 
-    void setQuality(const std::string &key, const std::string &value) { _qualities[key] = value; }
+    void setQuality(const std::string &key, const std::string &value);
     const std::string &quality(const std::string &key) const { return _qualities.at(key); }
     const Qualities &qualities() const { return _qualities; }
 
-    void setDeletable(const std::string &person, bool flag) { _deletable[person] = flag; }
-    bool isDeletable(const std::string &person) const {
-        auto it = _deletable.find(person);
-        return it != _deletable.end() ? it->second : false;
-    }
+    void setDeletable(const std::string &person, bool flag);
+    bool isDeletable(const std::string &person) const;
     const Deletability &deletability() const { return _deletable; }
 
 private:

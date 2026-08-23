@@ -1155,6 +1155,9 @@ void seedActionKind(ActionNode& node) {
             if (node.path.empty()) node.path = PropertyPath::parse("acoustic.frequency");
             if (node.input.empty()) node.input = PropertyPath::parse("acoustic.amplitude");
             break;
+        case ActionNode::Kind::AuthorZone:
+            if (node.createType.empty()) node.createType = "new-zone";
+            break;
         default:
             break;
     }
@@ -1168,10 +1171,11 @@ bool editActionNode(ActionNode& node) {
                                   "flow (rate of change)", "publish event",
                                   "create object", "add property", "add element",
                                   "remove property", "remove element", "destroy",
-                                  "synthesize (set-to-set)", "play audio"};
+                                  "synthesize (set-to-set)", "play audio",
+                                  "author zone"};
     int kind = static_cast<int>(node.kind);
     ImGui::SetNextItemWidth(200.0f);
-    if (ImGui::Combo("Action type", &kind, kinds, 19)) {
+    if (ImGui::Combo("Action type", &kind, kinds, 20)) {
         node.kind = static_cast<ActionNode::Kind>(kind);
         seedActionKind(node);
         changed = true;
@@ -1577,6 +1581,35 @@ bool editActionNode(ActionNode& node) {
             }
             if (ImGui::IsItemHovered()) {
                 ImGui::SetTooltip("material/waveType string (e.g. sine, square, sawtooth)");
+            }
+            break;
+        }
+
+        case ActionNode::Kind::AuthorZone: {
+            ImGui::TextDisabled("Mint a Zone into saves/zones/<id>/, owned by a Person, Relationship, or Community. Not a widget — this is the law text.");
+            char idBuf[128];
+            copyToBuf(idBuf, sizeof(idBuf), node.createType);
+            if (ImGui::InputText("Zone identifier", idBuf, sizeof(idBuf))) {
+                node.createType = idBuf;
+                changed = true;
+            }
+            char kindBuf[64];
+            copyToBuf(kindBuf, sizeof(kindBuf), node.propertyName);
+            if (ImGui::InputText("Kind (home / community-home / community-zone)", kindBuf, sizeof(kindBuf))) {
+                node.propertyName = kindBuf;
+                changed = true;
+            }
+            char ownerBuf[128];
+            copyToBuf(ownerBuf, sizeof(ownerBuf), node.elementToken);
+            if (ImGui::InputText("Owner token (empty = law subject)", ownerBuf, sizeof(ownerBuf))) {
+                node.elementToken = ownerBuf;
+                changed = true;
+            }
+            char ownerKindBuf[64];
+            copyToBuf(ownerKindBuf, sizeof(ownerKindBuf), node.containerToken);
+            if (ImGui::InputText("Owner kind (person / relationship / community)", ownerKindBuf, sizeof(ownerKindBuf))) {
+                node.containerToken = ownerKindBuf;
+                changed = true;
             }
             break;
         }

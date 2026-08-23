@@ -1,0 +1,12 @@
+{
+  "formationRelations": [],
+  "identifier": "Temple of Echoes",
+  "name": "Temple of Echoes",
+  "owner": "",
+  "parentZone": "",
+  "qualities": {},
+  "scope": "Local",
+  "world": {
+    "objects": []
+  }
+}

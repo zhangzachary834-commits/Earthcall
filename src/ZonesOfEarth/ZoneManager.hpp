@@ -51,8 +51,26 @@ public:
     SaveLoadState& getSaveLoadState() { return _saveLoad; }
     const SaveLoadState& getSaveLoadState() const { return _saveLoad; }
 
-    // Save/Load methods (moved from Game)
-    void ensureHomeZone(const std::string& playerId);
+    // The running Engine binds the global manager so Law text (AuthorZone)
+    // can mint into the live working set. Tests that fire that action bind
+    // their own. Not a second registry — one live pointer.
+    void bindLive();
+    static ZoneManager* live();
+
+    // Primary Home is a kernel fact: find-or-mint the Person's dwelling,
+    // not "any Zone they own". Additional Homes go through authorZone.
+    void ensureHomeZone(const std::string& personId);
+    Zone* findPrimaryHome(const std::string& personId);
+    const Zone* findPrimaryHome(const std::string& personId) const;
+
+    // Person/Relationship/Community-authored mint. Refuses gathering (that
+    // is Ourverse::ensureGatheringZone), refuses a second primary Home
+    // (ensureHomeZone), refuses identifier collision. kind is authored:
+    // home / community-home / community-zone / empty ordinary Zone.
+    std::shared_ptr<Zone> authorZone(const std::string& identifier,
+                                     const std::string& ownerId,
+                                     const std::string& kind,
+                                     const std::string& ownerKind = "");
     void updateSaveFiles();
     void setSaveDirectory(const std::string& dir);
     std::string getSaveDirectory() const;

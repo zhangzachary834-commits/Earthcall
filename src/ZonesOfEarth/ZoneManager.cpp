@@ -125,26 +125,150 @@ const std::vector<std::shared_ptr<Zone>>& ZoneManager::zones() const { return _z
 
 // Save/Load methods moved from Game
 
-void ZoneManager::ensureHomeZone(const std::string& playerId) {
-    if (playerId.empty()) return;
+namespace {
+ZoneManager* g_liveZones = nullptr;
+} // namespace
 
+void ZoneManager::bindLive() { g_liveZones = this; }
+
+ZoneManager* ZoneManager::live() { return g_liveZones; }
+
+Zone* ZoneManager::findPrimaryHome(const std::string& personId) {
+    return const_cast<Zone*>(
+        static_cast<const ZoneManager*>(this)->findPrimaryHome(personId));
+}
+
+const Zone* ZoneManager::findPrimaryHome(const std::string& personId) const {
+    if (personId.empty()) return nullptr;
     for (const auto& zone : _zones) {
-        if (zone->owner() == playerId) return;
+        if (!zone) continue;
+        if (zone->isPrimaryHome() && zone->owner() == personId) return zone.get();
     }
+    for (const auto& zone : _zones) {
+        if (!zone) continue;
+        if (zone->name() == "Home" && zone->owner() == personId
+            && !zone->isOurverseGathering() && !zone->isCommunityHome()
+            && !zone->isCommunityZone()) {
+            return zone.get();
+        }
+    }
+    return nullptr;
+}
+
+void ZoneManager::ensureHomeZone(const std::string& personId) {
+    if (personId.empty()) return;
+
+    if (Zone* existing = findPrimaryHome(personId)) {
+        existing->markPrimaryHome();
+        if (existing->owner().empty()) existing->setOwner(personId, Zone::kOwnerKindPerson);
+        return;
+    }
+
     // A save from before ownership existed may hold an unowned "Home" —
     // claim it instead of minting a name-twin (identifiers must stay unique).
     for (auto& zone : _zones) {
-        if (zone->name() == "Home" && zone->owner().empty()) {
-            zone->setOwner(playerId);
+        if (zone && zone->name() == "Home" && zone->owner().empty()
+            && !zone->isOurverseGathering()) {
+            zone->markPrimaryHome();
+            zone->setOwner(personId, Zone::kOwnerKindPerson);
             return;
         }
     }
-    auto home = std::make_shared<Zone>("Home", "strict");
-    home->setOwner(playerId);
-    home->setQuality("kind", "home");
-    addZone(std::move(home));
+
+    bool homeSlugFree = true;
+    for (const auto& zone : _zones) {
+        if (zone && zone->getIdentifier() == "Home") {
+            homeSlugFree = false;
+            break;
+        }
+    }
+    const std::string id = homeSlugFree ? std::string("Home")
+                                        : std::string("Home_of_") + personId;
+    auto home = std::make_shared<Zone>(id, "strict");
+    home->markPrimaryHome();
+    home->setOwner(personId, Zone::kOwnerKindPerson);
+    addZone(home);
     printf("[Init] Home established for '%s' (zone count now %zu)\n",
-           playerId.c_str(), _zones.size());
+           personId.c_str(), _zones.size());
+}
+
+std::shared_ptr<Zone> ZoneManager::authorZone(const std::string& identifier,
+                                              const std::string& ownerId,
+                                              const std::string& kind,
+                                              const std::string& ownerKind) {
+    const std::string id = SaveSystem::sanitizeLabel(identifier);
+    if (id.empty()) {
+        std::cerr << "[zones] REFUSED authorZone: identifier sanitizes away.\n";
+        return nullptr;
+    }
+    if (kind == Zone::kGatheringKind) {
+        std::cerr << "[zones] REFUSED authorZone '" << id
+                  << "': the gathering place is minted by Ourverse, not authored "
+                     "as a Home or Zone (OURVERSE.md).\n";
+        return nullptr;
+    }
+    if (id == "Home" || (kind == Zone::kHomeKind && identifier == "Home")) {
+        std::cerr << "[zones] REFUSED authorZone 'Home': the primary Home is "
+                     "ensureHomeZone, not an authored extra.\n";
+        return nullptr;
+    }
+    for (const auto& z : _zones) {
+        if (z && z->getIdentifier() == id) {
+            std::cerr << "[zones] REFUSED authorZone: '" << id << "' already lives here.\n";
+            return nullptr;
+        }
+    }
+    if (SaveSystem::zoneIdentityExists(id)) {
+        std::cerr << "[zones] REFUSED authorZone: '" << id
+                  << "' already has an identity file. Load or fork it.\n";
+        return nullptr;
+    }
+
+    std::string resolvedKind = ownerKind;
+    if (kind == Zone::kCommunityHomeKind || kind == Zone::kCommunityZoneKind) {
+        if (resolvedKind.empty()) resolvedKind = Zone::kOwnerKindCommunity;
+        if (resolvedKind != Zone::kOwnerKindCommunity) {
+            std::cerr << "[zones] REFUSED authorZone '" << id
+                      << "': Community Homes/Zones are owned by a Community.\n";
+            return nullptr;
+        }
+        if (ownerId.empty()) {
+            std::cerr << "[zones] REFUSED authorZone '" << id
+                      << "': a Community Home/Zone needs a Community owner.\n";
+            return nullptr;
+        }
+    }
+    if (kind == Zone::kHomeKind && resolvedKind == Zone::kOwnerKindCommunity) {
+        std::cerr << "[zones] REFUSED authorZone '" << id
+                  << "': a Community dwelling is kind=community-home, not kind=home.\n";
+        return nullptr;
+    }
+
+    auto zone = std::make_shared<Zone>(id, "strict");
+    if (kind == Zone::kHomeKind) {
+        zone->setQuality("kind", Zone::kHomeKind);
+    } else if (kind == Zone::kCommunityHomeKind) {
+        zone->markCommunityHome();
+    } else if (kind == Zone::kCommunityZoneKind) {
+        zone->markCommunityZone();
+    } else if (!kind.empty()) {
+        zone->setQuality("kind", kind);
+    }
+    if (!ownerId.empty()) {
+        if (resolvedKind.empty()) resolvedKind = Zone::kOwnerKindPerson;
+        zone->setOwner(ownerId, resolvedKind);
+    }
+    addZone(zone);
+    for (const auto& obj : zone->getOwnedObjects()) {
+        if (!obj) continue;
+        obj->addZoneDesignation(zone->name());
+        obj->addZoneDesignation(zone->getIdentifier());
+        globalObjects.push_back(obj);
+    }
+    persistZones();
+    Core::EventBus::instance().publish(
+        ECA::Event{"zone-authored", zone.get(), nullptr, std::time(nullptr)});
+    return zone;
 }
 
 void ZoneManager::updateSaveFiles() {
@@ -379,6 +503,8 @@ bool ZoneManager::forkZone(const std::string& sourceId, const std::string& newId
     src["identifier"] = newId;
     nlohmann::json qualities = src.value("qualities", nlohmann::json::object());
     qualities["forkedFrom"] = sourceId;
+    // A fork of the primary Home is an extra dwelling, not a second lock.
+    qualities.erase("primary");
     src["qualities"] = qualities;
     if (!SaveSystem::writeZoneIdentity(newId, src)) return false;
     auto forked = makeZoneFromJson(src);

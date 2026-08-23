@@ -181,6 +181,7 @@ void Engine::initLogic() {
     mgr.addZone(std::make_shared<Zone>("Cavern of Light", "default"));
     mgr.addZone(std::make_shared<Zone>("Character Architect Forge", "default"));
     mgr.ensureHomeZone(_player->getIdentifier());
+    mgr.bindLive();
     // Home (and every other identity-stable Zone) lives in
     // saves/zones/<id>/, not inside a session/"world" file. Hydrate
     // after minting the boot Zones so an empty Sanctum/Home is filled
