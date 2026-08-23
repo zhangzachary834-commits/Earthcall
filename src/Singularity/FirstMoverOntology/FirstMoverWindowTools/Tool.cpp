@@ -682,6 +682,9 @@ void Tool::FacePaint(GLFWwindow *window, Core::Engine *engine, ZoneManager &mgr,
 {
     (void)mgr;
     (void)dt;
+    if (!window || !engine) return;
+    if (ImGui::GetIO().WantCaptureMouse) return;
+
     bool mouseLeftNow = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
     if (mouseLeftNow && !engine->isMouseLeftPressedLast())
     {
@@ -716,37 +719,37 @@ void Tool::FacePaint(GLFWwindow *window, Core::Engine *engine, ZoneManager &mgr,
         }
         if (hitObj && hitFace >= 0)
         {
-            // Check if advanced face paint is enabled
-            if (engine->isAdvancedFacePaintEnabled())
-            {
-                // Use advanced face paint system with current settings
-                void* gradientSettings = engine->getCurrentGradientSettings();
-                void* smudgeSettings = engine->getCurrentSmudgeSettings();
-                
-                bool success = false;
-                // Paint the object's OWN material, not the shared one it is
-                // referencing: ownMaterial() diverges it on the first
-                // stroke so a brush touches this object and no other.
-                if (auto mat = hitObj->ownMaterial()) {
-                    PaintToolSurface pts(*mat);
-                    success = AdvancedFacePaint::paintFaceAdvanced(hitObj, hitFace, hitUV, 
+            // Paint the object's OWN material, not the shared one it is
+            // referencing: ownMaterial() diverges it on the first
+            // stroke so a brush touches this object and no other.
+            if (auto mat = hitObj->ownMaterial()) {
+                const int faces = hitObj->getFaces() > 0 ? hitObj->getFaces() : 6;
+                if (static_cast<int>(mat->faceTextures.size()) != faces) {
+                    mat->initFaceTextures(faces);
+                }
+                PaintToolSurface pts(*mat);
+                const float r = engine->getCurrentColor(0);
+                const float g = engine->getCurrentColor(1);
+                const float b = engine->getCurrentColor(2);
+
+                if (engine->isAdvancedFacePaintEnabled())
+                {
+                    bool success = AdvancedFacePaint::paintFaceAdvanced(hitObj, hitFace, hitUV, 
                                                                       nullptr, nullptr);
-                    
                     if (!success) {
                         // Fall back to basic fill if advanced painting fails
-                        pts.fillFaceColor(hitFace, engine->getCurrentColor(0), engine->getCurrentColor(1), engine->getCurrentColor(2));
+                        pts.fillFaceColor(hitFace, r, g, b);
                     }
                 }
-            }
-            else
-            {
-                // Use basic fill for FacePaint click
-                // Paint the object's OWN material, not the shared one it is
-                // referencing: ownMaterial() diverges it on the first
-                // stroke so a brush touches this object and no other.
-                if (auto mat = hitObj->ownMaterial()) {
-                    PaintToolSurface pts(*mat);
-                    pts.fillFaceColor(hitFace, engine->getCurrentColor(0), engine->getCurrentColor(1), engine->getCurrentColor(2));
+                else
+                {
+                    // Use basic fill for FacePaint click
+                    pts.fillFaceColor(hitFace, r, g, b);
+                }
+                if (hitFace < 6) {
+                    hitObj->faceColors[hitFace][0] = r;
+                    hitObj->faceColors[hitFace][1] = g;
+                    hitObj->faceColors[hitFace][2] = b;
                 }
             }
         }

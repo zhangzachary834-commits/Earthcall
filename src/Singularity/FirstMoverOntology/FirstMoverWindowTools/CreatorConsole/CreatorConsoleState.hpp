@@ -128,6 +128,8 @@ namespace Rendering {
         int faceBrushType = 0;
         float faceBrushRadius = 0.05f;
         float faceBrushSoftness = 0.3f;
+        float faceBrushOpacity = 1.0f;
+        float faceBrushFlow = 1.0f;
         float faceBrushUOffset = 0.0f;
         float faceBrushVOffset = 0.0f;
         int faceBrushUAxis = 0;

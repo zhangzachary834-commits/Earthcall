@@ -485,6 +485,9 @@ namespace Rendering {
             ImGui::Combo("Brush Type##3d", &state.faceBrushType, brushTypeNames, IM_ARRAYSIZE(brushTypeNames));
             ImGui::SliderFloat("Brush Radius", &state.faceBrushRadius, 0.01f, 2.0f, "%.2f");
             ImGui::SliderFloat("Softness", &state.faceBrushSoftness, 0.0f, 2.0f, "%.2f");
+            ImGui::SliderFloat("Opacity##facebrush", &state.faceBrushOpacity, 0.0f, 1.0f, "%.2f");
+            ImGui::SliderFloat("Flow##facebrush", &state.faceBrushFlow, 0.0f, 1.0f, "%.2f");
+            ImGui::ColorEdit3("Brush Color##facebrush", &state.createColor.x);
             if (ImGui::CollapsingHeader("UV Mapping")) {
                 ImGui::SliderFloat("U Offset", &state.faceBrushUOffset, -2.0f, 2.0f, "%.2f");
                 ImGui::SliderFloat("V Offset", &state.faceBrushVOffset, -2.0f, 2.0f, "%.2f");
