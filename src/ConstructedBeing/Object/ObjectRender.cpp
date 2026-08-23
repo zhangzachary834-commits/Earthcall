@@ -198,6 +198,10 @@ FaceAlbedo Object::faceAlbedo(size_t face) const {
     // as "no paint" rather than handing out an overrun.
     const size_t expected = static_cast<size_t>(ft.size) * ft.size * 4;
     if (ft.size <= 0 || ft.pixels.size() != expected) return {};
+    // Loaded paint restores CPU pixels; the GPU handle is 0 until something
+    // uploads. First draw after a load is that something. uploadToGPU is
+    // const (the handle is mutable); the paint itself does not change.
+    if (ft.id == 0) ft.uploadToGPU();
     return FaceAlbedo{ft.id, ft.pixels.data(), ft.size};
 }
 

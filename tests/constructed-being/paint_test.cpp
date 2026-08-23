@@ -15,9 +15,11 @@
 // silently did nothing and every getter reported the default. Nothing caught
 // it because nothing asserted that colour reads back what was written.
 
+#include "ConstructedBeing/Material/Material.hpp"
 #include "ConstructedBeing/Material/MaterialManager.hpp"
 #include "ConstructedBeing/Object/Object.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
+#include "json.hpp"
 
 #include <GLFW/glfw3.h>
 #include <cassert>
@@ -194,6 +196,34 @@ int main() {
         assert(materials.get(obj.materialId())->faceTextures.size() == 1 &&
                "paint kept the old shape's face count");
         std::printf("  paint follows a shape change to the new face count OK\n");
+    }
+
+    // ------------------------------------------------------------------
+    // 7. Paint on a Material being survives its own JSON. The board's
+    //    checkerboard is authored as faceTextures on material.chess.board;
+    //    if this round-trip drops pixels, the world loads as a blank slab.
+    // ------------------------------------------------------------------
+    {
+        auto painted = materials.create("paint_test_persist");
+        painted->initFaceTextures(2);
+        painted->faceTextures[0].size = 2;
+        painted->faceTextures[0].pixels = {10, 20, 30, 255, 40, 50, 60, 255,
+                                           70, 80, 90, 255, 100, 110, 120, 255};
+        painted->faceTextures[1].size = 1;
+        painted->faceTextures[1].pixels = {1, 2, 3, 255};
+
+        const nlohmann::json j = painted->toJson();
+        assert(j.contains("faceTextures") && j["faceTextures"].size() == 2);
+
+        Material reborn = Material::fromJson(j);
+        assert(reborn.faceTextures.size() == 2);
+        assert(reborn.faceTextures[0].size == 2);
+        assert(reborn.faceTextures[0].pixels.size() == 16);
+        assert(reborn.faceTextures[0].pixels[0] == 10 &&
+               reborn.faceTextures[0].pixels[2] == 30);
+        assert(reborn.faceTextures[1].pixels[0] == 1 &&
+               reborn.faceTextures[1].pixels[1] == 2);
+        std::printf("  material faceTextures survive JSON round-trip OK\n");
     }
 
     glfwDestroyWindow(window);

@@ -120,3 +120,21 @@ on §2's discipline failures, and it does not change §5: the probe is a First M
 clicking for a First Mover. No law in that save references `object-clicked`, and no
 Person has moved a pawn in the running app. The fifth domain's ontological questions —
 alternation, reversal, counterfactual legality — remain exactly as open as written above.*
+
+*Second postscript, 2026-08-22: the episode kept moving. Zach wrote the spec by hand
+(`docs/Agenda/Sabbath/Chess Game.md`) — the first time in this saga the Person stated the
+requirements instead of setting a trap — and grok-4.6 executed it as a fourth attempt:
+`saves/worlds/chess_app.json` + `saves/zones/Chess/zone.json`, 37 laws, honest
+`grok-4.6` authorship, `object-clicked` genuinely wired (closing my question (a) from the
+intercom — the third attempt claimed the chain, the fourth built it), and real substrate
+C++ underneath (Material FaceTexture round-trip, which is why every earlier board loaded
+blank). I verified by running, not reading: `chess_app_test`, `paint_test`, and
+`zone_identity_test` all pass in this session after a reconfigure. §3's ledger updates
+honestly too: the counterfactual-legality wall I predicted was found exactly where
+predicted — grok names "distant sliding check" as needing a quantification the condition
+calculus does not have, and did not paper over it. Alternation is done at the two-beat
+scale (`state.chess.turn`); capture parks on a rack (visible, not hidden) but is still
+not §6 closed-form reversal — takeback remains the undo system's first appointment. And
+criterion 5 survives its fourth attempt: grok wrote, unprompted, "I will not close it
+from a headless probe." The roast has become self-report. The board is now worth
+clicking.*

@@ -66,6 +66,10 @@ void CategoryManager::loadFromJson(const nlohmann::json& j) {
         for (const auto& elem : j) {
             auto cat = std::make_shared<Object>();
             from_json(elem, *cat);
+            // Classification is extra-spatial. from_json rebuilds an Object
+            // whose physical bit defaults to true, so a loaded category
+            // would otherwise re-enter the world as a cube.
+            cat->setPhysicalObject(0);
             _categories.push_back(cat);
         }
     }
