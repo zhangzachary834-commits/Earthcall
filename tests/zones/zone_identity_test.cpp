@@ -124,10 +124,10 @@ int main() {
         mgr.saveStateWithLog("session_a", h.ctx);
     }
 
-    const auto homePath = sandbox / "zones" / "Home" / "zone.json";
+    const auto homePath = sandbox / "homes" / "Home" / "home.json";
     const auto workshopPath = sandbox / "zones" / "Workshop" / "zone.json";
     check(std::filesystem::exists(homePath),
-          "Save writes Home to saves/zones/Home/zone.json");
+          "Save writes Home to saves/homes/Home/home.json");
     check(std::filesystem::exists(workshopPath),
           "Save writes Workshop to its own directory, not only the session file");
     {
@@ -208,8 +208,8 @@ int main() {
         ZoneManager mgr;
         mgr.hydrateFromZoneStore();
         check(mgr.forkZone("Home", "Home.garden"), "forkZone copies Home under a new name");
-        check(SaveSystem::zoneIdentityExists("Home.garden"),
-              "the fork has its own directory in the Zone store");
+        check(SaveSystem::homeIdentityExists("Home.garden"),
+              "the fork has its own directory in the Home store");
         auto garden = findZone(mgr, "Home.garden");
         check(garden && garden->getQualities().count("forkedFrom") &&
                   garden->getQualities().at("forkedFrom") == "Home",

@@ -17,6 +17,7 @@
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/Ourverse/Ourverse.hpp"
 #include "ZonesOfEarth/SaveContext.hpp"
+#include "ZonesOfEarth/HomesOfEarth/Home.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 
@@ -70,11 +71,28 @@ int main() {
     Zone* home = mgr.findPrimaryHome(zachId);
     check(home != nullptr, "ensureHomeZone mints a primary Home even if the Person already owns a Zone");
     check(home && home->getIdentifier() == "Home", "first Person's primary Home keeps the Home slug");
+    check(home && dynamic_cast<Home*>(home) != nullptr,
+          "the primary dwelling is a Home, not a Zone wearing a kind string");
     check(home && home->isPrimaryHome() && home->isPersonalHome(),
-          "the minted Zone is kind=home and primary");
+          "the minted Home is kind=home and primary");
     check(home && home->owner() == zachId, "primary Home is owned by the Person");
     check(home && home->propOwnerKind() == Zone::kOwnerKindPerson, "ownerKind is person");
     check(home && !home->isDeletable(zachId), "primary Home is not deletable");
+    check(sizeof(Home) > sizeof(Zone),
+          "Home's memory layout is larger than Zone — dwelling state is not a label");
+    auto* dwelling = dynamic_cast<Home*>(home);
+    check(dwelling && dwelling->hasStake(zachId),
+          "the owner holds a stake in the Home's own memory");
+    check(dwelling && dwelling->entryRequiresWill() && dwelling->cannotForceStay(),
+          "will-to-enter and cannot-force-stay live on Home, not on Zone");
+    check(dwelling && !dwelling->admitInhabitant("stranger", false),
+          "a stranger without will is refused at the Home");
+    check(dwelling && dwelling->admitInhabitant("guest", true),
+          "will admits a guest into the dwelling's inhabitant list");
+    check(dwelling && !dwelling->releaseInhabitant("guest", false),
+          "cannotForceStay refuses expulsion; the guest may leave");
+    check(dwelling && dwelling->releaseInhabitant("guest", true),
+          "the inhabitant may leave of their own will");
 
     home->setOwner("thief", Zone::kOwnerKindPerson);
     check(home->owner() == zachId, "setOwner cannot transfer a claimed primary Home");
@@ -95,9 +113,17 @@ int main() {
 
     auto extra = mgr.authorZone("Garden", zachId, Zone::kHomeKind, Zone::kOwnerKindPerson);
     check(extra != nullptr, "authorZone mints an extra Home");
+    check(extra && dynamic_cast<Home*>(extra.get()) != nullptr,
+          "an extra Home is still a Home — dwelling, not an ordinary Zone");
     check(extra && extra->isPersonalHome() && !extra->isPrimaryHome(),
           "an extra Home is kind=home and is not the kernel lock");
     check(extra && extra->owner() == zachId, "the extra Home is owned by the Person");
+    check(std::filesystem::exists(sandbox / "homes" / "Home" / "home.json"),
+          "primary Home serializes under saves/homes/, not saves/zones/");
+    check(std::filesystem::exists(sandbox / "homes" / "Garden" / "home.json"),
+          "an extra Home also lives in the homes identity store");
+    check(!std::filesystem::exists(sandbox / "zones" / "Home" / "zone.json"),
+          "a Home is not written as a Zone identity file");
     check(mgr.authorZone("Home", zachId, Zone::kHomeKind, Zone::kOwnerKindPerson) == nullptr,
           "authorZone refuses the primary Home slug");
     check(mgr.authorZone("Ourverse Gathering", zachId, Zone::kGatheringKind,
@@ -107,7 +133,9 @@ int main() {
     Community parish("parish");
     auto parishHome = mgr.authorZone("Parish Home", parish.getIdentifier(),
                                      Zone::kCommunityHomeKind, Zone::kOwnerKindCommunity);
-    check(parishHome && parishHome->isCommunityHome(), "Community Home is an authored kind, not a C++ class");
+    check(parishHome && dynamic_cast<Home*>(parishHome.get()) != nullptr
+              && parishHome->isCommunityHome(),
+          "Community Home is a Home owned by a Community — not a CommunityHome class");
     check(parishHome && parishHome->owner() == parish.getIdentifier()
               && parishHome->propOwnerKind() == Zone::kOwnerKindCommunity,
           "Community Home is owned by the Community");
@@ -117,8 +145,9 @@ int main() {
 
     auto commons = mgr.authorZone("Commons", parish.getIdentifier(),
                                   Zone::kCommunityZoneKind, Zone::kOwnerKindCommunity);
-    check(commons && commons->isCommunityZone() && !commons->isHome(),
-          "Community Zone belongs to a Community and is not a Home");
+    check(commons && dynamic_cast<Home*>(commons.get()) == nullptr
+              && commons->isCommunityZone() && !commons->isHome(),
+          "Community Zone is a Zone, not a Home");
 
     auto cottage = mgr.authorZone("Cottage", "marriage-1", "", Zone::kOwnerKindRelationship);
     check(cottage && cottage->owner() == "marriage-1"

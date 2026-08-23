@@ -1,6 +1,7 @@
 #include "Singularity/Storage/Serialization.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
 #include "Relation/Relation.hpp"
+#include "ZonesOfEarth/HomesOfEarth/Home.hpp"
 #include "Singularity/Storage/BinaryPack.hpp"
 #include <cstring>
 #include <glm/gtc/type_ptr.hpp>
@@ -798,6 +799,14 @@ nlohmann::json zoneToJson(const Zone& zone) {
     zj["qualities"] = qualities;
     zj["world"] = zoneObjectsToJson(zone);
     zj["formationRelations"] = zone.formation().relations().toJson();
+    if (const auto* home = dynamic_cast<const Home*>(&zone)) {
+        zj["being"] = "home";
+        zj["primary"] = home->isPrimaryHome();
+        zj["entryRequiresWill"] = home->entryRequiresWill();
+        zj["cannotForceStay"] = home->cannotForceStay();
+        zj["stakes"] = home->stakeIds();
+        zj["inhabitants"] = home->inhabitantIds();
+    }
     return zj;
 }
 
@@ -829,11 +838,37 @@ void applyZoneJson(Zone& zone, const nlohmann::json& zj, bool replaceObjects) {
         }
         applyFormationRelations(zone, zj);
     }
+    if (auto* home = dynamic_cast<Home*>(&zone)) {
+        if (zj.value("primary", false)) home->markPrimaryHome();
+        if (zj.contains("stakes") && zj["stakes"].is_array()) {
+            std::vector<std::string> ids;
+            for (const auto& s : zj["stakes"]) {
+                if (s.is_string()) ids.push_back(s.get<std::string>());
+            }
+            home->loadStakeIds(std::move(ids));
+        }
+        if (zj.contains("inhabitants") && zj["inhabitants"].is_array()) {
+            std::vector<std::string> ids;
+            for (const auto& s : zj["inhabitants"]) {
+                if (s.is_string()) ids.push_back(s.get<std::string>());
+            }
+            home->loadInhabitantIds(std::move(ids));
+        }
+    }
 }
 
 std::shared_ptr<Zone> makeZoneFromJson(const nlohmann::json& zj) {
     const std::string name = zj.value("name", zj.value("identifier", "Untitled Zone"));
-    auto zone = std::make_shared<Zone>(name, "strict");
+    std::string kind;
+    if (zj.contains("qualities") && zj["qualities"].is_object()) {
+        kind = zj["qualities"].value("kind", std::string{});
+    }
+    if (kind.empty()) kind = zj.value("kind", std::string{});
+    const bool dwelling = (kind == Zone::kHomeKind || kind == Zone::kCommunityHomeKind
+                           || name == "Home" || zj.value("being", std::string{}) == "home");
+    std::shared_ptr<Zone> zone = dwelling
+        ? std::shared_ptr<Zone>(std::make_shared<Home>(name, "strict"))
+        : std::make_shared<Zone>(name, "strict");
     applyZoneJson(*zone, zj, true);
     return zone;
 }

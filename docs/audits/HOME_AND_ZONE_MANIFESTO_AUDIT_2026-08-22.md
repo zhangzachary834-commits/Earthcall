@@ -198,11 +198,14 @@ ontology is still ahead.
 
 ## 3. What not to build
 
-- Do not populate `class Home`. It is unused, it is a domain noun, and its
-  identifier scheme (`Home_of_X`) would fork the live `"Home"` identity.
-  Home is an authored kind on `Zone` (`kind=home`, `kind=community-home`,
-  later). The human-form exception does not apply here.
 - Do not add `CommunityHome` / `CommunityZone` classes or enum values.
+  Community Home is `Home` owned by a Community. Community Zone is `Zone`.
+- `class Home : public Zone` **is** admitted: it is constitutive (named in
+  `Singularity::Earthcall` beside Person and Zone), not a domain noun.
+  Zach (2026-08-22): Home is meaningfully different in ownership, governance,
+  and shared stakes. The empty stub (welcome + a second object list) was
+  not that difference; the restored class is the dwelling type that mint,
+  load, and kernel lock construct.
 - Do not build a second permission system for “highest ownership priority.”
   Primary Home is Kernel-tier on the existing TransferPolicy gate; additional
   Homes and ordinary Zones stay Governable/Gated.
@@ -244,8 +247,8 @@ Homes are a name without a holder.
 ## 5. One-pass implementation (2026-08-22)
 
 Rungs 1–4 are in the tree and under `tests/zones/zone_home_ontology_test.cpp`.
-Rung 5 (will / forced entry) is still ⚑ AUTHOR. `class Home` is gone; Home is
-`kind=home` on `Zone`. `ActionNode::AuthorZone = 19` (append-only) mints into
-the identity store. `Relationship.cpp` is still empty — a Relationship may
-own a Zone *as an identifier* (`ownerKind=relationship`); there is no live
-Relationship being to resolve from Universe yet.
+Rung 5 (will / forced entry) is still ⚑ AUTHOR. `class Home` is restored as
+the dwelling type (Zach, 2026-08-22: ownership, governance, shared stakes
+are not a `kind=` string). `ActionNode::AuthorZone = 19` mints into the
+identity store. `Relationship.cpp` is still empty — a Relationship may own
+an extra Home *as an identifier*.

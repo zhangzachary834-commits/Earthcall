@@ -54,10 +54,17 @@ void Ourverse::setPrimaryGatheringZone(std::shared_ptr<Zone> zone) {
         _gatheringZone.reset();
         return;
     }
+    if (zone->isHome()) {
+        std::fprintf(stderr,
+            "Ourverse: REFUSED gathering Zone '%s' — a Home is a dwelling, "
+            "not a gathering place (EarthcallOurverse.md / OURVERSE.md).\n",
+            zone->name().c_str());
+        return;
+    }
     if (!zone->owner().empty() && !zone->isOurverseGathering()) {
         std::fprintf(stderr,
             "Ourverse: REFUSED gathering Zone '%s' — it is already owned. "
-            "A Home is not a gathering place (OURVERSE.md).\n",
+            "No one owns the gathering place (OURVERSE.md).\n",
             zone->name().c_str());
         return;
     }

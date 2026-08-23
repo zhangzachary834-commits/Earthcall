@@ -1,4 +1,5 @@
 #include "ZoneManager.hpp"
+#include "HomesOfEarth/Home.hpp"
 #include "ConstructedBeing/CategoryManager.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
@@ -184,7 +185,7 @@ void ZoneManager::ensureHomeZone(const std::string& personId) {
     }
     const std::string id = homeSlugFree ? std::string("Home")
                                         : std::string("Home_of_") + personId;
-    auto home = std::make_shared<Zone>(id, "strict");
+    auto home = std::make_shared<Home>(id, "strict");
     home->markPrimaryHome();
     home->setOwner(personId, Zone::kOwnerKindPerson);
     addZone(home);
@@ -244,14 +245,17 @@ std::shared_ptr<Zone> ZoneManager::authorZone(const std::string& identifier,
         return nullptr;
     }
 
-    auto zone = std::make_shared<Zone>(id, "strict");
+    const bool dwelling = (kind == Zone::kHomeKind || kind == Zone::kCommunityHomeKind);
+    std::shared_ptr<Zone> zone = dwelling
+        ? std::shared_ptr<Zone>(std::make_shared<Home>(id, "strict"))
+        : std::make_shared<Zone>(id, "strict");
     if (kind == Zone::kHomeKind) {
         zone->setQuality("kind", Zone::kHomeKind);
     } else if (kind == Zone::kCommunityHomeKind) {
         zone->markCommunityHome();
     } else if (kind == Zone::kCommunityZoneKind) {
         zone->markCommunityZone();
-    } else if (!kind.empty()) {
+    } else if (!kind.empty() && !dwelling) {
         zone->setQuality("kind", kind);
     }
     if (!ownerId.empty()) {
@@ -419,8 +423,12 @@ void ZoneManager::persistZones() const {
         // An empty live Zone must not erase a populated identity. Boot
         // mints empty Home/Sanctum; a session save of that empty bag
         // used to be how loading another "world" wiped Home.
-        if (z->getOwnedObjects().empty() && SaveSystem::zoneIdentityExists(id)) {
-            nlohmann::json existing = SaveSystem::readZoneIdentity(id);
+        const bool dwelling = z->isHome();
+        const bool identityExists = dwelling ? SaveSystem::homeIdentityExists(id)
+                                             : SaveSystem::zoneIdentityExists(id);
+        if (z->getOwnedObjects().empty() && identityExists) {
+            nlohmann::json existing = dwelling ? SaveSystem::readHomeIdentity(id)
+                                               : SaveSystem::readZoneIdentity(id);
             std::size_t stored = 0;
             if (existing.is_object()) {
                 if (existing.contains("world") && existing["world"].contains("objects") &&
@@ -431,23 +439,28 @@ void ZoneManager::persistZones() const {
                 }
             }
             if (stored > 0) {
-                std::cerr << "[zones] REFUSED to persist empty Zone '" << id
+                std::cerr << "[zones] REFUSED to persist empty "
+                          << (dwelling ? "Home" : "Zone") << " '" << id
                           << "' over a stored identity that still has "
                           << stored << " being(s).\n";
                 continue;
             }
         }
-        if (!SaveSystem::writeZoneIdentity(id, zoneToJson(*z))) {
-            std::cerr << "[zones] REFUSED or failed to persist Zone '" << id << "'\n";
+        const nlohmann::json doc = zoneToJson(*z);
+        const bool wrote = dwelling ? SaveSystem::writeHomeIdentity(id, doc)
+                                    : SaveSystem::writeZoneIdentity(id, doc);
+        if (!wrote) {
+            std::cerr << "[zones] REFUSED or failed to persist "
+                      << (dwelling ? "Home" : "Zone") << " '" << id << "'\n";
         }
     }
 }
 
 void ZoneManager::hydrateFromZoneStore() {
-    const auto stored = SaveSystem::listZoneIdentities();
-    for (const auto& id : stored) {
-        nlohmann::json zj = SaveSystem::readZoneIdentity(id);
-        if (!zj.is_object()) continue;
+    std::unordered_set<std::string> loaded;
+    auto admit = [&](const std::string& id, nlohmann::json zj) {
+        if (!zj.is_object() || id.empty() || loaded.count(id)) return;
+        loaded.insert(id);
         std::shared_ptr<Zone> live;
         for (auto& z : _zones) {
             if (z && z->getIdentifier() == id) {
@@ -456,12 +469,17 @@ void ZoneManager::hydrateFromZoneStore() {
             }
         }
         if (live) {
-            if (live->getOwnedObjects().empty()) {
-                applyZoneJson(*live, zj, true);
-            }
-            continue;
+            if (live->getOwnedObjects().empty()) applyZoneJson(*live, zj, true);
+            return;
         }
         addZone(makeZoneFromJson(zj));
+    };
+    // Homes first: dwelling memory lives under saves/homes/, not zones/.
+    for (const auto& id : SaveSystem::listHomeIdentities()) {
+        admit(id, SaveSystem::readHomeIdentity(id));
+    }
+    for (const auto& id : SaveSystem::listZoneIdentities()) {
+        admit(id, SaveSystem::readZoneIdentity(id));
     }
     globalObjects.clear();
     for (const auto& z : _zones) {
@@ -493,7 +511,8 @@ bool ZoneManager::forkZone(const std::string& sourceId, const std::string& newId
         }
     }
     if (src.is_null() || src.empty()) {
-        src = SaveSystem::readZoneIdentity(sourceId);
+        src = SaveSystem::readHomeIdentity(sourceId);
+        if (src.is_null() || src.empty()) src = SaveSystem::readZoneIdentity(sourceId);
     }
     if (!src.is_object()) {
         std::cerr << "[zones] REFUSED fork: source '" << sourceId << "' not found.\n";
@@ -506,7 +525,13 @@ bool ZoneManager::forkZone(const std::string& sourceId, const std::string& newId
     // A fork of the primary Home is an extra dwelling, not a second lock.
     qualities.erase("primary");
     src["qualities"] = qualities;
-    if (!SaveSystem::writeZoneIdentity(newId, src)) return false;
+    src["primary"] = false;
+    const bool dwelling = src.value("being", std::string{}) == "home"
+        || qualities.value("kind", std::string{}) == Zone::kHomeKind
+        || qualities.value("kind", std::string{}) == Zone::kCommunityHomeKind;
+    const bool wrote = dwelling ? SaveSystem::writeHomeIdentity(newId, src)
+                                : SaveSystem::writeZoneIdentity(newId, src);
+    if (!wrote) return false;
     auto forked = makeZoneFromJson(src);
     addZone(forked);
     for (const auto& obj : forked->getOwnedObjects()) {

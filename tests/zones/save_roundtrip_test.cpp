@@ -19,6 +19,7 @@
 #include "Singularity/Storage/SaveSystem.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/SaveContext.hpp"
+#include "ZonesOfEarth/HomesOfEarth/Home.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "json.hpp"
@@ -110,7 +111,7 @@ int main() {
     sanctum->addObject(makeCube("second-spawned", glm::vec3(2.0f, 0.0f, 0.0f)));
     sanctum->addObject(makeCube("third-spawned", glm::vec3(3.0f, 0.0f, 0.0f)));
     mgr.addZone(sanctum);
-    auto home = std::make_shared<Zone>("Home", "default");
+    auto home = std::make_shared<Home>("Home", "default");
     home->setOwner(player.getIdentifier());
     mgr.addZone(home);
 
@@ -125,8 +126,8 @@ int main() {
     check(std::filesystem::exists(ecsavePath), "Save As writes the binary .ecsave");
     check(std::filesystem::exists(sandbox / "zones" / "Sanctum of Beginnings" / "zone.json"),
           "Save As also writes the Sanctum identity under saves/zones/");
-    check(std::filesystem::exists(sandbox / "zones" / "Home" / "zone.json"),
-          "Save As writes Home as its own Zone directory");
+    check(std::filesystem::exists(sandbox / "homes" / "Home" / "home.json"),
+          "Save As writes Home under saves/homes/, not as a Zone file");
 
     {
         std::ifstream in(jsonPath);

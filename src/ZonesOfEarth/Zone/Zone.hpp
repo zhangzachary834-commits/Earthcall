@@ -70,11 +70,11 @@ public:
     const std::string& owner() const { return _ownerId; }
     std::string propOwner() const { return _ownerId; }
     // Owner is a being identifier: a Person, a Relationship, or a
-    // Community. Gathering Zones refuse every owner. A Person's primary
-    // Home refuses transfer once claimed (kernel; not a second permission
-    // system). ownerKind is stored as a quality, not a new C++ field.
-    void setOwner(const std::string& ownerId);
-    void setOwner(const std::string& ownerId, const std::string& ownerKind);
+    // Community. Gathering Zones refuse every owner. Dwelling-specific
+    // locks (primary Home transfer, Community Home stakes) live on Home,
+    // which overrides these.
+    virtual void setOwner(const std::string& ownerId);
+    virtual void setOwner(const std::string& ownerId, const std::string& ownerKind);
 
     static constexpr const char* kGatheringKind = "ourverse-gathering";
     static constexpr const char* kHomeKind = "home";
@@ -87,16 +87,16 @@ public:
     bool isOurverseGathering() const;
     void markOurverseGathering();
 
-    // Authored kinds — Home is a Zone whose telos is dwelling, not a C++
-    // subclass (NEW_KIND_FRAMEWORK.md). primary Home is the Singularity-fixed
-    // one each Person fully owns; extra Homes are ordinary kind=home Zones.
-    bool isHome() const;
+    // Home is a Zone whose telos is dwelling — a C++ kind, like Person, not
+    // a domain noun. Qualities remain for serialization dual-read of files
+    // written before the class was restored. Virtuals dispatch to Home.
+    virtual bool isHome() const;
     bool isPersonalHome() const;
     bool isCommunityHome() const;
     bool isCommunityZone() const;
-    bool isPrimaryHome() const;
-    void markPrimaryHome();
-    void markCommunityHome();
+    virtual bool isPrimaryHome() const;
+    virtual void markPrimaryHome();
+    virtual void markCommunityHome();
     void markCommunityZone();
 
     std::string propKind() const;
@@ -121,17 +121,18 @@ public:
     void setScope(Scope scope) { _scope = scope; }
     Scope scope() const { return _scope; }
 
-    void setQuality(const std::string &key, const std::string &value);
+    virtual void setQuality(const std::string &key, const std::string &value);
     const std::string &quality(const std::string &key) const { return _qualities.at(key); }
     const Qualities &qualities() const { return _qualities; }
 
-    void setDeletable(const std::string &person, bool flag);
-    bool isDeletable(const std::string &person) const;
+    virtual void setDeletable(const std::string &person, bool flag);
+    virtual bool isDeletable(const std::string &person) const;
     const Deletability &deletability() const { return _deletable; }
 
-private:
+protected:
     void buildProperties() override;
 
+private:
     std::string _name;
     std::string _parentZoneName;
     Scope _scope;

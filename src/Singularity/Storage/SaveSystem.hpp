@@ -14,7 +14,8 @@ enum class SaveType {
     BACKUP,     // Automatic backups
     CUSTOM,     // Custom saves
     INTEGRATION, // Integration system saves (web apps, external windows, etc.)
-    ZONE         // Per-Zone identity directory under saves/zones/<id>/
+    ZONE,        // Per-Zone identity directory under saves/zones/<id>/
+    HOME         // Per-Home identity directory under saves/homes/<id>/ — dwelling memory, not a Zone file
 };
 
 // Pin every relative save path to this directory (the repository `saves/`
@@ -122,5 +123,12 @@ bool writeZoneIdentity(const std::string& identifier, const nlohmann::json& j);
 nlohmann::json readZoneIdentity(const std::string& identifier);
 // Identifiers as stored (from zone.json `identifier`/`name`, else the folder).
 std::vector<std::string> listZoneIdentities();
+
+std::string homeDirectory(const std::string& identifier);
+std::string homeIdentityPath(const std::string& identifier);
+bool homeIdentityExists(const std::string& identifier);
+bool writeHomeIdentity(const std::string& identifier, const nlohmann::json& j);
+nlohmann::json readHomeIdentity(const std::string& identifier);
+std::vector<std::string> listHomeIdentities();
 
 } // namespace SaveSystem

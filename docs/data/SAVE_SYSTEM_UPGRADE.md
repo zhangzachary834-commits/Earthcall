@@ -9,7 +9,8 @@ The save system has been completely reorganized to provide structured storage, e
 ```
 saves/
 ├── worlds/         # Session snapshots (camera, laws, zoneRefs)
-├── zones/          # Zone identity — one directory per Zone (Home/zone.json, …)
+├── zones/          # Zone identity — one directory per Zone
+├── homes/          # Home identity — dwelling memory (saves/homes/<id>/home.json)
 ├── avatars/        # Avatar saves
 ├── persons/        # Registered Person / user profiles
 ├── designs/        # Design system saves

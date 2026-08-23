@@ -55,6 +55,7 @@
 #include "Singularity/TransferPolicy.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/Ourverse/Ourverse.hpp"
+#include "ZonesOfEarth/HomesOfEarth/Home.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 
 #include <GLFW/glfw3.h>
@@ -312,6 +313,7 @@ int main() {
         Material material("probe");                      audit("Material", material);
         Relation relation;                               audit("Relation", relation);
         Zone zone("probe-zone", "default");              audit("Zone", zone);
+        Home home("probe-home", "default");              audit("Home", home);
         Singularity::Language::Lexeme lexeme("probe");   audit("Lexeme", lexeme);
         Core::EventEntity event("probe-happened");       audit("EventEntity", event);
         geom::FieldNode field("probe-field");            audit("FieldNode", field);
