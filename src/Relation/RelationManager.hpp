@@ -3,17 +3,17 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include <ctime>
 #include "Relation.hpp"
 #include "json.hpp"
 #include "Singularity/Core/EventBus.hpp"
+#include "Time/Moment/Moment.hpp"
 
 struct RelationCreatedEvent {
     std::shared_ptr<const Relation> relation;
-    std::time_t timestamp;
+    Moment timestamp;
 
     explicit RelationCreatedEvent(std::shared_ptr<const Relation> r)
-        : relation(std::move(r)), timestamp(std::time(nullptr)) {}
+        : relation(std::move(r)), timestamp(Moment::now()) {}
 };
 
 // Centralized container/utility class for working with collections of Relation

@@ -451,7 +451,7 @@ ECA::ActionExecutor ActionNode::compile() const {
                     // engine has set the clock).
                     x = Universe::instance().hasClock()
                             ? Universe::instance().now()
-                            : static_cast<double>(event.timestamp);
+                            : event.timestamp.asSeconds();
                 } else {
                     PropertyValue v;
                     if (!lawGetValue(target, in, v) || !propertyValueToNumber(v, x)) return;

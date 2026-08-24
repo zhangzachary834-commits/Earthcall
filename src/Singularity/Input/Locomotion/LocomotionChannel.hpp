@@ -35,7 +35,7 @@ public:
     static void syncRegister(LawManager& laws);
     static LocomotionChannel* find(LawManager& laws);
 
-    // Per-frame Sense/Act. Writes person.position / person.velocity and the
+    // Per-frame Sense/Act. Writes person.position() / person.velocity() and the
     // camera; publishes locomotion / jump / landed edges.
     void step(Person& person, ::Core::Camera& camera, GLFWwindow* window,
               ZoneManager& mgr, float dt, bool flying, bool canMove);

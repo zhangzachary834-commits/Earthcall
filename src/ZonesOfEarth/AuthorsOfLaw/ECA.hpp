@@ -1,8 +1,8 @@
 #pragma once
 
 #include "ConstructedBeing/Singular/Singular.hpp"
+#include "Time/Moment/Moment.hpp"
 
-#include <ctime>
 #include <functional>
 #include <string>
 #include <vector>
@@ -25,7 +25,7 @@ struct Event {
     std::string type;
     Singular* subject = nullptr;
     Singular* object = nullptr;
-    std::time_t timestamp = 0;
+    Moment timestamp{};
 };
 
 using ConditionPredicate = std::function<bool(const Event&, const Singular&)>;

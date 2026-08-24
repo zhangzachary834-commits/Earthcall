@@ -1,4 +1,5 @@
 #include "EventEntity.hpp"
+#include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
@@ -32,6 +33,12 @@ void EventEntity::buildProperties() {
         std::make_unique<PropertyRef<EventEntity, std::string>>("sourceId", this, &EventEntity::_sourceId));
     _propertyRegistry.push_back(
         std::make_unique<PropertyRef<EventEntity, std::string>>("targetId", this, &EventEntity::_targetId));
+    _propertyRegistry.push_back(
+        std::make_unique<ComputedProperty<EventEntity, double>>(
+            "moment", this, &EventEntity::propMomentStart, &EventEntity::setMomentStart));
+    _propertyRegistry.push_back(
+        std::make_unique<ComputedProperty<EventEntity, double>>(
+            "momentEnd", this, &EventEntity::propMomentEnd, &EventEntity::setMomentEnd));
     _propertiesBuilt = true;
 }
 

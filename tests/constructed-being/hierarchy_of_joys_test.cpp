@@ -18,6 +18,7 @@
 #include <GLFW/glfw3.h>
 #include <algorithm>
 #include <cassert>
+#include <cmath>
 #include <cstdio>
 
 int main() {
@@ -44,9 +45,15 @@ int main() {
     assert(christ->getIdentifier() == LanguageSystem::kFoundationId);
     assert(christ->getSymbol() == LanguageSystem::kFoundationSymbol);
     assert(LanguageSystem::instance().resolve("Christ") == christ);
+    assert(christ->setConceptualWeightValue(PropertyValue(2.5)));
+    assert(std::fabs(christ->getConceptualWeight() - 2.5f) < 1e-5f);
+    Formation seeded;
+    seedJoyHierarchy(seeded, christ.get());
+    assert(seeded.root() == christ.get());
+    assert(seeded.satisfiesJoyBounds());
 
-    // 2. Person("default") gets a rooted joy hierarchy. The string is a
-    //    seed, not stored state.
+    // 2. Person("default") gets a rooted joy hierarchy. The string resolves
+    //    to a Lexeme; seedJoyHierarchy takes that Lexeme, not the string.
     Person person(Soul("Zach"), Body::createBasicAvatar("Voxel"), "default");
     assert(person.satisfiesJoyBounds());
     assert(person.joys().isJoyHierarchy());

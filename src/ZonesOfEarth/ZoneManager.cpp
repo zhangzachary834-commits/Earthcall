@@ -323,10 +323,10 @@ nlohmann::json readSaveJsonFile(const std::string& filename) {
 void settlePersonToCamera(SaveContext& ctx) {
     if (!ctx.player || !ctx.camera) return;
     const float eyeH = ctx.player->getBody().getEyeHeight();
-    ctx.player->position = ctx.camera->pos - glm::vec3(0.0f, eyeH, 0.0f);
+    ctx.player->position() = ctx.camera->pos - glm::vec3(0.0f, eyeH, 0.0f);
     ctx.player->cameraPos = ctx.camera->pos;
     ctx.player->cameraForward = ctx.camera->front;
-    ctx.player->velocity = glm::vec3(0.0f);
+    ctx.player->velocity() = glm::vec3(0.0f);
     ctx.player->updatePose();
 }
 

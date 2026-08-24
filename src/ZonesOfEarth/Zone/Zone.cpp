@@ -1,6 +1,7 @@
 #include "Zone.hpp"
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 #include "Singularity/Language/JoyHierarchy.hpp"
+#include "Singularity/Language/LanguageSystem.hpp"
 #include "../../ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
@@ -289,7 +290,14 @@ Zone::Zone(const std::string& name, const std::string& foundationSymbol, Scope s
 
     _formation.addMember(_spatialRootObject.get());
     _joys.setIdentifier(name + ".joys");
-    Singularity::Language::seedJoyHierarchy(_joys, foundationSymbol);
+    Singularity::Language::Lexeme* foundation = nullptr;
+    if (!foundationSymbol.empty()) {
+        auto& lang = Singularity::Language::LanguageSystem::instance();
+        foundation = (foundationSymbol == "default" || foundationSymbol == "strict")
+            ? lang.foundation().get()
+            : lang.resolve(foundationSymbol).get();
+    }
+    Singularity::Language::seedJoyHierarchy(_joys, foundation);
     if (_joys.root()) setTelosId(_joys.root()->getIdentifier());
 }
 

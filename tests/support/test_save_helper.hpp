@@ -49,7 +49,7 @@ inline void dump_test_save(const std::string& test_name, Zone& testWorld, LawMan
         glm::vec3 dir = center - camera.pos;
         camera.front = glm::length(dir) > 1e-4f ? glm::normalize(dir) : glm::vec3(0.0f, 0.0f, -1.0f);
     } else {
-        camera.pos = testPlayer.position + glm::vec3(0.0f, testPlayer.getBody().getEyeHeight(), 0.0f);
+        camera.pos = testPlayer.position() + glm::vec3(0.0f, testPlayer.getBody().getEyeHeight(), 0.0f);
         camera.front = testPlayer.cameraForward;
     }
     testPlayer.cameraPos = camera.pos;

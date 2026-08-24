@@ -210,9 +210,9 @@ void LocomotionChannel::step(Person& person, ::Core::Camera& camera, GLFWwindow*
     // loadTestObservation — see settlePersonToCamera in ZoneManager.cpp)
     // look like a no-op: the next frame undoes them. EngineInit writes both.
     glm::vec3 expectedPersonPos = camera.pos - glm::vec3(0.0f, eyeH, 0.0f);
-    if (glm::distance(person.position, expectedPersonPos) > 1e-4f) {
-        camera.pos = person.position + glm::vec3(0.0f, eyeH, 0.0f);
-        person.velocity.y = 0.0f;
+    if (glm::distance(person.position(), expectedPersonPos) > 1e-4f) {
+        camera.pos = person.position() + glm::vec3(0.0f, eyeH, 0.0f);
+        person.velocity().y = 0.0f;
     }
     const glm::vec3 posBefore = camera.pos;
     const bool groundedLast = _wasGrounded;
@@ -278,24 +278,24 @@ void LocomotionChannel::step(Person& person, ::Core::Camera& camera, GLFWwindow*
         if (jumpKeyDown) vy += actualSpeed;
         if (canMove && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) vy -= actualSpeed;
         camera.pos.y += vy;
-        person.velocity.y = 0.0f;
+        person.velocity().y = 0.0f;
         grounded = false;
     } else {
         constexpr float GRAVITY = 9.81f;
         constexpr float JUMP_SPEED = 5.0f;
         if (jumpKeyDown && !_jumpKeyDownLast && grounded) {
-            person.velocity.y = JUMP_SPEED;
+            person.velocity().y = JUMP_SPEED;
             grounded = false;
             Core::EventBus::instance().publish(ECA::Event{"jump-started", &person, nullptr, std::time(nullptr)});
         }
-        person.velocity.y -= GRAVITY * dt;
-        camera.pos.y += person.velocity.y * dt;
+        person.velocity().y -= GRAVITY * dt;
+        camera.pos.y += person.velocity().y * dt;
     }
     _jumpKeyDownLast = jumpKeyDown;
 
     if (camera.pos.y <= minEyeY) {
         camera.pos.y = minEyeY;
-        if (person.velocity.y < 0.0f) person.velocity.y = 0.0f;
+        if (person.velocity().y < 0.0f) person.velocity().y = 0.0f;
         grounded = true;
     } else {
         grounded = !flying && (camera.pos.y - minEyeY) <= 1e-3f;
@@ -318,7 +318,7 @@ void LocomotionChannel::step(Person& person, ::Core::Camera& camera, GLFWwindow*
     }
     _wasMoving = moving;
 
-    person.position = camera.pos - glm::vec3(0.0f, eyeH, 0.0f);
+    person.position() = camera.pos - glm::vec3(0.0f, eyeH, 0.0f);
     tickAutomations(person, dt);
     person.updatePose();
 }

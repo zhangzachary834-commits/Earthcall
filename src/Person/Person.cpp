@@ -1,5 +1,6 @@
 #include "Person.hpp"
 #include "Singularity/Language/JoyHierarchy.hpp"
+#include "Singularity/Language/LanguageSystem.hpp"
 #include <ctime>
 #include <iostream>
 #include <algorithm>
@@ -9,19 +10,14 @@
 #include "Singularity/Screen/Renderer.hpp"
 #include "ConstructedBeing/Singular/Object/Formation/Menu/stb_easy_font.h"
 #include "Singularity/Storage/Serialization.hpp"
-#include "ZonesOfEarth/ZoneManager.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "PersonEvents.hpp"
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
-#include "Singularity/Network/WebSocketClient.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-
-// Forward-declare global ZoneManager defined in main.cpp
-extern ZoneManager mgr;
 
 // PersonJoinedEvent/PersonLeftZoneEvent/PersonLoginEvent/PersonLogoutEvent
 // are defined in PersonEvents.hpp (not here), so external code can
@@ -32,9 +28,9 @@ extern ZoneManager mgr;
 // If its "singing up", new Person data should first be added to the new txt and json files, and only then should Person created.
 void Person::buildProperties() {
     _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, glm::vec3>>(
-        "position", this, &Person::position));
+        "position", this, &Person::_position));
     _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, glm::vec3>>(
-        "velocity", this, &Person::velocity));
+        "velocity", this, &Person::_velocity));
     _propertyRegistry.push_back(std::make_unique<ComputedProperty<Person, std::string>>(
         "name", this, &Person::propName));   // read-only: identity is not a slot
     // --- Law System Perception Properties ---
@@ -51,27 +47,46 @@ void Person::buildProperties() {
 Person::Person(Soul soul, Body body, const std::string& foundationSymbol) : _soul(std::move(soul)) {
     bodies.push_back(std::move(body));
     // Soul("Zach") is a display-name hint, not an identity. Identity is
-    // this Person's (personId / displayName). Binding clears the hint so
+    // this Person's (personId / called Lexeme). Binding clears the hint so
     // Soul cannot keep a second name.
-    displayName = _soul.constructionName();
-    if (displayName.empty()) displayName = "Person";
+    std::string seedName = _soul.constructionName();
+    if (seedName.empty()) seedName = "Person";
+    setDisplayName(seedName);
     _soul.bindPerson(this);
 
     _joys.setIdentifier("person-joys");
-    Singularity::Language::seedJoyHierarchy(_joys, foundationSymbol);
+    Singularity::Language::Lexeme* foundation = nullptr;
+    if (!foundationSymbol.empty()) {
+        auto& lang = Singularity::Language::LanguageSystem::instance();
+        foundation = (foundationSymbol == "default" || foundationSymbol == "strict")
+            ? lang.foundation().get()
+            : lang.resolve(foundationSymbol).get();
+    }
+    Singularity::Language::seedJoyHierarchy(_joys, foundation);
     if (_joys.root()) setTelosId(_joys.root()->getIdentifier());
+}
+
+const std::string& Person::getDisplayName() const {
+    static const std::string kEmpty;
+    return _called ? _called->getSymbol() : kEmpty;
+}
+
+void Person::setDisplayName(const std::string& name) {
+    _called = Singularity::Language::LanguageSystem::instance().resolve(
+        name.empty() ? "Person" : name);
 }
 
 nlohmann::json Person::serialize() const {
     nlohmann::json j;
-    j["displayName"] = displayName;
+    j["displayName"] = getDisplayName();
+    if (_called) j["displayLexemeId"] = _called->getIdentifier();
     // "soulName" is still written so a save from here still opens in a build
     // from before the split. It is a label in both directions and never the
     // identity, so emitting it grants nothing.
-    j["soulName"] = displayName;
+    j["soulName"] = getDisplayName();
     if (_personId.canAuthenticate()) j["personId"] = _personId.toString();
-    j["position"] = {position.x, position.y, position.z};
-    j["velocity"] = {velocity.x, velocity.y, velocity.z};
+    j["position"] = {_position.x, _position.y, _position.z};
+    j["velocity"] = {_velocity.x, _velocity.y, _velocity.z};
     
     // Save body and body parts
     j["body"] = ::bodyToJson(getBody());
@@ -83,9 +98,9 @@ void Person::deserialize(const nlohmann::json& j) {
     // Type-checked: this reads save data, which is untrusted by construction.
     // Prefer the new key, fall back to the pre-split one.
     if (j.contains("displayName") && j["displayName"].is_string()) {
-        displayName = j["displayName"].get<std::string>();
+        setDisplayName(j["displayName"].get<std::string>());
     } else if (j.contains("soulName") && j["soulName"].is_string()) {
-        displayName = j["soulName"].get<std::string>();
+        setDisplayName(j["soulName"].get<std::string>());
     }
 
     // A personId read from a file is only a CLAIM to that identity. Parsing it
@@ -100,10 +115,10 @@ void Person::deserialize(const nlohmann::json& j) {
         if (claimed.canAuthenticate()) _personId = claimed;
     }
     if (j.contains("position") && j["position"].is_array() && j["position"].size() >= 3) {
-        position = glm::vec3(j["position"][0], j["position"][1], j["position"][2]);
+        _position = glm::vec3(j["position"][0], j["position"][1], j["position"][2]);
     }
     if (j.contains("velocity") && j["velocity"].is_array() && j["velocity"].size() >= 3) {
-        velocity = glm::vec3(j["velocity"][0], j["velocity"][1], j["velocity"][2]);
+        _velocity = glm::vec3(j["velocity"][0], j["velocity"][1], j["velocity"][2]);
     }
     // grounded / wasGrounded / wasMoving / jumpKeyDownLast used to serialize
     // here as Game leftovers. They live on LocomotionChannel now (and the
@@ -119,7 +134,7 @@ void Person::deserialize(const nlohmann::json& j) {
 
 
 void Person::express() const {
-    std::cout << "\n✨ Person: " << displayName << std::endl;
+    std::cout << "\n✨ Person: " << getDisplayName() << std::endl;
     getBody().describe();
 }
 
@@ -151,7 +166,7 @@ void Person::drawNametag() const {
 
     // Project 3D position (above head) to 2D window coordinates
     double winX, winY, winZ;
-    ecgl::project(position.x, position.y + tagHeight, position.z,
+    ecgl::project(_position.x, _position.y + tagHeight, _position.z,
                   model, proj, viewport, &winX, &winY, &winZ);
 
     // Skip if projected behind camera
@@ -162,7 +177,7 @@ void Person::drawNametag() const {
 
     // Prepare string buffer
     char buf[6000];
-    std::string line = displayName;
+    std::string line = getDisplayName();
     int quads = stb_easy_font_print(static_cast<float>(winX), static_cast<float>(winY),
                                     const_cast<char*>(line.c_str()), nullptr,
                                     buf, sizeof(buf));
@@ -176,7 +191,7 @@ void Person::drawNametag() const {
 
 // -----------------------------------------------------------------------------
 void Person::updatePose() {
-    glm::mat4 base = glm::translate(glm::mat4(1.0f), position);
+    glm::mat4 base = glm::translate(glm::mat4(1.0f), _position);
 
     std::unordered_map<std::string, BodyPart*> partsByName;
     partsByName.reserve(getBody().parts.size());
@@ -254,9 +269,9 @@ void Person::login(const std::string& sessionId) {
         // Trigger PersonLoginEvent
         PersonLoginEvent event(*this, _currentSession);
         Core::EventBus::instance().publish(event);
-        Core::EventBus::instance().publish(ECA::Event{"person-logged-in", this, nullptr, std::time(nullptr)});
+        Core::EventBus::instance().publish(ECA::Event{"person-logged-in", this, nullptr, Moment::now()});
 
-        std::cout << "👤 " << displayName << " logged in (Session: " << _currentSession << ")" << std::endl;
+        std::cout << "👤 " << getDisplayName() << " logged in (Session: " << _currentSession << ")" << std::endl;
     }
 }
 
@@ -267,58 +282,37 @@ void Person::logout(const std::string& sessionId) {
         // Trigger PersonLogoutEvent
         PersonLogoutEvent event(*this, session);
         Core::EventBus::instance().publish(event);
-        Core::EventBus::instance().publish(ECA::Event{"person-logged-out", this, nullptr, std::time(nullptr)});
+        Core::EventBus::instance().publish(ECA::Event{"person-logged-out", this, nullptr, Moment::now()});
 
         _isLoggedIn = false;
         _currentSession.clear();
         
-        std::cout << "👤 " << displayName << " logged out (Session: " << session << ")" << std::endl;
+        std::cout << "👤 " << getDisplayName() << " logged out (Session: " << session << ")" << std::endl;
     }
 }
 
-// The zone is a being now: resolve the name so join/leave events can carry
-// it as the event OBJECT — "@event.object.owner" etc. testify in laws.
-static Zone* zoneByName(const std::string& zoneName) {
-    for (auto& z : mgr.zones()) {
-        if (z->name() == zoneName) return z.get();
-    }
-    return nullptr;
-}
-
-void Person::joinZone(const std::string& zoneName) {
-    // Check if already in this zone
-    auto it = std::find(_joinedZones.begin(), _joinedZones.end(), zoneName);
+void Person::joinZone(Zone& zone) {
+    auto it = std::find(_joinedZones.begin(), _joinedZones.end(), &zone);
     if (it == _joinedZones.end()) {
-        _joinedZones.push_back(zoneName);
+        _joinedZones.push_back(&zone);
 
-        // Trigger PersonJoinedEvent
-        PersonJoinedEvent event(*this, zoneName);
+        PersonJoinedEvent event(*this, zone);
         Core::EventBus::instance().publish(event);
-        Core::EventBus::instance().publish(ECA::Event{"person-joined-zone", this, zoneByName(zoneName), std::time(nullptr)});
+        Core::EventBus::instance().publish(ECA::Event{"person-joined-zone", this, &zone, Moment::now()});
 
-        std::cout << "👤 " << displayName << " joined zone: " << zoneName << std::endl;
+        std::cout << "👤 " << getDisplayName() << " joined zone: " << zone.name() << std::endl;
     }
 }
 
-void Person::leaveZone(const std::string& zoneName) {
-    auto it = std::find(_joinedZones.begin(), _joinedZones.end(), zoneName);
+void Person::leaveZone(Zone& zone) {
+    auto it = std::find(_joinedZones.begin(), _joinedZones.end(), &zone);
     if (it != _joinedZones.end()) {
         _joinedZones.erase(it);
 
-        // Trigger PersonLeftZoneEvent
-        PersonLeftZoneEvent event(*this, zoneName);
+        PersonLeftZoneEvent event(*this, zone);
         Core::EventBus::instance().publish(event);
-        Core::EventBus::instance().publish(ECA::Event{"person-left-zone", this, zoneByName(zoneName), std::time(nullptr)});
+        Core::EventBus::instance().publish(ECA::Event{"person-left-zone", this, &zone, Moment::now()});
 
-        std::cout << "👤 " << displayName << " left zone: " << zoneName << std::endl;
+        std::cout << "👤 " << getDisplayName() << " left zone: " << zone.name() << std::endl;
     }
-}
-
-void Person::requestAIAction(const std::string& context, const std::string& targetObjectId) {
-    nlohmann::json payload = {
-        {"type", "request_ai_action"},
-        {"context", context},
-        {"target_singular_id", targetObjectId}
-    };
-    Singularity::Network::WebSocketClient::instance().send(payload.dump());
 }

@@ -8,6 +8,7 @@
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 #include "Person/Relationship/Community/Community.hpp"
 #include "Singularity/Language/JoyHierarchy.hpp"
+#include "Singularity/Language/LanguageSystem.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include <unordered_map>
@@ -17,7 +18,8 @@ extern ZoneManager mgr;
 
 Ourverse::Ourverse() {
     _joys.setIdentifier("ourverse.joys");
-    Singularity::Language::seedJoyHierarchy(_joys, "default");
+    Singularity::Language::seedJoyHierarchy(
+        _joys, Singularity::Language::LanguageSystem::instance().foundation().get());
     if (_joys.root()) setTelosId(_joys.root()->getIdentifier());
     _filaments.setIdentifier("ourverse.filaments");
     _filaments.setRelationTypeTag("filaments");

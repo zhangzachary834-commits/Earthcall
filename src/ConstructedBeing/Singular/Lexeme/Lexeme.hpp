@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ConstructedBeing/Singular/Singular.hpp"
+#include "ConstructedBeing/Singular/Property/PropertyValue.hpp"
 #include <string>
 #include <memory>
 
@@ -26,9 +27,13 @@ public:
     // endpoint string.
     const std::string& getSymbol() const { return _symbol; }
 
-    // Frequency or conceptual weight of this lexeme in the current context
+    // Fast numeric view for channels that only multiply. The authored value
+    // is `_conceptualWeightValue` (int/float/double, or an OntoMath field).
     float getConceptualWeight() const { return _conceptualWeight; }
-    void setConceptualWeight(float weight) { _conceptualWeight = weight; }
+    void setConceptualWeight(float weight);
+
+    const PropertyValue& conceptualWeightValue() const { return _conceptualWeightValue; }
+    bool setConceptualWeightValue(const PropertyValue& v);
 
 protected:
     void buildProperties() override;
@@ -36,11 +41,9 @@ protected:
 private:
     std::string _id;
     std::string _symbol;
-    // weight needs to be type-flexible not a primitive float, two reasons first obviously bc of doubles,
-    // and second because of modeling rich OntoMath Relations instead of merely numerical multiplications
-    // to maximize computational expressiveness. - Zach
-    // Flat fields can be kept if necessary for efficient compute with no advanced workaround to achieve the same result.
-    // However, even then they still don't replace a type flexible one.
+    // Type-flexible authored weight (doubles, OntoMath fields). The float is
+    // the cheap cache when the value is a number — it does not replace this.
+    PropertyValue _conceptualWeightValue = 1.0;
     float _conceptualWeight = 1.0f;
 };
 

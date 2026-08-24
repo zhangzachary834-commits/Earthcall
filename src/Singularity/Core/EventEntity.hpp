@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ConstructedBeing/Singular/Singular.hpp"
+#include "Time/Moment/Moment.hpp"
 #include <string>
 #include <memory>
 
@@ -25,6 +26,15 @@ public:
     const std::string& getTargetId() const { return _targetId; }
     void setTargetId(const std::string& id) { _targetId = id; }
 
+    const Moment& moment() const { return _moment; }
+    void setMoment(const Moment& m) { _moment = m; }
+    double propMomentStart() const { return _moment.asSeconds(); }
+    void setMomentStart(const double& t) { _moment = Moment::instant(t); }
+    double propMomentEnd() const { return _moment.endSeconds().value_or(_moment.asSeconds()); }
+    void setMomentEnd(const double& t) {
+        _moment = Moment::interval(_moment.asSeconds(), t);
+    }
+
 protected:
     void buildProperties() override;
 
@@ -33,6 +43,7 @@ private:
     std::string _eventType;
     std::string _sourceId;
     std::string _targetId;
+    Moment _moment = Moment::now();
 };
 
 } // namespace Core

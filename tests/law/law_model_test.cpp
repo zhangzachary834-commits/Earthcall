@@ -192,7 +192,7 @@ int main() {
 
         // Condition fails
         assert(strLaw.applyTo(person) == Law::ApplicationResult::ConditionsFailed);
-        assert(person.position.y == 0.0f); 
+        assert(person.position().y == 0.0f); 
 
         PropertyPath::parse("activeTool").setValue(person, PropertyValue(std::string("3DShapeGenerator")));
         
@@ -262,8 +262,8 @@ int main() {
 
             // Before applying, x and z should be 0 (from defaults) and y is ~100 (from previous test)
             assert(multiLaw.applyTo(person) == Law::ApplicationResult::Applied);
-            assert(nearf(person.position.x, 42.0f));
-            assert(nearf(person.position.z, 42.0f));
+            assert(nearf(person.position().x, 42.0f));
+            assert(nearf(person.position().z, 42.0f));
             
             // Verify failure condition (AND fails if one is false)
             PropertyPath::parse("activeTool").setValue(person, PropertyValue(std::string("WrongTool")));

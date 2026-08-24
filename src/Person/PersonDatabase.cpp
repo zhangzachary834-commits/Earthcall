@@ -10,7 +10,7 @@ PersonDatabase& PersonDatabase::getInstance() {
 }
 
 void PersonDatabase::savePerson(const Person& person) {
-    if (person.displayName.empty()) {
+    if (person.getDisplayName().empty()) {
         std::cerr << "Cannot save Person with empty displayName." << std::endl;
         return;
     }
@@ -18,9 +18,9 @@ void PersonDatabase::savePerson(const Person& person) {
     nlohmann::json j = person.serialize();
     
     // Save to the PERSON save type in SaveSystem
-    SaveSystem::writeSaveData(j, person.displayName, SaveSystem::SaveType::PERSON);
+    SaveSystem::writeSaveData(j, person.getDisplayName(), SaveSystem::SaveType::PERSON);
     
-    std::cout << "Successfully saved Person profile for: " << person.displayName << std::endl;
+    std::cout << "Successfully saved Person profile for: " << person.getDisplayName() << std::endl;
 }
 
 bool PersonDatabase::loadPerson(const std::string& displayName, Person& outPerson) {

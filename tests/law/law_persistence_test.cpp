@@ -224,12 +224,12 @@ int main() {
             Soul soul("walker");
             Body body = Body::createBasicAvatar("Voxel");
             Person person(std::move(soul), std::move(body), "default");
-            person.position = glm::vec3(3.0f, 4.0f, 5.0f);
+            person.position() = glm::vec3(3.0f, 4.0f, 5.0f);
             ::Core::Camera camera;
             ZoneManager zones;
             loco->step(person, camera, window, zones, 0.016f, false, true);
-            assert(nearf(person.position.x, 3.0f) && nearf(person.position.y, 4.0f)
-                   && nearf(person.position.z, 5.0f));
+            assert(nearf(person.position().x, 3.0f) && nearf(person.position().y, 4.0f)
+                   && nearf(person.position().z, 5.0f));
 
             nlohmann::json savedMovers = movers.toJson();
             assert(savedMovers.contains("firstMoverEnabled"));

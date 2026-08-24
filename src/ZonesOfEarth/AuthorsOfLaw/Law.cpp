@@ -1428,7 +1428,7 @@ void LawManager::connectToEventBus() {
             {"eventType", e.type},
             {"subjectId", subjectId},
             {"objectId", objectId},
-            {"timestamp", e.timestamp}
+            {"timestamp", e.timestamp.toJson()}
         });
 
         // A being that has just left the world is released from every law

@@ -74,7 +74,7 @@ int main() {
     Soul soul("Player");
     Body body("humanoid", "default");
     Person player(std::move(soul), std::move(body), "default");
-    player.position = glm::vec3(0.0f, 1.0f, 0.0f);
+    player.position() = glm::vec3(0.0f, 1.0f, 0.0f);
 
     Singularity::Core::CreationChannel channel;
 

@@ -237,7 +237,7 @@ int main() {
         Person person(soul, std::move(avatar), "default");
         assert(person.getIdentifier() == "Witness");
         assert(PropertyPath::parse("position.y").setValue(person, PropertyValue(4.0f)) == PropertyPath::PathResult::Ok);
-        assert(std::fabs(person.position.y - 4.0f) < 1e-5f);
+        assert(std::fabs(person.position().y - 4.0f) < 1e-5f);
         assert(PropertyPath::parse("name").getValue(person, out) == PropertyPath::PathResult::Ok);
         assert(std::get<std::string>(out) == "Witness");
         assert(PropertyPath::parse("name").setValue(

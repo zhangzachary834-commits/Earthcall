@@ -1,9 +1,11 @@
 #pragma once
 
-#include <ctime>
+#include "Time/Moment/Moment.hpp"
+
 #include <string>
 
 class Person;
+class Zone;
 
 /*
  * Person-level automation triggers carried on Core::EventBus.
@@ -29,36 +31,36 @@ struct LocomotionChanged {
  */
 struct PersonJoinedEvent {
     const Person& person;
-    std::string   zoneName;
-    std::time_t   timestamp;
+    Zone*         zone = nullptr;
+    Moment        timestamp;
 
-    PersonJoinedEvent(const Person& p, const std::string& zone)
-        : person(p), zoneName(zone), timestamp(std::time(nullptr)) {}
+    PersonJoinedEvent(const Person& p, Zone& z)
+        : person(p), zone(&z), timestamp(Moment::now()) {}
 };
 
 struct PersonLeftZoneEvent {
     const Person& person;
-    std::string   zoneName;
-    std::time_t   timestamp;
+    Zone*         zone = nullptr;
+    Moment        timestamp;
 
-    PersonLeftZoneEvent(const Person& p, const std::string& zone)
-        : person(p), zoneName(zone), timestamp(std::time(nullptr)) {}
+    PersonLeftZoneEvent(const Person& p, Zone& z)
+        : person(p), zone(&z), timestamp(Moment::now()) {}
 };
 
 struct PersonLoginEvent {
     const Person& person;
     std::string   sessionId;
-    std::time_t   timestamp;
+    Moment        timestamp;
 
     PersonLoginEvent(const Person& p, const std::string& session = "")
-        : person(p), sessionId(session), timestamp(std::time(nullptr)) {}
+        : person(p), sessionId(session), timestamp(Moment::now()) {}
 };
 
 struct PersonLogoutEvent {
     const Person& person;
     std::string   sessionId;
-    std::time_t   timestamp;
+    Moment        timestamp;
 
     PersonLogoutEvent(const Person& p, const std::string& session = "")
-        : person(p), sessionId(session), timestamp(std::time(nullptr)) {}
+        : person(p), sessionId(session), timestamp(Moment::now()) {}
 };

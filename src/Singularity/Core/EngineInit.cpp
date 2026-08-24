@@ -325,7 +325,7 @@ void Engine::initLogic() {
 
     // Ensure _player initial position matches _camera.pos
     glm::vec3 anchor = _camera->pos - glm::vec3(0.0f, _player->getBody().getEyeHeight(), 0.0f);
-    _player->position = anchor;
+    _player->position() = anchor;
     // Route LocomotionChanged to the channel's clip libraries, then settle
     // the vessel into idle. Movement publishes the event that swaps idle
     // for a walk cycle (see Engine::update).

@@ -7,8 +7,8 @@
 // detection and interaction events.
 // ============================================================================
 
+#include "Time/Moment/Moment.hpp"
 #include <glm/glm.hpp>
-#include <ctime>
 
 // Forward declaration to avoid circular dependency
 class Object;
@@ -22,10 +22,10 @@ struct ObjectHoverEvent {
     const Object& object;
     glm::vec3 hoverPoint;
     glm::vec2 screenPosition;
-    std::time_t timestamp;
+    Moment timestamp;
     
     ObjectHoverEvent(const Object& obj, const glm::vec3& point, const glm::vec2& screen)
-        : object(obj), hoverPoint(point), screenPosition(screen), timestamp(std::time(nullptr)) {}
+        : object(obj), hoverPoint(point), screenPosition(screen), timestamp(Moment::now()) {}
 };
 
 // Triggered when mouse enters the object's bounds
@@ -33,10 +33,10 @@ struct ObjectHoverEnterEvent {
     const Object& object;
     glm::vec3 hoverPoint;
     glm::vec2 screenPosition;
-    std::time_t timestamp;
+    Moment timestamp;
     
     ObjectHoverEnterEvent(const Object& obj, const glm::vec3& point, const glm::vec2& screen)
-        : object(obj), hoverPoint(point), screenPosition(screen), timestamp(std::time(nullptr)) {}
+        : object(obj), hoverPoint(point), screenPosition(screen), timestamp(Moment::now()) {}
 };
 
 // Triggered when mouse exits the object's bounds
@@ -44,8 +44,8 @@ struct ObjectHoverExitEvent {
     const Object& object;
     glm::vec3 lastHoverPoint;
     glm::vec2 lastScreenPosition;
-    std::time_t timestamp;
+    Moment timestamp;
     
     ObjectHoverExitEvent(const Object& obj, const glm::vec3& point, const glm::vec2& screen)
-        : object(obj), lastHoverPoint(point), lastScreenPosition(screen), timestamp(std::time(nullptr)) {}
+        : object(obj), lastHoverPoint(point), lastScreenPosition(screen), timestamp(Moment::now()) {}
 };
