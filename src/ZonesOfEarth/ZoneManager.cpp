@@ -469,6 +469,38 @@ void ZoneManager::persistZones() const {
             }
         }
         const nlohmann::json doc = zoneToJson(*z);
+
+        // Bug #7's guard of last resort: never stamp an empty relation
+        // graph or lexeme set over a stored identity that still holds one.
+        // Fixes above should make the live Zone's graph correct before it
+        // gets here, but this is the check that would have caught the loss
+        // the day it happened, so it stays even if it now looks redundant.
+        if (identityExists) {
+            nlohmann::json existingGraph = dwelling ? SaveSystem::readHomeIdentity(id)
+                                                     : SaveSystem::readZoneIdentity(id);
+            if (existingGraph.is_object()) {
+                const std::size_t storedRelations =
+                    existingGraph.value("formationRelations", nlohmann::json::array()).size();
+                const std::size_t storedLexemes =
+                    existingGraph.value("lexemes", nlohmann::json::array()).size();
+                const std::size_t docRelations =
+                    doc.value("formationRelations", nlohmann::json::array()).size();
+                const std::size_t docLexemes =
+                    doc.value("lexemes", nlohmann::json::array()).size();
+                if ((docRelations == 0 && storedRelations > 0) ||
+                    (docLexemes == 0 && storedLexemes > 0)) {
+                    std::cerr << "[zones] REFUSED to persist "
+                              << (dwelling ? "Home" : "Zone") << " '" << id
+                              << "': live formation has " << docRelations
+                              << " relation(s)/" << docLexemes << " lexeme(s), "
+                              << "stored identity has " << storedRelations
+                              << " relation(s)/" << storedLexemes << " lexeme(s). "
+                              << "Protected the stored graph; nothing written.\n";
+                    continue;
+                }
+            }
+        }
+
         const bool wrote = dwelling ? SaveSystem::writeHomeIdentity(id, doc)
                                     : SaveSystem::writeZoneIdentity(id, doc);
         if (!wrote) {
@@ -960,7 +992,16 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
             if (!snapshotRestore && SaveSystem::zoneIdentityExists(id)) {
                 nlohmann::json identity = SaveSystem::readZoneIdentity(id);
                 if (identity.is_object()) {
-                    addZone(makeZoneFromJson(identity));
+                    auto z = makeZoneFromJson(identity);
+                    addZone(z);
+                    // Bug #7: the store wins on objects (that is the point
+                    // of per-Zone identity), but the store may be missing
+                    // things the session snapshot still holds — most
+                    // critically the formation relation graph, which used
+                    // to have no load path of its own. Merge rather than
+                    // discard `zj` whole; replaceObjects=false keeps the
+                    // store's objects authoritative.
+                    applyZoneJson(*z, zj, /*replaceObjects=*/false);
                     return;
                 }
             }

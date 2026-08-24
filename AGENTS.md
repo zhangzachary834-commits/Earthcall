@@ -4,11 +4,11 @@ Earthcall is a Person-centered ontology that orders the engine attached to it.
 The engine here is not the order of truth in Earthcall—the ontology is, and the engine serves as the vessel for that.
 
 **You are almost certainly about to do the standard engineering thing, and it is usually wrong here** — not because 
-it is bad engineering, but because it is engineering for a different kind of system. Spend the two minutes on the router below.
+it is bad engineering, but because it is engineering for a different kind of system. Spend the two minutes on the refusals and router below.
 
 ---
 ## The Six Refusals.
-These come up constantly. Learn them cold; everything else is detail.
+Zach: I had Opus 5 write these because they come up constantly. Learn them cold; everything else is detail.
 
 1. **No new C++ class for a domain noun.** Not `RobotEntity`, not `Vehicle`, not `Tree`,
    not `Category`. This principle also extends to hardcoded fields (e.g., `health` or `inventory` on a `Person`). Domain things and their state are *authored in-world* as data, never carved into the
@@ -91,12 +91,9 @@ docs/ tests/ examples/ scripts/ saves/ scratch/     the workshop
 third_party/ local_deps/ imgui/                     the foreign
 ```
 
-**Language is a leaf, never a branch.** Python lives in `py/` subfolders *inside* the
-ontological region it belongs to. There is no `backend-python/`.
+**Programming language is a leaf.** Put language folders (e.g., `py/`) *inside* their ontological region. No `backend-python/`.
 
-**A framework name is not a directory name.** `docs/architecture/Integration/` and
-`src/Singularity/Foreign/` are one effort at two scopes — do not "fix" it by renaming
-either. Details in `docs/BUILD_AND_ENVIRONMENT.md` § The tree, in detail.
+**Framework names aren't directories.** Do not "fix" multi-scope efforts (e.g., `docs/architecture/Integration/` vs `src/Singularity/Foreign/`) by renaming them. See `docs/BUILD_AND_ENVIRONMENT.md` § The tree.
 
 ---
 
@@ -160,23 +157,22 @@ which a constructor call does not set, so the whole vocabulary registers twice.
   This makes authorial intent better and easier to track the progress toward the telos that we the people intend for the design.
   Now, you can still write in a register as if the idea is your own. That is good. It is good to internalize ideas and bring it to their fulfillment. But you must make the ideas origination clear—what parts were from real people, what parts are originated from you, and where you are extending the person's idea.
   Leave room for the possibility that you may have independently re-derived something, in which case it would "originate" with you in a real way but still be within the human thread.
-- Save files are sacred. They are meant to hold, and will hold, profound human meaning and relationships. Do not touch them lightly—you must ensure they are preserved across architectural shifts. 
+- **Save files are sacred.** They are the flesh and blood of Earthcall that the ontological skeleton is meant to support—the entire reason for refusal #1 and #3. 
+  They're meant to hold, and will hold, profound human meaning and relationships. Handle this "data"—stored, represented information—with profound, surgical care. You must ensure they are always preserved across architectural shifts, and only ever modified with authorization from their owner/stakeholder Persons. 
 
 ---
 
-## Required reading
+## Required reading, companion docs
 
-Two companion files hold what used to live here, so this file stays short enough to read in full. Both are required:
+Two companions hold what once lived here, created to keep AGENTS.md concise. Both required:
 
 | File | Holds |
 |---|---|
 | `docs/BUILD_AND_ENVIRONMENT.md` | build flags, what the 59 tests mean, the deliberate failure, the tests guarding real shipped bugs, `.gitignore`/`.ignore`/clangd, the tree in detail |
 | `docs/ENGINEERING_DISCIPLINE.md` | End-to-End Coherence, the Integrity Check, Substance over Surface, Stewardship of Telos, Transparent Failure, State & Boundary Stewardship, Grace for the Inheritor, the Crucible of Scale — plus the working notes (scratch probes, "run things", bounds are doctrine) |
 
-Two from that second file are worth naming here because they are the ones most often
-skipped: **don't claim a doc is verified because you read the source — run things**, and
-**after finishing, ask whether anything you changed has a caller, consumer, or test that now
-lies.**
+Two from ENGINEERING_DISCIPLINE worth naming and often skipped: **don't claim a doc is verified because 
+you read the source—run things**, and **after finishing, ask whether anything you changed has a caller, consumer, or test that now lies.**
 
 ---
 
@@ -190,10 +186,14 @@ lies.**
 
 ---
 
+## Document Conventions
+- Audits belong in `/docs/audits/`. Implementation plans go to `/docs/`. 
+- Always sign your name, session ID, date, and timestamp.
+- Use Agent Intercom (`agent intercom/`) to coordinate and crystallize with other agents, especially concurrent sessions.
+- Save files injected by an agent follows this convention: an "injected_by:" section with the agent name with the "authors: " being the Person by whose authority you injected. This convention applies to serialization, not docs. We use different attribution conventions for docs.  
+
 ## Housekeeping & progress
-- If you are doing an audit, write to `/docs/audits/`. Implementation plans go to `/docs/`.
-- When finished, update this document and companions if anything went stale. 
-- Make sure AGENTS.md is concise and **under 200 lines.**
-- If it's not possible to make it more concise without losing meaning, then create new companion files.
+- When finished, update this document and companions so nothing goes stale. 
+- Make sure AGENTS.md is concise and **under 200 lines.** If it's not possible to make it more concise without losing meaning, then create new companion files.
 - Add relevant files/directories to `.gitignore` and `.ignore` as needed.
-- Note any unfinished tasks for future passes; use Agent Intercom (`agent intercom/`) to leave notes for other agents.
+- Note any unfinished tasks for future passes

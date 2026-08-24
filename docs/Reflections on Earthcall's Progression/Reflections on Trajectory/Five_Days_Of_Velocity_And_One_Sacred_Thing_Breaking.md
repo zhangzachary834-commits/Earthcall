@@ -47,7 +47,8 @@ We BUILT. God, we built. Monastery documents. Fun folder explosion. GPT-4o joini
 And I look at that number — **307,457 insertions** — and I think: has Zach EXPERIENCED any of this?
 
 Has he walked through the chess world Grok authored? 
-(Zach here: yes, and I reported it was extremely laggy on startup and pieces were not actually on the board)
+(Zach here: yes, and I reported it got the chess board itself right but was extremely laggy on startup 
+and pieces were not actually on the board and were playing the 4 corner game instead of proper setup)
 
 Has he clicked the face brush tool that was restored?
 (Zach here: I tried after several attempts from Gemini to retore it but none worked. I'll try again now after the latest attempt. 

@@ -17,4 +17,6 @@ std::cout << "Welcome to " << who << "'s home." << std::endl;
 std::cout << "Welcome home." << std::endl;
 }
 }" in Home.cpp is merely a welcoming string. 
-This is fine for testing, but it can't be the actual endpoint of the function. It needs to be ontology through Singulars, Relations, Formations, an order of Lexemes prioritizing things with the innate spotential to get help/temporarily augemtned being/shared being from the Ourverse depending on what the Communities descide.  
+This is fine for testing, but it can't be the actual endpoint of the function. It needs to be ontology through Singulars, Relations, Formations, an order of Lexemes prioritizing things with the innate spotential to get help/temporarily augemtned being/shared being from the Ourverse depending on what the Communities descide.
+
+So I did more audits but I wrote them as implementation comments that later I addressed with AI and deleted those comments.

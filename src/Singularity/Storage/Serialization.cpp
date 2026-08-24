@@ -17,6 +17,8 @@
 #include <memory>
 #include <algorithm>
 #include <unordered_set>
+#include <set>
+#include <tuple>
 
 extern MaterialManager materials;
 extern CategoryManager categories;
@@ -821,13 +823,26 @@ void applyFormationRelations(Zone& zone, const nlohmann::json& zj) {
     // edges bind to beings, not leftover name-strings.
     zone.syncFormationMembers();
     internZoneLexemes(zone, zj);
+
+    // Called on every load now (not just when the Zone arrives with no
+    // objects — Bug #7), so a relation already present by type + both
+    // endpoint ids is skipped rather than duplicated.
+    std::set<std::tuple<std::string, std::string, std::string>> existing;
+    for (const auto& r : zone.formation().relations().getAll()) {
+        if (r) existing.insert({r->type, r->aId(), r->bId()});
+    }
+
     size_t refused = 0;
     for (const auto& relJson : zj["formationRelations"]) {
         auto rel = std::make_shared<Relation>(Relation::fromJson(relJson, [&](const std::string& id) {
             return resolveZoneEndpoint(zone, id);
         }));
+        const auto key = std::make_tuple(rel->type, rel->aId(), rel->bId());
+        if (existing.count(key)) continue;
         if (!zone.formation().add(rel)) {
             ++refused;
+        } else {
+            existing.insert(key);
         }
     }
     if (refused > 0) {
@@ -932,8 +947,12 @@ void applyZoneJson(Zone& zone, const nlohmann::json& zj, bool replaceObjects) {
         } else if (zj.contains("objects")) {
             zoneObjectsFromJson(zj, zone);
         }
-        applyFormationRelations(zone, zj);
     }
+    // Bug #7: this used to be nested in the empty-objects branch above, so
+    // a Zone that already held objects (kept live, or just hydrated from
+    // the store) could never receive its relation graph or lexemes. Now
+    // idempotent (see applyFormationRelations), it always runs.
+    applyFormationRelations(zone, zj);
     if (auto* home = dynamic_cast<Home*>(&zone)) {
         if (zj.value("primary", false)) home->markPrimaryHome();
         if (zj.contains("stakes") && zj["stakes"].is_array()) {
