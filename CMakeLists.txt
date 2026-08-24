@@ -248,10 +248,9 @@ if(NOT EMSCRIPTEN)
     # ctest reports them "Not Run". Take a name off this list the moment the
     # feature it describes lands.
     #
-    #   webgpu_particle_test  wants WebGpuRenderer::drawParticles(FieldNode&, int),
-    #                         a GPU particle pipeline over a field. It has never
-    #                         existed in any commit; the test has never compiled.
-    set(PENDING_FEATURE_TESTS webgpu_particle_test)
+    #   (none right now — webgpu_particle_test landed 2026-08-24: drawParticles
+    #    added to WebGpuRenderer, see WebGpuRenderer.cpp)
+    set(PENDING_FEATURE_TESTS "")
     set(ALL_ACTIVE_TEST_TARGETS "")
 
     foreach(TEST_SOURCE ${TEST_FILES})

@@ -23,13 +23,15 @@ copy — and `Zone`, `Relation`, and `Object` all have copy constructors that ru
 The to-do list already recorded "Singular copy drops the map" as a known gap under authored
 properties (2026-08-23); this is that gap, and it is now closed in code.
 
-**To do:**
-- [ ] Regression test: construct a `Singular`, `AddProperty` several dynamic properties of
-      different `PropertyValue` kinds, set `name` / `designatedZones` / `_stakeholders`, copy
-      **and** move it, assert every field survives both. Confirm it fails on `ce5c1cbe^`.
-- [ ] Add to `Bugs.md` with the real title. A root-class slicing bug filed under "chess lag"
-      is invisible to anyone reading the log, and this will revert the next time somebody
-      tidies a constructor.
+**Done (2026-08-24):**
+- [x] Regression test: `tests/constructed-being/singular_copy_move_test.cpp` — a concrete
+      `Singular` subclass, dynamic properties of five `PropertyValue` kinds
+      (`int`/`float`/`bool`/`std::string`/`glm::vec3`), `name` / `designatedZones` /
+      `_stakeholders` / a `DataStructure` / `_telosId`, all copy-constructed, copy-assigned,
+      move-constructed, and move-assigned (50 checks). Confirmed 36/50 fail on `ce5c1cbe^`
+      (via `git worktree add` against that commit) before confirming 50/50 pass here.
+- [x] Added to `Bugs.md` #8 with the real title ("`Singular` copy and move silently dropped
+      every authored field"), marked done and verified.
 
 ## 2. `applyAndMaybeDrive` — right change, possible new hot loop
 

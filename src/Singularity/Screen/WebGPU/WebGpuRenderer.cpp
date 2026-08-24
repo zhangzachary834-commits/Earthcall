@@ -2,6 +2,7 @@
 #include "Singularity/Screen/WebGPU/WgpuDevice.hpp"
 #include "Singularity/Screen/WebGPU/SdfWgsl.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <cstdio>
@@ -795,6 +796,36 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, float extent,
     wgpuRenderPassEncoderSetBindGroup(_pass, 0, bg, 0, nullptr);
     wgpuRenderPassEncoderSetVertexBuffer(_pass, 0, _sdfCubeVerts, 0, 36 * sizeof(glm::vec3));
     wgpuRenderPassEncoderDraw(_pass, 36, 1, 0, 0);
+}
+
+void WebGpuRenderer::drawParticles(const geom::FieldNode& field, int count) {
+    if (!_pass || count <= 0 || !field.vectorField) return;
+
+    const glm::vec3 flow(field.vectorField->baseFlowX,
+                         field.vectorField->baseFlowY,
+                         field.vectorField->baseFlowZ);
+    const float speed = glm::length(flow);
+    const glm::vec3 flowDir = speed > 1e-6f ? flow / speed : glm::vec3(0.0f, 1.0f, 0.0f);
+    const float travel = field.vectorField->amplitude * glm::length(field.scale);
+
+    // xorshift32, seeded per-particle by index rather than carried across calls:
+    // the same (field, count) always produces the same cloud, so this needs no
+    // buffer to persist between frames and no dt the caller would have to supply.
+    std::vector<glm::vec3> verts;
+    verts.reserve(static_cast<size_t>(count));
+    for (int i = 0; i < count; ++i) {
+        uint32_t h = static_cast<uint32_t>(i) * 2654435761u + 1u;
+        auto rnd = [&h]() {
+            h ^= h << 13; h ^= h >> 17; h ^= h << 5;
+            return static_cast<float>(h & 0xFFFFFFu) / static_cast<float>(0xFFFFFFu);
+        };
+        const glm::vec3 local(rnd() * 2.0f - 1.0f, rnd() * 2.0f - 1.0f, rnd() * 2.0f - 1.0f);
+        const float phase = rnd();
+        verts.push_back(field.origin + local * field.scale + flowDir * (phase * travel));
+    }
+
+    drawFlat(flatPipeline(WGPUPrimitiveTopology_PointList, Blend::Additive, DepthMode::TestOnly),
+             verts, _viewProj * _model, glm::vec4(0.6f, 0.8f, 1.0f, 0.9f));
 }
 
 void WebGpuRenderer::drawFlat(WGPURenderPipeline pipe, const std::vector<glm::vec3>& verts,

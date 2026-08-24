@@ -111,14 +111,15 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
 
 cmake --build build --target earthcall -j8
 cmake --build build -j8                               # tests are NOT built by the line above
-ctest --test-dir build --output-on-failure -j4        # 64 registered, 63 pass (2026-08-24)
+ctest --test-dir build --output-on-failure -j4        # 65 registered, 65 pass (2026-08-24)
 ```
 
 Both flags are required (no system OpenSSL; CMake 4.x rejects websocketpp).
 **`--target earthcall` does not build the tests** — skip the default target and `ctest`
 reports every test `Not Run`, which reads like a mass failure and is not one.
-`webgpu_particle_test` is **deliberate** (`PENDING_FEATURE_TESTS`); `chess_app_test` is a real
-open failure (Bugs.md #7, 2026-08-24, not yours). Check both before blaming your change.
+`PENDING_FEATURE_TESTS` is empty as of 2026-08-24 (`webgpu_particle_test` landed —
+`WebGpuRenderer::drawParticles`). `chess_app_test` was a real failure (Bugs.md #7) but is
+fixed and green as of 2026-08-24 — a red re-run is a genuine regression, not a known issue.
 
 **Sources are globbed at configure time** — add or remove a `.cpp`, including deleting a
 scratch probe, and you must reconfigure or get a phantom link error. **Never call
@@ -196,4 +197,4 @@ you read the source—run things**, and **after finishing, ask whether anything 
 - When finished, update this document and companions so nothing goes stale. 
 - Make sure AGENTS.md is concise and **under 200 lines.** If it's not possible to make it more concise without losing meaning, then create new companion files.
 - Add relevant files/directories to `.gitignore` and `.ignore` as needed.
-- Note any unfinished tasks for future passes
+- At the end of each pass, if there are any visible changes Persons (like me, Zach) should see as a result of your work, you should note them and explain what exaxtly we should see under what conditions. Note any unfinished tasks for future passes

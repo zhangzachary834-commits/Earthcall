@@ -78,6 +78,16 @@ public:
     void drawImplicit(const geom::SdfNode& field, float extent,
                       const RenderMaterial& material,
                       const geom::FieldNode* fieldNode = nullptr) override;
+
+    // Vector-field visualization (Milestone 6b): drawImplicit renders a SCALAR
+    // field's surface; this renders a VECTOR field's flow as points. Positions are
+    // procedural — hashed from the particle index into the field's origin/scale
+    // box and carried along baseFlow by a per-particle phase — not a persistent
+    // simulation, so this is stateless and safe to call with a different `count`
+    // every frame. WebGPU-specific for now, same as the frame-lifecycle methods
+    // above; not on the Renderer interface because nothing else implements it yet.
+    void drawParticles(const geom::FieldNode& field, int count);
+
     void drawLines(const std::vector<std::pair<glm::vec3, glm::vec3>>& segments,
                    const glm::vec4& color, float width, Blend blend) override;
     void drawOverlay(const geom::TessMesh& mesh, const glm::vec4& color,

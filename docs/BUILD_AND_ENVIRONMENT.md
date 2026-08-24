@@ -49,7 +49,7 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
 
 cmake --build build --target earthcall -j8
 cmake --build build -j8                               # tests are NOT built by the line above
-ctest --test-dir build --output-on-failure -j4        # 64 registered, 63 pass
+ctest --test-dir build --output-on-failure -j4        # 65 registered, 65 pass
 ```
 
 **`--target earthcall` does not build the tests.** `ctest` will then report every test as
@@ -66,32 +66,40 @@ The Python backend starts from `src/Singularity/Foreign/py/app.py`.
 
 ## The test suite
 
-**As of 2026-08-24, 61 of 63 tests pass and the default build is clean.** `zone_facetexture_test` guards Home/Zone identity materials (FaceTextures persist across session loads). `chess_app_test` guards the authored chess world (`saves/worlds/chess_app.json`) and is currently **red** — see below. The thirteen
+**As of 2026-08-24, 65 of 65 tests pass and the default build is clean.** `zone_facetexture_test` guards Home/Zone identity materials (FaceTextures persist across session loads). `chess_app_test` guards the authored chess world (`saves/worlds/chess_app.json`) and is green again — see below. The thirteen
 that were broken were stale against three refactors, not against each other:
 `Rendering/` → `Singularity/Screen/` and `Util/` → `Singularity/Storage/`;
 `Object::GeometryType` → `ShapeKind`; the placement and tool fields off `Person` and onto
 `Singularity::Core::CreationChannel` (refusal #1 being enforced); `Zone` off `Object` and
 onto `Singular`, losing the tint and brush a canvas has and a space does not.
 
-There are two failures, and they are not the same kind of thing.
+There are no known failures, deliberate or otherwise.
 
-**`chess_app_test` is a real, open regression** (2026-08-24) and is **not** in
-`PENDING_FEATURE_TESTS`. The Zone identity store lost the relation graph — every
-`saves/zones/*/zone.json` carries `formationRelations: []` while `saves/worlds/chess.json`
-carries 38 — so `law-chess-click` and `law-chess-select` report `conditions-failed` and the
-test aborts at `chess_app_test.cpp:221`. It is Bugs.md #7 with a full trace in
-`docs/audits/ZONE_RELATION_GRAPH_LOSS_AUDIT_2026-08-24.md` and a fix order in
-`docs/Agenda/Tasks/Specific Tasks/Zone_Relation_Graph_Loss.md`. It is not your change. It is
-also not permission to stop reading the suite: when it goes green the count is 62, and any
-third failure is yours.
+**`chess_app_test` was a real, open regression (Bugs.md #7, 2026-08-24) and is now fixed and
+guarded.** The Zone identity store lost the relation graph — every `saves/zones/*/zone.json`
+carried `formationRelations: []` while `saves/worlds/chess.json` carried 38 — so
+`law-chess-click` and `law-chess-select` reported `conditions-failed`. Three defects fixed in
+series in `Serialization.cpp` / `ZoneManager.cpp`; full trace in
+`docs/audits/ZONE_RELATION_GRAPH_LOSS_AUDIT_2026-08-24.md`, resolution recorded in
+`docs/Agenda/Tasks/Specific Tasks/Zone_Relation_Graph_Loss.md`. Guarded independently by
+`tests/zones/zone_relation_roundtrip_test.cpp` so `chess_app_test` is not the only witness. If
+this test goes red again, it is a real regression — read the audit before touching either
+file.
 
-The other failure is **`webgpu_particle_test`, and it is deliberate**. It calls
-`WebGpuRenderer::drawParticles(FieldNode&, int)`, which has never existed in any commit —
-the test was written against an unbuilt feature and has never compiled. It is kept as that
-feature's specification, listed in `PENDING_FEATURE_TESTS` in `CMakeLists.txt`, and
-excluded from the default target so the build is not red for work nobody has started;
-`ctest` reports it `Not Run`. Take a name off that list when its feature lands. Do not read
-a red suite as evidence that your change broke something until you have checked it here.
+**`webgpu_particle_test` landed 2026-08-24.** It called `WebGpuRenderer::drawParticles(FieldNode&, int)`,
+which had never existed in any commit — the test was written against an unbuilt feature and
+had never compiled, and was excluded from the default target via `PENDING_FEATURE_TESTS` in
+`CMakeLists.txt` so the build was not red for work nobody had started. `drawParticles` now
+exists (`src/Singularity/Screen/WebGPU/WebGpuRenderer.cpp`): it visualizes a `FieldNode`'s
+`VectorField` as GPU points, reusing the existing flat-colour pipeline machinery
+(`flatPipeline`/`drawFlat`) with `WGPUPrimitiveTopology_PointList` rather than building a
+parallel one. Particle positions are procedural — an index-seeded xorshift hash places each
+particle inside the field's origin/scale box, then carries it along `baseFlow` by a random
+phase — so the call is stateless (no simulation buffer to step forward, no `dt` the caller
+would need to supply) and deterministic for a given `(field, count)`. `PENDING_FEATURE_TESTS`
+is now empty; add a name back to it if a future test lands ahead of its feature, and take it
+off the moment that feature lands. Do not read a red suite as evidence that your change broke
+something until you have checked it here.
 
 ### Tests that exist because of what got past the suite, not to pad it
 
