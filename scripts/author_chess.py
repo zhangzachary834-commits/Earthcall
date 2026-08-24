@@ -1203,6 +1203,7 @@ def build_world():
     board_sx, board_sy, board_sz = 8.0 * TILE, BOARD_DEPTH, 8.0 * TILE
     board = {
         "objectID": "object.chess.board",
+        "baseline": "ground",
         "shapeKind": 0,
         "geometryType": 0,
         "shapeParams": [0.5, 0.5, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0],

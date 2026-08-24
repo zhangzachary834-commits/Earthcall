@@ -612,6 +612,7 @@
         "objects": [
           {
             "objectID": "object.chess.board",
+            "baseline": "ground",
             "shapeKind": 0,
             "geometryType": 0,
             "shapeParams": [
