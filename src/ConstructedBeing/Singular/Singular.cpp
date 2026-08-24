@@ -6,17 +6,46 @@
 
 Singular::Singular() = default;
 Singular::~Singular() = default;
-Singular::Singular(const Singular& o) : _telosId(o._telosId) {}
+Singular::Singular(const Singular& o)
+    : designatedZones(o.designatedZones),
+      _stakeholders(o._stakeholders),
+      _dynamicProperties(o._dynamicProperties),
+      _dataStructures(o._dataStructures),
+      name(o.name),
+      _telosId(o._telosId) {}
+
 Singular& Singular::operator=(const Singular& o) {
-    if (this != &o) _telosId = o._telosId;
+    if (this != &o) {
+        designatedZones = o.designatedZones;
+        _stakeholders = o._stakeholders;
+        _dynamicProperties = o._dynamicProperties;
+        _dataStructures = o._dataStructures;
+        name = o.name;
+        _telosId = o._telosId;
+    }
     _propertyRegistry.clear();
     _property_formation = nullptr;
     _propertiesBuilt = false;
     return *this;
 }
-Singular::Singular(Singular&& o) noexcept : _telosId(std::move(o._telosId)) {}
+
+Singular::Singular(Singular&& o) noexcept
+    : designatedZones(std::move(o.designatedZones)),
+      _stakeholders(std::move(o._stakeholders)),
+      _dynamicProperties(std::move(o._dynamicProperties)),
+      _dataStructures(std::move(o._dataStructures)),
+      name(std::move(o.name)),
+      _telosId(std::move(o._telosId)) {}
+
 Singular& Singular::operator=(Singular&& o) noexcept {
-    if (this != &o) _telosId = std::move(o._telosId);
+    if (this != &o) {
+        designatedZones = std::move(o.designatedZones);
+        _stakeholders = std::move(o._stakeholders);
+        _dynamicProperties = std::move(o._dynamicProperties);
+        _dataStructures = std::move(o._dataStructures);
+        name = std::move(o.name);
+        _telosId = std::move(o._telosId);
+    }
     _propertyRegistry.clear();
     _property_formation = nullptr;
     _propertiesBuilt = false;

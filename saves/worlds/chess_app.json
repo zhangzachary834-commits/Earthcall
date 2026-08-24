@@ -15,8 +15,8 @@
   ],
   "cameraUp": [
     0.0,
-    0.83,
-    0.55
+    1.0,
+    0.0
   ],
   "yaw": 90.0,
   "pitch": -35.0,
@@ -5053,7 +5053,9 @@
       "physics-acoustics": false,
       "interaction-channel": true,
       "locomotion-channel": true,
-      "creation-channel": true
+      "creation-channel": false,
+      "shape-generator-3d-law": false,
+      "tool-create-3d-law": false
     },
     "formationMembers": [
       "law-chess-click",
@@ -13424,7 +13426,7 @@
         "name": "game-over-if-king-unmade",
         "enabled": true,
         "authority": 0,
-        "activation": 1,
+        "activation": 0,
         "scope": 1,
         "drives": false,
         "retrigger": 0,
@@ -13506,7 +13508,7 @@
         "name": "mark-white-to-move",
         "enabled": true,
         "authority": 0,
-        "activation": 1,
+        "activation": 0,
         "scope": 1,
         "drives": false,
         "retrigger": 0,
@@ -13585,7 +13587,7 @@
         "name": "mark-black-to-move",
         "enabled": true,
         "authority": 0,
-        "activation": 1,
+        "activation": 0,
         "scope": 1,
         "drives": false,
         "retrigger": 0,
@@ -13745,6 +13747,15 @@
         "check-evaluated"
       ],
       "law-chess-clear-capture-flag": [
+        "turn-changed"
+      ],
+      "law-chess-king-unmade-is-mate": [
+        "enemy-captured"
+      ],
+      "law-chess-seat-white": [
+        "turn-changed"
+      ],
+      "law-chess-seat-black": [
         "turn-changed"
       ]
     }

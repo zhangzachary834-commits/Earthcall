@@ -41,6 +41,12 @@ bool neard(const PropertyValue& a, const PropertyValue& b, double eps = 1e-9) {
 }
 
 int main() {
+    Object author;
+    author.setObjectID("math-author");
+    Universe::instance().setProvider([&](std::vector<Singular*>& beings) {
+        beings.push_back(&author);
+    });
+
     {
         using OntoMath::ScalarForm;
         using OntoMath::Piecewise;
@@ -122,7 +128,6 @@ int main() {
         // 6. Zone condition: the disk x² + z² ≤ 4 — a mathematically-defined
         //    satisfaction zone, desmos-precise, as a law's condition.
         // ------------------------------------------------------------------
-        Object author;
         ScalarForm paraboloid;
         paraboloid.terms.push_back(Term(1.0, {{"x", 2.0}}));
         paraboloid.terms.push_back(Term(1.0, {{"z", 2.0}}));
@@ -700,6 +705,7 @@ int main() {
             }
         }
 
+    Universe::instance().setProvider({});
     std::puts("ontomath_test: ALL OK");
     return 0;
 }

@@ -368,7 +368,10 @@ ECA::ConditionPredicate ConditionNode::compile() const {
                 for (const auto& [k, v] : *vars) pVars[k] = PropertyValue(v);
                 const auto valProp = f.evaluate(pVars, &target);
                 std::optional<double> value;
-                if (valProp && std::holds_alternative<double>(*valProp)) value = std::get<double>(*valProp);
+                if (valProp) {
+                    double d = 0.0;
+                    if (propertyValueToNumber(*valProp, d)) value = d;
+                }
                 if (!value) return false;
                 double bound = 0.0;
                 if (propertyValueToNumber(zlo, bound) && *value < bound) return false;

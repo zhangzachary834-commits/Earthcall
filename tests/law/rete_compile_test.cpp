@@ -54,8 +54,8 @@ double readNumber(Object& obj, const char* dotted) {
 }
 
 void writeFloat(Object& obj, const char* dotted, float value) {
-    assert(PropertyPath::parse(dotted).setValue(obj, PropertyValue(value)) ==
-           PropertyPath::PathResult::Ok);
+    auto res = PropertyPath::parse(dotted).setValue(obj, PropertyValue(value));
+    assert(res == PropertyPath::PathResult::Ok || res == PropertyPath::PathResult::Unchanged);
 }
 
 // Hand-assert one `property-state` fact, the way the world seeding pass does.

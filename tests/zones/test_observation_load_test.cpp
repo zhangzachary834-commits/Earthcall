@@ -58,7 +58,7 @@ Person makePlayer() {
     Soul soul("Player");
     Body body("humanoid", "default");
     Person player(std::move(soul), std::move(body), "default");
-    player.position = glm::vec3(10.0f, 0.0f, 10.0f);
+    player.position() = glm::vec3(10.0f, 0.0f, 10.0f);
     player.cameraPos = glm::vec3(10.0f, player.getBody().getEyeHeight(), 10.0f);
     player.cameraForward = glm::vec3(0.0f, 0.0f, -1.0f);
     return player;
@@ -154,7 +154,7 @@ int main() {
 
     const float eyeH = player.getBody().getEyeHeight();
     const glm::vec3 expectedPerson = camera.pos - glm::vec3(0.0f, eyeH, 0.0f);
-    check(glm::distance(player.position, expectedPerson) < 1e-3f,
+    check(glm::distance(player.position(), expectedPerson) < 1e-3f,
           "Person.position matches camera so locomotion will not snap the view back");
     check(glm::distance(player.cameraPos, camera.pos) < 1e-3f,
           "Person.cameraPos matches the Camera the render path uses");
@@ -185,7 +185,7 @@ int main() {
         }
         check(homeAfterFixture, "Home still present after observing the real fixture");
         const glm::vec3 expectedAfter = camera.pos - glm::vec3(0.0f, eyeH, 0.0f);
-        check(glm::distance(player.position, expectedAfter) < 1e-3f,
+        check(glm::distance(player.position(), expectedAfter) < 1e-3f,
               "Person remains settled on the camera after the fixture load");
     } else {
         std::cout << "  skip: saves/tests/basic_cube_law_test_final.json is not on disk "

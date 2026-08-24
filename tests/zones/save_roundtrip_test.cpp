@@ -158,7 +158,7 @@ int main() {
               listedPath.compare(listedPath.size() - 5, 5, ".json") == 0,
           "the list prefers the readable json");
 
-    player.position = glm::vec3(100.0f, 0.0f, 100.0f);
+    player.position() = glm::vec3(100.0f, 0.0f, 100.0f);
     camera.pos = glm::vec3(0.0f, 0.0f, 0.0f);
     worldTime = 0.0;
     mgr.loadState(jsonPath.string(), ctx);
@@ -172,18 +172,18 @@ int main() {
 
     const float eyeH = player.getBody().getEyeHeight();
     const glm::vec3 expectedPerson = camera.pos - glm::vec3(0.0f, eyeH, 0.0f);
-    check(glm::distance(player.position, expectedPerson) < 1e-3f,
+    check(glm::distance(player.position(), expectedPerson) < 1e-3f,
           "Person.position matches camera after loadState so locomotion will not snap the view");
     check(glm::distance(camera.pos, glm::vec3(4.0f, 6.0f, 8.0f)) < 1e-3f,
           "camera returns to the saved viewpoint");
 
-    player.position = glm::vec3(50.0f, 0.0f, 50.0f);
+    player.position() = glm::vec3(50.0f, 0.0f, 50.0f);
     mgr.loadState(ecsavePath.string(), ctx);
     check(countId(mgr, "first-spawned") == 1 &&
               countId(mgr, "second-spawned") == 1 &&
               countId(mgr, "third-spawned") == 1,
           "loading the .ecsave twin restores the same three beings");
-    check(glm::distance(player.position, camera.pos - glm::vec3(0.0f, eyeH, 0.0f)) < 1e-3f,
+    check(glm::distance(player.position(), camera.pos - glm::vec3(0.0f, eyeH, 0.0f)) < 1e-3f,
           "Person is settled after an .ecsave load too");
 
     mgr.switchTo(1);
@@ -191,7 +191,7 @@ int main() {
     check(countId(mgr, "first-spawned") == 1,
           "switchTo Home does not steal Sanctum's objects");
     mgr.saveStateWithLog("saved_from_home", ctx);
-    player.position = glm::vec3(70.0f, 0.0f, 70.0f);
+    player.position() = glm::vec3(70.0f, 0.0f, 70.0f);
     mgr.loadState((sandbox / "worlds" / "saved_from_home.json").string(), ctx);
     check(mgr.currentIndex() == 1, "load restores Home as the current Zone");
     check(countId(mgr, "first-spawned") == 1 &&

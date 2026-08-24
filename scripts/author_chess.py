@@ -1061,8 +1061,8 @@ def build_laws():
     add_law(
         "law-chess-king-unmade-is-mate",
         "game-over-if-king-unmade",
-        1,
-        [],
+        0,
+        ["enemy-captured"],
         all_of(
             IS_PIECE,
             is_role(5),
@@ -1077,8 +1077,8 @@ def build_laws():
     add_law(
         "law-chess-seat-white",
         "mark-white-to-move",
-        1,
-        [],
+        0,
+        ["turn-changed"],
         all_of(
             related("instance-of", "category.chess.player"),
             compare("playsColor", 0, pv("int", 0)),
@@ -1095,8 +1095,8 @@ def build_laws():
     add_law(
         "law-chess-seat-black",
         "mark-black-to-move",
-        1,
-        [],
+        0,
+        ["turn-changed"],
         all_of(
             related("instance-of", "category.chess.player"),
             compare("playsColor", 0, pv("int", 1)),
@@ -1329,7 +1329,7 @@ def build_world():
         "flying": True,
         "cameraPos": [0.0, 10.0, -12.0],
         "cameraFront": [0.0, -0.55, 0.83],
-        "cameraUp": [0.0, 0.83, 0.55],
+        "cameraUp": [0.0, 1.0, 0.0],
         "yaw": 90.0,
         "pitch": -35.0,
         "currentColor": [1.0, 1.0, 1.0],
@@ -1344,7 +1344,9 @@ def build_world():
                 "physics-acoustics": False,
                 "interaction-channel": True,
                 "locomotion-channel": True,
-                "creation-channel": True,
+                "creation-channel": False,
+                "shape-generator-3d-law": False,
+                "tool-create-3d-law": False,
             },
             "formationMembers": FORMATION,
             "laws": LAWS,
@@ -1358,12 +1360,15 @@ def main():
     root = Path(__file__).resolve().parents[1]
     session, zone = build_world()
     world_path = root / "saves" / "worlds" / "chess_app.json"
+    legacy_world_path = root / "saves" / "worlds" / "chess.json"
     zone_path = root / "saves" / "zones" / ZONE_ID / "zone.json"
     world_path.parent.mkdir(parents=True, exist_ok=True)
     zone_path.parent.mkdir(parents=True, exist_ok=True)
     world_path.write_text(json.dumps(session, indent=2) + "\n")
+    legacy_world_path.write_text(json.dumps(session, indent=2) + "\n")
     zone_path.write_text(json.dumps(zone, indent=2) + "\n")
     print(f"Authored {world_path}")
+    print(f"Authored {legacy_world_path}")
     print(f"Authored {zone_path}")
     print(f"  zone objects: {len(zone['world']['objects'])}")
     print(f"  pieces: {sum(1 for o in zone['world']['objects'] if o['objectID'].startswith('piece-'))}")

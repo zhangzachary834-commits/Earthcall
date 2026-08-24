@@ -1752,7 +1752,6 @@ void LawManager::applyAndMaybeDrive(Law& law, Singular& subject,
     records.push_back(record);
 
     if (result != Law::ApplicationResult::Applied) return;
-    if (!record.changedSomething()) return;   // nothing happened: nothing to drive
     maybeStartDriveSession(law, subject);
 }
 
