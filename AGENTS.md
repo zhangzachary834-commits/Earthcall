@@ -111,7 +111,7 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
 
 cmake --build build --target earthcall -j8
 cmake --build build -j8                               # tests are NOT built by the line above
-ctest --test-dir build --output-on-failure -j4        # 63 registered, 61 pass (2026-08-24)
+ctest --test-dir build --output-on-failure -j4        # 64 registered, 63 pass (2026-08-24)
 ```
 
 Both flags are required (no system OpenSSL; CMake 4.x rejects websocketpp).
