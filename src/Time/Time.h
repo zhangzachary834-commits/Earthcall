@@ -10,6 +10,8 @@
 
 class Time
 {
+    // Ok so we need a robust philosophy of time. Think: branch of high-level metaphysics that deals with time.
+
 };
 
 

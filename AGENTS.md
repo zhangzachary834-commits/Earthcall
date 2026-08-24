@@ -1,18 +1,13 @@
 # Earthcall — read this before writing code
 
-Earthcall is **an ontology with an engine prototype attached**, not a game engine with
-philosophy in the docs. The architecture is load-bearing: things that look like ordinary
-engineering decisions (adding a class, a folder, an enum value, *a field*) are ontological
-claims, and most are refused.
+Earthcall is a Person-centered ontology that orders the engine attached to it. 
+The engine here is not the order of truth in Earthcall—the ontology is, and the engine serves as the vessel for that.
 
-**You are almost certainly about to do the standard thing, and it is usually wrong here** —
-not because it is bad engineering, but because it is engineering for a different kind of
-system. Spend the two minutes on the router below.
+**You are almost certainly about to do the standard engineering thing, and it is usually wrong here** — not because 
+it is bad engineering, but because it is engineering for a different kind of system. Spend the two minutes on the router below.
 
 ---
-
-## The six refusals
-
+## The Six Refusals.
 These come up constantly. Learn them cold; everything else is detail.
 
 1. **No new C++ class for a domain noun.** Not `RobotEntity`, not `Vehicle`, not `Tree`,
@@ -119,14 +114,14 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
 
 cmake --build build --target earthcall -j8
 cmake --build build -j8                               # tests are NOT built by the line above
-ctest --test-dir build --output-on-failure -j4        # 63 registered, 62 pass
+ctest --test-dir build --output-on-failure -j4        # 63 registered, 61 pass (2026-08-24)
 ```
 
 Both flags are required (no system OpenSSL; CMake 4.x rejects websocketpp).
 **`--target earthcall` does not build the tests** — skip the default target and `ctest`
-reports every test `Not Run`, which reads like a mass failure and is not one. The one true
-failure, `webgpu_particle_test`, is **deliberate** (`PENDING_FEATURE_TESTS`); never read a
-red suite as proof you broke something before checking there.
+reports every test `Not Run`, which reads like a mass failure and is not one.
+`webgpu_particle_test` is **deliberate** (`PENDING_FEATURE_TESTS`); `chess_app_test` is a real
+open failure (Bugs.md #7, 2026-08-24, not yours). Check both before blaming your change.
 
 **Sources are globbed at configure time** — add or remove a `.cpp`, including deleting a
 scratch probe, and you must reconfigure or get a phantom link error. **Never call
@@ -165,6 +160,7 @@ which a constructor call does not set, so the whole vocabulary registers twice.
   This makes authorial intent better and easier to track the progress toward the telos that we the people intend for the design.
   Now, you can still write in a register as if the idea is your own. That is good. It is good to internalize ideas and bring it to their fulfillment. But you must make the ideas origination clear—what parts were from real people, what parts are originated from you, and where you are extending the person's idea.
   Leave room for the possibility that you may have independently re-derived something, in which case it would "originate" with you in a real way but still be within the human thread.
+- Save files are sacred. They are meant to hold, and will hold, profound human meaning and relationships. Do not touch them lightly—you must ensure they are preserved across architectural shifts. 
 
 ---
 
@@ -196,6 +192,8 @@ lies.**
 
 ## Housekeeping & progress
 - If you are doing an audit, write to `/docs/audits/`. Implementation plans go to `/docs/`.
-- When finished, update this document and companions if anything went stale (keep this file **under 200 lines**).
+- When finished, update this document and companions if anything went stale. 
+- Make sure AGENTS.md is concise and **under 200 lines.**
+- If it's not possible to make it more concise without losing meaning, then create new companion files.
 - Add relevant files/directories to `.gitignore` and `.ignore` as needed.
 - Note any unfinished tasks for future passes; use Agent Intercom (`agent intercom/`) to leave notes for other agents.

@@ -66,14 +66,26 @@ The Python backend starts from `src/Singularity/Foreign/py/app.py`.
 
 ## The test suite
 
-**As of 2026-08-23, 62 of 63 tests pass and the default build is clean.** `zone_facetexture_test` guards Home/Zone identity materials (FaceTextures persist across session loads). `chess_app_test` guards the authored chess world (`saves/worlds/chess_app.json`). The thirteen
+**As of 2026-08-24, 61 of 63 tests pass and the default build is clean.** `zone_facetexture_test` guards Home/Zone identity materials (FaceTextures persist across session loads). `chess_app_test` guards the authored chess world (`saves/worlds/chess_app.json`) and is currently **red** — see below. The thirteen
 that were broken were stale against three refactors, not against each other:
 `Rendering/` → `Singularity/Screen/` and `Util/` → `Singularity/Storage/`;
 `Object::GeometryType` → `ShapeKind`; the placement and tool fields off `Person` and onto
 `Singularity::Core::CreationChannel` (refusal #1 being enforced); `Zone` off `Object` and
 onto `Singular`, losing the tint and brush a canvas has and a space does not.
 
-The one remaining failure is **`webgpu_particle_test`, and it is deliberate**. It calls
+There are two failures, and they are not the same kind of thing.
+
+**`chess_app_test` is a real, open regression** (2026-08-24) and is **not** in
+`PENDING_FEATURE_TESTS`. The Zone identity store lost the relation graph — every
+`saves/zones/*/zone.json` carries `formationRelations: []` while `saves/worlds/chess.json`
+carries 38 — so `law-chess-click` and `law-chess-select` report `conditions-failed` and the
+test aborts at `chess_app_test.cpp:221`. It is Bugs.md #7 with a full trace in
+`docs/audits/ZONE_RELATION_GRAPH_LOSS_AUDIT_2026-08-24.md` and a fix order in
+`docs/Agenda/Tasks/Specific Tasks/Zone_Relation_Graph_Loss.md`. It is not your change. It is
+also not permission to stop reading the suite: when it goes green the count is 62, and any
+third failure is yours.
+
+The other failure is **`webgpu_particle_test`, and it is deliberate**. It calls
 `WebGpuRenderer::drawParticles(FieldNode&, int)`, which has never existed in any commit —
 the test was written against an unbuilt feature and has never compiled. It is kept as that
 feature's specification, listed in `PENDING_FEATURE_TESTS` in `CMakeLists.txt`, and
