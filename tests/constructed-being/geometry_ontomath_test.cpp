@@ -5,14 +5,14 @@
 // the suite was green for four of them, so each check below names the behaviour
 // it protects rather than just the function.
 
-#include "ConstructedBeing/Object/Object.hpp"
-#include "ConstructedBeing/Object/Creation/ObjectConcept.hpp"
-#include "ConstructedBeing/Object/Geometry/FieldNode.hpp"
-#include "ConstructedBeing/Object/Geometry/SmoothSurface.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Creation/ObjectConcept.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/SmoothSurface.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
-#include "ConstructedBeing/Object/Geometry/Patch.hpp"
-#include "ConstructedBeing/Object/Geometry/Sdf.hpp"
-#include "ConstructedBeing/Object/Geometry/SdfJson.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/Patch.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/SdfJson.hpp"
 #include "Singularity/OntoMath/ScalarForm.hpp"
 
 #include <cmath>

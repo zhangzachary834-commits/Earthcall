@@ -1,7 +1,7 @@
 #include "Singularity/Screen/WebGPU/SdfWgsl.hpp"
 
-#include "ConstructedBeing/Object/Geometry/Sdf.hpp"
-#include "ConstructedBeing/Object/Geometry/FieldNode.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
 
 #include <cstdio>
 #include <set>

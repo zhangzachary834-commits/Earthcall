@@ -11,7 +11,7 @@
 //      actual bounds — not existence of the slot.
 
 #include "ConstructedBeing/Material/Material.hpp"
-#include "ConstructedBeing/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
 #include "Person/Body/Body.hpp"

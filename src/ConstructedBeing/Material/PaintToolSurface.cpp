@@ -2,9 +2,9 @@
 // Per-face texture init, fill/paint/stroke/smudge/clone/airbrush, and layer/history ops.
 
 #include "PaintToolSurface.hpp"
-#include "ConstructedBeing/Object/Contour.hpp"
-#include "ConstructedBeing/Object/AngleTools.hpp"
-#include "ConstructedBeing/Object/Automation/AutomationEvents.hpp"
+#include "ConstructedBeing/Singular/Object/Contour.hpp"
+#include "ConstructedBeing/Singular/Object/AngleTools.hpp"
+#include "ConstructedBeing/Singular/Object/Automation/AutomationEvents.hpp"
 #include <GLFW/glfw3.h>
 #include <glm/gtc/quaternion.hpp>
 #include <algorithm>

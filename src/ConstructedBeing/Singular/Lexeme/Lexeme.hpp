@@ -36,6 +36,11 @@ protected:
 private:
     std::string _id;
     std::string _symbol;
+    // weight needs to be type-flexible not a primitive float, two reasons first obviously bc of doubles,
+    // and second because of modeling rich OntoMath Relations instead of merely numerical multiplications
+    // to maximize computational expressiveness. - Zach
+    // Flat fields can be kept if necessary for efficient compute with no advanced workaround to achieve the same result.
+    // However, even then they still don't replace a type flexible one.
     float _conceptualWeight = 1.0f;
 };
 

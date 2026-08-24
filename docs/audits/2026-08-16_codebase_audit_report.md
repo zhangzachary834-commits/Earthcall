@@ -81,9 +81,9 @@ Overall, the architectural integrity and adherence to ontological doctrine are e
 #### Finding 2.1: Volatile Object Identifier Generation and Law Target Fragility
 - **Severity:** High (Resolved)
 - **Affected Files:**
-  - `src/ConstructedBeing/Object/Object.hpp`
-  - `src/ConstructedBeing/Object/Object/ObjectCore.cpp`
-  - `src/ConstructedBeing/Object/Creation/ObjectConcept.cpp`
+  - `../../src/ConstructedBeing/Singular/Object/Object.hpp`
+  - `../../src/ConstructedBeing/Singular/Object/Object/ObjectCore.cpp`
+  - `../../src/ConstructedBeing/Singular/Object/Creation/ObjectConcept.cpp`
 - **Root Cause:**
   When objects were spawned dynamically without an explicitly authored identifier string, `Object` assigned a transient runtime ID (e.g., `object-1`, `object-2`) and emitted:
   ```
@@ -149,7 +149,7 @@ Overall, the architectural integrity and adherence to ontological doctrine are e
 - **Severity:** Medium
 - **Affected Files:**
   - `src/ConstructedBeing/Material/MaterialManager.hpp`
-  - `src/ConstructedBeing/Object/Object.cpp` (`setFaceColor`, `ownMaterial`)
+  - `../../src/ConstructedBeing/Singular/Object/Object.cpp` (`setFaceColor`, `ownMaterial`)
   - `tests/paint_test.cpp`
 - **Root Cause:**
   Materials in Earthcall are shared resources identified by name (`material.<identifier>`). Modifying a shared material directly repaints all beings referencing it. While `Object::ownMaterial()` is provided to diverge an object onto a private material instance, `MaterialManager::resolveOrDefault()` returns a mutable pointer (`Material*`), allowing direct mutation without triggering divergence.
@@ -206,7 +206,7 @@ Overall, the architectural integrity and adherence to ontological doctrine are e
 | **P0 (Immediate)** | Foreign Python | Restrict Python backend server bindings to `127.0.0.1` and validate incoming IPC requests. | **Verified** | `src/Singularity/Foreign/py/app.py` |
 | **P1 (High)** | Build System | Add `test_all` and `check` CMake targets to automatically build test dependencies before running CTest. | **Implemented** | `CMakeLists.txt`, `scripts/build.sh` |
 | **P1 (High)** | AuthorsOfLaw | Add matrix condition checks and `std::isfinite` guards in `ChangeRecorder::fitSeries`. | **Implemented** | `src/ZonesOfEarth/AuthorsOfLaw/ChangeRecorder.cpp` |
-| **P1 (High)** | Object Lifecycle | Generate deterministic slugs for dynamically concept-spawned objects to prevent volatile ID warnings. | **Implemented** | `src/ConstructedBeing/Object/Creation/` |
+| **P1 (High)** | Object Lifecycle | Generate deterministic slugs for dynamically concept-spawned objects to prevent volatile ID warnings. | **Implemented** | `../../src/ConstructedBeing/Singular/Object/Creation/` |
 | **P1 (High)** | Core Concurrency | Add double-buffered thread-safe event queue to `EventBus`. | In Review | `src/Singularity/Core/EventBus.hpp` |
 | **P2 (Medium)** | Material System | Enforce `const Material*` return in `MaterialManager` to mandate `ownMaterial()` divergence. | In Review | `src/ConstructedBeing/Material/` |
 

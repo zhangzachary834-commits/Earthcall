@@ -1,5 +1,5 @@
-#include "ConstructedBeing/Object/Formation/Formation.hpp"
-#include "ConstructedBeing/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Formation/Formation.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "Relation/Relation.hpp"
 
 #include <GLFW/glfw3.h>

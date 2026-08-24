@@ -1,7 +1,7 @@
 #pragma once
 
 #include "json.hpp"
-#include "ConstructedBeing/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "Person/Body/BodyPart/BodyPart.hpp"
 #include "Person/Body/Body.hpp"

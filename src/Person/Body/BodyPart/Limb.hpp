@@ -1,6 +1,6 @@
 #pragma once
 #include "BodyPart.hpp"
-#include "ConstructedBeing/Object/Object/ObjectTypes.hpp"
+#include "ConstructedBeing/Singular/Object/Object/ObjectTypes.hpp"
 #include <glm/glm.hpp>
 
 class Limb : public BodyPart {

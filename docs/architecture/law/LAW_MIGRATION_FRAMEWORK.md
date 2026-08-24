@@ -153,7 +153,7 @@ _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, glm::vec3>>(
 **Pattern B — the state lives in a foreign struct the being does not own.**
 Write a `Property` subclass that reaches into it. Three precedents in one file:
 `ShapeParamBridge`, `RigidBodyBridge`, `FacePropertyBridge`
-(`../../src/ConstructedBeing/Object/Object.cpp:536-580`). `RigidBodyBridge` is the closest analogue —
+(`../../src/ConstructedBeing/Singular/Object/Object.cpp:536-580`). `RigidBodyBridge` is the closest analogue —
 it exposes `Physics::getBodyFor(obj)`'s velocity and mass as `velocity` / `mass`
 on the Object, so collision *response* became authorable without moving the
 rigid-body registry.

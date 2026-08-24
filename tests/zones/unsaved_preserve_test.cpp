@@ -8,7 +8,7 @@
 // test drives ZoneManager::loadState — the same office the Load / Restore
 // unsaved buttons call.
 
-#include "ConstructedBeing/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "Person/Person.hpp"
 #include "Person/Soul/Soul.hpp"
 #include "Singularity/Input/Mouse/MouseHandler.hpp"

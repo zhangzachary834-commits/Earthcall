@@ -3,7 +3,7 @@
 
 #include "Game.hpp"
 #include "Singularity/Core/Engine.hpp"
-#include "ConstructedBeing/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "Singularity/Core/SdfBuild.hpp"
 #include "OurVerse/Tool.hpp"
 #include "OurVerse/AdvancedFacePaint.hpp"

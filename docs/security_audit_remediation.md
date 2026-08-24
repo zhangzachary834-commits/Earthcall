@@ -1500,7 +1500,7 @@ index 42862f8..c66b91e 100644
 +++ b/sight-cpp/src/ZonesOfEarth/AuthorsOfLaw/ActionModel.cpp
 @@ -2,6 +2,7 @@
  
- #include "ConstructedBeing/Object/Creation/ObjectConcept.hpp"
+ #include "ConstructedBeing/Singular/Object/Creation/ObjectConcept.hpp"
  #include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
 +#include "ConstructedBeing/Singular/SynthesisSystem.hpp"
  #include "Singularity/Core/EventBus.hpp"
@@ -1592,7 +1592,7 @@ index 0dc3d03..c62dff4 100644
  #include "ZonesOfEarth/Physics/CollisionDispatcher.hpp"
  #include "ZonesOfEarth/World/World.hpp"
  #include "ZonesOfEarth/Zone/Zone.hpp"
-+#include "Singularity/Language/Lexeme.hpp"
++#include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
  
  #include <algorithm>
  #include <cmath>

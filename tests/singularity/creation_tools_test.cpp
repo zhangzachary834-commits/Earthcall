@@ -10,7 +10,7 @@
 // is how the chrome writes registered paths. apply3DMode writes console
 // Create (active3DMode); L writes spawnLawArmed. Two latches.
 
-#include "ConstructedBeing/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
 #include "Singularity/Core/CreationChannel.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreationTools.hpp"

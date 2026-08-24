@@ -220,6 +220,8 @@ external software. So there is no `src/Integration/` (that would be refusal #2) 
 this has been attempted. See `docs/architecture/Integration/INTEGRATION_FRAMEWORK.md` §0.
 
 **`ConstructedBeing/`** was named `Form/` until 2a11f94; the docs corpus still says Form in
-places. `ObjectConcept` is the ONE set-to-set machine, for beings of every kind — do not add
+places. `Object`, `Lexeme`, and `Property` live under `ConstructedBeing/Singular/`;
+`ObjectConcept` is the ONE set-to-set machine (`Singular/Object/Creation`) — do not add
 a second one. See §7 of `LAW_AND_CREATION_SYSTEM.md`; a `Concept`/`SynthesisSystem` pair
-lived beside it until 2026-08-11 and was deleted.
+lived beside it until 2026-08-11 and was deleted. Formation is `Relation/Formation`
+(Object still includes it via a symlink). Lexeme is a Singular, not a Language-channel type.

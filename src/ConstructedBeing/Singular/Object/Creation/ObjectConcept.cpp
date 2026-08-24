@@ -1,9 +1,9 @@
-#include "ConstructedBeing/Object/Creation/ObjectConcept.hpp"
+#include "ConstructedBeing/Singular/Object/Creation/ObjectConcept.hpp"
 
 #include <unordered_map>
 
-#include "ConstructedBeing/Object/Geometry/SdfJson.hpp"
-#include "ConstructedBeing/Object/Object/ObjectIdentity.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/SdfJson.hpp"
+#include "ConstructedBeing/Singular/Object/Object/ObjectIdentity.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "Singularity/TransferPolicy.hpp"

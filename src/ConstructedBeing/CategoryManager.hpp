@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ConstructedBeing/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "json.hpp"
 
 #include <memory>

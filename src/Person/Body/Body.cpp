@@ -2,7 +2,7 @@
 #include <iostream>
 #include <algorithm>
 #include "BodyPart/BodyPart.hpp"
-#include "ConstructedBeing/Object/Formation/Formation.hpp"
+#include "ConstructedBeing/Singular/Object/Formation/Formation.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include "BodyPart/Limb/Arm.hpp"
 #include "BodyPart/Limb/Leg.hpp"
@@ -14,7 +14,7 @@
 #include "BodyPart/Limb/ForeArm.hpp"
 #include "BodyPart/Limb/ForeLeg.hpp"
 #include "BodyPart/Limb/Foot.hpp"
-#include "ConstructedBeing/Object/Creation/ObjectConcept.hpp"
+#include "ConstructedBeing/Singular/Object/Creation/ObjectConcept.hpp"
 
 Body::Body(std::string shape, std::string artStyle)
     : shape(shape), artStyle(artStyle), formation()

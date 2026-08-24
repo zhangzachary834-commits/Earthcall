@@ -83,14 +83,14 @@ never flatters itself.*
 ```
 Earthcall/
   src/                     the one source root — all languages
-    ConstructedBeing/      Singular · Object · ObjectConcept · Formation · Property · Material
+    ConstructedBeing/      Singular (Object · Lexeme · Property) · Material
     Person/                Person · Soul · Body · Relationship · Perspective
-    Relation/              Relation · RelationManager
+    Relation/              Relation · RelationManager · Formation
     ZonesOfEarth/          Zone · Home · Physics · AuthorsOfLaw (Law) · Ourverse
     Singularity/           the modality layer — where language stops mattering
       Core/                Engine · EventBus · CreationChannel
       Audio/               the Sound modality (AudioSystem)
-      Language/            the Symbolic modality (Lexeme, LanguageSystem)
+      Language/            the Symbolic modality (LanguageSystem, parser; Lexeme is a Singular)
       Network/             WebSocketClient.cpp · WebSocketServer.cpp
                              py/  engine_server.py · events.py
       OntoMath/            authored mathematics (Field, Function, CurveModel, Operations)
@@ -190,7 +190,7 @@ into their proper ontological homes:
 | `Integration/` | `Singularity/Foreign/` | **Done.** The Singularity-level modality holding hardwired connectors to external applications (`ForeignChannel`, `EarthcallAPI`, `SecurityManager`). |
 | `Perspective/` | split | **Done.** `KeyboardHandler`, `MouseHandler` → `Singularity/Input/`; `PersonPerspective`, `AvatarHandler` → `Person/Perspective/`. |
 | `Util/` | `Singularity/Storage/` | **Done.** Persistence and serialization moved to the Storage channel (`SaveSystem`, `CloudStorage`, `BinaryPack`, `Frontier`). |
-| `Form/` | `ConstructedBeing/` | **Done.** Renamed to clarify domain of constructed entities (`Singular`, `Object`, `ObjectConcept`, `Formation`, `Property`, `Material`). |
+| `Form/` | `ConstructedBeing/` | **Done.** Renamed to clarify domain of constructed entities. `Object`, `Lexeme`, and `Property` nest under `Singular/`; `ObjectConcept` is `Singular/Object/Creation`; Formation lives under `Relation/` (symlinked from Object); `Material` stays beside Singular. |
 
 | Subsystem | Action | Why |
 |---|---|---|
@@ -222,7 +222,7 @@ regrouping has thinned it.
 
 The move required exactly **two** edits to `CMakeLists.txt` — `../imgui` → `imgui`,
 twice — because every `#include` in the tree was already written relative to `src/`
-(`#include "ConstructedBeing/Object/Object.hpp"`), and `src/` is still called `src/`. Nothing else
+(`#include "ConstructedBeing/Singular/Object/Object.hpp"`), and `src/` is still called `src/`. Nothing else
 in 299 source files changed. That the whole rearrangement cost two lines is the
 strongest available evidence that `sight-cpp/` was a label rather than a boundary.
 

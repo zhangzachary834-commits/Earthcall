@@ -12,7 +12,7 @@
 // own centre. So the "floor" lifts itself by half its height every physics substep
 // and drags the whole world up with it.
 
-#include "ConstructedBeing/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 

@@ -84,10 +84,10 @@ All paths are under `docs/architecture/` unless noted. Map of the folders: `docs
 
 ```
 src/
-  ConstructedBeing/  Singular · Object · ObjectConcept · Formation · Property · Material
-                  (was `Form/`; ObjectConcept is the ONE set-to-set machine)
+  ConstructedBeing/  Singular (Object · Lexeme · Property) · Material
+                  (was `Form/`; ObjectConcept is under Object/Creation)
   Person/         Person · Soul · Body · Relationship
-  Relation/       Relation — a first-class being, not an edge in someone's array
+  Relation/       Relation · Formation — a first-class being, not an edge in someone's array
   ZonesOfEarth/   Zone · Home · Physics · AuthorsOfLaw (Law lives here) · Ourverse
   Singularity/    the modality layer: Core · Audio · Language · Network · Physical · OntoMath · Foreign · Input · Screen · Storage · FirstMoverWindowTools
   Identity/       First Mover register, identity ledger, keys

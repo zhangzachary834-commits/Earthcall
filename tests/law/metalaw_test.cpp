@@ -9,7 +9,7 @@
 
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/LawSynthesis.hpp"
-#include "ConstructedBeing/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
 
 #include <GLFW/glfw3.h>
 #include <algorithm>

@@ -1,4 +1,4 @@
-#include "ConstructedBeing/Object/Geometry/SdfJson.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/SdfJson.hpp"
 #include "Singularity/Storage/BinaryPack.hpp"
 
 namespace geom {

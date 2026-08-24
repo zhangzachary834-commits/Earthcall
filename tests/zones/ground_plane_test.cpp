@@ -22,7 +22,7 @@
 //     assumption, so in a Zone's world the second being a Person spawned passed
 //     through everything. Fault 1 hid this one.
 
-#include "ConstructedBeing/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 

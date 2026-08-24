@@ -2,7 +2,7 @@
 #include <glm/glm.hpp>
 #include <vector>
 #include <memory>
-#include "ConstructedBeing/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "Relation/RelationManager.hpp"
 #include "ConstructedBeing/Singular/Singular.hpp"
 #include <string>

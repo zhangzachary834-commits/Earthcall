@@ -3,9 +3,9 @@
 #include <vector>
 #include <memory>
 #include <ctime>
-#include "ConstructedBeing/Object/Object.hpp"
-#include "ConstructedBeing/Object/Formation/Formation.hpp"
-#include "ConstructedBeing/Object/Object/ObjectTypes.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Formation/Formation.hpp"
+#include "ConstructedBeing/Singular/Object/Object/ObjectTypes.hpp"
 #include <glm/glm.hpp>
 
 class BodyPart : public Object, public Formation {

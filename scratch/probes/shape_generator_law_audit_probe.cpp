@@ -5,8 +5,8 @@
 //
 // Not a permanent test. Built through the test target for this session only.
 
-#include "ConstructedBeing/Object/Creation/ObjectConcept.hpp"
-#include "ConstructedBeing/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Creation/ObjectConcept.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "Person/Person.hpp"
 #include "Singularity/Core/CreationChannel.hpp"
 #include "Singularity/Core/EventBus.hpp"

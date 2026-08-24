@@ -1,13 +1,13 @@
 // GameToolbar.cpp - unified Creator Console for creation, editing, and world tools.
 
 #include "Game.hpp"
-#include "ConstructedBeing/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "Singularity/Core/SdfBuild.hpp"
 #include "Rendering/BrushSystem.hpp"
 #include "Rendering/RelationManagerWindow.hpp"
 #include "Rendering/LawGraphWindow.hpp"
 #include "Rendering/CreationWindow.hpp"
-#include "ConstructedBeing/Object/Formation/Menu/stb_easy_font.h"
+#include "ConstructedBeing/Singular/Object/Formation/Menu/stb_easy_font.h"
 #include "OurVerse/Tool.hpp"
 #include "OurVerse/AdvancedFacePaint.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"

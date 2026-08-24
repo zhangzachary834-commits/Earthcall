@@ -4,7 +4,7 @@
 #include "imgui.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include "ConstructedBeing/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 #include "Person/Relationship/Community/Community.hpp"
 #include "Singularity/Language/JoyHierarchy.hpp"

@@ -4,7 +4,7 @@
 **Date:** August 17, 2026  
 **Auditor:** Gemini Spark  
 **Target Repository:** Earthcall (`/Users/zacharyzhang/Documents/GitHub/Earthcall`)  
-**Scope:** `src/ConstructedBeing/Object/Geometry/`, `src/ConstructedBeing/Object/`, `src/Singularity/OntoMath/`, `src/Singularity/Screen/WebGPU/SdfWgsl.*`  
+**Scope:** `../../src/ConstructedBeing/Singular/Object/Geometry/`, `../../src/ConstructedBeing/Singular/Object/`, `src/Singularity/OntoMath/`, `src/Singularity/Screen/WebGPU/SdfWgsl.*`  
 
 > **Historical.** This verdict describes HEAD on 2026-08-17, *before* the six-rung
 > unification. It is no longer a description of the tree. The isolated
@@ -28,7 +28,7 @@
 ### Audit Verdict: **CRITICAL ARCHITECTURAL DIVERGENCE**
 **The geometry framework in Earthcall currently does NOT rely on `OntoMath` for its pure math functions.** 
 
-Instead, the geometry subsystem (`geom::` under `src/ConstructedBeing/Object/Geometry/`) has constructed a parallel, isolated, and completely separate mathematical infrastructure from scratch. Except for a single recent wrapper (`FieldNode.hpp`), virtually all algebraic, calculus, polynomial, CSG, parser, evaluator, and trigonometric operations in the geometry framework are implemented via custom, standalone C++ logic and `<cmath>` functions, bypassing `OntoMath` entirely.
+Instead, the geometry subsystem (`geom::` under `../../src/ConstructedBeing/Singular/Object/Geometry/`) has constructed a parallel, isolated, and completely separate mathematical infrastructure from scratch. Except for a single recent wrapper (`FieldNode.hpp`), virtually all algebraic, calculus, polynomial, CSG, parser, evaluator, and trigonometric operations in the geometry framework are implemented via custom, standalone C++ logic and `<cmath>` functions, bypassing `OntoMath` entirely.
 
 ---
 
@@ -106,7 +106,7 @@ In Earthcall, mathematical purity is not an aesthetic preference; it is load-bea
   Implements Möller–Trumbore ray/triangle intersection (`rayTri`) and planar polygon raycasting from scratch.
 
 ### 4.5. `FieldNode.hpp` & `FieldNode.cpp`: The Lone Integration Seam
-* `FieldNode` is the **only** class in `src/ConstructedBeing/Object/Geometry/` that references `Singularity/OntoMath/Field.hpp`.
+* `FieldNode` is the **only** class in `../../src/ConstructedBeing/Singular/Object/Geometry/` that references `Singularity/OntoMath/Field.hpp`.
 * It wraps `std::shared_ptr<OntoMath::ScalarField>` and `std::shared_ptr<OntoMath::VectorField>`, registering properties such as `field.baseDensity`, `field.frequency`, and `field.amplitude`.
 * However, as noted in `docs/ontomath_fields.md`, Path B (AST-driven compilation) is not yet wired to active geometry generation, and `FieldNode` is an exception rather than the standard pattern in `Geometry/`.
 
@@ -125,7 +125,7 @@ In Earthcall, mathematical purity is not an aesthetic preference; it is load-bea
 2. **Breakdown of Symbolic Inversion & Reversibility:**
    `OntoMath` enables exact past-state reconstruction through symbolic closed-form antiderivatives. Because the geometry subsystem uses hardcoded floating-point routines, its mathematical states cannot participate in closed-form time reversal.
 3. **Redundant Code & Maintenance Burden:**
-   Multiple parsers, ASTs, CSG evaluators, and shader transpilers exist simultaneously across `Singularity/OntoMath` and `ConstructedBeing/Object/Geometry`.
+   Multiple parsers, ASTs, CSG evaluators, and shader transpilers exist simultaneously across `Singularity/OntoMath` and `ConstructedBeing/Singular/Object/Geometry`.
 4. **Disconnection between Tools and Ontology:**
    Tools and shape generators authored in C++ or via `ObjectConcept` manipulate geometry data structures that are alien to the rest of the simulation's mathematical ontology.
 

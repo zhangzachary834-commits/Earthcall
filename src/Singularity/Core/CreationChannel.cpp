@@ -1,6 +1,6 @@
 #include "CreationChannel.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
-#include "ConstructedBeing/Object/Creation/ObjectConcept.hpp"
+#include "ConstructedBeing/Singular/Object/Creation/ObjectConcept.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 #include <glm/gtc/matrix_transform.hpp>

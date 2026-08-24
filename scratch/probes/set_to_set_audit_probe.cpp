@@ -6,7 +6,7 @@
 // Build: copy into tests/, re-run cmake (sources are globbed), build the
 // set_to_set_audit_probe target, then delete the tests/ copy.
 
-#include "ConstructedBeing/Object/Creation/ObjectConcept.hpp"
+#include "ConstructedBeing/Singular/Object/Creation/ObjectConcept.hpp"
 #include "Singularity/TransferPolicy.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"

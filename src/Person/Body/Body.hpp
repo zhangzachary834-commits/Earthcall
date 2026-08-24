@@ -2,8 +2,8 @@
 #include <string>
 #include <vector>
 #include <map>
-#include "ConstructedBeing/Object/Object.hpp"
-#include "ConstructedBeing/Object/Formation/Formation.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Formation/Formation.hpp"
 #include "ConstructedBeing/Singular/Singular.hpp"
 #include "BodyPart/BodyPart.hpp"
 

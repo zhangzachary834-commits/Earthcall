@@ -18,8 +18,8 @@
 //      slot, and a slot is not an identity.
 //   5. Being a first mover, it stays out of world saves and survives a load.
 
-#include "ConstructedBeing/Object/Creation/ObjectConcept.hpp"
-#include "ConstructedBeing/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Creation/ObjectConcept.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "Person/Person.hpp"
 #include "Singularity/Core/CreationChannel.hpp"
 #include "Singularity/Core/EventBus.hpp"

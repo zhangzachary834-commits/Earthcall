@@ -18,7 +18,7 @@ The Unified Brush System is a powerful, professional-grade painting system that 
    - Maintains backward compatibility with legacy stroke system
    - Integrates BrushSystem for professional 2D painting
 
-3. **Object Integration** (`src/ConstructedBeing/Object/Object.hpp/cpp`)
+3. **Object Integration** (`../../src/ConstructedBeing/Singular/Object/Object.hpp/cpp`)
    - Enhanced 3D face painting with advanced brush features
    - Uses BrushSystem for texture painting on 3D objects
    - Provides layer system and advanced effects

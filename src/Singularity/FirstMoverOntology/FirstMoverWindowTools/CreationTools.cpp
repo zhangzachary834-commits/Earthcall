@@ -6,7 +6,7 @@
 #include "Singularity/Core/CreationChannel.hpp"
 #include "Singularity/Core/Engine.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
-#include "ConstructedBeing/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "Singularity/Screen/Camera.hpp"

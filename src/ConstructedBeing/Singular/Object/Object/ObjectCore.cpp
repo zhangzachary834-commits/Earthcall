@@ -5,13 +5,13 @@
 // basic property accessors, constructor, and polyhedron factory methods.
 // ============================================================================
 
-#include "ConstructedBeing/Object/Object.hpp"
-#include "ConstructedBeing/Object/Object/ObjectIdentity.hpp"
-#include "ConstructedBeing/Object/Object/ObjectComposition.hpp"
-#include "ConstructedBeing/Object/Object/ObjectEvents.hpp"
-#include "ConstructedBeing/Object/Contour.hpp"
-#include "ConstructedBeing/Object/AngleTools.hpp"
-#include "ConstructedBeing/Object/Automation/AutomationEvents.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Object/ObjectIdentity.hpp"
+#include "ConstructedBeing/Singular/Object/Object/ObjectComposition.hpp"
+#include "ConstructedBeing/Singular/Object/Object/ObjectEvents.hpp"
+#include "ConstructedBeing/Singular/Object/Contour.hpp"
+#include "ConstructedBeing/Singular/Object/AngleTools.hpp"
+#include "ConstructedBeing/Singular/Object/Automation/AutomationEvents.hpp"
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"

@@ -10,8 +10,8 @@
 // 6. Executes action: Spawns/creates a 3D Shape object of kind ShapeKind::Cube (basic cube) at cursorSpawnTransform.
 // 7. Persistence: Round-trips cleanly through JSON serialization preserving all placement law functionality.
 
-#include "ConstructedBeing/Object/Creation/ObjectConcept.hpp"
-#include "ConstructedBeing/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Creation/ObjectConcept.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "Person/Person.hpp"
 #include "Singularity/Core/CreationChannel.hpp"
 #include "Singularity/Core/EventBus.hpp"

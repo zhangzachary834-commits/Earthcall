@@ -1,6 +1,6 @@
 #include "Singularity/Screen/GL/OpenGLRenderer.hpp"
 
-#include "ConstructedBeing/Object/Geometry/Sdf.hpp" // geom::SdfNode, tessellateSdf
+#include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp" // geom::SdfNode, tessellateSdf
 
 #include <GLFW/glfw3.h>
 #if defined(__APPLE__) && !defined(EMSCRIPTEN)

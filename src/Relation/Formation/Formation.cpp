@@ -1,6 +1,6 @@
-#include "Singularity/Language/Lexeme.hpp"
+#include "../../ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
 #include "Formation.hpp"
-#include "ConstructedBeing/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
 #include <GLFW/glfw3.h>

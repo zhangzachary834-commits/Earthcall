@@ -5,7 +5,7 @@
 #include "Body.hpp"
 #include <glm/glm.hpp>
 #include "ConstructedBeing/Singular/Singular.hpp"
-#include "ConstructedBeing/Object/Formation/Formation.hpp"
+#include "ConstructedBeing/Singular/Object/Formation/Formation.hpp"
 #include "Identity/SingularId.hpp"
 #include "Soul/Soul.hpp"
 #include <json.hpp>

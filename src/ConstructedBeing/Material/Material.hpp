@@ -1,10 +1,10 @@
 #pragma once
 
-#include "ConstructedBeing/Object/Formation/Formation.hpp"
+#include "ConstructedBeing/Singular/Object/Formation/Formation.hpp"
 #include "ConstructedBeing/Singular/Singular.hpp"
 #include "json.hpp"
 
-#include "ConstructedBeing/Object/Object/FaceTexture.hpp"
+#include "ConstructedBeing/Singular/Object/Object/FaceTexture.hpp"
 
 #include <glm/glm.hpp>
 #include <string>

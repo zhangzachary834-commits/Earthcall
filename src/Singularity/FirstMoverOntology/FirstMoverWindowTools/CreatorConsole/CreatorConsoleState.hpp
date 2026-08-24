@@ -3,7 +3,7 @@
 #include <glm/glm.hpp>
 #include <vector>
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/Tool.hpp"
-#include "ConstructedBeing/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
 class BodyPart;
 
 #include <imgui.h>

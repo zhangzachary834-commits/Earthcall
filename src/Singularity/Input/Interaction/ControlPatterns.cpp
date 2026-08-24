@@ -1,7 +1,7 @@
 #include "ControlPatterns.hpp"
 
 #include "ConstructedBeing/CategoryManager.hpp"
-#include "ConstructedBeing/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "Relation/Relation.hpp"
 #include "Singularity/OntoMath/ScalarForm.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp"

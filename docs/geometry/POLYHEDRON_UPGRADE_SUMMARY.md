@@ -69,8 +69,8 @@ Successfully upgraded the Object.hpp/cpp system to support polyhedrons while mai
 
 ## Files Modified
 
-1. **src/ConstructedBeing/Object/Object.hpp** - Added polyhedron data structures and methods
-2. **src/ConstructedBeing/Object/Object.cpp** - Implemented polyhedron functionality
+1. **src/ConstructedBeing/Singular/Object/Object.hpp** - Added polyhedron data structures and methods
+2. **src/ConstructedBeing/Singular/Object/Object.cpp** - Implemented polyhedron functionality
 3. **src/Singularity/Core/Game.hpp** - Added polyhedron type selection
 4. **src/Singularity/Core/Game.cpp** - Updated UI and object creation
 5. **POLYHEDRON_GUIDE.md** - User documentation

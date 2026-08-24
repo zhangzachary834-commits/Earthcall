@@ -2,7 +2,7 @@
 #include <imgui.h>
 #include <GLFW/glfw3.h>
 #include "Person/Person.hpp"
-#include "ConstructedBeing/Object/Geometry/ComplexShape.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/ComplexShape.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/Tool.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreationTools.hpp"
 #include "Singularity/Core/Engine.hpp"
@@ -11,8 +11,8 @@
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "Singularity/Core/SdfBuild.hpp"
-#include "ConstructedBeing/Object/Geometry/Sdf.hpp"
-#include "ConstructedBeing/Object/Geometry/Patch.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/Patch.hpp"
 #include "Singularity/Screen/HighlightSystem.hpp"
 #include "Singularity/Screen/Camera.hpp"
 #include <glm/gtc/matrix_transform.hpp>

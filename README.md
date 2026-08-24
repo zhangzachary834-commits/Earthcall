@@ -22,7 +22,7 @@ Laws are executed with math operations because math is the universal language of
 ## Core Philosophy
 
 
-- **Ontology First:** The top-level directory structure reflects the ontology of the substrate categories (`ConstructedBeing`, `Person`, `Relation`, `Singularity`, `ZonesOfEarth`, `Identity`). It does not organize by technical subsystems. Ourverse the being lives under `ZonesOfEarth/`; the Person-facing tools live under `Singularity/FirstMoverWindowTools/`.
+- **Ontology First:** The top-level directory structure reflects the ontology of the substrate categories (`ConstructedBeing`, `Person`, `Relation`, `Singularity`, `ZonesOfEarth`, `Identity`). It does not organize by technical subsystems. `Object`, `Lexeme`, and `Property` nest under `ConstructedBeing/Singular/`; Formation lives under `Relation/` (symlinked from Object). Ourverse the being lives under `ZonesOfEarth/`; the Person-facing tools live under `Singularity/FirstMoverWindowTools/`.
 - **Law-Driven Simulation:** Beings interact through a network of active Laws rather than hardcoded C++ logic. C++ provides the execution substrate for these Laws.
 - **First Mover Authoring:** The world is authored dynamically. Beings are data, not classes. We don't define a `Tree` class; we define the components and laws that comprise a tree.
 - **Web First Architecture:** Earthcall embraces a modern WebUI built via embedded React/Vite, integrating directly with a high-performance C++ backend. Modalities (Audio, Language, Network) act as channels under the `Singularity` directory.

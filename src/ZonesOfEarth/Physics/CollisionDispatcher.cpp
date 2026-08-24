@@ -1,9 +1,9 @@
 #include "CollisionDispatcher.hpp"
 
-#include "ConstructedBeing/Object/Object/PolyhedronData.hpp"
-#include "ConstructedBeing/Object/Geometry/ComplexShape.hpp"
-#include "ConstructedBeing/Object/Geometry/Sdf.hpp"
-#include "ConstructedBeing/Object/Geometry/SmoothSurface.hpp"
+#include "ConstructedBeing/Singular/Object/Object/PolyhedronData.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/ComplexShape.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/SmoothSurface.hpp"
 
 #include <algorithm>
 #include <array>

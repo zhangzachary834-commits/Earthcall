@@ -1,4 +1,4 @@
-#include "Singularity/Language/Lexeme.hpp"
+#include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
 
 #include <uuid/uuid.h>

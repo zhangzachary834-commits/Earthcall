@@ -1,6 +1,6 @@
 #include "Physics.hpp"
 #include "ZonesOfEarth/Physics/CollisionDispatcher.hpp"
-#include "ConstructedBeing/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "Relation/RelationManager.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"

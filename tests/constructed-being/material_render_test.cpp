@@ -8,7 +8,7 @@
 // Without this, baseColor could silently stop flowing into drawMesh and every
 // other test would still pass.
 
-#include "ConstructedBeing/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ConstructedBeing/Material/MaterialManager.hpp"
 
 #include <GLFW/glfw3.h>

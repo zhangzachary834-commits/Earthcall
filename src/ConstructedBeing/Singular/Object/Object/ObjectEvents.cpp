@@ -5,8 +5,8 @@
 // including hover detection and event publishing.
 // ============================================================================
 
-#include "ConstructedBeing/Object/Object.hpp"
-#include "ConstructedBeing/Object/Object/ObjectEvents.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Object/ObjectEvents.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/matrix_transform.hpp>

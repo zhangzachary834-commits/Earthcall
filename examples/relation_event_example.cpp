@@ -1,7 +1,7 @@
 #include "../src/Singularity/Core/EventBus.hpp"
 #include "../src/Relation/RelationManager.hpp"
 #include "../src/Relation/Relation.hpp"
-#include "../src/Singularity/Language/Lexeme.hpp"
+#include "../src/ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
 #include <iostream>
 #include <memory>
 

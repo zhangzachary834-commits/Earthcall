@@ -3,8 +3,8 @@
 // Full definitions needed: the pointer alternatives upcast to Singular* for
 // identifier extraction, which forward declarations cannot prove.
 #include "ConstructedBeing/Singular/Singular.hpp"
-#include "ConstructedBeing/Object/Object.hpp"
-#include "ConstructedBeing/Object/Formation/Formation.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Formation/Formation.hpp"
 #include "Relation/Relation.hpp"
 #include "Singularity/OntoMath/Field.hpp"
 

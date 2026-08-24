@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Singularity/Language/Lexeme.hpp"
+#include "../../ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
 
 #include <string>
 #include <vector>

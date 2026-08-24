@@ -2,8 +2,8 @@
 #include <string>
 #include <vector>
 #include <ctime>
-#include "ConstructedBeing/Object/Object.hpp"
-#include "ConstructedBeing/Object/Formation/Formation.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Formation/Formation.hpp"
 #include "Person/Body/BodyPart/BodyPart.hpp"
 #include <glm/glm.hpp>
 

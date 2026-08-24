@@ -5,8 +5,8 @@
 // are ordered by those ranks. There is no HierarchyOfJoys class.
 // See docs/architecture/ontology/HIERARCHY_OF_JOYS.md.
 
-#include "ConstructedBeing/Object/Object.hpp"
-#include "ConstructedBeing/Object/Formation/Formation.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Formation/Formation.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
 #include "Person/Person.hpp"
 #include "Person/Soul/Soul.hpp"

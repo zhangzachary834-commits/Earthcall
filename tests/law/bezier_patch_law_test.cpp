@@ -9,10 +9,10 @@
 // 5. Live Overrides: activeColor and activeShapeKind propagation.
 // 6. Persistence: Full JSON serialization and reload round-trip.
 
-#include "ConstructedBeing/Object/Creation/ObjectConcept.hpp"
-#include "ConstructedBeing/Object/Geometry/Patch.hpp"
-#include "ConstructedBeing/Object/Geometry/Sdf.hpp"
-#include "ConstructedBeing/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Creation/ObjectConcept.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/Patch.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "Person/Person.hpp"
 #include "Singularity/Core/CreationChannel.hpp"
 #include "Singularity/Core/EventBus.hpp"

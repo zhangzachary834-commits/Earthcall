@@ -1,7 +1,7 @@
 # Audit — Person Interface and Experience — 2026-08-18
 
 Scope: the whole surface a Person touches. The main menu
-(`ConstructedBeing/Object/Formation/Menu/Menu.cpp` + its options in `EngineInit.cpp`),
+(`ConstructedBeing/Singular/Object/Formation/Menu/Menu.cpp` + its options in `EngineInit.cpp`),
 the Creator Console and all seven of its tabs
 (`Singularity/FirstMoverWindowTools/CreatorConsole/`), the Developer Tools window,
 the Singular Set-to-Set Creation window, the Law Graph window, Chat, Cursor Tools,

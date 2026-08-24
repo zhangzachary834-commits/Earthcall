@@ -11,7 +11,7 @@
 //   - json + .ecsave of the same stem listing as two worlds
 // This test calls those two methods, which is what the Assets console calls.
 
-#include "ConstructedBeing/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "Person/Person.hpp"
 #include "Person/Soul/Soul.hpp"
 #include "Singularity/Input/Mouse/MouseHandler.hpp"

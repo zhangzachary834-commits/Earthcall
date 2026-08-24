@@ -1,7 +1,7 @@
 #pragma once
 
-#include "ConstructedBeing/Object/Object.hpp"
-#include "ConstructedBeing/Object/Creation/PropertyMapping.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Creation/PropertyMapping.hpp"
 #include "Relation/RelationManager.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ConditionModel.hpp"
 #include "json.hpp"

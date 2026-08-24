@@ -1,5 +1,5 @@
 #include "Singularity/Language/LanguageSystem.hpp"
-#include "Singularity/Language/Lexeme.hpp"
+#include "../../src/ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
 #include "Singularity/Language/SyntacticParser.hpp"
 #include "Singularity/OntoMath/ScalarForm.hpp"
 #include "Singularity/OntoMath/ProbabilityForm.hpp"

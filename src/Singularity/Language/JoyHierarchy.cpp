@@ -1,7 +1,7 @@
 #include "JoyHierarchy.hpp"
 
 #include "Singularity/Language/LanguageSystem.hpp"
-#include "ConstructedBeing/Object/Formation/Formation.hpp"
+#include "ConstructedBeing/Singular/Object/Formation/Formation.hpp"
 #include "Relation/Relation.hpp"
 
 #include <cstdio>

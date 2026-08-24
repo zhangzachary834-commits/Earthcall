@@ -2,7 +2,7 @@
 #include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
 #include "Relation/Relation.hpp"
 #include "Singularity/Language/LanguageSystem.hpp"
-#include "Singularity/Language/Lexeme.hpp"
+#include "../../ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
 #include "ConstructedBeing/CategoryManager.hpp"
 #include "ZonesOfEarth/HomesOfEarth/Home.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"

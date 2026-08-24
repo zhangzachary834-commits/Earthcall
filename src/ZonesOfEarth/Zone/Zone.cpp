@@ -1,7 +1,7 @@
 #include "Zone.hpp"
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 #include "Singularity/Language/JoyHierarchy.hpp"
-#include "Singularity/Language/Lexeme.hpp"
+#include "../../ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
@@ -12,7 +12,7 @@
 #include <ctime>
 #include <unordered_set>
 #include "Singularity/OntoMath/Field.hpp"
-#include "ConstructedBeing/Object/Geometry/FieldNode.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
 
 using Scope = Zone::Scope;
 

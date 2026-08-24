@@ -1,8 +1,8 @@
 #pragma once
 
 #include "Singularity/Core/EventBus.hpp"
-#include "ConstructedBeing/Object/Formation/Formation.hpp"
-#include "ConstructedBeing/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Formation/Formation.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "Relation/Relation.hpp"
 #include "Relation/RelationManager.hpp"
 #include "../Physics/Physics.hpp"

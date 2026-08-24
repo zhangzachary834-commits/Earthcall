@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ECA.hpp"
-#include "ConstructedBeing/Object/Geometry/Sdf.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
 #include "MathBinding.hpp"
 #include "Singularity/OntoMath/ScalarForm.hpp"

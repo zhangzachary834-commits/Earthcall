@@ -64,7 +64,7 @@ Events should be represented as:
 
 #### 2. Lexeme - Unstable Identifier
 
-**File:** `src/Singularity/Language/Lexeme.cpp`
+**File:** `../../src/ConstructedBeing/Singular/Lexeme/Lexeme.cpp`
 
 **Issue:** Lexeme uses generated UUIDs for identifiers (lines 10-14)
 

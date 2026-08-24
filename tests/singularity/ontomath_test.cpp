@@ -2,8 +2,8 @@
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "Singularity/OntoMath/ScalarForm.hpp"
 #include "Singularity/OntoMath/Operations.hpp"
-#include "ConstructedBeing/Object/Object.hpp"
-#include "ConstructedBeing/Object/Geometry/SmoothSurface.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/SmoothSurface.hpp"
 
 #include <cassert>
 #include <cmath>

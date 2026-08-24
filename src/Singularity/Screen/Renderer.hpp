@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Singularity/Screen/RenderMaterial.hpp"
-#include "ConstructedBeing/Object/Geometry/SmoothSurface.hpp" // geom::TessMesh
+#include "ConstructedBeing/Singular/Object/Geometry/SmoothSurface.hpp" // geom::TessMesh
 
 #include <cstdint>
 #include <utility>

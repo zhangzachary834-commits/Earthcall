@@ -1,7 +1,7 @@
 #include "Singularity/Screen/WebGPU/WebGpuRenderer.hpp"
 #include "Singularity/Screen/WebGPU/WgpuDevice.hpp"
 #include "Singularity/Screen/WebGPU/SdfWgsl.hpp"
-#include "ConstructedBeing/Object/Geometry/Sdf.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <cstdio>

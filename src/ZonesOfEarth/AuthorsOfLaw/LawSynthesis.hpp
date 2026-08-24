@@ -2,7 +2,7 @@
 
 #include "Law.hpp"
 #include "ChangeRecorder.hpp"
-#include "ConstructedBeing/Object/Automation/Automation.hpp"
+#include "ConstructedBeing/Singular/Object/Automation/Automation.hpp"
 
 #include <memory>
 #include <string>

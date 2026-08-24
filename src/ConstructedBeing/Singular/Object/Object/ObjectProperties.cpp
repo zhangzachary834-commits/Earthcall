@@ -5,8 +5,8 @@
 // that make Object properties addressable through the PropertyPath system.
 // ============================================================================
 
-#include "ConstructedBeing/Object/Object.hpp"
-#include "ConstructedBeing/Object/Object/ObjectComposition.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Object/ObjectComposition.hpp"
 #include "ConstructedBeing/Material/MaterialManager.hpp"
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyRef.hpp"

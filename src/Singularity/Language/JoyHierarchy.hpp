@@ -15,6 +15,7 @@ namespace Language {
 //                             (lexeme.christ). God as ordering, not as icon.
 // any other symbol          → that Lexeme is authored as the root.
 
+    // "const std::string& foundationSymbol" NOT STRING. LEXEME. - Zach
 void seedJoyHierarchy(Formation& dest, const std::string& foundationSymbol);
 
 } // namespace Language

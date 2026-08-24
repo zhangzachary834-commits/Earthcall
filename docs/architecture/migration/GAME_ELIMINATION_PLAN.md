@@ -226,9 +226,9 @@ modelview, projection matrices.
 8. AdvancedFacePaint — complex nested state
 
 **Files to Create:**
-- `../../src/ConstructedBeing/Object/Tool/Tool.hpp` — base Tool class
-- `../../src/ConstructedBeing/Object/Tool/BrushTool.hpp`
-- `../../src/ConstructedBeing/Object/Tool/PolyhedronTool.hpp`
+- `../../src/ConstructedBeing/Singular/Object/Tool/Tool.hpp` — base Tool class
+- `../../src/ConstructedBeing/Singular/Object/Tool/BrushTool.hpp`
+- `../../src/ConstructedBeing/Singular/Object/Tool/PolyhedronTool.hpp`
 - etc.
 
 **Files to Modify:**
@@ -310,9 +310,9 @@ After extraction, Game's remaining responsibilities map to:
 | `registerCallbacks()` | `Engine.hpp` | GLFW callbacks belong to Engine (window owner) |
 | `update(float dt)` | `Engine.hpp` | Main loop belongs to Engine |
 | `render()` | `Engine.hpp` + `Singularity/Screen/` | Render loop belongs to Engine, screen output to Screen |
-| `fuseObjects()` | `Form/Object/Object.hpp` | Object-to-Object operations belong to Object |
-| `blendRail()` | `Form/Object/Object.hpp` | Field visualization belongs to Object |
-| `handleFieldGizmos()` | `Form/Object/Object.hpp` | Field interaction belongs to Object |
+| `fuseObjects()` | `ConstructedBeing/Singular/Object/Object.hpp` | Object-to-Object operations belong to Object |
+| `blendRail()` | `ConstructedBeing/Singular/Object/Object.hpp` | Field visualization belongs to Object |
+| `handleFieldGizmos()` | `ConstructedBeing/Singular/Object/Object.hpp` | Field interaction belongs to Object |
 | `renderNodeGraph()` | `ZonesOfEarth/AuthorsOfLaw/` | Node graph is Law structure visualization |
 | `renderNodePanel()` | `ZonesOfEarth/AuthorsOfLaw/` | Node editing is Law authorship |
 | Menu (`_mainMenu`) | `OurVerse/` | Menu is authorship surface |
@@ -465,7 +465,7 @@ Use the todo system to track progress:
 - **[Rung 4] Extract Tool State** — PARTIAL
   - Done: relocated the seven tool settings structs (BrushSettings.hpp, CloneToolState.hpp, FacePaintSettings.hpp, PlacementState.hpp, PolyhedronSettings.hpp, PotteryTool.hpp, RotationSettings.hpp) from `Singularity/Core/` to `Form/Object/Tool/`; updated includes in Game.hpp and PolyhedronSettings.cpp; deleted the originals from Singularity/Core/
   - Not done: the stated goal of this rung — "migrate tool settings as properties on Tool beings" — has not happened. Game still owns the settings structs directly as members; they were only moved to a new file location, not turned into properties on authored beings.
-  - A `Form::Tool` base class with a `Type` enum (`Brush`, `Polyhedron`, `FaceBrush`, `AdvancedFacePaint`, `Placement`, `Pottery`, `Rotation`, `Clone`, `StrokeTracking`) was created as part of this rung's earlier work. It has been deleted (`../../src/ConstructedBeing/Object/Tool/Tool.hpp`, `Tool.cpp`): a C++ class for a domain noun plus an enum of kinds-of-thing is exactly what CLAUDE.md refusals #1 and #3 forbid. It was also referenced by nothing in the codebase and contained a guaranteed-infinite-recursion bug in `getIdentifier()`. **A C++ `Tool` class with a `Type` enum is NOT an acceptable implementation of this rung** — do not recreate it.
+  - A `Form::Tool` base class with a `Type` enum (`Brush`, `Polyhedron`, `FaceBrush`, `AdvancedFacePaint`, `Placement`, `Pottery`, `Rotation`, `Clone`, `StrokeTracking`) was created as part of this rung's earlier work. It has been deleted (`../../src/ConstructedBeing/Singular/Object/Tool/Tool.hpp`, `Tool.cpp`): a C++ class for a domain noun plus an enum of kinds-of-thing is exactly what CLAUDE.md refusals #1 and #3 forbid. It was also referenced by nothing in the codebase and contained a guaranteed-infinite-recursion bug in `getIdentifier()`. **A C++ `Tool` class with a `Type` enum is NOT an acceptable implementation of this rung** — do not recreate it.
   - Remaining work: author Tool beings in-world (per `NEW_KIND_FRAMEWORK.md` / `AUTHORED_CATEGORIES.md`), not a new subclass hierarchy. This work has not started.
 
 - **[Rung 6] Delete Game** ✅
@@ -500,7 +500,7 @@ ctest is **35/35**. Five test executables previously failed to compile and did n
 - `src/ZonesOfEarth/ZoneManager.hpp` / `.cpp` - Owns save/load state and methods; takes `SaveContext`
 - `src/Singularity/Core/GameSaveLoad.cpp` - Duplicate definitions removed; delegate bodies moved here out-of-line
 - `src/Singularity/Core/GameToolbar.cpp` - Save/load call sites routed through Game's delegates
-- `../../src/ConstructedBeing/Object/Object.hpp` - Added `getPendingElementIds()` accessor pair for the private `_composition`
+- `../../src/ConstructedBeing/Singular/Object/Object.hpp` - Added `getPendingElementIds()` accessor pair for the private `_composition`
 - `src/Util/Serialization.cpp` - Uses the new `getPendingElementIds()` accessor
 
 ### Files Deleted
@@ -509,8 +509,8 @@ ctest is **35/35**. Five test executables previously failed to compile and did n
 - `src/Perspective/KeyboardHandler.cpp`
 - `src/Perspective/MouseHandler.hpp`
 - `src/Perspective/MouseHandler.cpp`
-- `../../src/ConstructedBeing/Object/Tool/Tool.hpp` - domain-noun class with a kind-enum, violated CLAUDE.md refusals #1 and #3; unreferenced; see Rung 4 above
-- `../../src/ConstructedBeing/Object/Tool/Tool.cpp` - same as above
+- `../../src/ConstructedBeing/Singular/Object/Tool/Tool.hpp` - domain-noun class with a kind-enum, violated CLAUDE.md refusals #1 and #3; unreferenced; see Rung 4 above
+- `../../src/ConstructedBeing/Singular/Object/Tool/Tool.cpp` - same as above
 
 ### Files To Delete (After Rung 6)
 

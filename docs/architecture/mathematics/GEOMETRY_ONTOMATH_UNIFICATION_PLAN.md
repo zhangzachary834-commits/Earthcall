@@ -3,7 +3,7 @@
 **Document:** `docs/architecture/mathematics/GEOMETRY_ONTOMATH_UNIFICATION_PLAN.md`  
 **Date:** August 17, 2026  
 **Author:** Gemini Spark + Zachary Zhang  
-**Target Subsystems:** `src/ConstructedBeing/Object/Geometry/`, `src/Singularity/OntoMath/`, `src/Singularity/Screen/WebGPU/`, `src/ZonesOfEarth/AuthorsOfLaw/`  
+**Target Subsystems:** `../../../src/ConstructedBeing/Singular/Object/Geometry/`, `src/Singularity/OntoMath/`, `src/Singularity/Screen/WebGPU/`, `src/ZonesOfEarth/AuthorsOfLaw/`  
 **Prerequisite Audit:** [`docs/audits/GEOMETRY_ONTOMATH_AUDIT_2026-08-17.md`](../../audits/GEOMETRY_ONTOMATH_AUDIT_2026-08-17.md)  
 
 **Status as of 2026-08-19:** the six rungs landed on 2026-08-18. This file is the
@@ -110,9 +110,9 @@ To prevent breaking the 48-test suite, the migration proceeds across **6 increme
 - Replace `geom::sdfNormal`'s ad-hoc central differences with `OntoMath::MathNode::Op::Gradient` (sharing `OntoMath::kGradientEpsilon = 1e-3`).
 
 **Files to Modify:**
-- `src/ConstructedBeing/Object/Geometry/Sdf.hpp`
-- `src/ConstructedBeing/Object/Geometry/Sdf.cpp`
-- `src/ConstructedBeing/Object/Geometry/SdfJson.cpp`
+- `../../../src/ConstructedBeing/Singular/Object/Geometry/Sdf.hpp`
+- `../../../src/ConstructedBeing/Singular/Object/Geometry/Sdf.cpp`
+- `../../../src/ConstructedBeing/Singular/Object/Geometry/SdfJson.cpp`
 - `tests/webgpu_sdf_parity_test.cpp`
 
 **Exit Test:**
@@ -139,9 +139,9 @@ To prevent breaking the 48-test suite, the migration proceeds across **6 increme
 - Expose polynomial coefficients $a_{kl}$ to the Law system as `PropertyPath`s, allowing Laws to animate or morph Bézier surfaces continuously.
 
 **Files to Modify:**
-- `src/ConstructedBeing/Object/Geometry/Patch.hpp`
-- `src/ConstructedBeing/Object/Geometry/Patch.cpp`
-- `src/ConstructedBeing/Object/Object.hpp`
+- `../../../src/ConstructedBeing/Singular/Object/Geometry/Patch.hpp`
+- `../../../src/ConstructedBeing/Singular/Object/Geometry/Patch.cpp`
+- `../../../src/ConstructedBeing/Singular/Object/Object.hpp`
 - `tests/bezier_patch_law_test.cpp`
 
 **Exit Test:**
@@ -171,8 +171,8 @@ abla(p^T Q p) = 2 Q p$.
 - Extract degree-2 coefficients $(A, B, C)$ by evaluating the symbolic composition $f(o + td)$ along the ray, solving $At^2 + Bt + C = 0$ algebraically.
 
 **Files to Modify:**
-- `src/ConstructedBeing/Object/Geometry/SmoothSurface.hpp`
-- `src/ConstructedBeing/Object/Geometry/SmoothSurface.cpp`
+- `../../../src/ConstructedBeing/Singular/Object/Geometry/SmoothSurface.hpp`
+- `../../../src/ConstructedBeing/Singular/Object/Geometry/SmoothSurface.cpp`
 - `tests/primitive_render_test.cpp`
 
 **Exit Test:**
@@ -220,9 +220,9 @@ abla(p^T Q p) = 2 Q p$.
 - Verify that Laws can spawn, mutate, and reverse geometric forms in-world.
 
 **Files to Modify:**
-- `src/ConstructedBeing/Object/Object/ObjectProperties.cpp`
-- `src/ConstructedBeing/Object/Geometry/FieldNode.hpp`
-- `src/ConstructedBeing/Object/Creation/ObjectConcept.cpp`
+- `../../../src/ConstructedBeing/Singular/Object/Object/ObjectProperties.cpp`
+- `../../../src/ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp`
+- `../../../src/ConstructedBeing/Singular/Object/Creation/ObjectConcept.cpp`
 - `tests/no_black_box_test.cpp`
 - `tests/singular_set_to_set_test.cpp`
 

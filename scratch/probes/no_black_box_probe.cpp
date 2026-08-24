@@ -1,7 +1,7 @@
 // Throwaway probe: what do Object::rotation and face.N.activeLayer actually
 // read back after a write? Distinguishes "setter does nothing" from "setter
 // legitimately clamps".
-#include "ConstructedBeing/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
 #include <GLFW/glfw3.h>
 #include <cstdio>
 

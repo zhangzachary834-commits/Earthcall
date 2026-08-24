@@ -1,6 +1,6 @@
 #include "LocomotionChannel.hpp"
 
-#include "ConstructedBeing/Object/Automation/Automation.hpp"
+#include "ConstructedBeing/Singular/Object/Automation/Automation.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
 #include "Person/Body/BodyPart/BodyPart.hpp"
 #include "Person/Person.hpp"

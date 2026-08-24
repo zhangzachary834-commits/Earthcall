@@ -5,8 +5,8 @@
 // including element membership, attributes, and tags.
 // ============================================================================
 
-#include "ConstructedBeing/Object/Object.hpp"
-#include "ConstructedBeing/Object/Object/ObjectComposition.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Object/ObjectComposition.hpp"
 
 // Element membership methods are in ObjectCore.cpp
 

@@ -40,9 +40,9 @@
 // Failures are REPORTED, not asserted, so one gap does not hide the rest.
 
 #include "ConstructedBeing/Material/Material.hpp"
-#include "ConstructedBeing/Object/Formation/Formation.hpp"
-#include "ConstructedBeing/Object/Geometry/FieldNode.hpp"
-#include "ConstructedBeing/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Formation/Formation.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ConstructedBeing/Singular/Property/Property.hpp"
 #include "Person/Person.hpp"
 #include "Person/Soul/Soul.hpp"
@@ -50,7 +50,7 @@
 #include "Singularity/Core/CreationChannel.hpp"
 #include "Singularity/Input/Locomotion/LocomotionChannel.hpp"
 #include "Singularity/Core/EventEntity.hpp"
-#include "Singularity/Language/Lexeme.hpp"
+#include "../../src/ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
 #include "Singularity/Screen/LawGraphWindow.hpp"
 #include "Singularity/TransferPolicy.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"

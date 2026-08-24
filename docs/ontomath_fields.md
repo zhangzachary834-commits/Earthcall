@@ -18,7 +18,7 @@ The architecture is divided into three responsibilities:
      / `ScalarForm`; `FieldNode` exposes `field.ast` and `vectorField.ast`.
    - Responsible for the raw mathematical definitions (unbounded space, repeating domains, bounded intersections).
 
-2. **Spatial Placement (`ConstructedBeing/Object/Geometry/FieldNode.hpp`)**
+2. **Spatial Placement (`ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp`)**
    - Integrates the `OntoMath::Field` into the 3D scene (providing origin, rotation, and scale transformations).
    - Inherits from `Singular`, mapping mathematical variables (like base density, frequency, or amplitude) to `PropertyPath`s.
 

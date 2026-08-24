@@ -1,7 +1,7 @@
 #include <iostream>
 #include <cassert>
 #include "Singularity/Screen/WebGPU/WebGpuRenderer.hpp"
-#include "ConstructedBeing/Object/Geometry/FieldNode.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
 #include "Singularity/OntoMath/Field.hpp"
 #include "Singularity/Screen/WebGPU/WgpuDevice.hpp"
 

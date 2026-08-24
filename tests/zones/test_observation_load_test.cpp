@@ -9,7 +9,7 @@
 // live path: Home survives, the dump's objects are in the active Zone,
 // and the Person is settled looking at them.
 
-#include "ConstructedBeing/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "Person/Person.hpp"
 #include "Person/Soul/Soul.hpp"
 #include "Singularity/Input/Mouse/MouseHandler.hpp"

@@ -11,7 +11,7 @@
 //
 // So: no window, no GLFW input, no camera. A ray, some beings, and the edges.
 
-#include "ConstructedBeing/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "Singularity/Input/Interaction/InteractionChannel.hpp"

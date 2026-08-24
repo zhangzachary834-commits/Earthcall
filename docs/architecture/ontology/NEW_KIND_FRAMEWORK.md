@@ -181,7 +181,7 @@ the live value.
 ### K2 — Worded
 
 Capture the assembly as an `ObjectConcept` — "the word for the thing"
-(`Form/Object/Creation/ObjectConcept.hpp`, `LAW_AND_CREATION_SYSTEM.md` §7a).
+(`ConstructedBeing/Singular/Object/Creation/ObjectConcept.hpp`, `LAW_AND_CREATION_SYSTEM.md` §7a).
 
 This is the rung that replaces the class. What a class gives you — one definition,
 many instances — an `ObjectConcept` gives you *as world data*: deep-copied geometry
@@ -237,7 +237,7 @@ robot-specific:
 | joint limits, collision response, hold-position | `Activation::WhileTrue` law | `PhysicsLawBridge` |
 | a command ("move to pose") | `Activation::OnEvent` law with a **drive** — change over time that outlives its trigger; `Retrigger::{Absorb, Restart}` decides what a second command mid-motion means | `Law::DriveSession` |
 | discrete events (contact, grasp, release, fault) | published `ECA::Event`, past-tense `noun-verbed` | `landed`, `jump-started`, `relation-formed` |
-| canned/periodic motion | `Automation::Clip` — additive offsets over a rest pose, so several clips sum and physics still drives untouched channels | `Form/Object/Automation` |
+| canned/periodic motion | `Automation::Clip` — additive offsets over a rest pose, so several clips sum and physics still drives untouched channels | `ConstructedBeing/Singular/Object/Automation` |
 | motion taught by demonstration | `ChangeRecorder` | `LAW_AND_CREATION_SYSTEM.md` §4 |
 | safety envelopes | `InRegion` condition — an authored SDF region **is** the constraint | `ConditionModel::region` |
 
@@ -303,7 +303,7 @@ A genuinely new geometric family (the enum is serialized as an int and is
 ### 5c. A property bridge — a `Property` subclass reaching into a foreign struct
 
 When state genuinely lives in a system the being does not own. Precedents:
-`ShapeParamBridge`, `RigidBodyBridge`, `FacePropertyBridge` (`Form/Object/Object.cpp`).
+`ShapeParamBridge`, `RigidBodyBridge`, `FacePropertyBridge` (`ConstructedBeing/Singular/Object/Object.cpp`).
 `RigidBodyBridge` is the closest analogue for anything device-shaped — it exposes the
 rigid body's velocity and mass as `velocity` / `mass` on the Object without moving the
 registry.

@@ -7,7 +7,7 @@
 #include <unordered_map>
 #include "Singularity/Screen/GL/GluCompat.hpp"
 #include "Singularity/Screen/Renderer.hpp"
-#include "ConstructedBeing/Object/Formation/Menu/stb_easy_font.h"
+#include "ConstructedBeing/Singular/Object/Formation/Menu/stb_easy_font.h"
 #include "Singularity/Storage/Serialization.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"

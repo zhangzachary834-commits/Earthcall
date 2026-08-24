@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ActionModel.hpp"
-#include "ConstructedBeing/Object/Automation/Automation.hpp"
+#include "ConstructedBeing/Singular/Object/Automation/Automation.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
 #include "Singularity/OntoMath/CurveModel.hpp"
 

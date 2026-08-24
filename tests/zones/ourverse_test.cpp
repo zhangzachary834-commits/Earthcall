@@ -10,7 +10,7 @@
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "Person/Person.hpp"
 #include "Person/Relationship/Community/Community.hpp"
-#include "ConstructedBeing/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
 #include "Singularity/Language/LanguageSystem.hpp"
 

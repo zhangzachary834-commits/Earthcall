@@ -7,7 +7,7 @@
 // primitive still reaches the framebuffer, and that the primitive path — like the
 // mesh paths — honours materials (a dim material dims the cube).
 
-#include "ConstructedBeing/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ConstructedBeing/Material/MaterialManager.hpp"
 #include "Singularity/Screen/Renderer.hpp"
 

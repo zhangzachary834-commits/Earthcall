@@ -17,7 +17,7 @@
 // small edge tolerance is allowed. It is deliberately far tighter than the area
 // any real transcription error would move.
 
-#include "ConstructedBeing/Object/Geometry/Sdf.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
 #include "Singularity/Screen/Renderer.hpp"
 #include "Singularity/Screen/RenderMaterial.hpp"
 #include "Singularity/Screen/WebGPU/WebGpuRenderer.hpp"

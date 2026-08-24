@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Relation/Relation.hpp"
-#include "Singularity/Language/Lexeme.hpp"
+#include "../../ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
 
 #include <memory>
 #include <string>

@@ -13,8 +13,8 @@
 // buttons, all of them looking right.
 
 #include "ConstructedBeing/CategoryManager.hpp"
-#include "ConstructedBeing/Object/Creation/ObjectConcept.hpp"
-#include "ConstructedBeing/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Creation/ObjectConcept.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "Relation/RelationManager.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "Singularity/Input/Interaction/ControlPatterns.hpp"

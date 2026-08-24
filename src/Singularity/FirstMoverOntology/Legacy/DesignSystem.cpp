@@ -1,7 +1,7 @@
 #include "DesignSystem.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "Singularity/Storage/SaveSystem.hpp"
-#include "ConstructedBeing/Object/Formation/Menu/stb_easy_font.h"
+#include "ConstructedBeing/Singular/Object/Formation/Menu/stb_easy_font.h"
 #include <GLFW/glfw3.h>
 #include <algorithm>
 #include <cmath>

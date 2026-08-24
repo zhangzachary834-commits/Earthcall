@@ -16,7 +16,7 @@
 // public accessors elsewhere. A field that to_json writes belongs here.
 
 #include "ConstructedBeing/Material/MaterialManager.hpp"
-#include "ConstructedBeing/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
 #include "Singularity/Storage/Serialization.hpp"
 

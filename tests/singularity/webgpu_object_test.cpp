@@ -12,8 +12,8 @@
 // backend first means Object construction never calls into OpenGL.
 
 #include "ConstructedBeing/Material/MaterialManager.hpp"
-#include "ConstructedBeing/Object/Object.hpp"
-#include "ConstructedBeing/Object/Geometry/Sdf.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
 #include "Singularity/Screen/Renderer.hpp"
 #include "Singularity/Screen/WebGPU/WebGpuRenderer.hpp"
 #include "Singularity/Screen/WebGPU/WgpuDevice.hpp"

@@ -1,8 +1,8 @@
 #include "ConditionModel.hpp"
 
-#include "ConstructedBeing/Object/Geometry/SdfJson.hpp"
-#include "ConstructedBeing/Object/Formation/Formation.hpp"
-#include "ConstructedBeing/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/SdfJson.hpp"
+#include "ConstructedBeing/Singular/Object/Formation/Formation.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
 #include "Law.hpp"
 #include "LawAuditLogger.hpp"
@@ -11,7 +11,7 @@
 #include "Universe.hpp"
 #include "ZonesOfEarth/Physics/CollisionDispatcher.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
-#include "Singularity/Language/Lexeme.hpp"
+#include "../../ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
 
 #include <algorithm>
 #include <cmath>

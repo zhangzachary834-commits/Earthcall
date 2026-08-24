@@ -10,8 +10,8 @@
 // group it has no relation to, while a true match was skipped. This test pins
 // the invariant: matched sets merge, unmatched sets are left alone.
 
-#include "ConstructedBeing/Object/Formation/Formation.hpp"
-#include "ConstructedBeing/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Formation/Formation.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "Relation/Relation.hpp"
 
 #include <GLFW/glfw3.h>

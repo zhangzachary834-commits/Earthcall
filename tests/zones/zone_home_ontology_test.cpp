@@ -6,7 +6,7 @@
 // Not implemented here: Second-Person will / forced entry (⚑ AUTHOR).
 
 #include "ConstructedBeing/Material/MaterialManager.hpp"
-#include "ConstructedBeing/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "Person/Person.hpp"
 #include "Person/Relationship/Community/Community.hpp"
 #include "Person/Soul/Soul.hpp"

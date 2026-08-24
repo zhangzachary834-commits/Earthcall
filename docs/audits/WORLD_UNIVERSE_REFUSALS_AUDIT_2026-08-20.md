@@ -194,7 +194,7 @@ These are the files an implementation has to touch. Scratch/legacy still names W
 - `AuthorsOfLaw/ActionModel.cpp` — `resolveWorld`, `Kind::Spawn`
 - `AuthorsOfLaw/Law.cpp` — `reapUnmadeBeings`
 - `AuthorsOfLaw/ConditionModel.cpp` — `BeingKind::World`
-- `ConstructedBeing/Object/Creation/ObjectConcept.cpp` — birth refusal for World
+- `ConstructedBeing/Singular/Object/Creation/ObjectConcept.cpp` — birth refusal for World
 - `Singularity/Screen/LawGraphWindow.cpp` / `MathEditors.cpp` — picker label `"World"`
 
 **Save**
