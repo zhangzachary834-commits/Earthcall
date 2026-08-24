@@ -761,6 +761,9 @@ void Tool::FacePaint(GLFWwindow *window, Core::Engine *engine, ZoneManager &mgr,
  {
     (void)mgr;
     (void)dt;
+    if (!window || !engine) return;
+    if (ImGui::GetIO().WantCaptureMouse) return;
+
      bool mouseLeftNow = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
      if (mouseLeftNow)
     {
@@ -823,41 +826,41 @@ void Tool::FacePaint(GLFWwindow *window, Core::Engine *engine, ZoneManager &mgr,
             auto& st = Rendering::getCreatorConsoleState();
             // Apply brush based on type
             // Paint the object's OWN material, not the shared one it is
-                // referencing: ownMaterial() diverges it on the first
-                // stroke so a brush touches this object and no other.
-                if (auto mat = hitObj->ownMaterial()) {
+            // referencing: ownMaterial() diverges it on the first
+            // stroke so a brush touches this object and no other.
+            if (auto mat = hitObj->ownMaterial()) {
+                const int faces = hitObj->getFaces() > 0 ? hitObj->getFaces() : 6;
+                if (static_cast<int>(mat->faceTextures.size()) != faces) {
+                    mat->initFaceTextures(faces);
+                }
                 PaintToolSurface pts(*mat);
-                const float radius = st.faceBrushRadius * pressure;
+                const float radius = std::max(0.005f, st.faceBrushRadius * pressure);
                 const float softness = st.faceBrushSoftness;
+                const float opacity = st.faceBrushOpacity;
+                const float flow = st.faceBrushFlow;
                 const int brushType = st.faceBrushType;
+                const float r = engine->getCurrentColor(0);
+                const float g = engine->getCurrentColor(1);
+                const float b = engine->getCurrentColor(2);
+
                 switch (brushType)
                 {
                 case 1: // Airbrush
-                     pts.airbrushFace(hitFace, uv,
-                                          engine->getCurrentColor(0), engine->getCurrentColor(1), engine->getCurrentColor(2),
-                                          radius, /*density*/ 0.5f, softness);
+                    pts.airbrushFace(hitFace, uv, r, g, b, radius, /*density*/ 0.5f, opacity);
                     break;
                 case 2: // Chalk
-                    pts.paintFaceAdvanced(hitFace, uv,
-                                              engine->getCurrentColor(0), engine->getCurrentColor(1), engine->getCurrentColor(2),
-                                              radius, softness,
-                                              0.0f, 0.0f, 2);
+                    pts.paintFaceAdvanced(hitFace, uv, r, g, b, radius, softness, opacity, flow, 2);
                     break;
                 case 3: // Spray
-                    pts.paintFaceAdvanced(hitFace, uv,
-                                              engine->getCurrentColor(0), engine->getCurrentColor(1), engine->getCurrentColor(2),
-                                              radius, softness,
-                                              0.0f, 0.0f, 3);
+                    pts.paintFaceAdvanced(hitFace, uv, r, g, b, radius, softness, opacity, flow, 3);
                     break;
                 case 4: // Smudge
-                     pts.smudgeFace(hitFace, uv,
-                                        radius, /*strength*/ 0.5f);
+                    pts.smudgeFace(hitFace, uv, radius, /*strength*/ 0.5f * opacity);
                     break;
                 case 5: // Clone
                     if (st.lastBrushUV.x >= 0.0f)
                     {
-                        pts.cloneFace(hitFace, uv, st.lastBrushUV,
-                                          radius, softness);
+                        pts.cloneFace(hitFace, uv, st.lastBrushUV, radius, opacity);
                     }
                     break;
                 default: // Normal
@@ -865,17 +868,12 @@ void Tool::FacePaint(GLFWwindow *window, Core::Engine *engine, ZoneManager &mgr,
                         st.lastBrushObject == hitObj &&
                         st.lastBrushFace == hitFace)
                     {
-                        pts.paintStroke(hitFace, st.lastBrushUV, uv,
-                                            engine->getCurrentColor(0), engine->getCurrentColor(1), engine->getCurrentColor(2),
-                                            radius, softness,
-                                            0.0f, 0.0f);
+                        pts.paintStroke(hitFace, st.lastBrushUV, uv, r, g, b,
+                                        radius, softness, opacity, std::max(0.002f, radius * 0.25f));
                     }
                     else
                     {
-                        pts.paintFaceAdvanced(hitFace, uv,
-                                                  engine->getCurrentColor(0), engine->getCurrentColor(1), engine->getCurrentColor(2),
-                                                  radius, softness,
-                                                  0.0f, 0.0f, 0);
+                        pts.paintFaceAdvanced(hitFace, uv, r, g, b, radius, softness, opacity, flow, 0);
                     }
                     break;
                 }

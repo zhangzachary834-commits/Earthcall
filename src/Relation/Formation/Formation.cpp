@@ -177,6 +177,7 @@ bool Formation::releaseMemberAt(Singular* s, int depth) {
         found = true;
     }
     if (_root == s) _root = nullptr;
+    relationMgr.removeInvolving(s);
     if (subformations.empty()) return found;
     if (depth + 1 >= kMaxFormationDepth) {
         std::fprintf(stderr,
@@ -224,7 +225,7 @@ bool Formation::reachesDirected(const std::string& from, const std::string& to,
     for (const auto& rel : relationMgr.getAll()) {
         if (!rel || !rel->directed) continue;
         if (rel->type != type) continue;
-        out[rel->entityA].push_back(rel->entityB);
+        out[rel->aId()].push_back(rel->bId());
     }
 
     std::set<std::string> seen{from};
@@ -243,20 +244,26 @@ bool Formation::reachesDirected(const std::string& from, const std::string& to,
 }
 
 bool Formation::mayAdmitRelation(const std::shared_ptr<Relation>& r) const {
-    if (!r) return false;
-    if (!r->entityA.empty() && r->entityA == r->entityB) return false;
+    if (!r || !r->hasEndpoints()) return false;
+    if (r->a() == r->b()) return false;
     if (!r->directed) return true;   // mutual bonds are a set, not a regress
-    return !reachesDirected(r->entityB, r->entityA, r->type);
+    return !reachesDirected(r->bId(), r->aId(), r->type);
 }
 
 bool Formation::addRelation(const std::shared_ptr<Relation>& r) {
     if (!r) return false;
+    if (!r->hasEndpoints()) {
+        std::fprintf(stderr,
+            "Formation '%s': REFUSED relation '%s' with unbound Singular endpoints.\n",
+            getIdentifier().c_str(), r->type.c_str());
+        return false;
+    }
     if (!mayAdmitRelation(r)) {
-        if (!r->entityA.empty() && r->entityA == r->entityB) {
+        if (r->a() == r->b()) {
             std::fprintf(stderr,
                 "Formation '%s': REFUSED relation '%s' from '%s' to itself. "
                 "A being is not its own ground.\n",
-                getIdentifier().c_str(), r->type.c_str(), r->entityA.c_str());
+                getIdentifier().c_str(), r->type.c_str(), r->aId().c_str());
         } else {
             std::fprintf(stderr,
                 "Formation '%s': REFUSED directed relation '%s' %s -> %s: it "
@@ -264,8 +271,8 @@ bool Formation::addRelation(const std::shared_ptr<Relation>& r) {
                 "ancestor has no ground (AUTHORED_CATEGORIES.md §7). The edge is "
                 "refused whole; no other edge is dropped to 'break' the cycle, "
                 "because that would discard an authorship no one revoked.\n",
-                getIdentifier().c_str(), r->type.c_str(), r->entityA.c_str(),
-                r->entityB.c_str(), r->type.c_str());
+                getIdentifier().c_str(), r->type.c_str(), r->aId().c_str(),
+                r->bId().c_str(), r->type.c_str());
         }
         return false;
     }
@@ -333,8 +340,8 @@ bool Formation::isCoreMember(const Singular* s) const {
     const std::string id = s->getIdentifier();
     for (const auto& rel : relationMgr.getAll()) {
         if (rel && !rel->directed) {
-            if (rel->entityA == id && findMemberByIdentifier(rel->entityB)) return true;
-            if (rel->entityB == id && findMemberByIdentifier(rel->entityA)) return true;
+            if (rel->a() == s && hasMember(rel->b())) return true;
+            if (rel->b() == s && hasMember(rel->a())) return true;
         }
     }
     return false;
@@ -353,9 +360,9 @@ Formation::Topology Formation::resolveTopology() {
     std::map<std::string, std::vector<std::string>> adj;
     for (const auto& rel : relationMgr.getAll()) {
         if (!rel) continue;
-        if (rel->entityA.empty() || rel->entityB.empty()) continue;
-        adj[rel->entityA].push_back(rel->entityB);
-        adj[rel->entityB].push_back(rel->entityA);
+        if (!rel->hasEndpoints()) continue;
+        adj[rel->aId()].push_back(rel->bId());
+        adj[rel->bId()].push_back(rel->aId());
     }
 
     // Step 2: weakly connected components across the members. A member named by
@@ -434,7 +441,7 @@ Formation::Topology Formation::resolveTopology() {
     }
     for (const auto& rel : oldRelations) {
         if (!rel) continue;
-        if (primaryGroup.count(rel->entityA) && primaryGroup.count(rel->entityB)) {
+        if (primaryGroup.count(rel->aId()) && primaryGroup.count(rel->bId())) {
             // Re-admitted, not re-authored: these relations were already
             // admitted once, so they are not put back through the §7 guard.
             relationMgr.add(rel);
@@ -454,7 +461,7 @@ Formation::Topology Formation::resolveTopology() {
         }
         for (const auto& rel : oldRelations) {
             if (!rel) continue;
-            if (group.count(rel->entityA) && group.count(rel->entityB)) {
+            if (group.count(rel->aId()) && group.count(rel->bId())) {
                 spawned->relationMgr.add(rel);
                 spawned->integrateRelationTopology(rel);
             }
@@ -500,8 +507,8 @@ std::shared_ptr<Formation> Formation::findOrCreateRelationFormation(const std::s
             if (held == r) { holdsRelation = true; break; }
         }
         if (holdsRelation ||
-            sub->findMemberByIdentifier(r->entityA) ||
-            sub->findMemberByIdentifier(r->entityB)) {
+            sub->hasMember(r->a()) ||
+            sub->hasMember(r->b())) {
             matchingIndices.push_back(i);
         }
     }
@@ -549,8 +556,8 @@ std::shared_ptr<Formation> Formation::findOrCreateRelationFormation(const std::s
 void Formation::integrateRelationTopology(const std::shared_ptr<Relation>& r) {
     if (!r) return;
 
-    Singular* memberA = findMemberByIdentifier(r->entityA);
-    Singular* memberB = findMemberByIdentifier(r->entityB);
+    Singular* memberA = r->a();
+    Singular* memberB = r->b();
     if (memberA) admitMember(memberA);
     if (memberB) admitMember(memberB);
 
@@ -574,7 +581,7 @@ void Formation::reintegrateRelationsFor(Singular* s) {
 
     std::vector<std::shared_ptr<Relation>> naming;
     for (const auto& rel : relationMgr.getAll()) {
-        if (rel && (rel->entityA == id || rel->entityB == id)) naming.push_back(rel);
+        if (rel && rel->involves(s)) naming.push_back(rel);
     }
     if (naming.empty()) return;
 
@@ -602,8 +609,8 @@ void Formation::applyAttachmentRelations() {
         for (const auto& rel : attachments) {
             if (!rel || !rel->attachment.enabled) continue;
 
-            auto* parent = dynamic_cast<Object*>(findMemberByIdentifier(rel->entityA));
-            auto* child  = dynamic_cast<Object*>(findMemberByIdentifier(rel->entityB));
+            auto* parent = dynamic_cast<Object*>(rel->a());
+            auto* child  = dynamic_cast<Object*>(rel->b());
             if (!parent || !child) continue;
 
             glm::mat4 parentTransform = parent->getTransform();
@@ -777,7 +784,7 @@ std::shared_ptr<Formation> Formation::fromJson(const nlohmann::json& json,
 
     if (json.contains("relations")) {
         RelationManager loaded;
-        loaded.loadFromJson(json["relations"]);
+        loaded.loadFromJson(json["relations"], resolve);
         for (const auto& rel : loaded.getAll()) f->addRelation(rel);
     }
 
@@ -820,8 +827,8 @@ int Formation::rankOf(const std::string& identifier) const {
     for (const auto& rel : relationMgr.getAll()) {
         if (!rel || !rel->directed) continue;
         if (rel->type != kGroundsType) continue;
-        if (rel->entityA.empty() || rel->entityB.empty()) continue;
-        children[rel->entityA].push_back(rel->entityB);
+        if (!rel->hasEndpoints()) continue;
+        children[rel->aId()].push_back(rel->bId());
     }
 
     const std::string rootId = _root->getIdentifier();
@@ -875,24 +882,24 @@ std::vector<std::shared_ptr<Relation>> Formation::relationsOrderedByTelos() cons
         [this](const std::shared_ptr<Relation>& a, const std::shared_ptr<Relation>& b) {
             if (!a || !b) return bool(a) && !b;
             const int aMin = [&] {
-                const int ra = rankOf(a->entityA);
-                const int rb = rankOf(a->entityB);
+                const int ra = rankOf(a->aId());
+                const int rb = rankOf(a->bId());
                 const int ka = ra < 0 ? 100000 : ra;
                 const int kb = rb < 0 ? 100000 : rb;
                 return std::min(ka, kb);
             }();
             const int bMin = [&] {
-                const int ra = rankOf(b->entityA);
-                const int rb = rankOf(b->entityB);
+                const int ra = rankOf(b->aId());
+                const int rb = rankOf(b->bId());
                 const int ka = ra < 0 ? 100000 : ra;
                 const int kb = rb < 0 ? 100000 : rb;
                 return std::min(ka, kb);
             }();
             if (aMin != bMin) return aMin < bMin;
-            const int aSpan = std::abs((rankOf(a->entityA) < 0 ? 100000 : rankOf(a->entityA))
-                                     - (rankOf(a->entityB) < 0 ? 100000 : rankOf(a->entityB)));
-            const int bSpan = std::abs((rankOf(b->entityA) < 0 ? 100000 : rankOf(b->entityA))
-                                     - (rankOf(b->entityB) < 0 ? 100000 : rankOf(b->entityB)));
+            const int aSpan = std::abs((rankOf(a->aId()) < 0 ? 100000 : rankOf(a->aId()))
+                                     - (rankOf(a->bId()) < 0 ? 100000 : rankOf(a->bId())));
+            const int bSpan = std::abs((rankOf(b->aId()) < 0 ? 100000 : rankOf(b->aId()))
+                                     - (rankOf(b->bId()) < 0 ? 100000 : rankOf(b->bId())));
             return aSpan < bSpan;
         });
     return ordered;
@@ -919,8 +926,8 @@ std::vector<std::shared_ptr<Relation>> Formation::orderRelationsBy(const Formati
     };
     auto key = [&](const std::shared_ptr<Relation>& r) {
         if (!r) return std::pair<int, int>{100000, 100000};
-        const int ra = endpointRank(r->entityA);
-        const int rb = endpointRank(r->entityB);
+        const int ra = endpointRank(r->aId());
+        const int rb = endpointRank(r->bId());
         const int ka = ra < 0 ? 100000 : ra;
         const int kb = rb < 0 ? 100000 : rb;
         return std::pair<int, int>{std::min(ka, kb), std::abs(ka - kb)};

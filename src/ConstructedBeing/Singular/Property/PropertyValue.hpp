@@ -1,6 +1,8 @@
 #pragma once
 
 #include <glm/glm.hpp>
+#include <algorithm>
+#include <cmath>
 #include <string>
 #include <type_traits>
 #include <variant>
@@ -82,4 +84,15 @@ inline bool propertyValueToNumber(const PropertyValue& v, double& out) {
             return false;
         }
     }, v);
+}
+
+// A law Map that would write the value already held is not a write.
+// Numeric alternatives compare as numbers so int 1 and double 1.0 agree.
+inline bool propertyValuesEquivalent(const PropertyValue& a, const PropertyValue& b) {
+    double na = 0.0, nb = 0.0;
+    if (propertyValueToNumber(a, na) && propertyValueToNumber(b, nb)) {
+        const double scale = std::max(1.0, std::max(std::fabs(na), std::fabs(nb)));
+        return std::fabs(na - nb) <= 1e-6 * scale;
+    }
+    return a.index() == b.index() && a == b;
 }

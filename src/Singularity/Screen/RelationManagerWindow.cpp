@@ -61,15 +61,15 @@ void renderRelationManagerWindow(bool* open, const RelationManager& registry) {
                 if (!rel) continue;
                 if (typeFilter[0] != '\0' && rel->type.find(typeFilter) == std::string::npos) continue;
                 
-                bool matchA = entityFilter[0] == '\0' || rel->entityA.find(entityFilter) != std::string::npos;
-                bool matchB = entityFilter[0] == '\0' || rel->entityB.find(entityFilter) != std::string::npos;
+                bool matchA = entityFilter[0] == '\0' || rel->aId().find(entityFilter) != std::string::npos;
+                bool matchB = entityFilter[0] == '\0' || rel->bId().find(entityFilter) != std::string::npos;
                 
                 if (!matchA && !matchB) continue;
 
-                if (std::find(nodes.begin(), nodes.end(), rel->entityA) == nodes.end()) nodes.push_back(rel->entityA);
-                if (std::find(nodes.begin(), nodes.end(), rel->entityB) == nodes.end()) nodes.push_back(rel->entityB);
+                if (std::find(nodes.begin(), nodes.end(), rel->aId()) == nodes.end()) nodes.push_back(rel->aId());
+                if (std::find(nodes.begin(), nodes.end(), rel->bId()) == nodes.end()) nodes.push_back(rel->bId());
                 
-                edges.push_back({rel->entityA, rel->entityB, rel->type, rel->directed, static_cast<float>(rel->getWeight())});
+                edges.push_back({rel->aId(), rel->bId(), rel->type, rel->directed, static_cast<float>(rel->getWeight())});
             }
 
             ImGui::Text("Showing %zu relations between %zu entities", edges.size(), nodes.size());

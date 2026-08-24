@@ -1,8 +1,11 @@
 #include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
 
 #include "ConstructedBeing/Singular/Property/Property.hpp"
+#include "ConstructedBeing/Singular/Property/PropertyValue.hpp"
 #include "ConstructedBeing/Singular/Singular.hpp"
 
+#include <algorithm>
+#include <cmath>
 #include <glm/glm.hpp>
 #include <utility>
 #include <variant>
@@ -134,6 +137,11 @@ PropertyPath::PathResult PropertyPath::setValue(Singular& root, const PropertyVa
     Property* property = resolve(root, &component);
     if (!property) {
         if (segments.size() == 1) {
+            PropertyValue cur;
+            if (root.getDynamicProperty(segments[0], cur) &&
+                propertyValuesEquivalent(cur, v)) {
+                return PathResult::Unchanged;
+            }
             root.setDynamicProperty(segments[0], v);
             return PathResult::Ok;
         }
@@ -141,11 +149,15 @@ PropertyPath::PathResult PropertyPath::setValue(Singular& root, const PropertyVa
     }
 
     if (component.empty()) {
+        if (propertyValuesEquivalent(property->value(), v)) return PathResult::Unchanged;
         if (property->setValue(v)) return PathResult::Ok;
         // Arithmetic coercion retry: match the alternative the slot holds.
         double n = 0.0;
         PropertyValue coerced;
         if (propertyValueToNumber(v, n) && coerceLike(property->value(), n, coerced)) {
+            if (propertyValuesEquivalent(property->value(), coerced)) {
+                return PathResult::Unchanged;
+            }
             if (property->setValue(coerced)) return PathResult::Ok;
         }
         // If setValue fails, we'll assume it's because the property rejected it, likely read-only or type mismatch.
@@ -161,7 +173,11 @@ PropertyPath::PathResult PropertyPath::setValue(Singular& root, const PropertyVa
     PropertyValue whole = property->value();
     glm::vec3* vec = std::get_if<glm::vec3>(&whole);
     if (!vec) return PathResult::BadComponent;
-    *componentOf(*vec, component) = static_cast<float>(n);
+    float& lane = *componentOf(*vec, component);
+    if (std::fabs(static_cast<double>(lane) - n) <= 1e-6 * std::max(1.0, std::fabs(n))) {
+        return PathResult::Unchanged;
+    }
+    lane = static_cast<float>(n);
     if (property->setValue(PropertyValue(*vec))) return PathResult::Ok;
     return PathResult::ReadOnly;
 }

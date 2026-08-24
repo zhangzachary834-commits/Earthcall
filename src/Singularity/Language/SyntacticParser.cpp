@@ -1,23 +1,23 @@
 #include "SyntacticParser.hpp"
+#include "Singularity/Language/LanguageSystem.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "Relation/RelationManager.hpp"
 #include <cctype>
-#include <sstream>
 #include <algorithm>
-#include <iostream>
 
 namespace Singularity {
 namespace Language {
 
-std::vector<Token> SyntacticParser::tokenize(const std::string& input) {
-    std::vector<Token> tokens;
+std::vector<std::string> SyntacticParser::tokenize(const std::string& input) {
+    std::vector<std::string> tokens;
     std::string current;
     for (char c : input) {
-        if (std::isspace(c) || std::ispunct(c)) {
+        if (std::isspace(static_cast<unsigned char>(c)) ||
+            std::ispunct(static_cast<unsigned char>(c))) {
             if (!current.empty()) {
-                std::string norm = current;
-                std::transform(norm.begin(), norm.end(), norm.begin(), ::tolower);
-                tokens.push_back({current, norm});
+                std::transform(current.begin(), current.end(), current.begin(),
+                               [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
+                tokens.push_back(current);
                 current.clear();
             }
         } else {
@@ -25,81 +25,91 @@ std::vector<Token> SyntacticParser::tokenize(const std::string& input) {
         }
     }
     if (!current.empty()) {
-        std::string norm = current;
-        std::transform(norm.begin(), norm.end(), norm.begin(), ::tolower);
-        tokens.push_back({current, norm});
+        std::transform(current.begin(), current.end(), current.begin(),
+                       [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
+        tokens.push_back(current);
     }
     return tokens;
 }
 
-std::string SyntacticParser::resolvePOS(const std::string& tokenStr, Zone& activeZone) {
-    auto rels = activeZone.formation().relations().getRelationsOf(tokenStr);
+Lexeme* SyntacticParser::resolvePOS(Lexeme& lexeme, Zone& activeZone) {
+    auto rels = activeZone.formation().relations().getRelationsOf(lexeme);
     for (const auto& r : rels) {
-        if (r && r->type == "is_pos" && r->entityA == tokenStr) {
-            return r->entityB; // e.g. "verb", "noun", "determiner"
+        if (r && r->type == "is_pos" && r->a() == &lexeme) {
+            return dynamic_cast<Lexeme*>(r->b());
         }
     }
-    return "unknown"; // Default if not explicitly defined
+    return nullptr;
 }
 
-std::string SyntacticParser::resolveMeaning(const std::string& tokenStr, Zone& activeZone) {
-    auto rels = activeZone.formation().relations().getRelationsOf(tokenStr);
+std::string SyntacticParser::resolveMeaning(Lexeme& verbPhrase, Zone& activeZone) {
+    auto rels = activeZone.formation().relations().getRelationsOf(verbPhrase);
     for (const auto& r : rels) {
-        if (r && r->type == "resolves_to" && r->entityA == tokenStr) {
-            return r->entityB; // e.g. "has_inventory"
+        if (r && r->type == "resolves_to" && r->a() == &verbPhrase) {
+            if (auto* meaning = dynamic_cast<Lexeme*>(r->b())) {
+                return meaning->getSymbol();
+            }
         }
     }
-    return tokenStr; // Defaults to itself
+    return verbPhrase.getSymbol();
 }
 
-std::vector<ParsedRelation> SyntacticParser::parse(const std::string& utterance, Zone& activeZone) {
-    std::vector<Token> tokens = tokenize(utterance);
-    std::vector<ParsedRelation> results;
-    
+std::vector<std::shared_ptr<Relation>> SyntacticParser::parse(const std::string& utterance, Zone& activeZone) {
+    auto& language = LanguageSystem::instance();
+    std::vector<std::string> tokens = tokenize(utterance);
+    std::vector<std::shared_ptr<Relation>> results;
+
     enum State { EXPECTING_SUBJECT, EXPECTING_VERB, EXPECTING_OBJECT };
     State state = EXPECTING_SUBJECT;
-    
-    ParsedRelation currentRel;
-    
-    for (const auto& token : tokens) {
-        std::string pos = resolvePOS(token.normalized, activeZone);
-        
-        if (pos == "determiner") {
-            continue; // Skip words like "the", "a", "an"
+
+    Lexeme* subject = nullptr;
+    std::string relationType;
+
+    for (const auto& symbol : tokens) {
+        auto lexeme = language.resolve(symbol);
+        if (!lexeme) continue;
+        activeZone.addToFormation(lexeme.get());
+
+        Lexeme* pos = resolvePOS(*lexeme, activeZone);
+        const std::string posSymbol = pos ? pos->getSymbol() : std::string("unknown");
+
+        if (posSymbol == "determiner") {
+            continue;
         }
-        
+
         if (state == EXPECTING_SUBJECT) {
-            if (pos == "noun" || pos == "unknown") {
-                currentRel.entityA = token.raw;
+            if (posSymbol == "noun" || posSymbol == "unknown") {
+                subject = lexeme.get();
                 state = EXPECTING_VERB;
             }
-        } 
+        }
         else if (state == EXPECTING_VERB) {
-            if (pos == "verb" || pos == "preposition") {
-                if (currentRel.relationType.empty()) {
-                    currentRel.relationType = token.normalized;
+            if (posSymbol == "verb" || posSymbol == "preposition") {
+                if (relationType.empty()) {
+                    relationType = lexeme->getSymbol();
                 } else {
-                    currentRel.relationType += "_" + token.normalized;
+                    relationType += "_" + lexeme->getSymbol();
                 }
-            } else if (pos == "noun" || pos == "unknown") {
-                if (!currentRel.relationType.empty()) {
-                    currentRel.entityB = token.raw;
-                    
-                    // Resolve synonym/canonical verb mapping from the graph
-                    currentRel.relationType = resolveMeaning(currentRel.relationType, activeZone);
-                    
-                    results.push_back(currentRel);
-                    // Reset for next potential relation in compound sentences
-                    currentRel = ParsedRelation();
+            } else if (posSymbol == "noun" || posSymbol == "unknown") {
+                if (!relationType.empty() && subject) {
+                    auto phrase = language.resolve(relationType);
+                    activeZone.addToFormation(phrase.get());
+                    const std::string canonical = resolveMeaning(*phrase, activeZone);
+
+                    auto rel = std::make_shared<Relation>(canonical, *subject, *lexeme, true);
+                    rel->setWeight(0.5f);
+                    results.push_back(rel);
+
+                    subject = nullptr;
+                    relationType.clear();
                     state = EXPECTING_SUBJECT;
                 } else {
-                    // Two subjects in a row? Overwrite current subject.
-                    currentRel.entityA = token.raw;
+                    subject = lexeme.get();
                 }
             }
         }
     }
-    
+
     return results;
 }
 

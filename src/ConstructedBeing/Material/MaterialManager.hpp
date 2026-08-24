@@ -32,7 +32,10 @@ public:
     const std::vector<std::shared_ptr<Material>>& getAll() const { return _materials; }
 
     nlohmann::json toJson() const;
-    void loadFromJson(const nlohmann::json& j); // reinstates material.default afterward
+    void loadFromJson(const nlohmann::json& j); // REPLACE — snapshot restore
+    // Upsert by identifier. Does not drop materials a live Home still names.
+    // Session load uses this so Home paint is not wiped by another world's bag.
+    void mergeFromJson(const nlohmann::json& j);
 
 private:
     void ensureDefault();

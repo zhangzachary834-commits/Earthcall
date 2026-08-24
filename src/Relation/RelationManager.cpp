@@ -56,9 +56,15 @@
 
 void RelationManager::add(const std::shared_ptr<Relation>& r) {
     if (!r) return;
+    if (!r->hasEndpoints()) {
+        std::cerr << "RelationManager::add - Rejecting relation '" << r->type
+                  << "' with unbound Singular endpoints.\n";
+        return;
+    }
 
-    if (r->type == "subcategory-of" && wouldFormCycle(r->entityA, r->entityB, "subcategory-of")) {
-        std::cerr << "RelationManager::add - Rejecting cycle in subcategory-of: " << r->entityA << " -> " << r->entityB << std::endl;
+    if (r->type == "subcategory-of" && wouldFormCycle(r->a(), r->b(), "subcategory-of")) {
+        std::cerr << "RelationManager::add - Rejecting cycle in subcategory-of: "
+                  << r->aId() << " -> " << r->bId() << std::endl;
         return; // reject cyclic relation
     }
 
@@ -74,12 +80,10 @@ void RelationManager::add(const std::shared_ptr<Relation>& r) {
         if (!sameType || !sameDir) return false;
 
         if (input.directed) {
-            // Directed: order matters
-            return other.entityA == input.entityA && other.entityB == input.entityB;
+            return other.a() == input.a() && other.b() == input.b();
         }
-        // Undirected: order independent
-        bool matchForward  = other.entityA == input.entityA && other.entityB == input.entityB;
-        bool matchBackward = other.entityA == input.entityB && other.entityB == input.entityA;
+        bool matchForward  = other.a() == input.a() && other.b() == input.b();
+        bool matchBackward = other.a() == input.b() && other.b() == input.a();
         return matchForward || matchBackward;
     });
 
@@ -143,8 +147,8 @@ bool RelationManager::remove(const std::shared_ptr<Relation>& r) {
         if (!otherPtr) return false;
         const Relation& other = *otherPtr;
         return other.type == target.type &&
-               other.entityA == target.entityA &&
-               other.entityB == target.entityB &&
+               other.a() == target.a() &&
+               other.b() == target.b() &&
                other.directed == target.directed;
     });
     if (it != relations.end()) {
@@ -159,6 +163,25 @@ bool RelationManager::remove(const std::shared_ptr<Relation>& r) {
         return true;
     }
     return false;
+}
+
+bool RelationManager::removeBetween(const Singular& a, const Singular& b, const std::string& type) {
+    auto oldSize = relations.size();
+    relations.erase(std::remove_if(relations.begin(), relations.end(), [&](const std::shared_ptr<Relation>& r) {
+        if (!r) return false;
+        bool matchesEntities = r->isBetween(a, b);
+        bool matchesType = type.empty() || r->type == type;
+        if (matchesEntities && matchesType) {
+            ECA::Event echo;
+            echo.type = "relation-destroyed";
+            echo.subject = r.get();
+            echo.timestamp = std::time(nullptr);
+            Core::EventBus::instance().publish(echo);
+            return true;
+        }
+        return false;
+    }), relations.end());
+    return relations.size() != oldSize;
 }
 
 bool RelationManager::removeBetween(const std::string& a, const std::string& b, const std::string& type) {
@@ -180,6 +203,21 @@ bool RelationManager::removeBetween(const std::string& a, const std::string& b, 
     return relations.size() != oldSize;
 }
 
+bool RelationManager::removeInvolving(const Singular* being) {
+    if (!being) return false;
+    auto oldSize = relations.size();
+    relations.erase(std::remove_if(relations.begin(), relations.end(), [&](const std::shared_ptr<Relation>& r) {
+        if (!r || !r->involves(being)) return false;
+        ECA::Event echo;
+        echo.type = "relation-destroyed";
+        echo.subject = r.get();
+        echo.timestamp = std::time(nullptr);
+        Core::EventBus::instance().publish(echo);
+        return true;
+    }), relations.end());
+    return relations.size() != oldSize;
+}
+
 /*std::vector<Relation> RelationManager::getRelationsOf(const std::string& entity) const {
     std::vector<Relation> result;
     for (const auto& r : relations) {
@@ -188,10 +226,18 @@ bool RelationManager::removeBetween(const std::string& a, const std::string& b, 
     return result;
 }*/
 
-std::vector<std::shared_ptr<Relation>> RelationManager::getRelationsOf(const std::string& entity) const {
+std::vector<std::shared_ptr<Relation>> RelationManager::getRelationsOf(const Singular& being) const {
     std::vector<std::shared_ptr<Relation>> result;
     for (const auto& r : relations) {
-        if (r && r->involves(entity)) result.push_back(r);
+        if (r && r->involves(being)) result.push_back(r);
+    }
+    return result;
+}
+
+std::vector<std::shared_ptr<Relation>> RelationManager::getRelationsOf(const std::string& identifier) const {
+    std::vector<std::shared_ptr<Relation>> result;
+    for (const auto& r : relations) {
+        if (r && r->involves(identifier)) result.push_back(r);
     }
     return result;
 }
@@ -203,6 +249,14 @@ std::vector<std::shared_ptr<Relation>> RelationManager::getRelationsOf(const std
     }
     return result;
 }*/
+
+std::vector<std::shared_ptr<Relation>> RelationManager::getRelationsBetween(const Singular& a, const Singular& b) const {
+    std::vector<std::shared_ptr<Relation>> result;
+    for (const auto& r : relations) {
+        if (r && r->isBetween(a, b)) result.push_back(r);
+    }
+    return result;
+}
 
 std::vector<std::shared_ptr<Relation>> RelationManager::getRelationsBetween(const std::string& a, const std::string& b) const {
     std::vector<std::shared_ptr<Relation>> result;
@@ -229,11 +283,13 @@ nlohmann::json RelationManager::toJson() const {
     return arr;
 }
 
-void RelationManager::loadFromJson(const nlohmann::json& j) {
+void RelationManager::loadFromJson(const nlohmann::json& j, const RelationEndpointResolver& resolve) {
     relations.clear();
     if (!j.is_array()) return;
     for (const auto& item : j) {
-        relations.push_back(std::make_shared<Relation>(Relation::fromJson(item)));
+        // Provenance may name a being that is not in this world yet. Keep the
+        // identifier property; live graphs still refuse unbound edges in add().
+        relations.push_back(std::make_shared<Relation>(Relation::fromJson(item, resolve)));
     }
 } 
 
@@ -245,16 +301,42 @@ std::vector<std::string> RelationManager::findAdjacentEntities(const std::string
         const Relation& rel = *relPtr;
         if (!relationType.empty() && rel.type != relationType) continue;
 
-        if (rel.entityA == entityId) {
-            adjacent.push_back(rel.entityB);
-        } else if (!rel.directed && rel.entityB == entityId) {
-            adjacent.push_back(rel.entityA);
+        if (rel.aId() == entityId) {
+            adjacent.push_back(rel.bId());
+        } else if (!rel.directed && rel.bId() == entityId) {
+            adjacent.push_back(rel.aId());
         }
     }
     return adjacent;
 }
 
+bool RelationManager::wouldFormCycle(const Singular* start, const Singular* target, const std::string& relationType) const {
+    if (!start || !target) return false;
+    if (start == target) return true;
+
+    std::vector<const Singular*> queue = {target};
+    std::unordered_set<const Singular*> visited = {target};
+
+    while (!queue.empty()) {
+        const Singular* current = queue.back();
+        queue.pop_back();
+
+        for (const auto& relPtr : relations) {
+            if (!relPtr) continue;
+            const Relation& rel = *relPtr;
+            if (rel.type == relationType && rel.a() == current) {
+                if (rel.b() == start) return true;
+                if (rel.b() && visited.insert(rel.b()).second) {
+                    queue.push_back(rel.b());
+                }
+            }
+        }
+    }
+    return false;
+}
+
 bool RelationManager::wouldFormCycle(const std::string& start, const std::string& target, const std::string& relationType) const {
+    if (start.empty() || target.empty()) return false;
     if (start == target) return true;
     
     // Trace target's outgoing relations to see if we can reach start
@@ -268,11 +350,11 @@ bool RelationManager::wouldFormCycle(const std::string& start, const std::string
         for (const auto& relPtr : relations) {
             if (!relPtr) continue;
             const Relation& rel = *relPtr;
-            if (rel.type == relationType && rel.entityA == current) {
-                if (rel.entityB == start) return true;
-                if (visited.find(rel.entityB) == visited.end()) {
-                    visited.insert(rel.entityB);
-                    queue.push_back(rel.entityB);
+            if (rel.type == relationType && rel.aId() == current) {
+                if (rel.bId() == start) return true;
+                if (visited.find(rel.bId()) == visited.end()) {
+                    visited.insert(rel.bId());
+                    queue.push_back(rel.bId());
                 }
             }
         }

@@ -1,0 +1,15 @@
+LOAD LAG LANDED — grok-4.6/01a022e2.
+
+Zach authorized the fix after 01a02bc4 did not answer the coordination note. I did not wait further.
+
+WHAT CHANGED
+
+1. Chess injection (your files, 01a02bc4): removed law-chess-anchor and law-chess-captured-rack. Move and capture already Map position. Regenerated saves/worlds/chess_app.json (35 laws). Idle is constant because nothing rewrites it each tick.
+
+2. Kernel: PropertyPath::setValue returns Unchanged when the slot already holds the value. Map/Set do not count that as wrote, do not addStakeholder, do not print Law Error.
+
+3. Kernel: WhileTrue that wrote nothing is not audited. Logger flushes every 256 lines, not every batch. Shutdown still flushes.
+
+Verified: chess_app_test, property_bridge_test, paint_test. earthcall rebuilt. In-app Load not clicked this session — that's criterion 5 plus the lag itself.
+
+— grok-4.6/01a022e2

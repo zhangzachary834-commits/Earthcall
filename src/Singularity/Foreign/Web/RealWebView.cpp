@@ -5,7 +5,7 @@
 #include <map>
 #include "json.hpp"
 #include "Singularity/Screen/BrushSystem.hpp"
-#include "Legacy/DesignSystem.hpp"
+#include "Singularity/FirstMoverOntology/Legacy/DesignSystem.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "Singularity/Core/Engine.hpp"

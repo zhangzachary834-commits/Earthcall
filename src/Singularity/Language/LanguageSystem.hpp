@@ -23,6 +23,13 @@ public:
     // Instantiate or retrieve a Lexeme for a given string
     std::shared_ptr<Lexeme> resolve(const std::string& symbol);
 
+    // First-mover / save intern: a Lexeme with a stable identifier law-text
+    // can name (`lexeme.the`). Does not mint a second being if the id or
+    // symbol is already live.
+    std::shared_ptr<Lexeme> intern(const std::string& symbol, const std::string& stableId);
+
+    std::shared_ptr<Lexeme> findBySymbol(const std::string& symbol) const;
+
     // The first-mover foundation Lexeme (`lexeme.christ`). Created once.
     // God shows up as the root of the seed hierarchy, not as a skinned Object.
     std::shared_ptr<Lexeme> foundation();

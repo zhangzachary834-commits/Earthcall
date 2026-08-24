@@ -1,8 +1,14 @@
 #include "Singularity/Storage/Serialization.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
 #include "Relation/Relation.hpp"
+#include "Singularity/Language/LanguageSystem.hpp"
+#include "Singularity/Language/Lexeme.hpp"
+#include "ConstructedBeing/CategoryManager.hpp"
 #include "ZonesOfEarth/HomesOfEarth/Home.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "Singularity/Storage/BinaryPack.hpp"
+#include "ConstructedBeing/Material/Material.hpp"
+#include "ConstructedBeing/Material/MaterialManager.hpp"
 #include <cstring>
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
@@ -10,6 +16,10 @@
 #include <vector>
 #include <memory>
 #include <algorithm>
+#include <unordered_set>
+
+extern MaterialManager materials;
+extern CategoryManager categories;
 
 // ------------------------------------------------------------------
 // Simple Base64 encode/decode for binary pixel buffers (RGBA8)
@@ -450,11 +460,16 @@ void from_json(const nlohmann::json& j, Object& obj){
     if (j.contains("faceColors")) {
         const auto& faceCols = j["faceColors"];
         const bool ownsItsSurface = obj.materialId() == "material." + obj.getIdentifier();
+        auto alreadyPainted = ownsItsSurface ? materials.get(obj.materialId()) : nullptr;
+        const bool texturesAlreadyHere =
+            alreadyPainted && !alreadyPainted->faceTextures.empty();
         for (size_t f = 0; f < faceCols.size() && f < 6; ++f) {
             obj.faceColors[f][0] = faceCols[f][0].get<float>();
             obj.faceColors[f][1] = faceCols[f][1].get<float>();
             obj.faceColors[f][2] = faceCols[f][2].get<float>();
-            if (ownsItsSurface) {
+            // If the Home/Zone identity already reinstated this material's
+            // pixels, do not flatten them to a solid faceColors fill.
+            if (ownsItsSurface && !texturesAlreadyHere) {
                 obj.setFaceColor(static_cast<int>(f),
                                  obj.faceColors[f][0], obj.faceColors[f][1],
                                  obj.faceColors[f][2]);
@@ -762,15 +777,56 @@ Zone::Scope scopeFromName(const std::string& name) {
     return Zone::Scope::Local;
 }
 
+void internZoneLexemes(Zone& zone, const nlohmann::json& zj) {
+    if (!zj.contains("lexemes") || !zj["lexemes"].is_array()) return;
+    auto& language = Singularity::Language::LanguageSystem::instance();
+    for (const auto& item : zj["lexemes"]) {
+        if (!item.is_object()) continue;
+        const std::string id = item.value("id", std::string{});
+        const std::string symbol = item.value("symbol", std::string{});
+        if (id.empty() || symbol.empty()) continue;
+        auto lexeme = language.intern(symbol, id);
+        zone.addToFormation(lexeme.get());
+    }
+}
+
+Singular* resolveZoneEndpoint(Zone& zone, const std::string& id) {
+    if (id.empty()) return nullptr;
+    if (Singular* member = zone.formation().findMemberByIdentifier(id)) return member;
+    for (const auto& obj : zone.getOwnedObjects()) {
+        if (obj && obj->getIdentifier() == id) return obj.get();
+    }
+    if (auto cat = categories.get(id)) return cat.get();
+    if (auto mat = materials.get(id)) return mat.get();
+    auto& language = Singularity::Language::LanguageSystem::instance();
+    if (auto lexeme = language.findById(id)) {
+        zone.addToFormation(lexeme.get());
+        return lexeme.get();
+    }
+    if (auto lexeme = language.findBySymbol(id)) {
+        zone.addToFormation(lexeme.get());
+        return lexeme.get();
+    }
+    for (Singular* being : Universe::instance().beings()) {
+        if (being && being->getIdentifier() == id) return being;
+    }
+    return nullptr;
+}
+
 void applyFormationRelations(Zone& zone, const nlohmann::json& zj) {
     if (!zj.contains("formationRelations") || !zj["formationRelations"].is_array()) return;
     // MEMBERS BEFORE RELATIONS. Zone::syncFormationMembers does not run
     // until the frame loop, so a relation added here used to find neither
-    // of its endpoints.
+    // of its endpoints. Lexemes are interned first so is_pos / resolves_to
+    // edges bind to beings, not leftover name-strings.
     zone.syncFormationMembers();
+    internZoneLexemes(zone, zj);
     size_t refused = 0;
     for (const auto& relJson : zj["formationRelations"]) {
-        if (!zone.formation().add(std::make_shared<Relation>(Relation::fromJson(relJson)))) {
+        auto rel = std::make_shared<Relation>(Relation::fromJson(relJson, [&](const std::string& id) {
+            return resolveZoneEndpoint(zone, id);
+        }));
+        if (!zone.formation().add(rel)) {
             ++refused;
         }
     }
@@ -797,8 +853,38 @@ nlohmann::json zoneToJson(const Zone& zone) {
         qualities[kv.first] = kv.second;
     }
     zj["qualities"] = qualities;
+    nlohmann::json del = nlohmann::json::object();
+    for (const auto& kv : zone.getDeletability()) {
+        del[kv.first] = kv.second;
+    }
+    zj["deletable"] = del;
     zj["world"] = zoneObjectsToJson(zone);
+    nlohmann::json lexemes = nlohmann::json::array();
+    for (Singular* member : zone.formation().getMembers()) {
+        auto* lexeme = dynamic_cast<Singularity::Language::Lexeme*>(member);
+        if (!lexeme) continue;
+        lexemes.push_back({
+            {"id", lexeme->getIdentifier()},
+            {"symbol", lexeme->getSymbol()}
+        });
+    }
+    zj["lexemes"] = lexemes;
     zj["formationRelations"] = zone.formation().relations().toJson();
+
+    // Paint lives on Material beings. Objects only store a materialId.
+    // If those materials stay only in the session bag, loading another
+    // save replaces them and Home comes back white. Carry the materials
+    // this Zone/Home's objects name, so the identity file is the surface.
+    nlohmann::json mats = nlohmann::json::array();
+    std::unordered_set<std::string> seen;
+    for (const auto& obj : zone.objects()) {
+        if (!obj) continue;
+        const std::string& mid = obj->materialId();
+        if (mid.empty() || !seen.insert(mid).second) continue;
+        if (auto m = materials.get(mid)) mats.push_back(m->toJson());
+    }
+    if (!mats.empty()) zj["materials"] = std::move(mats);
+
     if (const auto* home = dynamic_cast<const Home*>(&zone)) {
         zj["being"] = "home";
         zj["primary"] = home->isPrimaryHome();
@@ -811,6 +897,9 @@ nlohmann::json zoneToJson(const Zone& zone) {
 }
 
 void applyZoneJson(Zone& zone, const nlohmann::json& zj, bool replaceObjects) {
+    if (zj.contains("materials")) {
+        materials.mergeFromJson(zj["materials"]);
+    }
     if (zj.contains("owner")) {
         zone.setOwner(zj.value("owner", std::string{}));
     }
@@ -824,6 +913,13 @@ void applyZoneJson(Zone& zone, const nlohmann::json& zj, bool replaceObjects) {
         for (auto it = zj["qualities"].begin(); it != zj["qualities"].end(); ++it) {
             if (it.value().is_string()) {
                 zone.setQuality(it.key(), it.value().get<std::string>());
+            }
+        }
+    }
+    if (zj.contains("deletable") && zj["deletable"].is_object()) {
+        for (auto it = zj["deletable"].begin(); it != zj["deletable"].end(); ++it) {
+            if (it.value().is_boolean()) {
+                zone.setDeletable(it.key(), it.value().get<bool>());
             }
         }
     }

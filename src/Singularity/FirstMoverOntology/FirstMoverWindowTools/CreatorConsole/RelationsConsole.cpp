@@ -26,9 +26,9 @@ namespace Rendering {
             ImGui::TextUnformatted(r->getIdentifier().c_str());
             ImGui::SameLine();
             ImGui::TextDisabled("(%s%s%s)",
-                                r->entityA.c_str(),
+                                r->aId().c_str(),
                                 r->directed ? " -> " : " <-> ",
-                                r->entityB.c_str());
+                                r->bId().c_str());
         }
     }
 

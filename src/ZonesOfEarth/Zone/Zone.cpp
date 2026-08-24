@@ -1,6 +1,7 @@
 #include "Zone.hpp"
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 #include "Singularity/Language/JoyHierarchy.hpp"
+#include "Singularity/Language/Lexeme.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
@@ -267,7 +268,11 @@ void Zone::syncFormationMembers(const std::vector<Singular*>& extraMembers) {
 
     const std::vector<Singular*> current = _formation.getMembers();
     for (Singular* member : current) {
-        if (!member || live.count(member) == 0) _formation.removeMember(member);
+        if (!member || live.count(member) != 0) continue;
+        // Lexemes are language beings admitted into the Zone formation; they
+        // are not Zone objects and must survive the object-membership sweep.
+        if (dynamic_cast<Singularity::Language::Lexeme*>(member)) continue;
+        _formation.removeMember(member);
     }
 }
 

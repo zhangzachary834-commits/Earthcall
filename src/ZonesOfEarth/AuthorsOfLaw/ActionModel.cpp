@@ -49,6 +49,7 @@ const char* ActionNode::reasonName(PropertyPath::PathResult reason) {
         case PropertyPath::PathResult::TypeMismatch: return "Type Mismatch";
         case PropertyPath::PathResult::ReadOnly: return "Read Only";
         case PropertyPath::PathResult::BadComponent: return "Bad Component";
+        case PropertyPath::PathResult::Unchanged: return "Unchanged";
     }
     return "Unknown";
 }
@@ -56,6 +57,10 @@ const char* ActionNode::reasonName(PropertyPath::PathResult reason) {
 namespace {
     // A node that addresses a property reports what its write did.
     void emitResult(Singular& target, const std::string& actionName, PropertyPath::PathResult res, const PropertyPath& path) {
+        if (res == PropertyPath::PathResult::Unchanged) {
+            ActionNode::record(ActionNode::NodeOutcome{actionName, path.toString(), false, res, {}});
+            return;
+        }
         const bool wrote = res == PropertyPath::PathResult::Ok;
         ActionNode::record(ActionNode::NodeOutcome{actionName, path.toString(), wrote, res, {}});
 

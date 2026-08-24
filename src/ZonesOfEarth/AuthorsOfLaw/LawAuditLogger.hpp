@@ -80,6 +80,7 @@ private:
 
     std::atomic<Level> _level{Level::Summary};
     std::size_t _linesWritten = 0;
+    std::size_t _linesSinceFlush = 0;
     bool _budgetNoticeWritten = false;
 
     std::queue<LogEntry> _queue;

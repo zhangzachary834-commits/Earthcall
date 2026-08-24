@@ -379,8 +379,8 @@ int main() {
         bool joined = false;
         for (const auto& rel : graph.getAll()) {
             if (rel && rel->type == Control::kInstanceOf &&
-                rel->entityA == newborn->getIdentifier() &&
-                rel->entityB == Control::kCategoryButton) {
+                rel->aId() == newborn->getIdentifier() &&
+                rel->bId() == Control::kCategoryButton) {
                 joined = true;
             }
         }

@@ -17,8 +17,10 @@ struct PersonLogoutEvent;
 
 class Person : public Singular {
 public:
+    // this should be Lexeme. - Zach
     std::string displayName;
 
+    // WHAT IS THIS DOIGN HERE?!?!?!?! These are supposed to either be Perspective, or be properties not hardcoded fields!!! - Zach
     glm::vec3 position{0.0f, 0.0f, 0.0f};
     glm::vec3 velocity{0.0f, 0.0f, 0.0f};
 
@@ -45,6 +47,7 @@ public:
     void draw() const;
     void drawNametag() const;
 
+    // Lexeme. Not a mere string.
     const std::string& getDisplayName() const { return displayName; }
 
     // Rebuild body-part world transforms from position. Joint inheritance is
@@ -57,14 +60,20 @@ public:
     void addBody(Body&& newBody) { bodies.push_back(std::move(newBody)); }
     void setActiveBody(int index) { if(index >= 0 && index < static_cast<int>(bodies.size())) activeBodyIndex = index; }
 
+    // Logging into the device, the signal of when app/computer should interface with Person and when not to
     void login(const std::string& sessionId = "");
     void logout(const std::string& sessionId = "");
-    void joinZone(const std::string& zoneName);
-    void leaveZone(const std::string& zoneName);
+
     bool isLoggedIn() const { return _isLoggedIn; }
     const std::string& getCurrentSession() const { return _currentSession; }
+
+    // WHY IS THIS DOING THIS BY STRINGS RATHER THAN POINTERSSSSS - Zach
+    void joinZone(const std::string& zoneName);
+    void leaveZone(const std::string& zoneName);
+
     const std::vector<std::string>& getJoinedZones() const { return _joinedZones; }
 
+    // No new primitive methods for AI, it needs to be a larger ontology of how Persons Relate to First Movers - Zach
     void requestAIAction(const std::string& context, const std::string& targetObjectId);
 
     // ------------------------------------------------------------------
@@ -112,9 +121,11 @@ public:
 
 private:
     void buildProperties() override;
+
+    // "prop" name goes against the Person is not an Object principle.
     std::string propName() const { return displayName; }
 
-    // Soul is this Person considered as a composite, not a second someone.
+    // Soul is this Person viewed through the light of their composite experiences, states, and moments, not a second someone.
     // Its identifier is this Person's. See Soul.hpp.
     Soul _soul;
     Formation _joys;

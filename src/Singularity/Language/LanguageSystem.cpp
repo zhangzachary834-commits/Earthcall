@@ -83,6 +83,23 @@ std::shared_ptr<Lexeme> LanguageSystem::foundation() {
     return lexeme;
 }
 
+std::shared_ptr<Lexeme> LanguageSystem::intern(const std::string& symbol, const std::string& stableId) {
+    if (stableId.empty()) return resolve(symbol);
+    if (auto existing = findById(stableId)) return existing;
+
+    auto lexeme = std::make_shared<Lexeme>(symbol, stableId);
+    _lexemes.push_back(lexeme);
+    _symbolIndex[symbol] = lexeme;
+    _idIndex[stableId] = lexeme;
+    return lexeme;
+}
+
+std::shared_ptr<Lexeme> LanguageSystem::findBySymbol(const std::string& symbol) const {
+    auto it = _symbolIndex.find(symbol);
+    if (it != _symbolIndex.end()) return it->second;
+    return nullptr;
+}
+
 std::shared_ptr<Lexeme> LanguageSystem::findById(const std::string& id) const {
     auto it = _idIndex.find(id);
     if (it != _idIndex.end()) {
@@ -126,30 +143,27 @@ void LanguageSystem::tick(float deltaTime) {
         auto parsedRelations = SyntacticParser::parse(u.payload, activeZone);
         
         if (!parsedRelations.empty()) {
-            for (const auto& pr : parsedRelations) {
-                auto lexA = resolve(pr.entityA);
-                auto lexB = resolve(pr.entityB);
-                
-                activeZone.addToFormation(lexA.get());
-                activeZone.addToFormation(lexB.get());
-                
-                auto rels = activeZone.formation().relations().getRelationsBetween(lexA->getIdentifier(), lexB->getIdentifier());
+            for (const auto& rel : parsedRelations) {
+                if (!rel || !rel->hasEndpoints()) continue;
+                activeZone.addToFormation(rel->a());
+                activeZone.addToFormation(rel->b());
+
+                auto existing = activeZone.formation().relations().getRelationsBetween(*rel->a(), *rel->b());
                 bool found = false;
-                for (auto r : rels) {
-                    if (r->type == pr.relationType) {
+                for (auto r : existing) {
+                    if (r && r->type == rel->type) {
                         float w = r->getWeight();
                         r->setWeight(std::min(1.0f, w + 0.2f)); // Reinforce existing pathway
                         found = true;
-                        std::cout << "[LanguageSystem] Reinforced Graph Edge: [" << pr.entityA << "] -> " << pr.relationType << " -> [" << pr.entityB << "] (Weight: " << r->getWeight() << ")" << std::endl;
+                        std::cout << "[LanguageSystem] Reinforced Graph Edge: [" << rel->aId() << "] -> " << rel->type << " -> [" << rel->bId() << "] (Weight: " << r->getWeight() << ")" << std::endl;
                         break;
                     }
                 }
-                
+
                 if (!found) {
-                    auto rel = std::make_shared<Relation>(pr.relationType, *lexA, *lexB, true);
-                    rel->setWeight(0.5f); // Starting confidence
+                    if (rel->getWeight() < 0.0f) rel->setWeight(0.5f);
                     activeZone.formation().addRelation(rel);
-                    std::cout << "[LanguageSystem] New Graph Parse: [" << pr.entityA << "] -> " << pr.relationType << " -> [" << pr.entityB << "]" << std::endl;
+                    std::cout << "[LanguageSystem] New Graph Parse: [" << rel->aId() << "] -> " << rel->type << " -> [" << rel->bId() << "]" << std::endl;
                 }
             }
         } else {

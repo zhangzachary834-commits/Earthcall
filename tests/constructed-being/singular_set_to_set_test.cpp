@@ -112,7 +112,7 @@ void testProvenanceSurvivesLoad() {
     assert(reborn->provenance().getAll().size() == captured);
     bool sawAuthor = false;
     for (const auto& edge : reborn->provenance().getAll()) {
-        if (edge && edge->type == "authored-by" && edge->entityB == author.getIdentifier()) {
+        if (edge && edge->type == "authored-by" && edge->bId() == author.getIdentifier()) {
             sawAuthor = true;
         }
     }

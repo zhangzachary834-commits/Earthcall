@@ -4,7 +4,7 @@
 Zach's Sabbath note (docs/Agenda/Sabbath/Chess Game.md) is the spec:
 one 8t×8t×D prism, FaceTextures for the checkerboard and the sides,
 distinct shapes, queens on their colours, click-select click-move,
-pieces hard-anchored to square centres, a rule enforcer.
+pieces placed at square centres on load and on move, a rule enforcer.
 
 This script is the injection. It is not a chess engine class. It writes
 saves/worlds/chess_app.json and saves/zones/Chess/zone.json.
@@ -1054,49 +1054,9 @@ def build_laws():
         set_path("chessRole", pv("int", 4)),
     )
 
-    add_law(
-        "law-chess-anchor",
-        "anchor-pieces-to-squares",
-        1,  # WhileTrue
-        [],
-        all_of(IS_PIECE, ON_BOARD),
-        seq(
-            map_path(
-                "position.x",
-                {"gx": "gridX"},
-                offset_terms("gx", -3.5),
-            ),
-            map_path(
-                "position.z",
-                {"gy": "gridY"},
-                offset_terms("gy", -3.5),
-            ),
-            map_path("position.y", {"h": "restY"}, copy_terms("h")),
-        ),
-    )
-    add_law(
-        "law-chess-captured-rack",
-        "place-captured-beside-board",
-        1,
-        [],
-        all_of(IS_PIECE, compare("onBoard", 0, pv("bool", False))),
-        seq(
-            map_path(
-                "position.x",
-                {"c": "chessColor"},
-                [
-                    {"c": 5.6, "factors": {}},
-                    {"c": -11.2, "factors": {"c": 1.0}},
-                ],
-            ),
-            map_path(
-                "position.z",
-                {"s": "capturedSlot"},
-                offset_terms("s", -3.5),
-            ),
-            map_path("position.y", {"h": "restY"}, copy_terms("h")),
-        ),
-    )
+    # Idle placement is constant because move/capture already Map position
+    # when gridX/gridY change. A WhileTrue servo rewriting xz every tick was
+    # a level, not an edge — it stalled Load into a disk-bound frame loop.
 
     add_law(
         "law-chess-king-unmade-is-mate",

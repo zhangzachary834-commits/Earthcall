@@ -1,5 +1,9 @@
 #pragma once
 
+#include "Relation/Relation.hpp"
+#include "Singularity/Language/Lexeme.hpp"
+
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -8,28 +12,19 @@ class Zone;
 namespace Singularity {
 namespace Language {
 
-struct Token {
-    std::string raw;
-    std::string normalized;
-};
-
-struct ParsedRelation {
-    std::string entityA;
-    std::string relationType;
-    std::string entityB;
-};
-
+// Surface-form split of an utterance into Lexemes, then into Relations
+// between those Lexemes. Token is not a being — the occurrence/type cut
+// belongs to utterance vs Lexeme, and this parser does not model occurrence.
+// ParsedRelation is not a being — the committed edge is Relation.
 class SyntacticParser {
 public:
-    // Takes the raw utterance and the active Zone to query the semantic graph
-    static std::vector<ParsedRelation> parse(const std::string& utterance, Zone& activeZone);
-    
+    static std::vector<std::shared_ptr<Relation>> parse(const std::string& utterance, Zone& activeZone);
+
 private:
-    static std::vector<Token> tokenize(const std::string& input);
-    
-    // Graph resolution helpers
-    static std::string resolvePOS(const std::string& tokenStr, Zone& activeZone);
-    static std::string resolveMeaning(const std::string& tokenStr, Zone& activeZone);
+    static std::vector<std::string> tokenize(const std::string& input);
+
+    static Lexeme* resolvePOS(Lexeme& lexeme, Zone& activeZone);
+    static std::string resolveMeaning(Lexeme& verbPhrase, Zone& activeZone);
 };
 
 } // namespace Language

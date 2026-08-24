@@ -128,6 +128,8 @@ void LawAuditLogger::backgroundWorker() {
         }
         
         if (batch.empty() && !_running) {
+            if (_logFile.is_open()) _logFile.flush();
+            if (_jsonlFile.is_open()) _jsonlFile.flush();
             break;
         }
         
@@ -146,6 +148,7 @@ void LawAuditLogger::backgroundWorker() {
                 break;
             }
             ++_linesWritten;
+            ++_linesSinceFlush;
             if (_logFile.is_open()) {
                 _logFile << "[" << entry.timestamp << "] [" << entry.type << "] " << entry.message << "\n";
             }
@@ -159,9 +162,14 @@ void LawAuditLogger::backgroundWorker() {
                 _jsonlFile << j.dump() << "\n";
             }
         }
-        
-        if (_logFile.is_open()) _logFile.flush();
-        if (_jsonlFile.is_open()) _jsonlFile.flush();
+
+        // Flushing every batch made a WhileTrue world wait on disk once per
+        // tick. Cap is still kMaxLinesPerRun; last batch flushes on shutdown.
+        if (_linesSinceFlush >= 256) {
+            if (_logFile.is_open()) _logFile.flush();
+            if (_jsonlFile.is_open()) _jsonlFile.flush();
+            _linesSinceFlush = 0;
+        }
     }
 }
 

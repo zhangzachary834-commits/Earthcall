@@ -27,6 +27,7 @@ Defined in `SaveSystem::SaveType`:
 
 - **`WORLD`**: Session snapshots (camera, laws, working-set refs). Not the Zone identity.
 - **`ZONE`**: Per-Zone identity directory under `saves/zones/<id>/`
+- **`HOME`**: Per-Home identity directory under `saves/homes/<id>/` — dwelling memory, including the Material beings (FaceTextures) the Home's objects name. Not a Zone file.
 - **`AVATAR`**: Avatar saves (character data, body parts, mesh customizations)
 - **`PERSON`**: Registered Person profiles and identity ledgers
 - **`DESIGN`**: Design system saves (layers, tool states)

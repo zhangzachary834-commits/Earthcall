@@ -69,3 +69,13 @@ void MaterialManager::loadFromJson(const json& j) {
     }
     ensureDefault(); // a save without a default (or an empty save) still resolves
 }
+
+void MaterialManager::mergeFromJson(const json& j) {
+    if (!j.is_array()) {
+        ensureDefault();
+        return;
+    }
+    for (const auto& e : j)
+        add(std::make_shared<Material>(Material::fromJson(e)));
+    ensureDefault();
+}

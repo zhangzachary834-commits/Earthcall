@@ -33,7 +33,8 @@ struct PropertyPath {
         NoSuchProperty,
         TypeMismatch,
         ReadOnly,
-        BadComponent
+        BadComponent,
+        Unchanged  // the slot already held this value; not a write
     };
 
     PathResult getValue(Singular& root, PropertyValue& out) const;

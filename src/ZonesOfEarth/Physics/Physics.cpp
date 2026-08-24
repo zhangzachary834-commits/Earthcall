@@ -716,8 +716,8 @@ namespace Physics {
                 bool inCategory = false;
                 for (const auto* rel : Universe::instance().relations()) {
                     if (rel && rel->type == "in-category" && 
-                        rel->entityA == obj.getIdentifier() && 
-                        rel->entityB == s) {
+                        rel->aId() == obj.getIdentifier() && 
+                        rel->bId() == s) {
                         inCategory = true;
                         break;
                     }

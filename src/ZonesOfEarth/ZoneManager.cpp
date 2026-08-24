@@ -407,6 +407,28 @@ std::string zoneIdFromJson(const nlohmann::json& zj) {
 }
 
 const char* kZoneIdentityFormat = "zone-identity-v1";
+
+// Keep-live Home objects survive a session load, but FaceTextures live on
+// Material beings. If the identity file never carried those materials
+// (the pre-embed persist), the object's faceColors are still there and
+// the named own-material is gone — the draw path then resolves
+// material.default (white). Reinstatement is the same fill from_json
+// already does when textures are not already present: not a brush stroke.
+void reinstatedMissingOwnMaterials(Zone& zone) {
+    for (const auto& obj : zone.getOwnedObjects()) {
+        if (!obj) continue;
+        const std::string ownId = "material." + obj->getIdentifier();
+        if (obj->materialId() != ownId) continue;
+        if (materials.get(ownId)) continue;
+        const int faces = std::min(obj->getFaces() > 0 ? obj->getFaces() : 6, 6);
+        for (int f = 0; f < faces; ++f) {
+            obj->setFaceColor(f,
+                              obj->faceColors[f][0],
+                              obj->faceColors[f][1],
+                              obj->faceColors[f][2]);
+        }
+    }
+}
 } // namespace
 
 std::string ZoneManager::beforeLoadSnapshotPath() {
@@ -452,6 +474,30 @@ void ZoneManager::persistZones() const {
         if (!wrote) {
             std::cerr << "[zones] REFUSED or failed to persist "
                       << (dwelling ? "Home" : "Zone") << " '" << id << "'\n";
+        } else {
+            std::size_t paintedObjects = 0;
+            std::size_t totalFaceTextures = 0;
+            for (const auto& obj : z->getOwnedObjects()) {
+                if (!obj) continue;
+                if (auto mat = materials.get(obj->materialId())) {
+                    if (!mat->faceTextures.empty()) {
+                        ++paintedObjects;
+                        totalFaceTextures += mat->faceTextures.size();
+                    }
+                }
+            }
+            std::size_t missingMaterials = 0;
+            for (const auto& obj : z->getOwnedObjects()) {
+                if (!obj || obj->materialId().empty()) continue;
+                if (!materials.get(obj->materialId())) ++missingMaterials;
+            }
+            logIo("PERSIST " + std::string(dwelling ? "Home '" : "Zone '") + id + "': " +
+                  std::to_string(z->getOwnedObjects().size()) + " object(s), " +
+                  std::to_string(paintedObjects) + " painted object(s), " +
+                  std::to_string(totalFaceTextures) + " face texture(s)" +
+                  (missingMaterials ? (", " + std::to_string(missingMaterials) +
+                                       " object(s) name a material that is not in the registry")
+                                    : ""));
         }
     }
 }
@@ -469,10 +515,33 @@ void ZoneManager::hydrateFromZoneStore() {
             }
         }
         if (live) {
+            // Objects already here stay (keep-live). Still merge this
+            // identity's materials so FaceTextures are not a leftover
+            // from whatever session was last loaded.
+            if (zj.contains("materials")) materials.mergeFromJson(zj["materials"]);
             if (live->getOwnedObjects().empty()) applyZoneJson(*live, zj, true);
-            return;
+            else reinstatedMissingOwnMaterials(*live);
+        } else {
+            live = makeZoneFromJson(zj);
+            addZone(live);
         }
-        addZone(makeZoneFromJson(zj));
+        if (live) {
+            std::size_t paintedObjects = 0;
+            std::size_t totalFaceTextures = 0;
+            for (const auto& obj : live->getOwnedObjects()) {
+                if (!obj) continue;
+                if (auto mat = materials.get(obj->materialId())) {
+                    if (!mat->faceTextures.empty()) {
+                        ++paintedObjects;
+                        totalFaceTextures += mat->faceTextures.size();
+                    }
+                }
+            }
+            logIo("HYDRATE Zone '" + id + "': " +
+                  std::to_string(live->getOwnedObjects().size()) + " object(s), " +
+                  std::to_string(paintedObjects) + " painted object(s), " +
+                  std::to_string(totalFaceTextures) + " face texture(s)");
+        }
     };
     // Homes first: dwelling memory lives under saves/homes/, not zones/.
     for (const auto& id : SaveSystem::listHomeIdentities()) {
@@ -853,13 +922,20 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
         Physics::resetRigidBodies();
         Physics::clearBonds();
 
-        // Load material beings
-        if (j.contains("materials")) materials.loadFromJson(j["materials"]);
-        if (j.contains("categories")) categories.loadFromJson(j["categories"]);
-
         size_t currentZoneIdx = j.value("currentZone", 0);
         std::string currentZoneId = j.value("currentZoneId", std::string{});
         const bool snapshotRestore = isBeforeLoadSnapshot(filename);
+
+        // Materials are beings objects name by id. FaceTextures live on them,
+        // not on the Object. A session file still carries a materials bag;
+        // REPLACE would wipe paint on a live Home when another save loaded.
+        // Snapshot restore rewinds; every other load merges, then Home/Zone
+        // identity files re-apply their own surfaces (source of truth).
+        if (j.contains("materials")) {
+            if (snapshotRestore) materials.loadFromJson(j["materials"]);
+            else materials.mergeFromJson(j["materials"]);
+        }
+        if (j.contains("categories")) categories.loadFromJson(j["categories"]);
 
         // Snapshot restore (before-load) rewinds the working set from the
         // embedded copy. Every other load treats Zones as identities: a
@@ -942,7 +1018,23 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
             }
         }
 
-        if (!snapshotRestore) hydrateFromZoneStore();
+        if (!snapshotRestore) {
+            hydrateFromZoneStore();
+            // Home/Zone identity is the surface of truth. Session merge
+            // already kept live paint; this re-applies paint from the
+            // identity file so a Home's FaceTextures cannot be a different
+            // world's leftover bag.
+            for (const auto& z : _zones) {
+                if (!z) continue;
+                const std::string id = z->getIdentifier();
+                nlohmann::json idj = z->isHome()
+                    ? SaveSystem::readHomeIdentity(id)
+                    : SaveSystem::readZoneIdentity(id);
+                if (idj.contains("materials"))
+                    materials.mergeFromJson(idj["materials"]);
+                reinstatedMissingOwnMaterials(*z);
+            }
+        }
         if (ctx.player) ensureHomeZone(ctx.player->getIdentifier());
         if (snapshotRestore) persistZones();
 

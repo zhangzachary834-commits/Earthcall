@@ -370,8 +370,8 @@ std::shared_ptr<ObjectConcept> ObjectConcept::captureFromBeings(
     };
     for (const Relation* rel : Universe::instance().relations()) {
         if (!rel) continue;
-        const int a = indexOf(rel->entityA);
-        const int b = indexOf(rel->entityB);
+        const int a = indexOf(rel->aId());
+        const int b = indexOf(rel->bId());
         if (a >= 0 && b >= 0) {
             RelationTemplate t;
             t.aIndex = a;
@@ -395,7 +395,7 @@ std::shared_ptr<ObjectConcept> ObjectConcept::captureFromBeings(
         if (a >= 0) {
             RelationTemplate t;
             t.aIndex = a;
-            t.bAnchorId = rel->entityB;
+            t.bAnchorId = rel->bId();
             t.type = rel->type;
             t.directed = rel->directed;
             t.weight = rel->getWeight();
@@ -816,7 +816,13 @@ std::shared_ptr<ObjectConcept> ObjectConcept::fromJson(const nlohmann::json& j) 
     // chain terminate in a Person — so a world that forgets them on load
     // cannot enforce either. A being's descent is part of what it is.
     if (j.contains("provenance")) {
-        concept->_provenance.loadFromJson(j["provenance"]);
+        concept->_provenance.loadFromJson(j["provenance"], [concept](const std::string& id) -> Singular* {
+            if (id == concept->getIdentifier()) return concept.get();
+            for (Singular* being : Universe::instance().beings()) {
+                if (being && being->getIdentifier() == id) return being;
+            }
+            return nullptr;
+        });
     }
     return concept;
 }

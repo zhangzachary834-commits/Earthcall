@@ -6,33 +6,53 @@
       "r": 0.05,
       "g": 0.05,
       "b": 0.1,
+      "lexemes": [
+        { "id": "lexeme.pos.determiner", "symbol": "determiner" },
+        { "id": "lexeme.pos.noun", "symbol": "noun" },
+        { "id": "lexeme.pos.verb", "symbol": "verb" },
+        { "id": "lexeme.pos.preposition", "symbol": "preposition" },
+        { "id": "lexeme.the", "symbol": "the" },
+        { "id": "lexeme.a", "symbol": "a" },
+        { "id": "lexeme.an", "symbol": "an" },
+        { "id": "lexeme.sword", "symbol": "sword" },
+        { "id": "lexeme.arthur", "symbol": "arthur" },
+        { "id": "lexeme.apple", "symbol": "apple" },
+        { "id": "lexeme.picked", "symbol": "picked" },
+        { "id": "lexeme.up", "symbol": "up" },
+        { "id": "lexeme.picked_up", "symbol": "picked_up" },
+        { "id": "lexeme.grabbed", "symbol": "grabbed" },
+        { "id": "lexeme.belongs", "symbol": "belongs" },
+        { "id": "lexeme.to", "symbol": "to" },
+        { "id": "lexeme.belongs_to", "symbol": "belongs_to" },
+        { "id": "lexeme.has_inventory", "symbol": "has_inventory" }
+      ],
       "formationRelations": [
-        { "type": "is_pos", "entityA": "the", "entityB": "determiner", "directed": true, "weight": 1.0 },
-        { "type": "is_pos", "entityA": "a", "entityB": "determiner", "directed": true, "weight": 1.0 },
-        { "type": "is_pos", "entityA": "an", "entityB": "determiner", "directed": true, "weight": 1.0 },
-        
-        { "type": "is_pos", "entityA": "sword", "entityB": "noun", "directed": true, "weight": 1.0 },
-        { "type": "is_pos", "entityA": "arthur", "entityB": "noun", "directed": true, "weight": 1.0 },
-        { "type": "is_pos", "entityA": "apple", "entityB": "noun", "directed": true, "weight": 1.0 },
+        { "type": "is_pos", "entityA": "lexeme.the", "entityB": "lexeme.pos.determiner", "directed": true, "weight": 1.0 },
+        { "type": "is_pos", "entityA": "lexeme.a", "entityB": "lexeme.pos.determiner", "directed": true, "weight": 1.0 },
+        { "type": "is_pos", "entityA": "lexeme.an", "entityB": "lexeme.pos.determiner", "directed": true, "weight": 1.0 },
 
-        { "type": "is_pos", "entityA": "picked", "entityB": "verb", "directed": true, "weight": 1.0 },
-        { "type": "is_pos", "entityA": "up", "entityB": "preposition", "directed": true, "weight": 1.0 },
-        { "type": "resolves_to", "entityA": "picked_up", "entityB": "has_inventory", "directed": true, "weight": 1.0 },
+        { "type": "is_pos", "entityA": "lexeme.sword", "entityB": "lexeme.pos.noun", "directed": true, "weight": 1.0 },
+        { "type": "is_pos", "entityA": "lexeme.arthur", "entityB": "lexeme.pos.noun", "directed": true, "weight": 1.0 },
+        { "type": "is_pos", "entityA": "lexeme.apple", "entityB": "lexeme.pos.noun", "directed": true, "weight": 1.0 },
 
-        { "type": "is_pos", "entityA": "grabbed", "entityB": "verb", "directed": true, "weight": 1.0 },
-        { "type": "resolves_to", "entityA": "grabbed", "entityB": "has_inventory", "directed": true, "weight": 1.0 },
+        { "type": "is_pos", "entityA": "lexeme.picked", "entityB": "lexeme.pos.verb", "directed": true, "weight": 1.0 },
+        { "type": "is_pos", "entityA": "lexeme.up", "entityB": "lexeme.pos.preposition", "directed": true, "weight": 1.0 },
+        { "type": "resolves_to", "entityA": "lexeme.picked_up", "entityB": "lexeme.has_inventory", "directed": true, "weight": 1.0 },
 
-        { "type": "is_pos", "entityA": "belongs", "entityB": "verb", "directed": true, "weight": 1.0 },
-        { "type": "is_pos", "entityA": "to", "entityB": "preposition", "directed": true, "weight": 1.0 },
-        { "type": "resolves_to", "entityA": "belongs_to", "entityB": "has_inventory", "directed": true, "weight": 1.0 }
+        { "type": "is_pos", "entityA": "lexeme.grabbed", "entityB": "lexeme.pos.verb", "directed": true, "weight": 1.0 },
+        { "type": "resolves_to", "entityA": "lexeme.grabbed", "entityB": "lexeme.has_inventory", "directed": true, "weight": 1.0 },
+
+        { "type": "is_pos", "entityA": "lexeme.belongs", "entityB": "lexeme.pos.verb", "directed": true, "weight": 1.0 },
+        { "type": "is_pos", "entityA": "lexeme.to", "entityB": "lexeme.pos.preposition", "directed": true, "weight": 1.0 },
+        { "type": "resolves_to", "entityA": "lexeme.belongs_to", "entityB": "lexeme.has_inventory", "directed": true, "weight": 1.0 }
       ]
     }
   ],
   "injectedBy": {
-    "mover": "antigravity",
+    "mover": "grok-4.6",
     "onBehalfOf": "zacharyzhang",
-    "at": 1783903356,
-    "sections": ["zones[0].formationRelations"],
-    "attestation": "Initial NLP Lexicon Seed"
+    "at": 1787452800,
+    "sections": ["zones[0].lexemes", "zones[0].formationRelations"],
+    "attestation": "Lexicon endpoints are Lexemes. Original string-named POS graph was antigravity (2026-03) on behalf of Zach; grok-4.6 (2026-08-23) rewrote it so is_pos / resolves_to hold Singular pointers, after Zach's notes on SyntacticParser."
   }
 }

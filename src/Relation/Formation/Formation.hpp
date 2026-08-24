@@ -121,7 +121,7 @@ public:
     const RelationManager& relations() const { return relationMgr; }
 
     // Admit a relation. Returns false — loudly — when the relation is refused:
-    //   * a self-loop (entityA == entityB): a being grounded in itself;
+    //   * a self-loop (a() == b()): a being grounded in itself;
     //   * a directed edge that closes a directed cycle among relations OF THE
     //     SAME TYPE. That is §7's `mayAddSubcategoryEdge` reachability check,
     //     generalized to every directed type. The cycle is refused, never

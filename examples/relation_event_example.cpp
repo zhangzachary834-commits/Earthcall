@@ -1,6 +1,7 @@
 #include "../src/Singularity/Core/EventBus.hpp"
 #include "../src/Relation/RelationManager.hpp"
 #include "../src/Relation/Relation.hpp"
+#include "../src/Singularity/Language/Lexeme.hpp"
 #include <iostream>
 #include <memory>
 
@@ -13,9 +14,9 @@ void handleRelationCreated(const RelationCreatedEvent& event) {
         return;
     }
     std::cout << "Type: " << event.relation->type << std::endl;
-    std::cout << "Between: " << event.relation->entityA << " and " << event.relation->entityB << std::endl;
+    std::cout << "Between: " << event.relation->aId() << " and " << event.relation->bId() << std::endl;
     std::cout << "Directed: " << (event.relation->directed ? "Yes" : "No") << std::endl;
-    std::cout << "Weight: " << event.relation->weight << std::endl;
+    std::cout << "Weight: " << event.relation->getWeight() << std::endl;
     std::cout << "Timestamp: " << event.timestamp << std::endl;
     std::cout << "=============================" << std::endl;
 }
@@ -27,13 +28,14 @@ int main() {
     // Create a relation manager
     RelationManager manager;
     
-    // Create some test relations - these will trigger the event
-    // Relation friendship("friend", "Alice", "Bob", false, 1.0f);
-    // Relation ownership("owns", "Alice", "Car", true, 2.0f);
-    // Relation location("at", "Bob", "Home", true, 1.5f);
-    auto friendship = std::make_shared<Relation>("friend", "Alice", "Bob", false, 1.0f);
-    auto ownership = std::make_shared<Relation>("owns", "Alice", "Car", true, 2.0f);
-    auto location = std::make_shared<Relation>("at", "Bob", "Home", true, 1.5f);
+    using Singularity::Language::Lexeme;
+    auto alice = std::make_shared<Lexeme>("Alice", "lexeme.alice");
+    auto bob   = std::make_shared<Lexeme>("Bob", "lexeme.bob");
+    auto car   = std::make_shared<Lexeme>("Car", "lexeme.car");
+    auto home  = std::make_shared<Lexeme>("Home", "lexeme.home");
+    auto friendship = std::make_shared<Relation>("friend", *alice, *bob, false, 1.0f);
+    auto ownership = std::make_shared<Relation>("owns", *alice, *car, true, 2.0f);
+    auto location = std::make_shared<Relation>("at", *bob, *home, true, 1.5f);
     
     std::cout << "Adding relations..." << std::endl;
     

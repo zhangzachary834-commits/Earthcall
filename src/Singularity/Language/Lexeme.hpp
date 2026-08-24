@@ -21,7 +21,9 @@ public:
     // Singular interface
     std::string getIdentifier() const override;
 
-    // The symbolic value of this lexeme (e.g., "Joy", "Tree")
+    // Hardcoded linguistic string: the characters this Lexeme is. Authored
+    // vocabulary lives on the being as this property, never as a Relation
+    // endpoint string.
     const std::string& getSymbol() const { return _symbol; }
 
     // Frequency or conceptual weight of this lexeme in the current context

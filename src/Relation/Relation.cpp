@@ -4,6 +4,7 @@
 #include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
 #include <iostream>
 #include <cstring>
+#include <cstdio>
 
 // Specific Implementation Vision: Recursive, custom tool creation
 // With a combination of the basic tools here, with a Formation system comprised of relations between things, people can create their own tools on top of that.
@@ -63,29 +64,59 @@ Relation::AttachmentData Relation::AttachmentData::fromJson(const json& j) {
 }
 
 Relation::Relation(const std::string& type,
-                   const std::string& a,
-                   const std::string& b,
+                   Singular& aBeing,
+                   Singular& bBeing,
                    bool directed,
                    float initialWeight)
-    : type(type), entityA(a), entityB(b), directed(directed) { if (initialWeight != -1.0f) setWeight(initialWeight); }
+    : type(type), directed(directed), _a(&aBeing), _b(&bBeing) {
+    if (initialWeight != -1.0f) setWeight(initialWeight);
+}
+
+Relation::Relation(const std::string& type,
+                   const Singular& aBeing,
+                   const Singular& bBeing,
+                   bool directed,
+                   float initialWeight)
+    : type(type), directed(directed),
+      _a(const_cast<Singular*>(&aBeing)),
+      _b(const_cast<Singular*>(&bBeing)) {
+    if (initialWeight != -1.0f) setWeight(initialWeight);
+}
 
 void Relation::describe() const {
     std::cout << "Relation [" << type << "] "
               << (directed ? "from " : "between ")
-              << entityA << (directed ? " -> " : " and ") << entityB
+              << aId() << (directed ? " -> " : " and ") << bId()
               << " (strength=" << getWeight() << ")"
               << std::endl;
 }
 
-bool Relation::involves(const std::string& entity) const {
-    return entityA == entity || entityB == entity;
+bool Relation::involves(const Singular* being) const {
+    return being && (_a == being || _b == being);
+}
+
+bool Relation::involves(const Singular& being) const {
+    return _a == &being || _b == &being;
+}
+
+bool Relation::involves(const std::string& identifier) const {
+    if (identifier.empty()) return false;
+    return aId() == identifier || bId() == identifier;
+}
+
+bool Relation::isBetween(const Singular& aBeing, const Singular& bBeing) const {
+    if (directed) {
+        return _a == &aBeing && _b == &bBeing;
+    }
+    return (_a == &aBeing && _b == &bBeing) || (_a == &bBeing && _b == &aBeing);
 }
 
 bool Relation::isBetween(const std::string& a, const std::string& b) const {
+    if (a.empty() || b.empty()) return false;
     if (directed) {
-        return entityA == a && entityB == b;
+        return aId() == a && bId() == b;
     }
-    return (entityA == a && entityB == b) || (entityA == b && entityB == a);
+    return (aId() == a && bId() == b) || (aId() == b && bId() == a);
 }
 
 json Relation::toJson() const {
@@ -93,19 +124,17 @@ json Relation::toJson() const {
     for(const auto& ev : events) evArr.push_back(ev.toJson());
 
     return json{{"type", type},
-                {"entityA", entityA},
-                {"entityB", entityB},
+                {"entityA", aId()},
+                {"entityB", bId()},
                 {"directed", directed},
                 {"weight", getWeight()},
                 {"events", evArr},
                 {"attachment", attachment.toJson()}};
 }
 
-Relation Relation::fromJson(const json& j) {
+Relation Relation::fromJson(const json& j, const RelationEndpointResolver& resolve) {
     Relation r;
     r.type = j.at("type").get<std::string>();
-    r.entityA = j.at("entityA").get<std::string>();
-    r.entityB = j.at("entityB").get<std::string>();
     r.directed = j.value("directed", false);
     r.setWeight(j.value("weight", 1.0f));
 
@@ -117,26 +146,24 @@ Relation Relation::fromJson(const json& j) {
     if (j.contains("attachment")) {
         r.attachment = AttachmentData::fromJson(j["attachment"]);
     }
+
+    r._savedA = j.value("entityA", std::string{});
+    r._savedB = j.value("entityB", std::string{});
+    if (resolve) {
+        r._a = r._savedA.empty() ? nullptr : resolve(r._savedA);
+        r._b = r._savedB.empty() ? nullptr : resolve(r._savedB);
+        if (r._a) r._savedA.clear();
+        if (r._b) r._savedB.clear();
+        if ((!j.value("entityA", std::string{}).empty() && !r._a) ||
+            (!j.value("entityB", std::string{}).empty() && !r._b)) {
+            std::fprintf(stderr,
+                "Relation::fromJson: unbound endpoint(s) type='%s' a='%s' b='%s'. "
+                "Identifier properties kept; the relation holds no being until bind.\n",
+                r.type.c_str(), j.value("entityA", std::string{}).c_str(),
+                j.value("entityB", std::string{}).c_str());
+        }
+    }
     return r;
-}
-
-// ------------------------------------------------------------------
-// Additional constructors / methods for Singular endpoints
-// ------------------------------------------------------------------
-
-Relation::Relation(const std::string& type,
-                   const Singular& aEntity,
-                   const Singular& bEntity,
-                   bool directed,
-                   float initialWeight)
-    : Relation(type, aEntity.getIdentifier(), bEntity.getIdentifier(), directed, initialWeight) {}
-
-bool Relation::involves(const Singular& entity) const {
-    return involves(entity.getIdentifier());
-}
-
-bool Relation::isBetween(const Singular& aEntity, const Singular& bEntity) const {
-    return isBetween(aEntity.getIdentifier(), bEntity.getIdentifier());
 }
 
 // A Relation is a legible Singular: type/weight/directed are governable

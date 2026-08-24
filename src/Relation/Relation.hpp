@@ -4,6 +4,7 @@
 #include "ConstructedBeing/Singular/Singular.hpp"
 #include <vector>
 #include <ctime>
+#include <functional>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
@@ -26,13 +27,16 @@ struct RelationEvent {
     }
 };
 
-// Lightweight representation of a relationship between two named entities.
-// The semantics of the relationship are expressed via the free-form `type`
-// string (e.g. "friend", "parent", "owns", etc.).
+// A Relation is a first-class Singular whose identity IS its two endpoints
+// and its type. Endpoints are Singular pointers, not name-strings: a string
+// is either an authored property or a hardcoded one (Lexeme::symbol is the
+// linguistic case). JSON still writes identifiers — that is serialization of
+// the pointer, not the ontology.
 //
-// Relationships can be directed (A -> B) or undirected (A <-> B) and may
-// optionally carry a numeric `weight` describing the strength/importance of
-// the relation.
+// How to turn a saved identifier back into a being. Relation holds NON-OWNING
+// pointers, so deserialization cannot invent endpoints.
+using RelationEndpointResolver = std::function<Singular*(const std::string& identifier)>;
+
 class Relation : public Singular {
 public:
     struct AttachmentData {
@@ -52,64 +56,76 @@ public:
     // Constructors
     // ---------------------------------------------------------------------
     Relation() = default;
-    Relation(const std::string& type,
-             const std::string& a,
-             const std::string& b,
-             bool directed = false,
-              float initialWeight = -1.0f);
 
-    // Convenience constructor for working directly with "singular" objects
     Relation(const std::string& type,
-             const Singular& aEntity,
-             const Singular& bEntity,
+             Singular& aBeing,
+             Singular& bBeing,
              bool directed = false,
-              float initialWeight = -1.0f);
+             float initialWeight = -1.0f);
+
+    // const Singular& is accepted so existing call sites (physics, provenance)
+    // keep compiling. The stored pointer is non-owning identity, same as
+    // Formation members.
+    Relation(const std::string& type,
+             const Singular& aBeing,
+             const Singular& bBeing,
+             bool directed = false,
+             float initialWeight = -1.0f);
+
+    // ---------------------------------------------------------------------
+    // Endpoints — the beings this relation holds, not their names.
+    // ---------------------------------------------------------------------
+    Singular* a() const { return _a; }
+    Singular* b() const { return _b; }
+    bool hasEndpoints() const { return _a && _b; }
+
+    // Identifier of an endpoint. Law-text and JSON address beings by these
+    // strings; the pointer is the relation's actual state. When the being is
+    // not in this world (provenance load, a dangling save), the registered
+    // identifier property still holds the saved name.
+    std::string aId() const { return _a ? _a->getIdentifier() : _savedA; }
+    std::string bId() const { return _b ? _b->getIdentifier() : _savedB; }
+
+    void bind(Singular* aBeing, Singular* bBeing) {
+        _a = aBeing;
+        _b = bBeing;
+        if (_a) _savedA.clear();
+        if (_b) _savedB.clear();
+    }
 
     // ---------------------------------------------------------------------
     // Introspection / Queries
     // ---------------------------------------------------------------------
-    // Human-readable description to stdout (for quick debugging).
     void describe() const;
 
-    // Returns true if either endpoint matches the supplied entity name.
-    bool involves(const std::string& entity) const;
-    bool involves(const Singular& entity) const;
+    bool involves(const Singular* being) const;
+    bool involves(const Singular& being) const;
+    bool involves(const std::string& identifier) const; // query by saved id
 
-    // Returns true if this relation connects the two supplied entities.
-    // For undirected relations, order does not matter. For directed
-    // relations, the order must match exactly (a == entityA and
-    // b == entityB).
-    bool isBetween(const std::string& a, const std::string& b) const;
-    bool isBetween(const Singular& aEntity, const Singular& bEntity) const;
+    bool isBetween(const Singular& aBeing, const Singular& bBeing) const;
+    bool isBetween(const std::string& a, const std::string& b) const; // query by saved id
 
     // ---------------------------------------------------------------------
     // (De)Serialization helpers
     // ---------------------------------------------------------------------
     nlohmann::json toJson() const;
-    static Relation fromJson(const nlohmann::json& j);
+    static Relation fromJson(const nlohmann::json& j,
+                             const RelationEndpointResolver& resolve = {});
     bool isAttachment() const { return type == "attachment" || attachment.enabled; }
 
     // Singular interface
-    std::string getIdentifier() const override { return entityA + "-" + type + "-" + entityB; }
+    std::string getIdentifier() const override { return aId() + "-" + type + "-" + bId(); }
 
-    // ---------------------------------------------------------------------
-    // Public data members (simple POD for ease of use). If stronger
-    // encapsulation is desired in the future, switch to private with
-    // getters/setters.
-    // ---------------------------------------------------------------------
-    std::string type;     // semantic tag of the relationship
-    std::string entityA;  // first endpoint
-    std::string entityB;  // second endpoint
+    // `type` is a hardcoded string property: the semantic tag of the bond
+    // (attachment, instance-of, is_pos, …). It is not an endpoint.
+    std::string type;
 
-    // Developer mode flag for fallback auditing
     static bool s_developerMode;
     float getWeight() const;
     void setWeight(const float& w);
-    
-    bool directed = false;
-    
 
-    // Timeline of interaction events that influenced this relation
+    bool directed = false;
+
     std::vector<RelationEvent> events;
     AttachmentData attachment;
 
@@ -135,12 +151,19 @@ public:
     void setEventsList(const std::shared_ptr<PropertyList>& list);
 
 private:
-    // A Relation is a legible Singular like any being: its semantic tag,
-    // strength, direction, and endpoints address through PropertyPath —
-    // so conditions can ask "@rel-id.weight > 0.5" and metalaw-shaped laws
-    // can govern relations. Endpoints are read-only: a relation's identity
-    // IS its endpoints (getIdentifier derives from them).
+    // Non-owning. The beings live in a Zone / LanguageSystem / Formation.
+    // Registered to law as the identifier properties `entityA` / `entityB`
+    // (JSON and law-text still speak identifiers). The pointer is the
+    // in-memory handle of that same fact — not a second, ungoverned endpoint.
+    Singular* _a = nullptr;
+    Singular* _b = nullptr;
+    // Saved identifier when the being is absent from this world. Same fact
+    // as the registered `entityA` / `entityB` properties, not a second
+    // endpoint. Bind() clears these.
+    std::string _savedA;
+    std::string _savedB;
+
     void buildProperties() override;
-    std::string propEntityA() const { return entityA; }
-    std::string propEntityB() const { return entityB; }
+    std::string propEntityA() const { return aId(); }
+    std::string propEntityB() const { return bId(); }
 };

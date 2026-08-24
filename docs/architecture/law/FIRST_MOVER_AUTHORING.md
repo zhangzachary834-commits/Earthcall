@@ -277,14 +277,19 @@ vertices/faces with a JSON fallback), `mass`, `baseline`.
 ### 4b. A Relation
 
 `Relation.cpp`. Relations are **Singulars** — first-class beings with weight and an event
-timeline, not edges in someone's private array.
+timeline, not edges in someone's private array. Endpoints are **Singular pointers**
+in C++; the JSON `entityA` / `entityB` fields are the *identifiers of those beings*
+(serialization of the pointer). A leftover name-string is not an endpoint — load
+refuses a relation whose identifier does not resolve to a being in the world.
+Lexemes that a Zone formation holds are written under `zones[i].lexemes` so
+`is_pos` / `resolves_to` can bind on reload.
 
 ```jsonc
 {
   "type": "attachment",              // free-form semantic tag. House vocabulary in use:
                                      //   attachment · bond · authored-by ·
                                      //   abstracted-from · generated-from
-  "entityA": "pillar-north",         // identifiers, both ends
+  "entityA": "pillar-north",         // identifiers of the two Singulars, both ends
   "entityB": "beam-0",
   "directed": true,
   "weight": 1.0,
@@ -300,7 +305,7 @@ timeline, not edges in someone's private array.
 }
 ```
 
-`Relation::getIdentifier()` is **derived**: `entityA + "-" + type + "-" + entityB`. A
+`Relation::getIdentifier()` is **derived**: `aId() + "-" + type + "-" + bId()`. A
 relation's identity *is* its endpoints — you do not assign it an id, and you cannot have
 two distinguishable relations with the same triple.
 
@@ -310,6 +315,11 @@ Formations are not written as a standalone array. They appear as **membership**,
 places:
 
 ```jsonc
+// zones[i].lexemes — language beings admitted to the zone formation (not objects)
+"lexemes": [
+  {"id": "lexeme.the", "symbol": "the"}
+]
+
 // zones[i].formationRelations — the zone's relation graph, an array of §4b objects
 "formationRelations": [
   {"type": "attachment", "entityA": "pillar-north", "entityB": "beam-0", ...}
@@ -423,17 +433,24 @@ file stacked every Zone as a private snapshot. GPT-4o's note that the save
 system is "STAGNANT" named the same freeze: Worlds were bags, Zones were not
 beings with a path.
 
-The identity document is `saves/zones/<sanitized-identifier>/zone.json`:
+A Zone's identity document is `saves/zones/<sanitized-identifier>/zone.json`.
+A Home's is `saves/homes/<sanitized-identifier>/home.json` — dwelling memory,
+not a Zone file. FaceTextures live on Material beings, not on the Object;
+the identity file must carry the materials its objects name, or a later
+session load leaves the shapes and paints them white.
 
 ```jsonc
 {
+  "being": "home",                       // Homes only
   "name": "Home",
   "identifier": "Home",
   "owner": "Player",
   "parentZone": "",
   "scope": "Local",
   "qualities": {"kind": "home"},          // "forkedFrom" is set on a branch
-  "world": { "objects": [ /* §4a */ ] },
+  "world": { "objects": [ /* §4a — each object has materialId */ ] },
+  "materials": [ /* Material::toJson of every materialId those objects name,
+                    including faceTextures / pixelsB64. Paint is here. */ ],
   "formationRelations": [ /* §4b */ ]
 }
 ```
@@ -441,8 +458,10 @@ The identity document is `saves/zones/<sanitized-identifier>/zone.json`:
 A session file dual-writes the same shape under `zones[]` so existing
 `.json` / `.ecsave` files still load, and lists `zoneRefs` as the working
 set. On load, a live Zone is kept; else the store; else the snapshot is
-migrated into the store. An empty live Zone is refused as a persist over a
-populated identity, so saving a boot-empty Home cannot wipe the room.
+migrated into the store. Session materials are merged, not replaced, so a
+live Home's paint is not wiped by another world's bag. An empty live Zone
+is refused as a persist over a populated identity, so saving a boot-empty
+Home cannot wipe the room.
 
 To branch: `ZoneManager::forkZone("Home", "Home.garden")` copies the
 directory, sets `qualities.forkedFrom`, and admits the fork as its own

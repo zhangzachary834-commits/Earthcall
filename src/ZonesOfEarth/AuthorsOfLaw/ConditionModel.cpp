@@ -327,7 +327,7 @@ ECA::ConditionPredicate ConditionNode::compile() const {
                     if (!rel) continue;
                     if (!type.empty() && rel->type != type) continue;
                     if (other.empty()) {
-                        if (rel->directed ? rel->entityA == id : rel->involves(id)) {
+                        if (rel->directed ? rel->aId() == id : rel->involves(id)) {
                             return true;
                         }
                         continue;

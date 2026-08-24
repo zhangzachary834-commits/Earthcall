@@ -132,6 +132,23 @@ int main() {
     check(state.combineOperandA == nullptr && state.clayGrabbed == nullptr,
           "switching mode clears per-gesture pick operands");
 
+    // ---- 3D Face Brush Creator Console wiring ------------------------------
+    check(std::string(Rendering::toolNameForMode(Rendering::Mode3D::FaceBrush)) ==
+              "FaceBrush",
+          "console Face Brush maps to FaceBrush tool slug");
+    check(std::string(Rendering::activeModeFor(Rendering::Mode3D::FaceBrush)) ==
+              "FaceBrush",
+          "console Face Brush maps to active3DMode \"FaceBrush\"");
+    Rendering::apply3DMode(state, channel, Rendering::Mode3D::FaceBrush);
+    check(state.current3DMode == Rendering::Mode3D::FaceBrush,
+          "apply3DMode sets FaceBrush mode on console state");
+    check(channel->activeTool == "FaceBrush",
+          "apply3DMode writes @creation-channel.activeTool = FaceBrush");
+    check(channel->active3DMode == "FaceBrush",
+          "apply3DMode writes @creation-channel.active3DMode = FaceBrush");
+    check(state.currentTool.getType() == Tool::Type::FaceBrush,
+          "apply3DMode arms Tool::Type::FaceBrush");
+
     // ---- Creator Console tools as first movers -----------------------------
     Object author("creator-tools-author");
     Singularity::Core::syncRegisterCreatorTools(laws, author);
@@ -158,6 +175,9 @@ int main() {
           "Select is first-mover — engine truth, not a world save");
     check(selectLaw && selectLaw->isEnabled(),
           "a tool first mover boots up — set-down is a Person choice");
+    Law* faceBrushLaw = laws.find("tool-face-brush-law");
+    check(faceBrushLaw && faceBrushLaw->isFirstMover() && faceBrushLaw->isEnabled(),
+          "Face Brush first mover boots up and is enabled");
 
     std::printf(g_failures == 0 ? "creation_tools_test: ALL OK\n"
                                 : "creation_tools_test: FAILURES\n");

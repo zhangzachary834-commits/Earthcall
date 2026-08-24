@@ -5,6 +5,7 @@
 // Relationships and Communities own local Zones; gathering stays unowned.
 // Not implemented here: Second-Person will / forced entry (⚑ AUTHOR).
 
+#include "ConstructedBeing/Material/MaterialManager.hpp"
 #include "ConstructedBeing/Object/Object.hpp"
 #include "Person/Person.hpp"
 #include "Person/Relationship/Community/Community.hpp"
@@ -21,10 +22,14 @@
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 
+#include "json.hpp"
+#include <GLFW/glfw3.h>
 #include <filesystem>
 #include <iostream>
 #include <memory>
 #include <string>
+
+extern MaterialManager materials;
 
 namespace {
 
@@ -47,6 +52,19 @@ int main() {
     std::cout << "============================================================\n";
     std::cout << "Running Home / Zone ontology (manifesto, one pass)...\n";
     std::cout << "============================================================\n";
+
+    if (!glfwInit()) {
+        std::cout << "zone_home_ontology_test: glfwInit failed\n";
+        return 1;
+    }
+    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+    GLFWwindow* window = glfwCreateWindow(64, 64, "zone_home_ontology_test", nullptr, nullptr);
+    if (!window) {
+        std::cout << "zone_home_ontology_test: no GL context\n";
+        glfwTerminate();
+        return 1;
+    }
+    glfwMakeContextCurrent(window);
 
     auto sandbox = std::filesystem::temp_directory_path() / "earthcall_zone_home_ontology";
     std::filesystem::remove_all(sandbox);
@@ -180,6 +198,55 @@ int main() {
     }
     check(sawLawGarden, "AuthorZone action mints an extra Home owned by the law's subject");
 
+    {
+        auto cube = std::make_shared<Object>();
+        cube->setShapeKind(Object::ShapeKind::Cube);
+        cube->setObjectID("painted-home-cube");
+        for (int f = 0; f < cube->getFaces(); ++f)
+            cube->setFaceColor(f, 0.25f, 0.50f, 0.75f);
+        home->addObject(cube);
+        mgr.persistZones();
+        const std::string mid = cube->materialId();
+        auto painted = materials.get(mid);
+        check(painted && !painted->faceTextures.empty(),
+              "generated/painted shape owns a Material with FaceTextures");
+        const unsigned char red = painted->faceTextures[0].pixels.empty()
+            ? 0 : painted->faceTextures[0].pixels[0];
+        materials.loadFromJson(nlohmann::json::array());
+        check(!materials.get(mid),
+              "a session REPLACE (the old load) drops the Home's material");
+        nlohmann::json hj = SaveSystem::readHomeIdentity("Home");
+        check(hj.contains("materials") && hj["materials"].is_array() && !hj["materials"].empty(),
+              "the Home identity file carries the materials its objects name");
+        materials.mergeFromJson(hj["materials"]);
+        auto restored = materials.get(mid);
+        check(restored && !restored->faceTextures.empty() &&
+                  restored->faceTextures[0].pixels[0] == red,
+              "merging Home identity materials restores FaceTextures after a session wipe");
+
+        // Keep-live Home + hydrate (the in-app "load another save, walk to Home" path).
+        materials.loadFromJson(nlohmann::json::array());
+        mgr.hydrateFromZoneStore();
+        auto fromHydrate = materials.get(mid);
+        check(fromHydrate && !fromHydrate->faceTextures.empty() &&
+                  fromHydrate->faceTextures[0].pixels[0] == red,
+              "hydrate of a live Home restores FaceTextures from the identity file");
+
+        // Pre-embed identity: objects and faceColors, no materials array.
+        // After a session wipe the named own-material is gone and draw
+        // would resolve material.default (white). Reinstatement fills
+        // from the object's still-present faceColors.
+        hj.erase("materials");
+        SaveSystem::writeHomeIdentity("Home", hj);
+        materials.loadFromJson(nlohmann::json::array());
+        check(!materials.get(mid), "identity without materials cannot merge paint");
+        mgr.hydrateFromZoneStore();
+        auto fromFaces = materials.get(mid);
+        check(fromFaces && !fromFaces->faceTextures.empty() &&
+                  fromFaces->faceTextures[0].pixels[0] == red,
+              "keep-live Home with no identity materials reinstates FaceTextures from faceColors");
+    }
+
     PropertyValue v;
     check(PropertyPath::parse("kind").getValue(*home, v) == PropertyPath::PathResult::Ok
               && std::get<std::string>(v) == Zone::kHomeKind,
@@ -195,6 +262,8 @@ int main() {
 
     std::filesystem::remove_all(sandbox);
     SaveSystem::setSaveRoot("");
+    glfwDestroyWindow(window);
+    glfwTerminate();
 
     std::cout << "------------------------------------------------------------\n";
     std::cout << g_checks - g_failures << "/" << g_checks << " checks passed\n";

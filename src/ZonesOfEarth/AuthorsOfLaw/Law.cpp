@@ -303,7 +303,13 @@ std::shared_ptr<Law> Law::fromJson(const nlohmann::json& j) {
     // (they are live members, not recorded edges); this is the ANCESTRY, and
     // it is recorded by identifier, so it restores here on its own.
     if (j.contains("provenance")) {
-        law->_provenance.loadFromJson(j["provenance"]);
+        law->_provenance.loadFromJson(j["provenance"], [law](const std::string& id) -> Singular* {
+            if (id == law->getIdentifier()) return law.get();
+            for (Singular* being : Universe::instance().beings()) {
+                if (being && being->getIdentifier() == id) return being;
+            }
+            return nullptr;
+        });
     }
     return law;
 }
@@ -454,22 +460,27 @@ Law::ApplicationResult Law::applyTo(Singular& target) {
             }
         }
 
-        nlohmann::json nodesJson = nlohmann::json::array();
-        for (const auto& node : trace.nodes) {
-            nodesJson.push_back({{"action", node.actionName},
-                                 {"path", node.path},
-                                 {"wrote", node.wrote},
-                                 {"reason", node.wrote ? "" : (node.note.empty()
-                                     ? std::string(ActionNode::reasonName(node.reason))
-                                     : node.note)}});
+        // WhileTrue that wrote nothing is a level, not an event. Logging it
+        // every tick is the disk stall after loading a world of servos.
+        const bool skipAudit = _activation == Activation::WhileTrue && !wrote;
+        if (!skipAudit) {
+            nlohmann::json nodesJson = nlohmann::json::array();
+            for (const auto& node : trace.nodes) {
+                nodesJson.push_back({{"action", node.actionName},
+                                     {"path", node.path},
+                                     {"wrote", node.wrote},
+                                     {"reason", node.wrote ? "" : (node.note.empty()
+                                         ? std::string(ActionNode::reasonName(node.reason))
+                                         : node.note)}});
+            }
+            ECA::LawAuditLogger::instance().log("LAW", message, {
+                {"lawId", getIdentifier()},
+                {"targetId", target.getIdentifier()},
+                {"result", "Applied"},
+                {"changed", wrote},
+                {"nodes", nodesJson}
+            });
         }
-        ECA::LawAuditLogger::instance().log("LAW", message, {
-            {"lawId", getIdentifier()},
-            {"targetId", target.getIdentifier()},
-            {"result", "Applied"},
-            {"changed", wrote},
-            {"nodes", nodesJson}
-        });
     }
     // Bounded memory: a WhileTrue law applies every tick — the log is a
     // window onto recent history, not an infinite ledger.
