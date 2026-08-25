@@ -76,6 +76,9 @@ question, zero new systems.
   is the single most consequential unmade decision in the framework, it is a
   theological decision, and no agent may make it.
 
+Zach here: I've yet to fully make the decisions but one note for myself on the manifesto is 
+we need a first class distinction between a representative channel (even if it's the "primary avatar") and a real-life vessel (anything that directly corresponds to the real person's physical self. 
+
 ---
 
 ## 2. Axis two: consent of representation

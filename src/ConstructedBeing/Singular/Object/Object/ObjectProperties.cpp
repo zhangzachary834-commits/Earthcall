@@ -90,7 +90,9 @@ public:
         double n = 0.0;
         if (!propertyValueToNumber(v, n)) return false;
         const int kind = static_cast<int>(n);
-        if (kind < 0 || kind > static_cast<int>(Object::ShapeKind::RoundedBox)) {
+        if (kind < 0 || kind > static_cast<int>(Object::ShapeKind::Text2D) ||
+            kind == static_cast<int>(Object::ShapeKind::Field) ||
+            kind == static_cast<int>(Object::ShapeKind::Patch)) {
             return false;
         }
         _owner->setShape(static_cast<Object::ShapeKind>(kind),
@@ -489,6 +491,17 @@ void Object::buildProperties() {
     addShapeParam("shape.fillet", &ShapeParams::fillet);
     addShapeParam("shape.width2D", &ShapeParams::width2D);
     addShapeParam("shape.height2D", &ShapeParams::height2D);
+
+    // Screen-space position for Shape2D / Text2D objects.
+    // Registered on ALL objects (not just 2D ones) — the same principle as
+    // center and velocity: a field carried by every Object is visible on every
+    // Object, and "nobody reads it on a cube" is not a permission level.
+    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Object, float>>(
+        "x2D", this, &Object::getX2D, &Object::setX2D));
+    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Object, float>>(
+        "y2D", this, &Object::getY2D, &Object::setY2D));
+    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Object, int>>(
+        "zOrder2D", this, &Object::getZOrder2D, &Object::setZOrder2D));
 
     _propertyRegistry.push_back(std::make_unique<PropertyRef<Object, std::string>>(
         "textString", this, &Object::_textString));

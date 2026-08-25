@@ -14,6 +14,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <GLFW/glfw3.h>
+#include <algorithm>
 
 extern ZoneManager mgr;
 
@@ -98,6 +99,29 @@ namespace Core {
         }
 
         _mainMenu.draw(fbW, fbH);
+
+        // Draw 2D objects (Shape2D / Text2D) in screen space, after the 3D scene.
+        // begin2D / end2D bracket installs the orthographic projection; objects are
+        // sorted by zOrder2D so authored z-ordering is honoured.
+        {
+            const uint32_t fbWu = static_cast<uint32_t>(fbW);
+            const uint32_t fbHu = static_cast<uint32_t>(fbH);
+            std::vector<Object*> objects2D;
+            for (const auto& obj : objects) {
+                if (obj && obj->is2D()) objects2D.push_back(obj.get());
+            }
+            std::stable_sort(objects2D.begin(), objects2D.end(),
+                [](const Object* a, const Object* b) {
+                    return a->getZOrder2D() < b->getZOrder2D();
+                });
+            if (!objects2D.empty()) {
+                currentRenderer().begin2D(fbWu, fbHu);
+                for (Object* obj : objects2D) {
+                    obj->draw2DObject(fbWu, fbHu);
+                }
+                currentRenderer().end2D();
+            }
+        }
 
         currentRenderer().endFrame();
     }

@@ -48,6 +48,10 @@ static bool raycastTessMesh(const geom::TessMesh& m, const glm::vec3& o, const g
 
 bool Object::raycastFace(const glm::vec3& rayOriginWorld, const glm::vec3& rayDirWorld,
                          float& outT, int& outFaceIndex, glm::vec2& outUV) const {
+    // 2D objects live in screen space; a 3D ray never hits them.
+    // InteractionChannel handles them with a pixel AABB test instead.
+    if (is2D()) return false;
+
     glm::mat4 inv = glm::inverse(getRaycastTransform());
     glm::vec3 oL = glm::vec3(inv * glm::vec4(rayOriginWorld, 1.0f));
     glm::vec3 localDir = glm::vec3(inv * glm::vec4(rayDirWorld, 0.0f));

@@ -503,3 +503,37 @@ void Object::drawPolyhedron() const {
         currentRenderer().drawMesh(_polyhedronFaceMeshes[f],
                                    resolveRenderMaterial(_materialId, faceAlbedo(f)));
 }
+
+void Object::draw2DObject(uint32_t screenW, uint32_t screenH) const {
+    // Shape2D is a screen-space axis-aligned rectangle. It is drawn AFTER the
+    // 3D pass, in a begin2D / end2D bracket, so depth testing is off and the
+    // ortho is already (0,0) top-left to (screenW,screenH) bottom-right.
+    //
+    // Color comes from faceColors[0], matching the 3D convention so a law
+    // that sets "color" paints both 3D and 2D objects with the same path.
+    // Width/height come from ShapeParams::width2D / height2D, already
+    // registered as shape.width2D and shape.height2D.
+    (void)screenW; (void)screenH;
+    const float x0 = _x2D;
+    const float y0 = _y2D;
+    const float x1 = x0 + _shapeParams.width2D;
+    const float y1 = y0 + _shapeParams.height2D;
+    const glm::vec4 color(faceColors[0][0], faceColors[0][1], faceColors[0][2], 1.0f);
+
+    // Two triangles covering the rect (CCW, top-left origin matches ortho).
+    const std::vector<glm::vec2> tris = {
+        {x0, y0}, {x1, y0}, {x1, y1},
+        {x0, y0}, {x1, y1}, {x0, y1},
+    };
+    currentRenderer().drawTris2D(tris, color);
+
+    // Border: a 1px outline (darkened fill color for contrast).
+    const glm::vec4 borderColor(color.r * 0.6f, color.g * 0.6f, color.b * 0.6f, 1.0f);
+    const std::vector<glm::vec2> border = {
+        {x0, y0}, {x1, y0},
+        {x1, y0}, {x1, y1},
+        {x1, y1}, {x0, y1},
+        {x0, y1}, {x0, y0},
+    };
+    currentRenderer().drawLines2D(border, borderColor, 1.0f);
+}

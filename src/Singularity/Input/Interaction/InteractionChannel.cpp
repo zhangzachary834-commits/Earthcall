@@ -14,6 +14,7 @@
 #include <GLFW/glfw3.h>
 #include <cmath>
 #include <ctime>
+#include <limits>
 
 namespace Singularity {
 namespace Input {
@@ -131,6 +132,35 @@ void InteractionChannel::observe(const Sense& sense,
         float t = 0.0f;
         int face = -1;
         hit->raycastFace(sense.rayOrigin, sense.rayDirection, t, face, bestUV);
+    }
+
+    // 2D pick: Shape2D / Text2D objects are in screen space, so their
+    // "intersection" is a simple AABB test against the pointer pixel position.
+    // A 2D hit occludes 3D objects (the intent: screen-space controls sit on top
+    // of the world), so if a 2D object is hit we replace whatever the ray found.
+    if (!blind) {
+        Object* hit2D = nullptr;
+        int bestZ = std::numeric_limits<int>::min();
+        for (Object* obj : reachable) {
+            if (!obj || !obj->is2D()) continue;
+            const glm::vec4 rect = obj->getRect2D(); // {x0, y0, x1, y1}
+            if (sense.pointerX >= rect.x && sense.pointerX <= rect.z &&
+                sense.pointerY >= rect.y && sense.pointerY <= rect.w) {
+                if (obj->getZOrder2D() > bestZ) {
+                    bestZ = obj->getZOrder2D();
+                    hit2D = obj;
+                }
+            }
+        }
+        if (hit2D) {
+            hit = hit2D;
+            // No 3D surface hit — fill surface fields with safe defaults.
+            surface.obj = hit2D;
+            surface.t = 0.0f;
+            surface.face = 0;
+            surface.normal = glm::vec3(0.0f, 0.0f, 1.0f); // faces the camera
+            surface.point = glm::vec3(sense.pointerX, sense.pointerY, 0.0f);
+        }
     }
 
     const glm::vec3 hitPoint = hit ? surface.point : glm::vec3(0.0f);

@@ -142,6 +142,12 @@ private:
     // The primitive shape this Object represents. Default is Cube for compatibility and easy testing.
     ShapeKind _shapeKind = ShapeKind::Cube;
 
+    // Screen-space position for Shape2D / Text2D. In pixels, top-left origin.
+    // Not part of the 3D transform: a 2D object has no world position.
+    float _x2D = 100.0f;
+    float _y2D = 100.0f;
+    int   _zOrder2D = 0;  // draw order; higher is in front
+
     // Polyhedron data for arbitrary polyhedrons
     PolyhedronData polyhedronData;
 
@@ -278,6 +284,24 @@ public:
 
     void drawObject() const;
     void drawHighlightOutline() const;
+
+    // Screen-space 2D rendering (Shape2D / Text2D). Called after the 3D pass
+    // inside a begin2D / end2D bracket. draw2DObject() uses the same faceColors[0]
+    // convention as 3D so a single "color" law paints both.
+    bool  is2D() const { return _shapeKind == ShapeKind::Shape2D || _shapeKind == ShapeKind::Text2D; }
+    float getX2D() const { return _x2D; }
+    float getY2D() const { return _y2D; }
+    int   getZOrder2D() const { return _zOrder2D; }
+    void  setX2D(const float& v) { _x2D = v; }
+    void  setY2D(const float& v) { _y2D = v; }
+    void  setZOrder2D(const int& v) { _zOrder2D = v; }
+    // The screen-space AABB for picking. Returns {x0, y0, x1, y1}.
+    glm::vec4 getRect2D() const {
+        return glm::vec4(_x2D, _y2D,
+                         _x2D + _shapeParams.width2D,
+                         _y2D + _shapeParams.height2D);
+    }
+    void draw2DObject(uint32_t screenW, uint32_t screenH) const;
 
     // not implemented yet
     void interactWith(Formation&);

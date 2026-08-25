@@ -193,6 +193,11 @@ void to_json(nlohmann::json& j, const Object& obj){
                             obj.getTargetRotationEulerDegrees().y,
                             obj.getTargetRotationEulerDegrees().z};
     j["rotationResponsiveness"] = obj.getRotationResponsiveness();
+    // Screen-space position for Shape2D / Text2D. Persisted so a 2D control
+    // survives save/load at the same screen position the Person placed it.
+    j["x2D"] = obj.getX2D();
+    j["y2D"] = obj.getY2D();
+    j["zOrder2D"] = obj.getZOrder2D();
     // Persist baseline marker so baseline demo objects remain identifiable after load
     if (obj.hasAttribute("baseline")) {
         j["baseline"] = obj.getAttribute("baseline");
@@ -351,6 +356,11 @@ void from_json(const nlohmann::json& j, Object& obj){
     if (j.contains("rotationResponsiveness")) {
         obj.setRotationResponsiveness(j["rotationResponsiveness"].get<float>());
     }
+    // Screen-space position for Shape2D / Text2D. Defaults match the field
+    // defaults in Object.hpp; older saves without these keys load cleanly.
+    obj.setX2D(j.value("x2D", 100.0f));
+    obj.setY2D(j.value("y2D", 100.0f));
+    obj.setZOrder2D(j.value("zOrder2D", 0));
     if (j.contains("targetRotation") && j["targetRotation"].is_array() && j["targetRotation"].size() >= 3) {
         obj.setTargetRotationEulerDegrees(glm::vec3(j["targetRotation"][0].get<float>(),
                                                     j["targetRotation"][1].get<float>(),
