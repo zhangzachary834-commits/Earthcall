@@ -274,12 +274,12 @@ def path_blocked_slider_rank():
         compare("gridY", 0, operand_path="@state.chess.kingY"),
         any_of(
             all_of(
-                compare("gridX", 4, operand_path="@state.chess.sliderRankX"),
+                compare("gridX", 4, operand_path="@event.subject.gridX"),
                 compare("gridX", 2, operand_path="@state.chess.kingX"),
             ),
             all_of(
                 compare("gridX", 4, operand_path="@state.chess.kingX"),
-                compare("gridX", 2, operand_path="@state.chess.sliderRankX"),
+                compare("gridX", 2, operand_path="@event.subject.gridX"),
             ),
         ),
     )
@@ -292,12 +292,12 @@ def path_blocked_slider_file():
         compare("gridX", 0, operand_path="@state.chess.kingX"),
         any_of(
             all_of(
-                compare("gridY", 4, operand_path="@state.chess.sliderFileY"),
+                compare("gridY", 4, operand_path="@event.subject.gridY"),
                 compare("gridY", 2, operand_path="@state.chess.kingY"),
             ),
             all_of(
                 compare("gridY", 4, operand_path="@state.chess.kingY"),
-                compare("gridY", 2, operand_path="@state.chess.sliderFileY"),
+                compare("gridY", 2, operand_path="@event.subject.gridY"),
             ),
         ),
     )
@@ -326,22 +326,22 @@ def path_blocked_slider_diagonal():
     )
     between_x = any_of(
         all_of(
-            compare("gridX", 4, operand_path="@state.chess.sliderDiagX"),
+            compare("gridX", 4, operand_path="@event.subject.gridX"),
             compare("gridX", 2, operand_path="@state.chess.kingX"),
         ),
         all_of(
             compare("gridX", 4, operand_path="@state.chess.kingX"),
-            compare("gridX", 2, operand_path="@state.chess.sliderDiagX"),
+            compare("gridX", 2, operand_path="@event.subject.gridX"),
         ),
     )
     between_y = any_of(
         all_of(
-            compare("gridY", 4, operand_path="@state.chess.sliderDiagY"),
+            compare("gridY", 4, operand_path="@event.subject.gridY"),
             compare("gridY", 2, operand_path="@state.chess.kingY"),
         ),
         all_of(
             compare("gridY", 4, operand_path="@state.chess.kingY"),
-            compare("gridY", 2, operand_path="@state.chess.sliderDiagY"),
+            compare("gridY", 2, operand_path="@event.subject.gridY"),
         ),
     )
     return for_any(IS_PIECE, ON_BOARD, any_of(diag_pos, diag_neg), between_x, between_y)
@@ -1031,12 +1031,7 @@ def build_laws():
             compare("gridY", 0, operand_path="@state.chess.kingY"),
             compare("gridX", 1, operand_path="@state.chess.kingX"),
         ),
-        seq(
-            map_path("@state.chess.sliderRankX", {"gx": "gridX"}, copy_terms("gx")),
-            map_path("@state.chess.sliderRankY", {"gy": "gridY"}, copy_terms("gy")),
-            set_path("@state.chess.sliderRankActive", pv("bool", True)),
-            publish("slider-rank-scanned", "state.chess"),
-        ),
+        publish("slider-rank-eval"),
     )
     add_law(
         "law-chess-check-slider-file-candidate",
@@ -1048,12 +1043,7 @@ def build_laws():
             compare("gridX", 0, operand_path="@state.chess.kingX"),
             compare("gridY", 1, operand_path="@state.chess.kingY"),
         ),
-        seq(
-            map_path("@state.chess.sliderFileX", {"gx": "gridX"}, copy_terms("gx")),
-            map_path("@state.chess.sliderFileY", {"gy": "gridY"}, copy_terms("gy")),
-            set_path("@state.chess.sliderFileActive", pv("bool", True)),
-            publish("slider-file-scanned", "state.chess"),
-        ),
+        publish("slider-file-eval"),
     )
 
     diag_king_pos = zone_eq(
@@ -1086,24 +1076,15 @@ def build_laws():
             compare("gridX", 1, operand_path="@state.chess.kingX"),
             any_of(diag_king_pos, diag_king_neg),
         ),
-        seq(
-            map_path("@state.chess.sliderDiagX", {"gx": "gridX"}, copy_terms("gx")),
-            map_path("@state.chess.sliderDiagY", {"gy": "gridY"}, copy_terms("gy")),
-            set_path("@state.chess.sliderDiagActive", pv("bool", True)),
-            publish("slider-diag-scanned", "state.chess"),
-        ),
+        publish("slider-diag-eval"),
     )
 
     add_law(
         "law-chess-eval-slider-rank",
         "eval-slider-rank",
         0,
-        ["slider-rank-scanned"],
-        all_of(
-            identity("state.chess"),
-            compare("sliderRankActive", 0, pv("bool", True)),
-            not_of(path_blocked_slider_rank()),
-        ),
+        ["slider-rank-eval"],
+        not_of(path_blocked_slider_rank()),
         mark_check,
         scope=0,
     )
@@ -1111,12 +1092,8 @@ def build_laws():
         "law-chess-eval-slider-file",
         "eval-slider-file",
         0,
-        ["slider-file-scanned"],
-        all_of(
-            identity("state.chess"),
-            compare("sliderFileActive", 0, pv("bool", True)),
-            not_of(path_blocked_slider_file()),
-        ),
+        ["slider-file-eval"],
+        not_of(path_blocked_slider_file()),
         mark_check,
         scope=0,
     )
@@ -1124,12 +1101,8 @@ def build_laws():
         "law-chess-eval-slider-diag",
         "eval-slider-diag",
         0,
-        ["slider-diag-scanned"],
-        all_of(
-            identity("state.chess"),
-            compare("sliderDiagActive", 0, pv("bool", True)),
-            not_of(path_blocked_slider_diagonal()),
-        ),
+        ["slider-diag-eval"],
+        not_of(path_blocked_slider_diagonal()),
         mark_check,
         scope=0,
     )
@@ -1407,6 +1380,7 @@ def build_world():
     board_sx, board_sy, board_sz = 8.0 * TILE, BOARD_DEPTH, 8.0 * TILE
     board = {
         "objectID": "object.chess.board",
+        "baseline": "ground",
         "baseline": "ground",
         "shapeKind": 0,
         "geometryType": 0,

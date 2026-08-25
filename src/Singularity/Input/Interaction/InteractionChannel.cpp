@@ -317,6 +317,23 @@ void InteractionChannel::step(GLFWwindow* window, ::Core::Camera& camera,
     const GLdouble* mv = camera.getModelview();
     const GLdouble* pr = camera.getProjection();
     if (vp && mv && pr && vp[2] > 0 && vp[3] > 0) {
+        int winW = 0, winH = 0;
+        glfwGetWindowSize(window, &winW, &winH);
+        int fW = 0, fH = 0;
+        glfwGetFramebufferSize(window, &fW, &fH);
+        const float scaleX = (winW > 0 && fW > 0) ? (static_cast<float>(fW) / static_cast<float>(winW)) : 1.0f;
+        const float scaleY = (winH > 0 && fH > 0) ? (static_cast<float>(fH) / static_cast<float>(winH)) : 1.0f;
+
+        float fbX = 0.0f, fbY = 0.0f;
+        if (glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED) {
+            // Crosshair / centre of viewport when cursor is locked
+            fbX = static_cast<float>(vp[0]) + static_cast<float>(vp[2]) * 0.5f;
+            fbY = static_cast<float>(vp[1]) + static_cast<float>(vp[3]) * 0.5f;
+        } else {
+            fbX = sense.pointerX * scaleX;
+            fbY = sense.pointerY * scaleY;
+        }
+
         glm::mat4 V(1.0f), P(1.0f);
         for (int c = 0; c < 4; ++c) {
             for (int r = 0; r < 4; ++r) {
@@ -326,9 +343,9 @@ void InteractionChannel::step(GLFWwindow* window, ::Core::Camera& camera,
         }
         const glm::mat4 invVP = glm::inverse(P * V);
         const float ndcX =
-            ((sense.pointerX - static_cast<float>(vp[0])) / static_cast<float>(vp[2])) * 2.0f - 1.0f;
+            ((fbX - static_cast<float>(vp[0])) / static_cast<float>(vp[2])) * 2.0f - 1.0f;
         const float ndcY =
-            1.0f - ((sense.pointerY - static_cast<float>(vp[1])) / static_cast<float>(vp[3])) * 2.0f;
+            1.0f - ((fbY - static_cast<float>(vp[1])) / static_cast<float>(vp[3])) * 2.0f;
         glm::vec4 nearW = invVP * glm::vec4(ndcX, ndcY, -1.0f, 1.0f);
         glm::vec4 farW = invVP * glm::vec4(ndcX, ndcY, 1.0f, 1.0f);
         if (nearW.w != 0.0f) nearW /= nearW.w;
