@@ -73,6 +73,11 @@ Two smaller instances of the same decay, both found by re-running rather than re
 
 ## 3. The suite is green and the city is unwalked
 
+> **Superseded within four hours of writing — see §7.** Zach walked the app on the
+> evening of 2026-08-24 and discharged most of what this section counts. The section is
+> left standing unedited because §7 is only legible against it, and because being wrong
+> this fast is the finding.
+
 This is the oldest open thread in the repo and it has not moved. Counting through
 `Bugs.md` and the to-do list, the following are marked done and verified, *headlessly*,
 with an explicit note that no Person has confirmed them under the hand:
@@ -248,3 +253,167 @@ this file and one line in the to-do list pointing at it.
 
 ---
 *Claude (Opus 5) · session `79740b6f-39f1-4f66-a24d-3e072cb5fe5d` · 2026-08-24T15:24:42-07:00*
+
+---
+
+# §7. Addendum, 2026-08-24 evening: the walk happened
+
+Written four hours after everything above, at Zach's prompting: *"OKAY FINEEEE I MARKED MANY
+OF THE VERIFICATION ITEMS DONE (some of them i'd already verified prior to your reflection)."*
+That last parenthesis matters and I want it on the record — part of §3's ledger was already
+stale when I counted it. I measured the *documents*, not the world, and the documents were
+behind. The correction is his, not mine.
+
+## 7.1 What the hand found that the suite could not
+
+The walk is now a standing document — `docs/Agenda/Tasks/Person Verification List.md` —
+with a new rule at the top of the to-do list: *"Things that require a Person to manually
+verify whether in-app functionality is working as intended should go in Person Verification
+List."* That is the second feedback loop §3 said the repo did not have. It now exists, it is
+addressed, and it has a home.
+
+**Confirmed working under the hand:** save → quit → reopen → load; Save As with no crash;
+`my_world` loads in-app; Home round-trip with a painted FaceTexture surviving a departure and
+return; Creator Console open and select; Face Brush; the 3D Create tool; the gyroid implicit,
+visually; hover-enter and hover-exit, click, scroll, drag, and key edges all appearing in the
+Law Authoring Window's Recent Events; Assets; Chat; `K`, `F8`, `F9`, `H`.
+
+That retires, with a Person's eyes, three of the five verification debts §3 counted — Bug #6's
+gyroid, the 3D create path, and the interaction edges the whole Interaction-as-Law framework
+rests on. **The event vocabulary is real and observable at the surface.** That is a much
+stronger result than the suite could give, and it should be said plainly before the failures.
+
+**And then the failures, which are the point.** A Person's hand found things no headless test
+in this repo could have found, in about an hour:
+
+- **Chess: clicking a pawn does nothing visible.** Zach: *"Most other functionality below
+  can't be tested unless this is working."* Six chess line-items blocked behind one dead click.
+- **Rotate has two sets of controls and only one works.** The angle sliders on a selected
+  shape do nothing; scroll to the bottom of the Creator Console in 3D tool mode and the
+  "Target Rotation" sliders rotate it correctly. A dead control sitting above a live one is
+  worse than no control, and no test can see it because both are wired to *something*.
+- **Pottery still stretches FaceTexture pixels** instead of growing the texture to the new
+  face dimensions — Zach's own note from the to-do list, unfixed, now confirmed under the hand.
+- **`H` opens the chat window and pressing `H` again does not close it.** A toggle that only
+  toggles one way.
+- **Observe Test shows four tests out of 60+**, one throws on load, two are "epistemically
+  opaque," and the one that renders spawns cubes whose correctness Zach cannot judge without
+  an in-world tool for reading positions. The feature is technically live and practically
+  unusable — exactly the gap between "loads" and "tells you something."
+- **Fuse is ambiguous:** *"it executes, but it's not always clear what."*
+- **Four items are marked with "I don't know what I'm supposed to be looking for."** Window
+  focus, unfocus, and pointer-recapture. That is not a failure of the app; it is a **failure of
+  the checklist**, and it is the most reusable finding here: a verification item that does not
+  state its own success criterion cannot be verified, only guessed at. Whoever writes the next
+  batch owes each line an observable.
+
+## 7.2 `chess_app_test` passes and the pawn is dead — why both are true
+
+This is the sharpest thing in the tree right now, so I traced it rather than restating it.
+
+`tests/law/chess_app_test.cpp:68-75` is the whole story:
+
+```cpp
+void click(InteractionChannel* interaction, LawManager& lawManager,
+           Object* subject, float wx, float wy, float wz) {
+    interaction->pointerWorld = glm::vec3(wx, wy, wz);
+    Core::EventBus::instance().publish(
+        ECA::Event{"object-clicked", subject, nullptr, std::time(nullptr)});
+```
+
+The test **sets the pointer by hand and mints the event by hand**. It never calls
+`InteractionChannel::step()`. So it exercises the picking of nothing, the reachable set of
+nothing, and the press/release/slop edge logic of nothing. What it proves — and proves well,
+in 2.12 s — is *given an `object-clicked` bearing this subject, the 33 chess laws do the right
+thing.* What it cannot prove, and never claimed to, is that a mouse over a pawn produces that
+event.
+
+Zach's click lands in exactly that gap. And it is a narrow gap, because I checked the two
+things it could otherwise have been and both are sound:
+
+- **The law cascade is complete.** 33 chess laws listen for 10 event types
+  (`object-clicked`, `square-clicked`, `piece-selected`, `move-committed`, `turn-changed`,
+  `check-scanned`, `check-evaluated`, `king-probed`, `enemy-captured`, `move-reverted`), and
+  all 10 have publishers among **30 `Publish` action nodes** in the same world —
+  `law-chess-click` mints `square-clicked`, `law-chess-select` mints `piece-selected`, the
+  pawn laws mint `move-committed` and `enemy-captured`. Only 2 of the 33 listen for
+  `object-clicked`, the one event the engine itself publishes; the other 31 are downstream of
+  those two. **This retires a live suspicion:** to-do item 31c calls chess a *"private event
+  bus"* with laws whose triggers no publisher emits. That is not what it is. It is a correctly
+  wired cascade hanging off a single entry point — which is why one dead entry point kills all
+  of it.
+- **The conditions are satisfiable.** `law-chess-click`'s condition is `ConditionNode::Kind 4`
+  = **`Any`**, not `All` — `isBoard == true` OR `instance-of category.chess.piece`. (I first
+  read the `"conditionMode": "all"` field beside it as making this an impossible AND of
+  board-and-piece. It is not. Worth recording that the JSON has two adjacent things named
+  "all"/"Any" meaning different layers, because I misread it and the next reader will too.)
+
+So the entry point is where to look: whether `InteractionChannel::step` reaches chess pieces at
+all in the loaded Zone, and whether `@interaction-channel.pointerWorld` is populated on the
+live path the way the test populates it by hand. I have not run the app, so that is a located
+hypothesis and not a diagnosis — **the next move is a Person clicking a pawn with the Recent
+Events log open, and reporting whether `object-clicked` appears at all.** If it does, the
+break is in the law's read of `pointerWorld`; if it does not, the break is in picking. One
+click distinguishes them.
+
+Note also that §4's warning has teeth here: `saves/worlds/chess.json` and `chess_app.json` are
+byte-identical, and `chess_app_test` defaults to loading `chess_app.json` while a Person loads
+`chess`. They agree today. Nothing keeps them agreeing, and the day they diverge, the test and
+the Person will be looking at different worlds while using the same word.
+
+## 7.3 What this does to §3's argument
+
+It sharpens it rather than refuting it, and I want to be careful not to claim vindication for a
+section that was factually wrong within hours.
+
+§3 claimed the repo has one closing feedback loop and everything gravitates into it. Zach's
+walk shows the missing loop can be opened in an evening, and that when it opens it pays
+immediately — one hour of clicking produced a blocked feature, a dead control, an unusable
+tool, a one-way toggle, and four under-specified checklist lines. None of those were reachable
+from `ctest`.
+
+But the deeper point survives, and the chess case states it better than my Priority-1/Priority-3
+argument did: **a green test and a working feature are different claims, and this repo has been
+allowing the first to stand in for the second.** `chess_app_test` was cited in Bug #7 as the
+consequence-witness that the relation graph was restored. It was — the relations are there. It
+was never evidence that a Person could play chess, and it was read that way, by me among
+others, because it is named after the thing rather than after what it tests. A test that mints
+its own input event is a test of the downstream half. That is a fine and useful test. It should
+just be legible as half.
+
+The cheapest correction is not more tests. It is that **every headless "done and verified"
+should name the seam it does not cross** — `chess_app_test` verifies laws-given-events, not
+click-to-event — so the Person Verification List can be generated from the gaps instead of
+assembled by hand.
+
+## 7.4 Meanwhile, the lag question got a real answer
+
+A concurrent session's `tests/singularity/frame_lag_test.cpp` and
+`docs/audits/2026-08-24_frame_lag_probe.md` landed while this was being written, and they
+resolve something §6 left hanging. `ce5c1cbe`, titled "Attempt to fix chess lag," turned out to
+contain the `Singular` copy/move slicing fix and no performance change — §6 called that a happy
+accident. The probe now says what the lag actually is: **`Physics::updateBodies` is all-pairs
+with no broadphase** (`Physics.cpp:327-343`, fitted `n^1.75`, 1.1 → 40.7 ms from 64 → 512
+objects), with `g_legacyEngineEnabled = true` at `Physics.cpp:33` and no caller in the app that
+ever clears it. So the commit that was *reaching* for the lag fixed a different and more
+serious bug instead, and the quadratic is still standing. Both halves of that sentence are now
+documented, which is the outcome to want.
+
+Two of that probe's own notes belong to this document's argument: it refuses to enforce a
+timing when the machine moves under it, after a first draft reported contended numbers as
+Earthcall's and had to be withdrawn — an instrument that knows when it is being lied to. And
+its last line is the same one as §3's: *"A lag test cannot feel a hitch."*
+
+---
+
+## Addendum attribution
+
+The walk, the `Person Verification List.md` document, the to-do rule routing manual checks
+into it, and every finding in §7.1 are **Zach's** — including the correction that some items
+were verified before I counted them unverified. §7.2's trace of `chess_app_test.cpp:68-75`,
+the 33-laws/30-publishers cascade check, the `Kind 4 = Any` reading and my own misreading of
+it, and §7.3's "name the seam you do not cross" are mine. §7.4 is a concurrent session's work,
+summarised here only where it settles a question §6 left open.
+
+*Claude (Opus 5) · session `79740b6f-39f1-4f66-a24d-3e072cb5fe5d` · addendum
+2026-08-24T17:05-07:00*

@@ -214,7 +214,7 @@ def path_blocked_file():
 
 
 def path_blocked_diagonal():
-    on_move_diag = zone_eq(
+    on_move_diag_pos = zone_eq(
         {
             "gx": "gridX",
             "gy": "gridY",
@@ -226,6 +226,21 @@ def path_blocked_diagonal():
             {"c": -1.0, "factors": {"gy": 1.0}},
             {"c": -1.0, "factors": {"sx": 1.0}},
             {"c": 1.0, "factors": {"sy": 1.0}},
+        ],
+        0.0,
+    )
+    on_move_diag_neg = zone_eq(
+        {
+            "gx": "gridX",
+            "gy": "gridY",
+            "sx": "@state.chess.selectedX",
+            "sy": "@state.chess.selectedY",
+        },
+        [
+            {"c": 1.0, "factors": {"gx": 1.0}},
+            {"c": 1.0, "factors": {"gy": 1.0}},
+            {"c": -1.0, "factors": {"sx": 1.0}},
+            {"c": -1.0, "factors": {"sy": 1.0}},
         ],
         0.0,
     )
@@ -249,7 +264,87 @@ def path_blocked_diagonal():
             compare("gridY", 2, operand_path="@state.chess.selectedY"),
         ),
     )
-    return for_any(IS_PIECE, ON_BOARD, on_move_diag, between_x, between_y)
+    return for_any(IS_PIECE, ON_BOARD, any_of(on_move_diag_pos, on_move_diag_neg), between_x, between_y)
+
+
+def path_blocked_slider_rank():
+    return for_any(
+        IS_PIECE,
+        ON_BOARD,
+        compare("gridY", 0, operand_path="@state.chess.kingY"),
+        any_of(
+            all_of(
+                compare("gridX", 4, operand_path="@state.chess.sliderRankX"),
+                compare("gridX", 2, operand_path="@state.chess.kingX"),
+            ),
+            all_of(
+                compare("gridX", 4, operand_path="@state.chess.kingX"),
+                compare("gridX", 2, operand_path="@state.chess.sliderRankX"),
+            ),
+        ),
+    )
+
+
+def path_blocked_slider_file():
+    return for_any(
+        IS_PIECE,
+        ON_BOARD,
+        compare("gridX", 0, operand_path="@state.chess.kingX"),
+        any_of(
+            all_of(
+                compare("gridY", 4, operand_path="@state.chess.sliderFileY"),
+                compare("gridY", 2, operand_path="@state.chess.kingY"),
+            ),
+            all_of(
+                compare("gridY", 4, operand_path="@state.chess.kingY"),
+                compare("gridY", 2, operand_path="@state.chess.sliderFileY"),
+            ),
+        ),
+    )
+
+
+def path_blocked_slider_diagonal():
+    diag_pos = zone_eq(
+        {"gx": "gridX", "gy": "gridY", "kx": "@state.chess.kingX", "ky": "@state.chess.kingY"},
+        [
+            {"c": 1.0, "factors": {"gx": 1.0}},
+            {"c": -1.0, "factors": {"gy": 1.0}},
+            {"c": -1.0, "factors": {"kx": 1.0}},
+            {"c": 1.0, "factors": {"ky": 1.0}},
+        ],
+        0.0,
+    )
+    diag_neg = zone_eq(
+        {"gx": "gridX", "gy": "gridY", "kx": "@state.chess.kingX", "ky": "@state.chess.kingY"},
+        [
+            {"c": 1.0, "factors": {"gx": 1.0}},
+            {"c": 1.0, "factors": {"gy": 1.0}},
+            {"c": -1.0, "factors": {"kx": 1.0}},
+            {"c": -1.0, "factors": {"ky": 1.0}},
+        ],
+        0.0,
+    )
+    between_x = any_of(
+        all_of(
+            compare("gridX", 4, operand_path="@state.chess.sliderDiagX"),
+            compare("gridX", 2, operand_path="@state.chess.kingX"),
+        ),
+        all_of(
+            compare("gridX", 4, operand_path="@state.chess.kingX"),
+            compare("gridX", 2, operand_path="@state.chess.sliderDiagX"),
+        ),
+    )
+    between_y = any_of(
+        all_of(
+            compare("gridY", 4, operand_path="@state.chess.sliderDiagY"),
+            compare("gridY", 2, operand_path="@state.chess.kingY"),
+        ),
+        all_of(
+            compare("gridY", 4, operand_path="@state.chess.kingY"),
+            compare("gridY", 2, operand_path="@state.chess.sliderDiagY"),
+        ),
+    )
+    return for_any(IS_PIECE, ON_BOARD, any_of(diag_pos, diag_neg), between_x, between_y)
 
 
 def dx_dy_sq_terms():
@@ -780,9 +875,17 @@ def build_laws():
     probe_maps = [
         set_path("@state.chess.inCheck", pv("bool", False)),
         set_path("@state.chess.checkers", pv("int", 0)),
+        set_path("@state.chess.sliderRankActive", pv("bool", False)),
+        set_path("@state.chess.sliderFileActive", pv("bool", False)),
+        set_path("@state.chess.sliderDiagActive", pv("bool", False)),
+        set_path("@state.chess.sliderRankX", pv("int", -1)),
+        set_path("@state.chess.sliderRankY", pv("int", -1)),
+        set_path("@state.chess.sliderFileX", pv("int", -1)),
+        set_path("@state.chess.sliderFileY", pv("int", -1)),
+        set_path("@state.chess.sliderDiagX", pv("int", -1)),
+        set_path("@state.chess.sliderDiagY", pv("int", -1)),
+        publish("king-probed", "state.chess"),
     ]
-    # Copy white or black into kingX/Y via two later laws; here just publish.
-    probe_maps.append(publish("king-probed", "state.chess"))
     add_law(
         "law-chess-check-reset",
         "reset-check-flags",
@@ -851,14 +954,6 @@ def build_laws():
         {"c": 1.0, "factors": {"ky": 2.0}},
         {"c": -2.0, "factors": {"dy": 1.0, "ky": 1.0}},
     ]
-    diag_to_king = [
-        {"c": 1.0, "factors": {"dx": 2.0}},
-        {"c": 1.0, "factors": {"kx": 2.0}},
-        {"c": -2.0, "factors": {"dx": 1.0, "kx": 1.0}},
-        {"c": -1.0, "factors": {"dy": 2.0}},
-        {"c": -1.0, "factors": {"ky": 2.0}},
-        {"c": 2.0, "factors": {"dy": 1.0, "ky": 1.0}},
-    ]
 
     mark_check = seq(
         set_path("@state.chess.inCheck", pv("bool", True)),
@@ -922,38 +1017,138 @@ def build_laws():
         ),
         mark_check,
     )
-    # Adjacent sliding checks (distance 1). Distant sliding check is the
-    # remainder named in the Sabbath writeup's rule-enforcer note: path
-    # blocking for a third being between attacker and king needs a nested
-    # ForAny over the outer subject, which the condition calculus does not
-    # name. Adjacent queen/rook/bishop checks still fire, which is the
-    # contact case, and move-path blocking IS full (selected/target live
-    # on state).
+
+    # Sliding checks (Queens, Rooks, Bishops) from arbitrary distance:
+    # 1. On check-scanned, candidate enemy sliders in line-of-sight publish their positions.
+    # 2. On slider-*-scanned, blocker evaluation verifies an unblocked ray to the king.
     add_law(
-        "law-chess-check-adjacent-slide",
-        "adjacent-slider-gives-check",
+        "law-chess-check-slider-rank-candidate",
+        "candidate-slider-rank",
         0,
         ["check-scanned"],
         all_of(
-            attacker(any_of(is_role(1), is_role(3), is_role(4))),
-            zone_range(king_dx_dy, dist_sq_to_king, 1.0, 2.0),
-            any_of(
-                is_role(4),
-                all_of(is_role(1), any_of(
-                    compare("gridX", 0, operand_path="@state.chess.kingX"),
-                    compare("gridY", 0, operand_path="@state.chess.kingY"),
-                )),
-                all_of(is_role(3), zone_eq(king_dx_dy, diag_to_king, 0.0)),
-            ),
+            attacker(any_of(is_role(1), is_role(4))),
+            compare("gridY", 0, operand_path="@state.chess.kingY"),
+            compare("gridX", 1, operand_path="@state.chess.kingX"),
+        ),
+        seq(
+            map_path("@state.chess.sliderRankX", {"gx": "gridX"}, copy_terms("gx")),
+            map_path("@state.chess.sliderRankY", {"gy": "gridY"}, copy_terms("gy")),
+            set_path("@state.chess.sliderRankActive", pv("bool", True)),
+            publish("slider-rank-scanned", "state.chess"),
+        ),
+    )
+    add_law(
+        "law-chess-check-slider-file-candidate",
+        "candidate-slider-file",
+        0,
+        ["check-scanned"],
+        all_of(
+            attacker(any_of(is_role(1), is_role(4))),
+            compare("gridX", 0, operand_path="@state.chess.kingX"),
+            compare("gridY", 1, operand_path="@state.chess.kingY"),
+        ),
+        seq(
+            map_path("@state.chess.sliderFileX", {"gx": "gridX"}, copy_terms("gx")),
+            map_path("@state.chess.sliderFileY", {"gy": "gridY"}, copy_terms("gy")),
+            set_path("@state.chess.sliderFileActive", pv("bool", True)),
+            publish("slider-file-scanned", "state.chess"),
+        ),
+    )
+
+    diag_king_pos = zone_eq(
+        {"gx": "gridX", "gy": "gridY", "kx": "@state.chess.kingX", "ky": "@state.chess.kingY"},
+        [
+            {"c": 1.0, "factors": {"gx": 1.0}},
+            {"c": -1.0, "factors": {"gy": 1.0}},
+            {"c": -1.0, "factors": {"kx": 1.0}},
+            {"c": 1.0, "factors": {"ky": 1.0}},
+        ],
+        0.0,
+    )
+    diag_king_neg = zone_eq(
+        {"gx": "gridX", "gy": "gridY", "kx": "@state.chess.kingX", "ky": "@state.chess.kingY"},
+        [
+            {"c": 1.0, "factors": {"gx": 1.0}},
+            {"c": 1.0, "factors": {"gy": 1.0}},
+            {"c": -1.0, "factors": {"kx": 1.0}},
+            {"c": -1.0, "factors": {"ky": 1.0}},
+        ],
+        0.0,
+    )
+    add_law(
+        "law-chess-check-slider-diag-candidate",
+        "candidate-slider-diag",
+        0,
+        ["check-scanned"],
+        all_of(
+            attacker(any_of(is_role(3), is_role(4))),
+            compare("gridX", 1, operand_path="@state.chess.kingX"),
+            any_of(diag_king_pos, diag_king_neg),
+        ),
+        seq(
+            map_path("@state.chess.sliderDiagX", {"gx": "gridX"}, copy_terms("gx")),
+            map_path("@state.chess.sliderDiagY", {"gy": "gridY"}, copy_terms("gy")),
+            set_path("@state.chess.sliderDiagActive", pv("bool", True)),
+            publish("slider-diag-scanned", "state.chess"),
+        ),
+    )
+
+    add_law(
+        "law-chess-eval-slider-rank",
+        "eval-slider-rank",
+        0,
+        ["slider-rank-scanned"],
+        all_of(
+            identity("state.chess"),
+            compare("sliderRankActive", 0, pv("bool", True)),
+            not_of(path_blocked_slider_rank()),
         ),
         mark_check,
+        scope=0,
+    )
+    add_law(
+        "law-chess-eval-slider-file",
+        "eval-slider-file",
+        0,
+        ["slider-file-scanned"],
+        all_of(
+            identity("state.chess"),
+            compare("sliderFileActive", 0, pv("bool", True)),
+            not_of(path_blocked_slider_file()),
+        ),
+        mark_check,
+        scope=0,
+    )
+    add_law(
+        "law-chess-eval-slider-diag",
+        "eval-slider-diag",
+        0,
+        ["slider-diag-scanned"],
+        all_of(
+            identity("state.chess"),
+            compare("sliderDiagActive", 0, pv("bool", True)),
+            not_of(path_blocked_slider_diagonal()),
+        ),
+        mark_check,
+        scope=0,
+    )
+
+    add_law(
+        "law-chess-check-scan-complete",
+        "publish-scan-complete",
+        0,
+        ["check-scanned"],
+        identity("state.chess"),
+        publish("check-scanned-done", "state.chess"),
+        scope=0,
     )
 
     add_law(
         "law-chess-check-evaluated",
         "publish-check-evaluated",
         0,
-        ["check-scanned"],
+        ["check-scanned-done"],
         identity("state.chess"),
         publish("check-evaluated", "state.chess"),
         scope=0,
@@ -1193,6 +1388,15 @@ def build_world():
             "blackKingY": pv("int", 7),
             "midY": pv("int", 2),
             "midYBlack": pv("int", 5),
+            "sliderRankActive": pv("bool", False),
+            "sliderFileActive": pv("bool", False),
+            "sliderDiagActive": pv("bool", False),
+            "sliderRankX": pv("int", -1),
+            "sliderRankY": pv("int", -1),
+            "sliderFileX": pv("int", -1),
+            "sliderFileY": pv("int", -1),
+            "sliderDiagX": pv("int", -1),
+            "sliderDiagY": pv("int", -1),
             **king_offset_properties(),
         }, "Chess state"),
         extra_spatial("object.chess.status", {
@@ -1361,15 +1565,12 @@ def main():
     root = Path(__file__).resolve().parents[1]
     session, zone = build_world()
     world_path = root / "saves" / "worlds" / "chess_app.json"
-    legacy_world_path = root / "saves" / "worlds" / "chess.json"
     zone_path = root / "saves" / "zones" / ZONE_ID / "zone.json"
     world_path.parent.mkdir(parents=True, exist_ok=True)
     zone_path.parent.mkdir(parents=True, exist_ok=True)
     world_path.write_text(json.dumps(session, indent=2) + "\n")
-    legacy_world_path.write_text(json.dumps(session, indent=2) + "\n")
     zone_path.write_text(json.dumps(zone, indent=2) + "\n")
     print(f"Authored {world_path}")
-    print(f"Authored {legacy_world_path}")
     print(f"Authored {zone_path}")
     print(f"  zone objects: {len(zone['world']['objects'])}")
     print(f"  pieces: {sum(1 for o in zone['world']['objects'] if o['objectID'].startswith('piece-'))}")
@@ -1381,3 +1582,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

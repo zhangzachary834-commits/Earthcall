@@ -49,7 +49,8 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
 
 cmake --build build --target earthcall -j8
 cmake --build build -j8                               # tests are NOT built by the line above
-ctest --test-dir build --output-on-failure -j4        # 65 registered, 65 pass
+ctest --test-dir build --output-on-failure -j4        # 66 registered, 66 pass (~33 s)
+cmake --build build --target lag                       # just the frame-cost probe, with its report
 ```
 
 **`--target earthcall` does not build the tests.** `ctest` will then report every test as
@@ -66,7 +67,7 @@ The Python backend starts from `src/Singularity/Foreign/py/app.py`.
 
 ## The test suite
 
-**As of 2026-08-24, 65 of 65 tests pass and the default build is clean.** `zone_facetexture_test` guards Home/Zone identity materials (FaceTextures persist across session loads). `chess_app_test` guards the authored chess world (`saves/worlds/chess_app.json`) and is green again — see below. The thirteen
+**As of 2026-08-24, 66 of 66 tests pass and the default build is clean.** `zone_facetexture_test` guards Home/Zone identity materials (FaceTextures persist across session loads). `chess_app_test` guards the authored chess world (`saves/worlds/chess_app.json`) and is green again — see below. The thirteen
 that were broken were stale against three refactors, not against each other:
 `Rendering/` → `Singularity/Screen/` and `Util/` → `Singularity/Storage/`;
 `Object::GeometryType` → `ShapeKind`; the placement and tool fields off `Person` and onto
@@ -101,6 +102,51 @@ is now empty; add a name back to it if a future test lands ahead of its feature,
 off the moment that feature lands. Do not read a red suite as evidence that your change broke
 something until you have checked it here.
 
+**`frame_lag_test` landed 2026-08-24 and is the one test in the suite that measures
+durations.** It is also the slow one — ~18 s, most of the suite's 33 s — and it carries
+`RUN_SERIAL TRUE`, so `ctest -j4` gives it the machine to itself rather than measuring it
+while three other tests fight it for cores. Run it alone with `cmake --build build --target
+lag`, or `ctest --test-dir build -L lag`.
+
+It asks four questions, ordered by how much each leans on the clock: does per-frame cost
+grow faster than the world does (a *ratio* of times, so a slow machine and a fast one
+agree); on an idle world, is the frame still finding work (no clock at all); does the
+authored chess world hold a 60 Hz frame without a hitch or drift; how long does opening
+that world take.
+
+Its output has **four** verdicts, not two, and the distinction is load-bearing:
+
+| | means |
+|---|---|
+| `ok` | meets the aspiration — what a frame *ought* to cost |
+| `STANDING` | misses the aspiration, matches `tests/singularity/frame_lag_baseline.txt`. A known cost, already on the to-do list under **Performance**, reprinted every run. **Not a failure.** |
+| `LAG` | worse than the baseline. *This* is the failure: something you just did made Earthcall slower |
+| `IMPROVED` | comfortably better than the baseline — re-record it or the tripwire stays slack |
+
+So the suite is green while today's real lag is read aloud on every run. Do not silence a
+`STANDING` line by widening the baseline; fix the item or leave it standing.
+
+**It knows when it cannot trust the clock.** A fixed reference workload is timed before and
+after the measurements. If the machine's speed moved by more than 1.4x in between — a build,
+a browser, another agent — every timing verdict is still printed but **none of them may fail
+the run**, and `--rebaseline` is refused outright. The idle-world invariants never touch a
+clock and are enforced either way. Every wall-clock budget is also divided by that
+calibration factor, so the baseline file means roughly the same thing on another machine.
+
+Re-record with `./build/frame_lag_test --rebaseline`, on a quiet machine, only downward, and
+say so in the commit message. `./build/frame_lag_test --calibrate` prints this machine's
+speed against the reference and stops; if that number will not hold still, nothing else the
+test measures will either. Pass a save path as the first argument to measure a different
+world (the baseline is only ever written from the default one).
+
+What it found on its first run is written up in `docs/audits/2026-08-24_frame_lag_probe.md`
+and tracked in the to-do list's **Performance** section: `Physics::updateBodies` is all-pairs
+with no broadphase, so `Zone::update` costs 1.1 / 3.3 / 11.1 / 40.7 ms at 64 / 128 / 256 / 512
+objects — a fitted `n^1.75`. The chess world itself is fine at 35 objects (6-7 ms simulation
+half, no hitch, 1.4-2.1 s to load). `-O0` is a real caveat on every absolute number and is
+named in both. The audit's §2 also records a draft of itself that had to be withdrawn because
+it was written from a laptop at load average 90 — read it before you report a frame rate.
+
 ### Tests that exist because of what got past the suite, not to pad it
 
 Each guards a class of silent failure this repository has actually shipped, so keep them
@@ -118,6 +164,7 @@ honest rather than convenient:
 | `save_roundtrip_test` | Person Save As / Load. `saveStateWithLog` used to skip the first two Zone objects; `loadState` used to move the camera and not `Person.position`. json+.ecsave of one stem must list as one world; objects in a non-active Zone must survive |
 | `unsaved_preserve_test` | load used to erase unsaved work. Identity-stable Zones are kept across session load; `loadState` also writes `saves/backups/before-load.json` so Restore unsaved can rewind, and loading that slot does not re-stash over itself |
 | `zone_identity_test` | Home was copied into every "world" file, so loading another session showed an empty Home. Zones now have `saves/zones/<id>/zone.json`; sessions reference them; fork/diff are first-class |
+| `frame_lag_test` | the frame quietly getting dearer. Guards three things nothing else could see: that per-frame cost stays sub-quadratic in the population, that an *idle* world fires no laws and grows no objects (CLAUDE.md's edge-not-level rule, measured rather than asserted), and that no being registers a property path twice (the `buildProperties()`-in-a-constructor bug, which doubles the cost of every law evaluation and shows up nowhere else) |
 | `zone_home_ontology_test` | manifesto Home/Zone: primary Home kernel-locked per Person (not "any owned Zone"); owner is Person/Relationship/Community; community-home / community-zone authored kinds; AuthorZone mints extras; unused `class Home` retired |
 
 If you add a field to `Object` that `to_json` writes, add it to `object_roundtrip_test`.

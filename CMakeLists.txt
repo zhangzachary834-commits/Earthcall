@@ -300,7 +300,32 @@ if(NOT EMSCRIPTEN)
             list(APPEND ALL_ACTIVE_TEST_TARGETS ${TEST_NAME})
         endif()
         add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
+
+        # The lag probe measures durations, so it must not be measured while
+        # three other tests are fighting it for the machine: RUN_SERIAL makes
+        # ctest give it the box to itself. (It survives contention either way
+        # — it detects a moving machine and stops enforcing its timings — but
+        # a run where nothing is enforced is a run that checked nothing.)
+        if (${TEST_NAME} STREQUAL "frame_lag_test")
+            set_tests_properties(${TEST_NAME} PROPERTIES
+                RUN_SERIAL TRUE
+                TIMEOUT 300
+                LABELS "lag")
+        endif()
     endforeach()
+
+    # `cmake --build build --target lag` — the frame-cost probe on its own.
+    # It is in the ordinary ctest run too, but it is the one test that takes
+    # tens of seconds and prints a report worth reading, so it gets a name you
+    # can ask for directly. Add --rebaseline by hand when re-recording
+    # tests/singularity/frame_lag_baseline.txt.
+    add_custom_target(lag
+        COMMAND frame_lag_test
+        DEPENDS frame_lag_test
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        USES_TERMINAL
+        COMMENT "Measuring what a frame of Earthcall costs"
+    )
 
     add_custom_target(test_all
         COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure

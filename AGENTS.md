@@ -111,20 +111,20 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
 
 cmake --build build --target earthcall -j8
 cmake --build build -j8                               # tests are NOT built by the line above
-ctest --test-dir build --output-on-failure -j4        # 65 registered, 65 pass (2026-08-24)
+ctest --test-dir build --output-on-failure -j4        # 66 registered, 66 pass (2026-08-24), ~33 s
+cmake --build build --target lag                      # frame-cost probe alone, with its report
 ```
 
-Both flags are required (no system OpenSSL; CMake 4.x rejects websocketpp).
-**`--target earthcall` does not build the tests** — skip the default target and `ctest`
-reports every test `Not Run`, which reads like a mass failure and is not one.
-`PENDING_FEATURE_TESTS` is empty as of 2026-08-24 (`webgpu_particle_test` landed —
-`WebGpuRenderer::drawParticles`). `chess_app_test` was a real failure (Bugs.md #7) but is
-fixed and green as of 2026-08-24 — a red re-run is a genuine regression, not a known issue.
+Both flags are required (no system OpenSSL; CMake 4.x rejects websocketpp). **`--target earthcall`
+does not build the tests** — skip the default target and `ctest` reports every test `Not Run`, which reads like a mass failure and is not one.
+`PENDING_FEATURE_TESTS` is empty as of 2026-08-24 (`webgpu_particle_test` landed). `chess_app_test`
+was a real failure (Bugs.md #7), fixed and green as of 2026-08-24 — a red re-run is a genuine
+regression. **`frame_lag_test` prints four verdicts**: `STANDING` = misses the aspiration but matches
+`tests/singularity/frame_lag_baseline.txt`, a cost already on the to-do list under **Performance**,
+not a failure; `LAG` = worse than that baseline, i.e. your change. Never quiet a `STANDING` line by
+widening the baseline.
 
-**Sources are globbed at configure time** — add or remove a `.cpp`, including deleting a
-scratch probe, and you must reconfigure or get a phantom link error. **Never call
-`buildProperties()` from a constructor**: `Singular` builds lazily behind `_propertiesBuilt`,
-which a constructor call does not set, so the whole vocabulary registers twice.
+**Sources are globbed at configure time** — add or remove a `.cpp`, including deleting a scratch probe, and you must reconfigure or get a phantom link error. **Never call `buildProperties()` from a constructor**: `Singular` builds lazily behind `_propertiesBuilt`, which a constructor call does not set, so the whole vocabulary registers twice.
 
 ---
 

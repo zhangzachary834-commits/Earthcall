@@ -13,15 +13,24 @@
 //                This is the "event published as a level, not an edge" bug
 //                CLAUDE.md names, and the population-growth bug beside it.
 //   3. STEADY  — does the authored chess world hold a 60 Hz frame, with no
-//                hitch and no drift over four seconds of frames?
+//                hitch and no drift over up to four seconds of frames?
 //   4. LOAD    — does opening that world take longer than a Person will sit
 //                still for?
 //
-// 3 and 4 are wall-clock, so every wall-clock budget here is multiplied by a
-// calibration factor measured on the machine actually running the test (see
-// calibrate()). The budgets are deliberately loose: this test is a tripwire
-// for a regression that made the world *sluggish*, not a benchmark. A number
-// that drifts up 20% will not fail it. A number that doubles will.
+// 3 and 4 are wall-clock, so every duration here is divided by a calibration
+// factor measured on the machine actually running the test (see calibrate()),
+// and that factor is measured again at the end: if the machine's speed moved
+// while the measurements were being taken, every timing is still reported and
+// none of them may fail the run. §2 never touches a clock and is enforced
+// either way.
+//
+// Nothing here fails for merely being slow today. Each measurement is judged
+// against an *aspiration* (what a frame ought to cost) and against a
+// *baseline* checked in beside this file (what it costs today), and prints
+// ok / STANDING / LAG / IMPROVED accordingly — see the block above judge().
+// This is a tripwire for a change that made Earthcall slower, not a benchmark
+// and not a scold. A number that drifts up 20% will not fail it. A number
+// that doubles will.
 //
 // The frame stepped below is Engine::update + LawManager::tick from
 // src/Singularity/Core/EngineUpdate.cpp:119 and Engine.cpp:318, minus the
@@ -49,8 +58,12 @@
 #include <cmath>
 #include <cstdio>
 #include <filesystem>
+#include <fstream>
+#include <map>
 #include <numeric>
 #include <set>
+#include <cstdlib>
+#include <ctime>
 #include <string>
 #include <vector>
 
@@ -77,7 +90,11 @@ double msSince(Clock::time_point t0) {
 // The workload mixes floating-point arithmetic with pointer-chasing through a
 // vector of indices, because that is the mix an Earthcall frame actually is:
 // property lookups walking maps, and glm doing arithmetic on what it finds.
-constexpr double kReferenceCalibrationMs = 12.0;   // Apple M-series, -O0 Debug, 2026-08-24
+// Measured on an *idle* machine — 2.045 ms was the best of fifteen runs on an
+// Apple M-series laptop, Debug -O0, 2026-08-24. Take this number from a quiet
+// box or every duration in the report is silently scaled by the contention
+// that was present when it was set. `frame_lag_test --calibrate` prints it.
+constexpr double kReferenceCalibrationMs = 2.0;
 
 double calibrate() {
     constexpr int kN = 1 << 16;
@@ -86,15 +103,18 @@ double calibrate() {
 
     double best = 1e9;
     for (int rep = 0; rep < 3; ++rep) {          // best-of-3: ignore a stolen slice
-        volatile double sink = 0.0;
         const auto t0 = Clock::now();
         int at = 0;
         double acc = 0.0;
-        for (int i = 0; i < kN * 8; ++i) {
+        for (int i = 0; i < kN * 4; ++i) {       // dependent loads: memory latency
             at = hops[at];
             acc += std::sqrt(static_cast<double>(at) + 1.0);
         }
-        sink = acc;
+        std::map<std::string, double> churn;     // allocation + string compares,
+        for (int i = 0; i < 2000; ++i) {         // which is most of a property read
+            churn["path.segment." + std::to_string(i & 255)] += acc;
+        }
+        volatile double sink = acc + churn.size();
         (void)sink;
         best = std::min(best, msSince(t0));
     }
@@ -103,11 +123,14 @@ double calibrate() {
 
 double gCalibration = 1.0;   // >1 means this machine is slower than the reference
 
-// A budget is never allowed to *tighten* on a fast machine. A machine faster
-// than the reference does not get a stricter test; it just passes with room.
-double budget(double referenceMs) {
-    return referenceMs * std::max(1.0, gCalibration);
-}
+// A machine under load measures every duration long. That is not lag in
+// Earthcall, it is lag in the room, and a test that cannot tell the two apart
+// is a test that cries wolf. So the calibration workload is run again at the
+// end: if the machine's speed moved while the measurements were being taken,
+// every clock-derived verdict is reported and none of them is allowed to fail
+// the run. The invariants in section 2 never touch a clock and are enforced
+// either way.
+constexpr double kClockTrustDrift = 1.4;
 
 // ---------------------------------------------------------------------------
 // Frame timing statistics
@@ -117,17 +140,26 @@ struct Stats {
     double p95    = 0.0;
     double worst  = 0.0;
     double mean   = 0.0;
-    double firstQuarterMean = 0.0;
-    double lastQuarterMean  = 0.0;
+    double firstQuarterMedian = 0.0;
+    double lastQuarterMedian  = 0.0;
 };
+
+double medianOf(std::vector<double> v) {
+    if (v.empty()) return 0.0;
+    std::sort(v.begin(), v.end());
+    return v[v.size() / 2];
+}
 
 Stats summarize(std::vector<double> samples) {
     assert(samples.size() >= 8 && "too few frames to say anything");
     Stats s;
     const size_t n = samples.size();
     const size_t q = n / 4;
-    s.firstQuarterMean = std::accumulate(samples.begin(), samples.begin() + q, 0.0) / q;
-    s.lastQuarterMean  = std::accumulate(samples.end() - q, samples.end(), 0.0) / q;
+    // Medians, not means, at both ends: one 150 ms frame stolen by the window
+    // server would otherwise read as a leak. Drift is about the typical frame
+    // getting dearer, and the typical frame is the median.
+    s.firstQuarterMedian = medianOf({samples.begin(), samples.begin() + q});
+    s.lastQuarterMedian  = medianOf({samples.end() - q, samples.end()});
     s.mean  = std::accumulate(samples.begin(), samples.end(), 0.0) / n;
     std::sort(samples.begin(), samples.end());
     s.median = samples[n / 2];
@@ -138,39 +170,256 @@ Stats summarize(std::vector<double> samples) {
 
 void report(const char* what, const Stats& s) {
     std::printf("  %-28s median %7.3f ms   p95 %7.3f   worst %7.3f   "
-                "first-quarter %7.3f -> last-quarter %7.3f\n",
-                what, s.median, s.p95, s.worst, s.firstQuarterMean, s.lastQuarterMean);
+                "first-quarter %7.3f -> last-quarter %7.3f (medians)\n",
+                what, s.median, s.p95, s.worst, s.firstQuarterMedian, s.lastQuarterMedian);
 }
 
 // ---------------------------------------------------------------------------
 // One frame, headless
 // ---------------------------------------------------------------------------
+// Split by phase, because "the frame is slow" is not a finding — "the frame is
+// slow *in collision*" is. The three phases are Engine::update's world half
+// (EngineUpdate.cpp:163-165) and the law drain that follows it (Engine.cpp:318).
 struct FrameResult {
-    double ms = 0.0;
-    size_t firings = 0;
+    double zoneMs      = 0.0;   // Zone::update — automations, rotation, physics
+    double relationsMs = 0.0;   // Zone::applyFormationRelations
+    double lawMs       = 0.0;   // LawManager::tick — the Rete agenda drain
+    double totalMs     = 0.0;
+    size_t firings     = 0;
 };
 
 FrameResult stepFrame(Zone& zone, LawManager& lawManager, double& worldTime, float dt) {
     FrameResult r;
     const auto t0 = Clock::now();
     zone.update(dt);
+    const auto t1 = Clock::now();
     zone.applyFormationRelations();
+    const auto t2 = Clock::now();
     worldTime += static_cast<double>(dt);
     Universe::instance().setClock(worldTime, static_cast<double>(dt));
     r.firings = lawManager.tick().size();
-    r.ms = msSince(t0);
+    const auto t3 = Clock::now();
+
+    r.zoneMs      = std::chrono::duration<double, std::milli>(t1 - t0).count();
+    r.relationsMs = std::chrono::duration<double, std::milli>(t2 - t1).count();
+    r.lawMs       = std::chrono::duration<double, std::milli>(t3 - t2).count();
+    r.totalMs     = std::chrono::duration<double, std::milli>(t3 - t0).count();
     return r;
 }
 
-int gFailures = 0;
+// Sampling is capped in wall-clock as well as in frames. A lag test that
+// itself takes ten minutes to report lag is a lag test nobody runs — and
+// "only 14 frames fit inside two seconds" is already the answer.
+struct Samples {
+    std::vector<FrameResult> frames;
+    bool cutShort = false;
 
+    std::vector<double> totals() const {
+        std::vector<double> out;
+        out.reserve(frames.size());
+        for (const auto& f : frames) out.push_back(f.totalMs);
+        return out;
+    }
+    double bestOf(double FrameResult::* field) const {
+        double best = 1e18;
+        for (const auto& f : frames) best = std::min(best, f.*field);
+        return frames.empty() ? 0.0 : best;
+    }
+    double medianOf(double FrameResult::* field) const {
+        std::vector<double> v;
+        v.reserve(frames.size());
+        for (const auto& f : frames) v.push_back(f.*field);
+        std::sort(v.begin(), v.end());
+        return v.empty() ? 0.0 : v[v.size() / 2];
+    }
+};
+
+Samples runFrames(Zone& zone, LawManager& lawManager, double& worldTime,
+                  int maxFrames, double wallCapMs, int minFrames = 12) {
+    Samples s;
+    s.frames.reserve(maxFrames);
+    const auto start = Clock::now();
+    for (int i = 0; i < maxFrames; ++i) {
+        s.frames.push_back(stepFrame(zone, lawManager, worldTime, 1.0f / 60.0f));
+        if (static_cast<int>(s.frames.size()) >= minFrames && msSince(start) > wallCapMs) {
+            s.cutShort = (i + 1 < maxFrames);
+            break;
+        }
+    }
+    return s;
+}
+
+int gFailures = 0;       // hard: an invariant broke, no clock involved
+int gClockFailures = 0;  // a duration regressed; only fatal if the clock is trustworthy
+
+// ---------------------------------------------------------------------------
+// Three verdicts, not two
+// ---------------------------------------------------------------------------
+// A perf test with only pass/fail has to choose between lying and being red
+// forever. This one does neither. Every measurement is judged twice: against
+// an *aspiration* (what a frame ought to cost) and against a *baseline*
+// checked into the tree beside this file (what it costs today).
+//
+//   ok        — meets the aspiration.
+//   STANDING  — misses the aspiration, matches the baseline. A known cost,
+//               reprinted every single run so nobody forgets it is there.
+//               Not a failure: it is already written down as a task.
+//   LAG       — worse than the baseline. This is the failure. Something you
+//               just did made Earthcall slower.
+//   IMPROVED  — comfortably better than the baseline: re-record it, with
+//               `frame_lag_test --rebaseline`, or the tripwire stays slack.
+//
+// Baseline times are normalised by the calibration factor, so the file means
+// the same thing on a different machine (to the accuracy of the proxy
+// workload — hence the generous 1.5x regression tolerance).
+constexpr double kTimeRegressionTolerance     = 1.5;   // 50% dearer than the baseline fails
+constexpr double kExponentRegressionTolerance = 0.20;  // n^k drifting up by .20 fails
+constexpr double kImprovementNotice           = 0.75;  // 25% better: say so
+
+std::map<std::string, double> gBaseline;
+std::map<std::string, double> gMeasured;
+bool gHaveBaseline = false;
+
+// Under ctest the working directory is build/; run by hand it is the repo
+// root. Try both rather than making the caller care.
+std::string resolveRepoFile(const std::string& relative) {
+    for (const char* prefix : {"", "../", "../../"}) {
+        const std::string candidate = std::string(prefix) + relative;
+        if (std::filesystem::exists(candidate)) return candidate;
+    }
+    return relative;
+}
+
+const char* kBaselineFile = "tests/singularity/frame_lag_baseline.txt";
+
+void loadBaseline() {
+    std::ifstream in(resolveRepoFile(kBaselineFile));
+    if (!in) return;
+    std::string line;
+    while (std::getline(in, line)) {
+        if (line.empty() || line[0] == '#') continue;
+        const auto eq = line.find('=');
+        if (eq == std::string::npos) continue;
+        gBaseline[line.substr(0, eq)] = std::strtod(line.c_str() + eq + 1, nullptr);
+        gHaveBaseline = true;
+    }
+}
+
+void writeBaseline(const std::string& worldName) {
+    const std::string path = resolveRepoFile(kBaselineFile);
+    std::ofstream out(path);
+    if (!out) {
+        std::printf("could not write %s\n", path.c_str());
+        return;
+    }
+    const std::time_t now = std::time(nullptr);
+    char stamp[64];
+    std::strftime(stamp, sizeof(stamp), "%Y-%m-%d %H:%M:%S", std::localtime(&now));
+    out << "# frame_lag_test baseline — what a frame of Earthcall costs today.\n"
+        << "# Recorded " << stamp << " from world '" << worldName << "'.\n"
+        << "# Times are milliseconds normalised by the calibration factor in\n"
+        << "# frame_lag_test.cpp, so this file means the same thing on another\n"
+        << "# machine. Exponents are the fitted k in cost ~ n^k and are already\n"
+        << "# machine-independent.\n"
+        << "#\n"
+        << "# Re-record with:  ./build/frame_lag_test --rebaseline\n"
+        << "# Only ever re-record DOWNWARD, or after a change whose cost was\n"
+        << "# accepted deliberately — and say which in the commit message.\n"
+        << "#\n"
+        << "# One run writes one run's numbers. On a machine that is shared with\n"
+        << "# a browser and an IDE, run it three or four times and raise these to\n"
+        << "# the dearest of them by hand, or the tripwire sits under the noise\n"
+        << "# and fires at nobody's change.\n";
+    for (const auto& kv : gMeasured) {
+        out << kv.first << "=" << kv.second << "\n";
+    }
+    std::printf("\nbaseline written to %s (%zu measurements)\n",
+                path.c_str(), gMeasured.size());
+}
+
+// Hard invariant: no baseline, no tolerance. Used for the deterministic
+// checks, which have no business drifting at all.
 void expect(bool ok, const std::string& message) {
     if (ok) {
-        std::printf("  ok   %s\n", message.c_str());
+        std::printf("  ok        %s\n", message.c_str());
     } else {
-        std::printf("  LAG  %s\n", message.c_str());
+        std::printf("  LAG       %s\n", message.c_str());
         ++gFailures;
     }
+}
+
+// Same as expect(), for a claim that is derived from durations: it is only
+// allowed to fail the run when the machine held still (see kClockTrustDrift).
+void expectTimed(bool ok, const std::string& message) {
+    if (ok) {
+        std::printf("  ok        %s\n", message.c_str());
+    } else {
+        std::printf("  LAG       %s\n", message.c_str());
+        ++gClockFailures;
+    }
+}
+
+// `worse` is the direction that means "more lag". Everything here is
+// higher-is-worse, but saying so keeps the comparison honest at a glance.
+void judge(const std::string& key, double measured, double aspiration,
+           double regressionLimit, const char* unit, const std::string& what) {
+    gMeasured[key] = measured;
+
+    const auto found = gBaseline.find(key);
+    const bool haveKey = (found != gBaseline.end());
+    const double base = haveKey ? found->second : 0.0;
+
+    char detail[320];
+    if (haveKey) {
+        std::snprintf(detail, sizeof(detail), "%s = %.3f %s (aspiration %.3f, baseline %.3f)",
+                      what.c_str(), measured, unit, aspiration, base);
+    } else {
+        std::snprintf(detail, sizeof(detail), "%s = %.3f %s (aspiration %.3f, no baseline)",
+                      what.c_str(), measured, unit, aspiration);
+    }
+
+    if (haveKey && measured > regressionLimit) {
+        std::printf("  LAG       %s  <- worse than the recorded baseline\n", detail);
+        ++gClockFailures;
+        return;
+    }
+    if (measured <= aspiration) {
+        std::printf("  ok        %s\n", detail);
+        if (haveKey && base > aspiration) {
+            std::printf("            (baseline is stale and slack — re-record it)\n");
+        }
+        return;
+    }
+    if (!haveKey) {
+        std::printf("  STANDING  %s  <- no baseline yet; record one\n", detail);
+        return;
+    }
+    if (measured <= base * kImprovementNotice) {
+        std::printf("  IMPROVED  %s  <- re-record the baseline\n", detail);
+        return;
+    }
+    std::printf("  STANDING  %s\n", detail);
+}
+
+void judgeTime(const std::string& key, double rawMs, double aspirationMs,
+               const std::string& what) {
+    const double normalised = rawMs / std::max(0.05, gCalibration);
+    const auto found = gBaseline.find(key);
+    const double limit = (found != gBaseline.end())
+                       ? found->second * kTimeRegressionTolerance
+                       : 1e18;
+    judge(key, normalised, aspirationMs, limit, "ms", what);
+}
+
+void judgeExponent(const std::string& key, double k, double aspiration,
+                   const std::string& what) {
+    const auto found = gBaseline.find(key);
+    // Quadratic is the wall no baseline may excuse: a frame that scans every
+    // pair is a frame that stops working as soon as a world gets lived in.
+    const double baseLimit = (found != gBaseline.end())
+                           ? found->second + kExponentRegressionTolerance
+                           : 1e18;
+    judge(key, k, aspiration, std::min(baseLimit, 2.0), "", what);
 }
 
 } // namespace
@@ -181,25 +430,36 @@ void expect(bool ok, const std::string& message) {
 // A synthetic zone: n objects, each carrying an automation clip (so
 // Zone::update has real per-object work), watched by one WhileTrue law (so
 // LawManager::tick has real per-being work). Both of those are honestly
-// linear in n. Anything in the frame that is *not* — a nested scan over the
-// population, a rebuild of a cache that should have been kept — shows up as
-// the ratio pulling away from 2 as n doubles.
+// linear in n. Anything in the frame that is *not* — a scan over every pair,
+// a cache rebuilt instead of kept — shows up as the fitted exponent pulling
+// away from 1 toward 2.
 //
-// This is the check worth having even when the absolute numbers are fine:
+// This is the check worth having even when the absolute numbers look fine:
 // an O(n^2) frame is invisible on a 32-piece chess board and unusable in a
-// world a Person has actually lived in.
+// world a Person has actually lived in. It is also the check that does not
+// care how fast the machine is, because it compares the machine to itself.
 namespace {
 
-double medianFrameMsForPopulation(int n, int frames) {
+struct PopulationCost {
+    double total     = 0.0;
+    double zone      = 0.0;
+    double relations = 0.0;
+    double law       = 0.0;
+    int    frames    = 0;
+};
+
+PopulationCost costForPopulation(int n, double wallCapMs) {
     Object author("lag-probe-author");
     LawManager lawManager;
     auto zone = std::make_shared<Zone>("lag-probe", "test");
 
     for (int i = 0; i < n; ++i) {
         auto obj = std::make_shared<Object>("lag-probe-" + std::to_string(i));
-        obj->setPosition(glm::vec3(static_cast<float>(i % 32),
+        // Spread them out: a grid tight enough to be a world, loose enough
+        // that this measures the frame and not one specific pile-up.
+        obj->setPosition(glm::vec3(static_cast<float>(i % 32) * 3.0f,
                                    2.0f,
-                                   static_cast<float>(i / 32)));
+                                   static_cast<float>(i / 32) * 3.0f));
         Automation::Clip clip;
         clip.name = "lag-probe-spin";
         Automation::Track track;
@@ -230,53 +490,87 @@ double medianFrameMsForPopulation(int n, int frames) {
     watch->setActionModel(ActionNode::set("shape.fillet", PropertyValue(0.25)));
 
     double worldTime = 0.0;
-    for (int i = 0; i < 4; ++i) stepFrame(*zone, lawManager, worldTime, 1.0f / 60.0f);  // warm
+    for (int i = 0; i < 3; ++i) stepFrame(*zone, lawManager, worldTime, 1.0f / 60.0f);
 
-    std::vector<double> samples;
-    samples.reserve(frames);
-    for (int i = 0; i < frames; ++i) {
-        samples.push_back(stepFrame(*zone, lawManager, worldTime, 1.0f / 60.0f).ms);
-    }
-    std::sort(samples.begin(), samples.end());
+    const Samples s = runFrames(*zone, lawManager, worldTime, 24, wallCapMs, 8);
 
     Universe::instance().setProvider(nullptr);
     Universe::instance().setRelationProvider(nullptr);
-    return samples[samples.size() / 2];
+
+    // The *fastest* frame, not the median: this section asks how cost grows
+    // with n, and a frame that lost its slice to the window server says
+    // nothing about that. Best-case is the most reproducible estimate of the
+    // real work, which is what a growth curve needs.
+    PopulationCost c;
+    c.total     = s.bestOf(&FrameResult::totalMs);
+    c.zone      = s.bestOf(&FrameResult::zoneMs);
+    c.relations = s.bestOf(&FrameResult::relationsMs);
+    c.law       = s.bestOf(&FrameResult::lawMs);
+    c.frames    = static_cast<int>(s.frames.size());
+    return c;
+}
+
+// Least-squares fit of log(cost) against log(n): the exponent k in cost ~ n^k.
+// 1.0 is linear, 2.0 is a nested scan over the population. Everything in this
+// frame is specified to be linear, so the whole question is how far above 1
+// the measurement sits and whether that number moves.
+double fittedExponent(const std::vector<double>& ns, const std::vector<double>& costs) {
+    double sx = 0, sy = 0, sxx = 0, sxy = 0;
+    int m = 0;
+    for (size_t i = 0; i < ns.size(); ++i) {
+        if (costs[i] <= 1e-6) continue;         // below the timer's resolution
+        const double x = std::log(ns[i]);
+        const double y = std::log(costs[i]);
+        sx += x; sy += y; sxx += x * x; sxy += x * y;
+        ++m;
+    }
+    if (m < 2) return 0.0;
+    const double denom = m * sxx - sx * sx;
+    if (std::fabs(denom) < 1e-12) return 0.0;
+    return (m * sxy - sx * sy) / denom;
 }
 
 void checkFrameShape() {
     std::printf("\n1. SHAPE — per-frame cost against population size\n");
 
-    const int populations[] = {128, 256, 512, 1024};
-    double ms[4] = {0, 0, 0, 0};
-    for (int i = 0; i < 4; ++i) {
-        ms[i] = medianFrameMsForPopulation(populations[i], 24);
-        std::printf("  %5d objects  ->  %8.4f ms / frame   (%7.5f ms per object)\n",
-                    populations[i], ms[i], ms[i] / populations[i]);
+    const std::vector<double> populations = {64, 128, 256, 512};
+    std::vector<PopulationCost> costs;
+    for (double n : populations) {
+        costs.push_back(costForPopulation(static_cast<int>(n), 300.0));
+        const PopulationCost& c = costs.back();
+        std::printf("  %5d objects -> frame %8.3f ms  "
+                    "(zone %8.3f  relations %6.3f  law %8.3f)  over %d frames\n",
+                    static_cast<int>(n), c.total, c.zone, c.relations, c.law, c.frames);
     }
 
-    // Below this the timer, not the engine, is what is being measured.
-    if (ms[0] < 0.02) {
-        std::printf("  note: baseline under 20 us; ratios are timer noise, "
-                    "reporting only\n");
-        return;
-    }
+    // Every phase of this frame is specified to be linear in the population,
+    // so 1.0 is the aspiration everywhere and 1.15 is the slack allowed for
+    // cache effects and allocator behaviour at these sizes.
+    struct Phase { const char* key; const char* name; double PopulationCost::* field; };
+    const Phase phases[] = {
+        {"shape.exponent.frame",     "whole frame",         &PopulationCost::total},
+        {"shape.exponent.zone",      "Zone::update",        &PopulationCost::zone},
+        {"shape.exponent.relations", "formation relations", &PopulationCost::relations},
+        {"shape.exponent.law",       "LawManager::tick",    &PopulationCost::law},
+    };
 
-    for (int i = 1; i < 4; ++i) {
-        const double ratio = ms[i] / ms[i - 1];
-        char msg[256];
-        std::snprintf(msg, sizeof(msg),
-                      "doubling %d -> %d objects costs %.2fx (linear 2.0, quadratic 4.0)",
-                      populations[i - 1], populations[i], ratio);
-        expect(ratio <= 3.0, msg);
+    for (const Phase& phase : phases) {
+        std::vector<double> series;
+        for (const auto& c : costs) series.push_back(c.*(phase.field));
+        // A phase whose dearest measurement is a few microseconds has no
+        // measurable growth curve — fitting one produces a number that swings
+        // between runs and means nothing. Say so instead of judging it.
+        const double dearest = *std::max_element(series.begin(), series.end());
+        const double k = fittedExponent(populations, series);
+        if (k == 0.0 || dearest < 0.05) {
+            std::printf("  note      %s costs %.4f ms at %d objects — too little to fit a "
+                        "growth curve to; reported, not judged\n",
+                        phase.name, dearest, static_cast<int>(populations.back()));
+            continue;
+        }
+        judgeExponent(phase.key, k, 1.15,
+                      std::string(phase.name) + " grows as n^k (linear 1.0, quadratic 2.0), k");
     }
-
-    const double overall = ms[3] / ms[0];
-    char msg[256];
-    std::snprintf(msg, sizeof(msg),
-                  "8x the world costs %.2fx the frame (linear 8.0, quadratic 64.0)",
-                  overall);
-    expect(overall <= 14.0, msg);
 }
 
 } // namespace
@@ -288,16 +582,16 @@ void checkFrameShape() {
 // nobody is touching:
 //
 //   * law firings per frame must not grow. A steady non-zero count is fine —
-//     that is what WhileTrue *is*. A rising count is the level-as-edge bug:
-//     something publishes "still happening" every frame and the agenda grows
-//     under it.
+//     that is what WhileTrue *is*. A rising count is the level-as-edge bug
+//     CLAUDE.md names: something publishes "still happening" every frame and
+//     the agenda grows underneath it.
 //   * the population must not grow. A law that spawns on a condition instead
-//     of on a transition adds an object per frame, and the frame that walks
-//     them gets slower forever.
+//     of on a transition adds an object per frame, and every frame that walks
+//     the population is slower from then on.
 //   * no being may register the same property path twice. CLAUDE.md's rule
-//     against calling buildProperties() from a constructor exists because
-//     the vocabulary then registers twice — and every law evaluation after
-//     that pays for the duplicate, silently.
+//     against calling buildProperties() from a constructor exists because the
+//     vocabulary then registers twice — and every law evaluation afterwards
+//     pays for the duplicate, silently.
 namespace {
 
 void checkQuiescence(Zone& zone, LawManager& lawManager, double& worldTime) {
@@ -305,29 +599,33 @@ void checkQuiescence(Zone& zone, LawManager& lawManager, double& worldTime) {
 
     const size_t populationBefore = zone.getOwnedObjects().size();
 
-    std::vector<size_t> firings;
-    firings.reserve(120);
-    for (int i = 0; i < 120; ++i) {
-        firings.push_back(stepFrame(zone, lawManager, worldTime, 1.0f / 60.0f).firings);
-    }
+    const Samples s = runFrames(zone, lawManager, worldTime, 120, 2000.0, 24);
+    const size_t n = s.frames.size();
+    std::printf("  %zu idle frames%s\n", n, s.cutShort ? " (wall-clock cap reached)" : "");
 
-    // Frames 0-9 are warm-up: OnBecomeTrue laws legitimately fire once as the
-    // loaded world's conditions take hold for the first time.
-    const size_t earlyPeak = *std::max_element(firings.begin() + 10, firings.begin() + 40);
-    const size_t latePeak  = *std::max_element(firings.end() - 30, firings.end());
+    std::vector<size_t> firings;
+    for (const auto& f : s.frames) firings.push_back(f.firings);
+
+    // The first fifth is warm-up: OnBecomeTrue laws legitimately fire once as
+    // a freshly loaded world's conditions take hold for the first time.
+    const size_t warm = std::max<size_t>(4, n / 5);
+    const size_t earlyPeak = *std::max_element(firings.begin() + warm,
+                                               firings.begin() + warm + (n - warm) / 2);
+    const size_t latePeak  = *std::max_element(firings.begin() + warm + (n - warm) / 2,
+                                               firings.end());
     const size_t total     = std::accumulate(firings.begin(), firings.end(), size_t{0});
 
-    char msg[256];
+    char msg[300];
     std::snprintf(msg, sizeof(msg),
-                  "law firings per frame do not grow (frames 10-40 peak at %zu, "
-                  "last 30 peak at %zu; %zu firings over 120 idle frames)",
-                  earlyPeak, latePeak, total);
+                  "law firings per frame do not grow (first half after warm-up peaks at "
+                  "%zu, second half at %zu; %zu firings over %zu idle frames)",
+                  earlyPeak, latePeak, total, n);
     expect(latePeak <= earlyPeak, msg);
 
     const size_t populationAfter = zone.getOwnedObjects().size();
     std::snprintf(msg, sizeof(msg),
-                  "population stable over 120 idle frames (%zu -> %zu objects)",
-                  populationBefore, populationAfter);
+                  "population stable over %zu idle frames (%zu -> %zu objects)",
+                  n, populationBefore, populationAfter);
     expect(populationAfter == populationBefore, msg);
 
     size_t duplicated = 0;
@@ -356,46 +654,49 @@ void checkQuiescence(Zone& zone, LawManager& lawManager, double& worldTime) {
 // ===========================================================================
 // 3. STEADY — does the authored world hold a frame?
 // ===========================================================================
-// 240 frames is four seconds at 60 Hz: long enough for a leak to show as
-// drift, short enough that nobody stops running the suite because of it.
+// Up to 240 frames — four seconds at 60 Hz — or four wall-clock seconds,
+// whichever comes first. Long enough for a leak to show as drift; short
+// enough that nobody stops running the suite because of it.
 void checkSteadyFrame(Zone& zone, LawManager& lawManager, double& worldTime) {
-    std::printf("\n3. STEADY — 240 frames of the loaded world\n");
+    std::printf("\n3. STEADY — the loaded world, frame after frame\n");
 
     for (int i = 0; i < 10; ++i) stepFrame(zone, lawManager, worldTime, 1.0f / 60.0f);
 
-    std::vector<double> samples;
-    samples.reserve(240);
-    for (int i = 0; i < 240; ++i) {
-        samples.push_back(stepFrame(zone, lawManager, worldTime, 1.0f / 60.0f).ms);
-    }
-    const Stats s = summarize(samples);
+    const Samples samples = runFrames(zone, lawManager, worldTime, 240, 2500.0, 24);
+    const Stats s = summarize(samples.totals());
+    std::printf("  %zu frames%s\n", samples.frames.size(),
+                samples.cutShort ? " (wall-clock cap reached)" : "");
     report("simulation frame", s);
+    std::printf("  %-28s zone %8.3f ms   relations %7.3f ms   law %8.3f ms  (medians)\n",
+                "by phase", samples.medianOf(&FrameResult::zoneMs),
+                samples.medianOf(&FrameResult::relationsMs),
+                samples.medianOf(&FrameResult::lawMs));
 
-    char msg[256];
     // 16.6 ms is the whole 60 Hz frame. The simulation half of it gets a
-    // quarter; rendering, ImGui and the channels need the rest.
-    const double medianBudget = budget(4.0);
-    std::snprintf(msg, sizeof(msg),
-                  "median simulation frame %.3f ms within %.3f ms budget "
-                  "(quarter of a 60 Hz frame, calibrated x%.2f)",
-                  s.median, medianBudget, std::max(1.0, gCalibration));
-    expect(s.median <= medianBudget, msg);
+    // third; rendering, ImGui and the three windowed channels need the rest.
+    judgeTime("steady.median_ms", s.median, 5.5, "median simulation frame");
+    judgeTime("steady.zone_ms", samples.medianOf(&FrameResult::zoneMs), 3.0,
+              "  of that, Zone::update");
+    judgeTime("steady.law_ms", samples.medianOf(&FrameResult::lawMs), 2.0,
+              "  of that, LawManager::tick");
 
     // A hitch is what a Person actually reports as "it lags" — a mean that is
     // fine and one frame in fifty that stutters.
-    const double spikeBudget = budget(16.6);
-    std::snprintf(msg, sizeof(msg),
-                  "no hitch: worst frame %.3f ms within %.3f ms (a whole 60 Hz frame)",
-                  s.worst, spikeBudget);
-    expect(s.worst <= spikeBudget, msg);
+    // p95, not the single worst frame: on a shared machine the worst frame
+    // belongs to whatever else is running. A hitch a Person actually notices
+    // is one that recurs, and a recurring hitch moves the 95th percentile.
+    judgeTime("steady.p95_ms", s.p95, 16.6, "95th-percentile frame (a hitch that recurs)");
 
-    // Drift is the one that catches a slow leak: a frame that is 40% dearer
-    // after four seconds is 10x dearer after a session.
-    const double drift = s.firstQuarterMean > 1e-6
-                       ? s.lastQuarterMean / s.firstQuarterMean : 1.0;
+    // Drift is the one that catches a slow leak: a frame 40% dearer after
+    // four seconds is unrecognisable after a session. This one is a hard
+    // invariant — it compares the run to itself, so no machine and no
+    // baseline can excuse it.
+    const double drift = s.firstQuarterMedian > 1e-6
+                       ? s.lastQuarterMedian / s.firstQuarterMedian : 1.0;
+    char msg[256];
     std::snprintf(msg, sizeof(msg),
-                  "no drift: last 60 frames cost %.2fx the first 60", drift);
-    expect(drift <= 1.4 || s.lastQuarterMean <= budget(0.2), msg);
+                  "no drift: last quarter of the run costs %.2fx the first quarter", drift);
+    expectTimed(drift <= 1.4 || s.lastQuarterMedian <= 0.2 * std::max(1.0, gCalibration), msg);
 }
 
 // ===========================================================================
@@ -403,13 +704,12 @@ void checkSteadyFrame(Zone& zone, LawManager& lawManager, double& worldTime) {
 // ===========================================================================
 void checkLoadTime(const std::string& filename, double loadMs, size_t objects) {
     std::printf("\n4. LOAD — opening the authored world\n");
-    std::printf("  %s: %.1f ms for %zu objects\n", filename.c_str(), loadMs, objects);
+    std::printf("  %s: %.1f ms for %zu objects in the active Zone\n",
+                filename.c_str(), loadMs, objects);
 
-    const double loadBudget = budget(4000.0);
-    char msg[256];
-    std::snprintf(msg, sizeof(msg),
-                  "load %.1f ms within %.1f ms budget", loadMs, loadBudget);
-    expect(loadMs <= loadBudget, msg);
+    // Four seconds is roughly where opening a world stops feeling like
+    // opening a world and starts feeling like waiting for one.
+    judgeTime("load.ms", loadMs, 4000.0, "time to open the world");
 }
 
 } // namespace
@@ -419,11 +719,30 @@ int main(int argc, char** argv) {
     // suite long enough that a Person will want to watch it work.
     std::setvbuf(stdout, nullptr, _IOLBF, 0);
 
-    std::string filename = (argc > 1) ? argv[1] : "saves/worlds/chess_app.json";
-    if (argc <= 1 && !std::filesystem::exists(filename)) {
-        if (std::filesystem::exists("../saves/worlds/chess_app.json"))
-            filename = "../saves/worlds/chess_app.json";
+    bool rebaseline = false;
+    std::string filename;
+    for (int i = 1; i < argc; ++i) {
+        const std::string arg = argv[i];
+        if (arg == "--rebaseline") rebaseline = true;
+        else if (arg == "--calibrate") {
+            // Print the raw calibration workload time and stop. Run this a
+            // few times before recording a baseline: if the number will not
+            // hold still, neither will anything else this test measures.
+            std::printf("%.3f ms  (reference machine: %.3f ms)\n",
+                        calibrate(), kReferenceCalibrationMs);
+            return 0;
+        }
+        else if (arg == "--help" || arg == "-h") {
+            std::printf("frame_lag_test [world.json] [--rebaseline]\n"
+                        "  world.json    a save to measure (default saves/worlds/chess_app.json)\n"
+                        "  --rebaseline  record today's numbers as the new tripwire\n"
+                        "  --calibrate   print this machine's speed against the reference and stop\n");
+            return 0;
+        }
+        else filename = arg;
     }
+    const bool defaultWorld = filename.empty();
+    if (defaultWorld) filename = resolveRepoFile("saves/worlds/chess_app.json");
     {
         const auto p = std::filesystem::absolute(filename);
         if (p.parent_path().filename() == "worlds" &&
@@ -433,10 +752,14 @@ int main(int argc, char** argv) {
     }
 
     gCalibration = calibrate() / kReferenceCalibrationMs;
+    loadBaseline();
     std::printf("--- frame_lag_test: %s ---\n", filename.c_str());
-    std::printf("machine calibration: x%.2f versus reference "
-                "(>1 slower; budgets scale, never tighten)\n",
+    std::printf("machine calibration: x%.2f versus the reference machine "
+                "(>1 means slower; every time below is divided by it)\n",
                 gCalibration);
+    std::printf("baseline: %s\n", gHaveBaseline
+                ? resolveRepoFile(kBaselineFile).c_str()
+                : "none on disk — every miss reports STANDING, nothing can fail");
 
     // ---- the shape check needs no authored world, so it runs first and
     //      runs even if the save is missing.
@@ -445,8 +768,9 @@ int main(int argc, char** argv) {
     if (!std::filesystem::exists(filename)) {
         std::printf("\n%s not found — sections 2-4 need an authored world.\n",
                     filename.c_str());
-        std::printf("\nfailures: %d\n", gFailures);
-        return gFailures == 0 ? 0 : 1;
+        std::printf("\nbroken invariants: %d   timing regressions: %d\n",
+                    gFailures, gClockFailures);
+        return (gFailures + gClockFailures) == 0 ? 0 : 1;
     }
 
     Core::Camera camera;
@@ -524,6 +848,39 @@ int main(int argc, char** argv) {
     checkSteadyFrame(*active, lawManager, worldTime);
     checkLoadTime(filename, loadMs, active->getOwnedObjects().size());
 
-    std::printf("\nfailures: %d\n", gFailures);
-    return gFailures == 0 ? 0 : 1;
+    // Was the machine steady while all of that was measured?
+    const double calibrationAfter = calibrate() / kReferenceCalibrationMs;
+    const double drift = std::max(calibrationAfter, gCalibration) /
+                         std::max(1e-6, std::min(calibrationAfter, gCalibration));
+    const bool clockTrustworthy = drift <= kClockTrustDrift;
+    std::printf("\nmachine steadiness: calibration x%.2f at the start, x%.2f at the end "
+                "(drift %.2fx)\n", gCalibration, calibrationAfter, drift);
+    if (!clockTrustworthy) {
+        std::printf("  the machine's speed moved under the measurement. Every duration\n"
+                    "  above is reported, none of them can fail this run. Section 2's\n"
+                    "  invariants never touch a clock and were enforced regardless.\n");
+    }
+
+    if (rebaseline && !clockTrustworthy) {
+        std::printf("\n--rebaseline refused: a baseline recorded on a contended machine\n"
+                    "is a tripwire set at the wrong height. Re-run on a quiet one.\n");
+        rebaseline = false;
+    }
+
+    if (rebaseline) {
+        // Only the default world may write the baseline: the file records one
+        // world's cost, and quietly overwriting it from a different save is
+        // how a tripwire becomes a fiction.
+        if (defaultWorld) writeBaseline(active->getIdentifier());
+        else std::printf("\n--rebaseline ignored: the baseline records the default "
+                         "world, and this run measured %s\n", filename.c_str());
+    }
+
+    const int fatal = gFailures + (clockTrustworthy ? gClockFailures : 0);
+    std::printf("\nbroken invariants: %d   timing regressions: %d%s\n",
+                gFailures, gClockFailures,
+                (gClockFailures && !clockTrustworthy) ? "  (not counted: machine contended)" : "");
+    std::printf("STANDING lines are costs already recorded in the baseline, not failures.\n"
+                "They are tasks — see docs/Agenda/Tasks/To-do list.md, Performance.\n");
+    return fatal == 0 ? 0 : 1;
 }

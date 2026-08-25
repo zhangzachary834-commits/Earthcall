@@ -3,6 +3,7 @@
 - If you need to write a paragraph significantly longer than the rest here, put it in a separate file or create a new directory for it inside the Specific Tasks folder.
 - Judge what parts you want to write are more suited for the Agenda and what is more suitable for a separate, dedicated doc that is not inside Agenda.
 - Ensure you always link up relevant docs, files, and classes. Only do so if the directory is already in your context—-do not spend compute trying to search for it.
+- Things that require a Person to manually verify whether in-app functionality is working as intended should go in Person Verification List
 
 ## Near-term priorities (2026-08-14 — from architecture review):
 CRITICAL: Ensure the save system works. In this delicate state of the program's early generative phase, we don't want that to affect the save system to the point where developer worlds unstable or erased in the fragile states of testing and developing features that rely on the save system persisting my prior changes. – Zach
@@ -138,6 +139,56 @@ Addendum: Also ensure save system works in every case and everything that needs 
 - **Re-verification of the structural-debt list against `bb1b4737`** — (2026-08-24) all of the 08-24 audit's Priority-1 items are still standing verbatim (`Body : public Object` at `Body.hpp:13`; `EventEntity` with 6 live refs incl. `Law.hpp:737`; `Ourverse.hpp:92-93` `cameraPos`/`ownedObjects`; `src/Time/Duration/` empty and the four `src/Time/` files still in `IMGUI_SOURCES` at `CMakeLists.txt:144-148`; the tracked `Object/Formation` symlink with 21 stale includes). Newly found and **not** in that list: **6 broken relative links remain under `docs/Agenda/`** even though the three reflection trees were merged into one (§7 landed physically, unrecorded, links unfixed); `saves/worlds/chess.json` and `chess_app.json` are **byte-identical** (`md5 3616b980…`) and both tracked, so no world of record is identifiable; `/scratch/attic/earthcall_webgpu` is on `.gitignore:288` **and still an 18 MB blob in `HEAD`** (ignoring is not untracking); the ~480 volatile ids in §5 now measure **152** via `./build/chess_app_test`. Full reasoning: [Reflections on Repo State/What_The_Test_Suite_Can_See.md](../../Reflections%20on%20Earthcall%27s%20Progression/Reflections%20on%20Repo%20State/What_The_Test_Suite_Can_See.md).
 - **Note the `TestLab/` → `TestLabInterfaces/` rename somewhere authoritative** — happened silently in commit e813b6b6 (2026-08-21); no doc mentions it. Exactly what the router-truth probe (above) would catch mechanically.
 - **Document the "Covenant Reminder" Role of Agents** — Write a dedicated document expanding on the realization that agents are not discovering "zero days" in the Person's logic, but acting as a mirror with a perfect memory. The agents' primary philosophical role is to read the Person their own doctrine (e.g., "Encounter first, articulation after") at the exact moments the Person is busiest forgetting they wrote it. (Ref: `Wow this program is now getting really meta.md` point 5, and `The_Walk_Writes_Back.md` § Postscript).
+
+## Performance (opened 2026-08-24 by `tests/singularity/frame_lag_test.cpp`)
+Every item here is a **STANDING** line the lag probe prints on every run. Baseline
+numbers live in `tests/singularity/frame_lag_baseline.txt`; the reasoning, the sampled
+call stacks and the caveats are in [audits/2026-08-24_frame_lag_probe.md](../../audits/2026-08-24_frame_lag_probe.md).
+Re-record the baseline **downward** as each one lands (`./build/frame_lag_test --rebaseline`,
+on a quiet machine) so the tripwire tightens behind the fix.
+
+- ⚑ AUTHOR — **`Physics::updateBodies` is all-pairs with no broadphase, and the legacy
+  engine is on by default.** Measured on an idle machine: `Zone::update` costs
+  1.1 / 3.3 / 11.1 / 40.7 ms at 64 / 128 / 256 / 512 objects — a fitted `n^1.75`, i.e.
+  quadratic, and the one number that held steady across every machine state the session saw. `sample(1)` puts 100%
+  of a chess frame in `Zone::update → Physics::updateBodies (Physics.cpp:368) →
+  dispatchCollision → gjkEpaCollision → epaPenetration → addBorderEdge
+  (CollisionDispatcher.cpp:214)`. The pair loop is `Physics.cpp:327-343`; a second one is at
+  `:222`. There *is* an AABB pre-filter at `:353`, but B's AABB is recomputed inside the
+  inner loop, so the corner walk is paid per pair before the filter can reject anything.
+  `g_legacyEngineEnabled = true` at `Physics.cpp:33` and nothing in the app ever clears it —
+  the only caller of `setLegacyEngineEnabled` in the tree is
+  `tests/zones/ground_plane_test.cpp:64`. **Two decisions are Zach's, not an agent's:**
+  (a) should the legacy engine be on by default at all, and (b) a broadphase (uniform grid
+  or sort-and-sweep over cached AABBs) is a change to how the world *behaves* under
+  contact, not just to how fast it runs. This is the thing `ce5c1cbe` ("Attempt to fix
+  chess lag") was reaching for; that commit fixed a real `Singular` copy/move slicing bug
+  and left the quadratic standing.
+- **The chess frame is slightly over budget, and that is all.** 35 objects, 36 laws: the
+  simulation half medians **6.0-7.1 ms** on an idle machine in Debug `-O0` against a 5.5 ms
+  aspiration (`Zone::update` 4.3-5.0 ms vs 3.0; `LawManager::tick` 1.8-2.1 ms vs 2.0). No
+  hitching (p95 ≈ median), no drift, and the world opens in 1.4-2.1 s. At 35 objects the
+  quadratic above has not yet had room to hurt. Low priority on its own; it goes away with
+  the item above.
+- **Do not measure lag on a busy laptop.** The same tree, same binary, same world measured
+  6 ms / 18.8 ms / 26 ms per frame and 1.4 s / 6.8 s / 28.8 s to load as this machine went
+  from load average 7 to 93. A first draft of the audit reported the contended numbers as
+  Earthcall's and had to be withdrawn. `frame_lag_test` now refuses to enforce or re-record
+  a timing when the machine moves under it — but the same caution applies to any Person or
+  agent eyeballing a frame rate.
+- **Measure a Release build.** Every number above is `-O0`, which is what
+  `docs/BUILD_AND_ENVIRONMENT.md` tells a Person to build and what the suite runs. The
+  *exponent* is a property of the algorithm and no optimiser changes it, but the constant in
+  front of it is unknown, and that is the cheapest next measurement.
+- **Probe the three windowed channels** — locomotion, creation tools, interaction. They
+  need a live GLFW window and an ImGui frame, so `frame_lag_test` steps the frame without
+  them. `InteractionChannel::step` picks the being under the pointer over every object in
+  the Zone, every frame, and is the most likely lag among them.
+- **A lag test cannot feel a hitch.** Same standing debt as everywhere else in
+  [What_The_Test_Suite_Can_See.md](../../Reflections%20on%20Earthcall%27s%20Progression/Reflections%20on%20Repo%20State/What_The_Test_Suite_Can_See.md)
+  §3: a Person has to load chess and move, and say whether it feels the way 6-7 ms of
+  simulation plus a render implies it should.
+
 
 ## Essential Singularity substrate
 - FaceTextures must work, be visible, and handle edge cases. Add Face Texture tests if not there yet. After the refactor I used the Pottery tool on a square, and instead of the FaceTexture becoming larger in pixel scope to accmodate, it physically stretched every individual pixel's appearance. Seems like a classic bug for something like this. (We're all looking at you, Mistral, for forgetting to add back functionality 😤😂🤖😭) - Zach.
