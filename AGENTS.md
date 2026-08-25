@@ -113,7 +113,7 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
 
 cmake --build build --target earthcall -j8
 cmake --build build -j8                               # tests are NOT built by the line above
-ctest --test-dir build --output-on-failure -j4        # 66 registered, 66 pass (2026-08-24), ~33 s
+ctest --test-dir build --output-on-failure -j4        # 67 registered, 66-67 pass (2026-08-25) — frame_lag_test is machine-load-sensitive, see below
 cmake --build build --target lag                      # frame-cost probe alone, with its report
 ```
 

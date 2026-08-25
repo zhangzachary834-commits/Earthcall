@@ -98,6 +98,7 @@ namespace Rendering {
                         std::filesystem::file_size(stash, ec) > 0) {
                         if (ImGui::Button("Restore unsaved (before last load)")) {
                             loadWorld(engine, stash);
+                            sl.showLoadWindow = false;
                         }
                         if (ImGui::IsItemHovered()) {
                             ImGui::SetTooltip("%s", stash.c_str());
@@ -114,6 +115,7 @@ namespace Rendering {
                     ImGui::PushID(w.path.c_str());
                     if (ImGui::Button("Load")) {
                         loadWorld(engine, w.path);
+                        sl.showLoadWindow = false;
                     }
                     ImGui::SameLine();
                     if (w.label == current) {
@@ -151,6 +153,7 @@ namespace Rendering {
                     ImGui::TextUnformatted(w.label.c_str());
                     if (ImGui::SmallButton("Load") && engine) {
                         loadWorld(engine, w.path);
+                        sl.showManager = false;
                     }
                     ImGui::SameLine();
                     if (ImGui::SmallButton("Backup")) {
