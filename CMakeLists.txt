@@ -141,10 +141,6 @@ set(IMGUI_SOURCES
     ${IMGUI_DIR}/imgui_widgets.cpp
     ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp
     ${IMGUI_DIR}/backends/imgui_impl_opengl2.cpp
-        src/Time/Time.cpp
-        src/Time/Time.h
-        src/Time/Moment/Moment.cpp
-        src/Time/Moment/Moment.hpp
 )
 
 # Compile WebIntegration and RealWebView as Objective-C++ since they use macOS APIs

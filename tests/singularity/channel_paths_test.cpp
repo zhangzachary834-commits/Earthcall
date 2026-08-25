@@ -19,7 +19,7 @@
 
 #include "Person/Person.hpp"
 #include "Person/Soul/Soul.hpp"
-#include "ConstructedBeing/Singular/Object/Formation/Formation.hpp"
+#include "Relation/Formation/Formation.hpp"
 #include "Singularity/Core/CreationChannel.hpp"
 #include "Singularity/Input/Locomotion/LocomotionChannel.hpp"
 #include "Singularity/Input/Interaction/InteractionChannel.hpp"

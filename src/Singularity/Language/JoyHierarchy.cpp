@@ -1,7 +1,7 @@
 #include "JoyHierarchy.hpp"
 
 #include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
-#include "ConstructedBeing/Singular/Object/Formation/Formation.hpp"
+#include "Relation/Formation/Formation.hpp"
 
 #include <cstdio>
 

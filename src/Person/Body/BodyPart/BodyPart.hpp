@@ -4,7 +4,7 @@
 #include <memory>
 #include <ctime>
 #include "ConstructedBeing/Singular/Object/Object.hpp"
-#include "ConstructedBeing/Singular/Object/Formation/Formation.hpp"
+#include "Relation/Formation/Formation.hpp"
 #include "ConstructedBeing/Singular/Object/Object/ObjectTypes.hpp"
 #include <glm/glm.hpp>
 

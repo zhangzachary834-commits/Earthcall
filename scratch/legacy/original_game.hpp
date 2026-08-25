@@ -7,7 +7,7 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 
-#include "ConstructedBeing/Singular/Object/Formation/Menu/Menu.hpp"
+#include "Relation/Formation/Menu/Menu.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "ZonesOfEarth/Ourverse/Ourverse.hpp"
 #include "OurVerse/Chat.hpp"

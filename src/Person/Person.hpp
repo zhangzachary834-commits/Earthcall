@@ -6,7 +6,7 @@
 #include <glm/glm.hpp>
 #include "ConstructedBeing/Singular/Singular.hpp"
 #include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
-#include "ConstructedBeing/Singular/Object/Formation/Formation.hpp"
+#include "Relation/Formation/Formation.hpp"
 #include "Identity/SingularId.hpp"
 #include "Soul/Soul.hpp"
 #include <json.hpp>

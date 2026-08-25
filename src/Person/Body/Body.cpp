@@ -2,7 +2,7 @@
 #include <iostream>
 #include <algorithm>
 #include "BodyPart/BodyPart.hpp"
-#include "ConstructedBeing/Singular/Object/Formation/Formation.hpp"
+#include "Relation/Formation/Formation.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include "BodyPart/Limb/Arm.hpp"
 #include "BodyPart/Limb/Leg.hpp"

@@ -3,7 +3,7 @@
 #include <vector>
 #include <ctime>
 #include "ConstructedBeing/Singular/Object/Object.hpp"
-#include "ConstructedBeing/Singular/Object/Formation/Formation.hpp"
+#include "Relation/Formation/Formation.hpp"
 #include "Person/Body/BodyPart/BodyPart.hpp"
 #include <glm/glm.hpp>
 

@@ -77,10 +77,11 @@ for code that has not been typed.
       disagreeing. Whatever else is true, a top-level directory the ontology file does not list
       is drift, and the next agent to read Refusal #2 will try to delete it — as this review
       nearly did.
-- [ ] Either way: `src/Time/Time.cpp`, `Time.h`, `Moment.cpp`, `Moment.hpp` are pasted into the
+- [x] Either way: `src/Time/Time.cpp`, `Time.h`, `Moment.cpp`, `Moment.hpp` are pasted into the
       middle of `IMGUI_SOURCES` at `CMakeLists.txt:145-148`. `GLOB_RECURSE` already collects
       them; CMake dedupes within `earthcall_core` so it links, but this is an IDE writing into
       the wrong list. Remove those four lines.
+      *Done and verified: Cleaned IMGUI_SOURCES in CMakeLists.txt (2026-08-25).*
 - [ ] `src/Time/Duration/` is an empty directory. Remove it or fill it.
 
 ## 4. A tracked symlink is holding the Relation move together
@@ -99,9 +100,10 @@ tests.
 In a repo where the directory tree *is* the ontological claim, this commits the claim and its
 denial in the same tree. It also will not survive a checkout that does not honour symlinks.
 
-- [ ] `grep -rl "Object/Formation/Formation.hpp" src tests` → rewrite to
+- [x] `grep -rl "Object/Formation/Formation.hpp" src tests` → rewrite to
       `Relation/Formation/Formation.hpp`, then `git rm` the symlink and reconfigure.
       Verify: full build + `ctest`. Roughly twenty minutes; do it before the include graph sets.
+      *Done and verified: Rewrote all includes across src/, tests/, and scratch/ to Relation/Formation/Formation.hpp and Menu headers, git rm of symlink completed, full build and 65/65 ctest passed (2026-08-25).*
 
 ## 5. ~480 volatile identifiers on a chess load
 

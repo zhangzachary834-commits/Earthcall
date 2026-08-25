@@ -1,7 +1,7 @@
 #include "ConditionModel.hpp"
 
 #include "ConstructedBeing/Singular/Object/Geometry/SdfJson.hpp"
-#include "ConstructedBeing/Singular/Object/Formation/Formation.hpp"
+#include "Relation/Formation/Formation.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
 #include "Law.hpp"

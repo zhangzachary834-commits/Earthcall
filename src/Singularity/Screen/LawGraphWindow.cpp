@@ -3,7 +3,7 @@
 #include "Singularity/Screen/CardTreeLayout.hpp"
 #include "Singularity/Screen/MathEditors.hpp"
 #include "ConstructedBeing/Singular/Object/Creation/ObjectConcept.hpp"
-#include "ConstructedBeing/Singular/Object/Formation/Formation.hpp"
+#include "Relation/Formation/Formation.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "Person/Soul/Soul.hpp"
 #include "ZonesOfEarth/Ourverse/Ourverse.hpp"

@@ -40,7 +40,7 @@
 // Failures are REPORTED, not asserted, so one gap does not hide the rest.
 
 #include "ConstructedBeing/Material/Material.hpp"
-#include "ConstructedBeing/Singular/Object/Formation/Formation.hpp"
+#include "Relation/Formation/Formation.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ConstructedBeing/Singular/Property/Property.hpp"

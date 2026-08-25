@@ -1,6 +1,6 @@
-#include "../src/Singularity/Core/EventBus.hpp"
-#include "../src/Form/Object/Object.hpp"
-#include "../src/Form/Object/Formation/Formation.hpp"
+#include "Singularity/Core/EventBus.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
+#include "Relation/Formation/Formation.hpp"
 #include <iostream>
 #include <vector>
 #include <memory>

@@ -7,7 +7,7 @@
 #include "Rendering/RelationManagerWindow.hpp"
 #include "Rendering/LawGraphWindow.hpp"
 #include "Rendering/CreationWindow.hpp"
-#include "ConstructedBeing/Singular/Object/Formation/Menu/stb_easy_font.h"
+#include "Relation/Formation/Menu/stb_easy_font.h"
 #include "OurVerse/Tool.hpp"
 #include "OurVerse/AdvancedFacePaint.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"

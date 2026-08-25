@@ -6,7 +6,7 @@
 // See docs/architecture/ontology/HIERARCHY_OF_JOYS.md.
 
 #include "ConstructedBeing/Singular/Object/Object.hpp"
-#include "ConstructedBeing/Singular/Object/Formation/Formation.hpp"
+#include "Relation/Formation/Formation.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
 #include "Person/Person.hpp"
 #include "Person/Soul/Soul.hpp"

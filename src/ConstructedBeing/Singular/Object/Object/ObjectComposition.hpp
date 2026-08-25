@@ -11,7 +11,7 @@
 #include <vector>
 #include <string>
 #include <unordered_map>
-#include "../Formation/Formation.hpp"
+#include "Relation/Formation/Formation.hpp"
 
 class Singular;
 

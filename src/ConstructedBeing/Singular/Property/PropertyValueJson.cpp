@@ -4,7 +4,7 @@
 // identifier extraction, which forward declarations cannot prove.
 #include "ConstructedBeing/Singular/Singular.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
-#include "ConstructedBeing/Singular/Object/Formation/Formation.hpp"
+#include "Relation/Formation/Formation.hpp"
 #include "Relation/Relation.hpp"
 #include "Singularity/OntoMath/Field.hpp"
 

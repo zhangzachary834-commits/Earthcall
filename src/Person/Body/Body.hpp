@@ -3,7 +3,7 @@
 #include <vector>
 #include <map>
 #include "ConstructedBeing/Singular/Singular.hpp"
-#include "ConstructedBeing/Singular/Object/Formation/Formation.hpp"
+#include "Relation/Formation/Formation.hpp"
 #include "BodyPart/BodyPart.hpp"
 
 /* The same class that will create the characters will also be used for all meta-bodies. 

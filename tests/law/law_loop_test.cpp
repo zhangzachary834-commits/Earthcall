@@ -8,7 +8,7 @@
 
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
-#include "ConstructedBeing/Singular/Object/Formation/Formation.hpp"
+#include "Relation/Formation/Formation.hpp"
 
 #include <GLFW/glfw3.h>
 #include <cassert>
