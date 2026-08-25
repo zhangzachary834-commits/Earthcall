@@ -17,9 +17,6 @@ class LawManager;
 // Ourverse is the vessel of unity in Christ — an ordering principle that
 // channels Zones toward shared Joys. It is a Singular, not a Zone.
 // See docs/architecture/ourverse/OURVERSE.md.
-//
-// The Engine still parks a leftover object list and camera here (Game bag).
-// That list is not the Ourverse's meaning and is not registered.
 class Ourverse : public Singular {
 public:
     Ourverse();
@@ -28,20 +25,6 @@ public:
     static constexpr const char* kGathersType  = "gathers";
     static constexpr const char* kHostsType    = "hosts";
     static constexpr const char* kConvenesType = "convenes-toward";
-
-    void display() const;
-    void renderModeUI();
-
-    void updateObjectCollisions(glm::vec3& position, const Object& obj, const glm::mat4& transform) const;
-    void onUpdate(float deltaTime = 0.016f);
-
-    void setCamera(glm::vec3* cam) { cameraPos = cam; }
-    glm::vec3* getCamera() const { return cameraPos; }
-
-    void addOwnedObject(std::shared_ptr<Object> obj) { ownedObjects.push_back(std::move(obj)); }
-    const std::vector<std::shared_ptr<Object>>& getOwnedObjects() const { return ownedObjects; }
-    std::vector<std::shared_ptr<Object>>& getOwnedObjectsMutable() { return ownedObjects; }
-    void clearDynamicObjects();
 
     std::string getIdentifier() const override { return "Ourverse"; }
 
@@ -85,13 +68,6 @@ public:
 private:
     void buildProperties() override;
 
-    // BENEATH THE ONTOLOGY (Engine-bag debt, not Ourverse's meaning):
-    // leftover Game world list and camera the render/physics loop still
-    // reads. Named so they are not mistaken for "what Ourverse is."
-    // Retire with World → Zone (near-term 6).
-    glm::vec3* cameraPos = nullptr;
-    std::vector<std::shared_ptr<Object>> ownedObjects;
-
     std::shared_ptr<Zone> _gatheringZone;
     Formation _joys;
     Formation _filaments;
@@ -99,8 +75,3 @@ private:
     std::string _convenesToward;
 };
 
-struct InteractionEvent {
-    std::string description;
-    std::time_t timestamp;
-    Object* other;
-};

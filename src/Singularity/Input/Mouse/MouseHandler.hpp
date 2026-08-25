@@ -109,12 +109,6 @@ public:
     const std::map<MouseButton, MouseBinding>& getButtonBindings() const { return _buttonBindings; }
     MouseButton getButtonForAction(const std::string& action) const;
     
-    // Common mouse bindings for perspectives
-    void setupDefaultPerspectiveBindings();
-    void setupFirstPersonBindings();
-    void setupThirdPersonBindings();
-    void setupFreeCameraBindings();
-    
     // Cursor functionality
     float getCursorX() const { return _cursorX; }
     float getCursorY() const { return _cursorY; }

@@ -262,38 +262,6 @@ MouseHandler::MouseButton MouseHandler::getButtonForAction(const std::string& ac
     return MouseButton::Left;
 }
 
-void MouseHandler::setupDefaultPerspectiveBindings() {
-    bindButton(MouseButton::Left, "select", [](const glm::vec2& pos){(void)pos;});
-    bindButton(MouseButton::Right, "context_menu", [](const glm::vec2& pos){(void)pos;});
-    bindButton(MouseButton::Middle, "pan", [](const glm::vec2& pos){(void)pos;});
-    bindButton(MouseButton::Button4, "previous", [](const glm::vec2& pos){(void)pos;});
-    bindButton(MouseButton::Button5, "next", [](const glm::vec2& pos){(void)pos;});
-}
-
-void MouseHandler::setupFirstPersonBindings() {
-    bindButton(MouseButton::Left, "primary_action", [](const glm::vec2& pos){(void)pos;});
-    bindButton(MouseButton::Right, "secondary_action", [](const glm::vec2& pos){(void)pos;});
-    bindButton(MouseButton::Middle, "tertiary_action", [](const glm::vec2& pos){(void)pos;});
-    bindButton(MouseButton::Button4, "weapon_prev", [](const glm::vec2& pos){(void)pos;});
-    bindButton(MouseButton::Button5, "weapon_next", [](const glm::vec2& pos){(void)pos;});
-}
-
-void MouseHandler::setupThirdPersonBindings() {
-    bindButton(MouseButton::Left, "select_target", [](const glm::vec2& pos){(void)pos;});
-    bindButton(MouseButton::Right, "move_to", [](const glm::vec2& pos){(void)pos;});
-    bindButton(MouseButton::Middle, "rotate_camera", [](const glm::vec2& pos){(void)pos;});
-    bindButton(MouseButton::Button4, "previous_target", [](const glm::vec2& pos){(void)pos;});
-    bindButton(MouseButton::Button5, "next_target", [](const glm::vec2& pos){(void)pos;});
-}
-
-void MouseHandler::setupFreeCameraBindings() {
-    bindButton(MouseButton::Left, "select_object", [](const glm::vec2& pos){(void)pos;});
-    bindButton(MouseButton::Right, "orbit_camera", [](const glm::vec2& pos){(void)pos;});
-    bindButton(MouseButton::Middle, "pan_camera", [](const glm::vec2& pos){(void)pos;});
-    bindButton(MouseButton::Button4, "previous_object", [](const glm::vec2& pos){(void)pos;});
-    bindButton(MouseButton::Button5, "next_object", [](const glm::vec2& pos){(void)pos;});
-}
-
 bool MouseHandler::isMenuOpen() const {
     return _menuOpen;
 }

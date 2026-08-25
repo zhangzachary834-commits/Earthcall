@@ -60,21 +60,4 @@ public:
     // Menu state management
     bool isMenuOpen() const { return _menuOpen; }
     void setMenuOpen(bool open) { _menuOpen = open; }
-    
-    // Perspective key bindings
-    void setupDefaultPerspectiveBindings();
-    void setupFirstPersonBindings();
-    void setupThirdPersonBindings();
-    void setupFreeCameraBindings();
-    
-    // Game-specific key bindings (to be migrated to EventBus)
-    void setupGameBindings();
-    void setupMenuBindings();
-    void setupCameraBindings();
-    void setupToolBindings();
-    void setupPerspectiveBindings();
-    void setupUtilityBindings();
-    
-    // Game input update - processes keyboard state each frame
-    void updateGameInput(GLFWwindow* window);
 };

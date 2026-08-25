@@ -305,22 +305,7 @@ void Engine::initLogic() {
     _mainMenu.addOption("Quit",   GLFW_KEY_Q, [this]() { glfwSetWindowShouldClose(_window, 1); });
     printf("[Init] Checkpoint B3: after menu addOption(Quit)\n");
 
-    // --------------------------------------------------------------
-    // World baseline objects (spinning cube + ground)
-    // --------------------------------------------------------------
-    _world.setCamera(&_camera->pos);
-
-    {
-        std::shared_ptr<Object> cube = std::make_shared<Object>("object.baseline.cube");
-        std::shared_ptr<Object> ground = std::make_shared<Object>("object.baseline.ground");
-        // Tag these as baseline placeholders so we can safely special-case them later
-        cube->setAttribute("baseline", "cube");
-        ground->setAttribute("baseline", "ground");
-        _world.addOwnedObject(std::move(cube));
-        _world.addOwnedObject(std::move(ground));
-    }
-
-    printf("[Init] Checkpoint C: baseline objects created\n");
+    printf("[Init] Checkpoint C: initialization proceeding\n");
 
 
     // Ensure _player initial position matches _camera.pos
