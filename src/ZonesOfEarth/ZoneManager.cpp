@@ -11,6 +11,7 @@
 #include "ConstructedBeing/Material/Material.hpp"
 #include "ConstructedBeing/Material/MaterialManager.hpp"
 #include "ConstructedBeing/Singular/Object/Creation/ObjectConcept.hpp"
+#include "ConstructedBeing/Singular/Object/Object/ObjectIdentity.hpp"
 #include "Singularity/OntoMath/ScalarForm.hpp"
 #include "Singularity/TransferPolicy.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
@@ -917,6 +918,8 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
             return;
         }
 
+        ObjectIdentity::reportAndResetVolatileCount();
+
         // Preserve unsaved live work BEFORE zonesVec.clear(). The CRITICAL
         // save-system fear: load used to erase the present world with no
         // copy. The dedicated slot is backups/before-load.json — one place,
@@ -1253,6 +1256,10 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
         }
         if (!failures.empty()) {
             _saveLoad.lastLoadReport += "  |  FAILED stages: " + failures;
+        }
+        uint64_t volatileCount = ObjectIdentity::reportAndResetVolatileCount();
+        if (volatileCount > 0) {
+            _saveLoad.lastLoadReport += " (" + std::to_string(volatileCount) + " beings took volatile IDs)";
         }
         std::cerr << "[load] " << _saveLoad.lastLoadReport << "\n";
         logIo("LOAD end:   " + _saveLoad.lastLoadReport);

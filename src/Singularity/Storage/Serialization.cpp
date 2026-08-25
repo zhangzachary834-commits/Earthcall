@@ -745,7 +745,13 @@ void zoneObjectsFromJson(const nlohmann::json& j, Zone& zone) {
     else if (j.is_array()) arr = &j;
     if (!arr) return;
     for (const auto& oj : *arr) {
-        std::shared_ptr<Object> obj = std::make_shared<Object>();
+        std::string id;
+        if (oj.contains("objectID") && oj["objectID"].is_string()) {
+            id = oj["objectID"].get<std::string>();
+        } else if (oj.contains("id") && oj["id"].is_string()) {
+            id = oj["id"].get<std::string>();
+        }
+        std::shared_ptr<Object> obj = std::make_shared<Object>(id);
         from_json(oj, *obj);
         zone.addObject(std::move(obj));
     }

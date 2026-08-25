@@ -9,8 +9,7 @@
 // `setObjectID` is what `getIdentifier()` reports.
 std::shared_ptr<Object> CategoryManager::create(const std::string& name) {
     if (auto existing = get(name)) return existing;
-    auto cat = std::make_shared<Object>();
-    cat->setObjectID(name);
+    auto cat = std::make_shared<Object>(name);
     cat->setName(name);
     cat->setPhysicalObject(0);   // a classification is extra-spatial
     _categories.push_back(cat);
@@ -64,7 +63,13 @@ void CategoryManager::loadFromJson(const nlohmann::json& j) {
     _categories.clear();
     if (j.is_array()) {
         for (const auto& elem : j) {
-            auto cat = std::make_shared<Object>();
+            std::string id;
+            if (elem.contains("objectID") && elem["objectID"].is_string()) {
+                id = elem["objectID"].get<std::string>();
+            } else if (elem.contains("id") && elem["id"].is_string()) {
+                id = elem["id"].get<std::string>();
+            }
+            auto cat = std::make_shared<Object>(id);
             from_json(elem, *cat);
             // Classification is extra-spatial. from_json rebuilds an Object
             // whose physical bit defaults to true, so a loaded category

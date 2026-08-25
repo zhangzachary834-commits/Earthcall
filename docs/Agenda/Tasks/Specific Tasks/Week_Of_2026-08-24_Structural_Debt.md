@@ -118,10 +118,11 @@ breaks `chess_app_test`. But it is the **Stable identifiers** non-negotiable fai
 in the one world most dependent on law-text addressing, and it buries every other diagnostic
 printed during a load.
 
-- [ ] Find which beings are minted without a slug on this path (board squares? geometry
+- [x] Find which beings are minted without a slug on this path (board squares? geometry
       children?) and either give them stable slugs or stop registering them as addressable.
-- [ ] Collapse the warning to one summary line per load — *"142 beings took volatile ids"* —
+- [x] Collapse the warning to one summary line per load — *"142 beings took volatile ids"* —
       with the full list behind a flag.
+      *Done and verified: Passed stored object IDs directly to Object constructors during JSON deserialization (`zoneObjectsFromJson`), gave CategoryManager, EngineInit baseline objects, and BodyPart structured stable IDs, added verbose flag + atomic volatile ID counting in `ObjectIdentity.hpp`, and added summary line to `ZoneManager` load report. Eliminated ~480 warning spam lines down to a single clean load report; verified full build, 65/65 ctest (100%), and lag probe (0 broken invariants, 0 regressions) (2026-08-25).*
 
 ## 6. The chess authoring scripts are a graveyard
 

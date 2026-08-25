@@ -30,6 +30,32 @@ inline std::string generateObjectId() {
     return "object-" + std::to_string(getNextObjectId().fetch_add(1));
 }
 
+// Volatile object ID tracking and summary logging
+inline std::atomic<uint64_t>& getVolatileObjectCount() {
+    static std::atomic<uint64_t> g_volatileCount{0};
+    return g_volatileCount;
+}
+
+inline bool& getVerboseVolatileLogging() {
+    static bool g_verbose = false;
+    return g_verbose;
+}
+
+inline void setVerboseVolatileLogging(bool verbose) {
+    getVerboseVolatileLogging() = verbose;
+}
+
+inline void recordVolatileIdentifier(const std::string& id) {
+    getVolatileObjectCount().fetch_add(1);
+    if (getVerboseVolatileLogging()) {
+        printf("WARNING: Object initialized without a stable string identifier. Assigned volatile ID '%s'. This object should not be reliably targeted by Law text.\n", id.c_str());
+    }
+}
+
+inline uint64_t reportAndResetVolatileCount() {
+    return getVolatileObjectCount().exchange(0);
+}
+
 // The slug a concept's newborn is named by.
 //
 // A concept names its members by SLOT ("member-0" is the first thing in the

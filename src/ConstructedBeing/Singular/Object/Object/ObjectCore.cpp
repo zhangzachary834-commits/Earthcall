@@ -220,7 +220,7 @@ Object::Object(std::string explicitId) {
         ObjectIdentity::claimIdentifierAtLeast(objectID);
     } else {
         objectID = ObjectIdentity::generateObjectId();
-        printf("WARNING: Object initialized without a stable string identifier. Assigned volatile ID '%s'. This object should not be reliably targeted by Law text.\n", objectID.c_str());
+        ObjectIdentity::recordVolatileIdentifier(objectID);
     }
     syncRotationStateFromTransform(transform);
 }

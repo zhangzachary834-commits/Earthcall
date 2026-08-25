@@ -5,7 +5,7 @@
 
 BodyPart::BodyPart(const std::string& name, Type type, 
                    ObjectTypes::ShapeKind geometryType, const glm::vec3& dimensions)
-    : Object(), Formation(), partName(name), partType(type), _dimensions(dimensions)
+    : Object(name.empty() ? "" : "bodypart." + name), Formation(), partName(name), partType(type), _dimensions(dimensions)
 {
     isLiteral = true;
     isSymbolic = false;
@@ -102,7 +102,8 @@ bool BodyPart::hasCustomTextures() const {
 // Composite sub-object management
 // -----------------------------------------------------------------
 Object* BodyPart::addSubObject(Object::ShapeKind kind, const glm::mat4& localOffset) {
-    auto obj = std::make_unique<Object>();
+    std::string subId = getIdentifier() + ".sub-" + std::to_string(_subObjects.size());
+    auto obj = std::make_unique<Object>(subId);
     obj->setShape(kind);
 
     // obj->setOwnerBodyPart(this);
