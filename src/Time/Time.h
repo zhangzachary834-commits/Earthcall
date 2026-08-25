@@ -6,7 +6,11 @@
 #define EARTHCALL_TIME_H
 
 
-// Placeholder for a first-order vessel of Time in Earthcall
+// Placeholder for a first-order vessel of Time in Earthcall.
+// First rung written: docs/architecture/ontology/TIME_AND_MOMENT.md.
+// Moment (Moment/Moment.hpp) is the being that already answers "when did this
+// happen"; this class stays empty until Earthcall's philosophy of time asks
+// for something Moment and Universe's world clock do not already provide.
 
 class Time
 {

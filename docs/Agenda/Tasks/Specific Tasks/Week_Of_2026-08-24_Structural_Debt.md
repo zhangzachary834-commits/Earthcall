@@ -71,18 +71,34 @@ by unifying clocks… write what a* when *is first, the way `Formation` already 
 a category are"* — so the empty class is a placeholder for a doc that has not been written, not
 for code that has not been typed.
 
-- [ ] Write the *when* first (`docs/architecture/` — the Time framework), then let the class
+- [x] Write the *when* first (`docs/architecture/` — the Time framework), then let the class
       shape follow it. `Moment` is the one piece that already exists and already earns its place.
-- [ ] Add `Time` to the tree in `CLAUDE.md` § The tree, so the doc and the directory stop
+      *Done and verified (2026-08-25): [`ontology/TIME_AND_MOMENT.md`](../../../architecture/ontology/TIME_AND_MOMENT.md)
+      names the two existing "when" beings — `Universe`'s world clock (rate/simulation time,
+      already unified behind `time`/`time.delta`/`time.sinceApplied`) and `Moment` (wall-clock,
+      authored, comparable — already stamping `RelationManager`, `PersonEvents`, `ObjectEvents`,
+      and `ECA` timestamps) — and states why a duration is `Moment::Kind::Interval`, not a third
+      class. Verified: `scratch/probes/router_truth_probe.py` clean (all links, all router
+      paths); reconfigure + `earthcall` build + full `ctest` unaffected (doc-only + comment +
+      empty-directory removal, no behavior change).*
+- [x] Add `Time` to the tree in `CLAUDE.md` § The tree, so the doc and the directory stop
       disagreeing. Whatever else is true, a top-level directory the ontology file does not list
       is drift, and the next agent to read Refusal #2 will try to delete it — as this review
       nearly did.
+      *Done and verified (2026-08-25): `AGENTS.md` (source of `CLAUDE.md`'s symlink) Refusal #1's
+      exception clause, Refusal #2's noun list, the tree diagram, and the Router table all name
+      `Time`/`Moment`; `DIRECTORY_ORDERING.md` §1 and §2's tree updated to match;
+      `NEW_KIND_FRAMEWORK.md` §Floor 1 exception clause updated. `router_truth_probe.py` confirms
+      every backticked path in the router trio still resolves.*
 - [x] Either way: `src/Time/Time.cpp`, `Time.h`, `Moment.cpp`, `Moment.hpp` are pasted into the
       middle of `IMGUI_SOURCES` at `CMakeLists.txt:145-148`. `GLOB_RECURSE` already collects
       them; CMake dedupes within `earthcall_core` so it links, but this is an IDE writing into
       the wrong list. Remove those four lines.
       *Done and verified: Cleaned IMGUI_SOURCES in CMakeLists.txt (2026-08-25).*
-- [ ] `src/Time/Duration/` is an empty directory. Remove it or fill it.
+- [x] `src/Time/Duration/` is an empty directory. Remove it or fill it.
+      *Done and verified (2026-08-25): removed (`rmdir` — it held no tracked files, so this is
+      not a git change). `TIME_AND_MOMENT.md` §0/§3 explains why: a duration is
+      `Moment::interval(a, b)`, not a second class.*
 
 ## 4. A tracked symlink is holding the Relation move together
 

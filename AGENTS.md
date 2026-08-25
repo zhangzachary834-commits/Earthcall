@@ -13,10 +13,10 @@ Zach: I had Opus 5 write these because they come up constantly. Learn them cold;
 1. **No new C++ class for a domain noun.** Not `RobotEntity`, not `Vehicle`, not `Tree`,
    not `Category`. This principle also extends to hardcoded fields (e.g., `health` or `inventory` on a `Person`). Domain things and their state are *authored in-world* as data, never carved into the
    type system. → `ontology/NEW_KIND_FRAMEWORK.md`
-   *(Exception: The human form. `BodyPart` and constitutive members for the `Person` vessel are invariant ontological structures, not domain nouns, and thus admitted in C++).*
+   *(Exception: The human form. `BodyPart` and constitutive members for the `Person` vessel are invariant ontological structures, not domain nouns, and thus admitted in C++. `Moment`, time's own instant-or-interval structure, is admitted the same way — see `ontology/TIME_AND_MOMENT.md`; there is no `class Duration`.)*
 
 2. **No new top-level directory for a subsystem.** The top level is the ontology
-   (`ConstructedBeing`, `Person`, `Relation`, `Singularity`, `ZonesOfEarth`, `Identity`).
+   (`ConstructedBeing`, `Person`, `Relation`, `Singularity`, `ZonesOfEarth`, `Identity`, `Time`).
    A channel to hardware or foreign software goes *inside* `Singularity/`. → `ontology/DIRECTORY_ORDERING.md`
 
 3. **No new enum value for a kind of thing.** `BeingKind`, `ShapeKind`,
@@ -68,6 +68,7 @@ subsystem define what a thing's state *means* by keeping it where no law can loo
 | ask "why is it like this?" | `core/EarthcallOurverse.md`, `ontology/SUBSTRATE_ORDERING.md` | the ends the architecture serves |
 | touch the Hierarchy of Joys, telos, or "joyOrdering" | `ontology/HIERARCHY_OF_JOYS.md` | Lexemes are telos; the hierarchy is a Formation |
 | touch Ourverse, gathering Zones, or Zone filaments | `ourverse/OURVERSE.md` | vessel of unity in Christ; not the Engine object bag |
+| ask what a *when* is — a timestamp, a duration, `time.sinceApplied` | `ontology/TIME_AND_MOMENT.md` | the world clock and `Moment` answer two different questions; no `class Duration` |
 | build a button, panel, control, menu, or any interface at all | `law/INTERACTION_AS_LAW.md` | Law + set-to-set aimed at the pointer; no widget, no `src/UI/` |
 | build anything two Persons share — visibility, likeness, or conflicting law | `ourverse/SECOND_PERSON_FRAMEWORK.md` §5 | specified before needed; ⚑ AUTHOR decisions are Zach's |
 
@@ -86,6 +87,7 @@ src/
   ZonesOfEarth/   Zone · Home · Physics · AuthorsOfLaw (Law lives here) · Ourverse
   Singularity/    the modality layer: Core · Audio · Language · Network · Physical · OntoMath · Foreign · Input · Screen · Storage · FirstMoverWindowTools
   Identity/       First Mover register, identity ledger, keys
+  Time/           Moment (instant or interval) — the world clock itself lives on Universe
   Legacy/         not yet ontologically placed
 docs/ tests/ examples/ scripts/ saves/ scratch/     the workshop
 third_party/ local_deps/ imgui/                     the foreign
