@@ -291,4 +291,7 @@ places. `Object`, `Lexeme`, and `Property` live under `ConstructedBeing/Singular
 `ObjectConcept` is the ONE set-to-set machine (`Singular/Object/Creation`) — do not add
 a second one. See §7 of `LAW_AND_CREATION_SYSTEM.md`; a `Concept`/`SynthesisSystem` pair
 lived beside it until 2026-08-11 and was deleted. Formation is `Relation/Formation`
-(Object still includes it via a symlink). Lexeme is a Singular, not a Language-channel type.
+(all includes point directly to `Relation/Formation/Formation.hpp`). Lexeme is a Singular, not a Language-channel type.
+
+**Test harnesses (`TestLabInterfaces/`, `TestLabAI/`)** sit at the repository root as external harness interfaces (renamed from `TestLab/` in commit e813b6b6 to distinguish interface tools from the ontology).
+
