@@ -4,7 +4,6 @@
 #include "Universe.hpp"
 #include "LawAuditLogger.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
-#include "Singularity/Core/EventEntity.hpp"
 
 #include <algorithm>
 #include <atomic>
@@ -1455,27 +1454,24 @@ void LawManager::connectToEventBus() {
     });
 
     Core::EventBus::instance().subscribe<Core::Event::Custom>([this](const Core::Event::Custom& e) {
-        if (!e.singular) return;
+        if (!e.relation) return;
         
-        std::string evType = e.singular->getEventType();
+        std::string evType = e.relation->type;
+        std::string aId = e.relation->aId();
+        std::string bId = e.relation->bId();
         
-        ECA::LawAuditLogger::instance().log("EVENT", "Custom Event \"" + evType + "\" triggered (Id: " + e.singular->getIdentifier() + ")", {
+        ECA::LawAuditLogger::instance().log("EVENT", "Custom Event \"" + evType + "\" triggered (Id: " + e.relation->getIdentifier() + ")", {
             {"eventType", evType},
-            {"eventId", e.singular->getIdentifier()},
-            {"sourceId", e.singular->getSourceId()},
-            {"targetId", e.singular->getTargetId()}
+            {"eventId", e.relation->getIdentifier()},
+            {"sourceId", aId},
+            {"targetId", bId}
         });
-        
-        // Keep the shared_ptr alive until the end of the tick so Rete memories don't dangle
-        _activeCustomEvents.push_back(e.singular);
-        // Register it with the Universe so that it is addressable in properties and scripts
-        Universe::instance().addActiveEvent(e.singular.get());
         
         auto fact = std::make_shared<ReteFact>();
         fact->type = evType;
-        fact->subject = e.singular.get();
-        fact->subjectId = e.singular->getIdentifier();
-        fact->object = nullptr;
+        fact->subject = e.relation->a();
+        fact->subjectId = aId;
+        fact->object = e.relation->b();
         
         _rete.assertFact(fact);
         _dirty = true;
@@ -1590,13 +1586,6 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
         }
         _rete.retractFirst(consumed);
     }
-
-    // Now that event rounds have completed and Rete memory is retracted,
-    // the EventEntities representing custom events can be safely unmade.
-    for (auto& ev : _activeCustomEvents) {
-        Universe::instance().removeActiveEvent(ev.get());
-    }
-    _activeCustomEvents.clear();
 
     // ------------------------------------------------------------------
     // Continuous pass: level-triggered laws don't wait for events — their

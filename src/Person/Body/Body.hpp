@@ -2,19 +2,21 @@
 #include <string>
 #include <vector>
 #include <map>
-#include "ConstructedBeing/Singular/Object/Object.hpp"
-#include "ConstructedBeing/Singular/Object/Formation/Formation.hpp"
 #include "ConstructedBeing/Singular/Singular.hpp"
+#include "ConstructedBeing/Singular/Object/Formation/Formation.hpp"
 #include "BodyPart/BodyPart.hpp"
 
 /* The same class that will create the characters will also be used for all meta-bodies. 
 Or even if not the same class, it will be the same structure */
 
-class Body : public Object {
+class Body : public Singular {
 
 public:
+    Body(std::string shape = "humanoid", std::string artStyle = "default");
     Body(Body&&) = default;
     Body& operator=(Body&&) = default;
+    Body(const Body&) = default;
+    Body& operator=(const Body&) = default;
     
     std::string shape;
     std::string artStyle;
@@ -33,8 +35,6 @@ public:
     float getHeight() const { return hitboxHeight; }
     float getEyeHeight() const { return hitboxHeight * 0.9f; } // eye slightly below top
     float getNametagHeight() const { return hitboxHeight + 0.2f; }
-
-    Body(std::string shape, std::string artStyle);
 
     void describe() const;
     void addAdornment(const std::string& item);
@@ -62,4 +62,7 @@ public:
 
     // Singular interface
     std::string getIdentifier() const override { return shape + "_body"; }
+
+protected:
+    void buildProperties() override;
 };

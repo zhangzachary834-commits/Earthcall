@@ -49,7 +49,6 @@
 #include "Relation/Relation.hpp"
 #include "Singularity/Core/CreationChannel.hpp"
 #include "Singularity/Input/Locomotion/LocomotionChannel.hpp"
-#include "Singularity/Core/EventEntity.hpp"
 #include "../../src/ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
 #include "Singularity/Screen/LawGraphWindow.hpp"
 #include "Singularity/TransferPolicy.hpp"
@@ -315,7 +314,6 @@ int main() {
         Zone zone("probe-zone", "default");              audit("Zone", zone);
         Home home("probe-home", "default");              audit("Home", home);
         Singularity::Language::Lexeme lexeme("probe");   audit("Lexeme", lexeme);
-        Core::EventEntity event("probe-happened");       audit("EventEntity", event);
         geom::FieldNode field("probe-field");            audit("FieldNode", field);
         Singularity::Core::CreationChannel channel;      audit("CreationChannel", channel);
         Singularity::Input::LocomotionChannel locomotion; audit("LocomotionChannel", locomotion);
@@ -332,6 +330,7 @@ int main() {
         Formation formation;     audit("Formation", formation);
         Soul soul;               audit("Soul", soul);
         Ourverse ourverse;       audit("Ourverse", ourverse);
+        Body body;               audit("Body", body);
     }
 
     // ---- D. reachability from the authoring surface -----------------------

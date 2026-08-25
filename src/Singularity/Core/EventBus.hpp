@@ -15,7 +15,7 @@
 
 // Forward declarations
 class Formation;
-namespace Core { class EventEntity; }
+class Relation;
 
 namespace Core {
 
@@ -197,7 +197,7 @@ namespace Event {
     };
 
     struct Custom {
-        std::shared_ptr<Core::EventEntity> singular; // The physical Event entity
+        std::shared_ptr<Relation> relation; // The physical Relation representing this event
     };
 } // namespace Event
 

@@ -734,7 +734,6 @@ private:
     Formation _lawFormation;
     ReteNetwork _rete;
     std::vector<DriveSession> _driveSessions;
-    std::vector<std::shared_ptr<Core::EventEntity>> _activeCustomEvents;
     std::unordered_map<std::string, std::vector<std::string>> _triggers;
     // Terminal node IDs for each law's compiled condition DAG.
     // Key: lawId, Value: {nodeId, isBeta} pairs for the DAG's terminal nodes.

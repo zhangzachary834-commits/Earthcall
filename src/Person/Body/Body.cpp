@@ -15,6 +15,23 @@
 #include "BodyPart/Limb/ForeLeg.hpp"
 #include "BodyPart/Limb/Foot.hpp"
 #include "ConstructedBeing/Singular/Object/Creation/ObjectConcept.hpp"
+#include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
+#include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
+
+void Body::buildProperties() {
+    _propertyRegistry.push_back(std::make_unique<PropertyRef<Body, std::string>>(
+        "shape", this, &Body::shape));
+    _propertyRegistry.push_back(std::make_unique<PropertyRef<Body, std::string>>(
+        "artStyle", this, &Body::artStyle));
+    _propertyRegistry.push_back(std::make_unique<PropertyRef<Body, float>>(
+        "height", this, &Body::height));
+    _propertyRegistry.push_back(std::make_unique<PropertyRef<Body, float>>(
+        "hitboxHeight", this, &Body::hitboxHeight));
+    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Body, float>>(
+        "eyeHeight", this, &Body::getEyeHeight, nullptr));
+    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Body, float>>(
+        "nametagHeight", this, &Body::getNametagHeight, nullptr));
+}
 
 Body::Body(std::string shape, std::string artStyle)
     : shape(shape), artStyle(artStyle), formation()
@@ -177,12 +194,12 @@ Body Body::createFromConcept(const ObjectConcept& concept) {
     int index = 0;
     // Iterate over the concept's members and create generic body parts for each
     for(const auto& member : concept.members()) {
-        BodyPart* bp = new BodyPart("concept-part-" + std::to_string(index++), BodyPart::Type::Undefined, Object::ShapeKind::Cube, glm::vec3(1.0f));
+        BodyPart* bp = new BodyPart("concept-part-" + std::to_string(index++), BodyPart::Type::Undefined, ObjectTypes::ShapeKind::Cube, glm::vec3(1.0f));
         if (member.hasGeometry) {
             bp->setShape(member.kind);
             bp->setTransform(member.relativeTransform);
         }
         avatar.addPart(bp);
     }
-    return std::move(avatar);
+    return avatar;
 }
