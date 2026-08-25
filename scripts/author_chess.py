@@ -602,7 +602,7 @@ def build_laws():
         "law-chess-select",
         "select-own-piece",
         0,
-        ["object-clicked"],
+        ["square-clicked"],
         all_of(
             IS_PIECE,
             ON_BOARD,

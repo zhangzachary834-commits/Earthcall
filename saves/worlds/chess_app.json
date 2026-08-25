@@ -14610,7 +14610,7 @@
         "object-clicked"
       ],
       "law-chess-select": [
-        "object-clicked"
+        "square-clicked"
       ],
       "law-chess-deselect-others": [
         "piece-selected"
