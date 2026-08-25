@@ -9,7 +9,7 @@ Still open, and they are comments / leftover surface, not a seventh rung:
 
 - Write the sqrt-versus-`Pow(_, 0.5)` canonical rule next to the `MathNode::Op` values so `toScalarForm`, the emitter, and any simplifier pick the same spelling.
 - `emitNode` / `emitRpn` / `evalRpn` still exist as fallbacks. Do not delete them to "finish" Rung 4 without migrating remaining Expr/RPN saves.
-- Person-facing spawn path, event name, and seed twin: [`SHAPE_GENERATOR_LAW_AUDIT_2026-08-18.md`](../../audits/SHAPE_GENERATOR_LAW_AUDIT_2026-08-18.md).
+- Person-facing spawn path, event name, and seed twin: [`SHAPE_GENERATOR_LAW_AUDIT_2026-08-18.md`](../../../audits/SHAPE_GENERATOR_LAW_AUDIT_2026-08-18.md).
 
 ## Completed Rungs Summary
 

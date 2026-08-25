@@ -138,8 +138,9 @@ at 347 lines. Exactly one of these is the First Mover of record for `saves/world
 from outside there is no way to tell which — which matters more here than in an ordinary repo,
 because authorship is meant to be traceable.
 
-- [ ] Keep the one that authored the shipped world, name it so in a header comment, move the rest
+- [x] Keep the one that authored the shipped world, name it so in a header comment, move the rest
       to `scratch/attic/`. `scratch/` is a workshop; `scripts/` should not hold v2 through v4.
+      *Done and verified: Kept `scripts/author_chess.py` (authored `saves/worlds/chess_app.json`) and `scripts/author_chess_clean.py` (authored `saves/worlds/chess_first_mover.json`) with clear provenance header comments; moved redundant v2–v7 generator/rewrite scripts to `scratch/attic/` via git mv (2026-08-25).*
 
 ## 7. Three near-identical documentation trees
 

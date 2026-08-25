@@ -88,9 +88,7 @@ const Sealed kSealedRegister[] = {
     // the slot keeps this a valid array so the walk below still compiles.
     {"", "ledger empty — World folded into Zone"},
 
-    // Perspective is NOT probed: Perspective.cpp is empty, so its constructor is
-    // declared and never defined. It is an uninstantiable stub, not a being with
-    // hidden state — nothing to register until something implements it.
+    // Perspective stub retired (PersonPerspective is the implemented perspective model).
 };
 
 bool isSealed(const std::string& being) {

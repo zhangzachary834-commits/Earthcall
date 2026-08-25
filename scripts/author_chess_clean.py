@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+"""First-Mover authoring script generating saves/worlds/chess_first_mover.json.
+
+Authors a clean 32-piece chess set with OntoMath Piecewise transforms and
+explicit Gemini First Mover identity being.
+"""
 import json
 
 def get_mapping_pieces():
