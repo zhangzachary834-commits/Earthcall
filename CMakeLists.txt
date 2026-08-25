@@ -200,6 +200,8 @@ if(NOT EMSCRIPTEN)
         src/Singularity/Screen/WebGPU/WebGpuContext.mm
         src/Singularity/Screen/WebGPU/WebGpuRenderer.cpp
         src/Singularity/Screen/WebGPU/SdfWgsl.cpp
+        src/Singularity/Screen/WebGPU/GpuBufferPool.cpp
+        src/Singularity/Screen/WebGPU/GpuMeshCache.cpp
     )
 
     add_executable(earthcall_webgpu src/entry.cpp ${WEBGPU_APP_SOURCES} ${IMGUI_WEBGPU_SOURCES})
@@ -252,8 +254,13 @@ if(NOT EMSCRIPTEN)
     foreach(TEST_SOURCE ${TEST_FILES})
         get_filename_component(TEST_NAME ${TEST_SOURCE} NAME_WE)
 
-        if (${TEST_NAME} MATCHES "webgpu_.*")
-            add_executable(${TEST_NAME} ${TEST_SOURCE} src/Singularity/Screen/WebGPU/WebGpuRenderer.cpp src/Singularity/Screen/WebGPU/SdfWgsl.cpp src/Singularity/Screen/WebGPU/WebGpuContext.mm)
+        if (${TEST_NAME} MATCHES "webgpu_.*" OR ${TEST_NAME} STREQUAL "gpu_mastery_test")
+            add_executable(${TEST_NAME} ${TEST_SOURCE}
+                src/Singularity/Screen/WebGPU/WebGpuRenderer.cpp
+                src/Singularity/Screen/WebGPU/SdfWgsl.cpp
+                src/Singularity/Screen/WebGPU/GpuBufferPool.cpp
+                src/Singularity/Screen/WebGPU/GpuMeshCache.cpp
+                src/Singularity/Screen/WebGPU/WebGpuContext.mm)
             target_include_directories(${TEST_NAME} PRIVATE ${WGPU_NATIVE_DIR}/include)
             target_compile_definitions(${TEST_NAME} PRIVATE EARTHCALL_WEBGPU IMGUI_IMPL_WEBGPU_BACKEND_WGPU)
             set_source_files_properties(src/Singularity/Screen/WebGPU/WebGpuContext.mm PROPERTIES LANGUAGE OBJCXX)

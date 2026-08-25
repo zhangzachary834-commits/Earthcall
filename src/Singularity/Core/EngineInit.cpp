@@ -27,6 +27,7 @@
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleWindow.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreationTools.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/Chat.hpp"
+#include "Singularity/Screen/ScreenChannel.hpp"
 #include "ZonesOfEarth/SaveContext.hpp"
 
 #include <GLFW/glfw3.h>
@@ -93,6 +94,9 @@ void Engine::initLogic() {
     // version of any of them survives.
     Singularity::Input::InteractionChannel::syncRegister(*_lawManager);
     Singularity::Input::syncRegisterControlPatterns(*_lawManager, ::categories, *_player);
+
+    // Register first-mover ScreenChannel (GPU graphics telemetry and render governance)
+    Singularity::Screen::ScreenChannel::syncRegister(*_lawManager);
 
     // Inject default physics laws (gravity and kinematics)
     for (const auto& law : Physics::createDefaultPhysicsLaws()) {

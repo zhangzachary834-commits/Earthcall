@@ -10,7 +10,6 @@ namespace Rendering {
         ImGui::TextUnformatted("World & Environment");
         ImGui::Separator();
 
-        ImGui::TextDisabled("Global wireframe is not wired to the renderer.");
 
         if (ImGui::Button("Open Cursor Tools")) {
             state.cursorToolsOpen = true;

@@ -357,8 +357,10 @@ bool WebGpuRenderer::init(const wgpu::Device& gpu, WGPUTextureFormat colorFormat
     ipd.primitive.cullMode = WGPUCullMode_None;
     ipd.depthStencil = &ids;
     ipd.multisample.count = 1; ipd.multisample.mask = 0xFFFFFFFFu;
-    ipd.fragment = &ifrag;
     _imagePipe = wgpuDeviceCreateRenderPipeline(_device, &ipd);
+
+    _bufferPool.init(_device, _queue);
+    _meshCache.init(_device, _queue);
 
     return _sampler && _whiteView && _flatShader && _flatLayout && _imagePipe;
 }
@@ -385,6 +387,8 @@ WGPURenderPipeline WebGpuRenderer::flatPipeline(WGPUPrimitiveTopology topo, Blen
 }
 
 void WebGpuRenderer::shutdown() {
+    _meshCache.shutdown();
+    _bufferPool.shutdown();
     releaseFrameResources();
     if (_depthView) { wgpuTextureViewRelease(_depthView); _depthView = nullptr; }
     if (_depthTex)  { wgpuTextureRelease(_depthTex); _depthTex = nullptr; }
@@ -491,6 +495,8 @@ void WebGpuRenderer::present() {
 
 void WebGpuRenderer::beginFrameOffscreen(WGPUTextureView target, uint32_t width, uint32_t height,
                                          const glm::vec4& clear) {
+    _frameCount++;
+    _meshCache.beginFrame(_frameCount);
     ensureDepth(width, height);
     _encoder = wgpuDeviceCreateCommandEncoder(_device, nullptr);
     WGPURenderPassColorAttachment ca = {};
@@ -536,36 +542,28 @@ void WebGpuRenderer::drawMesh(const geom::TessMesh& mesh, const RenderMaterial& 
         return;
     }
     wgpuRenderPassEncoderSetPipeline(_pass, _meshPipeline);
+    mutableFrameStats().pipelineSwitches++;
 
     const size_t vbytes = mesh.tris.size() * sizeof(geom::TessVertex);
-    WGPUBufferDescriptor vbDesc = {};
-    vbDesc.usage = WGPUBufferUsage_Vertex | WGPUBufferUsage_CopyDst;
-    vbDesc.size = vbytes;
-    WGPUBuffer vbuf = wgpuDeviceCreateBuffer(_device, &vbDesc);
-    wgpuQueueWriteBuffer(_queue, vbuf, 0, mesh.tris.data(), vbytes);
+    WGPUBuffer vbuf = _meshCache.getOrUpload(mesh);
+    uint64_t voffset = 0;
+    if (!vbuf) {
+        auto vAlloc = _bufferPool.suballocateVertex(mesh.tris.data(), vbytes);
+        vbuf = vAlloc.buffer;
+        voffset = vAlloc.offset;
+    }
 
     MeshUniforms u;
     u.viewProj  = _viewProj;
     u.model     = _model;
     u.normalMat = glm::transpose(glm::inverse(_model));
     u.baseColor = glm::vec4(mat.baseColor, mat.opacity);
-    // The scene's light, as recorded by Renderer::setLight. Previously a hardcoded
-    // DIRECTIONAL vector, which diverged from OpenGL's GL_LIGHT0 — that light is
-    // positional and follows the camera, so lighting drifted apart as you moved.
-    // NOTE: params.x/y still carry the MATERIAL's ambient/diffuse coefficients,
-    // whose defaults (0.2/0.8) happen to equal the light's. Under GL_COLOR_MATERIAL
-    // the light's coefficients are what actually apply, so a material overriding
-    // ambient/diffuse will shade differently here than under OpenGL. Unifying that
-    // is a shading-model decision, not a migration step.
+    // The scene's light, as recorded by Renderer::setLight.
     u.lightPos  = glm::vec4(lightPos(), 1.0f);
     u.params    = glm::vec4(mat.ambient, mat.diffuse, mat.specular, mat.shininess);
     u.eyePos    = glm::vec4(_eyePos, 1.0f);
 
-    WGPUBufferDescriptor ubDesc = {};
-    ubDesc.usage = WGPUBufferUsage_Uniform | WGPUBufferUsage_CopyDst;
-    ubDesc.size = sizeof(MeshUniforms);
-    WGPUBuffer ubuf = wgpuDeviceCreateBuffer(_device, &ubDesc);
-    wgpuQueueWriteBuffer(_queue, ubuf, 0, &u, sizeof(MeshUniforms));
+    auto uAlloc = _bufferPool.suballocateUniform(&u, sizeof(MeshUniforms));
 
     // Albedo: upload the material's pixels to a WGPU texture, or fall back to white.
     WGPUTextureView albedoView = _whiteView;
@@ -596,7 +594,7 @@ void WebGpuRenderer::drawMesh(const geom::TessMesh& mesh, const RenderMaterial& 
     }
 
     WGPUBindGroupEntry bge[3] = {};
-    bge[0].binding = 0; bge[0].buffer = ubuf; bge[0].offset = 0; bge[0].size = sizeof(MeshUniforms);
+    bge[0].binding = 0; bge[0].buffer = uAlloc.buffer; bge[0].offset = uAlloc.offset; bge[0].size = uAlloc.size;
     bge[1].binding = 1; bge[1].textureView = albedoView;
     bge[2].binding = 2; bge[2].sampler = _sampler;
     WGPUBindGroupDescriptor bgDesc = {};
@@ -604,11 +602,12 @@ void WebGpuRenderer::drawMesh(const geom::TessMesh& mesh, const RenderMaterial& 
     WGPUBindGroup bindGroup = wgpuDeviceCreateBindGroup(_device, &bgDesc);
 
     wgpuRenderPassEncoderSetBindGroup(_pass, 0, bindGroup, 0, nullptr);
-    wgpuRenderPassEncoderSetVertexBuffer(_pass, 0, vbuf, 0, vbytes);
+    wgpuRenderPassEncoderSetVertexBuffer(_pass, 0, vbuf, voffset, vbytes);
     wgpuRenderPassEncoderDraw(_pass, static_cast<uint32_t>(mesh.tris.size()), 1, 0, 0);
 
-    _frameBuffers.push_back(vbuf);
-    _frameBuffers.push_back(ubuf);
+    mutableFrameStats().drawCalls++;
+    mutableFrameStats().trianglesDrawn += static_cast<uint32_t>(mesh.tris.size() / 3);
+
     _frameBindGroups.push_back(bindGroup);
 }
 
@@ -770,12 +769,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, float extent,
     u.misc = glm::vec4(extent * 1.05f, 1e-4f, extent * 8.0f,
                        prog.needsGradientStep ? 1.0f : 0.0f);
 
-    WGPUBufferDescriptor ubd = {};
-    ubd.usage = WGPUBufferUsage_Uniform | WGPUBufferUsage_CopyDst;
-    ubd.size = sizeof(SdfUniforms);
-    WGPUBuffer ubuf = wgpuDeviceCreateBuffer(_device, &ubd);
-    wgpuQueueWriteBuffer(_queue, ubuf, 0, &u, sizeof(u));
-    _frameBuffers.push_back(ubuf);
+    auto uAlloc = _bufferPool.suballocateUniform(&u, sizeof(SdfUniforms));
 
     WGPUBufferDescriptor pbd = {};
     pbd.usage = WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst;
@@ -785,7 +779,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, float extent,
     _frameBuffers.push_back(pbuf);
 
     WGPUBindGroupEntry bge[2] = {};
-    bge[0].binding = 0; bge[0].buffer = ubuf; bge[0].size = sizeof(u);
+    bge[0].binding = 0; bge[0].buffer = uAlloc.buffer; bge[0].offset = uAlloc.offset; bge[0].size = uAlloc.size;
     bge[1].binding = 1; bge[1].buffer = pbuf; bge[1].size = pbd.size;
     WGPUBindGroupDescriptor bgd = {};
     bgd.layout = sp->bgl; bgd.entryCount = 2; bgd.entries = bge;
@@ -793,9 +787,13 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, float extent,
     _frameBindGroups.push_back(bg);
 
     wgpuRenderPassEncoderSetPipeline(_pass, sp->pipe);
+    mutableFrameStats().pipelineSwitches++;
     wgpuRenderPassEncoderSetBindGroup(_pass, 0, bg, 0, nullptr);
     wgpuRenderPassEncoderSetVertexBuffer(_pass, 0, _sdfCubeVerts, 0, 36 * sizeof(glm::vec3));
     wgpuRenderPassEncoderDraw(_pass, 36, 1, 0, 0);
+
+    mutableFrameStats().drawCalls++;
+    mutableFrameStats().trianglesDrawn += 12;
 }
 
 void WebGpuRenderer::drawParticles(const geom::FieldNode& field, int count) {
@@ -832,31 +830,27 @@ void WebGpuRenderer::drawFlat(WGPURenderPipeline pipe, const std::vector<glm::ve
                              const glm::mat4& mvp, const glm::vec4& color) {
     if (!_pass || verts.empty()) return;
     wgpuRenderPassEncoderSetPipeline(_pass, pipe);
+    mutableFrameStats().pipelineSwitches++;
 
     const size_t vbytes = verts.size() * sizeof(glm::vec3);
-    WGPUBufferDescriptor vbDesc = {};
-    vbDesc.usage = WGPUBufferUsage_Vertex | WGPUBufferUsage_CopyDst; vbDesc.size = vbytes;
-    WGPUBuffer vbuf = wgpuDeviceCreateBuffer(_device, &vbDesc);
-    wgpuQueueWriteBuffer(_queue, vbuf, 0, verts.data(), vbytes);
+    auto vAlloc = _bufferPool.suballocateVertex(verts.data(), vbytes);
 
     FlatUniforms fu{ mvp, color };
-    WGPUBufferDescriptor ubDesc = {};
-    ubDesc.usage = WGPUBufferUsage_Uniform | WGPUBufferUsage_CopyDst; ubDesc.size = sizeof(FlatUniforms);
-    WGPUBuffer ubuf = wgpuDeviceCreateBuffer(_device, &ubDesc);
-    wgpuQueueWriteBuffer(_queue, ubuf, 0, &fu, sizeof(FlatUniforms));
+    auto uAlloc = _bufferPool.suballocateUniform(&fu, sizeof(FlatUniforms));
 
     WGPUBindGroupEntry bge = {};
-    bge.binding = 0; bge.buffer = ubuf; bge.offset = 0; bge.size = sizeof(FlatUniforms);
+    bge.binding = 0; bge.buffer = uAlloc.buffer; bge.offset = uAlloc.offset; bge.size = uAlloc.size;
     WGPUBindGroupDescriptor bgDesc = {};
     bgDesc.layout = _flatBgl; bgDesc.entryCount = 1; bgDesc.entries = &bge;
     WGPUBindGroup bindGroup = wgpuDeviceCreateBindGroup(_device, &bgDesc);
 
     wgpuRenderPassEncoderSetBindGroup(_pass, 0, bindGroup, 0, nullptr);
-    wgpuRenderPassEncoderSetVertexBuffer(_pass, 0, vbuf, 0, vbytes);
+    wgpuRenderPassEncoderSetVertexBuffer(_pass, 0, vAlloc.buffer, vAlloc.offset, vbytes);
     wgpuRenderPassEncoderDraw(_pass, static_cast<uint32_t>(verts.size()), 1, 0, 0);
 
-    _frameBuffers.push_back(vbuf);
-    _frameBuffers.push_back(ubuf);
+    mutableFrameStats().drawCalls++;
+    mutableFrameStats().trianglesDrawn += static_cast<uint32_t>(verts.size() / 3);
+
     _frameBindGroups.push_back(bindGroup);
 }
 
@@ -894,6 +888,16 @@ void WebGpuRenderer::endFrame() {
     wgpuCommandBufferRelease(cmd);
     wgpuCommandEncoderRelease(_encoder);
     _encoder = nullptr;
+
+    // The submit is done recording; reset the allocation pool heads.
+    _bufferPool.resetFrame();
+    _meshCache.endFrame();
+
+    auto& fs = mutableFrameStats();
+    fs.vramAllocatedBytes = _bufferPool.totalVramBytes() + _meshCache.totalCachedBytes();
+    fs.uniformBytesWritten = _bufferPool.bytesWrittenThisFrame();
+    fs.bufferSuballocations = _bufferPool.suballocationsThisFrame();
+    fs.cachedMeshesCount = static_cast<uint32_t>(_meshCache.cachedMeshCount());
 
     // The submit is done recording; the resources it referenced can go now.
     releaseFrameResources();
@@ -994,25 +998,15 @@ void WebGpuRenderer::drawImage2D(const uint8_t* rgba, uint32_t width, uint32_t h
         {{rect.z, rect.w, 0.0f}, {1.0f, 1.0f}},
         {{rect.x, rect.w, 0.0f}, {0.0f, 1.0f}},
     };
-    WGPUBufferDescriptor vbd = {};
-    vbd.usage = WGPUBufferUsage_Vertex | WGPUBufferUsage_CopyDst;
-    vbd.size = sizeof(quad);
-    WGPUBuffer vbuf = wgpuDeviceCreateBuffer(_device, &vbd);
-    wgpuQueueWriteBuffer(_queue, vbuf, 0, quad, sizeof(quad));
-    _frameBuffers.push_back(vbuf);
+    auto vAlloc = _bufferPool.suballocateVertex(quad, sizeof(quad));
 
     FlatUniforms u{};
     u.mvp = _ortho2D;
     u.color = tint;
-    WGPUBufferDescriptor ubd = {};
-    ubd.usage = WGPUBufferUsage_Uniform | WGPUBufferUsage_CopyDst;
-    ubd.size = sizeof(u);
-    WGPUBuffer ubuf = wgpuDeviceCreateBuffer(_device, &ubd);
-    wgpuQueueWriteBuffer(_queue, ubuf, 0, &u, sizeof(u));
-    _frameBuffers.push_back(ubuf);
+    auto uAlloc = _bufferPool.suballocateUniform(&u, sizeof(u));
 
     WGPUBindGroupEntry bge[3] = {};
-    bge[0].binding = 0; bge[0].buffer = ubuf; bge[0].size = sizeof(u);
+    bge[0].binding = 0; bge[0].buffer = uAlloc.buffer; bge[0].offset = uAlloc.offset; bge[0].size = uAlloc.size;
     bge[1].binding = 1; bge[1].textureView = view;
     bge[2].binding = 2; bge[2].sampler = _sampler;
     WGPUBindGroupDescriptor bgd = {};
@@ -1021,9 +1015,13 @@ void WebGpuRenderer::drawImage2D(const uint8_t* rgba, uint32_t width, uint32_t h
     _frameBindGroups.push_back(bg);
 
     wgpuRenderPassEncoderSetPipeline(_pass, _imagePipe);
+    mutableFrameStats().pipelineSwitches++;
     wgpuRenderPassEncoderSetBindGroup(_pass, 0, bg, 0, nullptr);
-    wgpuRenderPassEncoderSetVertexBuffer(_pass, 0, vbuf, 0, sizeof(quad));
+    wgpuRenderPassEncoderSetVertexBuffer(_pass, 0, vAlloc.buffer, vAlloc.offset, sizeof(quad));
     wgpuRenderPassEncoderDraw(_pass, 6, 1, 0, 0);
+
+    mutableFrameStats().drawCalls++;
+    mutableFrameStats().trianglesDrawn += 2;
 }
 
 // ---------------------------------------------------------------------------

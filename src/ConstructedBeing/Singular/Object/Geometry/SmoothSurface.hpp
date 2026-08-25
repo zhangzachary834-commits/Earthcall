@@ -21,8 +21,15 @@ struct TessVertex {
     glm::vec2 uv{0.0f};
 };
 // Triangle soup: every 3 consecutive verts form one triangle (local space).
+#include <atomic>
+inline uint64_t nextTessMeshId() {
+    static std::atomic<uint64_t> s_id{1};
+    return s_id.fetch_add(1, std::memory_order_relaxed);
+}
+
 struct TessMesh {
     std::vector<TessVertex> tris;
+    uint64_t id = nextTessMeshId();
 };
 
 struct SmoothSurfaceData {

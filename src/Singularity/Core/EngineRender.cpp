@@ -9,6 +9,7 @@
 #include "../../Person/Body/BodyPart/BodyPart.hpp"
 #include "../../ConstructedBeing/Singular/Object/Object.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleWindow.hpp"
+#include "Singularity/Screen/ScreenChannel.hpp"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -75,6 +76,11 @@ namespace Core {
         {
             currentRenderer().beginFrame(static_cast<uint32_t>(fbW), static_cast<uint32_t>(fbH),
                                          glm::vec4(0.1f, 0.1f, 0.15f, 1.0f));
+            if (_lawManager) {
+                if (auto* sc = Singularity::Screen::ScreenChannel::find(*_lawManager)) {
+                    currentRenderer().setWireframe(sc->wireframe);
+                }
+            }
         }
 
         // Draw all owned objects cleanly (no hardcoded baseline mutation or skipping ground)
@@ -124,5 +130,18 @@ namespace Core {
         }
 
         currentRenderer().endFrame();
+
+        if (_lawManager) {
+            if (auto* sc = Singularity::Screen::ScreenChannel::find(*_lawManager)) {
+                const auto& stats = currentRenderer().frameStats();
+                sc->updateMetrics(static_cast<int>(stats.drawCalls),
+                                  static_cast<int>(stats.trianglesDrawn),
+                                  static_cast<float>(stats.vramAllocatedBytes),
+                                  static_cast<float>(stats.uniformBytesWritten),
+                                  static_cast<int>(stats.bufferSuballocations),
+                                  static_cast<int>(stats.pipelineSwitches),
+                                  static_cast<int>(stats.cachedMeshesCount));
+            }
+        }
     }
 }

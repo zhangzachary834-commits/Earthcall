@@ -12,6 +12,8 @@
 // reuses drawMesh; drawLines/drawOverlay are stubs pending their own pipelines.
 
 #include "Singularity/Screen/Renderer.hpp"
+#include "Singularity/Screen/WebGPU/GpuBufferPool.hpp"
+#include "Singularity/Screen/WebGPU/GpuMeshCache.hpp"
 
 #include <webgpu/webgpu.h>
 #include <glm/glm.hpp>
@@ -113,6 +115,12 @@ public:
     TextureHandle uploadTexture(TextureHandle handle, const uint8_t* rgba,
                                 uint32_t width, uint32_t height) override;
     void releaseTexture(TextureHandle handle) override;
+
+    // CPU-GPU micro-mastery pool & persistent mesh cache
+    Singularity::Screen::WebGPU::GpuBufferPool& bufferPool() { return _bufferPool; }
+    const Singularity::Screen::WebGPU::GpuBufferPool& bufferPool() const { return _bufferPool; }
+    Singularity::Screen::WebGPU::GpuMeshCache& meshCache() { return _meshCache; }
+    const Singularity::Screen::WebGPU::GpuMeshCache& meshCache() const { return _meshCache; }
 
 protected:
     void applyBeginFrame(uint32_t width, uint32_t height,
@@ -221,6 +229,10 @@ private:
     std::vector<WGPUBindGroup>   _frameBindGroups;
     std::vector<WGPUTexture>     _frameTextures;
     std::vector<WGPUTextureView> _frameTextureViews;
+
+    Singularity::Screen::WebGPU::GpuBufferPool _bufferPool;
+    Singularity::Screen::WebGPU::GpuMeshCache  _meshCache;
+    uint64_t _frameCount = 0;
 
     void releaseFrameResources();
     // Shared flat-colour draw for the overlay verbs: uploads positions + a {mvp,

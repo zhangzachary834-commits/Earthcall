@@ -36,11 +36,26 @@ class Renderer {
 public:
     virtual ~Renderer() = default;
 
+    // Telemetry and GPU micro-mastery stats recorded during the frame.
+    struct FrameStats {
+        uint32_t drawCalls = 0;
+        uint32_t trianglesDrawn = 0;
+        size_t   vramAllocatedBytes = 0;
+        size_t   uniformBytesWritten = 0;
+        uint32_t bufferSuballocations = 0;
+        uint32_t pipelineSwitches = 0;
+        uint32_t cachedMeshesCount = 0;
+    };
+
+    const FrameStats& frameStats() const { return _frameStats; }
+    FrameStats& mutableFrameStats() { return _frameStats; }
+
     // Frame lifecycle. WebGPU needs an explicit render pass per frame; OpenGL is
     // immediate and manages its own framebuffer, so these default to no-ops and
     // only the WebGPU backend overrides them. GameRender brackets its drawing with
     // beginFrame/endFrame so the same call sequence works under either backend.
     void beginFrame(uint32_t width, uint32_t height, const glm::vec4& clearColor) {
+        _frameStats = FrameStats{};
         _viewport = glm::ivec4(0, 0, static_cast<int>(width), static_cast<int>(height));
         applyBeginFrame(width, height, clearColor);
     }
@@ -216,6 +231,7 @@ private:
     glm::vec3 _lightDiffuse{0.8f};
     glm::vec3 _lightSpecular{1.0f};
     bool      _lightingOn = true;
+    FrameStats _frameStats;
 };
 
 // Topology adapters. The fixed-function call sites emitted GL_QUADS, GL_POLYGON
