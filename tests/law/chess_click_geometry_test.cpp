@@ -231,6 +231,92 @@ int main() {
                          : "  **pawn did NOT move — this is what a Person's click looks like when it fails**\n");
     allHit = allHit && moveOk;
 
+    // ------------------------------------------------------------------
+    // Phase 3: Camera projection pick with realistic mouse movement
+    // (velocity deltas before click). Moves black pawn e7 -> e5.
+    // ------------------------------------------------------------------
+    Object* blackPawnE7 = findObj(*active, "piece-black-pawn-4-6");
+    assert(blackPawnE7);
+
+    std::cout << "--- Phase 3: black pawn e7 -> e5 via camera perspective picking ---\n";
+    int fbW = 1280, fbH = 720;
+    glm::mat4 proj = glm::perspective(glm::radians(45.0f), (float)fbW / (float)fbH, 0.1f, 200.0f);
+    glm::mat4 view = glm::lookAt(camera.pos, camera.pos + camera.front, camera.up);
+    glm::mat4 invVP = glm::inverse(proj * view);
+
+    auto unprojectScreen = [&](float sx, float sy, glm::vec3& outOrig, glm::vec3& outDir) {
+        float ndcX = (sx / (float)fbW) * 2.0f - 1.0f;
+        float ndcY = 1.0f - (sy / (float)fbH) * 2.0f;
+        glm::vec4 nearW = invVP * glm::vec4(ndcX, ndcY, -1.0f, 1.0f);
+        glm::vec4 farW = invVP * glm::vec4(ndcX, ndcY, 1.0f, 1.0f);
+        nearW /= nearW.w;
+        farW /= farW.w;
+        outOrig = glm::vec3(nearW);
+        outDir = glm::normalize(glm::vec3(farW - nearW));
+    };
+
+    glm::vec3 e7Pos = blackPawnE7->getPosition();
+    glm::vec4 e7Clip = proj * view * glm::vec4(e7Pos, 1.0f);
+    glm::vec3 e7Ndc = glm::vec3(e7Clip) / e7Clip.w;
+    float e7Sx = (e7Ndc.x + 1.0f) * 0.5f * fbW;
+    float e7Sy = (1.0f - e7Ndc.y) * 0.5f * fbH;
+
+    glm::vec3 e5Pos(0.5f, 0.0f, 0.5f);
+    glm::vec4 e5Clip = proj * view * glm::vec4(e5Pos, 1.0f);
+    glm::vec3 e5Ndc = glm::vec3(e5Clip) / e5Clip.w;
+    float e5Sx = (e5Ndc.x + 1.0f) * 0.5f * fbW;
+    float e5Sy = (1.0f - e5Ndc.y) * 0.5f * fbH;
+
+    // Moving mouse across screen towards e7 before clicking (simulates velocity delta on press frame)
+    Singularity::Input::InteractionChannel::Sense simSense;
+    unprojectScreen(e7Sx - 25.0f, e7Sy - 30.0f, simSense.rayOrigin, simSense.rayDirection);
+    simSense.pointerX = e7Sx - 25.0f;
+    simSense.pointerY = e7Sy - 30.0f;
+    simSense.left = false;
+    interaction->observe(simSense, reachable);
+
+    // Frame 1: Press on e7 pawn (pointerX jumps by 25px, testing dragTotal displacement fix)
+    unprojectScreen(e7Sx, e7Sy, simSense.rayOrigin, simSense.rayDirection);
+    simSense.pointerX = e7Sx;
+    simSense.pointerY = e7Sy;
+    simSense.left = true;
+    interaction->observe(simSense, reachable);
+
+    // Frame 2: Release on e7 pawn
+    simSense.left = false;
+    interaction->observe(simSense, reachable);
+    lawManager.tick();
+
+    bool blackPawnSelected = asBool(*blackPawnE7, "isSelected");
+    if (!blackPawnSelected) {
+        std::cout << "  **black pawn e7 was not selected after click**\n";
+    }
+
+    // Move to e5 square with mouse velocity
+    unprojectScreen(e5Sx - 40.0f, e5Sy - 40.0f, simSense.rayOrigin, simSense.rayDirection);
+    simSense.pointerX = e5Sx - 40.0f;
+    simSense.pointerY = e5Sy - 40.0f;
+    simSense.left = false;
+    interaction->observe(simSense, reachable);
+
+    // Frame 1: Press on e5 board square
+    unprojectScreen(e5Sx, e5Sy, simSense.rayOrigin, simSense.rayDirection);
+    simSense.pointerX = e5Sx;
+    simSense.pointerY = e5Sy;
+    simSense.left = true;
+    interaction->observe(simSense, reachable);
+
+    // Frame 2: Release on e5 board square
+    simSense.left = false;
+    interaction->observe(simSense, reachable);
+    lawManager.tick();
+
+    const int b_gx = asInt(*blackPawnE7, "gridX");
+    const int b_gy = asInt(*blackPawnE7, "gridY");
+    std::cout << "  black pawn now at (" << b_gx << "," << b_gy << ") turn=" << asInt(*state, "turn") << "\n";
+    bool blackMoveOk = blackPawnSelected && (b_gx == 4 && b_gy == 4) && (asInt(*state, "turn") == 0);
+    allHit = allHit && blackMoveOk;
+
     std::cout << "==================================================\n";
     std::cout << (allHit ? "chess_click_geometry_test: ALL OK"
                           : "chess_click_geometry_test: FAILURES FOUND")

@@ -205,8 +205,8 @@ void InteractionChannel::observe(const Sense& sense,
     }
 
     if (leftDown && !pressedId.empty()) {
-        dragTotalX += dragX;
-        dragTotalY += dragY;
+        dragTotalX = sense.pointerX - _pressX;
+        dragTotalY = sense.pointerY - _pressY;
         const float travelled = std::sqrt(dragTotalX * dragTotalX +
                                           dragTotalY * dragTotalY);
         if (!dragging && travelled > kClickSlopPixels) {
