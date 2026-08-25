@@ -277,7 +277,33 @@ int main(int argc, char** argv) {
     assert(asInt(*whiteRookA1, "gridY") == 0);
     std::cout << "  rook still on a1 (path blocked)\n";
 
-    (void)whiteBishopC1;
+    std::cout << "--- legal: white bishop c1 moves to e3 (slope +1 diagonal) ---\n";
+    // d2 pawn is unmade, so c1 bishop has open path to e3 (2,0 -> 4,2)
+    click(interaction, lawManager, whiteBishopC1, -1.5f, 0.4f, -3.5f);
+    click(interaction, lawManager, board, 0.5f, 0.0f, -1.5f); // e3
+    assert(asInt(*whiteBishopC1, "gridX") == 4);
+    assert(asInt(*whiteBishopC1, "gridY") == 2);
+    assert(asInt(*state, "turn") == 1);
+    std::cout << "  bishop moved c1-e3\n";
+
+    std::cout << "--- legal: black queen d8 moves to a5 (slope -1 diagonal) giving distant check to white king at e1 ---\n";
+    click(interaction, lawManager, blackQueen, -0.5f, 0.4f, 3.5f); // d8
+    click(interaction, lawManager, board, 3.5f, 0.0f, -0.5f); // h4
+    assert(asInt(*blackQueen, "gridX") == 7);
+    assert(asInt(*blackQueen, "gridY") == 3);
+    assert(asInt(*state, "turn") == 0);
+    std::cout << "  black queen moved d8-h4 (clear slope -1 diagonal across board)\n";
+
+    std::cout << "--- distant check test: black queen on h4 (7,3) attacks white king on e1 (4,0) ---\n";
+    Object* whitePawnF2 = findObj(*active, "piece-white-pawn-5-1");
+    assert(whitePawnF2);
+    click(interaction, lawManager, whitePawnF2, 1.5f, 0.3f, -2.5f); // f2
+    click(interaction, lawManager, board, 1.5f, 0.0f, -0.5f); // f4 (vacates diagonal to king!)
+    assert(asInt(*whitePawnF2, "gridX") == 5);
+    assert(asInt(*whitePawnF2, "gridY") == 1);
+    assert(asInt(*state, "turn") == 0); // Still white turn, move reverted!
+    std::cout << "  f2 pawn move reverted because it exposed king to distant diagonal check from queen at h4!\n";
+
     (void)whiteKnightB1;
     (void)blackPawnD7;
 

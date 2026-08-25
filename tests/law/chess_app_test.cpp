@@ -277,7 +277,54 @@ int main(int argc, char** argv) {
     assert(asInt(*whiteRookA1, "gridY") == 0);
     std::cout << "  rook still on a1 (path blocked)\n";
 
-    (void)whiteBishopC1;
+    std::cout << "--- legal: white bishop c1 moves to e3 (slope +1 diagonal) ---\n";
+    // d2 pawn is unmade, so c1 bishop has open path to e3 (2,0 -> 4,2)
+    click(interaction, lawManager, whiteBishopC1, -1.5f, 0.4f, -3.5f);
+    click(interaction, lawManager, board, 0.5f, 0.0f, -1.5f); // e3
+    assert(asInt(*whiteBishopC1, "gridX") == 4);
+    assert(asInt(*whiteBishopC1, "gridY") == 2);
+    assert(asInt(*state, "turn") == 1);
+    std::cout << "  bishop moved c1-e3\n";
+
+    std::cout << "--- legal: black queen d8 moves to a5 (slope -1 diagonal) giving distant check to white king at e1 ---\n";
+    // d8 is (3, 7). a5 is (0, 4). Path is (2, 6) c7 [black pawn], wait: d7 pawn was d7 (3,6)?
+    // d7 pawn is at (3,6), c7 is at (2,6). Let's check c7:
+    // d8 (3,7) to a5 (0,4): intervening square is (2,6) which is c7.
+    // Let's check black bishop or black queen diagonal:
+    // Black queen d8 to h4 (3,7 -> 7,3): dx=4, dy=-4 (slope -1 diagonal).
+    // Intervening squares: e7 (4,6) [e7 pawn moved to e5!], f6 (5,5) [empty], g5 (6,4) [empty].
+    // Path from d8 to h4 is completely clear!
+    click(interaction, lawManager, blackQueen, -0.5f, 0.4f, 3.5f); // d8
+    click(interaction, lawManager, board, 3.5f, 0.0f, -0.5f); // h4
+    assert(asInt(*blackQueen, "gridX") == 7);
+    assert(asInt(*blackQueen, "gridY") == 3);
+    assert(asInt(*state, "turn") == 0);
+    std::cout << "  black queen moved d8-h4 (clear slope -1 diagonal across board)\n";
+
+    std::cout << "--- distant check test: black queen on h4 (7,3) attacks white king on e1 (4,0) ---\n";
+    // King is at e1 (4,0). Queen is at h4 (7,3).
+    // Intervening squares on diagonal from h4 (7,3) to e1 (4,0):
+    // g2 (6,1) has white pawn? g2 is (6,1). Let's check:
+    // If g2 white pawn moves g2-g3 (blocking the check), it is legal!
+    // But if white attempts a move that leaves king in distant check (e.g. moving a2-a3):
+    // White king would be exposed to distant check from black queen on h4 (7,3) along diagonal!
+    // dx = 7-4 = 3, dy = 3-0 = 3. Distance = 3 squares across board!
+    // But f2 pawn is at (5,1). Intervening square is (5,1) and (6,2).
+    // Let's test moving f2 pawn to f4 (5,1 -> 5,3):
+    // Moving f2-f4 vacates (5,1). But if g2 pawn is at (6,1), diagonal is (4,0)-(5,1)-(6,2)-(7,3).
+    // Square (5,1) was occupied by f2 pawn. When f2 moves to f4, (5,1) is VACATED and (6,2) is EMPTY!
+    // So the diagonal between black queen h4 (7,3) and white king e1 (4,0) becomes COMPLETELY OPEN!
+    // Thus white moving f2-f4 self-checks white king via distant queen on h4 and MUST BE REVERTED!
+    Object* whitePawnF2 = findObj(*active, "piece-white-pawn-5-1");
+    assert(whitePawnF2);
+    click(interaction, lawManager, whitePawnF2, 1.5f, 0.3f, -2.5f); // f2
+    click(interaction, lawManager, board, 1.5f, 0.0f, -0.5f); // f4 (vacates diagonal to king!)
+    // The move MUST be reverted because king is in distant diagonal check from Queen on h4!
+    assert(asInt(*whitePawnF2, "gridX") == 5);
+    assert(asInt(*whitePawnF2, "gridY") == 1);
+    assert(asInt(*state, "turn") == 0); // Still white turn, move reverted!
+    std::cout << "  f2 pawn move reverted because it exposed king to distant diagonal check from queen at h4!\n";
+
     (void)whiteKnightB1;
     (void)blackPawnD7;
 

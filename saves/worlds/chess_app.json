@@ -511,6 +511,42 @@
           "t": "int",
           "v": 5
         },
+        "sliderRankActive": {
+          "t": "bool",
+          "v": false
+        },
+        "sliderFileActive": {
+          "t": "bool",
+          "v": false
+        },
+        "sliderDiagActive": {
+          "t": "bool",
+          "v": false
+        },
+        "sliderRankX": {
+          "t": "int",
+          "v": -1
+        },
+        "sliderRankY": {
+          "t": "int",
+          "v": -1
+        },
+        "sliderFileX": {
+          "t": "int",
+          "v": -1
+        },
+        "sliderFileY": {
+          "t": "int",
+          "v": -1
+        },
+        "sliderDiagX": {
+          "t": "int",
+          "v": -1
+        },
+        "sliderDiagY": {
+          "t": "int",
+          "v": -1
+        },
         "kingX": {
           "t": "int",
           "v": 4
@@ -5083,7 +5119,13 @@
       "law-chess-check-pawn-b",
       "law-chess-check-knight",
       "law-chess-check-king",
-      "law-chess-check-adjacent-slide",
+      "law-chess-check-slider-rank-candidate",
+      "law-chess-check-slider-file-candidate",
+      "law-chess-check-slider-diag-candidate",
+      "law-chess-eval-slider-rank",
+      "law-chess-eval-slider-file",
+      "law-chess-eval-slider-diag",
+      "law-chess-check-scan-complete",
       "law-chess-check-evaluated",
       "law-chess-revert",
       "law-chess-revert-capture",
@@ -8712,56 +8754,113 @@
                           }
                         },
                         {
-                          "kind": 6,
-                          "function": {
-                            "input": "x",
-                            "pieces": [
-                              {
-                                "expr": {
-                                  "terms": [
-                                    {
-                                      "c": 1.0,
-                                      "factors": {
-                                        "gx": 1.0
-                                      }
-                                    },
-                                    {
-                                      "c": -1.0,
-                                      "factors": {
-                                        "gy": 1.0
-                                      }
-                                    },
-                                    {
-                                      "c": -1.0,
-                                      "factors": {
-                                        "sx": 1.0
-                                      }
-                                    },
-                                    {
-                                      "c": 1.0,
-                                      "factors": {
-                                        "sy": 1.0
-                                      }
+                          "kind": 4,
+                          "children": [
+                            {
+                              "kind": 6,
+                              "function": {
+                                "input": "x",
+                                "pieces": [
+                                  {
+                                    "expr": {
+                                      "terms": [
+                                        {
+                                          "c": 1.0,
+                                          "factors": {
+                                            "gx": 1.0
+                                          }
+                                        },
+                                        {
+                                          "c": -1.0,
+                                          "factors": {
+                                            "gy": 1.0
+                                          }
+                                        },
+                                        {
+                                          "c": -1.0,
+                                          "factors": {
+                                            "sx": 1.0
+                                          }
+                                        },
+                                        {
+                                          "c": 1.0,
+                                          "factors": {
+                                            "sy": 1.0
+                                          }
+                                        }
+                                      ]
                                     }
-                                  ]
-                                }
+                                  }
+                                ]
+                              },
+                              "bindings": {
+                                "gx": "gridX",
+                                "gy": "gridY",
+                                "sx": "@state.chess.selectedX",
+                                "sy": "@state.chess.selectedY"
+                              },
+                              "lo": {
+                                "t": "double",
+                                "v": 0.0
+                              },
+                              "hi": {
+                                "t": "double",
+                                "v": 0.0
                               }
-                            ]
-                          },
-                          "bindings": {
-                            "gx": "gridX",
-                            "gy": "gridY",
-                            "sx": "@state.chess.selectedX",
-                            "sy": "@state.chess.selectedY"
-                          },
-                          "lo": {
-                            "t": "double",
-                            "v": 0.0
-                          },
-                          "hi": {
-                            "t": "double",
-                            "v": 0.0
-                          }
+                            },
+                            {
+                              "kind": 6,
+                              "function": {
+                                "input": "x",
+                                "pieces": [
+                                  {
+                                    "expr": {
+                                      "terms": [
+                                        {
+                                          "c": 1.0,
+                                          "factors": {
+                                            "gx": 1.0
+                                          }
+                                        },
+                                        {
+                                          "c": 1.0,
+                                          "factors": {
+                                            "gy": 1.0
+                                          }
+                                        },
+                                        {
+                                          "c": -1.0,
+                                          "factors": {
+                                            "sx": 1.0
+                                          }
+                                        },
+                                        {
+                                          "c": -1.0,
+                                          "factors": {
+                                            "sy": 1.0
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  }
+                                ]
+                              },
+                              "bindings": {
+                                "gx": "gridX",
+                                "gy": "gridY",
+                                "sx": "@state.chess.selectedX",
+                                "sy": "@state.chess.selectedY"
+                              },
+                              "lo": {
+                                "t": "double",
+                                "v": 0.0
+                              },
+                              "hi": {
+                                "t": "double",
+                                "v": 0.0
+                              }
+                            }
+                          ]
                         },
                         {
                           "kind": 4,
@@ -10078,56 +10177,113 @@
                               }
                             },
                             {
-                              "kind": 6,
-                              "function": {
-                                "input": "x",
-                                "pieces": [
-                                  {
-                                    "expr": {
-                                      "terms": [
-                                        {
-                                          "c": 1.0,
-                                          "factors": {
-                                            "gx": 1.0
-                                          }
-                                        },
-                                        {
-                                          "c": -1.0,
-                                          "factors": {
-                                            "gy": 1.0
-                                          }
-                                        },
-                                        {
-                                          "c": -1.0,
-                                          "factors": {
-                                            "sx": 1.0
-                                          }
-                                        },
-                                        {
-                                          "c": 1.0,
-                                          "factors": {
-                                            "sy": 1.0
-                                          }
+                              "kind": 4,
+                              "children": [
+                                {
+                                  "kind": 6,
+                                  "function": {
+                                    "input": "x",
+                                    "pieces": [
+                                      {
+                                        "expr": {
+                                          "terms": [
+                                            {
+                                              "c": 1.0,
+                                              "factors": {
+                                                "gx": 1.0
+                                              }
+                                            },
+                                            {
+                                              "c": -1.0,
+                                              "factors": {
+                                                "gy": 1.0
+                                              }
+                                            },
+                                            {
+                                              "c": -1.0,
+                                              "factors": {
+                                                "sx": 1.0
+                                              }
+                                            },
+                                            {
+                                              "c": 1.0,
+                                              "factors": {
+                                                "sy": 1.0
+                                              }
+                                            }
+                                          ]
                                         }
-                                      ]
-                                    }
+                                      }
+                                    ]
+                                  },
+                                  "bindings": {
+                                    "gx": "gridX",
+                                    "gy": "gridY",
+                                    "sx": "@state.chess.selectedX",
+                                    "sy": "@state.chess.selectedY"
+                                  },
+                                  "lo": {
+                                    "t": "double",
+                                    "v": 0.0
+                                  },
+                                  "hi": {
+                                    "t": "double",
+                                    "v": 0.0
                                   }
-                                ]
-                              },
-                              "bindings": {
-                                "gx": "gridX",
-                                "gy": "gridY",
-                                "sx": "@state.chess.selectedX",
-                                "sy": "@state.chess.selectedY"
-                              },
-                              "lo": {
-                                "t": "double",
-                                "v": 0.0
-                              },
-                              "hi": {
-                                "t": "double",
-                                "v": 0.0
-                              }
+                                },
+                                {
+                                  "kind": 6,
+                                  "function": {
+                                    "input": "x",
+                                    "pieces": [
+                                      {
+                                        "expr": {
+                                          "terms": [
+                                            {
+                                              "c": 1.0,
+                                              "factors": {
+                                                "gx": 1.0
+                                              }
+                                            },
+                                            {
+                                              "c": 1.0,
+                                              "factors": {
+                                                "gy": 1.0
+                                              }
+                                            },
+                                            {
+                                              "c": -1.0,
+                                              "factors": {
+                                                "sx": 1.0
+                                              }
+                                            },
+                                            {
+                                              "c": -1.0,
+                                              "factors": {
+                                                "sy": 1.0
+                                              }
+                                            }
+                                          ]
+                                        }
+                                      }
+                                    ]
+                                  },
+                                  "bindings": {
+                                    "gx": "gridX",
+                                    "gy": "gridY",
+                                    "sx": "@state.chess.selectedX",
+                                    "sy": "@state.chess.selectedY"
+                                  },
+                                  "lo": {
+                                    "t": "double",
+                                    "v": 0.0
+                                  },
+                                  "hi": {
+                                    "t": "double",
+                                    "v": 0.0
+                                  }
+                                }
+                              ]
                             },
                             {
                               "kind": 4,
@@ -11327,6 +11483,78 @@
               }
             },
             {
+              "kind": 0,
+              "path": "@state.chess.sliderRankActive",
+              "operand": {
+                "t": "bool",
+                "v": false
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@state.chess.sliderFileActive",
+              "operand": {
+                "t": "bool",
+                "v": false
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@state.chess.sliderDiagActive",
+              "operand": {
+                "t": "bool",
+                "v": false
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@state.chess.sliderRankX",
+              "operand": {
+                "t": "int",
+                "v": -1
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@state.chess.sliderRankY",
+              "operand": {
+                "t": "int",
+                "v": -1
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@state.chess.sliderFileX",
+              "operand": {
+                "t": "int",
+                "v": -1
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@state.chess.sliderFileY",
+              "operand": {
+                "t": "int",
+                "v": -1
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@state.chess.sliderDiagX",
+              "operand": {
+                "t": "int",
+                "v": -1
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@state.chess.sliderDiagY",
+              "operand": {
+                "t": "int",
+                "v": -1
+              }
+            },
+            {
               "kind": 10,
               "eventType": "king-probed",
               "publishSubject": "state.chess",
@@ -12429,8 +12657,8 @@
         "applicationLog": []
       },
       {
-        "id": "law-chess-check-adjacent-slide",
-        "name": "adjacent-slider-gives-check",
+        "id": "law-chess-check-slider-rank-candidate",
+        "name": "candidate-slider-rank",
         "enabled": true,
         "authority": 0,
         "activation": 0,
@@ -12487,6 +12715,323 @@
                       "op": 0,
                       "operand": {
                         "t": "int",
+                        "v": 4
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "kind": 0,
+              "path": "gridY",
+              "op": 0,
+              "operandPath": "@state.chess.kingY"
+            },
+            {
+              "kind": 0,
+              "path": "gridX",
+              "op": 1,
+              "operandPath": "@state.chess.kingX"
+            }
+          ]
+        },
+        "actionModel": {
+          "kind": 5,
+          "children": [
+            {
+              "kind": 8,
+              "path": "@state.chess.sliderRankX",
+              "bindings": {
+                "gx": "gridX"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "gx": 1.0
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 8,
+              "path": "@state.chess.sliderRankY",
+              "bindings": {
+                "gy": "gridY"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "gy": 1.0
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@state.chess.sliderRankActive",
+              "operand": {
+                "t": "bool",
+                "v": true
+              }
+            },
+            {
+              "kind": 10,
+              "eventType": "slider-rank-scanned",
+              "publishSubject": "state.chess",
+              "publishObject": ""
+            }
+          ]
+        },
+        "provenance": [
+          {
+            "type": "authored-by",
+            "entityA": "law-chess-check-slider-rank-candidate",
+            "entityB": "grok-4.6",
+            "directed": true,
+            "weight": 1.0,
+            "events": [
+              {
+                "description": "authored-by",
+                "deltaWeight": 1.0,
+                "timestamp": 1787390000
+              }
+            ]
+          }
+        ],
+        "applicationLog": []
+      },
+      {
+        "id": "law-chess-check-slider-file-candidate",
+        "name": "candidate-slider-file",
+        "enabled": true,
+        "authority": 0,
+        "activation": 0,
+        "scope": 1,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "grok-4.6"
+        ],
+        "conditionSubjects": [],
+        "targets": [],
+        "conditionModel": {
+          "kind": 3,
+          "children": [
+            {
+              "kind": 3,
+              "children": [
+                {
+                  "kind": 2,
+                  "relationType": "instance-of",
+                  "otherId": "category.chess.piece"
+                },
+                {
+                  "kind": 0,
+                  "path": "onBoard",
+                  "op": 0,
+                  "operand": {
+                    "t": "bool",
+                    "v": true
+                  }
+                },
+                {
+                  "kind": 0,
+                  "path": "chessColor",
+                  "op": 1,
+                  "operandPath": "@state.chess.turn"
+                },
+                {
+                  "kind": 4,
+                  "children": [
+                    {
+                      "kind": 0,
+                      "path": "chessRole",
+                      "op": 0,
+                      "operand": {
+                        "t": "int",
+                        "v": 1
+                      }
+                    },
+                    {
+                      "kind": 0,
+                      "path": "chessRole",
+                      "op": 0,
+                      "operand": {
+                        "t": "int",
+                        "v": 4
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "kind": 0,
+              "path": "gridX",
+              "op": 0,
+              "operandPath": "@state.chess.kingX"
+            },
+            {
+              "kind": 0,
+              "path": "gridY",
+              "op": 1,
+              "operandPath": "@state.chess.kingY"
+            }
+          ]
+        },
+        "actionModel": {
+          "kind": 5,
+          "children": [
+            {
+              "kind": 8,
+              "path": "@state.chess.sliderFileX",
+              "bindings": {
+                "gx": "gridX"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "gx": 1.0
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 8,
+              "path": "@state.chess.sliderFileY",
+              "bindings": {
+                "gy": "gridY"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "gy": 1.0
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@state.chess.sliderFileActive",
+              "operand": {
+                "t": "bool",
+                "v": true
+              }
+            },
+            {
+              "kind": 10,
+              "eventType": "slider-file-scanned",
+              "publishSubject": "state.chess",
+              "publishObject": ""
+            }
+          ]
+        },
+        "provenance": [
+          {
+            "type": "authored-by",
+            "entityA": "law-chess-check-slider-file-candidate",
+            "entityB": "grok-4.6",
+            "directed": true,
+            "weight": 1.0,
+            "events": [
+              {
+                "description": "authored-by",
+                "deltaWeight": 1.0,
+                "timestamp": 1787390000
+              }
+            ]
+          }
+        ],
+        "applicationLog": []
+      },
+      {
+        "id": "law-chess-check-slider-diag-candidate",
+        "name": "candidate-slider-diag",
+        "enabled": true,
+        "authority": 0,
+        "activation": 0,
+        "scope": 1,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "grok-4.6"
+        ],
+        "conditionSubjects": [],
+        "targets": [],
+        "conditionModel": {
+          "kind": 3,
+          "children": [
+            {
+              "kind": 3,
+              "children": [
+                {
+                  "kind": 2,
+                  "relationType": "instance-of",
+                  "otherId": "category.chess.piece"
+                },
+                {
+                  "kind": 0,
+                  "path": "onBoard",
+                  "op": 0,
+                  "operand": {
+                    "t": "bool",
+                    "v": true
+                  }
+                },
+                {
+                  "kind": 0,
+                  "path": "chessColor",
+                  "op": 1,
+                  "operandPath": "@state.chess.turn"
+                },
+                {
+                  "kind": 4,
+                  "children": [
+                    {
+                      "kind": 0,
+                      "path": "chessRole",
+                      "op": 0,
+                      "operand": {
+                        "t": "int",
                         "v": 3
                       }
                     },
@@ -12504,9 +13049,132 @@
               ]
             },
             {
-              "kind": 6,
+              "kind": 0,
+              "path": "gridX",
+              "op": 1,
+              "operandPath": "@state.chess.kingX"
+            },
+            {
+              "kind": 4,
+              "children": [
+                {
+                  "kind": 6,
+                  "function": {
+                    "input": "x",
+                    "pieces": [
+                      {
+                        "expr": {
+                          "terms": [
+                            {
+                              "c": 1.0,
+                              "factors": {
+                                "gx": 1.0
+                              }
+                            },
+                            {
+                              "c": -1.0,
+                              "factors": {
+                                "gy": 1.0
+                              }
+                            },
+                            {
+                              "c": -1.0,
+                              "factors": {
+                                "kx": 1.0
+                              }
+                            },
+                            {
+                              "c": 1.0,
+                              "factors": {
+                                "ky": 1.0
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  "bindings": {
+                    "gx": "gridX",
+                    "gy": "gridY",
+                    "kx": "@state.chess.kingX",
+                    "ky": "@state.chess.kingY"
+                  },
+                  "lo": {
+                    "t": "double",
+                    "v": 0.0
+                  },
+                  "hi": {
+                    "t": "double",
+                    "v": 0.0
+                  }
+                },
+                {
+                  "kind": 6,
+                  "function": {
+                    "input": "x",
+                    "pieces": [
+                      {
+                        "expr": {
+                          "terms": [
+                            {
+                              "c": 1.0,
+                              "factors": {
+                                "gx": 1.0
+                              }
+                            },
+                            {
+                              "c": 1.0,
+                              "factors": {
+                                "gy": 1.0
+                              }
+                            },
+                            {
+                              "c": -1.0,
+                              "factors": {
+                                "kx": 1.0
+                              }
+                            },
+                            {
+                              "c": -1.0,
+                              "factors": {
+                                "ky": 1.0
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  "bindings": {
+                    "gx": "gridX",
+                    "gy": "gridY",
+                    "kx": "@state.chess.kingX",
+                    "ky": "@state.chess.kingY"
+                  },
+                  "lo": {
+                    "t": "double",
+                    "v": 0.0
+                  },
+                  "hi": {
+                    "t": "double",
+                    "v": 0.0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "actionModel": {
+          "kind": 5,
+          "children": [
+            {
+              "kind": 8,
+              "path": "@state.chess.sliderDiagX",
+              "bindings": {
+                "gx": "gridX"
+              },
               "function": {
-                "input": "x",
                 "pieces": [
                   {
                     "expr": {
@@ -12514,181 +13182,173 @@
                         {
                           "c": 1.0,
                           "factors": {
-                            "dx": 2.0
-                          }
-                        },
-                        {
-                          "c": 1.0,
-                          "factors": {
-                            "kx": 2.0
-                          }
-                        },
-                        {
-                          "c": -2.0,
-                          "factors": {
-                            "dx": 1.0,
-                            "kx": 1.0
-                          }
-                        },
-                        {
-                          "c": 1.0,
-                          "factors": {
-                            "dy": 2.0
-                          }
-                        },
-                        {
-                          "c": 1.0,
-                          "factors": {
-                            "ky": 2.0
-                          }
-                        },
-                        {
-                          "c": -2.0,
-                          "factors": {
-                            "dy": 1.0,
-                            "ky": 1.0
+                            "gx": 1.0
                           }
                         }
                       ]
                     }
                   }
                 ]
-              },
-              "bindings": {
-                "dx": "gridX",
-                "kx": "@state.chess.kingX",
-                "dy": "gridY",
-                "ky": "@state.chess.kingY"
-              },
-              "lo": {
-                "t": "double",
-                "v": 1.0
-              },
-              "hi": {
-                "t": "double",
-                "v": 2.0
               }
             },
             {
-              "kind": 4,
+              "kind": 8,
+              "path": "@state.chess.sliderDiagY",
+              "bindings": {
+                "gy": "gridY"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "gy": 1.0
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@state.chess.sliderDiagActive",
+              "operand": {
+                "t": "bool",
+                "v": true
+              }
+            },
+            {
+              "kind": 10,
+              "eventType": "slider-diag-scanned",
+              "publishSubject": "state.chess",
+              "publishObject": ""
+            }
+          ]
+        },
+        "provenance": [
+          {
+            "type": "authored-by",
+            "entityA": "law-chess-check-slider-diag-candidate",
+            "entityB": "grok-4.6",
+            "directed": true,
+            "weight": 1.0,
+            "events": [
+              {
+                "description": "authored-by",
+                "deltaWeight": 1.0,
+                "timestamp": 1787390000
+              }
+            ]
+          }
+        ],
+        "applicationLog": []
+      },
+      {
+        "id": "law-chess-eval-slider-rank",
+        "name": "eval-slider-rank",
+        "enabled": true,
+        "authority": 0,
+        "activation": 0,
+        "scope": 0,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "grok-4.6"
+        ],
+        "conditionSubjects": [],
+        "targets": [],
+        "conditionModel": {
+          "kind": 3,
+          "children": [
+            {
+              "kind": 8,
+              "otherId": "state.chess"
+            },
+            {
+              "kind": 0,
+              "path": "sliderRankActive",
+              "op": 0,
+              "operand": {
+                "t": "bool",
+                "v": true
+              }
+            },
+            {
+              "kind": 5,
               "children": [
                 {
-                  "kind": 0,
-                  "path": "chessRole",
-                  "op": 0,
-                  "operand": {
-                    "t": "int",
-                    "v": 4
-                  }
-                },
-                {
-                  "kind": 3,
+                  "kind": 9,
+                  "beingKind": 1,
                   "children": [
                     {
-                      "kind": 0,
-                      "path": "chessRole",
-                      "op": 0,
-                      "operand": {
-                        "t": "int",
-                        "v": 1
-                      }
-                    },
-                    {
-                      "kind": 4,
+                      "kind": 3,
                       "children": [
                         {
+                          "kind": 2,
+                          "relationType": "instance-of",
+                          "otherId": "category.chess.piece"
+                        },
+                        {
                           "kind": 0,
-                          "path": "gridX",
+                          "path": "onBoard",
                           "op": 0,
-                          "operandPath": "@state.chess.kingX"
+                          "operand": {
+                            "t": "bool",
+                            "v": true
+                          }
                         },
                         {
                           "kind": 0,
                           "path": "gridY",
                           "op": 0,
                           "operandPath": "@state.chess.kingY"
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "kind": 3,
-                  "children": [
-                    {
-                      "kind": 0,
-                      "path": "chessRole",
-                      "op": 0,
-                      "operand": {
-                        "t": "int",
-                        "v": 3
-                      }
-                    },
-                    {
-                      "kind": 6,
-                      "function": {
-                        "input": "x",
-                        "pieces": [
-                          {
-                            "expr": {
-                              "terms": [
+                        },
+                        {
+                          "kind": 4,
+                          "children": [
+                            {
+                              "kind": 3,
+                              "children": [
                                 {
-                                  "c": 1.0,
-                                  "factors": {
-                                    "dx": 2.0
-                                  }
+                                  "kind": 0,
+                                  "path": "gridX",
+                                  "op": 4,
+                                  "operandPath": "@state.chess.sliderRankX"
                                 },
                                 {
-                                  "c": 1.0,
-                                  "factors": {
-                                    "kx": 2.0
-                                  }
+                                  "kind": 0,
+                                  "path": "gridX",
+                                  "op": 2,
+                                  "operandPath": "@state.chess.kingX"
+                                }
+                              ]
+                            },
+                            {
+                              "kind": 3,
+                              "children": [
+                                {
+                                  "kind": 0,
+                                  "path": "gridX",
+                                  "op": 4,
+                                  "operandPath": "@state.chess.kingX"
                                 },
                                 {
-                                  "c": -2.0,
-                                  "factors": {
-                                    "dx": 1.0,
-                                    "kx": 1.0
-                                  }
-                                },
-                                {
-                                  "c": -1.0,
-                                  "factors": {
-                                    "dy": 2.0
-                                  }
-                                },
-                                {
-                                  "c": -1.0,
-                                  "factors": {
-                                    "ky": 2.0
-                                  }
-                                },
-                                {
-                                  "c": 2.0,
-                                  "factors": {
-                                    "dy": 1.0,
-                                    "ky": 1.0
-                                  }
+                                  "kind": 0,
+                                  "path": "gridX",
+                                  "op": 2,
+                                  "operandPath": "@state.chess.sliderRankX"
                                 }
                               ]
                             }
-                          }
-                        ]
-                      },
-                      "bindings": {
-                        "dx": "gridX",
-                        "kx": "@state.chess.kingX",
-                        "dy": "gridY",
-                        "ky": "@state.chess.kingY"
-                      },
-                      "lo": {
-                        "t": "double",
-                        "v": 0.0
-                      },
-                      "hi": {
-                        "t": "double",
-                        "v": 0.0
-                      }
+                          ]
+                        }
+                      ]
                     }
                   ]
                 }
@@ -12739,7 +13399,524 @@
         "provenance": [
           {
             "type": "authored-by",
-            "entityA": "law-chess-check-adjacent-slide",
+            "entityA": "law-chess-eval-slider-rank",
+            "entityB": "grok-4.6",
+            "directed": true,
+            "weight": 1.0,
+            "events": [
+              {
+                "description": "authored-by",
+                "deltaWeight": 1.0,
+                "timestamp": 1787390000
+              }
+            ]
+          }
+        ],
+        "applicationLog": []
+      },
+      {
+        "id": "law-chess-eval-slider-file",
+        "name": "eval-slider-file",
+        "enabled": true,
+        "authority": 0,
+        "activation": 0,
+        "scope": 0,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "grok-4.6"
+        ],
+        "conditionSubjects": [],
+        "targets": [],
+        "conditionModel": {
+          "kind": 3,
+          "children": [
+            {
+              "kind": 8,
+              "otherId": "state.chess"
+            },
+            {
+              "kind": 0,
+              "path": "sliderFileActive",
+              "op": 0,
+              "operand": {
+                "t": "bool",
+                "v": true
+              }
+            },
+            {
+              "kind": 5,
+              "children": [
+                {
+                  "kind": 9,
+                  "beingKind": 1,
+                  "children": [
+                    {
+                      "kind": 3,
+                      "children": [
+                        {
+                          "kind": 2,
+                          "relationType": "instance-of",
+                          "otherId": "category.chess.piece"
+                        },
+                        {
+                          "kind": 0,
+                          "path": "onBoard",
+                          "op": 0,
+                          "operand": {
+                            "t": "bool",
+                            "v": true
+                          }
+                        },
+                        {
+                          "kind": 0,
+                          "path": "gridX",
+                          "op": 0,
+                          "operandPath": "@state.chess.kingX"
+                        },
+                        {
+                          "kind": 4,
+                          "children": [
+                            {
+                              "kind": 3,
+                              "children": [
+                                {
+                                  "kind": 0,
+                                  "path": "gridY",
+                                  "op": 4,
+                                  "operandPath": "@state.chess.sliderFileY"
+                                },
+                                {
+                                  "kind": 0,
+                                  "path": "gridY",
+                                  "op": 2,
+                                  "operandPath": "@state.chess.kingY"
+                                }
+                              ]
+                            },
+                            {
+                              "kind": 3,
+                              "children": [
+                                {
+                                  "kind": 0,
+                                  "path": "gridY",
+                                  "op": 4,
+                                  "operandPath": "@state.chess.kingY"
+                                },
+                                {
+                                  "kind": 0,
+                                  "path": "gridY",
+                                  "op": 2,
+                                  "operandPath": "@state.chess.sliderFileY"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "actionModel": {
+          "kind": 5,
+          "children": [
+            {
+              "kind": 0,
+              "path": "@state.chess.inCheck",
+              "operand": {
+                "t": "bool",
+                "v": true
+              }
+            },
+            {
+              "kind": 8,
+              "path": "@state.chess.checkers",
+              "bindings": {
+                "n": "@state.chess.checkers"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "n": 1.0
+                          }
+                        },
+                        {
+                          "c": 1.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "provenance": [
+          {
+            "type": "authored-by",
+            "entityA": "law-chess-eval-slider-file",
+            "entityB": "grok-4.6",
+            "directed": true,
+            "weight": 1.0,
+            "events": [
+              {
+                "description": "authored-by",
+                "deltaWeight": 1.0,
+                "timestamp": 1787390000
+              }
+            ]
+          }
+        ],
+        "applicationLog": []
+      },
+      {
+        "id": "law-chess-eval-slider-diag",
+        "name": "eval-slider-diag",
+        "enabled": true,
+        "authority": 0,
+        "activation": 0,
+        "scope": 0,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "grok-4.6"
+        ],
+        "conditionSubjects": [],
+        "targets": [],
+        "conditionModel": {
+          "kind": 3,
+          "children": [
+            {
+              "kind": 8,
+              "otherId": "state.chess"
+            },
+            {
+              "kind": 0,
+              "path": "sliderDiagActive",
+              "op": 0,
+              "operand": {
+                "t": "bool",
+                "v": true
+              }
+            },
+            {
+              "kind": 5,
+              "children": [
+                {
+                  "kind": 9,
+                  "beingKind": 1,
+                  "children": [
+                    {
+                      "kind": 3,
+                      "children": [
+                        {
+                          "kind": 2,
+                          "relationType": "instance-of",
+                          "otherId": "category.chess.piece"
+                        },
+                        {
+                          "kind": 0,
+                          "path": "onBoard",
+                          "op": 0,
+                          "operand": {
+                            "t": "bool",
+                            "v": true
+                          }
+                        },
+                        {
+                          "kind": 4,
+                          "children": [
+                            {
+                              "kind": 6,
+                              "function": {
+                                "input": "x",
+                                "pieces": [
+                                  {
+                                    "expr": {
+                                      "terms": [
+                                        {
+                                          "c": 1.0,
+                                          "factors": {
+                                            "gx": 1.0
+                                          }
+                                        },
+                                        {
+                                          "c": -1.0,
+                                          "factors": {
+                                            "gy": 1.0
+                                          }
+                                        },
+                                        {
+                                          "c": -1.0,
+                                          "factors": {
+                                            "kx": 1.0
+                                          }
+                                        },
+                                        {
+                                          "c": 1.0,
+                                          "factors": {
+                                            "ky": 1.0
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  }
+                                ]
+                              },
+                              "bindings": {
+                                "gx": "gridX",
+                                "gy": "gridY",
+                                "kx": "@state.chess.kingX",
+                                "ky": "@state.chess.kingY"
+                              },
+                              "lo": {
+                                "t": "double",
+                                "v": 0.0
+                              },
+                              "hi": {
+                                "t": "double",
+                                "v": 0.0
+                              }
+                            },
+                            {
+                              "kind": 6,
+                              "function": {
+                                "input": "x",
+                                "pieces": [
+                                  {
+                                    "expr": {
+                                      "terms": [
+                                        {
+                                          "c": 1.0,
+                                          "factors": {
+                                            "gx": 1.0
+                                          }
+                                        },
+                                        {
+                                          "c": 1.0,
+                                          "factors": {
+                                            "gy": 1.0
+                                          }
+                                        },
+                                        {
+                                          "c": -1.0,
+                                          "factors": {
+                                            "kx": 1.0
+                                          }
+                                        },
+                                        {
+                                          "c": -1.0,
+                                          "factors": {
+                                            "ky": 1.0
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  }
+                                ]
+                              },
+                              "bindings": {
+                                "gx": "gridX",
+                                "gy": "gridY",
+                                "kx": "@state.chess.kingX",
+                                "ky": "@state.chess.kingY"
+                              },
+                              "lo": {
+                                "t": "double",
+                                "v": 0.0
+                              },
+                              "hi": {
+                                "t": "double",
+                                "v": 0.0
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "kind": 4,
+                          "children": [
+                            {
+                              "kind": 3,
+                              "children": [
+                                {
+                                  "kind": 0,
+                                  "path": "gridX",
+                                  "op": 4,
+                                  "operandPath": "@state.chess.sliderDiagX"
+                                },
+                                {
+                                  "kind": 0,
+                                  "path": "gridX",
+                                  "op": 2,
+                                  "operandPath": "@state.chess.kingX"
+                                }
+                              ]
+                            },
+                            {
+                              "kind": 3,
+                              "children": [
+                                {
+                                  "kind": 0,
+                                  "path": "gridX",
+                                  "op": 4,
+                                  "operandPath": "@state.chess.kingX"
+                                },
+                                {
+                                  "kind": 0,
+                                  "path": "gridX",
+                                  "op": 2,
+                                  "operandPath": "@state.chess.sliderDiagX"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "kind": 4,
+                          "children": [
+                            {
+                              "kind": 3,
+                              "children": [
+                                {
+                                  "kind": 0,
+                                  "path": "gridY",
+                                  "op": 4,
+                                  "operandPath": "@state.chess.sliderDiagY"
+                                },
+                                {
+                                  "kind": 0,
+                                  "path": "gridY",
+                                  "op": 2,
+                                  "operandPath": "@state.chess.kingY"
+                                }
+                              ]
+                            },
+                            {
+                              "kind": 3,
+                              "children": [
+                                {
+                                  "kind": 0,
+                                  "path": "gridY",
+                                  "op": 4,
+                                  "operandPath": "@state.chess.kingY"
+                                },
+                                {
+                                  "kind": 0,
+                                  "path": "gridY",
+                                  "op": 2,
+                                  "operandPath": "@state.chess.sliderDiagY"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "actionModel": {
+          "kind": 5,
+          "children": [
+            {
+              "kind": 0,
+              "path": "@state.chess.inCheck",
+              "operand": {
+                "t": "bool",
+                "v": true
+              }
+            },
+            {
+              "kind": 8,
+              "path": "@state.chess.checkers",
+              "bindings": {
+                "n": "@state.chess.checkers"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "n": 1.0
+                          }
+                        },
+                        {
+                          "c": 1.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "provenance": [
+          {
+            "type": "authored-by",
+            "entityA": "law-chess-eval-slider-diag",
+            "entityB": "grok-4.6",
+            "directed": true,
+            "weight": 1.0,
+            "events": [
+              {
+                "description": "authored-by",
+                "deltaWeight": 1.0,
+                "timestamp": 1787390000
+              }
+            ]
+          }
+        ],
+        "applicationLog": []
+      },
+      {
+        "id": "law-chess-check-scan-complete",
+        "name": "publish-scan-complete",
+        "enabled": true,
+        "authority": 0,
+        "activation": 0,
+        "scope": 0,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "grok-4.6"
+        ],
+        "conditionSubjects": [],
+        "targets": [],
+        "conditionModel": {
+          "kind": 8,
+          "otherId": "state.chess"
+        },
+        "actionModel": {
+          "kind": 10,
+          "eventType": "check-scanned-done",
+          "publishSubject": "state.chess",
+          "publishObject": ""
+        },
+        "provenance": [
+          {
+            "type": "authored-by",
+            "entityA": "law-chess-check-scan-complete",
             "entityB": "grok-4.6",
             "directed": true,
             "weight": 1.0,
@@ -13732,11 +14909,29 @@
       "law-chess-check-king": [
         "check-scanned"
       ],
-      "law-chess-check-adjacent-slide": [
+      "law-chess-check-slider-rank-candidate": [
+        "check-scanned"
+      ],
+      "law-chess-check-slider-file-candidate": [
+        "check-scanned"
+      ],
+      "law-chess-check-slider-diag-candidate": [
+        "check-scanned"
+      ],
+      "law-chess-eval-slider-rank": [
+        "slider-rank-scanned"
+      ],
+      "law-chess-eval-slider-file": [
+        "slider-file-scanned"
+      ],
+      "law-chess-eval-slider-diag": [
+        "slider-diag-scanned"
+      ],
+      "law-chess-check-scan-complete": [
         "check-scanned"
       ],
       "law-chess-check-evaluated": [
-        "check-scanned"
+        "check-scanned-done"
       ],
       "law-chess-revert": [
         "check-evaluated"
