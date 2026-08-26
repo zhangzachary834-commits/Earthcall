@@ -80,6 +80,25 @@ This was already the unified answer to "what time is it in the simulation" befor
 document existed. What was missing was the sentence connecting it to the other
 question below, and the tree entry saying where it lives.
 
+**Under load, the world's clock may run slower than the Person's (2026-08-26).**
+`Zone::update` (`ZONE_UPDATE_SCALING_PLAN.md` Phase 3) accumulates real elapsed `dt`
+into a fixed-timestep accumulator and drains it in `1/60s` substeps, capped at
+`MAX_STEPS_PER_FRAME`. Before this, a slow frame meant more substeps of a *smaller*
+size (`stepDt = dt/steps`) — the world always caught up, at the cost of a positive
+feedback loop: crossing the step threshold instantly doubled that frame's physics
+cost, which made the next frame slower too, a spiral with no floor until the old
+`maxFrameTime` clamp. The fix drops the excess time instead of spending it once the
+cap is hit. This is a real ontological choice, not an implementation detail: **the
+world's clock (`Universe::setClock`, above) can now advance more slowly than the
+Person's own wall-clock time under sustained load**, rather than the frame simply
+taking longer while both clocks stay in lockstep. A Law reading `time`/`time.delta`
+sees the *simulated* elapsed time, which is the honest one to expose — but it means
+"how long has the Person actually been sitting here" is no longer recoverable from
+`time` alone once a session has dropped substeps. Nothing today reads wall-clock time
+alongside `Universe`'s clock to detect or report that gap; if a future Law or First
+Mover ever needs "how far behind is the simulation," that comparison — Person-side
+wall time versus `Universe`'s accumulated `now` — is unbuilt.
+
 ## 3. `Moment` — the authored, comparable *when* on a record
 
 `Moment` (`src/Time/Moment/Moment.hpp`) is a `Singular` whose substance is time itself:
