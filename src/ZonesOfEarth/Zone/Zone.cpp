@@ -377,10 +377,17 @@ bool Zone::removeObjectById(const std::string& identifier) {
 }
 
 void Zone::update(float dt, UpdateTiming* out) {
+    // Every ClockT::now() below is guarded by `out`: the point of the pointer
+    // parameter (ZONE_UPDATE_SCALING_PLAN.md Phase 0) is that the ordinary
+    // frame path — every real frame, `out == nullptr` — pays nothing for
+    // measuring, not even a handful of now() calls. Only a harness that
+    // passes a live UpdateTiming pays for the clock reads.
     using ClockT = std::chrono::high_resolution_clock;
-    auto tStart = ClockT::now();
+    ClockT::time_point tStart;
+    if (out) tStart = ClockT::now();
 
-    auto tGround0 = ClockT::now();
+    ClockT::time_point tGround0;
+    if (out) tGround0 = ClockT::now();
     // The floor is the object a First Mover TAGGED as the floor, or the y=0
     // plane. There is no fall-back to "whatever is at index 1".
     float groundY = 0.0f;
@@ -392,8 +399,10 @@ void Zone::update(float dt, UpdateTiming* out) {
         groundY = gT[3][1] + 0.5f * scaleY;
         break;
     }
-    auto tGround1 = ClockT::now();
-    if (out) out->groundScanMs += std::chrono::duration<double, std::milli>(tGround1 - tGround0).count();
+    if (out) {
+        const auto tGround1 = ClockT::now();
+        out->groundScanMs += std::chrono::duration<double, std::milli>(tGround1 - tGround0).count();
+    }
 
     const float FIXED_DT = 1.0f / 60.0f;
     const int MAX_STEPS_PER_FRAME = 3;
@@ -416,38 +425,46 @@ void Zone::update(float dt, UpdateTiming* out) {
     float stepDt = FIXED_DT;
 
     for (int s = 0; s < steps; ++s) {
-        auto tRot0 = ClockT::now();
+        ClockT::time_point tRot0;
+        if (out) tRot0 = ClockT::now();
         for (const auto& up : _objects) {
             if (up && up->hasPendingRotation()) {
                 up->updateRotation(stepDt);
             }
         }
-        auto tRot1 = ClockT::now();
-        
-        auto tAuto0 = ClockT::now();
+        if (out) {
+            const auto tRot1 = ClockT::now();
+            out->rotationMs += std::chrono::duration<double, std::milli>(tRot1 - tRot0).count();
+        }
+
+        ClockT::time_point tAuto0;
+        if (out) tAuto0 = ClockT::now();
         for (const auto& up : _objects) {
             if (up && up->hasAutomations()) {
                 up->updateAutomations(stepDt);
             }
         }
-        auto tAuto1 = ClockT::now();
+        if (out) {
+            const auto tAuto1 = ClockT::now();
+            out->automationMs += std::chrono::duration<double, std::milli>(tAuto1 - tAuto0).count();
+        }
 
-        auto tPhys0 = ClockT::now();
+        ClockT::time_point tPhys0;
+        if (out) tPhys0 = ClockT::now();
         if (Physics::getLegacyEngineEnabled()) {
             for (const auto& up : _objects) if (up) Physics::getFormFor(up.get());
             Physics::updateBodies(_objects, stepDt, 9.81f, 0.1f, groundY);
         }
-        auto tPhys1 = ClockT::now();
-
         if (out) {
-            out->rotationMs += std::chrono::duration<double, std::milli>(tRot1 - tRot0).count();
-            out->automationMs += std::chrono::duration<double, std::milli>(tAuto1 - tAuto0).count();
+            const auto tPhys1 = ClockT::now();
             out->physicsMs += std::chrono::duration<double, std::milli>(tPhys1 - tPhys0).count();
         }
     }
-    
-    auto tEnd = ClockT::now();
-    if (out) out->totalMs = std::chrono::duration<double, std::milli>(tEnd - tStart).count();
+
+    if (out) {
+        const auto tEnd = ClockT::now();
+        out->totalMs = std::chrono::duration<double, std::milli>(tEnd - tStart).count();
+    }
 }
 
 Zone::~Zone() {}
