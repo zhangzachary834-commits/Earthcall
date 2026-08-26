@@ -495,6 +495,7 @@ void WebGpuRenderer::present() {
 
 void WebGpuRenderer::beginFrameOffscreen(WGPUTextureView target, uint32_t width, uint32_t height,
                                          const glm::vec4& clear) {
+    mutableFrameStats() = FrameStats{};
     _frameCount++;
     _meshCache.beginFrame(_frameCount);
     ensureDepth(width, height);
@@ -883,15 +884,15 @@ void WebGpuRenderer::endFrame() {
     wgpuCommandEncoderRelease(_encoder);
     _encoder = nullptr;
 
-    // The submit is done recording; reset the allocation pool heads.
-    _bufferPool.resetFrame();
-    _meshCache.endFrame();
-
     auto& fs = mutableFrameStats();
     fs.vramAllocatedBytes = _bufferPool.totalVramBytes() + _meshCache.totalCachedBytes();
     fs.uniformBytesWritten = _bufferPool.bytesWrittenThisFrame();
     fs.bufferSuballocations = _bufferPool.suballocationsThisFrame();
     fs.cachedMeshesCount = static_cast<uint32_t>(_meshCache.cachedMeshCount());
+
+    // The submit is done recording; reset the allocation pool heads.
+    _bufferPool.resetFrame();
+    _meshCache.endFrame();
 
     // The submit is done recording; the resources it referenced can go now.
     releaseFrameResources();
