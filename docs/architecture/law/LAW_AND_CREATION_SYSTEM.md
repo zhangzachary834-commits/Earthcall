@@ -479,6 +479,8 @@ class Law : public Object {
 
 ## 3. Stage Three — Hearing: close the Event → Rete → Apply loop
 
+*(Note: Stage Three is now fully implemented. The text below describes the state prior to its completion.)*
+
 The `ReteNetwork` exists but is deaf: nothing feeds it facts, nothing drains its
 agenda. Three wires, all in `LawManager`:
 

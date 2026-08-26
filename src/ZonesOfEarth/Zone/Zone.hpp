@@ -113,7 +113,15 @@ public:
     const std::vector<std::shared_ptr<Object>>& objects() const { return _objects; }
     const std::vector<std::shared_ptr<Object>>& getOwnedObjects() const { return _objects; }
     std::vector<std::shared_ptr<Object>>& getOwnedObjectsMutable() { return _objects; }
-    void update(float dt = 0.016f);
+    struct UpdateTiming {
+        double groundScanMs = 0.0;
+        double rotationMs = 0.0;
+        double automationMs = 0.0;
+        double physicsMs = 0.0;
+        double totalMs = 0.0;
+        int substeps = 0;
+    };
+    void update(float dt = 0.016f, UpdateTiming* out = nullptr);
 
     const std::string& getParentZone() const { return _parentZoneName; }
     void setParentZone(const std::string& pZone) { _parentZoneName = pZone; }
@@ -141,6 +149,7 @@ private:
     Formation _joys;
     std::string _ownerId;
     std::vector<std::shared_ptr<Object>> _objects;
+    float _accumulator = 0.0f;
     Formation _formation;
     
     std::shared_ptr<OntoMath::ScalarField> _spatialField;

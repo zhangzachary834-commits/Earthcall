@@ -314,7 +314,7 @@ void Object::drawSmoothModel() const {
         r.drawImplicit(geom::sdfFromSmooth(smoothData), std::max(extent, 0.6f), mat, nullptr);
         return;
     }
-    r.drawMesh(_smoothMesh, mat);
+    if (_smoothMesh) r.drawMesh(*_smoothMesh, mat);
 }
 
 void Object::drawComplexModel() const {
@@ -450,7 +450,7 @@ void Object::drawHighlightOutline() const {
     } else if (_hasField) {
         shell(_fieldMesh);
     } else if (_hasSmooth) {
-        shell(_smoothMesh);
+        if (_smoothMesh) shell(*_smoothMesh);
     } else if (_hasPatch) {
         shell(_patchMesh);
     } else if (_hasComplex) {

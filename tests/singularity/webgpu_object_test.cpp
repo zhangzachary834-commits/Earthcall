@@ -261,6 +261,26 @@ int main() {
                "a single painted face must fall back to the six-draw path, not merge over the paint");
     }
 
+    {
+        std::vector<Object> toruses(10);
+        for (int i = 0; i < 10; ++i) {
+            toruses[i].setShapeKind(Object::ShapeKind::Torus);
+            // Force Mesh path. WebGPU raymarches Parametrics exactly (drawImplicit) which does not batch.
+            // This tests the Phase 4 tessellation cache, which applies to the Mesh path.
+            toruses[i].setRenderMode(Object::RenderMode::Mesh);
+        }
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        for (int i = 0; i < 10; ++i) {
+            renderer.setModel(glm::mat4(1.0f));
+            toruses[i].drawObject();
+        }
+        renderer.endFrame();
+        const int torusDrawCalls = renderer.frameStats().drawCalls;
+        std::printf("10 identical toruses draw calls = %d\n", torusDrawCalls);
+        assert(torusDrawCalls == 1 &&
+               "10 identical smooth shapes must batch into 1 draw call via shared tessellation");
+    }
+
     setCurrentRenderer(nullptr);
     renderer.shutdown();
     std::printf("webgpu_object_test: ALL OK\n");

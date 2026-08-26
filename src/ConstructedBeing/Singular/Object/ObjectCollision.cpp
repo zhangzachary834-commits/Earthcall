@@ -162,12 +162,49 @@ void Object::updateCollisionZone(const glm::mat4& transform) const {
 
 // Rebuilds everything derived from the shape: the cached render tessellations and
 // the GJK support cloud. Called from every geometry mutation point, so the draw
+namespace {
+    bool compareSmooth(const geom::SmoothSurfaceData& a, const geom::SmoothSurfaceData& b) {
+        if (a.closed != b.closed) return a.closed < b.closed;
+        if (a.orientable != b.orientable) return a.orientable < b.orientable;
+        if (a.hasBoundary != b.hasBoundary) return a.hasBoundary < b.hasBoundary;
+        if (a.isVolume != b.isVolume) return a.isVolume < b.isVolume;
+        if (a.model != b.model) return a.model < b.model;
+        for (int i = 0; i < 4; ++i) {
+            for (int j = 0; j < 4; ++j) {
+                if (a.Q[i][j] != b.Q[i][j]) return a.Q[i][j] < b.Q[i][j];
+            }
+        }
+        if (a.form != b.form) return a.form < b.form;
+        if (a.pkind != b.pkind) return a.pkind < b.pkind;
+        if (a.axes.x != b.axes.x) return a.axes.x < b.axes.x;
+        if (a.axes.y != b.axes.y) return a.axes.y < b.axes.y;
+        if (a.axes.z != b.axes.z) return a.axes.z < b.axes.z;
+        if (a.zTrim.x != b.zTrim.x) return a.zTrim.x < b.zTrim.x;
+        if (a.zTrim.y != b.zTrim.y) return a.zTrim.y < b.zTrim.y;
+        if (a.params.size() != b.params.size()) return a.params.size() < b.params.size();
+        for (size_t i = 0; i < a.params.size(); ++i) {
+            if (a.params[i] != b.params[i]) return a.params[i] < b.params[i];
+        }
+        return false;
+    }
+    
+    struct SmoothDataLess {
+        bool operator()(const geom::SmoothSurfaceData& a, const geom::SmoothSurfaceData& b) const {
+            return compareSmooth(a, b);
+        }
+    };
+    
+    std::map<geom::SmoothSurfaceData, std::shared_ptr<geom::TessMesh>, SmoothDataLess> s_smoothCache;
+}
+
+// Decimate to a capped, well-spread subset. The support cloud is argmax-scanned
+// (O(cloud)) up to ~14x per object per collision pair; keeping the full marching-tet
 // path never has to tessellate. Collision keeps its own coarser tessellation —
 // the cloud is decimated to `maxPts` anyway, and matching render resolution here
 // would change which points GJK sees for no benefit.
 void Object::rebuildGeometryCaches() {
     _supportCloud.clear();
-    _smoothMesh = geom::TessMesh{};
+    _smoothMesh.reset();
     _complexMeshes.clear();
     _patchMesh = geom::TessMesh{};
 
@@ -193,7 +230,13 @@ void Object::rebuildGeometryCaches() {
         }
     }
     else if (_hasSmooth) {
-        _smoothMesh = geom::tessellateSmooth(smoothData);
+        auto it = s_smoothCache.find(smoothData);
+        if (it != s_smoothCache.end()) {
+            _smoothMesh = it->second;
+        } else {
+            _smoothMesh = std::make_shared<geom::TessMesh>(geom::tessellateSmooth(smoothData));
+            s_smoothCache[smoothData] = _smoothMesh;
+        }
         m = geom::tessellateSmooth(smoothData, 16, 10);
     }
     else if (_hasPatch) {

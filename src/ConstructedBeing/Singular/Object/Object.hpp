@@ -171,7 +171,7 @@ private:
     // geometry that changes only when a Person edits it. Built once per change by
     // rebuildGeometryCaches(), which every mutation point already calls.
     geom::TessMesh          _fieldMesh;    // cached field tessellation (rebuilt on change)
-    geom::TessMesh          _smoothMesh;   // cached smooth-surface tessellation
+    std::shared_ptr<geom::TessMesh> _smoothMesh;   // cached smooth-surface tessellation
     // One mesh per patch, not one merged mesh: each patch is a real face and binds
     // its own face texture, so the render path must keep them separable.
     std::vector<geom::TessMesh> _complexMeshes;

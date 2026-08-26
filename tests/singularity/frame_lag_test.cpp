@@ -186,12 +186,18 @@ struct FrameResult {
     double lawMs       = 0.0;   // LawManager::tick — the Rete agenda drain
     double totalMs     = 0.0;
     size_t firings     = 0;
+
+    double groundScanMs = 0.0;
+    double rotationMs = 0.0;
+    double automationMs = 0.0;
+    double physicsMs = 0.0;
 };
 
 FrameResult stepFrame(Zone& zone, LawManager& lawManager, double& worldTime, float dt) {
     FrameResult r;
     const auto t0 = Clock::now();
-    zone.update(dt);
+    Zone::UpdateTiming zoneTiming;
+    zone.update(dt, &zoneTiming);
     const auto t1 = Clock::now();
     zone.applyFormationRelations();
     const auto t2 = Clock::now();
@@ -200,7 +206,12 @@ FrameResult stepFrame(Zone& zone, LawManager& lawManager, double& worldTime, flo
     r.firings = lawManager.tick().size();
     const auto t3 = Clock::now();
 
-    r.zoneMs      = std::chrono::duration<double, std::milli>(t1 - t0).count();
+    r.zoneMs       = zoneTiming.totalMs;
+    r.groundScanMs = zoneTiming.groundScanMs;
+    r.rotationMs   = zoneTiming.rotationMs;
+    r.automationMs = zoneTiming.automationMs;
+    r.physicsMs    = zoneTiming.physicsMs;
+    
     r.relationsMs = std::chrono::duration<double, std::milli>(t2 - t1).count();
     r.lawMs       = std::chrono::duration<double, std::milli>(t3 - t2).count();
     r.totalMs     = std::chrono::duration<double, std::milli>(t3 - t0).count();
@@ -413,13 +424,44 @@ void judgeTime(const std::string& key, double rawMs, double aspirationMs,
 
 void judgeExponent(const std::string& key, double k, double aspiration,
                    const std::string& what) {
+    gMeasured[key] = k;
     const auto found = gBaseline.find(key);
-    // Quadratic is the wall no baseline may excuse: a frame that scans every
-    // pair is a frame that stops working as soon as a world gets lived in.
-    const double baseLimit = (found != gBaseline.end())
-                           ? found->second + kExponentRegressionTolerance
-                           : 1e18;
-    judge(key, k, aspiration, std::min(baseLimit, 2.0), "", what);
+    const bool haveKey = (found != gBaseline.end());
+    const double base = haveKey ? found->second : 0.0;
+
+    char detail[320];
+    if (haveKey) {
+        std::snprintf(detail, sizeof(detail), "%s = %.3f (aspiration %.3f, baseline %.3f)",
+                      what.c_str(), k, aspiration, base);
+    } else {
+        std::snprintf(detail, sizeof(detail), "%s = %.3f (aspiration %.3f, no baseline)",
+                      what.c_str(), k, aspiration);
+    }
+
+    const double baseLimit = haveKey ? base + kExponentRegressionTolerance : 1e18;
+    const double regressionLimit = std::min(baseLimit, 2.0);
+
+    if (haveKey && k > regressionLimit) {
+        std::printf("  EXP-FAIL  %s  <- ALGORITHMIC REGRESSION\n", detail);
+        ++gFailures; // Real failure, independent of machine load
+        return;
+    }
+    if (k <= aspiration) {
+        std::printf("  ok        %s\n", detail);
+        if (haveKey && base > aspiration + kExponentRegressionTolerance * 2) {
+            std::printf("            (baseline is stale and slack — re-record it)\n");
+        }
+        return;
+    }
+    if (!haveKey) {
+        std::printf("  STANDING  %s  <- no baseline yet; record one\n", detail);
+        return;
+    }
+    if (k <= base - kExponentRegressionTolerance * 2) {
+        std::printf("  IMPROVED  %s  <- re-record the baseline\n", detail);
+        return;
+    }
+    std::printf("  STANDING  %s\n", detail);
 }
 
 } // namespace
@@ -445,6 +487,10 @@ struct PopulationCost {
     double zone      = 0.0;
     double relations = 0.0;
     double law       = 0.0;
+    double groundScan = 0.0;
+    double rotation   = 0.0;
+    double automation = 0.0;
+    double physics    = 0.0;
     int    frames    = 0;
 };
 
@@ -502,11 +548,15 @@ PopulationCost costForPopulation(int n, double wallCapMs) {
     // nothing about that. Best-case is the most reproducible estimate of the
     // real work, which is what a growth curve needs.
     PopulationCost c;
-    c.total     = s.bestOf(&FrameResult::totalMs);
-    c.zone      = s.bestOf(&FrameResult::zoneMs);
-    c.relations = s.bestOf(&FrameResult::relationsMs);
-    c.law       = s.bestOf(&FrameResult::lawMs);
-    c.frames    = static_cast<int>(s.frames.size());
+    c.total      = s.bestOf(&FrameResult::totalMs);
+    c.zone       = s.bestOf(&FrameResult::zoneMs);
+    c.relations  = s.bestOf(&FrameResult::relationsMs);
+    c.law        = s.bestOf(&FrameResult::lawMs);
+    c.groundScan = s.bestOf(&FrameResult::groundScanMs);
+    c.rotation   = s.bestOf(&FrameResult::rotationMs);
+    c.automation = s.bestOf(&FrameResult::automationMs);
+    c.physics    = s.bestOf(&FrameResult::physicsMs);
+    c.frames     = static_cast<int>(s.frames.size());
     return c;
 }
 
@@ -539,8 +589,8 @@ void checkFrameShape() {
         costs.push_back(costForPopulation(static_cast<int>(n), 300.0));
         const PopulationCost& c = costs.back();
         std::printf("  %5d objects -> frame %8.3f ms  "
-                    "(zone %8.3f  relations %6.3f  law %8.3f)  over %d frames\n",
-                    static_cast<int>(n), c.total, c.zone, c.relations, c.law, c.frames);
+                    "(zone %8.3f [g:%.3f r:%.3f a:%.3f p:%.3f]  relations %6.3f  law %8.3f)  over %d frames\n",
+                    static_cast<int>(n), c.total, c.zone, c.groundScan, c.rotation, c.automation, c.physics, c.relations, c.law, c.frames);
     }
 
     // Every phase of this frame is specified to be linear in the population,
@@ -550,6 +600,10 @@ void checkFrameShape() {
     const Phase phases[] = {
         {"shape.exponent.frame",     "whole frame",         &PopulationCost::total},
         {"shape.exponent.zone",      "Zone::update",        &PopulationCost::zone},
+        {"shape.exponent.z_ground",  "  groundScan",        &PopulationCost::groundScan},
+        {"shape.exponent.z_rot",     "  rotation",          &PopulationCost::rotation},
+        {"shape.exponent.z_auto",    "  automation",        &PopulationCost::automation},
+        {"shape.exponent.z_phys",    "  physics",           &PopulationCost::physics},
         {"shape.exponent.relations", "formation relations", &PopulationCost::relations},
         {"shape.exponent.law",       "LawManager::tick",    &PopulationCost::law},
     };

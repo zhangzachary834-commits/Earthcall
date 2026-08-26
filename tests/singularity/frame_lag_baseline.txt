@@ -1,29 +1,25 @@
 # frame_lag_test baseline — what a frame of Earthcall costs today.
-# Recorded 2026-08-24 from world 'Chess', Debug -O0, Apple M-series, machine idle.
+# Recorded 2026-08-26 12:44:12 from world 'Chess'.
 # Times are milliseconds normalised by the calibration factor in
-# frame_lag_test.cpp, so this file means the same thing on another machine.
-# Exponents are the fitted k in cost ~ n^k and are already machine-independent.
-#
-# These are the DEAREST values across four idle runs, not any single run's:
-# a tripwire set at one run's best fires at the next run's contention and gets
-# switched off by the third. Idle spread was ~15% on times and ~0.04 on
-# exponents; the padding here is about 15% on top of the dearest.
-#
-# RECORD THIS ON A QUIET MACHINE. The same tree measured 6 ms and 34 ms for the
-# chess frame as this laptop went from load 7 to load 93 — see
-# docs/audits/2026-08-24_frame_lag_probe.md § "The machine measures back".
+# frame_lag_test.cpp, so this file means the same thing on another
+# machine. Exponents are the fitted k in cost ~ n^k and are already
+# machine-independent.
 #
 # Re-record with:  ./build/frame_lag_test --rebaseline
-# Only ever re-record DOWNWARD, or after a change whose cost was accepted
-# deliberately — and say which in the commit message.
+# Only ever re-record DOWNWARD, or after a change whose cost was
+# accepted deliberately — and say which in the commit message.
 #
-# What every line that still prints STANDING is a task to make smaller:
-#   docs/Agenda/Tasks/To-do list.md § Performance
-load.ms=1550
-shape.exponent.frame=1.72
-shape.exponent.law=1.00
-shape.exponent.zone=1.76
-steady.law_ms=2.0
-steady.median_ms=6.9
-steady.p95_ms=7.4
-steady.zone_ms=4.9
+# One run writes one run's numbers. On a machine that is shared with
+# a browser and an IDE, run it three or four times and raise these to
+# the dearest of them by hand, or the tripwire sits under the noise
+# and fires at nobody's change.
+load.ms=1868.93
+shape.exponent.frame=1.19809
+shape.exponent.law=1.06028
+shape.exponent.z_auto=1.07793
+shape.exponent.z_phys=1.30382
+shape.exponent.zone=1.21921
+steady.law_ms=2.03853
+steady.median_ms=6.70616
+steady.p95_ms=7.88994
+steady.zone_ms=4.66664

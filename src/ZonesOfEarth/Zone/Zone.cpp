@@ -376,7 +376,11 @@ bool Zone::removeObjectById(const std::string& identifier) {
     return false;
 }
 
-void Zone::update(float dt) {
+void Zone::update(float dt, UpdateTiming* out) {
+    using ClockT = std::chrono::high_resolution_clock;
+    auto tStart = ClockT::now();
+
+    auto tGround0 = ClockT::now();
     // The floor is the object a First Mover TAGGED as the floor, or the y=0
     // plane. There is no fall-back to "whatever is at index 1".
     float groundY = 0.0f;
@@ -388,28 +392,62 @@ void Zone::update(float dt) {
         groundY = gT[3][1] + 0.5f * scaleY;
         break;
     }
+    auto tGround1 = ClockT::now();
+    if (out) out->groundScanMs += std::chrono::duration<double, std::milli>(tGround1 - tGround0).count();
 
-    const float maxStep = 0.02f;
-    const float maxFrameTime = 0.1f;
-    if (dt > maxFrameTime) dt = maxFrameTime;
-    int steps = std::max(1, (int)std::ceil(dt / maxStep));
-    float stepDt = dt / steps;
+    const float FIXED_DT = 1.0f / 60.0f;
+    const int MAX_STEPS_PER_FRAME = 3;
+    
+    _accumulator += dt;
+    int steps = 0;
+    while (_accumulator >= FIXED_DT && steps < MAX_STEPS_PER_FRAME) {
+        _accumulator -= FIXED_DT;
+        steps++;
+    }
+    
+    // If we hit the max steps, we are falling behind. Drop the remaining accumulated time
+    // to prevent a death spiral (the "jagged" effect). This is an ontological choice
+    // deferring time loss to the Universe clock.
+    if (_accumulator >= FIXED_DT) {
+        _accumulator = 0.0f;
+    }
+
+    if (out) out->substeps = steps;
+    float stepDt = FIXED_DT;
 
     for (int s = 0; s < steps; ++s) {
+        auto tRot0 = ClockT::now();
         for (const auto& up : _objects) {
-            if (!up) continue;
-            if (up->hasPendingRotation()) {
+            if (up && up->hasPendingRotation()) {
                 up->updateRotation(stepDt);
             }
-            if (up->hasAutomations()) {
+        }
+        auto tRot1 = ClockT::now();
+        
+        auto tAuto0 = ClockT::now();
+        for (const auto& up : _objects) {
+            if (up && up->hasAutomations()) {
                 up->updateAutomations(stepDt);
             }
         }
+        auto tAuto1 = ClockT::now();
+
+        auto tPhys0 = ClockT::now();
         if (Physics::getLegacyEngineEnabled()) {
             for (const auto& up : _objects) if (up) Physics::getFormFor(up.get());
             Physics::updateBodies(_objects, stepDt, 9.81f, 0.1f, groundY);
         }
+        auto tPhys1 = ClockT::now();
+
+        if (out) {
+            out->rotationMs += std::chrono::duration<double, std::milli>(tRot1 - tRot0).count();
+            out->automationMs += std::chrono::duration<double, std::milli>(tAuto1 - tAuto0).count();
+            out->physicsMs += std::chrono::duration<double, std::milli>(tPhys1 - tPhys0).count();
+        }
     }
+    
+    auto tEnd = ClockT::now();
+    if (out) out->totalMs = std::chrono::duration<double, std::milli>(tEnd - tStart).count();
 }
 
 Zone::~Zone() {}

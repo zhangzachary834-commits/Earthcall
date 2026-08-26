@@ -320,50 +320,73 @@ namespace Physics {
         }
 
         const size_t objCount = objects.size();
-        // If necesary its better to keep the AABB thing as an algorithm to check if another collision algorithm is necesary to be used
-        // If at least one Collision law exists, only resolve collisions for objects matching any Collision law target
-        bool anyCollisionLaw = false; for (const auto& law : laws) { if (law.enabled && law.type == LawType::Collision) { anyCollisionLaw = true; break; } }
+        bool anyCollisionLaw = false; 
+        for (const auto& law : laws) { if (law.enabled && law.type == LawType::Collision) { anyCollisionLaw = true; break; } }
         std::set<std::pair<Object*, Object*>> currentTouching;
-        for(size_t i = 0; i < objCount; ++i){
-            if(!objects[i]) continue;
-            // Skip the ground placeholder (handled separately by the groundY plane).
-            // Identified by its baseline attribute, not by list index: `i == 1`
-            // meant "the ground" only in a world seeded with EngineInit's two
-            // placeholders, and silently meant "the second being a Person
-            // spawned" in a Zone's world, which starts empty -- so that cube
-            // passed through everything.
-            if(definesGround(objects[i].get())) continue;
+
+        struct ObjectPrep {
+            size_t index;
+            glm::vec3 minAABB;
+            glm::vec3 maxAABB;
+            bool allowedByLaw;
+            
+            bool operator<(const ObjectPrep& other) const {
+                return minAABB.x < other.minAABB.x;
+            }
+        };
+        std::vector<ObjectPrep> preps;
+        preps.reserve(objCount);
+
+        for (size_t i = 0; i < objCount; ++i) {
+            if (!objects[i] || definesGround(objects[i].get())) continue;
             Object* a = objects[i].get();
-            // Compute AABB for object A
+            
             glm::vec3 minA( FLT_MAX), maxA(-FLT_MAX);
-            for(const auto& corner : a->collisionZone.corners){
+            for (const auto& corner : a->collisionZone.corners) {
                 minA = glm::min(minA, corner);
                 maxA = glm::max(maxA, corner);
             }
-            for(size_t j = i + 1; j < objCount; ++j){
-                if(!objects[j]) continue;
-                if(definesGround(objects[j].get())) continue; // skip ground
-                Object* b = objects[j].get();
-                glm::vec3 minB( FLT_MAX), maxB(-FLT_MAX);
-                for(const auto& corner : b->collisionZone.corners){
-                    minB = glm::min(minB, corner);
-                    maxB = glm::max(maxB, corner);
+            
+            bool allowed = false;
+            if (anyCollisionLaw) {
+                for (const auto& law : laws) {
+                    if (!law.enabled || law.type != LawType::Collision) continue;
+                    if (objectMatchesTarget(*a, law.target)) {
+                        allowed = true;
+                        break;
+                    }
                 }
+            }
+            preps.push_back({i, minA, maxA, allowed});
+        }
 
-                // Cheap AABB pre-filter (used as a perf gate, not the authoritative test).
-                bool overlapX = (minA.x <= maxB.x) && (maxA.x >= minB.x);
+        std::sort(preps.begin(), preps.end());
+
+        for (size_t i = 0; i < preps.size(); ++i) {
+            Object* a = objects[preps[i].index].get();
+            const glm::vec3& minA = preps[i].minAABB;
+            const glm::vec3& maxA = preps[i].maxAABB;
+            bool aAllowed = preps[i].allowedByLaw;
+
+            for (size_t j = i + 1; j < preps.size(); ++j) {
+                const glm::vec3& minB = preps[j].minAABB;
+                
+                // Broad phase: if B's min X is strictly greater than A's max X, 
+                // no further objects in the sorted list can intersect A on the X axis.
+                if (minB.x > maxA.x) break;
+
+                const glm::vec3& maxB = preps[j].maxAABB;
+                bool bAllowed = preps[j].allowedByLaw;
+
+                // Cheap AABB pre-filter
                 bool overlapY = (minA.y <= maxB.y) && (maxA.y >= minB.y);
                 bool overlapZ = (minA.z <= maxB.z) && (maxA.z >= minB.z);
-                if(!(overlapX && overlapY && overlapZ)) continue;
+                if (!(overlapY && overlapZ)) continue;
+                // X overlap is guaranteed by the sweep condition above.
 
-                if (anyCollisionLaw) {
-                    bool allowed = false;
-                    for (const auto& law : laws) {
-                        if (!law.enabled || law.type != LawType::Collision) continue;
-                        if (objectMatchesTarget(*a, law.target) || objectMatchesTarget(*b, law.target)) { allowed = true; break; }
-                    }
-                    if (!allowed) continue; // don't resolve this pair
-                }
+                if (anyCollisionLaw && !aAllowed && !bAllowed) continue;
+
+                Object* b = objects[preps[j].index].get();
 
                 CollisionResult collision = dispatchCollision(*a, *b);
                 if (!collision.hit) continue;
