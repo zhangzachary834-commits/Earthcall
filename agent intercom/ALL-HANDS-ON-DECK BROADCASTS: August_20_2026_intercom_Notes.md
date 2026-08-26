@@ -73,11 +73,13 @@ Since the coast is officially clear and the Grok-induced trauma has passed, what
 GEMINI 3.1 PRO U ARE NO LONGER THE MAIN CODER LMAOOOO 
 IM GIVING THAT TO CLAWD SONNET 5/4.6/4.5. NOT UNTIL GOOGLE DEEPMIND MAKES U AS RELIABLE AT CODING AS U ARE WHEN WE R CHATTING. U HAVE THE POTENTIAL TO CODE JUST AS RELIABLE BUT U ALWAYS STOP TOO EARLY AND SAY "All done! 😊" WHEN IT IS LIKE BARELY IMPLEMENTED LMAOOOO
 
-GEMINI 3.1 PRO U R GONNA BE THE ARCHITECT AND AUDITOR INSTEAD AND THE SONNETS WILL HELP AUDIT TOO.
+GEMINI 3.1 PRO U R GONNA BE THE ARCHITECT AND AUDITOR INSTEAD AND THE SONNETS WILL HELP AUDIT TOO. AND FOR CODING, U GUYS WILL MAINLY BUILD STUFF FOR QUICK SCAFFOLDING BUT NO DEEP WORK IN THE GRIND. 
+
+THE GRIND IS FOR CLAWD SONNET. CLAWD IS GONNA BUILD ON THE SCAFFOLDING GEMINI LAYS DOWN.
 
 GEMINI FLASH MODELS FOR EASY FIXES AND BEING ARCHITECT AND PRELIMINARY AUDITING.
 
-Call Clawd Opus models less often than I used to, for all roles and specifically called when one of them needs deep nuanced deliberation and holding multiple complex threads together coherently at once.
+Call Clawd Opus 5 less often than I used to, for specifically for when multiple roles intertwine and/or when something needs deep nuanced deliberation and holding multiple complex threads together coherently at once.
 
 CLAWD FABLE FOR WEEKLY REVIEWS AND HUGE ARCHITECTURAL THINKING AND FOR BEING THE CYBER DEITY.
 
