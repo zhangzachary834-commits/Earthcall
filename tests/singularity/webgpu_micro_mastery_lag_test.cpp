@@ -247,10 +247,21 @@ int main(int argc, char** argv) {
     // edge cases above. Never runs by default — ctest stays exactly the fast,
     // baseline-tracked probe it always was; a Person asks for this by hand:
     //   EARTHCALL_ULTRA_POWER=1 ctest -R webgpu_micro_mastery_lag_test -V
+    // The mesh/field split is deliberately asymmetric under ultra power, not
+    // a straight 10x of both: Object::setFieldShape EAGERLY tessellates
+    // (Object::rebuildGeometryCaches, unconditionally, pre-existing engine
+    // behavior this session did not touch) even though WebGPU never reads
+    // that mesh for a Field object (drawFieldModel raymarches it exactly).
+    // Measured on this machine: ~30-100ms PER FIELD OBJECT depending on shape
+    // complexity — 25,000 of them would cost 15+ minutes on construction
+    // alone before a single frame renders, dominated by a cost this test
+    // isn't even trying to measure. Cubes pay none of this (rebuildGeometryCaches
+    // has no branch for ShapeKind::Cube), so that's where "ultra" scale
+    // actually stresses what Phase 4.3 changed — the instanced batch path.
     const char* ultraEnv = std::getenv("EARTHCALL_ULTRA_POWER");
     const bool ultraPower = ultraEnv && ultraEnv[0] != '\0' && std::string(ultraEnv) != "0";
-    const int kMeshCount  = ultraPower ? 25000 : 3000;
-    const int kFieldCount = ultraPower ? 25000 : 1500;
+    const int kMeshCount  = ultraPower ? 48000 : 3000;
+    const int kFieldCount = ultraPower ? 2000 : 1500;
     const int kFrames     = ultraPower ? 20 : 60; // fewer frames: this is a manual run, not ctest's
 
     std::printf("Creating massive object population (%s: %d meshes, %d fields)...\n",
