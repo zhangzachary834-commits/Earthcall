@@ -43,6 +43,10 @@ public:
     // Offset is aligned to 16 bytes.
     Allocation suballocateVertex(const void* data, size_t size);
 
+    // Sub-allocate a chunk of storage buffer memory and upload data to it.
+    // Offset is aligned to 256 bytes.
+    Allocation suballocateStorage(const void* data, size_t size);
+
     // Reset allocation heads at frame boundary without releasing GPU VRAM.
     void resetFrame();
 
@@ -64,8 +68,10 @@ private:
 
     std::vector<Chunk> _uniformChunks;
     std::vector<Chunk> _vertexChunks;
+    std::vector<Chunk> _storageChunks;
     size_t _currentUniformChunk = 0;
     size_t _currentVertexChunk = 0;
+    size_t _currentStorageChunk = 0;
 
     size_t   _totalVramBytes = 0;
     size_t   _bytesWrittenThisFrame = 0;

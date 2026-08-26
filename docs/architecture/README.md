@@ -10,7 +10,7 @@ A **framework name is not a directory name.** `Integration/` stays
 
 | Folder | Holds |
 |---|---|
-| [`ontology/`](ontology/) | What things ARE: kinds, categories, black box, the tree, substrate, Joys |
+| [`ontology/`](ontology/) | What things ARE: kinds, categories, black box, the tree, substrate, micro-mastery, Joys |
 | [`law/`](law/) | What a Law is, migration, algorithms-as-law, First Mover authoring, interaction-as-law |
 | [`events/`](events/) | Event bus vs handler, hover / person / relation / physics events |
 | [`mathematics/`](mathematics/) | OntoMath, geometry unification, SDF/Bézier law replication |

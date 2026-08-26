@@ -10,6 +10,9 @@ void GpuBufferPool::init(WGPUDevice device, WGPUQueue queue,
     _queue  = queue;
     _uniformChunkSize = uniformChunkSize;
     _vertexChunkSize  = vertexChunkSize;
+    _currentUniformChunk = 0;
+    _currentVertexChunk = 0;
+    _currentStorageChunk = 0;
     _totalVramBytes = 0;
     _bytesWrittenThisFrame = 0;
     _suballocationsThisFrame = 0;
@@ -32,8 +35,17 @@ void GpuBufferPool::shutdown() {
     }
     _vertexChunks.clear();
 
+    for (auto& c : _storageChunks) {
+        if (c.buffer) {
+            wgpuBufferRelease(c.buffer);
+            c.buffer = nullptr;
+        }
+    }
+    _storageChunks.clear();
+
     _currentUniformChunk = 0;
     _currentVertexChunk = 0;
+    _currentStorageChunk = 0;
     _totalVramBytes = 0;
 }
 
@@ -112,11 +124,19 @@ GpuBufferPool::Allocation GpuBufferPool::suballocateVertex(const void* data, siz
                            _vertexChunkSize, data, size, 16);
 }
 
+GpuBufferPool::Allocation GpuBufferPool::suballocateStorage(const void* data, size_t size) {
+    return suballocateFrom(_storageChunks, _currentStorageChunk,
+                           WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst,
+                           _uniformChunkSize, data, size, 256);
+}
+
 void GpuBufferPool::resetFrame() {
-    _currentUniformChunk = 0;
-    _currentVertexChunk = 0;
     for (auto& c : _uniformChunks) c.head = 0;
     for (auto& c : _vertexChunks)  c.head = 0;
+    for (auto& c : _storageChunks) c.head = 0;
+    _currentUniformChunk = 0;
+    _currentVertexChunk = 0;
+    _currentStorageChunk = 0;
     _bytesWrittenThisFrame = 0;
     _suballocationsThisFrame = 0;
 }

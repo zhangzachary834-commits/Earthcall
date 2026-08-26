@@ -770,17 +770,11 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, float extent,
                        prog.needsGradientStep ? 1.0f : 0.0f);
 
     auto uAlloc = _bufferPool.suballocateUniform(&u, sizeof(SdfUniforms));
-
-    WGPUBufferDescriptor pbd = {};
-    pbd.usage = WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst;
-    pbd.size = prog.params.size() * sizeof(float);
-    WGPUBuffer pbuf = wgpuDeviceCreateBuffer(_device, &pbd);
-    wgpuQueueWriteBuffer(_queue, pbuf, 0, prog.params.data(), pbd.size);
-    _frameBuffers.push_back(pbuf);
+    auto pAlloc = _bufferPool.suballocateStorage(prog.params.data(), prog.params.size() * sizeof(float));
 
     WGPUBindGroupEntry bge[2] = {};
     bge[0].binding = 0; bge[0].buffer = uAlloc.buffer; bge[0].offset = uAlloc.offset; bge[0].size = uAlloc.size;
-    bge[1].binding = 1; bge[1].buffer = pbuf; bge[1].size = pbd.size;
+    bge[1].binding = 1; bge[1].buffer = pAlloc.buffer; bge[1].offset = pAlloc.offset; bge[1].size = pAlloc.size;
     WGPUBindGroupDescriptor bgd = {};
     bgd.layout = sp->bgl; bgd.entryCount = 2; bgd.entries = bge;
     WGPUBindGroup bg = wgpuDeviceCreateBindGroup(_device, &bgd);
