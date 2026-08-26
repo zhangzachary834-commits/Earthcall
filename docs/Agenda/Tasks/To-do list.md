@@ -4,6 +4,8 @@
 - Judge what parts you want to write are more suited for the Agenda and what is more suitable for a separate, dedicated doc that is not inside Agenda.
 - Ensure you always link up relevant docs, files, and classes. Only do so if the directory is already in your context—-do not spend compute trying to search for it.
 - Things that require a Person to manually verify whether in-app functionality is working as intended should go in Person Verification List
+- **Never erase this document's content.** Mark completed items with a checkmark and a "done and verified"
+    note describing what was actually verified. If two or more independent sessions mark it as verified, you may move it to an archive folder inside the Agenda directory.
 
 ## Near-term priorities (2026-08-14 — from architecture review):
 CRITICAL: Ensure the save system works. In this delicate state of the program's early generative phase, we don't want that to affect the save system to the point where developer worlds unstable or erased in the fragile states of testing and developing features that rely on the save system persisting my prior changes. – Zach

@@ -8,31 +8,25 @@ it is bad engineering, but because it is engineering for a different kind of sys
 
 ---
 ## The Six Refusals.
-Zach: I had Opus 5 write these because they come up constantly. Learn them cold; everything else is detail.
-
+Zach: I had Opus 5 write these because they came up constantly. Learn them cold; everything else is detail.
 1. **No new C++ class for a domain noun.** Not `RobotEntity`, not `Vehicle`, not `Tree`,
    not `Category`. This principle also extends to hardcoded fields (e.g., `health` or `inventory` on a `Person`). Domain things and their state are *authored in-world* as data, never carved into the
    type system. → `ontology/NEW_KIND_FRAMEWORK.md`
    *(Exception: The human form. `BodyPart` and constitutive members for the `Person` vessel are invariant ontological structures, not domain nouns, and thus admitted in C++. `Moment`, time's own instant-or-interval structure, is admitted the same way — see `ontology/TIME_AND_MOMENT.md`; there is no `class Duration`.)*
-
 2. **No new top-level directory for a subsystem.** The top level is the ontology
    (`ConstructedBeing`, `Person`, `Relation`, `Singularity`, `ZonesOfEarth`, `Identity`, `Time`).
    A channel to hardware or foreign software goes *inside* `Singularity/`. → `ontology/DIRECTORY_ORDERING.md`
-
 3. **No new enum value for a kind of thing.** `BeingKind`, `ShapeKind`,
    `ConditionNode::Kind`, `ActionNode::Kind` are **append-only and serialized as
    integers**; `ConditionNode::Kind` 12 and 13 are *burned* and must never be reused.
    Categories are authored beings, not enum members. → `ontology/AUTHORED_CATEGORIES.md`
-
 4. **`Body` is reserved for Persons.** A `Body` is the representation of an embodied
    *someone*. Objects have visual components — geometry, fields, materials. A robot arm
    has no Body. → `ontology/NEW_KIND_FRAMEWORK.md` Floor §2
-
 5. **`Person` means Human.** A `Person` strictly represents an actual human being
    interacting with Earthcall. AI agents or generative models are not Persons; an AI
    is simply a First Mover (authoring data) or an `Object` (existing in-world as a
    mechanism). Never model an AI as a `Person`.
-
 6. **No black box.** Every field a being carries is registered as a property path —
    readable by law, writable unless genuinely derived. **"Nobody registered it yet" is not a
    permission level**; it is the one access level no law can ever change, granted by accident
@@ -41,8 +35,12 @@ Zach: I had Opus 5 write these because they come up constantly. Learn them cold;
    it must be *named in a comment*, never merely omitted. Reach is total; *authority* is
    `Singularity/TransferPolicy`'s existing Kernel/Governable/Gated tiers — do not build a
    second permission system, one was built here and deleted. → `ontology/NO_BLACK_BOX.md`
+7. **No new methods to define variable behavior**: The order of behavior, representation, and resource allocation
+   depend on Person-authored Laws, represented by data. Methods should be the absolute invariants necessary to represent 
+   all artifacts of human intention. As such, they should only be used if the thing in question is a First Mover, a 
+    whether a developer tool or an irreducible component of the Singularity's Sense-Act substrate. (Zach wrote Refusal 7 by hand, not Opus 5)
 
-The general form of all six: **no subsystem may define what a thing IS.** Subsystems
+The general form of all seven: **no subsystem may define what a thing IS.** Subsystems
 define how the machine senses and acts. What things are is authored by Persons, in-world,
 out of primitives every other subsystem can see. Refusal 6 is the corollary: nor may a
 subsystem define what a thing's state *means* by keeping it where no law can look.
@@ -180,14 +178,8 @@ you read the source—run things**, and **after finishing, ask whether anything 
 ---
 
 ## The Agenda
-- The To-Do List is `docs/Agenda/Tasks/To-do list.md`. Consult it whenever a prompt asks what
-  Earthcall needs next, unless the prompt says otherwise.
-- Anything you work on that isn't listed goes in it — create categories as needed, and add
-  tasks any other document implies but the list omits.
-- **Never erase its content.** Mark completed items with a checkmark and a "done and verified"
-  note describing what was actually verified. If two or more independent sessions mark it as verified, you may move it to an archive folder inside the Agenda directory.
-
----
+- The To-Do List is `docs/Agenda/Tasks/To-do list.md`. Consult it whenever a prompt asks what Earthcall needs next, unless the prompt says otherwise.
+- Anything you work on that isn't listed goes in it — create categories as needed, and add tasks any other document implies but the list omits.
 
 ## Document Conventions
 - Audits belong in `docs/audits/`. Implementation plans go to `docs/`. 
