@@ -232,6 +232,35 @@ int main() {
     assert(currentRenderer().rendersImplicitExactly() &&
            "WebGPU should report exact implicit rendering");
 
+    // --- An unpainted cube draws as ONE merged mesh; painting a single face
+    // must drop it straight back to the six-face path (remediation plan Phase
+    // 4.2). This is the guard the plan calls for: the merge decision reads the
+    // resolved albedo fresh every draw rather than being cached on the Object.
+    {
+        Object mergeCube;
+        mergeCube.setShapeKind(Object::ShapeKind::Cube);
+
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        mergeCube.drawObject();
+        renderer.endFrame();
+        const int unpaintedDrawCalls = renderer.frameStats().drawCalls;
+        std::printf("unpainted cube draw calls = %d\n", unpaintedDrawCalls);
+        assert(unpaintedDrawCalls == 1 &&
+               "an unpainted cube's six faces resolve identical paint and should merge to one draw");
+
+        mergeCube.setFaceColor(0, 1.0f, 0.0f, 0.0f); // one stroke, one face
+
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        mergeCube.drawObject();
+        renderer.endFrame();
+        const int paintedDrawCalls = renderer.frameStats().drawCalls;
+        std::printf("single-face-painted cube draw calls = %d\n", paintedDrawCalls);
+        assert(paintedDrawCalls == 6 &&
+               "a single painted face must fall back to the six-draw path, not merge over the paint");
+    }
+
     setCurrentRenderer(nullptr);
     renderer.shutdown();
     std::printf("webgpu_object_test: ALL OK\n");

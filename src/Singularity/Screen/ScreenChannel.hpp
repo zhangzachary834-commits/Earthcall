@@ -33,21 +33,38 @@ public:
     static ScreenChannel* find(LawManager& laws);
 
     // Update live metrics from the active Renderer at the end of each frame.
-    void updateMetrics(int drawCalls, int trianglesDrawn, float vramBytes,
-                       float uniformBytes, int suballocations, int pipelineSwitches,
+    void updateMetrics(int drawCalls, int trianglesDrawn, double vramBytes,
+                       double uniformBytes, int suballocations, int pipelineSwitches,
                        int cachedMeshes);
 
-    int   drawCalls = 0;
-    int   trianglesDrawn = 0;
-    float vramAllocatedBytes = 0.0f;
-    float uniformBytesWritten = 0.0f;
-    int   bufferSuballocations = 0;
-    int   pipelineSwitches = 0;
-    int   cachedMeshesCount = 0;
-    bool  wireframe = false;
+    int    drawCalls = 0;
+    int    trianglesDrawn = 0;
+    double vramAllocatedBytes = 0.0;
+    double uniformBytesWritten = 0.0;
+    int    bufferSuballocations = 0;
+    int    pipelineSwitches = 0;
+    int    cachedMeshesCount = 0;
+    bool   wireframe = false;
 
 private:
     void buildProperties() override;
+
+    // Getters for the derived metrics below: NO_BLACK_BOX.md §3 says a Law may
+    // read anything, but "writable unless genuinely derived" — these seven are
+    // the definition of derived (the renderer computes them; nothing upstream
+    // of it should get to override what actually happened last frame). Each is
+    // registered as a ComputedProperty with a null setter, which resolves to a
+    // refused write rather than a value a Law could quietly clobber and have
+    // the next updateMetrics silently overwrite again. `wireframe` is the one
+    // exception and stays a plain PropertyRef, since it genuinely drives the
+    // rasterizer rather than reporting on it.
+    int    getDrawCalls() const { return drawCalls; }
+    int    getTrianglesDrawn() const { return trianglesDrawn; }
+    double getVramAllocatedBytes() const { return vramAllocatedBytes; }
+    double getUniformBytesWritten() const { return uniformBytesWritten; }
+    int    getBufferSuballocations() const { return bufferSuballocations; }
+    int    getPipelineSwitches() const { return pipelineSwitches; }
+    int    getCachedMeshesCount() const { return cachedMeshesCount; }
 
     std::string _name{"screen-channel"};
 };

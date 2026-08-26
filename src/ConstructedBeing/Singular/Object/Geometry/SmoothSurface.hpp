@@ -30,6 +30,13 @@ inline uint64_t nextTessMeshId() {
 struct TessMesh {
     std::vector<TessVertex> tris;
     uint64_t id = nextTessMeshId();
+    // Bumped by a writer that mutates `tris` IN PLACE on an already-cached mesh
+    // (a future sculpt/deform tool, say). Every current writer instead replaces
+    // the whole TessMesh by value (`_smoothMesh = geom::tessellateSmooth(...)`),
+    // which already gets a fresh `id` for free — this field exists so an
+    // in-place mutator has somewhere honest to say "I changed", the way
+    // FaceTexture staleness was already hit once for want of exactly this.
+    uint64_t revision = 0;
 };
 
 struct SmoothSurfaceData {

@@ -136,8 +136,8 @@ namespace Core {
                 const auto& stats = currentRenderer().frameStats();
                 sc->updateMetrics(static_cast<int>(stats.drawCalls),
                                   static_cast<int>(stats.trianglesDrawn),
-                                  static_cast<float>(stats.vramAllocatedBytes),
-                                  static_cast<float>(stats.uniformBytesWritten),
+                                  static_cast<double>(stats.vramAllocatedBytes),
+                                  static_cast<double>(stats.uniformBytesWritten),
                                   static_cast<int>(stats.bufferSuballocations),
                                   static_cast<int>(stats.pipelineSwitches),
                                   static_cast<int>(stats.cachedMeshesCount));

@@ -234,6 +234,23 @@ private:
     Singularity::Screen::WebGPU::GpuMeshCache  _meshCache;
     uint64_t _frameCount = 0;
 
+    // Last pipeline bound on the CURRENT pass. Kernel state: a driver-object
+    // handle, not governable — reset to null whenever a new pass begins
+    // (beginFrameOffscreen), since a pass carries no binding from the last one.
+    WGPURenderPipeline _boundPipeline = nullptr;
+
+    // Every draw verb calls this instead of wgpuRenderPassEncoderSetPipeline
+    // directly. In the heavy-object scene almost every draw rebinds the same
+    // mesh pipeline it just used; a redundant bind was both a wasted driver
+    // call and a lie in @screen-channel.pipelineSwitches, which is meant to
+    // count actual transitions, not bind attempts.
+    void bindPipeline(WGPURenderPipeline p) {
+        if (p == _boundPipeline) return;
+        wgpuRenderPassEncoderSetPipeline(_pass, p);
+        _boundPipeline = p;
+        mutableFrameStats().pipelineSwitches++;
+    }
+
     void releaseFrameResources();
     // Shared flat-colour draw for the overlay verbs: uploads positions + a {mvp,
     // color} uniform and records a draw with `pipe`.

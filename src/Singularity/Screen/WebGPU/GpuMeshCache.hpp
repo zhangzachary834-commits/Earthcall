@@ -22,6 +22,7 @@ public:
         size_t     vertexCount = 0;
         size_t     sizeBytes = 0;
         uint64_t   meshId = 0;
+        uint64_t   meshRevision = 0;
         uint64_t   lastUsedFrame = 0;
     };
 

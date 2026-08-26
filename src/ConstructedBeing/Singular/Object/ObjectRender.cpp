@@ -157,6 +157,21 @@ geom::TessMesh buildCubeFaceMesh(int f) {
 // Cached unit meshes, built on first use (pure CPU — no GL context needed). The
 // cylinder/cone are centred on Z in [-0.5, 0.5] to match the old draw transforms.
 const geom::TessMesh& cubeFace(int f)          { static geom::TessMesh m[6]; static bool init=false; if(!init){for(int i=0;i<6;++i)m[i]=buildCubeFaceMesh(i);init=true;} return m[f]; }
+// All 6 faces concatenated into one mesh, for the common case where every face
+// resolves the same paint (see Object::drawCube): one draw instead of six. A
+// static built once, like cubeFace() above, so GpuMeshCache can also cache its
+// vertex buffer across frames rather than re-uploading it every draw.
+const geom::TessMesh& mergedCubeMesh() {
+    static geom::TessMesh m = [] {
+        geom::TessMesh merged;
+        for (int f = 0; f < 6; ++f) {
+            const geom::TessMesh& face = cubeFace(f);
+            merged.tris.insert(merged.tris.end(), face.tris.begin(), face.tris.end());
+        }
+        return merged;
+    }();
+    return m;
+}
 const geom::TessMesh& sphereUnitMesh()         { static geom::TessMesh m = buildSphereMesh(0.5f, 16, 16); return m; }
 const geom::TessMesh& cylinderSideMesh()       { static geom::TessMesh m = transformedMesh(buildCylinderSideMesh(0.5f, 0.5f, 1.0f, 16, 4), glm::translate(glm::mat4(1.0f), {0,0,-0.5f})); return m; }
 const geom::TessMesh& coneSideMesh()           { static geom::TessMesh m = transformedMesh(buildCylinderSideMesh(0.5f, 0.0f, 1.0f, 16, 4), glm::translate(glm::mat4(1.0f), {0,0,-0.5f})); return m; }
@@ -168,8 +183,25 @@ const geom::TessMesh& capTopMesh()             { static geom::TessMesh m = trans
 } // namespace
 
 void Object::drawCube() const {
-    // Each of the 6 faces carries its own painted texture, so each is a separate
-    // drawMesh with that face's material/texture — like drawComplexModel's patches.
+    // Each face CAN carry its own painted texture, so the general path is six
+    // separate drawMesh calls — like drawComplexModel's patches. But the common
+    // case is an unpainted cube, where every face resolves the exact same
+    // RenderMaterial (no per-face texture at all), and six draws for one
+    // uniform box is pure driver overhead. Decided fresh every draw, from the
+    // resolved albedo, never cached on the Object: paint a single face with
+    // Object::setFaceColor / ownMaterial and the very next draw sees that
+    // face's FaceAlbedo differ and falls back to the six-draw path.
+    const FaceAlbedo first = faceAlbedo(0);
+    bool allFacesSame = true;
+    for (int f = 1; f < 6 && allFacesSame; ++f) {
+        const FaceAlbedo fa = faceAlbedo(f);
+        allFacesSame = (fa.handle == first.handle && fa.pixels == first.pixels &&
+                        fa.size == first.size);
+    }
+    if (allFacesSame) {
+        currentRenderer().drawMesh(mergedCubeMesh(), resolveRenderMaterial(_materialId, first));
+        return;
+    }
     for (int f = 0; f < 6; ++f)
         currentRenderer().drawMesh(cubeFace(f), resolveRenderMaterial(_materialId, faceAlbedo(f)));
 }

@@ -516,8 +516,11 @@ void WebGpuRenderer::beginFrameOffscreen(WGPUTextureView target, uint32_t width,
     rp.colorAttachments = &ca;
     rp.depthStencilAttachment = &da;
     _pass = wgpuCommandEncoderBeginRenderPass(_encoder, &rp);
-    // Each verb sets its own pipeline (mesh vs overlay vs lines), so nothing is
-    // pre-bound here — the pass may interleave meshes and overlays per object.
+    // Each verb ASKS for its pipeline via bindPipeline (mesh vs overlay vs
+    // lines), which binds only on an actual change — the pass may interleave
+    // meshes and overlays per object. The cache starts empty every pass: a new
+    // pass carries no binding from the one before it.
+    _boundPipeline = nullptr;
 }
 
 void WebGpuRenderer::drawMesh(const geom::TessMesh& mesh, const RenderMaterial& mat) {
@@ -542,8 +545,7 @@ void WebGpuRenderer::drawMesh(const geom::TessMesh& mesh, const RenderMaterial& 
                  glm::vec4(mat.baseColor, mat.opacity));
         return;
     }
-    wgpuRenderPassEncoderSetPipeline(_pass, _meshPipeline);
-    mutableFrameStats().pipelineSwitches++;
+    bindPipeline(_meshPipeline);
 
     const size_t vbytes = mesh.tris.size() * sizeof(geom::TessVertex);
     WGPUBuffer vbuf = _meshCache.getOrUpload(mesh);
@@ -781,8 +783,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, float extent,
     WGPUBindGroup bg = wgpuDeviceCreateBindGroup(_device, &bgd);
     _frameBindGroups.push_back(bg);
 
-    wgpuRenderPassEncoderSetPipeline(_pass, sp->pipe);
-    mutableFrameStats().pipelineSwitches++;
+    bindPipeline(sp->pipe);
     wgpuRenderPassEncoderSetBindGroup(_pass, 0, bg, 0, nullptr);
     wgpuRenderPassEncoderSetVertexBuffer(_pass, 0, _sdfCubeVerts, 0, 36 * sizeof(glm::vec3));
     wgpuRenderPassEncoderDraw(_pass, 36, 1, 0, 0);
@@ -824,8 +825,7 @@ void WebGpuRenderer::drawParticles(const geom::FieldNode& field, int count) {
 void WebGpuRenderer::drawFlat(WGPURenderPipeline pipe, const std::vector<glm::vec3>& verts,
                              const glm::mat4& mvp, const glm::vec4& color) {
     if (!_pass || verts.empty()) return;
-    wgpuRenderPassEncoderSetPipeline(_pass, pipe);
-    mutableFrameStats().pipelineSwitches++;
+    bindPipeline(pipe);
 
     const size_t vbytes = verts.size() * sizeof(glm::vec3);
     auto vAlloc = _bufferPool.suballocateVertex(verts.data(), vbytes);
@@ -1009,8 +1009,7 @@ void WebGpuRenderer::drawImage2D(const uint8_t* rgba, uint32_t width, uint32_t h
     WGPUBindGroup bg = wgpuDeviceCreateBindGroup(_device, &bgd);
     _frameBindGroups.push_back(bg);
 
-    wgpuRenderPassEncoderSetPipeline(_pass, _imagePipe);
-    mutableFrameStats().pipelineSwitches++;
+    bindPipeline(_imagePipe);
     wgpuRenderPassEncoderSetBindGroup(_pass, 0, bg, 0, nullptr);
     wgpuRenderPassEncoderSetVertexBuffer(_pass, 0, vAlloc.buffer, vAlloc.offset, sizeof(quad));
     wgpuRenderPassEncoderDraw(_pass, 6, 1, 0, 0);

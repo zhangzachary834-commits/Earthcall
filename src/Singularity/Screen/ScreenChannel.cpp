@@ -24,8 +24,8 @@ ScreenChannel* ScreenChannel::find(LawManager& laws) {
     return nullptr;
 }
 
-void ScreenChannel::updateMetrics(int dCalls, int tris, float vramBytes,
-                                 float uBytes, int suballocs, int pipeSwitches,
+void ScreenChannel::updateMetrics(int dCalls, int tris, double vramBytes,
+                                 double uBytes, int suballocs, int pipeSwitches,
                                  int cachedMeshes) {
     drawCalls = dCalls;
     trianglesDrawn = tris;
@@ -39,26 +39,30 @@ void ScreenChannel::updateMetrics(int dCalls, int tris, float vramBytes,
 void ScreenChannel::buildProperties() {
     registerEnabledProperty();
 
-    const auto integer = [this](const char* name, int ScreenChannel::*member) {
+    // Derived telemetry: readable, never writable — see the getters' comment
+    // in ScreenChannel.hpp. A null setter is ComputedProperty's read-only form
+    // (ComputedProperty.hpp), which no_black_box_test already treats as a
+    // valid answer rather than a hidden field.
+    const auto readOnlyInt = [this](const char* name, int (ScreenChannel::*getter)() const) {
         _propertyRegistry.push_back(
-            std::make_unique<PropertyRef<ScreenChannel, int>>(name, this, member));
+            std::make_unique<ComputedProperty<ScreenChannel, int>>(name, this, getter));
     };
-    const auto flt = [this](const char* name, float ScreenChannel::*member) {
+    const auto readOnlyDouble = [this](const char* name, double (ScreenChannel::*getter)() const) {
         _propertyRegistry.push_back(
-            std::make_unique<PropertyRef<ScreenChannel, float>>(name, this, member));
+            std::make_unique<ComputedProperty<ScreenChannel, double>>(name, this, getter));
     };
     const auto boolean = [this](const char* name, bool ScreenChannel::*member) {
         _propertyRegistry.push_back(
             std::make_unique<PropertyRef<ScreenChannel, bool>>(name, this, member));
     };
 
-    integer("drawCalls", &ScreenChannel::drawCalls);
-    integer("trianglesDrawn", &ScreenChannel::trianglesDrawn);
-    flt("vramAllocatedBytes", &ScreenChannel::vramAllocatedBytes);
-    flt("uniformBytesWritten", &ScreenChannel::uniformBytesWritten);
-    integer("bufferSuballocations", &ScreenChannel::bufferSuballocations);
-    integer("pipelineSwitches", &ScreenChannel::pipelineSwitches);
-    integer("cachedMeshesCount", &ScreenChannel::cachedMeshesCount);
+    readOnlyInt("drawCalls", &ScreenChannel::getDrawCalls);
+    readOnlyInt("trianglesDrawn", &ScreenChannel::getTrianglesDrawn);
+    readOnlyDouble("vramAllocatedBytes", &ScreenChannel::getVramAllocatedBytes);
+    readOnlyDouble("uniformBytesWritten", &ScreenChannel::getUniformBytesWritten);
+    readOnlyInt("bufferSuballocations", &ScreenChannel::getBufferSuballocations);
+    readOnlyInt("pipelineSwitches", &ScreenChannel::getPipelineSwitches);
+    readOnlyInt("cachedMeshesCount", &ScreenChannel::getCachedMeshesCount);
     boolean("wireframe", &ScreenChannel::wireframe);
 }
 

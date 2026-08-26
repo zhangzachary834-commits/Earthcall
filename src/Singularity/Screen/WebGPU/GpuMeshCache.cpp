@@ -25,8 +25,11 @@ WGPUBuffer GpuMeshCache::getOrUpload(const geom::TessMesh& mesh) {
     const size_t vbytes = mesh.tris.size() * sizeof(geom::TessVertex);
 
     if (it != _cache.end()) {
-        // Check if size or meshId changed
-        if (it->second.vertexCount == mesh.tris.size() && it->second.meshId == mesh.id) {
+        // Check if size, identity, or revision changed. meshId catches a NEW
+        // TessMesh landing at a freed address (the reincarnation bug); revision
+        // catches an in-place edit of a mesh that kept both its address and id.
+        if (it->second.vertexCount == mesh.tris.size() && it->second.meshId == mesh.id &&
+            it->second.meshRevision == mesh.revision) {
             it->second.lastUsedFrame = _currentFrame;
             return it->second.buffer;
         }
@@ -37,15 +40,19 @@ WGPUBuffer GpuMeshCache::getOrUpload(const geom::TessMesh& mesh) {
         }
     }
 
-    // Allocate and upload persistent vertex buffer
+    // Allocate and upload persistent vertex buffer. CopySrc costs nothing a
+    // vertex buffer wasn't already paying for and lets a debug/test readback
+    // (gpu_mastery_test [4c]/[4e]) verify what actually landed in VRAM instead
+    // of trusting the WGPUBuffer handle's address, which the driver is free to
+    // recycle after a release.
     WGPUBufferDescriptor desc = {};
-    desc.usage = WGPUBufferUsage_Vertex | WGPUBufferUsage_CopyDst;
+    desc.usage = WGPUBufferUsage_Vertex | WGPUBufferUsage_CopyDst | WGPUBufferUsage_CopySrc;
     desc.size = vbytes;
     WGPUBuffer vbuf = wgpuDeviceCreateBuffer(_device, &desc);
     wgpuQueueWriteBuffer(_queue, vbuf, 0, mesh.tris.data(), vbytes);
 
     _totalCachedBytes += vbytes;
-    _cache[meshPtr] = CachedMesh{ vbuf, mesh.tris.size(), vbytes, mesh.id, _currentFrame };
+    _cache[meshPtr] = CachedMesh{ vbuf, mesh.tris.size(), vbytes, mesh.id, mesh.revision, _currentFrame };
     return vbuf;
 }
 

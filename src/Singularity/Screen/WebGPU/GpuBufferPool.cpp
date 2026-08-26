@@ -6,6 +6,10 @@ namespace WebGPU {
 
 void GpuBufferPool::init(WGPUDevice device, WGPUQueue queue,
                          size_t uniformChunkSize, size_t vertexChunkSize) {
+    // A second init() (device loss, resize, backend switch) must not leak the
+    // chunks from the first: shutdown() releases every WGPUBuffer belonging to
+    // the old device before this one starts allocating from the new one.
+    shutdown();
     _device = device;
     _queue  = queue;
     _uniformChunkSize = uniformChunkSize;

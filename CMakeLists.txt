@@ -309,7 +309,8 @@ if(NOT EMSCRIPTEN)
         # ctest give it the box to itself. (It survives contention either way
         # — it detects a moving machine and stops enforcing its timings — but
         # a run where nothing is enforced is a run that checked nothing.)
-        if (${TEST_NAME} STREQUAL "frame_lag_test")
+        if (${TEST_NAME} STREQUAL "frame_lag_test" OR
+            ${TEST_NAME} STREQUAL "webgpu_micro_mastery_lag_test")
             set_tests_properties(${TEST_NAME} PROPERTIES
                 RUN_SERIAL TRUE
                 TIMEOUT 300
