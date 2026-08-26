@@ -304,7 +304,10 @@ void Object::drawSmoothModel() const {
     // Identity is the quadric / parametric surface. The cached mesh is a
     // drawing approximation for backends that cannot march it. Routing
     // OpenGL through drawImplicit would re-tessellate every frame.
-    if (r.rendersImplicitExactly()) {
+    // RenderMode::Mesh opts a Law OUT of the exact analytic path even where
+    // the backend supports it — trading exactness for the instanced draw
+    // path only tessellated meshes get.
+    if (r.rendersImplicitExactly() && _renderMode != RenderMode::Mesh) {
         const float extent = std::max(std::max(std::abs(smoothData.axes.x),
                                                std::abs(smoothData.axes.y)),
                                       std::abs(smoothData.axes.z)) + 0.25f;
@@ -319,7 +322,8 @@ void Object::drawComplexModel() const {
     // A capped cylinder / cone IS the round quadric plus planar caps.
     // The UV side mesh and N-gon disks are a drawing cache. Backends that
     // can march an SDF draw the primitive instead, same door as spheres.
-    if (r.rendersImplicitExactly()) {
+    // RenderMode::Mesh opts out of that, same reasoning as drawSmoothModel.
+    if (r.rendersImplicitExactly() && _renderMode != RenderMode::Mesh) {
         geom::SdfNode field;
         if (geom::sdfFromComplex(complexData, field)) {
             const float rExt = std::max(_shapeParams.r, _shapeParams.halfH) + 0.25f;

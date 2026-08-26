@@ -16,19 +16,27 @@ namespace {
 // A world-space Lambert term (ambient + diffuse*N·L) tints baseColor; front_facing
 // flips the normal so open surfaces (patches) light on both sides. Texture albedo
 // (faceTextures) is not sampled yet — a later refinement (needs a WGPU texture).
+// Per-instance transform (CPU-GPU micro-mastery Phase 4.3): every mesh draw is
+// an instanced draw now, even a "batch" of one, so the model/normal matrices
+// that used to live in the per-draw uniform U live in this per-instance
+// storage array instead, indexed by @builtin(instance_index). U carries only
+// what every instance in a batch genuinely SHARES (camera, material, light).
 const char* kMeshWGSL = R"(
 struct U {
     viewProj:  mat4x4<f32>,
-    model:     mat4x4<f32>,
-    normalMat: mat4x4<f32>,
     baseColor: vec4<f32>,
     lightPos:  vec4<f32>,   // world-space POSITION (GL_LIGHT0 is positional)
     params:    vec4<f32>,   // x=ambient, y=diffuse, z=specular, w=shininess
     eyePos:    vec4<f32>,
 };
+struct Instance {
+    model:     mat4x4<f32>,
+    normalMat: mat4x4<f32>,
+};
 @group(0) @binding(0) var<uniform> u: U;
 @group(0) @binding(1) var albedoTex: texture_2d<f32>;
 @group(0) @binding(2) var albedoSamp: sampler;
+@group(1) @binding(0) var<storage, read> instances: array<Instance>;
 
 struct VSOut {
     @builtin(position) clip: vec4<f32>,
@@ -39,11 +47,12 @@ struct VSOut {
 
 @vertex
 fn vs_main(@location(0) pos: vec3<f32>, @location(1) normal: vec3<f32>,
-           @location(2) uv: vec2<f32>) -> VSOut {
+           @location(2) uv: vec2<f32>, @builtin(instance_index) instIdx: u32) -> VSOut {
     var out: VSOut;
-    let world = u.model * vec4<f32>(pos, 1.0);
+    let inst = instances[instIdx];
+    let world = inst.model * vec4<f32>(pos, 1.0);
     out.clip = u.viewProj * world;
-    out.worldNormal = (u.normalMat * vec4<f32>(normal, 0.0)).xyz;
+    out.worldNormal = (inst.normalMat * vec4<f32>(normal, 0.0)).xyz;
     out.uv = uv;
     out.worldPos = world.xyz;
     return out;
@@ -67,11 +76,10 @@ fn fs_main(in: VSOut, @builtin(front_facing) front: bool) -> @location(0) vec4<f
 )";
 
 // std140-compatible: all members are 16-byte aligned, so this matches the WGSL
-// uniform block byte-for-byte. glm and WGSL are both column-major.
+// uniform block byte-for-byte. glm and WGSL are both column-major. model/
+// normalMat moved to the per-instance storage buffer — see kMeshWGSL.
 struct MeshUniforms {
     glm::mat4 viewProj;
-    glm::mat4 model;
-    glm::mat4 normalMat;
     glm::vec4 baseColor;
     glm::vec4 lightPos;
     glm::vec4 params;
@@ -181,9 +189,22 @@ bool WebGpuRenderer::init(const wgpu::Device& gpu, WGPUTextureFormat colorFormat
     bglDesc.entries = bglEntries;
     _bgl = wgpuDeviceCreateBindGroupLayout(_device, &bglDesc);
 
+    // group(1): the per-instance transform storage array (Phase 4.3). Same
+    // ReadOnlyStorage shape as the SDF params bind group below — minBindingSize
+    // left at 0 (unsized), since a batch's instance count varies draw to draw.
+    WGPUBindGroupLayoutEntry instEntry = {};
+    instEntry.binding = 0;
+    instEntry.visibility = WGPUShaderStage_Vertex;
+    instEntry.buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
+    WGPUBindGroupLayoutDescriptor instBglDesc = {};
+    instBglDesc.entryCount = 1;
+    instBglDesc.entries = &instEntry;
+    _instanceBgl = wgpuDeviceCreateBindGroupLayout(_device, &instBglDesc);
+
+    WGPUBindGroupLayout meshLayouts[2] = { _bgl, _instanceBgl };
     WGPUPipelineLayoutDescriptor plDesc = {};
-    plDesc.bindGroupLayoutCount = 1;
-    plDesc.bindGroupLayouts = &_bgl;
+    plDesc.bindGroupLayoutCount = 2;
+    plDesc.bindGroupLayouts = meshLayouts;
     WGPUPipelineLayout layout = wgpuDeviceCreatePipelineLayout(_device, &plDesc);
 
     WGPUVertexAttribute attrs[3] = {};
@@ -418,6 +439,8 @@ void WebGpuRenderer::shutdown() {
     if (_imageBgl)    { wgpuBindGroupLayoutRelease(_imageBgl); _imageBgl = nullptr; }
     if (_meshPipeline) { wgpuRenderPipelineRelease(_meshPipeline); _meshPipeline = nullptr; }
     if (_bgl) { wgpuBindGroupLayoutRelease(_bgl); _bgl = nullptr; }
+    if (_instanceBgl) { wgpuBindGroupLayoutRelease(_instanceBgl); _instanceBgl = nullptr; }
+    _meshBatches.clear();
 }
 
 void WebGpuRenderer::ensureDepth(uint32_t w, uint32_t h) {
@@ -521,6 +544,11 @@ void WebGpuRenderer::beginFrameOffscreen(WGPUTextureView target, uint32_t width,
     // meshes and overlays per object. The cache starts empty every pass: a new
     // pass carries no binding from the one before it.
     _boundPipeline = nullptr;
+    // Defensive: a normal frame's batches are drained by flushMeshDraws() in
+    // endFrame() and this is already empty. Only a frame that never reached
+    // endFrame() (an early return, a crash-recovery path) would leave stale
+    // entries — clear rather than carry them into a frame with a new _pass.
+    _meshBatches.clear();
 }
 
 void WebGpuRenderer::drawMesh(const geom::TessMesh& mesh, const RenderMaterial& mat) {
@@ -545,30 +573,10 @@ void WebGpuRenderer::drawMesh(const geom::TessMesh& mesh, const RenderMaterial& 
                  glm::vec4(mat.baseColor, mat.opacity));
         return;
     }
-    bindPipeline(_meshPipeline);
-
-    const size_t vbytes = mesh.tris.size() * sizeof(geom::TessVertex);
-    WGPUBuffer vbuf = _meshCache.getOrUpload(mesh);
-    uint64_t voffset = 0;
-    if (!vbuf) {
-        auto vAlloc = _bufferPool.suballocateVertex(mesh.tris.data(), vbytes);
-        vbuf = vAlloc.buffer;
-        voffset = vAlloc.offset;
-    }
-
-    MeshUniforms u;
-    u.viewProj  = _viewProj;
-    u.model     = _model;
-    u.normalMat = glm::transpose(glm::inverse(_model));
-    u.baseColor = glm::vec4(mat.baseColor, mat.opacity);
-    // The scene's light, as recorded by Renderer::setLight.
-    u.lightPos  = glm::vec4(lightPos(), 1.0f);
-    u.params    = glm::vec4(mat.ambient, mat.diffuse, mat.specular, mat.shininess);
-    u.eyePos    = glm::vec4(_eyePos, 1.0f);
-
-    auto uAlloc = _bufferPool.suballocateUniform(&u, sizeof(MeshUniforms));
-
-    // Albedo: upload the material's pixels to a WGPU texture, or fall back to white.
+    // Albedo is resolved NOW, not deferred: a queued batch cannot hold
+    // RenderMaterial::albedoPixels (documented "valid only for the duration
+    // of the draw call"), and resolving to a stable WGPUTextureView also
+    // doubles as the batching key's material identity — see MeshBatchKey.
     WGPUTextureView albedoView = _whiteView;
     // Prefer a texture this backend already owns: FaceTexture re-uploads only when
     // the paint changes, so a static surface costs nothing per frame. The
@@ -596,22 +604,80 @@ void WebGpuRenderer::drawMesh(const geom::TessMesh& mesh, const RenderMaterial& 
         _frameTextureViews.push_back(albedoView);
     }
 
-    WGPUBindGroupEntry bge[3] = {};
-    bge[0].binding = 0; bge[0].buffer = uAlloc.buffer; bge[0].offset = uAlloc.offset; bge[0].size = uAlloc.size;
-    bge[1].binding = 1; bge[1].textureView = albedoView;
-    bge[2].binding = 2; bge[2].sampler = _sampler;
-    WGPUBindGroupDescriptor bgDesc = {};
-    bgDesc.layout = _bgl; bgDesc.entryCount = 3; bgDesc.entries = bge;
-    WGPUBindGroup bindGroup = wgpuDeviceCreateBindGroup(_device, &bgDesc);
+    MeshBatchKey key;
+    key.mesh       = &mesh;
+    key.albedoView = albedoView;
+    key.baseColor  = glm::vec4(mat.baseColor, mat.opacity);
+    key.shading    = glm::vec4(mat.ambient, mat.diffuse, mat.specular, mat.shininess);
 
-    wgpuRenderPassEncoderSetBindGroup(_pass, 0, bindGroup, 0, nullptr);
-    wgpuRenderPassEncoderSetVertexBuffer(_pass, 0, vbuf, voffset, vbytes);
-    wgpuRenderPassEncoderDraw(_pass, static_cast<uint32_t>(mesh.tris.size()), 1, 0, 0);
+    InstanceData inst;
+    inst.model     = _model;
+    inst.normalMat = glm::transpose(glm::inverse(_model));
+    _meshBatches[key].push_back(inst);
 
-    mutableFrameStats().drawCalls++;
+    // Every queued instance really will be drawn at flush — count its
+    // triangles now. drawCalls/pipelineSwitches are credited once per BATCH
+    // in flushMeshDraws(), which is the actual number of GPU draw calls.
     mutableFrameStats().trianglesDrawn += static_cast<uint32_t>(mesh.tris.size() / 3);
+}
 
-    _frameBindGroups.push_back(bindGroup);
+void WebGpuRenderer::flushMeshDraws() {
+    if (_meshBatches.empty()) return;
+    if (!_pass) { _meshBatches.clear(); return; }
+
+    for (auto& kv : _meshBatches) {
+        const MeshBatchKey& key = kv.first;
+        const std::vector<InstanceData>& instances = kv.second;
+        if (!key.mesh || key.mesh->tris.empty() || instances.empty()) continue;
+        const geom::TessMesh& mesh = *key.mesh;
+
+        bindPipeline(_meshPipeline);
+
+        const size_t vbytes = mesh.tris.size() * sizeof(geom::TessVertex);
+        WGPUBuffer vbuf = _meshCache.getOrUpload(mesh);
+        uint64_t voffset = 0;
+        if (!vbuf) {
+            auto vAlloc = _bufferPool.suballocateVertex(mesh.tris.data(), vbytes);
+            vbuf = vAlloc.buffer;
+            voffset = vAlloc.offset;
+        }
+
+        MeshUniforms u;
+        u.viewProj  = _viewProj;
+        u.baseColor = key.baseColor;
+        u.lightPos  = glm::vec4(lightPos(), 1.0f);
+        u.params    = key.shading;
+        u.eyePos    = glm::vec4(_eyePos, 1.0f);
+        auto uAlloc = _bufferPool.suballocateUniform(&u, sizeof(MeshUniforms));
+
+        auto instAlloc = _bufferPool.suballocateStorage(
+            instances.data(), instances.size() * sizeof(InstanceData));
+
+        WGPUBindGroupEntry bge[3] = {};
+        bge[0].binding = 0; bge[0].buffer = uAlloc.buffer; bge[0].offset = uAlloc.offset; bge[0].size = uAlloc.size;
+        bge[1].binding = 1; bge[1].textureView = key.albedoView;
+        bge[2].binding = 2; bge[2].sampler = _sampler;
+        WGPUBindGroupDescriptor bgDesc = {};
+        bgDesc.layout = _bgl; bgDesc.entryCount = 3; bgDesc.entries = bge;
+        WGPUBindGroup bindGroup = wgpuDeviceCreateBindGroup(_device, &bgDesc);
+        _frameBindGroups.push_back(bindGroup);
+
+        WGPUBindGroupEntry ibge = {};
+        ibge.binding = 0; ibge.buffer = instAlloc.buffer; ibge.offset = instAlloc.offset; ibge.size = instAlloc.size;
+        WGPUBindGroupDescriptor ibgDesc = {};
+        ibgDesc.layout = _instanceBgl; ibgDesc.entryCount = 1; ibgDesc.entries = &ibge;
+        WGPUBindGroup instBindGroup = wgpuDeviceCreateBindGroup(_device, &ibgDesc);
+        _frameBindGroups.push_back(instBindGroup);
+
+        wgpuRenderPassEncoderSetBindGroup(_pass, 0, bindGroup, 0, nullptr);
+        wgpuRenderPassEncoderSetBindGroup(_pass, 1, instBindGroup, 0, nullptr);
+        wgpuRenderPassEncoderSetVertexBuffer(_pass, 0, vbuf, voffset, vbytes);
+        wgpuRenderPassEncoderDraw(_pass, static_cast<uint32_t>(mesh.tris.size()),
+                                  static_cast<uint32_t>(instances.size()), 0, 0);
+
+        mutableFrameStats().drawCalls++;
+    }
+    _meshBatches.clear();
 }
 
 namespace {
@@ -874,6 +940,10 @@ void WebGpuRenderer::drawOverlay(const geom::TessMesh& mesh, const glm::vec4& co
 
 void WebGpuRenderer::endFrame() {
     if (!_pass) return;
+    // Every drawMesh() call this frame only queued into _meshBatches; this is
+    // where those batches actually become wgpuRenderPassEncoderDraw calls, so
+    // it must run before the pass ends.
+    flushMeshDraws();
     wgpuRenderPassEncoderEnd(_pass);
     wgpuRenderPassEncoderRelease(_pass);
     _pass = nullptr;

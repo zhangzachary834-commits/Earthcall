@@ -154,6 +154,7 @@ widening the baseline.
 - **Say what you made.** If you write into a save file, or generate beings directly, tell
   the Person which file and which beings, and who is recorded as their author. This is the
   one rule with no technical enforcement at all.
+- **If you are making a design or technical decision, always choose the frontier, industry optimal approach for the task over the easier-looking, basic one.** Don't spend grueling hours trying to re-invent a solution to a problem that already has a known and optimal solution—not unless you are able to suggest novel and innovative approaches. For example, when we were creating Laws, Claude Fable volunteered the Rete algorithm so we didn't try to create some brute force one from scratch.   
 - **Mention the things human developers told you that you're drawing from.** Don't just write a document, spend some time addressing what the person said that you're responding to. 
   This makes authorial intent better and easier to track the progress toward the telos that we the people intend for the design.
   Now, you can still write in a register as if the idea is your own. That is good. It is good to internalize ideas and bring it to their fulfillment. But you must make the ideas origination clear—what parts were from real people, what parts are originated from you, and where you are extending the person's idea.

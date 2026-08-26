@@ -42,6 +42,19 @@ enum class ShapeKind {
     Text2D = 13
 };
 
+// How a shape whose truth is analytic (a quadric, an SDF) reaches the screen.
+// This is Sense-Act substrate — a rendering-strategy hint, the same shape as
+// `wireframe` — never a domain kind, so it stays outside AUTHORED_CATEGORIES.
+// Serialized as an int, so APPEND-ONLY like ShapeKind above.
+//   Auto     — the backend's own default (WebGPU raymarches exactly; a
+//              backend that cannot falls back to the cached tessellation).
+//   Analytic — force the exact analytic path even where a mesh fallback
+//              exists, refusing to let a tessellation stand in for the math.
+//   Mesh     — force the polygon fallback (e.g. to inspect the tessellation
+//              itself, or on a channel that cannot batch/instance analytic
+//              draws the way it can a merged mesh).
+enum class RenderMode { Auto = 0, Analytic = 1, Mesh = 2 };
+
 // Per-shape parameters (defaults match the geom factory defaults so an
 // unparameterized setShape reproduces current behavior). Persisted so
 // parameterized shapes round-trip through save/load.

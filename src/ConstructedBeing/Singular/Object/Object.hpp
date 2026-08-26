@@ -58,6 +58,7 @@ public:
     using ShapeParams = ObjectTypes::ShapeParams;
     using SpatialKind = ObjectTypes::SpatialKind;
     using StateSnapshot = ObjectTypes::StateSnapshot;
+    using RenderMode = ObjectTypes::RenderMode;
 
     std::string screenMode() const;
 
@@ -141,6 +142,13 @@ private:
 
     // The primitive shape this Object represents. Default is Cube for compatibility and easy testing.
     ShapeKind _shapeKind = ShapeKind::Cube;
+
+    // How an analytic shape (quadric, SDF) reaches the screen — Auto lets the
+    // backend's own capability decide (today's behavior), Mesh forces the
+    // tessellated fallback even on a backend that could raymarch it exactly.
+    // See ObjectTypes::RenderMode for why this is Sense-Act substrate, not a
+    // domain kind.
+    RenderMode _renderMode = RenderMode::Auto;
 
     // Screen-space position for Shape2D / Text2D. In pixels, top-left origin.
     // Not part of the 3D transform: a 2D object has no world position.
@@ -302,6 +310,18 @@ public:
                          _y2D + _shapeParams.height2D);
     }
     void draw2DObject(uint32_t screenW, uint32_t screenH) const;
+
+    // renderMode is Law-writable as an int (append-only, like ShapeKind — see
+    // ObjectTypes::RenderMode). An out-of-range write clamps to Auto rather
+    // than storing garbage a switch elsewhere would silently fall through on.
+    RenderMode renderMode() const { return _renderMode; }
+    void setRenderMode(RenderMode m) { _renderMode = m; }
+    int  getRenderModeProp() const { return static_cast<int>(_renderMode); }
+    void setRenderModeProp(const int& v) {
+        _renderMode = (v >= static_cast<int>(RenderMode::Auto) &&
+                       v <= static_cast<int>(RenderMode::Mesh))
+                    ? static_cast<RenderMode>(v) : RenderMode::Auto;
+    }
 
     // not implemented yet
     void interactWith(Formation&);

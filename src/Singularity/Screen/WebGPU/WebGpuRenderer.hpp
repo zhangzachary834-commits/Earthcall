@@ -234,6 +234,49 @@ private:
     Singularity::Screen::WebGPU::GpuMeshCache  _meshCache;
     uint64_t _frameCount = 0;
 
+    // ---- Instanced mesh batching (CPU-GPU micro-mastery Phase 4.3) ----
+    // drawMesh no longer draws immediately: it groups by everything that has
+    // to be IDENTICAL for one instanced draw to render every member
+    // correctly (same vertex data, same texture, same tint/shading — i.e.
+    // the same resolved appearance) and defers to flushMeshDraws() at the end
+    // of the frame, where each group becomes exactly one
+    // wgpuRenderPassEncoderDraw with instanceCount = the group's size and a
+    // per-instance transform read from a storage buffer in the shader
+    // (@builtin(instance_index)). Per-object variation collapses to the one
+    // thing every instance actually needs to differ by: its transform.
+    //
+    // albedoView is resolved to a stable WGPUTextureView at drawMesh() time,
+    // not carried as RenderMaterial::albedoPixels — that field is documented
+    // "valid only for the duration of the draw call" (RenderMaterial.hpp),
+    // which a deferred batch cannot honor.
+    struct MeshBatchKey {
+        const geom::TessMesh* mesh = nullptr;
+        WGPUTextureView albedoView = nullptr;
+        glm::vec4 baseColor{1.0f};
+        glm::vec4 shading{0.2f, 0.8f, 1.0f, 32.0f}; // ambient, diffuse, specular, shininess
+        bool operator<(const MeshBatchKey& o) const {
+            return std::tie(mesh, albedoView, baseColor.x, baseColor.y, baseColor.z, baseColor.w,
+                            shading.x, shading.y, shading.z, shading.w)
+                 < std::tie(o.mesh, o.albedoView, o.baseColor.x, o.baseColor.y, o.baseColor.z, o.baseColor.w,
+                            o.shading.x, o.shading.y, o.shading.z, o.shading.w);
+        }
+    };
+    // Mirrors the WGSL `Instance` struct in kMeshWGSL byte-for-byte (two
+    // mat4x4<f32>, both already 16-byte aligned — no std430 padding needed).
+    struct InstanceData { glm::mat4 model; glm::mat4 normalMat; };
+    std::map<MeshBatchKey, std::vector<InstanceData>> _meshBatches;
+    WGPUBindGroupLayout _instanceBgl = nullptr; // group(1): the instance storage buffer
+    // Records every queued batch as real wgpuRenderPassEncoderDraw calls.
+    // MUST run while _pass is still open — called from endFrame() before
+    // wgpuRenderPassEncoderEnd. Safety invariant this design now depends on:
+    // every geom::TessMesh* held in _meshBatches (an Object's _smoothMesh /
+    // _fieldMesh / _complexMeshes[i] / _patchMesh, or a static like
+    // mergedCubeMesh()) must stay alive from drawMesh() until this call — true
+    // today because nothing destroys an Object between the draw loop and
+    // endFrame() in the same frame (EngineRender.cpp), but no longer trivially
+    // true the way immediate-mode drawMesh (which uploaded and was done) was.
+    void flushMeshDraws();
+
     // Last pipeline bound on the CURRENT pass. Kernel state: a driver-object
     // handle, not governable — reset to null whenever a new pass begins
     // (beginFrameOffscreen), since a pass carries no binding from the last one.

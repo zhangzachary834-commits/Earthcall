@@ -19,6 +19,7 @@
 #include "ConstructedBeing/Material/MaterialManager.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
+#include "Singularity/OntoMath/ScalarForm.hpp"
 #include "Singularity/Screen/Renderer.hpp"
 #include "Singularity/Screen/WebGPU/WebGpuRenderer.hpp"
 #include "Singularity/Screen/WebGPU/WgpuDevice.hpp"
@@ -140,6 +141,75 @@ void writeBaseline(double avgMsNormalised, uint32_t drawCalls, uint32_t suballoc
     std::printf("\nbaseline written to %s\n", path.c_str());
 }
 
+// ---------------------------------------------------------------------------
+// "Ultra power" stress shapes (EARTHCALL_ULTRA_POWER=1 only — see main()).
+// These never appear in the standard run, so the tracked baseline above
+// stays a fixed, comparable scene no matter what this section grows into.
+// ---------------------------------------------------------------------------
+
+// SmoothUnion CSG: a box and a sphere melted into one surface, not just
+// placed side by side — the case that actually exercises SdfOp::SmoothUnion
+// composition (children + blend factor `t`), not merely a Leaf primitive.
+geom::SdfNode makeMeltedBoxSphere() {
+    auto box = std::make_shared<geom::SdfNode>();
+    box->op = geom::SdfOp::Leaf;
+    box->prim = geom::SdfPrim::Box;
+    box->dims = glm::vec3(0.4f);
+
+    auto sphere = std::make_shared<geom::SdfNode>();
+    sphere->op = geom::SdfOp::Leaf;
+    sphere->prim = geom::SdfPrim::Sphere;
+    sphere->dims = glm::vec3(0.35f);
+    sphere->offset = glm::vec3(0.3f, 0.0f, 0.0f);
+
+    geom::SdfNode melt;
+    melt.op = geom::SdfOp::SmoothUnion;
+    melt.t = 0.25f;
+    melt.children = { box, sphere };
+    return melt;
+}
+
+// A genuinely OntoMath::Piecewise-driven surface, not the plain compiled-expr
+// path makeImplicit(string) alone would exercise: the string compiles to a
+// MathNode (sin/cos/add — real algebraic composition, "wildly intricate" in
+// the sense the remediation plan asked for), then Piecewise::continuous wraps
+// it so SdfNode::piecewise (not just ::mathNode) is what the field actually
+// carries — see Sdf.cpp's evaluation of `n.piecewise` at raymarch/tessellate
+// time.
+geom::SdfNode makeSinusoidalManifold() {
+    const geom::SdfNode expr = geom::makeImplicit(std::string("sin(x*4)+cos(y*4)+sin(z*4)-0.3"));
+    auto pw = std::make_shared<OntoMath::Piecewise>(OntoMath::Piecewise::continuous(expr.mathNode));
+    return geom::makeImplicit(pw);
+}
+
+// Every 4th field object cycles through: a plain sphere (the control), the
+// CSG melt, the Piecewise manifold, and back to a plain sphere at an extreme
+// extent — the "scale(1000) beside scale(0.01)" case from the plan, expressed
+// as the field's bounding extent (a Field object's actual scale knob; Object
+// has no general setScale) rather than an invented transform API.
+geom::SdfNode stressFieldShape(int i, float& extentOut) {
+    extentOut = 1.0f;
+    switch (i % 4) {
+        case 0: {
+            geom::SdfNode s;
+            s.op = geom::SdfOp::Leaf; s.prim = geom::SdfPrim::Sphere; s.dims = glm::vec3(0.5f);
+            return s;
+        }
+        case 1:
+            return makeMeltedBoxSphere();
+        case 2:
+            return makeSinusoidalManifold();
+        default: {
+            geom::SdfNode s;
+            s.op = geom::SdfOp::Leaf; s.prim = geom::SdfPrim::Sphere; s.dims = glm::vec3(0.5f);
+            // Alternate extreme extents so the population carries both a
+            // 1000x-oversized and a 0.01x-undersized field, per frame.
+            extentOut = (i % 8 == 3) ? 1000.0f : 0.01f;
+            return s;
+        }
+    }
+}
+
 } // namespace
 
 int main(int argc, char** argv) {
@@ -172,25 +242,59 @@ int main(int argc, char** argv) {
     const glm::mat4 proj = glm::perspectiveZO(glm::radians(45.0f), float(W) / H, 0.1f, 1000.0f);
     const glm::mat4 view3d = glm::lookAt(eye, glm::vec3(0.0f), glm::vec3(0, 1, 0));
 
-    std::printf("Creating massive object population...\n");
+    // Ultra power: an opt-in 10x-plus population with the same shapes as the
+    // standard scene PLUS the CSG-melt / Piecewise-manifold / extreme-extent
+    // edge cases above. Never runs by default — ctest stays exactly the fast,
+    // baseline-tracked probe it always was; a Person asks for this by hand:
+    //   EARTHCALL_ULTRA_POWER=1 ctest -R webgpu_micro_mastery_lag_test -V
+    const char* ultraEnv = std::getenv("EARTHCALL_ULTRA_POWER");
+    const bool ultraPower = ultraEnv && ultraEnv[0] != '\0' && std::string(ultraEnv) != "0";
+    const int kMeshCount  = ultraPower ? 25000 : 3000;
+    const int kFieldCount = ultraPower ? 25000 : 1500;
+    const int kFrames     = ultraPower ? 20 : 60; // fewer frames: this is a manual run, not ctest's
+
+    std::printf("Creating massive object population (%s: %d meshes, %d fields)...\n",
+                ultraPower ? "ULTRA POWER" : "standard", kMeshCount, kFieldCount);
     std::vector<std::unique_ptr<Object>> meshes;
-    for (int i = 0; i < 3000; ++i) {
+    meshes.reserve(kMeshCount);
+    for (int i = 0; i < kMeshCount; ++i) {
         auto obj = std::make_unique<Object>("mesh_" + std::to_string(i));
         obj->setShapeKind(Object::ShapeKind::Cube);
-        obj->setPosition(glm::vec3( (i % 100) * 1.5f - 75.0f, (i / 100) * 1.5f - 75.0f, 0.0f ));
+        const int side = static_cast<int>(std::sqrt(static_cast<double>(kMeshCount))) + 1;
+        obj->setPosition(glm::vec3( (i % side) * 1.5f - side * 0.75f,
+                                    (i / side) * 1.5f - side * 0.75f, 0.0f ));
         meshes.push_back(std::move(obj));
     }
 
     std::vector<std::unique_ptr<Object>> fields;
-    geom::SdfNode sphere;
-    sphere.op = geom::SdfOp::Leaf;
-    sphere.prim = geom::SdfPrim::Sphere;
-    sphere.dims = glm::vec3(0.5f);
-    for (int i = 0; i < 1500; ++i) {
+    fields.reserve(kFieldCount);
+    const int fieldSide = static_cast<int>(std::sqrt(static_cast<double>(kFieldCount))) + 1;
+    for (int i = 0; i < kFieldCount; ++i) {
         auto obj = std::make_unique<Object>("field_" + std::to_string(i));
-        obj->setFieldShape(sphere, 1.0f);
-        obj->setPosition(glm::vec3( (i % 50) * 2.0f - 50.0f, (i / 50) * 2.0f - 50.0f, 10.0f ));
+        if (ultraPower) {
+            float extent = 1.0f;
+            const geom::SdfNode shape = stressFieldShape(i, extent);
+            obj->setFieldShape(shape, extent);
+        } else {
+            geom::SdfNode sphere;
+            sphere.op = geom::SdfOp::Leaf;
+            sphere.prim = geom::SdfPrim::Sphere;
+            sphere.dims = glm::vec3(0.5f);
+            obj->setFieldShape(sphere, 1.0f);
+        }
+        obj->setPosition(glm::vec3( (i % fieldSide) * 2.0f - fieldSide, (i / fieldSide) * 2.0f - fieldSide, 10.0f ));
         fields.push_back(std::move(obj));
+    }
+
+    if (ultraPower) {
+        // No baseline judgment: the tracked baseline is the standard scene's
+        // number, and comparing a 50,000-object frame against a 4,500-object
+        // baseline is exactly the category error Phase 0 exists to prevent —
+        // "never quiet a STANDING line by widening the baseline" applies just
+        // as much to comparing it against the wrong scene entirely. This run
+        // reports what it measures and asserts only that nothing crashed or
+        // hung; it is not a regression gate.
+        std::printf("ULTRA POWER: informational only — not compared to the standard baseline.\n");
     }
 
     loadBaseline();
@@ -202,7 +306,6 @@ int main(int argc, char** argv) {
                 : "none on disk — this run cannot fail on timing, only record one");
 
     std::printf("Running frames...\n");
-    const int kFrames = 60;
 
     using ClockT = Clock;
     auto t0 = ClockT::now();
@@ -225,10 +328,16 @@ int main(int argc, char** argv) {
 
         // A hard wall-clock ceiling independent of calibration: this is a "did
         // the loop hang" tripwire, not a lag verdict, so it stays absolute.
+        // Ultra power gets a proportionally longer leash — 25000+25000 CSG/
+        // Piecewise-heavy objects legitimately cost more CPU per frame than
+        // the standard scene, and this ceiling exists to catch a hang, not to
+        // re-litigate whether ultra power is fast enough (it isn't a gate).
+        const double hardCeilingMs = ultraPower ? 600000.0 : 60000.0;
         auto elapsed = std::chrono::duration<double, std::milli>(ClockT::now() - t0).count();
-        if (elapsed > 60000.0) {
+        if (elapsed > hardCeilingMs) {
              const auto& stats = renderer.frameStats();
-             std::printf("FAIL: Frame rendering exceeded the hard time ceiling (60s at frame %d).\n", frame);
+             std::printf("FAIL: Frame rendering exceeded the hard time ceiling (%.0fs at frame %d).\n",
+                         hardCeilingMs / 1000.0, frame);
              std::printf("Failure frame stats:\n");
              std::printf("  drawCalls: %d\n", stats.drawCalls);
              std::printf("  vramAllocatedBytes: %.2f MB\n", stats.vramAllocatedBytes / 1048576.0);
@@ -265,20 +374,28 @@ int main(int argc, char** argv) {
                 "(drift %.2fx)\n", gCalibrationBefore, gCalibrationAfter, drift);
 
     bool lag = false;
-    const auto found = gBaseline.find("frame.avg_ms");
-    if (found != gBaseline.end()) {
-        const double limit = found->second * kTimeRegressionTolerance;
-        if (averageMsNormalised > limit) {
-            std::printf("  LAG       frame.avg_ms = %.3f ms (baseline %.3f, limit %.3f)\n",
-                        averageMsNormalised, found->second, limit);
-            lag = true;
-        } else {
-            std::printf("  ok        frame.avg_ms = %.3f ms (baseline %.3f)\n",
-                        averageMsNormalised, found->second);
-        }
+    if (ultraPower) {
+        // Informational only — see the note printed when the population was
+        // built. Comparing this number to the standard scene's baseline would
+        // fail every single run for having 16x the objects, not for lag.
+        std::printf("  --        frame.avg_ms = %.3f ms  (ULTRA POWER: not judged against "
+                    "the standard-scene baseline)\n", averageMsNormalised);
     } else {
-        std::printf("  STANDING  frame.avg_ms = %.3f ms  <- no baseline yet; record one with "
-                    "--rebaseline\n", averageMsNormalised);
+        const auto found = gBaseline.find("frame.avg_ms");
+        if (found != gBaseline.end()) {
+            const double limit = found->second * kTimeRegressionTolerance;
+            if (averageMsNormalised > limit) {
+                std::printf("  LAG       frame.avg_ms = %.3f ms (baseline %.3f, limit %.3f)\n",
+                            averageMsNormalised, found->second, limit);
+                lag = true;
+            } else {
+                std::printf("  ok        frame.avg_ms = %.3f ms (baseline %.3f)\n",
+                            averageMsNormalised, found->second);
+            }
+        } else {
+            std::printf("  STANDING  frame.avg_ms = %.3f ms  <- no baseline yet; record one with "
+                        "--rebaseline\n", averageMsNormalised);
+        }
     }
 
     if (!clockTrustworthy) {
@@ -289,7 +406,10 @@ int main(int argc, char** argv) {
     }
 
     if (rebaseline) {
-        if (!clockTrustworthy) {
+        if (ultraPower) {
+            std::printf("\n--rebaseline ignored under EARTHCALL_ULTRA_POWER: the baseline file "
+                        "records the standard scene, not this one.\n");
+        } else if (!clockTrustworthy) {
             std::printf("\n--rebaseline refused: recorded on a contended machine, which sets "
                         "the tripwire at the wrong height. Re-run on a quiet one.\n");
         } else {

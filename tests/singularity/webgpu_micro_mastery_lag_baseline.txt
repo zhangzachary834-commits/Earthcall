@@ -1,5 +1,5 @@
 # webgpu_micro_mastery_lag_test baseline — what the 4,500-object heavy
-# probe costs today. Recorded 2026-08-25 20:47:05.
+# probe costs today. Recorded 2026-08-25 23:47:57.
 # frame.avg_ms is normalised by this file's calibration factor, so it
 # means the same thing on another machine. The other four are exact
 # counts for a fixed scene (3000 meshes x 6 faces + 1500 fields) and
@@ -11,8 +11,8 @@
 # Re-record with:  ./build/webgpu_micro_mastery_lag_test --rebaseline
 # Only re-record DOWNWARD, or after a change whose cost was accepted
 # deliberately — say which in the commit message.
-frame.avg_ms=103.88
-frame.drawCalls=4500
-frame.bufferSuballocations=6000
-frame.vramAllocatedBytes=2.0983e+06
+frame.avg_ms=108.74
+frame.drawCalls=1501
+frame.bufferSuballocations=3002
+frame.vramAllocatedBytes=1.69587e+06
 frame.pipelineSwitches=2

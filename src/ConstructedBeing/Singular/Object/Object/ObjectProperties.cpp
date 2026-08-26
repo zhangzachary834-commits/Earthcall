@@ -503,6 +503,14 @@ void Object::buildProperties() {
     _propertyRegistry.push_back(std::make_unique<ComputedProperty<Object, int>>(
         "zOrder2D", this, &Object::getZOrder2D, &Object::setZOrder2D));
 
+    // Representation control (Refusal #7): a Law may ask for the tessellated
+    // fallback instead of the exact analytic/raymarched surface — e.g. to
+    // trade exactness for the instanced draw-call batching only the mesh path
+    // gets (WebGpuRenderer::flushMeshDraws). Never a domain kind; see
+    // ObjectTypes::RenderMode.
+    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Object, int>>(
+        "renderMode", this, &Object::getRenderModeProp, &Object::setRenderModeProp));
+
     _propertyRegistry.push_back(std::make_unique<PropertyRef<Object, std::string>>(
         "textString", this, &Object::_textString));
 

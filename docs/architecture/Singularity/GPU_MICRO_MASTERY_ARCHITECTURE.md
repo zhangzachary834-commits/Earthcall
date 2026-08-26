@@ -48,3 +48,29 @@ This architectural shift aligns perfectly with **Refusal #7**:
 > "No new methods to define variable behavior: The order of behavior, representation, and resource allocation depend on Person-authored Laws, represented by data. Methods should be the absolute invariants necessary to represent all artifacts of human intention."
 
 The `GpuBufferPool` is exactly this: an absolute invariant necessary to represent intention. It does not dictate *what* is drawn or *how* it behaves; it merely provides a flawless, frictionless pipeline for the data of the world to reach the senses (the screen), ensuring that when a Person authors a massive Law-driven system, the underlying substrate will carry it without buckling.
+
+## 6. Resolving the Draw Call Bottleneck: Hardware Instancing (Phase 4.3)
+Even with zero-cost memory suballocation, Earthcall's original immediate-mode topology executed discrete API draw calls per object (or per face). At 10,000 objects, the CPU remains bound by the sequential command encoder (`wgpuRenderPassEncoderDrawIndexed`), preventing full utilization of the GPU's highly parallel SIMD architecture.
+
+The solution is **Hardware Instancing** (Phase 4.3 of the remediation plan). Rather than dispatching draws sequentially, the `WebGpuRenderer` defers them into a `_meshDrawQueue`. At `endFrame()`, this queue is sorted by material and mesh ID. The transforms for identically-shaded topologies are written into a single contiguous `Storage` array via the `GpuBufferPool`. A single instanced draw command is then issued.
+
+**Ontological Ruling:** Does the Engine grouping Beings into a batched array violate Refusal #1 or #6? No. The batching is entirely ephemeral and isolated to the `@screen-channel` projection. It dictates *how the machine acts* (translating spatial invariants into a raster format), not *what a thing is*. The Objects retain total ontological autonomy.
+
+## 7. The Fragment Starvation Paradox (SDF Overdraw)
+A critical distinction must be drawn between CPU starvation (draw calls) and GPU fragment starvation (pixel shading). While the headless tests achieved ~180ms frame times for 4,500 objects, rendering 20 analytically perfect Toruses stacked in the exact same spatial coordinates causes crippling lag on high-DPI displays.
+
+This is a result of **Bounding Box Overdraw** in the sphere-tracing step. Earthcall renders implicit `ShapeKind` fields by rasterizing an invisible analytic AABB, projecting a ray per fragment, and evaluating the signed distance function (e.g., `sdTorus`) in a 192-step loop.
+When 20 SDF objects perfectly overlap, a single central fragment evaluates the 192-step tracing loop 20 separate times. At retina resolutions (8M+ pixels), this yields billions of mathematical evaluations per frame, completely saturating the GPU ALUs.
+
+## 8. Exposing Representation to Law (Refusal #7 Alignment)
+Hardware rasterizers evaluate depth (`Early-Z`) optimally for tessellated polygons, bypassing the fragment shader entirely for occluded surfaces. To resolve SDF overdraw without breaking the ontology, the solution relies strictly on **Refusal #7**: "The order of behavior, representation, and resource allocation depend on Person-authored Laws."
+
+We introduce a `RenderMode` (Analytic vs. Mesh) property, registered via `PropertyPath` as `@object.renderMode`. This strips the hardcoded representation logic out of the C++ substrate. The Person is granted absolute authorial control to write a Law that gracefully degrades mathematical perfection into triangulated speed (`r.drawMesh(_smoothMesh, mat)`). If a Person wishes to stack 1,000 Toruses, they simply author a Law dictating their representation as meshes, enabling hardware instancing and perfect Z-culling.
+
+## 9. The Asymptote: Unified Scene Raymarching (Global SDF)
+If the Person demands mathematically perfect overlap of 1,000 analytic fields, Earthcall's `@screen-channel` must evolve to evaluate the Zone natively. 
+Instead of rendering individual AABBs, a **Global SDF (Unified Scene Raymarcher)** aggregates the Zone's mathematical topology into a single screen-space quad. The fragment shader fires one ray per pixel, evaluating the `min()` distance to the nearest `MathNode` in the entire scene at each step. 
+
+This approach drops overdraw to exactly zero. Furthermore, evaluating the mathematics of the Zone cohesively enables cross-object Constructive Solid Geometry (CSG), such as `Op::SmoothUnion`, where disparate authored Beings seamlessly merge into one another purely as an artifact of the sensory projection.
+
+> **Addendum:** Executing a true Global SDF without incurring catastrophic shader recompilation lag requires migrating `OntoMath` from static WGSL compilation to a dynamic GPU AST Interpreter. See [`NATIVE_GPU_ONTOMATH.md`](NATIVE_GPU_ONTOMATH.md) for the architecture of the ultimate native GPU math engine.
