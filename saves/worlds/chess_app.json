@@ -5097,6 +5097,8 @@
     "formationMembers": [
       "law-chess-click",
       "law-chess-select",
+      "law-chess-drag-pick",
+      "law-chess-drag-drop",
       "law-chess-deselect-others",
       "law-chess-pawn-w-step",
       "law-chess-pawn-w-double",
@@ -5624,6 +5626,33 @@
               }
             },
             {
+              "kind": 8,
+              "path": "position.y",
+              "bindings": {
+                "ry": "restY"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "ry": 1.0
+                          }
+                        },
+                        {
+                          "c": 0.18,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
               "kind": 10,
               "eventType": "piece-selected",
               "publishSubject": "",
@@ -5635,6 +5664,664 @@
           {
             "type": "authored-by",
             "entityA": "law-chess-select",
+            "entityB": "grok-4.6",
+            "directed": true,
+            "weight": 1.0,
+            "events": [
+              {
+                "description": "authored-by",
+                "deltaWeight": 1.0,
+                "timestamp": 1787390000
+              }
+            ]
+          }
+        ],
+        "applicationLog": []
+      },
+      {
+        "id": "law-chess-drag-pick",
+        "name": "select-dragged-piece",
+        "enabled": true,
+        "authority": 0,
+        "activation": 0,
+        "scope": 0,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "grok-4.6"
+        ],
+        "conditionSubjects": [],
+        "targets": [],
+        "conditionModel": {
+          "kind": 2,
+          "relationType": "instance-of",
+          "otherId": "category.chess.piece"
+        },
+        "actionModel": {
+          "kind": 5,
+          "children": [
+            {
+              "kind": 8,
+              "path": "@state.chess.targetX",
+              "bindings": {
+                "ptrX": "@interaction-channel.pointerWorld.x"
+              },
+              "function": {
+                "input": "ptrX",
+                "pieces": [
+                  {
+                    "lo": -4.0,
+                    "hi": -3.0,
+                    "includeLo": true,
+                    "includeHi": false,
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 0.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "lo": -3.0,
+                    "hi": -2.0,
+                    "includeLo": true,
+                    "includeHi": false,
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "lo": -2.0,
+                    "hi": -1.0,
+                    "includeLo": true,
+                    "includeHi": false,
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 2.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "lo": -1.0,
+                    "hi": 0.0,
+                    "includeLo": true,
+                    "includeHi": false,
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 3.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "lo": 0.0,
+                    "hi": 1.0,
+                    "includeLo": true,
+                    "includeHi": false,
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 4.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "lo": 1.0,
+                    "hi": 2.0,
+                    "includeLo": true,
+                    "includeHi": false,
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 5.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "lo": 2.0,
+                    "hi": 3.0,
+                    "includeLo": true,
+                    "includeHi": false,
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 6.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "lo": 3.0,
+                    "hi": 4.0,
+                    "includeLo": true,
+                    "includeHi": true,
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 7.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 8,
+              "path": "@state.chess.targetY",
+              "bindings": {
+                "ptrZ": "@interaction-channel.pointerWorld.z"
+              },
+              "function": {
+                "input": "ptrZ",
+                "pieces": [
+                  {
+                    "lo": -4.0,
+                    "hi": -3.0,
+                    "includeLo": true,
+                    "includeHi": false,
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 0.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "lo": -3.0,
+                    "hi": -2.0,
+                    "includeLo": true,
+                    "includeHi": false,
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "lo": -2.0,
+                    "hi": -1.0,
+                    "includeLo": true,
+                    "includeHi": false,
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 2.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "lo": -1.0,
+                    "hi": 0.0,
+                    "includeLo": true,
+                    "includeHi": false,
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 3.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "lo": 0.0,
+                    "hi": 1.0,
+                    "includeLo": true,
+                    "includeHi": false,
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 4.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "lo": 1.0,
+                    "hi": 2.0,
+                    "includeLo": true,
+                    "includeHi": false,
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 5.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "lo": 2.0,
+                    "hi": 3.0,
+                    "includeLo": true,
+                    "includeHi": false,
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 6.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "lo": 3.0,
+                    "hi": 4.0,
+                    "includeLo": true,
+                    "includeHi": true,
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 7.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 10,
+              "eventType": "square-clicked",
+              "publishSubject": "",
+              "publishObject": ""
+            }
+          ]
+        },
+        "provenance": [
+          {
+            "type": "authored-by",
+            "entityA": "law-chess-drag-pick",
+            "entityB": "grok-4.6",
+            "directed": true,
+            "weight": 1.0,
+            "events": [
+              {
+                "description": "authored-by",
+                "deltaWeight": 1.0,
+                "timestamp": 1787390000
+              }
+            ]
+          }
+        ],
+        "applicationLog": []
+      },
+      {
+        "id": "law-chess-drag-drop",
+        "name": "drop-onto-square",
+        "enabled": true,
+        "authority": 0,
+        "activation": 0,
+        "scope": 0,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "grok-4.6"
+        ],
+        "conditionSubjects": [],
+        "targets": [],
+        "conditionModel": {
+          "kind": 0,
+          "path": "@interaction-channel.hoveredId",
+          "op": 1,
+          "operand": {
+            "t": "string",
+            "v": ""
+          }
+        },
+        "actionModel": {
+          "kind": 5,
+          "children": [
+            {
+              "kind": 8,
+              "path": "@state.chess.targetX",
+              "bindings": {
+                "ptrX": "@interaction-channel.pointerWorld.x"
+              },
+              "function": {
+                "input": "ptrX",
+                "pieces": [
+                  {
+                    "lo": -4.0,
+                    "hi": -3.0,
+                    "includeLo": true,
+                    "includeHi": false,
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 0.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "lo": -3.0,
+                    "hi": -2.0,
+                    "includeLo": true,
+                    "includeHi": false,
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "lo": -2.0,
+                    "hi": -1.0,
+                    "includeLo": true,
+                    "includeHi": false,
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 2.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "lo": -1.0,
+                    "hi": 0.0,
+                    "includeLo": true,
+                    "includeHi": false,
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 3.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "lo": 0.0,
+                    "hi": 1.0,
+                    "includeLo": true,
+                    "includeHi": false,
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 4.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "lo": 1.0,
+                    "hi": 2.0,
+                    "includeLo": true,
+                    "includeHi": false,
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 5.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "lo": 2.0,
+                    "hi": 3.0,
+                    "includeLo": true,
+                    "includeHi": false,
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 6.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "lo": 3.0,
+                    "hi": 4.0,
+                    "includeLo": true,
+                    "includeHi": true,
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 7.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 8,
+              "path": "@state.chess.targetY",
+              "bindings": {
+                "ptrZ": "@interaction-channel.pointerWorld.z"
+              },
+              "function": {
+                "input": "ptrZ",
+                "pieces": [
+                  {
+                    "lo": -4.0,
+                    "hi": -3.0,
+                    "includeLo": true,
+                    "includeHi": false,
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 0.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "lo": -3.0,
+                    "hi": -2.0,
+                    "includeLo": true,
+                    "includeHi": false,
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "lo": -2.0,
+                    "hi": -1.0,
+                    "includeLo": true,
+                    "includeHi": false,
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 2.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "lo": -1.0,
+                    "hi": 0.0,
+                    "includeLo": true,
+                    "includeHi": false,
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 3.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "lo": 0.0,
+                    "hi": 1.0,
+                    "includeLo": true,
+                    "includeHi": false,
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 4.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "lo": 1.0,
+                    "hi": 2.0,
+                    "includeLo": true,
+                    "includeHi": false,
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 5.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "lo": 2.0,
+                    "hi": 3.0,
+                    "includeLo": true,
+                    "includeHi": false,
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 6.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "lo": 3.0,
+                    "hi": 4.0,
+                    "includeLo": true,
+                    "includeHi": true,
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 7.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 8,
+              "path": "@state.chess.dx",
+              "bindings": {
+                "tx": "@state.chess.targetX",
+                "sx": "@state.chess.selectedX"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "tx": 1.0
+                          }
+                        },
+                        {
+                          "c": -1.0,
+                          "factors": {
+                            "sx": 1.0
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 8,
+              "path": "@state.chess.dy",
+              "bindings": {
+                "ty": "@state.chess.targetY",
+                "sy": "@state.chess.selectedY"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "ty": 1.0
+                          }
+                        },
+                        {
+                          "c": -1.0,
+                          "factors": {
+                            "sy": 1.0
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 10,
+              "eventType": "square-clicked",
+              "publishSubject": "object.chess.board",
+              "publishObject": ""
+            }
+          ]
+        },
+        "provenance": [
+          {
+            "type": "authored-by",
+            "entityA": "law-chess-drag-drop",
             "entityB": "grok-4.6",
             "directed": true,
             "weight": 1.0,
@@ -5696,12 +6383,40 @@
           ]
         },
         "actionModel": {
-          "kind": 0,
-          "path": "isSelected",
-          "operand": {
-            "t": "bool",
-            "v": false
-          }
+          "kind": 5,
+          "children": [
+            {
+              "kind": 0,
+              "path": "isSelected",
+              "operand": {
+                "t": "bool",
+                "v": false
+              }
+            },
+            {
+              "kind": 8,
+              "path": "position.y",
+              "bindings": {
+                "ry": "restY"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "ry": 1.0
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
         },
         "provenance": [
           {
@@ -6045,6 +6760,29 @@
                         {
                           "c": -3.5,
                           "factors": {}
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 8,
+              "path": "position.y",
+              "bindings": {
+                "ry": "restY"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "ry": 1.0
+                          }
                         }
                       ]
                     }
@@ -6494,6 +7232,29 @@
               }
             },
             {
+              "kind": 8,
+              "path": "position.y",
+              "bindings": {
+                "ry": "restY"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "ry": 1.0
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
               "kind": 0,
               "path": "isSelected",
               "operand": {
@@ -6890,6 +7651,29 @@
               }
             },
             {
+              "kind": 8,
+              "path": "position.y",
+              "bindings": {
+                "ry": "restY"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "ry": 1.0
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
               "kind": 0,
               "path": "isSelected",
               "operand": {
@@ -7263,6 +8047,29 @@
                         {
                           "c": -3.5,
                           "factors": {}
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 8,
+              "path": "position.y",
+              "bindings": {
+                "ry": "restY"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "ry": 1.0
+                          }
                         }
                       ]
                     }
@@ -7712,6 +8519,29 @@
               }
             },
             {
+              "kind": 8,
+              "path": "position.y",
+              "bindings": {
+                "ry": "restY"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "ry": 1.0
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
               "kind": 0,
               "path": "isSelected",
               "operand": {
@@ -8100,6 +8930,29 @@
                         {
                           "c": -3.5,
                           "factors": {}
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 8,
+              "path": "position.y",
+              "bindings": {
+                "ry": "restY"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "ry": 1.0
+                          }
                         }
                       ]
                     }
@@ -8498,6 +9351,29 @@
                         {
                           "c": -3.5,
                           "factors": {}
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 8,
+              "path": "position.y",
+              "bindings": {
+                "ry": "restY"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "ry": 1.0
+                          }
                         }
                       ]
                     }
@@ -9135,6 +10011,29 @@
               }
             },
             {
+              "kind": 8,
+              "path": "position.y",
+              "bindings": {
+                "ry": "restY"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "ry": 1.0
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
               "kind": 0,
               "path": "isSelected",
               "operand": {
@@ -9705,6 +10604,29 @@
                         {
                           "c": -3.5,
                           "factors": {}
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 8,
+              "path": "position.y",
+              "bindings": {
+                "ry": "restY"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "ry": 1.0
+                          }
                         }
                       ]
                     }
@@ -10560,6 +11482,29 @@
               }
             },
             {
+              "kind": 8,
+              "path": "position.y",
+              "bindings": {
+                "ry": "restY"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "ry": 1.0
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
               "kind": 0,
               "path": "isSelected",
               "operand": {
@@ -10950,6 +11895,29 @@
                         {
                           "c": -3.5,
                           "factors": {}
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 8,
+              "path": "position.y",
+              "bindings": {
+                "ry": "restY"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "ry": 1.0
+                          }
                         }
                       ]
                     }
@@ -14611,6 +15579,12 @@
       ],
       "law-chess-select": [
         "square-clicked"
+      ],
+      "law-chess-drag-pick": [
+        "object-drag-started"
+      ],
+      "law-chess-drag-drop": [
+        "object-drag-ended"
       ],
       "law-chess-deselect-others": [
         "piece-selected"

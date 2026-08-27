@@ -239,7 +239,7 @@ void InteractionChannel::observe(const Sense& sense,
         dragTotalY = sense.pointerY - _pressY;
         const float travelled = std::sqrt(dragTotalX * dragTotalX +
                                           dragTotalY * dragTotalY);
-        if (!dragging && travelled > kClickSlopPixels) {
+        if (!dragging && travelled > clickSlopPixels) {
             dragging = true;
             publishEdge("object-drag-started", findReachable(reachable, pressedId));
         }
@@ -320,7 +320,10 @@ void InteractionChannel::step(GLFWwindow* window, ::Core::Camera& camera,
     sense.pointerX = static_cast<float>(cx);
     sense.pointerY = static_cast<float>(cy);
 
-    sense.left = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
+    // Left comes from noteMouseButton()'s callback-latched level, not a poll
+    // — see its doc comment. Right/middle stay polled: nothing in the tree
+    // publishes edges for them yet, so there is nothing for a poll to drop.
+    sense.left = _liveLeftDown;
     sense.right = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS;
     sense.middle = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS;
     sense.shift = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ||
@@ -343,6 +346,8 @@ void InteractionChannel::step(GLFWwindow* window, ::Core::Camera& camera,
     // here rather than called through it because CursorTools is a tool window
     // and this is a channel; a channel that depends on a window is the bug
     // CreationChannel was extracted to fix.
+    pointerLocked = glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED;
+
     const int* vp = camera.getViewport();
     const GLdouble* mv = camera.getModelview();
     const GLdouble* pr = camera.getProjection();
@@ -355,7 +360,7 @@ void InteractionChannel::step(GLFWwindow* window, ::Core::Camera& camera,
         const float scaleY = (winH > 0 && fH > 0) ? (static_cast<float>(fH) / static_cast<float>(winH)) : 1.0f;
 
         float fbX = 0.0f, fbY = 0.0f;
-        if (glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED) {
+        if (pointerLocked) {
             // Crosshair / centre of viewport when cursor is locked
             fbX = static_cast<float>(vp[0]) + static_cast<float>(vp[2]) * 0.5f;
             fbY = static_cast<float>(vp[1]) + static_cast<float>(vp[3]) * 0.5f;
@@ -396,12 +401,47 @@ void InteractionChannel::step(GLFWwindow* window, ::Core::Camera& camera,
         if (obj) reachable.push_back(obj.get());
     }
 
+    // A press and release that both landed since the last step() (one
+    // glfwPollEvents() batch) would otherwise vanish: sense.left already
+    // reads false (the button is back up by now), so a single observe()
+    // call would never see the press at all. Replay it as two frames —
+    // press, then release — before this frame's regular level. Consumed
+    // here regardless of `blind`: if the world is not listening this frame,
+    // observe() already degrades both calls to nothing, same as it would a
+    // single call.
+    if (_pendingFullClick) {
+        _pendingFullClick = false;
+        Sense pressSense = sense;
+        pressSense.left = true;
+        observe(pressSense, reachable);
+    }
+    _pressSeenSinceLastStep = false;
+
     observe(sense, reachable);
 }
 
 void InteractionChannel::noteScroll(float dx, float dy) {
     _pendingScrollX += dx;
     _pendingScrollY += dy;
+}
+
+void InteractionChannel::noteMouseButton(bool pressed) {
+    if (pressed) {
+        _liveLeftDown = true;
+        _pressSeenSinceLastStep = true;
+    } else {
+        // If a step() already ran while this press was live, that step()'s
+        // Sense.left = true replayed the press normally, and
+        // _pressSeenSinceLastStep was cleared at the end of it — this
+        // release is the ordinary next-frame edge, nothing pending. If no
+        // step() has run since the press (both callbacks landed inside one
+        // glfwPollEvents() batch), the whole gesture is about to vanish
+        // between two polls; latch it so step() can replay press-then-
+        // release itself instead of losing it.
+        if (_pressSeenSinceLastStep) _pendingFullClick = true;
+        _liveLeftDown = false;
+        _pressSeenSinceLastStep = false;
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -463,6 +503,9 @@ void InteractionChannel::buildProperties() {
     boolean("shiftDown", &InteractionChannel::shiftDown);
     boolean("ctrlDown", &InteractionChannel::ctrlDown);
     boolean("altDown", &InteractionChannel::altDown);
+
+    flt("clickSlopPixels", &InteractionChannel::clickSlopPixels);
+    boolean("pointerLocked", &InteractionChannel::pointerLocked);
 }
 
 } // namespace Input

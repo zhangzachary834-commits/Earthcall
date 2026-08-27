@@ -30,6 +30,7 @@
 
 #include "Singularity/Input/Keyboard/KeyboardHandler.hpp"
 #include "Singularity/Input/Mouse/MouseHandler.hpp"
+#include "Singularity/Input/Interaction/InteractionChannel.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CursorTools.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/Chat.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/ElementalToolHandler.hpp"
@@ -320,6 +321,27 @@ void Engine::tick(float dt) {
         // the spawn law's gate is spawnLawArmed, not the publisher and not
         // console Create. See CreationChannel::spawnLawArmed.
         if (_lawManager) _lawManager->tick();
+
+        // A ray the Person cannot see the origin of is a black box aimed at
+        // their world: while the cursor is locked, InteractionChannel picks
+        // from the viewport centre rather than the OS pointer (which is
+        // hidden and drifting), and until now nothing drew where that centre
+        // was. `pointerLocked` is the channel's own registered fact, not a
+        // fresh GLFW query, so this reticle and the pick it depicts can never
+        // disagree.
+        if (_lawManager) {
+            if (auto* interaction = Singularity::Input::InteractionChannel::find(*_lawManager)) {
+                if (interaction->pointerLocked) {
+                    ImGuiIO& rio = ImGui::GetIO();
+                    const ImVec2 center(rio.DisplaySize.x * 0.5f, rio.DisplaySize.y * 0.5f);
+                    ImDrawList* dl = ImGui::GetForegroundDrawList();
+                    constexpr float half = 6.0f;
+                    const ImU32 col = IM_COL32(255, 255, 255, 200);
+                    dl->AddLine(ImVec2(center.x - half, center.y), ImVec2(center.x + half, center.y), col, 1.5f);
+                    dl->AddLine(ImVec2(center.x, center.y - half), ImVec2(center.x, center.y + half), col, 1.5f);
+                }
+            }
+        }
 
         Rendering::renderDeveloperToolsWindow(&_devToolsWindowOpen, _window, this);
 

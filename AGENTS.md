@@ -111,7 +111,7 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
 
 cmake --build build --target earthcall -j8
 cmake --build build -j8                               # tests are NOT built by the line above
-ctest --test-dir build --output-on-failure -j4        # 69 registered, 68-69 pass (2026-08-25) — frame_lag_test is machine-load-sensitive, see below
+ctest --test-dir build --output-on-failure -j4        # 72 registered, 71 pass (2026-08-26) — frame_lag_test is machine-load-sensitive (see below); smooth_tessellation_cache_test is a genuine pre-existing failure, Bugs.md #11
 cmake --build build --target lag                      # frame-cost probe alone, with its report
 ```
 

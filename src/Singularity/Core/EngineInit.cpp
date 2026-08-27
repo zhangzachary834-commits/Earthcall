@@ -457,7 +457,22 @@ void Engine::registerCallbacks() {
             ImGui_ImplGlfw_MouseButtonCallback(window, button, action, mods);
             // Then handle game-specific mouse input
             self->_mouseHandler->handleMouseButton(button, action, mods);
-            
+
+            // InteractionChannel's left-button level used to come from a
+            // per-frame poll, which drops a press-and-release that both land
+            // inside this one glfwPollEvents() batch (routine for a human
+            // click). Latch it here — edge-accurate, callback-driven, same
+            // shape as noteScroll() just below — regardless of
+            // WantCaptureMouse: observe()'s own `blind` gate is what decides
+            // whether a captured frame's edges mean anything, the same way a
+            // polled level would have been gated.
+            if (button == GLFW_MOUSE_BUTTON_LEFT && self->getLawManager()) {
+                if (auto* interaction =
+                        Singularity::Input::InteractionChannel::find(*self->getLawManager())) {
+                    interaction->noteMouseButton(action == GLFW_PRESS);
+                }
+            }
+
             // Emit global onMouseClicked event
             if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS && !ImGui::GetIO().WantCaptureMouse) {
                 Singularity::Core::CreationChannel* channel = nullptr;

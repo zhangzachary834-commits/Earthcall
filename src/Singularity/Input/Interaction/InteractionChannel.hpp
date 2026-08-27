@@ -106,6 +106,17 @@ public:
     // none instead of repeating the last notch forever.
     void noteScroll(float dx, float dy);
 
+    // The left button's level used to come from polling glfwGetMouseButton()
+    // once per frame in step(). A press-and-release that both land inside one
+    // glfwPollEvents() batch — routine at 60 fps for a human click, and the
+    // norm once the frame budget is tight — is invisible to a poll: by the
+    // time step() asks, the button is already back up, so leftDown never
+    // reads true and the whole gesture is dropped. Called from the GLFW
+    // mouse-button callback, this keeps the level edge-accurate and latches
+    // a same-frame press+release pair so step() can replay both edges rather
+    // than lose them. See CHESS_GESTURE_HANDOFF_2026-08-26.md §3.
+    void noteMouseButton(bool pressed);
+
     // Registered as "@world.pointerOver" / "@world.pointerDistance": readings
     // ABOUT the subject rather than properties ON it, so "if the pointer is
     // over me" is authorable on a being that carries no interaction state of
@@ -153,10 +164,22 @@ public:
     bool altDown = false;
 
     // How far the pointer may travel between press and release and still be a
-    // click rather than a drag, in pixels. A first-mover constant, not a
-    // setting: it is a fact about hands, and an authored law that could widen
-    // it could make every drag in the world a click.
-    static constexpr float kClickSlopPixels = 6.0f;
+    // click rather than a drag, in WINDOW points (the same space `pointerX`/
+    // `pointerY` and `dragTotalX`/`dragTotalY` are measured in). Used to be a
+    // `static constexpr` nothing could see or change — Refusal 6 on its face,
+    // since deciding a gesture was a drag rather than a click is a meaning
+    // decision, not a sensing one. Registered so a law (or a Person, through
+    // the Law Graph) can read or tune it; 12.0 is a reasoned default (roughly
+    // half a chess pawn's on-screen radius at chess_app's saved camera — see
+    // CHESS_APP_EVERY_GESTURE_IS_A_DRAG_2026-08-26.md §3), not a measured
+    // human constant, and Zach may want a different number.
+    float clickSlopPixels = 12.0f;
+
+    // Whether the OS cursor is confined/hidden for first-person look
+    // (GLFW_CURSOR_DISABLED). While true, the pick ray leaves the viewport
+    // centre rather than the pointer (step()) — a fact that used to be
+    // invisible from inside the world. Written by step(); read-only to law.
+    bool pointerLocked = false;
 
 private:
     void buildProperties() override;
@@ -186,6 +209,13 @@ private:
     bool _worldReadingsInstalled = false;
     float _pendingScrollX = 0.0f;      // callback accumulator, drained by step()
     float _pendingScrollY = 0.0f;
+
+    // Edge-accurate left-button state, kept by noteMouseButton() from the
+    // GLFW callback instead of a per-frame glfwGetMouseButton() poll (see
+    // noteMouseButton's doc comment for why polling drops fast clicks).
+    bool _liveLeftDown = false;
+    bool _pressSeenSinceLastStep = false;  // a press the last step() has not replayed yet
+    bool _pendingFullClick = false;        // press AND release both landed since the last step()
 };
 
 } // namespace Input

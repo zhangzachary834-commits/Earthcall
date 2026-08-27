@@ -520,6 +520,27 @@ def add_law(law_id, name, activation, triggers, cond, action, scope=1):
         TRIGGERS[law_id] = triggers
 
 
+
+# How far a selected piece rises off the board, in world units — the visual
+# feedback a Person has never had for "this is the piece the game thinks is
+# selected" (To-do list: "I need to be able to click on a piece and see
+# visual feedback its the game-selected piece"). A Y-lift, not a colour
+# change: it sidesteps the shared-Material footgun entirely (a face color
+# written through `materials.resolveOrDefault` — never done here, but a Set
+# on a Property Path aimed at faceColor would still be one Material shared by
+# every piece of that colour) and reads unambiguously as "picked up" the way
+# every physical chess set already teaches a Person to see it.
+SELECTED_LIFT = 0.18
+
+
+def lift_action():
+    return map_path("position.y", {"ry": "restY"}, offset_terms("ry", SELECTED_LIFT))
+
+
+def unlift_action():
+    return map_path("position.y", {"ry": "restY"}, copy_terms("ry"))
+
+
 def move_action():
     return seq(
         map_path("@state.chess.prevX", {"gx": "gridX"}, copy_terms("gx")),
@@ -535,6 +556,7 @@ def move_action():
         map_path("gridY", {"ty": "@state.chess.targetY"}, copy_terms("ty")),
         map_path("position.x", {"tx": "@state.chess.targetX"}, offset_terms("tx", -3.5)),
         map_path("position.z", {"ty": "@state.chess.targetY"}, offset_terms("ty", -3.5)),
+        unlift_action(),
         set_path("isSelected", pv("bool", False)),
         set_path("hasMoved", pv("bool", True)),
         set_path("@state.chess.selectionActive", pv("bool", False)),
@@ -614,7 +636,83 @@ def build_laws():
             map_path("@state.chess.selectedX", {"gx": "gridX"}, copy_terms("gx")),
             map_path("@state.chess.selectedY", {"gy": "gridY"}, copy_terms("gy")),
             set_path("@state.chess.selectionActive", pv("bool", True)),
+            lift_action(),
             publish("piece-selected"),
+        ),
+        scope=0,
+    )
+
+    add_law(
+        "law-chess-drag-pick",
+        "select-dragged-piece",
+        0,
+        ["object-drag-started"],
+        IS_PIECE,   # NOT the board — starting a drag on empty board must not move anything
+        seq(
+            {
+                "kind": 8,
+                "path": "@state.chess.targetX",
+                "bindings": {"ptrX": "@interaction-channel.pointerWorld.x"},
+                "function": {"input": "ptrX", "pieces": pointer_bins()},
+            },
+            {
+                "kind": 8,
+                "path": "@state.chess.targetY",
+                "bindings": {"ptrZ": "@interaction-channel.pointerWorld.z"},
+                "function": {"input": "ptrZ", "pieces": pointer_bins()},
+            },
+            publish("square-clicked"),
+        ),
+        scope=0,
+    )
+
+    add_law(
+        "law-chess-drag-drop",
+        "drop-onto-square",
+        0,
+        ["object-drag-ended"],
+        # Guard: object-drag-ended fires with the DRAGGED PIECE as subject even
+        # when the pointer has left the world, and pointerWorld is then (0,0,0)
+        # — which the bins read as square (4,4). Without this, letting go off
+        # the board teleports the piece to e5.
+        compare("@interaction-channel.hoveredId", 1, pv("string", "")),
+        seq(
+            {
+                "kind": 8,
+                "path": "@state.chess.targetX",
+                "bindings": {"ptrX": "@interaction-channel.pointerWorld.x"},
+                "function": {"input": "ptrX", "pieces": pointer_bins()},
+            },
+            {
+                "kind": 8,
+                "path": "@state.chess.targetY",
+                "bindings": {"ptrZ": "@interaction-channel.pointerWorld.z"},
+                "function": {"input": "ptrZ", "pieces": pointer_bins()},
+            },
+            map_path(
+                "@state.chess.dx",
+                {"tx": "@state.chess.targetX", "sx": "@state.chess.selectedX"},
+                [
+                    {"c": 1.0, "factors": {"tx": 1.0}},
+                    {"c": -1.0, "factors": {"sx": 1.0}},
+                ],
+            ),
+            map_path(
+                "@state.chess.dy",
+                {"ty": "@state.chess.targetY", "sy": "@state.chess.selectedY"},
+                [
+                    {"c": 1.0, "factors": {"ty": 1.0}},
+                    {"c": -1.0, "factors": {"sy": 1.0}},
+                ],
+            ),
+            # The BOARD as subject, deliberately. The move laws are
+            # Scope::Everyone and read isSelected, so the subject is nothing to
+            # them — but law-chess-select is Scope::Subject, and publishing the
+            # piece here would re-select it in the same round as the move that
+            # clears isSelected. Publishing the board makes select's IS_PIECE
+            # condition fail, exactly what a click on a destination square
+            # does today.
+            publish("square-clicked", "object.chess.board"),
         ),
         scope=0,
     )
@@ -631,7 +729,10 @@ def build_laws():
                 compare("gridY", 1, operand_path="@state.chess.targetY"),
             ),
         ),
-        set_path("isSelected", pv("bool", False)),
+        seq(
+            set_path("isSelected", pv("bool", False)),
+            unlift_action(),
+        ),
     )
 
     # Pawns
