@@ -163,6 +163,9 @@ namespace Core {
         mgr.active().update(dt);
         mgr.active().applyFormationRelations();
 
+        // Evict unreferenced smooth tessellation caches from destroyed or modified objects
+        Object::gcSmoothTessellationCache();
+
         // Advance time
         _worldTime += static_cast<double>(dt);
         Universe::instance().setClock(_worldTime, static_cast<double>(dt));

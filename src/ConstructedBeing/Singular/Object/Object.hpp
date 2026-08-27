@@ -523,6 +523,11 @@ public:
     const geom::ComplexShapeData&  getComplexData() const { return complexData; }
     const geom::SdfNode&           getFieldData()   const { return fieldData; }
     const std::vector<glm::vec3>& getSupportCloud() const { return _supportCloud; }
+
+    // Smooth-surface tessellation cache garbage collection (evicts entries with use_count() <= 1)
+    static size_t gcSmoothTessellationCache();
+    static size_t smoothTessellationCacheSize();
+    static void clearSmoothTessellationCache();
     void setSmoothSurface(const geom::SmoothSurfaceData& s) {
         smoothData = s; _hasSmooth = true; _hasComplex = false; _hasField = false; _hasPatch = false; rebuildGeometryCaches();
     }

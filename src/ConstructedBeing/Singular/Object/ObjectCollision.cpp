@@ -255,6 +255,29 @@ void Object::rebuildGeometryCaches() {
     for (size_t i = 0; i < m.tris.size(); i += step) _supportCloud.push_back(m.tris[i].pos);
 }
 
+size_t Object::gcSmoothTessellationCache() {
+    size_t evicted = 0;
+    for (auto it = s_smoothCache.begin(); it != s_smoothCache.end(); ) {
+        // If use_count() <= 1, only s_smoothCache itself holds a reference to this TessMesh.
+        // Evict it to prevent memory growth across slider edits or deleted objects.
+        if (it->second.use_count() <= 1) {
+            it = s_smoothCache.erase(it);
+            ++evicted;
+        } else {
+            ++it;
+        }
+    }
+    return evicted;
+}
+
+size_t Object::smoothTessellationCacheSize() {
+    return s_smoothCache.size();
+}
+
+void Object::clearSmoothTessellationCache() {
+    s_smoothCache.clear();
+}
+
 glm::vec3 Object::getLocalSupportPoint(const glm::vec3& localDirection) const {
     glm::vec3 dir = localDirection;
     if (glm::dot(dir, dir) <= 1e-12f) dir = glm::vec3(1.0f, 0.0f, 0.0f);
