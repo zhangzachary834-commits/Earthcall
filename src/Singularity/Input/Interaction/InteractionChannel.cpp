@@ -263,6 +263,84 @@ void InteractionChannel::observe(const Sense& sense,
         dragTotalY = 0.0f;
     }
 
+    // --- Right button edges ---
+    const bool rightPressedNow = rightDown && !_prevRight;
+    const bool rightReleasedNow = !rightDown && _prevRight;
+
+    if (rightPressedNow) {
+        _rightPressX = sense.pointerX;
+        _rightPressY = sense.pointerY;
+        rightPressedId = hoveredId;
+        rightDragTotalX = 0.0f;
+        rightDragTotalY = 0.0f;
+        rightDragging = false;
+        if (hit) publishEdge("object-right-pressed", hit);
+    }
+
+    if (rightDown && !rightPressedId.empty()) {
+        rightDragTotalX = sense.pointerX - _rightPressX;
+        rightDragTotalY = sense.pointerY - _rightPressY;
+        const float travelled = std::sqrt(rightDragTotalX * rightDragTotalX +
+                                          rightDragTotalY * rightDragTotalY);
+        if (!rightDragging && travelled > clickSlopPixels) {
+            rightDragging = true;
+            publishEdge("object-right-drag-started", findReachable(reachable, rightPressedId));
+        }
+    }
+
+    if (rightReleasedNow) {
+        Object* pressed = findReachable(reachable, rightPressedId);
+        if (pressed) publishEdge("object-right-released", pressed);
+        if (rightDragging) {
+            publishEdge("object-right-drag-ended", pressed);
+        } else if (pressed && pressed == hit) {
+            publishEdge("object-right-clicked", pressed);
+        }
+        rightPressedId.clear();
+        rightDragging = false;
+        rightDragTotalX = 0.0f;
+        rightDragTotalY = 0.0f;
+    }
+
+    // --- Middle button edges ---
+    const bool middlePressedNow = middleDown && !_prevMiddle;
+    const bool middleReleasedNow = !middleDown && _prevMiddle;
+
+    if (middlePressedNow) {
+        _middlePressX = sense.pointerX;
+        _middlePressY = sense.pointerY;
+        middlePressedId = hoveredId;
+        middleDragTotalX = 0.0f;
+        middleDragTotalY = 0.0f;
+        middleDragging = false;
+        if (hit) publishEdge("object-middle-pressed", hit);
+    }
+
+    if (middleDown && !middlePressedId.empty()) {
+        middleDragTotalX = sense.pointerX - _middlePressX;
+        middleDragTotalY = sense.pointerY - _middlePressY;
+        const float travelled = std::sqrt(middleDragTotalX * middleDragTotalX +
+                                          middleDragTotalY * middleDragTotalY);
+        if (!middleDragging && travelled > clickSlopPixels) {
+            middleDragging = true;
+            publishEdge("object-middle-drag-started", findReachable(reachable, middlePressedId));
+        }
+    }
+
+    if (middleReleasedNow) {
+        Object* pressed = findReachable(reachable, middlePressedId);
+        if (pressed) publishEdge("object-middle-released", pressed);
+        if (middleDragging) {
+            publishEdge("object-middle-drag-ended", pressed);
+        } else if (pressed && pressed == hit) {
+            publishEdge("object-middle-clicked", pressed);
+        }
+        middlePressedId.clear();
+        middleDragging = false;
+        middleDragTotalX = 0.0f;
+        middleDragTotalY = 0.0f;
+    }
+
     if (!leftDown) {
         dragX = 0.0f;
         dragY = 0.0f;
@@ -495,6 +573,16 @@ void InteractionChannel::buildProperties() {
     flt("dragTotalX", &InteractionChannel::dragTotalX);
     flt("dragTotalY", &InteractionChannel::dragTotalY);
     boolean("dragging", &InteractionChannel::dragging);
+
+    text("rightPressedId", &InteractionChannel::rightPressedId);
+    flt("rightDragTotalX", &InteractionChannel::rightDragTotalX);
+    flt("rightDragTotalY", &InteractionChannel::rightDragTotalY);
+    boolean("rightDragging", &InteractionChannel::rightDragging);
+
+    text("middlePressedId", &InteractionChannel::middlePressedId);
+    flt("middleDragTotalX", &InteractionChannel::middleDragTotalX);
+    flt("middleDragTotalY", &InteractionChannel::middleDragTotalY);
+    boolean("middleDragging", &InteractionChannel::middleDragging);
 
     text("lastKey", &InteractionChannel::lastKey);
     _propertyRegistry.push_back(std::make_unique<PropertyRef<InteractionChannel, int>>(

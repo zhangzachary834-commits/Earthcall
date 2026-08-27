@@ -133,7 +133,15 @@ int main() {
             {"scrollY", "float"},       {"scrollTotal", "float"},
             {"dragX", "float"},         {"dragY", "float"},
             {"dragTotalX", "float"},    {"dragTotalY", "float"},
-            {"dragging", "bool"},       {"lastKey", "string"},
+            {"dragging", "bool"},       
+
+            {"rightPressedId", "string"}, {"rightDragTotalX", "float"},
+            {"rightDragTotalY", "float"}, {"rightDragging", "bool"},
+
+            {"middlePressedId", "string"}, {"middleDragTotalX", "float"},
+            {"middleDragTotalY", "float"}, {"middleDragging", "bool"},
+
+            {"lastKey", "string"},
             {"lastKeyCode", "int"},     {"keyDown", "bool"},
             {"shiftDown", "bool"},      {"ctrlDown", "bool"},
             {"altDown", "bool"},
@@ -223,6 +231,33 @@ int main() {
         check(g_recorder.count("object-clicked", "control-a") == 1,
               "press and release on the same being is a click");
         check(channel.pressedId.empty(), "the press is forgotten on release");
+    }
+
+    // ------------------------------------------------------------------
+    // 4b. right press -> release -> click, and middle press -> release -> click.
+    // ------------------------------------------------------------------
+    {
+        g_recorder.clear();
+        auto down = look(0.0f, 0.0f);
+        down.right = true;
+        channel.observe(look(0.0f, 0.0f), reachable);
+        channel.observe(down, reachable);
+        check(g_recorder.count("object-right-pressed", "control-a") == 1, "right press publishes");
+        check(channel.rightPressedId == "control-a", "right press is remembered");
+        channel.observe(look(0.0f, 0.0f), reachable);
+        check(g_recorder.count("object-right-released", "control-a") == 1, "right release publishes");
+        check(g_recorder.count("object-right-clicked", "control-a") == 1, "right click publishes");
+
+        g_recorder.clear();
+        auto middleDown = look(0.0f, 0.0f);
+        middleDown.middle = true;
+        channel.observe(look(0.0f, 0.0f), reachable);
+        channel.observe(middleDown, reachable);
+        check(g_recorder.count("object-middle-pressed", "control-a") == 1, "middle press publishes");
+        check(channel.middlePressedId == "control-a", "middle press is remembered");
+        channel.observe(look(0.0f, 0.0f), reachable);
+        check(g_recorder.count("object-middle-released", "control-a") == 1, "middle release publishes");
+        check(g_recorder.count("object-middle-clicked", "control-a") == 1, "middle click publishes");
     }
 
     // ------------------------------------------------------------------

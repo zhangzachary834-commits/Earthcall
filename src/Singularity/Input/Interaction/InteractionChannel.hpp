@@ -140,6 +140,8 @@ public:
     float hoveredV = 0.0f;
 
     std::string pressedId;             // who received the press still held
+    std::string rightPressedId;
+    std::string middlePressedId;
     std::string focusedId;             // last being clicked, until another is
 
     bool leftDown = false;
@@ -155,6 +157,14 @@ public:
     float dragTotalX = 0.0f;           // since the press began; 0 when released
     float dragTotalY = 0.0f;
     bool dragging = false;
+
+    float rightDragTotalX = 0.0f;
+    float rightDragTotalY = 0.0f;
+    bool rightDragging = false;
+
+    float middleDragTotalX = 0.0f;
+    float middleDragTotalY = 0.0f;
+    bool middleDragging = false;
 
     std::string lastKey;
     int lastKeyCode = 0;
@@ -203,6 +213,10 @@ private:
     bool _prevMiddle = false;
     float _pressX = 0.0f;              // where the press landed
     float _pressY = 0.0f;
+    float _rightPressX = 0.0f;
+    float _rightPressY = 0.0f;
+    float _middlePressX = 0.0f;
+    float _middlePressY = 0.0f;
     float _prevPointerX = 0.0f;
     float _prevPointerY = 0.0f;
     bool _hasPrevPointer = false;
