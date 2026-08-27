@@ -989,7 +989,31 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
             const std::string id = zoneIdFromJson(zj);
             if (id.empty()) return;
             if (auto live = findLive(id)) {
-                if (snapshotRestore) applyZoneJson(*live, zj, true);
+                // A LIVE zone still needs the session's zone JSON merged into
+                // it. Boot runs hydrateFromZoneStore() (EngineInit.cpp) before
+                // any world is loaded, so every Zone in saves/zones/ is already
+                // live by the time a Person clicks Load — and this branch used
+                // to return here, which meant the session snapshot was skipped
+                // entirely for exactly the Zones a Person keeps coming back to.
+                //
+                // That mattered most for the relation graph, and it is Bug #7
+                // arriving through the door its fix did not cover. Categories
+                // are world data: they load in loadState (categories
+                // .loadFromJson), NOT at boot. So when hydration binds a Zone's
+                // formation relations, "category.chess.piece" does not exist
+                // yet, every instance-of edge comes back with an unbound
+                // endpoint, and Formation::add REFUSES it. The Chess zone went
+                // live with zero relations, and nothing ever tried again:
+                // "instance-of category.chess.piece" was false for every piece
+                // for the rest of the run, so law-chess-click answered
+                // CONDITIONS FAILED on a pawn while still succeeding on the
+                // board (whose test is the isBoard property, not a relation).
+                //
+                // replaceObjects=false: the live objects stay authoritative,
+                // exactly as the store-hit branch below keeps the store's.
+                // applyFormationRelations is idempotent by type + endpoint ids,
+                // so re-running it adds only what is genuinely missing.
+                applyZoneJson(*live, zj, /*replaceObjects=*/snapshotRestore);
                 return;
             }
             if (!snapshotRestore && SaveSystem::zoneIdentityExists(id)) {

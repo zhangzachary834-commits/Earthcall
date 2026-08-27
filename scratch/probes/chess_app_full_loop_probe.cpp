@@ -179,12 +179,16 @@ int main(int argc, char** argv) {
     float jitterPx = 0.0f;       // how far the pointer slides while the button is down
     int holdFrames = 6;          // ~100ms at 60fps
     float retina = 2.0f;         // MacBook framebuffer/window scale
+    bool bootHydrate = false;    // EngineInit.cpp:193 runs hydrateFromZoneStore() at boot,
+                                 // which makes the Chess zone LIVE before any world is loaded —
+                                 // and admitFromJson then skips the session's zone JSON entirely.
     for (int i = 1; i < argc; ++i) {
         std::string a = argv[i];
         if (a == "--locked") cursorLocked = true;
         else if (a.rfind("--jitter=", 0) == 0) jitterPx = std::stof(a.substr(9));
         else if (a.rfind("--hold=", 0) == 0) holdFrames = std::stoi(a.substr(7));
         else if (a.rfind("--retina=", 0) == 0) retina = std::stof(a.substr(9));
+        else if (a == "--boot") bootHydrate = true;
     }
     std::cout << "scenario: cursorLocked=" << (cursorLocked ? "yes" : "no")
               << " jitter=" << jitterPx << "px hold=" << holdFrames
@@ -266,12 +270,35 @@ int main(int argc, char** argv) {
     ctx.worldTime = &worldTime;
     ctx.unpackForAuthoring = false;
 
+    if (bootHydrate) {
+        std::cout << "--- boot: hydrateFromZoneStore() before any world is loaded ---\n";
+        zones.hydrateFromZoneStore();
+    }
+
     zones.loadState(filename, ctx);
     auto active = zones.zones()[zones.currentIndex()];
     assert(active);
 
     std::cout << "interaction-channel enabled after load: "
               << (interaction->isEnabled() ? "yes" : "NO") << "\n";
+    // Why a pawn can fail "instance-of category.chess.piece" while the board
+    // still passes "isBoard": the board's test is a property ON the object,
+    // the piece's test is a RELATION in the zone's Formation.
+    {
+        int total = 0, instanceOf = 0, boundBoth = 0, unboundB = 0;
+        for (const auto& rel : active->formation().relations().getAll()) {
+            if (!rel) continue;
+            ++total;
+            if (rel->type != "instance-of") continue;
+            ++instanceOf;
+            if (rel->a() && rel->b()) ++boundBoth; else if (!rel->b()) ++unboundB;
+        }
+        std::cout << "formation relations: " << total << " total, " << instanceOf
+                  << " instance-of, " << boundBoth << " with both endpoints bound, "
+                  << unboundB << " with an unbound B endpoint\n";
+        std::cout << "category.chess.piece exists: "
+                  << (categories.get("category.chess.piece") ? "yes" : "NO") << "\n";
+    }
     std::cout << "camera pos=(" << camera.pos.x << "," << camera.pos.y << "," << camera.pos.z
               << ") front=(" << camera.front.x << "," << camera.front.y << "," << camera.front.z << ")\n";
 
