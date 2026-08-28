@@ -202,6 +202,16 @@ bool WebGpuRenderer::init(const wgpu::Device& gpu, WGPUTextureFormat colorFormat
     instBglDesc.entries = &instEntry;
     _instanceBgl = wgpuDeviceCreateBindGroupLayout(_device, &instBglDesc);
 
+    // group(2): the SDF per-instance storage array
+    WGPUBindGroupLayoutEntry sdfInstEntry = {};
+    sdfInstEntry.binding = 0;
+    sdfInstEntry.visibility = WGPUShaderStage_Vertex | WGPUShaderStage_Fragment;
+    sdfInstEntry.buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
+    WGPUBindGroupLayoutDescriptor sdfInstBglDesc = {};
+    sdfInstBglDesc.entryCount = 1;
+    sdfInstBglDesc.entries = &sdfInstEntry;
+    _sdfInstanceBgl = wgpuDeviceCreateBindGroupLayout(_device, &sdfInstBglDesc);
+
     WGPUBindGroupLayout meshLayouts[2] = { _bgl, _instanceBgl };
     WGPUPipelineLayoutDescriptor plDesc = {};
     plDesc.bindGroupLayoutCount = 2;
@@ -441,6 +451,7 @@ void WebGpuRenderer::shutdown() {
     if (_meshPipeline) { wgpuRenderPipelineRelease(_meshPipeline); _meshPipeline = nullptr; }
     if (_bgl) { wgpuBindGroupLayoutRelease(_bgl); _bgl = nullptr; }
     if (_instanceBgl) { wgpuBindGroupLayoutRelease(_instanceBgl); _instanceBgl = nullptr; }
+    if (_sdfInstanceBgl) { wgpuBindGroupLayoutRelease(_sdfInstanceBgl); _sdfInstanceBgl = nullptr; }
     _meshBatches.clear();
 }
 
@@ -727,8 +738,10 @@ const WebGpuRenderer::SdfPipeline* WebGpuRenderer::sdfPipeline(const std::string
 
     SdfPipeline out;
     out.bgl = wgpuDeviceCreateBindGroupLayout(_device, &bgld);
+    WGPUBindGroupLayout meshLayouts[2] = { out.bgl, _sdfInstanceBgl };
     WGPUPipelineLayoutDescriptor pld = {};
-    pld.bindGroupLayoutCount = 1; pld.bindGroupLayouts = &out.bgl;
+    pld.bindGroupLayoutCount = 2;
+    pld.bindGroupLayouts = meshLayouts;
     WGPUPipelineLayout layout = wgpuDeviceCreatePipelineLayout(_device, &pld);
 
     WGPUVertexAttribute attr = {};
@@ -836,17 +849,10 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         wgpuQueueWriteBuffer(_queue, _sdfCubeVerts, 0, tris.data(), bd.size);
     }
 
-    SdfUniforms u{};
-    u.viewProj  = _viewProj;
-    u.model     = _model;
-    u.invModel  = glm::inverse(_model);
-    // Face paint on a field, matching the mesh path EXACTLY. tessellateSdf gives
-    // every vertex uv = (0.5, 0.5), so a meshed field samples a single texel — its
-    // paint is one flat colour. That means no texture binding is needed here at
-    // all: read the same texel on the CPU and fold it into baseColor. Skipping
-    // this made fields render white under WebGPU while the mesh path tinted them
-    // (a default field's face 0 is red), i.e. a shape changing colour with the
-    // backend.
+    SdfInstanceData inst;
+    inst.model = _model;
+    inst.invModel = glm::inverse(_model);
+    
     glm::vec3 albedo(1.0f);
     if (mat.albedoPixels && mat.albedoSize > 0) {
         const int   half = mat.albedoSize / 2;
@@ -855,36 +861,18 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                            mat.albedoPixels[idx + 1] / 255.0f,
                            mat.albedoPixels[idx + 2] / 255.0f);
     }
-    u.baseColor = glm::vec4(mat.baseColor * albedo, mat.opacity);
-    u.lightPos  = glm::vec4(lightPos(), 1.0f);
-    u.shading   = glm::vec4(mat.ambient, mat.diffuse, mat.specular, mat.shininess);
-    u.eyePos    = glm::vec4(_eyePos, 1.0f);
-    // The box is grown slightly past the extent so a surface sitting exactly on the
-    // boundary still gets fragments. surfaceEps/maxDist mirror the CPU raycaster's
-    // 1e-4 hit threshold; damping < 1 keeps implicit (non-distance) fields from
-    // tunnelling through their own surface.
+    inst.baseColor = glm::vec4(mat.baseColor * albedo, mat.opacity);
+    inst.shading = glm::vec4(mat.ambient, mat.diffuse, mat.specular, mat.shininess);
+    inst.extents = glm::vec4(extent * 1.05f, 0.0f);
+    
     float maxDim = glm::max(glm::max(extent.x, extent.y), extent.z);
-    u.misc = glm::vec4(1.0f, 1e-4f, maxDim * 8.0f,
-                       prog.needsGradientStep ? 1.0f : 0.0f);
-    u.extents = glm::vec4(extent * 1.05f, 0.0f);
-
-    auto uAlloc = _bufferPool.suballocateUniform(&u, sizeof(SdfUniforms));
-    auto pAlloc = _bufferPool.suballocateStorage(prog.params.data(), prog.params.size() * sizeof(float));
-
-    WGPUBindGroupEntry bge[2] = {};
-    bge[0].binding = 0; bge[0].buffer = uAlloc.buffer; bge[0].offset = uAlloc.offset; bge[0].size = uAlloc.size;
-    bge[1].binding = 1; bge[1].buffer = pAlloc.buffer; bge[1].offset = pAlloc.offset; bge[1].size = pAlloc.size;
-    WGPUBindGroupDescriptor bgd = {};
-    bgd.layout = sp->bgl; bgd.entryCount = 2; bgd.entries = bge;
-    WGPUBindGroup bg = wgpuDeviceCreateBindGroup(_device, &bgd);
-    _frameBindGroups.push_back(bg);
-
-    bindPipeline(sp->pipe);
-    wgpuRenderPassEncoderSetBindGroup(_pass, 0, bg, 0, nullptr);
-    wgpuRenderPassEncoderSetVertexBuffer(_pass, 0, _sdfCubeVerts, 0, 36 * sizeof(glm::vec3));
-    wgpuRenderPassEncoderDraw(_pass, 36, 1, 0, 0);
-
-    mutableFrameStats().drawCalls++;
+    inst.misc = glm::vec4(1.0f, 1e-4f, maxDim * 8.0f,
+                          prog.needsGradientStep ? 1.0f : 0.0f);
+                          
+    inst.paramOffset = static_cast<uint32_t>(_sdfParamsBatches[sp].size());
+    _sdfBatches[sp].push_back(inst);
+    _sdfParamsBatches[sp].insert(_sdfParamsBatches[sp].end(), prog.params.begin(), prog.params.end());
+    
     mutableFrameStats().trianglesDrawn += 12;
 }
 
@@ -968,12 +956,69 @@ void WebGpuRenderer::drawOverlay(const geom::TessMesh& mesh, const glm::vec4& co
              verts, mvp, color);
 }
 
+void WebGpuRenderer::flushSdfDraws() {
+    if (_sdfBatches.empty()) return;
+    if (!_pass) { _sdfBatches.clear(); _sdfParamsBatches.clear(); return; }
+    
+    // Global uniforms for SDFs
+    struct SdfGlobalUniforms {
+        glm::mat4 viewProj;
+        glm::vec4 lightPos;
+        glm::vec4 eyePos;
+        glm::vec4 pad;
+    } u;
+    u.viewProj = _viewProj;
+    u.lightPos = glm::vec4(lightPos(), 1.0f);
+    u.eyePos = glm::vec4(_eyePos, 1.0f);
+    
+    auto uAlloc = _bufferPool.suballocateUniform(&u, sizeof(SdfGlobalUniforms));
+
+    for (auto& kv : _sdfBatches) {
+        const SdfPipeline* sp = kv.first;
+        const auto& instances = kv.second;
+        if (instances.empty()) continue;
+        
+        const auto& params = _sdfParamsBatches[sp];
+        
+        auto pAlloc = _bufferPool.suballocateStorage(params.data(), params.size() * sizeof(float));
+        auto instAlloc = _bufferPool.suballocateStorage(instances.data(), instances.size() * sizeof(SdfInstanceData));
+
+        // Group 0: Globals and Parameters
+        WGPUBindGroupEntry bge[2] = {};
+        bge[0].binding = 0; bge[0].buffer = uAlloc.buffer; bge[0].offset = uAlloc.offset; bge[0].size = uAlloc.size;
+        bge[1].binding = 1; bge[1].buffer = pAlloc.buffer; bge[1].offset = pAlloc.offset; bge[1].size = pAlloc.size;
+        WGPUBindGroupDescriptor bgd = {};
+        bgd.layout = sp->bgl; bgd.entryCount = 2; bgd.entries = bge;
+        WGPUBindGroup bg = wgpuDeviceCreateBindGroup(_device, &bgd);
+        _frameBindGroups.push_back(bg);
+
+        // Group 1: Instances
+        WGPUBindGroupEntry ibge = {};
+        ibge.binding = 0; ibge.buffer = instAlloc.buffer; ibge.offset = instAlloc.offset; ibge.size = instAlloc.size;
+        WGPUBindGroupDescriptor ibgDesc = {};
+        ibgDesc.layout = _sdfInstanceBgl; ibgDesc.entryCount = 1; ibgDesc.entries = &ibge;
+        WGPUBindGroup instBindGroup = wgpuDeviceCreateBindGroup(_device, &ibgDesc);
+        _frameBindGroups.push_back(instBindGroup);
+
+        bindPipeline(sp->pipe);
+        wgpuRenderPassEncoderSetBindGroup(_pass, 0, bg, 0, nullptr);
+        wgpuRenderPassEncoderSetBindGroup(_pass, 1, instBindGroup, 0, nullptr);
+        wgpuRenderPassEncoderSetVertexBuffer(_pass, 0, _sdfCubeVerts, 0, 36 * sizeof(glm::vec3));
+        wgpuRenderPassEncoderDraw(_pass, 36, static_cast<uint32_t>(instances.size()), 0, 0);
+
+        mutableFrameStats().drawCalls++;
+    }
+    _sdfBatches.clear();
+    _sdfParamsBatches.clear();
+}
+
 void WebGpuRenderer::endFrame() {
     if (!_pass) return;
     // Every drawMesh() call this frame only queued into _meshBatches; this is
     // where those batches actually become wgpuRenderPassEncoderDraw calls, so
     // it must run before the pass ends.
     flushMeshDraws();
+    flushSdfDraws();
     wgpuRenderPassEncoderEnd(_pass);
     wgpuRenderPassEncoderRelease(_pass);
     _pass = nullptr;

@@ -287,6 +287,22 @@ private:
     // true the way immediate-mode drawMesh (which uploaded and was done) was.
     void flushMeshDraws();
 
+    // ---- Instanced SDF batching ----
+    struct SdfInstanceData {
+        glm::mat4 model;
+        glm::mat4 invModel;
+        glm::vec4 baseColor;
+        glm::vec4 shading;
+        glm::vec4 extents;
+        glm::vec4 misc;
+        uint32_t paramOffset;
+        uint32_t pad0, pad1, pad2;
+    };
+    std::map<const SdfPipeline*, std::vector<SdfInstanceData>> _sdfBatches;
+    std::map<const SdfPipeline*, std::vector<float>> _sdfParamsBatches;
+    WGPUBindGroupLayout _sdfInstanceBgl = nullptr; // group(2): the instance storage buffer
+    void flushSdfDraws();
+
     // Last pipeline bound on the CURRENT pass. Kernel state: a driver-object
     // handle, not governable — reset to null whenever a new pass begins
     // (beginFrameOffscreen), since a pass carries no binding from the last one.

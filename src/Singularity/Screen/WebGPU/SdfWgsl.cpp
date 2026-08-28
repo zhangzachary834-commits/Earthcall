@@ -22,6 +22,21 @@ namespace {
 // reverse of a C ternary, which is an easy way to invert a sign by accident.
 // ---------------------------------------------------------------------------
 const char* kPrimitives = R"WGSL(
+struct SdfInstanceData {
+    model: mat4x4<f32>,
+    invModel: mat4x4<f32>,
+    baseColor: vec4<f32>,
+    shading: vec4<f32>,
+    extents: vec4<f32>,
+    misc: vec4<f32>,
+    paramOffset: u32,
+    pad0: u32,
+    pad1: u32,
+    pad2: u32,
+};
+@group(1) @binding(0) var<storage, read> instances: array<SdfInstanceData>;
+var<private> g_instIdx: u32;
+
 fn dot2(v: vec2<f32>) -> f32 { return dot(v, v); }
 
 fn sdSphere(p: vec3<f32>, r: f32) -> f32 { return length(p) - r; }
@@ -186,8 +201,8 @@ struct Emit {
 
     // Record a number and return the WGSL expression that reads it.
     std::string param(float v) {
-        char buf[64];
-        std::snprintf(buf, sizeof(buf), "P.v[%zu]", params.size());
+        char buf[128];
+        std::snprintf(buf, sizeof(buf), "P.v[instances[g_instIdx].paramOffset + %zu]", params.size());
         params.push_back(v);
         return buf;
     }
@@ -587,14 +602,9 @@ std::string emitNode(const geom::SdfNode& n, Emit& e) {
 const char* kMarcher = R"WGSL(
 struct RU {
     viewProj:  mat4x4<f32>,
-    model:     mat4x4<f32>,
-    invModel:  mat4x4<f32>,
-    baseColor: vec4<f32>,
     lightPos:  vec4<f32>,
-    shading:   vec4<f32>,   // x=ambient y=diffuse z=specular w=shininess
     eyePos:    vec4<f32>,
-    misc:      vec4<f32>,   // x=extent(unused), y=surfaceEps, z=maxDist, w=exprDamping
-    extents:   vec4<f32>,
+    pad:       vec4<f32>,
 };
 @group(0) @binding(0) var<uniform> u: RU;
 struct Params { v: array<f32> };
@@ -603,16 +613,19 @@ struct Params { v: array<f32> };
 struct VSOut {
     @builtin(position) clip: vec4<f32>,
     @location(0) worldPos: vec3<f32>,
+    @location(1) @interpolate(flat) instIdx: u32,
 };
 
 @vertex
-fn vs(@location(0) pos: vec3<f32>) -> VSOut {
+fn vs(@location(0) pos: vec3<f32>, @builtin(instance_index) instIdx: u32) -> VSOut {
     var o: VSOut;
-    let world = u.model * vec4<f32>(pos * u.extents.xyz, 1.0);
+    let inst = instances[instIdx];
+    let world = inst.model * vec4<f32>(pos * inst.extents.xyz, 1.0);
     o.clip = u.viewProj * world;
     // Clamp to far plane so proxy geometry is never lost to far-plane clipping.
     o.clip.z = min(o.clip.z, o.clip.w * 0.999999);
     o.worldPos = world.xyz;
+    o.instIdx = instIdx;
     return o;
 }
 
@@ -661,15 +674,17 @@ fn rayAabb(ro: vec3<f32>, rd: vec3<f32>, b: vec3<f32>) -> vec2<f32> {
 
 @fragment
 fn fs(in: VSOut) -> FSOut {
+    g_instIdx = in.instIdx;
+    let inst = instances[in.instIdx];
     // Ray in field space, so the marched distances are the field's own.
-    let o4 = u.invModel * vec4<f32>(u.eyePos.xyz, 1.0);
-    let t4 = u.invModel * vec4<f32>(in.worldPos, 1.0);
+    let o4 = inst.invModel * vec4<f32>(u.eyePos.xyz, 1.0);
+    let t4 = inst.invModel * vec4<f32>(in.worldPos, 1.0);
     let ro = o4.xyz;
     let rd = normalize(t4.xyz - ro);
 
-    let eps     = u.misc.y;
-    let damping = u.misc.w;
-    let box     = rayAabb(ro, rd, u.extents.xyz);
+    let eps     = inst.misc.y;
+    let damping = inst.misc.w;
+    let box     = rayAabb(ro, rd, inst.extents.xyz);
     // Miss the cube, or the whole slab is behind the eye.
     if (box.y < box.x || box.y < 0.0) { discard; }
 
@@ -685,7 +700,7 @@ fn fs(in: VSOut) -> FSOut {
         let raw = sdfEval(p);
         
         var d = raw;
-        if (damping > 0.5) {
+        if (damping > 0.5 && abs(d) < current_eps * 10.0) {
             let e = 1e-3;
             let g = vec3<f32>(
                 sdfEval(p + vec3<f32>(e, 0.0, 0.0)) - raw,
@@ -733,7 +748,7 @@ fn fs(in: VSOut) -> FSOut {
         }
         if (first_hit_t >= 0.0) {
             let hit_p = ro + rd * first_hit_t;
-            let hit_w = (u.model * vec4<f32>(hit_p, 1.0)).xyz;
+            let hit_w = (inst.model * vec4<f32>(hit_p, 1.0)).xyz;
             let hit_c = u.viewProj * vec4<f32>(hit_w, 1.0);
             out.depth = hit_c.z / hit_c.w;
         } else {
@@ -743,27 +758,27 @@ fn fs(in: VSOut) -> FSOut {
     }
 
     let pf = ro + rd * t;                                // field-space hit
-    let pw = (u.model * vec4<f32>(pf, 1.0)).xyz;         // world-space hit
+    let pw = (inst.model * vec4<f32>(pf, 1.0)).xyz;         // world-space hit
     let nf = sdfNormal(pf);
     // Normals transform by the inverse-transpose; invModel transposed gives it
     // without shipping another matrix.
-    let nw = normalize((transpose(u.invModel) * vec4<f32>(nf, 0.0)).xyz);
+    let nw = normalize((transpose(inst.invModel) * vec4<f32>(nf, 0.0)).xyz);
 
     let L = normalize(u.lightPos.xyz - pw);
     let V = normalize(u.eyePos.xyz - pw);
     let H = normalize(L + V);
     
     let diff = max(dot(nw, L), 0.0);
-    let lit  = u.shading.x + u.shading.y * diff;
-    let spec = u.shading.z * pow(max(dot(nw, H), 0.0), max(u.shading.w, 1.0)) * step(0.0001, diff);
+    let lit  = inst.shading.x + inst.shading.y * diff;
+    let spec = inst.shading.z * pow(max(dot(nw, H), 0.0), max(inst.shading.w, 1.0)) * step(0.0001, diff);
 
     let clip = u.viewProj * vec4<f32>(pw, 1.0);
 
     // Combine hard surface with accumulated volumetric scatter
-    let base_rgb = u.baseColor.rgb * lit + vec3<f32>(spec);
+    let base_rgb = inst.baseColor.rgb * lit + vec3<f32>(spec);
     let field_rgb = vec3<f32>(1.0, 1.0, 1.0) * volumetric_scatter; // Could be colored by the field later
     
-    let final_alpha = clamp(u.baseColor.a + (1.0 - transmittance), 0.0, 1.0);
+    let final_alpha = clamp(inst.baseColor.a + (1.0 - transmittance), 0.0, 1.0);
     let final_rgb = base_rgb * transmittance + field_rgb;
     
     if (final_alpha > 0.0) {
