@@ -56,6 +56,7 @@
               0
             ],
             "materialId": "material.grass",
+            "baseline": "ground",
             "authoredProperties": {
               "displayName": {
                 "t": "string",
@@ -81,7 +82,7 @@
                         "scalarForm": {
                           "terms": [
                             {
-                              "c": 2.0,
+                              "c": 4.0,
                               "factors": {}
                             }
                           ]
@@ -98,15 +99,58 @@
                                 "scalarForm": {
                                   "terms": [
                                     {
-                                      "c": 0.2,
+                                      "c": 0.5,
                                       "factors": {}
                                     }
                                   ]
                                 }
                               },
                               {
-                                "op": 1,
-                                "var": "p"
+                                "op": 4,
+                                "children": [
+                                  {
+                                    "op": 1,
+                                    "var": "p"
+                                  },
+                                  {
+                                    "op": 2,
+                                    "children": [
+                                      {
+                                        "op": 0,
+                                        "scalarForm": {
+                                          "terms": [
+                                            {
+                                              "c": 100.0,
+                                              "factors": {}
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      {
+                                        "op": 0,
+                                        "scalarForm": {
+                                          "terms": [
+                                            {
+                                              "c": 0.0,
+                                              "factors": {}
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      {
+                                        "op": 0,
+                                        "scalarForm": {
+                                          "terms": [
+                                            {
+                                              "c": 100.0,
+                                              "factors": {}
+                                            }
+                                          ]
+                                        }
+                                      }
+                                    ]
+                                  }
+                                ]
                               }
                             ]
                           }
@@ -175,68 +219,5 @@
     0
   ],
   "yaw": -90.0,
-  "pitch": 0.0,
-  "laws": [
-    {
-      "identifier": "law-toggle-ground",
-      "name": "toggle-ground-visibility",
-      "activation": 0,
-      "eventTypes": [
-        "key-pressed"
-      ],
-      "condition": {
-        "kind": 3,
-        "conditions": [
-          {
-            "kind": 0,
-            "path": "@event.subject",
-            "op": 0,
-            "operand": {
-              "t": "string",
-              "v": "key.g"
-            }
-          },
-          {
-            "kind": 0,
-            "path": "baseline",
-            "op": 0,
-            "operand": {
-              "t": "string",
-              "v": "ground"
-            }
-          }
-        ]
-      },
-      "action": {
-        "kind": 8,
-        "path": "position.y",
-        "bindings": {
-          "v": "position.y"
-        },
-        "function": {
-          "pieces": [
-            {
-              "expr": {
-                "terms": [
-                  {
-                    "c": -1000.0,
-                    "factors": {}
-                  },
-                  {
-                    "c": -1.0,
-                    "factors": {
-                      "v": 1.0
-                    }
-                  }
-                ]
-              }
-            }
-          ]
-        }
-      },
-      "authors": [
-        "person.zach"
-      ]
-    }
-  ]
+  "pitch": 0.0
 }

@@ -2,7 +2,7 @@
   "being": "zone",
   "name": "Perlin Noise Floor Zone",
   "identifier": "NoiseFloorWorld",
-  "owner": "Player",
+  "owner": "Antigravity",
   "parentZone": "",
   "scope": "Local",
   "qualities": {},
@@ -47,6 +47,7 @@
           0
         ],
         "materialId": "material.grass",
+        "baseline": "ground",
         "authoredProperties": {
           "displayName": {
             "t": "string",
@@ -72,7 +73,7 @@
                     "scalarForm": {
                       "terms": [
                         {
-                          "c": 2.0,
+                          "c": 4.0,
                           "factors": {}
                         }
                       ]
@@ -89,15 +90,58 @@
                             "scalarForm": {
                               "terms": [
                                 {
-                                  "c": 0.2,
+                                  "c": 0.5,
                                   "factors": {}
                                 }
                               ]
                             }
                           },
                           {
-                            "op": 1,
-                            "var": "p"
+                            "op": 4,
+                            "children": [
+                              {
+                                "op": 1,
+                                "var": "p"
+                              },
+                              {
+                                "op": 2,
+                                "children": [
+                                  {
+                                    "op": 0,
+                                    "scalarForm": {
+                                      "terms": [
+                                        {
+                                          "c": 100.0,
+                                          "factors": {}
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  {
+                                    "op": 0,
+                                    "scalarForm": {
+                                      "terms": [
+                                        {
+                                          "c": 0.0,
+                                          "factors": {}
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  {
+                                    "op": 0,
+                                    "scalarForm": {
+                                      "terms": [
+                                        {
+                                          "c": 100.0,
+                                          "factors": {}
+                                        }
+                                      ]
+                                    }
+                                  }
+                                ]
+                              }
+                            ]
                           }
                         ]
                       }

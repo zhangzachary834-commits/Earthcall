@@ -36,19 +36,35 @@ def math_sub(a, b):
         "children": [a, b]
     }
 
+def math_add(a, b):
+    return {
+        "op": 4,
+        "children": [a, b]
+    }
+
 def math_noise(a):
     return {
         "op": 29,
         "children": [a]
     }
 
-freq = 0.2
-amp = 2.0
+def math_vec3(x, y, z):
+    return {
+        "op": 2,
+        "children": [math_scalar(x), math_scalar(y), math_scalar(z)]
+    }
+
+# Increase frequency to 0.5 (period = 2m) and amplitude to 4.0m
+# Also offset 'p' by (100, 0, 100) so the origin isn't a flat zero-crossing.
+freq = 0.5
+amp = 4.0
+offset_p = math_add(math_var("p"), math_vec3(100.0, 0.0, 100.0))
+
 sdf_math = math_sub(
     math_var("y"),
     math_scale(
         math_scalar(amp),
-        math_noise(math_scale(math_scalar(freq), math_var("p")))
+        math_noise(math_scale(math_scalar(freq), offset_p))
     )
 )
 
@@ -66,6 +82,7 @@ floor_object = {
     "transform": [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,-2,0,1],
     "center": [0,-2,0],
     "materialId": "material.grass",
+    "baseline": "ground",
     "authoredProperties": {
         "displayName": pv("string", "Perlin Ground Plane")
     },

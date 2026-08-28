@@ -4443,5 +4443,47 @@
         }
       ]
     }
+  ],
+  "objects": [
+    {
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Legacy Ground"
+        }
+      },
+      "center": [
+        0.0,
+        -0.5,
+        0.0
+      ],
+      "geometryType": 0,
+      "materialId": "material.grass",
+      "objectID": "legacy-ground-plane-Chess",
+      "shapeKind": 0,
+      "transform": [
+        1000.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1000.0,
+        0.0,
+        0.0,
+        -0.5,
+        0.0,
+        1.0
+      ],
+      "injected_by": "Antigravity",
+      "authors": [
+        "Zach"
+      ],
+      "baseline": "ground"
+    }
   ]
 }

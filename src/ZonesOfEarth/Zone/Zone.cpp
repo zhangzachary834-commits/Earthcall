@@ -390,7 +390,8 @@ void Zone::update(float dt, UpdateTiming* out) {
     if (out) tGround0 = ClockT::now();
     // The floor is the object a First Mover TAGGED as the floor, or the y=0
     // plane. There is no fall-back to "whatever is at index 1".
-    float groundY = 0.0f;
+    // Zach: BRUHHHHHHHHH THIS WAS SUPPOSED TO BE A TEMPORARY DEVELOPER TOOL NOT A BLACK BOXXXXXX
+    float groundY = -10000.0f;
     for (const auto& obj : _objects) {
         if (!obj || !obj->hasAttribute("baseline")) continue;
         if (obj->getAttribute("baseline") != std::string("ground")) continue;

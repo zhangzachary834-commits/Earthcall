@@ -145,6 +145,7 @@ namespace Physics {
         for (const auto& upObj : objects) {
             if (!upObj) continue;
             auto* obj = upObj.get();
+            if (definesGround(obj)) continue;
             RigidForm& form = getFormFor(obj);
             clearForces(form);
             bool appliedAny = false;
@@ -275,6 +276,7 @@ namespace Physics {
         for (const auto& upObj : objects) {
             if (!upObj) continue;
             auto* obj = upObj.get();
+            if (definesGround(obj)) continue;
             RigidForm& form = getFormFor(obj);
             glm::vec3 pos = getObjectPos(obj);
             // Use baseline unless an AirResistance law targets this object
@@ -338,7 +340,7 @@ namespace Physics {
         preps.reserve(objCount);
 
         for (size_t i = 0; i < objCount; ++i) {
-            if (!objects[i] || definesGround(objects[i].get())) continue;
+            if (!objects[i]) continue;
             Object* a = objects[i].get();
             
             glm::vec3 minA( FLT_MAX), maxA(-FLT_MAX);
@@ -398,14 +400,23 @@ namespace Physics {
                 }
 
                 collisionNormal = glm::normalize(collisionNormal);
-                float pushDist = (penetrationDepth * 0.5f) + 0.001f;
-                glm::vec3 correction = collisionNormal * pushDist;
-
-                // Apply corrections to positions
+                bool groundA = definesGround(a);
+                bool groundB = definesGround(b);
+                
                 glm::vec3 posA = getObjectPos(a);
                 glm::vec3 posB = getObjectPos(b);
-                posA += correction;
-                posB -= correction;
+
+                if (groundA && !groundB) {
+                    posB -= collisionNormal * (penetrationDepth + 0.001f);
+                } else if (groundB && !groundA) {
+                    posA += collisionNormal * (penetrationDepth + 0.001f);
+                } else {
+                    float pushDist = (penetrationDepth * 0.5f) + 0.001f;
+                    glm::vec3 correction = collisionNormal * pushDist;
+                    posA += correction;
+                    posB -= correction;
+                }
+
                 setObjectPos(a, posA);
                 setObjectPos(b, posB);
 
@@ -657,12 +668,6 @@ namespace Physics {
     void enforceCollisions(glm::vec3& position, const std::vector<std::shared_ptr<Object>>& objects) {
         for (const auto& obj : objects) {
             if (!obj) continue;
-            // Skip the baseline ground placeholder: it is a solid AABB cube whose
-            // top face sits exactly at groundY, so resting on it registers as a
-            // perpetual penetration and fights gravity (the ground-level jitter).
-            // Ground contact is handled separately by the groundY plane clamp in
-            // integrate(), exactly as the object-object resolver already does.
-            if (obj->getAttribute("baseline") == std::string("ground")) continue;
             // Update collision zone based on current transform
             glm::mat4 transform = obj->getTransform();
             obj->updateCollisionZone(transform);

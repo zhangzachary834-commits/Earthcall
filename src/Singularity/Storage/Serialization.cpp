@@ -9,6 +9,7 @@
 #include "Singularity/Storage/BinaryPack.hpp"
 #include "ConstructedBeing/Material/Material.hpp"
 #include "ConstructedBeing/Material/MaterialManager.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/SdfJson.hpp"
 #include <cstring>
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
@@ -121,44 +122,7 @@ static glm::mat4 vectorToMat4(const std::vector<float>& v){
 // ------------------------------------------------------------------
 // Object
 // ------------------------------------------------------------------
-static nlohmann::json sdfToJson(const geom::SdfNode& n) {
-    nlohmann::json j;
-    j["op"] = static_cast<int>(n.op);
-    j["prim"] = static_cast<int>(n.prim);
-    j["dims"] = { n.dims.x, n.dims.y, n.dims.z };
-    j["offset"] = { n.offset.x, n.offset.y, n.offset.z };
-    j["p0"] = n.p0; j["p1"] = n.p1; j["t"] = n.t;
-    if (!n.expr.empty()) j["expr"] = n.expr;
-    if (!n.planes.empty()) {
-        j["planes"] = nlohmann::json::array();
-        for (const auto& pl : n.planes) j["planes"].push_back({ pl.x, pl.y, pl.z, pl.w });
-    }
-    j["children"] = nlohmann::json::array();
-    for (const auto& c : n.children) if (c) j["children"].push_back(sdfToJson(*c));
-    return j;
-}
 
-static geom::SdfNode sdfFromJson(const nlohmann::json& j) {
-    geom::SdfNode n;
-    n.op = static_cast<geom::SdfOp>(j.value("op", 0));
-    n.prim = static_cast<geom::SdfPrim>(j.value("prim", 0));
-    if (j.contains("dims") && j["dims"].is_array() && j["dims"].size() >= 3) {
-        n.dims = glm::vec3(j["dims"][0].get<float>(), j["dims"][1].get<float>(), j["dims"][2].get<float>());
-    }
-    if (j.contains("offset") && j["offset"].is_array() && j["offset"].size() >= 3) {
-        n.offset = glm::vec3(j["offset"][0].get<float>(), j["offset"][1].get<float>(), j["offset"][2].get<float>());
-    }
-    n.p0 = j.value("p0", 0.0f); n.p1 = j.value("p1", 0.0f); n.t = j.value("t", 0.5f);
-    if (j.contains("expr")) { n.expr = j["expr"].get<std::string>(); n.rpn = geom::compileExpr(n.expr); }
-    if (j.contains("planes") && j["planes"].is_array()) {
-        for (const auto& pl : j["planes"])
-            if (pl.is_array() && pl.size() >= 4)
-                n.planes.push_back(glm::vec4(pl[0].get<float>(), pl[1].get<float>(),
-                                             pl[2].get<float>(), pl[3].get<float>()));
-    }
-    if (j.contains("children")) for (const auto& c : j["children"]) n.children.push_back(std::make_shared<geom::SdfNode>(sdfFromJson(c)));
-    return n;
-}
 
 void to_json(nlohmann::json& j, const Object& obj){
     j = nlohmann::json{};
@@ -170,7 +134,7 @@ void to_json(nlohmann::json& j, const Object& obj){
                              sp.minorR, sp.paraboloidA, sp.ovoidAsym, sp.fillet };
     }
     if (obj.hasField()) {
-        j["field"] = sdfToJson(obj.getFieldData());
+        j["field"] = geom::sdfToJson(obj.getFieldData());
         j["fieldExtent"] = obj.getFieldExtent();
     }
     if (obj.hasPatch()) {
@@ -329,7 +293,7 @@ void from_json(const nlohmann::json& j, Object& obj){
         }
         obj.setBezierPatch(p);
     } else if (j.contains("field")) {
-        obj.setFieldShape(sdfFromJson(j["field"]), j.value("fieldExtent", 1.0f));
+        obj.setFieldShape(geom::sdfFromJson(j["field"]), j.value("fieldExtent", 1.0f));
     } else if (j.contains("shapeKind")) {
         obj.setShape(static_cast<Object::ShapeKind>(j["shapeKind"].get<int>()), parseShapeParams(j));
     } else {

@@ -8,7 +8,9 @@
 #include <string>
 #include <functional>
 
-// This should be retired into a legacy system and physics should become purely runtime-created Law Formations.
+// Zach: This should be moved to First Movers instead of being here because Physics is NOT a first-order property of Zones
+// Its a first mover developer tool to test Laws in because default Physics provides a familiar and stable interface to work in
+// and real physics should ultimately become purely runtime-created Law Formations.
 namespace Physics {
     // Legacy engine toggle
     bool getLegacyEngineEnabled();
@@ -100,7 +102,7 @@ namespace Physics {
     // Apply bond forces and integrate all registered object bodies
     void updateBodies(std::vector<std::shared_ptr<Object>>& objects,
                       float deltaTime,
-                      float gravityAccel  = 9.81f,
+                      float gravityAccel  = 0.0f,
                       float airResistance = 0.1f,
                       float groundY       = 0.0f);
 
