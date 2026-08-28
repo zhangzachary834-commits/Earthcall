@@ -71,8 +71,14 @@ fn sminK(a: f32, b: f32, k: f32) -> f32 {
     return mix(b, a, h) - k * h * (1.0 - h);
 }
 
+fn mod289(x: vec4<f32>) -> vec4<f32> {
+    return x - floor(x * (1.0 / 289.0)) * 289.0;
+}
+fn mod289_3(x: vec3<f32>) -> vec3<f32> {
+    return x - floor(x * (1.0 / 289.0)) * 289.0;
+}
 fn permute4(x: vec4<f32>) -> vec4<f32> {
-    return (((x * 34.0) + 1.0) * x) % vec4<f32>(289.0);
+    return mod289(((x * 34.0) + 1.0) * x);
 }
 fn taylorInvSqrt(r: vec4<f32>) -> vec4<f32> {
     return 1.79284291400159 - 0.85373472095314 * r;
@@ -80,8 +86,8 @@ fn taylorInvSqrt(r: vec4<f32>) -> vec4<f32> {
 fn cnoise3(P: vec3<f32>) -> f32 {
     let Pi0 = floor(P);
     let Pi1 = Pi0 + vec3<f32>(1.0);
-    let Pi0_mod = Pi0 % vec3<f32>(289.0);
-    let Pi1_mod = Pi1 % vec3<f32>(289.0);
+    let Pi0_mod = mod289_3(Pi0);
+    let Pi1_mod = mod289_3(Pi1);
     let Pf0 = fract(P);
     let Pf1 = Pf0 - vec3<f32>(1.0);
     let ix = vec4<f32>(Pi0_mod.x, Pi1_mod.x, Pi0_mod.x, Pi1_mod.x);
@@ -603,6 +609,8 @@ fn vs(@location(0) pos: vec3<f32>) -> VSOut {
     var o: VSOut;
     let world = u.model * vec4<f32>(pos * u.misc.x, 1.0);
     o.clip = u.viewProj * world;
+    // Clamp to far plane so proxy geometry is never lost to far-plane clipping.
+    o.clip.z = min(o.clip.z, o.clip.w * 0.999999);
     o.worldPos = world.xyz;
     return o;
 }
