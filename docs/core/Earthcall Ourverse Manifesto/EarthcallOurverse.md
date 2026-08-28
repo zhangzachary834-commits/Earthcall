@@ -17,17 +17,19 @@ Repository: https://github.com/zhangzachary834-commits/Earthcall
 
 If you guys come up with better names for these things than I have already, tell me and we might change them.
 
-The Earthcall Ourverse is an ontologically-birthed digital existence meant to represent life and meaning as humanity lives it, a liturgical vessel ordered according to the true our ordo amoris in  Christ.
+The Earthcall Ourverse is an ontologically-birthed digital existence meant to represent life and meaning as humanity lives it, a liturgical vessel ordered according to the true our ordo amoris (order of loves/affections) in Christ. In the Earthcall paradigm, every structure exists to glorify and not to replace.
 
 I named it the “Ourverse” because digital existence is fundamentally, and ultimately relational, first in relation to God as Our Father, and second in relation to each other. It derives its meaning through how the elements relate to each other, a person relates to the elements, and how a person relates to another person. They, altogether, comprise an ever-evolving formation. Whereas “meta-verse” would imply merely a substrate overlaid on top of ours, “our” verse declares that it is fundamentally “ours”—a creation God gave us the scepter over to fill with His glory, birthed through incarnated humanity together in profound, shared and selfless life.
 
-Its a computational architecture formed from the essential procession of beings from their Singularity, YAHWEH.
+It's a computational architecture formed from the essential procession of beings from their Singularity, YAHWEH.
 
 Earthcall’s language is not meant to form people independently. It’s meant to hold Christian experiences from which we encounter Christ and each other—and only then, after the encounter has done its forming work, does Earthcall’s language let us articulate the structure of what was just formed.
 “Singularity” and “Singular-relation” are, by themselves, neutral phrases, because they are unspecified. But the heart is never neutral. It always fills it in with whatever it is most deeply worships, what its life is ordered by to treasure. Earthcall is instead meant to hold Christward glory the way arches and stained glass in a cathedral point to Christ.
 
 
 Critically it is designed to encode everything on a hierarchy of joys. At the foundation of that hierarchy is Christ, or the program naturally cannot work.
+
+
 
 Singularity
 Singularity means ground-of-being, both in the low-level technical sense and in the teleological sense of being ordered toward God. Concretely speaking, this is essentially the “operating system” of Earthcall but elevated so that the theological substrate of man’s creation of digital worlds are structurally represented and prioritized.
@@ -95,6 +97,10 @@ Another mode: The Hierarchy of Joys
 There was a question for how to code hierarchy of joys, with Christ at the very bottom of your joy. Either as hard coded or as a compiled construct. I could try to not hard code it and just leave it entirely to users to build it for themselves. The issue with that then Earthcall itself becomes secular, and a liturgical ordering toward Christ-centeredness (or, if the user is unbeliever, at least some explicit value hierarchy) is bolted on rather than ontologically required native. The hard-coded approach would have it just be literally coded down in every aspect (i.e. encode an exact routine for ordering and filling in “joy” headers). However, that is very rigid, and it defeats the purpose of Earthcall by turning it into essentially an aesthetic devotional website rather than a true extension of Christian life. It’s not as though I can literally code joy into a program.
 
 However, I can encode categorical requirements of having one, on the developer level while the substance is fulfilled by the authorial substrate.
+
+So basically hierarchy of joys is a Formation of Lexemes (which are the individual Joys). Lexemes are full Singulars, meaning they can have an arbitrary amount of authored properties and therefore can be literally mathematically ordered upon one another with Earthcall’s rich OntoMath engine.
+It is not obligatory if you only view Earthcall in the narrow techno-materialist sense big tech is driven by. Earthcall still compiles even if the Persons refuse Christ. A mere engine doesn’t have the right to override that freedom. But in the philosophically true sense of technology and telos and human creation, the program does not work and it is obligatory. The hierarchy of Joys is created to order reality according to its actual structure—which in reality is only ordered under Christ. An automated driver that compiles but always fails to drive to a meaningful destination has failed as a piece of technology. An engine made to be the vessel to hold reality under Logos cannot cohere without the Logos Himself. Without Christ, the things that actually take place on Earthcall will fragment and decay because they lack their ontological center they need for true joy and order.
+
 
 
 Singular
@@ -254,6 +260,23 @@ Every BodyPart, will Formation-recursively consist of the smaller BodyParts thro
 
 On the high level, it will be bounded by the primary BodyParts. They will be primary organs, systems, or something, depending on what form the Earthcall author-devs want to apply. On the lower level, it will leave open the ability to add and continually Formation-recurse.
 
+Gender will also be first order, so we’ll have Male and Female. But people do not necessarily want to reveal their gender online, so also give the ability for unknown.
+
+We need to distinguish Child versus Adult.
+
+CRITICAL EDGE CASE: unbounded freedom to modify Body representations or even spatial Objects means people can create NSFW easily, and the sheer freedom to do so with various modes and means governing mere shapes or simplistic mathematical frames is bound within the scope of the frame—the freedom to construct similar or same visuals in so many different ways could bypass easily. I am considering what to do about this because this would be absolutely disastrous.
+
+The obvious answer is classifiers but that is not sufficient because classifiers are not independently teleological. The other obvious answer is for Community Zones, and for all Zones to mark whether they are NSFW and what exactly are those NSFW categories. The other obvious answer is since all beings are authored, it therefore means it takes active effort to conceal NSFW things behind a private section, and all NSFW things authored in Community Zones/Homes are traceable to the Person who authored them.
+
+I also have a few ideas: Persons can author things that structurally detect if things are in a Body form. The issue with traditional classifiers is that they are fundamentally still masks over a teleologically indifferent substrate. The entire point of Earthcall is to model things around the structure and liturgy of the actual telos rather than merely an autoregressive approximation of it.  So, things can be detected by their purpose and context. Every BodyPart in the Body ontology in the vision is already understood according to its role in the Body (1 Corinthians 12:12–26). This means the detection of an Object or Singular (including a collection of Singulars) to the likeness of sensitive parts can be done by understanding its role, spatial properties, proportions, texture, etc.. And this means BodyPart/Body needs an extremely robust model of human anatomy.
+
+Ourverse has to ensure this universal model-and-detection ontology has to every Zone so they each have the raw materials.
+
+And obviously there is legitimate purpose for modeling sensitive parts such as in medical context. Thats why its decided by Person/Community authored Laws rather than . However, Persons must use never these static parts in pornographic ways.
+
+And the other problem is how you’re going to verify this without exposing yourself to a lot of NSFW. That’s the darkness of traditional RLHF and I need to mitigate it here somehow so I don’t expose myself to unclean things.
+
+This is why BodyParts must not shy away from also encoding the sensitive members of the body too. Not because Earthcall will actually show them the way it shows, but so the program understands the concept and therefore can be a vessel for understanding its severity and fitting governance, and so for those who have the sacred covenant of marriage where God created bodily union to be a fitting expression for this husbands and wives can use it strictly and only for each other. I don’t think I should do this part alone.
 Voice (Extends Formation and Singular)
 Similar framework to Body and BodyParts. Most fundamentally the audible main audible representation of person’s voice i.e. their real life voice.
 
@@ -466,6 +489,13 @@ Object set to set creation:
 Object Creation Typology
 
 Tools that are not first movers need to be stored as Objects that can enforce Laws
+
+
+The generative capacity of Set to Set:
+
+On Graphic Interfaces:
+
+One of the highest priority things we need for Earthcall is a framework (both written and executed at runtime) that gathers the Singular set to set creation and Laws system (Singular set to set creation IS, conceptually, a Law by the way in the sense of change writers, it's just a matter of whether its hardcoded, first mover default laws, or Person authored), and aims them to create GUIs in the most expressive possible way. Consider a button. A button, minimally speaking,  is really just a spatial Object with a Law with either when(onmouseclicked)-act(math ops on the properties when activated), or if(some PropertyPath to mouse clicking being true). UI, as traditionally conceptualized, has always been two things: *clicking, scrolling, and keyboard.* To replicate the traditional frameworks all Earthcall needs to do is listen for those and enable the corresponding ActionNodes on the Person-chosen and properties. To create any innovative behavior beyond that, we expand from merely the clicking/scrolling/keyboard triad I listed to the full scope of Singularity Modalities that Earthcall has, names, and governs as their vessel. This, of course, relies heavily on deep metal management, and while the current first mover tools drawers may be helpful, they will not be sufficient, because they abstract too much away. We also need tests for this, and a manual verification protocol.
 
 Event
 

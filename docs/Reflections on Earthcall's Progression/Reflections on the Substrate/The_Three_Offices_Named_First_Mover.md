@@ -13,7 +13,7 @@ come from a pre-existing law configuring them; meaningful interactions between
 First Movers are Relations; the framework must distinguish hardcoded and
 default-loaded First Movers; and the present mandate is to **crystallize** the
 branches into one tree rather than merely stop building. These claims come from
-`docs/core/EarthcallOurverse.md`, Zach's replies preserved in the reflection
+`../../core/Earthcall Ourverse Manifesto/EarthcallOurverse.md`, Zach's replies preserved in the reflection
 corpus, and Agenda item 31.
 
 **From other agents:** Sonnet named the chorus and the missing first-class

@@ -3,7 +3,7 @@
 **Asked by Zach:** whether the innate capacity (whether gated or not) exists to
 author an arbitrary number of properties of any kind into a base Singular.
 
-**Sources:** `docs/core/EarthcallOurverse.md` (Property — hardcoded vs
+**Sources:** `../core/Earthcall Ourverse Manifesto/EarthcallOurverse.md` (Property — hardcoded vs
 Person-originated, and the bounds that "need" to exist), `Singular.hpp` /
 `Singular.cpp`, `PropertyValue.hpp`, `ActionNode::AddProperty`,
 `TransferPolicy`, `DataStructure.hpp`, Object/Relation/Material/Person

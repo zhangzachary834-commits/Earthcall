@@ -13,7 +13,7 @@ the same rule as appending to a Singularity enum. An agent implementing this
 framework stops at every flag and asks.
 
 **Companion docs:** `NO_BLACK_BOX.md` (the substrate axis this deliberately does not
-reopen), `docs/core/EarthcallOurverse.md` (Body/Voice doctrine; the representational-
+reopen), `../../core/Earthcall Ourverse Manifesto/EarthcallOurverse.md` (Body/Voice doctrine; the representational-
 subordination note), `OURVERSE.md` (due-weight metalaws, the unowned gathering Zone),
 `LAW_AND_CREATION_SYSTEM.md` (authority, jurisdiction), `HIERARCHY_OF_JOYS.md`,
 `AUTHORED_CATEGORIES.md`.

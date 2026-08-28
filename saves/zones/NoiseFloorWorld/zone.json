@@ -1,0 +1,132 @@
+{
+  "being": "zone",
+  "name": "Perlin Noise Floor Zone",
+  "identifier": "NoiseFloorWorld",
+  "owner": "Player",
+  "parentZone": "",
+  "scope": "Local",
+  "qualities": {},
+  "world": {
+    "objects": [
+      {
+        "objectID": "perlin-ground-plane",
+        "shapeKind": 10,
+        "geometryType": 10,
+        "shapeParams": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          -2,
+          0,
+          1
+        ],
+        "center": [
+          0,
+          -2,
+          0
+        ],
+        "materialId": "material.grass",
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Perlin Ground Plane"
+          }
+        },
+        "fieldExtent": 1000.0,
+        "field": {
+          "op": 0,
+          "prim": 7,
+          "mathNode": {
+            "op": 5,
+            "children": [
+              {
+                "op": 1,
+                "var": "y"
+              },
+              {
+                "op": 6,
+                "children": [
+                  {
+                    "op": 0,
+                    "scalarForm": {
+                      "terms": [
+                        {
+                          "c": 2.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "op": 29,
+                    "children": [
+                      {
+                        "op": 6,
+                        "children": [
+                          {
+                            "op": 0,
+                            "scalarForm": {
+                              "terms": [
+                                {
+                                  "c": 0.2,
+                                  "factors": {}
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "op": 1,
+                            "var": "p"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "laws": []
+  },
+  "materials": [
+    {
+      "name": "grass",
+      "baseColor": [
+        0.2,
+        0.8,
+        0.2
+      ],
+      "opacity": 1.0,
+      "shininess": 10.0,
+      "specular": 0.1,
+      "ambient": 0.2,
+      "diffuse": 0.9
+    }
+  ],
+  "formationRelations": [],
+  "lexemes": []
+}

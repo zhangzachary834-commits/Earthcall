@@ -1,0 +1,242 @@
+{
+  "saveFormat": "zone-identity-v1",
+  "zoneRefs": [
+    {
+      "identifier": "NoiseFloorWorld"
+    }
+  ],
+  "currentZoneId": "NoiseFloorWorld",
+  "zones": [
+    {
+      "being": "zone",
+      "name": "Perlin Noise Floor Zone",
+      "identifier": "NoiseFloorWorld",
+      "owner": "Antigravity",
+      "parentZone": "",
+      "scope": "Local",
+      "qualities": {},
+      "world": {
+        "objects": [
+          {
+            "objectID": "perlin-ground-plane",
+            "shapeKind": 10,
+            "geometryType": 10,
+            "shapeParams": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              -2,
+              0,
+              1
+            ],
+            "center": [
+              0,
+              -2,
+              0
+            ],
+            "materialId": "material.grass",
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "Perlin Ground Plane"
+              }
+            },
+            "fieldExtent": 1000.0,
+            "field": {
+              "op": 0,
+              "prim": 7,
+              "mathNode": {
+                "op": 5,
+                "children": [
+                  {
+                    "op": 1,
+                    "var": "y"
+                  },
+                  {
+                    "op": 6,
+                    "children": [
+                      {
+                        "op": 0,
+                        "scalarForm": {
+                          "terms": [
+                            {
+                              "c": 2.0,
+                              "factors": {}
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "op": 29,
+                        "children": [
+                          {
+                            "op": 6,
+                            "children": [
+                              {
+                                "op": 0,
+                                "scalarForm": {
+                                  "terms": [
+                                    {
+                                      "c": 0.2,
+                                      "factors": {}
+                                    }
+                                  ]
+                                }
+                              },
+                              {
+                                "op": 1,
+                                "var": "p"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "laws": []
+      },
+      "materials": [
+        {
+          "name": "grass",
+          "baseColor": [
+            0.2,
+            0.8,
+            0.2
+          ],
+          "opacity": 1.0,
+          "shininess": 10.0,
+          "specular": 0.1,
+          "ambient": 0.2,
+          "diffuse": 0.9
+        }
+      ],
+      "formationRelations": [],
+      "lexemes": []
+    }
+  ],
+  "authoredLaws": {
+    "laws": [],
+    "triggers": {},
+    "formationMembers": [],
+    "rete": {
+      "alphaNodes": [],
+      "betaNodes": [],
+      "facts": [],
+      "agenda": []
+    }
+  },
+  "concepts": {
+    "concepts": []
+  },
+  "playerBody": [
+    0,
+    5,
+    0
+  ],
+  "cameraPos": [
+    0,
+    5,
+    5
+  ],
+  "cameraFront": [
+    0,
+    0,
+    -1
+  ],
+  "cameraUp": [
+    0,
+    1,
+    0
+  ],
+  "yaw": -90.0,
+  "pitch": 0.0,
+  "laws": [
+    {
+      "identifier": "law-toggle-ground",
+      "name": "toggle-ground-visibility",
+      "activation": 0,
+      "eventTypes": [
+        "key-pressed"
+      ],
+      "condition": {
+        "kind": 3,
+        "conditions": [
+          {
+            "kind": 0,
+            "path": "@event.subject",
+            "op": 0,
+            "operand": {
+              "t": "string",
+              "v": "key.g"
+            }
+          },
+          {
+            "kind": 0,
+            "path": "baseline",
+            "op": 0,
+            "operand": {
+              "t": "string",
+              "v": "ground"
+            }
+          }
+        ]
+      },
+      "action": {
+        "kind": 8,
+        "path": "position.y",
+        "bindings": {
+          "v": "position.y"
+        },
+        "function": {
+          "pieces": [
+            {
+              "expr": {
+                "terms": [
+                  {
+                    "c": -1000.0,
+                    "factors": {}
+                  },
+                  {
+                    "c": -1.0,
+                    "factors": {
+                      "v": 1.0
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "authors": [
+        "person.zach"
+      ]
+    }
+  ]
+}

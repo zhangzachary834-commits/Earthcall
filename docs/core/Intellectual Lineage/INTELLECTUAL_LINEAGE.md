@@ -121,3 +121,12 @@ Refusal as method. Adding a class, folder, or enum value is an ontological claim
 
 What is not new, and must never be claimed as such: Rete; production systems; ECA rules; declarative evaluation; runtime authoring; symbolic algebra as runtime values; capability security; bounded/total languages; whole-machine language-ordered operating systems; the critique of the object as a modeling primitive.
 
+
+§11 — Liberating Programming from the von Neumann Style
+When `ALGORITHMS_AS_LAW.md` declares that "Earthcall is not a von Neumann machine," it is invoking one of the most famous critiques in computer science history: John Backus’s 1977 Turing Award lecture, *Can Programming Be Liberated from the von Neumann Style?*
+Backus (the inventor of Fortran) argued that standard programming languages are just high-level metaphors for the hardware's memory tubes and instruction pointers, crippling our ability to think mathematically. Earthcall's architecture directly engages with this lineage:
+*   **The Triumph of `OntoMath`**: Backus advocated for pure, composable mathematical functions (Functional Programming) over state-mutating assignment statements (`x = x + 1`). Earthcall realizes this by making exact symbolic algebra the substrate of change. Rates of change are integrated and differentiated analytically, perfectly aligning with Backus's dream of mathematically sound programming.
+*   **Declarative vs Imperative**: By using a Rete network where Laws *hold* rather than *run*, Earthcall completely discards the von Neumann instruction pointer. The system figures out *when* things happen; the author just defines the truth.
+*   **The Point of Departure (State as the World)**: Where functional purists wanted to eliminate mutable state entirely, Earthcall elevates it. Earthcall *does* have mutable state, but instead of hiding it in an invisible `std::queue` in RAM, state *is* the physical reality of the Beings. Earthcall reconciles mutable state with mathematical purity through **accountability**: because Laws are exact texts, the system can integrate them backward over time to reconstruct the past perfectly—a feat impossible in the "von Neumann style" of destructive memory updates.
+*   **The Ceilings as Provocation**: Where academic computer scientists fetishized Turing-completeness and unbounded recursion, Earthcall deliberately breaks them (`kMaxCallDepth = 32`). The provocation is that computation must not be an instantaneous, unobservable black box; it must be forced to unfold over time as a physical, observable event in the world.
+

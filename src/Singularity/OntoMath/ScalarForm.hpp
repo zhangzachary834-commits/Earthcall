@@ -291,6 +291,7 @@ struct MathNode {
         Clamp = 26,    // ternary clamp(val, lo, hi) (Scalar/Scalar/Scalar, Vector/Vector/Vector, Vector/Scalar/Scalar)
         Sqrt = 27,     // unary square root (Scalar->Scalar, Vector->Vector)
         Tan = 28,      // unary tangent (Scalar->Scalar)
+        Noise = 29,    // Perlin noise (Vector->Scalar)
 
         // Not a kind an author picks — the landing place for an op THIS BUILD
         // does not know: a save written by another version. It never

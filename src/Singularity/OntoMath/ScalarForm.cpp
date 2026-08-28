@@ -12,6 +12,7 @@
 #include <cmath>
 #include <cstdio>
 #include <sstream>
+#include <glm/gtc/noise.hpp>
 
 namespace OntoMath {
 
@@ -837,6 +838,7 @@ const char* mathOpName(MathNode::Op op) {
         case MathNode::Op::Clamp:           return "Clamp";
         case MathNode::Op::Sqrt:            return "Sqrt";
         case MathNode::Op::Tan:             return "Tan";
+        case MathNode::Op::Noise:           return "Noise";
         case MathNode::Op::Unsupported:     return "Unsupported";
     }
     return "Unsupported";
@@ -877,6 +879,7 @@ bool isKnownMathOp(int raw) {
         case MathNode::Op::Clamp:
         case MathNode::Op::Sqrt:
         case MathNode::Op::Tan:
+        case MathNode::Op::Noise:
             return true;
         // Unsupported is where unknown ops LAND; it is never a stored value an
         // author picked, so it does not read back as known.
@@ -1157,6 +1160,12 @@ TypeResult MathNode::typeOf(const TypeEnv& env, const std::string& path,
             auto t = sub(0); if (!t) return t;
             if (!scalarLike(*t)) return mismatch(path, op, 0, "Scalar", *t);
             return TypeResult::ok(widerScalar(*t, *t));
+        }
+        case Op::Noise: {
+            if (children.size() != 1) return arity(path, op, children.size(), 1);
+            auto t = sub(0); if (!t) return t;
+            if (!vectorLike(*t)) return mismatch(path, op, 0, "Vector", *t);
+            return TypeResult::ok(ValueKind::Scalar);
         }
         case Op::Unsupported:
             return TypeResult::error(TypeDiagnostic{
@@ -1537,6 +1546,13 @@ std::optional<PropertyValue> MathNode::evaluate(const std::map<std::string, Prop
             double da = 0.0;
             if (!propertyValueToNumber(*a, da)) return std::nullopt;
             return PropertyValue(std::tan(da));
+        }
+        case Op::Noise: {
+            if (children.size() != 1) return std::nullopt;
+            auto a = children[0]->evaluate(vars, subject);
+            if (!a || !std::holds_alternative<glm::vec3>(*a)) return std::nullopt;
+            glm::vec3 va = std::get<glm::vec3>(*a);
+            return PropertyValue(static_cast<double>(glm::perlin(va)));
         }
 
         // --- Sampling a field expression at a point ------------------------

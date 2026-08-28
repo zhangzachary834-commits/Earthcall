@@ -1917,7 +1917,7 @@
           0.0,
           31.563278198242188,
           0.3478606939315796,
-          19.948257446289063,
+          19.948257446289062,
           1.0
         ]
       },
@@ -2666,6 +2666,69 @@
           0.3458845019340515,
           13.414341926574707,
           1.0
+        ]
+      }
+    ],
+    "laws": [
+      {
+        "identifier": "law-toggle-ground",
+        "name": "toggle-ground-visibility",
+        "activation": 0,
+        "eventTypes": [
+          "key-pressed"
+        ],
+        "condition": {
+          "kind": 3,
+          "conditions": [
+            {
+              "kind": 0,
+              "path": "@event.subject",
+              "op": 0,
+              "operand": {
+                "t": "string",
+                "v": "key.g"
+              }
+            },
+            {
+              "kind": 0,
+              "path": "baseline",
+              "op": 0,
+              "operand": {
+                "t": "string",
+                "v": "ground"
+              }
+            }
+          ]
+        },
+        "action": {
+          "kind": 8,
+          "path": "position.y",
+          "bindings": {
+            "v": "position.y"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": -1000.0,
+                      "factors": {}
+                    },
+                    {
+                      "c": -1.0,
+                      "factors": {
+                        "v": 1.0
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        "authors": [
+          "person.zach"
         ]
       }
     ]

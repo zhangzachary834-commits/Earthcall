@@ -224,6 +224,8 @@ on a quiet machine) so the tripwire tightens behind the fix.
 - Restore full Polyhedron generator functionality as an option inside the larger 3D Shape generator in the Creator Console (MISTRAAALLLLLLLLLLLLLLLLLL)
 - Make the 3D Shape Generator Law with features like implicit, full polyhedron support, and the fulll OntoMath-geometry engine.
 
+- ✅ **Implement Perlin noise floor** — **done (2026-08-27)**: Authored `perlin-ground-plane` as a Field (`ShapeKind 10`) evaluated via `geom::SdfNode` mapping an OntoMath `Op::Noise` AST. Fixed serialization to emit a proper `SdfNode` structure so the WebGPU raymarcher evaluates the SDF correctly instead of defaulting to an invisible 1e9 empty space. Added green `faceColors` so it renders visibly, shifted its Y origin to prevent clipping the default player spawn, and added a fixture law (`law-toggle-ground`) to toggle the `baseline: ground` (the huge rectangular prism) by pressing the `G` key.
+
 ## R&D:
 - Determine the best ML strategies for Integration classifiers.
 - **Formations with Neuro-Symbolic ML / OntoMath** — PARTIAL (2026-08-13): Implemented `Formation` neural structure with Hebbian learning in `LanguageSystem::tick`. Next step: migrate hardcoded constants to authorable Law rules. See [Specific Tasks/Neuro_Symbolic_Formations_and_ML.md](Specific%20Tasks/Neuro_Symbolic_Formations_and_ML.md). **Distinguish First Mover ML elements from Person-authored ML properties.**

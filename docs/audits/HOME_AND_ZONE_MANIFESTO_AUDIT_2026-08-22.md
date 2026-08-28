@@ -6,7 +6,7 @@ Person with highest ownership priority, Person-authored extra Zones and Homes,
 Relationship- and Community-owned Zones/Homes, and the philosophical
 distinction between a Zone and a Home.
 
-**Sources:** `docs/core/EarthcallOurverse.md` (Zone / Home / Ourverse / Person /
+**Sources:** `../core/Earthcall Ourverse Manifesto/EarthcallOurverse.md` (Zone / Home / Ourverse / Person /
 Relationship / Community), `docs/architecture/ourverse/OURVERSE.md`,
 `docs/architecture/ourverse/SECOND_PERSON_FRAMEWORK.md` (specified, not built),
 live `Zone`, `Home`, `ZoneManager`, `Community`, `Relationship`,
