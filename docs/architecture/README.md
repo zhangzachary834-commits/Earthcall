@@ -13,7 +13,7 @@ A **framework name is not a directory name.** `Integration/` stays
 | [`ontology/`](ontology/) | What things ARE: kinds, categories, black box, the tree, substrate, Joys |
 | [`law/`](law/) | What a Law is, migration, algorithms-as-law, First Mover authoring, interaction-as-law |
 | [`events/`](events/) | Event bus vs handler, hover / person / relation / physics events |
-| [`mathematics/`](mathematics/) | OntoMath, geometry unification, SDF/Bézier law replication |
+| [`mathematics/`](mathematics/) | OntoMath, geometry unification, SDF/Bézier law replication, Far Lands |
 | [`ourverse/`](ourverse/) | Ourverse the being; second-person frameworks |
 | [`migration/`](migration/) | In-flight plans: game-elimination, keyboard, security, semantic network, leftover UI todo |
 | [`Integration/`](Integration/) | Foreign-app integration (docs twin of `src/Singularity/Foreign/`) |

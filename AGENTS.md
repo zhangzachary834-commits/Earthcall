@@ -65,6 +65,7 @@ subsystem define what a thing's state *means* by keeping it where no law can loo
 | understand what a Law is at all | `law/LAW_AND_CREATION_SYSTEM.md` | the foundation the rest assumes |
 | undo a change, rewind, or ask whether something *can* be undone | `mathematics/ONTOMATH_FRAMEWORK.md` §6 | the past is integrated in closed form, never replayed from a log |
 | render an authored expression to a channel (sound, shader, physics) | `mathematics/ONTOMATH_FRAMEWORK.md` §1, §7 | a channel reads OntoMath; it never decides what the thing is |
+| build terrain that degenerates, folds, or layers with distance | `mathematics/FAR_LANDS_FRAMEWORK.md` §2, §3 | recursive `FunctionDef` + `Piecewise` spatial bounds; no new C++ |
 | ask "why is it like this?" | `core/EarthcallOurverse.md`, `ontology/SUBSTRATE_ORDERING.md` | the ends the architecture serves |
 | touch the Hierarchy of Joys, telos, or "joyOrdering" | `ontology/HIERARCHY_OF_JOYS.md` | Lexemes are telos; the hierarchy is a Formation |
 | touch Ourverse, gathering Zones, or Zone filaments | `ourverse/OURVERSE.md` | vessel of unity in Christ; not the Engine object bag |
