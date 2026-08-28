@@ -1,5 +1,5 @@
 # frame_lag_test baseline — what a frame of Earthcall costs today.
-# Recorded 2026-08-28 12:08:19 from world 'Chess'.
+# Recorded 2026-08-28 15:53:18 from world 'Chess'.
 # Times are milliseconds normalised by the calibration factor in
 # frame_lag_test.cpp, so this file means the same thing on another
 # machine. Exponents are the fitted k in cost ~ n^k and are already
@@ -13,13 +13,13 @@
 # a browser and an IDE, run it three or four times and raise these to
 # the dearest of them by hand, or the tripwire sits under the noise
 # and fires at nobody's change.
-load.ms=75000.0
-shape.exponent.frame=1.12266
-shape.exponent.law=0.988372
-shape.exponent.z_auto=0.992445
-shape.exponent.z_phys=1.35
-shape.exponent.zone=1.35
-steady.law_ms=1.76163
-steady.median_ms=8.0
-steady.p95_ms=12.0
-steady.zone_ms=5.5
+load.ms=5279.38
+shape.exponent.frame=1.11276
+shape.exponent.law=0.957271
+shape.exponent.z_auto=0.967647
+shape.exponent.z_phys=1.27897
+shape.exponent.zone=1.13668
+steady.law_ms=1.65263
+steady.median_ms=2.45555
+steady.p95_ms=2.66214
+steady.zone_ms=0.796612

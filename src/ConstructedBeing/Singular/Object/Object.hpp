@@ -167,6 +167,7 @@ private:
     geom::ComplexShapeData  complexData;
     geom::SdfNode           fieldData;     // SDF expression when _hasField
     glm::vec3               _fieldExtent{1.0f, 1.0f, 1.0f};
+    std::optional<float>    _fieldCellSize = std::nullopt;
     mutable uint64_t        _memoIdBase = 0;
     mutable uint32_t        _fieldRevision = 0;
     // Cached render tessellations. Tessellating is O(slices*stacks) and allocates;
@@ -204,8 +205,8 @@ private:
     mutable std::vector<glm::vec3> _supportCloud;   // mutable: rebuildFieldMesh() is const
     // Cached local-space AABB of the topology mesh, so updateCollisionZone only
     // transforms 8 corners instead of the whole (huge) support cloud per call.
-    glm::vec3 _localMin{-0.5f};
-    glm::vec3 _localMax{ 0.5f};
+    mutable glm::vec3 _localMin{-0.5f};
+    mutable glm::vec3 _localMax{0.5f};
     mutable glm::mat4 _lastCollisionTransform = glm::mat4(0.0f);
     mutable uint32_t _lastCollisionFieldRevision = 0xffffffff;
 
@@ -553,11 +554,19 @@ public:
     // of the region the field is meshed/marched over.
     void setFieldShape(const geom::SdfNode& f, const glm::vec3& extent = glm::vec3(1.0f)) {
         fieldData = f; _fieldExtent = extent;
-        _hasField = true; _hasSmooth = false; _hasComplex = false; _hasPatch = false;
+        _hasSmooth = _hasComplex = _hasPatch = false; _hasField = true;
         _shapeKind = ShapeKind::Field;
         rebuildGeometryCaches();
     }
+
     const glm::vec3& getFieldExtent() const { return _fieldExtent; }
+    
+    void setFieldCellSize(std::optional<float> size) { 
+        _fieldCellSize = size; 
+        if (_hasField) rebuildGeometryCaches(); 
+    }
+    std::optional<float> getFieldCellSize() const { return _fieldCellSize; }
+
     // Live-edit the blend of a Morph/SmoothUnion field (re-tessellates).
     bool isMorphField() const {
         return _hasField && (fieldData.op == geom::SdfOp::Morph || fieldData.op == geom::SdfOp::SmoothUnion);
@@ -597,6 +606,7 @@ public:
         polyhedronData.vertices[i] = v;
         polyhedronData.computeNormals();
         polyhedronData.computeFaceAreas();
+        rebuildGeometryCaches();
         updateCollisionZone(getTransform());
     }
     

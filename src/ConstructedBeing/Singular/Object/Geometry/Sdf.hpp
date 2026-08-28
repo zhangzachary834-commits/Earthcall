@@ -129,6 +129,8 @@ bool sdfFromComplex(const ComplexShapeData& c, SdfNode& out);
 
 // Evaluate the signed distance of the tree at a local-space point.
 float evalSdf(const SdfNode& n, const glm::vec3& p);
+// Evaluate the conservative interval of the tree over a local-space AABB.
+OntoMath::Interval evalRange(const SdfNode& n, const glm::vec3& boxMin, const glm::vec3& boxMax);
 // Central-difference surface normal.
 glm::vec3 sdfNormal(const SdfNode& n, const glm::vec3& p);
 // Sphere-march a ray (origin outside) against the field. nrm normalised.

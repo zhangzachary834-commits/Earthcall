@@ -694,16 +694,11 @@ void WebGpuRenderer::flushMeshDraws() {
 
 namespace {
 // Uniform block for the raymarcher; must match struct RU in the generated WGSL.
-struct SdfUniforms {
+struct SdfGlobalUniforms {
     glm::mat4 viewProj;
-    glm::mat4 model;
-    glm::mat4 invModel;
-    glm::vec4 baseColor;
     glm::vec4 lightPos;
-    glm::vec4 shading;  // ambient, diffuse, specular, shininess
     glm::vec4 eyePos;
-    glm::vec4 misc;     // extent(unused scalar), surfaceEps, maxDist, exprDamping
-    glm::vec4 extents;  // The xyz scale of the bounding box
+    glm::vec4 pad;
 };
 } // namespace
 
@@ -729,7 +724,7 @@ const WebGpuRenderer::SdfPipeline* WebGpuRenderer::sdfPipeline(const std::string
     be[0].binding = 0;
     be[0].visibility = WGPUShaderStage_Vertex | WGPUShaderStage_Fragment;
     be[0].buffer.type = WGPUBufferBindingType_Uniform;
-    be[0].buffer.minBindingSize = sizeof(SdfUniforms);
+    be[0].buffer.minBindingSize = sizeof(SdfGlobalUniforms);
     be[1].binding = 1;
     be[1].visibility = WGPUShaderStage_Fragment;
     be[1].buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
@@ -961,12 +956,7 @@ void WebGpuRenderer::flushSdfDraws() {
     if (!_pass) { _sdfBatches.clear(); _sdfParamsBatches.clear(); return; }
     
     // Global uniforms for SDFs
-    struct SdfGlobalUniforms {
-        glm::mat4 viewProj;
-        glm::vec4 lightPos;
-        glm::vec4 eyePos;
-        glm::vec4 pad;
-    } u;
+    SdfGlobalUniforms u;
     u.viewProj = _viewProj;
     u.lightPos = glm::vec4(lightPos(), 1.0f);
     u.eyePos = glm::vec4(_eyePos, 1.0f);

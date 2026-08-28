@@ -176,6 +176,7 @@ void Object::setPolyhedronData(const PolyhedronData& data) {
     _hasSmooth = false;   // a polyhedron is flat-faced, not a topology surface
     _hasComplex = false;
     if (_shapeKind == ShapeKind::Polyhedron) {
+        rebuildGeometryCaches();
     }
 }
 
@@ -183,24 +184,28 @@ void Object::createTetrahedron() {
     _shapeKind = ShapeKind::Polyhedron;
     polyhedronData = PolyhedronData::createRegularPolyhedron(4);
     _polyhedronDirty = true;
+    rebuildGeometryCaches();
 }
 
 void Object::createOctahedron() {
     _shapeKind = ShapeKind::Polyhedron;
     polyhedronData = PolyhedronData::createRegularPolyhedron(8);
     _polyhedronDirty = true;
+    rebuildGeometryCaches();
 }
 
 void Object::createDodecahedron() {
     _shapeKind = ShapeKind::Polyhedron;
     polyhedronData = PolyhedronData::createRegularPolyhedron(12);
     _polyhedronDirty = true;
+    rebuildGeometryCaches();
 }
 
 void Object::createIcosahedron() {
     _shapeKind = ShapeKind::Polyhedron;
     polyhedronData = PolyhedronData::createRegularPolyhedron(20);
     _polyhedronDirty = true;
+    rebuildGeometryCaches();
 }
 
 void Object::createCustomPolyhedron(const std::vector<glm::vec3>& vertices, 
@@ -208,6 +213,7 @@ void Object::createCustomPolyhedron(const std::vector<glm::vec3>& vertices,
     _shapeKind = ShapeKind::Polyhedron;
     polyhedronData = PolyhedronData::createCustomPolyhedron(vertices, faces);
     _polyhedronDirty = true;
+    rebuildGeometryCaches();
 }
 
 // ID management lives in ObjectIdentity.hpp. The member function that used to

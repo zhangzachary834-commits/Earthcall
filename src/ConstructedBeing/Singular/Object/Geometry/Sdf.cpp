@@ -1,3 +1,4 @@
+#include <unordered_map>
 #include "Sdf.hpp"
 
 #include <algorithm>
@@ -514,6 +515,82 @@ float evalSdf(const SdfNode& n, const glm::vec3& p) {
     }
 }
 
+
+OntoMath::Interval evalRange(const SdfNode& n, const glm::vec3& boxMin, const glm::vec3& boxMax) {
+    using namespace OntoMath;
+    auto retInf = []() { return Interval::infinite(); };
+    
+    // AABB center and half-diagonal for 1-Lipschitz true-distance leaves
+    glm::vec3 c = 0.5f * (boxMin + boxMax);
+    glm::vec3 halfSize = 0.5f * (boxMax - boxMin);
+    float R = glm::length(halfSize);
+    
+    switch (n.op) {
+        case SdfOp::Leaf: {
+            if (n.prim == SdfPrim::Expr) {
+                if (n.mathNode) {
+                    std::map<std::string, MathNode::RangeValue> vars = {
+                        {kAmbientPointVar, MathNode::RangeValue::makeVector(Interval(boxMin.x, boxMax.x), Interval(boxMin.y, boxMax.y), Interval(boxMin.z, boxMax.z))},
+                        {"x", MathNode::RangeValue::makeScalar(Interval(boxMin.x, boxMax.x))},
+                        {"y", MathNode::RangeValue::makeScalar(Interval(boxMin.y, boxMax.y))},
+                        {"z", MathNode::RangeValue::makeScalar(Interval(boxMin.z, boxMax.z))}
+                    };
+                    auto r = n.mathNode->evalRange(vars);
+                    if (r && r->kind == ValueKind::Scalar) return r->scalar;
+                }
+                return retInf();
+            }
+            
+            // True distance leaves (1-Lipschitz)
+            float distAtCenter = evalSdf(n, c);
+            return Interval(distAtCenter - R, distAtCenter + R);
+        }
+        case SdfOp::Morph: {
+            if (n.children.size() < 2 || !n.children[0] || !n.children[1]) return retInf();
+            Interval a = evalRange(*n.children[0], boxMin, boxMax);
+            Interval b = evalRange(*n.children[1], boxMin, boxMax);
+            float t = glm::clamp(n.t, 0.0f, 1.0f);
+            return Interval(glm::mix(a.lo, b.lo, t), glm::mix(a.hi, b.hi, t));
+        }
+        case SdfOp::Union: {
+            if (n.children.size() < 2 || !n.children[0] || !n.children[1]) return retInf();
+            Interval a = evalRange(*n.children[0], boxMin, boxMax);
+            Interval b = evalRange(*n.children[1], boxMin, boxMax);
+            return Interval(std::min(a.lo, b.lo), std::min(a.hi, b.hi));
+        }
+        case SdfOp::Intersect: {
+            if (n.children.size() < 2 || !n.children[0] || !n.children[1]) return retInf();
+            Interval a = evalRange(*n.children[0], boxMin, boxMax);
+            Interval b = evalRange(*n.children[1], boxMin, boxMax);
+            return Interval(std::max(a.lo, b.lo), std::max(a.hi, b.hi));
+        }
+        case SdfOp::Subtract: {
+            if (n.children.size() < 2 || !n.children[0] || !n.children[1]) return retInf();
+            Interval a = evalRange(*n.children[0], boxMin, boxMax);
+            Interval b = evalRange(*n.children[1], boxMin, boxMax);
+            return Interval(std::max(a.lo, -b.hi), std::max(a.hi, -b.lo));
+        }
+        case SdfOp::SmoothUnion: {
+            if (n.children.size() < 2 || !n.children[0] || !n.children[1]) return retInf();
+            Interval a = evalRange(*n.children[0], boxMin, boxMax);
+            Interval b = evalRange(*n.children[1], boxMin, boxMax);
+            // smin <= min, and below it by at most a k-dependent constant
+            // Specifically, for polynomial smin(a,b,k): max difference is k/4
+            // So smin >= min(a,b) - k/4
+            // Wait, the SDF smooth union uses k directly, max diff is k / 4. 
+            // Wait, in evalSdf, smooth min is:
+            // float h = glm::clamp( 0.5f + 0.5f*(b-a)/k, 0.0f, 1.0f );
+            // return glm::mix(b, a, h) - k*h*(1.0f-h);
+            // Max diff is k * 0.5 * 0.5 = k / 4.
+            // But we can be looser: just min(lo_a, lo_b) - k, and min(hi_a, hi_b) for upper bound.
+            float k = std::max(0.0001f, n.t); // use n.t as k
+            return Interval(std::min(a.lo, b.lo) - k, std::min(a.hi, b.hi));
+        }
+        default:
+            return retInf();
+    }
+}
+
 glm::vec3 sdfNormal(const SdfNode& n, const glm::vec3& p) {
     const float e = 1e-3f;
     glm::vec3 g(evalSdf(n, p + glm::vec3(e, 0, 0)) - evalSdf(n, p - glm::vec3(e, 0, 0)),
@@ -614,6 +691,7 @@ static void marchTet(TessMesh& m, const glm::vec3 p[4], const float v[4], const 
     }
 }
 
+
 TessMesh tessellateSdf(const SdfNode& n, const glm::vec3& extent, const glm::ivec3& res) {
     TessMesh m;
     glm::ivec3 N = glm::max(glm::ivec3(4), res);
@@ -621,68 +699,150 @@ TessMesh tessellateSdf(const SdfNode& n, const glm::vec3& extent, const glm::ive
     auto pos = [&](int i, int j, int k) {
         return glm::vec3(-extent.x + i * step.x, -extent.y + j * step.y, -extent.z + k * step.z);
     };
-    // Precompute the (N+1)^3 field samples so shared corners are evaluated once.
-    glm::ivec3 S = N + 1;
-    std::vector<float> g(static_cast<size_t>(S.x) * S.y * S.z);
-    auto gi = [&](int i, int j, int k) { return (static_cast<size_t>(i) * S.y + j) * S.z + k; };
-    for (int i = 0; i < S.x; ++i)
-        for (int j = 0; j < S.y; ++j)
-            for (int k = 0; k < S.z; ++k)
-                g[gi(i, j, k)] = evalSdf(n, pos(i, j, k));
 
-    // Each difference MUST be divided by the world-space span it covers. `step`
-    // is 2*extent/N per axis and is NOT isotropic -- the noise floor's box is
-    // 1000 x 30 x 1000, so its y cells come out ~4x finer than its x and z
-    // cells. Normalizing an unscaled (dx, dy, dz) therefore aims the normal in
-    // the wrong direction: measured 5.4 degrees off on an exact plane at a
-    // 1.19:1 cell ratio, and the error grows with the ratio. Dividing by the
-    // span also reconciles the one-sided differences at the box faces, which
-    // cover one step rather than two, with the interior ones.
-    std::vector<glm::vec3> gn(static_cast<size_t>(S.x) * S.y * S.z);
-    for (int i = 0; i < S.x; ++i) {
-        for (int j = 0; j < S.y; ++j) {
-            for (int k = 0; k < S.z; ++k) {
-                const int i0 = i > 0 ? i - 1 : i, i1 = i + 1 < S.x ? i + 1 : i;
-                const int j0 = j > 0 ? j - 1 : j, j1 = j + 1 < S.y ? j + 1 : j;
-                const int k0 = k > 0 ? k - 1 : k, k1 = k + 1 < S.z ? k + 1 : k;
-                glm::vec3 grad(
-                    i1 > i0 ? (g[gi(i1,j,k)] - g[gi(i0,j,k)]) / ((i1 - i0) * step.x) : 0.0f,
-                    j1 > j0 ? (g[gi(i,j1,k)] - g[gi(i,j0,k)]) / ((j1 - j0) * step.y) : 0.0f,
-                    k1 > k0 ? (g[gi(i,j,k1)] - g[gi(i,j,k0)]) / ((k1 - k0) * step.z) : 0.0f);
-                float len = glm::length(grad);
-                gn[gi(i,j,k)] = len > 1e-8f ? grad / len : glm::vec3(0,1,0);
+    struct Sample {
+        float v;
+        glm::vec3 nrm;
+    };
+    std::unordered_map<uint64_t, Sample> cache;
+    auto gi = [&](int i, int j, int k) -> uint64_t { 
+        return (static_cast<uint64_t>(i & 0x7FFFFF) << 40) | (static_cast<uint64_t>(j & 0xFFFFF) << 20) | (k & 0xFFFFF);
+    };
+
+    // Evaluate single sample. To match Phase 3 grid-gradient, we evaluate 3-axis central diff using step sizes.
+    auto getSample = [&](auto& self, int i, int j, int k) -> Sample {
+        uint64_t id = gi(i, j, k);
+        auto it = cache.find(id);
+        if (it != cache.end()) return it->second;
+        
+        float v = evalSdf(n, pos(i, j, k));
+        
+        // Wait, for the normal we need neighbors... 
+        // We'll compute normal exactly as before if we can, or just use sdfNormal if we want to avoid halo dependency loops.
+        // The plan says "corner-interpolated normals from Phase 3 stay exactly as they are". 
+        // But doing grid-differences means we'd recursively getSample the neighbors!
+        // The recursive calls to getSample would cause a 6x blowup in evaluated points per surface point, which is fine since they are cached.
+        
+        // However, if we do recursive getSample here, computing a normal at (i,j,k) requires v at (i+1,j,k) etc.
+        // Let's break the recursion: we only evaluate v first.
+        cache[id] = {v, glm::vec3(0,1,0)}; // temporary
+        return cache[id];
+    };
+
+    auto getV = [&](int i, int j, int k) -> float {
+        uint64_t id = gi(i, j, k);
+        auto it = cache.find(id);
+        if (it != cache.end()) return it->second.v;
+        float val = evalSdf(n, pos(i, j, k));
+        cache[id] = {val, glm::vec3(0,1,0)};
+        return val;
+    };
+
+    auto getNormal = [&](int i, int j, int k) -> glm::vec3 {
+        // Grid gradient exactly as Phase 3
+        const int i0 = i > 0 ? i - 1 : i, i1 = i + 1 <= N.x ? i + 1 : i;
+        const int j0 = j > 0 ? j - 1 : j, j1 = j + 1 <= N.y ? j + 1 : j;
+        const int k0 = k > 0 ? k - 1 : k, k1 = k + 1 <= N.z ? k + 1 : k;
+        glm::vec3 grad(
+            i1 > i0 ? (getV(i1,j,k) - getV(i0,j,k)) / ((i1 - i0) * step.x) : 0.0f,
+            j1 > j0 ? (getV(i,j1,k) - getV(i,j0,k)) / ((j1 - j0) * step.y) : 0.0f,
+            k1 > k0 ? (getV(i,j,k1) - getV(i,j,k0)) / ((k1 - k0) * step.z) : 0.0f);
+        float len = glm::length(grad);
+        return len > 1e-8f ? grad / len : glm::vec3(0,1,0);
+    };
+
+    // Subdivide
+    auto subdivide = [&](auto& self, int i0, int i1, int j0, int j1, int k0, int k1) -> void {
+        glm::vec3 boxMin = pos(i0, j0, k0);
+        glm::vec3 boxMax = pos(i1, j1, k1);
+        OntoMath::Interval range = evalRange(n, boxMin, boxMax);
+        if (range.lo > 0.0f || range.hi < 0.0f) return;
+        
+        if (i1 - i0 == 1 && j1 - j0 == 1 && k1 - k0 == 1) {
+            // Corner offset per index c: (c&1, (c>>1)&1, (c>>2)&1).
+            static const int off[8][3] = { {0,0,0},{1,0,0},{0,1,0},{1,1,0},{0,0,1},{1,0,1},{0,1,1},{1,1,1} };
+            static const int tets[6][4] = { {0,7,1,3},{0,7,3,2},{0,7,2,6},{0,7,6,4},{0,7,4,5},{0,7,5,1} };
+            
+            glm::vec3 cp[8], cn[8]; float cv[8];
+            for (int c = 0; c < 8; ++c) {
+                int ci = i0 + off[c][0], cj = j0 + off[c][1], ck = k0 + off[c][2];
+                cp[c] = pos(ci, cj, ck);
+                cv[c] = getV(ci, cj, ck);
+            }
+            // Now compute normals for the 8 corners
+            for (int c = 0; c < 8; ++c) {
+                int ci = i0 + off[c][0], cj = j0 + off[c][1], ck = k0 + off[c][2];
+                cn[c] = getNormal(ci, cj, ck);
+            }
+            
+            for (int t = 0; t < 6; ++t) {
+                glm::vec3 tp[4], tn[4]; float tv[4];
+                for (int q = 0; q < 4; ++q) { 
+                    tp[q] = cp[tets[t][q]]; 
+                    tv[q] = cv[tets[t][q]]; 
+                    tn[q] = cn[tets[t][q]]; 
+                }
+                marchTet(m, tp, tv, tn);
+            }
+            return;
+        }
+        
+        int imid = i0 + std::max(1, (i1 - i0) / 2);
+        int jmid = j0 + std::max(1, (j1 - j0) / 2);
+        int kmid = k0 + std::max(1, (k1 - k0) / 2);
+        
+        if (imid < i1) {
+            if (jmid < j1) {
+                if (kmid < k1) {
+                    self(self, i0, imid, j0, jmid, k0, kmid);
+                    self(self, imid, i1, j0, jmid, k0, kmid);
+                    self(self, i0, imid, jmid, j1, k0, kmid);
+                    self(self, imid, i1, jmid, j1, k0, kmid);
+                    self(self, i0, imid, j0, jmid, kmid, k1);
+                    self(self, imid, i1, j0, jmid, kmid, k1);
+                    self(self, i0, imid, jmid, j1, kmid, k1);
+                    self(self, imid, i1, jmid, j1, kmid, k1);
+                } else {
+                    self(self, i0, imid, j0, jmid, k0, k1);
+                    self(self, imid, i1, j0, jmid, k0, k1);
+                    self(self, i0, imid, jmid, j1, k0, k1);
+                    self(self, imid, i1, jmid, j1, k0, k1);
+                }
+            } else {
+                if (kmid < k1) {
+                    self(self, i0, imid, j0, j1, k0, kmid);
+                    self(self, imid, i1, j0, j1, k0, kmid);
+                    self(self, i0, imid, j0, j1, kmid, k1);
+                    self(self, imid, i1, j0, j1, kmid, k1);
+                } else {
+                    self(self, i0, imid, j0, j1, k0, k1);
+                    self(self, imid, i1, j0, j1, k0, k1);
+                }
+            }
+        } else {
+            if (jmid < j1) {
+                if (kmid < k1) {
+                    self(self, i0, i1, j0, jmid, k0, kmid);
+                    self(self, i0, i1, jmid, j1, k0, kmid);
+                    self(self, i0, i1, j0, jmid, kmid, k1);
+                    self(self, i0, i1, jmid, j1, kmid, k1);
+                } else {
+                    self(self, i0, i1, j0, jmid, k0, k1);
+                    self(self, i0, i1, jmid, j1, k0, k1);
+                }
+            } else {
+                if (kmid < k1) {
+                    self(self, i0, i1, j0, j1, k0, kmid);
+                    self(self, i0, i1, j0, j1, kmid, k1);
+                } else {
+                    self(self, i0, i1, j0, j1, k0, k1);
+                }
             }
         }
-    }
-
-    // Corner offset per index c: (c&1, (c>>1)&1, (c>>2)&1).
-    static const int off[8][3] = {
-        {0,0,0},{1,0,0},{0,1,0},{1,1,0},{0,0,1},{1,0,1},{0,1,1},{1,1,1}
     };
-    // 6 tetrahedra sharing the cube's main diagonal (corners 0 and 7).
-    static const int tets[6][4] = {
-        {0,7,1,3},{0,7,3,2},{0,7,2,6},{0,7,6,4},{0,7,4,5},{0,7,5,1}
-    };
-    for (int x = 0; x < N.x; ++x)
-    for (int y = 0; y < N.y; ++y)
-    for (int z = 0; z < N.z; ++z) {
-        glm::vec3 cp[8], cn[8]; float cv[8];
-        for (int c = 0; c < 8; ++c) {
-            int ci = x + off[c][0], cj = y + off[c][1], ck = z + off[c][2];
-            cp[c] = pos(ci, cj, ck);
-            cv[c] = g[gi(ci, cj, ck)];
-            cn[c] = gn[gi(ci, cj, ck)];
-        }
-        for (int t = 0; t < 6; ++t) {
-            glm::vec3 tp[4], tn[4]; float tv[4];
-            for (int q = 0; q < 4; ++q) { 
-                tp[q] = cp[tets[t][q]]; 
-                tv[q] = cv[tets[t][q]]; 
-                tn[q] = cn[tets[t][q]]; 
-            }
-            marchTet(m, tp, tv, tn);
-        }
-    }
+    
+    subdivide(subdivide, 0, N.x, 0, N.y, 0, N.z);
+    
     return m;
 }
 

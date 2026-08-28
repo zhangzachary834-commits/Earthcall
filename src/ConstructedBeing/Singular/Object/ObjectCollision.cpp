@@ -117,28 +117,7 @@ void Object::updateCollisionZone(const glm::mat4& transform) const {
     _lastCollisionFieldRevision = _fieldRevision;
 
     // Phase 4: Use the precomputed local AABB (_localMin, _localMax) rather than the support cloud.
-    //
-    // Polyhedra are the exception, and it is not optional. NO polyhedron
-    // mutation point calls rebuildGeometryCaches -- setPolyhedronData,
-    // createTetrahedron/Octahedron/Dodecahedron/Icosahedron,
-    // createCustomPolyhedron and setPolyhedronVertexLocal all set
-    // _polyhedronDirty and stop -- so _localMin/_localMax keep their +/-0.5
-    // default for every polyhedron in the world. createCustomPolyhedron applies
-    // no scaleToRadius at all, and setPolyhedronVertexLocal lets a Person drag a
-    // vertex anywhere, so a +/-0.5 box UNDER-sizes the zone and
-    // computePointPenetration then rejects points that really are inside --
-    // things you can walk through. Read the vertices, the way this function did
-    // before the local-AABB change. A polyhedron has a handful of them, and the
-    // transform cache above already keeps this off the per-frame path.
     glm::vec3 lo = _localMin, hi = _localMax;
-    if (_shapeKind == ShapeKind::Polyhedron && !polyhedronData.vertices.empty()) {
-        lo = glm::vec3(std::numeric_limits<float>::max());
-        hi = glm::vec3(-std::numeric_limits<float>::max());
-        for (const auto& v : polyhedronData.vertices) {
-            lo = glm::min(lo, v);
-            hi = glm::max(hi, v);
-        }
-    }
     glm::vec3 localCorners[8] = {
         {lo.x, lo.y, lo.z},
         {hi.x, lo.y, lo.z},
@@ -327,18 +306,28 @@ void Object::clearSmoothTessellationCache() {
 void Object::rebuildFieldMesh() const {
     if (!_fieldMeshDirty || !_hasField) return;
 
-    // Phase 1a: Cap total cells instead of per-axis clamp
-    float baseScale = 1.0f / 5.0f;
-    glm::vec3 fRes = _fieldExtent * baseScale;
-    fRes.x = std::max(fRes.x, 24.0f);
-    fRes.y = std::max(fRes.y, 24.0f);
-    fRes.z = std::max(fRes.z, 24.0f);
+    glm::vec3 fRes;
+    if (_fieldCellSize.has_value() && _fieldCellSize.value() > 0.0f) {
+        fRes = (2.0f * _fieldExtent) / _fieldCellSize.value();
+    } else {
+        float baseScale = 1.0f / 5.0f;
+        fRes = _fieldExtent * baseScale;
+    }
+    
+    // Scale down if exceeding budget (4.1 fix)
     float total = fRes.x * fRes.y * fRes.z;
     const float MAX_CELLS = 125000.0f; // Global cell budget
     if (total > MAX_CELLS) {
         float scale = std::cbrt(MAX_CELLS / total);
+        if (_fieldCellSize.has_value() && _fieldCellSize.value() > 0.0f) {
+            float appliedSize = _fieldCellSize.value() / scale;
+            fprintf(stderr, "[Kernel] Authored cellSize %.3f on field '%s' exceeds %g-cell budget; restricted to %.3f to prevent window hang.\n",
+                    _fieldCellSize.value(), getIdentifier().c_str(), MAX_CELLS, appliedSize);
+        }
         fRes *= scale;
     }
+    
+    // Apply floor after scale (4.1 fix)
     glm::ivec3 res(
         std::max(4, static_cast<int>(fRes.x)),
         std::max(4, static_cast<int>(fRes.y)),
@@ -347,18 +336,31 @@ void Object::rebuildFieldMesh() const {
 
     _fieldMesh = geom::tessellateSdf(fieldData, _fieldExtent, res);
     
-    // Also update _supportCloud for collision. (_supportCloud is `mutable`, so
-    // this needs no const_cast -- casting away const on a member of a genuinely
-    // const object would be undefined behaviour, and `mutable` is what actually
-    // says "this cache is not part of the object's observable value".)
+    // Update _supportCloud for collision and tighten local bounds (4.2 fix)
     _supportCloud.clear();
     const size_t maxPts = 256;
+    
     if (!_fieldMesh.tris.empty()) {
+        glm::vec3 meshMin(std::numeric_limits<float>::max());
+        glm::vec3 meshMax(-std::numeric_limits<float>::max());
+        
         const size_t step = std::max<size_t>(1, _fieldMesh.tris.size() / maxPts);
         _supportCloud.reserve(_fieldMesh.tris.size() / step + 1);
         for (size_t i = 0; i < _fieldMesh.tris.size(); i += step) {
-            _supportCloud.push_back(_fieldMesh.tris[i].pos);
+            const glm::vec3& p = _fieldMesh.tris[i].pos;
+            _supportCloud.push_back(p);
         }
+        
+        // Tighten AABB to actual mesh rather than just _fieldExtent
+        for (const auto& tri : _fieldMesh.tris) {
+            meshMin = glm::min(meshMin, tri.pos);
+            meshMax = glm::max(meshMax, tri.pos);
+        }
+        _localMin = meshMin;
+        _localMax = meshMax;
+    } else {
+        _localMin = -_fieldExtent;
+        _localMax = _fieldExtent;
     }
     
     _fieldMeshDirty = false;

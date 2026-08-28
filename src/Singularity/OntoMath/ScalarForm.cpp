@@ -1645,6 +1645,131 @@ std::optional<PropertyValue> MathNode::evaluate(const std::map<std::string, Prop
     return std::nullopt;
 }
 
+
+std::optional<MathNode::RangeValue> MathNode::evalRange(const std::map<std::string, RangeValue>& vars) const {
+    auto retInf = []() { return RangeValue::makeScalar(Interval::infinite()); };
+    auto retVecInf = []() { return RangeValue::makeVector(Interval::infinite(), Interval::infinite(), Interval::infinite()); };
+    
+    switch (op) {
+        case Op::ScalarLeaf: {
+            if (scalarForm.terms.size() == 1 && scalarForm.terms[0].factors.empty() && scalarForm.terms[0].trans.empty()) {
+                return RangeValue::makeScalar(Interval(static_cast<float>(scalarForm.terms[0].coefficient)));
+            } else if (scalarForm.terms.empty()) {
+                return RangeValue::makeScalar(Interval(0.0f));
+            }
+            return retInf();
+        }
+        case Op::ValueLeaf: {
+            auto it = vars.find(variableName);
+            if (it != vars.end()) return it->second;
+            return retInf();
+        }
+        case Op::VectorConstruct: {
+            if (children.size() != 3) return std::nullopt;
+            auto x = children[0]->evalRange(vars);
+            auto y = children[1]->evalRange(vars);
+            auto z = children[2]->evalRange(vars);
+            if (!x || !y || !z) return std::nullopt;
+            return RangeValue::makeVector(x->scalar, y->scalar, z->scalar);
+        }
+        case Op::Component: {
+            if (children.size() != 1) return std::nullopt;
+            auto a = children[0]->evalRange(vars);
+            if (!a || a->kind != ValueKind::Vector) return std::nullopt;
+            if (stringArg == "x") return RangeValue::makeScalar(a->vec[0]);
+            if (stringArg == "y") return RangeValue::makeScalar(a->vec[1]);
+            if (stringArg == "z") return RangeValue::makeScalar(a->vec[2]);
+            return std::nullopt;
+        }
+        case Op::Add: {
+            if (children.size() != 2) return std::nullopt;
+            auto a = children[0]->evalRange(vars);
+            auto b = children[1]->evalRange(vars);
+            if (!a || !b) return std::nullopt;
+            if (a->kind == ValueKind::Scalar && b->kind == ValueKind::Scalar) return RangeValue::makeScalar(a->scalar + b->scalar);
+            if (a->kind == ValueKind::Vector && b->kind == ValueKind::Vector) return RangeValue::makeVector(a->vec[0] + b->vec[0], a->vec[1] + b->vec[1], a->vec[2] + b->vec[2]);
+            return std::nullopt;
+        }
+        case Op::Sub: {
+            if (children.size() != 2) return std::nullopt;
+            auto a = children[0]->evalRange(vars);
+            auto b = children[1]->evalRange(vars);
+            if (!a || !b) return std::nullopt;
+            if (a->kind == ValueKind::Scalar && b->kind == ValueKind::Scalar) return RangeValue::makeScalar(a->scalar - b->scalar);
+            if (a->kind == ValueKind::Vector && b->kind == ValueKind::Vector) return RangeValue::makeVector(a->vec[0] - b->vec[0], a->vec[1] - b->vec[1], a->vec[2] - b->vec[2]);
+            return std::nullopt;
+        }
+        case Op::Scale: {
+            if (children.size() != 2) return std::nullopt;
+            auto a = children[0]->evalRange(vars);
+            auto b = children[1]->evalRange(vars);
+            if (!a || !b) return std::nullopt;
+            if (a->kind == ValueKind::Scalar && b->kind == ValueKind::Scalar) return RangeValue::makeScalar(a->scalar * b->scalar);
+            if (a->kind == ValueKind::Scalar && b->kind == ValueKind::Vector) return RangeValue::makeVector(a->scalar * b->vec[0], a->scalar * b->vec[1], a->scalar * b->vec[2]);
+            if (a->kind == ValueKind::Vector && b->kind == ValueKind::Scalar) return RangeValue::makeVector(a->vec[0] * b->scalar, a->vec[1] * b->scalar, a->vec[2] * b->scalar);
+            return std::nullopt;
+        }
+        case Op::Div: {
+            if (children.size() != 2) return std::nullopt;
+            auto a = children[0]->evalRange(vars);
+            auto b = children[1]->evalRange(vars);
+            if (!a || !b) return std::nullopt;
+            if (a->kind == ValueKind::Scalar && b->kind == ValueKind::Scalar) return RangeValue::makeScalar(a->scalar / b->scalar);
+            if (a->kind == ValueKind::Vector && b->kind == ValueKind::Scalar) return RangeValue::makeVector(a->vec[0] / b->scalar, a->vec[1] / b->scalar, a->vec[2] / b->scalar);
+            return std::nullopt;
+        }
+        case Op::Abs: {
+            if (children.size() != 1) return std::nullopt;
+            auto a = children[0]->evalRange(vars);
+            if (!a) return std::nullopt;
+            auto absInt = [](Interval i) {
+                float minAbs = (i.lo <= 0.0f && i.hi >= 0.0f) ? 0.0f : std::min(std::abs(i.lo), std::abs(i.hi));
+                float maxAbs = std::max(std::abs(i.lo), std::abs(i.hi));
+                return Interval(minAbs, maxAbs);
+            };
+            if (a->kind == ValueKind::Scalar) return RangeValue::makeScalar(absInt(a->scalar));
+            if (a->kind == ValueKind::Vector) return RangeValue::makeVector(absInt(a->vec[0]), absInt(a->vec[1]), absInt(a->vec[2]));
+            return std::nullopt;
+        }
+        case Op::Union: {
+            if (children.size() != 2) return std::nullopt;
+            auto a = children[0]->evalRange(vars);
+            auto b = children[1]->evalRange(vars);
+            if (!a || !b) return std::nullopt;
+            if (a->kind == ValueKind::Scalar && b->kind == ValueKind::Scalar) {
+                return RangeValue::makeScalar(Interval(std::min(a->scalar.lo, b->scalar.lo), std::min(a->scalar.hi, b->scalar.hi)));
+            }
+            return std::nullopt;
+        }
+        case Op::Intersection: {
+            if (children.size() != 2) return std::nullopt;
+            auto a = children[0]->evalRange(vars);
+            auto b = children[1]->evalRange(vars);
+            if (!a || !b) return std::nullopt;
+            if (a->kind == ValueKind::Scalar && b->kind == ValueKind::Scalar) {
+                return RangeValue::makeScalar(Interval(std::max(a->scalar.lo, b->scalar.lo), std::max(a->scalar.hi, b->scalar.hi)));
+            }
+            return std::nullopt;
+        }
+        case Op::Difference: {
+            if (children.size() != 2) return std::nullopt;
+            auto a = children[0]->evalRange(vars);
+            auto b = children[1]->evalRange(vars);
+            if (!a || !b) return std::nullopt;
+            if (a->kind == ValueKind::Scalar && b->kind == ValueKind::Scalar) {
+                return RangeValue::makeScalar(Interval(std::max(a->scalar.lo, -b->scalar.hi), std::max(a->scalar.hi, -b->scalar.lo)));
+            }
+            return std::nullopt;
+        }
+        case Op::Noise: {
+            return RangeValue::makeScalar(Interval(-1.0f, 1.0f));
+        }
+        // Fallback for everything else
+        default:
+            return retInf();
+    }
+}
+
 nlohmann::json MathNode::toJson() const {
     // An op this build cannot read is handed back exactly as it arrived.
     // Re-serializing it from our own fields would drop every payload key we

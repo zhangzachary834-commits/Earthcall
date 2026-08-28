@@ -699,6 +699,9 @@ fn fs(in: VSOut) -> FSOut {
         let p = ro + rd * t;
         let raw = sdfEval(p);
         
+        // Scale epsilon by distance (cone stepping) to prevent infinite steps on the horizon
+        let current_eps = max(eps, t * 0.001);
+
         var d = raw;
         if (damping > 0.5 && abs(d) < current_eps * 10.0) {
             let e = 1e-3;
@@ -710,8 +713,6 @@ fn fs(in: VSOut) -> FSOut {
             if (gl > 1e-6) { d = raw / gl; }
         }
 
-        // Scale epsilon by distance (cone stepping) to prevent infinite steps on the horizon
-        let current_eps = max(eps, t * 0.001);
         if (d < current_eps) { hit = true; break; }
         // Volumetric Field Accumulation
         let density = fieldEval(p);

@@ -125,7 +125,7 @@ private:
 // such payload REFUSES rather than silently doing nothing.
 class FieldShapeBridge : public Property {
 public:
-    enum class Field { Extent, Op, Prim, Dims, Offset, P0, P1, Blend, Expr };
+    enum class Field { Extent, Op, Prim, Dims, Offset, P0, P1, Blend, Expr, CellSize };
     FieldShapeBridge(std::string name, Object* owner, Field field)
         : _name(std::move(name)), _owner(owner), _field(field) {}
 
@@ -137,6 +137,7 @@ public:
             case Field::Op:
             case Field::Prim:   return "int";
             case Field::Expr:   return "string";
+            case Field::CellSize: return "float";
             default:            return "float";
         }
     }
@@ -163,6 +164,7 @@ public:
             case Field::P1:     return PropertyValue(f.p1);
             case Field::Blend:  return PropertyValue(f.t);
             case Field::Expr:   return PropertyValue(f.expr);
+            case Field::CellSize: return PropertyValue(_owner->getFieldCellSize().value_or(0.0f));
         }
         return PropertyValue(0.0f);
     }
@@ -182,6 +184,17 @@ public:
 
         geom::SdfNode f = _owner->getFieldData();   // deep-clones the subtree
         glm::vec3 extent = _owner->getFieldExtent();
+        if (_field == Field::CellSize) {
+            double n = 0.0;
+            if (!propertyValueToNumber(v, n)) return false;
+            float size = static_cast<float>(n);
+            if (size > 0.0f) {
+                _owner->setFieldCellSize(size);
+            } else {
+                _owner->setFieldCellSize(std::nullopt);
+            }
+            return true;
+        }
         if (_field == Field::Dims || _field == Field::Offset || _field == Field::Extent) {
             const glm::vec3* vec = std::get_if<glm::vec3>(&v);
             if (!vec) {
@@ -540,6 +553,7 @@ void Object::buildProperties() {
         addField("blend",  FieldShapeBridge::Field::Blend);
         // Writable: assigning an implicit expression RESHAPES the object.
         addField("expr",   FieldShapeBridge::Field::Expr);
+        addField("cellSize", FieldShapeBridge::Field::CellSize);
     }
 
     // The Bezier control net. Sixteen is the bicubic default that

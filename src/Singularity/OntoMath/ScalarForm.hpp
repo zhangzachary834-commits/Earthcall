@@ -247,6 +247,34 @@ inline constexpr float kDegenerateVectorLength = 1e-6f;
 // Degenerate-divisor threshold for Div, shared by CPU and GPU paths.
 inline constexpr double kDegenerateDivisor = 1e-6;
 
+// Interval arithmetic for conservative range evaluation
+struct Interval {
+    float lo = 0.0f;
+    float hi = 0.0f;
+    
+    Interval() = default;
+    Interval(float val) : lo(val), hi(val) {}
+    Interval(float l, float h) : lo(l), hi(h) {}
+    
+    static Interval infinite() { return Interval(-std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity()); }
+    
+    Interval operator+(const Interval& o) const { return Interval(lo + o.lo, hi + o.hi); }
+    Interval operator-(const Interval& o) const { return Interval(lo - o.hi, hi - o.lo); }
+    Interval operator-() const { return Interval(-hi, -lo); }
+    Interval operator*(const Interval& o) const {
+        float a = lo * o.lo, b = lo * o.hi, c = hi * o.lo, d = hi * o.hi;
+        return Interval(std::min({a, b, c, d}), std::max({a, b, c, d}));
+    }
+    Interval operator/(const Interval& o) const {
+        if (o.lo <= 0.0f && o.hi >= 0.0f) return infinite(); // includes zero
+        float a = lo / o.lo, b = lo / o.hi, c = hi / o.lo, d = hi / o.hi;
+        return Interval(std::min({a, b, c, d}), std::max({a, b, c, d}));
+    }
+    
+    // Scale by scalar
+    Interval operator*(float s) const { return *this * Interval(s); }
+};
+
 struct MathNode {
     // Serialized as ints — APPEND-ONLY
     enum class Op {
@@ -345,6 +373,19 @@ struct MathNode {
     void collectDependencies(std::set<std::string>& outDeps) const;
 
     std::optional<PropertyValue> evaluate(const std::map<std::string, PropertyValue>& vars, const Singular* subject = nullptr) const;
+
+    // Conservative interval evaluation. Given a map of variables to their bounded ranges
+    // (e.g. x -> [-10, 10], p -> [ (-10,-10,-10), (10,10,10) ]), returns the output range.
+    // Return empty optional if the node type is unsupported or cannot be bounded (returns [-∞, +∞] equivalently).
+    // A vector interval is returned as an array of 3 Intervals.
+    struct RangeValue {
+        ValueKind kind;
+        Interval scalar;
+        Interval vec[3];
+        static RangeValue makeScalar(Interval i) { return {ValueKind::Scalar, i, {}}; }
+        static RangeValue makeVector(Interval x, Interval y, Interval z) { return {ValueKind::Vector, Interval(), {x, y, z}}; }
+    };
+    std::optional<RangeValue> evalRange(const std::map<std::string, RangeValue>& vars) const;
 
     // --- Canonical Geometric Primitive & CSG Helpers ---
     static std::unique_ptr<MathNode> sphere(double radius, const std::string& pVar = kAmbientPointVar);
