@@ -433,7 +433,26 @@ static float evalLeaf(const SdfNode& n, const glm::vec3& world) {
         case SdfPrim::Torus:     return sdTorus(p, n.dims.x, n.dims.y);
         case SdfPrim::Expr: {
             if (n.mathNode) {
-                std::map<std::string, PropertyValue> vars;
+                // Rebuilding this environment per sample was pure overhead:
+                // four red-black-tree inserts with string keys, once per SDF
+                // sample. Reuse one map per thread -- the keys are created once
+                // and every later call only assigns into nodes that already
+                // exist, so the steady state allocates nothing.
+                //
+                // KERNEL SCRATCH (Refusal 6): a reused evaluation buffer, not
+                // being state; nothing authored can observe it. Safe to share
+                // because MathNode::evaluate never re-enters evalLeaf -- Op::SDF
+                // and Op::Gradient recurse inside the MathNode tree, never back
+                // out through geom::evalSdf -- so two bindings are never live at
+                // once. The piecewise arm below keeps its own fresh map: a Piece
+                // can carry a FunctionCall or a Fold, which read the world, and
+                // that is not a path this comment can promise never returns here.
+                static thread_local std::map<std::string, PropertyValue> vars{
+                    {"x", PropertyValue(0.0)},
+                    {"y", PropertyValue(0.0)},
+                    {"z", PropertyValue(0.0)},
+                    {"p", PropertyValue(glm::vec3(0.0f))},
+                };
                 vars["x"] = PropertyValue(static_cast<double>(p.x));
                 vars["y"] = PropertyValue(static_cast<double>(p.y));
                 vars["z"] = PropertyValue(static_cast<double>(p.z));
@@ -555,40 +574,41 @@ bool raycastSdf(const SdfNode& n, const glm::vec3& o, const glm::vec3& d,
 // ---------------------------------------------------------------------------
 // Tessellation — marching tetrahedra (arbitrary topology).
 // ---------------------------------------------------------------------------
-static TessVertex mkVert(const SdfNode& n, const glm::vec3& p) {
-    TessVertex v; v.pos = p; v.normal = sdfNormal(n, p); v.uv = glm::vec2(0.5f); return v;
-}
 
-// Emit the iso-surface inside one tetrahedron (corners p[4], field values v[4]).
-static void marchTet(const SdfNode& n, TessMesh& m,
-                     const glm::vec3 p[4], const float v[4]) {
+// Emit the iso-surface inside one tetrahedron (corners p[4], field values v[4], normals nrm[4]).
+static void marchTet(TessMesh& m, const glm::vec3 p[4], const float v[4], const glm::vec3 nrm[4]) {
     int in[4], out[4], ni = 0, no = 0;
     for (int i = 0; i < 4; ++i) (v[i] < 0.0f ? in[ni++] : out[no++]) = i;
     if (ni == 0 || ni == 4) return;
 
     auto cut = [&](int a, int b) {
         float t = v[a] / (v[a] - v[b]);
-        return p[a] + (p[b] - p[a]) * t;
+        return std::make_pair(p[a] + (p[b] - p[a]) * t, glm::normalize(nrm[a] + (nrm[b] - nrm[a]) * t));
     };
-    auto emit = [&](glm::vec3 a, glm::vec3 b, glm::vec3 c) {
-        glm::vec3 centroid = (a + b + c) / 3.0f;
-        glm::vec3 nrm = sdfNormal(n, centroid);                   // outward (grad of f)
-        glm::vec3 face = glm::cross(b - a, c - a);
-        if (glm::dot(face, nrm) < 0.0f) std::swap(b, c);          // front faces outward
-        m.tris.push_back(mkVert(n, a));
-        m.tris.push_back(mkVert(n, b));
-        m.tris.push_back(mkVert(n, c));
+    auto emit = [&](const std::pair<glm::vec3, glm::vec3>& a, 
+                    const std::pair<glm::vec3, glm::vec3>& b, 
+                    const std::pair<glm::vec3, glm::vec3>& c) {
+        glm::vec3 centroidNrm = a.second + b.second + c.second;
+        if (glm::dot(centroidNrm, centroidNrm) > 1e-8f) centroidNrm = glm::normalize(centroidNrm);
+        else centroidNrm = glm::vec3(0,1,0);
+        glm::vec3 face = glm::cross(b.first - a.first, c.first - a.first);
+        auto aa = a, bb = b, cc = c;
+        if (glm::dot(face, centroidNrm) < 0.0f) std::swap(bb, cc);          // front faces outward
+        TessVertex va; va.pos = aa.first; va.normal = aa.second; va.uv = glm::vec2(0.5f);
+        TessVertex vb; vb.pos = bb.first; vb.normal = bb.second; vb.uv = glm::vec2(0.5f);
+        TessVertex vc; vc.pos = cc.first; vc.normal = cc.second; vc.uv = glm::vec2(0.5f);
+        m.tris.push_back(va);
+        m.tris.push_back(vb);
+        m.tris.push_back(vc);
     };
 
     if (ni == 1) {
-        glm::vec3 a = cut(in[0], out[0]), b = cut(in[0], out[1]), c = cut(in[0], out[2]);
-        emit(a, b, c);
+        emit(cut(in[0], out[0]), cut(in[0], out[1]), cut(in[0], out[2]));
     } else if (ni == 3) {
-        glm::vec3 a = cut(out[0], in[0]), b = cut(out[0], in[1]), c = cut(out[0], in[2]);
-        emit(a, b, c);
+        emit(cut(out[0], in[0]), cut(out[0], in[1]), cut(out[0], in[2]));
     } else { // ni == 2 → quad
-        glm::vec3 ac = cut(in[0], out[0]), ad = cut(in[0], out[1]);
-        glm::vec3 bd = cut(in[1], out[1]), bc = cut(in[1], out[0]);
+        auto ac = cut(in[0], out[0]), ad = cut(in[0], out[1]);
+        auto bd = cut(in[1], out[1]), bc = cut(in[1], out[0]);
         emit(ac, ad, bd);
         emit(ac, bd, bc);
     }
@@ -610,6 +630,31 @@ TessMesh tessellateSdf(const SdfNode& n, const glm::vec3& extent, const glm::ive
             for (int k = 0; k < S.z; ++k)
                 g[gi(i, j, k)] = evalSdf(n, pos(i, j, k));
 
+    // Each difference MUST be divided by the world-space span it covers. `step`
+    // is 2*extent/N per axis and is NOT isotropic -- the noise floor's box is
+    // 1000 x 30 x 1000, so its y cells come out ~4x finer than its x and z
+    // cells. Normalizing an unscaled (dx, dy, dz) therefore aims the normal in
+    // the wrong direction: measured 5.4 degrees off on an exact plane at a
+    // 1.19:1 cell ratio, and the error grows with the ratio. Dividing by the
+    // span also reconciles the one-sided differences at the box faces, which
+    // cover one step rather than two, with the interior ones.
+    std::vector<glm::vec3> gn(static_cast<size_t>(S.x) * S.y * S.z);
+    for (int i = 0; i < S.x; ++i) {
+        for (int j = 0; j < S.y; ++j) {
+            for (int k = 0; k < S.z; ++k) {
+                const int i0 = i > 0 ? i - 1 : i, i1 = i + 1 < S.x ? i + 1 : i;
+                const int j0 = j > 0 ? j - 1 : j, j1 = j + 1 < S.y ? j + 1 : j;
+                const int k0 = k > 0 ? k - 1 : k, k1 = k + 1 < S.z ? k + 1 : k;
+                glm::vec3 grad(
+                    i1 > i0 ? (g[gi(i1,j,k)] - g[gi(i0,j,k)]) / ((i1 - i0) * step.x) : 0.0f,
+                    j1 > j0 ? (g[gi(i,j1,k)] - g[gi(i,j0,k)]) / ((j1 - j0) * step.y) : 0.0f,
+                    k1 > k0 ? (g[gi(i,j,k1)] - g[gi(i,j,k0)]) / ((k1 - k0) * step.z) : 0.0f);
+                float len = glm::length(grad);
+                gn[gi(i,j,k)] = len > 1e-8f ? grad / len : glm::vec3(0,1,0);
+            }
+        }
+    }
+
     // Corner offset per index c: (c&1, (c>>1)&1, (c>>2)&1).
     static const int off[8][3] = {
         {0,0,0},{1,0,0},{0,1,0},{1,1,0},{0,0,1},{1,0,1},{0,1,1},{1,1,1}
@@ -621,16 +666,21 @@ TessMesh tessellateSdf(const SdfNode& n, const glm::vec3& extent, const glm::ive
     for (int x = 0; x < N.x; ++x)
     for (int y = 0; y < N.y; ++y)
     for (int z = 0; z < N.z; ++z) {
-        glm::vec3 cp[8]; float cv[8];
+        glm::vec3 cp[8], cn[8]; float cv[8];
         for (int c = 0; c < 8; ++c) {
             int ci = x + off[c][0], cj = y + off[c][1], ck = z + off[c][2];
             cp[c] = pos(ci, cj, ck);
             cv[c] = g[gi(ci, cj, ck)];
+            cn[c] = gn[gi(ci, cj, ck)];
         }
         for (int t = 0; t < 6; ++t) {
-            glm::vec3 tp[4]; float tv[4];
-            for (int q = 0; q < 4; ++q) { tp[q] = cp[tets[t][q]]; tv[q] = cv[tets[t][q]]; }
-            marchTet(n, m, tp, tv);
+            glm::vec3 tp[4], tn[4]; float tv[4];
+            for (int q = 0; q < 4; ++q) { 
+                tp[q] = cp[tets[t][q]]; 
+                tv[q] = cv[tets[t][q]]; 
+                tn[q] = cn[tets[t][q]]; 
+            }
+            marchTet(m, tp, tv, tn);
         }
     }
     return m;

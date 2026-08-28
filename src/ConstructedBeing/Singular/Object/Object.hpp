@@ -168,12 +168,13 @@ private:
     geom::SdfNode           fieldData;     // SDF expression when _hasField
     glm::vec3               _fieldExtent{1.0f, 1.0f, 1.0f};
     mutable uint64_t        _memoIdBase = 0;
-    uint32_t                _fieldRevision = 0;
+    mutable uint32_t        _fieldRevision = 0;
     // Cached render tessellations. Tessellating is O(slices*stacks) and allocates;
     // doing it in the draw path rebuilt every surface in the world every frame for
     // geometry that changes only when a Person edits it. Built once per change by
     // rebuildGeometryCaches(), which every mutation point already calls.
-    geom::TessMesh          _fieldMesh;    // cached field tessellation (rebuilt on change)
+    mutable geom::TessMesh  _fieldMesh;    // cached field tessellation (built on demand)
+    mutable bool            _fieldMeshDirty = true; // lazy evaluation flag
     std::shared_ptr<geom::TessMesh> _smoothMesh;   // cached smooth-surface tessellation
     // One mesh per patch, not one merged mesh: each patch is a real face and binds
     // its own face texture, so the render path must keep them separable.
@@ -200,11 +201,13 @@ private:
 
     // Cached local-space surface vertices for GJK support queries on the new
     // topology shapes (argmax dot(v,dir)). Rebuilt when the shape changes.
-    std::vector<glm::vec3> _supportCloud;
+    mutable std::vector<glm::vec3> _supportCloud;   // mutable: rebuildFieldMesh() is const
     // Cached local-space AABB of the topology mesh, so updateCollisionZone only
     // transforms 8 corners instead of the whole (huge) support cloud per call.
     glm::vec3 _localMin{-0.5f};
     glm::vec3 _localMax{ 0.5f};
+    mutable glm::mat4 _lastCollisionTransform = glm::mat4(0.0f);
+    mutable uint32_t _lastCollisionFieldRevision = 0xffffffff;
 
     void drawSmoothModel() const;
     void drawComplexModel() const;
@@ -212,6 +215,7 @@ private:
     void drawPatchModel() const;
     FaceAlbedo faceAlbedo(size_t face) const; // per-face albedo (handle + CPU pixels)
     void rebuildPolyhedronMeshes() const;          // rebuild _polyhedronFaceMeshes
+    void rebuildFieldMesh() const;                 // lazily rebuild _fieldMesh
     void rebuildGeometryCaches();
 
 public:
@@ -525,7 +529,15 @@ public:
     const geom::SmoothSurfaceData& getSmoothData()  const { return smoothData; }
     const geom::ComplexShapeData&  getComplexData() const { return complexData; }
     const geom::SdfNode&           getFieldData()   const { return fieldData; }
-    const std::vector<glm::vec3>& getSupportCloud() const { return _supportCloud; }
+    // Forces the lazy field tessellation. Asking for the support cloud IS the
+    // demand that builds it -- handing back an empty vector instead would be the
+    // silent-wrong-answer this cache exists to prevent (an empty cloud makes an
+    // object unpickable and non-collidable, which is the exact bug the Bezier
+    // assertion in geometry_cache_test locks down).
+    const std::vector<glm::vec3>& getSupportCloud() const {
+        if (_hasField) rebuildFieldMesh();
+        return _supportCloud;
+    }
 
     // Smooth-surface tessellation cache garbage collection (evicts entries with use_count() <= 1)
     static size_t gcSmoothTessellationCache();

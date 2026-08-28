@@ -183,7 +183,7 @@ you read the source—run things**, and **after finishing, ask whether anything 
 - Anything you work on that isn't listed goes in it — create categories as needed, and add tasks any other document implies but the list omits.
 
 ## Document Conventions
-- Audits belong in `docs/audits/`. Implementation plans go to `docs/`. 
+- Audits belong in `docs/audits/`. Implementation plans go to `docs/plans/`. 
 - Always sign your name, session ID, date, and timestamp.
 - Use Agent Intercom (`agent intercom/`) to coordinate and crystallize with other agents, especially concurrent sessions.
 - Save files injected by an agent follows this convention: an "injected_by:" section with the agent name with the "authors: " being the Person by whose authority you injected. This convention applies to serialization, not docs. We use different attribution conventions for docs.  

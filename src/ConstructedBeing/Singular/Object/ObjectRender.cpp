@@ -369,6 +369,7 @@ void Object::drawFieldModel() const {
                        getMemoId(), getFieldRevision());
         return;
     }
+    rebuildFieldMesh();
     r.drawMesh(_fieldMesh, mat);
 }
 
@@ -452,6 +453,7 @@ void Object::drawHighlightOutline() const {
                                    polyhedronData.vertices[face[(k + 1) % face.size()]]);
         wire(edges);
     } else if (_hasField) {
+        rebuildFieldMesh();
         shell(_fieldMesh);
     } else if (_hasSmooth) {
         if (_smoothMesh) shell(*_smoothMesh);

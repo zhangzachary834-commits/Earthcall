@@ -64,6 +64,7 @@ bool Object::raycastFace(const glm::vec3& rayOriginWorld, const glm::vec3& rayDi
         // Pick against the cached mesh — robust for any field (morph/boolean/
         // implicit), including non-SDF implicit expressions where sphere-tracing
         // would be unreliable.
+        rebuildFieldMesh();
         if (raycastTessMesh(_fieldMesh, oL, dL, outT)) { outFaceIndex = 0; outUV = glm::vec2(0.5f); return true; }
         return false;
     }

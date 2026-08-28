@@ -3931,7 +3931,6 @@
           ]
         ],
         "field": {
-          "children": [],
           "dims": [
             0.5,
             0.5,
@@ -3949,7 +3948,11 @@
           "prim": 7,
           "t": 0.5
         },
-        "fieldExtent": 1.100000023841858,
+        "fieldExtent": [
+          1.100000023841858,
+          1.100000023841858,
+          1.100000023841858
+        ],
         "geometryType": 10,
         "materialId": "material.object-338",
         "objectID": "object-338",
@@ -4209,7 +4212,6 @@
           ]
         ],
         "field": {
-          "children": [],
           "dims": [
             0.5,
             0.5,
@@ -4227,7 +4229,11 @@
           "prim": 7,
           "t": 0.5
         },
-        "fieldExtent": 1.100000023841858,
+        "fieldExtent": [
+          1.100000023841858,
+          1.100000023841858,
+          1.100000023841858
+        ],
         "geometryType": 10,
         "materialId": "material.object-412",
         "objectID": "object-412",

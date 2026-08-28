@@ -406,6 +406,44 @@ int main() {
         check(coeffsAgree, "raycast's A/B/C equal the symbolic coefficients of f(o + t*d)");
     }
 
+    // --- Tessellated normals must not depend on cell ASPECT RATIO -----------
+    // Regression lock. tessellateSdf takes its vertex normals from a
+    // central-difference gradient over the presampled corner grid. The first
+    // version of that differenced raw grid VALUES without dividing by the
+    // per-axis cell spacing -- and `step` is 2*extent/N, which is anisotropic
+    // whenever the box is (the noise floor's is 1000 x 30 x 1000). Normalizing
+    // an unscaled (dx, dy, dz) then aims the normal in the wrong direction:
+    // measured 5.4 degrees off on an EXACT PLANE, where the answer should be
+    // exact at any resolution. Nothing caught it -- the existing normal check
+    // asserts unit LENGTH, which a wrong direction passes. So check direction,
+    // and check it under a deliberately lopsided grid.
+    {
+        geom::SdfNode plane;                 // f(p) = y - 0.5x, an exact plane
+        plane.op = geom::SdfOp::Leaf;
+        plane.prim = geom::SdfPrim::Expr;
+        plane.expr = "y - 0.5*x";
+        plane.rpn = geom::compileExpr(plane.expr);
+        const glm::vec3 truth = glm::normalize(glm::vec3(-0.5f, 1.0f, 0.0f));
+
+        auto worstError = [&](const glm::vec3& extent, const glm::ivec3& res) {
+            geom::TessMesh m = geom::tessellateSdf(plane, extent, res);
+            float worst = 0.0f;
+            for (const auto& v : m.tris) {
+                float d = glm::clamp(glm::dot(glm::normalize(v.normal), truth), -1.0f, 1.0f);
+                worst = std::max(worst, glm::degrees(std::acos(d)));
+            }
+            return m.tris.empty() ? 999.0f : worst;
+        };
+
+        const float isoErr   = worstError(glm::vec3(10, 10, 10),   glm::ivec3(32, 32, 32));
+        const float anisoErr = worstError(glm::vec3(100, 10, 100), glm::ivec3(101, 12, 101));
+        check(isoErr   < 1.0f, "an exact plane's normals are right on an isotropic grid");
+        check(anisoErr < 1.0f, "and stay right when the cells are lopsided (the spacing bug)");
+        if (isoErr >= 1.0f || anisoErr >= 1.0f)
+            std::printf("    (worst normal error: isotropic %.2f deg, anisotropic %.2f deg)\n",
+                        isoErr, anisoErr);
+    }
+
     std::printf(g_failures == 0 ? "geometry_ontomath_test: ALL OK\n"
                                 : "geometry_ontomath_test: FAILURES\n");
     return g_failures > 0 ? 1 : 0;

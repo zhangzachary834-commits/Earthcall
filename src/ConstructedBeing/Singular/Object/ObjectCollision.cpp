@@ -108,48 +108,59 @@ bool rayIntersectsTriangle(const glm::vec3& origin,
 } // namespace
 
 void Object::updateCollisionZone(const glm::mat4& transform) const {
-    glm::vec3 minCorner = glm::vec3(std::numeric_limits<float>::max());
-    glm::vec3 maxCorner = glm::vec3(-std::numeric_limits<float>::max());
-    bool hasBounds = false;
-
-    if (_shapeKind == ShapeKind::Polyhedron && !polyhedronData.vertices.empty()) {
-        for (const auto& vertex : polyhedronData.vertices) {
-            glm::vec4 world = transform * glm::vec4(vertex, 1.0f);
-            glm::vec3 worldVertex = glm::vec3(world);
-            minCorner = glm::min(minCorner, worldVertex);
-            maxCorner = glm::max(maxCorner, worldVertex);
-        }
-        hasBounds = true;
-    } else if (!_supportCloud.empty()) {
-        for (const auto& vertex : _supportCloud) {
-            glm::vec4 world = transform * glm::vec4(vertex, 1.0f);
-            glm::vec3 worldVertex = glm::vec3(world);
-            minCorner = glm::min(minCorner, worldVertex);
-            maxCorner = glm::max(maxCorner, worldVertex);
-        }
-        hasBounds = true;
-    }
-    
-    if (!hasBounds) {
-        // Fallback for completely empty shapes (legacy behavior)
-        glm::vec3 localCorners[8] = {
-            {-0.5f, -0.5f, -0.5f},
-            { 0.5f, -0.5f, -0.5f},
-            { 0.5f,  0.5f, -0.5f},
-            {-0.5f,  0.5f, -0.5f},
-            {-0.5f, -0.5f,  0.5f},
-            { 0.5f, -0.5f,  0.5f},
-            { 0.5f,  0.5f,  0.5f},
-            {-0.5f,  0.5f,  0.5f}
-        };
-        for (int i = 0; i < 8; ++i) {
-            glm::vec4 world = transform * glm::vec4(localCorners[i], 1.0f);
-            collisionZone.corners[i] = glm::vec3(world);
-        }
+    // Phase 4: Skip if transform and revision haven't changed.
+    if (_lastCollisionTransform == transform && _lastCollisionFieldRevision == _fieldRevision) {
         return;
     }
 
-    // Create bounding box corners from min/max
+    _lastCollisionTransform = transform;
+    _lastCollisionFieldRevision = _fieldRevision;
+
+    // Phase 4: Use the precomputed local AABB (_localMin, _localMax) rather than the support cloud.
+    //
+    // Polyhedra are the exception, and it is not optional. NO polyhedron
+    // mutation point calls rebuildGeometryCaches -- setPolyhedronData,
+    // createTetrahedron/Octahedron/Dodecahedron/Icosahedron,
+    // createCustomPolyhedron and setPolyhedronVertexLocal all set
+    // _polyhedronDirty and stop -- so _localMin/_localMax keep their +/-0.5
+    // default for every polyhedron in the world. createCustomPolyhedron applies
+    // no scaleToRadius at all, and setPolyhedronVertexLocal lets a Person drag a
+    // vertex anywhere, so a +/-0.5 box UNDER-sizes the zone and
+    // computePointPenetration then rejects points that really are inside --
+    // things you can walk through. Read the vertices, the way this function did
+    // before the local-AABB change. A polyhedron has a handful of them, and the
+    // transform cache above already keeps this off the per-frame path.
+    glm::vec3 lo = _localMin, hi = _localMax;
+    if (_shapeKind == ShapeKind::Polyhedron && !polyhedronData.vertices.empty()) {
+        lo = glm::vec3(std::numeric_limits<float>::max());
+        hi = glm::vec3(-std::numeric_limits<float>::max());
+        for (const auto& v : polyhedronData.vertices) {
+            lo = glm::min(lo, v);
+            hi = glm::max(hi, v);
+        }
+    }
+    glm::vec3 localCorners[8] = {
+        {lo.x, lo.y, lo.z},
+        {hi.x, lo.y, lo.z},
+        {hi.x, hi.y, lo.z},
+        {lo.x, hi.y, lo.z},
+        {lo.x, lo.y, hi.z},
+        {hi.x, lo.y, hi.z},
+        {hi.x, hi.y, hi.z},
+        {lo.x, hi.y, hi.z}
+    };
+    
+    glm::vec3 minCorner = glm::vec3(std::numeric_limits<float>::max());
+    glm::vec3 maxCorner = glm::vec3(-std::numeric_limits<float>::max());
+
+    for (int i = 0; i < 8; ++i) {
+        glm::vec4 world = transform * glm::vec4(localCorners[i], 1.0f);
+        glm::vec3 worldCorner = glm::vec3(world);
+        minCorner = glm::min(minCorner, worldCorner);
+        maxCorner = glm::max(maxCorner, worldCorner);
+    }
+
+    // Create axis-aligned bounding box corners from world min/max
     collisionZone.corners[0] = glm::vec3(minCorner.x, minCorner.y, minCorner.z);
     collisionZone.corners[1] = glm::vec3(maxCorner.x, minCorner.y, minCorner.z);
     collisionZone.corners[2] = glm::vec3(maxCorner.x, maxCorner.y, minCorner.z);
@@ -211,12 +222,11 @@ void Object::rebuildGeometryCaches() {
 
     geom::TessMesh m; // collision source — decimated into _supportCloud below
     if (_hasField) {
-        glm::ivec3 res;
-        res.x = std::clamp(static_cast<int>(_fieldExtent.x / 5.0f), 24, 128);
-        res.y = std::clamp(static_cast<int>(_fieldExtent.y / 5.0f), 24, 128);
-        res.z = std::clamp(static_cast<int>(_fieldExtent.z / 5.0f), 24, 128);
-        _fieldMesh = geom::tessellateSdf(fieldData, _fieldExtent, res);
-        m = _fieldMesh; // render and collision share it: marching tets are too costly to repeat
+        _fieldMeshDirty = true;
+        _supportCloud.clear();
+        _localMin = -_fieldExtent;
+        _localMax = _fieldExtent;
+        return; // Field mesh and support cloud are built lazily on first access.
     }
     else if (_hasComplex) {
         geom::SdfNode asField;
@@ -248,7 +258,25 @@ void Object::rebuildGeometryCaches() {
         _patchMesh = geom::tessellateBezier(patchData);
         m = _patchMesh; // render and collision share the one tessellation
     }
-    else return;
+    else if (_shapeKind == ShapeKind::Polyhedron) {
+        _localMin = glm::vec3(std::numeric_limits<float>::max());
+        _localMax = glm::vec3(-std::numeric_limits<float>::max());
+        for (const auto& v : polyhedronData.vertices) {
+            _localMin = glm::min(_localMin, v);
+            _localMax = glm::max(_localMax, v);
+        }
+        if (polyhedronData.vertices.empty()) {
+            _localMin = glm::vec3(-0.5f);
+            _localMax = glm::vec3(0.5f);
+        }
+        return;
+    }
+    else {
+        _localMin = glm::vec3(-0.5f);
+        _localMax = glm::vec3(0.5f);
+        return;
+    }
+
     // Decimate to a capped, well-spread subset. The support cloud is argmax-scanned
     // (O(cloud)) up to ~14x per object per collision pair; keeping the full marching-tet
     // vertex set (tens of thousands of points) makes the narrowphase O(n*cloud) and was
@@ -257,7 +285,20 @@ void Object::rebuildGeometryCaches() {
     const size_t maxPts = 256;
     const size_t step = std::max<size_t>(1, m.tris.size() / maxPts);
     _supportCloud.reserve(m.tris.size() / step + 1);
-    for (size_t i = 0; i < m.tris.size(); i += step) _supportCloud.push_back(m.tris[i].pos);
+    
+    _localMin = glm::vec3(std::numeric_limits<float>::max());
+    _localMax = glm::vec3(-std::numeric_limits<float>::max());
+    
+    for (size_t i = 0; i < m.tris.size(); i += step) {
+        const glm::vec3& p = m.tris[i].pos;
+        _supportCloud.push_back(p);
+        _localMin = glm::min(_localMin, p);
+        _localMax = glm::max(_localMax, p);
+    }
+    if (_supportCloud.empty()) {
+        _localMin = glm::vec3(-0.5f);
+        _localMax = glm::vec3(0.5f);
+    }
 }
 
 size_t Object::gcSmoothTessellationCache() {
@@ -283,6 +324,46 @@ void Object::clearSmoothTessellationCache() {
     s_smoothCache.clear();
 }
 
+void Object::rebuildFieldMesh() const {
+    if (!_fieldMeshDirty || !_hasField) return;
+
+    // Phase 1a: Cap total cells instead of per-axis clamp
+    float baseScale = 1.0f / 5.0f;
+    glm::vec3 fRes = _fieldExtent * baseScale;
+    fRes.x = std::max(fRes.x, 24.0f);
+    fRes.y = std::max(fRes.y, 24.0f);
+    fRes.z = std::max(fRes.z, 24.0f);
+    float total = fRes.x * fRes.y * fRes.z;
+    const float MAX_CELLS = 125000.0f; // Global cell budget
+    if (total > MAX_CELLS) {
+        float scale = std::cbrt(MAX_CELLS / total);
+        fRes *= scale;
+    }
+    glm::ivec3 res(
+        std::max(4, static_cast<int>(fRes.x)),
+        std::max(4, static_cast<int>(fRes.y)),
+        std::max(4, static_cast<int>(fRes.z))
+    );
+
+    _fieldMesh = geom::tessellateSdf(fieldData, _fieldExtent, res);
+    
+    // Also update _supportCloud for collision. (_supportCloud is `mutable`, so
+    // this needs no const_cast -- casting away const on a member of a genuinely
+    // const object would be undefined behaviour, and `mutable` is what actually
+    // says "this cache is not part of the object's observable value".)
+    _supportCloud.clear();
+    const size_t maxPts = 256;
+    if (!_fieldMesh.tris.empty()) {
+        const size_t step = std::max<size_t>(1, _fieldMesh.tris.size() / maxPts);
+        _supportCloud.reserve(_fieldMesh.tris.size() / step + 1);
+        for (size_t i = 0; i < _fieldMesh.tris.size(); i += step) {
+            _supportCloud.push_back(_fieldMesh.tris[i].pos);
+        }
+    }
+    
+    _fieldMeshDirty = false;
+}
+
 glm::vec3 Object::getLocalSupportPoint(const glm::vec3& localDirection) const {
     glm::vec3 dir = localDirection;
     if (glm::dot(dir, dir) <= 1e-12f) dir = glm::vec3(1.0f, 0.0f, 0.0f);
@@ -293,6 +374,11 @@ glm::vec3 Object::getLocalSupportPoint(const glm::vec3& localDirection) const {
         glm::vec3 sp = geom::supportPoint(smoothData, dir, ok);
         if (ok) return sp;
     }
+    
+    if (_hasField) {
+        rebuildFieldMesh(); // lazy build
+    }
+    
     if ((_hasSmooth || _hasComplex || _hasField || _hasPatch) && !_supportCloud.empty()) {
         float best = -std::numeric_limits<float>::max();
         glm::vec3 bestV = _supportCloud[0];
