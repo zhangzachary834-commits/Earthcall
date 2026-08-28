@@ -79,7 +79,7 @@
                     "scalarForm": {
                       "terms": [
                         {
-                          "c": 15.0,
+                          "c": 40.0,
                           "factors": {}
                         }
                       ]
@@ -96,7 +96,7 @@
                             "scalarForm": {
                               "terms": [
                                 {
-                                  "c": 0.02,
+                                  "c": 0.008,
                                   "factors": {}
                                 }
                               ]
@@ -166,9 +166,9 @@
     {
       "name": "grass",
       "baseColor": [
-        0.15,
-        0.55,
-        0.15
+        0.25,
+        0.75,
+        0.25
       ],
       "opacity": 1.0,
       "shininess": 0.0,

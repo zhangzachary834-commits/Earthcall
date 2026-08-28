@@ -1,0 +1,28 @@
+--- src/ConstructedBeing/Singular/Object/Object.hpp
++++ src/ConstructedBeing/Singular/Object/Object.hpp
+@@ -194,6 +194,9 @@
+     // is re-resolved.
+     std::string _materialId;
+ 
++    mutable uint64_t _memoIdBase = 0;
++    uint32_t _fieldRevision = 0;
++
+     // Optional per-face color overrides, overriding the material.
+     // Stored sparse; empty means use material colour.
+     // The "color" Law property writes here, diverging the object's paint.
+@@ -624,6 +627,15 @@
+     void updateMovement(float deltaTime, glm::vec3 g);
+     void syncRotationStateFromTransform(const glm::mat4& t);
+ 
++    uint64_t getMemoId(int suffix = 0) const {
++        if (_memoIdBase == 0) {
++            static std::atomic<uint64_t> counter{1000};
++            _memoIdBase = counter.fetch_add(100);
++        }
++        return _memoIdBase + suffix;
++    }
++    uint32_t getFieldRevision() const { return _fieldRevision; }
++
+     // Methods with inline implementations (no cpp definitions)
+     int getRelationships() const { return _composition.relationships; }
+     void setRelationships(int r) { _composition.relationships = r; }

@@ -55,8 +55,8 @@ def math_vec3(x, y, z):
     }
 
 # Use a lower frequency for larger rolling hills, and higher amplitude
-freq = 0.02
-amp = 15.0
+freq = 0.008
+amp = 40.0
 offset_p = math_add(math_var("p"), math_vec3(100.0, 0.0, 100.0))
 
 sdf_math = math_sub(
@@ -91,7 +91,7 @@ floor_object = {
 
 grass_material = {
     "name": "grass",
-    "baseColor": [0.15, 0.55, 0.15],
+    "baseColor": [0.25, 0.75, 0.25],
     "opacity": 1.0,
     "shininess": 0.0,
     "specular": 0.0,

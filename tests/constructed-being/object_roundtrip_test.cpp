@@ -204,13 +204,13 @@ int main() {
         sphere.dims = glm::vec3(0.55f);
 
         Object src;
-        src.setFieldShape(sphere, 1.5f);
+        src.setFieldShape(sphere, glm::vec3(1.5f));
 
         Object out = reborn(src);
         assert(out.hasField() && "the field became something other than a field");
         assert(out.getFieldData().prim == geom::SdfPrim::Sphere);
         assert(nearf(out.getFieldData().dims.x, 0.55f));
-        assert(nearf(out.getFieldExtent(), 1.5f));
+        assert(nearf(out.getFieldExtent().x, 1.5f));
         std::printf("  field expression and extent survive OK\n");
     }
 

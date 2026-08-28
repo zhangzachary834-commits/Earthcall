@@ -160,7 +160,7 @@ void applySpawnOverrides(Object& newborn, Singular* source,
                 }
             } else if (k == static_cast<int>(Object::ShapeKind::Field)) {
                 if (!newborn.hasField()) {
-                    newborn.setFieldShape(geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(0.5f)), 1.0f);
+                    newborn.setFieldShape(geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(0.5f)), glm::vec3(1.0f));
                 }
             } else if (k >= 0 && k <= static_cast<int>(Object::ShapeKind::Text2D)) {
                 // Keep the template's params: they describe radii and fillets

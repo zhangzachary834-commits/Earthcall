@@ -285,13 +285,13 @@ int main(int argc, char** argv) {
         if (ultraPower) {
             float extent = 1.0f;
             const geom::SdfNode shape = stressFieldShape(i, extent);
-            obj->setFieldShape(shape, extent);
+            obj->setFieldShape(shape, glm::vec3(extent));
         } else {
             geom::SdfNode sphere;
             sphere.op = geom::SdfOp::Leaf;
             sphere.prim = geom::SdfPrim::Sphere;
             sphere.dims = glm::vec3(0.5f);
-            obj->setFieldShape(sphere, 1.0f);
+            obj->setFieldShape(sphere, glm::vec3(1.0f));
         }
         obj->setPosition(glm::vec3( (i % fieldSide) * 2.0f - fieldSide, (i / fieldSide) * 2.0f - fieldSide, 10.0f ));
         fields.push_back(std::move(obj));

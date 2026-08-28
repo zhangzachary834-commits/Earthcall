@@ -109,7 +109,7 @@ int main() {
         n.op = geom::SdfOp::Leaf;
         n.prim = geom::SdfPrim::Sphere;
         n.dims = glm::vec3(0.5f);
-        o.setFieldShape(n, 1.0f);
+        o.setFieldShape(n, glm::vec3(1.0f));
         assert(o.hasField());
         std::vector<glm::vec3> cloud = o.getSupportCloud();
         assert(!cloud.empty());

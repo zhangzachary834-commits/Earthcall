@@ -84,7 +84,9 @@ void OpenGLRenderer::drawMesh(const geom::TessMesh& mesh, const RenderMaterial& 
 
 void OpenGLRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& extent,
                                   const RenderMaterial& material,
-                                  const geom::FieldNode* fieldNode) {
+                                  const geom::FieldNode* fieldNode,
+                                  uint64_t memoId,
+                                  uint32_t memoRevision) {
     // Fixed-function GL has no raymarcher, so a field is drawn by tessellating it
     // and reusing drawMesh. Callers that already cache a field mesh (Object holds
     // _fieldMesh) should call drawMesh directly; this exists so the interface is

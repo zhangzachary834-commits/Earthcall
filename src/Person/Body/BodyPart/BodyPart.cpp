@@ -54,7 +54,7 @@ void BodyPart::draw() const {
     }
 }
 
-void BodyPart::update(float deltaTime) {
+void BodyPart::update(float /*deltaTime*/) {
     
 }
 

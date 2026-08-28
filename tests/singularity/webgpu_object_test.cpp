@@ -205,7 +205,7 @@ int main() {
         sphere.dims = glm::vec3(0.55f);
 
         Object field;
-        field.setFieldShape(sphere, 1.0f);
+        field.setFieldShape(sphere, glm::vec3(1.0f));
         // Painted explicitly: a field is one face, and nothing gives an object
         // paint it was not given any more, so the colour under test has to be
         // put there rather than inherited from a construction-time palette.

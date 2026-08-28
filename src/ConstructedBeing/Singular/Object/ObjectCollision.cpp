@@ -203,6 +203,7 @@ namespace {
 // the cloud is decimated to `maxPts` anyway, and matching render resolution here
 // would change which points GJK sees for no benefit.
 void Object::rebuildGeometryCaches() {
+    _fieldRevision++;
     _supportCloud.clear();
     _smoothMesh.reset();
     _complexMeshes.clear();

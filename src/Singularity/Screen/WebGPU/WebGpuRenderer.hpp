@@ -14,9 +14,11 @@
 #include "Singularity/Screen/Renderer.hpp"
 #include "Singularity/Screen/WebGPU/GpuBufferPool.hpp"
 #include "Singularity/Screen/WebGPU/GpuMeshCache.hpp"
+#include "Singularity/Screen/WebGPU/SdfWgsl.hpp"
 
 #include <webgpu/webgpu.h>
 #include <glm/glm.hpp>
+#include <unordered_map>
 #include <functional>
 #include <string>
 #include <map>
@@ -79,7 +81,9 @@ public:
     void drawMesh(const geom::TessMesh& mesh, const RenderMaterial& material) override;
     void drawImplicit(const geom::SdfNode& field, const glm::vec3& extent,
                       const RenderMaterial& material,
-                      const geom::FieldNode* fieldNode = nullptr) override;
+                      const geom::FieldNode* fieldNode = nullptr,
+                      uint64_t memoId = 0,
+                      uint32_t memoRevision = 0) override;
 
     // Vector-field visualization (Milestone 6b): drawImplicit renders a SCALAR
     // field's surface; this renders a VECTOR field's flow as points. Positions are
@@ -184,6 +188,12 @@ private:
         WGPUBindGroupLayout bgl = nullptr;
     };
     std::map<std::string, SdfPipeline> _sdfPipes;
+    struct MemoizedProgram {
+        uint32_t revision = 0xffffffff;
+        sdfwgsl::Program prog;
+        const SdfPipeline* sp = nullptr;
+    };
+    std::unordered_map<uint64_t, MemoizedProgram> _programCache;
     WGPUBuffer _sdfCubeVerts = nullptr; // unit bounding cube, shared by every field
     const SdfPipeline* sdfPipeline(const std::string& wgsl);
 

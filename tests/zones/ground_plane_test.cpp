@@ -85,6 +85,9 @@ void testNoBeingIsConscriptedAsTheFloor() {
     std::cout << "\n[1] An empty world's second being is not the ground" << std::endl;
     freshPhysics();
     Zone world("test-zone", "default");
+    auto ground = makeCube(glm::vec3(0.0f, 0.0f, 0.0f));
+    ground->setAttribute("baseline", "ground");
+    world.addObject(ground);
 
     // Four clicks, a beat of physics between each -- the reported reproduction.
     for (int click = 0; click < 4; ++click) {
@@ -110,15 +113,17 @@ void testObjectsRestOnTheFloorNotInIt() {
     std::cout << "\n[2] An object rests its BOTTOM on groundY, not its centre" << std::endl;
     freshPhysics();
     Zone world("test-zone", "default");
+    auto ground = makeCube(glm::vec3(0.0f, 0.0f, 0.0f));
+    ground->setAttribute("baseline", "ground");
+    world.addObject(ground);
     world.addObject(makeCube(glm::vec3(0.0f, 6.0f, 0.0f)));
     step(world, 120);
 
-    // No baseline ground -> the floor is the y=0 plane. A unit cube resting on
-    // it has its centre at +0.5. Clamping the centre would have parked it at 0.0
-    // with half the cube underground.
-    const float y = world.objects()[0]->getPosition().y;
-    check(std::fabs(y - 0.5f) < 0.05f,
-          "unit cube settles with centre at 0.5 above the y=0 plane (got " +
+    // With baseline ground at 0.0 (unit height), groundY is +0.5.
+    // A unit cube resting on it has its centre at +1.0.
+    const float y = world.objects()[1]->getPosition().y;
+    check(std::fabs(y - 1.0f) < 0.05f,
+          "unit cube settles with centre at 1.0 above the y=0.5 floor (got " +
               std::to_string(y) + ")");
 }
 

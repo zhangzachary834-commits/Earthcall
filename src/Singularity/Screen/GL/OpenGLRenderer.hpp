@@ -23,7 +23,9 @@ public:
     void drawMesh(const geom::TessMesh& mesh, const RenderMaterial& material) override;
     void drawImplicit(const geom::SdfNode& field, const glm::vec3& extent,
                       const RenderMaterial& material,
-                      const geom::FieldNode* fieldNode = nullptr) override;
+                      const geom::FieldNode* fieldNode = nullptr,
+                      uint64_t memoId = 0,
+                      uint32_t memoRevision = 0) override;
     void drawLines(const std::vector<std::pair<glm::vec3, glm::vec3>>& segments,
                    const glm::vec4& color, float width, Blend blend) override;
     void setWireframe(bool on) override;

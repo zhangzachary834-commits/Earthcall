@@ -1,3 +1,4 @@
+#include <chrono>
 #include "Singularity/Screen/WebGPU/WebGpuRenderer.hpp"
 #include "Singularity/Screen/WebGPU/WgpuDevice.hpp"
 #include "Singularity/Screen/WebGPU/SdfWgsl.hpp"
@@ -768,7 +769,12 @@ const WebGpuRenderer::SdfPipeline* WebGpuRenderer::sdfPipeline(const std::string
     pd.depthStencil = &ds;
     pd.multisample.count = 1; pd.multisample.mask = 0xFFFFFFFFu;
     pd.fragment = &frag;
+
+    auto t0 = std::chrono::high_resolution_clock::now();
     out.pipe = wgpuDeviceCreateRenderPipeline(_device, &pd);
+    auto t1 = std::chrono::high_resolution_clock::now();
+    double ms = std::chrono::duration<double, std::milli>(t1 - t0).count();
+    printf("wgpuDeviceCreateRenderPipeline compiled novel SDF in %.2f ms\n", ms);
 
     wgpuPipelineLayoutRelease(layout);
     wgpuShaderModuleRelease(shader);
@@ -781,12 +787,33 @@ const WebGpuRenderer::SdfPipeline* WebGpuRenderer::sdfPipeline(const std::string
 
 void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& extent,
                                   const RenderMaterial& mat,
-                                  const geom::FieldNode* fieldNode) {
+                                  const geom::FieldNode* fieldNode,
+                                  uint64_t memoId,
+                                  uint32_t memoRevision) {
     if (!_pass) return;
 
-    // Compile the tree. Structure -> WGSL (cached), numbers -> a buffer.
-    const sdfwgsl::Program prog = sdfwgsl::compile(field, fieldNode);
-    const SdfPipeline* sp = sdfPipeline(prog.wgsl);
+    // Memoize the WGSL string generation and pipeline lookup.
+    sdfwgsl::Program prog;
+    const SdfPipeline* sp = nullptr;
+    bool needsCompile = true;
+    if (memoId != 0) {
+        auto& entry = _programCache[memoId];
+        if (entry.revision == memoRevision) {
+            prog = entry.prog;
+            sp = entry.sp;
+            needsCompile = false;
+        }
+    }
+    if (needsCompile) {
+        prog = sdfwgsl::compile(field, fieldNode);
+        sp = sdfPipeline(prog.wgsl);
+        if (memoId != 0) {
+            auto& entry = _programCache[memoId];
+            entry.revision = memoRevision;
+            entry.prog = prog;
+            entry.sp = sp;
+        }
+    }
     if (!sp) return;
 
     // The bounding cube, shared by every field: the vertex shader scales it by the

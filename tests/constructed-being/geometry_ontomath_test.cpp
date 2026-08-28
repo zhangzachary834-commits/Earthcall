@@ -265,7 +265,7 @@ int main() {
         PropertyValue blend;
         check(get("field.blend", blend) && nearf(static_cast<float>(std::get<float>(blend)), 0.25f),
               "field.blend reads back what law wrote");
-        check(set("field.extent", PropertyValue(2.0)) && nearf(o.getFieldExtent(), 2.0f),
+        check(set("field.extent", PropertyValue(2.0)) && nearf(o.getFieldExtent().x, 2.0f),
               "field.extent is writable and reaches the object");
 
         // The Bezier control net: the Bernstein coefficients themselves.
@@ -324,7 +324,7 @@ int main() {
         // field/patch that reinstantiated as a bare cube would make set-to-set
         // creation lossy exactly where the geometry is most authored.
         Object sculpted("sculpted-source");
-        sculpted.setFieldShape(geom::makeImplicit("x*x + y*y + z*z - 0.25"), 1.5f);
+        sculpted.setFieldShape(geom::makeImplicit("x*x + y*y + z*z - 0.25"), glm::vec3(1.5f));
         auto concept = ObjectConcept::captureFrom({&sculpted}, "concept-sculpted");
         auto born = concept->instantiate(glm::mat4(1.0f),
                                          static_cast<const std::vector<Singular*>*>(nullptr));
@@ -333,7 +333,7 @@ int main() {
         if (!born.empty() && born[0]) {
             check(nearf(geom::evalSdf(born[0]->getFieldData(), glm::vec3(0.5f, 0.0f, 0.0f)), 0.0f),
                   "the newborn's field evaluates as the source's did");
-            check(nearf(born[0]->getFieldExtent(), 1.5f), "the field extent came across too");
+            check(nearf(born[0]->getFieldExtent().x, 1.5f), "the field extent came across too");
         }
     }
 

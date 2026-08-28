@@ -109,7 +109,7 @@ int main() {
     auto sphereNode = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(0.5f));
     auto torusNode = geom::SdfNode::leaf(geom::SdfPrim::Torus, glm::vec3(0.4f, 0.15f, 0.4f), 0.4f, 0.15f);
     sdfMember.field = geom::SdfNode::binary(geom::SdfOp::SmoothUnion, sphereNode, torusNode, 0.2f);
-    sdfMember.fieldExtent = 1.2f;
+    sdfMember.fieldExtent = glm::vec3(1.2f);
     sdfMember.relativeTransform = glm::mat4(1.0f);
     sdfConcept->members().push_back(sdfMember);
     ConceptRegistry::instance().add(sdfConcept);
@@ -225,7 +225,7 @@ int main() {
         Object* obj = world.getOwnedObjects()[1].get();
         check(obj->getShapeKind() == Object::ShapeKind::Field, "Object is ShapeKind::Field");
         check(obj->hasField(), "Object has valid SDF field geometry");
-        check(std::fabs(obj->getFieldExtent() - 1.2f) < 1e-4f, "Field extent preserved at 1.2");
+        check(std::fabs(obj->getFieldExtent().x - 1.2f) < 1e-4f, "Field extent preserved at 1.2");
         check(nearVec3(obj->getPosition(), glm::vec3(2.5f, 0.5f, -4.5f)),
               "Complex SDF snapped to grid coordinates (2.5, 0.5, -4.5)");
         // Evaluate SDF distance at center (must be negative inside)

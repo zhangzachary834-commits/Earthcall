@@ -127,7 +127,9 @@ public:
     virtual void drawMesh(const geom::TessMesh& mesh, const RenderMaterial& material) = 0;
     virtual void drawImplicit(const geom::SdfNode& field, const glm::vec3& extent,
                               const RenderMaterial& material,
-                              const geom::FieldNode* fieldNode = nullptr) = 0;
+                              const geom::FieldNode* fieldNode = nullptr,
+                              uint64_t memoId = 0,
+                              uint32_t memoRevision = 0) = 0;
 
     // Unlit, blended overlays — the selection/law-candidate highlight. These are
     // deliberately separate verbs from drawMesh: colour-only, no lighting or

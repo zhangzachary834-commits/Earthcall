@@ -97,7 +97,7 @@ int main() {
         r.setCamera(viewM, proj, eye);
         r.setModel(model);
         r.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
-        r.drawImplicit(field, kExtent, mat);
+        r.drawImplicit(field, glm::vec3(kExtent), mat);
         r.endFrame();
 
         WGPUCommandEncoder enc = wgpuDeviceCreateCommandEncoder(gpu.device, nullptr);

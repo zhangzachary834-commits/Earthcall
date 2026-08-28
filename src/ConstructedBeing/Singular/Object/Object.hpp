@@ -20,6 +20,7 @@
 // ============================================================================
 
 #include <vector>
+#include <atomic>
 #include <cstdint>
 #include "Relation/Formation/Formation.hpp"
 #include <glm/glm.hpp>
@@ -166,6 +167,8 @@ private:
     geom::ComplexShapeData  complexData;
     geom::SdfNode           fieldData;     // SDF expression when _hasField
     glm::vec3               _fieldExtent{1.0f, 1.0f, 1.0f};
+    mutable uint64_t        _memoIdBase = 0;
+    uint32_t                _fieldRevision = 0;
     // Cached render tessellations. Tessellating is O(slices*stacks) and allocates;
     // doing it in the draw path rebuilt every surface in the world every frame for
     // geometry that changes only when a Person edits it. Built once per change by
@@ -625,6 +628,15 @@ public:
     void setElements(int e);
     
     // Methods with inline implementations (no cpp definitions)
+
+    uint64_t getMemoId(int suffix = 0) const {
+        if (_memoIdBase == 0) {
+            static std::atomic<uint64_t> counter{1000};
+            _memoIdBase = counter.fetch_add(100);
+        }
+        return _memoIdBase + suffix;
+    }
+    uint32_t getFieldRevision() const { return _fieldRevision; }
     int getRelationships() const { return _composition.relationships; }
     void setRelationships(int r) { _composition.relationships = r; }
     int getComplexityLevel() const { return _composition.complexityLevel; }

@@ -1209,12 +1209,41 @@ std::map<std::string, PropertyValue> varsAtPoint(
 std::optional<PropertyValue> MathNode::evaluate(const std::map<std::string, PropertyValue>& vars, const Singular* subject) const {
     switch(op) {
         case Op::ScalarLeaf: {
+            // Bind only what this form actually reads. Term::evaluate looks
+            // every variable up by name and never inspects the rest of the
+            // map, and ScalarForm::evaluate only sums terms, so narrowing the
+            // environment is exact -- an entry no term mentions could never
+            // have been observed.
+            //
+            // The win is the constant form, which is the overwhelming case
+            // inside a field expression: every numeric literal in the tree is
+            // a ScalarLeaf with no factors, and it needs no environment at
+            // all. Projecting the whole of `vars` here instead cost a
+            // red-black-tree insert per bound variable per literal per
+            // evaluation -- for the noise floor's tree, six literals x four
+            // variables = 24 allocations on every SDF sample, of which a
+            // tessellation takes millions.
+            bool needsVars = false;
+            for (const auto& t : scalarForm.terms) {
+                if (!t.factors.empty() || !t.trans.empty()) { needsVars = true; break; }
+            }
+            if (!needsVars) {
+                static const std::map<std::string, double> kNoVars;
+                auto res = scalarForm.evaluate(kNoVars);
+                if (!res) return std::nullopt;
+                return PropertyValue(*res);
+            }
             std::map<std::string, double> scalarVars;
-            for (const auto& [k, v] : vars) {
+            auto bind = [&](const std::string& name) {
+                if (scalarVars.find(name) != scalarVars.end()) return;
+                auto it = vars.find(name);
+                if (it == vars.end()) return;   // unbound: Term::evaluate refuses
                 double d = 0.0;
-                if (propertyValueToNumber(v, d)) {
-                    scalarVars[k] = d;
-                }
+                if (propertyValueToNumber(it->second, d)) scalarVars.emplace(name, d);
+            };
+            for (const auto& t : scalarForm.terms) {
+                for (const auto& f : t.factors) bind(f.first);
+                for (const auto& tf : t.trans) bind(tf.variable);
             }
             auto res = scalarForm.evaluate(scalarVars);
             if (!res) return std::nullopt;
