@@ -690,7 +690,8 @@ struct SdfUniforms {
     glm::vec4 lightPos;
     glm::vec4 shading;  // ambient, diffuse, specular, shininess
     glm::vec4 eyePos;
-    glm::vec4 misc;     // extent, surfaceEps, maxDist, exprDamping
+    glm::vec4 misc;     // extent(unused scalar), surfaceEps, maxDist, exprDamping
+    glm::vec4 extents;  // The xyz scale of the bounding box
 };
 } // namespace
 
@@ -778,7 +779,7 @@ const WebGpuRenderer::SdfPipeline* WebGpuRenderer::sdfPipeline(const std::string
     return &(_sdfPipes[wgsl] = out);
 }
 
-void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, float extent,
+void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& extent,
                                   const RenderMaterial& mat,
                                   const geom::FieldNode* fieldNode) {
     if (!_pass) return;
@@ -798,9 +799,9 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, float extent,
         const int idx[36] = {
             0,1,2, 0,2,3,  4,6,5, 4,7,6,  0,4,5, 0,5,1,
             3,2,6, 3,6,7,  0,3,7, 0,7,4,  1,5,6, 1,6,2};
-        std::vector<glm::vec3> tris;
-        tris.reserve(36);
-        for (int i : idx) tris.push_back(c[i]);
+        std::vector<glm::vec3> tris(36);
+        for (int i = 0; i < 36; ++i) tris[i] = c[idx[i]];
+
         WGPUBufferDescriptor bd = {};
         bd.usage = WGPUBufferUsage_Vertex | WGPUBufferUsage_CopyDst;
         bd.size = tris.size() * sizeof(glm::vec3);
@@ -835,8 +836,10 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, float extent,
     // boundary still gets fragments. surfaceEps/maxDist mirror the CPU raycaster's
     // 1e-4 hit threshold; damping < 1 keeps implicit (non-distance) fields from
     // tunnelling through their own surface.
-    u.misc = glm::vec4(extent * 1.05f, 1e-4f, extent * 8.0f,
+    float maxDim = glm::max(glm::max(extent.x, extent.y), extent.z);
+    u.misc = glm::vec4(1.0f, 1e-4f, maxDim * 8.0f,
                        prog.needsGradientStep ? 1.0f : 0.0f);
+    u.extents = glm::vec4(extent * 1.05f, 0.0f);
 
     auto uAlloc = _bufferPool.suballocateUniform(&u, sizeof(SdfUniforms));
     auto pAlloc = _bufferPool.suballocateStorage(prog.params.data(), prog.params.size() * sizeof(float));

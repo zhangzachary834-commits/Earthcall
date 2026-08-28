@@ -133,9 +133,10 @@ void to_json(nlohmann::json& j, const Object& obj){
         j["shapeParams"] = { sp.r, sp.ry, sp.rz, sp.halfH, sp.majorR,
                              sp.minorR, sp.paraboloidA, sp.ovoidAsym, sp.fillet };
     }
-    if (obj.hasField()) {
+    if (obj.getSpatialKind() == Object::SpatialKind::Field) {
         j["field"] = geom::sdfToJson(obj.getFieldData());
-        j["fieldExtent"] = obj.getFieldExtent();
+        const auto& ext = obj.getFieldExtent();
+        j["fieldExtent"] = {ext.x, ext.y, ext.z};
     }
     if (obj.hasPatch()) {
         const auto& p = obj.getPatchData();
@@ -293,7 +294,15 @@ void from_json(const nlohmann::json& j, Object& obj){
         }
         obj.setBezierPatch(p);
     } else if (j.contains("field")) {
-        obj.setFieldShape(geom::sdfFromJson(j["field"]), j.value("fieldExtent", 1.0f));
+        glm::vec3 ext{1.0f};
+        if (j.contains("fieldExtent")) {
+            if (j["fieldExtent"].is_number()) {
+                ext = glm::vec3(j["fieldExtent"].get<float>());
+            } else if (j["fieldExtent"].is_array() && j["fieldExtent"].size() >= 3) {
+                ext = glm::vec3(j["fieldExtent"][0].get<float>(), j["fieldExtent"][1].get<float>(), j["fieldExtent"][2].get<float>());
+            }
+        }
+        obj.setFieldShape(geom::sdfFromJson(j["field"]), ext);
     } else if (j.contains("shapeKind")) {
         obj.setShape(static_cast<Object::ShapeKind>(j["shapeKind"].get<int>()), parseShapeParams(j));
     } else {

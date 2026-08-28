@@ -38,7 +38,7 @@ public:
         Object::ShapeParams params;
         bool hasField = false;
         geom::SdfNode field;            // deep-copies: the template is its own being
-        float fieldExtent = 1.0f;
+        glm::vec3 fieldExtent{1.0f, 1.0f, 1.0f};
         bool hasPatch = false;
         geom::BezierPatch patch;
         glm::mat4 relativeTransform{1.0f};   // member pose relative to set centroid

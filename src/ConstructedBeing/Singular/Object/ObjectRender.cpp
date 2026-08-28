@@ -311,7 +311,7 @@ void Object::drawSmoothModel() const {
         const float extent = std::max(std::max(std::abs(smoothData.axes.x),
                                                std::abs(smoothData.axes.y)),
                                       std::abs(smoothData.axes.z)) + 0.25f;
-        r.drawImplicit(geom::sdfFromSmooth(smoothData), std::max(extent, 0.6f), mat, nullptr);
+        r.drawImplicit(geom::sdfFromSmooth(smoothData), glm::vec3(std::max(extent, 0.6f)), mat, nullptr);
         return;
     }
     if (_smoothMesh) r.drawMesh(*_smoothMesh, mat);
@@ -327,7 +327,7 @@ void Object::drawComplexModel() const {
         geom::SdfNode field;
         if (geom::sdfFromComplex(complexData, field)) {
             const float rExt = std::max(_shapeParams.r, _shapeParams.halfH) + 0.25f;
-            r.drawImplicit(field, std::max(rExt, 0.6f),
+            r.drawImplicit(field, glm::vec3(std::max(rExt, 0.6f)),
                            resolveRenderMaterial(_materialId, faceAlbedo(0)), nullptr);
             return;
         }
@@ -337,7 +337,7 @@ void Object::drawComplexModel() const {
             if (patch.type == geom::SurfacePatch::Type::Smooth) {
                 const float extent = std::max(std::abs(patch.smooth.axes.x),
                     std::max(std::abs(patch.smooth.zTrim.x), std::abs(patch.smooth.zTrim.y))) + 0.25f;
-                r.drawImplicit(geom::sdfFromSmooth(patch.smooth), std::max(extent, 0.6f), mat, nullptr);
+                r.drawImplicit(geom::sdfFromSmooth(patch.smooth), glm::vec3(std::max(extent, 0.6f)), mat, nullptr);
             } else if (i < _complexMeshes.size()) {
                 r.drawMesh(_complexMeshes[i], mat);
             }

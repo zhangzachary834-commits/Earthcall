@@ -594,20 +594,20 @@ static void marchTet(const SdfNode& n, TessMesh& m,
     }
 }
 
-TessMesh tessellateSdf(const SdfNode& n, float extent, int res) {
+TessMesh tessellateSdf(const SdfNode& n, const glm::vec3& extent, const glm::ivec3& res) {
     TessMesh m;
-    int N = std::max(4, res);
-    float step = 2.0f * extent / N;
+    glm::ivec3 N = glm::max(glm::ivec3(4), res);
+    glm::vec3 step = 2.0f * extent / glm::vec3(N);
     auto pos = [&](int i, int j, int k) {
-        return glm::vec3(-extent + i * step, -extent + j * step, -extent + k * step);
+        return glm::vec3(-extent.x + i * step.x, -extent.y + j * step.y, -extent.z + k * step.z);
     };
     // Precompute the (N+1)^3 field samples so shared corners are evaluated once.
-    int S = N + 1;
-    std::vector<float> g(static_cast<size_t>(S) * S * S);
-    auto gi = [&](int i, int j, int k) { return (static_cast<size_t>(i) * S + j) * S + k; };
-    for (int i = 0; i < S; ++i)
-        for (int j = 0; j < S; ++j)
-            for (int k = 0; k < S; ++k)
+    glm::ivec3 S = N + 1;
+    std::vector<float> g(static_cast<size_t>(S.x) * S.y * S.z);
+    auto gi = [&](int i, int j, int k) { return (static_cast<size_t>(i) * S.y + j) * S.z + k; };
+    for (int i = 0; i < S.x; ++i)
+        for (int j = 0; j < S.y; ++j)
+            for (int k = 0; k < S.z; ++k)
                 g[gi(i, j, k)] = evalSdf(n, pos(i, j, k));
 
     // Corner offset per index c: (c&1, (c>>1)&1, (c>>2)&1).
@@ -618,9 +618,9 @@ TessMesh tessellateSdf(const SdfNode& n, float extent, int res) {
     static const int tets[6][4] = {
         {0,7,1,3},{0,7,3,2},{0,7,2,6},{0,7,6,4},{0,7,4,5},{0,7,5,1}
     };
-    for (int x = 0; x < N; ++x)
-    for (int y = 0; y < N; ++y)
-    for (int z = 0; z < N; ++z) {
+    for (int x = 0; x < N.x; ++x)
+    for (int y = 0; y < N.y; ++y)
+    for (int z = 0; z < N.z; ++z) {
         glm::vec3 cp[8]; float cv[8];
         for (int c = 0; c < 8; ++c) {
             int ci = x + off[c][0], cj = y + off[c][1], ck = z + off[c][2];

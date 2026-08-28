@@ -181,16 +181,24 @@ public:
         if (!_owner->hasField()) return false;
 
         geom::SdfNode f = _owner->getFieldData();   // deep-clones the subtree
-        float extent = _owner->getFieldExtent();
-        if (_field == Field::Dims || _field == Field::Offset) {
+        glm::vec3 extent = _owner->getFieldExtent();
+        if (_field == Field::Dims || _field == Field::Offset || _field == Field::Extent) {
             const glm::vec3* vec = std::get_if<glm::vec3>(&v);
-            if (!vec) return false;
-            (_field == Field::Dims ? f.dims : f.offset) = *vec;
+            if (!vec) {
+                // Backward compatibility if assigned a scalar
+                double n = 0.0;
+                if (!propertyValueToNumber(v, n)) return false;
+                if (_field == Field::Extent) extent = glm::vec3(static_cast<float>(n));
+                else return false;
+            } else {
+                if (_field == Field::Dims) f.dims = *vec;
+                else if (_field == Field::Offset) f.offset = *vec;
+                else extent = *vec;
+            }
         } else {
             double n = 0.0;
             if (!propertyValueToNumber(v, n)) return false;
             switch (_field) {
-                case Field::Extent: extent = static_cast<float>(n); break;
                 case Field::P0:     f.p0 = static_cast<float>(n); break;
                 case Field::P1:     f.p1 = static_cast<float>(n); break;
                 case Field::Blend:  f.t  = static_cast<float>(n); break;

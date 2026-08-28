@@ -593,7 +593,8 @@ struct RU {
     lightPos:  vec4<f32>,
     shading:   vec4<f32>,   // x=ambient y=diffuse z=specular w=shininess
     eyePos:    vec4<f32>,
-    misc:      vec4<f32>,   // x=extent y=surfaceEps z=maxDist w=exprDamping
+    misc:      vec4<f32>,   // x=extent(unused), y=surfaceEps, z=maxDist, w=exprDamping
+    extents:   vec4<f32>,
 };
 @group(0) @binding(0) var<uniform> u: RU;
 struct Params { v: array<f32> };
@@ -607,7 +608,7 @@ struct VSOut {
 @vertex
 fn vs(@location(0) pos: vec3<f32>) -> VSOut {
     var o: VSOut;
-    let world = u.model * vec4<f32>(pos * u.misc.x, 1.0);
+    let world = u.model * vec4<f32>(pos * u.extents.xyz, 1.0);
     o.clip = u.viewProj * world;
     // Clamp to far plane so proxy geometry is never lost to far-plane clipping.
     o.clip.z = min(o.clip.z, o.clip.w * 0.999999);
@@ -645,12 +646,12 @@ struct FSOut {
 // provides a hardcoded parameter path or an AST-driven piecewise definition.
 // fieldEval is emitted before this block.
 
-fn rayAabb(ro: vec3<f32>, rd: vec3<f32>, b: f32) -> vec2<f32> {
+fn rayAabb(ro: vec3<f32>, rd: vec3<f32>, b: vec3<f32>) -> vec2<f32> {
     // Slab method. A zero direction would NaN the inverse; nudge it.
     let rds = select(rd, vec3<f32>(1e-8), abs(rd) < vec3<f32>(1e-8));
     let inv = 1.0 / rds;
-    let t0 = (-vec3<f32>(b) - ro) * inv;
-    let t1 = ( vec3<f32>(b) - ro) * inv;
+    let t0 = (-b - ro) * inv;
+    let t1 = ( b - ro) * inv;
     let tmin = min(t0, t1);
     let tmax = max(t0, t1);
     let tEnter = max(max(tmin.x, tmin.y), tmin.z);
@@ -668,7 +669,7 @@ fn fs(in: VSOut) -> FSOut {
 
     let eps     = u.misc.y;
     let damping = u.misc.w;
-    let box     = rayAabb(ro, rd, u.misc.x);
+    let box     = rayAabb(ro, rd, u.extents.xyz);
     // Miss the cube, or the whole slab is behind the eye.
     if (box.y < box.x || box.y < 0.0) { discard; }
 
@@ -697,13 +698,11 @@ fn fs(in: VSOut) -> FSOut {
         // Scale epsilon by distance (cone stepping) to prevent infinite steps on the horizon
         let current_eps = max(eps, t * 0.001);
         if (d < current_eps) { hit = true; break; }
-        t = t + max(d, current_eps);
-
         // Volumetric Field Accumulation
         let density = fieldEval(p);
         if (density > 0.0) {
             if (first_hit_t < 0.0) { first_hit_t = t; }
-            let step_size = max(abs(d), eps); // Optical depth uses absolute distance to next bound or small step
+            let step_size = max(abs(d), current_eps); // Optical depth uses absolute distance to next bound or small step
             let extinction = max(density * 0.5, 1e-6); // Tunable constant
             
             let old_t = transmittance;
@@ -713,9 +712,7 @@ fn fs(in: VSOut) -> FSOut {
             volumetric_scatter += (density / extinction) * (old_t - transmittance);
         }
         
-        if (d < eps) { hit = true; break; }
-        t = t + max(d, eps);
-        
+        t = t + max(d, current_eps);
         // Early exit if the field is fully opaque
         if (transmittance < 0.01) { break; }
         if (t > maxDist) { break; }

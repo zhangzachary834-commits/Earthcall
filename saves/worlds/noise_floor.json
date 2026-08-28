@@ -14,6 +14,8 @@
       "owner": "Antigravity",
       "parentZone": "",
       "scope": "Local",
+      "injected_by": "Antigravity",
+      "authors": "Zachary",
       "qualities": {},
       "world": {
         "objects": [
@@ -63,7 +65,11 @@
                 "v": "Perlin Ground Plane"
               }
             },
-            "fieldExtent": 1000.0,
+            "fieldExtent": [
+              1000.0,
+              30.0,
+              1000.0
+            ],
             "field": {
               "op": 0,
               "prim": 7,

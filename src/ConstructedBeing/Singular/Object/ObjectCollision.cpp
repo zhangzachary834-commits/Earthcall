@@ -210,7 +210,10 @@ void Object::rebuildGeometryCaches() {
 
     geom::TessMesh m; // collision source — decimated into _supportCloud below
     if (_hasField) {
-        int res = std::clamp(static_cast<int>(_fieldExtent / 5.0f), 24, 64);
+        glm::ivec3 res;
+        res.x = std::clamp(static_cast<int>(_fieldExtent.x / 5.0f), 24, 128);
+        res.y = std::clamp(static_cast<int>(_fieldExtent.y / 5.0f), 24, 128);
+        res.z = std::clamp(static_cast<int>(_fieldExtent.z / 5.0f), 24, 128);
         _fieldMesh = geom::tessellateSdf(fieldData, _fieldExtent, res);
         m = _fieldMesh; // render and collision share it: marching tets are too costly to repeat
     }
@@ -221,7 +224,7 @@ void Object::rebuildGeometryCaches() {
             // a 24-slice UV side plus N-gon caps. Collision still uses the
             // coarser cloud below.
             const float ext = std::max(_shapeParams.r, _shapeParams.halfH) + 0.25f;
-            _complexMeshes.push_back(geom::tessellateSdf(asField, std::max(ext, 0.6f), 32));
+            _complexMeshes.push_back(geom::tessellateSdf(asField, glm::vec3(std::max(ext, 0.6f)), glm::ivec3(32)));
             m = _complexMeshes.front();
         } else {
             _complexMeshes.reserve(complexData.patches.size());

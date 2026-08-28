@@ -165,7 +165,7 @@ private:
     geom::SmoothSurfaceData smoothData;
     geom::ComplexShapeData  complexData;
     geom::SdfNode           fieldData;     // SDF expression when _hasField
-    float                   _fieldExtent = 1.0f;
+    glm::vec3               _fieldExtent{1.0f, 1.0f, 1.0f};
     // Cached render tessellations. Tessellating is O(slices*stacks) and allocates;
     // doing it in the draw path rebuilt every surface in the world every frame for
     // geometry that changes only when a Person edits it. Built once per change by
@@ -536,13 +536,13 @@ public:
     }
     // An SDF-defined shape (morph / boolean / implicit). `extent` is the half-size
     // of the region the field is meshed/marched over.
-    void setFieldShape(const geom::SdfNode& f, float extent = 1.0f) {
+    void setFieldShape(const geom::SdfNode& f, const glm::vec3& extent = glm::vec3(1.0f)) {
         fieldData = f; _fieldExtent = extent;
         _hasField = true; _hasSmooth = false; _hasComplex = false; _hasPatch = false;
         _shapeKind = ShapeKind::Field;
         rebuildGeometryCaches();
     }
-    float getFieldExtent() const { return _fieldExtent; }
+    const glm::vec3& getFieldExtent() const { return _fieldExtent; }
     // Live-edit the blend of a Morph/SmoothUnion field (re-tessellates).
     bool isMorphField() const {
         return _hasField && (fieldData.op == geom::SdfOp::Morph || fieldData.op == geom::SdfOp::SmoothUnion);

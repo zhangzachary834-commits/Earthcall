@@ -336,7 +336,7 @@ namespace Rendering {
                 geom::SdfNode node = geom::makeImplicit(implicitBuf);
                 Object* o = spawnAuthoredObject(zoneMgr, channel, engine, state.createColor);
                 if (o) {
-                    o->setFieldShape(node, 1.1f);
+                    o->setFieldShape(node, glm::vec3(1.1f));
                     paintNewObject(*o, state.createColor);
                 }
             }

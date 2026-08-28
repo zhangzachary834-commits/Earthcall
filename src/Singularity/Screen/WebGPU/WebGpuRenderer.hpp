@@ -77,7 +77,7 @@ public:
 
     // Renderer interface.
     void drawMesh(const geom::TessMesh& mesh, const RenderMaterial& material) override;
-    void drawImplicit(const geom::SdfNode& field, float extent,
+    void drawImplicit(const geom::SdfNode& field, const glm::vec3& extent,
                       const RenderMaterial& material,
                       const geom::FieldNode* fieldNode = nullptr) override;
 

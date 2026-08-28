@@ -85,7 +85,7 @@ floor_object = {
     "authoredProperties": {
         "displayName": pv("string", "Perlin Ground Plane")
     },
-    "fieldExtent": 1000.0,
+    "fieldExtent": [1000.0, 30.0, 1000.0],
     "field": field_node
 }
 
@@ -106,6 +106,8 @@ zone_json = {
     "owner": AUTHOR,
     "parentZone": "",
     "scope": "Local",
+    "injected_by": "Antigravity",
+    "authors": "Zachary",
     "qualities": {},
     "world": {
         "objects": [floor_object],

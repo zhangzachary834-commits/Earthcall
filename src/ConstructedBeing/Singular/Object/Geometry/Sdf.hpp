@@ -138,6 +138,6 @@ bool raycastSdf(const SdfNode& n, const glm::vec3& o, const glm::vec3& d,
 // regular grid — handles arbitrary topology (holes, cavities) so boolean and
 // implicit shapes render correctly. `extent` is the half-size of the sampled
 // cube; `res` is grid cells per axis.
-TessMesh tessellateSdf(const SdfNode& n, float extent = 1.0f, int res = 24);
+TessMesh tessellateSdf(const SdfNode& n, const glm::vec3& extent = glm::vec3(1.0f), const glm::ivec3& res = glm::ivec3(24));
 
 } // namespace geom

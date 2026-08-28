@@ -83,7 +83,7 @@ nlohmann::json ObjectConcept::MemberTemplate::toJson() const {
     };
     if (hasField) {
         j["field"] = geom::sdfToJson(field);
-        j["fieldExtent"] = fieldExtent;
+        j["fieldExtent"] = {fieldExtent.x, fieldExtent.y, fieldExtent.z};
     }
     if (hasPatch) {
         nlohmann::json pj{
@@ -134,7 +134,13 @@ ObjectConcept::MemberTemplate ObjectConcept::MemberTemplate::fromJson(const nloh
     if (j.contains("field")) {
         m.hasField = true;
         m.field = geom::sdfFromJson(j["field"]);
-        m.fieldExtent = j.value("fieldExtent", 1.0f);
+        if (j.contains("fieldExtent")) {
+            if (j["fieldExtent"].is_number()) {
+                m.fieldExtent = glm::vec3(j["fieldExtent"].get<float>());
+            } else if (j["fieldExtent"].is_array() && j["fieldExtent"].size() >= 3) {
+                m.fieldExtent = glm::vec3(j["fieldExtent"][0].get<float>(), j["fieldExtent"][1].get<float>(), j["fieldExtent"][2].get<float>());
+            }
+        }
     }
     if (j.contains("patch") && j["patch"].is_object()) {
         m.hasPatch = true;

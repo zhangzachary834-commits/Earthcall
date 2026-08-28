@@ -112,6 +112,7 @@ Addendum: Also ensure save system works in every case and everything that needs 
 - How far should substrate ordering / origination ratio (`docs/architecture/ontology/SUBSTRATE_ORDERING.md`) steer week-to-week work versus the Person-facing creation loop (near-term 2 / feature-sized 2). The ratio is already non-zero (authored SDF → WGSL); it should not displace clicking the running app.
 - ✅ **Whether `src/OurVerse/` should exist as a top-level region** — decided 2026-08-19: no. Ourverse the being stays at `ZonesOfEarth/Ourverse/`. The Person-facing surface stays ImGui under `Singularity/FirstMoverWindowTools/`. Router tree (`AGENTS.md` / `CLAUDE.md` / `GEMINI.md`) and `DIRECTORY_ORDERING.md` now match disk.
 - Whether the ImGUI is relevant or obselete once Earthcall has robust enough UI.
+- **Track the marginal cost of each new authored domain** (from [Green_Hills_Population_One §2](../../Reflections%20on%20Earthcall%27s%20Progression/Reflections%20on%20Trajectory/Green_Hills_Population_One.md), 2026-08-28): chess took weeks; the Perlin ground took one night (2026-08-27→28). Record wall-clock start→green for the *third* authored domain — the datum that shows whether the substrate is compounding or only the agents are learning. The ledger already timestamps everything; this is bookkeeping, not tooling.
 
 ## Propertypath exposure debt (tracked in `tests/no_black_box_test.cpp`):**
 - ✅ `World` — folded into `Zone` 2026-08-20 (`class World` gone; `BeingKind` 6 burned). Did not populate properties. Verified: `no_black_box_test` ALL OK; `save_roundtrip_test` 21/21. Audit: [WORLD_UNIVERSE_REFUSALS_AUDIT_2026-08-20.md](../../audits/WORLD_UNIVERSE_REFUSALS_AUDIT_2026-08-20.md).
@@ -152,6 +153,8 @@ numbers live in `tests/singularity/frame_lag_baseline.txt`; the reasoning, the s
 call stacks and the caveats are in [audits/2026-08-24_frame_lag_probe.md](../../audits/2026-08-24_frame_lag_probe.md).
 Re-record the baseline **downward** as each one lands (`./build/frame_lag_test --rebaseline`,
 on a quiet machine) so the tripwire tightens behind the fix.
+
+- **Dual-path parity test (hardcoded WGSL vs OntoMath AST path)** (from [Green_Hills_Population_One §3](../../Reflections%20on%20Earthcall%27s%20Progression/Reflections%20on%20Trajectory/Green_Hills_Population_One.md), 2026-08-28): the fast path is allowed to diverge in *implementation*, never in *meaning* — the day it can express something the authored path cannot, Refusal 7 is lost where no test looks. Guard it: evaluate the same field/SDF through both paths (`SdfWgsl.cpp` Path A vs Path B) and assert value parity within tolerance, so lag hunts can optimize the fast path without silently widening its semantics.
 
 - ⚑ AUTHOR — **`Physics::updateBodies` is all-pairs with no broadphase, and the legacy
   engine is on by default.** Measured on an idle machine: `Zone::update` costs

@@ -36,7 +36,7 @@ namespace Core {
         int oi = state.combineOp;
         if (oi < 0 || oi > 4) oi = 2;
         const float blend = (oi >= 3) ? state.combineBlend : 0.5f;
-        A->setFieldShape(geom::SdfNode::binary(ops[oi], an, bn, blend), 1.6f);
+        A->setFieldShape(geom::SdfNode::binary(ops[oi], an, bn, blend), glm::vec3(1.6f));
         mgr.active().removeObject(B);
         if (state.selectedObject3D == B) state.selectedObject3D = A;
         if (state.combineOperandA == B) state.combineOperandA = nullptr;

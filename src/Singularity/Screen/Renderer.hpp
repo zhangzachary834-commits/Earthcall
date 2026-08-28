@@ -125,7 +125,7 @@ public:
     const glm::mat4& currentModel() const { return _modelStack.back(); }
 
     virtual void drawMesh(const geom::TessMesh& mesh, const RenderMaterial& material) = 0;
-    virtual void drawImplicit(const geom::SdfNode& field, float extent,
+    virtual void drawImplicit(const geom::SdfNode& field, const glm::vec3& extent,
                               const RenderMaterial& material,
                               const geom::FieldNode* fieldNode = nullptr) = 0;
 

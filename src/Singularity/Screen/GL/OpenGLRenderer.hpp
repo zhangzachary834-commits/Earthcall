@@ -21,7 +21,7 @@ public:
 
 
     void drawMesh(const geom::TessMesh& mesh, const RenderMaterial& material) override;
-    void drawImplicit(const geom::SdfNode& field, float extent,
+    void drawImplicit(const geom::SdfNode& field, const glm::vec3& extent,
                       const RenderMaterial& material,
                       const geom::FieldNode* fieldNode = nullptr) override;
     void drawLines(const std::vector<std::pair<glm::vec3, glm::vec3>>& segments,

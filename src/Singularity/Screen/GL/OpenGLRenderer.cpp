@@ -82,7 +82,7 @@ void OpenGLRenderer::drawMesh(const geom::TessMesh& mesh, const RenderMaterial& 
     if (mat.doubleSided) glPopAttrib(); // restore one-sided light model
 }
 
-void OpenGLRenderer::drawImplicit(const geom::SdfNode& field, float extent,
+void OpenGLRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& extent,
                                   const RenderMaterial& material,
                                   const geom::FieldNode* fieldNode) {
     // Fixed-function GL has no raymarcher, so a field is drawn by tessellating it
