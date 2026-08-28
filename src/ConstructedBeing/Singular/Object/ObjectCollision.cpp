@@ -210,7 +210,8 @@ void Object::rebuildGeometryCaches() {
 
     geom::TessMesh m; // collision source — decimated into _supportCloud below
     if (_hasField) {
-        _fieldMesh = geom::tessellateSdf(fieldData, _fieldExtent);
+        int res = std::clamp(static_cast<int>(_fieldExtent / 5.0f), 24, 64);
+        _fieldMesh = geom::tessellateSdf(fieldData, _fieldExtent, res);
         m = _fieldMesh; // render and collision share it: marching tets are too costly to repeat
     }
     else if (_hasComplex) {
