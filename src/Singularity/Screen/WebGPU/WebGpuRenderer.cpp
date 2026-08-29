@@ -25,7 +25,6 @@ namespace {
 const char* kMeshWGSL = R"(
 struct U {
     viewProj:  mat4x4<f32>,
-    baseColor: vec4<f32>,
     lightPos:  vec4<f32>,   // world-space POSITION (GL_LIGHT0 is positional)
     params:    vec4<f32>,   // x=ambient, y=diffuse, z=specular, w=shininess
     eyePos:    vec4<f32>,
@@ -33,6 +32,7 @@ struct U {
 struct Instance {
     model:     mat4x4<f32>,
     normalMat: mat4x4<f32>,
+    baseColor: vec4<f32>,
 };
 @group(0) @binding(0) var<uniform> u: U;
 @group(0) @binding(1) var albedoTex: texture_2d<f32>;
@@ -44,6 +44,7 @@ struct VSOut {
     @location(0) worldNormal: vec3<f32>,
     @location(1) uv: vec2<f32>,
     @location(2) worldPos: vec3<f32>,
+    @location(3) baseColor: vec4<f32>,
 };
 
 @vertex
@@ -56,6 +57,7 @@ fn vs_main(@location(0) pos: vec3<f32>, @location(1) normal: vec3<f32>,
     out.worldNormal = (inst.normalMat * vec4<f32>(normal, 0.0)).xyz;
     out.uv = uv;
     out.worldPos = world.xyz;
+    out.baseColor = inst.baseColor;
     return out;
 }
 
@@ -71,8 +73,8 @@ fn fs_main(in: VSOut, @builtin(front_facing) front: bool) -> @location(0) vec4<f
     // Blinn-Phong specular: white highlight, gated so it only appears on lit faces.
     let spec = u.params.z * pow(max(dot(N, H), 0.0), max(u.params.w, 1.0)) * step(0.0001, diff);
     let texel = textureSample(albedoTex, albedoSamp, in.uv); // paint (white when untextured)
-    let rgb = u.baseColor.rgb * texel.rgb * lit + vec3<f32>(spec);
-    return vec4<f32>(rgb, u.baseColor.a * texel.a);
+    let rgb = in.baseColor.rgb * texel.rgb * lit + vec3<f32>(spec);
+    return vec4<f32>(rgb, in.baseColor.a * texel.a);
 }
 )";
 
@@ -81,7 +83,6 @@ fn fs_main(in: VSOut, @builtin(front_facing) front: bool) -> @location(0) vec4<f
 // normalMat moved to the per-instance storage buffer — see kMeshWGSL.
 struct MeshUniforms {
     glm::mat4 viewProj;
-    glm::vec4 baseColor;
     glm::vec4 lightPos;
     glm::vec4 params;
     glm::vec4 eyePos;
@@ -619,12 +620,12 @@ void WebGpuRenderer::drawMesh(const geom::TessMesh& mesh, const RenderMaterial& 
     MeshBatchKey key;
     key.mesh       = &mesh;
     key.albedoView = albedoView;
-    key.baseColor  = glm::vec4(mat.baseColor, mat.opacity);
     key.shading    = glm::vec4(mat.ambient, mat.diffuse, mat.specular, mat.shininess);
 
     InstanceData inst;
     inst.model     = _model;
     inst.normalMat = glm::transpose(glm::inverse(_model));
+    inst.baseColor = glm::vec4(mat.baseColor, mat.opacity);
     _meshBatches[key].push_back(inst);
 
     // Every queued instance really will be drawn at flush — count its
@@ -656,7 +657,6 @@ void WebGpuRenderer::flushMeshDraws() {
 
         MeshUniforms u;
         u.viewProj  = _viewProj;
-        u.baseColor = key.baseColor;
         u.lightPos  = glm::vec4(lightPos(), 1.0f);
         u.params    = key.shading;
         u.eyePos    = glm::vec4(_eyePos, 1.0f);

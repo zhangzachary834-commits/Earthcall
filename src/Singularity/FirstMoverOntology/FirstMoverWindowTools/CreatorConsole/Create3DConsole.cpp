@@ -10,6 +10,7 @@
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
+#include "ConstructedBeing/Material/Material.hpp"
 #include "Singularity/Core/SdfBuild.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/Patch.hpp"
@@ -86,8 +87,9 @@ namespace Rendering {
         }
 
         void paintNewObject(Object& obj, const glm::vec3& color) {
-            for (int f = 0; f < obj.getFaces(); ++f)
-                obj.setFaceColor(f, color.x, color.y, color.z);
+            if (auto mine = obj.ownMaterial()) {
+                mine->baseColor = color;
+            }
         }
 
         glm::mat4 spawnTransform(Singularity::Core::CreationChannel* channel,
