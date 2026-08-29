@@ -305,7 +305,6 @@ void Object::clearSmoothTessellationCache() {
 
 void Object::rebuildFieldMesh() const {
     if (!_fieldMeshDirty || !_hasField) return;
-    
 
     glm::vec3 fRes;
     if (_fieldCellSize.has_value() && _fieldCellSize.value() > 0.0f) {
@@ -379,12 +378,10 @@ glm::vec3 Object::getLocalSupportPoint(const glm::vec3& localDirection) const {
     }
     
     if (_hasField) {
-        return glm::vec3(dir.x >= 0.0f ? _fieldExtent.x : -_fieldExtent.x,
-                         dir.y >= 0.0f ? _fieldExtent.y : -_fieldExtent.y,
-                         dir.z >= 0.0f ? _fieldExtent.z : -_fieldExtent.z);
+        rebuildFieldMesh(); // lazy build
     }
     
-    if ((_hasSmooth || _hasComplex || _hasPatch) && !_supportCloud.empty()) {
+    if ((_hasSmooth || _hasComplex || _hasField || _hasPatch) && !_supportCloud.empty()) {
         float best = -std::numeric_limits<float>::max();
         glm::vec3 bestV = _supportCloud[0];
         for (const auto& v : _supportCloud) {
