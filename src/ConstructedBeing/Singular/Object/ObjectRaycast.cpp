@@ -59,13 +59,34 @@ bool Object::raycastFace(const glm::vec3& rayOriginWorld, const glm::vec3& rayDi
     if (dirLen < 1e-8f) return false;
     glm::vec3 dL = localDir / dirLen;
 
-    // Topology-based geometry takes precedence over the legacy primitive switch.
     if (_hasField) {
-        // Pick against the cached mesh — robust for any field (morph/boolean/
-        // implicit), including non-SDF implicit expressions where sphere-tracing
-        // would be unreliable.
-        rebuildFieldMesh();
-        if (raycastTessMesh(_fieldMesh, oL, dL, outT)) { outFaceIndex = 0; outUV = glm::vec2(0.5f); return true; }
+        // Fast AABB rejection & clipping before evaluating the field
+        const glm::vec3 bMin = -_fieldExtent * 1.05f, bMax = _fieldExtent * 1.05f;
+        float t0 = -1e9f, t1 = 1e9f;
+        for (int a = 0; a < 3; ++a) {
+            float invD = 1.0f / (std::abs(dL[a]) > 1e-6f ? dL[a] : (dL[a] < 0 ? -1e-6f : 1e-6f));
+            float tNear = (bMin[a] - oL[a]) * invD;
+            float tFar  = (bMax[a] - oL[a]) * invD;
+            if (tNear > tFar) std::swap(tNear, tFar);
+            t0 = std::max(t0, tNear);
+            t1 = std::min(t1, tFar);
+            if (t0 > t1) return false;
+        }
+        if (t1 < 0.0f) return false;
+
+        float tStart = std::max(t0, 0.0f);
+        float tMax = std::min(t1, 600.0f);
+        glm::vec3 nrm(0.0f);
+        glm::vec3 rayStart = oL + dL * tStart;
+        float subT = 0.0f;
+        if (geom::raycastSdf(fieldData, rayStart, dL, subT, nrm)) {
+            outT = tStart + subT;
+            if (outT <= tMax) {
+                outFaceIndex = 0;
+                outUV = glm::vec2(0.5f);
+                return true;
+            }
+        }
         return false;
     }
     if (_hasComplex) {

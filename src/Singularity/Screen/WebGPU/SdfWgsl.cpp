@@ -638,12 +638,16 @@ fn sdfGrad(p: vec3<f32>) -> vec3<f32> {
 }
 
 fn sdfNormal(p: vec3<f32>) -> vec3<f32> {
-    // Central differences, same 1e-3 epsilon the CPU sdfNormal uses.
+    // Tetrahedral gradient (4 evaluations instead of 6) for isotropic precision and 33% lower cost
     let e = 1e-3;
-    let g = vec3<f32>(
-        sdfEval(p + vec3<f32>(e, 0.0, 0.0)) - sdfEval(p - vec3<f32>(e, 0.0, 0.0)),
-        sdfEval(p + vec3<f32>(0.0, e, 0.0)) - sdfEval(p - vec3<f32>(0.0, e, 0.0)),
-        sdfEval(p + vec3<f32>(0.0, 0.0, e)) - sdfEval(p - vec3<f32>(0.0, 0.0, e)));
+    let k0 = vec3<f32>( 1.0, -1.0, -1.0);
+    let k1 = vec3<f32>(-1.0, -1.0,  1.0);
+    let k2 = vec3<f32>(-1.0,  1.0, -1.0);
+    let k3 = vec3<f32>( 1.0,  1.0,  1.0);
+    let g = k0 * sdfEval(p + k0 * e) +
+            k1 * sdfEval(p + k1 * e) +
+            k2 * sdfEval(p + k2 * e) +
+            k3 * sdfEval(p + k3 * e);
     let l = length(g);
     if (l < 1e-8) { return vec3<f32>(0.0, 1.0, 0.0); }
     return g / l;
@@ -689,28 +693,60 @@ fn fs(in: VSOut) -> FSOut {
     if (box.y < box.x || box.y < 0.0) { discard; }
 
     var t = max(box.x, 0.0);
-    let maxDist = box.y;
+    let maxDist = min(box.y, inst.misc.z);
     var hit = false;
     var transmittance = 1.0;
     var volumetric_scatter = 0.0;
     var first_hit_t = -1.0;
     
-    for (var i = 0; i < 192; i = i + 1) {
+    // Enhanced Sphere Tracing (Over-Relaxation) state:
+    var omega = select(1.0, 1.4, damping > 0.5);
+    var prev_d = 1e10;
+    var candidate_step = 0.0;
+    
+    for (var i = 0; i < 128; i = i + 1) {
         let p = ro + rd * t;
         let raw = sdfEval(p);
         
         // Scale epsilon by distance (cone stepping) to prevent infinite steps on the horizon
-        let current_eps = max(eps, t * 0.001);
+        let current_eps = max(eps, t * 0.0008);
 
         var d = raw;
 
         if (damping < 0.5) {
-            // Un-Lipschitz ASTs underestimate distance and stall infinitely near the surface.
-            // Instead of doing a massively expensive numerical gradient, we just accept a looser hit epsilon.
-            if (d < current_eps * 8.0) { hit = true; break; }
+            // Un-Lipschitz ASTs & implicit heightfield terrains:
+            if (d <= 0.0 || abs(d) < current_eps * 2.0) {
+                hit = true;
+                if (d < 0.0 && prev_d > 0.0 && candidate_step > 0.0) {
+                    // Secant root refinement for exact sub-pixel boundary hit
+                    let frac = clamp(prev_d / (prev_d - d), 0.0, 1.0);
+                    t = (t - candidate_step) + candidate_step * frac;
+                }
+                break;
+            }
+            // Adaptive distance step: allows grazing rays to cross empty space without micro-step stalls
+            let s = max(d * 0.75, max(current_eps, t * 0.012));
+            candidate_step = s;
+            prev_d = d;
+            t = t + s;
         } else {
+            // Exact manifold SDFs: Keinert et al. Over-Relaxation
             if (d < current_eps) { hit = true; break; }
+            
+            if (d + prev_d < candidate_step) {
+                // Overstep detected: roll back candidate leap
+                t = t - (omega - 1.0) * prev_d;
+                candidate_step = d;
+                prev_d = d;
+                omega = 1.0;
+            } else {
+                candidate_step = omega * d;
+                prev_d = d;
+                omega = 1.4;
+            }
+            t = t + max(candidate_step, current_eps);
         }
+        
         // Volumetric Field Accumulation
         let density = fieldEval(p);
         if (density > 0.0) {
@@ -725,8 +761,7 @@ fn fs(in: VSOut) -> FSOut {
             volumetric_scatter += (density / extinction) * (old_t - transmittance);
         }
         
-        t = t + max(d, current_eps);
-        // Early exit if the field is fully opaque
+        // Early exit if the field is fully opaque or ray exits the bounded volume
         if (transmittance < 0.01) { break; }
         if (t > maxDist) { break; }
     }

@@ -371,6 +371,7 @@ void Object::drawFieldModel() const {
     }
     rebuildFieldMesh();
     r.drawMesh(_fieldMesh, mat);
+    
 }
 
 void Object::drawPatchModel() const {
