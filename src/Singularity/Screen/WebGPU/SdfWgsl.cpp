@@ -799,7 +799,7 @@ fn fs(in: VSOut) -> FSOut {
                 break;
             }
             
-            let M = 4.0; // Lipschitz bound from 0.25 damping
+            let M = 0.4;
             let denom = M * length(rd.xz) - rd.y;
             var s = current_eps;
             if (denom > 1e-4) {
