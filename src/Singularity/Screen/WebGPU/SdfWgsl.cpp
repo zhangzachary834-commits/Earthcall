@@ -721,13 +721,11 @@ fn rayAabb(ro: vec3<f32>, rd: vec3<f32>, b: vec3<f32>) -> vec2<f32> {
 @fragment
 fn fs(in: VSOut) -> FSOut {
     g_instIdx = in.instIdx;
-    let inst = instances[in.instIdx];
-    // Ray in field space, so the marched distances are the field's own.
-    let o4 = inst.invModel * vec4<f32>(u.eyePos.xyz, 1.0);
-    let t4 = inst.invModel * vec4<f32>(in.worldPos, 1.0);
-    let ro = o4.xyz;
-    let rd = normalize(t4.xyz - ro);
-
+    let inst    = instances[in.instIdx];
+    let roWorld = u.eyePos.xyz;
+    let rdWorld = normalize(in.worldPos - roWorld);
+    let ro      = (inst.invModel * vec4<f32>(roWorld, 1.0)).xyz;
+    let rd      = normalize((inst.invModel * vec4<f32>(rdWorld, 0.0)).xyz);
     let eps     = inst.misc.y;
     let damping = inst.misc.w;
     let box     = rayAabb(ro, rd, inst.extents.xyz);
@@ -756,7 +754,7 @@ fn fs(in: VSOut) -> FSOut {
         var d = raw;
 
         if (damping < 0.5) {
-            // Un-Lipschitz ASTs & implicit heightfield terrains:
+            // Implicit ASTs & heightfield terrains: Coarse-to-fine rapid convergence
             if (d <= 0.0 || abs(d) < current_eps * 2.0) {
                 hit = true;
                 if (d < 0.0 && prev_d > 0.0 && candidate_step > 0.0) {
@@ -766,8 +764,14 @@ fn fs(in: VSOut) -> FSOut {
                 }
                 break;
             }
-            // Adaptive distance step: allows grazing rays to cross empty space without micro-step stalls
-            let s = max(d * 0.75, max(current_eps, t * 0.012));
+            
+            // Multi-tier coarse jump across empty space + fine boundary convergence
+            var s = 0.0;
+            if (d > 4.0) {
+                s = max(d * 0.9, t * 0.025); // Coarse macro leap across valleys
+            } else {
+                s = max(d * 0.75, max(current_eps, t * 0.008)); // Fine adaptive step
+            }
             candidate_step = s;
             prev_d = d;
             t = t + s;
