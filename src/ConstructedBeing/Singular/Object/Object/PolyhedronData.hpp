@@ -77,13 +77,16 @@ struct PolyhedronData {
 
     static PolyhedronData createPrism(
         const std::vector<glm::vec2>& basePolygon, float height, float radius = 0.5f);
+    static PolyhedronData createPrism(int sides, float radius, float height);
     static PolyhedronData createAntiprism(int n, float radius = 0.5f, float height = 1.0f);
     static PolyhedronData createPyramid(
         const std::vector<glm::vec2>& basePolygon, float apexHeight, float radius = 0.5f);
+    static PolyhedronData createPyramid(int sides, float radius, float height);
     static PolyhedronData createBipyramid(int n, float radius = 0.5f, float height = 1.0f);
     static PolyhedronData createFrustum(
         const std::vector<glm::vec2>& basePolygon, float height,
         float topScale = 0.5f, float radius = 0.5f);
+    static PolyhedronData createFrustum(int sides, float radius, float topScale, float height);
 
     static PolyhedronData truncate(const PolyhedronData& source, float amount = 0.3f);
     static PolyhedronData createDual(const PolyhedronData& source);

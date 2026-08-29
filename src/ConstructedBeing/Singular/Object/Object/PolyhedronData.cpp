@@ -453,6 +453,18 @@ PolyhedronData PolyhedronData::createPrism(
     return data;
 }
 
+PolyhedronData PolyhedronData::createPrism(
+    int sides, float radius, float height)
+{
+    std::vector<glm::vec2> base;
+    sides = std::max(3, sides);
+    for (int i = 0; i < sides; ++i) {
+        float angle = 2.0f * static_cast<float>(M_PI) * i / sides;
+        base.emplace_back(std::cos(angle), std::sin(angle));
+    }
+    return createPrism(base, height, radius);
+}
+
 PolyhedronData PolyhedronData::createAntiprism(
     int n, float radius, float height)
 {

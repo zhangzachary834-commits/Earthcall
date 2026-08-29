@@ -89,8 +89,14 @@ fn sminK(a: f32, b: f32, k: f32) -> f32 {
 fn mod289(x: vec4<f32>) -> vec4<f32> {
     return x - floor(x * (1.0 / 289.0)) * 289.0;
 }
+fn mod289_2(x: vec2<f32>) -> vec2<f32> {
+    return x - floor(x * (1.0 / 289.0)) * 289.0;
+}
 fn mod289_3(x: vec3<f32>) -> vec3<f32> {
     return x - floor(x * (1.0 / 289.0)) * 289.0;
+}
+fn permute3(x: vec3<f32>) -> vec3<f32> {
+    return mod289_3(((x * 34.0) + 1.0) * x);
 }
 fn permute4(x: vec4<f32>) -> vec4<f32> {
     return mod289(((x * 34.0) + 1.0) * x);
@@ -98,6 +104,28 @@ fn permute4(x: vec4<f32>) -> vec4<f32> {
 
 fn taylorInvSqrt(r: vec4<f32>) -> vec4<f32> {
     return 1.79284291400159 - 0.85373472095314 * r;
+}
+
+fn snoise2(v: vec2<f32>) -> f32 {
+    let C = vec4<f32>(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439);
+    var i = floor(v + dot(v, C.yy));
+    let x0 = v - i + dot(i, C.xx);
+    var i1 = select(vec2<f32>(0.0, 1.0), vec2<f32>(1.0, 0.0), x0.x > x0.y);
+    var x12 = x0.xyxy + C.xxzz;
+    x12.x = x12.x - i1.x;
+    x12.y = x12.y - i1.y;
+    i = mod289_2(i);
+    let p = permute3(permute3(i.y + vec3<f32>(0.0, i1.y, 1.0)) + i.x + vec3<f32>(0.0, i1.x, 1.0));
+    var m = max(0.5 - vec3<f32>(dot(x0, x0), dot(x12.xy, x12.xy), dot(x12.zw, x12.zw)), vec3<f32>(0.0));
+    m = m * m;
+    m = m * m;
+    let x = 2.0 * fract(p * C.www) - 1.0;
+    let h = abs(x) - 0.5;
+    let ox = floor(x + 0.5);
+    let a0 = x - ox;
+    m = m * (1.79284291400159 - 0.85373472095314 * (a0 * a0 + h * h));
+    let g = vec3<f32>(a0.x * x0.x + h.x * x0.y, a0.y * x12.x + h.y * x12.y, a0.z * x12.z + h.z * x12.w);
+    return 70.0 * dot(m, g);
 }
 
 fn cnoise2(P: vec2<f32>) -> f32 {
@@ -137,75 +165,68 @@ fn cnoise2(P: vec2<f32>) -> f32 {
     return 2.3 * n_xy;
 }
 
+fn snoise3(v: vec3<f32>) -> f32 {
+    let C = vec2<f32>(1.0 / 6.0, 1.0 / 3.0);
+    let D = vec4<f32>(0.0, 0.5, 1.0, 2.0);
+
+    var i = floor(v + dot(v, C.yyy));
+    let x0 = v - i + dot(i, C.xxx);
+
+    let g = step(x0.yzx, x0.xyz);
+    let l = 1.0 - g;
+    let i1 = min(g.xyz, l.zxy);
+    let i2 = max(g.xyz, l.zxy);
+
+    let x1 = x0 - i1 + C.xxx;
+    let x2 = x0 - i2 + C.yyy;
+    let x3 = x0 - D.yyy;
+
+    i = mod289_3(i);
+    let p = permute4(permute4(permute4(
+                i.z + vec4<f32>(0.0, i1.z, i2.z, 1.0))
+              + i.y + vec4<f32>(0.0, i1.y, i2.y, 1.0))
+              + i.x + vec4<f32>(0.0, i1.x, i2.x, 1.0));
+
+    let n_ = 0.142857142857;
+    let ns = n_ * D.wyz - D.xzx;
+
+    let j = p - 49.0 * floor(p * ns.z * ns.z);
+
+    let x_ = floor(j * ns.z);
+    let y_ = floor(j - 7.0 * x_);
+
+    let x = x_ * ns.x + ns.yyyy;
+    let y = y_ * ns.x + ns.yyyy;
+    let h = 1.0 - abs(x) - abs(y);
+
+    let b0 = vec4<f32>(x.xy, y.xy);
+    let b1 = vec4<f32>(x.zw, y.zw);
+
+    let s0 = floor(b0) * 2.0 + 1.0;
+    let s1 = floor(b1) * 2.0 + 1.0;
+    let sh = -step(h, vec4<f32>(0.0));
+
+    let a0 = b0.xzyw + s0.xzyw * sh.xxyy;
+    let a1 = b1.xzyw + s1.xzyw * sh.zzww;
+
+    var p0 = vec3<f32>(a0.xy, h.x);
+    var p1 = vec3<f32>(a0.zw, h.y);
+    var p2 = vec3<f32>(a1.xy, h.z);
+    var p3 = vec3<f32>(a1.zw, h.w);
+
+    let norm = taylorInvSqrt(vec4<f32>(dot(p0, p0), dot(p1, p1), dot(p2, p2), dot(p3, p3)));
+    p0 = p0 * norm.x;
+    p1 = p1 * norm.y;
+    p2 = p2 * norm.z;
+    p3 = p3 * norm.w;
+
+    var m = max(0.6 - vec4<f32>(dot(x0, x0), dot(x1, x1), dot(x2, x2), dot(x3, x3)), vec4<f32>(0.0));
+    m = m * m;
+    return 42.0 * dot(m * m, vec4<f32>(dot(p0, x0), dot(p1, x1), dot(p2, x2), dot(p3, x3)));
+}
+
 fn cnoise3(P: vec3<f32>) -> f32 {
-    if (abs(P.y) < 1e-5) {
-        return cnoise2(P.xz);
-    }
-    let Pi0 = floor(P);
-    let Pi1 = Pi0 + vec3<f32>(1.0);
-    let Pi0_mod = mod289_3(Pi0);
-    let Pi1_mod = mod289_3(Pi1);
-    let Pf0 = fract(P);
-    let Pf1 = Pf0 - vec3<f32>(1.0);
-    let ix = vec4<f32>(Pi0_mod.x, Pi1_mod.x, Pi0_mod.x, Pi1_mod.x);
-    let iy = vec4<f32>(Pi0_mod.y, Pi0_mod.y, Pi1_mod.y, Pi1_mod.y);
-    let iz0 = vec4<f32>(Pi0_mod.z);
-    let iz1 = vec4<f32>(Pi1_mod.z);
-
-    let ixy = permute4(permute4(ix) + iy);
-    let ixy0 = permute4(ixy + iz0);
-    let ixy1 = permute4(ixy + iz1);
-
-    var gx0 = ixy0 / 7.0;
-    var gy0 = fract(floor(gx0) / 7.0) - 0.5;
-    gx0 = fract(gx0);
-    var gz0 = vec4<f32>(0.5) - abs(gx0) - abs(gy0);
-    let sz0 = step(gz0, vec4<f32>(0.0));
-    gx0 = gx0 - sz0 * (step(vec4<f32>(0.0), gx0) - 0.5);
-    gy0 = gy0 - sz0 * (step(vec4<f32>(0.0), gy0) - 0.5);
-
-    var gx1 = ixy1 / 7.0;
-    var gy1 = fract(floor(gx1) / 7.0) - 0.5;
-    gx1 = fract(gx1);
-    var gz1 = vec4<f32>(0.5) - abs(gx1) - abs(gy1);
-    let sz1 = step(gz1, vec4<f32>(0.0));
-    gx1 = gx1 - sz1 * (step(vec4<f32>(0.0), gx1) - 0.5);
-    gy1 = gy1 - sz1 * (step(vec4<f32>(0.0), gy1) - 0.5);
-
-    var g000 = vec3<f32>(gx0.x,gy0.x,gz0.x);
-    var g100 = vec3<f32>(gx0.y,gy0.y,gz0.y);
-    var g010 = vec3<f32>(gx0.z,gy0.z,gz0.z);
-    var g110 = vec3<f32>(gx0.w,gy0.w,gz0.w);
-    var g001 = vec3<f32>(gx1.x,gy1.x,gz1.x);
-    var g101 = vec3<f32>(gx1.y,gy1.y,gz1.y);
-    var g011 = vec3<f32>(gx1.z,gy1.z,gz1.z);
-    var g111 = vec3<f32>(gx1.w,gy1.w,gz1.w);
-
-    let norm0 = taylorInvSqrt(vec4<f32>(dot(g000, g000), dot(g010, g010), dot(g100, g100), dot(g110, g110)));
-    g000 = g000 * norm0.x;
-    g010 = g010 * norm0.y;
-    g100 = g100 * norm0.z;
-    g110 = g110 * norm0.w;
-    let norm1 = taylorInvSqrt(vec4<f32>(dot(g001, g001), dot(g011, g011), dot(g101, g101), dot(g111, g111)));
-    g001 = g001 * norm1.x;
-    g011 = g011 * norm1.y;
-    g101 = g101 * norm1.z;
-    g111 = g111 * norm1.w;
-
-    let n000 = dot(g000, Pf0);
-    let n100 = dot(g100, vec3<f32>(Pf1.x, Pf0.y, Pf0.z));
-    let n010 = dot(g010, vec3<f32>(Pf0.x, Pf1.y, Pf0.z));
-    let n110 = dot(g110, vec3<f32>(Pf1.x, Pf1.y, Pf0.z));
-    let n001 = dot(g001, vec3<f32>(Pf0.x, Pf0.y, Pf1.z));
-    let n101 = dot(g101, vec3<f32>(Pf1.x, Pf0.y, Pf1.z));
-    let n011 = dot(g011, vec3<f32>(Pf0.x, Pf1.y, Pf1.z));
-    let n111 = dot(g111, Pf1);
-
-    let fade_xyz = Pf0 * Pf0 * Pf0 * (Pf0 * (Pf0 * 6.0 - 15.0) + 10.0);
-    let n_z = mix(vec4<f32>(n000, n100, n010, n110), vec4<f32>(n001, n101, n011, n111), fade_xyz.z);
-    let n_yz = mix(n_z.xy, n_z.zw, fade_xyz.y);
-    let n_xyz = mix(n_yz.x, n_yz.y, fade_xyz.x); 
-    return 2.2 * n_xyz;
+    return snoise3(P);
 }
 )WGSL";
 
@@ -751,7 +772,7 @@ fn fs(in: VSOut) -> FSOut {
     var prev_d = 1e10;
     var candidate_step = 0.0;
     
-    for (var i = 0; i < 96; i = i + 1) {
+    for (var i = 0; i < 48; i = i + 1) {
         if (t > maxDist) { break; }
         let p = ro + rd * t;
         
@@ -763,7 +784,7 @@ fn fs(in: VSOut) -> FSOut {
         let raw = sdfEval(p);
         
         // Scale epsilon by distance (cone stepping) to prevent infinite steps on the horizon
-        let current_eps = max(eps, t * 0.0008);
+        let current_eps = max(eps, t * 0.001);
 
         var d = raw;
 
@@ -779,13 +800,8 @@ fn fs(in: VSOut) -> FSOut {
                 break;
             }
             
-            // Multi-tier coarse jump across empty space + fine boundary convergence
-            var s = 0.0;
-            if (d > 4.0) {
-                s = max(d * 0.9, t * 0.025); // Coarse macro leap across valleys
-            } else {
-                s = max(d * 0.75, max(current_eps, t * 0.008)); // Fine adaptive step
-            }
+            // Dynamic terrain step: scale aggressively with distance and clearance
+            let s = max(d * 0.85, max(0.4, t * 0.02));
             candidate_step = s;
             prev_d = d;
             t = t + s;
