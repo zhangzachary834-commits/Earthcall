@@ -16,6 +16,9 @@
 
 namespace OntoMath {
 
+std::atomic<uint32_t> g_astEvaluations{0};
+
+
 namespace {
 
 std::string formatNumber(double v) {
@@ -1207,6 +1210,12 @@ std::map<std::string, PropertyValue> varsAtPoint(
 } // namespace
 
 std::optional<PropertyValue> MathNode::evaluate(const std::map<std::string, PropertyValue>& vars, const Singular* subject) const {
+    thread_local uint32_t t_localCount = 0;
+    t_localCount++;
+    if (t_localCount >= 1024) {
+        g_astEvaluations.fetch_add(t_localCount, std::memory_order_relaxed);
+        t_localCount = 0;
+    }
     switch(op) {
         case Op::ScalarLeaf: {
             // Bind only what this form actually reads. Term::evaluate looks

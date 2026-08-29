@@ -39,6 +39,8 @@ public:
     // Telemetry and GPU micro-mastery stats recorded during the frame.
     struct FrameStats {
         uint32_t drawCalls = 0;
+        uint32_t meshDrawCalls = 0;
+        uint32_t sdfDrawCalls = 0;
         uint32_t trianglesDrawn = 0;
         size_t   vramAllocatedBytes = 0;
         size_t   uniformBytesWritten = 0;

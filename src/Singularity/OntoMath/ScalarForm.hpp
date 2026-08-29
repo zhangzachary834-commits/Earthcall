@@ -39,7 +39,10 @@ struct ConditionNode;   // guards: the condition calculus gates pieces
 // terms, and the graph/relation-valued conditions of the manifesto's law
 // calculus. Extend here — the ECA wiring above this does not change.
 // ============================================================================
+#include <atomic>
 namespace OntoMath {
+
+extern std::atomic<uint32_t> g_astEvaluations;
 
 // A transcendental factor: kind(scale·var + shift). This is what carries the
 // algebra past signomials — periodic (sin/cos), exponential (exp), and

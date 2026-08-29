@@ -688,6 +688,7 @@ void WebGpuRenderer::flushMeshDraws() {
                                   static_cast<uint32_t>(instances.size()), 0, 0);
 
         mutableFrameStats().drawCalls++;
+        mutableFrameStats().meshDrawCalls++;
     }
     _meshBatches.clear();
 }
@@ -997,6 +998,7 @@ void WebGpuRenderer::flushSdfDraws() {
         wgpuRenderPassEncoderDraw(_pass, 36, static_cast<uint32_t>(instances.size()), 0, 0);
 
         mutableFrameStats().drawCalls++;
+        mutableFrameStats().sdfDrawCalls++;
     }
     _sdfBatches.clear();
     _sdfParamsBatches.clear();
