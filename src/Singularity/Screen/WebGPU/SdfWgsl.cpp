@@ -772,7 +772,7 @@ fn fs(in: VSOut) -> FSOut {
     var prev_d = 1e10;
     var candidate_step = 0.0;
     
-    for (var i = 0; i < 48; i = i + 1) {
+    for (var i = 0; i < 28; i = i + 1) {
         if (t > maxDist) { break; }
         let p = ro + rd * t;
         
@@ -789,26 +789,19 @@ fn fs(in: VSOut) -> FSOut {
         var d = raw;
 
         if (damping < 0.5) {
-            // Implicit ASTs & heightfield terrains: Maximum Safe Cone Stepping
+            // Implicit ASTs & heightfield terrains: Coarse-to-fine rapid convergence
             if (d <= 0.0 || abs(d) < current_eps * 2.0) {
                 hit = true;
                 if (d < 0.0 && prev_d > 0.0 && candidate_step > 0.0) {
+                    // Secant root refinement for exact sub-pixel boundary hit
                     let frac = clamp(prev_d / (prev_d - d), 0.0, 1.0);
                     t = (t - candidate_step) + candidate_step * frac;
                 }
                 break;
             }
             
-            let M = 0.4;
-            let denom = M * length(rd.xz) - rd.y;
-            var s = current_eps;
-            if (denom > 1e-4) {
-                s = max(d / denom, current_eps);
-                s = s * 1.5; // Relaxation
-            } else {
-                break; // Ray is too shallow to ever hit the terrain
-            }
-            
+            // Dynamic terrain step: scale aggressively with distance and clearance
+            let s = max(d * 0.95, max(1.5, t * 0.06));
             candidate_step = s;
             prev_d = d;
             t = t + s;
@@ -976,7 +969,6 @@ Program compile(const geom::SdfNode& root, const geom::FieldNode* fieldNode) {
     // A storage array of length zero is invalid, and a field with no parameters at
     // all is possible (a bare degenerate tree). One unused float keeps the binding
     // legal without the shader having to know.
-
     if (prog.params.empty()) prog.params.push_back(0.0f);
     return prog;
 }
