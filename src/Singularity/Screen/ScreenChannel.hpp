@@ -45,6 +45,8 @@ public:
     int    pipelineSwitches = 0;
     int    cachedMeshesCount = 0;
     bool   wireframe = false;
+    double renderScale = 1.0;
+    bool   performanceMode = false;
 
 private:
     void buildProperties() override;

@@ -1,26 +1,22 @@
-# Task: 3D Face Brush Restoration, Per-Zone FaceTexture Serialization & Full Serialization Audit
+# Task Checklist: Earthcall Broken Tool Restoration
 
-- [ ] **Phase 1: Due Diligence & Detailed Audit**
-  - [x] Trace FaceBrush tool implementation across `Tool.cpp`, `CreationTools.cpp`, `Create3DConsole.cpp`, `PaintToolSurface.cpp`, `ObjectRender.cpp`.
-  - [x] Identify FaceBrush bugs (0 opacity/flow, 0 spacing, missing faceTextures initialization on unpainted objects, ImGui mouse capture).
-  - [x] Trace Per-Zone serialization across `Zone.cpp`, `ZoneManager.cpp`, `Serialization.cpp`, `SaveSystem.cpp`.
-  - [x] Audit all missing entities/properties from `zone.json` / `home.json` beyond face textures.
-
-- [ ] **Phase 2: Fix 3D Face Brush Tool Functionality**
-  - [ ] Fix `Tool::FaceBrush` in `src/Singularity/FirstMoverOntology/FirstMoverWindowTools/Tool.cpp` (initFaceTextures on ownMaterial, valid opacity/flow/spacing, ImGui capture guard).
-  - [ ] Enhance Face Brush UI controls in `src/Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/Create3DConsole.cpp` (opacity, flow, brush radius, softness, color picker).
-  - [ ] Verify Face Brush painting logic with tests.
-
-- [ ] **Phase 3: Per-Zone FaceTexture & Material Serialization & Logging**
-  - [ ] Update `zoneToJson` in `src/Singularity/Storage/Serialization.cpp` to serialize `materials` for all objects in the zone.
-  - [ ] Update `applyZoneJson` / `makeZoneFromJson` in `src/Singularity/Storage/Serialization.cpp` to restore `materials` on load.
-  - [ ] Add explicit per-zone logging for face textures in `ZoneManager.cpp` during `persistZones()`, `hydrateFromZoneStore()`, `saveStateWithLog()`, and `loadState()`.
-  - [ ] Ensure `zoneToJson` and `applyZoneJson` also serialize/deserialize `deletable` map and custom object attributes.
-
-- [ ] **Phase 4: Serialization Audit Documentation**
-  - [ ] Author comprehensive audit report in `docs/audits/ZONE_SERIALIZATION_AUDIT_2026-08-22.md` detailing every entity and property omitted from per-zone serialization.
-
-- [ ] **Phase 5: Build, Test & Verification**
-  - [ ] Add unit test verifying painted face textures survive per-zone identity persistence (`zone.json` / `home.json`).
-  - [ ] Build and pass all tests (`paint_test`, `zone_identity_test`, `object_roundtrip_test`, `zone_home_ontology_test`, etc.).
-  - [ ] Verify `earthcall` builds cleanly.
+- [ ] 1. Initial Analysis & Reconnaissance
+  - [ ] 1.1 Read and inspect `src/Singularity/FirstMoverOntology/FirstMoverWindowTools/Tool.cpp`
+  - [ ] 1.2 Read and inspect `src/Singularity/FirstMoverOntology/FirstMoverWindowTools/CreationTools.cpp`
+  - [ ] 1.3 Read and inspect `src/Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/Create3DConsole.cpp`
+  - [ ] 1.4 Read and inspect `src/Singularity/Storage/Serialization.cpp` and related headers (`Object.hpp`, `Material.hpp`, `FaceTexture.hpp`, `PolyhedronData.hpp`)
+  - [ ] 1.5 Check existing test suites and build system setup
+- [ ] 2. Tool 1: 3D Polyhedron Generator Restoration
+  - [ ] 2.1 Update `Tool.cpp` to remove stub early return and generate Polyhedron objects with proper `PolyhedronData`
+  - [ ] 2.2 Update `CreationTools.cpp` to sync polyhedron state and update hologram preview
+- [ ] 3. Tool 2: 3D Face Brush Tool Restoration
+  - [ ] 3.1 Update `Tool.cpp` (`Tool::FaceBrush` / face paint methods) with ImGui mouse capture guard, parameter fallbacks, and face texture initialization
+  - [ ] 3.2 Update `Create3DConsole.cpp` to expose sliders for opacity, flow, radius, softness, and color picker
+- [ ] 4. Tool 3: Pottery Tool & FaceTexture Scaling
+  - [ ] 4.1 Update `Tool.cpp` (`Tool::Pottery`) to handle UV/face texture scaling adaptively
+- [ ] 5. System: Per-Zone Material & FaceTexture Serialization
+  - [ ] 5.1 Update `zoneToJson` in `Serialization.cpp` for materials and faceTextures
+  - [ ] 5.2 Update `applyZoneJson` / `makeZoneFromJson` in `Serialization.cpp` for materials and faceTextures deserialization
+- [ ] 6. Verification and Testing
+  - [ ] 6.1 Run build / tests to verify changes compile and tests pass
+  - [ ] 6.2 Review diffs and ensure clean implementation

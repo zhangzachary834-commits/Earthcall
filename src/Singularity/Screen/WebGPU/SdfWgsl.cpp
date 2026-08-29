@@ -734,6 +734,13 @@ fn fs(in: VSOut) -> FSOut {
 
     var t = max(box.x, 0.0);
     let maxDist = min(box.y, inst.misc.z);
+
+    // Heightfield planar leap: If ray starts above the upper extent and points down, leap to top plane in 1 step
+    if (damping < 0.5 && rd.y < -1e-4 && (ro.y + rd.y * t) > inst.extents.y) {
+        let planeT = (inst.extents.y - ro.y) / rd.y;
+        t = max(t, planeT);
+    }
+
     var hit = false;
     var transmittance = 1.0;
     var volumetric_scatter = 0.0;
@@ -745,7 +752,14 @@ fn fs(in: VSOut) -> FSOut {
     var candidate_step = 0.0;
     
     for (var i = 0; i < 96; i = i + 1) {
+        if (t > maxDist) { break; }
         let p = ro + rd * t;
+        
+        // Analytical early-exit: If ray is above maximum height and traveling upwards, it can never hit ground
+        if (damping < 0.5 && rd.y > 1e-4 && p.y > inst.extents.y) {
+            break;
+        }
+
         let raw = sdfEval(p);
         
         // Scale epsilon by distance (cone stepping) to prevent infinite steps on the horizon
