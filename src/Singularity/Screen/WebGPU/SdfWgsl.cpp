@@ -789,19 +789,26 @@ fn fs(in: VSOut) -> FSOut {
         var d = raw;
 
         if (damping < 0.5) {
-            // Implicit ASTs & heightfield terrains: Coarse-to-fine rapid convergence
+            // Implicit ASTs & heightfield terrains: Maximum Safe Cone Stepping
             if (d <= 0.0 || abs(d) < current_eps * 2.0) {
                 hit = true;
                 if (d < 0.0 && prev_d > 0.0 && candidate_step > 0.0) {
-                    // Secant root refinement for exact sub-pixel boundary hit
                     let frac = clamp(prev_d / (prev_d - d), 0.0, 1.0);
                     t = (t - candidate_step) + candidate_step * frac;
                 }
                 break;
             }
             
-            // Dynamic terrain step: scale aggressively with distance and clearance
-            let s = max(d * 0.85, max(0.4, t * 0.02));
+            let M = 4.0; // Lipschitz bound from 0.25 damping
+            let denom = M * length(rd.xz) - rd.y;
+            var s = current_eps;
+            if (denom > 1e-4) {
+                s = max(d / denom, current_eps);
+                s = s * 1.5; // Relaxation
+            } else {
+                break; // Ray is too shallow to ever hit the terrain
+            }
+            
             candidate_step = s;
             prev_d = d;
             t = t + s;
@@ -969,6 +976,62 @@ Program compile(const geom::SdfNode& root, const geom::FieldNode* fieldNode) {
     // A storage array of length zero is invalid, and a field with no parameters at
     // all is possible (a bare degenerate tree). One unused float keeps the binding
     // legal without the shader having to know.
+
+    prog.computeWgsl = kPrimitives + "\nfn sdfEval(p: vec3<f32>) -> f32 {\n" + e.body + "    return " + result + ";\n}\n" + R"WGSL(
+@group(0) @binding(1) var<storage, read> P: Params;
+
+struct SdfInstanceData {
+    model: mat4x4<f32>,
+    invModel: mat4x4<f32>,
+    baseColor: vec4<f32>,
+    shading: vec4<f32>,
+    extents: vec4<f32>,
+    misc: vec4<f32>,
+    paramOffset: u32,
+    brickmapOffset: u32,
+    brickmapRes: u32,
+    pad2: u32,
+};
+@group(1) @binding(0) var<storage, read> instances: array<SdfInstanceData>;
+@group(2) @binding(0) var<storage, read_write> brickmaps: array<atomic<u32>>;
+
+struct ComputeParams {
+    instIdx: u32,
+    resX: u32,
+    resY: u32,
+    resZ: u32,
+};
+@group(3) @binding(0) var<uniform> cu: ComputeParams;
+
+@compute @workgroup_size(4, 4, 4)
+fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
+    if (gid.x >= cu.resX || gid.y >= cu.resY || gid.z >= cu.resZ) { return; }
+    let inst = instances[cu.instIdx];
+    let voxel_size = (inst.extents.xyz * 2.0) / vec3<f32>(f32(cu.resX), f32(cu.resY), f32(cu.resZ));
+    let local_pos = -inst.extents.xyz + vec3<f32>(gid) * voxel_size + voxel_size * 0.5;
+    
+    // We need to set g_instIdx so that sdfEval uses the correct parameter offset.
+    // Wait, g_instIdx is a module-scope private variable in the fragment shader. 
+    // We need to define it here too.
+    g_instIdx = cu.instIdx;
+    
+    let d = sdfEval(local_pos);
+    let voxel_radius = length(voxel_size) * 0.5;
+    
+    if (d < voxel_radius) {
+        let linear_idx = gid.z * (cu.resX * cu.resY) + gid.y * cu.resX + gid.x;
+        let word_idx = linear_idx / 32u;
+        let bit_idx = linear_idx % 32u;
+        atomicOr(&brickmaps[inst.brickmapOffset + word_idx], 1u << bit_idx);
+    }
+}
+)WGSL";
+
+    // Also inject `g_instIdx` definition into computeWgsl
+    prog.computeWgsl = "var<private> g_instIdx: u32;
+" + prog.computeWgsl;
+
+
     if (prog.params.empty()) prog.params.push_back(0.0f);
     return prog;
 }
