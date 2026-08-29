@@ -119,6 +119,45 @@ struct VOut { @builtin(position) clip: vec4<f32>, @location(0) uv: vec2<f32> };
 )";
 struct ImageVertex { glm::vec3 pos; glm::vec2 uv; };
 
+const char* kParticleWGSL = R"(
+struct PU { 
+    mvp: mat4x4<f32>, 
+    color: vec4<f32>, 
+    originAndTravel: vec4<f32>, 
+    flowDir: vec4<f32>, 
+    scale: vec4<f32> 
+};
+@group(0) @binding(0) var<uniform> pu: PU;
+
+var<private> h: u32;
+
+fn rnd() -> f32 {
+    h = h ^ (h << 13u);
+    h = h ^ (h >> 17u);
+    h = h ^ (h << 5u);
+    return f32(h & 0xFFFFFFu) / f32(0xFFFFFFu);
+}
+
+@vertex fn vs(@builtin(vertex_index) vi: u32) -> @builtin(position) vec4<f32> {
+    h = vi * 2654435761u + 1u;
+    let local = vec3<f32>(rnd() * 2.0 - 1.0, rnd() * 2.0 - 1.0, rnd() * 2.0 - 1.0);
+    let phase = rnd();
+    
+    let pos = pu.originAndTravel.xyz + local * pu.scale.xyz + pu.flowDir.xyz * (phase * pu.originAndTravel.w);
+    return pu.mvp * vec4<f32>(pos, 1.0);
+}
+@fragment fn fs() -> @location(0) vec4<f32> { return pu.color; }
+)";
+
+struct ParticleUniforms {
+    glm::mat4 mvp;
+    glm::vec4 color;
+    glm::vec4 originAndTravel; // xyz: origin, w: travel
+    glm::vec4 flowDir; // xyz: flowDir, w: unused
+    glm::vec4 scale; // xyz: scale, w: unused
+};
+
+
 // A flat pipeline: position-only vertex, one uniform, chosen topology + blend +
 // depth behaviour. In GL these last two were mutable state; here they are baked in.
 WGPURenderPipeline makeFlatPipeline(WGPUDevice dev, WGPUPipelineLayout layout,
@@ -392,10 +431,49 @@ bool WebGpuRenderer::init(const wgpu::Device& gpu, WGPUTextureFormat colorFormat
     ipd.multisample.count = 1; ipd.multisample.mask = 0xFFFFFFFFu;
     _imagePipe = wgpuDeviceCreateRenderPipeline(_device, &ipd);
 
+    // Particle pipeline
+    _particleShader = loadShader(_device, kParticleWGSL, "particle");
+    WGPUBindGroupLayoutEntry pbgle = {};
+    pbgle.binding = 0;
+    pbgle.visibility = WGPUShaderStage_Vertex | WGPUShaderStage_Fragment;
+    pbgle.buffer.type = WGPUBufferBindingType_Uniform;
+    pbgle.buffer.minBindingSize = sizeof(ParticleUniforms);
+    WGPUBindGroupLayoutDescriptor pbgld = {};
+    pbgld.entryCount = 1; pbgld.entries = &pbgle;
+    _particleBgl = wgpuDeviceCreateBindGroupLayout(_device, &pbgld);
+    WGPUPipelineLayoutDescriptor ppld = {};
+    ppld.bindGroupLayoutCount = 1; ppld.bindGroupLayouts = &_particleBgl;
+    _particleLayout = wgpuDeviceCreatePipelineLayout(_device, &ppld);
+    
+    WGPURenderPipelineDescriptor ppd = {};
+    ppd.layout = _particleLayout;
+    ppd.vertex.module = _particleShader; ppd.vertex.entryPoint = wgpu::Device::str("vs");
+    ppd.primitive.topology = WGPUPrimitiveTopology_PointList;
+    WGPUBlendState pblend = {};
+    pblend.color.operation = WGPUBlendOperation_Add;
+    pblend.color.srcFactor = WGPUBlendFactor_SrcAlpha;
+    pblend.color.dstFactor = WGPUBlendFactor_One;
+    pblend.alpha.operation = WGPUBlendOperation_Add;
+    pblend.alpha.srcFactor = WGPUBlendFactor_One;
+    pblend.alpha.dstFactor = WGPUBlendFactor_One;
+    WGPUColorTargetState pct = {};
+    pct.format = _colorFormat; pct.writeMask = WGPUColorWriteMask_All; pct.blend = &pblend;
+    WGPUFragmentState pfrag = {};
+    pfrag.module = _particleShader; pfrag.entryPoint = wgpu::Device::str("fs");
+    pfrag.targetCount = 1; pfrag.targets = &pct;
+    WGPUDepthStencilState pds = {};
+    pds.format = WGPUTextureFormat_Depth24Plus;
+    pds.depthWriteEnabled = WGPUOptionalBool_False;
+    pds.depthCompare = WGPUCompareFunction_Less;
+    ppd.fragment = &pfrag;
+    ppd.depthStencil = &pds;
+    ppd.multisample.count = 1; ppd.multisample.mask = 0xFFFFFFFFu;
+    _particlePipe = wgpuDeviceCreateRenderPipeline(_device, &ppd);
+
     _bufferPool.init(_device, _queue);
     _meshCache.init(_device, _queue);
 
-    return _sampler && _whiteView && _flatShader && _flatLayout && _imagePipe;
+    return _sampler && _whiteView && _flatShader && _flatLayout && _imagePipe && _particlePipe;
 }
 
 // Build-on-first-use so only the combinations the app actually draws exist.
@@ -882,24 +960,31 @@ void WebGpuRenderer::drawParticles(const geom::FieldNode& field, int count) {
     const glm::vec3 flowDir = speed > 1e-6f ? flow / speed : glm::vec3(0.0f, 1.0f, 0.0f);
     const float travel = field.vectorField->amplitude * glm::length(field.scale);
 
-    // xorshift32, seeded per-particle by index rather than carried across calls:
-    // the same (field, count) always produces the same cloud, so this needs no
-    // buffer to persist between frames and no dt the caller would have to supply.
-    std::vector<glm::vec3> verts;
-    verts.reserve(static_cast<size_t>(count));
-    for (int i = 0; i < count; ++i) {
-        uint32_t h = static_cast<uint32_t>(i) * 2654435761u + 1u;
-        auto rnd = [&h]() {
-            h ^= h << 13; h ^= h >> 17; h ^= h << 5;
-            return static_cast<float>(h & 0xFFFFFFu) / static_cast<float>(0xFFFFFFu);
-        };
-        const glm::vec3 local(rnd() * 2.0f - 1.0f, rnd() * 2.0f - 1.0f, rnd() * 2.0f - 1.0f);
-        const float phase = rnd();
-        verts.push_back(field.origin + local * field.scale + flowDir * (phase * travel));
-    }
+    bindPipeline(_particlePipe);
 
-    drawFlat(flatPipeline(WGPUPrimitiveTopology_PointList, Blend::Additive, DepthMode::TestOnly),
-             verts, _viewProj * _model, glm::vec4(0.6f, 0.8f, 1.0f, 0.9f));
+    ParticleUniforms pu;
+    pu.mvp = _viewProj * _model;
+    pu.color = glm::vec4(0.6f, 0.8f, 1.0f, 0.9f);
+    pu.originAndTravel = glm::vec4(field.origin, travel);
+    pu.flowDir = glm::vec4(flowDir, 0.0f);
+    pu.scale = glm::vec4(field.scale, 0.0f);
+
+    auto uAlloc = _bufferPool.suballocateUniform(&pu, sizeof(ParticleUniforms));
+
+    WGPUBindGroupEntry bge = {};
+    bge.binding = 0;
+    bge.buffer = uAlloc.buffer;
+    bge.offset = uAlloc.offset;
+    bge.size = uAlloc.size;
+    WGPUBindGroupDescriptor bgd = {};
+    bgd.layout = _particleBgl;
+    bgd.entryCount = 1;
+    bgd.entries = &bge;
+    WGPUBindGroup bg = wgpuDeviceCreateBindGroup(_device, &bgd);
+    _frameBindGroups.push_back(bg);
+
+    wgpuRenderPassEncoderSetBindGroup(_pass, 0, bg, 0, nullptr);
+    wgpuRenderPassEncoderDraw(_pass, static_cast<uint32_t>(count), 1, 0, 0);
 }
 
 void WebGpuRenderer::drawFlat(WGPURenderPipeline pipe, const std::vector<glm::vec3>& verts,

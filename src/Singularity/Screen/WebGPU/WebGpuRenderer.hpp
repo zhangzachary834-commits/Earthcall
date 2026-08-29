@@ -174,6 +174,10 @@ private:
     WGPUPipelineLayout  _imageLayout = nullptr;
     WGPUShaderModule    _imageShader = nullptr;
     WGPURenderPipeline  _imagePipe   = nullptr;
+    WGPUShaderModule _particleShader = nullptr;
+    WGPUBindGroupLayout _particleBgl = nullptr;
+    WGPUPipelineLayout _particleLayout = nullptr;
+    WGPURenderPipeline _particlePipe = nullptr;
 
     // Screen-space state, established by begin2D.
     bool      _in2D = false;
