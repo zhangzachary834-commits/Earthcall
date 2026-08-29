@@ -197,6 +197,7 @@
         "geometryType": 10,
         "materialId": "material.grass",
         "objectID": "perlin-ground-plane",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 10,
         "shapeParams": [
@@ -235,8 +236,7 @@
         ],
         "x2D": 100.0,
         "y2D": 100.0,
-        "zOrder2D": 0,
-        "renderMode": 1
+        "zOrder2D": 0
       }
     ]
   }

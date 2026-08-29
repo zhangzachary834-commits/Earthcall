@@ -1,0 +1,18 @@
+{
+  "deletable": {
+    "first-mover": true
+  },
+  "formationRelations": [],
+  "identifier": "random zone",
+  "lexemes": [],
+  "name": "random zone",
+  "owner": "first-mover",
+  "parentZone": "",
+  "qualities": {
+    "ownerKind": "person"
+  },
+  "scope": "Local",
+  "world": {
+    "objects": []
+  }
+}

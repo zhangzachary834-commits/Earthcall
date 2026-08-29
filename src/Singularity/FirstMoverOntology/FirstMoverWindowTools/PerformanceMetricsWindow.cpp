@@ -7,6 +7,9 @@
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "Singularity/OntoMath/ScalarForm.hpp"
 #include "Singularity/Screen/Renderer.hpp"
+#include "ZonesOfEarth/ZoneManager.hpp"
+
+extern ZoneManager mgr;
 
 namespace Rendering {
 
@@ -24,6 +27,15 @@ void renderPerformanceMetricsWindow(bool* open, Core::Engine* engine) {
         } else {
             ImGui::TextDisabled("Player Pos: Unknown");
         }
+        
+        ImGui::Separator();
+        Zone& activeZone = mgr.active();
+        size_t zoneShapes = activeZone.objects().size();
+        size_t zoneSingulars = zoneShapes + activeZone.formation().getMembers().size() + activeZone.joys().getMembers().size();
+
+        ImGui::TextColored(ImVec4(0.8f, 0.4f, 1.0f, 1.0f), "Current Zone: %s", activeZone.name().c_str());
+        ImGui::Text("Zone Singulars: %zu", zoneSingulars);
+        ImGui::Text("Zone Visual Shapes: %zu", zoneShapes);
         
         ImGui::Separator();
         ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.4f, 1.0f), "CPU Substrate Metrics");

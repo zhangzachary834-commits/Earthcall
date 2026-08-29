@@ -1095,6 +1095,7 @@
         "geometryType": 0,
         "materialId": "material.object-142",
         "objectID": "object-142",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
@@ -1181,6 +1182,7 @@
         "geometryType": 0,
         "materialId": "material.object-143",
         "objectID": "object-143",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
@@ -1267,6 +1269,7 @@
         "geometryType": 0,
         "materialId": "material.object-144",
         "objectID": "object-144",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
@@ -1353,6 +1356,7 @@
         "geometryType": 0,
         "materialId": "material.object-145",
         "objectID": "object-145",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
@@ -1439,6 +1443,7 @@
         "geometryType": 0,
         "materialId": "material.object-146",
         "objectID": "object-146",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
@@ -1525,6 +1530,7 @@
         "geometryType": 0,
         "materialId": "material.object-147",
         "objectID": "object-147",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
@@ -1611,6 +1617,7 @@
         "geometryType": 0,
         "materialId": "material.object-148",
         "objectID": "object-148",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
@@ -1697,6 +1704,7 @@
         "geometryType": 0,
         "materialId": "material.object-149",
         "objectID": "object-149",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
@@ -1783,6 +1791,7 @@
         "geometryType": 0,
         "materialId": "material.object-150",
         "objectID": "object-150",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
@@ -1869,6 +1878,7 @@
         "geometryType": 0,
         "materialId": "material.object-151",
         "objectID": "object-151",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
@@ -1955,6 +1965,7 @@
         "geometryType": 0,
         "materialId": "material.object-152",
         "objectID": "object-152",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
@@ -2041,6 +2052,7 @@
         "geometryType": 0,
         "materialId": "material.object-206",
         "objectID": "object-206",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
@@ -2127,6 +2139,7 @@
         "geometryType": 0,
         "materialId": "material.object-207",
         "objectID": "object-207",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
@@ -2213,6 +2226,7 @@
         "geometryType": 0,
         "materialId": "material.object-208",
         "objectID": "object-208",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
@@ -2299,6 +2313,7 @@
         "geometryType": 2,
         "materialId": "material.object-209",
         "objectID": "object-209",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 2,
         "shapeParams": [
@@ -2385,6 +2400,7 @@
         "geometryType": 2,
         "materialId": "material.object-250",
         "objectID": "object-250",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 2,
         "shapeParams": [
@@ -2471,6 +2487,7 @@
         "geometryType": 7,
         "materialId": "material.object-251",
         "objectID": "object-251",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 7,
         "shapeParams": [
@@ -2557,6 +2574,7 @@
         "geometryType": 7,
         "materialId": "material.object-252",
         "objectID": "object-252",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 7,
         "shapeParams": [
@@ -2643,6 +2661,7 @@
         "geometryType": 7,
         "materialId": "material.object-253",
         "objectID": "object-253",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 7,
         "shapeParams": [
@@ -2729,6 +2748,7 @@
         "geometryType": 7,
         "materialId": "material.object-254",
         "objectID": "object-254",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 7,
         "shapeParams": [
@@ -2815,6 +2835,7 @@
         "geometryType": 7,
         "materialId": "material.object-255",
         "objectID": "object-255",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 7,
         "shapeParams": [
@@ -2901,6 +2922,7 @@
         "geometryType": 8,
         "materialId": "material.object-256",
         "objectID": "object-256",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -2987,6 +3009,7 @@
         "geometryType": 8,
         "materialId": "material.object-257",
         "objectID": "object-257",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -3073,6 +3096,7 @@
         "geometryType": 8,
         "materialId": "material.object-258",
         "objectID": "object-258",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -3159,6 +3183,7 @@
         "geometryType": 8,
         "materialId": "material.object-259",
         "objectID": "object-259",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -3245,6 +3270,7 @@
         "geometryType": 8,
         "materialId": "material.object-260",
         "objectID": "object-260",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -3331,6 +3357,7 @@
         "geometryType": 8,
         "materialId": "material.object-261",
         "objectID": "object-261",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -3417,6 +3444,7 @@
         "geometryType": 8,
         "materialId": "material.object-262",
         "objectID": "object-262",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -3503,6 +3531,7 @@
         "geometryType": 8,
         "materialId": "material.object-263",
         "objectID": "object-263",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -3589,6 +3618,7 @@
         "geometryType": 8,
         "materialId": "material.object-264",
         "objectID": "object-264",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -3675,6 +3705,7 @@
         "geometryType": 8,
         "materialId": "material.object-265",
         "objectID": "object-265",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -3761,6 +3792,7 @@
         "geometryType": 8,
         "materialId": "material.object-266",
         "objectID": "object-266",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -3847,6 +3879,7 @@
         "geometryType": 6,
         "materialId": "material.object-337",
         "objectID": "object-337",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 6,
         "shapeParams": [
@@ -3956,6 +3989,7 @@
         "geometryType": 10,
         "materialId": "material.object-338",
         "objectID": "object-338",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 10,
         "shapeParams": [
@@ -4042,6 +4076,7 @@
         "geometryType": 0,
         "materialId": "material.object-410",
         "objectID": "object-410",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
@@ -4128,6 +4163,7 @@
         "geometryType": 0,
         "materialId": "material.object-411",
         "objectID": "object-411",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
@@ -4237,6 +4273,7 @@
         "geometryType": 10,
         "materialId": "material.object-412",
         "objectID": "object-412",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 10,
         "shapeParams": [

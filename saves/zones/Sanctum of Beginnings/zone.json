@@ -2437,6 +2437,7 @@
         "geometryType": 0,
         "materialId": "material.object-43",
         "objectID": "object-43",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
@@ -2507,7 +2508,7 @@
           1.0,
           0.0,
           0.10098647326231003,
-          -673.784423828125,
+          -1278.431640625,
           1.0026824474334717,
           1.0
         ],
@@ -2561,6 +2562,7 @@
         "geometryType": 0,
         "materialId": "material.object-44",
         "objectID": "object-44",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
@@ -2601,7 +2603,7 @@
           1.0,
           0.0,
           -0.5929641723632813,
-          -673.784423828125,
+          -1278.431640625,
           3.7277050018310547,
           1.0
         ],
@@ -2655,6 +2657,7 @@
         "geometryType": 0,
         "materialId": "material.concept-shape-3d.birth-45.member-0",
         "objectID": "concept-shape-3d.birth-45.member-0",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
@@ -2695,7 +2698,7 @@
           1.0,
           0.0,
           -0.5982033014297485,
-          -673.784423828125,
+          -1278.431640625,
           -2.3708736896514893,
           1.0
         ],
@@ -2749,6 +2752,7 @@
         "geometryType": 0,
         "materialId": "material.concept-shape-3d.birth-46.member-0",
         "objectID": "concept-shape-3d.birth-46.member-0",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
@@ -2789,7 +2793,7 @@
           1.0,
           0.0,
           0.25600314140319824,
-          -673.784423828125,
+          -1278.431640625,
           -3.6349873542785645,
           1.0
         ],
@@ -2843,6 +2847,7 @@
         "geometryType": 0,
         "materialId": "material.concept-shape-3d.birth-47.member-0",
         "objectID": "concept-shape-3d.birth-47.member-0",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
@@ -2883,7 +2888,7 @@
           1.0,
           0.0,
           0.25600314140319824,
-          -673.784423828125,
+          -1278.431640625,
           -4.635402679443359,
           1.0
         ],
@@ -2937,6 +2942,7 @@
         "geometryType": 0,
         "materialId": "material.concept-shape-3d.birth-48.member-0",
         "objectID": "concept-shape-3d.birth-48.member-0",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
@@ -2977,7 +2983,7 @@
           1.0,
           0.0,
           2.828935146331787,
-          -673.784423828125,
+          -1278.431640625,
           -5.086270809173584,
           1.0
         ],
@@ -3031,6 +3037,7 @@
         "geometryType": 0,
         "materialId": "material.concept-shape-3d.birth-49.member-0",
         "objectID": "concept-shape-3d.birth-49.member-0",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
@@ -3071,7 +3078,7 @@
           1.0,
           0.0,
           4.275790691375732,
-          -673.784423828125,
+          -1278.431640625,
           -2.986839532852173,
           1.0
         ],
@@ -3125,6 +3132,7 @@
         "geometryType": 0,
         "materialId": "material.concept-shape-3d.birth-50.member-0",
         "objectID": "concept-shape-3d.birth-50.member-0",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
@@ -3165,7 +3173,7 @@
           1.0,
           0.0,
           4.562497615814209,
-          -673.784423828125,
+          -1278.431640625,
           -3.988839626312256,
           1.0
         ],
@@ -3219,6 +3227,7 @@
         "geometryType": 0,
         "materialId": "material.concept-shape-3d.birth-51.member-0",
         "objectID": "concept-shape-3d.birth-51.member-0",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
@@ -3259,7 +3268,7 @@
           1.0,
           0.0,
           5.277790546417236,
-          -673.784423828125,
+          -1278.431640625,
           -2.9887795448303223,
           1.0
         ],
@@ -3313,6 +3322,7 @@
         "geometryType": 0,
         "materialId": "material.concept-shape-3d.birth-52.member-0",
         "objectID": "concept-shape-3d.birth-52.member-0",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
@@ -3353,7 +3363,7 @@
           1.0,
           0.0,
           4.614189624786377,
-          -671.853515625,
+          -1276.5008544921875,
           -0.9847192764282227,
           1.0
         ],
@@ -3407,6 +3417,7 @@
         "geometryType": 0,
         "materialId": "material.concept-shape-3d.birth-53.member-0",
         "objectID": "concept-shape-3d.birth-53.member-0",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
@@ -3447,7 +3458,7 @@
           1.0,
           0.0,
           6.696753978729248,
-          -673.784423828125,
+          -1278.431640625,
           -1.5948783159255981,
           1.0
         ],
@@ -3501,6 +3512,7 @@
         "geometryType": 0,
         "materialId": "material.concept-shape-3d.birth-54.member-0",
         "objectID": "concept-shape-3d.birth-54.member-0",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
@@ -3541,7 +3553,7 @@
           1.0,
           0.0,
           5.689316272735596,
-          -671.6226806640625,
+          -1276.27001953125,
           -1.448621153831482,
           1.0
         ],
@@ -3595,6 +3607,7 @@
         "geometryType": 0,
         "materialId": "material.concept-shape-3d.birth-56.member-0",
         "objectID": "concept-shape-3d.birth-56.member-0",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
@@ -3635,7 +3648,7 @@
           1.0,
           0.0,
           6.6913161277771,
-          -673.784423828125,
+          -1278.431640625,
           -0.5928784012794495,
           1.0
         ],
@@ -3999,6 +4012,7 @@
         "geometryType": 10,
         "materialId": "material.concept-shape-3d.birth-57.member-0",
         "objectID": "concept-shape-3d.birth-57.member-0",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 10,
         "shapeParams": [
@@ -4039,7 +4053,7 @@
           1.0,
           0.0,
           4.688387393951416,
-          -672.6753540039063,
+          -1277.3226318359375,
           -1.9857795238494873,
           1.0
         ],
@@ -4093,6 +4107,7 @@
         "geometryType": 0,
         "materialId": "material.concept-shape-3d.birth-59.member-0",
         "objectID": "concept-shape-3d.birth-59.member-0",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
@@ -4133,7 +4148,7 @@
           1.0,
           0.0,
           5.67896032333374,
-          -673.784423828125,
+          -1278.431640625,
           -0.4466211199760437,
           1.0
         ],
@@ -4187,6 +4202,7 @@
         "geometryType": 0,
         "materialId": "material.concept-shape-3d.birth-63.member-0",
         "objectID": "concept-shape-3d.birth-63.member-0",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
@@ -4227,7 +4243,7 @@
           1.0,
           0.0,
           8.666543960571289,
-          -673.784423828125,
+          -1278.431640625,
           6.07556676864624,
           1.0
         ],
@@ -4281,6 +4297,7 @@
         "geometryType": 0,
         "materialId": "material.concept-shape-3d.birth-64.member-0",
         "objectID": "concept-shape-3d.birth-64.member-0",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
@@ -4321,7 +4338,7 @@
           1.0,
           0.0,
           9.198979377746582,
-          -673.784423828125,
+          -1278.431640625,
           8.635794639587402,
           1.0
         ],
@@ -4375,6 +4392,7 @@
         "geometryType": 0,
         "materialId": "material.concept-shape-3d.birth-65.member-0",
         "objectID": "concept-shape-3d.birth-65.member-0",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
@@ -4415,7 +4433,7 @@
           1.0,
           0.0,
           8.196979522705078,
-          -673.784423828125,
+          -1278.431640625,
           8.433700561523438,
           1.0
         ],
@@ -4469,6 +4487,7 @@
         "geometryType": 0,
         "materialId": "material.concept-shape-3d.birth-67.member-0",
         "objectID": "concept-shape-3d.birth-67.member-0",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
@@ -4509,7 +4528,7 @@
           1.0,
           0.0,
           7.588244915008545,
-          -673.784423828125,
+          -1278.431640625,
           6.689026832580566,
           1.0
         ],
@@ -4563,6 +4582,7 @@
         "geometryType": 0,
         "materialId": "material.concept-shape-3d.birth-70.member-0",
         "objectID": "concept-shape-3d.birth-70.member-0",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
@@ -4603,7 +4623,7 @@
           1.0,
           0.0,
           12.533796310424805,
-          -673.784423828125,
+          -1278.431640625,
           3.665191888809204,
           1.0
         ],
@@ -4657,6 +4677,7 @@
         "geometryType": 0,
         "materialId": "material.concept-shape-3d.birth-71.member-0",
         "objectID": "concept-shape-3d.birth-71.member-0",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
@@ -4697,7 +4718,7 @@
           1.0,
           0.0,
           12.298794746398926,
-          -673.784423828125,
+          -1278.431640625,
           1.032294511795044,
           1.0
         ],
@@ -4751,6 +4772,7 @@
         "geometryType": 2,
         "materialId": "material.concept-shape-3d.birth-72.member-0",
         "objectID": "concept-shape-3d.birth-72.member-0",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 2,
         "shapeParams": [
@@ -4791,7 +4813,7 @@
           1.0,
           0.0,
           14.380775451660156,
-          -673.784423828125,
+          -1278.431640625,
           -0.38936948776245117,
           1.0
         ],
@@ -4845,6 +4867,7 @@
         "geometryType": 2,
         "materialId": "material.concept-shape-3d.birth-73.member-0",
         "objectID": "concept-shape-3d.birth-73.member-0",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 2,
         "shapeParams": [
@@ -4885,7 +4908,7 @@
           1.0,
           0.0,
           17.667221069335938,
-          -673.784423828125,
+          -1278.431640625,
           -3.3191909790039063,
           1.0
         ],
@@ -4939,6 +4962,7 @@
         "geometryType": 2,
         "materialId": "material.concept-shape-3d.birth-74.member-0",
         "objectID": "concept-shape-3d.birth-74.member-0",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 2,
         "shapeParams": [
@@ -4979,7 +5003,7 @@
           1.0,
           0.0,
           7.098783016204834,
-          -673.784423828125,
+          -1278.431640625,
           -14.522348403930664,
           1.0
         ],
@@ -5033,6 +5057,7 @@
         "geometryType": 2,
         "materialId": "material.concept-shape-3d.birth-75.member-0",
         "objectID": "concept-shape-3d.birth-75.member-0",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 2,
         "shapeParams": [
@@ -5073,7 +5098,7 @@
           1.0,
           0.0,
           20.732572555541992,
-          -673.784423828125,
+          -1278.431640625,
           -14.030694961547852,
           1.0
         ],
@@ -5127,6 +5152,7 @@
         "geometryType": 2,
         "materialId": "material.concept-shape-3d.birth-76.member-0",
         "objectID": "concept-shape-3d.birth-76.member-0",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 2,
         "shapeParams": [
@@ -5167,7 +5193,7 @@
           1.0,
           0.0,
           13.72721004486084,
-          -673.784423828125,
+          -1278.431640625,
           -16.132356643676758,
           1.0
         ],
@@ -5221,6 +5247,7 @@
         "geometryType": 8,
         "materialId": "material.concept-shape-3d.birth-77.member-0",
         "objectID": "concept-shape-3d.birth-77.member-0",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -5261,7 +5288,7 @@
           1.0,
           0.0,
           16.40319061279297,
-          -673.784423828125,
+          -1278.431640625,
           -4.66898250579834,
           1.0
         ],
@@ -5315,6 +5342,7 @@
         "geometryType": 8,
         "materialId": "material.concept-shape-3d.birth-78.member-0",
         "objectID": "concept-shape-3d.birth-78.member-0",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -5355,7 +5383,7 @@
           1.0,
           0.0,
           18.350135803222656,
-          -673.784423828125,
+          -1278.431640625,
           -2.048527717590332,
           1.0
         ],
@@ -5409,6 +5437,7 @@
         "geometryType": 8,
         "materialId": "material.concept-shape-3d.birth-79.member-0",
         "objectID": "concept-shape-3d.birth-79.member-0",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -5449,7 +5478,7 @@
           1.0,
           0.0,
           26.682010650634766,
-          -673.784423828125,
+          -1278.431640625,
           -2.048527717590332,
           1.0
         ],
@@ -5503,6 +5532,7 @@
         "geometryType": 8,
         "materialId": "material.concept-shape-3d.birth-80.member-0",
         "objectID": "concept-shape-3d.birth-80.member-0",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -5543,7 +5573,7 @@
           1.0,
           0.0,
           11.178437232971191,
-          -673.784423828125,
+          -1278.431640625,
           -2.048527717590332,
           1.0
         ],
@@ -5597,6 +5627,7 @@
         "geometryType": 0,
         "materialId": "material.concept-shape-3d.birth-81.member-0",
         "objectID": "concept-shape-3d.birth-81.member-0",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
@@ -5637,7 +5668,7 @@
           1.0,
           0.0,
           17.139570236206055,
-          -673.784423828125,
+          -1278.431640625,
           1.0032340288162231,
           1.0
         ],
@@ -5691,6 +5722,7 @@
         "geometryType": 0,
         "materialId": "material.object-409",
         "objectID": "object-409",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
@@ -5731,7 +5763,7 @@
           1.0,
           0.0,
           10.141836166381836,
-          -673.784423828125,
+          -1278.431640625,
           -2.9599034786224365,
           1.0
         ],
@@ -5785,6 +5817,7 @@
         "geometryType": 0,
         "materialId": "material.object-484",
         "objectID": "object-484",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
@@ -5825,7 +5858,7 @@
           1.0,
           0.0,
           9.754598617553711,
-          -673.784423828125,
+          -1278.431640625,
           -4.907513618469238,
           1.0
         ],
@@ -5879,6 +5912,7 @@
         "geometryType": 8,
         "materialId": "material.object-487",
         "objectID": "object-487",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -5919,7 +5953,7 @@
           1.0,
           0.0,
           5.693754196166992,
-          -672.6256713867188,
+          -1277.27294921875,
           -1.4164574146270752,
           1.0
         ],
@@ -5973,6 +6007,7 @@
         "geometryType": 8,
         "materialId": "material.object-488",
         "objectID": "object-488",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -6013,7 +6048,7 @@
           1.0,
           0.0,
           3.696171283721924,
-          -673.784423828125,
+          -1278.431640625,
           5.673133373260498,
           1.0
         ],
@@ -6067,6 +6102,7 @@
         "geometryType": 8,
         "materialId": "material.object-489",
         "objectID": "object-489",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -6107,7 +6143,7 @@
           1.0,
           0.0,
           2.2707290649414063,
-          -673.7548828125,
+          -1278.402099609375,
           12.553348541259766,
           1.0
         ],
@@ -6161,6 +6197,7 @@
         "geometryType": 8,
         "materialId": "material.object-490",
         "objectID": "object-490",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -6201,7 +6238,7 @@
           1.0,
           0.0,
           0.693126916885376,
-          -673.784423828125,
+          -1278.431640625,
           14.220473289489746,
           1.0
         ],
@@ -6255,6 +6292,7 @@
         "geometryType": 8,
         "materialId": "material.object-491",
         "objectID": "object-491",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -6295,7 +6333,7 @@
           1.0,
           0.0,
           4.532101154327393,
-          -673.784423828125,
+          -1278.431640625,
           3.0440118312835693,
           1.0
         ],
@@ -6349,6 +6387,7 @@
         "geometryType": 8,
         "materialId": "material.object-492",
         "objectID": "object-492",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -6389,7 +6428,7 @@
           1.0,
           0.0,
           2.5359771251678467,
-          -673.784423828125,
+          -1278.431640625,
           2.86826229095459,
           1.0
         ],
@@ -6443,6 +6482,7 @@
         "geometryType": 8,
         "materialId": "material.object-493",
         "objectID": "object-493",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -6483,7 +6523,7 @@
           1.0,
           0.0,
           2.0046472549438477,
-          -673.784423828125,
+          -1278.431640625,
           11.387198448181152,
           1.0
         ],
@@ -6537,6 +6577,7 @@
         "geometryType": 8,
         "materialId": "material.object-494",
         "objectID": "object-494",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -6577,7 +6618,7 @@
           1.0,
           0.0,
           -5.506669521331787,
-          -673.784423828125,
+          -1278.431640625,
           7.046947002410889,
           1.0
         ],
@@ -6631,6 +6672,7 @@
         "geometryType": 8,
         "materialId": "material.object-495",
         "objectID": "object-495",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -6671,7 +6713,7 @@
           1.0,
           0.0,
           0.40479668974876404,
-          -673.784423828125,
+          -1278.431640625,
           -2.9893288612365723,
           1.0
         ],
@@ -6725,6 +6767,7 @@
         "geometryType": 8,
         "materialId": "material.object-496",
         "objectID": "object-496",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -6765,7 +6808,7 @@
           1.0,
           0.0,
           0.4887814223766327,
-          -673.784423828125,
+          -1278.431640625,
           -1.6050182580947876,
           1.0
         ],
@@ -6819,6 +6862,7 @@
         "geometryType": 8,
         "materialId": "material.object-497",
         "objectID": "object-497",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -6859,7 +6903,7 @@
           1.0,
           0.0,
           4.210909366607666,
-          -673.784423828125,
+          -1278.431640625,
           6.586478233337402,
           1.0
         ],
@@ -6913,6 +6957,7 @@
         "geometryType": 8,
         "materialId": "material.object-498",
         "objectID": "object-498",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -6953,7 +6998,7 @@
           1.0,
           0.0,
           1.163162350654602,
-          -673.784423828125,
+          -1278.431640625,
           4.244398593902588,
           1.0
         ],
@@ -7007,6 +7052,7 @@
         "geometryType": 8,
         "materialId": "material.object-499",
         "objectID": "object-499",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -7047,7 +7093,7 @@
           1.0,
           0.0,
           1.9557627439498901,
-          -673.784423828125,
+          -1278.431640625,
           3.368243455886841,
           1.0
         ],
@@ -7101,6 +7147,7 @@
         "geometryType": 8,
         "materialId": "material.object-500",
         "objectID": "object-500",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -7141,7 +7188,7 @@
           1.0,
           0.0,
           -3.1480324268341064,
-          -673.784423828125,
+          -1278.431640625,
           13.066225051879883,
           1.0
         ],
@@ -7195,6 +7242,7 @@
         "geometryType": 8,
         "materialId": "material.object-501",
         "objectID": "object-501",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -7235,7 +7283,7 @@
           1.0,
           0.0,
           4.7077436447143555,
-          -673.7807006835938,
+          -1278.427978515625,
           6.094780921936035,
           1.0
         ],
@@ -7289,6 +7337,7 @@
         "geometryType": 8,
         "materialId": "material.object-502",
         "objectID": "object-502",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -7329,7 +7378,7 @@
           1.0,
           0.0,
           8.036389350891113,
-          -673.784423828125,
+          -1278.431640625,
           -0.05203515291213989,
           1.0
         ],
@@ -7383,6 +7432,7 @@
         "geometryType": 8,
         "materialId": "material.object-503",
         "objectID": "object-503",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -7423,7 +7473,7 @@
           1.0,
           0.0,
           -8.497822761535645,
-          -673.784423828125,
+          -1278.431640625,
           4.20936918258667,
           1.0
         ],
@@ -7477,6 +7527,7 @@
         "geometryType": 8,
         "materialId": "material.object-504",
         "objectID": "object-504",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -7517,7 +7568,7 @@
           1.0,
           0.0,
           7.517190456390381,
-          -673.7842407226563,
+          -1278.4315185546875,
           6.018425464630127,
           1.0
         ],
@@ -7571,6 +7622,7 @@
         "geometryType": 8,
         "materialId": "material.object-505",
         "objectID": "object-505",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -7611,7 +7663,7 @@
           1.0,
           0.0,
           1.7198899984359741,
-          -673.784423828125,
+          -1278.431640625,
           0.12379462271928787,
           1.0
         ],
@@ -7665,6 +7717,7 @@
         "geometryType": 8,
         "materialId": "material.object-506",
         "objectID": "object-506",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -7705,7 +7758,7 @@
           1.0,
           0.0,
           6.3138885498046875,
-          -673.784423828125,
+          -1278.431640625,
           4.178437232971191,
           1.0
         ],
@@ -7759,6 +7812,7 @@
         "geometryType": 8,
         "materialId": "material.object-507",
         "objectID": "object-507",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -7799,7 +7853,7 @@
           1.0,
           0.0,
           2.848999261856079,
-          -673.784423828125,
+          -1278.431640625,
           3.852727174758911,
           1.0
         ],
@@ -7853,6 +7907,7 @@
         "geometryType": 8,
         "materialId": "material.object-508",
         "objectID": "object-508",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -7893,7 +7948,7 @@
           1.0,
           0.0,
           2.505863666534424,
-          -673.784423828125,
+          -1278.431640625,
           4.769103527069092,
           1.0
         ],
@@ -7947,6 +8002,7 @@
         "geometryType": 8,
         "materialId": "material.object-509",
         "objectID": "object-509",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -7987,7 +8043,7 @@
           1.0,
           0.0,
           -0.9861015677452087,
-          -673.784423828125,
+          -1278.431640625,
           10.217026710510254,
           1.0
         ],
@@ -8041,6 +8097,7 @@
         "geometryType": 8,
         "materialId": "material.object-510",
         "objectID": "object-510",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -8081,7 +8138,7 @@
           1.0,
           0.0,
           3.5739212036132813,
-          -673.784423828125,
+          -1278.431640625,
           6.2927350997924805,
           1.0
         ],
@@ -8135,6 +8192,7 @@
         "geometryType": 8,
         "materialId": "material.object-511",
         "objectID": "object-511",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -8175,7 +8233,7 @@
           1.0,
           0.0,
           11.53079605102539,
-          -673.784423828125,
+          -1278.431640625,
           4.004034519195557,
           1.0
         ],
@@ -8229,6 +8287,7 @@
         "geometryType": 8,
         "materialId": "material.object-512",
         "objectID": "object-512",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -8269,7 +8328,7 @@
           1.0,
           0.0,
           6.37003231048584,
-          -673.7613525390625,
+          -1278.4085693359375,
           6.396194934844971,
           1.0
         ],
@@ -8323,6 +8382,7 @@
         "geometryType": 8,
         "materialId": "material.object-513",
         "objectID": "object-513",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -8363,7 +8423,7 @@
           1.0,
           0.0,
           3.7525246143341064,
-          -673.784423828125,
+          -1278.431640625,
           3.331939935684204,
           1.0
         ],
@@ -8417,6 +8477,7 @@
         "geometryType": 8,
         "materialId": "material.object-514",
         "objectID": "object-514",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -8457,7 +8518,7 @@
           1.0,
           0.0,
           11.660964965820313,
-          -673.784423828125,
+          -1278.431640625,
           4.316895484924316,
           1.0
         ],
@@ -8511,6 +8572,7 @@
         "geometryType": 8,
         "materialId": "material.object-515",
         "objectID": "object-515",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -8551,7 +8613,7 @@
           1.0,
           0.0,
           -5.291965007781982,
-          -673.784423828125,
+          -1278.431640625,
           5.623864650726318,
           1.0
         ],
@@ -8605,6 +8667,7 @@
         "geometryType": 8,
         "materialId": "material.object-516",
         "objectID": "object-516",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -8645,7 +8708,7 @@
           1.0,
           0.0,
           1.5690263509750366,
-          -673.784423828125,
+          -1278.431640625,
           3.0000784397125244,
           1.0
         ],
@@ -8699,6 +8762,7 @@
         "geometryType": 8,
         "materialId": "material.object-517",
         "objectID": "object-517",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -8739,7 +8803,7 @@
           1.0,
           0.0,
           0.8784624934196472,
-          -673.784423828125,
+          -1278.431640625,
           3.9459009170532227,
           1.0
         ],
@@ -8793,6 +8857,7 @@
         "geometryType": 8,
         "materialId": "material.object-518",
         "objectID": "object-518",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -8833,7 +8898,7 @@
           1.0,
           0.0,
           2.749751091003418,
-          -673.784423828125,
+          -1278.431640625,
           5.313151836395264,
           1.0
         ],
@@ -8887,6 +8952,7 @@
         "geometryType": 8,
         "materialId": "material.object-519",
         "objectID": "object-519",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -8927,7 +8993,7 @@
           1.0,
           0.0,
           0.4117635190486908,
-          -673.784423828125,
+          -1278.431640625,
           3.6313276290893555,
           1.0
         ],
@@ -8981,6 +9047,7 @@
         "geometryType": 8,
         "materialId": "material.object-520",
         "objectID": "object-520",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -9021,7 +9088,7 @@
           1.0,
           0.0,
           -4.382966995239258,
-          -673.784423828125,
+          -1278.431640625,
           4.741782188415527,
           1.0
         ],
@@ -9075,6 +9142,7 @@
         "geometryType": 8,
         "materialId": "material.object-521",
         "objectID": "object-521",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -9115,7 +9183,7 @@
           1.0,
           0.0,
           5.5973219871521,
-          -673.784423828125,
+          -1278.431640625,
           3.0927321910858154,
           1.0
         ],
@@ -9169,6 +9237,7 @@
         "geometryType": 8,
         "materialId": "material.object-522",
         "objectID": "object-522",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -9209,7 +9278,7 @@
           1.0,
           0.0,
           -0.010803120210766792,
-          -672.802734375,
+          -1277.4500732421875,
           4.708002090454102,
           1.0
         ],
@@ -9263,6 +9332,7 @@
         "geometryType": 8,
         "materialId": "material.object-523",
         "objectID": "object-523",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -9303,7 +9373,7 @@
           1.0,
           0.0,
           10.510793685913086,
-          -673.784423828125,
+          -1278.431640625,
           4.477531433105469,
           1.0
         ],
@@ -9357,6 +9427,7 @@
         "geometryType": 8,
         "materialId": "material.object-524",
         "objectID": "object-524",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -9397,7 +9468,7 @@
           1.0,
           0.0,
           4.104055881500244,
-          -673.784423828125,
+          -1278.431640625,
           1.099625825881958,
           1.0
         ],
@@ -9451,6 +9522,7 @@
         "geometryType": 8,
         "materialId": "material.object-525",
         "objectID": "object-525",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -9491,7 +9563,7 @@
           1.0,
           0.0,
           4.247862339019775,
-          -673.784423828125,
+          -1278.431640625,
           3.9334802627563477,
           1.0
         ],
@@ -9545,6 +9617,7 @@
         "geometryType": 8,
         "materialId": "material.object-526",
         "objectID": "object-526",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -9585,7 +9658,7 @@
           1.0,
           0.0,
           2.1397957801818848,
-          -673.784423828125,
+          -1278.431640625,
           4.455935478210449,
           1.0
         ],
@@ -9639,6 +9712,7 @@
         "geometryType": 8,
         "materialId": "material.object-527",
         "objectID": "object-527",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -9679,7 +9753,7 @@
           1.0,
           0.0,
           5.684476375579834,
-          -673.691650390625,
+          -1278.3388671875,
           5.952081203460693,
           1.0
         ],
@@ -9733,6 +9807,7 @@
         "geometryType": 8,
         "materialId": "material.object-528",
         "objectID": "object-528",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -9773,7 +9848,7 @@
           1.0,
           0.0,
           5.9420366287231445,
-          -673.784423828125,
+          -1278.431640625,
           5.0507097244262695,
           1.0
         ],
@@ -9827,6 +9902,7 @@
         "geometryType": 8,
         "materialId": "material.object-529",
         "objectID": "object-529",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -9867,7 +9943,7 @@
           1.0,
           0.0,
           4.723438739776611,
-          -673.784423828125,
+          -1278.431640625,
           3.439497232437134,
           1.0
         ],
@@ -9921,6 +9997,7 @@
         "geometryType": 8,
         "materialId": "material.object-530",
         "objectID": "object-530",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -9961,7 +10038,7 @@
           1.0,
           0.0,
           2.8847029209136963,
-          -673.784423828125,
+          -1278.431640625,
           3.5648305416107178,
           1.0
         ],
@@ -10015,6 +10092,7 @@
         "geometryType": 8,
         "materialId": "material.object-531",
         "objectID": "object-531",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -10055,7 +10133,7 @@
           1.0,
           0.0,
           0.4018259048461914,
-          -672.8156127929688,
+          -1277.462890625,
           4.373363018035889,
           1.0
         ],
@@ -10109,6 +10187,7 @@
         "geometryType": 8,
         "materialId": "material.object-532",
         "objectID": "object-532",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -10149,7 +10228,7 @@
           1.0,
           0.0,
           -4.423138618469238,
-          -673.784423828125,
+          -1278.431640625,
           1.6483408212661743,
           1.0
         ],
@@ -10203,6 +10282,7 @@
         "geometryType": 8,
         "materialId": "material.object-533",
         "objectID": "object-533",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -10243,7 +10323,7 @@
           1.0,
           0.0,
           4.769463062286377,
-          -673.7681274414063,
+          -1278.4154052734375,
           4.919195652008057,
           1.0
         ],
@@ -10297,6 +10377,7 @@
         "geometryType": 8,
         "materialId": "material.object-534",
         "objectID": "object-534",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -10337,7 +10418,7 @@
           1.0,
           0.0,
           -1.9913990497589111,
-          -673.784423828125,
+          -1278.431640625,
           5.1250457763671875,
           1.0
         ],
@@ -10391,6 +10472,7 @@
         "geometryType": 8,
         "materialId": "material.object-535",
         "objectID": "object-535",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -10431,7 +10513,7 @@
           1.0,
           0.0,
           3.898146629333496,
-          -673.784423828125,
+          -1278.431640625,
           4.486963748931885,
           1.0
         ],
@@ -10485,6 +10567,7 @@
         "geometryType": 8,
         "materialId": "material.object-536",
         "objectID": "object-536",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -10525,7 +10608,7 @@
           1.0,
           0.0,
           6.705869674682617,
-          -673.784423828125,
+          -1278.431640625,
           1.4792789220809937,
           1.0
         ],
@@ -10579,6 +10662,7 @@
         "geometryType": 8,
         "materialId": "material.object-537",
         "objectID": "object-537",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -10619,7 +10703,7 @@
           1.0,
           0.0,
           -1.1924813985824585,
-          -673.784423828125,
+          -1278.431640625,
           6.995190143585205,
           1.0
         ],
@@ -10673,6 +10757,7 @@
         "geometryType": 8,
         "materialId": "material.object-538",
         "objectID": "object-538",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -10713,7 +10798,7 @@
           1.0,
           0.0,
           5.225327014923096,
-          -673.784423828125,
+          -1278.431640625,
           4.205167770385742,
           1.0
         ],
@@ -10767,6 +10852,7 @@
         "geometryType": 8,
         "materialId": "material.object-539",
         "objectID": "object-539",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -10807,7 +10893,7 @@
           1.0,
           0.0,
           -0.06962299346923828,
-          -673.784423828125,
+          -1278.431640625,
           5.771383285522461,
           1.0
         ],
@@ -10861,6 +10947,7 @@
         "geometryType": 8,
         "materialId": "material.object-540",
         "objectID": "object-540",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -10901,7 +10988,7 @@
           1.0,
           0.0,
           -6.835597038269043,
-          -673.784423828125,
+          -1278.431640625,
           12.761576652526855,
           1.0
         ],
@@ -10955,6 +11042,7 @@
         "geometryType": 8,
         "materialId": "material.object-541",
         "objectID": "object-541",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -10995,7 +11083,7 @@
           1.0,
           0.0,
           2.1364729404449463,
-          -673.784423828125,
+          -1278.431640625,
           4.153903961181641,
           1.0
         ],
@@ -11049,6 +11137,7 @@
         "geometryType": 8,
         "materialId": "material.object-542",
         "objectID": "object-542",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -11089,7 +11178,7 @@
           1.0,
           0.0,
           -0.2181575894355774,
-          -673.784423828125,
+          -1278.431640625,
           7.09187126159668,
           1.0
         ],
@@ -11143,6 +11232,7 @@
         "geometryType": 8,
         "materialId": "material.object-543",
         "objectID": "object-543",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -11183,7 +11273,7 @@
           1.0,
           0.0,
           1.7450857162475586,
-          -673.7688598632813,
+          -1278.4161376953125,
           12.262341499328613,
           1.0
         ],
@@ -11237,6 +11327,7 @@
         "geometryType": 8,
         "materialId": "material.object-544",
         "objectID": "object-544",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -11277,7 +11368,7 @@
           1.0,
           0.0,
           9.7448148727417,
-          -673.784423828125,
+          -1278.431640625,
           5.071869373321533,
           1.0
         ],
@@ -11331,6 +11422,7 @@
         "geometryType": 8,
         "materialId": "material.object-545",
         "objectID": "object-545",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -11371,7 +11463,7 @@
           1.0,
           0.0,
           6.1431074142456055,
-          -673.784423828125,
+          -1278.431640625,
           1.7775983810424805,
           1.0
         ],
@@ -11425,6 +11517,7 @@
         "geometryType": 8,
         "materialId": "material.object-546",
         "objectID": "object-546",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -11465,7 +11558,7 @@
           1.0,
           0.0,
           -2.4007649421691895,
-          -673.784423828125,
+          -1278.431640625,
           4.800930976867676,
           1.0
         ],
@@ -11519,6 +11612,7 @@
         "geometryType": 8,
         "materialId": "material.object-547",
         "objectID": "object-547",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -11559,7 +11653,7 @@
           1.0,
           0.0,
           2.167710065841675,
-          -673.784423828125,
+          -1278.431640625,
           5.599564075469971,
           1.0
         ],
@@ -11613,6 +11707,7 @@
         "geometryType": 8,
         "materialId": "material.object-548",
         "objectID": "object-548",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -11653,7 +11748,7 @@
           1.0,
           0.0,
           4.749724864959717,
-          -673.6637573242188,
+          -1278.31103515625,
           5.360355377197266,
           1.0
         ],
@@ -11707,6 +11802,7 @@
         "geometryType": 8,
         "materialId": "material.object-549",
         "objectID": "object-549",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -11747,7 +11843,7 @@
           1.0,
           0.0,
           -0.5156919360160828,
-          -673.784423828125,
+          -1278.431640625,
           5.2630615234375,
           1.0
         ],
@@ -11801,6 +11897,7 @@
         "geometryType": 8,
         "materialId": "material.object-550",
         "objectID": "object-550",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -11841,7 +11938,7 @@
           1.0,
           0.0,
           11.75883960723877,
-          -673.784423828125,
+          -1278.431640625,
           3.019533634185791,
           1.0
         ],
@@ -11895,6 +11992,7 @@
         "geometryType": 8,
         "materialId": "material.object-551",
         "objectID": "object-551",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -11935,7 +12033,7 @@
           1.0,
           0.0,
           22.285743713378906,
-          -673.784423828125,
+          -1278.431640625,
           5.055023670196533,
           1.0
         ],
@@ -11989,6 +12087,7 @@
         "geometryType": 8,
         "materialId": "material.object-552",
         "objectID": "object-552",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -12029,7 +12128,7 @@
           1.0,
           0.0,
           1.1771057844161987,
-          -673.784423828125,
+          -1278.431640625,
           6.195418834686279,
           1.0
         ],
@@ -12083,6 +12182,7 @@
         "geometryType": 8,
         "materialId": "material.object-553",
         "objectID": "object-553",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -12123,7 +12223,7 @@
           1.0,
           0.0,
           10.29527759552002,
-          -673.784423828125,
+          -1278.431640625,
           3.3243234157562256,
           1.0
         ],
@@ -12177,6 +12277,7 @@
         "geometryType": 8,
         "materialId": "material.object-554",
         "objectID": "object-554",
+        "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
@@ -12217,7 +12318,7 @@
           1.0,
           0.0,
           9.71761417388916,
-          -673.784423828125,
+          -1278.431640625,
           17.849529266357422,
           1.0
         ],

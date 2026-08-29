@@ -4,8 +4,21 @@
 
 namespace Rendering {
 
+    static char s_newZoneName[128] = "";
+
     void renderZonesConsole(ZoneManager& zoneMgr) {
         ImGui::TextUnformatted("Zones");
+        ImGui::Separator();
+
+        ImGui::InputText("New Zone Name", s_newZoneName, IM_ARRAYSIZE(s_newZoneName));
+        ImGui::SameLine();
+        if (ImGui::Button("Create")) {
+            std::string newId(s_newZoneName);
+            if (!newId.empty()) {
+                zoneMgr.authorZone(newId, "first-mover", "", "");
+                s_newZoneName[0] = '\0';
+            }
+        }
         ImGui::Separator();
 
         const auto& zones = zoneMgr.zones();
