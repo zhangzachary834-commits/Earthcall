@@ -364,7 +364,7 @@ void Object::drawFieldModel() const {
     // no tessellation seams, and the surface is exact at any zoom. Backends that
     // cannot fall back to the cached mesh, which is why this asks rather than
     // always calling drawImplicit.
-    if (r.rendersImplicitExactly()) {
+    if (r.rendersImplicitExactly() && _renderMode != RenderMode::Mesh) {
         r.drawImplicit(getFieldData(), getFieldExtent(), mat, nullptr,
                        getMemoId(), getFieldRevision());
         return;

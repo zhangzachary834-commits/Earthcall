@@ -158,6 +158,7 @@ void to_json(nlohmann::json& j, const Object& obj){
                             obj.getTargetRotationEulerDegrees().y,
                             obj.getTargetRotationEulerDegrees().z};
     j["rotationResponsiveness"] = obj.getRotationResponsiveness();
+    j["renderMode"] = static_cast<int>(obj.getRenderModeProp());
     // Screen-space position for Shape2D / Text2D. Persisted so a 2D control
     // survives save/load at the same screen position the Person placed it.
     j["x2D"] = obj.getX2D();
@@ -328,6 +329,9 @@ void from_json(const nlohmann::json& j, Object& obj){
     }
     if (j.contains("rotationResponsiveness")) {
         obj.setRotationResponsiveness(j["rotationResponsiveness"].get<float>());
+    }
+    if (j.contains("renderMode")) {
+        obj.setRenderModeProp(j["renderMode"].get<int>());
     }
     // Screen-space position for Shape2D / Text2D. Defaults match the field
     // defaults in Object.hpp; older saves without these keys load cleanly.

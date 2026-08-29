@@ -432,7 +432,12 @@ bool WebGpuRenderer::init(const wgpu::Device& gpu, WGPUTextureFormat colorFormat
     _imagePipe = wgpuDeviceCreateRenderPipeline(_device, &ipd);
 
     // Particle pipeline
-    _particleShader = loadShader(_device, kParticleWGSL, "particle");
+    WGPUShaderSourceWGSL psrc = {};
+    psrc.chain.sType = WGPUSType_ShaderSourceWGSL;
+    psrc.code = wgpu::Device::str(kParticleWGSL);
+    WGPUShaderModuleDescriptor psmDesc = {};
+    psmDesc.nextInChain = &psrc.chain;
+    _particleShader = wgpuDeviceCreateShaderModule(_device, &psmDesc);
     WGPUBindGroupLayoutEntry pbgle = {};
     pbgle.binding = 0;
     pbgle.visibility = WGPUShaderStage_Vertex | WGPUShaderStage_Fragment;
