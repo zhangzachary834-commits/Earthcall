@@ -69,6 +69,7 @@ public:
     void setMouseLeftPressedLast(bool v) { _mouseLeftPressedLast = v; }
 
     bool& devToolsWindowOpen() { return _devToolsWindowOpen; }
+    bool& performanceMetricsWindowOpen() { return _performanceMetricsWindowOpen; }
         
     glm::vec2 get2DToolDragStart() const { return _dragStart; }
     void update2DToolDrag(glm::vec2 pos) { _dragCurrent = pos; }
@@ -116,6 +117,7 @@ private:
 
     bool _mouseLeftPressedLast = false;
     bool _devToolsWindowOpen = false;
+    bool _performanceMetricsWindowOpen = false;
     bool _creationConsoleOpen = false;
     bool _creatorConsoleOpen = false;
     bool _showKeymapWindow = false;

@@ -861,8 +861,8 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     inst.extents = glm::vec4(extent * 1.05f, 0.0f);
     
     float maxDim = glm::max(glm::max(extent.x, extent.y), extent.z);
-    inst.misc = glm::vec4(1.0f, 1e-4f, maxDim * 8.0f,
-                          prog.needsGradientStep ? 1.0f : 0.0f);
+    // Pass 0.25 as damping factor for un-Lipschitz ASTs, 1.0 for exact SDFs.
+    inst.misc = glm::vec4(1.0f, 1e-4f, maxDim * 8.0f, prog.needsGradientStep ? 0.25f : 1.0f);
                           
     inst.paramOffset = static_cast<uint32_t>(_sdfParamsBatches[sp].size());
     _sdfBatches[sp].push_back(inst);

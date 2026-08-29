@@ -702,16 +702,7 @@ fn fs(in: VSOut) -> FSOut {
         // Scale epsilon by distance (cone stepping) to prevent infinite steps on the horizon
         let current_eps = max(eps, t * 0.001);
 
-        var d = raw;
-        if (damping > 0.5 && abs(d) < current_eps * 10.0) {
-            let e = 1e-3;
-            let g = vec3<f32>(
-                sdfEval(p + vec3<f32>(e, 0.0, 0.0)) - raw,
-                sdfEval(p + vec3<f32>(0.0, e, 0.0)) - raw,
-                sdfEval(p + vec3<f32>(0.0, 0.0, e)) - raw) / e;
-            let gl = length(g);
-            if (gl > 1e-6) { d = raw / gl; }
-        }
+        var d = raw * damping;
 
         if (d < current_eps) { hit = true; break; }
         // Volumetric Field Accumulation

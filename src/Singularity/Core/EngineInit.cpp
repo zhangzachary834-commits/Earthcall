@@ -261,6 +261,10 @@ void Engine::initLogic() {
         _devToolsWindowOpen = !_devToolsWindowOpen;
         if (_devToolsWindowOpen) ensureCursorUnlocked();
     });
+    _mainMenu.addOption("Toggle Performance Metrics", GLFW_KEY_F3, [this]() {
+        _performanceMetricsWindowOpen = !_performanceMetricsWindowOpen;
+        if (_performanceMetricsWindowOpen) ensureCursorUnlocked();
+    });
     _mainMenu.addOption("Toggle Creator Console", GLFW_KEY_F8, [this]() {
         _creatorConsoleOpen = !_creatorConsoleOpen;
         if (_creatorConsoleOpen) ensureCursorUnlocked();
@@ -364,6 +368,10 @@ void Engine::initLogic() {
     _keyboardHandler->bindKey(GLFW_KEY_GRAVE_ACCENT, "toggle_dev_tools", [this]() {
         _devToolsWindowOpen = !_devToolsWindowOpen;
         if (_devToolsWindowOpen) ensureCursorUnlocked();
+    });
+    _keyboardHandler->bindKey(GLFW_KEY_F3, "toggle_performance_metrics", [this]() {
+        _performanceMetricsWindowOpen = !_performanceMetricsWindowOpen;
+        if (_performanceMetricsWindowOpen) ensureCursorUnlocked();
     });
     _keyboardHandler->bindKey(GLFW_KEY_F8, "toggle_creation_console", [this]() {
         _creatorConsoleOpen = !_creatorConsoleOpen;

@@ -1,3 +1,6 @@
+#include "Singularity/Screen/ScreenChannel.hpp"
+#include "Singularity/Screen/Renderer.hpp"
+#include "Singularity/FirstMoverOntology/FirstMoverWindowTools/PerformanceMetricsWindow.hpp"
 #include "Singularity/Core/Engine.hpp"
 #include "Singularity/Core/CreationChannel.hpp"
 #include "Singularity/Screen/Camera.hpp"
@@ -344,6 +347,7 @@ void Engine::tick(float dt) {
         }
 
         Rendering::renderDeveloperToolsWindow(&_devToolsWindowOpen, _window, this);
+        Rendering::renderPerformanceMetricsWindow(&_performanceMetricsWindowOpen, this);
 
         if (_creationConsoleOpen) {
             Rendering::renderCreationWindow(&_creationConsoleOpen, *_player, nullptr, mgr.active());
