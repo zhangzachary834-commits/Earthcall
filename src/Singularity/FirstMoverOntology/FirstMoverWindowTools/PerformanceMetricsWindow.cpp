@@ -26,11 +26,9 @@ void renderPerformanceMetricsWindow(bool* open, Core::Engine* engine) {
         }
         
         ImGui::Separator();
-        ImGui::Text("Total Singulars: %d", Singular::getAliveCount());
-        ImGui::Text("Total Visual Shapes: %d", Object::getAliveCount());
-        
-        ImGui::Separator();
         ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.4f, 1.0f), "CPU Substrate Metrics");
+        ImGui::Text("Total Singulars (CPU allocs): %d", Singular::getAliveCount());
+        ImGui::Text("Total Visual Shapes (CPU allocs): %d", Object::getAliveCount());
         
         // Calculate AST evals per frame
         static uint32_t lastAstEvals = 0;
