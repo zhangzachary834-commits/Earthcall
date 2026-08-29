@@ -54,6 +54,8 @@ class Material;
 class Object : public Singular {
 
 public:
+    static int getAliveCount();
+
     // Geometry types are defined in ObjectTypes.hpp
     using ShapeKind = ObjectTypes::ShapeKind;
     using ShapeParams = ObjectTypes::ShapeParams;
@@ -618,7 +620,7 @@ public:
     void createCustomPolyhedron(const std::vector<glm::vec3>& vertices, 
                                const std::vector<std::vector<int>>& faces);
 
-    virtual ~Object() = default;
+    virtual ~Object();
 
     // Owning form part (non-null when this Object is a sub-object of a BodyPart)
     // void setOwnerBodyPart(BodyPart* owner) { part = owner; }

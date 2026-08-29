@@ -27,6 +27,8 @@ public:
     Singular& operator=(Singular&&) noexcept;
     virtual ~Singular();
     virtual std::string getIdentifier() const = 0;
+    
+    static int getAliveCount();
 
     // Checks if this Singular satisfies the strict Kernel bounds required for set-to-set synthesis.
     // Placeholder for when we define these bounds later.

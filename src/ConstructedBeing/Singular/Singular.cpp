@@ -4,15 +4,31 @@
 #include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
 #include "ConstructedBeing/Singular/Property/DataStructure.hpp"
 
-Singular::Singular() = default;
-Singular::~Singular() = default;
+#include <atomic>
+
+static std::atomic<int> s_singularAliveCount{0};
+
+int Singular::getAliveCount() {
+    return s_singularAliveCount.load(std::memory_order_relaxed);
+}
+
+Singular::Singular() {
+    s_singularAliveCount.fetch_add(1, std::memory_order_relaxed);
+}
+
+Singular::~Singular() {
+    s_singularAliveCount.fetch_sub(1, std::memory_order_relaxed);
+}
+
 Singular::Singular(const Singular& o)
     : designatedZones(o.designatedZones),
       _stakeholders(o._stakeholders),
       _dynamicProperties(o._dynamicProperties),
       _dataStructures(o._dataStructures),
       name(o.name),
-      _telosId(o._telosId) {}
+      _telosId(o._telosId) {
+    s_singularAliveCount.fetch_add(1, std::memory_order_relaxed);
+}
 
 Singular& Singular::operator=(const Singular& o) {
     if (this != &o) {
@@ -35,7 +51,9 @@ Singular::Singular(Singular&& o) noexcept
       _dynamicProperties(std::move(o._dynamicProperties)),
       _dataStructures(std::move(o._dataStructures)),
       name(std::move(o.name)),
-      _telosId(std::move(o._telosId)) {}
+      _telosId(std::move(o._telosId)) {
+    s_singularAliveCount.fetch_add(1, std::memory_order_relaxed);
+}
 
 Singular& Singular::operator=(Singular&& o) noexcept {
     if (this != &o) {

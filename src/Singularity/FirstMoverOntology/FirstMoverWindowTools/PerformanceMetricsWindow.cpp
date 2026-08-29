@@ -3,6 +3,8 @@
 #include "imgui.h"
 #include "Singularity/Core/Engine.hpp"
 #include "Person/Person.hpp"
+#include "ConstructedBeing/Singular/Singular.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "Singularity/OntoMath/ScalarForm.hpp"
 #include "Singularity/Screen/Renderer.hpp"
 
@@ -22,6 +24,10 @@ void renderPerformanceMetricsWindow(bool* open, Core::Engine* engine) {
         } else {
             ImGui::TextDisabled("Player Pos: Unknown");
         }
+        
+        ImGui::Separator();
+        ImGui::Text("Total Singulars: %d", Singular::getAliveCount());
+        ImGui::Text("Total Visual Shapes: %d", Object::getAliveCount());
         
         ImGui::Separator();
         ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.4f, 1.0f), "CPU Substrate Metrics");

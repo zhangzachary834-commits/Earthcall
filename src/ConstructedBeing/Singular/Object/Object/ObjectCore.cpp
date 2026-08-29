@@ -220,7 +220,15 @@ void Object::createCustomPolyhedron(const std::vector<glm::vec3>& vertices,
 // stand here only forwarded to ObjectIdentity::claimIdentifierAtLeast and had
 // no callers — a non-static member shadowing the namespace function it wrapped.
 
+#include <atomic>
+static std::atomic<int> s_objectAliveCount{0};
+
+int Object::getAliveCount() {
+    return s_objectAliveCount.load(std::memory_order_relaxed);
+}
+
 Object::Object(std::string explicitId) {
+    s_objectAliveCount.fetch_add(1, std::memory_order_relaxed);
     if (!explicitId.empty()) {
         objectID = std::move(explicitId);
         ObjectIdentity::claimIdentifierAtLeast(objectID);
@@ -232,6 +240,10 @@ Object::Object(std::string explicitId) {
 }
 
 Object::Object() : Object("") {}
+
+Object::~Object() {
+    s_objectAliveCount.fetch_sub(1, std::memory_order_relaxed);
+}
 
 void Object::setPosition(const glm::vec3& p) {
     glm::mat4 t = transform;

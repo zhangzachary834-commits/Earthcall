@@ -91,7 +91,6 @@ Addendum: Also ensure save system works in every case and everything that needs 
 - Restore the broad phase in the hardcoded collision first mover.
 - Make Collision and gravity toggleable first movers rather than hardcoded black boxes.
 - Make the physics laws inside the first mover fixtures either actually work, or remove redundant functionality and wire them up to the originals instead.
-- 
 
 ### Modalities · integration · substrate
 - Implement Voice, Sound, and Audio primitives.
@@ -252,3 +251,6 @@ on a quiet machine) so the tripwire tightens behind the fix.
 ## Basic design before creating fully working products with Earthcall:
 - FOR ZACH: Write foundational design specification.
 - ✅ **Tessellation Cache Garbage Collection (Phase 4 Follow-up)** — **done and verified (2026-08-26)**: Implemented reference-counted garbage collection for `s_smoothCache` in `src/ConstructedBeing/Singular/Object/ObjectCollision.cpp` via `Object::gcSmoothTessellationCache()`, `smoothTessellationCacheSize()`, and `clearSmoothTessellationCache()`; evicts cached `TessMesh` entries with `use_count() <= 1` (where no live `Object` holds a reference); wired periodic eviction into `Engine::update` (`EngineUpdate.cpp`); guarded by `tests/constructed-being/smooth_tessellation_cache_test.cpp` (8/8 checks pass covering cache insertion, sharing across identical shapes, retention while referenced, and eviction upon object deletion or shape modification).
+
+## Stuff for Zach to write when I don't know which section it belongs in (agents if you're reading this please move the bullet points below to their proper section):
+- So make sure every Shape Kind has a Face Texture or whatever equivalent necessary to draw on it freely. Also, facetextures shouldn't be a black box or a hardcoded limiter (e.g. facetexture dimensions should not be hardcoded away from Person authoring--we shouldn't be stuck with only having 256x256 resolution textures) 
