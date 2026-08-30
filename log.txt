@@ -1,0 +1,147 @@
+HELLO FROM CPP MAIN!
+Engine::init starting
+[Engine] repo root: /Users/zacharyzhang/Documents/GitHub/Earthcall  saves: /Users/zacharyzhang/Documents/GitHub/Earthcall/saves
+Engine::init creating window
+Engine::init window created
+Engine::init creating WebGpuBackend
+Engine::init calling createWindowContext
+Engine::init createWindowContext returned
+🌟 Engine initialised (WebGPU).
+🎵 Audio System initialized.
+Relation::fromJson: unbound endpoint(s) type='instance-of' a='object.chess.board' b='category.chess.board'. Identifier properties kept; the relation holds no being until bind.
+Formation 'formation-248': REFUSED relation 'instance-of' with unbound Singular endpoints.
+Relation::fromJson: unbound endpoint(s) type='subcategory-of' a='category.chess.piece' b='category.chess'. Identifier properties kept; the relation holds no being until bind.
+Formation 'formation-248': REFUSED relation 'subcategory-of' with unbound Singular endpoints.
+Relation::fromJson: unbound endpoint(s) type='subcategory-of' a='category.chess.board' b='category.chess'. Identifier properties kept; the relation holds no being until bind.
+Formation 'formation-248': REFUSED relation 'subcategory-of' with unbound Singular endpoints.
+Relation::fromJson: unbound endpoint(s) type='subcategory-of' a='category.chess.player' b='category.chess'. Identifier properties kept; the relation holds no being until bind.
+Formation 'formation-248': REFUSED relation 'subcategory-of' with unbound Singular endpoints.
+Relation::fromJson: unbound endpoint(s) type='instance-of' a='piece-white-rook-0-0' b='category.chess.piece'. Identifier properties kept; the relation holds no being until bind.
+Formation 'formation-248': REFUSED relation 'instance-of' with unbound Singular endpoints.
+Relation::fromJson: unbound endpoint(s) type='instance-of' a='piece-white-knight-1-0' b='category.chess.piece'. Identifier properties kept; the relation holds no being until bind.
+Formation 'formation-248': REFUSED relation 'instance-of' with unbound Singular endpoints.
+Relation::fromJson: unbound endpoint(s) type='instance-of' a='piece-white-bishop-2-0' b='category.chess.piece'. Identifier properties kept; the relation holds no being until bind.
+Formation 'formation-248': REFUSED relation 'instance-of' with unbound Singular endpoints.
+Relation::fromJson: unbound endpoint(s) type='instance-of' a='piece-white-queen-3-0' b='category.chess.piece'. Identifier properties kept; the relation holds no being until bind.
+Formation 'formation-248': REFUSED relation 'instance-of' with unbound Singular endpoints.
+Relation::fromJson: unbound endpoint(s) type='instance-of' a='piece-white-king-4-0' b='category.chess.piece'. Identifier properties kept; the relation holds no being until bind.
+Formation 'formation-248': REFUSED relation 'instance-of' with unbound Singular endpoints.
+Relation::fromJson: unbound endpoint(s) type='instance-of' a='piece-white-bishop-5-0' b='category.chess.piece'. Identifier properties kept; the relation holds no being until bind.
+Formation 'formation-248': REFUSED relation 'instance-of' with unbound Singular endpoints.
+Relation::fromJson: unbound endpoint(s) type='instance-of' a='piece-white-knight-6-0' b='category.chess.piece'. Identifier properties kept; the relation holds no being until bind.
+Formation 'formation-248': REFUSED relation 'instance-of' with unbound Singular endpoints.
+Relation::fromJson: unbound endpoint(s) type='instance-of' a='piece-white-rook-7-0' b='category.chess.piece'. Identifier properties kept; the relation holds no being until bind.
+Formation 'formation-248': REFUSED relation 'instance-of' with unbound Singular endpoints.
+Relation::fromJson: unbound endpoint(s) type='instance-of' a='piece-black-rook-0-7' b='category.chess.piece'. Identifier properties kept; the relation holds no being until bind.
+Formation 'formation-248': REFUSED relation 'instance-of' with unbound Singular endpoints.
+Relation::fromJson: unbound endpoint(s) type='instance-of' a='piece-black-knight-1-7' b='category.chess.piece'. Identifier properties kept; the relation holds no being until bind.
+Formation 'formation-248': REFUSED relation 'instance-of' with unbound Singular endpoints.
+Relation::fromJson: unbound endpoint(s) type='instance-of' a='piece-black-bishop-2-7' b='category.chess.piece'. Identifier properties kept; the relation holds no being until bind.
+Formation 'formation-248': REFUSED relation 'instance-of' with unbound Singular endpoints.
+Relation::fromJson: unbound endpoint(s) type='instance-of' a='piece-black-queen-3-7' b='category.chess.piece'. Identifier properties kept; the relation holds no being until bind.
+Formation 'formation-248': REFUSED relation 'instance-of' with unbound Singular endpoints.
+Relation::fromJson: unbound endpoint(s) type='instance-of' a='piece-black-king-4-7' b='category.chess.piece'. Identifier properties kept; the relation holds no being until bind.
+Formation 'formation-248': REFUSED relation 'instance-of' with unbound Singular endpoints.
+Relation::fromJson: unbound endpoint(s) type='instance-of' a='piece-black-bishop-5-7' b='category.chess.piece'. Identifier properties kept; the relation holds no being until bind.
+Formation 'formation-248': REFUSED relation 'instance-of' with unbound Singular endpoints.
+Relation::fromJson: unbound endpoint(s) type='instance-of' a='piece-black-knight-6-7' b='category.chess.piece'. Identifier properties kept; the relation holds no being until bind.
+Formation 'formation-248': REFUSED relation 'instance-of' with unbound Singular endpoints.
+Relation::fromJson: unbound endpoint(s) type='instance-of' a='piece-black-rook-7-7' b='category.chess.piece'. Identifier properties kept; the relation holds no being until bind.
+Formation 'formation-248': REFUSED relation 'instance-of' with unbound Singular endpoints.
+Relation::fromJson: unbound endpoint(s) type='instance-of' a='piece-white-pawn-0-1' b='category.chess.piece'. Identifier properties kept; the relation holds no being until bind.
+Formation 'formation-248': REFUSED relation 'instance-of' with unbound Singular endpoints.
+Relation::fromJson: unbound endpoint(s) type='instance-of' a='piece-black-pawn-0-6' b='category.chess.piece'. Identifier properties kept; the relation holds no being until bind.
+Formation 'formation-248': REFUSED relation 'instance-of' with unbound Singular endpoints.
+Relation::fromJson: unbound endpoint(s) type='instance-of' a='piece-white-pawn-1-1' b='category.chess.piece'. Identifier properties kept; the relation holds no being until bind.
+Formation 'formation-248': REFUSED relation 'instance-of' with unbound Singular endpoints.
+Relation::fromJson: unbound endpoint(s) type='instance-of' a='piece-black-pawn-1-6' b='category.chess.piece'. Identifier properties kept; the relation holds no being until bind.
+Formation 'formation-248': REFUSED relation 'instance-of' with unbound Singular endpoints.
+Relation::fromJson: unbound endpoint(s) type='instance-of' a='piece-white-pawn-2-1' b='category.chess.piece'. Identifier properties kept; the relation holds no being until bind.
+Formation 'formation-248': REFUSED relation 'instance-of' with unbound Singular endpoints.
+Relation::fromJson: unbound endpoint(s) type='instance-of' a='piece-black-pawn-2-6' b='category.chess.piece'. Identifier properties kept; the relation holds no being until bind.
+Formation 'formation-248': REFUSED relation 'instance-of' with unbound Singular endpoints.
+Relation::fromJson: unbound endpoint(s) type='instance-of' a='piece-white-pawn-3-1' b='category.chess.piece'. Identifier properties kept; the relation holds no being until bind.
+Formation 'formation-248': REFUSED relation 'instance-of' with unbound Singular endpoints.
+Relation::fromJson: unbound endpoint(s) type='instance-of' a='piece-black-pawn-3-6' b='category.chess.piece'. Identifier properties kept; the relation holds no being until bind.
+Formation 'formation-248': REFUSED relation 'instance-of' with unbound Singular endpoints.
+Relation::fromJson: unbound endpoint(s) type='instance-of' a='piece-white-pawn-4-1' b='category.chess.piece'. Identifier properties kept; the relation holds no being until bind.
+Formation 'formation-248': REFUSED relation 'instance-of' with unbound Singular endpoints.
+Relation::fromJson: unbound endpoint(s) type='instance-of' a='piece-black-pawn-4-6' b='category.chess.piece'. Identifier properties kept; the relation holds no being until bind.
+Formation 'formation-248': REFUSED relation 'instance-of' with unbound Singular endpoints.
+Relation::fromJson: unbound endpoint(s) type='instance-of' a='piece-white-pawn-5-1' b='category.chess.piece'. Identifier properties kept; the relation holds no being until bind.
+Formation 'formation-248': REFUSED relation 'instance-of' with unbound Singular endpoints.
+Relation::fromJson: unbound endpoint(s) type='instance-of' a='piece-black-pawn-5-6' b='category.chess.piece'. Identifier properties kept; the relation holds no being until bind.
+Formation 'formation-248': REFUSED relation 'instance-of' with unbound Singular endpoints.
+Relation::fromJson: unbound endpoint(s) type='instance-of' a='piece-white-pawn-6-1' b='category.chess.piece'. Identifier properties kept; the relation holds no being until bind.
+Formation 'formation-248': REFUSED relation 'instance-of' with unbound Singular endpoints.
+Relation::fromJson: unbound endpoint(s) type='instance-of' a='piece-black-pawn-6-6' b='category.chess.piece'. Identifier properties kept; the relation holds no being until bind.
+Formation 'formation-248': REFUSED relation 'instance-of' with unbound Singular endpoints.
+Relation::fromJson: unbound endpoint(s) type='instance-of' a='piece-white-pawn-7-1' b='category.chess.piece'. Identifier properties kept; the relation holds no being until bind.
+Formation 'formation-248': REFUSED relation 'instance-of' with unbound Singular endpoints.
+Relation::fromJson: unbound endpoint(s) type='instance-of' a='piece-black-pawn-7-6' b='category.chess.piece'. Identifier properties kept; the relation holds no being until bind.
+Formation 'formation-248': REFUSED relation 'instance-of' with unbound Singular endpoints.
+Relation::fromJson: unbound endpoint(s) type='instance-of' a='object.chess.seat.white' b='category.chess.player'. Identifier properties kept; the relation holds no being until bind.
+Formation 'formation-248': REFUSED relation 'instance-of' with unbound Singular endpoints.
+Relation::fromJson: unbound endpoint(s) type='instance-of' a='object.chess.seat.black' b='category.chess.player'. Identifier properties kept; the relation holds no being until bind.
+Formation 'formation-248': REFUSED relation 'instance-of' with unbound Singular endpoints.
+[Init] Checkpoint A: after ShadingSystem::init()
+[Init] Home established for 'Player' (zone count now 5)
+⚠️  Zone 'Chess': 38 saved formation relation(s) were REFUSED on load (self-ground or a directed cycle). They are not in the formation and will not be written back on the next save. Fix them in the save file to keep them.
+[Init] Checkpoint B: zones added (10)
+[Init] Zone[0]: Sanctum of Beginnings | Q=0 D=0
+[Init] Zone[1]: Temple of Echoes | Q=0 D=0
+[Init] Zone[2]: Cavern of Light | Q=0 D=0
+[Init] Zone[3]: Character Architect Forge | Q=0 D=0
+[Init] Zone[4]: Home | Q=3 D=0
+[Init] Zone[5]: Chess | Q=2 D=1
+[Init] Zone[6]: Perlin Noise Floor Zone | Q=1 D=1
+[Init] Zone[7]: Ourverse Gathering | Q=1 D=0
+[Init] Zone[8]: new slate | Q=1 D=1
+[Init] Zone[9]: random zone | Q=1 D=1
+[Init] Menu reset before adding options
+[Init] Checkpoint B1: before menu addOption(Resume)
+[Menu] addOption begin: key=82, current options=0
+[Menu] addOption end: new options=1
+[Init] Checkpoint B2: after menu addOption(Resume)
+[Menu] addOption begin: key=83, current options=1
+[Menu] addOption end: new options=2
+[Menu] addOption begin: key=65, current options=2
+[Menu] addOption end: new options=3
+[Menu] addOption begin: key=76, current options=3
+[Menu] addOption end: new options=4
+[Menu] addOption begin: key=71, current options=4
+[Menu] addOption end: new options=5
+[Menu] addOption begin: key=72, current options=5
+[Menu] addOption end: new options=6
+[Menu] addOption begin: key=292, current options=6
+[Menu] addOption end: new options=7
+[Menu] addOption begin: key=293, current options=7
+[Menu] addOption end: new options=8
+[Menu] addOption begin: key=294, current options=8
+[Menu] addOption end: new options=9
+[Menu] addOption begin: key=96, current options=9
+[Menu] addOption end: new options=10
+[Menu] addOption begin: key=292, current options=10
+[Menu] addOption end: new options=11
+[Menu] addOption begin: key=297, current options=11
+[Menu] addOption end: new options=12
+[Menu] addOption begin: key=66, current options=12
+[Menu] addOption end: new options=13
+[Menu] addOption begin: key=86, current options=13
+[Menu] addOption end: new options=14
+[Menu] addOption begin: key=75, current options=14
+[Menu] addOption end: new options=15
+[Menu] addOption begin: key=67, current options=15
+[Menu] addOption end: new options=16
+[Menu] addOption begin: key=81, current options=16
+[Menu] addOption end: new options=17
+[Init] Checkpoint B3: after menu addOption(Quit)
+[Init] Checkpoint C: initialization proceeding
+[Init] Checkpoint D: callbacks registered
+🔥 Earthcall Game initialised.
+CPU FRAME TIMING: law_manager=95.34ms
+wgpuDeviceCreateRenderPipeline compiled novel SDF in 0.63 ms
+wgpuDeviceCreateRenderPipeline compiled novel SDF in 0.32 ms
+wgpuDeviceCreateRenderPipeline compiled novel SDF in 0.29 ms
+CPU FRAME TIMING: law_manager=29.55ms
+CPU FRAME TIMING: law_manager=29.22ms

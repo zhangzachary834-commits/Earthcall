@@ -5,6 +5,8 @@
 #include "LawAuditLogger.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 
+#include <GLFW/glfw3.h>  // at top of file
+
 #include <algorithm>
 #include <atomic>
 #include <cstdio>
@@ -1485,6 +1487,8 @@ void LawManager::connectToEventBus() {
 }
 
 std::vector<Law::ApplicationRecord> LawManager::tick() {
+    auto T0 = glfwGetTime();
+
     // Bring compiled terminals up to date with the conditions they were
     // compiled from, before anything reads either. Conditions are edited from
     // the graph window, from tools, and from loaded worlds; asking here means
@@ -1493,6 +1497,7 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
     for (const auto& law : _laws) {
         if (law) syncReteCompilation(*law);
     }
+    auto T1 = glfwGetTime();
 
     // Introduce any being the network has not met. Only while connected: the
     // property-change callback installed by connectToEventBus() is what keeps
@@ -1504,6 +1509,8 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
             seedStateFacts(being);
         }
     }
+
+    auto T2 = glfwGetTime();
 
     if (_rete.hasDirtyFacts()) {
         _rete.evaluateDirty();
@@ -1615,7 +1622,7 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
         // The terminal node memories already contain exactly the beings that
         // satisfy all conditions, so we skip both sweepSubjects AND
         // conditionsSatisfied — the Rete network has done both reactively.
-        if (hasTerminals && law->activation() == Law::Activation::WhileTrue) {
+        if (hasTerminals) {
             std::vector<std::size_t> termIds;
             termIds.reserve(termIt->second.size());
             for (const auto& info : termIt->second) termIds.push_back(info.nodeId);
@@ -1718,8 +1725,19 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
         }
     }
 
+    auto T3 = glfwGetTime();
     runDriveSessions(records);
+    auto T4 = glfwGetTime();
     reapUnmade();
+    auto T5 = glfwGetTime();
+
+    _tickTiming.syncMs  = static_cast<float>((T1 - T0) * 1000.0);
+    _tickTiming.seedMs  = static_cast<float>((T2 - T1) * 1000.0);
+    _tickTiming.evalMs  = static_cast<float>((T3 - T2) * 1000.0);
+    _tickTiming.driveMs = static_cast<float>((T4 - T3) * 1000.0);
+    _tickTiming.reapMs  = static_cast<float>((T5 - T4) * 1000.0);
+    _tickTiming.totalMs = static_cast<float>((T5 - T0) * 1000.0);
+
     return records;
 }
 

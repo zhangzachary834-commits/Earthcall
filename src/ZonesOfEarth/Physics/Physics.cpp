@@ -721,6 +721,10 @@ namespace Physics {
             // If explicitObjects is provided, we treat it as the only set unless other filters also match
             // fallthrough to allow other filters as well
         }
+        // Zach: I commented out Gemini/Antigravity's objId version and reverted the code
+        // because that was somehow making it much slower.
+        // It's unclear to me at the time of writing whether creating a new objId field to store the getIdentifier() instead of using getIdentifier() directly has a good idea behind it.
+        // std::string objId = obj.getIdentifier();
         if (t.limitByExplicitList) {
             bool found=false; for(const auto& id : t.objectIdentifiers){ if(obj.getIdentifier()==id){found=true;break;} }
             if(!found) return false;
@@ -744,7 +748,7 @@ namespace Physics {
                 bool inCategory = false;
                 for (const auto* rel : Universe::instance().relations()) {
                     if (rel && rel->type == "in-category" && 
-                        rel->aId() == obj.getIdentifier() && 
+                        rel->aId() == obj.getIdentifier() &&
                         rel->bId() == s) {
                         inCategory = true;
                         break;

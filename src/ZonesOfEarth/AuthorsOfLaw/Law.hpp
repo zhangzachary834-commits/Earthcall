@@ -663,6 +663,17 @@ public:
     bool isConnected() const { return _connected; }
     std::vector<Law::ApplicationRecord> tick();
 
+    // Per-frame timing breakdown, written by tick(), read by the perf window.
+    struct TickTiming {
+        float syncMs    = 0.0f;   // syncReteCompilation over all laws
+        float seedMs    = 0.0f;   // seedStateFacts over all beings
+        float evalMs    = 0.0f;   // Rete evaluation + agenda drain + continuous sweep
+        float driveMs   = 0.0f;   // runDriveSessions
+        float reapMs    = 0.0f;   // reapUnmade
+        float totalMs   = 0.0f;   // wall time of the entire tick()
+    };
+    const TickTiming& lastTickTiming() const { return _tickTiming; }
+
     // ------------------------------------------------------------------
     // Triggers — the serializable truth of WHAT WAKES each law. The Rete
     // alpha bindings are derived from this map (closures cannot serialize);
@@ -771,4 +782,5 @@ private:
     std::unordered_set<std::string> _seededSubjects;
     bool _connected = false;
     bool _dirty = false;
+    TickTiming _tickTiming;
 };

@@ -102,7 +102,7 @@ void configureSurface(WindowContext& ctx, uint32_t width, uint32_t height) {
     cfg.usage = WGPUTextureUsage_RenderAttachment;
     cfg.width = width;
     cfg.height = height;
-    cfg.presentMode = WGPUPresentMode_Fifo; // vsync
+    cfg.presentMode = WGPUPresentMode_Immediate; // vsync OFF
     cfg.alphaMode = WGPUCompositeAlphaMode_Auto;
     wgpuSurfaceConfigure(ctx.surface, &cfg);
 }

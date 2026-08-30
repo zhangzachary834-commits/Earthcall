@@ -8,6 +8,7 @@
 #include "Singularity/OntoMath/ScalarForm.hpp"
 #include "Singularity/Screen/Renderer.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 
 extern ZoneManager mgr;
 
@@ -65,6 +66,18 @@ void renderPerformanceMetricsWindow(bool* open, Core::Engine* engine) {
         ImGui::Text("Pipeline Switches: %u", stats.pipelineSwitches);
         ImGui::Text("VRAM Allocations: %u", stats.bufferSuballocations);
         ImGui::Text("VRAM Uniform Bytes: %zu", stats.uniformBytesWritten);
+
+        // ---- LawManager tick() timing breakdown ----
+        if (LawManager* lm = engine->getLawManager()) {
+            const auto& t = lm->lastTickTiming();
+            ImGui::Separator();
+            ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "LawManager::tick()  %.1f ms", t.totalMs);
+            ImGui::Text("  Rete Sync:       %6.2f ms", t.syncMs);
+            ImGui::Text("  Seed State:      %6.2f ms", t.seedMs);
+            ImGui::Text("  Eval + Sweep:    %6.2f ms", t.evalMs);
+            ImGui::Text("  Drive Sessions:  %6.2f ms", t.driveMs);
+            ImGui::Text("  Reap Unmade:     %6.2f ms", t.reapMs);
+        }
     }
     ImGui::End();
 }
