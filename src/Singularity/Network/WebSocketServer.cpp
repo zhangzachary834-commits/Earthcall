@@ -25,6 +25,7 @@
 #include <mutex>
 #include <vector>
 #include <ctime>
+#include <cmath>
 
 extern ZoneManager mgr;
 extern MaterialManager materials;
@@ -129,8 +130,8 @@ static nlohmann::json buildWorldSnapshotJson() {
             pj["camera_forward"] = {camFront.x, camFront.y, camFront.z};
             glm::vec3 camPos = cam->getPos();
             pj["camera_position"] = {camPos.x, camPos.y, camPos.z};
-            pj["yaw"] = cam->yaw;
-            pj["pitch"] = cam->pitch;
+            pj["yaw"] = glm::degrees(std::atan2(camFront.z, camFront.x));
+            pj["pitch"] = glm::degrees(std::asin(std::clamp(camFront.y, -1.0f, 1.0f)));
         }
         pj["flying"] = Physics::getFlying();
         root["player"] = pj;
