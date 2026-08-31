@@ -58,3 +58,78 @@ Scale Earthcall's WebGPU implicit SDF and terrain rendering from 40 FPS into the
 Antigravity (Gemini 3.7 Flash)  
 Session: `fb329b04-fd0d-42e8-b6c8-8f30c3e28deb`  
 Date: 2026-08-28T23:01:00-07:00
+
+---
+
+## Addendum — measured refinement of this plan's claims
+
+**Added**: 2026-08-31 by Claude Opus 5 (Claude Code), session `4e6ef036-ad44-4bc6-97b9-a8704274736e`
+**Basis**: `scratch/probes/horizon_cost_probe.cpp` against the authored Perlin field, plus
+[REVIEW_OF_ANTIGRAVITY_SDF_RENDERING_PLANS_2026-08-31.md](../audits/REVIEW_OF_ANTIGRAVITY_SDF_RENDERING_PLANS_2026-08-31.md).
+
+### The 40 FPS this scales "from" was not a rendering number
+
+The cap was **two contentless `WhileTrue` Ourverse metalaws sweeping every being every
+frame, ~20–30 ms together** — found by Zach after this was written. Rendering was one of
+the faster phases. Both metalaws now default to disabled. The 120–240 FPS target has no
+measured baseline under it.
+
+### Phase 1 (2D lattice noise) — sound idea, but the shipped version broke CPU/GPU agreement
+
+The observation is right: for a heightfield `y = h(x,z)` the `y` coordinate is invariant, so
+a 2D noise is the correct object and is genuinely cheaper. And the measurement now backs the
+premise hard — **the field evaluation is essentially the entire horizon cost** (a trivial
+one-operation field at the same camera sits at the empty-frame floor).
+
+What shipped was not this. `cnoise3` was redefined as an alias for **3D simplex** noise while
+the CPU evaluator kept computing `glm::perlin` (classic Perlin), so the ground a Person saw
+stopped being the ground they collided with — collision reads the CPU field. Reverted
+2026-08-31, and `webgpu_sdf_parity_test` now carries an `Expr(noise)` case that fires at
+diff 128 against a tolerance of 10 when the substitution is re-injected.
+
+The rule this phase needs, and did not have: **a faster noise is admissible only if it is
+the same function.** Routing a 2D argument to a 2D noise is fine *if* the 2D noise agrees
+with `glm::perlin` restricted to that plane, or if the CPU is routed identically. Anything
+else changes what a Person's `Op::Noise` means, which is a channel deciding the mathematics
+rather than reading it.
+
+### Phase 2 (temporal depth warm-starting) — real technique, two things to fix first
+
+The technique is standard and the premise is sound. Two refinements:
+
+1. **`t = max(t0 - 0.25, t_enter)` is another picked world-space constant.** 0.25 units is
+   an assumption about scale in a world holding a 1000-unit terrain and a 0.6-unit chess
+   piece in the same tree. Every constant of this kind in this campaign became a bug — 600,
+   1.5, `maxDim * 8` compared against an eye-relative `t` (Bugs.md #20). Derive the margin
+   from camera motion since the last frame plus the pixel footprint, not from a number.
+2. **It makes the previous frame an input to what the current frame shows.** Disocclusion
+   needs an explicit validity test — re-march from the warm start and confirm the surface,
+   or fall back — or geometry that has just been revealed will be missing for a frame or
+   more. That belongs in the plan, not in the discovery.
+
+Priority note: the measurement says horizon rays terminate on **distance**, not on the
+iteration cap (192 → 96 → 48 → 24 changed nothing across four builds). A warm start reduces
+steps for pixels that *hit*; the horizon cost is dominated by long rays through the field.
+Useful, but not the lever.
+
+### Phase 3 (adaptive sub-sampling) — sound; build the feature before the knob
+
+`@screen-channel.renderScale` and `performanceMode` were **registered as law-visible
+properties and read by nothing**. Both were deleted 2026-08-31. A path that reaches nothing
+is a lie in the vocabulary, worse than no control at all. Register the property in the commit
+that makes it live.
+
+Also worth knowing before choosing a fixed scale: **looking down is already free** — the
+marcher is indistinguishable from an empty frame there. Half-resolution pays quality in every
+direction to win in one. It should be conditional on measured cost, not a global setting.
+
+### Verification
+
+The three automated tests listed were all green while the campaign shipped the noise
+substitution, a 1.5-unit minimum march step, a 600-unit horizon, and a march bound that
+deleted every small analytic shape past ~5 units. And the interactive step names
+`./build/earthcall`, the **OpenGL** binary, where every analytic shape falls back to its
+cached tessellation and none of the WGSL this plan modifies runs at all. The WebGPU app is
+`earthcall_webgpu`.
+
+— Claude Opus 5, 2026-08-31

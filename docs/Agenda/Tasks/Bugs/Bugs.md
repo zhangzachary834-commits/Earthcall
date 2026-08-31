@@ -65,6 +65,29 @@ Bugs:
 
     Two candidates for what was seen, and they want Zach to settle them:
     - **The F3 counters.** `flushSdfDraws` increments `sdfDrawCalls` once per PIPELINE BATCH, not per object — 72 toruses sharing one WGSL string are one SDF draw call, by design (that batching is the good half of the August campaign). A window reading "SDF Draws: 1 / Mesh Draws: 30" is what correct behaviour looks like here, not a fallback.
-    - **The wrong binary.** There are two apps: `earthcall` (OpenGL, `rendersImplicitExactly()` == false, so EVERY analytic shape falls back to its cached tessellation) and `earthcall_webgpu`. `Run Earthcall.command` and `./scripts/build.sh webgpu run` launch the WebGPU one; a plain `cmake --build build --target earthcall` followed by `./build/earthcall` gets the OpenGL one, where toruses really are meshes and always were. CLAUDE.md's own build block names `--target earthcall`, which is the OpenGL target — worth fixing in the docs regardless of what happened here.
+    - **The wrong binary.** There are two apps: `earthcall` (OpenGL, `rendersImplicitExactly()` == false, so EVERY analytic shape falls back to its cached tessellation) and `earthcall_webgpu`. `Run Earthcall.command` and `./scripts/build.sh webgpu run` launch the WebGPU one; a plain `cmake --build build --target earthcall` followed by `./build/earthcall` gets the OpenGL one, where toruses really are meshes and always were. CLAUDE.md's own build block names `--target earthcall`, which is the OpenGL target — worth fixing in the docs regardless of what happened here. Zach: (Oh yeah what if I was looking the opengl one rather than webgpu, let me check again)
 
-20. Loaded up chess_app. The chess pieces are not rendering except the 4 rooks, except when I am very close to them. They still seem to move and respond to clicks fine though. 
+20. Loaded up chess_app. The chess pieces are not rendering except the 4 rooks, except when I am very close to them. They still seem to move and respond to clicks fine though.
+
+    **Found, reproduced headlessly, fixed and locked (2026-08-31).** A march budget compared against the wrong origin. `misc.z` is a LENGTH — `maxDim * 8`, how far to march *inside* the bounding volume — and the marcher bounded itself with `maxDist = min(box.y, inst.misc.z)` while `t` is measured from the **eye**. So it stopped being a budget and became "objects further than `maxDim * 8` from the camera do not exist": the loop's first `if (t > maxDist) { break; }` fired before a single sample, `hit` stayed false, and the fragment discarded.
+
+    Every detail of the report follows from that. `maxDim` for a chess piece is ~0.6, so the cutoff is **~4.8 units** — "except when I am very close to them". The four rooks are the only pieces that are `ShapeKind::Cube` (kind 0), which draws through the **mesh** path and never touches the marcher; the pawns are Spheres, knights Ellipsoids, bishops Cones, queens Ovoids, kings Cylinders — all analytic, all raymarched, all gone. And they still moved and took clicks because picking is CPU geometry that never asks the shader anything. The noise floor was unaffected because its budget is 8000, which is why terrain looked fine while only small things went missing.
+
+    Introduced by the August campaign: before it, `let maxDist = box.y;` and `misc.z` was carried in the uniform but **never read**. Fixed to `min(min(box.y, t + inst.misc.z), farField)`, so the budget is offset by the entry point and the two eye-relative bounds stay eye-relative.
+
+    Reproduced before fixing, in `tests/singularity/webgpu_sdf_distance_test.cpp` — a pawn-sized sphere rendered on a real WebGPU device with the camera pulled back, framing held constant:
+
+    | camera distance | before | after |
+    |---|---|---|
+    | 2.0 units | 804 lit px | 804 |
+    | 4.0 units | 788 | 788 |
+    | 8.0 units | **0 — gone** | 804 |
+    | 20 / 60 / 200 units | **0 — gone** | 840 / 1044 / 1852 |
+
+    Nothing could have caught this: `webgpu_sdf_parity_test` renders every one of its 21 cases from a single camera 3 units away, inside any plausible budget. Distance was a free variable no test varied.
+
+    **This is very likely #18 as well.** Whether a given ray trips the bound depends on its own entry distance, so near the threshold *part* of a shape renders and part discards, along a boundary that slides as the camera moves — "corners that look like they're warping depending on my location relative to it." **Zach: re-check the two stacked red shapes.** It may also be part of #19, since a Sanctum torus's extent is ~0.65 and it would have vanished past ~5 units too; that would present as "not there", though, not as "mesh", so the two candidates recorded under #19 still stand.
+
+21. Putting a modest number of cubes quickly increases the "update" ms and the ms of something else I forgot.
+
+22. Earlier there was an issue where if the cubes slid off from a gradually steepening slope in the perlin noise world, it would at a certain point just teleport back to the original location. Not sure if this is still happening, recent tests suggests it may be fixed already but I need to verify again to be sure.

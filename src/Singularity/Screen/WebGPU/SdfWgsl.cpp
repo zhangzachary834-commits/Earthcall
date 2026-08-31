@@ -701,7 +701,20 @@ fn fs(in: VSOut) -> FSOut {
     if (box.y < box.x || box.y < 0.0) { discard; }
 
     var t = max(box.x, 0.0);
-    let maxDist = min(min(box.y, inst.misc.z), farField);
+    // Three bounds, and they are measured from two different origins -- getting
+    // that wrong is what made every small analytic shape vanish (Bugs.md #20).
+    //   box.y     : where the ray leaves the bounding cube. From the EYE.
+    //   farField  : the camera's far plane. Also from the eye.
+    //   misc.z    : how far to march INSIDE the volume, a LENGTH (maxDim * 8) --
+    //               so it has to be offset by the entry point. Compared against
+    //               `t` directly, as it briefly was, it stops being a budget and
+    //               becomes "objects further than maxDim * 8 from the camera do
+    //               not exist": for a chess piece maxDim is ~0.6, so pieces
+    //               beyond ~4.8 units entered the loop with t already past
+    //               maxDist, broke on the first iteration and discarded. The
+    //               noise floor's budget is 8000, which is why terrain looked
+    //               fine and only the small things went missing.
+    let maxDist = min(min(box.y, t + inst.misc.z), farField);
 
     // Heightfield planar leap: If ray starts above the upper extent and points down, leap to top plane in 1 step
     if (damping < 0.5 && rd.y < -1e-4 && (ro.y + rd.y * t) > inst.extents.y) {

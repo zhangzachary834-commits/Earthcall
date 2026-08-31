@@ -348,6 +348,37 @@ All five are recorded in full in `docs/Agenda/Tasks/Bugs/Bugs.md` #15-#19. In sh
   CLAUDE.md's build block named `--target earthcall`, the OpenGL target; both it and
   `BUILD_AND_ENVIRONMENT.md` now name `earthcall_webgpu` and say what the difference is.
 
+### #20 — the campaign's worst regression, found last
+
+Chess pieces invisible except the four rooks, "except when I am very close to them",
+while still moving and taking clicks. One line:
+
+```wgsl
+let maxDist = min(box.y, inst.misc.z);   // t is measured from the EYE
+```
+
+`misc.z` is `maxDim * 8` — a LENGTH, how far to march *inside* the volume. Compared
+against `t`, which starts at the box entry distance from the camera, it becomes
+"objects further than `maxDim * 8` from the eye do not exist." A chess piece's
+`maxDim` is ~0.6, so the cutoff is **4.8 units**. The rooks are the only pieces that
+are `ShapeKind::Cube` and draw through the mesh path; every other piece is analytic
+and raymarched. Picking kept working because picking is CPU geometry.
+
+Before the campaign this line was `let maxDist = box.y;` and `misc.z` was carried in
+the uniform and **never read**. Now `min(min(box.y, t + inst.misc.z), farField)`.
+
+Reproduced headlessly *before* fixing, in a new `webgpu_sdf_distance_test`: a
+pawn-sized sphere goes 804 lit pixels at 2 units, 788 at 4, and **0 at 8 and beyond** —
+`maxDim * 8 = 4.8` sitting exactly at the cliff. After: 804 / 788 / 804 / 840 / 1044 /
+1852 out to 200 units.
+
+**Nothing in the suite could have caught it.** `webgpu_sdf_parity_test` renders all 21
+of its cases from one camera 3 units away — inside any plausible budget. Distance was a
+free variable no test varied, and 21 green shapes said nothing about it. That is the
+lesson worth keeping from this whole review: the campaign's tests all measured the axis
+the campaign was optimising, and every regression it shipped hid on an axis nobody
+sampled.
+
 ## Left open, deliberately
 
 1. **`saves/zones/Ourverse Gathering/zone.json` is 36 MB**, of which 19 MB is

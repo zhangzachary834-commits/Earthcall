@@ -204,3 +204,78 @@ Every optimization in Earthcall must satisfy strict end-to-end parity against CP
    - Verdict: **PASSED** with 0 broken invariants.
 4. **Full Test Suite (`ctest`)**:
    - **72/73 PASSED (99%)** across all 73 suites in **25.38 seconds** (reduced from $71.0\text{ s}$).
+
+---
+
+## Addendum — measured refinement
+
+**Added**: 2026-08-31 by Claude Opus 5 (Claude Code), session `4e6ef036-ad44-4bc6-97b9-a8704274736e`
+**Basis**: `scratch/probes/horizon_cost_probe.cpp` run against `perlin-ground-plane`'s authored
+mathNode, plus [REVIEW_OF_ANTIGRAVITY_SDF_RENDERING_PLANS_2026-08-31.md](../../audits/REVIEW_OF_ANTIGRAVITY_SDF_RENDERING_PLANS_2026-08-31.md).
+Companion addendums sit at the end of the three plans this treatise underwrites.
+
+The lineage in §2 is accurate and well chosen — Quilez, Keinert, Aaltonen, Evans, Lumen are
+the right references and the summaries of each are fair. What follows corrects the parts that
+were asserted about *Earthcall* rather than about the literature.
+
+### The framing is right and the diagnosis is now measured
+
+> *"naive sphere tracing … easily degrades to 15–30 FPS due to ALU saturation"*
+
+**Measured true, for the horizon.** With the same camera and the same extents, swapping the
+authored Perlin field for a one-operation field (`y`) drops the marcher to the empty-frame
+floor. The cost of a horizon frame is essentially *evaluating the mathematics* — not the
+march structure, not fragments, not iteration count. Whoever builds against this treatise
+should take the ALU-saturation thesis seriously; it is the correct target.
+
+Two measured corrections to how it is usually attacked:
+
+1. **Iteration budget is irrelevant.** 192 → 96 → 48 → 24 changed nothing across four
+   builds. Horizon rays terminate on **distance**, not on the cap. Cutting the budget — the
+   August campaign's headline change — bought nothing measurable and cost the marcher its
+   ability to hit thin geometry.
+2. **Finite-difference gradients are much cheaper than their call count suggests.** Removing
+   the three extra `sdfEval` per step moved the horizon not at all and the 45° case ~19 %,
+   not the ~4× the arithmetic implies. Almost certainly because the four samples share
+   `floor(P)`, so Perlin's lattice hash — its expensive half — is common to all four and the
+   shader compiler already eliminates it. **Symbolic gradient emission is therefore worth far
+   less than it looks**, which is a correction to my own earlier recommendation.
+
+The lever the measurement actually points at is **fewer field evaluations along the ray**:
+Claybook's DDA over empty macro-bricks (§2.1), which for a heightfield is the min/max quadtree.
+
+### The 21 → 40 FPS in the sibling plans was not a rendering result
+
+The 20–40 FPS cap was two contentless `WhileTrue` Ourverse metalaws sweeping every being every
+frame, **~20–30 ms together** — found by Zach afterwards; rendering was one of the *faster*
+phases. Both now default to disabled. This treatise does not itself make that claim, but the
+plans it underwrites open with it, so it is recorded here too.
+
+### Where transcribing the precedents needs care in this tree
+
+The techniques are right; two of them stop being equivalent when moved into an ontology where
+the mathematics is authored and the CPU reads the same expression.
+
+- **Claybook's TMU offloading (§2.1) is a cache, not a substitution.** Baking distance or
+  noise into a texture is admissible only when the texture reproduces *the same function* to a
+  proven bound and the CPU path reads the same cache — because in Earthcall the CPU field is
+  what collision and physics use. The campaign's version of this idea silently redefined
+  `cnoise3` as **simplex** noise while the CPU kept computing `glm::perlin`, so the ground a
+  Person saw stopped being the ground they walked on. Reverted; `webgpu_sdf_parity_test` now
+  carries an `Expr(noise)` case that fires hard on re-injection. A fixed 64³ RGBA8 volume is
+  not that cache: 8-bit quantisation is ~0.16 world units of height at the noise floor's
+  amplitude, and a tileable volume at `p * 0.05` repeats every 20 units across a 2000-unit
+  terrain.
+- **Dreams' cluster bounding (§2.2) transcribes cleanly**, including the subtlety that a
+  `smin` chain's cull radius must carry `+ k` — the sibling plan states this correctly.
+
+### A structural note on how these documents were used
+
+The plans built from this treatise all scheduled their falsifying measurement *after*
+implementation ("open `PerformanceMetricsWindow` and observe the frame rate", last section),
+and all three named `./build/earthcall` — the **OpenGL** binary, where
+`rendersImplicitExactly()` is false and none of the WGSL they modify executes. The theory in
+this document was not the failure. The absence of a measurement between the theory and the
+code was.
+
+— Claude Opus 5, 2026-08-31
