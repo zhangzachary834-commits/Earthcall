@@ -325,7 +325,7 @@ void Engine::tick(float dt) {
     // Camera is what the render path actually moves, so it has to be
     // copied across each frame or Person's copy goes stale at its
     // construction-time default.
-    if (Person* p = getPlayer()) {
+    if (Person* p = getPerson()) {
         if (Camera* cam = getCamera()) {
             p->cameraPos = cam->getPos();
             p->cameraForward = cam->getFront();
@@ -358,12 +358,12 @@ void Engine::tick(float dt) {
     Rendering::renderPerformanceMetricsWindow(&_performanceMetricsWindowOpen, this);
 
     if (_creationConsoleOpen) {
-        Rendering::renderCreationWindow(&_creationConsoleOpen, *_player, nullptr, mgr.active());
+        Rendering::renderCreationWindow(&_creationConsoleOpen, *_person, nullptr, mgr.active());
     }
 
     if (_creatorConsoleOpen) {
         Rendering::renderCreatorConsoleWindow(
-            &_creatorConsoleOpen, _player.get(),
+            &_creatorConsoleOpen, _person.get(),
             Rendering::getCreatorConsoleState().selectedObject3D,
             mgr, _window, this);
     }
@@ -418,7 +418,7 @@ void Engine::tick(float dt) {
         Singular* testSubject = _lawManager
             ? Singularity::Core::CreationChannel::find(*_lawManager)
             : nullptr;
-        Rendering::renderLawGraphWindow(&Rendering::getCreatorConsoleState().showLawAuthor, *_lawManager, *_player, testSubject);
+        Rendering::renderLawGraphWindow(&Rendering::getCreatorConsoleState().showLawAuthor, *_lawManager, *_person, testSubject);
     }
 
     // 6. Render 3D scene (must happen before ImGui::Render composites over it)
@@ -493,7 +493,7 @@ void Engine::shutdown() {
 namespace Core {
 MouseHandler* Engine::getMouseHandler() { return _mouseHandler.get(); }
 Camera* Engine::getCamera() { return _camera.get(); }
-Person* Engine::getPlayer() { return _player.get(); }
+Person* Engine::getPerson() { return _person.get(); }
 LawManager* Engine::getLawManager() { return _lawManager.get(); }
 KeyboardHandler* Engine::getKeyboardHandler() { return _keyboardHandler.get(); }
 CursorTools* Engine::getCursorTools() { return _cursorTools.get(); }

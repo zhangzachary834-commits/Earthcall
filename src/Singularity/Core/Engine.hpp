@@ -56,7 +56,7 @@ public:
     bool running()   const { return _running; }
     
     // Core systems migrating from Game
-    Person* getPlayer();
+    Person* getPerson();
     Camera* getCamera();
     LawManager* getLawManager();
     KeyboardHandler* getKeyboardHandler();
@@ -105,7 +105,8 @@ private:
     WebGpuBackend*  _webgpu  = nullptr; // owned; only allocated in the WebGPU build
     
     // Systems migrated from Game
-    std::unique_ptr<Person> _player;
+    // Zach: Hmm... okay, so I think we can still refactor this more. See it's strange to have Engine own all these handlers when Singularity is supposed to do that.
+    std::unique_ptr<Person> _person;
     std::unique_ptr<Camera> _camera;
     std::unique_ptr<LawManager> _lawManager;
         std::unique_ptr<KeyboardHandler> _keyboardHandler;

@@ -59,10 +59,10 @@ void Engine::initLogic() {
     if (!_camera) _camera = std::make_unique<Camera>();
     if (!_mouseHandler) _mouseHandler = std::make_unique<MouseHandler>();
     if (!_keyboardHandler) _keyboardHandler = std::make_unique<KeyboardHandler>();
-    if (!_player) {
+    if (!_person) {
         Soul soul("Player");
         Body body("humanoid", "default");
-        _player = std::make_unique<Person>(std::move(soul), std::move(body), "default");
+        _person = std::make_unique<Person>(std::move(soul), std::move(body), "default");
     }
     if (!_chat) _chat = std::make_unique<Chat>();
     if (!_cursorTools) _cursorTools = std::make_unique<CursorTools>();
@@ -93,7 +93,7 @@ void Engine::initLogic() {
     // else. The patterns are registered first-wins, so a loaded world's edited
     // version of any of them survives.
     Singularity::Input::InteractionChannel::syncRegister(*_lawManager);
-    Singularity::Input::syncRegisterControlPatterns(*_lawManager, ::categories, *_player);
+    Singularity::Input::syncRegisterControlPatterns(*_lawManager, ::categories, *_person);
 
     // Register first-mover ScreenChannel (GPU graphics telemetry and render governance)
     Singularity::Screen::ScreenChannel::syncRegister(*_lawManager);
@@ -112,7 +112,7 @@ void Engine::initLogic() {
     // Shape Generator 3D plus the rest of the Creator Console tools, as
     // first movers. The console remains the chrome; these are the named
     // beings it arms. See CreationChannel::syncRegisterCreatorTools.
-    Singularity::Core::syncRegisterCreatorTools(*_lawManager, *_player);
+    Singularity::Core::syncRegisterCreatorTools(*_lawManager, *_person);
 
     // The Universe: what continuous laws watch and quantified conditions
     // (ForAny/ForAll) range over — the active world's objects, the laws
@@ -150,7 +150,7 @@ void Engine::initLogic() {
         // The transfer gate is a legible being: laws govern set-to-set
         // access by writing @transfer-policy.gate.* properties.
         beings.push_back(&TransferPolicy::instance());
-        beings.push_back(_player.get());
+        beings.push_back(_person.get());
         // Other Zones: governance geography — laws quantify over them
         // (ForAny Zone ...) and address them by name (@Home.owner) even
         // while unloaded. Active was already pushed as the Spawn womb.
@@ -184,7 +184,7 @@ void Engine::initLogic() {
     mgr.addZone(std::make_shared<Zone>("Temple of Echoes", "default"));
     mgr.addZone(std::make_shared<Zone>("Cavern of Light", "default"));
     mgr.addZone(std::make_shared<Zone>("Character Architect Forge", "default"));
-    mgr.ensureHomeZone(_player->getIdentifier());
+    mgr.ensureHomeZone(_person->getIdentifier());
     mgr.bindLive();
     // Home (and every other identity-stable Zone) lives in
     // saves/zones/<id>/, not inside a session/"world" file. Hydrate
@@ -224,7 +224,7 @@ void Engine::initLogic() {
         ctx.camera = getCamera();
         ctx.mouseHandler = getMouseHandler();
         ctx.currentColor = Rendering::getCreatorConsoleState().currentColor;
-        ctx.player = getPlayer();
+        ctx.person = getPerson();
         ctx.lawManager = getLawManager();
         ctx.worldTime = &_worldTime;
         ctx.unpackForAuthoring = mgr.getSaveLoadState().unpackForAuthoring;
@@ -317,16 +317,16 @@ void Engine::initLogic() {
 
 
     // Ensure _player initial position matches _camera.pos
-    glm::vec3 anchor = _camera->pos - glm::vec3(0.0f, _player->getBody().getEyeHeight(), 0.0f);
-    _player->position() = anchor;
+    glm::vec3 anchor = _camera->pos - glm::vec3(0.0f, _person->getBody().getEyeHeight(), 0.0f);
+    _person->position() = anchor;
     // Route LocomotionChanged to the channel's clip libraries, then settle
     // the vessel into idle. Movement publishes the event that swaps idle
     // for a walk cycle (see Engine::update).
     if (auto* locomotion = Singularity::Input::LocomotionChannel::find(*_lawManager)) {
         locomotion->installRouting();
-        locomotion->playIdle(*_player);
+        locomotion->playIdle(*_person);
     }
-    _player->updatePose();
+    _person->updatePose();
 
     // --------------------------------------------------------------
     // Register GLFW callbacks that need 'this' pointer via user pointer

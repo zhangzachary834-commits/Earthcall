@@ -119,7 +119,7 @@ namespace Core {
     }
     
     void Engine::update(float dt) {
-        if (!_keyboardHandler || !_mouseHandler || !_camera || !_player || !_lawManager) return;
+        if (!_keyboardHandler || !_mouseHandler || !_camera || !_person || !_lawManager) return;
 
         using clock = std::chrono::steady_clock;
         auto getMs = [](clock::time_point start, clock::time_point end) {
@@ -148,7 +148,7 @@ namespace Core {
         const bool flying  = Physics::getFlying();
         auto tLoco0 = clock::now();
         if (auto* locomotion = Singularity::Input::LocomotionChannel::find(*_lawManager)) {
-            locomotion->step(*_player, *_camera, _window, mgr, dt, flying, canMove);
+            locomotion->step(*_person, *_camera, _window, mgr, dt, flying, canMove);
         }
         auto tLoco1 = clock::now();
         g_frameTimings.locomotion_ms = getMs(tLoco0, tLoco1);

@@ -86,7 +86,7 @@ struct Harness {
         ctx.camera = &camera;
         ctx.mouseHandler = &mouse;
         ctx.currentColor = color;
-        ctx.player = &player;
+        ctx.person = &player;
         ctx.lawManager = &laws;
         ctx.worldTime = &worldTime;
     }

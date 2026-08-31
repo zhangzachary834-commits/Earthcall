@@ -104,12 +104,12 @@ void renderDeveloperToolsWindow(bool* open, GLFWwindow* window, Core::Engine* en
                 ctx.mouseHandler = engine->getMouseHandler();
                 static float dummyColor[3] = {1.0f, 1.0f, 1.0f};
                 ctx.currentColor = dummyColor;
-                ctx.player = engine->getPlayer();
+                ctx.person = engine->getPerson();
                 ctx.lawManager = engine->getLawManager();
                 ctx.worldTime = engine->worldTimePtr();
                 ctx.unpackForAuthoring = false;
                 mgr.loadTestObservation("saves/tests/" + row.filename, ctx);
-                forgetStaleObjectHandles(mgr, engine->getPlayer());
+                forgetStaleObjectHandles(mgr, engine->getPerson());
             }
             ImGui::SameLine();
             ImGui::TextUnformatted(row.filename.c_str());

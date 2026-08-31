@@ -57,6 +57,7 @@ public:
     // ---------------------------------------------------------------------
     Relation() = default;
 
+    // BRUHHHHHHHHH WHO MADE THIS INTO "std::string" BRUHHHHHH ITS SUPPOSED TO BE A LEXEME
     Relation(const std::string& type,
              Singular& aBeing,
              Singular& bBeing,
@@ -66,6 +67,7 @@ public:
     // const Singular& is accepted so existing call sites (physics, provenance)
     // keep compiling. The stored pointer is non-owning identity, same as
     // Formation members.
+    // BRUHHHHHHHHH WHO MADE THIS INTO "std::string" BRUHHHHHH ITS SUPPOSED TO BE A LEXEME
     Relation(const std::string& type,
              const Singular& aBeing,
              const Singular& bBeing,

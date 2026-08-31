@@ -1686,7 +1686,7 @@ void refreshEditBuffers() {
 
 } // namespace
 
-void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player,
+void renderLawGraphWindow(bool* open, LawManager& laws, Singular& person,
                           Singular* testSubject) {
     // A touch of finish: rounded frames throughout the window. RAII so the
     // pops survive every early return.
@@ -1722,20 +1722,20 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player,
             g.selectedCard = 0;
         };
         if (ImGui::MenuItem("Blank — shape WHEN/IF/THEN yourself")) {
-            auto law = laws.createLaw("New Law", {&player});
+            auto law = laws.createLaw("New Law", {&person});
             law->setConditionModel(ConditionNode::compare(
                 "position.y", ConditionNode::Op::Lt, PropertyValue(0.0)));
             law->setActionModel(ActionNode::set("position.y", PropertyValue(0.0)));
             select(law);
         }
         if (ImGui::MenuItem("On collision -> act")) {
-            auto law = laws.createLaw("On collision", {&player});
+            auto law = laws.createLaw("On collision", {&person});
             law->setActionModel(ActionNode::set("position.y", PropertyValue(2.0)));
             laws.bindTrigger(law->getIdentifier(), "collision");
             select(law);
         }
         if (ImGui::MenuItem("While a condition holds -> keep acting")) {
-            auto law = laws.createLaw("While watching", {&player});
+            auto law = laws.createLaw("While watching", {&person});
             law->setActivation(Law::Activation::WhileTrue);
             law->setConditionModel(ConditionNode::compare(
                 "position.y", ConditionNode::Op::Lt, PropertyValue(0.0)));
@@ -1743,7 +1743,7 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player,
             select(law);
         }
         if (ImGui::MenuItem("On event -> change over time (drive)")) {
-            auto law = laws.createLaw("Drive over time", {&player});
+            auto law = laws.createLaw("Drive over time", {&person});
             law->setDrives(true);
             OntoMath::Piecewise arc;              // y := 2t for t in [0, 2]
             arc.inputVariable = "t";
@@ -1761,14 +1761,14 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player,
             select(law);
         }
         if (ImGui::MenuItem("Perception law — announce contact (mints an event)")) {
-            auto law = laws.createLaw("Perceive contact", {&player});
+            auto law = laws.createLaw("Perceive contact", {&person});
             law->setActivation(Law::Activation::WhileTrue);
             law->setConditionModel(ConditionNode::overlaps(""));   // pick the other
             law->setActionModel(ActionNode::publish("contact-perceived"));
             select(law);
         }
         if (ImGui::MenuItem("On collision -> bounce (velocity is law now)")) {
-            auto law = laws.createLaw("Bounce", {&player});
+            auto law = laws.createLaw("Bounce", {&person});
             // Collision RESPONSE as authored text: reflect the vertical
             // velocity with restitution 0.8 — physics legislated, not coded.
             law->setActionModel(ActionNode::scale("velocity.y", -0.8));
@@ -1776,7 +1776,7 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player,
             select(law);
         }
         if (ImGui::MenuItem("Metalaw — govern another law")) {
-            auto law = laws.createLaw("Metalaw", {&player});
+            auto law = laws.createLaw("Metalaw", {&person});
             law->setActionModel(ActionNode::set("enabled", PropertyValue(false)));
             laws.bindTrigger(law->getIdentifier(), "law-registered");
             select(law);
@@ -2166,11 +2166,11 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player,
                 // forgery — laws saved before authors had stable identities
                 // reload unauthored, and this is their lawful way back.
                 if (ImGui::SmallButton("sign as author")) {
-                    law->addAuthor(player);
+                    law->addAuthor(person);
                 }
                 if (ImGui::IsItemHovered()) {
                     ImGui::SetTooltip("add yourself (%s) as this law's author",
-                                      player.getIdentifier().c_str());
+                                      person.getIdentifier().c_str());
                 }
             } else {
                 ImGui::TextDisabled("Authored by: %s", authors.c_str());

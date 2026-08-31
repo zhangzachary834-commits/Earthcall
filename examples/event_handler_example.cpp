@@ -5,7 +5,7 @@
 
 // Example event types
 struct PlayerJumped {
-    int playerId;
+    int personId;
     float jumpHeight;
     std::string timestamp;
 };
@@ -22,13 +22,13 @@ struct GameStateChanged {
 };
 
 // Example event handlers
-void handlePlayerJumped(const PlayerJumped& event) {
-    std::cout << "🎮 Player " << event.playerId << " jumped " 
+void handlePersonJumped(const PlayerJumped& event) {
+    std::cout << "🎮 Person " << event.personId << " jumped "
               << event.jumpHeight << " units high!" << std::endl;
 }
 
 void handleItemCollected(const ItemCollected& event) {
-    std::cout << "💎 Player " << event.playerId << " collected " 
+    std::cout << "💎 Person " << event.playerId << " collected "
               << event.itemName << " (value: " << event.value << ")" << std::endl;
 }
 
@@ -39,7 +39,7 @@ void handleGameStateChanged(const GameStateChanged& event) {
 
 // High priority handler (runs first)
 void handlePlayerJumpedHighPriority(const PlayerJumped& event) {
-    std::cout << "🚀 [HIGH PRIORITY] Player " << event.playerId 
+    std::cout << "🚀 [HIGH PRIORITY] Player " << event.personId
               << " is jumping! Processing first..." << std::endl;
 }
 
@@ -50,7 +50,7 @@ int main() {
     auto& eventHandler = Core::EventHandler::instance();
     
     // Register handlers using the new EventHandler
-    eventHandler.registerHandler<PlayerJumped>("player_jump_handler", handlePlayerJumped);
+    eventHandler.registerHandler<PlayerJumped>("player_jump_handler", handlePersonJumped);
     eventHandler.registerHandler<PlayerJumped>("player_jump_high_priority", handlePlayerJumpedHighPriority, 10); // Higher priority
     eventHandler.registerHandler<ItemCollected>("item_collected_handler", handleItemCollected);
     eventHandler.registerHandler<GameStateChanged>("game_state_handler", handleGameStateChanged);

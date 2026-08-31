@@ -69,7 +69,7 @@ inline void dump_test_save(const std::string& test_name, Zone& testWorld, LawMan
     ctx.camera = &camera;
     ctx.mouseHandler = &mouseHandler;
     ctx.currentColor = currentColor;
-    ctx.player = &testPlayer;
+    ctx.person = &testPlayer;
     ctx.lawManager = &testLawManager;
     ctx.worldTime = &worldTime;
     ctx.unpackForAuthoring = false;

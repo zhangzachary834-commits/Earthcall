@@ -24,7 +24,7 @@ namespace Rendering {
             ctx.camera = engine->getCamera();
             ctx.mouseHandler = engine->getMouseHandler();
             ctx.currentColor = getCreatorConsoleState().currentColor;
-            ctx.player = engine->getPlayer();
+            ctx.person = engine->getPerson();
             ctx.lawManager = engine->getLawManager();
             ctx.worldTime = engine->worldTimePtr();
             ctx.unpackForAuthoring = mgr.getSaveLoadState().unpackForAuthoring;
@@ -37,7 +37,7 @@ namespace Rendering {
             mgr.loadState(path, ctx);
             // Session pose changed; identity-stable Zones (Home, …) were
             // kept. Drop Object* only if that being is no longer live.
-            forgetStaleObjectHandles(mgr, engine->getPlayer());
+            forgetStaleObjectHandles(mgr, engine->getPerson());
         }
     }
 

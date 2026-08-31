@@ -842,7 +842,7 @@ int main(int argc, char** argv) {
     ctx.camera = &camera;
     ctx.mouseHandler = &mouseHandler;
     ctx.currentColor = currentColor;
-    ctx.player = &player;
+    ctx.person = &player;
     ctx.lawManager = &lawManager;
     ctx.worldTime = &worldTime;
     ctx.unpackForAuthoring = false;

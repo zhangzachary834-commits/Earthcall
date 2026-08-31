@@ -36,7 +36,7 @@ void Body::buildProperties() {
 Body::Body(std::string shape, std::string artStyle)
     : shape(shape), artStyle(artStyle), formation()
 {
-    // Voxel player default approx 1.8m tall, but our simplified avatar is ~1 unit tall in model space
+    // Voxel Person default approx 1.8m tall, but our simplified avatar is ~1 unit tall in model space
     hitboxHeight = 1.0f;
 }
 

@@ -147,7 +147,7 @@ void Person::draw() const {
 }
 
 // ---------------------------------------------------------------------------------
-//  Render a simple nametag above the player's head using stb_easy_font
+//  Render a simple nametag above the Person's head using stb_easy_font
 // ---------------------------------------------------------------------------------
 void Person::drawNametag() const {
     // Offset above the head where the nametag should appear (world space)

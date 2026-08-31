@@ -35,7 +35,11 @@ namespace Core {
         // Current active Zone's objects
         auto& zone = mgr.active();
 
-        // Projection
+        /**
+         * --------------------
+         * Projection
+         *
+         */
         float fov = 45.0f;
         float nearZ = 0.1f;
         float farZ  = 100.0f;
@@ -47,6 +51,8 @@ namespace Core {
         glm::mat4 proj = currentRenderer().zeroToOneDepth()
             ? glm::frustumZO(left, right, bottom, top, nearZ, farZ)
             : glm::frustumNO(left, right, bottom, top, nearZ, farZ);
+
+        /* -------------------- */
 
         // Model-view (camera)
         glm::vec3 eyePos   = _camera->pos;
@@ -95,13 +101,13 @@ namespace Core {
         currentRenderer().setModel(glm::mat4(1.0f)); // back to world space
 
         if (_creatorConsoleOpen) {
-            Rendering::renderCreatorConsole3DPreviews(_player.get(), nullptr);
+            Rendering::renderCreatorConsole3DPreviews(_person.get(), nullptr);
         }
 
         // Draw player avatar and nametag when not in first-person
         if (_currentPerspective != PerspectiveMode::FirstPerson) {
-            _player->draw();
-            _player->drawNametag();
+            _person->draw();
+            _person->drawNametag();
         }
 
         _mainMenu.draw(fbW, fbH);

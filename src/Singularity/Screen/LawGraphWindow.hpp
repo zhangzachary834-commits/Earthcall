@@ -50,7 +50,7 @@ ActionNode* actionAt(ActionNode& root, const std::vector<int>& path);
 // binding into the Rete network, and the concept registry listing.
 // `testSubject` (usually the selected 3D object) enables the "apply now"
 // feedback loop — authoring without feedback is guessing.
-void renderLawGraphWindow(bool* open, LawManager& laws, Singular& player,
+void renderLawGraphWindow(bool* open, LawManager& laws, Singular& person,
                           Singular* testSubject = nullptr);
 
 } // namespace Rendering

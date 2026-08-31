@@ -322,13 +322,13 @@ nlohmann::json readSaveJsonFile(const std::string& filename) {
 // person.position (this helper's callers: loadState, loadTestObservation)
 // look like a no-op — the next frame undoes them. Keep both sides in step.
 void settlePersonToCamera(SaveContext& ctx) {
-    if (!ctx.player || !ctx.camera) return;
-    const float eyeH = ctx.player->getBody().getEyeHeight();
-    ctx.player->position() = ctx.camera->pos - glm::vec3(0.0f, eyeH, 0.0f);
-    ctx.player->cameraPos = ctx.camera->pos;
-    ctx.player->cameraForward = ctx.camera->front;
-    ctx.player->velocity() = glm::vec3(0.0f);
-    ctx.player->updatePose();
+    if (!ctx.person || !ctx.camera) return;
+    const float eyeH = ctx.person->getBody().getEyeHeight();
+    ctx.person->position() = ctx.camera->pos - glm::vec3(0.0f, eyeH, 0.0f);
+    ctx.person->cameraPos = ctx.camera->pos;
+    ctx.person->cameraForward = ctx.camera->front;
+    ctx.person->velocity() = glm::vec3(0.0f);
+    ctx.person->updatePose();
 }
 
 void applyLook(SaveContext& ctx, const glm::vec3& eye, const glm::vec3& target) {
@@ -764,7 +764,7 @@ nlohmann::json ZoneManager::buildSaveJson(const SaveContext& ctx) const {
     j["flying"] = Physics::getFlying();
 
     // Player avatar body
-    j["playerBody"] = bodyToJson(ctx.player->getBody());
+    j["playerBody"] = bodyToJson(ctx.person->getBody());
 
     // Authored register
     j["authoredLaws"] = ctx.lawManager->toJson();
@@ -1103,7 +1103,7 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
                 reinstatedMissingOwnMaterials(*z);
             }
         }
-        if (ctx.player) ensureHomeZone(ctx.player->getIdentifier());
+        if (ctx.person) ensureHomeZone(ctx.person->getIdentifier());
         if (snapshotRestore) persistZones();
 
         // switchTo CLEARS the active world's objects and refills from
@@ -1217,7 +1217,7 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
         // Player avatar body
         stage("player-body", [&] {
             if (j.contains("playerBody")) {
-                bodyFromJson(j["playerBody"], ctx.player->getBody());
+                bodyFromJson(j["playerBody"], ctx.person->getBody());
             }
         });
 
@@ -1375,8 +1375,8 @@ void ZoneManager::loadTestObservation(const std::string& filename, SaveContext& 
                             }
                         }
                     }
-                    if (law->authors().getMembers().empty() && ctx.player) {
-                        law->addAuthor(*ctx.player);
+                    if (law->authors().getMembers().empty() && ctx.person) {
+                        law->addAuthor(*ctx.person);
                         ++lawsReauthored;
                     }
                     ctx.lawManager->add(law);
