@@ -5,13 +5,14 @@
 #include <memory>
 #include <string>
 #include <thread>
+#include <cstdint>
 
 namespace Singularity {
 namespace Network {
 
-// A lightweight WebSocket server for Earthcall.
-// Listens on a specified port (default 8080) and ingests events like Utterance
-// into the core EventBus.
+// A high-performance WebSocket server for Earthcall.
+// Listens on a specified port (default 8080) and facilitates bidirectional
+// real-time synchronization between the C++ engine and external tools (Python backend, Web UI, Robotics).
 class WebSocketServer {
 public:
     static WebSocketServer& instance();
@@ -24,6 +25,12 @@ public:
 
     // Sends a JSON string payload to all connected clients.
     void broadcast(const std::string& jsonPayload);
+
+    // Broadcasts the current live world state snapshot to all connected clients.
+    void broadcastStateSync();
+
+    // Checks if the server is running
+    bool isRunning() const;
 
 private:
     WebSocketServer();

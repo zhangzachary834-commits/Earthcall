@@ -38,6 +38,7 @@
 #include "Singularity/Input/Locomotion/LocomotionChannel.hpp"
 #include "Singularity/Input/Interaction/InteractionChannel.hpp"
 #include "Singularity/Input/Interaction/ControlPatterns.hpp"
+#include "Singularity/Network/WebSocketServer.hpp"
 #include <memory>
 
 extern ZoneManager mgr;
@@ -71,6 +72,11 @@ void Engine::initLogic() {
     // in the engine becomes a fact the law network can act on.
     _lawManager->connectToEventBus();
     (void)TransferPolicy::instance();   // the gate exists from the first frame
+
+#ifndef __EMSCRIPTEN__
+    // Start WebSocket server on port 8080 to link with the Python backend and Web UI
+    Singularity::Network::WebSocketServer::instance().start(8080);
+#endif
 
     // Collisions feed the relation graph (recordCollision) as well as the
     // ECA echo above; without this, PhysicsCollisionEvent had no listener

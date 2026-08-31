@@ -475,9 +475,59 @@ void Tool::ShapeGenerator3D(GLFWwindow *window, Core::Engine *engine, ZoneManage
     if (ImGui::GetIO().WantCaptureMouse) return;
 
     if (channel.activeShapeKind == static_cast<int>(Object::ShapeKind::Polyhedron)) {
-        // Polyhedron authoring needs a live polyhedron builder; Engine::
-        // buildCurrentPolyhedron() is still a stub ("dummy for now"), so
-        // refuse rather than spawn a shape with no topology.
+        const auto& consoleState = Rendering::getCreatorConsoleState();
+        const auto& polyState = consoleState.polyhedron;
+        PolyhedronData polyData;
+
+        if (polyState.irregularType > 0) {
+            switch (polyState.irregularType) {
+                case 1: polyData = PolyhedronData::createPrism(polyState.irregularBaseSides, 0.5f, polyState.irregularHeight); break;
+                case 2: polyData = PolyhedronData::createAntiprism(polyState.irregularBaseSides, 0.5f, polyState.irregularHeight); break;
+                case 3: polyData = PolyhedronData::createPyramid(polyState.irregularBaseSides, 0.5f, polyState.irregularHeight); break;
+                case 4: polyData = PolyhedronData::createBipyramid(polyState.irregularBaseSides, 0.5f, polyState.irregularHeight); break;
+                case 5: polyData = PolyhedronData::createFrustum(polyState.irregularBaseSides, 0.5f, polyState.frustumTopScale * 0.5f, polyState.irregularHeight); break;
+                default: polyData = PolyhedronData::createRegularPolyhedron(polyState.currentType > 0 ? polyState.currentType : 4, 0.5f); break;
+            }
+        } else if (polyState.concaveType > 0) {
+            switch (polyState.concaveType) {
+                case 1: polyData = PolyhedronData::createConcavePolyhedron(polyState.currentType > 0 ? polyState.currentType : 4, 0.5f, polyState.concavityAmount); break;
+                case 2: polyData = PolyhedronData::createStarPolyhedron(polyState.currentType > 0 ? polyState.currentType : 4, 0.5f, polyState.spikeLength); break;
+                case 3: polyData = PolyhedronData::createCraterPolyhedron(polyState.currentType > 0 ? polyState.currentType : 4, 0.5f, polyState.craterDepth); break;
+                default: polyData = PolyhedronData::createRegularPolyhedron(polyState.currentType > 0 ? polyState.currentType : 4, 0.5f); break;
+            }
+        } else {
+            int faces = polyState.currentType > 0 ? polyState.currentType : 4;
+            polyData = PolyhedronData::createRegularPolyhedron(faces, 0.5f);
+        }
+
+        glm::mat4 t = channel.getCursorSpawnTransform();
+        Object* newObj = nullptr;
+        if (targetPart) {
+            glm::mat4 partWorld = targetPart->getTransform();
+            glm::mat4 localT = glm::inverse(partWorld) * t;
+            Object* sub = targetPart->addSubObject(Object::ShapeKind::Polyhedron, localT);
+            if (sub) {
+                sub->setShape(Object::ShapeKind::Polyhedron);
+                sub->setPolyhedronData(polyData);
+                for (int f = 0; f < sub->getFaces(); ++f)
+                    sub->setFaceColor(f, channel.activeColor.x, channel.activeColor.y, channel.activeColor.z);
+            }
+            newObj = sub;
+        } else {
+            auto obj = std::make_unique<Object>();
+            obj->setShape(Object::ShapeKind::Polyhedron);
+            obj->setPolyhedronData(polyData);
+            obj->setTransform(t);
+            obj->updateCollisionZone(t);
+            for (int f = 0; f < obj->getFaces(); ++f)
+                obj->setFaceColor(f, channel.activeColor.x, channel.activeColor.y, channel.activeColor.z);
+            newObj = obj.get();
+            mgr.active().addObject(std::move(obj));
+        }
+
+        if (newObj) {
+            channel.recordProvenance("authored-by", *newObj, channel, true, 1.0f);
+        }
         return;
     }
 
@@ -834,10 +884,10 @@ void Tool::FacePaint(GLFWwindow *window, Core::Engine *engine, ZoneManager &mgr,
                     mat->initFaceTextures(faces);
                 }
                 PaintToolSurface pts(*mat);
-                const float radius = std::max(0.005f, st.faceBrushRadius * pressure);
+                const float radius = std::max(0.005f, (st.faceBrushRadius <= 0.0f ? 0.05f : st.faceBrushRadius) * pressure);
                 const float softness = st.faceBrushSoftness;
-                const float opacity = st.faceBrushOpacity;
-                const float flow = st.faceBrushFlow;
+                const float opacity = st.faceBrushOpacity <= 0.0f ? 1.0f : std::clamp(st.faceBrushOpacity, 0.01f, 1.0f);
+                const float flow = st.faceBrushFlow <= 0.0f ? 1.0f : std::clamp(st.faceBrushFlow, 0.01f, 1.0f);
                 const int brushType = st.faceBrushType;
                 const float r = engine->getCurrentColor(0);
                 const float g = engine->getCurrentColor(1);

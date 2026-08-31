@@ -27,6 +27,7 @@
 #include "Singularity/Audio/AudioSystem.hpp"
 #include "Singularity/Language/LanguageSystem.hpp"
 #include "Singularity/Core/EventBus.hpp"
+#include "Singularity/Network/WebSocketServer.hpp"
 #include "Person/Person.hpp"
 #include "Singularity/Screen/Camera.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
@@ -480,6 +481,11 @@ void Engine::shutdown() {
 
     // Shutdown audio system
     Core::Audio::AudioSystem::instance().shutdown();
+
+#ifndef __EMSCRIPTEN__
+    // Shutdown WebSocket server
+    Singularity::Network::WebSocketServer::instance().stop();
+#endif
     
     // Clear Language Lexemes
     Singularity::Language::LanguageSystem::instance().clear();

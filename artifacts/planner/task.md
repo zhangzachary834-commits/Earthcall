@@ -1,22 +1,9 @@
-# Task Checklist: Earthcall Broken Tool Restoration
+# Earthcall 5005 Python App & C++ Link Upgrade Plan
 
-- [ ] 1. Initial Analysis & Reconnaissance
-  - [ ] 1.1 Read and inspect `src/Singularity/FirstMoverOntology/FirstMoverWindowTools/Tool.cpp`
-  - [ ] 1.2 Read and inspect `src/Singularity/FirstMoverOntology/FirstMoverWindowTools/CreationTools.cpp`
-  - [ ] 1.3 Read and inspect `src/Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/Create3DConsole.cpp`
-  - [ ] 1.4 Read and inspect `src/Singularity/Storage/Serialization.cpp` and related headers (`Object.hpp`, `Material.hpp`, `FaceTexture.hpp`, `PolyhedronData.hpp`)
-  - [ ] 1.5 Check existing test suites and build system setup
-- [ ] 2. Tool 1: 3D Polyhedron Generator Restoration
-  - [ ] 2.1 Update `Tool.cpp` to remove stub early return and generate Polyhedron objects with proper `PolyhedronData`
-  - [ ] 2.2 Update `CreationTools.cpp` to sync polyhedron state and update hologram preview
-- [ ] 3. Tool 2: 3D Face Brush Tool Restoration
-  - [ ] 3.1 Update `Tool.cpp` (`Tool::FaceBrush` / face paint methods) with ImGui mouse capture guard, parameter fallbacks, and face texture initialization
-  - [ ] 3.2 Update `Create3DConsole.cpp` to expose sliders for opacity, flow, radius, softness, and color picker
-- [ ] 4. Tool 3: Pottery Tool & FaceTexture Scaling
-  - [ ] 4.1 Update `Tool.cpp` (`Tool::Pottery`) to handle UV/face texture scaling adaptively
-- [ ] 5. System: Per-Zone Material & FaceTexture Serialization
-  - [ ] 5.1 Update `zoneToJson` in `Serialization.cpp` for materials and faceTextures
-  - [ ] 5.2 Update `applyZoneJson` / `makeZoneFromJson` in `Serialization.cpp` for materials and faceTextures deserialization
-- [ ] 6. Verification and Testing
-  - [ ] 6.1 Run build / tests to verify changes compile and tests pass
-  - [ ] 6.2 Review diffs and ensure clean implementation
+- [ ] Survey existing C++ networking and Python app infrastructure <!-- id: 0 -->
+- [ ] Upgrade C++ WebSocketServer to support comprehensive live commands and bidirectional state sync <!-- id: 1 -->
+- [ ] Connect WebSocketServer startup in C++ Engine initialization <!-- id: 2 -->
+- [ ] Build robust Python-to-C++ Bridge (CppBridge) with auto-reconnect, live cache, and bidirectional event routing <!-- id: 3 -->
+- [ ] Build complete RESTful API and SocketIO event layer for Earthcall in Python <!-- id: 4 -->
+- [ ] Build modern, responsive, feature-packed Earthcall Web UI (Object Studio, Law Workshop, Zone Navigator, Logos Console, Person/Physics, Robotics, Event Log) <!-- id: 5 -->
+- [ ] Test Python app on port 5005 and verify C++ link and UI interactions <!-- id: 6 -->

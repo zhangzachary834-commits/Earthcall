@@ -3,49 +3,567 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Earthcall (Wasm)</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" type="text/css">
-    <!-- Load Socket.io -->
+    <title>Earthcall — First Mover Studio & Engine Console</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Modern Styling -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+    
+    <!-- Socket.IO & Three.js 3D Engine -->
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-    <style>
-        body, html { margin: 0; padding: 0; overflow: hidden; background: #000; }
-        /* The canvas must be full screen for WebGPU */
-        #canvas {
-            display: block;
-            width: 100vw;
-            height: 100vh;
-        }
-        #ui-layer {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; /* Let clicks pass through to ImGui/Canvas by default */
-        }
-    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 </head>
 <body>
-    <canvas id="canvas" oncontextmenu="event.preventDefault()"></canvas>
-    
-    <link rel="stylesheet" href="{{ url_for('static', filename='ui/app.css') }}" type="text/css">
-    <div id="ui-layer">
-        <!-- Modern HTML UI will be injected here by app.js -->
-    </div>
-    <script src="{{ url_for('static', filename='ui/app.js') }}"></script>
+    <!-- Ambient Background Glows -->
+    <div class="bg-glow-orb cyan"></div>
+    <div class="bg-glow-orb purple"></div>
 
-    <!-- Emscripten Module Config -->
-    <script>
-        var Module = {
-            canvas: document.getElementById('canvas'),
-            onRuntimeInitialized: function() {
-                console.log("Earthcall Wasm Engine Initialized!");
-                // Connect SocketIO once Wasm is ready
-                window.initSocketIO();
-            }
-        };
-    </script>
-    
-    <!-- Client Bridge -->
-    <script src="{{ url_for('static', filename='earthcall_client.js') }}"></script>
-    <!-- The compiled C++ engine (to be built into static/) -->
-    <script src="{{ url_for('static', filename='earthcall.js') }}"></script>
+    <!-- Top Header Bar -->
+    <header id="top-header">
+        <div class="brand-area">
+            <div class="logo-symbol">🌍</div>
+            <div>
+                <div class="brand-title">EARTHCALL</div>
+            </div>
+            <div class="brand-badge">STUDIO & ENGINE LINK</div>
+        </div>
+
+        <div class="header-center">
+            <!-- Active Zone Selector -->
+            <div class="zone-selector-wrapper">
+                <span class="zone-selector-label">Zone:</span>
+                <select id="header-zone-select" class="zone-select">
+                    <option value="0">Sanctum of Beginnings</option>
+                </select>
+            </div>
+
+            <!-- Stats Ticker -->
+            <div style="display: flex; gap: 12px; font-size: 0.75rem; font-family: var(--font-mono); color: var(--text-muted);">
+                <span>Beings: <strong id="stat-object-count" style="color: var(--accent-cyan);">0</strong></span>
+                <span>Laws: <strong id="stat-law-count" style="color: var(--accent-purple);">0</strong></span>
+                <span>Zones: <strong id="stat-zone-count" style="color: var(--accent-emerald);">0</strong></span>
+            </div>
+        </div>
+
+        <div class="header-actions">
+            <!-- Engine Connection Indicator -->
+            <div id="connection-indicator" class="connection-pill">
+                <div class="pulse-dot"></div>
+                <span id="connection-text">Connecting...</span>
+            </div>
+
+            <button id="toggle-flight-btn" class="btn btn-secondary btn-sm" title="Toggle Flight Mode (F)">
+                <span>🕊️ Flight</span>
+            </button>
+
+            <button id="quick-save-btn" class="btn btn-primary btn-sm" title="Quick Save Reality">
+                <span>💾 Quick Save</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main App Container Layout -->
+    <div id="app-layout">
+        <!-- Sidebar Navigation -->
+        <aside id="sidebar">
+            <div class="nav-section-title">First Mover Studios</div>
+            
+            <div class="nav-item active" data-tab="objects">
+                <span class="nav-icon">🪐</span>
+                <span>World & Objects</span>
+            </div>
+            
+            <div class="nav-item" data-tab="laws">
+                <span class="nav-icon">⚡</span>
+                <span>Authors of Law</span>
+            </div>
+            
+            <div class="nav-item" data-tab="zones">
+                <span class="nav-icon">🌌</span>
+                <span>Zones of Earth</span>
+            </div>
+            
+            <div class="nav-item" data-tab="logos">
+                <span class="nav-icon">🗣️</span>
+                <span>Logos & Utterance</span>
+            </div>
+
+            <div class="nav-section-title">Vessel & Substrate</div>
+
+            <div class="nav-item" data-tab="physics">
+                <span class="nav-icon">👤</span>
+                <span>Person & Physics</span>
+            </div>
+            
+            <div class="nav-item" data-tab="robotics">
+                <span class="nav-icon">🤖</span>
+                <span>Robotics Modality</span>
+            </div>
+            
+            <div class="nav-item" data-tab="events">
+                <span class="nav-icon">📜</span>
+                <span>Live Event Stream</span>
+            </div>
+
+            <div class="sidebar-footer">
+                <div class="telemetry-item">
+                    <span>Engine Link</span>
+                    <span class="telemetry-val">Port 8080</span>
+                </div>
+                <div class="telemetry-item">
+                    <span>Web UI</span>
+                    <span class="telemetry-val">Port 5005</span>
+                </div>
+                <div class="telemetry-item">
+                    <span>Engine Uptime</span>
+                    <span id="uptime-display" class="telemetry-val">0s</span>
+                </div>
+                <div class="telemetry-item">
+                    <span>Sync Packets</span>
+                    <span id="msgs-display" class="telemetry-val">0</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Workspace Studios -->
+        <main id="workspace">
+            
+            <!-- STUDIO 1: Object & World Studio -->
+            <div id="tab-objects" class="tab-pane active">
+                <div class="studio-layout">
+                    <!-- 3D Interactive WebGL Viewport -->
+                    <div class="viewport-container" id="viewport-3d">
+                        <div class="viewport-overlay-top">
+                            <div class="viewport-control-pill">
+                                <span>🖱️ Left-Click: Orbit / Select</span>
+                                <span>•</span>
+                                <span>Right-Click: Pan</span>
+                                <span>•</span>
+                                <span>Scroll: Zoom</span>
+                            </div>
+                        </div>
+
+                        <!-- Object Spawner Bottom Bar -->
+                        <div class="viewport-spawner-bar">
+                            <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Spawn:</span>
+                            <button class="shape-btn spawner-btn" data-shape="Cube">🧊 Cube</button>
+                            <button class="shape-btn spawner-btn" data-shape="Sphere">🔮 Sphere</button>
+                            <button class="shape-btn spawner-btn" data-shape="Cylinder">🪵 Cylinder</button>
+                            <button class="shape-btn spawner-btn" data-shape="Cone">📐 Cone</button>
+                            <button class="shape-btn spawner-btn" data-shape="Torus">🍩 Torus</button>
+                            <button class="shape-btn spawner-btn" data-shape="RoundedBox">📦 Rounded</button>
+                        </div>
+                    </div>
+
+                    <!-- Right Inspector Panel -->
+                    <div class="inspector-panel">
+                        <div class="panel-header">
+                            <div class="panel-title">
+                                <span>📐</span> Object Inspector
+                            </div>
+                        </div>
+
+                        <div class="panel-body">
+                            <!-- Search & Filter -->
+                            <div class="search-input-wrapper">
+                                <span class="search-icon">🔍</span>
+                                <input type="text" id="object-search" class="search-input" placeholder="Filter beings in zone...">
+                            </div>
+
+                            <!-- Object Explorer List -->
+                            <div class="control-group">
+                                <div class="control-label">Beings in Active Zone</div>
+                                <div id="object-explorer-list" class="object-tree">
+                                    <!-- Dynamic Object Items -->
+                                </div>
+                            </div>
+
+                            <!-- Selected Object Inspector Form -->
+                            <div id="inspector-empty-state" style="padding: 24px; text-align: center; color: var(--text-muted); font-size: 0.85rem;">
+                                Click on any 3D object in the viewport or select from the list above to inspect and edit its properties live in C++.
+                            </div>
+
+                            <div id="inspector-content" style="display: none; flex-direction: column; gap: 16px;">
+                                <div style="border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+                                    <div id="insp-title-name" style="font-weight: 700; font-size: 1.05rem;">Genesis Cube</div>
+                                    <div id="insp-title-id" style="font-size: 0.75rem; font-family: var(--font-mono); color: var(--accent-cyan);">@obj-1</div>
+                                </div>
+
+                                <!-- Identifier / Name -->
+                                <div class="control-group">
+                                    <div class="control-label">Name / Identifier</div>
+                                    <input type="text" id="insp-name" class="select-styled" placeholder="Name">
+                                </div>
+
+                                <!-- Shape Selector -->
+                                <div class="control-group">
+                                    <div class="control-label">Geometric Shape</div>
+                                    <select id="insp-shape" class="select-styled">
+                                        <option value="0">Cube (Box)</option>
+                                        <option value="1">Polyhedron</option>
+                                        <option value="2">Sphere</option>
+                                        <option value="3">Cylinder</option>
+                                        <option value="4">Cone</option>
+                                        <option value="5">Ellipsoid</option>
+                                        <option value="6">Ovoid</option>
+                                        <option value="7">Paraboloid</option>
+                                        <option value="8">Torus (Ring)</option>
+                                        <option value="9">Rounded Box</option>
+                                        <option value="12">Field (SDF)</option>
+                                        <option value="13">Patch (Bezier)</option>
+                                    </select>
+                                </div>
+
+                                <!-- Position X, Y, Z -->
+                                <div class="control-group">
+                                    <div class="control-label">World Position [X, Y, Z]</div>
+                                    <div class="control-row">
+                                        <div class="input-with-label"><span>X</span><input type="number" id="insp-pos-x" step="0.5" class="input-number"></div>
+                                        <div class="input-with-label"><span>Y</span><input type="number" id="insp-pos-y" step="0.5" class="input-number"></div>
+                                        <div class="input-with-label"><span>Z</span><input type="number" id="insp-pos-z" step="0.5" class="input-number"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Rotation Euler X, Y, Z -->
+                                <div class="control-group">
+                                    <div class="control-label">Rotation Euler Angles [°]</div>
+                                    <div class="control-row">
+                                        <div class="input-with-label"><span>X</span><input type="number" id="insp-rot-x" step="15" class="input-number"></div>
+                                        <div class="input-with-label"><span>Y</span><input type="number" id="insp-rot-y" step="15" class="input-number"></div>
+                                        <div class="input-with-label"><span>Z</span><input type="number" id="insp-rot-z" step="15" class="input-number"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Dimensions / Scale -->
+                                <div class="control-group">
+                                    <div class="control-label">Scale / Dimensions</div>
+                                    <input type="number" id="insp-dim" min="0.1" step="0.5" class="select-styled" value="1.0">
+                                </div>
+
+                                <!-- Material ID -->
+                                <div class="control-group">
+                                    <div class="control-label">Material Being</div>
+                                    <select id="insp-mat" class="select-styled">
+                                        <option value="material.default">material.default</option>
+                                        <option value="material.clay">material.clay</option>
+                                        <option value="material.gold">material.gold</option>
+                                        <option value="material.obsidian">material.obsidian</option>
+                                        <option value="material.glass">material.glass</option>
+                                    </select>
+                                </div>
+
+                                <!-- Color Picker -->
+                                <div class="control-group">
+                                    <div class="control-label">Albedo Base Color</div>
+                                    <input type="color" id="insp-color-hex" class="select-styled" style="height: 38px; padding: 2px; cursor: pointer;" value="#33b3ff">
+                                </div>
+
+                                <!-- Action Buttons -->
+                                <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">
+                                    <button id="insp-teleport-to-btn" class="btn btn-secondary btn-sm">📍 Teleport Player Here</button>
+                                    <button id="insp-duplicate-btn" class="btn btn-secondary btn-sm">✨ Duplicate Being</button>
+                                    <button id="insp-delete-btn" class="btn btn-danger btn-sm">🗑️ Destroy Being</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STUDIO 2: Authors of Law -->
+            <div id="tab-laws" class="tab-pane">
+                <div class="full-page-studio">
+                    <div class="studio-banner">
+                        <div>
+                            <div class="banner-title">⚡ Authors of Law</div>
+                            <div class="banner-desc">Earthcall simulation is driven by active Person-authored Laws. Toggle or author conditions and actions live into the C++ Rete agenda.</div>
+                        </div>
+                        <button id="open-create-law-modal" class="btn btn-primary">➕ Author New Law</button>
+                    </div>
+
+                    <!-- Law Preset Chips -->
+                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                        <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Templates:</span>
+                        <button class="shape-btn law-template-btn" data-template="zero-g" onclick="document.getElementById('open-create-law-modal').click();">🌌 Zero-G Well</button>
+                        <button class="shape-btn law-template-btn" data-template="pulse" onclick="document.getElementById('open-create-law-modal').click();">🌈 Color Pulsator</button>
+                        <button class="shape-btn law-template-btn" data-template="orbit" onclick="document.getElementById('open-create-law-modal').click();">🛸 Orbital Satellite</button>
+                        <button class="shape-btn law-template-btn" data-template="bounce" onclick="document.getElementById('open-create-law-modal').click();">💥 Kinetic Bounce</button>
+                    </div>
+
+                    <!-- Law Cards Grid -->
+                    <div id="laws-grid" class="cards-grid">
+                        <!-- Dynamic Law Cards -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- STUDIO 3: Zones of Earth -->
+            <div id="tab-zones" class="tab-pane">
+                <div class="full-page-studio">
+                    <div class="studio-banner">
+                        <div>
+                            <div class="banner-title">🌌 Zones of Earth & Save Realities</div>
+                            <div class="banner-desc">Zones are ontological dwellings of beings. Teleport between realities or author newborn zones.</div>
+                        </div>
+                        <button id="open-create-zone-modal" class="btn btn-primary">➕ Author New Zone</button>
+                    </div>
+
+                    <!-- Zones Grid -->
+                    <div class="control-label" style="font-size: 0.85rem;">Active Realities</div>
+                    <div id="zones-grid" class="cards-grid">
+                        <!-- Dynamic Zone Cards -->
+                    </div>
+
+                    <!-- Saves Section -->
+                    <div style="margin-top: 20px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 20px;">
+                        <div style="font-weight: 700; font-size: 1rem; margin-bottom: 12px;">💾 Saved Reality Files</div>
+                        <div id="saves-list" class="object-tree" style="max-height: 200px;">
+                            <!-- Dynamic Saves List -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STUDIO 4: Logos & Utterance -->
+            <div id="tab-logos" class="tab-pane">
+                <div class="full-page-studio">
+                    <div class="logos-container">
+                        <div class="studio-banner" style="background: linear-gradient(135deg, rgba(0, 240, 255, 0.15), rgba(168, 85, 247, 0.05));">
+                            <div>
+                                <div class="banner-title">🗣️ Logos & Utterance Modality</div>
+                                <div class="banner-desc">Spoken words carry creative authority in Earthcall. Emitted utterances route through the Language System and publish into the core EventBus.</div>
+                            </div>
+                        </div>
+
+                        <!-- Spoken Word Presets -->
+                        <div class="presets-row">
+                            <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); align-self: center;">Words of Power:</span>
+                            <div class="preset-chip" data-word="Joy">✨ Joy</div>
+                            <div class="preset-chip" data-word="Light">💡 Light</div>
+                            <div class="preset-chip" data-word="Harmony">🎵 Harmony</div>
+                            <div class="preset-chip" data-word="Terraform">🌱 Terraform</div>
+                            <div class="preset-chip" data-word="Ignite">🔥 Ignite</div>
+                            <div class="preset-chip" data-word="Genesis">🌌 Genesis</div>
+                        </div>
+
+                        <!-- Live Terminal Box -->
+                        <div id="logos-terminal" class="terminal-box">
+                            <div class="terminal-msg">
+                                <span class="msg-time">[SYSTEM]</span>
+                                <span class="msg-speaker">&lt;Logos Engine&gt;</span>
+                                <span class="msg-text">Logos Modality connected. Ready to receive spoken words of creation.</span>
+                            </div>
+                        </div>
+
+                        <!-- Input Bar -->
+                        <div class="logos-input-bar">
+                            <input type="text" id="logos-input-text" class="logos-input" placeholder="Speak a word into the World (e.g. 'Joy', 'Spawn Pillar', 'Light')...">
+                            <button id="logos-emit-btn" class="btn btn-primary">Emit into Reality</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STUDIO 5: Person & Physics -->
+            <div id="tab-physics" class="tab-pane">
+                <div class="full-page-studio">
+                    <div class="studio-banner">
+                        <div>
+                            <div class="banner-title">👤 Person & Physics Cockpit</div>
+                            <div class="banner-desc">Manage the human vessel, camera perspectives, gravitation fields, and teleportation anchors.</div>
+                        </div>
+                    </div>
+
+                    <div class="cards-grid">
+                        <!-- Player Coordinates Card -->
+                        <div class="law-card">
+                            <div class="law-card-header">
+                                <div class="law-name">Vessel Telemetry</div>
+                            </div>
+                            <div style="font-size: 0.85rem; color: var(--text-secondary);">
+                                Position: <strong id="player-pos-display" style="color: var(--accent-cyan); font-family: var(--font-mono);">[0.0, 1.8, 5.0]</strong>
+                            </div>
+                            <div class="control-label" style="margin-top: 8px;">Quick Teleport Anchors</div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                                <button id="tp-spawn" class="btn btn-secondary btn-sm">📍 Spawn Point</button>
+                                <button id="tp-origin" class="btn btn-secondary btn-sm">🎯 Origin Anchor</button>
+                                <button id="tp-sky" class="btn btn-secondary btn-sm">☁️ Sky Platform</button>
+                                <button id="tp-sanctum" class="btn btn-secondary btn-sm">🏛️ Sanctum Core</button>
+                            </div>
+                        </div>
+
+                        <!-- Custom Teleport Card -->
+                        <div class="law-card">
+                            <div class="law-card-header">
+                                <div class="law-name">Custom Coordinate Warp</div>
+                            </div>
+                            <div class="control-row">
+                                <div class="input-with-label"><span>X</span><input type="number" id="tp-custom-x" value="0" class="input-number"></div>
+                                <div class="input-with-label"><span>Y</span><input type="number" id="tp-custom-y" value="2" class="input-number"></div>
+                                <div class="input-with-label"><span>Z</span><input type="number" id="tp-custom-z" value="0" class="input-number"></div>
+                            </div>
+                            <button id="tp-custom-btn" class="btn btn-primary btn-sm" style="margin-top: 12px;">Warp Player</button>
+                        </div>
+
+                        <!-- Physics Controls Card -->
+                        <div class="law-card">
+                            <div class="law-card-header">
+                                <div class="law-name">Physics Simulation Modes</div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span>🕊️ Flight Mode (Fly / No Clip)</span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="physics-flying-toggle">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                                <span>🌐 Gravity Vector Visualization</span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="physics-gravviz-toggle">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STUDIO 6: Robotics Modality -->
+            <div id="tab-robotics" class="tab-pane">
+                <div class="full-page-studio">
+                    <div class="studio-banner">
+                        <div>
+                            <div class="banner-title">🤖 Robotics & Physical Modality</div>
+                            <div class="banner-desc">Drive physical actuators and robot joints directly via property writes over the C++ Engine link.</div>
+                        </div>
+                    </div>
+
+                    <div class="cards-grid">
+                        <div class="law-card">
+                            <div class="law-card-header">
+                                <div class="law-name">Actuator Joints (Robot Arm)</div>
+                            </div>
+                            <div class="control-group">
+                                <div class="control-label">Base Yaw Joint <span id="rob-joint-1-val" style="color: var(--accent-cyan);">0°</span></div>
+                                <input type="range" id="rob-joint-1" class="slider" min="-180" max="180" value="0" data-joint="arm.joint1">
+                            </div>
+                            <div class="control-group">
+                                <div class="control-label">Shoulder Pitch <span id="rob-joint-2-val" style="color: var(--accent-cyan);">45°</span></div>
+                                <input type="range" id="rob-joint-2" class="slider" min="-90" max="90" value="45" data-joint="arm.joint2">
+                            </div>
+                            <div class="control-group">
+                                <div class="control-label">Elbow Extension <span id="rob-joint-3-val" style="color: var(--accent-cyan);">30°</span></div>
+                                <input type="range" id="rob-joint-3" class="slider" min="-120" max="120" value="30" data-joint="arm.joint3">
+                            </div>
+                            <div class="control-group">
+                                <div class="control-label">End-Effector Gripper <span id="rob-gripper-val" style="color: var(--accent-cyan);">0°</span></div>
+                                <input type="range" id="rob-gripper" class="slider" min="0" max="100" value="0" data-joint="arm.gripper">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STUDIO 7: Live Event Stream -->
+            <div id="tab-events" class="tab-pane">
+                <div class="full-page-studio">
+                    <div class="studio-banner">
+                        <div>
+                            <div class="banner-title">📜 Live Event Stream & Audit Log</div>
+                            <div class="banner-desc">Real-time WebSocket event broadcast from the C++ EventBus (Utterances, Law triggers, Collisions, Mutations).</div>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button id="pause-event-log-btn" class="btn btn-secondary btn-sm">Pause Stream</button>
+                            <button id="clear-event-log-btn" class="btn btn-danger btn-sm">Clear Log</button>
+                        </div>
+                    </div>
+
+                    <div id="events-stream-list" class="terminal-box" style="height: 500px;">
+                        <!-- Dynamic Event Logs -->
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- MODAL 1: Create Law -->
+    <div id="create-law-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="font-weight: 700; font-size: 1.1rem;">⚡ Author New Law</div>
+                <button id="close-law-modal" class="btn btn-secondary btn-sm">✕</button>
+            </div>
+            
+            <div class="control-group">
+                <div class="control-label">Law Display Name</div>
+                <input type="text" id="new-law-name" class="select-styled" placeholder="e.g. Gravity Inverter">
+            </div>
+
+            <div class="control-group">
+                <div class="control-label">Law Identifier (Slug)</div>
+                <input type="text" id="new-law-id" class="select-styled" placeholder="e.g. law-gravity-inverter">
+            </div>
+
+            <div class="control-group">
+                <div class="control-label">Activation Mode</div>
+                <select id="new-law-activation" class="select-styled">
+                    <option value="0">Continuous (Level-Triggered)</option>
+                    <option value="1">OnEvent (Edge-Triggered)</option>
+                    <option value="2">WhileTrue</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <div class="control-label">Action Mathematical Expression</div>
+                <textarea id="new-law-expr" class="select-styled" style="height: 80px; font-family: var(--font-mono); font-size: 0.8rem;" placeholder="e.g. set(position.y, sin(time) * 5.0)"></textarea>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px;">
+                <button id="submit-create-law-btn" class="btn btn-primary">Inject Law into Engine</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: Create Zone -->
+    <div id="create-zone-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="font-weight: 700; font-size: 1.1rem;">🌌 Author New Zone</div>
+                <button id="close-zone-modal" class="btn btn-secondary btn-sm">✕</button>
+            </div>
+            
+            <div class="control-group">
+                <div class="control-label">Zone Name</div>
+                <input type="text" id="new-zone-name" class="select-styled" placeholder="e.g. Citadel of Harmony">
+            </div>
+
+            <div class="control-group">
+                <div class="control-label">Zone Kind</div>
+                <select id="new-zone-kind" class="select-styled">
+                    <option value="zone">Standard Zone</option>
+                    <option value="home">Home Dwelling</option>
+                    <option value="community-home">Community Home</option>
+                    <option value="community-zone">Community Zone</option>
+                </select>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px;">
+                <button id="submit-create-zone-btn" class="btn btn-primary">Birth Zone into Ourverse</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container"></div>
+
+    <!-- Application Script -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
 </html>
