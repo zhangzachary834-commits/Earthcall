@@ -41,6 +41,7 @@ Body::Body(std::string shape, std::string artStyle)
 }
 
 void Body::describe() const {
+    // Zach: ARE YOU KIDDING ME?!?!?!?! REFUSALS #1 AND #3!!!!!!!
     std::cout << "🧍 Body Shape: " << shape << ", Style: " << artStyle << std::endl;
     std::cout << "   Height: " << height << "m" << std::endl;
     std::cout << "   Adornments:" << std::endl;
