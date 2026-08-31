@@ -365,8 +365,12 @@ void Object::drawFieldModel() const {
     // cannot fall back to the cached mesh, which is why this asks rather than
     // always calling drawImplicit.
     if (r.rendersImplicitExactly() && _renderMode != RenderMode::Mesh) {
+        // getHeightGrid() lazily builds the min/max heightfield grid (Phase C)
+        // on first access after a revision bump, mirroring rebuildFieldMesh();
+        // dimX==0 (not a proven heightfield) reads back as "no grid" downstream.
+        const geom::HeightGrid& hg = getHeightGrid();
         r.drawImplicit(getFieldData(), getFieldExtent(), mat, nullptr,
-                       getMemoId(), getFieldRevision());
+                       getMemoId(), getFieldRevision(), hg.dimX > 0 ? &hg : nullptr);
         return;
     }
     rebuildFieldMesh();

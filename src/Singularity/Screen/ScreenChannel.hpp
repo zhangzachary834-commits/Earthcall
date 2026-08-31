@@ -21,6 +21,10 @@ namespace Screen {
 //   - @screen-channel.pipelineSwitches: number of pipeline state transitions
 //   - @screen-channel.cachedMeshesCount: number of persistent VBO meshes retained in VRAM
 //   - @screen-channel.wireframe: whether the screen renders in wireframe mode
+//   - @screen-channel.heightGridDdaEnabled: whether the WebGPU marcher skips
+//     proven-empty stretches of a heightfield ray via its min/max grid
+//     (rendering-optimization Phase C); disabling falls back to the
+//     unmodified per-step marcher
 class ScreenChannel : public Law {
 public:
     ScreenChannel();
@@ -45,6 +49,7 @@ public:
     int    pipelineSwitches = 0;
     int    cachedMeshesCount = 0;
     bool   wireframe = false;
+    bool   heightGridDdaEnabled = true;
 
 private:
     void buildProperties() override;

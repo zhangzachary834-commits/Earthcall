@@ -54,6 +54,8 @@ inline constexpr const char* kCategoryToggle = "category.control.toggle";
 inline constexpr const char* kCategorySlider = "category.control.slider";
 inline constexpr const char* kCategoryTuner  = "category.control.tuner";
 inline constexpr const char* kCategoryKey    = "category.control.key-command";
+inline constexpr const char* kCategoryArtRoot = "category.art";
+inline constexpr const char* kCategoryStroke  = "category.art.stroke";
 
 // The membership edge, and the one a category uses to sit under another.
 inline constexpr const char* kInstanceOf    = "instance-of";
@@ -129,6 +131,18 @@ std::shared_ptr<Law> createHoverResponseLaw(Singular& author);
 // Seed the categories and register every archetype into `laws`, binding each
 // to the event that wakes it. Idempotent — safe on every boot and after a
 // world load, which is what makes these first movers rather than save data.
+// Seed art tool categories (category.art and category.art.stroke).
+void seedArtCategories(CategoryManager& categories, Singular& author);
+
+// WhileTrue drawing law that spawns stroke Singulars along @interaction-channel.pointerWorld.
+std::shared_ptr<Law> createStrokeDrawingLaw(Singular& author);
+
+// OnEvent law that triggers acoustic response on object-hover-entered for strokes.
+std::shared_ptr<Law> createStrokeAcousticLaw(Singular& author);
+
+// WhileTrue law that illuminates strokes when pointer is over them.
+std::shared_ptr<Law> createStrokeGlowLaw(Singular& author);
+
 void syncRegisterControlPatterns(LawManager& laws, CategoryManager& categories,
                                  Singular& author);
 

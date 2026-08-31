@@ -83,7 +83,15 @@ public:
                       const RenderMaterial& material,
                       const geom::FieldNode* fieldNode = nullptr,
                       uint64_t memoId = 0,
-                      uint32_t memoRevision = 0) override;
+                      uint32_t memoRevision = 0,
+                      const geom::HeightGrid* heightGrid = nullptr) override;
+
+    // Governs whether drawImplicit's heightGrid argument is actually honoured
+    // (rendering-optimization Phase C). Read from @screen-channel.
+    // heightGridDdaEnabled every frame in EngineRender.cpp, the same live
+    // template as setWireframe -- disabled, every heightfield object simply
+    // renders through the unmodified marcher, exactly as before this phase.
+    void setHeightGridDdaEnabled(bool on) override { _heightGridDdaEnabled = on; }
 
     // Vector-field visualization (Milestone 6b): drawImplicit renders a SCALAR
     // field's surface; this renders a VECTOR field's flow as points. Positions are
@@ -203,6 +211,10 @@ private:
 
     // setWireframe: meshes draw as edges instead of filled triangles.
     bool _wireframe = false;
+    // setHeightGridDdaEnabled: governs the min/max heightfield DDA skip
+    // (Phase C). Defaults true so the optimization is live out of the box;
+    // a Person can author @screen-channel.heightGridDdaEnabled = false.
+    bool _heightGridDdaEnabled = true;
 
     // Depth buffer, recreated when the target size changes.
     WGPUTexture     _depthTex  = nullptr;
@@ -300,11 +312,20 @@ private:
         glm::vec4 extents;
         glm::vec4 misc;
         uint32_t paramOffset;
-        uint32_t pad0, pad1, pad2;
+        // Min/max heightfield grid (Phase C): this instance's cells live at
+        // heightCells[heightGridOffset .. +heightGridDimX*heightGridDimZ) in
+        // the shared per-pipeline buffer flushSdfDraws() builds, row-major
+        // z-major. heightGridDimX/Z == 0 (the default, matching an
+        // ineligible or grid-less object) means "no grid" -- the shader
+        // takes the unmodified marcher path, same as before this phase.
+        uint32_t heightGridOffset = 0;
+        uint32_t heightGridDimX = 0;
+        uint32_t heightGridDimZ = 0;
     };
     std::map<const SdfPipeline*, std::vector<SdfInstanceData>> _sdfBatches;
     std::map<const SdfPipeline*, std::vector<float>> _sdfParamsBatches;
-    WGPUBindGroupLayout _sdfInstanceBgl = nullptr; // group(2): the instance storage buffer
+    std::map<const SdfPipeline*, std::vector<glm::vec2>> _sdfHeightGridBatches;
+    WGPUBindGroupLayout _sdfInstanceBgl = nullptr; // group(1): instances (binding 0) + height cells (binding 1)
     void flushSdfDraws();
 
     // Last pipeline bound on the CURRENT pass. Kernel state: a driver-object

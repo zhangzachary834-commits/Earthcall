@@ -242,14 +242,19 @@ bool WebGpuRenderer::init(const wgpu::Device& gpu, WGPUTextureFormat colorFormat
     instBglDesc.entries = &instEntry;
     _instanceBgl = wgpuDeviceCreateBindGroupLayout(_device, &instBglDesc);
 
-    // group(2): the SDF per-instance storage array
-    WGPUBindGroupLayoutEntry sdfInstEntry = {};
-    sdfInstEntry.binding = 0;
-    sdfInstEntry.visibility = WGPUShaderStage_Vertex | WGPUShaderStage_Fragment;
-    sdfInstEntry.buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
+    // group(2): the SDF per-instance storage array, plus (binding 1) the
+    // shared min/max heightfield-grid cells buffer (Phase C) -- fragment-only,
+    // since only the marcher's DDA skip (fs) ever reads it.
+    WGPUBindGroupLayoutEntry sdfInstEntry[2] = {};
+    sdfInstEntry[0].binding = 0;
+    sdfInstEntry[0].visibility = WGPUShaderStage_Vertex | WGPUShaderStage_Fragment;
+    sdfInstEntry[0].buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
+    sdfInstEntry[1].binding = 1;
+    sdfInstEntry[1].visibility = WGPUShaderStage_Fragment;
+    sdfInstEntry[1].buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
     WGPUBindGroupLayoutDescriptor sdfInstBglDesc = {};
-    sdfInstBglDesc.entryCount = 1;
-    sdfInstBglDesc.entries = &sdfInstEntry;
+    sdfInstBglDesc.entryCount = 2;
+    sdfInstBglDesc.entries = sdfInstEntry;
     _sdfInstanceBgl = wgpuDeviceCreateBindGroupLayout(_device, &sdfInstBglDesc);
 
     WGPUBindGroupLayout meshLayouts[2] = { _bgl, _instanceBgl };
@@ -877,7 +882,8 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                                   const RenderMaterial& mat,
                                   const geom::FieldNode* fieldNode,
                                   uint64_t memoId,
-                                  uint32_t memoRevision) {
+                                  uint32_t memoRevision,
+                                  const geom::HeightGrid* heightGrid) {
     if (!_pass) return;
 
     // Memoize the WGSL string generation and pipeline lookup.
@@ -950,11 +956,28 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     // damping selects the marcher: < 0.5 is the Lipschitz-corrected path for an
     // authored expression, >= 0.5 the over-relaxed path for an exact distance field.
     inst.misc = glm::vec4(1.0f, 1e-4f, maxDim * 8.0f, prog.needsGradientStep ? 0.25f : 1.0f);
-                          
+
     inst.paramOffset = static_cast<uint32_t>(_sdfParamsBatches[sp].size());
+
+    // Min/max heightfield grid (Phase C): wired only when the caller found a
+    // proven heightfield (Object::getHeightGrid()) AND the property that
+    // governs it is live. Defaulted zero otherwise, which the shader reads as
+    // "no grid" and takes the unmodified marcher path.
+    inst.heightGridOffset = 0;
+    inst.heightGridDimX = 0;
+    inst.heightGridDimZ = 0;
+    if (_heightGridDdaEnabled && heightGrid && heightGrid->dimX > 0 && heightGrid->dimZ > 0 &&
+        !heightGrid->cells.empty()) {
+        auto& hgBatch = _sdfHeightGridBatches[sp];
+        inst.heightGridOffset = static_cast<uint32_t>(hgBatch.size());
+        inst.heightGridDimX = static_cast<uint32_t>(heightGrid->dimX);
+        inst.heightGridDimZ = static_cast<uint32_t>(heightGrid->dimZ);
+        hgBatch.insert(hgBatch.end(), heightGrid->cells.begin(), heightGrid->cells.end());
+    }
+
     _sdfBatches[sp].push_back(inst);
     _sdfParamsBatches[sp].insert(_sdfParamsBatches[sp].end(), prog.params.begin(), prog.params.end());
-    
+
     mutableFrameStats().trianglesDrawn += 12;
 }
 
@@ -1089,11 +1112,21 @@ void WebGpuRenderer::flushSdfDraws() {
         WGPUBindGroup bg = wgpuDeviceCreateBindGroup(_device, &bgd);
         _frameBindGroups.push_back(bg);
 
-        // Group 1: Instances
-        WGPUBindGroupEntry ibge = {};
-        ibge.binding = 0; ibge.buffer = instAlloc.buffer; ibge.offset = instAlloc.offset; ibge.size = instAlloc.size;
+        // Group 1: Instances (binding 0) + min/max heightfield-grid cells
+        // (binding 1, Phase C). A storage array of length zero is invalid, same
+        // as the params buffer above -- when nothing in this pipeline's batch
+        // built a grid, one unused cell keeps the binding legal without the
+        // shader having to know (every instance's heightGridDimX/Z stay 0, so
+        // it is never indexed).
+        auto& hgCells = _sdfHeightGridBatches[sp];
+        if (hgCells.empty()) hgCells.push_back(glm::vec2(0.0f));
+        auto hgAlloc = _bufferPool.suballocateStorage(hgCells.data(), hgCells.size() * sizeof(glm::vec2));
+
+        WGPUBindGroupEntry ibge[2] = {};
+        ibge[0].binding = 0; ibge[0].buffer = instAlloc.buffer; ibge[0].offset = instAlloc.offset; ibge[0].size = instAlloc.size;
+        ibge[1].binding = 1; ibge[1].buffer = hgAlloc.buffer; ibge[1].offset = hgAlloc.offset; ibge[1].size = hgAlloc.size;
         WGPUBindGroupDescriptor ibgDesc = {};
-        ibgDesc.layout = _sdfInstanceBgl; ibgDesc.entryCount = 1; ibgDesc.entries = &ibge;
+        ibgDesc.layout = _sdfInstanceBgl; ibgDesc.entryCount = 2; ibgDesc.entries = ibge;
         WGPUBindGroup instBindGroup = wgpuDeviceCreateBindGroup(_device, &ibgDesc);
         _frameBindGroups.push_back(instBindGroup);
 
@@ -1108,6 +1141,7 @@ void WebGpuRenderer::flushSdfDraws() {
     }
     _sdfBatches.clear();
     _sdfParamsBatches.clear();
+    _sdfHeightGridBatches.clear();
 }
 
 void WebGpuRenderer::endFrame() {

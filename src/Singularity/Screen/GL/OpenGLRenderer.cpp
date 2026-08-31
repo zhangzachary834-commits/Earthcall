@@ -86,11 +86,15 @@ void OpenGLRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                                   const RenderMaterial& material,
                                   const geom::FieldNode* fieldNode,
                                   uint64_t memoId,
-                                  uint32_t memoRevision) {
+                                  uint32_t memoRevision,
+                                  const geom::HeightGrid* heightGrid) {
     // Fixed-function GL has no raymarcher, so a field is drawn by tessellating it
     // and reusing drawMesh. Callers that already cache a field mesh (Object holds
     // _fieldMesh) should call drawMesh directly; this exists so the interface is
     // honest for callers that only have the SDF. WebGPU (M6) will raymarch here.
+    // heightGrid is a WebGPU-only DDA acceleration structure (rendering-
+    // optimization Phase C) -- nothing to accelerate in a tessellation path.
+    (void)heightGrid;
     drawMesh(geom::tessellateSdf(field, extent), material);
 }
 

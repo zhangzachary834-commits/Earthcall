@@ -64,6 +64,7 @@ void ScreenChannel::buildProperties() {
     readOnlyInt("pipelineSwitches", &ScreenChannel::getPipelineSwitches);
     readOnlyInt("cachedMeshesCount", &ScreenChannel::getCachedMeshesCount);
     boolean("wireframe", &ScreenChannel::wireframe);
+    boolean("heightGridDdaEnabled", &ScreenChannel::heightGridDdaEnabled);
 }
 
 } // namespace Screen

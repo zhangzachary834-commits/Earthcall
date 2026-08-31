@@ -5,6 +5,7 @@
 #include <cmath>
 #include <cctype>
 #include <cstdlib>
+#include <optional>
 
 namespace geom {
 
@@ -589,6 +590,212 @@ OntoMath::Interval evalRange(const SdfNode& n, const glm::vec3& boxMin, const gl
         default:
             return retInf();
     }
+}
+
+// ---------------------------------------------------------------------------
+// Min/max heightfield grid (rendering-optimization Phase C). See Sdf.hpp.
+// ---------------------------------------------------------------------------
+namespace {
+
+// Empirically measured (2026-08-31, scratch/probes/measure_perlin_lipschitz.cpp):
+// sup |glm::perlin(a) - glm::perlin(b)| / |a-b| for small |a-b|, sampled at four
+// step scales (1e-2 .. 1e-5) over 4e6 random point pairs each, broadly across
+// [-20,20]^3 -- the domain the noise floor's argument (p*0.008+offset) actually
+// reaches. Measured max: 3.7257, stable across step scales (not growing as the
+// step shrinks, which is the sign of a genuine local-slope bound rather than a
+// finite-difference artifact). Used with a ~1.6x margin, the same style of
+// margin kPerlinBound documents above (measured 1.123 sup vs a used 1.905),
+// since this is an empirical corroboration, not a closed-form proof.
+constexpr float kPerlinLipschitz = 6.0f;
+
+// A conservative PER-AXIS Lipschitz bound for `n`: |n(a) - n(b)| <=
+// dot(L, abs(a-b)) for nearby a,b, i.e. L.x/.y/.z bound n's sensitivity to
+// perturbing the ambient point along x/y/z ALONE. Per-axis (not one scalar)
+// matters here specifically: a properly-authored 2D heightfield extracts only
+// x and z from p before it ever reaches Noise, so its true y-sensitivity is
+// EXACTLY ZERO -- a single blanket constant would have no way to say that,
+// and would force the same expensive "cover the whole y half-extent" slack
+// computeHeightGrid needs for a field that genuinely does depend on y (the
+// real Perlin-floor save file's noise argument is the full 3D point).
+//
+// Handles only the operations a realistically-authored heightfield composes
+// (constants, the point/its axes, Component, VectorConstruct, Add/Sub,
+// Scale-by-constant, Noise); anything else REFUSES (nullopt) rather than
+// guess, which computeHeightGrid treats as "this field gets no acceleration"
+// -- always safe, never an unsound tightened bound.
+std::optional<glm::vec3> estimateLipschitz(const OntoMath::MathNode& n) {
+    using Op = OntoMath::MathNode::Op;
+    switch (n.op) {
+        case Op::ScalarLeaf: {
+            // A pure constant (no variable factors, no transcendental terms)
+            // has zero local slope on every axis. A polynomial/transcendental
+            // ScalarLeaf term is outside what this estimator covers.
+            for (const auto& term : n.scalarForm.terms) {
+                if (!term.factors.empty() || !term.trans.empty()) return std::nullopt;
+            }
+            return glm::vec3(0.0f);
+        }
+        case Op::ValueLeaf:
+            // "x"/"y"/"z" move 1:1 with exactly their own axis, 0 with the
+            // others. Bare "p" (the whole point) is conservatively 1:1 with
+            // every axis -- correct if a caller ever binds p as a scalar-typed
+            // leaf, though in practice p is Vector-typed and reaches here only
+            // through VectorConstruct/Component's own handling.
+            if (n.variableName == "x") return glm::vec3(1.0f, 0.0f, 0.0f);
+            if (n.variableName == "y") return glm::vec3(0.0f, 1.0f, 0.0f);
+            if (n.variableName == "z") return glm::vec3(0.0f, 0.0f, 1.0f);
+            if (n.variableName == OntoMath::kAmbientPointVar) return glm::vec3(1.0f);
+            return std::nullopt;
+        case Op::Component: {
+            if (n.children.size() != 1 || !n.children[0]) return std::nullopt;
+            // Precise case, and the one that matters most: Component(p, axis)
+            // extracts exactly one axis of the ambient point directly --
+            // sensitivity 1 to that axis, ZERO to the other two. This is what
+            // a properly-authored 2D heightfield's noise argument actually
+            // does (Component(p,"x"), Component(p,"z")), and it is the
+            // difference between a real win and none: falling through to the
+            // general case below would bound it via bare "p"'s (1,1,1) and
+            // silently reintroduce the full y half-extent this whole per-axis
+            // scheme exists to avoid paying when it is not owed.
+            const OntoMath::MathNode& child = *n.children[0];
+            if (child.op == Op::ValueLeaf && child.variableName == OntoMath::kAmbientPointVar) {
+                if (n.stringArg == "x") return glm::vec3(1.0f, 0.0f, 0.0f);
+                if (n.stringArg == "y") return glm::vec3(0.0f, 1.0f, 0.0f);
+                if (n.stringArg == "z") return glm::vec3(0.0f, 0.0f, 1.0f);
+                return std::nullopt;
+            }
+            // General case: a compound vector subtree. We cannot see which of
+            // its three build expressions produced this axis without deeper
+            // bookkeeping, so fall back to the whole subtree's own (looser,
+            // but still sound) per-axis bound.
+            return estimateLipschitz(child);
+        }
+        case Op::VectorConstruct: {
+            if (n.children.size() != 3) return std::nullopt;
+            glm::vec3 sum(0.0f);
+            for (const auto& c : n.children) {
+                if (!c) return std::nullopt;
+                auto l = estimateLipschitz(*c);
+                if (!l) return std::nullopt;
+                sum += *l; // sound (if loose): triangle inequality, per axis, over the 3 components
+            }
+            return sum;
+        }
+        case Op::Add:
+        case Op::Sub: {
+            if (n.children.size() != 2 || !n.children[0] || !n.children[1]) return std::nullopt;
+            auto a = estimateLipschitz(*n.children[0]);
+            auto b = estimateLipschitz(*n.children[1]);
+            if (!a || !b) return std::nullopt;
+            return *a + *b;
+        }
+        case Op::Scale: {
+            // Only the constant*subtree product rule is sound here -- a genuine
+            // two-non-constant product needs a magnitude bound on BOTH factors,
+            // which this estimator does not carry.
+            if (n.children.size() != 2 || !n.children[0] || !n.children[1]) return std::nullopt;
+            const auto asConst = [](const OntoMath::MathNode& c) -> std::optional<double> {
+                if (c.op != Op::ScalarLeaf) return std::nullopt;
+                if (c.scalarForm.terms.empty()) return 0.0;
+                if (c.scalarForm.terms.size() > 1) return std::nullopt;
+                const auto& t = c.scalarForm.terms[0];
+                if (!t.factors.empty() || !t.trans.empty()) return std::nullopt;
+                return t.coefficient;
+            };
+            if (auto k = asConst(*n.children[0])) {
+                auto l = estimateLipschitz(*n.children[1]);
+                if (!l) return std::nullopt;
+                return static_cast<float>(std::abs(*k)) * (*l);
+            }
+            if (auto k = asConst(*n.children[1])) {
+                auto l = estimateLipschitz(*n.children[0]);
+                if (!l) return std::nullopt;
+                return static_cast<float>(std::abs(*k)) * (*l);
+            }
+            return std::nullopt;
+        }
+        case Op::Noise: {
+            if (n.children.size() != 1 || !n.children[0]) return std::nullopt;
+            auto argL = estimateLipschitz(*n.children[0]);
+            if (!argL) return std::nullopt;
+            return kPerlinLipschitz * (*argL);
+        }
+        default:
+            return std::nullopt;
+    }
+}
+
+} // namespace
+
+bool isHeightfieldExpr(const SdfNode& n, const OntoMath::MathNode** outH) {
+    if (n.op != SdfOp::Leaf || n.prim != SdfPrim::Expr || !n.mathNode) return false;
+    const OntoMath::MathNode& root = *n.mathNode;
+    if (root.op != OntoMath::MathNode::Op::Sub) return false;
+    if (root.children.size() != 2 || !root.children[0] || !root.children[1]) return false;
+    const OntoMath::MathNode& a = *root.children[0];
+    const bool isY =
+        (a.op == OntoMath::MathNode::Op::ValueLeaf && a.variableName == "y") ||
+        (a.op == OntoMath::MathNode::Op::Component && a.stringArg == "y" &&
+         a.children.size() == 1 && a.children[0] &&
+         a.children[0]->op == OntoMath::MathNode::Op::ValueLeaf &&
+         a.children[0]->variableName == OntoMath::kAmbientPointVar);
+    if (!isY) return false;
+    if (outH) *outH = root.children[1].get();
+    return true;
+}
+
+HeightGrid computeHeightGrid(const OntoMath::MathNode& h, const glm::vec3& halfExtent,
+                             int dimX, int dimZ) {
+    HeightGrid grid;
+    if (dimX <= 0 || dimZ <= 0) return grid;
+
+    const std::optional<glm::vec3> lipschitz = estimateLipschitz(h);
+    if (!lipschitz) return grid; // cannot bound soundly -- "no acceleration", not a guess
+
+    const float cellSizeX = (2.0f * halfExtent.x) / static_cast<float>(dimX);
+    const float cellSizeZ = (2.0f * halfExtent.z) / static_cast<float>(dimZ);
+    // Worst-case displacement from a cell's SAMPLED point (its center, y=0) to
+    // any point actually in its domain, PER AXIS: half the cell width in x/z,
+    // and the object's full y half-extent in y (the grid has no y dimension,
+    // so every cell's sample must cover the whole y range unconditionally).
+    // Combined via the per-axis Lipschitz bound (dot product, sound by the
+    // triangle inequality) rather than one scalar times a Euclidean radius --
+    // if h genuinely does not depend on y (lipschitz.y == 0, the well-authored
+    // case: Component(p,"x")/Component(p,"z") only), that huge y half-extent
+    // costs NOTHING. It only gets paid when h actually reads y, which is
+    // exactly when paying it is correctness, not caution.
+    const float slack = lipschitz->x * (0.5f * cellSizeX) +
+                        lipschitz->y * halfExtent.y +
+                        lipschitz->z * (0.5f * cellSizeZ);
+
+    // Same reused-map reasoning as evalLeaf above: Kernel scratch, safe because
+    // MathNode::evaluate never re-enters this call while it is live.
+    static thread_local std::map<std::string, PropertyValue> vars{
+        {"x", PropertyValue(0.0)}, {"y", PropertyValue(0.0)},
+        {"z", PropertyValue(0.0)}, {"p", PropertyValue(glm::vec3(0.0f))},
+    };
+
+    grid.dimX = dimX;
+    grid.dimZ = dimZ;
+    grid.cells.resize(static_cast<size_t>(dimX) * static_cast<size_t>(dimZ));
+    for (int iz = 0; iz < dimZ; ++iz) {
+        const float z = -halfExtent.z + (static_cast<float>(iz) + 0.5f) * cellSizeZ;
+        for (int ix = 0; ix < dimX; ++ix) {
+            const float x = -halfExtent.x + (static_cast<float>(ix) + 0.5f) * cellSizeX;
+            vars["x"] = PropertyValue(static_cast<double>(x));
+            vars["y"] = PropertyValue(0.0);
+            vars["z"] = PropertyValue(static_cast<double>(z));
+            vars["p"] = PropertyValue(glm::vec3(x, 0.0f, z));
+            float sample = 0.0f;
+            if (auto val = h.evaluate(vars)) {
+                double d = 0.0;
+                if (propertyValueToNumber(*val, d)) sample = static_cast<float>(d);
+            }
+            grid.cells[static_cast<size_t>(iz) * dimX + ix] =
+                glm::vec2(sample - slack, sample + slack);
+        }
+    }
+    return grid;
 }
 
 glm::vec3 sdfNormal(const SdfNode& n, const glm::vec3& p) {

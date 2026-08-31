@@ -198,6 +198,13 @@ private:
     // rebuildGeometryCaches(), which every mutation point already calls.
     mutable geom::TessMesh  _fieldMesh;    // cached field tessellation (built on demand)
     mutable bool            _fieldMeshDirty = true; // lazy evaluation flag
+    // Min/max heightfield grid for the GPU DDA skip (rendering-optimization
+    // Phase C). Same lazy-build shape as _fieldMesh: cheap dirty flag bumped by
+    // every mutation via rebuildGeometryCaches(), the actual O(grid) build
+    // deferred to first access. dimX/dimZ stay 0 (grid.cells empty) for a field
+    // that is not a proven heightfield -- see geom::isHeightfieldExpr.
+    mutable geom::HeightGrid _heightGrid;
+    mutable bool             _heightGridDirty = true;
     // Ray index over the two meshes that get picked against every frame. Built
     // with the mesh, discarded with it. Kernel substrate — derived entirely
     // from the TessMesh beside it, holds nothing a Law could ask about.
@@ -245,6 +252,7 @@ private:
     FaceAlbedo faceAlbedo(size_t face) const; // per-face albedo (handle + CPU pixels)
     void rebuildPolyhedronMeshes() const;          // rebuild _polyhedronFaceMeshes
     void rebuildFieldMesh() const;                 // lazily rebuild _fieldMesh
+    void rebuildHeightGrid() const;                // lazily rebuild _heightGrid
     void rebuildGeometryCaches();
 
 public:
@@ -558,6 +566,10 @@ public:
     const geom::SmoothSurfaceData& getSmoothData()  const { return smoothData; }
     const geom::ComplexShapeData&  getComplexData() const { return complexData; }
     const geom::SdfNode&           getFieldData()   const { return fieldData; }
+    // Forces the lazy min/max heightfield grid build (rendering-optimization
+    // Phase C). Returns a dimX=0 grid for a field that is not a proven
+    // heightfield -- never a half-built or unsound one.
+    const geom::HeightGrid& getHeightGrid() const { rebuildHeightGrid(); return _heightGrid; }
     // Forces the lazy field tessellation. Asking for the support cloud IS the
     // demand that builds it -- handing back an empty vector instead would be the
     // silent-wrong-answer this cache exists to prevent (an empty cloud makes an

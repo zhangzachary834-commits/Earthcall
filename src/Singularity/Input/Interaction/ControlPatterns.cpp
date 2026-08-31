@@ -260,6 +260,68 @@ std::shared_ptr<Law> createHoverResponseLaw(Singular& author) {
     return law;
 }
 
+
+// ---------------------------------------------------------------------------
+// Art & Stroke Patterns
+// ---------------------------------------------------------------------------
+
+void seedArtCategories(CategoryManager& categories, Singular& author) {
+    auto root = categories.create(Control::kCategoryArtRoot);
+    if (!root) return;
+
+    auto stroke = categories.create(Control::kCategoryStroke);
+    if (stroke) {
+        Universe::instance().addRelation(std::make_shared<Relation>(
+            Control::kSubcategoryOf, *stroke, *root, true, 1.0f));
+    }
+    Universe::instance().addRelation(std::make_shared<Relation>(
+        "authored-by", *root, author, true, 1.0f));
+}
+
+std::shared_ptr<Law> createStrokeDrawingLaw(Singular& author) {
+    auto law = std::make_shared<FirstMoverLaw>("Art: Draw Stroke");
+    law->setLawIdentifier("art-stroke-draw-law");
+    law->addAuthor(author);
+    law->setActivation(Law::Activation::WhileTrue);
+    law->setScope(Law::Scope::Everyone);
+    law->setConditionModel(ConditionNode::all({
+        ConditionNode::compare("@interaction-channel.leftDown", ConditionNode::Op::Eq, PropertyValue(true)),
+        ConditionNode::compare("@creation-channel.active3DMode", ConditionNode::Op::Eq, PropertyValue(std::string("Draw"))),
+        ConditionNode::compare("@interaction-channel.dragging", ConditionNode::Op::Eq, PropertyValue(true))
+    }));
+
+    ActionNode createSegment = ActionNode::create(1, "art.stroke.segment", {
+        ActionNode::set("scale", PropertyValue(glm::vec3(0.08f))),
+        ActionNode::set("color", PropertyValue(glm::vec3(1.0f, 0.8f, 0.2f))),
+        ActionNode::addRelation("", Control::kCategoryStroke, Control::kInstanceOf)
+    });
+    createSegment.spawnPlacementPath = PropertyPath::parse("@interaction-channel.pointerWorld");
+    law->setActionModel(createSegment);
+    return law;
+}
+
+std::shared_ptr<Law> createStrokeAcousticLaw(Singular& author) {
+    auto law = beginPattern("Art: Stroke Acoustic Reaction", "art-stroke-sound-law",
+                            "object-hover-entered", author);
+    law->setConditionModel(inCategory(Control::kCategoryStroke));
+    law->setActionModel(ActionNode::playAudio("acoustic.frequency", "acoustic.amplitude", "crystal"));
+    return law;
+}
+
+std::shared_ptr<Law> createStrokeGlowLaw(Singular& author) {
+    auto law = std::make_shared<FirstMoverLaw>("Art: Stroke Illumination");
+    law->setLawIdentifier("art-stroke-glow-law");
+    law->addAuthor(author);
+    law->setActivation(Law::Activation::WhileTrue);
+    law->setScope(Law::Scope::Everyone);
+    law->setConditionModel(ConditionNode::all({
+        inCategory(Control::kCategoryStroke),
+        ConditionNode::compare("@world.pointerOver", ConditionNode::Op::Eq, PropertyValue(true))
+    }));
+    law->setActionModel(ActionNode::set("color", PropertyValue(glm::vec3(1.0f, 1.0f, 1.0f))));
+    return law;
+}
+
 // ---------------------------------------------------------------------------
 // Registration
 // ---------------------------------------------------------------------------

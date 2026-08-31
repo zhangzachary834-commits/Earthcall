@@ -30,11 +30,18 @@ struct SdfInstanceData {
     extents: vec4<f32>,
     misc: vec4<f32>,
     paramOffset: u32,
-    pad0: u32,
-    pad1: u32,
-    pad2: u32,
+    // Min/max heightfield grid (rendering-optimization Phase C): this
+    // instance's cells live at heightCells[heightGridOffset ..
+    // +heightGridDimX*heightGridDimZ), row-major z-major, covering
+    // [-extents.x,extents.x] x [-extents.z,extents.z] in field-local space.
+    // heightGridDimX/Z == 0 means "no grid" -- take the unmodified marcher.
+    heightGridOffset: u32,
+    heightGridDimX: u32,
+    heightGridDimZ: u32,
 };
 @group(1) @binding(0) var<storage, read> instances: array<SdfInstanceData>;
+// (hMin, hMax) per cell, conservative -- see geom::computeHeightGrid.
+@group(1) @binding(1) var<storage, read> heightCells: array<vec2<f32>>;
 var<private> g_instIdx: u32;
 
 fn dot2(v: vec2<f32>) -> f32 { return dot(v, v); }
@@ -680,6 +687,66 @@ fn rayAabb(ro: vec3<f32>, rd: vec3<f32>, b: vec3<f32>) -> vec2<f32> {
     return vec2<f32>(tEnter, tExit);
 }
 
+// Min/max heightfield grid DDA skip (rendering-optimization Phase C). Walks
+// the ray's XZ footprint across a uniform grid of conservative (hMin,hMax)
+// bounds (Amanatides & Woo 1987) and skips whole cells the ray's own height
+// range there cannot intersect -- a cell bound is PROVEN by
+// geom::computeHeightGrid, not guessed here, so a skip can never remove real
+// geometry. Returns (t, found): found < 0.5 is a PROVEN miss -- the caller can
+// skip the fine marcher for the whole ray -- and found >= 0.5 means resume the
+// unmodified fine marcher at t. On exhausting the guard budget without either
+// (should not happen: a correct 2D DDA crosses at most dimX+dimZ grid lines)
+// this fails OPEN (found=1 at the last t reached), never claiming a miss it
+// has not actually verified.
+fn heightGridAdvance(inst: SdfInstanceData, ro: vec3<f32>, rd: vec3<f32>,
+                     tStart: f32, tMax: f32) -> vec2<f32> {
+    let dimX = inst.heightGridDimX;
+    let dimZ = inst.heightGridDimZ;
+    if (dimX == 0u || dimZ == 0u) { return vec2<f32>(tStart, 1.0); }
+
+    let halfX = inst.extents.x;
+    let halfZ = inst.extents.z;
+    let cellX = (2.0 * halfX) / f32(dimX);
+    let cellZ = (2.0 * halfZ) / f32(dimZ);
+
+    var t = tStart;
+    var ix = clamp(i32(floor((ro.x + rd.x * t + halfX) / cellX)), 0, i32(dimX) - 1);
+    var iz = clamp(i32(floor((ro.z + rd.z * t + halfZ) / cellZ)), 0, i32(dimZ) - 1);
+    let stepX = select(-1, 1, rd.x >= 0.0);
+    let stepZ = select(-1, 1, rd.z >= 0.0);
+    let hasRdX = abs(rd.x) > 1e-8;
+    let hasRdZ = abs(rd.z) > 1e-8;
+    let invRdX = select(0.0, 1.0 / rd.x, hasRdX);
+    let invRdZ = select(0.0, 1.0 / rd.z, hasRdZ);
+
+    let maxSteps = i32(dimX) + i32(dimZ) + 4;
+    for (var guard = 0; guard < maxSteps; guard = guard + 1) {
+        if (t >= tMax) { return vec2<f32>(tMax, 0.0); }
+        if (ix < 0 || ix >= i32(dimX) || iz < 0 || iz >= i32(dimZ)) {
+            return vec2<f32>(tMax, 0.0); // left the grid footprint: nothing to find
+        }
+
+        let nx = -halfX + f32(select(ix, ix + 1, stepX > 0)) * cellX;
+        let nz = -halfZ + f32(select(iz, iz + 1, stepZ > 0)) * cellZ;
+        let tMaxX = select(1e30, (nx - ro.x) * invRdX, hasRdX);
+        let tMaxZ = select(1e30, (nz - ro.z) * invRdZ, hasRdZ);
+        let tCellExit = min(min(tMaxX, tMaxZ), tMax);
+
+        let cell = heightCells[inst.heightGridOffset + u32(iz) * dimX + u32(ix)];
+        let y0 = ro.y + rd.y * t;
+        let y1 = ro.y + rd.y * tCellExit;
+        let yLo = min(y0, y1);
+        let yHi = max(y0, y1);
+        if (!(yHi < cell.x || yLo > cell.y)) {
+            return vec2<f32>(t, 1.0); // candidate cell -- hand off to the fine marcher
+        }
+
+        t = tCellExit;
+        if (tMaxX < tMaxZ) { ix = ix + stepX; } else { iz = iz + stepZ; }
+    }
+    return vec2<f32>(t, 1.0); // guard exhausted: fail open, never an unverified miss
+}
+
 @fragment
 fn fs(in: VSOut) -> FSOut {
     g_instIdx = in.instIdx;
@@ -715,6 +782,24 @@ fn fs(in: VSOut) -> FSOut {
     //               noise floor's budget is 8000, which is why terrain looked
     //               fine and only the small things went missing.
     let maxDist = min(min(box.y, t + inst.misc.z), farField);
+
+    // Min/max heightfield grid skip (Phase C): for a proven heightfield
+    // (inst.heightGridDimX/Z > 0, wired only from geom::isHeightfieldExpr),
+    // fast-forward t past any stretch the grid proves cannot contain the
+    // surface, or discard the whole fragment on a proven miss -- BEFORE
+    // paying for the fine per-step marcher below, which this does not modify.
+    // Discarding outright (rather than jumping t to maxDist and letting the
+    // loop below exit on its own) is sound only because Object::drawFieldModel
+    // -- the sole caller that ever sets heightGridDimX/Z nonzero -- always
+    // passes fieldNode=nullptr, so fieldEval is a hardcoded `return 0.0` for
+    // every grid-eligible object today: there is no volumetric accumulation
+    // this skip could drop. If a heightfield object is ever given a density
+    // field too, this must jump t forward instead of discarding.
+    if (damping < 0.5) {
+        let adv = heightGridAdvance(inst, ro, rd, t, maxDist);
+        if (adv.y < 0.5) { discard; }
+        t = adv.x;
+    }
 
     // Heightfield planar leap: If ray starts above the upper extent and points down, leap to top plane in 1 step
     if (damping < 0.5 && rd.y < -1e-4 && (ro.y + rd.y * t) > inst.extents.y) {

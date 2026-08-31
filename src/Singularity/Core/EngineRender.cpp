@@ -85,6 +85,7 @@ namespace Core {
             if (_lawManager) {
                 if (auto* sc = Singularity::Screen::ScreenChannel::find(*_lawManager)) {
                     currentRenderer().setWireframe(sc->wireframe);
+                    currentRenderer().setHeightGridDdaEnabled(sc->heightGridDdaEnabled);
                 }
             }
         }

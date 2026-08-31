@@ -9,6 +9,7 @@
 #include "Person/Person.hpp"
 #include "Person/Relationship/Community/Community.hpp"
 #include "Person/Body/BodyPart/BodyPart.hpp"
+#include "Relation/Relation.hpp"
 
 #include <ctime>
 
@@ -124,6 +125,7 @@ const char* ActionNode::kindName(Kind k) {
         case Kind::Synthesize: return "Synthesize";
         case Kind::PlayAudio: return "PlayAudio";
         case Kind::AuthorZone: return "AuthorZone";
+        case Kind::AddRelation: return "AddRelation";
     }
     return "Unknown";
 }
@@ -312,6 +314,11 @@ nlohmann::json ActionNode::toJson() const {
             if (!elementToken.empty()) j["elementToken"] = elementToken;
             if (!containerToken.empty()) j["containerToken"] = containerToken;
             break;
+        case Kind::AddRelation:
+            if (!containerToken.empty()) j["sourceToken"] = containerToken;
+            if (!elementToken.empty()) j["targetToken"] = elementToken;
+            if (!propertyName.empty()) j["relationType"] = propertyName;
+            break;
         case Kind::Map:
         case Kind::Flow:
             j["path"] = path.toString();
@@ -377,8 +384,11 @@ ActionNode ActionNode::fromJson(const nlohmann::json& j) {
     n.createShapeKind = j.value("shapeKind", 0);
     n.createType = j.value("createType", std::string());
     n.propertyName = j.value("propertyName", std::string());
-    n.containerToken = j.value("containerToken", std::string());
-    n.elementToken = j.value("elementToken", std::string());
+    if (j.contains("sourceToken")) n.containerToken = j["sourceToken"].get<std::string>();
+    else n.containerToken = j.value("containerToken", std::string());
+    if (j.contains("targetToken")) n.elementToken = j["targetToken"].get<std::string>();
+    else n.elementToken = j.value("elementToken", std::string());
+    if (j.contains("relationType")) n.propertyName = j["relationType"].get<std::string>();
     if (j.contains("function")) n.mapFunction = OntoMath::Piecewise::fromJson(j["function"]);
     if (j.contains("bindings")) n.bindings = mathBindingsFromJson(j["bindings"]);
     if (j.contains("children")) {
@@ -656,6 +666,48 @@ ECA::ActionExecutor ActionNode::compile() const {
                 emitEffect("AuthorZone", true);
                 Core::EventBus::instance().publish(
                     ActionNode::ExecutedEvent{"AuthorZone", minted.get(), std::time(nullptr)});
+            };
+        }
+        case Kind::AddRelation: {
+            const std::string srcToken = containerToken;
+            const std::string dstToken = elementToken;
+            const std::string relType = propertyName;
+
+            return [srcToken, dstToken, relType](const ECA::Event& event, Singular& subject) {
+                if (relType.empty()) {
+                    emitEffect("AddRelation", false, "no relation type specified");
+                    return;
+                }
+                Singular* a = resolveBeingToken(srcToken, subject);
+                Singular* b = resolveBeingToken(dstToken, subject);
+                if (!a || !b) {
+                    emitEffect("AddRelation", false, "unresolved endpoints for relation");
+                    return;
+                }
+
+                Zone* zone = resolveZone(subject);
+                if (!zone) {
+                    emitEffect("AddRelation", false, "no active Zone for relation");
+                    return;
+                }
+
+                for (const auto& rel : zone->getRelations()) {
+                    if (rel && rel->a() == a && rel->b() == b && rel->getType() == relType) {
+                        emitEffect("AddRelation", true, "relation already present");
+                        return;
+                    }
+                }
+
+                auto relation = std::make_shared<Relation>(a, b, relType);
+                if (Universe::instance().hasAuthorContext()) {
+                    relation->setAuthor(Universe::instance().currentAuthor());
+                }
+                zone->addRelation(relation);
+
+                emitEffect("AddRelation", true);
+                Core::EventBus::instance().publish(
+                    ECA::Event{"relation-created", a, b, std::time(nullptr)}
+                );
             };
         }
         case Kind::Publish: {
@@ -1083,6 +1135,10 @@ std::string ActionNode::describe() const {
             return kindName(kind);
         case Kind::AuthorZone:
             return "author zone '" + createType + "'";
+        case Kind::AddRelation:
+            return "relate " + (containerToken.empty() ? std::string("subject") : containerToken) +
+                   " --[" + propertyName + "]--> " +
+                   (elementToken.empty() ? std::string("subject") : elementToken);
     }
     return "action";
 }
@@ -1607,5 +1663,16 @@ ActionNode ActionNode::authorZone(const std::string& identifier,
     n.propertyName = kind;
     n.elementToken = ownerToken;
     n.containerToken = ownerKind;
+    return n;
+}
+
+ActionNode ActionNode::addRelation(const std::string& sourceToken,
+                                  const std::string& targetToken,
+                                  const std::string& relationType) {
+    ActionNode n;
+    n.kind = Kind::AddRelation;
+    n.containerToken = sourceToken;
+    n.elementToken = targetToken;
+    n.propertyName = relationType;
     return n;
 }

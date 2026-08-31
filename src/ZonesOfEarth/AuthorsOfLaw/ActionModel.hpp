@@ -97,7 +97,15 @@ struct ActionNode {
         // createType = identifier, propertyName = authored kind (home /
         // community-home / community-zone / empty), elementToken = owner
         // being ("" = the law's subject), containerToken = ownerKind.
-        AuthorZone = 19
+        AuthorZone = 19,
+        // Mint a first-class Relation between two beings in the active Zone.
+        // containerToken = source being ("" = subject), elementToken = target
+        // being, propertyName = relation type tag (e.g. "instance-of").
+
+        // NOTE FROM ZACH: "Relations" cannot be created unless an actual interaction happens--there's no such thin gas an "empty" Relation.
+        // That would be philosophically nonsensical. If a Law creates a Relation, it is creating an interaction.
+        // The instrinsic structure of the Relation class itself needs to enforce this.
+        AddRelation = 20
     };
 
     struct ExecutedEvent {
@@ -366,6 +374,9 @@ struct ActionNode {
                                  const std::string& kind = "",
                                  const std::string& ownerToken = "",
                                  const std::string& ownerKind = "");
+    static ActionNode addRelation(const std::string& sourceToken,
+                                  const std::string& targetToken,
+                                  const std::string& relationType);
 };
 
 // A law's action model is the root of one such tree.

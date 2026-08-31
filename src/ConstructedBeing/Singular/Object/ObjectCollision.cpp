@@ -202,10 +202,11 @@ void Object::rebuildGeometryCaches() {
     geom::TessMesh m; // collision source — decimated into _supportCloud below
     if (_hasField) {
         _fieldMeshDirty = true;
+        _heightGridDirty = true;
         _supportCloud.clear();
         _localMin = -_fieldExtent;
         _localMax = _fieldExtent;
-        return; // Field mesh and support cloud are built lazily on first access.
+        return; // Field mesh, height grid and support cloud are built lazily on first access.
     }
     else if (_hasComplex) {
         geom::SdfNode asField;
@@ -391,6 +392,26 @@ void Object::rebuildFieldMesh() const {
     _lastCollisionTransform = glm::mat4(0.0f);
 
     _fieldMeshDirty = false;
+}
+
+void Object::rebuildHeightGrid() const {
+    if (!_heightGridDirty || !_hasField) return;
+    _heightGridDirty = false;
+    _heightGrid = geom::HeightGrid{}; // default: not eligible (dimX=0)
+
+    const OntoMath::MathNode* h = nullptr;
+    if (!geom::isHeightfieldExpr(fieldData, &h) || !h) return;
+
+    // Same per-axis budget rebuildFieldMesh() already uses for x/z (kMinRes=24,
+    // kMaxRes=128, one cell per 5 extent units unauthored) -- reused, not
+    // reinvented, and this grid is 2D so the same budget affords a resolution
+    // the 3D field mesh cannot.
+    static constexpr int kMinRes = 24;
+    static constexpr int kMaxRes = 128;
+    const int dimX = std::clamp(static_cast<int>(_fieldExtent.x / 5.0f), kMinRes, kMaxRes);
+    const int dimZ = std::clamp(static_cast<int>(_fieldExtent.z / 5.0f), kMinRes, kMaxRes);
+
+    _heightGrid = geom::computeHeightGrid(*h, _fieldExtent, dimX, dimZ);
 }
 
 glm::vec3 Object::getLocalSupportPoint(const glm::vec3& localDirection) const {

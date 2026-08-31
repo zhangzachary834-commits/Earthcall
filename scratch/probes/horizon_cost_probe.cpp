@@ -5,6 +5,7 @@
 #include "Singularity/Screen/WebGPU/WebGpuRenderer.hpp"
 #include "Singularity/Screen/WebGPU/WgpuDevice.hpp"
 #include "Singularity/OntoMath/ScalarForm.hpp"
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <webgpu/wgpu.h>
@@ -15,7 +16,12 @@
 #include <cstdio>
 namespace { constexpr uint32_t W=512,H=512; struct MapR{bool done=false;};
 void onMap(WGPUMapAsyncStatus,WGPUStringView,void*u,void*){static_cast<MapR*>(u)->done=true;} }
-int main(){
+int main(int argc, char** argv){
+    // A/B toggle for controlled before/after comparison on one machine state:
+    // `--no-grid` disables Phase C's height grid, reproducing the unmodified
+    // marcher's cost in the SAME binary/process as the default (grid-on) run.
+    bool gridEnabled = true;
+    for (int i = 1; i < argc; ++i) if (std::string(argv[i]) == "--no-grid") gridEnabled = false;
     std::setvbuf(stdout,nullptr,_IONBF,0);
     wgpu::Device gpu; if(!gpu.init()){printf("no device\n");return 1;}
     WebGpuRenderer r; if(!r.init(gpu)){printf("no renderer\n");return 1;}
@@ -41,18 +47,33 @@ int main(){
         const glm::mat4 proj=glm::perspectiveZO(glm::radians(60.f),1.f,0.1f,1000.f);
         const glm::mat4 viewM=glm::lookAt(eye,target,glm::vec3(0,1,0));
         RenderMaterial mat; mat.baseColor=glm::vec3(0.3f,0.7f,0.3f);
+        // Min/max heightfield grid (Phase C): this probe calls WebGpuRenderer
+        // directly, bypassing Object::drawFieldModel -- the ONLY call site that
+        // otherwise builds and passes one -- so without this, the probe would
+        // silently exercise the unmodified marcher no matter what this phase
+        // changed. Same resolution derivation Object::rebuildHeightGrid uses.
+        // Empty (dimX=0) for the trivial "y" field, which is correct: a bare
+        // ValueLeaf is not the Sub(y,h) pattern, so it stays a control, unaffected.
+        geom::HeightGrid heightGrid;
+        const OntoMath::MathNode* h = nullptr;
+        if (geom::isHeightfieldExpr(field, &h) && h) {
+            const int dimX = std::clamp(static_cast<int>(extent.x/5.0f), 24, 128);
+            const int dimZ = std::clamp(static_cast<int>(extent.z/5.0f), 24, 128);
+            heightGrid = geom::computeHeightGrid(*h, extent, dimX, dimZ);
+        }
+        const geom::HeightGrid* hgArg = (gridEnabled && heightGrid.dimX > 0) ? &heightGrid : nullptr;
         // warm up (pipeline compile) outside the timing
         for(int w=0;w<2;++w){
             r.setCamera(viewM,proj,eye); r.setModel(glm::mat4(1.f));
             r.beginFrameOffscreen(view,W,H,glm::vec4(0,0,0,1));
-            r.drawImplicit(field,extent,mat); r.endFrame();
+            r.drawImplicit(field,extent,mat,nullptr,0,0,hgArg); r.endFrame();
         }
         wgpuDevicePoll(gpu.device,true,nullptr);
         auto t0=std::chrono::high_resolution_clock::now();
         for(int i=0;i<frames;++i){
             r.setCamera(viewM,proj,eye); r.setModel(glm::mat4(1.f));
             r.beginFrameOffscreen(view,W,H,glm::vec4(0,0,0,1));
-            r.drawImplicit(field,extent,mat); r.endFrame();
+            r.drawImplicit(field,extent,mat,nullptr,0,0,hgArg); r.endFrame();
             wgpuDevicePoll(gpu.device,true,nullptr);
         }
         auto t1=std::chrono::high_resolution_clock::now();

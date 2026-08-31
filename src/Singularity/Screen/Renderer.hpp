@@ -7,7 +7,7 @@
 #include <utility>
 #include <vector>
 
-namespace geom { struct SdfNode; class FieldNode; }
+namespace geom { struct SdfNode; class FieldNode; struct HeightGrid; }
 
 // ---------------------------------------------------------------------------
 // The renderer boundary (OPENGL_MIGRATION_PLAN.md, Milestone 2). Every raw GPU
@@ -131,7 +131,8 @@ public:
                               const RenderMaterial& material,
                               const geom::FieldNode* fieldNode = nullptr,
                               uint64_t memoId = 0,
-                              uint32_t memoRevision = 0) = 0;
+                              uint32_t memoRevision = 0,
+                              const geom::HeightGrid* heightGrid = nullptr) = 0;
 
     // Unlit, blended overlays — the selection/law-candidate highlight. These are
     // deliberately separate verbs from drawMesh: colour-only, no lighting or
@@ -164,6 +165,13 @@ public:
     // Object draw path — which is why it is render STATE rather than a draw verb.
     // OpenGL maps it to glPolygonMode; WebGPU swaps in a line-list pipeline.
     virtual void setWireframe(bool /*on*/) {}
+
+    // Governs the min/max heightfield DDA skip (rendering-optimization Phase
+    // C, @screen-channel.heightGridDdaEnabled). Same shape as setWireframe:
+    // OpenGL has no marcher to skip anything in, so it stays a no-op there;
+    // WebGPU overrides it to gate whether drawImplicit's heightGrid argument
+    // is honoured.
+    virtual void setHeightGridDdaEnabled(bool /*on*/) {}
     virtual void drawOverlay(const geom::TessMesh& mesh, const glm::vec4& color,
                              float scale, bool additive) = 0;
 

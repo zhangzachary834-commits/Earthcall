@@ -1,9 +1,8 @@
-# Implementation Plan: 2D Singulars, UI Controls as Law, and Art Tool Stroke Generation
+# Task Checklist: 2D UI Controls and Art Strokes as Law
 
-- [ ] Survey codebase: ActionNode kinds, Relation creation, InteractionChannel properties, Object 2D shape raycasting
-- [ ] Task 1: Enhance InteractionChannel (register clickSlopPixels property, refine click/drag classification and 2D/3D raycasting)
-- [ ] Task 2: Implement ActionNode::Kind::AddRelation (Kind 20) in ActionModel (header, cpp, compilation, serialization, trace)
-- [ ] Task 3: Author Control & Art Stroke Archetypes and Patterns (button click -> action, stroke generation from pointer drag, behavior imbuement)
-- [ ] Task 4: Create automated regression tests (testing 2D button creation + click event handling, and stroke Singular generation + behavior laws)
-- [ ] Task 5: Build and verify full test suite (ctest) with 0 regressions
-- [ ] Final review against AGENTS.md, refusals, and update documentation
+- [x] Write implementation plan to `docs/plans/2D_UI_CONTROLS_AND_ART_STROKES_AS_LAW_PLAN.md`
+- [x] Seam 1: Implement `ActionNode::Kind::AddRelation` (Kind 20) in `src/ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp` and `.cpp`
+- [x] Seam 2: Register `clickSlopPixels` property on `InteractionChannel` in `src/Singularity/Input/Interaction/InteractionChannel.hpp` and `.cpp`
+- [x] Seam 3: Implement Control & Stroke pattern factories in `src/Singularity/Input/Interaction/ControlPatterns.hpp` and `.cpp`
+- [x] Seam 4: Create automated regression tests (`tests/law/add_relation_action_test.cpp`)
+- [x] Seam 5: Update `docs/Agenda/Tasks/To-do list.md`
