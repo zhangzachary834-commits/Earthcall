@@ -1,9 +1,9 @@
-# Earthcall 5005 Python App & C++ Link Upgrade Plan
+# Implementation Plan: 2D Singulars, UI Controls as Law, and Art Tool Stroke Generation
 
-- [ ] Survey existing C++ networking and Python app infrastructure <!-- id: 0 -->
-- [ ] Upgrade C++ WebSocketServer to support comprehensive live commands and bidirectional state sync <!-- id: 1 -->
-- [ ] Connect WebSocketServer startup in C++ Engine initialization <!-- id: 2 -->
-- [ ] Build robust Python-to-C++ Bridge (CppBridge) with auto-reconnect, live cache, and bidirectional event routing <!-- id: 3 -->
-- [ ] Build complete RESTful API and SocketIO event layer for Earthcall in Python <!-- id: 4 -->
-- [ ] Build modern, responsive, feature-packed Earthcall Web UI (Object Studio, Law Workshop, Zone Navigator, Logos Console, Person/Physics, Robotics, Event Log) <!-- id: 5 -->
-- [ ] Test Python app on port 5005 and verify C++ link and UI interactions <!-- id: 6 -->
+- [ ] Survey codebase: ActionNode kinds, Relation creation, InteractionChannel properties, Object 2D shape raycasting
+- [ ] Task 1: Enhance InteractionChannel (register clickSlopPixels property, refine click/drag classification and 2D/3D raycasting)
+- [ ] Task 2: Implement ActionNode::Kind::AddRelation (Kind 20) in ActionModel (header, cpp, compilation, serialization, trace)
+- [ ] Task 3: Author Control & Art Stroke Archetypes and Patterns (button click -> action, stroke generation from pointer drag, behavior imbuement)
+- [ ] Task 4: Create automated regression tests (testing 2D button creation + click event handling, and stroke Singular generation + behavior laws)
+- [ ] Task 5: Build and verify full test suite (ctest) with 0 regressions
+- [ ] Final review against AGENTS.md, refusals, and update documentation
