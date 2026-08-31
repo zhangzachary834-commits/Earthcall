@@ -9,7 +9,9 @@
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
+#include "Singularity/OntoMath/ScalarForm.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyValue.hpp"
@@ -489,7 +491,122 @@ struct WebSocketServer::Impl {
                 return;
             }
 
-            // 8. Switch Zone
+            // 8. Create / Author Law
+            if (type == "create_law" || type == "author_law" || type == "inject_law") {
+                std::string name = j.value("name", "Authored Law");
+                std::string identifier = j.value("identifier", j.value("id", ""));
+                int activation = j.value("activation", 0);
+                std::string expr = j.value("expression", "");
+
+                LawManager* lm = Core::Engine::instance().getLawManager();
+                Person* p = Core::Engine::instance().getPerson();
+
+                if (lm) {
+                    // Check if law already exists
+                    Law* existing = nullptr;
+                    for (auto& l : lm->getAll()) {
+                        if (l && (l->getIdentifier() == identifier || l->name() == name)) {
+                            existing = l.get();
+                            break;
+                        }
+                    }
+
+                    std::shared_ptr<Law> law;
+                    if (existing) {
+                        law = lm->find(existing->getIdentifier()) ? nullptr : nullptr;
+                        existing->setEnabled(true);
+                        std::cout << "[WebSocketServer] Re-enabling existing Law: " << existing->name() << std::endl;
+                    } else {
+                        law = lm->createLaw(name, p ? std::vector<Singular*>{p} : std::vector<Singular*>{});
+                        if (!identifier.empty()) {
+                            law->setLawIdentifier(identifier);
+                        }
+                    }
+
+                    if (law) {
+                        law->setEnabled(true);
+                        law->setScope(Law::Scope::Everyone);
+
+                        // Template: Zero-G
+                        if (identifier == "law-zero-g" || name.find("Zero-G") != std::string::npos || name.find("Zero Gravity") != std::string::npos) {
+                            law->setActivation(Law::Activation::WhileTrue);
+                            auto gNode = std::make_shared<OntoMath::MathNode>();
+                            gNode->op = OntoMath::MathNode::Op::VectorConstruct;
+                            auto makeConst = [](double val) {
+                                auto n = std::make_unique<OntoMath::MathNode>();
+                                n->op = OntoMath::MathNode::Op::ScalarLeaf;
+                                n->scalarForm = OntoMath::ScalarForm::constant(val);
+                                return n;
+                            };
+                            gNode->children.push_back(makeConst(0.0));
+                            gNode->children.push_back(makeConst(0.0));
+                            gNode->children.push_back(makeConst(0.0));
+                            law->setActionModel(ActionNode::flow("velocity", OntoMath::Piecewise::continuous(gNode), MathBindings{}));
+                            
+                            // Disable default gravity
+                            for (auto& otherLaw : lm->getAll()) {
+                                if (otherLaw && otherLaw->getIdentifier() == "physics-gravity") {
+                                    otherLaw->setEnabled(false);
+                                }
+                            }
+                        }
+                        // Template: Color Pulsator
+                        else if (identifier == "law-color-pulse" || name.find("Color Pulse") != std::string::npos || name.find("Pulsator") != std::string::npos) {
+                            law->setActivation(Law::Activation::WhileTrue);
+                            MathBindings vibBindings;
+                            vibBindings["t"] = PropertyPath::parse("time");
+                            auto sNode = std::make_shared<OntoMath::MathNode>();
+                            sNode->op = OntoMath::MathNode::Op::ScalarLeaf;
+                            sNode->scalarForm = OntoMath::ScalarForm::sinusoid(0.5, 2.0, 0.5, 0.0, "t");
+                            law->setActionModel(ActionNode::map("color.r", OntoMath::Piecewise::continuous(sNode), vibBindings));
+                        }
+                        // Template: Bounce
+                        else if (identifier == "law-kinetic-bounce" || name.find("Bounce") != std::string::npos || activation == 1) {
+                            law->setActivation(Law::Activation::OnEvent);
+                            law->ecaLoop().eventType = "contact-began";
+                            law->setScope(Law::Scope::Subject);
+                            lm->bindTrigger(law->getIdentifier(), "contact-began");
+                        }
+                        else {
+                            law->setActivation(static_cast<Law::Activation>(activation));
+                        }
+
+                        law->recompile();
+                        std::cout << "[WebSocketServer] Successfully authored Law: " << law->name() << " (@" << law->getIdentifier() << ")" << std::endl;
+                    }
+
+                    nlohmann::json reply;
+                    reply["type"] = "create_law_ack";
+                    reply["status"] = "success";
+                    reply["identifier"] = identifier;
+                    reply["name"] = name;
+                    sendTo(hdl, reply.dump());
+
+                    broadcast(buildWorldSnapshotJson().dump());
+                }
+                return;
+            }
+
+            // 9. Delete Law
+            if (type == "delete_law" || type == "remove_law") {
+                std::string identifier = j.value("identifier", j.value("id", ""));
+                LawManager* lm = Core::Engine::instance().getLawManager();
+                if (lm && !identifier.empty()) {
+                    bool removed = lm->remove(identifier);
+                    nlohmann::json reply;
+                    reply["type"] = "delete_law_ack";
+                    reply["status"] = removed ? "success" : "not_found";
+                    reply["identifier"] = identifier;
+                    sendTo(hdl, reply.dump());
+
+                    if (removed) {
+                        broadcast(buildWorldSnapshotJson().dump());
+                    }
+                }
+                return;
+            }
+
+            // 10. Switch Zone
             if (type == "switch_zone" || type == "change_zone") {
                 if (j.contains("index")) {
                     size_t idx = j["index"].get<size_t>();
@@ -510,7 +627,7 @@ struct WebSocketServer::Impl {
                 return;
             }
 
-            // 9. Create Zone
+            // 11. Create Zone
             if (type == "create_zone") {
                 std::string zname = j.value("name", "New Zone");
                 std::string kind = j.value("kind", "zone");
@@ -521,7 +638,7 @@ struct WebSocketServer::Impl {
                 return;
             }
 
-            // 10. Teleport Player
+            // 12. Teleport Player
             if (type == "teleport_player" || type == "teleport") {
                 if (j.contains("position") && j["position"].is_array() && j["position"].size() >= 3) {
                     float px = j["position"][0].get<float>();
@@ -539,7 +656,7 @@ struct WebSocketServer::Impl {
                 return;
             }
 
-            // 11. Physics Controls
+            // 13. Physics Controls
             if (type == "set_physics") {
                 if (j.contains("flying")) {
                     Physics::setFlying(j["flying"].get<bool>());
@@ -551,7 +668,7 @@ struct WebSocketServer::Impl {
                 return;
             }
 
-            // 12. Quick Save
+            // 14. Quick Save
             if (type == "quick_save" || type == "save_world") {
                 SaveContext ctx;
                 Core::Engine& eng = Core::Engine::instance();
