@@ -2,8 +2,9 @@ import json
 import threading
 import time
 import os
-from typing import Dict, Any, Optional, Callable
-import websocket
+from typing import Dict, Any, Optional
+from websockets.sync.client import connect
+from websockets.exceptions import ConnectionClosed, WebSocketException
 
 class CppBridge:
     """
@@ -15,7 +16,7 @@ class CppBridge:
         self.port = port
         self.url = f"ws://{host}:{port}"
         
-        self.ws: Optional[websocket.WebSocketApp] = None
+        self.ws = None
         self.connected = False
         self.running = True
         self.lock = threading.Lock()
@@ -24,7 +25,7 @@ class CppBridge:
         # In-memory cached snapshot of world state
         self.current_state: Dict[str, Any] = self._create_initial_state()
         
-        # Event callbacks: (event_name, data)
+        # Event callbacks
         self.on_state_sync_callbacks = []
         self.on_event_callbacks = []
         
@@ -32,10 +33,8 @@ class CppBridge:
         self.last_connected_time = None
         self.messages_sent = 0
         self.messages_received = 0
-        self.last_ping_latency_ms = 0.0
 
     def _create_initial_state(self) -> Dict[str, Any]:
-        """Initial baseline state before first C++ sync or when C++ is offline."""
         return {
             "type": "state_sync",
             "timestamp": time.time(),
@@ -115,45 +114,52 @@ class CppBridge:
         }
 
     def start(self):
-        """Starts the background connection manager thread."""
         self.worker_thread = threading.Thread(target=self._connection_loop, daemon=True)
         self.worker_thread.start()
         print(f"[CppBridge] Initialized C++ Engine link targeting {self.url}")
 
     def stop(self):
         self.running = False
-        if self.ws:
-            self.ws.close()
+        with self.lock:
+            if self.ws:
+                try:
+                    self.ws.close()
+                except Exception:
+                    pass
 
     def _connection_loop(self):
         while self.running:
             try:
-                self.ws = websocket.WebSocketApp(
-                    self.url,
-                    on_open=self._on_open,
-                    on_message=self._on_message,
-                    on_error=self._on_error,
-                    on_close=self._on_close
-                )
-                self.ws.run_forever(ping_interval=10, ping_timeout=5)
-            except Exception as e:
+                with connect(self.url, open_timeout=2, close_timeout=2) as ws:
+                    with self.lock:
+                        self.ws = ws
+                        self.connected = True
+                        self.last_connected_time = time.time()
+                        self.current_state["engine_connected"] = True
+                    
+                    print(f"[CppBridge] Connected to C++ Engine at {self.url}")
+                    
+                    try:
+                        ws.send(json.dumps({"type": "get_state"}))
+                    except Exception:
+                        pass
+
+                    for message in ws:
+                        if not self.running:
+                            break
+                        self._process_message(message)
+                        
+            except Exception:
                 pass
             
-            self.connected = False
-            self.current_state["engine_connected"] = False
-            # Wait before reconnect attempt
+            with self.lock:
+                self.ws = None
+                self.connected = False
+                self.current_state["engine_connected"] = False
+            
             time.sleep(2)
 
-    def _on_open(self, ws):
-        self.connected = True
-        self.last_connected_time = time.time()
-        self.current_state["engine_connected"] = True
-        print(f"[CppBridge] Connected to C++ Engine at {self.url}")
-        
-        # Request full state sync immediately
-        self.send_command({"type": "get_state"})
-
-    def _on_message(self, ws, message):
+    def _process_message(self, message: str):
         self.messages_received += 1
         try:
             data = json.loads(message)
@@ -165,15 +171,14 @@ class CppBridge:
                     self.current_state["engine_connected"] = True
                     self.current_state["last_sync_time"] = time.time()
                 
-                # Notify listeners
-                for cb in self.on_state_sync_callbacks:
+                for cb in list(self.on_state_sync_callbacks):
                     try:
                         cb(self.current_state)
                     except Exception as e:
                         print(f"[CppBridge] State callback error: {e}")
                         
             elif msg_type == "engine_event" or "event" in data:
-                for cb in self.on_event_callbacks:
+                for cb in list(self.on_event_callbacks):
                     try:
                         cb(data)
                     except Exception as e:
@@ -182,21 +187,9 @@ class CppBridge:
         except Exception as e:
             print(f"[CppBridge] Error parsing incoming message: {e}")
 
-    def _on_error(self, ws, error):
-        self.connected = False
-        self.current_state["engine_connected"] = False
-
-    def _on_close(self, ws, close_status_code, close_msg):
-        self.connected = False
-        self.current_state["engine_connected"] = False
-        print(f"[CppBridge] Disconnected from C++ Engine. Retrying...")
-
     def send_command(self, payload: Dict[str, Any]) -> bool:
-        """Sends a JSON command to the C++ engine over WebSocket."""
         with self.lock:
             self.messages_sent += 1
-            
-            # If not connected, update local simulated state as fallback
             if not self.connected or not self.ws:
                 self._apply_fallback_state_update(payload)
                 return False
@@ -211,7 +204,6 @@ class CppBridge:
                 return False
 
     def _apply_fallback_state_update(self, payload: Dict[str, Any]):
-        """Updates local state cache when running in standalone mode."""
         msg_type = payload.get("type", "")
         
         if msg_type == "spawn_object":
@@ -271,14 +263,12 @@ class CppBridge:
             if "gravity_viz" in payload and "physics" in self.current_state:
                 self.current_state["physics"]["gravity_viz"] = payload["gravity_viz"]
 
-        # Notify UI of state change
-        for cb in self.on_state_sync_callbacks:
+        for cb in list(self.on_state_sync_callbacks):
             try:
                 cb(self.current_state)
             except Exception:
                 pass
 
-    # High-level helper methods
     def emit_utterance(self, text: str, source_client: str = "web_ui", target_id: str = ""):
         return self.send_command({
             "type": "utterance",

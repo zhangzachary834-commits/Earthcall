@@ -120,7 +120,7 @@ static nlohmann::json buildWorldSnapshotJson() {
     if (p) {
         nlohmann::json pj;
         pj["name"] = p->getIdentifier();
-        glm::vec3 pPos = p->getPosition();
+        glm::vec3 pPos = p->position();
         pj["position"] = {pPos.x, pPos.y, pPos.z};
         
         Core::Camera* cam = eng.getCamera();
@@ -129,8 +129,8 @@ static nlohmann::json buildWorldSnapshotJson() {
             pj["camera_forward"] = {camFront.x, camFront.y, camFront.z};
             glm::vec3 camPos = cam->getPos();
             pj["camera_position"] = {camPos.x, camPos.y, camPos.z};
-            pj["yaw"] = cam->getYaw();
-            pj["pitch"] = cam->getPitch();
+            pj["yaw"] = cam->yaw;
+            pj["pitch"] = cam->pitch;
         }
         pj["flying"] = Physics::getFlying();
         root["player"] = pj;
@@ -145,9 +145,9 @@ static nlohmann::json buildWorldSnapshotJson() {
             nlohmann::json lj;
             lj["identifier"] = lawPtr->getIdentifier();
             lj["name"] = lawPtr->name();
-            lj["enabled"] = lawPtr->enabled();
+            lj["enabled"] = lawPtr->isEnabled();
             lj["activation"] = static_cast<int>(lawPtr->activation());
-            lj["expression"] = lawPtr->sourceExpression();
+            lj["expression"] = lawPtr->name();
             lawsList.push_back(lj);
         }
         root["laws"] = lawsList;
@@ -174,7 +174,6 @@ struct WebSocketServer::Impl {
 
     static bool isAllowedOrigin(const std::string& origin) {
         if (origin.empty()) return true;
-        // Allow loopback origins on common web/python ports
         if (origin.find("localhost") != std::string::npos ||
             origin.find("127.0.0.1") != std::string::npos ||
             origin.find("[::1]") != std::string::npos) {
@@ -247,7 +246,6 @@ struct WebSocketServer::Impl {
                     Core::EventBus::instance().publish(evt);
                     std::cout << "[WebSocketServer] Received utterance: \"" << evt.payload << "\" from " << evt.sourceClient << std::endl;
 
-                    // Acknowledge and broadcast event to all clients
                     nlohmann::json reply;
                     reply["type"] = "engine_event";
                     reply["event"] = "utterance";
@@ -272,7 +270,6 @@ struct WebSocketServer::Impl {
                     } else if (target == "@active_zone" || target == "active_zone" || target == "zone") {
                         targetBeing = &mgr.active();
                     } else {
-                        // Search universe beings
                         for (auto* being : Universe::instance().beings()) {
                             if (being && (being->getIdentifier() == target || (dynamic_cast<Object*>(being) && dynamic_cast<Object*>(being)->getObjectID() == target))) {
                                 targetBeing = being;
@@ -330,10 +327,9 @@ struct WebSocketServer::Impl {
                     float pz = j["position"][2].get<float>();
                     obj->setPosition(glm::vec3(px, py, pz));
                 } else {
-                    // Spawn in front of player if no pos provided
                     Person* p = Core::Engine::instance().getPerson();
                     if (p) {
-                        glm::vec3 pPos = p->getPosition();
+                        glm::vec3 pPos = p->position();
                         glm::vec3 fwd = p->cameraForward;
                         obj->setPosition(pPos + fwd * 3.0f + glm::vec3(0, 0.5f, 0));
                     }
@@ -592,7 +588,6 @@ struct WebSocketServer::Impl {
         std::cout << "[WebSocketServer] Client connected from " 
                   << server.get_con_from_hdl(hdl)->get_remote_endpoint() << std::endl;
         
-        // Send initial world state sync immediately upon connection
         try {
             nlohmann::json snapshot = buildWorldSnapshotJson();
             sendTo(hdl, snapshot.dump());
