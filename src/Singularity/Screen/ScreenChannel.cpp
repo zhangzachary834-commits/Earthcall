@@ -56,11 +56,6 @@ void ScreenChannel::buildProperties() {
             std::make_unique<PropertyRef<ScreenChannel, bool>>(name, this, member));
     };
 
-    const auto doubleProp = [this](const char* name, double ScreenChannel::*member) {
-        _propertyRegistry.push_back(
-            std::make_unique<PropertyRef<ScreenChannel, double>>(name, this, member));
-    };
-
     readOnlyInt("drawCalls", &ScreenChannel::getDrawCalls);
     readOnlyInt("trianglesDrawn", &ScreenChannel::getTrianglesDrawn);
     readOnlyDouble("vramAllocatedBytes", &ScreenChannel::getVramAllocatedBytes);
@@ -69,8 +64,6 @@ void ScreenChannel::buildProperties() {
     readOnlyInt("pipelineSwitches", &ScreenChannel::getPipelineSwitches);
     readOnlyInt("cachedMeshesCount", &ScreenChannel::getCachedMeshesCount);
     boolean("wireframe", &ScreenChannel::wireframe);
-    doubleProp("renderScale", &ScreenChannel::renderScale);
-    boolean("performanceMode", &ScreenChannel::performanceMode);
 }
 
 } // namespace Screen

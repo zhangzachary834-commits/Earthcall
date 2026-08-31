@@ -25,6 +25,7 @@
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <cmath>
@@ -152,6 +153,60 @@ void testTaggedGroundHoldsStill() {
 }
 
 // ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
+// A FIELD tagged as the ground is terrain, not a plane.
+//
+// groundY was `origin.y + 0.5 * scaleY` unconditionally -- the top face of a
+// unit box, which is exactly right for the cube placeholder every case above
+// uses and wrong for anything with a shape. The Perlin floor sits at y = -2
+// with unit scale, so it produced a FLAT plane at y = -1.5 across the whole
+// world, and Physics::integrate's "never allow below ground" clamp then refused
+// to let anything descend past it while the valleys underneath reach y = -42.
+// Zach, twice: "after a certain point when I go in perlin world I can't fly
+// down anymore" (Bugs.md #15), and "it's like they're sliding across an
+// invisible rectangular platform hovering way above the valleys below" (#12).
+//
+// The clamp's job is the floor of the WORLD; the shape of terrain belongs to
+// mesh collision. So a field ground contributes its lowest point, and this
+// asserts a body can get below the old flat plane -- which is the whole
+// complaint, stated as a number.
+void testFieldGroundIsNotAFlatPlane() {
+    std::cout << "\n[5] A field tagged as the ground is terrain, not a plane" << std::endl;
+    freshPhysics();
+    Zone world("test-zone", "default");
+
+    // A field whose surface sits at y = -4, four units below where the old
+    // formula would put the floor. Deliberately flat so the ONLY thing under
+    // test is where groundY lands -- a bumpy field would also drag the
+    // narrowphase's convex-hull approximation into the answer.
+    auto ground = std::make_shared<Object>();
+    ground->setFieldShape(geom::makeImplicit("y + 4.0"), glm::vec3(10.0f, 6.0f, 10.0f));
+    ground->setPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+    ground->setAttribute("baseline", "ground");
+    world.addObject(ground);
+
+    // What the old formula produced for this object: origin.y + 0.5 * scaleY,
+    // the top face of a unit box, giving groundY = 0.5 -- so a unit cube came
+    // to rest with its CENTRE at 1.0 and could never go lower, no matter that
+    // the surface it was standing over is at -4.
+    const float oldRestHeight = 1.0f;
+    const float trueSurface   = -4.0f;
+
+    auto faller = makeCube(glm::vec3(0.0f, 8.0f, 0.0f));
+    world.addObject(faller);
+    step(world, 400);
+
+    const float y = faller->getPosition().y;
+    check(y < oldRestHeight - 1.0f,
+          "a body descends past the flat plane the old formula imposed (y = " +
+              std::to_string(y) + ", the old clamp held it at " +
+              std::to_string(oldRestHeight) + ")");
+    check(y > trueSurface - 2.0f,
+          "and is still caught rather than falling forever (y = " +
+              std::to_string(y) + ", surface at " + std::to_string(trueSurface) + ")");
+}
+
+// ---------------------------------------------------------------------
 void testSecondBeingIsNotAGhost() {
     std::cout << "\n[4] The second being spawned still collides" << std::endl;
     freshPhysics();
@@ -180,6 +235,7 @@ int main() {
     testObjectsRestOnTheFloorNotInIt();
     testTaggedGroundHoldsStill();
     testSecondBeingIsNotAGhost();
+    testFieldGroundIsNotAFlatPlane();
 
     std::cout << "\n------------------------------------------------------------" << std::endl;
     std::cout << (g_failures == 0 ? "PASSED" : "FAILED") << ": " << (g_checks - g_failures)

@@ -397,8 +397,31 @@ void Zone::update(float dt, UpdateTiming* out) {
         if (!obj || !obj->hasAttribute("baseline")) continue;
         if (obj->getAttribute("baseline") != std::string("ground")) continue;
         const glm::mat4& gT = obj->getTransform();
-        float scaleY = glm::length(glm::vec3(gT[1]));
-        groundY = gT[3][1] + 0.5f * scaleY;
+        if (obj->hasField()) {
+            // A FIELD has no single top surface. `origin.y + 0.5 * scaleY` is the
+            // top face of a unit box, which is right for the cube placeholder
+            // this line was written for and badly wrong for terrain: the Perlin
+            // floor sits at y = -2 with unit scale, so it produced a FLAT plane
+            // at y = -1.5 across the entire world, and Physics::integrate's
+            // "never allow below ground" clamp then refused to let anything --
+            // a Person flying, a dropped cube -- descend past it, while the
+            // valleys it was standing over reach y = -42. Bugs.md #15 ("after a
+            // certain point I can't fly down anymore") and half of #12 ("an
+            // invisible rectangular platform hovering way above the valleys").
+            //
+            // The shape of terrain is the mesh collision's job. What this clamp
+            // is FOR is the floor of the world -- so take the lowest point the
+            // ground being reaches, and let everything above it be decided by
+            // the surface a Person can actually see.
+            obj->updateCollisionZone(gT);
+            float lowest = obj->collisionZone.corners[0].y;
+            for (int i = 1; i < 8; ++i)
+                lowest = std::min(lowest, obj->collisionZone.corners[i].y);
+            groundY = lowest;
+        } else {
+            float scaleY = glm::length(glm::vec3(gT[1]));
+            groundY = gT[3][1] + 0.5f * scaleY;
+        }
         break;
     }
     if (out) {

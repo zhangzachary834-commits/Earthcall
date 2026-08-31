@@ -109,9 +109,16 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
   -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.13/libcrypto.a" \
   -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.13/libssl.a"
 
-cmake --build build --target earthcall -j8
+cmake --build build --target earthcall_webgpu -j8       # THE APP. `earthcall` is the
+                                                       # OpenGL build, where every
+                                                       # analytic shape (sphere, torus,
+                                                       # field) falls back to its cached
+                                                       # tessellation -- nothing is
+                                                       # raymarched. Run Earthcall.command
+                                                       # and scripts/build.sh webgpu run
+                                                       # both use earthcall_webgpu.
 cmake --build build -j8                               # tests are NOT built by the line above
-ctest --test-dir build --output-on-failure -j4        # 73 registered, 72 pass (2026-08-27) — frame_lag_test is machine-load-sensitive (see below); smooth_tessellation_cache_test is a genuine pre-existing failure, Bugs.md #11
+ctest --test-dir build --output-on-failure -j4        # 74 registered, 73 pass (2026-08-31) — smooth_tessellation_cache_test is the one failure, pre-existing, Bugs.md #11; frame_lag_test is machine-load-sensitive (see below)
 cmake --build build --target lag                      # frame-cost probe alone, with its report
 ```
 

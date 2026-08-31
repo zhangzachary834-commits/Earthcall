@@ -1771,7 +1771,21 @@ std::optional<MathNode::RangeValue> MathNode::evalRange(const std::map<std::stri
             return std::nullopt;
         }
         case Op::Noise: {
-            return RangeValue::makeScalar(Interval(-1.0f, 1.0f));
+            // This bound is LOAD-BEARING, not decorative: geom::evalRange feeds it to
+            // tessellateSdf's subdivision, which DISCARDS any cell whose interval does
+            // not straddle zero. Claim a range the noise can leave and the marcher
+            // deletes cells that really do contain surface -- holes in the mesh a
+            // Person falls through, with nothing logged.
+            //
+            // Op::Noise evaluates to glm::perlin, whose 3D form returns 2.2 * n, with
+            // n a fade-weighted convex blend of unit-gradient dot products. The
+            // classical supremum for N-dimensional classic Perlin is sqrt(N)/2, so
+            // |glm::perlin| <= 2.2 * sqrt(3)/2 = 1.905. It is NOT 1.0: sampling
+            // 8e6 random points measured [-1.127, +1.123], so the [-1, 1] this read
+            // for one campaign was already unsound at the values the noise floor
+            // actually reaches.
+            constexpr float kPerlinBound = 1.905255f;   // 2.2 * sqrt(3)/2
+            return RangeValue::makeScalar(Interval(-kPerlinBound, kPerlinBound));
         }
         // Fallback for everything else
         default:

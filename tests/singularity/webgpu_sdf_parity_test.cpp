@@ -22,6 +22,7 @@
 #include "Singularity/Screen/RenderMaterial.hpp"
 #include "Singularity/Screen/WebGPU/WebGpuRenderer.hpp"
 #include "Singularity/Screen/WebGPU/WgpuDevice.hpp"
+#include "Singularity/OntoMath/ScalarForm.hpp"
 
 #include <webgpu/wgpu.h>
 #include <glm/glm.hpp>
@@ -168,6 +169,9 @@ int main() {
         const char* name;
         std::shared_ptr<geom::SdfNode> node;
         glm::mat4 model{1.0f};
+        // Absolute pixel tolerance, when the perimeter heuristic below is the
+        // wrong instrument for what this case is asking. Zero = use the heuristic.
+        size_t tolOverride = 0;
     };
     std::vector<Case> cases;
 
@@ -202,6 +206,57 @@ int main() {
         std::make_shared<geom::SdfNode>(geom::makeImplicit("sqrt(x*x + y*y + z*z) - 0.55")) });
     cases.push_back({ "Expr(iso)",
         std::make_shared<geom::SdfNode>(geom::makeImplicit("x*x + y*y + z*z - 0.3")) });
+
+    // Op::Noise, which no case above reached. This is the gap a whole rendering
+    // campaign fell through: SdfWgsl's `cnoise3` was quietly redefined to return
+    // SIMPLEX noise while the CPU evaluator kept calling glm::perlin (classic
+    // Perlin). Both are "noise", both look like terrain, and every existing test
+    // stayed green -- but the ground a Person SEES stopped being the ground they
+    // COLLIDE with, because collision reads the CPU field. Noise reaches the
+    // shader only through an OntoMath mathNode, never through makeImplicit's RPN,
+    // so this case has to author the tree the way a save carries it.
+    //
+    // The shape is a noise-DISPLACED SPHERE rather than a terrain sheet on
+    // purpose. A sheet fills most of the frame, and the perimeter-scaled tolerance
+    // below is then larger than the disagreement any noise change produces -- the
+    // case would pass whatever the shader returned. Here the noise sets the
+    // silhouette's radius directly, so the two noises disagreeing moves the
+    // outline, which is what this comparison can actually see.
+    {
+        auto num = [](double c) {
+            return nlohmann::json{{"op", 0}, {"scalarForm", {{"terms",
+                     nlohmann::json::array({ {{"c", c}, {"factors", nlohmann::json::object()}} })}}}};
+        };
+        const nlohmann::json pv{{"op", 1}, {"var", "p"}};
+        // length(p) - (0.7 + 0.35 * Noise(3 * p))
+        nlohmann::json j = {
+            {"op", 5}, {"children", nlohmann::json::array({
+                nlohmann::json{{"op", 11}, {"children", nlohmann::json::array({ pv })}},
+                nlohmann::json{{"op", 4}, {"children", nlohmann::json::array({
+                    num(0.7),
+                    nlohmann::json{{"op", 6}, {"children", nlohmann::json::array({
+                        num(0.35),
+                        nlohmann::json{{"op", 29}, {"children", nlohmann::json::array({
+                            nlohmann::json{{"op", 6}, {"children", nlohmann::json::array({
+                                num(1.2), pv })}}
+                        })}}
+                    })}}
+                })}}
+            })}};
+        auto n = std::make_shared<geom::SdfNode>();
+        n->op = geom::SdfOp::Leaf;
+        n->prim = geom::SdfPrim::Expr;
+        n->mathNode = std::shared_ptr<OntoMath::MathNode>(OntoMath::MathNode::fromJson(j).release());
+        // A tight ABSOLUTE tolerance, not the perimeter heuristic. That heuristic
+        // is calibrated for two marchers landing either side of an epsilon on a
+        // shape both already agree about; here the question is whether the two
+        // NOISES are the same function, and 2.5x sqrt(area) is roughly half the
+        // frame -- slack enough that this case passed while the shader returned a
+        // different noise entirely, which is how the substitution survived. With
+        // the transcription correct the two agree to 2 pixels of 261; changing the
+        // noise's amplitude by a third moves 20. Ten separates them with room.
+        cases.push_back({ "Expr(noise)", n, glm::mat4(1.0f), 10 });
+    }
 
     // Every operator.
     auto a = leaf(geom::SdfPrim::Sphere, glm::vec3(0.6f), 0.0f, glm::vec3(-0.25f, 0, 0));
@@ -251,9 +306,36 @@ int main() {
         // approximates the perimeter; 2.5x leaves room for two marchers landing on
         // opposite sides of an epsilon without admitting a real shape difference.
         const double perimeter = std::sqrt(double(cpuOn ? cpuOn : 1)) * 4.0;
-        const size_t tolerance = size_t(perimeter * 2.5) + 4;
+        const size_t tolerance = c.tolOverride ? c.tolOverride
+                                               : size_t(perimeter * 2.5) + 4;
 
-        const bool ok = (cpuOn > 0) && (gpuOn > 0) && (diff <= tolerance);
+        // HOLES: a background pixel with solid neighbours on all four sides.
+        // The silhouette comparison above is structurally blind to these — it
+        // asks where the shape's EDGE is, and a ray that passes through the
+        // middle of a solid shape leaves the edge exactly where it was.
+        //
+        // HONEST LIMIT: this catches nothing today. It was added while chasing
+        // an over-relaxation rollback that spent a radius sampled at an
+        // overstepped point (SdfWgsl.cpp, `fs`), which can in principle put a
+        // ray through its own surface where curvature is highest — a torus's
+        // inner ring, a rounded box's corners. Re-injecting that defect and
+        // re-running this file produces ZERO holes at 32x32, so the check did
+        // not witness the thing it was written for; the fix rests on the
+        // algorithm matching Keinert et al., not on this. Kept because the
+        // blindness it covers is real and free to cover, and because the next
+        // person deserves to know it has never fired rather than to assume
+        // green means guarded. Raising W/H, or comparing DEPTH rather than
+        // coverage, is what would actually reach this class.
+        size_t holes = 0;
+        for (uint32_t y = 1; y + 1 < H; ++y)
+            for (uint32_t x = 1; x + 1 < W; ++x)
+                if (!g[y * W + x] && g[(y - 1) * W + x] && g[(y + 1) * W + x] &&
+                    g[y * W + x - 1] && g[y * W + x + 1]) ++holes;
+
+        const bool ok = (cpuOn > 0) && (gpuOn > 0) && (diff <= tolerance) && (holes == 0);
+        if (holes != 0)
+            std::printf("  %-14s %zu HOLE(S) — the marcher passed through its own surface\n",
+                        c.name, holes);
         std::printf("  %-14s gpu=%4zu cpu=%4zu diff=%3zu (tol %3zu) %s\n",
                     c.name, gpuOn, cpuOn, diff, tolerance, ok ? "ok" : "MISMATCH");
         if (!ok) ++failures;

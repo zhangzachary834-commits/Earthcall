@@ -227,8 +227,13 @@ int Object::getAliveCount() {
     return s_objectAliveCount.load(std::memory_order_relaxed);
 }
 
+// Counted on every construction path, generated ones included — see Object.hpp.
+Object::AliveTick::AliveTick()                    { s_objectAliveCount.fetch_add(1, std::memory_order_relaxed); }
+Object::AliveTick::AliveTick(const AliveTick&)    { s_objectAliveCount.fetch_add(1, std::memory_order_relaxed); }
+Object::AliveTick::AliveTick(AliveTick&&) noexcept{ s_objectAliveCount.fetch_add(1, std::memory_order_relaxed); }
+Object::AliveTick::~AliveTick()                   { s_objectAliveCount.fetch_sub(1, std::memory_order_relaxed); }
+
 Object::Object(std::string explicitId) {
-    s_objectAliveCount.fetch_add(1, std::memory_order_relaxed);
     if (!explicitId.empty()) {
         objectID = std::move(explicitId);
         ObjectIdentity::claimIdentifierAtLeast(objectID);
@@ -241,9 +246,7 @@ Object::Object(std::string explicitId) {
 
 Object::Object() : Object("") {}
 
-Object::~Object() {
-    s_objectAliveCount.fetch_sub(1, std::memory_order_relaxed);
-}
+Object::~Object() = default;
 
 void Object::setPosition(const glm::vec3& p) {
     glm::mat4 t = transform;

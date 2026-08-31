@@ -709,26 +709,6 @@ TessMesh tessellateSdf(const SdfNode& n, const glm::vec3& extent, const glm::ive
         return (static_cast<uint64_t>(i & 0x7FFFFF) << 40) | (static_cast<uint64_t>(j & 0xFFFFF) << 20) | (k & 0xFFFFF);
     };
 
-    // Evaluate single sample. To match Phase 3 grid-gradient, we evaluate 3-axis central diff using step sizes.
-    auto getSample = [&](auto& self, int i, int j, int k) -> Sample {
-        uint64_t id = gi(i, j, k);
-        auto it = cache.find(id);
-        if (it != cache.end()) return it->second;
-        
-        float v = evalSdf(n, pos(i, j, k));
-        
-        // Wait, for the normal we need neighbors... 
-        // We'll compute normal exactly as before if we can, or just use sdfNormal if we want to avoid halo dependency loops.
-        // The plan says "corner-interpolated normals from Phase 3 stay exactly as they are". 
-        // But doing grid-differences means we'd recursively getSample the neighbors!
-        // The recursive calls to getSample would cause a 6x blowup in evaluated points per surface point, which is fine since they are cached.
-        
-        // However, if we do recursive getSample here, computing a normal at (i,j,k) requires v at (i+1,j,k) etc.
-        // Let's break the recursion: we only evaluate v first.
-        cache[id] = {v, glm::vec3(0,1,0)}; // temporary
-        return cache[id];
-    };
-
     auto getV = [&](int i, int j, int k) -> float {
         uint64_t id = gi(i, j, k);
         auto it = cache.find(id);

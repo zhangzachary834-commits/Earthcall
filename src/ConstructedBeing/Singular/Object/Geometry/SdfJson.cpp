@@ -65,7 +65,8 @@ SdfNode sdfFromJson(const nlohmann::json& j) {
             OntoMath::Piecewise::fromJson(j["piecewise"]));
     }
     if (j.contains("planesBinary")) {
-        BinaryPack::Reader r(j["planesBinary"].get_binary());
+        const std::vector<uint8_t> planeBytes = BinaryPack::bytesFrom(j["planesBinary"]);
+        BinaryPack::Reader r(planeBytes);
         r.readArray(n.planes);
     } else if (j.contains("planes")) {
         for (const auto& p : j["planes"]) {

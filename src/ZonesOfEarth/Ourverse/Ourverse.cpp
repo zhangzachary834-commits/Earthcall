@@ -126,6 +126,22 @@ void Ourverse::registerMetalaws(LawManager& laws) {
         law->setLawIdentifier(id);
         law->addAuthor(*this);
         law->setActivation(Law::Activation::WhileTrue);
+        // OFF until one of these actually does something. Both are declarations
+        // with no conditions and no actions -- they exist to make a ceiling the
+        // Kernel already enforces legible and metalaw-addressable. But a
+        // WhileTrue law with no compiled Rete terminals takes the FULL SWEEP
+        // path in LawManager::tick(), over every being, every frame, to decide
+        // nothing. Zach measured the pair at 20-30 ms together, which is what
+        // was capping the frame rate at 20-40 fps; disabling them let it reach
+        // 200-600 (or 60, vsync-bound). Rendering was never the cost -- a whole
+        // optimization campaign chased this, see
+        // docs/audits/RENDERING_OPTIMIZATION_CAMPAIGN_REVIEW_2026-08-31.md.
+        //
+        // This sets the DEFAULT only. A world that recorded a choice in its
+        // firstMoverEnabled map still wins on load, in either direction: the
+        // Person's answer outranks ours. Turn this back to enabled when these
+        // laws carry conditions and actions of their own.
+        law->setEnabled(false);
         laws.add(law);
         _metalaws.addMember(law.get());
     };

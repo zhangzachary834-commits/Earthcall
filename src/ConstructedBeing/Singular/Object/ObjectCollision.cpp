@@ -235,6 +235,7 @@ void Object::rebuildGeometryCaches() {
     }
     else if (_hasPatch) {
         _patchMesh = geom::tessellateBezier(patchData);
+        _patchMeshGridDirty = true;
         m = _patchMesh; // render and collision share the one tessellation
     }
     else if (_shapeKind == ShapeKind::Polyhedron) {
@@ -306,35 +307,54 @@ void Object::clearSmoothTessellationCache() {
 void Object::rebuildFieldMesh() const {
     if (!_fieldMeshDirty || !_hasField) return;
 
-    glm::vec3 fRes;
+    // Resolution of the marching-tet grid this field is meshed over. The mesh is
+    // what COLLISION reads, so this number is how finely a Person's feet can feel
+    // the shape -- not a render setting.
+    //
+    // kMinRes is a PER-AXIS floor, and it is the whole point. A field box is
+    // routinely lopsided (the noise floor's is 1000 x 30 x 1000), and a budget
+    // enforced by one cbrt() scale over all three axes takes the same fraction off
+    // the thin axis as the fat ones -- which starves the axis that had least to
+    // give. That is not hypothetical: uniform scaling to a 125k budget put the
+    // noise floor at 160 x 4 x 160, i.e. FOUR samples across 60 units of height
+    // for terrain that swings +-40, and the collision surface became a plateau
+    // 15 units thick. Bugs.md #12 is a Person walking on exactly that: "an
+    // invisible rectangular platform hovering way above the valleys below."
+    static constexpr int   kMinRes   = 24;
+    static constexpr int   kMaxRes   = 128;
+    static constexpr float kMaxCells = 2200000.0f;  // ~kMaxRes^3, the old ceiling
+
+    glm::ivec3 res;
     if (_fieldCellSize.has_value() && _fieldCellSize.value() > 0.0f) {
-        fRes = (2.0f * _fieldExtent) / _fieldCellSize.value();
-    } else {
-        float baseScale = 1.0f / 5.0f;
-        fRes = _fieldExtent * baseScale;
-    }
-    
-    // Scale down if exceeding budget (4.1 fix)
-    float total = fRes.x * fRes.y * fRes.z;
-    const float MAX_CELLS = 125000.0f; // Global cell budget
-    if (total > MAX_CELLS) {
-        float scale = std::cbrt(MAX_CELLS / total);
-        if (_fieldCellSize.has_value() && _fieldCellSize.value() > 0.0f) {
-            float appliedSize = _fieldCellSize.value() / scale;
-            fprintf(stderr, "[Kernel] Authored cellSize %.3f on field '%s' exceeds %g-cell budget; restricted to %.3f to prevent window hang.\n",
-                    _fieldCellSize.value(), getIdentifier().c_str(), MAX_CELLS, appliedSize);
+        // An AUTHORED cell size. This is the one that can hang the window, so it
+        // is the one the budget guards -- and it says so out loud rather than
+        // quietly meshing something other than what was asked for.
+        glm::vec3 fRes = (2.0f * _fieldExtent) / _fieldCellSize.value();
+        const float total = fRes.x * fRes.y * fRes.z;
+        if (total > kMaxCells) {
+            const float scale = std::cbrt(kMaxCells / total);
+            fprintf(stderr,
+                    "[Kernel] Authored cellSize %.3f on field '%s' asks for %.0f cells, over the "
+                    "%.0f-cell budget; meshing at %.3f instead to prevent a window hang.\n",
+                    _fieldCellSize.value(), getIdentifier().c_str(), total, kMaxCells,
+                    _fieldCellSize.value() / scale);
+            fRes *= scale;
         }
-        fRes *= scale;
+        res = glm::ivec3(std::max(4, static_cast<int>(fRes.x)),
+                         std::max(4, static_cast<int>(fRes.y)),
+                         std::max(4, static_cast<int>(fRes.z)));
+    } else {
+        // Unauthored: one cell per 5 units of extent, floored and capped per axis.
+        res = glm::ivec3(
+            std::clamp(static_cast<int>(_fieldExtent.x / 5.0f), kMinRes, kMaxRes),
+            std::clamp(static_cast<int>(_fieldExtent.y / 5.0f), kMinRes, kMaxRes),
+            std::clamp(static_cast<int>(_fieldExtent.z / 5.0f), kMinRes, kMaxRes));
     }
-    
-    // Apply floor after scale (4.1 fix)
-    glm::ivec3 res(
-        std::max(4, static_cast<int>(fRes.x)),
-        std::max(4, static_cast<int>(fRes.y)),
-        std::max(4, static_cast<int>(fRes.z))
-    );
 
     _fieldMesh = geom::tessellateSdf(fieldData, _fieldExtent, res);
+    // Index it while it is hot. Every pick this session reads the grid, not
+    // the triangle list -- see TriGrid.hpp for why the linear scan had to go.
+    _fieldMeshGrid.build(_fieldMesh);
     
     // Update _supportCloud for collision and tighten local bounds (4.2 fix)
     _supportCloud.clear();
@@ -362,7 +382,14 @@ void Object::rebuildFieldMesh() const {
         _localMin = -_fieldExtent;
         _localMax = _fieldExtent;
     }
-    
+
+    // The lazy build TIGHTENS _localMin/_localMax from the field extent onto the
+    // actual mesh, and updateCollisionZone memoizes on (transform, _fieldRevision)
+    // -- neither of which this changed. Without invalidating that memo the zone
+    // keeps the loose pre-build bounds until the object next moves, so the
+    // tightening silently never lands.
+    _lastCollisionTransform = glm::mat4(0.0f);
+
     _fieldMeshDirty = false;
 }
 

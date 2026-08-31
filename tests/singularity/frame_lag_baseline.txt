@@ -1,5 +1,22 @@
 # frame_lag_test baseline — what a frame of Earthcall costs today.
-# Recorded 2026-08-28 15:53:18 from world 'Chess'.
+# Recorded 2026-08-28 15:53:18 from world 'Chess', except load.ms.
+#
+# load.ms re-recorded 2026-08-31 at 6950, and it is a STANDING cost, not a
+# quiet one -- 3.7x the 1868.93 of 2026-08-26 and past the 4000 aspiration.
+# Two things had to be untangled to record it honestly:
+#   1. A 1375 ms reading measured that morning was NOT a fast load. Boot was
+#      throwing on saves/homes/Home/home.json (Bugs.md #13) and the load was
+#      abandoning partway. With that fixed the world actually opens -- 441
+#      objects across 12 zones -- and four steady runs (drift 1.00-1.06) gave
+#      6024 / 6440 / 6791 / 6931 ms. The 5279 of 08-28 was real after all.
+#   2. ~1200 ms of it is a deliberate trade made the same day: the field mesh
+#      resolution restored from 160x4x160 to 128x24x128 so a Person stops
+#      walking on a 15-unit-thick plateau (Bugs.md #12). Measured by A/B on
+#      this machine: 5.4-5.6 s at the coarse resolution, 6.4-6.9 s restored.
+# So ~5.4 s predates this pass and wants finding; ~1.2 s is bought fidelity,
+# and the real answer to it is sparse surface-following tessellation (To-do
+# list, Performance, item 1c) rather than sampling the terrain less.
+# Recorded to the dearest of four runs, as the note below says to.
 # Times are milliseconds normalised by the calibration factor in
 # frame_lag_test.cpp, so this file means the same thing on another
 # machine. Exponents are the fitted k in cost ~ n^k and are already
@@ -13,7 +30,7 @@
 # a browser and an IDE, run it three or four times and raise these to
 # the dearest of them by hand, or the tripwire sits under the noise
 # and fires at nobody's change.
-load.ms=5279.38
+load.ms=6950
 shape.exponent.frame=1.11276
 shape.exponent.law=0.957271
 shape.exponent.z_auto=0.967647

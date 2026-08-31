@@ -24,6 +24,7 @@
 #include <cstdint>
 #include "Relation/Formation/Formation.hpp"
 #include <glm/glm.hpp>
+#include "ConstructedBeing/Singular/Object/Geometry/TriGrid.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include "ConstructedBeing/Singular/Singular.hpp"
 #include "Singularity/Core/EventBus.hpp"
@@ -55,6 +56,25 @@ class Object : public Singular {
 
 public:
     static int getAliveCount();
+
+private:
+    // Population count for the First Mover metrics window. It lives in a member
+    // rather than in Object's constructors because Object's copy and move
+    // constructors are compiler-generated: counting in the two DECLARED
+    // constructors alone meant a copied Object decremented at destruction
+    // without ever having incremented, and the reported count walked negative.
+    // A member counts on every path that builds an Object, including those.
+    struct AliveTick {
+        AliveTick();
+        AliveTick(const AliveTick&);
+        AliveTick(AliveTick&&) noexcept;
+        AliveTick& operator=(const AliveTick&) noexcept { return *this; }
+        AliveTick& operator=(AliveTick&&) noexcept { return *this; }
+        ~AliveTick();
+    };
+    AliveTick _aliveTick;
+
+public:
 
     // Geometry types are defined in ObjectTypes.hpp
     using ShapeKind = ObjectTypes::ShapeKind;
@@ -178,6 +198,12 @@ private:
     // rebuildGeometryCaches(), which every mutation point already calls.
     mutable geom::TessMesh  _fieldMesh;    // cached field tessellation (built on demand)
     mutable bool            _fieldMeshDirty = true; // lazy evaluation flag
+    // Ray index over the two meshes that get picked against every frame. Built
+    // with the mesh, discarded with it. Kernel substrate — derived entirely
+    // from the TessMesh beside it, holds nothing a Law could ask about.
+    mutable geom::TriGrid   _fieldMeshGrid;
+    mutable geom::TriGrid   _patchMeshGrid;
+    mutable bool            _patchMeshGridDirty = true;
     std::shared_ptr<geom::TessMesh> _smoothMesh;   // cached smooth-surface tessellation
     // One mesh per patch, not one merged mesh: each patch is a real face and binds
     // its own face texture, so the render path must keep them separable.
@@ -653,12 +679,17 @@ public:
     
     // Methods with inline implementations (no cpp definitions)
 
+    // Renderer-side memo key for this object's compiled SDF program. `suffix`
+    // separates the sub-patches of a complex shape, so the stride has to exceed
+    // any patch count an object can carry; at the old stride of 100 the 101st
+    // patch addressed the NEXT object's program and drew its shape.
+    static constexpr uint64_t kMemoIdStride = 1u << 20;
     uint64_t getMemoId(int suffix = 0) const {
         if (_memoIdBase == 0) {
-            static std::atomic<uint64_t> counter{1000};
-            _memoIdBase = counter.fetch_add(100);
+            static std::atomic<uint64_t> counter{1};
+            _memoIdBase = counter.fetch_add(1) * kMemoIdStride;
         }
-        return _memoIdBase + suffix;
+        return _memoIdBase + static_cast<uint64_t>(suffix) % kMemoIdStride;
     }
     uint32_t getFieldRevision() const { return _fieldRevision; }
     int getRelationships() const { return _composition.relationships; }

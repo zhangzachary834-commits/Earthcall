@@ -287,7 +287,8 @@ void from_json(const nlohmann::json& j, Object& obj){
         geom::BezierPatch p;
         p.du = pj.value("du", 3); p.dv = pj.value("dv", 3);
         if (pj.contains("ctrlBinary")) {
-            BinaryPack::Reader br(pj["ctrlBinary"].get_binary());
+            const std::vector<uint8_t> ctrlBytes = BinaryPack::bytesFrom(pj["ctrlBinary"]);
+            BinaryPack::Reader br(ctrlBytes);
             br.readArray(p.ctrl);
         } else if (pj.contains("ctrl")) {
             for (const auto& c : pj["ctrl"])
@@ -388,11 +389,14 @@ void from_json(const nlohmann::json& j, Object& obj){
         std::vector<std::vector<int>> faces;
         
         if (pj.contains("verticesBinary") && pj.contains("facesDataBinary") && pj.contains("facesSizesBinary")) {
-            BinaryPack::Reader vReader(pj["verticesBinary"].get_binary());
+            const std::vector<uint8_t> vBytes = BinaryPack::bytesFrom(pj["verticesBinary"]);
+            BinaryPack::Reader vReader(vBytes);
             vReader.readArray(verts);
             
-            BinaryPack::Reader fDataReader(pj["facesDataBinary"].get_binary());
-            BinaryPack::Reader fSizesReader(pj["facesSizesBinary"].get_binary());
+            const std::vector<uint8_t> fDataBytes  = BinaryPack::bytesFrom(pj["facesDataBinary"]);
+            const std::vector<uint8_t> fSizesBytes = BinaryPack::bytesFrom(pj["facesSizesBinary"]);
+            BinaryPack::Reader fDataReader(fDataBytes);
+            BinaryPack::Reader fSizesReader(fSizesBytes);
             std::vector<int> flatFaces;
             std::vector<int> faceSizes;
             fDataReader.readArray(flatFaces);

@@ -1111,7 +1111,6 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
         // read then wiped the world. Stamp zone membership and fill the
         // catalog BEFORE switching.
         globalObjects.clear();
-        auto start = std::chrono::high_resolution_clock::now();
         for (const auto& z : _zones) {
             if (!z) continue;
             for (const auto& obj : z->getOwnedObjects()) {
@@ -1121,10 +1120,6 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
                 globalObjects.push_back(obj);
             }
         }
-        auto end = std::chrono::high_resolution_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-        std::cout << "[load] globalObjects registration took " << duration << "ms\n";
-
         size_t switchIdx = std::min(currentZoneIdx, _zones.size() - 1);
         if (!currentZoneId.empty()) {
             for (size_t i = 0; i < _zones.size(); ++i) {

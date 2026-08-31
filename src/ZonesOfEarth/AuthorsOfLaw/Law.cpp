@@ -1622,7 +1622,19 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
         // The terminal node memories already contain exactly the beings that
         // satisfy all conditions, so we skip both sweepSubjects AND
         // conditionsSatisfied — the Rete network has done both reactively.
-        if (hasTerminals) {
+        //
+        // The activation test is LOAD-BEARING and reads as redundant, so it has
+        // been deleted once already (04c52ed4, inside a commit about FPS
+        // measuring). This path applies to every matching subject with no edge
+        // check at all — that is what makes it right for a level-triggered law
+        // and wrong for an edge-triggered one, which then re-fires every tick
+        // for as long as its condition keeps holding. CLAUDE.md's
+        // non-negotiable: "Event-transitions must be edges, not levels... A
+        // per-frame 'still happening' event is a bug — that is what WhileTrue
+        // is for." The comment below this block already says so. Guarded by
+        // tests/law/rete_compile_test.cpp, which went red the day it was
+        // dropped ("an edge fires once, not once per tick").
+        if (hasTerminals && law->activation() == Law::Activation::WhileTrue) {
             std::vector<std::size_t> termIds;
             termIds.reserve(termIt->second.size());
             for (const auto& info : termIt->second) termIds.push_back(info.nodeId);

@@ -23,7 +23,31 @@
 #endif
 
 // Ray vs a triangle-soup tessellation (Möller–Trumbore); nearest hit.
-static bool raycastTessMesh(const geom::TessMesh& m, const glm::vec3& o, const glm::vec3& d, float& tHit) {
+// Slab test. Cheap enough to run before anything else, and it is what turns
+// "the pointer is nowhere near this object" from full price into six compares.
+static bool rayHitsBox(const glm::vec3& o, const glm::vec3& d,
+                       const glm::vec3& lo, const glm::vec3& hi) {
+    float tEnter = 0.0f, tExit = 1e30f;
+    for (int a = 0; a < 3; ++a) {
+        if (std::fabs(d[a]) < 1e-12f) {
+            if (o[a] < lo[a] || o[a] > hi[a]) return false;
+            continue;
+        }
+        const float inv = 1.0f / d[a];
+        float t0 = (lo[a] - o[a]) * inv, t1 = (hi[a] - o[a]) * inv;
+        if (t0 > t1) std::swap(t0, t1);
+        tEnter = std::max(tEnter, t0);
+        tExit  = std::min(tExit,  t1);
+        if (tEnter > tExit) return false;
+    }
+    return tExit >= 0.0f;
+}
+
+// The linear scan the TriGrid replaced on the field and patch paths. Kept
+// because it is the reference the grid is asserted against in
+// tests/constructed-being/tri_grid_test.cpp: an index is only worth having if
+// it returns what the exhaustive answer returns.
+bool raycastTessMeshLinear(const geom::TessMesh& m, const glm::vec3& o, const glm::vec3& d, float& tHit) {
     float nearest = 1e9f; bool found = false;
     for (size_t i = 0; i + 2 < m.tris.size(); i += 3) {
         const glm::vec3& a = m.tris[i].pos;
@@ -64,8 +88,18 @@ bool Object::raycastFace(const glm::vec3& rayOriginWorld, const glm::vec3& rayDi
         // Pick against the cached mesh — robust for any field (morph/boolean/
         // implicit), including non-SDF implicit expressions where sphere-tracing
         // would be unreliable.
+        //
+        // Reject against the field's own extent BEFORE forcing the lazy
+        // tessellation. `pickSurface` asks every object in the Zone every frame
+        // and has no broadphase of its own, so without this a Person standing in
+        // the air over a terrain still pays to mesh and then walk it. The field
+        // is only defined over ±_fieldExtent and the mesh cannot leave that box,
+        // so missing the box is a miss — no approximation.
+        if (!rayHitsBox(oL, dL, -_fieldExtent, _fieldExtent)) return false;
         rebuildFieldMesh();
-        if (raycastTessMesh(_fieldMesh, oL, dL, outT)) { outFaceIndex = 0; outUV = glm::vec2(0.5f); return true; }
+        if (_fieldMeshGrid.raycast(_fieldMesh, oL, dL, outT)) {
+            outFaceIndex = 0; outUV = glm::vec2(0.5f); return true;
+        }
         return false;
     }
     if (_hasComplex) {
@@ -78,7 +112,10 @@ bool Object::raycastFace(const glm::vec3& rayOriginWorld, const glm::vec3& rayDi
     }
     if (_hasPatch) {
         // Pick against the cached patch tessellation — same approach as fields.
-        if (raycastTessMesh(_patchMesh, oL, dL, outT)) { outFaceIndex = 0; outUV = glm::vec2(0.5f); return true; }
+        if (_patchMeshGridDirty) { _patchMeshGrid.build(_patchMesh); _patchMeshGridDirty = false; }
+        if (_patchMeshGrid.raycast(_patchMesh, oL, dL, outT)) {
+            outFaceIndex = 0; outUV = glm::vec2(0.5f); return true;
+        }
         return false;
     }
 

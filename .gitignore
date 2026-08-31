@@ -32,6 +32,8 @@ __pycache__/
 # the Makefile regenerates all of it.
 # ---------------------------------------------------------------------------
 build/
+build_release/
+build-wasm/
 *.o
 *.d
 *.gch
@@ -290,3 +292,29 @@ Testing/
 /scratch/attic/dump_save
 /scratch/attic/test_parse
 /scratch/attic/test_parse2
+
+# ---------------------------------------------------------------------------
+# Agent edit scaffolding at the repo root. An agent that cannot edit a file in
+# place writes a one-shot Python rewriter or a .patch next to it; 64 of those
+# (fix_*.py, patch_*.py/.patch, rewrite_*.py, test_*.py, add_particle_*.py,
+# update_*.py, tune_math.py, check_range.cpp, test_eval*.cpp) were tracked by
+# the August 2026 rendering campaign. They are single-use residue, never a
+# build input, and CLAUDE.md keeps that kind of probe in scratch/.
+# ---------------------------------------------------------------------------
+/add_particle_*.py
+/check_range.cpp
+/fix_*.py
+/patch*.py
+/patch*.patch
+/rewrite_*.py
+/test_*.py
+/test_eval*.cpp
+/test_perf.cpp
+/test_perf*.patch
+/tune_math.py
+/update_hpp.py
+/update_task.py
+
+# Merge-conflict leftovers (Object.hpp.orig was tracked-adjacent for three days).
+*.orig
+*.rej

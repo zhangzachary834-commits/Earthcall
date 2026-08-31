@@ -57,3 +57,20 @@ imgui/misc/
 third_party/miniaudio/miniaudio.h
 src/json.hpp
 third_party/httplib/httplib.h
+
+# Agent edit scaffolding at the repo root — see the matching .gitignore block.
+/add_particle_*.py
+/check_range.cpp
+/fix_*.py
+/patch*.py
+/patch*.patch
+/rewrite_*.py
+/test_*.py
+/test_eval*.cpp
+/test_perf.cpp
+/test_perf*.patch
+/tune_math.py
+/update_hpp.py
+/update_task.py
+*.orig
+*.rej

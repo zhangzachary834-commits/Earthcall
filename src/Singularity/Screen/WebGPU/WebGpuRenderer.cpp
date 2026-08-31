@@ -782,7 +782,7 @@ struct SdfGlobalUniforms {
     glm::mat4 viewProj;
     glm::vec4 lightPos;
     glm::vec4 eyePos;
-    glm::vec4 pad;
+    glm::vec4 limits;   // x = far-plane distance in world units; see struct RU
 };
 } // namespace
 
@@ -862,11 +862,7 @@ const WebGpuRenderer::SdfPipeline* WebGpuRenderer::sdfPipeline(const std::string
     pd.multisample.count = 1; pd.multisample.mask = 0xFFFFFFFFu;
     pd.fragment = &frag;
 
-    auto t0 = std::chrono::high_resolution_clock::now();
     out.pipe = wgpuDeviceCreateRenderPipeline(_device, &pd);
-    auto t1 = std::chrono::high_resolution_clock::now();
-    double ms = std::chrono::duration<double, std::milli>(t1 - t0).count();
-    printf("wgpuDeviceCreateRenderPipeline compiled novel SDF in %.2f ms\n", ms);
 
     wgpuPipelineLayoutRelease(layout);
     wgpuShaderModuleRelease(shader);
@@ -944,10 +940,16 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     inst.shading = glm::vec4(mat.ambient, mat.diffuse, mat.specular, mat.shininess);
     inst.extents = glm::vec4(extent * 1.05f, 0.0f);
     
+    // The box is grown slightly past the extent so a surface sitting exactly on the
+    // boundary still gets fragments. surfaceEps/maxDist mirror the CPU raycaster's
+    // 1e-4 hit threshold. maxDist is the object's own diagonal budget, NOT a world
+    // constant: a hard cap (this briefly read `min(maxDim * 4, 600)`) makes anything
+    // further than the cap vanish, and a large authored terrain is exactly the case
+    // that trips it.
     float maxDim = glm::max(glm::max(extent.x, extent.y), extent.z);
-    float horizonDist = glm::min(maxDim * 4.0f, 600.0f);
-    // Pass 0.25 as damping factor for un-Lipschitz ASTs, 1.0 for exact SDFs.
-    inst.misc = glm::vec4(1.0f, 1e-4f, horizonDist, prog.needsGradientStep ? 0.25f : 1.0f);
+    // damping selects the marcher: < 0.5 is the Lipschitz-corrected path for an
+    // authored expression, >= 0.5 the over-relaxed path for an exact distance field.
+    inst.misc = glm::vec4(1.0f, 1e-4f, maxDim * 8.0f, prog.needsGradientStep ? 0.25f : 1.0f);
                           
     inst.paramOffset = static_cast<uint32_t>(_sdfParamsBatches[sp].size());
     _sdfBatches[sp].push_back(inst);
@@ -1052,7 +1054,20 @@ void WebGpuRenderer::flushSdfDraws() {
     u.viewProj = _viewProj;
     u.lightPos = glm::vec4(lightPos(), 1.0f);
     u.eyePos = glm::vec4(_eyePos, 1.0f);
-    
+    // Unprojected rather than read off a named setting: the far plane belongs to
+    // whatever projection the caller actually set, and asking the matrix cannot
+    // drift away from it. NDC z = 1 is the far plane under the [0,1] depth range
+    // WebGPU uses; view space looks down -z.
+    float farDist = 1e6f;
+    {
+        const glm::vec4 farPt = glm::inverse(proj()) * glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
+        if (std::fabs(farPt.w) > 1e-9f) {
+            const float d = -(farPt.z / farPt.w);
+            if (std::isfinite(d) && d > 0.0f) farDist = d;
+        }
+    }
+    u.limits = glm::vec4(farDist, 0.0f, 0.0f, 0.0f);
+
     auto uAlloc = _bufferPool.suballocateUniform(&u, sizeof(SdfGlobalUniforms));
 
     for (auto& kv : _sdfBatches) {
