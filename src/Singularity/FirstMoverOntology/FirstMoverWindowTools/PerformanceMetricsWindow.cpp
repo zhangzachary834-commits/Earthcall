@@ -23,9 +23,9 @@ void renderPerformanceMetricsWindow(bool* open, Core::Engine* engine) {
         ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "Core Metrics");
         ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
 
-        Person* player = engine->getPlayer();
-        if (player) {
-            const glm::vec3& pos = player->position();
+        Person* person = engine->getPerson();
+        if (person) {
+            const glm::vec3& pos = person->position();
             ImGui::Text("Player Pos: (%.2f, %.2f, %.2f)", pos.x, pos.y, pos.z);
         } else {
             ImGui::TextDisabled("Player Pos: Unknown");

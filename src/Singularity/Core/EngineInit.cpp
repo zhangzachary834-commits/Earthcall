@@ -52,7 +52,7 @@ void Engine::initLogic() {
     // _player, _camera, _mouseHandler or _keyboardHandler was one call away
     // from a null-pointer deref, starting with connectToEventBus() two lines
     // down. Restoring Tool::ShapeGenerator3D as a developer tool (2026-08-13)
-    // is the first thing that actually calls getPlayer()/getLawManager(), so
+    // is the first thing that actually calls getPerson()/getLawManager(), so
     // it is the first thing that hits this. Allocating them here is the
     // minimum fix to make the engine boot at all -- not a redesign.
     if (!_lawManager) _lawManager = std::make_unique<LawManager>();

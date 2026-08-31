@@ -16,7 +16,7 @@
 +        ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "Core Metrics");
          ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
          
-         Person* player = engine->getPlayer();
+         Person* player = engine->getPerson();
          if (player) {
              const glm::vec3& pos = player->position();
 -            ImGui::Text("Coordinates: (%.2f, %.2f, %.2f)", pos.x, pos.y, pos.z);

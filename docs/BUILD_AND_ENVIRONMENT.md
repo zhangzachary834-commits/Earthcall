@@ -206,7 +206,7 @@ globs `tests/**/*.cpp`; the ctest name is the file stem. See `tests/README.md`.
 first line (`_lawManager->connectToEventBus()`) was a null-pointer deref waiting for the first
 caller. Nothing had called it, so nothing had noticed: `Tool::Pottery3D`/`Rotate3D`/etc. (the
 already-"reconnected" 3D tools) were never actually invoked from `Engine::tick()` either, and
-`getPlayer()`/`getLawManager()` weren't even *defined*, only declared — so nothing exercised the
+`getPerson()`/`getLawManager()` weren't even *defined*, only declared — so nothing exercised the
 null. They're allocated now, in `EngineInit.cpp::initLogic()`, before anything touches them; the
 live `earthcall` binary runs to its main loop as of this fix (verified by running it). If you
 hit a null `_camera`/`_player`/etc. deref elsewhere, that subsystem is now real — look for a
