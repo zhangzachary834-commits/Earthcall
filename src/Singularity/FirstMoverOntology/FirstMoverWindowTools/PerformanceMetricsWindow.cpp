@@ -12,6 +12,8 @@
 
 extern ZoneManager mgr;
 
+FrameTimings g_frameTimings{};
+
 namespace Rendering {
 
 void renderPerformanceMetricsWindow(bool* open, Core::Engine* engine) {
@@ -20,7 +22,7 @@ void renderPerformanceMetricsWindow(bool* open, Core::Engine* engine) {
     if (ImGui::Begin("Performance & Coordinates", open, ImGuiWindowFlags_AlwaysAutoResize)) {
         ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "Core Metrics");
         ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
-        
+
         Person* player = engine->getPlayer();
         if (player) {
             const glm::vec3& pos = player->position();
@@ -28,7 +30,7 @@ void renderPerformanceMetricsWindow(bool* open, Core::Engine* engine) {
         } else {
             ImGui::TextDisabled("Player Pos: Unknown");
         }
-        
+
         ImGui::Separator();
         Zone& activeZone = mgr.active();
         size_t zoneShapes = activeZone.objects().size();
@@ -37,27 +39,27 @@ void renderPerformanceMetricsWindow(bool* open, Core::Engine* engine) {
         ImGui::TextColored(ImVec4(0.8f, 0.4f, 1.0f, 1.0f), "Current Zone: %s", activeZone.name().c_str());
         ImGui::Text("Zone Singulars: %zu", zoneSingulars);
         ImGui::Text("Zone Visual Shapes: %zu", zoneShapes);
-        
+
         ImGui::Separator();
         ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.4f, 1.0f), "CPU Substrate Metrics");
         ImGui::Text("Total Singulars (CPU allocs): %d", Singular::getAliveCount());
         ImGui::Text("Total Visual Shapes (CPU allocs): %d", Object::getAliveCount());
-        
+
         // Calculate AST evals per frame
         static uint32_t lastAstEvals = 0;
         uint32_t currentAstEvals = OntoMath::g_astEvaluations.load(std::memory_order_relaxed);
         uint32_t astDiff = currentAstEvals - lastAstEvals;
         lastAstEvals = currentAstEvals;
-        
+
         // Smooth it slightly for readability
         static float smoothedAstDiff = 0.0f;
         smoothedAstDiff = smoothedAstDiff * 0.9f + astDiff * 0.1f;
         ImGui::Text("AST Evaluations: %.0f / frame", smoothedAstDiff);
         ImGui::TextDisabled("Total ASTs lifetime: %u", currentAstEvals);
-        
+
         ImGui::Separator();
         ImGui::TextColored(ImVec4(0.4f, 0.8f, 1.0f, 1.0f), "GPU Frame Stats");
-        
+
         const auto& stats = currentRenderer().frameStats();
         ImGui::Text("Total Draw Calls: %u", stats.drawCalls);
         ImGui::Text("  Mesh Draws: %u", stats.meshDrawCalls);
@@ -66,6 +68,20 @@ void renderPerformanceMetricsWindow(bool* open, Core::Engine* engine) {
         ImGui::Text("Pipeline Switches: %u", stats.pipelineSwitches);
         ImGui::Text("VRAM Allocations: %u", stats.bufferSuballocations);
         ImGui::Text("VRAM Uniform Bytes: %zu", stats.uniformBytesWritten);
+
+        // ---- Engine::tick() Frame Timings Breakdown ----
+        ImGui::Separator();
+        ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.2f, 1.0f), "Engine::tick()  %.2f ms", g_frameTimings.total_ms);
+        ImGui::Text("  Input:           %6.2f ms", g_frameTimings.input_ms);
+        ImGui::Text("  Locomotion:      %6.2f ms", g_frameTimings.locomotion_ms);
+        ImGui::Text("  Creation Tools:  %6.2f ms", g_frameTimings.creation_ms);
+        ImGui::Text("  Interaction:     %6.2f ms", g_frameTimings.interaction_ms);
+        ImGui::Text("  Zone Update:     %6.2f ms", g_frameTimings.zone_ms);
+        ImGui::Text("  Laws (Rete):     %6.2f ms", g_frameTimings.laws_ms);
+        ImGui::Text("  Language:        %6.2f ms", g_frameTimings.language_ms);
+        ImGui::Text("  Audio:           %6.2f ms", g_frameTimings.audio_ms);
+        ImGui::Text("  3D Render:       %6.2f ms", g_frameTimings.render3d_ms);
+        ImGui::Text("  ImGui / Present: %6.2f ms", g_frameTimings.imgui_ms);
 
         // ---- LawManager tick() timing breakdown ----
         if (LawManager* lm = engine->getLawManager()) {

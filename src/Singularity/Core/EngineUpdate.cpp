@@ -7,6 +7,7 @@
 #include "Singularity/Input/Interaction/InteractionChannel.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreationTools.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleState.hpp"
+#include "Singularity/FirstMoverOntology/FirstMoverWindowTools/PerformanceMetricsWindow.hpp"
 #include "Singularity/Core/SdfBuild.hpp"
 #include "Singularity/Screen/GL/GluCompat.hpp"
 #include "../../Person/Person.hpp"
@@ -18,6 +19,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
 #include <cmath>
+#include <chrono>
 
 extern ZoneManager mgr;
 
@@ -119,7 +121,13 @@ namespace Core {
     void Engine::update(float dt) {
         if (!_keyboardHandler || !_mouseHandler || !_camera || !_player || !_lawManager) return;
 
+        using clock = std::chrono::steady_clock;
+        auto getMs = [](clock::time_point start, clock::time_point end) {
+            return std::chrono::duration<float, std::milli>(end - start).count();
+        };
+
         // Update input handlers
+        auto tInput0 = clock::now();
         if (_mainMenu.isOpen()) {
             _mainMenu.processInput(_window);
         }
@@ -129,6 +137,8 @@ namespace Core {
 
         // Update camera front from mouse handler
         _camera->front = _mouseHandler->calculateCameraFront();
+        auto tInput1 = clock::now();
+        g_frameTimings.input_ms = getMs(tInput0, tInput1);
 
         // Check if any text input is active (ImGui)
         bool anyTextInputActive = ImGui::IsAnyItemActive() || ImGui::IsWindowFocused();
@@ -136,15 +146,21 @@ namespace Core {
         // Vessel movement — Input first mover, not Person.
         const bool canMove = _mouseHandler->isCursorLocked() && !_mainMenu.isOpen() && !anyTextInputActive;
         const bool flying  = Physics::getFlying();
+        auto tLoco0 = clock::now();
         if (auto* locomotion = Singularity::Input::LocomotionChannel::find(*_lawManager)) {
             locomotion->step(*_player, *_camera, _window, mgr, dt, flying, canMove);
         }
+        auto tLoco1 = clock::now();
+        g_frameTimings.locomotion_ms = getMs(tLoco0, tLoco1);
 
         // Creation first mover — sense placement, honour L, push the
         // console's live selection onto the channel, actuate the armed
         // tool. Used to run inside render3DConsole / DeveloperToolsWindow,
         // so collapsing the console froze every 3D tool.
+        auto tCreate0 = clock::now();
         Rendering::stepCreationTools(_window, this, mgr, dt, _creatorConsoleOpen);
+        auto tCreate1 = clock::now();
+        g_frameTimings.creation_ms = getMs(tCreate0, tCreate1);
 
         // Interaction first mover — pick the being under the pointer, publish
         // the click/scroll/focus edges, drive hover. Stepped here and not from
@@ -155,11 +171,15 @@ namespace Core {
         // WantCaptureMouse is the foreign-surface veto: while an ImGui panel
         // owns the pointer, the world must see no pointer at all, or the
         // Person clicks a menu and a button behind it fires too.
+        auto tInteract0 = clock::now();
         if (auto* interaction = Singularity::Input::InteractionChannel::find(*_lawManager)) {
             interaction->step(_window, *_camera, mgr, ImGui::GetIO().WantCaptureMouse);
         }
+        auto tInteract1 = clock::now();
+        g_frameTimings.interaction_ms = getMs(tInteract0, tInteract1);
 
         // Update world (physics etc.)
+        auto tZone0 = clock::now();
         mgr.active().update(dt);
         mgr.active().applyFormationRelations();
 
@@ -169,5 +189,7 @@ namespace Core {
         // Advance time
         _worldTime += static_cast<double>(dt);
         Universe::instance().setClock(_worldTime, static_cast<double>(dt));
+        auto tZone1 = clock::now();
+        g_frameTimings.zone_ms = getMs(tZone0, tZone1);
     }
 }

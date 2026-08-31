@@ -51,6 +51,7 @@
 #include <filesystem>
 #include <vector>
 #include <climits>
+#include <chrono>
 #ifdef __APPLE__
 #include <mach-o/dyld.h>
 #endif
@@ -238,7 +239,7 @@ static void emscripten_main_loop(void* arg) {
         // only in the browser -- entry.cpp's own post-loop call is
         // unreachable in this build (emscripten_set_main_loop_arg with
         // simulate_infinite_loop=1 never returns, it unwinds the stack).
-                ctx->engine->shutdown();
+        ctx->engine->shutdown();
         delete ctx;
         return;
     }
@@ -271,165 +272,182 @@ void Engine::run() {
 }
 
 void Engine::tick(float dt) {
-        glfwPollEvents();
+    using clock = std::chrono::steady_clock;
+    auto tickStart = clock::now();
+    auto getMs = [](clock::time_point start, clock::time_point end) {
+        return std::chrono::duration<float, std::milli>(end - start).count();
+    };
+
+    glfwPollEvents();
 
 #ifdef EARTHCALL_WEBGPU
-        // A swapchain is sized: presenting against a stale size gives a suboptimal
-        // or failed surface texture, so track the framebuffer and reconfigure.
-        {
-            int fbw = 0, fbh = 0;
-            glfwGetFramebufferSize(_window, &fbw, &fbh);
-            if (fbw != _webgpu->lastFbW || fbh != _webgpu->lastFbH) {
-                _webgpu->lastFbW = fbw;
-                _webgpu->lastFbH = fbh;
-                wgpu::configureSurface(_webgpu->ctx, static_cast<uint32_t>(fbw),
-                                       static_cast<uint32_t>(fbh));
-            }
-            if (fbw == 0 || fbh == 0) return; // minimised: nothing to draw into
+    // A swapchain is sized: presenting against a stale size gives a suboptimal
+    // or failed surface texture, so track the framebuffer and reconfigure.
+    {
+        int fbw = 0, fbh = 0;
+        glfwGetFramebufferSize(_window, &fbw, &fbh);
+        if (fbw != _webgpu->lastFbW || fbh != _webgpu->lastFbH) {
+            _webgpu->lastFbW = fbw;
+            _webgpu->lastFbH = fbh;
+            wgpu::configureSurface(_webgpu->ctx, static_cast<uint32_t>(fbw),
+                                   static_cast<uint32_t>(fbh));
         }
-        ImGui_ImplWGPU_NewFrame();
+        if (fbw == 0 || fbh == 0) return; // minimised: nothing to draw into
+    }
+    ImGui_ImplWGPU_NewFrame();
 #else
-        ImGui_ImplOpenGL2_NewFrame();
+    ImGui_ImplOpenGL2_NewFrame();
 #endif
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
 
-        // 1. Process physical & logical simulation
-        update(dt);
+    // 1. Process physical & logical simulation (populates input, locomotion, creation, interaction, zone)
+    update(dt);
 
-        // Tick language modality
-        Singularity::Language::LanguageSystem::instance().tick(dt);
-        Core::Audio::AudioSystem::instance().tick();
+    // 2. Tick language modality
+    auto tLang0 = clock::now();
+    Singularity::Language::LanguageSystem::instance().tick(dt);
+    auto tLang1 = clock::now();
+    g_frameTimings.language_ms = getMs(tLang0, tLang1);
+
+    // 3. Audio & event modality
+    auto tAudio0 = clock::now();
+    Core::Audio::AudioSystem::instance().tick();
 #ifdef __EMSCRIPTEN__
-        Core::EventBus::instance().tick();
+    Core::EventBus::instance().tick();
 #endif
+    auto tAudio1 = clock::now();
+    g_frameTimings.audio_ms = getMs(tAudio0, tAudio1);
 
-        // The Person is the canonical source of "where the Person is looking
-        // from" (see tests/basic_cube_law_test.cpp's comment on why placement
-        // law text reads player.cameraPos, not the Camera object) -- but
-        // Camera is what the render path actually moves, so it has to be
-        // copied across each frame or Person's copy goes stale at its
-        // construction-time default.
-        if (Person* p = getPlayer()) {
-            if (Camera* cam = getCamera()) {
-                p->cameraPos = cam->getPos();
-                p->cameraForward = cam->getFront();
+    // The Person is the canonical source of "where the Person is looking
+    // from" (see tests/basic_cube_law_test.cpp's comment on why placement
+    // law text reads player.cameraPos, not the Camera object) -- but
+    // Camera is what the render path actually moves, so it has to be
+    // copied across each frame or Person's copy goes stale at its
+    // construction-time default.
+    if (Person* p = getPlayer()) {
+        if (Camera* cam = getCamera()) {
+            p->cameraPos = cam->getPos();
+            p->cameraForward = cam->getFront();
+        }
+    }
+
+    // 4. Laws: LawManager::tick() drains the Rete agenda queued by events published this frame.
+    auto tLaws0 = clock::now();
+    if (_lawManager) _lawManager->tick();
+    auto tLaws1 = clock::now();
+    g_frameTimings.laws_ms = getMs(tLaws0, tLaws1);
+
+    // Interaction reticle
+    if (_lawManager) {
+        if (auto* interaction = Singularity::Input::InteractionChannel::find(*_lawManager)) {
+            if (interaction->pointerLocked) {
+                ImGuiIO& rio = ImGui::GetIO();
+                const ImVec2 center(rio.DisplaySize.x * 0.5f, rio.DisplaySize.y * 0.5f);
+                ImDrawList* dl = ImGui::GetForegroundDrawList();
+                constexpr float half = 6.0f;
+                const ImU32 col = IM_COL32(255, 255, 255, 200);
+                dl->AddLine(ImVec2(center.x - half, center.y), ImVec2(center.x + half, center.y), col, 1.5f);
+                dl->AddLine(ImVec2(center.x, center.y - half), ImVec2(center.x, center.y + half), col, 1.5f);
             }
         }
+    }
 
-        // Nothing fires an authored law without this: LawManager::tick()
-        // drains the Rete agenda queued by events published this frame.
-        // onMouseClicked is published from the GLFW mouse callback
-        // (EngineInit::registerCallbacks) for every left press outside ImGui;
-        // the spawn law's gate is spawnLawArmed, not the publisher and not
-        // console Create. See CreationChannel::spawnLawArmed.
-        if (_lawManager) _lawManager->tick();
+    // 5. ImGui Windows
+    Rendering::renderDeveloperToolsWindow(&_devToolsWindowOpen, _window, this);
+    Rendering::renderPerformanceMetricsWindow(&_performanceMetricsWindowOpen, this);
 
-        // A ray the Person cannot see the origin of is a black box aimed at
-        // their world: while the cursor is locked, InteractionChannel picks
-        // from the viewport centre rather than the OS pointer (which is
-        // hidden and drifting), and until now nothing drew where that centre
-        // was. `pointerLocked` is the channel's own registered fact, not a
-        // fresh GLFW query, so this reticle and the pick it depicts can never
-        // disagree.
-        if (_lawManager) {
-            if (auto* interaction = Singularity::Input::InteractionChannel::find(*_lawManager)) {
-                if (interaction->pointerLocked) {
-                    ImGuiIO& rio = ImGui::GetIO();
-                    const ImVec2 center(rio.DisplaySize.x * 0.5f, rio.DisplaySize.y * 0.5f);
-                    ImDrawList* dl = ImGui::GetForegroundDrawList();
-                    constexpr float half = 6.0f;
-                    const ImU32 col = IM_COL32(255, 255, 255, 200);
-                    dl->AddLine(ImVec2(center.x - half, center.y), ImVec2(center.x + half, center.y), col, 1.5f);
-                    dl->AddLine(ImVec2(center.x, center.y - half), ImVec2(center.x, center.y + half), col, 1.5f);
-                }
-            }
+    if (_creationConsoleOpen) {
+        Rendering::renderCreationWindow(&_creationConsoleOpen, *_player, nullptr, mgr.active());
+    }
+
+    if (_creatorConsoleOpen) {
+        Rendering::renderCreatorConsoleWindow(
+            &_creatorConsoleOpen, _player.get(),
+            Rendering::getCreatorConsoleState().selectedObject3D,
+            mgr, _window, this);
+    }
+
+    Rendering::renderSaveLoadWindows(this);
+
+    if (_showKeymapWindow) {
+        ImGui::SetNextWindowSize(ImVec2(420, 420), ImGuiCond_FirstUseEver);
+        if (ImGui::Begin("Controls / Keymap", &_showKeymapWindow,
+                         ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize)) {
+            ImGui::TextUnformatted("Core");
+            ImGui::Separator();
+            ImGui::BulletText("M: Toggle Main Menu");
+            ImGui::BulletText("Esc: Toggle Cursor Lock");
+            ImGui::BulletText("H: Toggle Chat");
+            ImGui::BulletText("K: Controls / Keymap");
+            ImGui::BulletText("`: Toggle Dev Tools");
+            ImGui::BulletText("F8: Creator Console");
+            ImGui::BulletText("F9: Singular Set-to-Set Creation");
+            ImGui::BulletText("C: Character Architect Forge Zone");
+            ImGui::Separator();
+            ImGui::TextUnformatted("Saves");
+            ImGui::Separator();
+            ImGui::BulletText("S: Quick Save (from the menu)");
+            ImGui::BulletText("A: Save As...  L: Load  G: Save Manager");
+            ImGui::Separator();
+            ImGui::TextUnformatted("Camera");
+            ImGui::Separator();
+            ImGui::BulletText("WASD: Move");
+            ImGui::BulletText("Space: Up");
+            ImGui::BulletText("Shift: Down");
+            ImGui::BulletText("V: Sprint");
+            ImGui::BulletText("Alt: Slow");
+            ImGui::Separator();
+            ImGui::TextUnformatted("Create");
+            ImGui::Separator();
+            ImGui::BulletText("L: Arm 3D create law (when the menu is closed)");
+            ImGui::BulletText("F4: 3D Create tab   F5: 3D Select tab");
         }
+        ImGui::End();
+    }
 
-        Rendering::renderDeveloperToolsWindow(&_devToolsWindowOpen, _window, this);
-        Rendering::renderPerformanceMetricsWindow(&_performanceMetricsWindowOpen, this);
+    if (_showChatWindow && _chat) {
+        _chat->renderUI(&_showChatWindow);
+    }
 
-        if (_creationConsoleOpen) {
-            Rendering::renderCreationWindow(&_creationConsoleOpen, *_player, nullptr, mgr.active());
-        }
+    if (_showImGuiDemo) {
+        ImGui::ShowDemoWindow(&_showImGuiDemo);
+    }
 
-        if (_creatorConsoleOpen) {
-            Rendering::renderCreatorConsoleWindow(
-                &_creatorConsoleOpen, _player.get(),
-                Rendering::getCreatorConsoleState().selectedObject3D,
-                mgr, _window, this);
-        }
+    if (Rendering::getCreatorConsoleState().showLawAuthor) {
+        Singular* testSubject = _lawManager
+            ? Singularity::Core::CreationChannel::find(*_lawManager)
+            : nullptr;
+        Rendering::renderLawGraphWindow(&Rendering::getCreatorConsoleState().showLawAuthor, *_lawManager, *_player, testSubject);
+    }
 
-        Rendering::renderSaveLoadWindows(this);
+    // 6. Render 3D scene (must happen before ImGui::Render composites over it)
+    auto tRender0 = clock::now();
+    render();
+    auto tRender1 = clock::now();
+    g_frameTimings.render3d_ms = getMs(tRender0, tRender1);
 
-        if (_showKeymapWindow) {
-            ImGui::SetNextWindowSize(ImVec2(420, 420), ImGuiCond_FirstUseEver);
-            if (ImGui::Begin("Controls / Keymap", &_showKeymapWindow,
-                             ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize)) {
-                ImGui::TextUnformatted("Core");
-                ImGui::Separator();
-                ImGui::BulletText("M: Toggle Main Menu");
-                ImGui::BulletText("Esc: Toggle Cursor Lock");
-                ImGui::BulletText("H: Toggle Chat");
-                ImGui::BulletText("K: Controls / Keymap");
-                ImGui::BulletText("`: Toggle Dev Tools");
-                ImGui::BulletText("F8: Creator Console");
-                ImGui::BulletText("F9: Singular Set-to-Set Creation");
-                ImGui::BulletText("C: Character Architect Forge Zone");
-                ImGui::Separator();
-                ImGui::TextUnformatted("Saves");
-                ImGui::Separator();
-                ImGui::BulletText("S: Quick Save (from the menu)");
-                ImGui::BulletText("A: Save As...  L: Load  G: Save Manager");
-                ImGui::Separator();
-                ImGui::TextUnformatted("Camera");
-                ImGui::Separator();
-                ImGui::BulletText("WASD: Move");
-                ImGui::BulletText("Space: Up");
-                ImGui::BulletText("Shift: Down");
-                ImGui::BulletText("V: Sprint");
-                ImGui::BulletText("Alt: Slow");
-                ImGui::Separator();
-                ImGui::TextUnformatted("Create");
-                ImGui::Separator();
-                ImGui::BulletText("L: Arm 3D create law (when the menu is closed)");
-                ImGui::BulletText("F4: 3D Create tab   F5: 3D Select tab");
-            }
-            ImGui::End();
-        }
-
-        if (_showChatWindow && _chat) {
-            _chat->renderUI(&_showChatWindow);
-        }
-
-        if (_showImGuiDemo) {
-            ImGui::ShowDemoWindow(&_showImGuiDemo);
-        }
-
-        if (Rendering::getCreatorConsoleState().showLawAuthor) {
-            Singular* testSubject = _lawManager
-                ? Singularity::Core::CreationChannel::find(*_lawManager)
-                : nullptr;
-            Rendering::renderLawGraphWindow(&Rendering::getCreatorConsoleState().showLawAuthor, *_lawManager, *_player, testSubject);
-        }
-
-        // 2. Render 3D scene (must happen before ImGui::Render composites over it)
-        render();
-
-        // Render ImGui
-        ImGui::Render();
+    // 7. Render ImGui & Present / Buffer Swap
+    auto tGui0 = clock::now();
+    ImGui::Render();
 #ifdef EARTHCALL_WEBGPU
-        // game.render() already closed the scene pass, but the acquired surface
-        // texture is still held — so imgui composites in a second load-op pass on
-        // top of it, and only then does the frame get presented.
-        _webgpu->renderer.overlayPass([](WGPURenderPassEncoder pass) {
-            ImGui_ImplWGPU_RenderDrawData(ImGui::GetDrawData(), pass);
-        });
-        _webgpu->renderer.present();
+    // game.render() already closed the scene pass, but the acquired surface
+    // texture is still held — so imgui composites in a second load-op pass on
+    // top of it, and only then does the frame get presented.
+    _webgpu->renderer.overlayPass([](WGPURenderPassEncoder pass) {
+        ImGui_ImplWGPU_RenderDrawData(ImGui::GetDrawData(), pass);
+    });
+    _webgpu->renderer.present();
 #else
-        ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
-        glfwSwapBuffers(_window);
+    ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
+    glfwSwapBuffers(_window);
 #endif
+    auto tGui1 = clock::now();
+    g_frameTimings.imgui_ms = getMs(tGui0, tGui1);
+
+    // Total tick elapsed time
+    auto tickEnd = clock::now();
+    g_frameTimings.total_ms = getMs(tickStart, tickEnd);
 }
 
 void Engine::shutdown() {
@@ -471,6 +489,7 @@ void Engine::shutdown() {
 }
 
 } // namespace Core
+
 namespace Core {
 MouseHandler* Engine::getMouseHandler() { return _mouseHandler.get(); }
 Camera* Engine::getCamera() { return _camera.get(); }
