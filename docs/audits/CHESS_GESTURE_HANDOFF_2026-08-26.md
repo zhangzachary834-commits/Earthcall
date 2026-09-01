@@ -4,7 +4,7 @@
 **Author:** Claude Opus 5
 **Session:** https://claude.ai/code/session_01Ewyb3adQJuSmsgG2x5Yp7p
 **For:** whoever picks this up next
-**Root cause:** [`docs/audits/CHESS_APP_EVERY_GESTURE_IS_A_DRAG_2026-08-26.md`](audits/CHESS_APP_EVERY_GESTURE_IS_A_DRAG_2026-08-26.md)
+**Root cause:** [`docs/audits/CHESS_APP_EVERY_GESTURE_IS_A_DRAG_2026-08-26.md`](CHESS_APP_EVERY_GESTURE_IS_A_DRAG_2026-08-26.md)
 **Reproduction:** `scratch/probes/chess_app_full_loop_probe.cpp`
 
 ---

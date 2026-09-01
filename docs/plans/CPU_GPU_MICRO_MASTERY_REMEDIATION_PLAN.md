@@ -3,8 +3,8 @@
 **Date**: 2026-08-25
 **Author**: Claude Opus 5, from a review of `ce5c1cbe..8bd89909`
 **Status**: Plan only. Nothing in this document has been implemented.
-**Reads**: [`docs/architecture/ontology/CPU_GPU_MICRO_MASTERY.md`](architecture/ontology/CPU_GPU_MICRO_MASTERY.md),
-[`docs/architecture/Singularity/GPU_MICRO_MASTERY_ARCHITECTURE.md`](architecture/Singularity/GPU_MICRO_MASTERY_ARCHITECTURE.md),
+**Reads**: [`docs/architecture/ontology/CPU_GPU_MICRO_MASTERY.md`](../architecture/ontology/CPU_GPU_MICRO_MASTERY.md),
+[`docs/architecture/Singularity/GPU_MICRO_MASTERY_ARCHITECTURE.md`](../architecture/Singularity/GPU_MICRO_MASTERY_ARCHITECTURE.md),
 `NO_BLACK_BOX.md` §3
 
 ---
