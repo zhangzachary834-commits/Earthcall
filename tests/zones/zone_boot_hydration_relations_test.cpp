@@ -6,48 +6,17 @@
 // (EngineInit.cpp), so every Zone under saves/zones/ is already live by the time
 // a Person clicks Load.
 //
-// Two things went wrong in that order, and only in that order:
-//
-//   1. Categories are WORLD data — they load in ZoneManager::loadState, not at
-//      boot. So when hydration binds the Chess zone's formation relations,
-//      "category.chess.piece" does not exist yet, every instance-of edge comes
-//      back with an unbound endpoint, and Formation::add REFUSES it.
-//   2. loadState's admitFromJson then found the Chess zone LIVE and returned
-//      without merging the session's zone JSON at all, so nothing ever tried
-//      again.
-//
-// The Chess zone ran with zero relations. "instance-of category.chess.piece" was
-// false for every piece, so law-chess-click answered CONDITIONS FAILED on a pawn
-// while still succeeding on the board — whose test is the isBoard PROPERTY, not
-// a relation. To a Person: clicking a piece does nothing, forever.
-//
-// This test performs the app's sequence, not the test suite's.
+// This test uses the shared TestSupport::BootedEngineHarness to perform the app's
+// sequence (boot hydration then load), ensuring all tests model true boot order.
 
-#include "ConstructedBeing/CategoryManager.hpp"
-#include "ConstructedBeing/Material/MaterialManager.hpp"
-#include "ConstructedBeing/Singular/Object/Object.hpp"
-#include "Person/Body/Body.hpp"
-#include "Person/Person.hpp"
-#include "Person/Soul/Soul.hpp"
+#include "support/test_harness.hpp"
 #include "Relation/Relation.hpp"
-#include "Singularity/Input/Interaction/InteractionChannel.hpp"
-#include "Singularity/Input/Mouse/MouseHandler.hpp"
-#include "Singularity/Screen/Camera.hpp"
-#include "Singularity/Storage/SaveSystem.hpp"
-#include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
-#include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
-#include "ZonesOfEarth/SaveContext.hpp"
-#include "ZonesOfEarth/Zone/Zone.hpp"
-#include "ZonesOfEarth/ZoneManager.hpp"
 
 #include <cassert>
 #include <filesystem>
 #include <iostream>
 #include <string>
 #include <vector>
-
-extern MaterialManager materials;
-extern CategoryManager categories;
 
 namespace {
 
@@ -113,61 +82,15 @@ int main() {
         }
     }
 
-    Core::Camera camera;
-    MouseHandler mouseHandler;
-    Soul soul("Player");
-    Body body("humanoid", "default");
-    Person player(std::move(soul), std::move(body), "default");
-    LawManager lawManager;
-    lawManager.connectToEventBus();
-
-    ZoneManager zones;
-    Universe::instance().setProvider([&](std::vector<Singular*>& beings) {
-        if (zones.zones().empty()) return;
-        auto active = zones.zones()[zones.currentIndex()];
-        if (!active) return;
-        beings.push_back(active.get());
-        for (const auto& obj : active->getOwnedObjects()) if (obj) beings.push_back(obj.get());
-        for (const auto& law : lawManager.getAll()) if (law) beings.push_back(law.get());
-        for (const auto& material : materials.getAll()) if (material) beings.push_back(material.get());
-        for (const auto& category : categories.getAll()) if (category) beings.push_back(category.get());
-        beings.push_back(&player);
-    });
-    Universe::instance().setRelationProvider([&](std::vector<Relation*>& relations) {
-        if (zones.zones().empty()) return;
-        auto active = zones.zones()[zones.currentIndex()];
-        if (!active) return;
-        for (const auto& rel : active->formation().relations().getAll()) {
-            if (rel) relations.push_back(rel.get());
-        }
-    });
-
-    Singularity::Input::InteractionChannel::syncRegister(lawManager);
-    auto* interaction = Singularity::Input::InteractionChannel::find(lawManager);
-    assert(interaction);
-    interaction->setEnabled(true);
-
-    float currentColor[3] = {1.0f, 1.0f, 1.0f};
-    double worldTime = 0.0;
-    SaveContext ctx;
-    ctx.camera = &camera;
-    ctx.mouseHandler = &mouseHandler;
-    ctx.currentColor = currentColor;
-    ctx.person = &player;
-    ctx.lawManager = &lawManager;
-    ctx.worldTime = &worldTime;
-    ctx.unpackForAuthoring = false;
-
     std::cout << "=== Boot hydration then load — the running app's order ===\n";
 
-    // THE POINT OF THIS TEST. Engine::initLogic does this before any world is
-    // loaded; no other chess test does, and that is why none of them could see
-    // the bug this guards.
-    zones.hydrateFromZoneStore();
+    // BootedEngineHarness runs hydrateFromZoneStore() in its constructor
+    // matching Engine::initLogic boot sequence.
+    TestSupport::BootedEngineHarness harness;
+    harness.loadWorld(filename);
 
-    zones.loadState(filename, ctx);
-    assert(!zones.zones().empty());
-    auto active = zones.zones()[zones.currentIndex()];
+    assert(!harness.zones.zones().empty());
+    auto active = harness.zones.zones()[harness.zones.currentIndex()];
     assert(active);
     check(active->getIdentifier() == "Chess",
           "active zone is Chess (got '" + active->getIdentifier() + "')");
@@ -198,13 +121,13 @@ int main() {
 
     // Straight down onto the e2 pawn, then onto e4 — a real press/release each,
     // through InteractionChannel::observe(), not a hand-published event.
-    click(interaction, lawManager, reachable,
+    click(harness.interaction, harness.lawManager, reachable,
           pawn->getPosition() + glm::vec3(0.0f, 5.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f));
     check(asBool(*pawn, "isSelected"),
           "clicking the pawn selects it (law-chess-click must not answer "
           "CONDITIONS FAILED on a piece)");
 
-    click(interaction, lawManager, reachable,
+    click(harness.interaction, harness.lawManager, reachable,
           glm::vec3(0.5f, 5.0f, -0.5f), glm::vec3(0.0f, -1.0f, 0.0f));
     const int gx = asInt(*pawn, "gridX"), gy = asInt(*pawn, "gridY");
     std::cout << "  pawn is at (" << gx << "," << gy << ")\n";

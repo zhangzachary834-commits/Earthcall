@@ -1,41 +1,15 @@
 // The gesture a Person actually makes, not the gesture a test finds
 // convenient to publish.
-//
-// chess_app_test.cpp hand-publishes ECA::Event{"object-clicked", ...} with a
-// subject it already knows is right — it never calls observe()/pickSurface()
-// at all. chess_click_geometry_test.cpp calls observe() but only moves the
-// pointer BEFORE the press, never between press and release. Neither can see
-// the defect CHESS_APP_EVERY_GESTURE_IS_A_DRAG_2026-08-26.md found: any
-// travel past clickSlopPixels between button-down and button-up is published
-// as object-drag-started/object-drag-ended, and until this pass no chess law
-// listened for a drag. This test reproduces the RUNNING APP's path — every
-// first mover EngineInit registers, the real render-matrix ray arithmetic,
-// a law tick every frame whether or not anything was clicked — the same
-// shape as scratch/probes/chess_app_full_loop_probe.cpp, promoted here with
-// the scenarios the handoff named: a human-scale jittery click, a real
-// piece-to-square drag, a drag released off the board, and the locked-cursor
-// crosshair made legible via `pointerLocked`.
 
-#include "ConstructedBeing/CategoryManager.hpp"
-#include "ConstructedBeing/Material/MaterialManager.hpp"
-#include "Person/Body/Body.hpp"
-#include "Person/Person.hpp"
-#include "Person/Soul/Soul.hpp"
+#include "support/test_harness.hpp"
 #include "Singularity/Core/CreationChannel.hpp"
 #include "Singularity/Input/Interaction/ControlPatterns.hpp"
-#include "Singularity/Input/Interaction/InteractionChannel.hpp"
 #include "Singularity/Input/Locomotion/LocomotionChannel.hpp"
-#include "Singularity/Input/Mouse/MouseHandler.hpp"
-#include "Singularity/Screen/Camera.hpp"
 #include "Singularity/Screen/ScreenChannel.hpp"
-#include "Singularity/Storage/SaveSystem.hpp"
 #include "Singularity/TransferPolicy.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
-#include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
-#include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ZonesOfEarth/Physics/DefaultPhysicsLaws.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
-#include "ZonesOfEarth/ZoneManager.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -46,9 +20,6 @@
 #include <filesystem>
 #include <string>
 #include <vector>
-
-extern MaterialManager materials;
-extern CategoryManager categories;
 
 using Sense = Singularity::Input::InteractionChannel::Sense;
 
@@ -93,9 +64,6 @@ Object* findObj(Zone& zone, const std::string& id) {
     return nullptr;
 }
 
-// EngineRender.cpp's matrices and InteractionChannel::step()'s ray/projection
-// arithmetic, parameterized instead of read from GLFW — see
-// chess_app_full_loop_probe.cpp, which this test was promoted from.
 struct RenderMatrices {
     GLdouble modelview[16]{};
     GLdouble projection[16]{};
@@ -180,71 +148,28 @@ int main() {
         SaveSystem::setSaveRoot(p.parent_path().parent_path().string());
     }
 
-    Core::Camera camera;
-    MouseHandler mouseHandler;
-    Soul soul("Player");
-    Body body("humanoid", "default");
-    Person player(std::move(soul), std::move(body), "default");
-    LawManager lawManager;
-    lawManager.connectToEventBus();
+    TestSupport::BootedEngineHarness harness;
 
-    ZoneManager zones;
-    Universe::instance().setProvider([&](std::vector<Singular*>& beings) {
-        if (zones.zones().empty()) return;
-        beings.push_back(&zones.active());
-        for (const auto& obj : zones.active().getOwnedObjects()) if (obj) beings.push_back(obj.get());
-        for (const auto& law : lawManager.getAll()) if (law) beings.push_back(law.get());
-        for (const auto& rel : zones.active().formation().relations().getAll()) if (rel) beings.push_back(rel.get());
-        for (const auto& material : materials.getAll()) if (material) beings.push_back(material.get());
-        for (const auto& category : categories.getAll()) if (category) beings.push_back(category.get());
-        beings.push_back(&TransferPolicy::instance());
-        beings.push_back(&player);
-        for (auto& zone : zones.zones()) {
-            if (zone.get() != &zones.active()) beings.push_back(zone.get());
-        }
-    });
-    Universe::instance().setRelationProvider([&](std::vector<Relation*>& relations) {
-        if (zones.zones().empty()) return;
-        for (const auto& rel : zones.active().formation().relations().getAll()) {
-            if (rel) relations.push_back(rel.get());
-        }
-    });
-
-    Singularity::Core::CreationChannel::syncRegister(lawManager);
-    Singularity::Input::LocomotionChannel::syncRegister(lawManager);
-    Singularity::Input::InteractionChannel::syncRegister(lawManager);
-    Singularity::Input::syncRegisterControlPatterns(lawManager, categories, player);
-    Singularity::Screen::ScreenChannel::syncRegister(lawManager);
+    Singularity::Core::CreationChannel::syncRegister(harness.lawManager);
+    Singularity::Input::LocomotionChannel::syncRegister(harness.lawManager);
+    Singularity::Input::syncRegisterControlPatterns(harness.lawManager, categories, harness.player);
+    Singularity::Screen::ScreenChannel::syncRegister(harness.lawManager);
     for (const auto& law : Physics::createDefaultPhysicsLaws()) {
         law->setEnabled(!Physics::getLegacyEngineEnabled());
-        lawManager.add(law);
+        harness.lawManager.add(law);
         if (law->activation() == Law::Activation::OnEvent) {
-            lawManager.bindTrigger(law->getIdentifier(), law->ecaLoop().eventType);
+            harness.lawManager.bindTrigger(law->getIdentifier(), law->ecaLoop().eventType);
         }
     }
-    Singularity::Core::syncRegisterCreatorTools(lawManager, player);
+    Singularity::Core::syncRegisterCreatorTools(harness.lawManager, harness.player);
 
-    auto* interaction = Singularity::Input::InteractionChannel::find(lawManager);
-    assert(interaction);
-
-    float currentColor[3] = {1.0f, 1.0f, 1.0f};
-    double worldTime = 0.0;
-    SaveContext ctx;
-    ctx.camera = &camera;
-    ctx.mouseHandler = &mouseHandler;
-    ctx.currentColor = currentColor;
-    ctx.person = &player;
-    ctx.lawManager = &lawManager;
-    ctx.worldTime = &worldTime;
-    ctx.unpackForAuthoring = false;
-
-    zones.loadState(filename, ctx);
-    auto active = zones.zones()[zones.currentIndex()];
+    harness.loadWorld(filename);
+    auto active = harness.zones.zones()[harness.zones.currentIndex()];
     assert(active);
 
     const int fbW = 2560, fbH = 1440;
     const float retina = 2.0f;
-    RenderMatrices m = renderMatrices(camera, fbW, fbH);
+    RenderMatrices m = renderMatrices(harness.camera, fbW, fbH);
 
     std::vector<Object*> reachable;
     for (const auto& obj : active->getOwnedObjects()) if (obj) reachable.push_back(obj.get());
@@ -260,17 +185,13 @@ int main() {
         sense.left = leftDown;
         sense.uiCaptured = false;
         rayFromPointer(m, px, py, retina, retina, cursorLocked, sense.rayOrigin, sense.rayDirection);
-        // pointerLocked is normally written by step() reading the real GLFW
-        // input mode; this harness calls observe() directly (no window, same
-        // as chess_app_full_loop_probe.cpp), so it stands in for that one
-        // line of step() to keep the fact honest for scenario 4 below.
-        interaction->pointerLocked = cursorLocked;
-        interaction->observe(sense, reachable);
+        harness.interaction->pointerLocked = cursorLocked;
+        harness.interaction->observe(sense, reachable);
         active->update(1.0f / 60.0f);
         active->applyFormationRelations();
-        lawManager.tick();
-        worldTime += 1.0 / 60.0;
-        Universe::instance().setClock(worldTime, 1.0 / 60.0);
+        harness.lawManager.tick();
+        harness.worldTime += 1.0 / 60.0;
+        Universe::instance().setClock(harness.worldTime, 1.0 / 60.0);
     };
 
     auto windowPos = [&](const glm::vec3& world, float& x, float& y) {
@@ -288,15 +209,12 @@ int main() {
 
         for (int i = 0; i < 8; ++i) frame(px, py, false); // idle, as after load
 
-        // Press on the pawn, drift 5px diagonally while held (a real trackpad
-        // click — the exact travel CHESS_APP_EVERY_GESTURE_IS_A_DRAG found
-        // fails at the old 6px slop), release near where it started.
         frame(px, py, true);
         frame(px + 3.0f, py + 3.0f, true);
         frame(px + 5.0f, py + 5.0f, true);
         frame(px + 5.0f, py + 5.0f, false);
 
-        check(!interaction->dragging, "5px of jitter does not classify as a drag");
+        check(!harness.interaction->dragging, "5px of jitter does not classify as a drag");
         check(asBool(*pawn, "isSelected"), "pawn selected after a jittery click");
         const double restY = asDouble(*pawn, "restY");
         check(std::fabs(pawn->getPosition().y - (restY + 0.18)) < 0.02,
@@ -327,7 +245,7 @@ int main() {
             const float t = static_cast<float>(i) / static_cast<float>(steps);
             frame(px + (ex - px) * t, py + (ey - py) * t, true);
         }
-        check(interaction->dragging, "moving 10+ px while held is classified as a drag");
+        check(harness.interaction->dragging, "moving 10+ px while held is classified as a drag");
         frame(ex, ey, false); // release over the destination square
 
         check(asInt(*pawn, "gridX") == 4 && asInt(*pawn, "gridY") == 4,
@@ -346,7 +264,7 @@ int main() {
         frame(px, py, false);
         frame(px, py, true);
         for (int i = 1; i <= 10; ++i) frame(px, py - 40.0f * i, true); // drag straight up, off the board
-        check(interaction->hoveredId.empty(), "dragging off the board hits nothing");
+        check(harness.interaction->hoveredId.empty(), "dragging off the board hits nothing");
         frame(px, py - 400.0f, false); // release in empty space
 
         check(asInt(*pawn, "gridX") == gx0 && asInt(*pawn, "gridY") == gy0,
@@ -357,12 +275,9 @@ int main() {
     {
         cursorLocked = true;
         frame(9999.0f, 9999.0f, false); // pointerX/Y are irrelevant while locked
-        check(interaction->pointerLocked, "InteractionChannel reports pointerLocked while GLFW_CURSOR_DISABLED would hold");
-        // The crosshair is the viewport centre regardless of pointerX/Y — this
-        // is the known, now-legible behaviour item 4 makes visible (a reticle
-        // in the running app), not a ray-targeting change.
+        check(harness.interaction->pointerLocked, "InteractionChannel reports pointerLocked while GLFW_CURSOR_DISABLED would hold");
         float cx, cy;
-        windowPos(camera.pos + camera.front * 5.0f, cx, cy);
+        windowPos(harness.camera.pos + harness.camera.front * 5.0f, cx, cy);
         (void)cx; (void)cy;
         cursorLocked = false;
     }
