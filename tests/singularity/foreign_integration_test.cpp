@@ -3,6 +3,8 @@
 #include "Singularity/Foreign/Sync/InferenceLawBridge.hpp"
 #include "Singularity/Foreign/Sync/ForeignSyncManager.hpp"
 #include "Singularity/Foreign/Adapters/MacOSAccessibilityAdapter.hpp"
+#include "Singularity/Foreign/API/EarthcallAPI.hpp"
+#include "Singularity/Foreign/API/SecurityManager.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"   // LawManager is declared here
 #include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
@@ -100,6 +102,17 @@ int main() {
         // Verify we can call act methods without crashing (scaffolds)
         adapter.executeClick("os-btn-123");
         adapter.executeMove("os-window-123", 10.0f, 20.0f);
+
+        // 5. Test EarthcallAPI camera position getter/setter
+        Integration::EarthcallAPI& api = Integration::getEarthcallAPI();
+        Integration::SecurityManager::instance().grantPermission(Integration::PermissionType::WORLD_ACCESS, "earthcall_api");
+
+        glm::vec3 testPos(10.0f, 20.0f, 30.0f);
+        bool setSuccess = api.setCameraPosition(testPos);
+        assert(setSuccess == true);
+
+        glm::vec3 readPos = api.getCameraPosition();
+        assert(readPos == testPos);
     }
 
     glfwDestroyWindow(window);

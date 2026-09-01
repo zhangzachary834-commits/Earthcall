@@ -1,6 +1,7 @@
 #include "Singularity/Foreign/API/EarthcallAPI.hpp"
 #include "Singularity/Foreign/API/SecurityManager.hpp"
 #include "Singularity/Screen/BrushSystem.hpp"
+#include "Singularity/Screen/Camera.hpp"
 #include "Singularity/FirstMoverOntology/Legacy/DesignSystem.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include <iostream>
@@ -235,8 +236,7 @@ bool EarthcallAPI::deleteObject(const std::string& id) {
 }
 
 glm::vec3 EarthcallAPI::getCameraPosition() {
-    // TODO: Get actual camera position from the game
-    return glm::vec3(0.0f, 0.0f, 0.0f);
+    return Core::Camera::instance().getPos();
 }
 
 bool EarthcallAPI::setCameraPosition(const glm::vec3& position) {
@@ -247,7 +247,7 @@ bool EarthcallAPI::setCameraPosition(const glm::vec3& position) {
     
     std::cout << "🌍 Setting camera position to (" 
               << position.x << ", " << position.y << ", " << position.z << ")" << std::endl;
-    // TODO: Actually set camera position
+    Core::Camera::instance().setPos(position);
     return true;
 }
 
