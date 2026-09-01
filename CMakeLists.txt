@@ -68,6 +68,7 @@ set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 if (NOT EMSCRIPTEN)
     FetchContent_MakeAvailable(glfw)
     set(GLFW_LIB glfw)
+    include_directories(${glfw_SOURCE_DIR}/include)
 endif()
 
 FetchContent_Declare(
@@ -157,6 +158,8 @@ if (NOT EMSCRIPTEN)
         ZLIB::ZLIB
         OpenSSL::SSL
         OpenSSL::Crypto
+        ${GLFW_LIB}
+        uuid
     )
 endif()
 if(APPLE AND NOT EMSCRIPTEN)
@@ -286,11 +289,25 @@ if(NOT EMSCRIPTEN)
                     OpenGL::GL
                 )
             else()
-                target_link_libraries(${TEST_NAME} PRIVATE earthcall_core)
+                target_link_libraries(${TEST_NAME} PRIVATE
+                    earthcall_core
+                    OpenSSL::SSL
+                    OpenSSL::Crypto
+                    ZLIB::ZLIB
+                    OpenGL::GL
+                    ${GLFW_LIB}
+                )
             endif()
         else()
             add_executable(${TEST_NAME} ${TEST_SOURCE})
-            target_link_libraries(${TEST_NAME} PRIVATE earthcall_core)
+            target_link_libraries(${TEST_NAME} PRIVATE
+                earthcall_core
+                OpenSSL::SSL
+                OpenSSL::Crypto
+                ZLIB::ZLIB
+                OpenGL::GL
+                ${GLFW_LIB}
+            )
         endif()
 
         # Shared fixtures (test_save_helper.hpp). Source files live under

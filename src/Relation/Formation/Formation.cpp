@@ -400,6 +400,7 @@ Formation::Topology Formation::resolveTopology() {
     // Formation is a category and its root grounds it at any size — or when it
     // binds at least three participants.
     std::vector<size_t> validCores;
+    validCores.reserve(components.size());
     for (size_t i = 0; i < components.size(); ++i) {
         const bool rooted = (static_cast<long long>(i) == rootComponent);
         if (rooted || components[i].size() >= 3) validCores.push_back(i);
