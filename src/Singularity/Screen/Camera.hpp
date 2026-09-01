@@ -3,6 +3,10 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 
+#ifndef GLdouble
+typedef double GLdouble;
+#endif
+
 namespace Core {
 
 class Camera {

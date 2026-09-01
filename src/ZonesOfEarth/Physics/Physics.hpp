@@ -8,6 +8,8 @@
 #include <string>
 #include <functional>
 
+class LawManager;
+
 // Zach: This should be moved to First Movers instead of being here because Physics is NOT a first-order property of Zones
 // Its a first mover developer tool to test Laws in because default Physics provides a familiar and stable interface to work in
 // and real physics should ultimately become purely runtime-created Law Formations.
@@ -241,4 +243,10 @@ namespace Physics {
     bool getGravityVisualization();
     void setGravityVisualizationDensity(int samplesPerAxis);
     int  getGravityVisualizationDensity();
+
+    // Query helper for First Mover law states ("physics-gravity", "physics-collision")
+    void setLawManager(LawManager* lm);
+    LawManager* getLawManager();
+    bool isGravityEnabled(const LawManager* lm = nullptr);
+    bool isCollisionEnabled(const LawManager* lm = nullptr);
 }

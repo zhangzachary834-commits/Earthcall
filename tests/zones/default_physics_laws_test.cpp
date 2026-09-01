@@ -32,6 +32,7 @@ int main() {
 
     const char* expected[] = {
         "physics-gravity",
+        "physics-collision",
         "physics-kinematics",
         "physics-acoustics",
         "physics-acoustics-envelope",

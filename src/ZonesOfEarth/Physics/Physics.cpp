@@ -3,8 +3,10 @@
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "Relation/RelationManager.hpp"
 #include "Singularity/Core/EventBus.hpp"
+#include "Singularity/Core/Engine.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include <glm/glm.hpp>
 #include <iostream>
 #include <algorithm>
@@ -206,7 +208,9 @@ namespace Physics {
             if (!laws.empty() && !appliedAny) {
                 // no-op; form has no forces this frame
             } else if (laws.empty()) {
-                applyForce(form, glm::vec3(0.0f, -gravityAccel * form.mass, 0.0f));
+                if (isGravityEnabled()) {
+                    applyForce(form, glm::vec3(0.0f, -gravityAccel * form.mass, 0.0f));
+                }
                 glm::vec3 dragForce = -airResistance * form.velocity;
                 applyForce(form, dragForce);
             }
@@ -315,6 +319,10 @@ namespace Physics {
         }
 
         // 4. Detect and resolve object-object collisions -------------------
+        if (!isCollisionEnabled()) {
+            return;
+        }
+
         // First update collision zones for all objects using latest transforms
         for(const auto& upObj : objects){
             if(!upObj) continue;
@@ -584,7 +592,7 @@ namespace Physics {
         // Preserve a single rigid form to represent the player/camera
         static RigidForm playerForm{ /*mass*/ 70.0f };
 
-        if (isFlying) {
+        if (isFlying || !isGravityEnabled()) {
             // Reset velocity when physics disabled or in non-physical modes
             playerForm.velocity = glm::vec3(0.0f);
             return;
@@ -666,6 +674,9 @@ namespace Physics {
     }
 
     void enforceCollisions(glm::vec3& position, const std::vector<std::shared_ptr<Object>>& objects) {
+        if (!isCollisionEnabled()) {
+            return;
+        }
         for (const auto& obj : objects) {
             if (!obj) continue;
             // Update collision zone based on current transform
@@ -837,4 +848,30 @@ namespace Physics {
     bool getGravityVisualization() { return g_visualizeGravity; }
     void setGravityVisualizationDensity(int samplesPerAxis) { g_vizDensity = std::max(2, samplesPerAxis); }
     int  getGravityVisualizationDensity() { return g_vizDensity; }
+
+    static LawManager* g_registeredLawManager = nullptr;
+
+    void setLawManager(LawManager* lm) { g_registeredLawManager = lm; }
+    LawManager* getLawManager() { return g_registeredLawManager; }
+
+    static bool checkFirstMoverLawEnabled(const LawManager* lm, const std::string& lawId) {
+        const LawManager* targetManager = lm ? lm : g_registeredLawManager;
+        if (!targetManager) {
+            targetManager = Core::Engine::instance().getLawManager();
+        }
+        if (targetManager) {
+            if (const Law* law = targetManager->find(lawId)) {
+                return law->isEnabled();
+            }
+        }
+        return true; // Default enabled if law manager or law not found
+    }
+
+    bool isGravityEnabled(const LawManager* lm) {
+        return checkFirstMoverLawEnabled(lm, "physics-gravity");
+    }
+
+    bool isCollisionEnabled(const LawManager* lm) {
+        return checkFirstMoverLawEnabled(lm, "physics-collision");
+    }
 }

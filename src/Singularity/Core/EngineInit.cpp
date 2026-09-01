@@ -57,6 +57,7 @@ void Engine::initLogic() {
     // it is the first thing that hits this. Allocating them here is the
     // minimum fix to make the engine boot at all -- not a redesign.
     if (!_lawManager) _lawManager = std::make_unique<LawManager>();
+    Physics::setLawManager(_lawManager.get());
     if (!_camera) _camera = std::make_unique<Camera>();
     if (!_mouseHandler) _mouseHandler = std::make_unique<MouseHandler>();
     if (!_keyboardHandler) _keyboardHandler = std::make_unique<KeyboardHandler>();

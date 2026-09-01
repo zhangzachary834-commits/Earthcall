@@ -221,6 +221,9 @@ void LocomotionChannel::step(Person& person, ::Core::Camera& camera, GLFWwindow*
     if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS) actualSpeed *= 2.5f;
     if (glfwGetKey(window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS) actualSpeed *= 0.3f;
 
+    const bool collisionEnabled = Physics::isCollisionEnabled();
+    const bool gravityEnabled = Physics::isGravityEnabled();
+
     if (canMove) {
         glm::vec3 forwardXZ = glm::normalize(glm::vec3(camera.front.x, 0.0f, camera.front.z));
         if (glm::length(forwardXZ) < 1e-3f) forwardXZ = glm::vec3(0.0f, 0.0f, -1.0f);
@@ -234,7 +237,7 @@ void LocomotionChannel::step(Person& person, ::Core::Camera& camera, GLFWwindow*
         if (glm::length(move) > 1e-4f) camera.pos += glm::normalize(move) * actualSpeed;
     }
 
-    {
+    if (collisionEnabled) {
         constexpr float RADIUS = 0.3f;
         glm::vec3 rightVec  = glm::normalize(glm::cross(camera.front, camera.up));
         glm::vec3 forwardXZ = glm::normalize(glm::vec3(camera.front.x, 0.0f, camera.front.z));
@@ -254,7 +257,7 @@ void LocomotionChannel::step(Person& person, ::Core::Camera& camera, GLFWwindow*
     }
 
     float supportY = 0.0f;
-    {
+    if (collisionEnabled) {
         const float feetY = camera.pos.y - eyeH;
         const float standTol = 0.05f;
         for (const auto& up : objects) {
@@ -288,17 +291,23 @@ void LocomotionChannel::step(Person& person, ::Core::Camera& camera, GLFWwindow*
             grounded = false;
             Core::EventBus::instance().publish(ECA::Event{"jump-started", &person, nullptr, std::time(nullptr)});
         }
-        person.velocity().y -= GRAVITY * dt;
+        if (gravityEnabled) {
+            person.velocity().y -= GRAVITY * dt;
+        } else {
+            person.velocity().y = 0.0f;
+        }
         camera.pos.y += person.velocity().y * dt;
     }
     _jumpKeyDownLast = jumpKeyDown;
 
-    if (camera.pos.y <= minEyeY) {
+    if (collisionEnabled && camera.pos.y <= minEyeY) {
         camera.pos.y = minEyeY;
         if (person.velocity().y < 0.0f) person.velocity().y = 0.0f;
         grounded = true;
-    } else {
+    } else if (collisionEnabled) {
         grounded = !flying && (camera.pos.y - minEyeY) <= 1e-3f;
+    } else {
+        grounded = false;
     }
     if (grounded && !groundedLast) {
         Core::EventBus::instance().publish(ECA::Event{"landed", &person, nullptr, std::time(nullptr)});
