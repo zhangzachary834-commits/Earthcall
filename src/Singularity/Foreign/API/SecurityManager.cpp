@@ -1,5 +1,7 @@
 #include "Singularity/Foreign/API/SecurityManager.hpp"
 #include "Singularity/Storage/SaveSystem.hpp"
+#include "Singularity/Core/EventBus.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -193,8 +195,15 @@ bool SecurityManager::isURLWhitelisted(const std::string& url) {
     }
     
     for (const auto& domain : _config.whitelistedDomains) {
-        if (url == domain || url.find(domain + "/") == 0 || url.find(domain + "?") == 0 || url.find(domain + "#") == 0) {
-            return true;
+        const size_t domainLen = domain.length();
+        if (url.size() >= domainLen && url.compare(0, domainLen, domain) == 0) {
+            if (url.size() == domainLen) {
+                return true;
+            }
+            const char nextChar = url[domainLen];
+            if (nextChar == '/' || nextChar == '?' || nextChar == '#') {
+                return true;
+            }
         }
     }
     return false;
@@ -421,7 +430,10 @@ void SecurityManager::logEvent(SecurityEventType type, const std::string& descri
     
     _securityLog.push_back(event);
     _sourceActivityCount[source]++;
-    
+
+    Core::EventBus::instance().publish(
+        ECA::Event{"security-event-logged", nullptr, nullptr, std::time(nullptr)});
+
     // Keep log size manageable
     if (_securityLog.size() > 10000) {
         _securityLog.erase(_securityLog.begin(), _securityLog.begin() + 1000);

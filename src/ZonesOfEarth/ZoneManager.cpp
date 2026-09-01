@@ -7,6 +7,7 @@
 #include "Singularity/Storage/Serialization.hpp"
 #include "Singularity/Storage/BinaryPack.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/LawAuditLogger.hpp"
+#include "Singularity/Core/Logger.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
 #include "ConstructedBeing/Material/Material.hpp"
 #include "ConstructedBeing/Material/MaterialManager.hpp"
@@ -48,9 +49,14 @@ void ZoneManager::switchTo(size_t index)
 {
     if (index < _zones.size())
     {
+        if (!_zones.empty() && _currentIndex < _zones.size() && _currentIndex != index) {
+            Core::EventBus::instance().publish(
+                ECA::Event{"zone-exited", _zones[_currentIndex].get(), nullptr, std::time(nullptr)});
+        }
+
         _currentIndex = index;
         std::cout << "🔀 Switching to zone [" << index << "]..." << std::endl;
-        
+
         // Repopulate active zone's world with global objects that belong to it or its parents
         std::vector<std::string> activeZones;
         std::string currentZoneId = _zones[_currentIndex]->getIdentifier();
@@ -82,7 +88,11 @@ void ZoneManager::switchTo(size_t index)
             }
         }
 
-        try { _zones[_currentIndex]->load(); } catch (...) { std::cerr << "⚠️  Zone load failed." << std::endl; }
+        try {
+            _zones[_currentIndex]->load();
+            Core::EventBus::instance().publish(
+                ECA::Event{"zone-loaded", _zones[_currentIndex].get(), nullptr, std::time(nullptr)});
+        } catch (...) { std::cerr << "⚠️  Zone load failed." << std::endl; }
         describeCurrent();
         // The zone is a being: laws hear arrival (subject: the zone itself).
         Core::EventBus::instance().publish(
@@ -855,7 +865,7 @@ void ZoneManager::saveStateWithLog(const std::string& customName, SaveContext& c
         SaveSystem::writeSaveDataAsync(deltaChunk, actualName + "_delta", ".ecsave", SaveSystem::SaveType::WORLD);
     }
     
-    ECA::LawAuditLogger::instance().setActiveWorld(actualName);
+    ECA::Logger::instance().setActiveWorld(actualName);
     logIo("SAVE (log) '" + actualName + "' -> " + path + ": " +
           std::to_string(ctx.lawManager->getAll().size()) + " law(s), " +
           std::to_string(ConceptRegistry::instance().getAll().size()) + " concept(s)");
@@ -865,7 +875,7 @@ void ZoneManager::saveStateWithLog(const std::string& customName, SaveContext& c
 // loadState
 // ------------------------------------------------------------------
 void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
-    ECA::LawAuditLogger::instance().setActiveWorld(filename);
+    ECA::Logger::instance().setActiveWorld(filename);
     
     std::filesystem::path path(filename);
     std::string name = path.stem().string();

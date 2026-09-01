@@ -230,9 +230,9 @@ public:
     // targets — should be addressable as `<owner>.authors`, not as whichever
     // number it happened to draw this session. Refuses an empty name rather
     // than leaving the being unnamed; returns false when it does.
-    bool setIdentifier(const std::string& id) {
-        if (id.empty()) return false;
-        _formationId = id;
+    bool setIdentifier(const std::string& identifier) {
+        if (identifier.empty()) return false;
+        _formationId = identifier;
         return true;
     }
 

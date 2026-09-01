@@ -1,4 +1,5 @@
 #include "AsyncStateLogger.hpp"
+#include "Singularity/Core/Logger.hpp"
 
 // Scaffold implementation
 
@@ -22,8 +23,22 @@ void AsyncStateLogger::flush() {
         return;
     }
     
-    // In a real implementation: serialize _buffer to JSON/Binary and send over 
-    // network/IPC to the Python ML First Mover backend running in Singularity/Network/py/
+    nlohmann::json entries = nlohmann::json::array();
+    for (const auto& entry : _buffer) {
+        entries.push_back({
+            {"entityId", entry.entityId},
+            {"key", entry.key},
+            {"value", entry.value},
+            {"timestamp", entry.timestamp}
+        });
+    }
+
+    ECA::Logger::instance().log(
+        ECA::LogCategory::State,
+        "STATE_SYNC",
+        "Flushed " + std::to_string(_buffer.size()) + " state events",
+        nlohmann::json{{"count", _buffer.size()}, {"entries", entries}}
+    );
 
     _buffer.clear();
 }

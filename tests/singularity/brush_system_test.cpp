@@ -1,5 +1,7 @@
 #include "Singularity/Screen/BrushSystem.hpp"
 #include "Singularity/Screen/Renderer.hpp"
+#include "Singularity/Foreign/API/EarthcallAPI.hpp"
+#include "Singularity/Foreign/API/SecurityManager.hpp"
 #include <cassert>
 #include <iostream>
 #include <vector>
@@ -7,26 +9,6 @@
 
 class DummyRenderer : public Renderer {
 public:
-    Backend backend() const override { return Backend::OpenGL; }
-    void beginFrame(uint32_t, uint32_t, const glm::vec4&) override {}
-    void endFrame() override {}
-    void setCamera(const glm::mat4&, const glm::mat4&, const glm::vec3&) override {}
-    void setModel(const glm::mat4&) override {}
-    void pushModel(const glm::mat4&) override {}
-    void popModel() override {}
-    const glm::mat4& model() const override { static glm::mat4 m(1.0f); return m; }
-    const glm::mat4& view() const override { static glm::mat4 m(1.0f); return m; }
-    const glm::mat4& projection() const override { static glm::mat4 m(1.0f); return m; }
-    const glm::vec3& cameraPosition() const override { static glm::vec3 p(0.0f); return p; }
-    bool zeroToOneDepth() const override { return false; }
-    glm::ivec4 viewport() const override { return glm::ivec4(0, 0, 512, 512); }
-    void setWireframe(bool) override {}
-    bool wireframe() const override { return false; }
-    void setLightingEnabled(bool) override {}
-    bool lightingEnabled() const override { return false; }
-    void setLight(const glm::vec3&, const glm::vec3&, const glm::vec3&, const glm::vec3&) override {}
-    void setHeightGridDdaEnabled(bool) override {}
-    bool heightGridDdaEnabled() const override { return false; }
     void drawMesh(const geom::TessMesh&, const RenderMaterial&) override {}
     void drawImplicit(const geom::SdfNode&, const glm::vec3&, const RenderMaterial&, const geom::FieldNode*, uint64_t, uint32_t, const geom::HeightGrid*) override {}
     void drawLines(const std::vector<std::pair<glm::vec3, glm::vec3>>&, const glm::vec4&, float, Blend) override {}
@@ -39,10 +21,6 @@ public:
     void end2D() override {}
     void drawLines2D(const std::vector<glm::vec2>&, const glm::vec4&, float) override {}
     void drawTris2D(const std::vector<glm::vec2>&, const glm::vec4&) override {}
-    void drawTexQuad2D(TextureHandle, const glm::vec2&, const glm::vec2&, const glm::vec2&, const glm::vec2&, const glm::vec4&) override {}
-    void drawParticles(const std::vector<glm::vec3>&, const glm::vec4&, float) override {}
-    const FrameStats& frameStats() const override { static FrameStats s{}; return s; }
-    void resetFrameStats() override {}
 };
 
 int main() {
@@ -114,6 +92,23 @@ int main() {
               << ms_lvalue << " ms (" << (ms_lvalue / benchIterations) << " ms/op)" << std::endl;
     std::cout << "rvalue replaceLayers move execution total: "
               << ms_rvalue << " ms (" << (ms_rvalue / benchIterations) << " ms/op)" << std::endl;
+
+    // 4. Test clearLayer and clearAllLayers
+    brushSystem.paintDab(glm::vec2(0.5f, 0.5f), glm::vec3(1.0f, 0.0f, 0.0f), 1.0f);
+    int centerIdx = (256 * 512 + 256) * 4 + 3;
+    assert(brushSystem.getLayers()[brushSystem.getActiveLayer()].pixels[centerIdx] > 0);
+    brushSystem.clearLayer(brushSystem.getActiveLayer());
+    assert(brushSystem.getLayers()[brushSystem.getActiveLayer()].pixels[centerIdx] == 0);
+
+    // 5. Test EarthcallAPI::clearBrushLayer
+    Integration::SecurityManager::instance().grantPermission(Integration::PermissionType::BRUSH_SYSTEM, "earthcall_api");
+    Integration::EarthcallAPI api;
+    api.setBrushSystem(&brushSystem);
+    brushSystem.paintDab(glm::vec2(0.5f, 0.5f), glm::vec3(0.0f, 1.0f, 0.0f), 1.0f);
+    assert(brushSystem.getLayers()[brushSystem.getActiveLayer()].pixels[centerIdx] > 0);
+    bool cleared = api.clearBrushLayer("active");
+    assert(cleared);
+    assert(brushSystem.getLayers()[brushSystem.getActiveLayer()].pixels[centerIdx] == 0);
 
     std::cout << "BrushSystem unit test passed!" << std::endl;
     return 0;

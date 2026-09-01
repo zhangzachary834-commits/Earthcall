@@ -73,8 +73,7 @@ int g_checked = 0;
 
 void fail(const std::string& being, const std::string& what, const std::string& why) {
     ++g_failures;
-    std::printf("  FAILED  %-22s %-24s %s
-", being.c_str(), what.c_str(), why.c_str());
+    std::printf("  FAILED  %-22s %-24s %s\n", being.c_str(), what.c_str(), why.c_str());
 }
 
 // ---------------------------------------------------------------------------
@@ -218,8 +217,7 @@ void audit(const std::string& beingName, Singular& being) {
                  "registers no properties and is not on the sealed register — either "
                  "register its state or name it in kSealedRegister with a reason");
         } else {
-            std::printf("  sealed  %-22s registers nothing (see kSealedRegister)
-",
+            std::printf("  sealed  %-22s registers nothing (see kSealedRegister)\n",
                         beingName.c_str());
         }
         return;
@@ -231,8 +229,7 @@ void audit(const std::string& beingName, Singular& being) {
         bool onlyUniversalTelos = properties.size() == 1
             && properties[0] && properties[0]->name() == "telos";
         if (onlyUniversalTelos) {
-            std::printf("  sealed  %-22s only universal `telos`; own state still {}
-",
+            std::printf("  sealed  %-22s only universal `telos`; own state still {}\n",
                         beingName.c_str());
         } else {
             fail(beingName, "(sealed register)",
@@ -268,8 +265,7 @@ void audit(const std::string& beingName, Singular& being) {
 
         if (accepted && !roundTripped) {
             if (isWriteExempt(beingName, property->name())) {
-                std::printf("  noted   %-22s %-24s clamped or lossy, see kWriteExemptions
-",
+                std::printf("  noted   %-22s %-24s clamped or lossy, see kWriteExemptions\n",
                             beingName.c_str(), property->name().c_str());
             } else {
                 fail(beingName, property->name(),
@@ -301,17 +297,13 @@ void auditReachability(const std::string& beingName, Singular& being,
 int main() {
     // Mirrors channel_paths_test: a context exists before any being that may
     // touch the renderer is constructed.
-    if (!glfwInit()) { std::fprintf(stderr, "no_black_box_test: no GLFW
-"); return 1; }
+    if (!glfwInit()) { std::fprintf(stderr, "no_black_box_test: no GLFW\n"); return 1; }
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
     GLFWwindow* window = glfwCreateWindow(64, 64, "no-black-box", nullptr, nullptr);
-    if (!window) { std::fprintf(stderr, "no_black_box_test: no GL context
-"); glfwTerminate(); return 1; }
+    if (!window) { std::fprintf(stderr, "no_black_box_test: no GL context\n"); glfwTerminate(); return 1; }
     glfwMakeContextCurrent(window);
 
-    std::printf("no_black_box_test — the sixth refusal (NO_BLACK_BOX.md)
-
-");
+    std::printf("no_black_box_test — the sixth refusal (NO_BLACK_BOX.md)\n\n");
 
     // ---- beings that must have a vocabulary -------------------------------
     {
@@ -344,9 +336,7 @@ int main() {
     }
 
     // ---- D. reachability from the authoring surface -----------------------
-    std::printf("
-  -- registered means reachable (inverse of channel_paths_test) --
-");
+    std::printf("\n  -- registered means reachable (inverse of channel_paths_test) --\n");
     std::set<std::string> advertised;
     for (const Rendering::PathOption& option : Rendering::knownPathOptions()) {
         advertised.insert(option.path);
@@ -379,9 +369,7 @@ int main() {
         auditReachability("Person", person, advertised);
     }
 
-    std::printf("
-no_black_box_test: %d property writes probed, %d failures
-",
+    std::printf("\nno_black_box_test: %d property writes probed, %d failures\n",
                 g_checked, g_failures);
 
     glfwDestroyWindow(window);
@@ -389,11 +377,9 @@ no_black_box_test: %d property writes probed, %d failures
 
     if (g_failures > 0) {
         std::printf("no_black_box_test: FAILED — the substrate is holding state where "
-                    "no law can reach it
-");
+                    "no law can reach it\n");
         return 1;
     }
-    std::printf("no_black_box_test: ALL OK
-");
+    std::printf("no_black_box_test: ALL OK\n");
     return 0;
 }

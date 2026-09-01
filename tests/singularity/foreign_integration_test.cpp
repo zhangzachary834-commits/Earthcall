@@ -3,6 +3,7 @@
 #include "Singularity/Foreign/Sync/InferenceLawBridge.hpp"
 #include "Singularity/Foreign/Sync/ForeignSyncManager.hpp"
 #include "Singularity/Foreign/Adapters/MacOSAccessibilityAdapter.hpp"
+#include "Singularity/Foreign/Web/WindowManager.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"   // LawManager is declared here
 #include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
@@ -100,6 +101,35 @@ int main() {
         // Verify we can call act methods without crashing (scaffolds)
         adapter.executeClick("os-btn-123");
         adapter.executeMove("os-window-123", 10.0f, 20.0f);
+
+        // 5. Test Integration::WindowManager and Integration::ExternalWindow
+        Integration::WindowManager& wm = Integration::WindowManager::instance();
+        Integration::ExternalWindow::Config winConfig;
+        winConfig.name = "test_overlay";
+        winConfig.process_name = "test_proc";
+        winConfig.window_title = "Test Overlay Window";
+        winConfig.allow_overlay = true;
+
+        assert(wm.registerWindow(winConfig) == true);
+        assert(wm.registerWindow(winConfig) == false); // Duplicate registration fails
+
+        Integration::ExternalWindow* extWin = wm.getWindow("test_overlay");
+        assert(extWin != nullptr);
+        assert(extWin->isOverlayMode() == false);
+
+        extWin->setOverlayMode(true);
+        assert(extWin->isOverlayMode() == true);
+        assert(wm.isAnyWindowOverlayed() == true);
+
+        extWin->setTransparency(0.5f);
+        assert(extWin->getTransparency() == 0.5f);
+
+        extWin->setOverlayMode(false);
+        assert(extWin->isOverlayMode() == false);
+        assert(wm.isAnyWindowOverlayed() == false);
+
+        wm.unregisterWindow("test_overlay");
+        assert(wm.getWindow("test_overlay") == nullptr);
     }
 
     glfwDestroyWindow(window);

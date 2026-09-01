@@ -1,5 +1,6 @@
 #include "PersonDatabase.hpp"
 #include "Singularity/Storage/SaveSystem.hpp"
+#include "Singularity/Core/Logger.hpp"
 #include <iostream>
 #include <fstream>
 #include <filesystem>
@@ -20,6 +21,7 @@ void PersonDatabase::savePerson(const Person& person) {
     // Save to the PERSON save type in SaveSystem
     SaveSystem::writeSaveData(j, person.getDisplayName(), SaveSystem::SaveType::PERSON);
     
+    ECA::Logger::instance().log(ECA::LogCategory::Person, "PROFILE_SAVE", "Successfully saved Person profile for: " + person.getDisplayName(), nlohmann::json{{"person", person.getDisplayName()}});
     std::cout << "Successfully saved Person profile for: " << person.getDisplayName() << std::endl;
 }
 

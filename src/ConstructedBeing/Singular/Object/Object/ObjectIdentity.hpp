@@ -80,7 +80,7 @@ inline std::string generateConceptMemberId(const std::string& conceptId, std::si
 
 // Ensure a restored object ID advances the counter past itself
 // This prevents ID collisions between loaded objects and new objects
-inline void claimIdentifierAtLeast(const std::string& id) {
+inline void claimIdentifierAtLeast(const std::string& identifier) {
     // Two forms carry a number drawn from the shared counter: "object-N" and
     // "<conceptId>.birth-N.member-M". A restored id of EITHER form has to push
     // the counter past itself, or the next spawn reissues an identity that is
@@ -88,16 +88,16 @@ inline void claimIdentifierAtLeast(const std::string& id) {
     std::size_t numberStart = std::string::npos;
 
     const std::string prefix = "object-";
-    if (id.rfind(prefix, 0) == 0) {
+    if (identifier.rfind(prefix, 0) == 0) {
         numberStart = prefix.size();
     } else {
         const std::string birth = conceptMemberIdPrefix();
-        const std::size_t at = id.find(birth);
+        const std::size_t at = identifier.find(birth);
         if (at != std::string::npos) numberStart = at + birth.size();
     }
     if (numberStart == std::string::npos) return;   // not a counter-borne id
 
-    const uint64_t n = std::strtoull(id.c_str() + numberStart, nullptr, 10);
+    const uint64_t n = std::strtoull(identifier.c_str() + numberStart, nullptr, 10);
     uint64_t current = getNextObjectId().load();
 
     while (n + 1 > current &&

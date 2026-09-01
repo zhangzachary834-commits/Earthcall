@@ -8,7 +8,6 @@ endif()
 set(CMAKE_PREFIX_PATH "${CMAKE_CURRENT_SOURCE_DIR}/local_deps" CACHE PATH "" FORCE)
 set(CMAKE_INCLUDE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/local_deps/include" CACHE PATH "" FORCE)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/local_deps/include)
-
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
@@ -31,11 +30,13 @@ endif()
 
 # We need OpenGL, OpenSSL, ZLIB
 find_package(OpenGL)
+
 if(NOT APPLE AND NOT EXISTS "/usr/include/GL/gl.h")
     set(OpenGL_FOUND FALSE CACHE BOOL "" FORCE)
 endif()
 find_library(UUID_LIB uuid)
 find_package(Threads REQUIRED)
+
 if (NOT EMSCRIPTEN)
     find_package(ZLIB REQUIRED)
     find_package(OpenSSL REQUIRED)
@@ -100,6 +101,9 @@ if (NOT EMSCRIPTEN)
         FetchContent_MakeAvailable(glfw)
         set(GLFW_LIB glfw)
     endif()
+
+    include_directories(${glfw_SOURCE_DIR}/include)
+
 endif()
 
 FetchContent_Declare(
@@ -177,7 +181,7 @@ if(NOT EMSCRIPTEN AND OpenGL_FOUND)
     list(APPEND IMGUI_SOURCES ${IMGUI_DIR}/backends/imgui_impl_opengl2.cpp)
 endif()
 
-# Compile WebIntegration and RealWebView as Objective-C++ since they use macOS APIs
+# Compile WebIntegration and RealWebView as Objective-C++ since they use macOS APIs on Apple
 if(APPLE)
     set_source_files_properties(src/Singularity/Foreign/Web/RealWebView.cpp PROPERTIES LANGUAGE OBJCXX)
     set_source_files_properties(src/Singularity/Foreign/Web/WebIntegration.cpp PROPERTIES LANGUAGE OBJCXX)
@@ -199,6 +203,12 @@ if (NOT EMSCRIPTEN)
         Threads::Threads
         ${UUID_LIB}
     )
+    if (NOT APPLE)
+        # <uuid/uuid.h>'s symbols (uuid_generate/uuid_unparse, used by
+        # Lexeme.cpp) ship in libSystem on Apple platforms; elsewhere they
+        # need util-linux's separate libuuid.
+        target_link_libraries(earthcall_core PUBLIC uuid)
+    endif()
 endif()
 if(APPLE AND NOT EMSCRIPTEN)
     target_link_libraries(earthcall_core PUBLIC 
@@ -254,7 +264,7 @@ if(NOT EMSCRIPTEN)
 
     if(APPLE)
         target_link_libraries(earthcall_webgpu PRIVATE
-            OpenGL::GL
+            $<$<BOOL:${OPENGL_FOUND}>:OpenGL::GL>
             ${WGPU_NATIVE_DIR}/lib/libwgpu_native.a
             ${GLFW_LIB}
             ${COCOA_FW}
@@ -354,6 +364,17 @@ if(NOT EMSCRIPTEN)
             list(APPEND ALL_ACTIVE_TEST_TARGETS ${TEST_NAME})
         endif()
         add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
+
+        # ctest's default WORKING_DIRECTORY for an add_test() target is the
+        # build tree, not the source tree. synthesis_studio_app_test opens an
+        # authored save by a bare "saves/..." path (test_observation_load_test's
+        # equivalent fixture is optional and skips when absent; this one is the
+        # test's actual subject, so it must resolve), so it needs the source
+        # root as its CWD like the `lag` custom target above already gets.
+        if (${TEST_NAME} STREQUAL "synthesis_studio_app_test")
+            set_tests_properties(${TEST_NAME} PROPERTIES
+                WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+        endif()
 
         # The lag probe measures durations, so it must not be measured while
         # three other tests are fighting it for the machine: RUN_SERIAL makes
