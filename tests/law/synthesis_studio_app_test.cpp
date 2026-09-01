@@ -224,6 +224,23 @@ int main() {
         std::cout << "[Test 4 PASS] Art stroke drawing and behavior laws successfully applied." << std::endl;
     }
 
+    // -----------------------------------------------------------------------
+    // Test 5: Verify Authored Laws Count & End-to-End Serialization
+    // -----------------------------------------------------------------------
+    {
+        const auto& lawsJson = worldJson["authoredLaws"]["laws"];
+        assert(lawsJson.size() == 11);
+
+        bool foundDrawToggle = false;
+        bool foundSliderSync = false;
+        for (const auto& law : lawsJson) {
+            if (law["id"] == "law-studio-draw-mode-toggle") foundDrawToggle = true;
+            if (law["id"] == "law-studio-slider-sync") foundSliderSync = true;
+        }
+        assert(foundDrawToggle && foundSliderSync);
+        std::cout << "[Test 5 PASS] All 11 authored laws verified in JSON serialization." << std::endl;
+    }
+
     std::cout << "=== ALL SYNTHESIS STUDIO INTEGRATION TESTS PASSED ===" << std::endl;
     return 0;
 }
