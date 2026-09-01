@@ -15,6 +15,7 @@
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
 #include "Singularity/Core/EventBus.hpp"
+#include "Singularity/Core/Logger.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -271,6 +272,7 @@ void Person::login(const std::string& sessionId) {
         Core::EventBus::instance().publish(event);
         Core::EventBus::instance().publish(ECA::Event{"person-logged-in", this, nullptr, Moment::now()});
 
+        ECA::Logger::instance().log(ECA::LogCategory::Person, "LOGIN", getDisplayName() + " logged in (Session: " + _currentSession + ")", nlohmann::json{{"person", getDisplayName()}, {"session", _currentSession}});
         std::cout << "👤 " << getDisplayName() << " logged in (Session: " << _currentSession << ")" << std::endl;
     }
 }
@@ -287,6 +289,7 @@ void Person::logout(const std::string& sessionId) {
         _isLoggedIn = false;
         _currentSession.clear();
         
+        ECA::Logger::instance().log(ECA::LogCategory::Person, "LOGOUT", getDisplayName() + " logged out (Session: " + session + ")", nlohmann::json{{"person", getDisplayName()}, {"session", session}});
         std::cout << "👤 " << getDisplayName() << " logged out (Session: " << session << ")" << std::endl;
     }
 }
@@ -300,6 +303,7 @@ void Person::joinZone(Zone& zone) {
         Core::EventBus::instance().publish(event);
         Core::EventBus::instance().publish(ECA::Event{"person-joined-zone", this, &zone, Moment::now()});
 
+        ECA::Logger::instance().log(ECA::LogCategory::Person, "ZONE_JOIN", getDisplayName() + " joined zone: " + zone.name(), nlohmann::json{{"person", getDisplayName()}, {"zone", zone.name()}});
         std::cout << "👤 " << getDisplayName() << " joined zone: " << zone.name() << std::endl;
     }
 }
@@ -313,6 +317,7 @@ void Person::leaveZone(Zone& zone) {
         Core::EventBus::instance().publish(event);
         Core::EventBus::instance().publish(ECA::Event{"person-left-zone", this, &zone, Moment::now()});
 
+        ECA::Logger::instance().log(ECA::LogCategory::Person, "ZONE_LEAVE", getDisplayName() + " left zone: " + zone.name(), nlohmann::json{{"person", getDisplayName()}, {"zone", zone.name()}});
         std::cout << "👤 " << getDisplayName() << " left zone: " << zone.name() << std::endl;
     }
 }

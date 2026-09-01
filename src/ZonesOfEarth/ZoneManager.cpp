@@ -7,6 +7,7 @@
 #include "Singularity/Storage/Serialization.hpp"
 #include "Singularity/Storage/BinaryPack.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/LawAuditLogger.hpp"
+#include "Singularity/Core/Logger.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
 #include "ConstructedBeing/Material/Material.hpp"
 #include "ConstructedBeing/Material/MaterialManager.hpp"
@@ -864,7 +865,7 @@ void ZoneManager::saveStateWithLog(const std::string& customName, SaveContext& c
         SaveSystem::writeSaveDataAsync(deltaChunk, actualName + "_delta", ".ecsave", SaveSystem::SaveType::WORLD);
     }
     
-    ECA::LawAuditLogger::instance().setActiveWorld(actualName);
+    ECA::Logger::instance().setActiveWorld(actualName);
     logIo("SAVE (log) '" + actualName + "' -> " + path + ": " +
           std::to_string(ctx.lawManager->getAll().size()) + " law(s), " +
           std::to_string(ConceptRegistry::instance().getAll().size()) + " concept(s)");
@@ -874,7 +875,7 @@ void ZoneManager::saveStateWithLog(const std::string& customName, SaveContext& c
 // loadState
 // ------------------------------------------------------------------
 void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
-    ECA::LawAuditLogger::instance().setActiveWorld(filename);
+    ECA::Logger::instance().setActiveWorld(filename);
     
     std::filesystem::path path(filename);
     std::string name = path.stem().string();
