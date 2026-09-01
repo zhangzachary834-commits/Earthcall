@@ -729,6 +729,7 @@ def build_world():
         ["control-activated"],
         compare("buttonRole", 0, pv("string", "spawn-orb")),
         seq(
+            map_path("@state.studio.spawnCount", {"c": "@state.studio.spawnCount"}, offset_terms("c", 1.0)),
             create_object(
                 1, # Sphere
                 "interactive.harmonic.orb",
@@ -757,8 +758,38 @@ def build_world():
         ["control-activated"],
         compare("buttonRole", 0, pv("string", "toggle-theme")),
         seq(
+            map_path("@state.studio.themeNight", {"tn": "@state.studio.themeNight"}, offset_terms("tn", 1.0)),
             play_audio("@state.studio.soundFreq", "@state.studio.soundAmp", "bell"),
             publish("theme-toggled", "state.studio"),
+        ),
+        scope=0,
+    )
+
+    # 4b. Domain Law: Draw Mode Toggle Button
+    add_law(
+        "law-studio-draw-mode-toggle",
+        "Studio: Toggle Canvas Drawing Mode on Button Click",
+        0,
+        ["control-activated"],
+        compare("buttonRole", 0, pv("string", "draw-mode")),
+        seq(
+            set_path("@creation-channel.active3DMode", pv("string", "Draw")),
+            play_audio("@state.studio.soundFreq", "@state.studio.soundAmp", "crystal"),
+            publish("draw-mode-toggled", "state.studio"),
+        ),
+        scope=0,
+    )
+
+    # 4c. Domain Law: Slider Sync and Pulse Rate Mapping
+    add_law(
+        "law-studio-slider-sync",
+        "Studio: Sync Pulse Rate from Slider Value",
+        1, # WhileTrue continuous sync
+        [],
+        related("instance-of", "category.control.slider"),
+        seq(
+            map_path("@state.studio.pulseRate", {"v": "controlValue"}, copy_terms("v")),
+            map_path("position.x", {"v": "controlValue"}, offset_terms("v", -1.6)),
         ),
         scope=0,
     )
