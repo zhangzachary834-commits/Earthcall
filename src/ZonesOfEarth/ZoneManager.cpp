@@ -48,9 +48,14 @@ void ZoneManager::switchTo(size_t index)
 {
     if (index < _zones.size())
     {
+        if (!_zones.empty() && _currentIndex < _zones.size() && _currentIndex != index) {
+            Core::EventBus::instance().publish(
+                ECA::Event{"zone-exited", _zones[_currentIndex].get(), nullptr, std::time(nullptr)});
+        }
+
         _currentIndex = index;
         std::cout << "🔀 Switching to zone [" << index << "]..." << std::endl;
-        
+
         // Repopulate active zone's world with global objects that belong to it or its parents
         std::vector<std::string> activeZones;
         std::string currentZoneId = _zones[_currentIndex]->getIdentifier();
@@ -82,7 +87,11 @@ void ZoneManager::switchTo(size_t index)
             }
         }
 
-        try { _zones[_currentIndex]->load(); } catch (...) { std::cerr << "⚠️  Zone load failed." << std::endl; }
+        try {
+            _zones[_currentIndex]->load();
+            Core::EventBus::instance().publish(
+                ECA::Event{"zone-loaded", _zones[_currentIndex].get(), nullptr, std::time(nullptr)});
+        } catch (...) { std::cerr << "⚠️  Zone load failed." << std::endl; }
         describeCurrent();
         // The zone is a being: laws hear arrival (subject: the zone itself).
         Core::EventBus::instance().publish(

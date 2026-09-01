@@ -3,7 +3,10 @@
 #include "Singularity/Screen/BrushSystem.hpp"
 #include "Singularity/FirstMoverOntology/Legacy/DesignSystem.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
+#include "Singularity/Core/EventBus.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
 #include <iostream>
+#include <ctime>
 namespace Integration {
 
 EarthcallAPI::EarthcallAPI() {
@@ -361,6 +364,9 @@ void EarthcallAPI::_notifyEvent(const std::string& event_type, const std::string
     if (it != _callbacks.end()) {
         it->second(data);
     }
+    // A foreign caller's named event, admitted to Law under its own name -
+    // same bridging role as Person::raiseEvent, but for this Foreign channel.
+    Core::EventBus::instance().publish(ECA::Event{event_type, nullptr, nullptr, std::time(nullptr)});
 }
 
 // Global API instance

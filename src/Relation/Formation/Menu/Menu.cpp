@@ -1,7 +1,10 @@
 #include "Menu.hpp"
+#include "Singularity/Core/EventBus.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
 #include <GLFW/glfw3.h>
 #include <algorithm>
 #include <cstdio>
+#include <ctime>
 #include <iostream>
 #include <string>
 
@@ -54,9 +57,19 @@ void Menu::addOption(const std::string& label, int key, std::function<void()> ac
     fflush(stdout);
 }
 
-void Menu::open() { openState = true; }
-void Menu::close() { openState = false; }
-void Menu::toggle() { openState = !openState; }
+void Menu::open() {
+    openState = true;
+    Core::EventBus::instance().publish(ECA::Event{"menu-opened", nullptr, nullptr, std::time(nullptr)});
+}
+void Menu::close() {
+    openState = false;
+    Core::EventBus::instance().publish(ECA::Event{"menu-closed", nullptr, nullptr, std::time(nullptr)});
+}
+void Menu::toggle() {
+    openState = !openState;
+    Core::EventBus::instance().publish(
+        ECA::Event{openState ? "menu-opened" : "menu-closed", nullptr, nullptr, std::time(nullptr)});
+}
 bool Menu::isOpen() const { return openState; }
 
 namespace {
