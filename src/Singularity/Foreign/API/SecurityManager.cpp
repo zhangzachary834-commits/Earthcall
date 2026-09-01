@@ -195,8 +195,15 @@ bool SecurityManager::isURLWhitelisted(const std::string& url) {
     }
     
     for (const auto& domain : _config.whitelistedDomains) {
-        if (url == domain || url.find(domain + "/") == 0 || url.find(domain + "?") == 0 || url.find(domain + "#") == 0) {
-            return true;
+        const size_t domainLen = domain.length();
+        if (url.size() >= domainLen && url.compare(0, domainLen, domain) == 0) {
+            if (url.size() == domainLen) {
+                return true;
+            }
+            const char nextChar = url[domainLen];
+            if (nextChar == '/' || nextChar == '?' || nextChar == '#') {
+                return true;
+            }
         }
     }
     return false;
