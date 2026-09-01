@@ -9,7 +9,7 @@ it is bad engineering, but because it is engineering for a different kind of sys
 Don't use subagents because they tend to take up an enormous amount of tokens (120k just for basic lookups, which kills my usage quotas). 
 
 ---
-## The Six Refusals.
+## The Seven Refusals.
 Zach: I had Opus 5 write these because they came up constantly. Learn them cold; everything else is detail.
 1. **No new C++ class for a domain noun.** Not `RobotEntity`, not `Vehicle`, not `Tree`,
    not `Category`. This principle also extends to hardcoded fields (e.g., `health` or `inventory` on a `Person`). Domain things and their state are *authored in-world* as data, never carved into the

@@ -195,19 +195,25 @@ else()
     target_compile_definitions(earthcall_core PUBLIC NO_OPENGL_RENDERER GLFW_INCLUDE_NONE)
 endif()
 if (NOT EMSCRIPTEN)
-    target_link_libraries(earthcall_core PUBLIC 
+    target_link_libraries(earthcall_core PUBLIC
         ${GLFW_LIB}
         ZLIB::ZLIB
-        ${OPENSSL_LIBRARIES}
+        OpenSSL::SSL
+        OpenSSL::Crypto
         ${CMAKE_DL_LIBS}
         Threads::Threads
-        ${UUID_LIB}
     )
     if (NOT APPLE)
         # <uuid/uuid.h>'s symbols (uuid_generate/uuid_unparse, used by
-        # Lexeme.cpp) ship in libSystem on Apple platforms; elsewhere they
-        # need util-linux's separate libuuid.
-        target_link_libraries(earthcall_core PUBLIC uuid)
+        # Lexeme.cpp) ship in libSystem on Apple platforms, so UUID_LIB is
+        # NOTFOUND there and must not be linked (or even referenced
+        # unconditionally — CMake errors at generate time on a NOTFOUND
+        # variable used in target_link_libraries). Elsewhere they need
+        # util-linux's separate libuuid.
+        if (NOT UUID_LIB)
+            message(FATAL_ERROR "libuuid not found (required by Lexeme.cpp's uuid_generate on non-Apple platforms)")
+        endif()
+        target_link_libraries(earthcall_core PUBLIC ${UUID_LIB})
     endif()
 endif()
 if(APPLE AND NOT EMSCRIPTEN)
@@ -351,7 +357,9 @@ if(NOT EMSCRIPTEN)
             endif()
         else()
             add_executable(${TEST_NAME} ${TEST_SOURCE})
-            target_link_libraries(${TEST_NAME} PRIVATE earthcall_core ${GLFW_LIB} ${OPENSSL_SSL_LIBRARY} ${OPENSSL_CRYPTO_LIBRARY} ZLIB::ZLIB ${CMAKE_DL_LIBS} Threads::Threads ${UUID_LIB})
+            # uuid (non-Apple only, and NOTFOUND-guarded) already comes in
+            # transitively via earthcall_core's PUBLIC link libraries above.
+            target_link_libraries(${TEST_NAME} PRIVATE earthcall_core ${GLFW_LIB} ${OPENSSL_SSL_LIBRARY} ${OPENSSL_CRYPTO_LIBRARY} ZLIB::ZLIB ${CMAKE_DL_LIBS} Threads::Threads)
         endif()
 
         # Shared fixtures (test_save_helper.hpp). Source files live under
