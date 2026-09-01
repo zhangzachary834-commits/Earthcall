@@ -254,7 +254,12 @@ if(NOT EMSCRIPTEN)
     foreach(TEST_SOURCE ${TEST_FILES})
         get_filename_component(TEST_NAME ${TEST_SOURCE} NAME_WE)
 
-        if (${TEST_NAME} MATCHES "webgpu_.*" OR ${TEST_NAME} STREQUAL "gpu_mastery_test")
+        if (${TEST_NAME} STREQUAL "brush_system_test")
+            add_executable(${TEST_NAME} ${TEST_SOURCE})
+            target_include_directories(${TEST_NAME} PRIVATE ${GLFW_SOURCE_DIR}/include ${GLFW_SOURCE_DIR}/deps)
+            target_compile_definitions(${TEST_NAME} PRIVATE GLFW_INCLUDE_NONE)
+            target_link_libraries(${TEST_NAME} PRIVATE earthcall_core)
+        elseif (${TEST_NAME} MATCHES "webgpu_.*" OR ${TEST_NAME} STREQUAL "gpu_mastery_test")
             add_executable(${TEST_NAME} ${TEST_SOURCE}
                 src/Singularity/Screen/WebGPU/WebGpuRenderer.cpp
                 src/Singularity/Screen/WebGPU/SdfWgsl.cpp

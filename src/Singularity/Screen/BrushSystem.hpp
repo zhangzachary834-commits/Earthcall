@@ -98,6 +98,7 @@ public:
     float getLayerOpacity() const;
     BlendMode getBlendMode() const;
     void replaceLayers(const std::vector<Layer>& layers, int activeLayer, bool useLayers);
+    void replaceLayers(std::vector<Layer>&& layers, int activeLayer, bool useLayers);
 
     // Clone tool
     void setCloneActive(bool active) { _cloneActive = active; }
