@@ -29,8 +29,20 @@ struct Vec4;
 struct PolyhedronData;
 struct PolyhedronDataBuilder;
 
+struct BezierPatch;
+struct BezierPatchBuilder;
+
+struct FaceTexture;
+struct FaceTextureBuilder;
+
+struct SmoothSurfaceData;
+struct SmoothSurfaceDataBuilder;
+
 struct SdfNode;
 struct SdfNodeBuilder;
+
+struct FieldData;
+struct FieldDataBuilder;
 
 struct Entity;
 struct EntityBuilder;
@@ -419,6 +431,344 @@ inline ::flatbuffers::Offset<PolyhedronData> CreatePolyhedronDataDirect(
       face_offsets__);
 }
 
+struct BezierPatch FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef BezierPatchBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_DU = 4,
+    VT_DV = 6,
+    VT_CTRL = 8
+  };
+  int32_t du() const {
+    return GetField<int32_t>(VT_DU, 0);
+  }
+  int32_t dv() const {
+    return GetField<int32_t>(VT_DV, 0);
+  }
+  const ::flatbuffers::Vector<const Earthcall::Schema::Vec3 *> *ctrl() const {
+    return GetPointer<const ::flatbuffers::Vector<const Earthcall::Schema::Vec3 *> *>(VT_CTRL);
+  }
+  template <bool B = false>
+  bool Verify(::flatbuffers::VerifierTemplate<B> &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<int32_t>(verifier, VT_DU, 4) &&
+           VerifyField<int32_t>(verifier, VT_DV, 4) &&
+           VerifyOffset(verifier, VT_CTRL) &&
+           verifier.VerifyVector(ctrl()) &&
+           verifier.EndTable();
+  }
+};
+
+struct BezierPatchBuilder {
+  typedef BezierPatch Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_du(int32_t du) {
+    fbb_.AddElement<int32_t>(BezierPatch::VT_DU, du, 0);
+  }
+  void add_dv(int32_t dv) {
+    fbb_.AddElement<int32_t>(BezierPatch::VT_DV, dv, 0);
+  }
+  void add_ctrl(::flatbuffers::Offset<::flatbuffers::Vector<const Earthcall::Schema::Vec3 *>> ctrl) {
+    fbb_.AddOffset(BezierPatch::VT_CTRL, ctrl);
+  }
+  explicit BezierPatchBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<BezierPatch> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<BezierPatch>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<BezierPatch> CreateBezierPatch(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    int32_t du = 0,
+    int32_t dv = 0,
+    ::flatbuffers::Offset<::flatbuffers::Vector<const Earthcall::Schema::Vec3 *>> ctrl = 0) {
+  BezierPatchBuilder builder_(_fbb);
+  builder_.add_ctrl(ctrl);
+  builder_.add_dv(dv);
+  builder_.add_du(du);
+  return builder_.Finish();
+}
+
+inline ::flatbuffers::Offset<BezierPatch> CreateBezierPatchDirect(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    int32_t du = 0,
+    int32_t dv = 0,
+    const std::vector<Earthcall::Schema::Vec3> *ctrl = nullptr) {
+  auto ctrl__ = ctrl ? _fbb.CreateVectorOfStructs<Earthcall::Schema::Vec3>(*ctrl) : 0;
+  return Earthcall::Schema::CreateBezierPatch(
+      _fbb,
+      du,
+      dv,
+      ctrl__);
+}
+
+struct FaceTexture FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef FaceTextureBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_FACE_INDEX = 4,
+    VT_SIZE = 6,
+    VT_PIXELS = 8
+  };
+  int32_t face_index() const {
+    return GetField<int32_t>(VT_FACE_INDEX, 0);
+  }
+  int32_t size() const {
+    return GetField<int32_t>(VT_SIZE, 0);
+  }
+  const ::flatbuffers::Vector<uint8_t> *pixels() const {
+    return GetPointer<const ::flatbuffers::Vector<uint8_t> *>(VT_PIXELS);
+  }
+  template <bool B = false>
+  bool Verify(::flatbuffers::VerifierTemplate<B> &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<int32_t>(verifier, VT_FACE_INDEX, 4) &&
+           VerifyField<int32_t>(verifier, VT_SIZE, 4) &&
+           VerifyOffset(verifier, VT_PIXELS) &&
+           verifier.VerifyVector(pixels()) &&
+           verifier.EndTable();
+  }
+};
+
+struct FaceTextureBuilder {
+  typedef FaceTexture Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_face_index(int32_t face_index) {
+    fbb_.AddElement<int32_t>(FaceTexture::VT_FACE_INDEX, face_index, 0);
+  }
+  void add_size(int32_t size) {
+    fbb_.AddElement<int32_t>(FaceTexture::VT_SIZE, size, 0);
+  }
+  void add_pixels(::flatbuffers::Offset<::flatbuffers::Vector<uint8_t>> pixels) {
+    fbb_.AddOffset(FaceTexture::VT_PIXELS, pixels);
+  }
+  explicit FaceTextureBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<FaceTexture> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<FaceTexture>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<FaceTexture> CreateFaceTexture(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    int32_t face_index = 0,
+    int32_t size = 0,
+    ::flatbuffers::Offset<::flatbuffers::Vector<uint8_t>> pixels = 0) {
+  FaceTextureBuilder builder_(_fbb);
+  builder_.add_pixels(pixels);
+  builder_.add_size(size);
+  builder_.add_face_index(face_index);
+  return builder_.Finish();
+}
+
+inline ::flatbuffers::Offset<FaceTexture> CreateFaceTextureDirect(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    int32_t face_index = 0,
+    int32_t size = 0,
+    const std::vector<uint8_t> *pixels = nullptr) {
+  auto pixels__ = pixels ? _fbb.CreateVector<uint8_t>(*pixels) : 0;
+  return Earthcall::Schema::CreateFaceTexture(
+      _fbb,
+      face_index,
+      size,
+      pixels__);
+}
+
+struct SmoothSurfaceData FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef SmoothSurfaceDataBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_CLOSED = 4,
+    VT_ORIENTABLE = 6,
+    VT_HAS_BOUNDARY = 8,
+    VT_IS_VOLUME = 10,
+    VT_MODEL = 12,
+    VT_QUADRIC_MATRIX = 14,
+    VT_QUADRIC_FORM = 16,
+    VT_PARAMETRIC_KIND = 18,
+    VT_AXES = 20,
+    VT_Z_TRIM_MIN = 22,
+    VT_Z_TRIM_MAX = 24,
+    VT_PARAMS = 26
+  };
+  bool closed() const {
+    return GetField<uint8_t>(VT_CLOSED, 1) != 0;
+  }
+  bool orientable() const {
+    return GetField<uint8_t>(VT_ORIENTABLE, 1) != 0;
+  }
+  bool has_boundary() const {
+    return GetField<uint8_t>(VT_HAS_BOUNDARY, 0) != 0;
+  }
+  bool is_volume() const {
+    return GetField<uint8_t>(VT_IS_VOLUME, 0) != 0;
+  }
+  int32_t model() const {
+    return GetField<int32_t>(VT_MODEL, 0);
+  }
+  const ::flatbuffers::Vector<float> *quadric_matrix() const {
+    return GetPointer<const ::flatbuffers::Vector<float> *>(VT_QUADRIC_MATRIX);
+  }
+  int32_t quadric_form() const {
+    return GetField<int32_t>(VT_QUADRIC_FORM, 0);
+  }
+  int32_t parametric_kind() const {
+    return GetField<int32_t>(VT_PARAMETRIC_KIND, 0);
+  }
+  const Earthcall::Schema::Vec3 *axes() const {
+    return GetStruct<const Earthcall::Schema::Vec3 *>(VT_AXES);
+  }
+  float z_trim_min() const {
+    return GetField<float>(VT_Z_TRIM_MIN, -0.5f);
+  }
+  float z_trim_max() const {
+    return GetField<float>(VT_Z_TRIM_MAX, 0.5f);
+  }
+  const ::flatbuffers::Vector<float> *params() const {
+    return GetPointer<const ::flatbuffers::Vector<float> *>(VT_PARAMS);
+  }
+  template <bool B = false>
+  bool Verify(::flatbuffers::VerifierTemplate<B> &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint8_t>(verifier, VT_CLOSED, 1) &&
+           VerifyField<uint8_t>(verifier, VT_ORIENTABLE, 1) &&
+           VerifyField<uint8_t>(verifier, VT_HAS_BOUNDARY, 1) &&
+           VerifyField<uint8_t>(verifier, VT_IS_VOLUME, 1) &&
+           VerifyField<int32_t>(verifier, VT_MODEL, 4) &&
+           VerifyOffset(verifier, VT_QUADRIC_MATRIX) &&
+           verifier.VerifyVector(quadric_matrix()) &&
+           VerifyField<int32_t>(verifier, VT_QUADRIC_FORM, 4) &&
+           VerifyField<int32_t>(verifier, VT_PARAMETRIC_KIND, 4) &&
+           VerifyField<Earthcall::Schema::Vec3>(verifier, VT_AXES, 4) &&
+           VerifyField<float>(verifier, VT_Z_TRIM_MIN, 4) &&
+           VerifyField<float>(verifier, VT_Z_TRIM_MAX, 4) &&
+           VerifyOffset(verifier, VT_PARAMS) &&
+           verifier.VerifyVector(params()) &&
+           verifier.EndTable();
+  }
+};
+
+struct SmoothSurfaceDataBuilder {
+  typedef SmoothSurfaceData Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_closed(bool closed) {
+    fbb_.AddElement<uint8_t>(SmoothSurfaceData::VT_CLOSED, static_cast<uint8_t>(closed), 1);
+  }
+  void add_orientable(bool orientable) {
+    fbb_.AddElement<uint8_t>(SmoothSurfaceData::VT_ORIENTABLE, static_cast<uint8_t>(orientable), 1);
+  }
+  void add_has_boundary(bool has_boundary) {
+    fbb_.AddElement<uint8_t>(SmoothSurfaceData::VT_HAS_BOUNDARY, static_cast<uint8_t>(has_boundary), 0);
+  }
+  void add_is_volume(bool is_volume) {
+    fbb_.AddElement<uint8_t>(SmoothSurfaceData::VT_IS_VOLUME, static_cast<uint8_t>(is_volume), 0);
+  }
+  void add_model(int32_t model) {
+    fbb_.AddElement<int32_t>(SmoothSurfaceData::VT_MODEL, model, 0);
+  }
+  void add_quadric_matrix(::flatbuffers::Offset<::flatbuffers::Vector<float>> quadric_matrix) {
+    fbb_.AddOffset(SmoothSurfaceData::VT_QUADRIC_MATRIX, quadric_matrix);
+  }
+  void add_quadric_form(int32_t quadric_form) {
+    fbb_.AddElement<int32_t>(SmoothSurfaceData::VT_QUADRIC_FORM, quadric_form, 0);
+  }
+  void add_parametric_kind(int32_t parametric_kind) {
+    fbb_.AddElement<int32_t>(SmoothSurfaceData::VT_PARAMETRIC_KIND, parametric_kind, 0);
+  }
+  void add_axes(const Earthcall::Schema::Vec3 *axes) {
+    fbb_.AddStruct(SmoothSurfaceData::VT_AXES, axes);
+  }
+  void add_z_trim_min(float z_trim_min) {
+    fbb_.AddElement<float>(SmoothSurfaceData::VT_Z_TRIM_MIN, z_trim_min, -0.5f);
+  }
+  void add_z_trim_max(float z_trim_max) {
+    fbb_.AddElement<float>(SmoothSurfaceData::VT_Z_TRIM_MAX, z_trim_max, 0.5f);
+  }
+  void add_params(::flatbuffers::Offset<::flatbuffers::Vector<float>> params) {
+    fbb_.AddOffset(SmoothSurfaceData::VT_PARAMS, params);
+  }
+  explicit SmoothSurfaceDataBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<SmoothSurfaceData> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<SmoothSurfaceData>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<SmoothSurfaceData> CreateSmoothSurfaceData(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    bool closed = true,
+    bool orientable = true,
+    bool has_boundary = false,
+    bool is_volume = false,
+    int32_t model = 0,
+    ::flatbuffers::Offset<::flatbuffers::Vector<float>> quadric_matrix = 0,
+    int32_t quadric_form = 0,
+    int32_t parametric_kind = 0,
+    const Earthcall::Schema::Vec3 *axes = nullptr,
+    float z_trim_min = -0.5f,
+    float z_trim_max = 0.5f,
+    ::flatbuffers::Offset<::flatbuffers::Vector<float>> params = 0) {
+  SmoothSurfaceDataBuilder builder_(_fbb);
+  builder_.add_params(params);
+  builder_.add_z_trim_max(z_trim_max);
+  builder_.add_z_trim_min(z_trim_min);
+  builder_.add_axes(axes);
+  builder_.add_parametric_kind(parametric_kind);
+  builder_.add_quadric_form(quadric_form);
+  builder_.add_quadric_matrix(quadric_matrix);
+  builder_.add_model(model);
+  builder_.add_is_volume(is_volume);
+  builder_.add_has_boundary(has_boundary);
+  builder_.add_orientable(orientable);
+  builder_.add_closed(closed);
+  return builder_.Finish();
+}
+
+inline ::flatbuffers::Offset<SmoothSurfaceData> CreateSmoothSurfaceDataDirect(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    bool closed = true,
+    bool orientable = true,
+    bool has_boundary = false,
+    bool is_volume = false,
+    int32_t model = 0,
+    const std::vector<float> *quadric_matrix = nullptr,
+    int32_t quadric_form = 0,
+    int32_t parametric_kind = 0,
+    const Earthcall::Schema::Vec3 *axes = nullptr,
+    float z_trim_min = -0.5f,
+    float z_trim_max = 0.5f,
+    const std::vector<float> *params = nullptr) {
+  auto quadric_matrix__ = quadric_matrix ? _fbb.CreateVector<float>(*quadric_matrix) : 0;
+  auto params__ = params ? _fbb.CreateVector<float>(*params) : 0;
+  return Earthcall::Schema::CreateSmoothSurfaceData(
+      _fbb,
+      closed,
+      orientable,
+      has_boundary,
+      is_volume,
+      model,
+      quadric_matrix__,
+      quadric_form,
+      parametric_kind,
+      axes,
+      z_trim_min,
+      z_trim_max,
+      params__);
+}
+
 struct SdfNode FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef SdfNodeBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
@@ -426,7 +776,13 @@ struct SdfNode FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
     VT_OPERATION = 6,
     VT_TRANSFORM = 8,
     VT_PLANES = 10,
-    VT_CHILDREN_INDICES = 12
+    VT_CHILDREN_INDICES = 12,
+    VT_DIMS = 14,
+    VT_OFFSET = 16,
+    VT_P0 = 18,
+    VT_P1 = 20,
+    VT_T = 22,
+    VT_EXPR = 24
   };
   int32_t type() const {
     return GetField<int32_t>(VT_TYPE, 0);
@@ -443,6 +799,24 @@ struct SdfNode FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   const ::flatbuffers::Vector<int32_t> *children_indices() const {
     return GetPointer<const ::flatbuffers::Vector<int32_t> *>(VT_CHILDREN_INDICES);
   }
+  const Earthcall::Schema::Vec3 *dims() const {
+    return GetStruct<const Earthcall::Schema::Vec3 *>(VT_DIMS);
+  }
+  const Earthcall::Schema::Vec3 *offset() const {
+    return GetStruct<const Earthcall::Schema::Vec3 *>(VT_OFFSET);
+  }
+  float p0() const {
+    return GetField<float>(VT_P0, 0.0f);
+  }
+  float p1() const {
+    return GetField<float>(VT_P1, 0.0f);
+  }
+  float t() const {
+    return GetField<float>(VT_T, 0.0f);
+  }
+  const ::flatbuffers::String *expr() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_EXPR);
+  }
   template <bool B = false>
   bool Verify(::flatbuffers::VerifierTemplate<B> &verifier) const {
     return VerifyTableStart(verifier) &&
@@ -454,6 +828,13 @@ struct SdfNode FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
            verifier.VerifyVector(planes()) &&
            VerifyOffset(verifier, VT_CHILDREN_INDICES) &&
            verifier.VerifyVector(children_indices()) &&
+           VerifyField<Earthcall::Schema::Vec3>(verifier, VT_DIMS, 4) &&
+           VerifyField<Earthcall::Schema::Vec3>(verifier, VT_OFFSET, 4) &&
+           VerifyField<float>(verifier, VT_P0, 4) &&
+           VerifyField<float>(verifier, VT_P1, 4) &&
+           VerifyField<float>(verifier, VT_T, 4) &&
+           VerifyOffset(verifier, VT_EXPR) &&
+           verifier.VerifyString(expr()) &&
            verifier.EndTable();
   }
 };
@@ -477,6 +858,24 @@ struct SdfNodeBuilder {
   void add_children_indices(::flatbuffers::Offset<::flatbuffers::Vector<int32_t>> children_indices) {
     fbb_.AddOffset(SdfNode::VT_CHILDREN_INDICES, children_indices);
   }
+  void add_dims(const Earthcall::Schema::Vec3 *dims) {
+    fbb_.AddStruct(SdfNode::VT_DIMS, dims);
+  }
+  void add_offset(const Earthcall::Schema::Vec3 *offset) {
+    fbb_.AddStruct(SdfNode::VT_OFFSET, offset);
+  }
+  void add_p0(float p0) {
+    fbb_.AddElement<float>(SdfNode::VT_P0, p0, 0.0f);
+  }
+  void add_p1(float p1) {
+    fbb_.AddElement<float>(SdfNode::VT_P1, p1, 0.0f);
+  }
+  void add_t(float t) {
+    fbb_.AddElement<float>(SdfNode::VT_T, t, 0.0f);
+  }
+  void add_expr(::flatbuffers::Offset<::flatbuffers::String> expr) {
+    fbb_.AddOffset(SdfNode::VT_EXPR, expr);
+  }
   explicit SdfNodeBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
@@ -494,8 +893,20 @@ inline ::flatbuffers::Offset<SdfNode> CreateSdfNode(
     int32_t operation = 0,
     ::flatbuffers::Offset<::flatbuffers::Vector<float>> transform = 0,
     ::flatbuffers::Offset<::flatbuffers::Vector<const Earthcall::Schema::Vec4 *>> planes = 0,
-    ::flatbuffers::Offset<::flatbuffers::Vector<int32_t>> children_indices = 0) {
+    ::flatbuffers::Offset<::flatbuffers::Vector<int32_t>> children_indices = 0,
+    const Earthcall::Schema::Vec3 *dims = nullptr,
+    const Earthcall::Schema::Vec3 *offset = nullptr,
+    float p0 = 0.0f,
+    float p1 = 0.0f,
+    float t = 0.0f,
+    ::flatbuffers::Offset<::flatbuffers::String> expr = 0) {
   SdfNodeBuilder builder_(_fbb);
+  builder_.add_expr(expr);
+  builder_.add_t(t);
+  builder_.add_p1(p1);
+  builder_.add_p0(p0);
+  builder_.add_offset(offset);
+  builder_.add_dims(dims);
   builder_.add_children_indices(children_indices);
   builder_.add_planes(planes);
   builder_.add_transform(transform);
@@ -510,17 +921,83 @@ inline ::flatbuffers::Offset<SdfNode> CreateSdfNodeDirect(
     int32_t operation = 0,
     const std::vector<float> *transform = nullptr,
     const std::vector<Earthcall::Schema::Vec4> *planes = nullptr,
-    const std::vector<int32_t> *children_indices = nullptr) {
+    const std::vector<int32_t> *children_indices = nullptr,
+    const Earthcall::Schema::Vec3 *dims = nullptr,
+    const Earthcall::Schema::Vec3 *offset = nullptr,
+    float p0 = 0.0f,
+    float p1 = 0.0f,
+    float t = 0.0f,
+    const char *expr = nullptr) {
   auto transform__ = transform ? _fbb.CreateVector<float>(*transform) : 0;
   auto planes__ = planes ? _fbb.CreateVectorOfStructs<Earthcall::Schema::Vec4>(*planes) : 0;
   auto children_indices__ = children_indices ? _fbb.CreateVector<int32_t>(*children_indices) : 0;
+  auto expr__ = expr ? _fbb.CreateString(expr) : 0;
   return Earthcall::Schema::CreateSdfNode(
       _fbb,
       type,
       operation,
       transform__,
       planes__,
-      children_indices__);
+      children_indices__,
+      dims,
+      offset,
+      p0,
+      p1,
+      t,
+      expr__);
+}
+
+struct FieldData FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef FieldDataBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_EXTENT = 4,
+    VT_ROOT_NODE = 6
+  };
+  const Earthcall::Schema::Vec3 *extent() const {
+    return GetStruct<const Earthcall::Schema::Vec3 *>(VT_EXTENT);
+  }
+  const Earthcall::Schema::SdfNode *root_node() const {
+    return GetPointer<const Earthcall::Schema::SdfNode *>(VT_ROOT_NODE);
+  }
+  template <bool B = false>
+  bool Verify(::flatbuffers::VerifierTemplate<B> &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<Earthcall::Schema::Vec3>(verifier, VT_EXTENT, 4) &&
+           VerifyOffset(verifier, VT_ROOT_NODE) &&
+           verifier.VerifyTable(root_node()) &&
+           verifier.EndTable();
+  }
+};
+
+struct FieldDataBuilder {
+  typedef FieldData Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_extent(const Earthcall::Schema::Vec3 *extent) {
+    fbb_.AddStruct(FieldData::VT_EXTENT, extent);
+  }
+  void add_root_node(::flatbuffers::Offset<Earthcall::Schema::SdfNode> root_node) {
+    fbb_.AddOffset(FieldData::VT_ROOT_NODE, root_node);
+  }
+  explicit FieldDataBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<FieldData> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<FieldData>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<FieldData> CreateFieldData(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    const Earthcall::Schema::Vec3 *extent = nullptr,
+    ::flatbuffers::Offset<Earthcall::Schema::SdfNode> root_node = 0) {
+  FieldDataBuilder builder_(_fbb);
+  builder_.add_root_node(root_node);
+  builder_.add_extent(extent);
+  return builder_.Finish();
 }
 
 struct Entity FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
@@ -530,8 +1007,13 @@ struct Entity FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
     VT_NAME = 6,
     VT_TRANSFORM = 8,
     VT_POLYHEDRON = 10,
-    VT_SDF_NODES = 12,
-    VT_LAWS = 14
+    VT_PATCH = 12,
+    VT_SMOOTH_DATA = 14,
+    VT_FIELD = 16,
+    VT_FACE_TEXTURES = 18,
+    VT_FACE_COLORS = 20,
+    VT_SDF_NODES = 22,
+    VT_LAWS = 24
   };
   const ::flatbuffers::String *id() const {
     return GetPointer<const ::flatbuffers::String *>(VT_ID);
@@ -544,6 +1026,21 @@ struct Entity FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   }
   const Earthcall::Schema::PolyhedronData *polyhedron() const {
     return GetPointer<const Earthcall::Schema::PolyhedronData *>(VT_POLYHEDRON);
+  }
+  const Earthcall::Schema::BezierPatch *patch() const {
+    return GetPointer<const Earthcall::Schema::BezierPatch *>(VT_PATCH);
+  }
+  const Earthcall::Schema::SmoothSurfaceData *smooth_data() const {
+    return GetPointer<const Earthcall::Schema::SmoothSurfaceData *>(VT_SMOOTH_DATA);
+  }
+  const Earthcall::Schema::FieldData *field() const {
+    return GetPointer<const Earthcall::Schema::FieldData *>(VT_FIELD);
+  }
+  const ::flatbuffers::Vector<::flatbuffers::Offset<Earthcall::Schema::FaceTexture>> *face_textures() const {
+    return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<Earthcall::Schema::FaceTexture>> *>(VT_FACE_TEXTURES);
+  }
+  const ::flatbuffers::Vector<const Earthcall::Schema::Vec3 *> *face_colors() const {
+    return GetPointer<const ::flatbuffers::Vector<const Earthcall::Schema::Vec3 *> *>(VT_FACE_COLORS);
   }
   const ::flatbuffers::Vector<::flatbuffers::Offset<Earthcall::Schema::SdfNode>> *sdf_nodes() const {
     return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<Earthcall::Schema::SdfNode>> *>(VT_SDF_NODES);
@@ -562,6 +1059,17 @@ struct Entity FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
            verifier.VerifyVector(transform()) &&
            VerifyOffset(verifier, VT_POLYHEDRON) &&
            verifier.VerifyTable(polyhedron()) &&
+           VerifyOffset(verifier, VT_PATCH) &&
+           verifier.VerifyTable(patch()) &&
+           VerifyOffset(verifier, VT_SMOOTH_DATA) &&
+           verifier.VerifyTable(smooth_data()) &&
+           VerifyOffset(verifier, VT_FIELD) &&
+           verifier.VerifyTable(field()) &&
+           VerifyOffset(verifier, VT_FACE_TEXTURES) &&
+           verifier.VerifyVector(face_textures()) &&
+           verifier.VerifyVectorOfTables(face_textures()) &&
+           VerifyOffset(verifier, VT_FACE_COLORS) &&
+           verifier.VerifyVector(face_colors()) &&
            VerifyOffset(verifier, VT_SDF_NODES) &&
            verifier.VerifyVector(sdf_nodes()) &&
            verifier.VerifyVectorOfTables(sdf_nodes()) &&
@@ -588,6 +1096,21 @@ struct EntityBuilder {
   void add_polyhedron(::flatbuffers::Offset<Earthcall::Schema::PolyhedronData> polyhedron) {
     fbb_.AddOffset(Entity::VT_POLYHEDRON, polyhedron);
   }
+  void add_patch(::flatbuffers::Offset<Earthcall::Schema::BezierPatch> patch) {
+    fbb_.AddOffset(Entity::VT_PATCH, patch);
+  }
+  void add_smooth_data(::flatbuffers::Offset<Earthcall::Schema::SmoothSurfaceData> smooth_data) {
+    fbb_.AddOffset(Entity::VT_SMOOTH_DATA, smooth_data);
+  }
+  void add_field(::flatbuffers::Offset<Earthcall::Schema::FieldData> field) {
+    fbb_.AddOffset(Entity::VT_FIELD, field);
+  }
+  void add_face_textures(::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<Earthcall::Schema::FaceTexture>>> face_textures) {
+    fbb_.AddOffset(Entity::VT_FACE_TEXTURES, face_textures);
+  }
+  void add_face_colors(::flatbuffers::Offset<::flatbuffers::Vector<const Earthcall::Schema::Vec3 *>> face_colors) {
+    fbb_.AddOffset(Entity::VT_FACE_COLORS, face_colors);
+  }
   void add_sdf_nodes(::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<Earthcall::Schema::SdfNode>>> sdf_nodes) {
     fbb_.AddOffset(Entity::VT_SDF_NODES, sdf_nodes);
   }
@@ -611,11 +1134,21 @@ inline ::flatbuffers::Offset<Entity> CreateEntity(
     ::flatbuffers::Offset<::flatbuffers::String> name = 0,
     ::flatbuffers::Offset<::flatbuffers::Vector<float>> transform = 0,
     ::flatbuffers::Offset<Earthcall::Schema::PolyhedronData> polyhedron = 0,
+    ::flatbuffers::Offset<Earthcall::Schema::BezierPatch> patch = 0,
+    ::flatbuffers::Offset<Earthcall::Schema::SmoothSurfaceData> smooth_data = 0,
+    ::flatbuffers::Offset<Earthcall::Schema::FieldData> field = 0,
+    ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<Earthcall::Schema::FaceTexture>>> face_textures = 0,
+    ::flatbuffers::Offset<::flatbuffers::Vector<const Earthcall::Schema::Vec3 *>> face_colors = 0,
     ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<Earthcall::Schema::SdfNode>>> sdf_nodes = 0,
     ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<Earthcall::Schema::LawComponent>>> laws = 0) {
   EntityBuilder builder_(_fbb);
   builder_.add_laws(laws);
   builder_.add_sdf_nodes(sdf_nodes);
+  builder_.add_face_colors(face_colors);
+  builder_.add_face_textures(face_textures);
+  builder_.add_field(field);
+  builder_.add_smooth_data(smooth_data);
+  builder_.add_patch(patch);
   builder_.add_polyhedron(polyhedron);
   builder_.add_transform(transform);
   builder_.add_name(name);
@@ -629,11 +1162,18 @@ inline ::flatbuffers::Offset<Entity> CreateEntityDirect(
     const char *name = nullptr,
     const std::vector<float> *transform = nullptr,
     ::flatbuffers::Offset<Earthcall::Schema::PolyhedronData> polyhedron = 0,
+    ::flatbuffers::Offset<Earthcall::Schema::BezierPatch> patch = 0,
+    ::flatbuffers::Offset<Earthcall::Schema::SmoothSurfaceData> smooth_data = 0,
+    ::flatbuffers::Offset<Earthcall::Schema::FieldData> field = 0,
+    const std::vector<::flatbuffers::Offset<Earthcall::Schema::FaceTexture>> *face_textures = nullptr,
+    const std::vector<Earthcall::Schema::Vec3> *face_colors = nullptr,
     const std::vector<::flatbuffers::Offset<Earthcall::Schema::SdfNode>> *sdf_nodes = nullptr,
     const std::vector<::flatbuffers::Offset<Earthcall::Schema::LawComponent>> *laws = nullptr) {
   auto id__ = id ? _fbb.CreateString(id) : 0;
   auto name__ = name ? _fbb.CreateString(name) : 0;
   auto transform__ = transform ? _fbb.CreateVector<float>(*transform) : 0;
+  auto face_textures__ = face_textures ? _fbb.CreateVector<::flatbuffers::Offset<Earthcall::Schema::FaceTexture>>(*face_textures) : 0;
+  auto face_colors__ = face_colors ? _fbb.CreateVectorOfStructs<Earthcall::Schema::Vec3>(*face_colors) : 0;
   auto sdf_nodes__ = sdf_nodes ? _fbb.CreateVector<::flatbuffers::Offset<Earthcall::Schema::SdfNode>>(*sdf_nodes) : 0;
   auto laws__ = laws ? _fbb.CreateVector<::flatbuffers::Offset<Earthcall::Schema::LawComponent>>(*laws) : 0;
   return Earthcall::Schema::CreateEntity(
@@ -642,6 +1182,11 @@ inline ::flatbuffers::Offset<Entity> CreateEntityDirect(
       name__,
       transform__,
       polyhedron,
+      patch,
+      smooth_data,
+      field,
+      face_textures__,
+      face_colors__,
       sdf_nodes__,
       laws__);
 }

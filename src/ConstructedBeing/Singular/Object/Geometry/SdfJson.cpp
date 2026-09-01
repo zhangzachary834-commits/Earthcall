@@ -1,5 +1,4 @@
 #include "ConstructedBeing/Singular/Object/Geometry/SdfJson.hpp"
-#include "Singularity/Storage/BinaryPack.hpp"
 
 namespace geom {
 
@@ -21,11 +20,6 @@ nlohmann::json sdfToJson(const SdfNode& n) {
     // evalSdf's empty-rpn fallback returns 1e9 -- empty space, silently.
     if (n.piecewise) j["piecewise"] = n.piecewise->toJson();
     if (!n.planes.empty()) {
-        BinaryPack::Writer w;
-        w.writeArray(n.planes);
-        j["planesBinary"] = w.toBinaryJson();
-        
-        // Fallback JSON
         nlohmann::json planes = nlohmann::json::array();
         for (const auto& p : n.planes) planes.push_back({p.x, p.y, p.z, p.w});
         j["planes"] = planes;
@@ -64,11 +58,7 @@ SdfNode sdfFromJson(const nlohmann::json& j) {
         n.piecewise = std::make_shared<OntoMath::Piecewise>(
             OntoMath::Piecewise::fromJson(j["piecewise"]));
     }
-    if (j.contains("planesBinary")) {
-        const std::vector<uint8_t> planeBytes = BinaryPack::bytesFrom(j["planesBinary"]);
-        BinaryPack::Reader r(planeBytes);
-        r.readArray(n.planes);
-    } else if (j.contains("planes")) {
+    if (j.contains("planes")) {
         for (const auto& p : j["planes"]) {
             if (p.is_array() && p.size() == 4) {
                 n.planes.emplace_back(p[0].get<float>(), p[1].get<float>(),

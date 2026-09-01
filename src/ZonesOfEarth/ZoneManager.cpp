@@ -5,7 +5,6 @@
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
 #include "Singularity/Storage/SaveSystem.hpp"
 #include "Singularity/Storage/Serialization.hpp"
-#include "Singularity/Storage/BinaryPack.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/LawAuditLogger.hpp"
 #include "Singularity/Core/Logger.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
@@ -25,6 +24,7 @@
 #include <flatbuffers/flatbuffers.h>
 #include <imgui.h>
 #include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <filesystem>
 #include <fstream>
 #include <ctime>
@@ -797,6 +797,18 @@ void ZoneManager::saveState(const std::string& filename, SaveContext& ctx) {
     nlohmann::json j = buildSaveJson(ctx);
     std::ofstream out(filename);
     out << j.dump(2);
+    
+    // Also save matching .ecmatter if not a before-load snapshot
+    if (!isBeforeLoadSnapshot(filename)) {
+        std::filesystem::path p(filename);
+        p.replace_extension(".ecmatter");
+        std::vector<uint8_t> matter = buildMatterFlatBuffer();
+        if (!matter.empty()) {
+            std::ofstream mOut(p, std::ios::binary);
+            if (mOut) mOut.write(reinterpret_cast<const char*>(matter.data()), matter.size());
+        }
+    }
+
     logIo("SAVE " + filename + ": " +
           std::to_string(ctx.lawManager->getAll().size()) + " law(s), " +
           std::to_string(ConceptRegistry::instance().getAll().size()) + " concept(s)");
@@ -809,11 +821,7 @@ void ZoneManager::saveStateWithLog(const std::string& customName, SaveContext& c
     persistZones();
     nlohmann::json j = buildSaveJson(ctx);
 
-    // Top-level objects: the active zone's whole world. This used to skip
-    // index 0 and 1 as "baseline cube & ground", but those live on Ourverse
-    // now (EngineInit), so the skip ate the first two beings a Person
-    // spawned. Zone JSON still had them; the top-level array is the fallback
-    // for empty zone worlds (legacy saves). Write what is actually there.
+    // Top-level objects: the active zone's whole world.
     auto& zone = active();
     nlohmann::json objArr = nlohmann::json::array();
     for (const auto& o : zone.getOwnedObjects()) {
@@ -823,7 +831,7 @@ void ZoneManager::saveStateWithLog(const std::string& customName, SaveContext& c
     }
     j["objects"] = objArr;
 
-    // Use the new SaveSystem to write the file
+    // Use SaveSystem to write the files
     std::string actualName = customName;
     if (actualName.empty()) {
         if (!_saveLoad.loadedSaveName.empty()) {
@@ -832,24 +840,32 @@ void ZoneManager::saveStateWithLog(const std::string& customName, SaveContext& c
             actualName = SaveSystem::timestamp() + "_QuickSave";
         }
     }
-    // Console / menu Save As used to fire-and-forget async, so a Person
-    // who pressed the button and looked at saves/worlds/ saw nothing and
-    // concluded the gesture failed. Write on this thread; report the path.
+    
+    // 1. Semantic Text Substrate (.ecform and .json)
     const std::string path = SaveSystem::writeSaveData(j, actualName, SaveSystem::SaveType::WORLD);
     if (path.empty()) {
         _saveLoad.lastSaveReport = "Save refused or failed for '" + actualName + "'.";
         logIo("SAVE FAILED '" + actualName + "'");
         return;
     }
-    // The console Save As path is authoring: write the readable JSON next to
-    // the binary .ecsave so looking in saves/worlds/ is not a blank folder
-    // of opaque files.
     {
         std::filesystem::path jsonPath(path);
         jsonPath.replace_extension(".json");
         std::ofstream jsonOut(jsonPath);
         if (jsonOut) jsonOut << j.dump(2);
+
+        std::filesystem::path formPath(path);
+        formPath.replace_extension(".ecform");
+        std::ofstream formOut(formPath);
+        if (formOut) formOut << j.dump(2);
     }
+
+    // 2. Physical Binary Substrate (.ecmatter via FlatBuffers)
+    std::vector<uint8_t> matterBuffer = buildMatterFlatBuffer();
+    if (!matterBuffer.empty()) {
+        SaveSystem::writeMatterData(matterBuffer, actualName, SaveSystem::SaveType::WORLD);
+    }
+
     _saveLoad.lastSaveReport = "Wrote " + path;
     _saveLoad.loadedSaveName = actualName;
     if (ctx.unpackForAuthoring) {
@@ -857,12 +873,6 @@ void ZoneManager::saveStateWithLog(const std::string& customName, SaveContext& c
         std::string unpackedPath = gameFolder + "/" + actualName + "_unpacked";
         SaveSystem::unpackSaveToDirectory(j, unpackedPath);
         _saveLoad.lastSaveReport += " (unpacked " + unpackedPath + ")";
-    }
-    
-    // Phase 4: Save dirty delta chunk as FlatBuffers
-    std::vector<uint8_t> deltaChunk = buildSaveChunkFlatBuffer();
-    if (!deltaChunk.empty()) {
-        SaveSystem::writeSaveDataAsync(deltaChunk, actualName + "_delta", ".ecsave", SaveSystem::SaveType::WORLD);
     }
     
     ECA::Logger::instance().setActiveWorld(actualName);
@@ -1253,6 +1263,26 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
                 ctx.lawManager->loadFromJson(j["authoredLaws"]);
             }
         });
+        stage("physical-matter", [&] {
+            std::vector<uint8_t> matterBytes = SaveSystem::readMatterData(filename);
+            if (!matterBytes.empty()) {
+                applyMatterFlatBuffer(matterBytes);
+                logIo("Physical matter (.ecmatter) hydrated successfully.");
+            } else if (!snapshotRestore && looksLikeWorld) {
+                // Legacy JSON splitter: transparent migration on load
+                std::filesystem::path p(filename);
+                std::string stem = p.stem().string();
+                std::vector<uint8_t> newMatter = buildMatterFlatBuffer();
+                if (!newMatter.empty()) {
+                    SaveSystem::writeMatterData(newMatter, stem, SaveSystem::SaveType::WORLD);
+                    std::filesystem::path formPath(filename);
+                    formPath.replace_extension(".ecform");
+                    std::ofstream formOut(formPath);
+                    if (formOut) formOut << j.dump(2);
+                    logIo("Migrated legacy save '" + filename + "' to split substrate (.ecform + .ecmatter).");
+                }
+            }
+        });
 
         // Build report
         std::size_t objectCount = 0;
@@ -1510,84 +1540,294 @@ void ZoneManager::loadTestObservation(const std::string& filename, SaveContext& 
     }
 }
 
+static glm::mat4 vectorToMat4(const std::vector<float>& v){
+    glm::mat4 m(1.0f);
+    if(v.size()==16){ std::memcpy(glm::value_ptr(m), v.data(), sizeof(float)*16); }
+    return m;
+}
+
 // ------------------------------------------------------------------
-// buildSaveChunkFlatBuffer – Serialize dirty objects to FlatBuffer
+// buildMatterFlatBuffer – Serialize physical geometry to FlatBuffer (.ecmatter)
 // ------------------------------------------------------------------
-std::vector<uint8_t> ZoneManager::buildSaveChunkFlatBuffer() {
-    flatbuffers::FlatBufferBuilder builder(1024);
+std::vector<uint8_t> ZoneManager::buildMatterFlatBuffer() const {
+    flatbuffers::FlatBufferBuilder builder(4096);
     
     std::vector<flatbuffers::Offset<Earthcall::Schema::Entity>> entity_offsets;
-    const auto& objs = active().getOwnedObjects();
     
-    for (size_t i = 2; i < objs.size(); ++i) {
-        const auto& o = objs[i];
-        if (!o->getIsDirty()) continue;
-        
-        // Mark as clean since we are saving it
-        o->clearDirty();
-        
-        // 1. Strings
-        auto id_str = builder.CreateString(o->getIdentifier());
-        auto name_str = builder.CreateString(o->getObjectType());
-        
-        // 2. Transform matrix (16 floats)
-        glm::mat4 t = o->getTransform();
-        std::vector<float> tf_data(16);
-        const float* t_ptr = (const float*)glm::value_ptr(t);
-        for(int m=0; m<16; m++) tf_data[m] = t_ptr[m];
-        auto tf_vec = builder.CreateVector(tf_data);
-        
-        // 3. Polyhedron Data
-        const auto& poly = o->getPolyhedronData();
-        std::vector<Earthcall::Schema::Vec3> fbs_verts;
-        for (const auto& v : poly.vertices) {
-            fbs_verts.push_back(Earthcall::Schema::Vec3(v.x, v.y, v.z));
-        }
-        auto verts_vec = builder.CreateVectorOfStructs(fbs_verts);
-        
-        std::vector<int> face_data;
-        std::vector<int> face_offsets;
-        for (const auto& face : poly.faces) {
-            face_offsets.push_back(face_data.size());
-            for (int v_idx : face) {
-                face_data.push_back(v_idx);
+    for (const auto& zone : _zones) {
+        if (!zone) continue;
+        for (const auto& o : zone->getOwnedObjects()) {
+            if (!o) continue;
+
+            auto id_str = builder.CreateString(o->getIdentifier());
+            auto name_str = builder.CreateString(o->getObjectType());
+
+            // 1. Transform matrix (16 floats)
+            glm::mat4 t = o->getTransform();
+            std::vector<float> tf_data(16);
+            const float* t_ptr = glm::value_ptr(t);
+            for (int m = 0; m < 16; ++m) tf_data[m] = t_ptr[m];
+            auto tf_vec = builder.CreateVector(tf_data);
+
+            // 2. Polyhedron Data
+            flatbuffers::Offset<Earthcall::Schema::PolyhedronData> poly_offset = 0;
+            if (o->getShapeKind() == Object::ShapeKind::Polyhedron) {
+                const auto& poly = o->getPolyhedronData();
+                std::vector<Earthcall::Schema::Vec3> fbs_verts;
+                fbs_verts.reserve(poly.vertices.size());
+                for (const auto& v : poly.vertices) {
+                    fbs_verts.push_back(Earthcall::Schema::Vec3(v.x, v.y, v.z));
+                }
+                auto verts_vec = builder.CreateVectorOfStructs(fbs_verts);
+
+                std::vector<int> face_data;
+                std::vector<int> face_offsets;
+                for (const auto& face : poly.faces) {
+                    face_offsets.push_back(static_cast<int>(face_data.size()));
+                    for (int v_idx : face) {
+                        face_data.push_back(v_idx);
+                    }
+                }
+                face_offsets.push_back(static_cast<int>(face_data.size()));
+
+                auto face_data_vec = builder.CreateVector(face_data);
+                auto face_offsets_vec = builder.CreateVector(face_offsets);
+                poly_offset = Earthcall::Schema::CreatePolyhedronData(
+                    builder, verts_vec, face_data_vec, face_offsets_vec);
             }
+
+            // 3. Bezier Patch Data
+            flatbuffers::Offset<Earthcall::Schema::BezierPatch> patch_offset = 0;
+            if (o->hasPatch()) {
+                const auto& patch = o->getPatchData();
+                std::vector<Earthcall::Schema::Vec3> fbs_ctrl;
+                fbs_ctrl.reserve(patch.ctrl.size());
+                for (const auto& c : patch.ctrl) {
+                    fbs_ctrl.push_back(Earthcall::Schema::Vec3(c.x, c.y, c.z));
+                }
+                auto ctrl_vec = builder.CreateVectorOfStructs(fbs_ctrl);
+                patch_offset = Earthcall::Schema::CreateBezierPatch(
+                    builder, patch.du, patch.dv, ctrl_vec);
+            }
+
+            // 4. Smooth Surface Data
+            flatbuffers::Offset<Earthcall::Schema::SmoothSurfaceData> smooth_offset = 0;
+            if (o->hasSmoothSurface()) {
+                const auto& sm = o->getSmoothData();
+                std::vector<float> q_data(16);
+                const float* q_ptr = glm::value_ptr(sm.Q);
+                for (int m = 0; m < 16; ++m) q_data[m] = q_ptr[m];
+                auto q_vec = builder.CreateVector(q_data);
+                auto params_vec = builder.CreateVector(sm.params);
+                Earthcall::Schema::Vec3 axes(sm.axes.x, sm.axes.y, sm.axes.z);
+
+                smooth_offset = Earthcall::Schema::CreateSmoothSurfaceData(
+                    builder,
+                    sm.closed,
+                    sm.orientable,
+                    sm.hasBoundary,
+                    sm.isVolume,
+                    static_cast<int>(sm.model),
+                    q_vec,
+                    static_cast<int>(sm.form),
+                    static_cast<int>(sm.pkind),
+                    &axes,
+                    sm.zTrim.x,
+                    sm.zTrim.y,
+                    params_vec
+                );
+            }
+
+            // 5. Face Textures (from the object's resolved material)
+            std::vector<flatbuffers::Offset<Earthcall::Schema::FaceTexture>> fts;
+            auto mat = materials.get(o->materialId());
+            if (mat) {
+                for (size_t f = 0; f < mat->faceTextures.size(); ++f) {
+                    const auto& ft = mat->faceTextures[f];
+                    if (!ft.pixels.empty()) {
+                        auto pix_vec = builder.CreateVector(ft.pixels);
+                        fts.push_back(Earthcall::Schema::CreateFaceTexture(
+                            builder, static_cast<int>(f), ft.size, pix_vec));
+                    }
+                }
+            }
+            auto fts_vec = fts.empty() ? 0 : builder.CreateVector(fts);
+
+            // 6. Face Colors
+            std::vector<Earthcall::Schema::Vec3> fbs_colors;
+            for (int f = 0; f < 6; ++f) {
+                fbs_colors.push_back(Earthcall::Schema::Vec3(
+                    o->faceColors[f][0], o->faceColors[f][1], o->faceColors[f][2]));
+            }
+            auto fbs_colors_vec = builder.CreateVectorOfStructs(fbs_colors);
+
+            auto entity = Earthcall::Schema::CreateEntity(
+                builder,
+                id_str,
+                name_str,
+                tf_vec,
+                poly_offset,
+                patch_offset,
+                smooth_offset,
+                0, // field
+                fts_vec,
+                fbs_colors_vec
+            );
+            entity_offsets.push_back(entity);
         }
-        face_offsets.push_back(face_data.size()); // end offset
-        
-        auto face_data_vec = builder.CreateVector(face_data);
-        auto face_offsets_vec = builder.CreateVector(face_offsets);
-        
-        auto poly_data = Earthcall::Schema::CreatePolyhedronData(
-            builder, verts_vec, face_data_vec, face_offsets_vec);
-            
-        // 4. Entity
-        auto entity = Earthcall::Schema::CreateEntity(
-            builder,
-            id_str,
-            name_str,
-            tf_vec,
-            poly_data
-            // laws left empty for now to test serialization
-        );
-        
-        entity_offsets.push_back(entity);
     }
-    
-    auto chunk_id = builder.CreateString("zone_" + std::to_string(_currentIndex) + "_delta_" + SaveSystem::timestamp());
+
+    auto chunk_id = builder.CreateString("matter_" + SaveSystem::timestamp());
     auto entities_vec = builder.CreateVector(entity_offsets);
     auto chunk = Earthcall::Schema::CreateSaveChunk(builder, chunk_id, entities_vec);
-    
+
     builder.Finish(chunk);
-    
-    uint8_t* buf = builder.GetBufferPointer();
-    int size = builder.GetSize();
+
+    const uint8_t* buf = builder.GetBufferPointer();
+    size_t size = builder.GetSize();
     return std::vector<uint8_t>(buf, buf + size);
 }
 
 // ------------------------------------------------------------------
-// loadSaveChunkFlatBuffer
+// applyMatterFlatBuffer – Hydrate physical geometry from FlatBuffer (.ecmatter)
 // ------------------------------------------------------------------
+void ZoneManager::applyMatterFlatBuffer(const std::vector<uint8_t>& buffer) {
+    if (buffer.empty()) return;
+    flatbuffers::Verifier verifier(buffer.data(), buffer.size());
+    if (!Earthcall::Schema::VerifySaveChunkBuffer(verifier)) {
+        std::cerr << "[ZoneManager] Matter FlatBuffer verification failed!\n";
+        return;
+    }
+
+    const auto* chunk = Earthcall::Schema::GetSaveChunk(buffer.data());
+    if (!chunk || !chunk->entities()) return;
+
+    std::unordered_map<std::string, std::shared_ptr<Object>> objMap;
+    for (const auto& zone : _zones) {
+        if (!zone) continue;
+        for (const auto& o : zone->getOwnedObjects()) {
+            if (o) objMap[o->getIdentifier()] = o;
+        }
+    }
+
+    for (const auto* entity : *chunk->entities()) {
+        if (!entity || !entity->id()) continue;
+        const std::string id = entity->id()->str();
+        auto it = objMap.find(id);
+        if (it == objMap.end()) continue;
+        auto& o = it->second;
+
+        // 1. Transform
+        if (entity->transform() && entity->transform()->size() == 16) {
+            std::vector<float> tvals(entity->transform()->begin(), entity->transform()->end());
+            o->setTransform(vectorToMat4(tvals));
+        }
+
+        // 2. Polyhedron
+        if (entity->polyhedron() && entity->polyhedron()->vertices() && entity->polyhedron()->face_data() && entity->polyhedron()->face_offsets()) {
+            const auto* poly = entity->polyhedron();
+            std::vector<glm::vec3> verts;
+            verts.reserve(poly->vertices()->size());
+            for (const auto* v : *poly->vertices()) {
+                verts.emplace_back(v->x(), v->y(), v->z());
+            }
+
+            const auto* fData = poly->face_data();
+            const auto* fOffsets = poly->face_offsets();
+            std::vector<std::vector<int>> faces;
+            if (fOffsets->size() >= 2) {
+                faces.reserve(fOffsets->size() - 1);
+                for (size_t i = 0; i + 1 < fOffsets->size(); ++i) {
+                    int start = fOffsets->Get(i);
+                    int end = fOffsets->Get(i + 1);
+                    std::vector<int> face;
+                    face.reserve(end - start);
+                    for (int fi = start; fi < end && fi < (int)fData->size(); ++fi) {
+                        face.push_back(fData->Get(fi));
+                    }
+                    faces.push_back(std::move(face));
+                }
+            }
+            if (!verts.empty() && !faces.empty()) {
+                o->setPolyhedronData(PolyhedronData::createCustomPolyhedron(verts, faces));
+            }
+        }
+
+        // 3. Bezier Patch
+        if (entity->patch() && entity->patch()->ctrl()) {
+            geom::BezierPatch patch;
+            patch.du = entity->patch()->du();
+            patch.dv = entity->patch()->dv();
+            patch.ctrl.reserve(entity->patch()->ctrl()->size());
+            for (const auto* c : *entity->patch()->ctrl()) {
+                patch.ctrl.emplace_back(c->x(), c->y(), c->z());
+            }
+            if (patch.valid()) {
+                o->setBezierPatch(patch);
+            }
+        }
+
+        // 4. Smooth Surface
+        if (entity->smooth_data() && entity->smooth_data()->quadric_matrix()) {
+            const auto* sm = entity->smooth_data();
+            geom::SmoothSurfaceData sd;
+            sd.closed = sm->closed();
+            sd.orientable = sm->orientable();
+            sd.hasBoundary = sm->has_boundary();
+            sd.isVolume = sm->is_volume();
+            sd.model = static_cast<geom::SmoothSurfaceData::Model>(sm->model());
+            if (sm->quadric_matrix()->size() == 16) {
+                std::vector<float> qv(sm->quadric_matrix()->begin(), sm->quadric_matrix()->end());
+                sd.Q = vectorToMat4(qv);
+            }
+            sd.form = static_cast<geom::SmoothSurfaceData::QuadricForm>(sm->quadric_form());
+            sd.pkind = static_cast<geom::SmoothSurfaceData::ParametricKind>(sm->parametric_kind());
+            if (sm->axes()) {
+                sd.axes = glm::vec3(sm->axes()->x(), sm->axes()->y(), sm->axes()->z());
+            }
+            sd.zTrim = glm::vec2(sm->z_trim_min(), sm->z_trim_max());
+            if (sm->params()) {
+                sd.params.assign(sm->params()->begin(), sm->params()->end());
+            }
+            o->setSmoothSurface(sd);
+        }
+
+        // 5. Face Textures
+        if (entity->face_textures()) {
+            auto mat = materials.get(o->materialId());
+            if (mat) {
+                for (const auto* ft : *entity->face_textures()) {
+                    if (!ft || !ft->pixels()) continue;
+                    int fIdx = ft->face_index();
+                    int sz = ft->size();
+                    if (fIdx >= 0 && fIdx < static_cast<int>(mat->faceTextures.size()) && sz > 0) {
+                        auto& oft = mat->faceTextures[fIdx];
+                        oft.size = sz;
+                        oft.pixels.assign(ft->pixels()->begin(), ft->pixels()->end());
+                        oft.updateWholeGPU();
+                    }
+                }
+            }
+        }
+
+        // 6. Face Colors
+        if (entity->face_colors()) {
+            for (size_t f = 0; f < entity->face_colors()->size() && f < 6; ++f) {
+                const auto* c = entity->face_colors()->Get(f);
+                if (c) {
+                    o->faceColors[f][0] = c->x();
+                    o->faceColors[f][1] = c->y();
+                    o->faceColors[f][2] = c->z();
+                }
+            }
+        }
+    }
+}
+
+std::vector<uint8_t> ZoneManager::buildSaveChunkFlatBuffer() {
+    return buildMatterFlatBuffer();
+}
+
 void ZoneManager::loadSaveChunkFlatBuffer(const std::vector<uint8_t>& buffer) {
-    // TODO: implement loading
+    applyMatterFlatBuffer(buffer);
 }

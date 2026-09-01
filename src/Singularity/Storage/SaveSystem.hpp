@@ -65,6 +65,11 @@ void writeSaveDataAsync(const nlohmann::json& j, const std::string& customLabel 
 std::string writeSaveData(const std::vector<uint8_t>& data, const std::string& customLabel, const std::string& ext, SaveType type);
 void writeSaveDataAsync(const std::vector<uint8_t>& data, const std::string& customLabel, const std::string& ext, SaveType type);
 
+// Split substrate (.ecmatter) handlers
+std::string writeMatterData(const std::vector<uint8_t>& data, const std::string& customLabel = "", SaveType type = SaveType::WORLD);
+void writeMatterDataAsync(const std::vector<uint8_t>& data, const std::string& customLabel = "", SaveType type = SaveType::WORLD);
+std::vector<uint8_t> readMatterData(const std::string& filepath);
+
 bool isSaving();
 
 // Unified read function: detects whether the file is binary MessagePack or plain JSON and loads it.

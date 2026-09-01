@@ -1,4 +1,3 @@
-## B-Time Rete is Prophetic
 
 BROOOOOOO I JUST HAD A REALIZATION
 

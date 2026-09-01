@@ -1,4 +1,4 @@
-// Earthcall.fbs - FlatBuffers schema for Earthcall serialization
+// Earthcall.fbs - FlatBuffers schema for Earthcall physical serialization (.ecmatter)
 
 namespace Earthcall.Schema;
 
@@ -49,12 +49,50 @@ table PolyhedronData {
   face_offsets: [int];
 }
 
+table BezierPatch {
+  du: int;
+  dv: int;
+  ctrl: [Vec3];
+}
+
+table FaceTexture {
+  face_index: int;
+  size: int;
+  pixels: [ubyte];
+}
+
+table SmoothSurfaceData {
+  closed: bool = true;
+  orientable: bool = true;
+  has_boundary: bool = false;
+  is_volume: bool = false;
+  model: int = 0; // 0 = Quadric, 1 = Parametric
+  quadric_matrix: [float]; // 16 floats for 4x4 matrix
+  quadric_form: int = 0; // 0=Sphere, 1=Ellipsoid, 2=CylinderSide, 3=ConeSide, 4=Paraboloid
+  parametric_kind: int = 0; // 0=Torus, 1=Ovoid, 2=Mobius, 3=Klein, 4=ProjectivePlane
+  axes: Vec3;
+  z_trim_min: float = -0.5;
+  z_trim_max: float = 0.5;
+  params: [float];
+}
+
 table SdfNode {
   type: int;
   operation: int;
   transform: [float]; // 4x4 matrix
   planes: [Vec4];
   children_indices: [int];
+  dims: Vec3;
+  offset: Vec3;
+  p0: float;
+  p1: float;
+  t: float;
+  expr: string;
+}
+
+table FieldData {
+  extent: Vec3;
+  root_node: SdfNode;
 }
 
 // A generic "Entity" (could be a Zone, Person, or Prop)
@@ -63,13 +101,18 @@ table Entity {
   name: string;
   transform: [float];
   polyhedron: PolyhedronData;
+  patch: BezierPatch;
+  smooth_data: SmoothSurfaceData;
+  field: FieldData;
+  face_textures: [FaceTexture];
+  face_colors: [Vec3];
   sdf_nodes: [SdfNode];
   
   // Dynamic components managed by the Law System
   laws: [LawComponent];
 }
 
-// A Save Chunk represents a spatial region or category of entities (Delta Saves)
+// A Save Chunk represents a spatial region or category of entities (.ecmatter)
 table SaveChunk {
   chunk_id: string;
   entities: [Entity];
