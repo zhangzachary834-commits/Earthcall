@@ -100,10 +100,19 @@ public:
     void shutdown();
 
 private:
+    struct DesignElementRecord {
+        DesignElement element;
+        std::string systemId;
+        std::string systemType; // "shape", "text", "effect"
+    };
+
     // System references
     BrushSystem* _brushSystem = nullptr;
     DesignSystem* _designSystem = nullptr;
     ZonesOfEarth::ZoneManager* _zoneManager = nullptr;
+
+    // Design Elements Storage
+    std::map<std::string, DesignElementRecord> _designElements;
 
     // Permissions
     std::vector<std::string> _grantedPermissions;
