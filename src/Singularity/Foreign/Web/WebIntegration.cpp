@@ -1,8 +1,11 @@
 #include "Singularity/Foreign/Web/WebIntegration.hpp"
 #include "Singularity/Storage/SaveSystem.hpp"
+#include "Singularity/Core/EventBus.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <ctime>
 
 // Real web view implementation using native WebKit
 #ifndef __EMSCRIPTEN__
@@ -268,6 +271,7 @@ void WebView::shutdown() {
 
 void WebView::navigate(const std::string& url) {
     _impl->navigate(url);
+    Core::EventBus::instance().publish(ECA::Event{"web-page-loaded", nullptr, nullptr, std::time(nullptr)});
 }
 
 void WebView::executeJavaScript(const std::string& script) {

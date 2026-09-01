@@ -1,4 +1,5 @@
 import os
+import secrets
 import sys
 from pathlib import Path
 
@@ -19,7 +20,7 @@ load_dotenv()
 
 # Initialize Flask app
 app = Flask(__name__, static_folder='static', template_folder='templates')
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'earthcall-secret-key-logos')
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or secrets.token_hex(32)
 
 # Apply CORS (Cross-Origin Resource Sharing)
 CORS(app)
@@ -75,4 +76,4 @@ if __name__ == '__main__':
     print("=" * 60)
     
     # Start the Flask-SocketIO Meta-Server
-    socketio.run(app, host=host, port=port, debug=debug, allow_unsafe_werkzeug=True, use_reloader=False)
+    socketio.run(app, host=host, port=port, debug=debug, allow_unsafe_werkzeug=debug, use_reloader=False)

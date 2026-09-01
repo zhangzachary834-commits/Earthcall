@@ -92,6 +92,8 @@ public:
     void setBlendMode(BlendMode mode);
     int addLayer();
     void deleteLayer(int layerIndex);
+    void clearLayer(int layerIndex);
+    void clearAllLayers();
     int getActiveLayer() const { return _activeLayer; }
     int getLayerCount() const { return static_cast<int>(_layers.size()); }
     const std::vector<Layer>& getLayers() const { return _layers; }

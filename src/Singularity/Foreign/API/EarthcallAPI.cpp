@@ -3,7 +3,10 @@
 #include "Singularity/Screen/BrushSystem.hpp"
 #include "Singularity/FirstMoverOntology/Legacy/DesignSystem.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
+#include "Singularity/Core/EventBus.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
 #include <iostream>
+#include <ctime>
 namespace Integration {
 
 EarthcallAPI::EarthcallAPI() {
@@ -81,7 +84,26 @@ bool EarthcallAPI::clearBrushLayer(const std::string& layer_name) {
     }
     
     std::cout << "🎨 Clearing brush layer: " << layer_name << std::endl;
-    // TODO: Actually clear the layer
+    if (!_brushSystem) {
+        return false;
+    }
+
+    if (layer_name == "all") {
+        _brushSystem->clearAllLayers();
+    } else if (layer_name == "active" || layer_name == "current" || layer_name == "default" || layer_name.empty()) {
+        _brushSystem->clearLayer(_brushSystem->getActiveLayer());
+    } else {
+        try {
+            int idx = std::stoi(layer_name);
+            if (idx >= 0 && idx < _brushSystem->getLayerCount()) {
+                _brushSystem->clearLayer(idx);
+            } else {
+                _brushSystem->clearLayer(_brushSystem->getActiveLayer());
+            }
+        } catch (...) {
+            _brushSystem->clearLayer(_brushSystem->getActiveLayer());
+        }
+    }
     return true;
 }
 
@@ -602,6 +624,9 @@ void EarthcallAPI::_notifyEvent(const std::string& event_type, const std::string
     if (it != _callbacks.end()) {
         it->second(data);
     }
+    // A foreign caller's named event, admitted to Law under its own name -
+    // same bridging role as Person::raiseEvent, but for this Foreign channel.
+    Core::EventBus::instance().publish(ECA::Event{event_type, nullptr, nullptr, std::time(nullptr)});
 }
 
 // Global API instance

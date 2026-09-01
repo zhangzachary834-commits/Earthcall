@@ -1,0 +1,2668 @@
+{
+  "saveFormat": "zone-identity-v1",
+  "currentZone": 0,
+  "currentZoneId": "SynthesisStudio",
+  "flying": true,
+  "cameraPos": [
+    0.0,
+    2.2,
+    -4.2
+  ],
+  "cameraFront": [
+    0.0,
+    -0.22,
+    0.97
+  ],
+  "cameraUp": [
+    0.0,
+    1.0,
+    0.0
+  ],
+  "yaw": 90.0,
+  "pitch": -12.0,
+  "currentColor": [
+    1.0,
+    1.0,
+    1.0
+  ],
+  "materials": [
+    {
+      "name": "material.studio.slate",
+      "baseColor": [
+        0.18,
+        0.2,
+        0.24
+      ],
+      "opacity": 1.0
+    },
+    {
+      "name": "material.studio.walnut",
+      "baseColor": [
+        0.12,
+        0.13,
+        0.16
+      ],
+      "opacity": 1.0
+    },
+    {
+      "name": "material.studio.canvas",
+      "baseColor": [
+        0.92,
+        0.9,
+        0.86
+      ],
+      "opacity": 1.0
+    },
+    {
+      "name": "material.studio.crystal",
+      "baseColor": [
+        0.3,
+        0.75,
+        0.9
+      ],
+      "opacity": 0.85
+    },
+    {
+      "name": "material.studio.btn.blue",
+      "baseColor": [
+        0.15,
+        0.55,
+        0.95
+      ],
+      "opacity": 1.0
+    },
+    {
+      "name": "material.studio.btn.gold",
+      "baseColor": [
+        1.0,
+        0.65,
+        0.1
+      ],
+      "opacity": 1.0
+    }
+  ],
+  "categories": [
+    {
+      "objectID": "author.gemini-spark",
+      "shapeKind": 12,
+      "geometryType": 12,
+      "shapeParams": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "transform": [
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "center": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "materialId": "",
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Gemini Spark"
+        }
+      }
+    },
+    {
+      "objectID": "grok-4.6",
+      "shapeKind": 12,
+      "geometryType": 12,
+      "shapeParams": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "transform": [
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "center": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "materialId": "",
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Grok 4.6"
+        }
+      }
+    },
+    {
+      "objectID": "Zach",
+      "shapeKind": 12,
+      "geometryType": 12,
+      "shapeParams": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "transform": [
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "center": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "materialId": "",
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Zachary Zhang"
+        }
+      }
+    },
+    {
+      "objectID": "category.control",
+      "shapeKind": 12,
+      "geometryType": 12,
+      "shapeParams": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "transform": [
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "center": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "materialId": "",
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "UI Controls"
+        }
+      }
+    },
+    {
+      "objectID": "category.control.button",
+      "shapeKind": 12,
+      "geometryType": 12,
+      "shapeParams": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "transform": [
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "center": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "materialId": "",
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Action Button"
+        }
+      }
+    },
+    {
+      "objectID": "category.control.toggle",
+      "shapeKind": 12,
+      "geometryType": 12,
+      "shapeParams": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "transform": [
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "center": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "materialId": "",
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Toggle Switch"
+        }
+      }
+    },
+    {
+      "objectID": "category.control.slider",
+      "shapeKind": 12,
+      "geometryType": 12,
+      "shapeParams": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "transform": [
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "center": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "materialId": "",
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Continuous Slider"
+        }
+      }
+    },
+    {
+      "objectID": "category.art",
+      "shapeKind": 12,
+      "geometryType": 12,
+      "shapeParams": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "transform": [
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "center": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "materialId": "",
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Digital Art"
+        }
+      }
+    },
+    {
+      "objectID": "category.art.stroke",
+      "shapeKind": 12,
+      "geometryType": 12,
+      "shapeParams": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "transform": [
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "center": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "materialId": "",
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Authored Stroke"
+        }
+      }
+    },
+    {
+      "objectID": "category.interactive.orb",
+      "shapeKind": 12,
+      "geometryType": 12,
+      "shapeParams": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "transform": [
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "center": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "materialId": "",
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Harmonic Resonance Orb"
+        }
+      }
+    }
+  ],
+  "zoneRefs": [
+    {
+      "identifier": "SynthesisStudio",
+      "kind": "studio"
+    }
+  ],
+  "zones": [
+    {
+      "name": "SynthesisStudio",
+      "identifier": "SynthesisStudio",
+      "owner": "Player",
+      "parentZone": "",
+      "scope": "Local",
+      "qualities": {
+        "kind": "studio"
+      },
+      "world": {
+        "objects": [
+          {
+            "objectID": "studio.platform.floor",
+            "shapeKind": 0,
+            "geometryType": 0,
+            "shapeParams": [
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              12.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.2,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              12.0,
+              0.0,
+              0.0,
+              -0.1,
+              0.0,
+              1.0
+            ],
+            "center": [
+              0.0,
+              -0.1,
+              0.0
+            ],
+            "materialId": "material.studio.slate",
+            "faceColors": [
+              [
+                0.18,
+                0.2,
+                0.24
+              ],
+              [
+                0.18,
+                0.2,
+                0.24
+              ],
+              [
+                0.18,
+                0.2,
+                0.24
+              ],
+              [
+                0.18,
+                0.2,
+                0.24
+              ],
+              [
+                0.18,
+                0.2,
+                0.24
+              ],
+              [
+                0.18,
+                0.2,
+                0.24
+              ]
+            ],
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "Studio Platform Floor"
+              },
+              "isStudioSurface": {
+                "t": "bool",
+                "v": true
+              }
+            }
+          },
+          {
+            "objectID": "studio.console.desk",
+            "shapeKind": 0,
+            "geometryType": 0,
+            "shapeParams": [
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              4.8,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.8,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              2.2,
+              0.0,
+              0.0,
+              0.4,
+              0.0,
+              1.0
+            ],
+            "center": [
+              0.0,
+              0.4,
+              0.0
+            ],
+            "materialId": "material.studio.walnut",
+            "faceColors": [
+              [
+                0.12,
+                0.13,
+                0.16
+              ],
+              [
+                0.12,
+                0.13,
+                0.16
+              ],
+              [
+                0.12,
+                0.13,
+                0.16
+              ],
+              [
+                0.12,
+                0.13,
+                0.16
+              ],
+              [
+                0.12,
+                0.13,
+                0.16
+              ],
+              [
+                0.12,
+                0.13,
+                0.16
+              ]
+            ],
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "Studio Control Console"
+              }
+            }
+          },
+          {
+            "objectID": "studio.easel.canvas",
+            "shapeKind": 0,
+            "geometryType": 0,
+            "shapeParams": [
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              3.8,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              2.4,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.1,
+              0.0,
+              0.0,
+              2.1,
+              2.2,
+              1.0
+            ],
+            "center": [
+              0.0,
+              2.1,
+              2.2
+            ],
+            "materialId": "material.studio.canvas",
+            "faceColors": [
+              [
+                0.92,
+                0.9,
+                0.86
+              ],
+              [
+                0.92,
+                0.9,
+                0.86
+              ],
+              [
+                0.92,
+                0.9,
+                0.86
+              ],
+              [
+                0.92,
+                0.9,
+                0.86
+              ],
+              [
+                0.92,
+                0.9,
+                0.86
+              ],
+              [
+                0.92,
+                0.9,
+                0.86
+              ]
+            ],
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "Interactive Art Canvas"
+              },
+              "isCanvas": {
+                "t": "bool",
+                "v": true
+              }
+            }
+          },
+          {
+            "objectID": "studio.pedestal.crystal",
+            "shapeKind": 2,
+            "geometryType": 2,
+            "shapeParams": [
+              0.4,
+              0.4,
+              0.4,
+              0.8,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              0.8,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.8,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.8,
+              0.0,
+              0.0,
+              0.4,
+              1.2,
+              1.0
+            ],
+            "center": [
+              0.0,
+              0.4,
+              1.2
+            ],
+            "materialId": "material.studio.crystal",
+            "faceColors": [
+              [
+                0.3,
+                0.75,
+                0.9
+              ],
+              [
+                0.3,
+                0.75,
+                0.9
+              ],
+              [
+                0.3,
+                0.75,
+                0.9
+              ],
+              [
+                0.3,
+                0.75,
+                0.9
+              ],
+              [
+                0.3,
+                0.75,
+                0.9
+              ],
+              [
+                0.3,
+                0.75,
+                0.9
+              ]
+            ],
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "Harmonic Crystal Pedestal"
+              }
+            }
+          },
+          {
+            "objectID": "studio.btn.spawn-orb",
+            "shapeKind": 0,
+            "geometryType": 0,
+            "shapeParams": [
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              0.7,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.16,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.55,
+              0.0,
+              -1.4,
+              0.88,
+              -0.35,
+              1.0
+            ],
+            "center": [
+              -1.4,
+              0.88,
+              -0.35
+            ],
+            "materialId": "material.studio.btn.blue",
+            "faceColors": [
+              [
+                0.15,
+                0.55,
+                0.95
+              ],
+              [
+                0.15,
+                0.55,
+                0.95
+              ],
+              [
+                0.15,
+                0.55,
+                0.95
+              ],
+              [
+                0.15,
+                0.55,
+                0.95
+              ],
+              [
+                0.15,
+                0.55,
+                0.95
+              ],
+              [
+                0.15,
+                0.55,
+                0.95
+              ]
+            ],
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "Button: Spawn Orb"
+              },
+              "controlLabel": {
+                "t": "string",
+                "v": "Spawn Harmonic Orb"
+              },
+              "buttonRole": {
+                "t": "string",
+                "v": "spawn-orb"
+              },
+              "restY": {
+                "t": "double",
+                "v": 0.88
+              }
+            }
+          },
+          {
+            "objectID": "studio.btn.toggle-theme",
+            "shapeKind": 0,
+            "geometryType": 0,
+            "shapeParams": [
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              0.7,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.16,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.55,
+              0.0,
+              -0.5,
+              0.88,
+              -0.35,
+              1.0
+            ],
+            "center": [
+              -0.5,
+              0.88,
+              -0.35
+            ],
+            "materialId": "material.studio.btn.gold",
+            "faceColors": [
+              [
+                1.0,
+                0.65,
+                0.1
+              ],
+              [
+                1.0,
+                0.65,
+                0.1
+              ],
+              [
+                1.0,
+                0.65,
+                0.1
+              ],
+              [
+                1.0,
+                0.65,
+                0.1
+              ],
+              [
+                1.0,
+                0.65,
+                0.1
+              ],
+              [
+                1.0,
+                0.65,
+                0.1
+              ]
+            ],
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "Toggle: Ambient Theme"
+              },
+              "controlLabel": {
+                "t": "string",
+                "v": "Toggle Night/Day Ambient"
+              },
+              "buttonRole": {
+                "t": "string",
+                "v": "toggle-theme"
+              },
+              "controlOn": {
+                "t": "bool",
+                "v": false
+              },
+              "restY": {
+                "t": "double",
+                "v": 0.88
+              }
+            }
+          },
+          {
+            "objectID": "studio.pad.c5",
+            "shapeKind": 0,
+            "geometryType": 0,
+            "shapeParams": [
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              0.45,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.14,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.5,
+              0.0,
+              0.4,
+              0.87,
+              -0.35,
+              1.0
+            ],
+            "center": [
+              0.4,
+              0.87,
+              -0.35
+            ],
+            "materialId": "material.studio.C5",
+            "faceColors": [
+              [
+                0.95,
+                0.22,
+                0.32
+              ],
+              [
+                0.95,
+                0.22,
+                0.32
+              ],
+              [
+                0.95,
+                0.22,
+                0.32
+              ],
+              [
+                0.95,
+                0.22,
+                0.32
+              ],
+              [
+                0.95,
+                0.22,
+                0.32
+              ],
+              [
+                0.95,
+                0.22,
+                0.32
+              ]
+            ],
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "Chord Pad: C5"
+              },
+              "controlLabel": {
+                "t": "string",
+                "v": "Play Note C5"
+              },
+              "noteName": {
+                "t": "string",
+                "v": "C5"
+              },
+              "acoustic.frequency": {
+                "t": "double",
+                "v": 523.25
+              },
+              "acoustic.amplitude": {
+                "t": "double",
+                "v": 0.85
+              },
+              "acoustic.waveType": {
+                "t": "string",
+                "v": "crystal"
+              },
+              "isChordPad": {
+                "t": "bool",
+                "v": true
+              },
+              "restY": {
+                "t": "double",
+                "v": 0.87
+              }
+            }
+          },
+          {
+            "objectID": "studio.pad.e5",
+            "shapeKind": 0,
+            "geometryType": 0,
+            "shapeParams": [
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              0.45,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.14,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.5,
+              0.0,
+              0.95,
+              0.87,
+              -0.35,
+              1.0
+            ],
+            "center": [
+              0.95,
+              0.87,
+              -0.35
+            ],
+            "materialId": "material.studio.E5",
+            "faceColors": [
+              [
+                1.0,
+                0.72,
+                0.12
+              ],
+              [
+                1.0,
+                0.72,
+                0.12
+              ],
+              [
+                1.0,
+                0.72,
+                0.12
+              ],
+              [
+                1.0,
+                0.72,
+                0.12
+              ],
+              [
+                1.0,
+                0.72,
+                0.12
+              ],
+              [
+                1.0,
+                0.72,
+                0.12
+              ]
+            ],
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "Chord Pad: E5"
+              },
+              "controlLabel": {
+                "t": "string",
+                "v": "Play Note E5"
+              },
+              "noteName": {
+                "t": "string",
+                "v": "E5"
+              },
+              "acoustic.frequency": {
+                "t": "double",
+                "v": 659.25
+              },
+              "acoustic.amplitude": {
+                "t": "double",
+                "v": 0.85
+              },
+              "acoustic.waveType": {
+                "t": "string",
+                "v": "crystal"
+              },
+              "isChordPad": {
+                "t": "bool",
+                "v": true
+              },
+              "restY": {
+                "t": "double",
+                "v": 0.87
+              }
+            }
+          },
+          {
+            "objectID": "studio.pad.g5",
+            "shapeKind": 0,
+            "geometryType": 0,
+            "shapeParams": [
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              0.45,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.14,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.5,
+              0.0,
+              1.5,
+              0.87,
+              -0.35,
+              1.0
+            ],
+            "center": [
+              1.5,
+              0.87,
+              -0.35
+            ],
+            "materialId": "material.studio.G5",
+            "faceColors": [
+              [
+                0.18,
+                0.85,
+                0.42
+              ],
+              [
+                0.18,
+                0.85,
+                0.42
+              ],
+              [
+                0.18,
+                0.85,
+                0.42
+              ],
+              [
+                0.18,
+                0.85,
+                0.42
+              ],
+              [
+                0.18,
+                0.85,
+                0.42
+              ],
+              [
+                0.18,
+                0.85,
+                0.42
+              ]
+            ],
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "Chord Pad: G5"
+              },
+              "controlLabel": {
+                "t": "string",
+                "v": "Play Note G5"
+              },
+              "noteName": {
+                "t": "string",
+                "v": "G5"
+              },
+              "acoustic.frequency": {
+                "t": "double",
+                "v": 783.99
+              },
+              "acoustic.amplitude": {
+                "t": "double",
+                "v": 0.85
+              },
+              "acoustic.waveType": {
+                "t": "string",
+                "v": "crystal"
+              },
+              "isChordPad": {
+                "t": "bool",
+                "v": true
+              },
+              "restY": {
+                "t": "double",
+                "v": 0.87
+              }
+            }
+          },
+          {
+            "objectID": "studio.pad.b5",
+            "shapeKind": 0,
+            "geometryType": 0,
+            "shapeParams": [
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              0.45,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.14,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.5,
+              0.0,
+              2.05,
+              0.87,
+              -0.35,
+              1.0
+            ],
+            "center": [
+              2.05,
+              0.87,
+              -0.35
+            ],
+            "materialId": "material.studio.B5",
+            "faceColors": [
+              [
+                0.28,
+                0.45,
+                1.0
+              ],
+              [
+                0.28,
+                0.45,
+                1.0
+              ],
+              [
+                0.28,
+                0.45,
+                1.0
+              ],
+              [
+                0.28,
+                0.45,
+                1.0
+              ],
+              [
+                0.28,
+                0.45,
+                1.0
+              ],
+              [
+                0.28,
+                0.45,
+                1.0
+              ]
+            ],
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "Chord Pad: B5"
+              },
+              "controlLabel": {
+                "t": "string",
+                "v": "Play Note B5"
+              },
+              "noteName": {
+                "t": "string",
+                "v": "B5"
+              },
+              "acoustic.frequency": {
+                "t": "double",
+                "v": 987.77
+              },
+              "acoustic.amplitude": {
+                "t": "double",
+                "v": 0.85
+              },
+              "acoustic.waveType": {
+                "t": "string",
+                "v": "crystal"
+              },
+              "isChordPad": {
+                "t": "bool",
+                "v": true
+              },
+              "restY": {
+                "t": "double",
+                "v": 0.87
+              }
+            }
+          },
+          {
+            "objectID": "studio.slider.track",
+            "shapeKind": 0,
+            "geometryType": 0,
+            "shapeParams": [
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              2.6,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.04,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.18,
+              0.0,
+              0.0,
+              0.83,
+              0.5,
+              1.0
+            ],
+            "center": [
+              0.0,
+              0.83,
+              0.5
+            ],
+            "materialId": "material.studio.track",
+            "faceColors": [
+              [
+                0.25,
+                0.27,
+                0.32
+              ],
+              [
+                0.25,
+                0.27,
+                0.32
+              ],
+              [
+                0.25,
+                0.27,
+                0.32
+              ],
+              [
+                0.25,
+                0.27,
+                0.32
+              ],
+              [
+                0.25,
+                0.27,
+                0.32
+              ],
+              [
+                0.25,
+                0.27,
+                0.32
+              ]
+            ],
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "Pulse Rate Slider Track"
+              }
+            }
+          },
+          {
+            "objectID": "studio.slider.handle",
+            "shapeKind": 0,
+            "geometryType": 0,
+            "shapeParams": [
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              0.35,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.14,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.32,
+              0.0,
+              0.0,
+              0.9,
+              0.5,
+              1.0
+            ],
+            "center": [
+              0.0,
+              0.9,
+              0.5
+            ],
+            "materialId": "material.studio.handle",
+            "faceColors": [
+              [
+                0.92,
+                0.94,
+                0.98
+              ],
+              [
+                0.92,
+                0.94,
+                0.98
+              ],
+              [
+                0.92,
+                0.94,
+                0.98
+              ],
+              [
+                0.92,
+                0.94,
+                0.98
+              ],
+              [
+                0.92,
+                0.94,
+                0.98
+              ],
+              [
+                0.92,
+                0.94,
+                0.98
+              ]
+            ],
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "Pulse Rate Handle"
+              },
+              "controlLabel": {
+                "t": "string",
+                "v": "Pulse Rate"
+              },
+              "controlValue": {
+                "t": "double",
+                "v": 1.0
+              },
+              "controlMin": {
+                "t": "double",
+                "v": 0.2
+              },
+              "controlMax": {
+                "t": "double",
+                "v": 3.0
+              },
+              "controlStep": {
+                "t": "double",
+                "v": 0.1
+              },
+              "restY": {
+                "t": "double",
+                "v": 0.9
+              }
+            }
+          },
+          {
+            "objectID": "state.studio",
+            "shapeKind": 12,
+            "geometryType": 12,
+            "shapeParams": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              0.01,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.01,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.01,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "center": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "materialId": "",
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "Studio Ambient State"
+              },
+              "themeNight": {
+                "t": "bool",
+                "v": false
+              },
+              "pulseRate": {
+                "t": "double",
+                "v": 1.0
+              },
+              "spawnCount": {
+                "t": "int",
+                "v": 0
+              },
+              "soundFreq": {
+                "t": "double",
+                "v": 440.0
+              },
+              "soundAmp": {
+                "t": "double",
+                "v": 0.8
+              }
+            }
+          }
+        ]
+      },
+      "formationRelations": [
+        {
+          "type": "subcategory-of",
+          "entityA": "category.control.button",
+          "entityB": "category.control",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "subcategory-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787395000
+            }
+          ]
+        },
+        {
+          "type": "subcategory-of",
+          "entityA": "category.control.toggle",
+          "entityB": "category.control",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "subcategory-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787395000
+            }
+          ]
+        },
+        {
+          "type": "subcategory-of",
+          "entityA": "category.control.slider",
+          "entityB": "category.control",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "subcategory-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787395000
+            }
+          ]
+        },
+        {
+          "type": "subcategory-of",
+          "entityA": "category.art.stroke",
+          "entityB": "category.art",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "subcategory-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787395000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "category.control",
+          "entityB": "author.gemini-spark",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787395000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "category.art",
+          "entityB": "author.gemini-spark",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787395000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "studio.btn.spawn-orb",
+          "entityB": "category.control.button",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787395000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "studio.btn.toggle-theme",
+          "entityB": "category.control.toggle",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787395000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "studio.pad.c5",
+          "entityB": "category.control.button",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787395000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "studio.pad.e5",
+          "entityB": "category.control.button",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787395000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "studio.pad.g5",
+          "entityB": "category.control.button",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787395000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "studio.pad.b5",
+          "entityB": "category.control.button",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787395000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "studio.slider.handle",
+          "entityB": "category.control.slider",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787395000
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "authoredLaws": {
+    "firstMoverEnabled": {
+      "physics-gravity": false,
+      "physics-kinematics": false,
+      "physics-acoustics": false,
+      "interaction-channel": true,
+      "locomotion-channel": true,
+      "creation-channel": true,
+      "shape-generator-3d-law": false,
+      "tool-create-3d-law": false
+    },
+    "formationMembers": [
+      "law-control-button-archetype",
+      "law-control-toggle-archetype",
+      "law-studio-spawn-orb",
+      "law-studio-theme-toggle",
+      "law-studio-pad-play",
+      "law-studio-button-spring",
+      "law-art-stroke-draw",
+      "law-stroke-hover-sound",
+      "law-stroke-hover-glow"
+    ],
+    "laws": [
+      {
+        "id": "law-control-button-archetype",
+        "name": "Control Archetype: Button Activation",
+        "enabled": true,
+        "authority": 0,
+        "activation": 0,
+        "scope": 0,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "author.gemini-spark"
+        ],
+        "conditionSubjects": [],
+        "targets": [],
+        "conditionModel": {
+          "kind": 2,
+          "relationType": "instance-of",
+          "otherId": "category.control.button"
+        },
+        "actionModel": {
+          "kind": 10,
+          "eventType": "control-activated",
+          "publishSubject": "",
+          "publishObject": ""
+        },
+        "provenance": [
+          {
+            "type": "authored-by",
+            "entityA": "law-control-button-archetype",
+            "entityB": "author.gemini-spark",
+            "directed": true,
+            "weight": 1.0,
+            "events": [
+              {
+                "description": "authored-by",
+                "deltaWeight": 1.0,
+                "timestamp": 1787395000
+              }
+            ]
+          }
+        ],
+        "applicationLog": []
+      },
+      {
+        "id": "law-control-toggle-archetype",
+        "name": "Control Archetype: Toggle Flip",
+        "enabled": true,
+        "authority": 0,
+        "activation": 0,
+        "scope": 0,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "author.gemini-spark"
+        ],
+        "conditionSubjects": [],
+        "targets": [],
+        "conditionModel": {
+          "kind": 2,
+          "relationType": "instance-of",
+          "otherId": "category.control.toggle"
+        },
+        "actionModel": {
+          "kind": 5,
+          "children": [
+            {
+              "kind": 8,
+              "path": "controlOn",
+              "bindings": {
+                "o": "controlOn"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "o": 1.0
+                          }
+                        },
+                        {
+                          "c": 1.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 10,
+              "eventType": "control-activated",
+              "publishSubject": "",
+              "publishObject": ""
+            }
+          ]
+        },
+        "provenance": [
+          {
+            "type": "authored-by",
+            "entityA": "law-control-toggle-archetype",
+            "entityB": "author.gemini-spark",
+            "directed": true,
+            "weight": 1.0,
+            "events": [
+              {
+                "description": "authored-by",
+                "deltaWeight": 1.0,
+                "timestamp": 1787395000
+              }
+            ]
+          }
+        ],
+        "applicationLog": []
+      },
+      {
+        "id": "law-studio-spawn-orb",
+        "name": "Studio: Spawn Harmonic Orb on Button Click",
+        "enabled": true,
+        "authority": 0,
+        "activation": 0,
+        "scope": 0,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "author.gemini-spark"
+        ],
+        "conditionSubjects": [],
+        "targets": [],
+        "conditionModel": {
+          "kind": 0,
+          "path": "buttonRole",
+          "op": 0,
+          "operand": {
+            "t": "string",
+            "v": "spawn-orb"
+          }
+        },
+        "actionModel": {
+          "kind": 5,
+          "children": [
+            {
+              "kind": 11,
+              "shapeKind": 1,
+              "createType": "interactive.harmonic.orb",
+              "children": [
+                {
+                  "kind": 0,
+                  "path": "scale",
+                  "operand": {
+                    "t": "vec3",
+                    "v": [
+                      0.4,
+                      0.4,
+                      0.4
+                    ]
+                  }
+                },
+                {
+                  "kind": 0,
+                  "path": "color",
+                  "operand": {
+                    "t": "vec3",
+                    "v": [
+                      1.0,
+                      0.84,
+                      0.22
+                    ]
+                  }
+                },
+                {
+                  "kind": 0,
+                  "path": "position",
+                  "operand": {
+                    "t": "vec3",
+                    "v": [
+                      0.0,
+                      1.6,
+                      1.2
+                    ]
+                  }
+                },
+                {
+                  "kind": 0,
+                  "path": "acoustic.frequency",
+                  "operand": {
+                    "t": "double",
+                    "v": 880.0
+                  }
+                },
+                {
+                  "kind": 0,
+                  "path": "acoustic.amplitude",
+                  "operand": {
+                    "t": "double",
+                    "v": 0.9
+                  }
+                },
+                {
+                  "kind": 20,
+                  "sourceToken": "",
+                  "targetToken": "category.art.stroke",
+                  "relationType": "instance-of"
+                },
+                {
+                  "kind": 20,
+                  "sourceToken": "",
+                  "targetToken": "category.interactive.orb",
+                  "relationType": "instance-of"
+                }
+              ]
+            },
+            {
+              "kind": 18,
+              "path": "@state.studio.soundFreq",
+              "input": "@state.studio.soundAmp",
+              "propertyName": "crystal"
+            },
+            {
+              "kind": 8,
+              "path": "position.y",
+              "bindings": {
+                "ry": "restY"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "ry": 1.0
+                          }
+                        },
+                        {
+                          "c": -0.04,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 10,
+              "eventType": "orb-spawned",
+              "publishSubject": "state.studio",
+              "publishObject": ""
+            }
+          ]
+        },
+        "provenance": [
+          {
+            "type": "authored-by",
+            "entityA": "law-studio-spawn-orb",
+            "entityB": "author.gemini-spark",
+            "directed": true,
+            "weight": 1.0,
+            "events": [
+              {
+                "description": "authored-by",
+                "deltaWeight": 1.0,
+                "timestamp": 1787395000
+              }
+            ]
+          }
+        ],
+        "applicationLog": []
+      },
+      {
+        "id": "law-studio-theme-toggle",
+        "name": "Studio: Switch Ambient Theme on Toggle Click",
+        "enabled": true,
+        "authority": 0,
+        "activation": 0,
+        "scope": 0,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "author.gemini-spark"
+        ],
+        "conditionSubjects": [],
+        "targets": [],
+        "conditionModel": {
+          "kind": 0,
+          "path": "buttonRole",
+          "op": 0,
+          "operand": {
+            "t": "string",
+            "v": "toggle-theme"
+          }
+        },
+        "actionModel": {
+          "kind": 5,
+          "children": [
+            {
+              "kind": 18,
+              "path": "@state.studio.soundFreq",
+              "input": "@state.studio.soundAmp",
+              "propertyName": "bell"
+            },
+            {
+              "kind": 10,
+              "eventType": "theme-toggled",
+              "publishSubject": "state.studio",
+              "publishObject": ""
+            }
+          ]
+        },
+        "provenance": [
+          {
+            "type": "authored-by",
+            "entityA": "law-studio-theme-toggle",
+            "entityB": "author.gemini-spark",
+            "directed": true,
+            "weight": 1.0,
+            "events": [
+              {
+                "description": "authored-by",
+                "deltaWeight": 1.0,
+                "timestamp": 1787395000
+              }
+            ]
+          }
+        ],
+        "applicationLog": []
+      },
+      {
+        "id": "law-studio-pad-play",
+        "name": "Studio: Play Musical Note on Chord Pad Click",
+        "enabled": true,
+        "authority": 0,
+        "activation": 0,
+        "scope": 0,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "author.gemini-spark"
+        ],
+        "conditionSubjects": [],
+        "targets": [],
+        "conditionModel": {
+          "kind": 0,
+          "path": "isChordPad",
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": true
+          }
+        },
+        "actionModel": {
+          "kind": 5,
+          "children": [
+            {
+              "kind": 18,
+              "path": "acoustic.frequency",
+              "input": "acoustic.amplitude",
+              "propertyName": "crystal"
+            },
+            {
+              "kind": 8,
+              "path": "position.y",
+              "bindings": {
+                "ry": "restY"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "ry": 1.0
+                          }
+                        },
+                        {
+                          "c": -0.04,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 10,
+              "eventType": "note-played",
+              "publishSubject": "",
+              "publishObject": ""
+            }
+          ]
+        },
+        "provenance": [
+          {
+            "type": "authored-by",
+            "entityA": "law-studio-pad-play",
+            "entityB": "author.gemini-spark",
+            "directed": true,
+            "weight": 1.0,
+            "events": [
+              {
+                "description": "authored-by",
+                "deltaWeight": 1.0,
+                "timestamp": 1787395000
+              }
+            ]
+          }
+        ],
+        "applicationLog": []
+      },
+      {
+        "id": "law-studio-button-spring",
+        "name": "Studio: Restore Button Elevation",
+        "enabled": true,
+        "authority": 0,
+        "activation": 0,
+        "scope": 0,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "author.gemini-spark"
+        ],
+        "conditionSubjects": [],
+        "targets": [],
+        "conditionModel": {
+          "kind": 2,
+          "relationType": "instance-of",
+          "otherId": "category.control.button"
+        },
+        "actionModel": {
+          "kind": 8,
+          "path": "position.y",
+          "bindings": {
+            "ry": "restY"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "ry": 1.0
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        "provenance": [
+          {
+            "type": "authored-by",
+            "entityA": "law-studio-button-spring",
+            "entityB": "author.gemini-spark",
+            "directed": true,
+            "weight": 1.0,
+            "events": [
+              {
+                "description": "authored-by",
+                "deltaWeight": 1.0,
+                "timestamp": 1787395000
+              }
+            ]
+          }
+        ],
+        "applicationLog": []
+      },
+      {
+        "id": "law-art-stroke-draw",
+        "name": "Art Tool: Draw Stroke Singulars along Pointer",
+        "enabled": true,
+        "authority": 0,
+        "activation": 1,
+        "scope": 1,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "author.gemini-spark"
+        ],
+        "conditionSubjects": [],
+        "targets": [],
+        "conditionModel": {
+          "kind": 3,
+          "children": [
+            {
+              "kind": 0,
+              "path": "@interaction-channel.leftDown",
+              "op": 0,
+              "operand": {
+                "t": "bool",
+                "v": true
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@creation-channel.active3DMode",
+              "op": 0,
+              "operand": {
+                "t": "string",
+                "v": "Draw"
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@interaction-channel.dragging",
+              "op": 0,
+              "operand": {
+                "t": "bool",
+                "v": true
+              }
+            }
+          ]
+        },
+        "actionModel": {
+          "kind": 11,
+          "shapeKind": 1,
+          "createType": "art.stroke.segment",
+          "spawnPlacementPath": "@interaction-channel.pointerWorld",
+          "children": [
+            {
+              "kind": 0,
+              "path": "scale",
+              "operand": {
+                "t": "vec3",
+                "v": [
+                  0.08,
+                  0.08,
+                  0.08
+                ]
+              }
+            },
+            {
+              "kind": 0,
+              "path": "color",
+              "operand": {
+                "t": "vec3",
+                "v": [
+                  1.0,
+                  0.85,
+                  0.15
+                ]
+              }
+            },
+            {
+              "kind": 20,
+              "sourceToken": "",
+              "targetToken": "category.art.stroke",
+              "relationType": "instance-of"
+            }
+          ]
+        },
+        "provenance": [
+          {
+            "type": "authored-by",
+            "entityA": "law-art-stroke-draw",
+            "entityB": "author.gemini-spark",
+            "directed": true,
+            "weight": 1.0,
+            "events": [
+              {
+                "description": "authored-by",
+                "deltaWeight": 1.0,
+                "timestamp": 1787395000
+              }
+            ]
+          }
+        ],
+        "applicationLog": []
+      },
+      {
+        "id": "law-stroke-hover-sound",
+        "name": "Art Stroke: Sound Chime on Hover",
+        "enabled": true,
+        "authority": 0,
+        "activation": 0,
+        "scope": 0,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "author.gemini-spark"
+        ],
+        "conditionSubjects": [],
+        "targets": [],
+        "conditionModel": {
+          "kind": 2,
+          "relationType": "instance-of",
+          "otherId": "category.art.stroke"
+        },
+        "actionModel": {
+          "kind": 18,
+          "path": "acoustic.frequency",
+          "input": "acoustic.amplitude",
+          "propertyName": "crystal"
+        },
+        "provenance": [
+          {
+            "type": "authored-by",
+            "entityA": "law-stroke-hover-sound",
+            "entityB": "author.gemini-spark",
+            "directed": true,
+            "weight": 1.0,
+            "events": [
+              {
+                "description": "authored-by",
+                "deltaWeight": 1.0,
+                "timestamp": 1787395000
+              }
+            ]
+          }
+        ],
+        "applicationLog": []
+      },
+      {
+        "id": "law-stroke-hover-glow",
+        "name": "Art Stroke: Illuminate on Pointer Hover",
+        "enabled": true,
+        "authority": 0,
+        "activation": 1,
+        "scope": 1,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "author.gemini-spark"
+        ],
+        "conditionSubjects": [],
+        "targets": [],
+        "conditionModel": {
+          "kind": 3,
+          "children": [
+            {
+              "kind": 2,
+              "relationType": "instance-of",
+              "otherId": "category.art.stroke"
+            },
+            {
+              "kind": 0,
+              "path": "@world.pointerOver",
+              "op": 0,
+              "operand": {
+                "t": "bool",
+                "v": true
+              }
+            }
+          ]
+        },
+        "actionModel": {
+          "kind": 0,
+          "path": "color",
+          "operand": {
+            "t": "vec3",
+            "v": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        "provenance": [
+          {
+            "type": "authored-by",
+            "entityA": "law-stroke-hover-glow",
+            "entityB": "author.gemini-spark",
+            "directed": true,
+            "weight": 1.0,
+            "events": [
+              {
+                "description": "authored-by",
+                "deltaWeight": 1.0,
+                "timestamp": 1787395000
+              }
+            ]
+          }
+        ],
+        "applicationLog": []
+      }
+    ],
+    "triggers": {
+      "law-control-button-archetype": [
+        "object-clicked"
+      ],
+      "law-control-toggle-archetype": [
+        "object-clicked"
+      ],
+      "law-studio-spawn-orb": [
+        "control-activated"
+      ],
+      "law-studio-theme-toggle": [
+        "control-activated"
+      ],
+      "law-studio-pad-play": [
+        "control-activated"
+      ],
+      "law-studio-button-spring": [
+        "object-released"
+      ],
+      "law-stroke-hover-sound": [
+        "object-hover-entered"
+      ]
+    }
+  }
+}

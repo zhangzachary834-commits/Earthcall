@@ -18,6 +18,14 @@ const App = {
     },
     selectedObjectId: null,
     currentTab: 'objects',
+    
+    // Law Workshop State
+    lawViewMode: 'grid',       // 'grid' | 'grouped' | 'graph'
+    lawSystemFilter: 'all',    // 'all' | 'physics' | 'acoustics' | 'visual' | 'motion' | 'creation' | 'input' | 'custom'
+    lawSearchQuery: '',
+    selectedLawGraphNode: null,
+    currentEditingLaw: null,   // Law currently opened in ECA pipeline editor modal
+
     eventLog: [],
     eventLogPaused: false,
     three: {
@@ -177,6 +185,9 @@ function switchTab(tabName) {
     // Trigger Three.js resize if switching to objects tab
     if (tabName === 'objects' && App.three.renderer) {
         setTimeout(onThreeResize, 50);
+    }
+    if (tabName === 'laws' && App.lawViewMode === 'graph') {
+        setTimeout(() => LawGraphEngine.resize(), 50);
     }
 }
 
@@ -396,7 +407,7 @@ function renderAll() {
     syncThreeScene(App.state.objects);
     renderObjectExplorer();
     renderObjectInspector();
-    renderLawCards();
+    renderLawSubsystem();
     renderZoneCards();
     renderPersonPhysics();
     renderStatsCounters();
@@ -427,13 +438,6 @@ function initObjectStudio() {
     });
 
     // Inspector Live Inputs
-    const bindInput = (id, prop, isNumber = true) => {
-        const el = document.getElementById(id);
-        if (el) {
-            el.addEventListener('input', () => onInspectorFieldChange());
-        }
-    };
-
     ['insp-pos-x', 'insp-pos-y', 'insp-pos-z',
      'insp-rot-x', 'insp-rot-y', 'insp-rot-z',
      'insp-dim', 'insp-shape', 'insp-mat', 'insp-name', 'insp-color-hex'].forEach(id => {
@@ -602,7 +606,6 @@ function onInspectorFieldChange() {
         color: rgb
     };
 
-    // Send update command to C++ engine
     if (App.socket) {
         App.socket.emit('update_object', payload);
     }
@@ -652,8 +655,123 @@ function deleteObject(id) {
         });
 }
 
-// --- Studio 2: Law Workshop ---
+// ==========================================================================
+// STUDIO 2: Authors of Law (Grouping by System & Interconnected Graph Mode)
+// ==========================================================================
+
+function categorizeLaw(law) {
+    const id = (law.identifier || '').toLowerCase();
+    const name = (law.name || '').toLowerCase();
+    const expr = (law.expression || '').toLowerCase();
+
+    if (id.includes('acoustics') || id.includes('sound') || name.includes('acoustic') || name.includes('sound') || expr.includes('acoustic') || expr.includes('sound')) {
+        return {
+            key: 'acoustics',
+            name: 'Acoustics & Audio',
+            icon: '🔊',
+            color: '#f59e0b',
+            desc: 'Sound emitters, ADSR envelopes, vibrato LFOs, and acoustic occlusion behind geometry.'
+        };
+    }
+    if (id.includes('color') || id.includes('pulse') || id.includes('visual') || id.includes('material') || name.includes('color') || expr.includes('color')) {
+        return {
+            key: 'visual',
+            name: 'Visual & Materials',
+            icon: '🌈',
+            color: '#ec4899',
+            desc: 'Shader parameters, color pulsation, albedo modulations, and material state transitions.'
+        };
+    }
+    if (id.includes('orbit') || id.includes('bounce') || id.includes('kinetic') || id.includes('motion') || name.includes('orbit') || name.includes('bounce') || expr.includes('impulse')) {
+        return {
+            key: 'motion',
+            name: 'Motion & Kinetics',
+            icon: '🛸',
+            color: '#a855f7',
+            desc: 'Orbital trajectories, collision restitution, kinetic impulses, and angular momentum.'
+        };
+    }
+    if (id.includes('gravity') || id.includes('kinematics') || id.includes('zero-g') || name.includes('gravity') || name.includes('kinematics') || expr.includes('gravity') || expr.includes('velocity')) {
+        return {
+            key: 'physics',
+            name: 'Physics & Gravitation',
+            icon: '🌌',
+            color: '#3b82f6',
+            desc: 'Classical kinematics, gravitational fields, acceleration vectors, and integration.'
+        };
+    }
+    if (id.includes('shape') || id.includes('spawn') || id.includes('create') || id.includes('generator') || name.includes('shape') || name.includes('create')) {
+        return {
+            key: 'creation',
+            name: 'Creation Tools',
+            icon: '📐',
+            color: '#00f0ff',
+            desc: '3D geometric mesh generators, singular set-to-set constructors, and concept instantiators.'
+        };
+    }
+    if (id.includes('input') || id.includes('mouse') || id.includes('keyboard') || id.includes('locomotion') || id.includes('interaction')) {
+        return {
+            key: 'input',
+            name: 'Input & Control',
+            icon: '🎮',
+            color: '#6366f1',
+            desc: 'Locomotion channels, cursor pointer events, gesture picking, and input bindings.'
+        };
+    }
+    return {
+        key: 'custom',
+        name: 'Custom Authored',
+        icon: '✨',
+        color: '#10b981',
+        desc: 'User-authored OntoMath laws and custom experimental rules.'
+    };
+}
+
 function initLawWorkshop() {
+    // View Switcher Buttons
+    const viewGridBtn = document.getElementById('view-mode-grid');
+    const viewGroupedBtn = document.getElementById('view-mode-grouped');
+    const viewGraphBtn = document.getElementById('view-mode-graph');
+
+    if (viewGridBtn && viewGroupedBtn && viewGraphBtn) {
+        viewGridBtn.addEventListener('click', () => setLawViewMode('grid'));
+        viewGroupedBtn.addEventListener('click', () => setLawViewMode('grouped'));
+        viewGraphBtn.addEventListener('click', () => setLawViewMode('graph'));
+    }
+
+    // System Filter Chips
+    document.querySelectorAll('.system-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            document.querySelectorAll('.system-chip').forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+            App.lawSystemFilter = chip.getAttribute('data-system') || 'all';
+            renderLawSubsystem();
+        });
+    });
+
+    // Law Search Input
+    const searchInput = document.getElementById('law-search-input');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            App.lawSearchQuery = e.target.value;
+            renderLawSubsystem();
+        });
+    }
+
+    // Graph Toolbar Controls
+    document.getElementById('graph-zoom-in')?.addEventListener('click', () => LawGraphEngine.zoom(1.2));
+    document.getElementById('graph-zoom-out')?.addEventListener('click', () => LawGraphEngine.zoom(0.8));
+    document.getElementById('graph-zoom-reset')?.addEventListener('click', () => LawGraphEngine.resetView());
+    document.getElementById('graph-layout-mode')?.addEventListener('change', (e) => {
+        LawGraphEngine.setLayout(e.target.value);
+    });
+    document.getElementById('close-graph-drawer')?.addEventListener('click', () => {
+        document.getElementById('graph-node-drawer')?.classList.remove('open');
+        App.selectedLawGraphNode = null;
+        LawGraphEngine.requestRedraw();
+    });
+
+    // Create Law Modal
     const openCreateLawBtn = document.getElementById('open-create-law-modal');
     if (openCreateLawBtn) {
         openCreateLawBtn.addEventListener('click', () => {
@@ -666,6 +784,32 @@ function initLawWorkshop() {
         closeLawModalBtn.addEventListener('click', () => {
             document.getElementById('create-law-modal').classList.remove('active');
         });
+    }
+
+    // Close ECA Pipeline Modal
+    const closeEcaModalBtn = document.getElementById('close-eca-modal');
+    if (closeEcaModalBtn) {
+        closeEcaModalBtn.addEventListener('click', () => {
+            document.getElementById('eca-pipeline-modal').classList.remove('active');
+            App.currentEditingLaw = null;
+        });
+    }
+
+    // Live update listeners for ECA node editor inputs
+    ['eca-when-trigger', 'eca-when-activation', 'eca-when-scope',
+     'eca-cond-enable-toggle', 'eca-cond-path', 'eca-cond-op', 'eca-cond-val',
+     'eca-act-kind', 'eca-act-path', 'eca-act-amp', 'eca-act-freq', 'eca-act-phase', 'eca-act-offset'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', () => updateEcaFlowSummaries());
+            el.addEventListener('change', () => updateEcaFlowSummaries());
+        }
+    });
+
+    // ECA Apply Button
+    const applyEcaBtn = document.getElementById('eca-apply-btn');
+    if (applyEcaBtn) {
+        applyEcaBtn.addEventListener('click', () => saveAndApplyEcaNodes());
     }
 
     // Law Template buttons
@@ -702,6 +846,22 @@ function initLawWorkshop() {
             showToast(`Authoring Law: ${name}`, "success");
         });
     }
+
+    // Initialize Canvas Graph Engine
+    LawGraphEngine.init();
+}
+
+function setLawViewMode(mode) {
+    App.lawViewMode = mode;
+    ['grid', 'grouped', 'graph'].forEach(m => {
+        document.getElementById(`view-mode-${m}`)?.classList.toggle('active', m === mode);
+        document.getElementById(`laws-${m}-view`)?.classList.toggle('active', m === mode);
+    });
+
+    if (mode === 'graph') {
+        setTimeout(() => LawGraphEngine.resize(), 30);
+    }
+    renderLawSubsystem();
 }
 
 function applyLawTemplate(tpl) {
@@ -713,7 +873,7 @@ function applyLawTemplate(tpl) {
     if (tpl === 'zero-g') {
         nameEl.value = "Zero-Gravity Zone";
         idEl.value = "law-zero-g";
-        exprEl.value = "gravity(0, 0, 0)";
+        exprEl.value = "gravity(0, 0, 0) -> weightless_equilibrium()";
         actEl.value = "0";
     } else if (tpl === 'pulse') {
         nameEl.value = "Prismatic Color Pulsator";
@@ -723,65 +883,1020 @@ function applyLawTemplate(tpl) {
     } else if (tpl === 'bounce') {
         nameEl.value = "Super Kinetic Bounce";
         idEl.value = "law-kinetic-bounce";
-        exprEl.value = "onEvent('contact-began') -> impulse(normal * 15.0)";
+        exprEl.value = "onEvent('contact-began') -> set(velocity.y, 12.0)";
         actEl.value = "1";
     } else if (tpl === 'orbit') {
         nameEl.value = "Planetary Orbit Satellite";
         idEl.value = "law-satellite-orbit";
-        exprEl.value = "set(position.x, cos(time) * 5.0); set(position.z, sin(time) * 5.0)";
+        exprEl.value = "set(position.x, 5.0 * cos(time)); set(position.z, 5.0 * sin(time))";
         actEl.value = "0";
     }
 }
 
-function renderLawCards() {
+function updateSystemChipCounts(laws) {
+    const counts = { all: laws.length, physics: 0, acoustics: 0, visual: 0, motion: 0, creation: 0, input: 0, custom: 0 };
+    laws.forEach(l => {
+        const cat = categorizeLaw(l);
+        if (counts[cat.key] !== undefined) counts[cat.key]++;
+        else counts.custom++;
+    });
+
+    Object.keys(counts).forEach(k => {
+        const el = document.getElementById(`chip-count-${k}`);
+        if (el) el.innerText = counts[k];
+    });
+}
+
+function renderLawSubsystem() {
+    const laws = App.state.laws || [];
+    updateSystemChipCounts(laws);
+
+    if (App.lawViewMode === 'grid') {
+        renderFlatLawGrid(laws);
+    } else if (App.lawViewMode === 'grouped') {
+        renderGroupedLawSections(laws);
+    } else if (App.lawViewMode === 'graph') {
+        LawGraphEngine.updateData(laws);
+    }
+}
+
+function createLawCardElement(law, stripeColor) {
+    const card = document.createElement('div');
+    card.className = 'law-card';
+
+    const isChecked = law.enabled ? 'checked' : '';
+    const actLabel = law.activation === 1 ? 'OnEvent' : (law.activation === 2 ? 'WhileTrue' : 'Continuous');
+    const col = stripeColor || '#a855f7';
+
+    card.innerHTML = `
+        <div class="law-system-stripe" style="background: ${col};"></div>
+        <div class="law-card-header">
+            <div>
+                <div class="law-name">${law.name || law.identifier}</div>
+                <div class="law-id">@${law.identifier} • <span style="color: var(--accent-cyan);">${actLabel}</span></div>
+            </div>
+            <label class="toggle-switch">
+                <input type="checkbox" ${isChecked} data-law-id="${law.identifier}">
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+        <div class="law-code-box">${law.expression || 'authored_law_action()'}</div>
+        <div class="law-card-footer">
+            <button class="btn btn-secondary btn-sm eca-inspect-btn" style="width: 100%; justify-content: center; gap: 6px;">
+                <span>🧬 Inspect & Edit ECA Graph</span>
+            </button>
+        </div>
+    `;
+
+    const toggleInput = card.querySelector('input');
+    toggleInput.addEventListener('change', (e) => {
+        const enabled = e.target.checked;
+        toggleLaw(law.identifier, enabled);
+    });
+
+    const inspectBtn = card.querySelector('.eca-inspect-btn');
+    inspectBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openEcaPipelineModal(law);
+    });
+
+    return card;
+}
+
+function renderFlatLawGrid(laws) {
     const grid = document.getElementById('laws-grid');
     if (!grid) return;
-
     grid.innerHTML = '';
-    const laws = App.state.laws || [];
 
-    if (laws.length === 0) {
-        grid.innerHTML = '<div style="padding: 24px; color: var(--text-muted);">No laws currently active in universe</div>';
+    const filterText = (App.lawSearchQuery || '').toLowerCase();
+    const systemFilter = App.lawSystemFilter || 'all';
+
+    const filtered = laws.filter(l => {
+        const cat = categorizeLaw(l);
+        const matchSys = (systemFilter === 'all' || cat.key === systemFilter);
+        const matchSearch = (l.name || '').toLowerCase().includes(filterText) ||
+                            (l.identifier || '').toLowerCase().includes(filterText) ||
+                            (l.expression || '').toLowerCase().includes(filterText);
+        return matchSys && matchSearch;
+    });
+
+    if (filtered.length === 0) {
+        grid.innerHTML = '<div style="padding: 32px; color: var(--text-muted); grid-column: 1/-1; text-align: center;">No laws matching filter criteria.</div>';
         return;
     }
 
-    laws.forEach(law => {
-        const card = document.createElement('div');
-        card.className = 'law-card';
+    filtered.forEach(law => {
+        const cat = categorizeLaw(law);
+        grid.appendChild(createLawCardElement(law, cat.color));
+    });
+}
 
-        const isChecked = law.enabled ? 'checked' : '';
-        const actLabel = law.activation === 1 ? 'OnEvent' : (law.activation === 2 ? 'WhileTrue' : 'Continuous');
+function renderGroupedLawSections(laws) {
+    const container = document.getElementById('laws-grouped-container');
+    if (!container) return;
+    container.innerHTML = '';
 
-        card.innerHTML = `
-            <div class="law-card-header">
-                <div>
-                    <div class="law-name">${law.name || law.identifier}</div>
-                    <div class="law-id">@${law.identifier} • <span style="color: var(--accent-cyan);">${actLabel}</span></div>
+    const filterText = (App.lawSearchQuery || '').toLowerCase();
+    const systemFilter = App.lawSystemFilter || 'all';
+
+    const systems = [
+        { key: 'physics', name: 'Physics & Gravitation', icon: '🌌', color: '#3b82f6', desc: 'Classical kinematics, gravitational fields, acceleration vectors, and integration.' },
+        { key: 'acoustics', name: 'Acoustics & Audio', icon: '🔊', color: '#f59e0b', desc: 'Sound emitters, ADSR envelopes, vibrato LFOs, and acoustic occlusion behind geometry.' },
+        { key: 'visual', name: 'Visual & Materials', icon: '🌈', color: '#ec4899', desc: 'Shader parameters, color pulsation, albedo modulations, and material state transitions.' },
+        { key: 'motion', name: 'Motion & Kinetics', icon: '🛸', color: '#a855f7', desc: 'Orbital trajectories, collision restitution, kinetic impulses, and angular momentum.' },
+        { key: 'creation', name: 'Creation Tools', icon: '📐', color: '#00f0ff', desc: '3D geometric mesh generators, singular set-to-set constructors, and concept instantiators.' },
+        { key: 'input', name: 'Input & Control', icon: '🎮', color: '#6366f1', desc: 'Locomotion channels, cursor pointer events, gesture picking, and input bindings.' },
+        { key: 'custom', name: 'Custom Authored', icon: '✨', color: '#10b981', desc: 'User-authored OntoMath laws and custom experimental rules.' }
+    ];
+
+    let renderedCount = 0;
+
+    systems.forEach(sys => {
+        if (systemFilter !== 'all' && systemFilter !== sys.key) return;
+
+        const groupLaws = laws.filter(l => categorizeLaw(l).key === sys.key);
+        const filteredLaws = groupLaws.filter(l => 
+            (l.name || '').toLowerCase().includes(filterText) ||
+            (l.identifier || '').toLowerCase().includes(filterText) ||
+            (l.expression || '').toLowerCase().includes(filterText)
+        );
+
+        if (filteredLaws.length === 0 && systemFilter === 'all') return;
+
+        renderedCount++;
+        const section = document.createElement('div');
+        section.className = 'system-section-card';
+        section.style.borderLeft = `4px solid ${sys.color}`;
+
+        const allEnabled = filteredLaws.length > 0 && filteredLaws.every(l => l.enabled);
+
+        section.innerHTML = `
+            <div class="system-section-header">
+                <div class="system-title-box">
+                    <span class="system-icon">${sys.icon}</span>
+                    <div>
+                        <div class="system-title" style="color: ${sys.color};">${sys.name} <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: normal;">(${filteredLaws.length})</span></div>
+                        <div class="system-subtitle">${sys.desc}</div>
+                    </div>
                 </div>
-                <label class="toggle-switch">
-                    <input type="checkbox" ${isChecked} data-law-id="${law.identifier}">
-                    <span class="toggle-slider"></span>
-                </label>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <button class="btn btn-secondary btn-sm toggle-sys-batch-btn">
+                        ${allEnabled ? 'Disable All' : 'Enable All'}
+                    </button>
+                </div>
             </div>
-            <div class="law-code-box">${law.expression || 'authored_law_action()'}</div>
+            <div class="cards-grid" style="margin-top: 10px;">
+                <!-- Cards container -->
+            </div>
         `;
 
-        const toggleInput = card.querySelector('input');
-        toggleInput.addEventListener('change', (e) => {
-            const enabled = e.target.checked;
-            toggleLaw(law.identifier, enabled);
+        const cardsGrid = section.querySelector('.cards-grid');
+        filteredLaws.forEach(law => {
+            cardsGrid.appendChild(createLawCardElement(law, sys.color));
         });
 
-        grid.appendChild(card);
+        const batchBtn = section.querySelector('.toggle-sys-batch-btn');
+        batchBtn.addEventListener('click', () => {
+            const targetState = !allEnabled;
+            filteredLaws.forEach(l => toggleLaw(l.identifier, targetState));
+        });
+
+        container.appendChild(section);
     });
+
+    if (renderedCount === 0) {
+        container.innerHTML = '<div style="padding: 32px; text-align: center; color: var(--text-muted);">No laws matching criteria in selected system.</div>';
+    }
 }
 
 function toggleLaw(identifier, enabled) {
     if (App.socket) {
-        App.socket.emit('toggle_law', { identifier, enabled });
+        App.socket.emit('command', {
+            type: 'toggle_law',
+            identifier: identifier,
+            enabled: enabled
+        });
         showToast(`Law @${identifier} ${enabled ? 'Enabled' : 'Disabled'}`, "success");
     }
 }
+
+// ==========================================================================
+// ECA NODE PIPELINE MODAL & LIVE MODIFIER (When -> Condition -> Action)
+// ==========================================================================
+
+function openEcaPipelineModal(law) {
+    App.currentEditingLaw = law;
+
+    const modal = document.getElementById('eca-pipeline-modal');
+    if (!modal) return;
+
+    document.getElementById('eca-modal-law-name').innerText = law.name || law.identifier;
+    document.getElementById('eca-modal-law-id').innerText = `@${law.identifier}`;
+
+    // 1. Fill When Node fields
+    const trigger = law.trigger || (law.activation === 1 ? 'contact-began' : 'universe.time');
+    document.getElementById('eca-when-trigger').value = trigger;
+    document.getElementById('eca-when-activation').value = law.activation !== undefined ? law.activation : 0;
+    document.getElementById('eca-when-scope').value = law.scope !== undefined ? law.scope : 1;
+
+    // 2. Fill Condition Node fields
+    const condToggle = document.getElementById('eca-cond-enable-toggle');
+    const hasCond = (law.conditionDescription && !law.conditionDescription.includes('always')) || false;
+    condToggle.checked = hasCond;
+
+    document.getElementById('eca-cond-path').value = law.conditionPath || (hasCond ? 'position.y' : '');
+    document.getElementById('eca-cond-op').value = law.conditionOp || '==';
+    document.getElementById('eca-cond-val').value = law.conditionVal !== undefined ? law.conditionVal : '0.0';
+
+    // 3. Fill Action Node fields
+    const id = (law.identifier || '').toLowerCase();
+    let actKind = 'map';
+    let actPath = 'velocity.y';
+    let amp = 1.0;
+    let freq = 1.0;
+    let phase = 0.0;
+    let offset = 0.0;
+
+    if (id.includes('gravity') || id.includes('zero-g')) {
+        actKind = 'flow';
+        actPath = 'velocity';
+        offset = 9.81;
+    } else if (id.includes('color') || id.includes('pulse')) {
+        actKind = 'map';
+        actPath = 'color.r';
+        amp = 0.5;
+        freq = 2.0;
+        offset = 0.5;
+    } else if (id.includes('orbit')) {
+        actKind = 'map';
+        actPath = 'position.x';
+        amp = 5.0;
+        freq = 1.0;
+    } else if (id.includes('bounce')) {
+        actKind = 'map';
+        actPath = 'velocity.y';
+        offset = 12.0;
+    }
+
+    document.getElementById('eca-act-kind').value = actKind;
+    document.getElementById('eca-act-path').value = actPath;
+    document.getElementById('eca-act-amp').value = amp;
+    document.getElementById('eca-act-freq').value = freq;
+    document.getElementById('eca-act-phase').value = phase;
+    document.getElementById('eca-act-offset').value = offset;
+
+    updateEcaFlowSummaries();
+    modal.classList.add('active');
+}
+
+function updateEcaFlowSummaries() {
+    const trigger = document.getElementById('eca-when-trigger')?.value || 'universe.time';
+    const actMode = document.getElementById('eca-when-activation')?.value;
+    const actLabel = actMode === '1' ? 'OnEvent' : (actMode === '2' ? 'OnBecomeTrue' : 'WhileTrue');
+    
+    document.getElementById('flow-when-summary').innerText = `${trigger} (${actLabel})`;
+
+    const condEnabled = document.getElementById('eca-cond-enable-toggle')?.checked;
+    if (condEnabled) {
+        const cPath = document.getElementById('eca-cond-path')?.value || 'property';
+        const cOp = document.getElementById('eca-cond-op')?.value || '==';
+        const cVal = document.getElementById('eca-cond-val')?.value || '0.0';
+        document.getElementById('flow-cond-summary').innerText = `${cPath} ${cOp} ${cVal}`;
+    } else {
+        document.getElementById('flow-cond-summary').innerText = "Always True (No Guard)";
+    }
+
+    const aKind = document.getElementById('eca-act-kind')?.value || 'map';
+    const aPath = document.getElementById('eca-act-path')?.value || 'target';
+    const aAmp = document.getElementById('eca-act-amp')?.value || '1.0';
+    const aFreq = document.getElementById('eca-act-freq')?.value || '1.0';
+
+    if (aKind === 'map') {
+        document.getElementById('flow-act-summary').innerText = `Map ${aPath} := sin(${aFreq}t) * ${aAmp}`;
+    } else if (aKind === 'flow') {
+        document.getElementById('flow-act-summary').innerText = `Flow ${aPath} += rate * dt`;
+    } else {
+        document.getElementById('flow-act-summary').innerText = `${aKind.toUpperCase()} ${aPath}`;
+    }
+}
+
+function saveAndApplyEcaNodes() {
+    if (!App.currentEditingLaw) return;
+    const law = App.currentEditingLaw;
+
+    const trigger = document.getElementById('eca-when-trigger').value;
+    const activation = parseInt(document.getElementById('eca-when-activation').value, 10);
+    const scope = parseInt(document.getElementById('eca-when-scope').value, 10);
+
+    const condEnabled = document.getElementById('eca-cond-enable-toggle').checked;
+    const condPath = document.getElementById('eca-cond-path').value.trim();
+    const condOp = document.getElementById('eca-cond-op').value;
+    const condVal = document.getElementById('eca-cond-val').value.trim();
+
+    const actKind = document.getElementById('eca-act-kind').value;
+    const actPath = document.getElementById('eca-act-path').value.trim();
+    const actAmp = parseFloat(document.getElementById('eca-act-amp').value) || 1.0;
+    const actFreq = parseFloat(document.getElementById('eca-act-freq').value) || 1.0;
+    const actPhase = parseFloat(document.getElementById('eca-act-phase').value) || 0.0;
+    const actOffset = parseFloat(document.getElementById('eca-act-offset').value) || 0.0;
+    const actTimevar = document.getElementById('eca-act-timevar').value.trim() || 'time';
+
+    const payload = {
+        type: 'update_law_nodes',
+        identifier: law.identifier,
+        name: law.name || law.identifier,
+        enabled: law.enabled !== undefined ? law.enabled : true,
+        activation: activation,
+        scope: scope,
+        trigger: trigger,
+        condition: {
+            enabled: condEnabled,
+            path: condPath,
+            op: condOp,
+            operand: isNaN(parseFloat(condVal)) ? condVal : parseFloat(condVal)
+        },
+        action: {
+            kind: actKind,
+            path: actPath,
+            amplitude: actAmp,
+            frequency: actFreq,
+            phase: actPhase,
+            offset: actOffset,
+            timeVariable: actTimevar
+        }
+    };
+
+    if (App.socket) {
+        App.socket.emit('command', payload);
+    }
+
+    document.getElementById('eca-pipeline-modal').classList.remove('active');
+    showToast(`Compiled & Applied ECA Node changes for @${law.identifier} in C++!`, "success");
+    App.currentEditingLaw = null;
+}
+
+// ==========================================================================
+// INTERCONNECTED LAW GRAPH ENGINE (Canvas 2D Interactive Force/DAG Graph)
+// ==========================================================================
+
+const LawGraphEngine = {
+    canvas: null,
+    ctx: null,
+    width: 800,
+    height: 600,
+    dpr: 1,
+
+    nodes: [],
+    links: [],
+    nodeMap: new Map(),
+
+    // Camera / Pan & Zoom
+    panX: 0,
+    panY: 0,
+    zoomScale: 1.0,
+
+    isDragging: false,
+    dragNode: null,
+    lastMouseX: 0,
+    lastMouseY: 0,
+
+    layoutMode: 'force', // 'force' | 'flow' | 'clusters'
+    pulseTime: 0,
+
+    init() {
+        this.canvas = document.getElementById('law-graph-canvas');
+        if (!this.canvas) return;
+        this.ctx = this.canvas.getContext('2d');
+
+        this.setupEvents();
+        this.resize();
+        this.startLoop();
+    },
+
+    resize() {
+        const container = document.getElementById('law-graph-viewport');
+        if (!container || !this.canvas) return;
+
+        this.width = container.clientWidth || 800;
+        this.height = container.clientHeight || 600;
+        this.dpr = window.devicePixelRatio || 1;
+
+        this.canvas.width = this.width * this.dpr;
+        this.canvas.height = this.height * this.dpr;
+        this.canvas.style.width = `${this.width}px`;
+        this.canvas.style.height = `${this.height}px`;
+
+        if (this.nodes.length > 0 && this.panX === 0 && this.panY === 0) {
+            this.panX = this.width / 2;
+            this.panY = this.height / 2;
+        }
+    },
+
+    zoom(factor) {
+        this.zoomScale = Math.max(0.3, Math.min(3.0, this.zoomScale * factor));
+    },
+
+    resetView() {
+        this.zoomScale = 1.0;
+        this.panX = this.width / 2;
+        this.panY = this.height / 2;
+    },
+
+    setLayout(mode) {
+        this.layoutMode = mode;
+        this.applyInitialPositions();
+    },
+
+    updateData(laws) {
+        this.nodes = [];
+        this.links = [];
+        this.nodeMap.clear();
+
+        const filterText = (App.lawSearchQuery || '').toLowerCase();
+        const systemFilter = App.lawSystemFilter || 'all';
+
+        // 1. Create Law Nodes
+        laws.forEach(law => {
+            const cat = categorizeLaw(law);
+            if (systemFilter !== 'all' && cat.key !== systemFilter) return;
+
+            const isMatch = (law.name || '').toLowerCase().includes(filterText) ||
+                            (law.identifier || '').toLowerCase().includes(filterText);
+
+            const lawNode = {
+                id: law.identifier,
+                name: law.name || law.identifier,
+                kind: 'law',
+                law: law,
+                system: cat.key,
+                color: cat.color,
+                enabled: law.enabled,
+                activation: law.activation,
+                expression: law.expression,
+                isMatch: isMatch,
+                width: 150,
+                height: 48,
+                x: (Math.random() - 0.5) * 400,
+                y: (Math.random() - 0.5) * 300,
+                vx: 0,
+                vy: 0
+            };
+
+            this.nodes.push(lawNode);
+            this.nodeMap.set(lawNode.id, lawNode);
+        });
+
+        // 2. Derive Event & Target Nodes & Interconnections
+        laws.forEach(law => {
+            if (!this.nodeMap.has(law.identifier)) return;
+            const lawNode = this.nodeMap.get(law.identifier);
+            const id = (law.identifier || '').toLowerCase();
+            const expr = (law.expression || '').toLowerCase();
+
+            // A. Trigger Connections
+            let eventTrigger = null;
+            if (law.activation === 1 || id.includes('acoustics') || id.includes('bounce') || expr.includes('contact')) {
+                eventTrigger = 'contact-began';
+            } else if (id.includes('mouse') || expr.includes('mouse')) {
+                eventTrigger = 'onMouseClicked';
+            } else if (id.includes('utterance') || expr.includes('utterance')) {
+                eventTrigger = 'utterance-spoken';
+            } else if (law.activation === 0 || law.activation === 2) {
+                eventTrigger = 'universe.time';
+            }
+
+            if (eventTrigger) {
+                const eventNodeId = `evt_${eventTrigger}`;
+                let evtNode = this.nodeMap.get(eventNodeId);
+                if (!evtNode) {
+                    evtNode = {
+                        id: eventNodeId,
+                        name: eventTrigger,
+                        kind: 'event',
+                        color: '#10b981',
+                        radius: 20,
+                        x: -250 + (Math.random() - 0.5) * 60,
+                        y: (Math.random() - 0.5) * 300,
+                        vx: 0,
+                        vy: 0
+                    };
+                    this.nodes.push(evtNode);
+                    this.nodeMap.set(eventNodeId, evtNode);
+                }
+                this.links.push({
+                    source: evtNode,
+                    target: lawNode,
+                    type: 'trigger',
+                    color: '#10b981',
+                    label: 'wakes'
+                });
+            }
+
+            // B. Target Property Mutations
+            let targetProp = null;
+            if (id.includes('gravity') || id.includes('zero-g') || expr.includes('velocity')) {
+                targetProp = '@beings.velocity';
+            } else if (id.includes('kinematics') || id.includes('orbit') || expr.includes('position')) {
+                targetProp = '@beings.position';
+            } else if (id.includes('color') || id.includes('pulse') || expr.includes('color')) {
+                targetProp = '@beings.color';
+            } else if (id.includes('acoustics')) {
+                targetProp = '@world.acoustics';
+            }
+
+            if (targetProp) {
+                const targetNodeId = `target_${targetProp}`;
+                let targetNode = this.nodeMap.get(targetNodeId);
+                if (!targetNode) {
+                    targetNode = {
+                        id: targetNodeId,
+                        name: targetProp,
+                        kind: 'target',
+                        color: '#38bdf8',
+                        radius: 20,
+                        x: 250 + (Math.random() - 0.5) * 60,
+                        y: (Math.random() - 0.5) * 300,
+                        vx: 0,
+                        vy: 0
+                    };
+                    this.nodes.push(targetNode);
+                    this.nodeMap.set(targetNodeId, targetNode);
+                }
+                this.links.push({
+                    source: lawNode,
+                    target: targetNode,
+                    type: 'action',
+                    color: '#38bdf8',
+                    label: 'mutates'
+                });
+            }
+
+            // C. Metalaw Connections (Law governing Law)
+            if (id === 'law-zero-g' && this.nodeMap.has('physics-gravity')) {
+                this.links.push({
+                    source: lawNode,
+                    target: this.nodeMap.get('physics-gravity'),
+                    type: 'metalaw',
+                    color: '#ec4899',
+                    label: 'disables'
+                });
+            }
+        });
+
+        this.applyInitialPositions();
+    },
+
+    applyInitialPositions() {
+        if (this.layoutMode === 'flow') {
+            // Hierarchical flow: Events (left) -> Laws (middle) -> Targets (right)
+            const events = this.nodes.filter(n => n.kind === 'event');
+            const laws = this.nodes.filter(n => n.kind === 'law');
+            const targets = this.nodes.filter(n => n.kind === 'target');
+
+            events.forEach((n, i) => {
+                n.x = -260;
+                n.y = (i - (events.length - 1) / 2) * 90;
+            });
+            laws.forEach((n, i) => {
+                n.x = 0;
+                n.y = (i - (laws.length - 1) / 2) * 75;
+            });
+            targets.forEach((n, i) => {
+                n.x = 260;
+                n.y = (i - (targets.length - 1) / 2) * 90;
+            });
+        } else if (this.layoutMode === 'clusters') {
+            const systemAngles = {
+                physics: 0,
+                acoustics: Math.PI * 0.35,
+                visual: Math.PI * 0.7,
+                motion: Math.PI * 1.05,
+                creation: Math.PI * 1.4,
+                input: Math.PI * 1.75,
+                custom: Math.PI * 0.5
+            };
+            this.nodes.forEach(n => {
+                if (n.kind === 'law') {
+                    const angle = systemAngles[n.system] || 0;
+                    const r = 180 + Math.random() * 50;
+                    n.x = Math.cos(angle) * r + (Math.random() - 0.5) * 40;
+                    n.y = Math.sin(angle) * r + (Math.random() - 0.5) * 40;
+                }
+            });
+        }
+    },
+
+    setupEvents() {
+        if (!this.canvas) return;
+
+        this.canvas.addEventListener('pointerdown', (e) => {
+            const rect = this.canvas.getBoundingClientRect();
+            const mouseX = (e.clientX - rect.left - this.panX) / this.zoomScale;
+            const mouseY = (e.clientY - rect.top - this.panY) / this.zoomScale;
+
+            const hit = this.findNodeAt(mouseX, mouseY);
+            if (hit) {
+                this.dragNode = hit;
+                this.isDragging = true;
+                this.selectNode(hit);
+            } else {
+                this.isDragging = true;
+                this.dragNode = null;
+            }
+
+            this.lastMouseX = e.clientX;
+            this.lastMouseY = e.clientY;
+        });
+
+        window.addEventListener('pointermove', (e) => {
+            if (!this.isDragging) return;
+
+            const dx = e.clientX - this.lastMouseX;
+            const dy = e.clientY - this.lastMouseY;
+
+            if (this.dragNode) {
+                this.dragNode.x += dx / this.zoomScale;
+                this.dragNode.y += dy / this.zoomScale;
+            } else {
+                this.panX += dx;
+                this.panY += dy;
+            }
+
+            this.lastMouseX = e.clientX;
+            this.lastMouseY = e.clientY;
+        });
+
+        window.addEventListener('pointerup', () => {
+            this.isDragging = false;
+            this.dragNode = null;
+        });
+
+        this.canvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const factor = e.deltaY < 0 ? 1.1 : 0.9;
+            this.zoom(factor);
+        }, { passive: false });
+    },
+
+    findNodeAt(x, y) {
+        for (let i = this.nodes.length - 1; i >= 0; i--) {
+            const n = this.nodes[i];
+            if (n.kind === 'law') {
+                const hw = n.width / 2;
+                const hh = n.height / 2;
+                if (x >= n.x - hw && x <= n.x + hw && y >= n.y - hh && y <= n.y + hh) {
+                    return n;
+                }
+            } else {
+                const dist = Math.hypot(x - n.x, y - n.y);
+                if (dist <= n.radius) {
+                    return n;
+                }
+            }
+        }
+        return null;
+    },
+
+    selectNode(node) {
+        App.selectedLawGraphNode = node;
+        const drawer = document.getElementById('graph-node-drawer');
+        const titleEl = document.getElementById('drawer-node-title');
+        const bodyEl = document.getElementById('drawer-node-body');
+
+        if (!drawer || !titleEl || !bodyEl) return;
+
+        drawer.classList.add('open');
+        titleEl.innerText = node.name;
+
+        if (node.kind === 'law') {
+            const law = node.law;
+            const cat = categorizeLaw(law);
+            const isChecked = law.enabled ? 'checked' : '';
+            const actLabel = law.activation === 1 ? 'OnEvent (Edge)' : (law.activation === 2 ? 'WhileTrue' : 'Continuous');
+
+            bodyEl.innerHTML = `
+                <div style="border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+                    <div style="font-size: 0.75rem; color: ${cat.color}; font-weight: 700; text-transform: uppercase;">
+                        ${cat.icon} ${cat.name}
+                    </div>
+                    <div style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--accent-cyan);">
+                        @${law.identifier}
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 0.85rem; font-weight: 600;">Active Status:</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="drawer-law-toggle" ${isChecked}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+
+                <button id="drawer-inspect-eca-btn" class="btn btn-primary btn-sm" style="width: 100%; justify-content: center; gap: 6px;">
+                    <span>🧬 Inspect & Edit ECA Node Pipeline</span>
+                </button>
+
+                <div class="control-group">
+                    <div class="control-label">Activation Mode</div>
+                    <div style="font-size: 0.8rem; color: var(--text-secondary); font-family: var(--font-mono);">
+                        ${actLabel}
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <div class="control-label">OntoMath Expression</div>
+                    <div class="law-code-box" style="max-height: 120px;">
+                        ${law.expression || 'authored_law_action()'}
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <div class="control-label">System Responsibilities</div>
+                    <div style="font-size: 0.78rem; color: var(--text-secondary); line-height: 1.4;">
+                        ${cat.desc}
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('drawer-law-toggle')?.addEventListener('change', (e) => {
+                toggleLaw(law.identifier, e.target.checked);
+            });
+
+            document.getElementById('drawer-inspect-eca-btn')?.addEventListener('click', () => {
+                openEcaPipelineModal(law);
+            });
+
+        } else if (node.kind === 'event') {
+            bodyEl.innerHTML = `
+                <div style="font-size: 0.75rem; color: #10b981; font-weight: 700; text-transform: uppercase;">Event Signal Node</div>
+                <div style="font-family: var(--font-mono); font-size: 0.95rem; color: #fff;">${node.name}</div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 8px;">
+                    Broadcast from C++ EventBus whenever state transitions or collisions occur in the world.
+                </div>
+            `;
+        } else {
+            bodyEl.innerHTML = `
+                <div style="font-size: 0.75rem; color: #38bdf8; font-weight: 700; text-transform: uppercase;">Target State Property</div>
+                <div style="font-family: var(--font-mono); font-size: 0.95rem; color: #fff;">${node.name}</div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 8px;">
+                    Property path governed and mutated by active laws during every simulation cycle.
+                </div>
+            `;
+        }
+    },
+
+    startLoop() {
+        const tick = () => {
+            this.updatePhysics();
+            this.render();
+            requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+    },
+
+    updatePhysics() {
+        if (this.layoutMode !== 'force') return;
+
+        const kRepel = 2400;
+        const kSpring = 0.04;
+        const damping = 0.82;
+
+        for (let i = 0; i < this.nodes.length; i++) {
+            const n1 = this.nodes[i];
+            if (n1 === this.dragNode) continue;
+
+            for (let j = i + 1; j < this.nodes.length; j++) {
+                const n2 = this.nodes[j];
+                const dx = n2.x - n1.x;
+                const dy = n2.y - n1.y;
+                const dist = Math.hypot(dx, dy) || 1;
+
+                if (dist < 320) {
+                    const force = kRepel / (dist * dist);
+                    const fx = (dx / dist) * force;
+                    const fy = (dy / dist) * force;
+
+                    n1.vx -= fx;
+                    n1.vy -= fy;
+                    n2.vx += fx;
+                    n2.vy += fy;
+                }
+            }
+
+            // Center gravity
+            n1.vx -= n1.x * 0.005;
+            n1.vy -= n1.y * 0.005;
+        }
+
+        // Links spring force
+        this.links.forEach(l => {
+            const dx = l.target.x - l.source.x;
+            const dy = l.target.y - l.source.y;
+            const dist = Math.hypot(dx, dy) || 1;
+            const desiredDist = 140;
+            const force = (dist - desiredDist) * kSpring;
+
+            const fx = (dx / dist) * force;
+            const fy = (dy / dist) * force;
+
+            if (l.source !== this.dragNode) {
+                l.source.vx += fx;
+                l.source.vy += fy;
+            }
+            if (l.target !== this.dragNode) {
+                l.target.vx -= fx;
+                l.target.vy -= fy;
+            }
+        });
+
+        // Apply velocities
+        this.nodes.forEach(n => {
+            if (n === this.dragNode) return;
+            n.vx *= damping;
+            n.vy *= damping;
+            n.x += n.vx;
+            n.y += n.vy;
+        });
+    },
+
+    requestRedraw() {
+        this.render();
+    },
+
+    render() {
+        if (!this.ctx || !this.canvas) return;
+        const ctx = this.ctx;
+
+        ctx.save();
+        ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+        ctx.clearRect(0, 0, this.width, this.height);
+
+        // Background Grid Pattern
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+        ctx.lineWidth = 1;
+        const gridSize = 40 * this.zoomScale;
+        const startX = (this.panX % gridSize);
+        const startY = (this.panY % gridSize);
+
+        for (let x = startX; x < this.width; x += gridSize) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, this.height);
+            ctx.stroke();
+        }
+        for (let y = startY; y < this.height; y += gridSize) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(this.width, y);
+            ctx.stroke();
+        }
+
+        // Apply Pan & Zoom
+        ctx.translate(this.panX, this.panY);
+        ctx.scale(this.zoomScale, this.zoomScale);
+
+        this.pulseTime += 0.03;
+
+        // Render Links
+        this.links.forEach(link => {
+            this.renderLink(ctx, link);
+        });
+
+        // Render Nodes
+        this.nodes.forEach(node => {
+            this.renderNode(ctx, node);
+        });
+
+        ctx.restore();
+    },
+
+    renderLink(ctx, link) {
+        const s = link.source;
+        const t = link.target;
+
+        const isSelected = App.selectedLawGraphNode && (App.selectedLawGraphNode === s || App.selectedLawGraphNode === t);
+
+        ctx.strokeStyle = isSelected ? '#00f0ff' : link.color;
+        ctx.lineWidth = isSelected ? 2.5 : 1.5;
+        ctx.globalAlpha = isSelected ? 1.0 : 0.45;
+
+        if (link.type === 'metalaw') {
+            ctx.setLineDash([5, 5]);
+        } else {
+            ctx.setLineDash([]);
+        }
+
+        // Curve
+        const midX = (s.x + t.x) / 2;
+        const midY = (s.y + t.y) / 2;
+
+        ctx.beginPath();
+        ctx.moveTo(s.x, s.y);
+        ctx.quadraticCurveTo(midX, midY - 15, t.x, t.y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Animated Particle Pulse
+        const pulseEnabled = document.getElementById('graph-pulse-edges')?.checked !== false;
+        if (pulseEnabled) {
+            const p = (this.pulseTime + (s.x * 0.01)) % 1.0;
+            const px = (1 - p) * (1 - p) * s.x + 2 * (1 - p) * p * midX + p * p * t.x;
+            const py = (1 - p) * (1 - p) * s.y + 2 * (1 - p) * p * (midY - 15) + p * p * t.y;
+
+            ctx.fillStyle = isSelected ? '#00f0ff' : link.color;
+            ctx.shadowColor = ctx.fillStyle;
+            ctx.shadowBlur = 8;
+            ctx.beginPath();
+            ctx.arc(px, py, 3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
+
+        ctx.globalAlpha = 1.0;
+    },
+
+    renderNode(ctx, node) {
+        const isSelected = App.selectedLawGraphNode === node;
+
+        if (node.kind === 'law') {
+            const w = node.width;
+            const h = node.height;
+            const x = node.x - w / 2;
+            const y = node.y - h / 2;
+            const r = 8;
+
+            ctx.fillStyle = isSelected ? '#151c36' : (node.enabled ? '#0e1224' : '#070914');
+            ctx.strokeStyle = isSelected ? '#00f0ff' : (node.enabled ? node.color : '#334155');
+            ctx.lineWidth = isSelected ? 2.5 : 1.5;
+
+            if (isSelected) {
+                ctx.shadowColor = '#00f0ff';
+                ctx.shadowBlur = 16;
+            } else if (node.enabled) {
+                ctx.shadowColor = node.color;
+                ctx.shadowBlur = 6;
+            }
+
+            ctx.beginPath();
+            ctx.roundRect(x, y, w, h, r);
+            ctx.fill();
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+
+            // Top system stripe
+            ctx.fillStyle = node.color;
+            ctx.beginPath();
+            ctx.roundRect(x, y, w, 4, [r, r, 0, 0]);
+            ctx.fill();
+
+            // Status Indicator Dot
+            ctx.fillStyle = node.enabled ? '#10b981' : '#64748b';
+            ctx.beginPath();
+            ctx.arc(x + 12, y + h / 2 + 2, 4, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Text
+            ctx.fillStyle = node.enabled ? '#ffffff' : '#94a3b8';
+            ctx.font = '600 11px Inter, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText(node.name.length > 16 ? node.name.substring(0, 15) + '…' : node.name, x + 24, y + 22);
+
+            ctx.fillStyle = node.color;
+            ctx.font = '500 9px "JetBrains Mono", monospace';
+            ctx.fillText(`@${node.id.length > 18 ? node.id.substring(0, 17) + '…' : node.id}`, x + 24, y + 36);
+
+        } else if (node.kind === 'event') {
+            ctx.fillStyle = isSelected ? '#064e3b' : '#022c22';
+            ctx.strokeStyle = isSelected ? '#34d399' : '#10b981';
+            ctx.lineWidth = isSelected ? 2.5 : 1.5;
+
+            ctx.beginPath();
+            ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = '#6ee7b7';
+            ctx.font = '600 9px "JetBrains Mono", monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText(node.name.replace('contact-', '').replace('on', ''), node.x, node.y + 3);
+
+        } else {
+            ctx.fillStyle = isSelected ? '#1e293b' : '#0f172a';
+            ctx.strokeStyle = isSelected ? '#38bdf8' : '#64748b';
+            ctx.lineWidth = isSelected ? 2.5 : 1.5;
+
+            ctx.beginPath();
+            ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '500 8px "JetBrains Mono", monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText(node.name.replace('@beings.', ''), node.x, node.y + 3);
+        }
+    }
+};
 
 // --- Studio 3: Zone Navigator ---
 function initZoneNavigator() {
@@ -874,180 +1989,166 @@ function renderZoneCards() {
 
 function switchZone(index) {
     if (App.socket) {
-        App.socket.emit('switch_zone', { index });
-        showToast(`Transitioning to Zone #${index}...`, "success");
+        App.socket.emit('command', {
+            type: 'switch_zone',
+            index: index
+        });
+        showToast(`Switched active Zone to [${index}]`, "success");
     }
 }
 
-async function fetchSaves() {
-    try {
-        const res = await fetch('/api/saves');
-        if (res.ok) {
-            const data = await res.json();
-            renderSavesList(data.saves || []);
-        }
-    } catch (e) {}
-}
-
-function renderSavesList(saves) {
-    const container = document.getElementById('saves-list');
-    if (!container) return;
-
-    container.innerHTML = '';
-    if (saves.length === 0) {
-        container.innerHTML = '<div style="color: var(--text-muted); font-size: 0.8rem;">No saved world files found</div>';
-        return;
-    }
-
-    saves.forEach(s => {
-        const row = document.createElement('div');
-        row.className = 'object-item';
-        row.innerHTML = `
-            <div>
-                <strong>${s.filename}</strong>
-                <span style="color: var(--text-muted); font-size: 0.7rem; margin-left: 8px;">${s.size_kb} KB</span>
-            </div>
-            <button class="btn btn-secondary btn-sm" onclick="loadSaveFile('${s.filename}')">Load</button>
-        `;
-        container.appendChild(row);
-    });
-}
-
-function loadSaveFile(filename) {
-    showToast(`Loading save file ${filename}...`, "success");
-}
-
-// --- Studio 4: Logos & Utterance Console ---
+// --- Studio 4: Logos & Utterance Modality ---
 function initLogosConsole() {
-    const input = document.getElementById('logos-input-text');
     const emitBtn = document.getElementById('logos-emit-btn');
+    const inputEl = document.getElementById('logos-input-text');
 
-    const emit = () => {
-        const text = input.value.trim();
+    const doEmit = () => {
+        const text = inputEl.value.trim();
         if (!text) return;
-        
-        if (App.socket) {
-            App.socket.emit('utterance', { text: text });
-        }
-        input.value = '';
-        showToast(`Spoke into World: "${text}"`, "success");
+
+        fetch('/api/utterance', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ utterance: text })
+        }).then(() => {
+            addTerminalMessage('Player', text);
+            inputEl.value = '';
+        });
     };
 
-    if (emitBtn) emitBtn.addEventListener('click', emit);
-    if (input) {
-        input.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') emit();
+    if (emitBtn) emitBtn.addEventListener('click', doEmit);
+    if (inputEl) {
+        inputEl.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') doEmit();
         });
     }
 
-    // Preset Word Chips
+    // Word Presets
     document.querySelectorAll('.preset-chip').forEach(chip => {
         chip.addEventListener('click', () => {
             const word = chip.getAttribute('data-word');
-            if (App.socket) {
-                App.socket.emit('utterance', { text: word });
-                showToast(`Spoke into World: "${word}"`, "success");
+            if (inputEl) {
+                inputEl.value = word;
+                doEmit();
             }
         });
     });
 }
 
+function addTerminalMessage(speaker, text) {
+    const term = document.getElementById('logos-terminal');
+    if (!term) return;
+
+    const timeStr = new Date().toLocaleTimeString();
+    const msg = document.createElement('div');
+    msg.className = 'terminal-msg';
+    msg.innerHTML = `
+        <span class="msg-time">[${timeStr}]</span>
+        <span class="msg-speaker">&lt;${speaker}&gt;</span>
+        <span class="msg-text">${escapeHtml(text)}</span>
+    `;
+    term.appendChild(msg);
+    term.scrollTop = term.scrollHeight;
+}
+
 // --- Studio 5: Person & Physics ---
 function initPhysicsControls() {
-    const bindTeleport = (id, coords) => {
-        const btn = document.getElementById(id);
-        if (btn) {
-            btn.addEventListener('click', () => teleportPlayer(coords));
-        }
-    };
+    const tpSpawnBtn = document.getElementById('tp-spawn');
+    const tpOriginBtn = document.getElementById('tp-origin');
+    const tpSkyBtn = document.getElementById('tp-sky');
+    const tpSanctumBtn = document.getElementById('tp-sanctum');
 
-    bindTeleport('tp-spawn', [0, 1.8, 5]);
-    bindTeleport('tp-origin', [0, 1.8, 0]);
-    bindTeleport('tp-sky', [0, 35, 0]);
-    bindTeleport('tp-sanctum', [-8, 2, -8]);
+    if (tpSpawnBtn) tpSpawnBtn.addEventListener('click', () => teleportPlayer([0, 1.8, 5]));
+    if (tpOriginBtn) tpOriginBtn.addEventListener('click', () => teleportPlayer([0, 1.8, 0]));
+    if (tpSkyBtn) tpSkyBtn.addEventListener('click', () => teleportPlayer([0, 25.0, 0]));
+    if (tpSanctumBtn) tpSanctumBtn.addEventListener('click', () => teleportPlayer([-10, 3.0, 10]));
 
     const customTpBtn = document.getElementById('tp-custom-btn');
     if (customTpBtn) {
         customTpBtn.addEventListener('click', () => {
-            const px = parseFloat(document.getElementById('tp-custom-x').value) || 0;
-            const py = parseFloat(document.getElementById('tp-custom-y').value) || 0;
-            const pz = parseFloat(document.getElementById('tp-custom-z').value) || 0;
-            teleportPlayer([px, py, pz]);
+            const x = parseFloat(document.getElementById('tp-custom-x').value) || 0;
+            const y = parseFloat(document.getElementById('tp-custom-y').value) || 0;
+            const z = parseFloat(document.getElementById('tp-custom-z').value) || 0;
+            teleportPlayer([x, y, z]);
         });
     }
 
-    const flightSwitch = document.getElementById('physics-flying-toggle');
-    if (flightSwitch) {
-        flightSwitch.addEventListener('change', (e) => {
-            if (App.socket) App.socket.emit('set_physics', { flying: e.target.checked });
+    const flyingToggle = document.getElementById('physics-flying-toggle');
+    if (flyingToggle) {
+        flyingToggle.addEventListener('change', (e) => {
+            setPhysics({ flying: e.target.checked });
         });
     }
 
-    const gravVizSwitch = document.getElementById('physics-gravviz-toggle');
-    if (gravVizSwitch) {
-        gravVizSwitch.addEventListener('change', (e) => {
-            if (App.socket) App.socket.emit('set_physics', { gravity_viz: e.target.checked });
+    const gravVizToggle = document.getElementById('physics-gravviz-toggle');
+    if (gravVizToggle) {
+        gravVizToggle.addEventListener('change', (e) => {
+            setPhysics({ gravity_viz: e.target.checked });
         });
-    }
-}
-
-function teleportPlayer(coords) {
-    if (App.socket) {
-        App.socket.emit('teleport', { position: coords });
-        showToast(`Teleported Player to [${coords.map(n=>n.toFixed(1)).join(', ')}]`, "success");
     }
 }
 
 function renderPersonPhysics() {
-    const player = App.state.player;
-    if (!player) return;
-
-    const pos = player.position || [0,0,0];
-    const posText = `[X: ${pos[0].toFixed(2)}, Y: ${pos[1].toFixed(2)}, Z: ${pos[2].toFixed(2)}]`;
-    const posEl = document.getElementById('player-pos-display');
-    if (posEl) posEl.innerText = posText;
-
-    const flightSwitch = document.getElementById('physics-flying-toggle');
-    if (flightSwitch && App.state.physics) {
-        flightSwitch.checked = !!App.state.physics.flying;
+    if (!App.state.player) return;
+    const pos = App.state.player.position || [0, 1.8, 5];
+    const posDisplay = document.getElementById('player-pos-display');
+    if (posDisplay) {
+        posDisplay.innerText = `[${pos[0].toFixed(2)}, ${pos[1].toFixed(2)}, ${pos[2].toFixed(2)}]`;
     }
 
-    const gravVizSwitch = document.getElementById('physics-gravviz-toggle');
-    if (gravVizSwitch && App.state.physics) {
-        gravVizSwitch.checked = !!App.state.physics.gravity_viz;
+    const flyingToggle = document.getElementById('physics-flying-toggle');
+    if (flyingToggle && App.state.physics) {
+        flyingToggle.checked = App.state.physics.flying || false;
+    }
+
+    const gravVizToggle = document.getElementById('physics-gravviz-toggle');
+    if (gravVizToggle && App.state.physics) {
+        gravVizToggle.checked = App.state.physics.gravity_viz || false;
     }
 }
 
-// --- Studio 6: Robotics Panel ---
+function teleportPlayer(pos) {
+    if (App.socket) {
+        App.socket.emit('command', {
+            type: 'teleport_player',
+            position: pos
+        });
+        showToast(`Warped Vessel to [${pos.map(v => v.toFixed(1)).join(', ')}]`, "success");
+    }
+}
+
+function setPhysics(opts) {
+    fetch('/api/physics', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(opts)
+    }).then(() => showToast("Physics Settings Updated", "success"));
+}
+
+// --- Studio 6: Robotics Modality ---
 function initRoboticsPanel() {
-    ['rob-joint-1', 'rob-joint-2', 'rob-joint-3', 'rob-gripper'].forEach(id => {
-        const slider = document.getElementById(id);
-        const valDisp = document.getElementById(`${id}-val`);
-        if (slider && valDisp) {
-            slider.addEventListener('input', () => {
-                valDisp.innerText = `${slider.value}°`;
-                if (App.socket) {
-                    App.socket.emit('write_property', {
-                        target: '@physical-channel',
-                        property: slider.getAttribute('data-joint'),
-                        value: parseFloat(slider.value)
-                    });
-                }
-            });
-        }
+    document.querySelectorAll('#tab-robotics input[type="range"]').forEach(slider => {
+        slider.addEventListener('input', (e) => {
+            const jointProp = slider.getAttribute('data-joint');
+            const val = parseFloat(slider.value);
+            
+            const valLabel = document.getElementById(`${slider.id}-val`);
+            if (valLabel) valLabel.innerText = `${val}°`;
+
+            if (App.socket) {
+                App.socket.emit('command', {
+                    type: 'property_write',
+                    target: '@player',
+                    property: jointProp,
+                    value: val
+                });
+            }
+        });
     });
 }
 
-// --- Studio 7: Live Event & Audit Log Stream ---
+// --- Studio 7: Live Event Stream ---
 function initEventLogStream() {
-    const clearBtn = document.getElementById('clear-event-log-btn');
-    if (clearBtn) {
-        clearBtn.addEventListener('click', () => {
-            App.eventLog = [];
-            renderEventLog();
-        });
-    }
-
     const pauseBtn = document.getElementById('pause-event-log-btn');
     if (pauseBtn) {
         pauseBtn.addEventListener('click', () => {
@@ -1055,69 +2156,105 @@ function initEventLogStream() {
             pauseBtn.innerText = App.eventLogPaused ? "Resume Stream" : "Pause Stream";
         });
     }
+
+    const clearBtn = document.getElementById('clear-event-log-btn');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            App.eventLog = [];
+            const listEl = document.getElementById('events-stream-list');
+            if (listEl) listEl.innerHTML = '';
+        });
+    }
 }
 
-function addEventToLog(evt) {
+function addEventToLog(eventData) {
     if (App.eventLogPaused) return;
+
+    const listEl = document.getElementById('events-stream-list');
+    if (!listEl) return;
+
     const timeStr = new Date().toLocaleTimeString();
-    App.eventLog.unshift({ time: timeStr, data: evt });
-    if (App.eventLog.length > 200) App.eventLog.pop();
-    renderEventLog();
+    const item = document.createElement('div');
+    item.className = 'terminal-msg';
+    
+    item.innerHTML = `
+        <span class="msg-time">[${timeStr}]</span>
+        <span class="msg-speaker">&lt;${eventData.event || 'EngineEvent'}&gt;</span>
+        <span class="msg-text">${escapeHtml(JSON.stringify(eventData))}</span>
+    `;
+
+    listEl.appendChild(item);
+    listEl.scrollTop = listEl.scrollHeight;
 }
 
-function renderEventLog() {
-    const container = document.getElementById('events-stream-list');
-    if (!container) return;
-
-    container.innerHTML = '';
-    App.eventLog.slice(0, 50).forEach(item => {
-        const div = document.createElement('div');
-        div.className = 'terminal-msg';
-        const type = item.data.type || item.data.event || 'engine_event';
-        div.innerHTML = `
-            <span class="msg-time">[${item.time}]</span>
-            <span class="msg-speaker">&lt;${type}&gt;</span>
-            <span class="msg-text">${JSON.stringify(item.data)}</span>
-        `;
-        container.appendChild(div);
-    });
+// --- Saves Fetcher ---
+async function fetchSaves() {
+    try {
+        const res = await fetch('/api/saves');
+        if (res.ok) {
+            const data = await res.json();
+            const listEl = document.getElementById('saves-list');
+            if (listEl && data.saves) {
+                listEl.innerHTML = '';
+                if (data.saves.length === 0) {
+                    listEl.innerHTML = '<div style="padding: 10px; color: var(--text-muted); font-size: 0.8rem;">No saved reality files found</div>';
+                    return;
+                }
+                data.saves.forEach(s => {
+                    const item = document.createElement('div');
+                    item.className = 'object-item';
+                    item.innerHTML = `
+                        <div class="object-name-tag">
+                            <span>📄 ${s.name}</span>
+                        </div>
+                        <span style="color: var(--text-muted); font-size: 0.72rem; font-family: var(--font-mono);">${(s.size/1024).toFixed(1)} KB</span>
+                    `;
+                    listEl.appendChild(item);
+                });
+            }
+        }
+    } catch (e) {
+        console.warn("Failed to fetch saves", e);
+    }
 }
 
-// --- Utility Helpers ---
+// --- Helpers ---
 function getShapeName(kind) {
-    const shapes = ["Cube", "Polyhedron", "Sphere", "Cylinder", "Cone", "Ellipsoid", "Ovoid", "Paraboloid", "Torus", "RoundedBox", "Shape2D", "Text2D", "Field", "Patch"];
-    return shapes[kind] || "Cube";
+    const names = ['Cube', 'Polyhedron', 'Sphere', 'Cylinder', 'Cone', 'Ellipsoid', 'Ovoid', 'Paraboloid', 'Torus', 'RoundedBox', 'Shape2D', 'Text2D', 'Field', 'Patch'];
+    return names[kind] || 'Cube';
 }
 
 function rgbToHex(r, g, b) {
-    const toHex = (c) => {
-        const hex = Math.round(Math.min(1, Math.max(0, c)) * 255).toString(16);
-        return hex.length === 1 ? '0' + hex : hex;
-    };
+    const toHex = c => Math.round(c * 255).toString(16).padStart(2, '0');
     return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 }
 
 function hexToRgb(hex) {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result ? [
-        parseInt(result[1], 16) / 255,
-        parseInt(result[2], 16) / 255,
-        parseInt(result[3], 16) / 255
-    ] : [0.2, 0.7, 1.0];
+    const bigint = parseInt(hex.slice(1), 16);
+    return [((bigint >> 16) & 255) / 255, ((bigint >> 8) & 255) / 255, (bigint & 255) / 255];
 }
 
-function showToast(message, type = "info") {
+function escapeHtml(str) {
+    return (str || '').replace(/[&<>"']/g, m => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+    }[m]));
+}
+
+function showToast(message, type = 'info') {
     const container = document.getElementById('toast-container');
     if (!container) return;
 
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
-    toast.innerHTML = `<span>${message}</span>`;
-    container.appendChild(toast);
+    toast.innerHTML = `
+        <span>${type === 'success' ? '✓' : (type === 'error' ? '⚠' : 'ℹ')}</span>
+        <span>${escapeHtml(message)}</span>
+    `;
 
+    container.appendChild(toast);
     setTimeout(() => {
         toast.style.opacity = '0';
         toast.style.transform = 'translateX(100%)';
-        setTimeout(() => toast.remove(), 300);
-    }, 3200);
+        setTimeout(() => toast.remove(), 250);
+    }, 3500);
 }
