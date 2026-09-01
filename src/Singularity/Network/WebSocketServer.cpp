@@ -10,8 +10,10 @@
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/ConditionModel.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
 #include "Singularity/OntoMath/ScalarForm.hpp"
+#include "Singularity/OntoMath/CurveModel.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyValue.hpp"
@@ -139,7 +141,7 @@ static nlohmann::json buildWorldSnapshotJson() {
         root["player"] = pj;
     }
 
-    // Laws
+    // Laws with full ECA Node Graph inspection
     LawManager* lm = eng.getLawManager();
     if (lm) {
         nlohmann::json lawsList = nlohmann::json::array();
@@ -150,7 +152,39 @@ static nlohmann::json buildWorldSnapshotJson() {
             lj["name"] = lawPtr->name();
             lj["enabled"] = lawPtr->isEnabled();
             lj["activation"] = static_cast<int>(lawPtr->activation());
+            lj["scope"] = static_cast<int>(lawPtr->scope());
             lj["expression"] = lawPtr->name();
+
+            // Triggers / When
+            auto triggers = lm->triggersOf(lawPtr->getIdentifier());
+            lj["triggers"] = triggers;
+            if (!triggers.empty()) {
+                lj["trigger"] = triggers[0];
+            } else if (lawPtr->activation() == Law::Activation::WhileTrue) {
+                lj["trigger"] = "universe.time";
+            } else {
+                lj["trigger"] = lawPtr->ecaLoop().eventType;
+            }
+
+            // Condition model
+            if (lawPtr->hasConditionModel() && lawPtr->conditionModel()) {
+                lj["conditionModel"] = lawPtr->conditionModel()->toJson();
+                lj["conditionDescription"] = lawPtr->conditionModel()->describe();
+            } else {
+                lj["conditionDescription"] = "always (no condition guard)";
+            }
+
+            // Action model
+            if (lawPtr->hasActionModel() && lawPtr->actionModel()) {
+                lj["actionModel"] = lawPtr->actionModel()->toJson();
+                lj["actionDescription"] = lawPtr->actionModel()->describe();
+            } else {
+                lj["actionDescription"] = "custom action";
+            }
+
+            // Required / Target properties
+            lj["requiredProperties"] = lawPtr->requiredProperties();
+
             lawsList.push_back(lj);
         }
         root["laws"] = lawsList;
@@ -491,7 +525,131 @@ struct WebSocketServer::Impl {
                 return;
             }
 
-            // 8. Create / Author Law
+            // 8. Update Law Nodes (Modifying When -> Condition -> Action Nodes Live)
+            if (type == "update_law_nodes" || type == "update_law" || type == "modify_law_nodes") {
+                std::string identifier = j.value("identifier", j.value("id", ""));
+                LawManager* lm = Core::Engine::instance().getLawManager();
+                Person* p = Core::Engine::instance().getPerson();
+
+                if (lm && !identifier.empty()) {
+                    Law* law = nullptr;
+                    for (auto& l : lm->getAll()) {
+                        if (l && (l->getIdentifier() == identifier || l->name() == identifier)) {
+                            law = l.get();
+                            break;
+                        }
+                    }
+
+                    if (!law) {
+                        // Create if not found
+                        auto newLaw = lm->createLaw(j.value("name", "Authored Law"), p ? std::vector<Singular*>{p} : std::vector<Singular*>{});
+                        newLaw->setLawIdentifier(identifier);
+                        law = newLaw.get();
+                    }
+
+                    if (law) {
+                        if (j.contains("name")) law->setName(j["name"].get<std::string>());
+                        if (j.contains("enabled")) law->setEnabled(j["enabled"].get<bool>());
+                        if (j.contains("activation")) law->setActivation(static_cast<Law::Activation>(j["activation"].get<int>()));
+                        if (j.contains("scope")) law->setScope(static_cast<Law::Scope>(j["scope"].get<int>()));
+
+                        // Update Triggers / When
+                        if (j.contains("trigger") && j["trigger"].is_string()) {
+                            std::string trigger = j["trigger"].get<std::string>();
+                            if (!trigger.empty() && trigger != "universe.time") {
+                                law->ecaLoop().eventType = trigger;
+                                lm->bindTrigger(law->getIdentifier(), trigger);
+                            }
+                        }
+
+                        // Update Condition Node
+                        if (j.contains("condition") && j["condition"].is_object()) {
+                            auto cJson = j["condition"];
+                            bool condEnabled = cJson.value("enabled", true);
+                            if (condEnabled) {
+                                std::string pathStr = cJson.value("path", "");
+                                std::string opStr = cJson.value("op", "==");
+                                auto valIt = cJson.find("operand");
+
+                                if (!pathStr.empty()) {
+                                    ConditionNode cNode;
+                                    cNode.kind = ConditionNode::Kind::Compare;
+                                    cNode.path = PropertyPath::parse(pathStr);
+                                    if (valIt != cJson.end()) {
+                                        cNode.operand = propertyValueFromJson(*valIt);
+                                    } else {
+                                        cNode.operand = PropertyValue(0.0);
+                                    }
+
+                                    if (opStr == "==") cNode.op = ConditionNode::Op::Eq;
+                                    else if (opStr == "!=") cNode.op = ConditionNode::Op::Neq;
+                                    else if (opStr == "<") cNode.op = ConditionNode::Op::Lt;
+                                    else if (opStr == "<=") cNode.op = ConditionNode::Op::Lte;
+                                    else if (opStr == ">") cNode.op = ConditionNode::Op::Gt;
+                                    else if (opStr == ">=") cNode.op = ConditionNode::Op::Gte;
+
+                                    law->setConditionModel(cNode);
+                                }
+                            } else {
+                                law->clearConditionModel();
+                            }
+                        }
+
+                        // Update Action Node
+                        if (j.contains("action") && j["action"].is_object()) {
+                            auto aJson = j["action"];
+                            std::string kind = aJson.value("kind", "map");
+                            std::string pathStr = aJson.value("path", "position.y");
+                            std::string formula = aJson.value("formula", "sinusoid");
+
+                            if (kind == "flow" || kind == "map") {
+                                double amp = aJson.value("amplitude", 1.0);
+                                double freq = aJson.value("frequency", 1.0);
+                                double phase = aJson.value("phase", 0.0);
+                                double offset = aJson.value("offset", 0.0);
+                                std::string timeVar = aJson.value("timeVariable", "t");
+
+                                MathBindings bindings;
+                                bindings[timeVar] = PropertyPath::parse("time");
+
+                                auto sNode = std::make_shared<OntoMath::MathNode>();
+                                sNode->op = OntoMath::MathNode::Op::ScalarLeaf;
+                                sNode->scalarForm = OntoMath::ScalarForm::sinusoid(amp, freq, offset, phase, timeVar);
+
+                                if (kind == "flow") {
+                                    law->setActionModel(ActionNode::flow(pathStr, OntoMath::Piecewise::continuous(sNode), bindings));
+                                } else {
+                                    law->setActionModel(ActionNode::map(pathStr, OntoMath::Piecewise::continuous(sNode), bindings));
+                                }
+                            } else if (kind == "set") {
+                                auto valIt = aJson.find("value");
+                                if (valIt != aJson.end()) {
+                                    law->setActionModel(ActionNode::set(PropertyPath::parse(pathStr), propertyValueFromJson(*valIt)));
+                                }
+                            } else if (kind == "spawn") {
+                                std::string conceptId = aJson.value("concept", "shape-cube");
+                                law->setActionModel(ActionNode::spawn(conceptId));
+                            } else if (kind == "destroy") {
+                                law->setActionModel(ActionNode::destroy());
+                            }
+                        }
+
+                        law->recompile();
+                        std::cout << "[WebSocketServer] Successfully modified Law Nodes for: " << law->name() << " (@" << law->getIdentifier() << ")" << std::endl;
+
+                        nlohmann::json reply;
+                        reply["type"] = "update_law_ack";
+                        reply["status"] = "success";
+                        reply["identifier"] = law->getIdentifier();
+                        sendTo(hdl, reply.dump());
+
+                        broadcast(buildWorldSnapshotJson().dump());
+                    }
+                }
+                return;
+            }
+
+            // 9. Create / Author Law
             if (type == "create_law" || type == "author_law" || type == "inject_law") {
                 std::string name = j.value("name", "Authored Law");
                 std::string identifier = j.value("identifier", j.value("id", ""));
@@ -502,7 +660,6 @@ struct WebSocketServer::Impl {
                 Person* p = Core::Engine::instance().getPerson();
 
                 if (lm) {
-                    // Check if law already exists
                     Law* existing = nullptr;
                     for (auto& l : lm->getAll()) {
                         if (l && (l->getIdentifier() == identifier || l->name() == name)) {
@@ -513,9 +670,7 @@ struct WebSocketServer::Impl {
 
                     std::shared_ptr<Law> law;
                     if (existing) {
-                        law = lm->find(existing->getIdentifier()) ? nullptr : nullptr;
                         existing->setEnabled(true);
-                        std::cout << "[WebSocketServer] Re-enabling existing Law: " << existing->name() << std::endl;
                     } else {
                         law = lm->createLaw(name, p ? std::vector<Singular*>{p} : std::vector<Singular*>{});
                         if (!identifier.empty()) {
@@ -539,11 +694,10 @@ struct WebSocketServer::Impl {
                                 return n;
                             };
                             gNode->children.push_back(makeConst(0.0));
-                            gNode->children.push_back(makeConst(0.0));
+                            gNode->children.push_back(makeConst(9.81));
                             gNode->children.push_back(makeConst(0.0));
                             law->setActionModel(ActionNode::flow("velocity", OntoMath::Piecewise::continuous(gNode), MathBindings{}));
                             
-                            // Disable default gravity
                             for (auto& otherLaw : lm->getAll()) {
                                 if (otherLaw && otherLaw->getIdentifier() == "physics-gravity") {
                                     otherLaw->setEnabled(false);
@@ -560,19 +714,44 @@ struct WebSocketServer::Impl {
                             sNode->scalarForm = OntoMath::ScalarForm::sinusoid(0.5, 2.0, 0.5, 0.0, "t");
                             law->setActionModel(ActionNode::map("color.r", OntoMath::Piecewise::continuous(sNode), vibBindings));
                         }
+                        // Template: Orbit
+                        else if (identifier == "law-satellite-orbit" || name.find("Orbit") != std::string::npos || name.find("Satellite") != std::string::npos) {
+                            law->setActivation(Law::Activation::WhileTrue);
+                            MathBindings timeBinding;
+                            timeBinding["t"] = PropertyPath::parse("time");
+
+                            auto xNode = std::make_shared<OntoMath::MathNode>();
+                            xNode->op = OntoMath::MathNode::Op::ScalarLeaf;
+                            xNode->scalarForm = OntoMath::ScalarForm::sinusoid(5.0, 1.0, 0.0, 1.5707963, "t");
+
+                            auto zNode = std::make_shared<OntoMath::MathNode>();
+                            zNode->op = OntoMath::MathNode::Op::ScalarLeaf;
+                            zNode->scalarForm = OntoMath::ScalarForm::sinusoid(5.0, 1.0, 0.0, 0.0, "t");
+
+                            ActionNode mapX = ActionNode::map("position.x", OntoMath::Piecewise::continuous(xNode), timeBinding);
+                            ActionNode mapZ = ActionNode::map("position.z", OntoMath::Piecewise::continuous(zNode), timeBinding);
+
+                            law->setActionModel(ActionNode::block({mapX, mapZ}));
+                        }
                         // Template: Bounce
                         else if (identifier == "law-kinetic-bounce" || name.find("Bounce") != std::string::npos || activation == 1) {
                             law->setActivation(Law::Activation::OnEvent);
                             law->ecaLoop().eventType = "contact-began";
                             law->setScope(Law::Scope::Subject);
                             lm->bindTrigger(law->getIdentifier(), "contact-began");
+
+                            auto bounceNode = std::make_shared<OntoMath::MathNode>();
+                            bounceNode->op = OntoMath::MathNode::Op::ScalarLeaf;
+                            bounceNode->scalarForm = OntoMath::ScalarForm::constant(12.0);
+
+                            law->setActionModel(ActionNode::map("velocity.y", OntoMath::Piecewise::continuous(bounceNode), MathBindings{}));
                         }
                         else {
                             law->setActivation(static_cast<Law::Activation>(activation));
                         }
 
                         law->recompile();
-                        std::cout << "[WebSocketServer] Successfully authored Law: " << law->name() << " (@" << law->getIdentifier() << ")" << std::endl;
+                        std::cout << "[WebSocketServer] Authored Law: " << law->name() << " (@" << law->getIdentifier() << ")" << std::endl;
                     }
 
                     nlohmann::json reply;
@@ -587,7 +766,7 @@ struct WebSocketServer::Impl {
                 return;
             }
 
-            // 9. Delete Law
+            // 10. Delete Law
             if (type == "delete_law" || type == "remove_law") {
                 std::string identifier = j.value("identifier", j.value("id", ""));
                 LawManager* lm = Core::Engine::instance().getLawManager();
@@ -606,7 +785,7 @@ struct WebSocketServer::Impl {
                 return;
             }
 
-            // 10. Switch Zone
+            // 11. Switch Zone
             if (type == "switch_zone" || type == "change_zone") {
                 if (j.contains("index")) {
                     size_t idx = j["index"].get<size_t>();
@@ -627,7 +806,7 @@ struct WebSocketServer::Impl {
                 return;
             }
 
-            // 11. Create Zone
+            // 12. Create Zone
             if (type == "create_zone") {
                 std::string zname = j.value("name", "New Zone");
                 std::string kind = j.value("kind", "zone");
@@ -638,7 +817,7 @@ struct WebSocketServer::Impl {
                 return;
             }
 
-            // 12. Teleport Player
+            // 13. Teleport Player
             if (type == "teleport_player" || type == "teleport") {
                 if (j.contains("position") && j["position"].is_array() && j["position"].size() >= 3) {
                     float px = j["position"][0].get<float>();
@@ -656,7 +835,7 @@ struct WebSocketServer::Impl {
                 return;
             }
 
-            // 13. Physics Controls
+            // 14. Physics Controls
             if (type == "set_physics") {
                 if (j.contains("flying")) {
                     Physics::setFlying(j["flying"].get<bool>());
@@ -668,7 +847,7 @@ struct WebSocketServer::Impl {
                 return;
             }
 
-            // 14. Quick Save
+            // 15. Quick Save
             if (type == "quick_save" || type == "save_world") {
                 SaveContext ctx;
                 Core::Engine& eng = Core::Engine::instance();

@@ -275,29 +275,157 @@
                 </div>
             </div>
 
-            <!-- STUDIO 2: Authors of Law -->
+            <!-- STUDIO 2: Authors of Law (with Grouping & Graph Mode) -->
             <div id="tab-laws" class="tab-pane">
                 <div class="full-page-studio">
+                    <!-- Banner -->
                     <div class="studio-banner">
                         <div>
-                            <div class="banner-title">⚡ Authors of Law</div>
-                            <div class="banner-desc">Earthcall simulation is driven by active Person-authored Laws. Toggle or author conditions and actions live into the C++ Rete agenda.</div>
+                            <div class="banner-title">⚡ Authors of Law Studio</div>
+                            <div class="banner-desc">Earthcall simulation is driven by active Person-authored Laws. Group by ontological systems or inspect interconnected causation graphs.</div>
                         </div>
                         <button id="open-create-law-modal" class="btn btn-primary">➕ Author New Law</button>
                     </div>
 
-                    <!-- Law Preset Chips -->
-                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                        <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Templates:</span>
-                        <button class="shape-btn law-template-btn" data-template="zero-g" onclick="document.getElementById('open-create-law-modal').click();">🌌 Zero-G Well</button>
-                        <button class="shape-btn law-template-btn" data-template="pulse" onclick="document.getElementById('open-create-law-modal').click();">🌈 Color Pulsator</button>
-                        <button class="shape-btn law-template-btn" data-template="orbit" onclick="document.getElementById('open-create-law-modal').click();">🛸 Orbital Satellite</button>
-                        <button class="shape-btn law-template-btn" data-template="bounce" onclick="document.getElementById('open-create-law-modal').click();">💥 Kinetic Bounce</button>
+                    <!-- Law Studio Controls & View Switcher Bar -->
+                    <div class="law-studio-toolbar">
+                        <!-- View Modes -->
+                        <div class="view-mode-pill-group">
+                            <button id="view-mode-grid" class="view-mode-pill active" title="Flat Card Grid View">
+                                <span>🗂️ Grid</span>
+                            </button>
+                            <button id="view-mode-grouped" class="view-mode-pill" title="Group Laws by Ontological System">
+                                <span>📂 Grouped by System</span>
+                            </button>
+                            <button id="view-mode-graph" class="view-mode-pill" title="Interconnected Law Causation Graph">
+                                <span>🕸️ Graph Mode</span>
+                            </button>
+                        </div>
+
+                        <!-- Search Filter -->
+                        <div class="search-input-wrapper" style="flex: 1; max-width: 280px;">
+                            <span class="search-icon">🔍</span>
+                            <input type="text" id="law-search-input" class="search-input" placeholder="Search laws, triggers, math...">
+                        </div>
+
+                        <!-- Template Quick Chips -->
+                        <div class="law-quick-templates">
+                            <span class="toolbar-label">Templates:</span>
+                            <button class="shape-btn law-template-btn" data-template="zero-g" onclick="document.getElementById('open-create-law-modal').click();">🌌 Zero-G</button>
+                            <button class="shape-btn law-template-btn" data-template="pulse" onclick="document.getElementById('open-create-law-modal').click();">🌈 Pulsator</button>
+                            <button class="shape-btn law-template-btn" data-template="orbit" onclick="document.getElementById('open-create-law-modal').click();">🛸 Orbit</button>
+                            <button class="shape-btn law-template-btn" data-template="bounce" onclick="document.getElementById('open-create-law-modal').click();">💥 Bounce</button>
+                        </div>
                     </div>
 
-                    <!-- Law Cards Grid -->
-                    <div id="laws-grid" class="cards-grid">
-                        <!-- Dynamic Law Cards -->
+                    <!-- System Filter Chips Bar -->
+                    <div id="system-filter-chips-bar" class="system-chips-bar">
+                        <button class="system-chip active" data-system="all">
+                            <span>All Systems</span>
+                            <span class="chip-count" id="chip-count-all">0</span>
+                        </button>
+                        <button class="system-chip chip-physics" data-system="physics">
+                            <span>🌌 Physics & Gravitation</span>
+                            <span class="chip-count" id="chip-count-physics">0</span>
+                        </button>
+                        <button class="system-chip chip-acoustics" data-system="acoustics">
+                            <span>🔊 Acoustics & Audio</span>
+                            <span class="chip-count" id="chip-count-acoustics">0</span>
+                        </button>
+                        <button class="system-chip chip-visual" data-system="visual">
+                            <span>🌈 Visual & Materials</span>
+                            <span class="chip-count" id="chip-count-visual">0</span>
+                        </button>
+                        <button class="system-chip chip-motion" data-system="motion">
+                            <span>🛸 Motion & Kinetics</span>
+                            <span class="chip-count" id="chip-count-motion">0</span>
+                        </button>
+                        <button class="system-chip chip-creation" data-system="creation">
+                            <span>📐 Creation Tools</span>
+                            <span class="chip-count" id="chip-count-creation">0</span>
+                        </button>
+                        <button class="system-chip chip-input" data-system="input">
+                            <span>🎮 Input & Control</span>
+                            <span class="chip-count" id="chip-count-input">0</span>
+                        </button>
+                        <button class="system-chip chip-custom" data-system="custom">
+                            <span>✨ Custom Authored</span>
+                            <span class="chip-count" id="chip-count-custom">0</span>
+                        </button>
+                    </div>
+
+                    <!-- VIEW 1: Flat Grid View -->
+                    <div id="laws-grid-view" class="law-view-container active">
+                        <div id="laws-grid" class="cards-grid">
+                            <!-- Dynamic Law Cards -->
+                        </div>
+                    </div>
+
+                    <!-- VIEW 2: Grouped by System View -->
+                    <div id="laws-grouped-view" class="law-view-container">
+                        <div id="laws-grouped-container" class="grouped-systems-layout">
+                            <!-- Dynamic Grouped System Sections -->
+                        </div>
+                    </div>
+
+                    <!-- VIEW 3: Interconnected Graph View -->
+                    <div id="laws-graph-view" class="law-view-container">
+                        <div class="law-graph-wrapper">
+                            <!-- Graph Toolbar -->
+                            <div class="graph-floating-toolbar">
+                                <div class="graph-tool-group">
+                                    <button id="graph-zoom-in" class="btn btn-secondary btn-icon btn-sm" title="Zoom In">➕</button>
+                                    <button id="graph-zoom-out" class="btn btn-secondary btn-icon btn-sm" title="Zoom Out">➖</button>
+                                    <button id="graph-zoom-reset" class="btn btn-secondary btn-icon btn-sm" title="Reset View (Center Graph)">⟲</button>
+                                </div>
+
+                                <div class="graph-tool-group">
+                                    <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600;">Layout:</span>
+                                    <select id="graph-layout-mode" class="select-styled" style="padding: 4px 8px; font-size: 0.75rem; width: 140px;">
+                                        <option value="force">Dynamic Force</option>
+                                        <option value="flow">Hierarchical Flow</option>
+                                        <option value="clusters">System Clusters</option>
+                                    </select>
+                                </div>
+
+                                <div class="graph-tool-group">
+                                    <label style="font-size: 0.72rem; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                                        <input type="checkbox" id="graph-pulse-edges" checked>
+                                        <span>Animated Pulses</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Graph Legend -->
+                            <div class="graph-floating-legend">
+                                <div class="legend-header">Graph Legend</div>
+                                <div class="legend-items">
+                                    <div class="legend-item"><span class="legend-dot" style="background: #3b82f6;"></span><span>Physics</span></div>
+                                    <div class="legend-item"><span class="legend-dot" style="background: #f59e0b;"></span><span>Acoustics</span></div>
+                                    <div class="legend-item"><span class="legend-dot" style="background: #ec4899;"></span><span>Visual/FX</span></div>
+                                    <div class="legend-item"><span class="legend-dot" style="background: #a855f7;"></span><span>Motion</span></div>
+                                    <div class="legend-item"><span class="legend-dot" style="background: #00f0ff;"></span><span>Creation</span></div>
+                                    <div class="legend-item"><span class="legend-dot" style="background: #10b981;"></span><span>Event/Signal</span></div>
+                                    <div class="legend-item"><span class="legend-dot" style="background: #64748b;"></span><span>Target/Property</span></div>
+                                </div>
+                            </div>
+
+                            <!-- Interactive Canvas Element -->
+                            <div id="law-graph-viewport" class="graph-canvas-box">
+                                <canvas id="law-graph-canvas"></canvas>
+                            </div>
+
+                            <!-- Graph Node Inspector Side Drawer -->
+                            <div id="graph-node-drawer" class="graph-inspector-drawer">
+                                <div class="drawer-header">
+                                    <div id="drawer-node-title" class="drawer-title">Selected Node</div>
+                                    <button id="close-graph-drawer" class="btn btn-secondary btn-icon btn-sm">✕</button>
+                                </div>
+                                <div id="drawer-node-body" class="drawer-body">
+                                    <!-- Dynamic Node Inspector Content -->
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -514,9 +642,9 @@
             <div class="control-group">
                 <div class="control-label">Activation Mode</div>
                 <select id="new-law-activation" class="select-styled">
-                    <option value="0">Continuous (Level-Triggered)</option>
+                    <option value="0">Continuous (Level-Triggered / WhileTrue)</option>
                     <option value="1">OnEvent (Edge-Triggered)</option>
-                    <option value="2">WhileTrue</option>
+                    <option value="2">OnBecomeTrue (Edge-Armed)</option>
                 </select>
             </div>
 
@@ -556,6 +684,163 @@
 
             <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px;">
                 <button id="submit-create-zone-btn" class="btn btn-primary">Birth Zone into Ourverse</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 3: Interactive ECA Node Pipeline Editor (When -> Condition -> Action) -->
+    <div id="eca-pipeline-modal" class="modal-overlay">
+        <div class="modal-content" style="width: 840px; max-width: 95vw; max-height: 90vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+                <div>
+                    <div style="font-weight: 700; font-size: 1.15rem; display: flex; align-items: center; gap: 8px;">
+                        <span>🧬</span> <span id="eca-modal-law-name">Law Node Pipeline</span>
+                    </div>
+                    <div id="eca-modal-law-id" style="font-size: 0.75rem; font-family: var(--font-mono); color: var(--accent-cyan);">@law-identifier</div>
+                </div>
+                <button id="close-eca-modal" class="btn btn-secondary btn-sm">✕</button>
+            </div>
+
+            <!-- Visual Flowchart Diagram Header -->
+            <div class="eca-flow-diagram">
+                <div class="eca-flow-step step-when active" data-step="when">
+                    <div class="step-num">1</div>
+                    <div class="step-content">
+                        <div class="step-title">⚡ WHEN (Trigger)</div>
+                        <div class="step-desc" id="flow-when-summary">universe.time (WhileTrue)</div>
+                    </div>
+                </div>
+                <div class="eca-flow-arrow">➔</div>
+                <div class="eca-flow-step step-condition" data-step="condition">
+                    <div class="step-num">2</div>
+                    <div class="step-content">
+                        <div class="step-title">🛡️ IF (Condition)</div>
+                        <div class="step-desc" id="flow-cond-summary">Always True (No Guard)</div>
+                    </div>
+                </div>
+                <div class="eca-flow-arrow">➔</div>
+                <div class="eca-flow-step step-action" data-step="action">
+                    <div class="step-num">3</div>
+                    <div class="step-content">
+                        <div class="step-title">🎯 THEN (Action)</div>
+                        <div class="step-desc" id="flow-act-summary">Map: velocity := f(t)</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Live Editable Forms for each Node -->
+            <div class="eca-nodes-editor-grid">
+                <!-- 1. WHEN NODE -->
+                <div class="eca-node-box node-box-when">
+                    <div class="node-box-header" style="color: var(--accent-emerald);">
+                        <span>⚡ 1. When (Trigger & Activation)</span>
+                    </div>
+                    <div class="control-group">
+                        <div class="control-label">Event Trigger</div>
+                        <select id="eca-when-trigger" class="select-styled">
+                            <option value="universe.time">universe.time (Every Frame / Clock)</option>
+                            <option value="contact-began">contact-began (Physics Collision Start)</option>
+                            <option value="contact-ended">contact-ended (Collision Separation)</option>
+                            <option value="onMouseClicked">onMouseClicked (Pointer Input)</option>
+                            <option value="utterance-spoken">utterance-spoken (Logos Spoken Word)</option>
+                            <option value="objects-collided">objects-collided (Generic Collision)</option>
+                            <option value="locomotion-started">locomotion-started (Player Movement)</option>
+                            <option value="law-applied">law-applied (Chained Law Success)</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <div class="control-label">Activation Mode</div>
+                        <select id="eca-when-activation" class="select-styled">
+                            <option value="0">WhileTrue (Continuous Level-Triggered)</option>
+                            <option value="1">OnEvent (Discrete Edge-Triggered)</option>
+                            <option value="2">OnBecomeTrue (Edge-Armed)</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <div class="control-label">Referent Scope</div>
+                        <select id="eca-when-scope" class="select-styled">
+                            <option value="1">Everyone (Universal Sweep across Beings)</option>
+                            <option value="0">Subject (Event Subject Participant Only)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 2. CONDITION NODE -->
+                <div class="eca-node-box node-box-cond">
+                    <div class="node-box-header" style="color: var(--accent-blue);">
+                        <span>🛡️ 2. If (Guard Predicate)</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="eca-cond-enable-toggle" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div id="eca-cond-fields">
+                        <div class="control-group">
+                            <div class="control-label">Target Property Path</div>
+                            <input type="text" id="eca-cond-path" class="select-styled" placeholder="e.g. position.y, velocity.y, acoustic.isSoundEmitter">
+                        </div>
+                        <div class="control-row">
+                            <div class="control-group" style="grid-column: span 1;">
+                                <div class="control-label">Op</div>
+                                <select id="eca-cond-op" class="select-styled">
+                                    <option value="==">== (Equal)</option>
+                                    <option value="!=">!= (Not Equal)</option>
+                                    <option value="<">&lt; (Less Than)</option>
+                                    <option value="<=">&lt;= (Less Equal)</option>
+                                    <option value=">">&gt; (Greater Than)</option>
+                                    <option value=">=">&gt;= (Greater Equal)</option>
+                                </select>
+                            </div>
+                            <div class="control-group" style="grid-column: span 2;">
+                                <div class="control-label">Operand Value</div>
+                                <input type="text" id="eca-cond-val" class="select-styled" placeholder="e.g. 0.0, true, 5.0">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. ACTION NODE -->
+                <div class="eca-node-box node-box-action">
+                    <div class="node-box-header" style="color: var(--accent-purple);">
+                        <span>🎯 3. Then (Action & Dynamics)</span>
+                    </div>
+                    <div class="control-group">
+                        <div class="control-label">Action Kind</div>
+                        <select id="eca-act-kind" class="select-styled">
+                            <option value="map">Map (Harmonic / Mathematical Value: f(t))</option>
+                            <option value="flow">Flow (Rate Integration: path += f·dt)</option>
+                            <option value="set">Set (Direct Value Assignment)</option>
+                            <option value="spawn">Spawn (Concept Instance Birth)</option>
+                            <option value="destroy">Destroy (Unmaking Being)</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <div class="control-label">Target Mutation Property</div>
+                        <input type="text" id="eca-act-path" class="select-styled" placeholder="e.g. velocity.y, position.x, color.r">
+                    </div>
+                    <div id="eca-act-math-group">
+                        <div class="control-label">Math Function Parameters</div>
+                        <div class="control-row">
+                            <div class="input-with-label" title="Amplitude / Magnitude"><span>A</span><input type="number" id="eca-act-amp" step="0.5" class="input-number" value="1.0"></div>
+                            <div class="input-with-label" title="Frequency / Omega"><span>ω</span><input type="number" id="eca-act-freq" step="0.5" class="input-number" value="1.0"></div>
+                            <div class="input-with-label" title="Phase Shift"><span>ϕ</span><input type="number" id="eca-act-phase" step="0.5" class="input-number" value="0.0"></div>
+                        </div>
+                        <div class="control-row" style="margin-top: 6px;">
+                            <div class="input-with-label" title="Offset / Baseline"><span>C</span><input type="number" id="eca-act-offset" step="0.5" class="input-number" value="0.0"></div>
+                            <div class="input-with-label" style="grid-column: span 2;" title="Time Binding Variable"><span>t</span><input type="text" id="eca-act-timevar" class="input-number" value="time"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer with Live Submit -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border-color);">
+                <div style="font-size: 0.78rem; color: var(--text-muted);">
+                    Modifications compile directly into C++ Rete network & ECA closures live.
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button id="eca-apply-btn" class="btn btn-primary">💾 Apply Node Changes to C++ Engine</button>
+                </div>
             </div>
         </div>
     </div>
