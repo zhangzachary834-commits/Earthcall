@@ -1520,11 +1520,11 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
     }
 
     std::vector<Law::ApplicationRecord> records;
-    for (int round = 0; round < kMaxChainRounds && _dirty; ++round) {
+    for (int round = 0; round < _maxChainRounds && _dirty; ++round) {
         _dirty = false;
         // Facts asserted before this round are consumed by it; facts asserted
         // DURING it (laws firing events from applyTo) survive into the next
-        // round — that's how law chains resolve, bounded by kMaxChainRounds.
+        // round — that's how law chains resolve, bounded by _maxChainRounds.
         const std::size_t consumed = _rete.facts().size();
         // Straight to the drain: the agenda is already complete. (An
         // _rete.evaluate() call sat here whose result was discarded — the
@@ -2167,6 +2167,12 @@ void LawManager::loadFromJson(const nlohmann::json& j) {
     _reteTerminals.clear();
     _compiledConditionRevision.clear();
 
+    if (j.contains("maxChainRounds")) {
+        _maxChainRounds = j["maxChainRounds"].get<int>();
+    } else {
+        _maxChainRounds = 8;
+    }
+
     const auto findBeing = [](const std::string& id) -> Singular* {
         for (Singular* being : Universe::instance().beings()) {
             if (being && being->getIdentifier() == id) return being;
@@ -2301,6 +2307,7 @@ nlohmann::json LawManager::toJson() const {
         {"triggers", triggersJson},
         {"formationMembers", formationMemberIds(_lawFormation)},
         {"rete", _rete.toJson()},
-        {"firstMoverEnabled", firstMoverEnabled}
+        {"firstMoverEnabled", firstMoverEnabled},
+        {"maxChainRounds", _maxChainRounds}
     };
 }

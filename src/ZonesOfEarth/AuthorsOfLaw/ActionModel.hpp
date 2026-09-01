@@ -43,7 +43,7 @@ struct ActionNode {
                        // vocabulary and start authoring it — perception laws
                        // ("publish contact-perceived(a, b) whenever they
                        // overlap") become ordinary text. Cascades stay under
-                       // the anti-Babel ceiling (kMaxChainRounds).
+                       // the anti-Babel ceiling (maxChainRounds).
         // ------------------------------------------------------------------
         // Creation from nothing. Spawn instantiates a REMEMBERED thing (an
         // ObjectConcept captured from a selection); these three let a law

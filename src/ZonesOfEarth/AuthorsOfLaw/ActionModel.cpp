@@ -712,7 +712,7 @@ ECA::ActionExecutor ActionNode::compile() const {
             // vocabulary instead of only consuming it. Participants resolve
             // at fire time; an unproven SUBJECT publishes nothing (a law
             // never testifies about a being the world cannot produce).
-            // Cascades resolve within the tick, bounded by kMaxChainRounds.
+            // Cascades resolve within the tick, bounded by maxChainRounds.
             const std::string type = eventType;
             const std::string subjectToken = publishSubject;
             const std::string objectToken = publishObject;

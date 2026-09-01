@@ -718,9 +718,10 @@ public:
     }
 
     // Bounded law chaining per tick: a law firing an event that wakes another
-    // law resolves within the same tick, but never unboundedly — the first
-    // Singularity-level anti-Babel ceiling in code.
-    static constexpr int kMaxChainRounds = 8;
+    // law resolves within the same tick, but never unboundedly.
+    // The ceiling is now authorable rather than hardcoded.
+    int maxChainRounds() const { return _maxChainRounds; }
+    void setMaxChainRounds(int rounds) { _maxChainRounds = rounds; }
 
     nlohmann::json toJson() const;
 
@@ -783,4 +784,5 @@ private:
     bool _connected = false;
     bool _dirty = false;
     TickTiming _tickTiming;
+    int _maxChainRounds = 8;
 };

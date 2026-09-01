@@ -1,28 +1,93 @@
---- src/ConstructedBeing/Singular/Object/Object.hpp
-+++ src/ConstructedBeing/Singular/Object/Object.hpp
-@@ -194,6 +194,9 @@
-     // is re-resolved.
-     std::string _materialId;
+--- a/src/Singularity/Input/Interaction/ControlPatterns.cpp
++++ b/src/Singularity/Input/Interaction/ControlPatterns.cpp
+@@ -129,7 +129,7 @@
+ // the law network CASCADES: the on-law writes controlOn, the write marks the
+ // Rete state fact dirty, the dirty fact re-activates the off-law's Compare
+ // terminal in the next chain round, and the off-law fires within the same
+-// tick. One click, both laws, no net change. kMaxChainRounds bounds the loop;
++// tick. One click, both laws, no net change. maxChainRounds bounds the loop;
+ // it does not make it wrong less often.
+ //
+ // The general rule this is an instance of: TWO LAWS WHOSE ACTIONS SATISFY EACH
+--- a/src/ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp
++++ b/src/ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp
+@@ -43,7 +43,7 @@
+                        // vocabulary and start authoring it — perception laws
+                        // ("publish contact-perceived(a, b) whenever they
+                        // overlap") become ordinary text. Cascades stay under
+-                       // the anti-Babel ceiling (kMaxChainRounds).
++                       // the anti-Babel ceiling (maxChainRounds).
+         // ------------------------------------------------------------------
+         // Creation from nothing. Spawn instantiates a REMEMBERED thing (an
+         // ObjectConcept captured from a selection); these three let a law
+--- a/src/ZonesOfEarth/AuthorsOfLaw/ActionModel.cpp
++++ b/src/ZonesOfEarth/AuthorsOfLaw/ActionModel.cpp
+@@ -712,7 +712,7 @@
+             // vocabulary instead of only consuming it. Participants resolve
+             // at fire time; an unproven SUBJECT publishes nothing (a law
+             // never testifies about a being the world cannot produce).
+-            // Cascades resolve within the tick, bounded by kMaxChainRounds.
++            // Cascades resolve within the tick, bounded by maxChainRounds.
+             const std::string type = eventType;
+             const std::string subjectToken = publishSubject;
+             const std::string objectToken = publishObject;
+--- a/src/ZonesOfEarth/AuthorsOfLaw/Law.cpp
++++ b/src/ZonesOfEarth/AuthorsOfLaw/Law.cpp
+@@ -1520,11 +1520,11 @@
+     }
  
-+    mutable uint64_t _memoIdBase = 0;
-+    uint32_t _fieldRevision = 0;
+     std::vector<Law::ApplicationRecord> records;
+-    for (int round = 0; round < kMaxChainRounds && _dirty; ++round) {
++    for (int round = 0; round < _maxChainRounds && _dirty; ++round) {
+         _dirty = false;
+         // Facts asserted before this round are consumed by it; facts asserted
+         // DURING it (laws firing events from applyTo) survive into the next
+-        // round — that's how law chains resolve, bounded by kMaxChainRounds.
++        // round — that's how law chains resolve, bounded by _maxChainRounds.
+         const std::size_t consumed = _rete.facts().size();
+         // Straight to the drain: the agenda is already complete. (An
+         // _rete.evaluate() call sat here whose result was discarded — the
+@@ -2166,6 +2166,12 @@
+     _driveSessions.clear();
+     _reteTerminals.clear();
+     _compiledConditionRevision.clear();
 +
-     // Optional per-face color overrides, overriding the material.
-     // Stored sparse; empty means use material colour.
-     // The "color" Law property writes here, diverging the object's paint.
-@@ -624,6 +627,15 @@
-     void updateMovement(float deltaTime, glm::vec3 g);
-     void syncRotationStateFromTransform(const glm::mat4& t);
- 
-+    uint64_t getMemoId(int suffix = 0) const {
-+        if (_memoIdBase == 0) {
-+            static std::atomic<uint64_t> counter{1000};
-+            _memoIdBase = counter.fetch_add(100);
-+        }
-+        return _memoIdBase + suffix;
++    if (j.contains("maxChainRounds")) {
++        _maxChainRounds = j["maxChainRounds"].get<int>();
++    } else {
++        _maxChainRounds = 8;
 +    }
-+    uint32_t getFieldRevision() const { return _fieldRevision; }
-+
-     // Methods with inline implementations (no cpp definitions)
-     int getRelationships() const { return _composition.relationships; }
-     void setRelationships(int r) { _composition.relationships = r; }
+
+     const auto findBeing = [](const std::string& id) -> Singular* {
+         for (Singular* being : Universe::instance().beings()) {
+@@ -2301,6 +2307,7 @@
+         {"triggers", triggersJson},
+         {"formationMembers", formationMemberIds(_lawFormation)},
+         {"rete", _rete.toJson()},
+-        {"firstMoverEnabled", firstMoverEnabled}
++        {"firstMoverEnabled", firstMoverEnabled},
++        {"maxChainRounds", _maxChainRounds}
+     };
+ }
+--- a/src/ZonesOfEarth/AuthorsOfLaw/Law.hpp
++++ b/src/ZonesOfEarth/AuthorsOfLaw/Law.hpp
+@@ -718,9 +718,10 @@
+     }
+
+     // Bounded law chaining per tick: a law firing an event that wakes another
+-    // law resolves within the same tick, but never unboundedly — the first
+-    // Singularity-level anti-Babel ceiling in code.
+-    static constexpr int kMaxChainRounds = 8;
++    // law resolves within the same tick, but never unboundedly.
++    // The ceiling is now authorable rather than hardcoded.
++    int maxChainRounds() const { return _maxChainRounds; }
++    void setMaxChainRounds(int rounds) { _maxChainRounds = rounds; }
+
+     nlohmann::json toJson() const;
+
+@@ -783,4 +784,5 @@
+     bool _connected = false;
+     bool _dirty = false;
+     TickTiming _tickTiming;
++    int _maxChainRounds = 8;
+ };

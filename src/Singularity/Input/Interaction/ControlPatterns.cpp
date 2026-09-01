@@ -129,7 +129,7 @@ std::shared_ptr<Law> createButtonLaw(Singular& author) {
 // the law network CASCADES: the on-law writes controlOn, the write marks the
 // Rete state fact dirty, the dirty fact re-activates the off-law's Compare
 // terminal in the next chain round, and the off-law fires within the same
-// tick. One click, both laws, no net change. kMaxChainRounds bounds the loop;
+// tick. One click, both laws, no net change. maxChainRounds bounds the loop;
 // it does not make it wrong less often.
 //
 // The general rule this is an instance of: TWO LAWS WHOSE ACTIONS SATISFY EACH
