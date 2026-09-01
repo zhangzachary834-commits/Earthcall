@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <functional>
 #include <string>
+#include <memory>
 #include <utility>
 #include <vector>
 

@@ -68,6 +68,7 @@ set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 if (NOT EMSCRIPTEN)
     FetchContent_MakeAvailable(glfw)
     set(GLFW_LIB glfw)
+    include_directories(${glfw_SOURCE_DIR}/include)
 endif()
 
 FetchContent_Declare(
@@ -157,6 +158,7 @@ if (NOT EMSCRIPTEN)
         ZLIB::ZLIB
         OpenSSL::SSL
         OpenSSL::Crypto
+        ${GLFW_LIB}
     )
 endif()
 if(APPLE AND NOT EMSCRIPTEN)
