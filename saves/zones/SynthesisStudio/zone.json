@@ -1,0 +1,1372 @@
+{
+  "name": "SynthesisStudio",
+  "identifier": "SynthesisStudio",
+  "owner": "Player",
+  "parentZone": "",
+  "scope": "Local",
+  "qualities": {
+    "kind": "studio"
+  },
+  "world": {
+    "objects": [
+      {
+        "objectID": "studio.platform.floor",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [
+          0.5,
+          0.5,
+          0.5,
+          0.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          12.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.2,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          12.0,
+          0.0,
+          0.0,
+          -0.1,
+          0.0,
+          1.0
+        ],
+        "center": [
+          0.0,
+          -0.1,
+          0.0
+        ],
+        "materialId": "material.studio.slate",
+        "faceColors": [
+          [
+            0.18,
+            0.2,
+            0.24
+          ],
+          [
+            0.18,
+            0.2,
+            0.24
+          ],
+          [
+            0.18,
+            0.2,
+            0.24
+          ],
+          [
+            0.18,
+            0.2,
+            0.24
+          ],
+          [
+            0.18,
+            0.2,
+            0.24
+          ],
+          [
+            0.18,
+            0.2,
+            0.24
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Studio Platform Floor"
+          },
+          "isStudioSurface": {
+            "t": "bool",
+            "v": true
+          }
+        }
+      },
+      {
+        "objectID": "studio.console.desk",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [
+          0.5,
+          0.5,
+          0.5,
+          0.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          4.8,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.8,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          2.2,
+          0.0,
+          0.0,
+          0.4,
+          0.0,
+          1.0
+        ],
+        "center": [
+          0.0,
+          0.4,
+          0.0
+        ],
+        "materialId": "material.studio.walnut",
+        "faceColors": [
+          [
+            0.12,
+            0.13,
+            0.16
+          ],
+          [
+            0.12,
+            0.13,
+            0.16
+          ],
+          [
+            0.12,
+            0.13,
+            0.16
+          ],
+          [
+            0.12,
+            0.13,
+            0.16
+          ],
+          [
+            0.12,
+            0.13,
+            0.16
+          ],
+          [
+            0.12,
+            0.13,
+            0.16
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Studio Control Console"
+          }
+        }
+      },
+      {
+        "objectID": "studio.easel.canvas",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [
+          0.5,
+          0.5,
+          0.5,
+          0.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          3.8,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          2.4,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.1,
+          0.0,
+          0.0,
+          2.1,
+          2.2,
+          1.0
+        ],
+        "center": [
+          0.0,
+          2.1,
+          2.2
+        ],
+        "materialId": "material.studio.canvas",
+        "faceColors": [
+          [
+            0.92,
+            0.9,
+            0.86
+          ],
+          [
+            0.92,
+            0.9,
+            0.86
+          ],
+          [
+            0.92,
+            0.9,
+            0.86
+          ],
+          [
+            0.92,
+            0.9,
+            0.86
+          ],
+          [
+            0.92,
+            0.9,
+            0.86
+          ],
+          [
+            0.92,
+            0.9,
+            0.86
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Interactive Art Canvas"
+          },
+          "isCanvas": {
+            "t": "bool",
+            "v": true
+          }
+        }
+      },
+      {
+        "objectID": "studio.pedestal.crystal",
+        "shapeKind": 2,
+        "geometryType": 2,
+        "shapeParams": [
+          0.4,
+          0.4,
+          0.4,
+          0.8,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          0.8,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.8,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.8,
+          0.0,
+          0.0,
+          0.4,
+          1.2,
+          1.0
+        ],
+        "center": [
+          0.0,
+          0.4,
+          1.2
+        ],
+        "materialId": "material.studio.crystal",
+        "faceColors": [
+          [
+            0.3,
+            0.75,
+            0.9
+          ],
+          [
+            0.3,
+            0.75,
+            0.9
+          ],
+          [
+            0.3,
+            0.75,
+            0.9
+          ],
+          [
+            0.3,
+            0.75,
+            0.9
+          ],
+          [
+            0.3,
+            0.75,
+            0.9
+          ],
+          [
+            0.3,
+            0.75,
+            0.9
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Harmonic Crystal Pedestal"
+          }
+        }
+      },
+      {
+        "objectID": "studio.btn.spawn-orb",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [
+          0.5,
+          0.5,
+          0.5,
+          0.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          0.7,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.16,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.55,
+          0.0,
+          -1.4,
+          0.88,
+          -0.35,
+          1.0
+        ],
+        "center": [
+          -1.4,
+          0.88,
+          -0.35
+        ],
+        "materialId": "material.studio.btn.blue",
+        "faceColors": [
+          [
+            0.15,
+            0.55,
+            0.95
+          ],
+          [
+            0.15,
+            0.55,
+            0.95
+          ],
+          [
+            0.15,
+            0.55,
+            0.95
+          ],
+          [
+            0.15,
+            0.55,
+            0.95
+          ],
+          [
+            0.15,
+            0.55,
+            0.95
+          ],
+          [
+            0.15,
+            0.55,
+            0.95
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Button: Spawn Orb"
+          },
+          "controlLabel": {
+            "t": "string",
+            "v": "Spawn Harmonic Orb"
+          },
+          "buttonRole": {
+            "t": "string",
+            "v": "spawn-orb"
+          },
+          "restY": {
+            "t": "double",
+            "v": 0.88
+          }
+        }
+      },
+      {
+        "objectID": "studio.btn.toggle-theme",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [
+          0.5,
+          0.5,
+          0.5,
+          0.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          0.7,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.16,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.55,
+          0.0,
+          -0.5,
+          0.88,
+          -0.35,
+          1.0
+        ],
+        "center": [
+          -0.5,
+          0.88,
+          -0.35
+        ],
+        "materialId": "material.studio.btn.gold",
+        "faceColors": [
+          [
+            1.0,
+            0.65,
+            0.1
+          ],
+          [
+            1.0,
+            0.65,
+            0.1
+          ],
+          [
+            1.0,
+            0.65,
+            0.1
+          ],
+          [
+            1.0,
+            0.65,
+            0.1
+          ],
+          [
+            1.0,
+            0.65,
+            0.1
+          ],
+          [
+            1.0,
+            0.65,
+            0.1
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Toggle: Ambient Theme"
+          },
+          "controlLabel": {
+            "t": "string",
+            "v": "Toggle Night/Day Ambient"
+          },
+          "buttonRole": {
+            "t": "string",
+            "v": "toggle-theme"
+          },
+          "controlOn": {
+            "t": "bool",
+            "v": false
+          },
+          "restY": {
+            "t": "double",
+            "v": 0.88
+          }
+        }
+      },
+      {
+        "objectID": "studio.pad.c5",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [
+          0.5,
+          0.5,
+          0.5,
+          0.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          0.45,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.14,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          0.4,
+          0.87,
+          -0.35,
+          1.0
+        ],
+        "center": [
+          0.4,
+          0.87,
+          -0.35
+        ],
+        "materialId": "material.studio.C5",
+        "faceColors": [
+          [
+            0.95,
+            0.22,
+            0.32
+          ],
+          [
+            0.95,
+            0.22,
+            0.32
+          ],
+          [
+            0.95,
+            0.22,
+            0.32
+          ],
+          [
+            0.95,
+            0.22,
+            0.32
+          ],
+          [
+            0.95,
+            0.22,
+            0.32
+          ],
+          [
+            0.95,
+            0.22,
+            0.32
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Chord Pad: C5"
+          },
+          "controlLabel": {
+            "t": "string",
+            "v": "Play Note C5"
+          },
+          "noteName": {
+            "t": "string",
+            "v": "C5"
+          },
+          "acoustic.frequency": {
+            "t": "double",
+            "v": 523.25
+          },
+          "acoustic.amplitude": {
+            "t": "double",
+            "v": 0.85
+          },
+          "acoustic.waveType": {
+            "t": "string",
+            "v": "crystal"
+          },
+          "isChordPad": {
+            "t": "bool",
+            "v": true
+          },
+          "restY": {
+            "t": "double",
+            "v": 0.87
+          }
+        }
+      },
+      {
+        "objectID": "studio.pad.e5",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [
+          0.5,
+          0.5,
+          0.5,
+          0.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          0.45,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.14,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          0.95,
+          0.87,
+          -0.35,
+          1.0
+        ],
+        "center": [
+          0.95,
+          0.87,
+          -0.35
+        ],
+        "materialId": "material.studio.E5",
+        "faceColors": [
+          [
+            1.0,
+            0.72,
+            0.12
+          ],
+          [
+            1.0,
+            0.72,
+            0.12
+          ],
+          [
+            1.0,
+            0.72,
+            0.12
+          ],
+          [
+            1.0,
+            0.72,
+            0.12
+          ],
+          [
+            1.0,
+            0.72,
+            0.12
+          ],
+          [
+            1.0,
+            0.72,
+            0.12
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Chord Pad: E5"
+          },
+          "controlLabel": {
+            "t": "string",
+            "v": "Play Note E5"
+          },
+          "noteName": {
+            "t": "string",
+            "v": "E5"
+          },
+          "acoustic.frequency": {
+            "t": "double",
+            "v": 659.25
+          },
+          "acoustic.amplitude": {
+            "t": "double",
+            "v": 0.85
+          },
+          "acoustic.waveType": {
+            "t": "string",
+            "v": "crystal"
+          },
+          "isChordPad": {
+            "t": "bool",
+            "v": true
+          },
+          "restY": {
+            "t": "double",
+            "v": 0.87
+          }
+        }
+      },
+      {
+        "objectID": "studio.pad.g5",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [
+          0.5,
+          0.5,
+          0.5,
+          0.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          0.45,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.14,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.5,
+          0.87,
+          -0.35,
+          1.0
+        ],
+        "center": [
+          1.5,
+          0.87,
+          -0.35
+        ],
+        "materialId": "material.studio.G5",
+        "faceColors": [
+          [
+            0.18,
+            0.85,
+            0.42
+          ],
+          [
+            0.18,
+            0.85,
+            0.42
+          ],
+          [
+            0.18,
+            0.85,
+            0.42
+          ],
+          [
+            0.18,
+            0.85,
+            0.42
+          ],
+          [
+            0.18,
+            0.85,
+            0.42
+          ],
+          [
+            0.18,
+            0.85,
+            0.42
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Chord Pad: G5"
+          },
+          "controlLabel": {
+            "t": "string",
+            "v": "Play Note G5"
+          },
+          "noteName": {
+            "t": "string",
+            "v": "G5"
+          },
+          "acoustic.frequency": {
+            "t": "double",
+            "v": 783.99
+          },
+          "acoustic.amplitude": {
+            "t": "double",
+            "v": 0.85
+          },
+          "acoustic.waveType": {
+            "t": "string",
+            "v": "crystal"
+          },
+          "isChordPad": {
+            "t": "bool",
+            "v": true
+          },
+          "restY": {
+            "t": "double",
+            "v": 0.87
+          }
+        }
+      },
+      {
+        "objectID": "studio.pad.b5",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [
+          0.5,
+          0.5,
+          0.5,
+          0.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          0.45,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.14,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          2.05,
+          0.87,
+          -0.35,
+          1.0
+        ],
+        "center": [
+          2.05,
+          0.87,
+          -0.35
+        ],
+        "materialId": "material.studio.B5",
+        "faceColors": [
+          [
+            0.28,
+            0.45,
+            1.0
+          ],
+          [
+            0.28,
+            0.45,
+            1.0
+          ],
+          [
+            0.28,
+            0.45,
+            1.0
+          ],
+          [
+            0.28,
+            0.45,
+            1.0
+          ],
+          [
+            0.28,
+            0.45,
+            1.0
+          ],
+          [
+            0.28,
+            0.45,
+            1.0
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Chord Pad: B5"
+          },
+          "controlLabel": {
+            "t": "string",
+            "v": "Play Note B5"
+          },
+          "noteName": {
+            "t": "string",
+            "v": "B5"
+          },
+          "acoustic.frequency": {
+            "t": "double",
+            "v": 987.77
+          },
+          "acoustic.amplitude": {
+            "t": "double",
+            "v": 0.85
+          },
+          "acoustic.waveType": {
+            "t": "string",
+            "v": "crystal"
+          },
+          "isChordPad": {
+            "t": "bool",
+            "v": true
+          },
+          "restY": {
+            "t": "double",
+            "v": 0.87
+          }
+        }
+      },
+      {
+        "objectID": "studio.slider.track",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [
+          0.5,
+          0.5,
+          0.5,
+          0.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          2.6,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.04,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.18,
+          0.0,
+          0.0,
+          0.83,
+          0.5,
+          1.0
+        ],
+        "center": [
+          0.0,
+          0.83,
+          0.5
+        ],
+        "materialId": "material.studio.track",
+        "faceColors": [
+          [
+            0.25,
+            0.27,
+            0.32
+          ],
+          [
+            0.25,
+            0.27,
+            0.32
+          ],
+          [
+            0.25,
+            0.27,
+            0.32
+          ],
+          [
+            0.25,
+            0.27,
+            0.32
+          ],
+          [
+            0.25,
+            0.27,
+            0.32
+          ],
+          [
+            0.25,
+            0.27,
+            0.32
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Pulse Rate Slider Track"
+          }
+        }
+      },
+      {
+        "objectID": "studio.slider.handle",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [
+          0.5,
+          0.5,
+          0.5,
+          0.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          0.35,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.14,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.32,
+          0.0,
+          0.0,
+          0.9,
+          0.5,
+          1.0
+        ],
+        "center": [
+          0.0,
+          0.9,
+          0.5
+        ],
+        "materialId": "material.studio.handle",
+        "faceColors": [
+          [
+            0.92,
+            0.94,
+            0.98
+          ],
+          [
+            0.92,
+            0.94,
+            0.98
+          ],
+          [
+            0.92,
+            0.94,
+            0.98
+          ],
+          [
+            0.92,
+            0.94,
+            0.98
+          ],
+          [
+            0.92,
+            0.94,
+            0.98
+          ],
+          [
+            0.92,
+            0.94,
+            0.98
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Pulse Rate Handle"
+          },
+          "controlLabel": {
+            "t": "string",
+            "v": "Pulse Rate"
+          },
+          "controlValue": {
+            "t": "double",
+            "v": 1.0
+          },
+          "controlMin": {
+            "t": "double",
+            "v": 0.2
+          },
+          "controlMax": {
+            "t": "double",
+            "v": 3.0
+          },
+          "controlStep": {
+            "t": "double",
+            "v": 0.1
+          },
+          "restY": {
+            "t": "double",
+            "v": 0.9
+          }
+        }
+      },
+      {
+        "objectID": "state.studio",
+        "shapeKind": 12,
+        "geometryType": 12,
+        "shapeParams": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          0.01,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.01,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.01,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "materialId": "",
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Studio Ambient State"
+          },
+          "themeNight": {
+            "t": "bool",
+            "v": false
+          },
+          "pulseRate": {
+            "t": "double",
+            "v": 1.0
+          },
+          "spawnCount": {
+            "t": "int",
+            "v": 0
+          },
+          "soundFreq": {
+            "t": "double",
+            "v": 440.0
+          },
+          "soundAmp": {
+            "t": "double",
+            "v": 0.8
+          }
+        }
+      }
+    ]
+  },
+  "formationRelations": [
+    {
+      "type": "subcategory-of",
+      "entityA": "category.control.button",
+      "entityB": "category.control",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "subcategory-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "subcategory-of",
+      "entityA": "category.control.toggle",
+      "entityB": "category.control",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "subcategory-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "subcategory-of",
+      "entityA": "category.control.slider",
+      "entityB": "category.control",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "subcategory-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "subcategory-of",
+      "entityA": "category.art.stroke",
+      "entityB": "category.art",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "subcategory-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "category.control",
+      "entityB": "author.gemini-spark",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "category.art",
+      "entityB": "author.gemini-spark",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "studio.btn.spawn-orb",
+      "entityB": "category.control.button",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "studio.btn.toggle-theme",
+      "entityB": "category.control.toggle",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "studio.pad.c5",
+      "entityB": "category.control.button",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "studio.pad.e5",
+      "entityB": "category.control.button",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "studio.pad.g5",
+      "entityB": "category.control.button",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "studio.pad.b5",
+      "entityB": "category.control.button",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "studio.slider.handle",
+      "entityB": "category.control.slider",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    }
+  ]
+}
