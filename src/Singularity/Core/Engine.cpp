@@ -46,6 +46,7 @@
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "Singularity/Storage/SaveSystem.hpp"
+#include "Singularity/Core/Logger.hpp"
 
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleWindow.hpp"
 #include <iostream>
@@ -101,6 +102,7 @@ std::filesystem::path findRepoRoot() {
 } // namespace
 
 bool Engine::init(int /*argc*/, char** /*argv*/) {
+    ECA::Logger::instance().log(ECA::LogCategory::System, "SYSTEM", "Engine::init starting");
     std::cout << "Engine::init starting" << std::endl;
     {
         const auto root = findRepoRoot();
@@ -206,6 +208,7 @@ bool Engine::init(int /*argc*/, char** /*argv*/) {
 #endif
     _running = true;
 
+    ECA::Logger::instance().log(ECA::LogCategory::System, "SYSTEM", "Engine initialised successfully");
     std::cout << "🌟 Engine initialised ("
 #ifdef EARTHCALL_WEBGPU
               << "WebGPU"
@@ -491,6 +494,7 @@ void Engine::shutdown() {
     Singularity::Language::LanguageSystem::instance().clear();
 
     _running = false;
+    ECA::Logger::instance().log(ECA::LogCategory::System, "SYSTEM", "Engine shut down");
     std::cout << "👋 Engine shut down." << std::endl;
 }
 

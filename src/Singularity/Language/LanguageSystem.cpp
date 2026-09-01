@@ -4,6 +4,7 @@
 #include "Singularity/Core/EventBus.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "Singularity/Language/SyntacticParser.hpp"
+#include "Singularity/Core/Logger.hpp"
 #include <iostream>
 #include <cstddef>
 
@@ -180,6 +181,12 @@ void LanguageSystem::tick(float deltaTime) {
             }
         }
 
+        ECA::Logger::instance().log(
+            ECA::LogCategory::Language,
+            "UTTERANCE",
+            "Processed utterance '" + u.payload + "' in Zone: " + activeZone.name(),
+            nlohmann::json{{"payload", u.payload}, {"zone", activeZone.name()}, {"target", u.targetSingularId}}
+        );
         std::cout << "[LanguageSystem] Finished processing utterance '" << u.payload 
                   << "' in Zone: " << activeZone.name() << std::endl;
         
@@ -201,6 +208,12 @@ void LanguageSystem::tick(float deltaTime) {
             w -= 0.02f * deltaTime; // Decay rate
             if (w <= 0.0f) {
                 toRemove.push_back(rel);
+                ECA::Logger::instance().log(
+                    ECA::LogCategory::Language,
+                    "PATHWAY_DECAY",
+                    "Semantic pathway decayed and forgotten: " + rel->getIdentifier(),
+                    nlohmann::json{{"relationId", rel->getIdentifier()}}
+                );
                 std::cout << "[LanguageSystem] Semantic pathway decayed and forgotten: " << rel->getIdentifier() << std::endl;
             } else {
                 rel->setWeight(w);

@@ -12,6 +12,7 @@
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp"
+#include "Singularity/Core/Logger.hpp"
 
 extern ZoneManager mgr;
 
@@ -62,6 +63,7 @@ bool AudioSystem::init() {
     }
 
     _initialized = true;
+    ECA::Logger::instance().log(ECA::LogCategory::Audio, "SYSTEM", "Audio System initialized");
     std::cout << "🎵 Audio System initialized." << std::endl;
     return true;
 }
@@ -106,6 +108,7 @@ void AudioSystem::shutdown() {
     }
 
     _initialized = false;
+    ECA::Logger::instance().log(ECA::LogCategory::Audio, "SYSTEM", "Audio System shut down");
     std::cout << "🎵 Audio System shut down." << std::endl;
 }
 
