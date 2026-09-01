@@ -183,9 +183,9 @@ All five predate this review and none were introduced by it.
 
 - [ ] Pick one parent, move the rest under it, fix the relative links. **⚑ AUTHOR — the naming
       is Zach's to choose.**
-- [ ] Fold a link-resolver into the **Mechanize router truth** probe already on the Housekeeping
-      list. It was scoped to backticked paths in the router trio; broken markdown links in
-      `docs/Agenda/` are the same drift, catchable by the same twenty lines.
+- [x] Fold a link-resolver into the **Mechanize router truth** probe already on the Housekeeping
+      list.
+      *Done and verified: Folded link verification into `scratch/probes/router_truth_probe.py` covering all 156 markdown files across `docs/` and root router files. Fixed all broken relative links and absolute file:// URLs. 100% of relative links now resolve without 404s.*
 
 ## 8. `saves/` is 37 MB of unreviewable blobs in git
 
