@@ -86,6 +86,6 @@ every session, on top of the refusals in `AGENTS.md` and the workshop rules in
   corpus has a probe in `scratch/probes/` that executes its central claims. Two of those probes
   caught claims that were plainly wrong on inspection. Run things.
 
-- **Bounds are doctrine, not limits.** `kMaxChainRounds = 8`, `kMaxCallDepth = 32`, one pass
+- **Bounds are doctrine, not limits.** `kMaxChainRounds` (now authorable via LawManager), `kMaxCallDepth = 32`, one pass
   per fold. If your design needs one raised, the design is in the wrong shape — see
   `docs/architecture/law/ALGORITHMS_AS_LAW.md` §3.
