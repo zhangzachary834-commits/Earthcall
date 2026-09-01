@@ -103,8 +103,10 @@ def check_markdown_links():
             
             if clean_target.startswith('file://'):
                 parsed_path = urlparse(clean_target).path
-                # Handle Windows vs Unix
                 resolved = Path(parsed_path).resolve()
+                if not resolved.exists() and "Earthcall/" in parsed_path:
+                    rel_part = parsed_path.split("Earthcall/")[1]
+                    resolved = (ROOT / rel_part).resolve()
             elif clean_target.startswith('const ') or '&' in clean_target or ',' in clean_target:
                 # Filter out false-positive markdown link matches that are actually C++ signatures
                 continue

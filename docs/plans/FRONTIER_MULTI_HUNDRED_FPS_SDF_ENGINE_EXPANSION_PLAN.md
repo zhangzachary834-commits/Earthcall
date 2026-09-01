@@ -52,7 +52,7 @@ Procedural Perlin noise evaluates ~150 ALU instructions per step (`floor`, `frac
    - Allocate a single persistent $64 \times 64 \times 64$ `RGBA8Unorm` 3D texture containing four pre-computed gradient noise octaves across the R, G, B, and A channels.
    - Upload once at renderer initialization (`WebGpuRenderer::init`).
 2. **Hardware Trilinear Filtering**:
-   - In [`SdfWgsl.cpp`](file:///Users/zacharyzhang/Documents/GitHub/Earthcall/src/Singularity/Screen/WebGPU/SdfWgsl.cpp), replace arithmetic `cnoise3(p)` with:
+   - In [`SdfWgsl.cpp`](../../src/Singularity/Screen/WebGPU/SdfWgsl.cpp), replace arithmetic `cnoise3(p)` with:
      ```wgsl
      fn textureNoise(p: vec3<f32>) -> f32 {
          let sample = textureSampleLevel(noiseTex, noiseSampler, p * 0.05, 0.0);

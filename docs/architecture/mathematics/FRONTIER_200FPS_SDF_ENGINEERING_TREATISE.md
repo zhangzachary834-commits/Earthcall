@@ -194,13 +194,13 @@ In accordance with Rule 6 (No Black Box), all performance controls are registere
 
 Every optimization in Earthcall must satisfy strict end-to-end parity against CPU analytical mathematical references:
 
-1. **Parity Guard ([`webgpu_sdf_parity_test`](file:///Users/zacharyzhang/Documents/GitHub/Earthcall/tests/singularity/webgpu_sdf_parity_test.cpp))**:
+1. **Parity Guard ([`webgpu_sdf_parity_test`](../../../tests/singularity/webgpu_sdf_parity_test.cpp))**:
    - Compares GPU hardware raymarching against CPU ground truth across all 20 canonical shapes (Sphere, Box, RoundBox, Ellipsoid, Cylinder, Cone, Torus, Convex Polyhedra, Distance Expressions, Iso Expressions, Unions, Intersections, Subtractions, Morphs, SmoothUnions, Transforms).
    - Verdict: **20/20 PASSED** (0 silhouette difference).
-2. **Micro-Mastery Stress Guard ([`webgpu_micro_mastery_lag_test`](file:///Users/zacharyzhang/Documents/GitHub/Earthcall/tests/singularity/webgpu_micro_mastery_lag_test.cpp))**:
+2. **Micro-Mastery Stress Guard ([`webgpu_micro_mastery_lag_test`](../../../tests/singularity/webgpu_micro_mastery_lag_test.cpp))**:
    - Renders 3,000 instanced meshes and 1,500 continuous implicit fields simultaneously.
    - Verdict: **PASSED** at **23.4 ms** normalized frame time (well below the $108.7\text{ ms}$ baseline).
-3. **Multi-Subsystem Lag Guard ([`frame_lag_test`](file:///Users/zacharyzhang/Documents/GitHub/Earthcall/tests/singularity/frame_lag_test.cpp))**:
+3. **Multi-Subsystem Lag Guard ([`frame_lag_test`](../../../tests/singularity/frame_lag_test.cpp))**:
    - Verdict: **PASSED** with 0 broken invariants.
 4. **Full Test Suite (`ctest`)**:
    - **72/73 PASSED (99%)** across all 73 suites in **25.38 seconds** (reduced from $71.0\text{ s}$).

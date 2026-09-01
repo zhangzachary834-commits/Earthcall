@@ -188,5 +188,5 @@ is currently firing.
 exists. That is Refusal 6 exactly: *"nobody registered it yet" is not a permission level*. The
 channel is supposed to sense and publish; deciding that this motion was a drag is a meaning
 decision, and it is currently made behind a number the ontology cannot see. The fix in
-[`docs/CHESS_GESTURE_HANDOFF_2026-08-26.md`](../CHESS_GESTURE_HANDOFF_2026-08-26.md) §2 puts it
+[`docs/CHESS_GESTURE_HANDOFF_2026-08-26.md`](CHESS_GESTURE_HANDOFF_2026-08-26.md) §2 puts it
 on the property registry where the rest of the channel's vocabulary already lives.
