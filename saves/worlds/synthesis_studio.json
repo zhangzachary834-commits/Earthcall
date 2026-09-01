@@ -3618,6 +3618,8 @@
       "law-control-toggle-archetype",
       "law-studio-spawn-orb",
       "law-studio-theme-toggle",
+      "law-studio-draw-mode-toggle",
+      "law-studio-slider-sync",
       "law-studio-pad-play",
       "law-studio-button-spring",
       "law-art-stroke-draw",
@@ -3772,6 +3774,33 @@
         "actionModel": {
           "kind": 5,
           "children": [
+            {
+              "kind": 8,
+              "path": "@state.studio.spawnCount",
+              "bindings": {
+                "c": "@state.studio.spawnCount"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "c": 1.0
+                          }
+                        },
+                        {
+                          "c": 1.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
             {
               "kind": 11,
               "shapeKind": 1,
@@ -3930,6 +3959,33 @@
           "kind": 5,
           "children": [
             {
+              "kind": 8,
+              "path": "@state.studio.themeNight",
+              "bindings": {
+                "tn": "@state.studio.themeNight"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "tn": 1.0
+                          }
+                        },
+                        {
+                          "c": 1.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
               "kind": 18,
               "path": "@state.studio.soundFreq",
               "input": "@state.studio.soundAmp",
@@ -3947,6 +4003,166 @@
           {
             "type": "authored-by",
             "entityA": "law-studio-theme-toggle",
+            "entityB": "author.gemini-spark",
+            "directed": true,
+            "weight": 1.0,
+            "events": [
+              {
+                "description": "authored-by",
+                "deltaWeight": 1.0,
+                "timestamp": 1787395000
+              }
+            ]
+          }
+        ],
+        "applicationLog": []
+      },
+      {
+        "id": "law-studio-draw-mode-toggle",
+        "name": "Studio: Toggle Canvas Drawing Mode on Button Click",
+        "enabled": true,
+        "authority": 0,
+        "activation": 0,
+        "scope": 0,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "author.gemini-spark"
+        ],
+        "conditionSubjects": [],
+        "targets": [],
+        "conditionModel": {
+          "kind": 0,
+          "path": "buttonRole",
+          "op": 0,
+          "operand": {
+            "t": "string",
+            "v": "draw-mode"
+          }
+        },
+        "actionModel": {
+          "kind": 5,
+          "children": [
+            {
+              "kind": 0,
+              "path": "@creation-channel.active3DMode",
+              "operand": {
+                "t": "string",
+                "v": "Draw"
+              }
+            },
+            {
+              "kind": 18,
+              "path": "@state.studio.soundFreq",
+              "input": "@state.studio.soundAmp",
+              "propertyName": "crystal"
+            },
+            {
+              "kind": 10,
+              "eventType": "draw-mode-toggled",
+              "publishSubject": "state.studio",
+              "publishObject": ""
+            }
+          ]
+        },
+        "provenance": [
+          {
+            "type": "authored-by",
+            "entityA": "law-studio-draw-mode-toggle",
+            "entityB": "author.gemini-spark",
+            "directed": true,
+            "weight": 1.0,
+            "events": [
+              {
+                "description": "authored-by",
+                "deltaWeight": 1.0,
+                "timestamp": 1787395000
+              }
+            ]
+          }
+        ],
+        "applicationLog": []
+      },
+      {
+        "id": "law-studio-slider-sync",
+        "name": "Studio: Sync Pulse Rate from Slider Value",
+        "enabled": true,
+        "authority": 0,
+        "activation": 1,
+        "scope": 0,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "author.gemini-spark"
+        ],
+        "conditionSubjects": [],
+        "targets": [],
+        "conditionModel": {
+          "kind": 2,
+          "relationType": "instance-of",
+          "otherId": "category.control.slider"
+        },
+        "actionModel": {
+          "kind": 5,
+          "children": [
+            {
+              "kind": 8,
+              "path": "@state.studio.pulseRate",
+              "bindings": {
+                "v": "controlValue"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "v": 1.0
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 8,
+              "path": "position.x",
+              "bindings": {
+                "v": "controlValue"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "v": 1.0
+                          }
+                        },
+                        {
+                          "c": -1.6,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "provenance": [
+          {
+            "type": "authored-by",
+            "entityA": "law-studio-slider-sync",
             "entityB": "author.gemini-spark",
             "directed": true,
             "weight": 1.0,
@@ -4331,6 +4547,9 @@
         "control-activated"
       ],
       "law-studio-theme-toggle": [
+        "control-activated"
+      ],
+      "law-studio-draw-mode-toggle": [
         "control-activated"
       ],
       "law-studio-pad-play": [
