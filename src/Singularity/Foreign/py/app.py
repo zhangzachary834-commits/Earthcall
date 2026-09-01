@@ -24,23 +24,8 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'earthcall-secret-key-lo
 # Apply CORS (Cross-Origin Resource Sharing)
 CORS(app)
 
-# Configure SocketIO allowed CORS origins securely
-cors_env = os.environ.get('CORS_ALLOWED_ORIGINS', '').strip()
-if cors_env:
-    if cors_env == '*':
-        cors_allowed_origins = '*'
-    else:
-        cors_allowed_origins = [origin.strip() for origin in cors_env.split(',') if origin.strip()]
-else:
-    cors_allowed_origins = [
-        "http://127.0.0.1:5005",
-        "http://localhost:5005",
-        "http://127.0.0.1:8080",
-        "http://localhost:8080"
-    ]
-
 # Initialize SocketIO
-socketio = SocketIO(app, cors_allowed_origins=cors_allowed_origins, async_mode='threading')
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 
 # Initialize C++ Engine Bridge (WebSocket client to C++ Engine on port 8080)
 from bridge import CppBridge
