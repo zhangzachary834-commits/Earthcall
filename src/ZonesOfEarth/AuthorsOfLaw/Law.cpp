@@ -388,11 +388,13 @@ Law::ApplicationResult Law::applyTo(Singular& target) {
         });
     } else if (_actions.empty()) {
         result = ApplicationResult::NoAction;
-        ECA::LawAuditLogger::instance().log("LAW", "Law \"" + getIdentifier() + "\" applied to \"" + target.getIdentifier() + "\" - NO ACTIONS", {
-            {"lawId", getIdentifier()},
-            {"targetId", target.getIdentifier()},
-            {"result", "NoAction"}
-        });
+        if (ECA::LawAuditLogger::instance().level() == ECA::LawAuditLogger::Level::Verbose) {
+            ECA::LawAuditLogger::instance().log("LAW", "Law \"" + getIdentifier() + "\" applied to \"" + target.getIdentifier() + "\" - NO ACTIONS", {
+                {"lawId", getIdentifier()},
+                {"targetId", target.getIdentifier()},
+                {"result", "NoAction"}
+            });
+        }
     } else {
         ECA::Event event;
         event.type = "law-apply";
