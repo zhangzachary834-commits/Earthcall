@@ -75,4 +75,4 @@ if __name__ == '__main__':
     print("=" * 60)
     
     # Start the Flask-SocketIO Meta-Server
-    socketio.run(app, host=host, port=port, debug=debug, allow_unsafe_werkzeug=True, use_reloader=False)
+    socketio.run(app, host=host, port=port, debug=debug, allow_unsafe_werkzeug=debug, use_reloader=False)
