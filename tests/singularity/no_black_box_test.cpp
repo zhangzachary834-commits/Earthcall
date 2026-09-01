@@ -49,6 +49,8 @@
 #include "Relation/Relation.hpp"
 #include "Singularity/Core/CreationChannel.hpp"
 #include "Singularity/Input/Locomotion/LocomotionChannel.hpp"
+#include "Singularity/Input/Interaction/InteractionChannel.hpp"
+#include "Singularity/Screen/ScreenChannel.hpp"
 #include "../../src/ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
 #include "Singularity/Screen/LawGraphWindow.hpp"
 #include "Singularity/TransferPolicy.hpp"
@@ -71,7 +73,8 @@ int g_checked = 0;
 
 void fail(const std::string& being, const std::string& what, const std::string& why) {
     ++g_failures;
-    std::printf("  FAILED  %-22s %-24s %s\n", being.c_str(), what.c_str(), why.c_str());
+    std::printf("  FAILED  %-22s %-24s %s
+", being.c_str(), what.c_str(), why.c_str());
 }
 
 // ---------------------------------------------------------------------------
@@ -215,7 +218,8 @@ void audit(const std::string& beingName, Singular& being) {
                  "registers no properties and is not on the sealed register — either "
                  "register its state or name it in kSealedRegister with a reason");
         } else {
-            std::printf("  sealed  %-22s registers nothing (see kSealedRegister)\n",
+            std::printf("  sealed  %-22s registers nothing (see kSealedRegister)
+",
                         beingName.c_str());
         }
         return;
@@ -227,7 +231,8 @@ void audit(const std::string& beingName, Singular& being) {
         bool onlyUniversalTelos = properties.size() == 1
             && properties[0] && properties[0]->name() == "telos";
         if (onlyUniversalTelos) {
-            std::printf("  sealed  %-22s only universal `telos`; own state still {}\n",
+            std::printf("  sealed  %-22s only universal `telos`; own state still {}
+",
                         beingName.c_str());
         } else {
             fail(beingName, "(sealed register)",
@@ -263,7 +268,8 @@ void audit(const std::string& beingName, Singular& being) {
 
         if (accepted && !roundTripped) {
             if (isWriteExempt(beingName, property->name())) {
-                std::printf("  noted   %-22s %-24s clamped or lossy, see kWriteExemptions\n",
+                std::printf("  noted   %-22s %-24s clamped or lossy, see kWriteExemptions
+",
                             beingName.c_str(), property->name().c_str());
             } else {
                 fail(beingName, property->name(),
@@ -295,13 +301,17 @@ void auditReachability(const std::string& beingName, Singular& being,
 int main() {
     // Mirrors channel_paths_test: a context exists before any being that may
     // touch the renderer is constructed.
-    if (!glfwInit()) { std::fprintf(stderr, "no_black_box_test: no GLFW\n"); return 1; }
+    if (!glfwInit()) { std::fprintf(stderr, "no_black_box_test: no GLFW
+"); return 1; }
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
     GLFWwindow* window = glfwCreateWindow(64, 64, "no-black-box", nullptr, nullptr);
-    if (!window) { std::fprintf(stderr, "no_black_box_test: no GL context\n"); glfwTerminate(); return 1; }
+    if (!window) { std::fprintf(stderr, "no_black_box_test: no GL context
+"); glfwTerminate(); return 1; }
     glfwMakeContextCurrent(window);
 
-    std::printf("no_black_box_test — the sixth refusal (NO_BLACK_BOX.md)\n\n");
+    std::printf("no_black_box_test — the sixth refusal (NO_BLACK_BOX.md)
+
+");
 
     // ---- beings that must have a vocabulary -------------------------------
     {
@@ -315,6 +325,8 @@ int main() {
         geom::FieldNode field("probe-field");            audit("FieldNode", field);
         Singularity::Core::CreationChannel channel;      audit("CreationChannel", channel);
         Singularity::Input::LocomotionChannel locomotion; audit("LocomotionChannel", locomotion);
+        Singularity::Input::InteractionChannel interaction; audit("InteractionChannel", interaction);
+        Singularity::Screen::ScreenChannel screen;        audit("ScreenChannel", screen);
         audit("TransferPolicy", TransferPolicy::instance());
 
         Soul soul("Prober");
@@ -332,7 +344,9 @@ int main() {
     }
 
     // ---- D. reachability from the authoring surface -----------------------
-    std::printf("\n  -- registered means reachable (inverse of channel_paths_test) --\n");
+    std::printf("
+  -- registered means reachable (inverse of channel_paths_test) --
+");
     std::set<std::string> advertised;
     for (const Rendering::PathOption& option : Rendering::knownPathOptions()) {
         advertised.insert(option.path);
@@ -343,6 +357,12 @@ int main() {
 
         Singularity::Input::LocomotionChannel locomotion;
         auditReachability("LocomotionChannel", locomotion, advertised);
+
+        Singularity::Input::InteractionChannel interactionReach;
+        auditReachability("InteractionChannel", interactionReach, advertised);
+
+        Singularity::Screen::ScreenChannel screenReach;
+        auditReachability("ScreenChannel", screenReach, advertised);
 
         Formation formation;
         auditReachability("Formation", formation, advertised);
@@ -359,7 +379,9 @@ int main() {
         auditReachability("Person", person, advertised);
     }
 
-    std::printf("\nno_black_box_test: %d property writes probed, %d failures\n",
+    std::printf("
+no_black_box_test: %d property writes probed, %d failures
+",
                 g_checked, g_failures);
 
     glfwDestroyWindow(window);
@@ -367,9 +389,11 @@ int main() {
 
     if (g_failures > 0) {
         std::printf("no_black_box_test: FAILED — the substrate is holding state where "
-                    "no law can reach it\n");
+                    "no law can reach it
+");
         return 1;
     }
-    std::printf("no_black_box_test: ALL OK\n");
+    std::printf("no_black_box_test: ALL OK
+");
     return 0;
 }

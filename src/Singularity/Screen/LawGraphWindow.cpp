@@ -10,6 +10,7 @@
 #include "Singularity/Core/CreationChannel.hpp"
 #include "Singularity/Input/Locomotion/LocomotionChannel.hpp"
 #include "Singularity/Input/Interaction/InteractionChannel.hpp"
+#include "Singularity/Screen/ScreenChannel.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 
 #include <imgui.h>
@@ -195,6 +196,23 @@ const std::vector<PathOption>& knownPathOptions() {
             if (std::holds_alternative<std::string>(probe)) type = "text";
             else if (std::holds_alternative<int>(probe)) type = "number";
             options.push_back({property->name(), "Ourverse", type, false});
+        }
+
+        static Singularity::Screen::ScreenChannel screenPrototype;
+        for (Property* property : screenPrototype.listProperties()) {
+            const PropertyValue probe = property->value();
+            const bool isVec = std::holds_alternative<glm::vec3>(probe);
+            const char* type = "number";
+            if (isVec)                                            type = "vector";
+            else if (std::holds_alternative<glm::mat4>(probe))     type = "transform";
+            else if (std::holds_alternative<std::string>(probe))   type = "text";
+            else if (std::holds_alternative<bool>(probe))          type = "toggle";
+            options.push_back({property->name(), "Channel — Screen", type, isVec});
+            if (isVec) {
+                options.push_back({property->name() + ".x", "Channel — Screen", "number", false});
+                options.push_back({property->name() + ".y", "Channel — Screen", "number", false});
+                options.push_back({property->name() + ".z", "Channel — Screen", "number", false});
+            }
         }
     }
     return options;

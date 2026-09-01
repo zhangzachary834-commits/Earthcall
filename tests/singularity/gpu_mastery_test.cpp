@@ -81,22 +81,25 @@ glm::vec3 readFirstVertexPos(const wgpu::Device& gpu, WGPUBuffer buf) {
 void check(bool ok, const char* msg) {
     if (ok) {
         ++g_passed;
-        std::printf("  ok: %s\n", msg);
+        std::printf("  ok: %s
+", msg);
     } else {
         ++g_failed;
-        std::printf("  FAIL: %s\n", msg);
+        std::printf("  FAIL: %s
+", msg);
     }
 }
 
 } // namespace
 
 int main() {
-    std::printf("Running gpu_mastery_test...\n");
+    std::printf("Running gpu_mastery_test...
+");
 
     // -------------------------------------------------------------------
     // [1] ScreenChannel: First-mover registration and stable identifier
     // -------------------------------------------------------------------
-    {
+    {\
         LawManager laws;
         Singularity::Screen::ScreenChannel::syncRegister(laws);
         auto* channel = Singularity::Screen::ScreenChannel::find(laws);
@@ -110,7 +113,7 @@ int main() {
     // -------------------------------------------------------------------
     // [2] ScreenChannel: PropertyPath resolution and live telemetry updates
     // -------------------------------------------------------------------
-    {
+    {\
         LawManager laws;
         Singularity::Screen::ScreenChannel::syncRegister(laws);
         auto* channel = Singularity::Screen::ScreenChannel::find(laws);
@@ -179,12 +182,29 @@ int main() {
             check(setRes == PropertyPath::PathResult::Ok, "[2] wireframe setValue returns Ok");
             check(channel->wireframe == true, "[2] wireframe writes back true");
         }
+
+        // Read and write backgroundColor via PropertyPath
+        {
+            PropertyValue v;
+            auto res = PropertyPath::parse("backgroundColor").getValue(*channel, v);
+            check(res == PropertyPath::PathResult::Ok, "[2] backgroundColor resolves");
+            check(std::holds_alternative<glm::vec3>(v), "[2] backgroundColor is vec3");
+
+            glm::vec3 testColor(0.2f, 0.3f, 0.4f);
+            auto setRes = PropertyPath::parse("backgroundColor").setValue(*channel, PropertyValue(testColor));
+            check(setRes == PropertyPath::PathResult::Ok, "[2] backgroundColor setValue returns Ok");
+            check(glm::distance(channel->backgroundColor, testColor) < 1e-4f, "[2] backgroundColor writes back new vec3");
+
+            auto setXRes = PropertyPath::parse("backgroundColor.x").setValue(*channel, PropertyValue(0.7f));
+            check(setXRes == PropertyPath::PathResult::Ok, "[2] backgroundColor.x setValue returns Ok");
+            check(std::abs(channel->backgroundColor.x - 0.7f) < 1e-4f, "[2] backgroundColor.x writes 0.7");
+        }
     }
 
     // -------------------------------------------------------------------
     // [3] GpuBufferPool & GpuMeshCache: Headless lifecycle test
     // -------------------------------------------------------------------
-    {
+    {\
         using namespace Singularity::Screen::WebGPU;
         GpuBufferPool pool;
         check(pool.totalVramBytes() == 0, "[3] Initial pool VRAM is 0");
@@ -211,10 +231,11 @@ int main() {
     // [4] Device-backed: the two claimed fixes, the revision guard, and
     //     GpuBufferPool::init() not leaking a previous device's chunks.
     // -------------------------------------------------------------------
-    {
+    {\
         wgpu::Device gpu;
         if (!gpu.init()) {
-            std::printf("  [4] skipped: no WebGPU device available in this environment\n");
+            std::printf("  [4] skipped: no WebGPU device available in this environment
+");
         } else {
             using namespace Singularity::Screen::WebGPU;
 
@@ -325,6 +346,8 @@ int main() {
         }
     }
 
-    std::printf("\ngpu_mastery_test: %d/%d passed\n", g_passed, g_passed + g_failed);
+    std::printf("
+gpu_mastery_test: %d/%d passed
+", g_passed, g_passed + g_failed);
     return g_failed == 0 ? 0 : 1;
 }

@@ -23,6 +23,7 @@
 #include "Singularity/Core/CreationChannel.hpp"
 #include "Singularity/Input/Locomotion/LocomotionChannel.hpp"
 #include "Singularity/Input/Interaction/InteractionChannel.hpp"
+#include "Singularity/Screen/ScreenChannel.hpp"
 #include "Singularity/Screen/LawGraphWindow.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
@@ -103,6 +104,7 @@ int main() {
     Singularity::Core::CreationChannel channel;
     Singularity::Input::LocomotionChannel locomotion;
     Singularity::Input::InteractionChannel interaction;
+    Singularity::Screen::ScreenChannel screen;
     // The readings must be installed before the picker's "@world.*" entries can
     // be answered for — that is the whole point of checking them.
     interaction.installWorldReadings();
@@ -118,6 +120,7 @@ int main() {
         else if (groupIs(option.group, "Channel — Creation")) check(option, channel);
         else if (groupIs(option.group, "Channel — Locomotion")) check(option, locomotion);
         else if (groupIs(option.group, "Channel — Interaction")) check(option, interaction);
+        else if (groupIs(option.group, "Channel — Screen")) check(option, screen);
         else if (groupIs(option.group, "Reading —")) {
             // A world reading has no owning being to resolve against: it is a
             // closure a modality channel registered, answering ABOUT whatever
