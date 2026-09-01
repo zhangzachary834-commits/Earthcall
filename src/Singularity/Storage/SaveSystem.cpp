@@ -153,9 +153,10 @@ std::string sanitizeLabel(const std::string& label) {
         }
     }
 
-    size_t pos;
-    while ((pos = safe.find("..")) != std::string::npos) {
+    size_t pos = 0;
+    while ((pos = safe.find("..", pos)) != std::string::npos) {
         safe.replace(pos, 2, "__");
+        pos += 2;
     }
 
     // A name that is only dots still resolves to a directory entry rather than
