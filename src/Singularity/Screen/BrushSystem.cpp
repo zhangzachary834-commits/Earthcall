@@ -59,9 +59,12 @@ BrushSystem::BlendMode BrushSystem::getBlendMode() const {
 
 void BrushSystem::replaceLayers(const std::vector<Layer>& layers, int activeLayer, bool useLayers) {
     _layers.clear();
+    _layers.reserve(layers.size());
     const size_t expectedSize = static_cast<size_t>(_textureSize * _textureSize * 4);
 
-    for (auto layer : layers) {
+    for (const auto& inputLayer : layers) {
+        _layers.push_back(inputLayer);
+        auto& layer = _layers.back();
         if (layer.pixels.size() != expectedSize) {
             layer.pixels.assign(expectedSize, 0);
         }
@@ -70,7 +73,35 @@ void BrushSystem::replaceLayers(const std::vector<Layer>& layers, int activeLaye
         layer.pixelUndoStack.clear();
         layer.pixelRedoStack.clear();
         layer.opacity = std::clamp(layer.opacity, 0.0f, 1.0f);
+    }
+
+    if (_layers.empty()) {
+        Layer layer;
+        layer.pixels.assign(expectedSize, 0);
+        layer.opacity = 1.0f;
+        layer.blendMode = BlendMode::Normal;
+        layer.visible = true;
         _layers.push_back(std::move(layer));
+    }
+
+    _activeLayer = std::clamp(activeLayer, 0, static_cast<int>(_layers.size()) - 1);
+    _useLayers = useLayers;
+    requestComposite();
+}
+
+void BrushSystem::replaceLayers(std::vector<Layer>&& layers, int activeLayer, bool useLayers) {
+    _layers = std::move(layers);
+    const size_t expectedSize = static_cast<size_t>(_textureSize * _textureSize * 4);
+
+    for (auto& layer : _layers) {
+        if (layer.pixels.size() != expectedSize) {
+            layer.pixels.assign(expectedSize, 0);
+        }
+        layer.strokeHistory.clear();
+        layer.undoStack.clear();
+        layer.pixelUndoStack.clear();
+        layer.pixelRedoStack.clear();
+        layer.opacity = std::clamp(layer.opacity, 0.0f, 1.0f);
     }
 
     if (_layers.empty()) {

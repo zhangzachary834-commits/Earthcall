@@ -1703,7 +1703,7 @@ void DesignSystem::loadDesign(const std::string& filename) {
                     }
                 }
                 _brushSystem->replaceLayers(
-                    brushLayers,
+                    std::move(brushLayers),
                     brushJson.value("activeLayer", 0),
                     brushJson.value("useLayers", false));
             }
