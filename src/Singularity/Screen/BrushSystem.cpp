@@ -30,6 +30,29 @@ void BrushSystem::setLayerOpacity(float opacity) {
     }
 }
 
+void BrushSystem::clearLayer(int layerIndex) {
+    if (layerIndex >= 0 && layerIndex < static_cast<int>(_layers.size())) {
+        Layer& layer = _layers[layerIndex];
+        std::fill(layer.pixels.begin(), layer.pixels.end(), 0);
+        layer.strokeHistory.clear();
+        layer.undoStack.clear();
+        layer.pixelUndoStack.clear();
+        layer.pixelRedoStack.clear();
+        compositeLayers();
+    }
+}
+
+void BrushSystem::clearAllLayers() {
+    for (auto& layer : _layers) {
+        std::fill(layer.pixels.begin(), layer.pixels.end(), 0);
+        layer.strokeHistory.clear();
+        layer.undoStack.clear();
+        layer.pixelUndoStack.clear();
+        layer.pixelRedoStack.clear();
+    }
+    compositeLayers();
+}
+
 void BrushSystem::setActiveLayer(int layer) {
     if (layer >= 0 && layer < static_cast<int>(_layers.size())) {
         _activeLayer = layer;
