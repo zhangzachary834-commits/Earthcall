@@ -379,8 +379,12 @@ bool editPiecewise(OntoMath::Piecewise& f, const MathBindings& bindings) {
                 }
             }
         } else {
-            // TODO: MathNode editor 
-            /* if (editExpression(piece.expression, bindings)) changed = true; */
+            if (piece.mathNode) {
+                if (editMathNode(*piece.mathNode, bindings)) changed = true;
+            } else {
+                piece.mathNode = OntoMath::MathNode::fromLegacyExpression(OntoMath::ScalarForm::constant(0.0));
+                changed = true;
+            }
             ImGui::SameLine();
             if (ImGui::SmallButton("fold over the world...")) {
                 piece.fold = std::make_shared<OntoMath::Fold>();
@@ -497,6 +501,135 @@ void editFunctionRegistry() {
         ImGui::PopID();
         if (bodyChanged) registry.define(std::move(def));
     }
+}
+
+bool editMathNode(OntoMath::MathNode& node, const MathBindings& bindings) {
+    bool changed = false;
+
+    struct OpDescriptor {
+        OntoMath::MathNode::Op op;
+        const char* name;
+        std::size_t requiredChildren;
+        bool isScalarLeaf;
+        bool isValueLeaf;
+        bool hasStringArg;
+        const char* stringArgLabel;
+    };
+
+    static const OpDescriptor descriptors[] = {
+        { OntoMath::MathNode::Op::ScalarLeaf, "Scalar Expression", 0, true, false, false, nullptr },
+        { OntoMath::MathNode::Op::ValueLeaf, "Variable Leaf", 0, false, true, false, nullptr },
+        { OntoMath::MathNode::Op::VectorConstruct, "Vector Construct", 3, false, false, false, nullptr },
+        { OntoMath::MathNode::Op::Component, "Component", 1, false, false, true, "index (0,1,2)" },
+        { OntoMath::MathNode::Op::Add, "Add (+)", 2, false, false, false, nullptr },
+        { OntoMath::MathNode::Op::Sub, "Subtract (-)", 2, false, false, false, nullptr },
+        { OntoMath::MathNode::Op::Scale, "Scale (*)", 2, false, false, false, nullptr },
+        { OntoMath::MathNode::Op::Div, "Divide (/)", 2, false, false, false, nullptr },
+        { OntoMath::MathNode::Op::Dot, "Dot Product", 2, false, false, false, nullptr },
+        { OntoMath::MathNode::Op::Cross, "Cross Product", 2, false, false, false, nullptr },
+        { OntoMath::MathNode::Op::Hadamard, "Hadamard Product", 2, false, false, false, nullptr },
+        { OntoMath::MathNode::Op::Normalize, "Normalize", 1, false, false, false, nullptr },
+        { OntoMath::MathNode::Op::Length, "Length", 1, false, false, false, nullptr },
+        { OntoMath::MathNode::Op::Map, "Map (Func)", 1, false, false, true, "func (round/floor/etc)" },
+        { OntoMath::MathNode::Op::Stochastic, "Stochastic", 0, false, false, true, "distribution" },
+        { OntoMath::MathNode::Op::Project, "Project", 2, false, false, false, nullptr },
+        { OntoMath::MathNode::Op::Distance, "Distance", 2, false, false, false, nullptr },
+        { OntoMath::MathNode::Op::Raycast, "Raycast", 2, false, false, false, nullptr },
+        { OntoMath::MathNode::Op::SDF, "SDF Sample", 2, false, false, false, nullptr },
+        { OntoMath::MathNode::Op::Gradient, "Gradient", 2, false, false, false, nullptr },
+        { OntoMath::MathNode::Op::LineIntegral, "Line Integral", 2, false, false, false, nullptr },
+        { OntoMath::MathNode::Op::Union, "CSG Union", 2, false, false, false, nullptr },
+        { OntoMath::MathNode::Op::Intersection, "CSG Intersection", 2, false, false, false, nullptr },
+        { OntoMath::MathNode::Op::Difference, "CSG Difference", 2, false, false, false, nullptr },
+        { OntoMath::MathNode::Op::Pow, "Power (^)", 2, false, false, false, nullptr },
+        { OntoMath::MathNode::Op::Abs, "Abs", 1, false, false, false, nullptr },
+        { OntoMath::MathNode::Op::Clamp, "Clamp", 3, false, false, false, nullptr },
+        { OntoMath::MathNode::Op::Sqrt, "Sqrt", 1, false, false, false, nullptr },
+        { OntoMath::MathNode::Op::Tan, "Tan", 1, false, false, false, nullptr },
+        { OntoMath::MathNode::Op::Noise, "Noise", 1, false, false, false, nullptr }
+    };
+
+    constexpr int numDescriptors = sizeof(descriptors) / sizeof(descriptors[0]);
+
+    int currentOpIndex = 0;
+    for (int i = 0; i < numDescriptors; ++i) {
+        if (descriptors[i].op == node.op) {
+            currentOpIndex = i;
+            break;
+        }
+    }
+
+    ImGui::PushID(&node);
+
+    ImGui::SetNextItemWidth(180.0f);
+    if (ImGui::BeginCombo("Op", descriptors[currentOpIndex].name)) {
+        for (int i = 0; i < numDescriptors; ++i) {
+            if (ImGui::Selectable(descriptors[i].name, i == currentOpIndex)) {
+                node.op = descriptors[i].op;
+                currentOpIndex = i;
+                changed = true;
+            }
+        }
+        ImGui::EndCombo();
+    }
+
+    const auto& desc = descriptors[currentOpIndex];
+
+    if (node.children.size() != desc.requiredChildren) {
+        node.children.resize(desc.requiredChildren);
+        for (auto& child : node.children) {
+            if (!child) {
+                child = std::make_unique<OntoMath::MathNode>();
+                child->op = OntoMath::MathNode::Op::ScalarLeaf;
+                child->scalarForm = OntoMath::ScalarForm::constant(0.0);
+            }
+        }
+        changed = true;
+    }
+
+    if (desc.isScalarLeaf) {
+        ImGui::Indent();
+        if (editExpression(node.scalarForm, bindings)) changed = true;
+        ImGui::Unindent();
+    }
+
+    if (desc.isValueLeaf) {
+        ImGui::SameLine();
+        if (ImGui::BeginCombo("##valleafvar", node.variableName.c_str())) {
+            for (const auto& b : bindings) {
+                if (ImGui::Selectable(b.first.c_str(), b.first == node.variableName)) {
+                    node.variableName = b.first;
+                    changed = true;
+                }
+            }
+            ImGui::EndCombo();
+        }
+    }
+
+    if (desc.hasStringArg) {
+        ImGui::SameLine();
+        char argBuf[64];
+        copyToBuf(argBuf, sizeof(argBuf), node.stringArg);
+        ImGui::SetNextItemWidth(120.0f);
+        if (ImGui::InputText(desc.stringArgLabel ? desc.stringArgLabel : "arg", argBuf, sizeof(argBuf))) {
+            node.stringArg = argBuf;
+            changed = true;
+        }
+    }
+
+    for (std::size_t i = 0; i < node.children.size(); ++i) {
+        ImGui::PushID(static_cast<int>(i));
+        if (ImGui::TreeNode((void*)(intptr_t)i, "Child %zu", i + 1)) {
+            if (node.children[i]) {
+                if (editMathNode(*node.children[i], bindings)) changed = true;
+            }
+            ImGui::TreePop();
+        }
+        ImGui::PopID();
+    }
+
+    ImGui::PopID();
+    return changed;
 }
 
 } // namespace MathEd

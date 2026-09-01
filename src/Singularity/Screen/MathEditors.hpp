@@ -20,6 +20,7 @@ using PathPickerFn = std::function<bool(const char* label, PropertyPath& path)>;
 bool editMathBindings(MathBindings& bindings, const PathPickerFn& pathPicker);
 bool editExpression(OntoMath::ScalarForm& e, const MathBindings& bindings);
 bool editPiecewise(OntoMath::Piecewise& f, const MathBindings& bindings);
+bool editMathNode(OntoMath::MathNode& node, const MathBindings& bindings);
 
 // The registry of NAMED functions — define once, call anywhere (recursion
 // included, depth-bounded). Hosted by the Law Author window.

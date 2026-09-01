@@ -13,7 +13,7 @@ Renderer* g_current = nullptr;
 
 Renderer& currentRenderer() {
     if (!g_current) {
-#ifndef __EMSCRIPTEN__
+#if !defined(__EMSCRIPTEN__) && !defined(NO_OPENGL_RENDERER)
         static OpenGLRenderer s_defaultGL;
         g_current = &s_defaultGL;
 #endif

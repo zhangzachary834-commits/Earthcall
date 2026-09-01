@@ -1,5 +1,13 @@
 cmake_minimum_required(VERSION 3.5)
-project(Earthcall VERSION 1.0 LANGUAGES CXX OBJCXX)
+if(APPLE)
+    project(Earthcall VERSION 1.0 LANGUAGES CXX OBJCXX)
+else()
+    project(Earthcall VERSION 1.0 LANGUAGES CXX)
+endif()
+
+set(CMAKE_PREFIX_PATH "${CMAKE_CURRENT_SOURCE_DIR}/local_deps" CACHE PATH "" FORCE)
+set(CMAKE_INCLUDE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/local_deps/include" CACHE PATH "" FORCE)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/local_deps/include)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
@@ -22,7 +30,12 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 # We need OpenGL, OpenSSL, ZLIB
-find_package(OpenGL REQUIRED)
+find_package(OpenGL)
+if(NOT APPLE AND NOT EXISTS "/usr/include/GL/gl.h")
+    set(OpenGL_FOUND FALSE CACHE BOOL "" FORCE)
+endif()
+find_library(UUID_LIB uuid)
+find_package(Threads REQUIRED)
 if (NOT EMSCRIPTEN)
     find_package(ZLIB REQUIRED)
     find_package(OpenSSL REQUIRED)
@@ -43,6 +56,8 @@ if(APPLE)
     find_library(APPKIT_FW AppKit)
 endif()
 
+list(APPEND CMAKE_INCLUDE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/local_deps/include")
+
 # Include directories
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/src
@@ -57,6 +72,8 @@ include_directories(
 # Fetch standalone ASIO, WebSocketPP, and GLFW
 include(FetchContent)
 
+list(APPEND CMAKE_INCLUDE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/local_deps/include")
+
 FetchContent_Declare(
     glfw
     GIT_REPOSITORY https://github.com/glfw/glfw.git
@@ -65,9 +82,24 @@ FetchContent_Declare(
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(RANDR_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/local_deps/include" CACHE PATH "" FORCE)
+set(XINERAMA_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/local_deps/include" CACHE PATH "" FORCE)
+set(XCURSOR_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/local_deps/include" CACHE PATH "" FORCE)
+set(XI_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/local_deps/include" CACHE PATH "" FORCE)
+if(NOT APPLE AND NOT EMSCRIPTEN)
+    set(GLFW_BUILD_X11 OFF CACHE BOOL "" FORCE)
+    set(GLFW_BUILD_WAYLAND OFF CACHE BOOL "" FORCE)
+endif()
 if (NOT EMSCRIPTEN)
-    FetchContent_MakeAvailable(glfw)
-    set(GLFW_LIB glfw)
+    if(APPLE AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/local_deps/glfw_install/lib/libglfw3.a")
+        add_library(glfw STATIC IMPORTED)
+        set_target_properties(glfw PROPERTIES IMPORTED_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/local_deps/glfw_install/lib/libglfw3.a")
+        target_include_directories(glfw INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/local_deps/glfw_install/include")
+        set(GLFW_LIB glfw)
+    else()
+        FetchContent_MakeAvailable(glfw)
+        set(GLFW_LIB glfw)
+    endif()
 endif()
 
 FetchContent_Declare(
@@ -140,23 +172,32 @@ set(IMGUI_SOURCES
     ${IMGUI_DIR}/imgui_tables.cpp
     ${IMGUI_DIR}/imgui_widgets.cpp
     ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp
-    ${IMGUI_DIR}/backends/imgui_impl_opengl2.cpp
 )
+if(NOT EMSCRIPTEN AND OpenGL_FOUND)
+    list(APPEND IMGUI_SOURCES ${IMGUI_DIR}/backends/imgui_impl_opengl2.cpp)
+endif()
 
 # Compile WebIntegration and RealWebView as Objective-C++ since they use macOS APIs
-set_source_files_properties(src/Singularity/Foreign/Web/RealWebView.cpp PROPERTIES LANGUAGE OBJCXX)
-set_source_files_properties(src/Singularity/Foreign/Web/WebIntegration.cpp PROPERTIES LANGUAGE OBJCXX)
+if(APPLE)
+    set_source_files_properties(src/Singularity/Foreign/Web/RealWebView.cpp PROPERTIES LANGUAGE OBJCXX)
+    set_source_files_properties(src/Singularity/Foreign/Web/WebIntegration.cpp PROPERTIES LANGUAGE OBJCXX)
+endif()
 
 # Object library for shared code
 add_library(earthcall_core OBJECT ${SRC_FILES} ${IMGUI_SOURCES})
-if(NOT EMSCRIPTEN)
+if(NOT EMSCRIPTEN AND OpenGL_FOUND)
     target_link_libraries(earthcall_core PUBLIC OpenGL::GL)
+else()
+    target_compile_definitions(earthcall_core PUBLIC NO_OPENGL_RENDERER GLFW_INCLUDE_NONE)
 endif()
 if (NOT EMSCRIPTEN)
     target_link_libraries(earthcall_core PUBLIC 
+        ${GLFW_LIB}
         ZLIB::ZLIB
-        OpenSSL::SSL
-        OpenSSL::Crypto
+        ${OPENSSL_LIBRARIES}
+        ${CMAKE_DL_LIBS}
+        Threads::Threads
+        ${UUID_LIB}
     )
 endif()
 if(APPLE AND NOT EMSCRIPTEN)
@@ -197,17 +238,19 @@ if(NOT EMSCRIPTEN)
     )
     # Add WebGPU specific sources
     list(APPEND WEBGPU_APP_SOURCES 
-        src/Singularity/Screen/WebGPU/WebGpuContext.mm
         src/Singularity/Screen/WebGPU/WebGpuRenderer.cpp
         src/Singularity/Screen/WebGPU/SdfWgsl.cpp
         src/Singularity/Screen/WebGPU/GpuBufferPool.cpp
         src/Singularity/Screen/WebGPU/GpuMeshCache.cpp
     )
+    if(APPLE)
+        list(APPEND WEBGPU_APP_SOURCES src/Singularity/Screen/WebGPU/WebGpuContext.mm)
+        set_source_files_properties(src/Singularity/Screen/WebGPU/WebGpuContext.mm PROPERTIES LANGUAGE OBJCXX)
+    endif()
 
     add_executable(earthcall_webgpu src/entry.cpp ${WEBGPU_APP_SOURCES} ${IMGUI_WEBGPU_SOURCES})
     target_include_directories(earthcall_webgpu PRIVATE ${WGPU_NATIVE_DIR}/include)
     target_compile_definitions(earthcall_webgpu PRIVATE EARTHCALL_WEBGPU IMGUI_IMPL_WEBGPU_BACKEND_WGPU)
-    set_source_files_properties(src/Singularity/Screen/WebGPU/WebGpuContext.mm PROPERTIES LANGUAGE OBJCXX)
 
     if(APPLE)
         target_link_libraries(earthcall_webgpu PRIVATE
@@ -260,15 +303,18 @@ if(NOT EMSCRIPTEN)
             target_compile_definitions(${TEST_NAME} PRIVATE GLFW_INCLUDE_NONE)
             target_link_libraries(${TEST_NAME} PRIVATE earthcall_core)
         elseif (${TEST_NAME} MATCHES "webgpu_.*" OR ${TEST_NAME} STREQUAL "gpu_mastery_test")
-            add_executable(${TEST_NAME} ${TEST_SOURCE}
+            set(WEBGPU_TEST_EXTRA_SRCS
                 src/Singularity/Screen/WebGPU/WebGpuRenderer.cpp
                 src/Singularity/Screen/WebGPU/SdfWgsl.cpp
                 src/Singularity/Screen/WebGPU/GpuBufferPool.cpp
-                src/Singularity/Screen/WebGPU/GpuMeshCache.cpp
-                src/Singularity/Screen/WebGPU/WebGpuContext.mm)
+                src/Singularity/Screen/WebGPU/GpuMeshCache.cpp)
+            if(APPLE)
+                list(APPEND WEBGPU_TEST_EXTRA_SRCS src/Singularity/Screen/WebGPU/WebGpuContext.mm)
+                set_source_files_properties(src/Singularity/Screen/WebGPU/WebGpuContext.mm PROPERTIES LANGUAGE OBJCXX)
+            endif()
+            add_executable(${TEST_NAME} ${TEST_SOURCE} ${WEBGPU_TEST_EXTRA_SRCS})
             target_include_directories(${TEST_NAME} PRIVATE ${WGPU_NATIVE_DIR}/include)
             target_compile_definitions(${TEST_NAME} PRIVATE EARTHCALL_WEBGPU IMGUI_IMPL_WEBGPU_BACKEND_WGPU)
-            set_source_files_properties(src/Singularity/Screen/WebGPU/WebGpuContext.mm PROPERTIES LANGUAGE OBJCXX)
             if(APPLE)
                 target_link_libraries(${TEST_NAME} PRIVATE
                     earthcall_core
@@ -291,11 +337,11 @@ if(NOT EMSCRIPTEN)
                     OpenGL::GL
                 )
             else()
-                target_link_libraries(${TEST_NAME} PRIVATE earthcall_core)
+                target_link_libraries(${TEST_NAME} PRIVATE earthcall_core ${GLFW_LIB} ${OPENSSL_LIBRARIES} ZLIB::ZLIB ${CMAKE_DL_LIBS} Threads::Threads)
             endif()
         else()
             add_executable(${TEST_NAME} ${TEST_SOURCE})
-            target_link_libraries(${TEST_NAME} PRIVATE earthcall_core)
+            target_link_libraries(${TEST_NAME} PRIVATE earthcall_core ${GLFW_LIB} ${OPENSSL_SSL_LIBRARY} ${OPENSSL_CRYPTO_LIBRARY} ZLIB::ZLIB ${CMAKE_DL_LIBS} Threads::Threads ${UUID_LIB})
         endif()
 
         # Shared fixtures (test_save_helper.hpp). Source files live under

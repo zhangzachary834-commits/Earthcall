@@ -2,6 +2,7 @@
 #include "ConstructedBeing/Singular/Property/Property.hpp"
 #include "ConstructedBeing/Singular/Property/DataStructure.hpp"
 
+#include <ctime>
 #include <memory>
 #include <string>
 #include <vector>
