@@ -69,7 +69,6 @@ private:
 #ifdef _WIN32
     HWND _hwnd = nullptr;
     WNDPROC _originalWndProc = nullptr;
-    bool _inputCaptured = false;
 #elif defined(__APPLE__)
     void* _windowRef = nullptr;
 #endif
