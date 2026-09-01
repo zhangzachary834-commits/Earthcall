@@ -58,6 +58,7 @@ subsystem define what a thing's state *means* by keeping it where no law can loo
 | add a **field/member** to a being, or wonder whether one must be exposed | `ontology/NO_BLACK_BOX.md` §3, §5 | four questions; unregistered is not "protected", it is ungoverned forever |
 | decide who may *write* a property | `ontology/NO_BLACK_BOX.md` §2 → `Singularity/TransferPolicy` | one gate, three tiers; a second permission system was built here and deleted |
 | implement an algorithm — a loop, search, solver, traversal | `law/ALGORITHMS_AS_LAW.md` §3 | this is not a von Neumann machine; loops compile differently |
+| optimize the Rete, add a fact filter, or reason about a law before it fires | `law/PROPHETIC_RETE.md` §2 | the analysis may only ever conclude IMPOSSIBLE; a too-narrow answer makes a law go deaf, silently |
 | move existing hard-coded behavior into law | `law/LAW_MIGRATION_FRAMEWORK.md` §2 | six rungs, in order; never skip |
 | write or edit a save file / seed a world | `law/FIRST_MOVER_AUTHORING.md` §4, §7 | you are acting as a First Mover; §7 is not optional |
 | add a directory | `ontology/DIRECTORY_ORDERING.md` §7 | the tree is the ontology |
@@ -93,9 +94,7 @@ docs/ tests/ examples/ scripts/ saves/ scratch/     the workshop
 third_party/ local_deps/ imgui/                     the foreign
 ```
 
-**Programming language is a leaf.** Put language folders (e.g., `py/`) *inside* their ontological region. No `backend-python/`.
-
-**Framework names aren't directories.** Do not "fix" multi-scope efforts (e.g., `docs/architecture/Integration/` vs `src/Singularity/Foreign/`) by renaming them. See `docs/BUILD_AND_ENVIRONMENT.md` § The tree.
+**Programming language is a leaf.** Put language folders (e.g., `py/`) *inside* their ontological region. No `backend-python/`. **Framework names aren't directories** — do not "fix" multi-scope efforts (e.g., `docs/architecture/Integration/` vs `src/Singularity/Foreign/`) by renaming them. See `docs/BUILD_AND_ENVIRONMENT.md` § The tree.
 
 ---
 

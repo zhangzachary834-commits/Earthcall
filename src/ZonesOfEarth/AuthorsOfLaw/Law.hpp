@@ -10,6 +10,7 @@
 #include "../Zone/Zone.hpp"
 #include "ECA.hpp"
 #include "ConditionModel.hpp"
+#include "PropheticRete.hpp"
 #include "ActionModel.hpp"
 #include "json.hpp"
 
@@ -289,6 +290,12 @@ public:
     // ------------------------------------------------------------------
     bool hasConditionModel() const { return _conditionModel.has_value(); }
     bool hasActionModel() const { return _actionModel.has_value(); }
+    // How many compiled condition predicates this law carries. With an
+    // authored model behind them they are derived from it and introspectable;
+    // WITHOUT one they came from addCondition() as arbitrary closures, and a
+    // closure cannot be read. The Prophetic index asks this to know whether it
+    // may claim to have seen everything this law reads.
+    std::size_t conditionPredicateCount() const { return _conditionPredicates.size(); }
     const ConditionModel* conditionModel() const {
         return _conditionModel ? &*_conditionModel : nullptr;
     }
@@ -322,6 +329,7 @@ public:
         _conditionModel.reset();
         _conditionPredicates.clear();
         ++_conditionRevision;
+        bumpTextRevision();
     }
 
     // Bumped by every change to the condition tree. The compiled Rete
@@ -332,9 +340,25 @@ public:
     // paths disagreed by construction. LawManager watches this number and
     // recompiles, so nobody has to remember to ask.
     std::uint64_t conditionRevision() const { return _conditionRevision; }
+
+    // ------------------------------------------------------------------
+    // "The law text changed, SOMEWHERE." One counter for the whole register,
+    // bumped by every edit to any law's condition or action model and by
+    // every law entering or leaving the register.
+    //
+    // conditionRevision() is per-law and per-condition, which is right for
+    // recompiling one law's Rete terminals. The Prophetic index is a
+    // conclusion about the register as a WHOLE, and it is consulted from the
+    // property-change callback — a path that runs between ticks and cannot
+    // afford to walk every law to ask whether it is still current. Comparing
+    // one integer is what lets that path fail open the instant anything moves.
+    // ------------------------------------------------------------------
+    static std::uint64_t textRevision() { return s_textRevision; }
+    static void bumpTextRevision() { ++s_textRevision; }
     void clearActionModel() {
         _actionModel.reset();
         _actions.clear();
+        bumpTextRevision();
     }
     void recompile();
 
@@ -404,6 +428,7 @@ private:
     std::unordered_map<std::string, bool> _conditionMemory;   // edge detection
     std::unordered_map<std::string, double> _onsetMemory;     // t=0 per subject
     std::uint64_t _conditionRevision{0};                      // see conditionRevision()
+    static std::uint64_t s_textRevision;                      // see textRevision()
     ConditionMode _conditionMode = ConditionMode::All;
 
 
@@ -455,10 +480,24 @@ public:
     using AlphaPredicate = std::function<bool(const FactPtr&)>;
     using BetaJoin = std::function<bool(const ReteToken&, const FactPtr&)>;
 
+    // Where an alpha node's predicate came from. A predicate is a closure and
+    // cannot be read back, so this records what is known about it AT THE
+    // MOMENT IT IS MADE — the only moment anyone knows.
+    //   Interned  the one-line "type == x" node internTypeAlpha builds. Its
+    //             whole behaviour is the event type it names.
+    //   Authored  compiled from a ConditionNode by compileToRete. Opaque as a
+    //             closure, but its TEXT is right there in the law, and the
+    //             Prophetic index has already read exactly what it matches on.
+    //   Foreign   a hand-written closure (the graph editor, a test, a channel).
+    //             Nothing can be known about what it reads.
+    // Serialized nowhere — this is a fact about a runtime node, not law text.
+    enum class AlphaSource { Interned, Authored, Foreign };
+
     struct AlphaNode {
         std::size_t id{0};
         std::string description;
         AlphaPredicate predicate;
+        AlphaSource source{AlphaSource::Foreign};
         std::vector<FactPtr> memory;
     };
 
@@ -483,7 +522,11 @@ public:
     // facts hold raw participant pointers and outlive the round that
     // asserted them, so a fact about a dead being is a dangling read waiting
     // for the next tick.
-    void retractFactsAbout(const Singular* being);
+    // Returns the subject identifiers whose state facts were dropped, so a
+    // caller can forget it ever seeded them. Matching is by POINTER only:
+    // this is called from ~Singular, where the being is no longer anything
+    // more than a Singular and no virtual call on it is valid.
+    std::vector<std::string> retractFactsAbout(const Singular* being);
     // Retract the oldest `count` facts — the consumption step of the tick
     // loop: facts asserted before a round are consumed by it, facts asserted
     // during it (laws firing events) survive into the next round.
@@ -491,7 +534,11 @@ public:
     void clearFacts();
     const std::vector<FactPtr>& facts() const { return _facts; }
 
-    std::size_t addAlphaNode(const std::string& description, AlphaPredicate predicate);
+    // `source` defaults to Foreign deliberately: a caller that has not said
+    // where its predicate came from has not earned the assumption that it can
+    // be reasoned about.
+    std::size_t addAlphaNode(const std::string& description, AlphaPredicate predicate,
+                             AlphaSource source = AlphaSource::Foreign);
     std::size_t addBetaNode(const std::string& description,
                             bool leftIsBeta,
                             std::size_t leftId,
@@ -538,6 +585,15 @@ public:
     // ------------------------------------------------------------------
     bool hearsType(const std::string& eventType) const;
     bool hasOpaqueBoundAlpha() const;
+
+    // Is any node bound to a law reading through a predicate NOBODY can
+    // account for — a Foreign closure? hasOpaqueBoundAlpha() answers the
+    // event-interest question and counts every non-interned node, authored
+    // conditions included; this asks the narrower question the Prophetic
+    // index needs, because an authored condition's reads ARE enumerable (they
+    // are the law's own text) and treating them as unknowable would switch
+    // the possibility-space filter off in every world that has laws in it.
+    bool hasForeignBoundAlpha() const;
 
     // There is no evaluation phase. Propagation happens as it arrives —
     // assertFact queues activations for the facts it matches, and the bind
@@ -646,6 +702,37 @@ public:
 
     ReteNetwork& rete() { return _rete; }
     const ReteNetwork& rete() const { return _rete; }
+
+    // ------------------------------------------------------------------
+    // Prophetic Rete (B-Time Rete) — what the authored law set makes
+    // POSSIBLE, computed from the law text before anything fires. Rebuilt
+    // only when that text changes; see PropheticRete.hpp for the analysis and
+    // `docs/architecture/law/PROPHETIC_RETE.md` for what it is for.
+    // ------------------------------------------------------------------
+    const Prophetic::Index& prophetic() const { return _prophetic; }
+    // Bring the index up to date with the law register if the text moved.
+    // Called at the top of tick(); safe (and cheap) to call at any time.
+    void syncProphetic();
+
+    // Pass 1/2 of the four-pass model, asked on the hot path: could a change
+    // to a property of this name reach ANY authored condition?
+    //
+    // FAILS OPEN, three ways: a stale index, an incomplete index, or an
+    // opaque alpha node in the network all answer true. The only "no" this
+    // returns is one the abstract interpretation proved, and a wrong "no"
+    // here is a law that silently stops hearing — so the gate is written to
+    // make that the hard case to reach, not the easy one.
+    bool propheticHears(const std::string& propertyName) const;
+
+    // How many property-change notifications the filter has answered, and how
+    // many of those it ruled irrelevant. Read by the perf window and by the
+    // test that guards the filter; reset with resetPropheticCounters().
+    struct PropheticCounters {
+        std::uint64_t asked = 0;
+        std::uint64_t filtered = 0;
+    };
+    const PropheticCounters& propheticCounters() const { return _propheticCounters; }
+    void resetPropheticCounters() { _propheticCounters = {}; }
     // (evaluateRete() lived here, wrapping the removed ReteNetwork::evaluate().
     // It had no callers. Reach through rete().agenda() for a peek.)
 
@@ -661,6 +748,11 @@ public:
     // ------------------------------------------------------------------
     void connectToEventBus();
     bool isConnected() const { return _connected; }
+    // Releases the static Singular hooks this manager installed, if it is the
+    // one that installed them. Without this, a block-scoped LawManager dies
+    // before the beings declared above it and their destructors call back into
+    // freed memory — the ordinary shape of every test in this tree.
+    ~LawManager();
     std::vector<Law::ApplicationRecord> tick();
 
     // Per-frame timing breakdown, written by tick(), read by the perf window.
@@ -783,4 +875,11 @@ private:
     bool _connected = false;
     bool _dirty = false;
     TickTiming _tickTiming;
+
+    Prophetic::Index _prophetic;
+    // The Law::textRevision() the index was built from. Deliberately started
+    // one BELOW any real revision so a manager that has never synced reads as
+    // stale and fails open.
+    std::uint64_t _propheticRevision = static_cast<std::uint64_t>(-1);
+    mutable PropheticCounters _propheticCounters;
 };

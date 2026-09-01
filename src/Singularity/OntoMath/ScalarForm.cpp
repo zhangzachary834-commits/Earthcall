@@ -66,6 +66,69 @@ std::optional<double> TransFactor::evaluate(double x) const {
     return std::nullopt;
 }
 
+Interval TransFactor::evalRange(const Interval& x) const {
+    const Interval arg = x * Interval(static_cast<float>(scale)) +
+                         Interval(static_cast<float>(shift));
+    switch (kind) {
+        case Kind::Sin:
+        case Kind::Cos: {
+            // The honest bound, not the lazy [-1, 1]. sin over an arc shorter
+            // than a full turn only reaches +1 if a peak (pi/2 + 2*pi*k) lies
+            // inside it; otherwise the extrema are the endpoints. Getting this
+            // right is what makes "0.5*sin(t) + 0.5 can never exceed 1" a
+            // usable proof instead of a truism.
+            if (!arg.bounded()) return Interval(-1.0f, 1.0f);
+            const double lo = arg.lo, hi = arg.hi;
+            if (hi - lo >= 2.0 * M_PI) return Interval(-1.0f, 1.0f);
+            const auto f = [&](double t) {
+                return kind == Kind::Sin ? std::sin(t) : std::cos(t);
+            };
+            double mn = std::min(f(lo), f(hi));
+            double mx = std::max(f(lo), f(hi));
+            // Peak/trough phases: sin peaks at pi/2, cos at 0; each repeats
+            // every 2*pi, with the trough half a turn later.
+            const double peak = kind == Kind::Sin ? M_PI / 2.0 : 0.0;
+            const auto sweeps = [&](double phase) {
+                const double k = std::ceil((lo - phase) / (2.0 * M_PI));
+                return phase + k * 2.0 * M_PI <= hi;
+            };
+            if (sweeps(peak)) mx = 1.0;
+            if (sweeps(peak + M_PI)) mn = -1.0;
+            return Interval(static_cast<float>(mn), static_cast<float>(mx));
+        }
+        case Kind::Exp: {
+            if (!arg.bounded()) {
+                // exp is monotone, so an unbounded side stays unbounded on
+                // that side only -- and exp is never negative.
+                return Interval(std::isfinite(arg.lo)
+                                    ? static_cast<float>(std::exp(arg.lo))
+                                    : 0.0f,
+                                std::isfinite(arg.hi)
+                                    ? static_cast<float>(std::exp(arg.hi))
+                                    : std::numeric_limits<float>::infinity());
+            }
+            return Interval(static_cast<float>(std::exp(arg.lo)),
+                            static_cast<float>(std::exp(arg.hi)));
+        }
+        case Kind::Ln: {
+            // ln is undefined at or below zero. Where part of the argument's
+            // range is positive, bound only that part; where NONE of it is,
+            // the term has no value at all and claiming a bound would be a
+            // claim about nothing -- answer unbounded and let the caller's
+            // own refusal stand.
+            if (arg.hi <= 0.0f) return Interval::infinite();
+            const float lo = arg.lo > 0.0f
+                                 ? static_cast<float>(std::log(arg.lo))
+                                 : -std::numeric_limits<float>::infinity();
+            const float hi = std::isfinite(arg.hi)
+                                 ? static_cast<float>(std::log(arg.hi))
+                                 : std::numeric_limits<float>::infinity();
+            return Interval(lo, hi);
+        }
+    }
+    return Interval::infinite();
+}
+
 std::string TransFactor::print() const {
     const char* name = kind == Kind::Sin   ? "sin"
                        : kind == Kind::Cos ? "cos"
@@ -122,6 +185,65 @@ std::optional<double> Term::evaluate(const std::map<std::string, double>& vars) 
         value *= *v;
     }
     return value;
+}
+
+namespace {
+
+// x^e over an interval, sound for every real exponent this algebra admits.
+// For an INTEGER exponent the power is monotone on each side of zero, so the
+// endpoints bound it -- except across zero, where an even power turns around
+// (min 0) and a negative one crosses a pole. A NON-INTEGER exponent is
+// undefined for negative x, so an interval reaching below zero is refused
+// outright rather than bounded by a value the function never takes.
+Interval powRange(const Interval& x, double e) {
+    if (e == 0.0) return Interval(1.0f);
+    const bool isInt = std::floor(e) == e && std::isfinite(e);
+    const auto endpoints = [&](double a, double b) {
+        const double pa = std::pow(a, e), pb = std::pow(b, e);
+        if (!std::isfinite(pa) && !std::isfinite(pb)) return Interval::infinite();
+        return Interval(static_cast<float>(std::min(pa, pb)),
+                        static_cast<float>(std::max(pa, pb)));
+    };
+    const bool spansZero = x.lo <= 0.0f && x.hi >= 0.0f;
+    if (!spansZero) {
+        if (!isInt && x.hi < 0.0f) return Interval::infinite();   // undefined
+        if (!x.bounded()) {
+            // One endpoint at infinity: only the finite side is a real bound,
+            // and only when the power is monotone toward it. Not worth a case
+            // analysis nobody can check -- take the unbounded answer.
+            return Interval::infinite();
+        }
+        return endpoints(x.lo, x.hi);
+    }
+    if (!isInt) return Interval::infinite();                      // undefined below 0
+    if (e < 0.0) return Interval::infinite();                     // pole at 0
+    if (!x.bounded()) return Interval::infinite();
+    const long long n = static_cast<long long>(e);
+    if (n % 2 == 0) {
+        const double m = std::max(std::pow(std::fabs(static_cast<double>(x.lo)), e),
+                                  std::pow(std::fabs(static_cast<double>(x.hi)), e));
+        return Interval(0.0f, static_cast<float>(m));
+    }
+    return endpoints(x.lo, x.hi);
+}
+
+Interval rangeOfVar(const std::map<std::string, Interval>& vars, const std::string& name) {
+    auto it = vars.find(name);
+    return it == vars.end() ? Interval::infinite() : it->second;
+}
+
+} // namespace
+
+Interval Term::evalRange(const std::map<std::string, Interval>& vars) const {
+    Interval acc(static_cast<float>(coefficient));
+    if (coefficient == 0.0) return Interval(0.0f);   // 0 * anything is 0
+    for (const auto& [name, exp] : factors) {
+        acc = acc * powRange(rangeOfVar(vars, name), exp);
+    }
+    for (const auto& tf : trans) {
+        acc = acc * tf.evalRange(rangeOfVar(vars, tf.variable));
+    }
+    return acc;
 }
 
 Term Term::times(const Term& other) const {
@@ -236,6 +358,13 @@ std::optional<double> ScalarForm::evaluate(const std::map<std::string, double>& 
         if (!v) return std::nullopt;
         sum += *v;
     }
+    return sum;
+}
+
+Interval ScalarForm::evalRange(const std::map<std::string, Interval>& vars) const {
+    if (terms.empty()) return Interval(0.0f);
+    Interval sum(0.0f);
+    for (const auto& term : terms) sum = sum + term.evalRange(vars);
     return sum;
 }
 
@@ -1715,12 +1844,16 @@ std::optional<MathNode::RangeValue> MathNode::evalRange(const std::map<std::stri
     
     switch (op) {
         case Op::ScalarLeaf: {
-            if (scalarForm.terms.size() == 1 && scalarForm.terms[0].factors.empty() && scalarForm.terms[0].trans.empty()) {
-                return RangeValue::makeScalar(Interval(static_cast<float>(scalarForm.terms[0].coefficient)));
-            } else if (scalarForm.terms.empty()) {
-                return RangeValue::makeScalar(Interval(0.0f));
+            // A non-constant form used to answer [-inf, +inf] outright, which
+            // made every bound downstream of an authored formula useless. The
+            // signomial algebra can bound itself: hand ScalarForm::evalRange
+            // the SCALAR variables in scope (a vector variable is never a
+            // ScalarForm symbol) and let it do the interval arithmetic.
+            std::map<std::string, Interval> scalars;
+            for (const auto& [name, rv] : vars) {
+                if (rv.kind == ValueKind::Scalar) scalars.emplace(name, rv.scalar);
             }
-            return retInf();
+            return RangeValue::makeScalar(scalarForm.evalRange(scalars));
         }
         case Op::ValueLeaf: {
             auto it = vars.find(variableName);

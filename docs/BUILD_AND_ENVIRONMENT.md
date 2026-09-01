@@ -56,7 +56,7 @@ cmake --build build --target earthcall_webgpu -j8       # THE APP. `earthcall` i
                                                        # and scripts/build.sh webgpu run
                                                        # both use earthcall_webgpu.
 cmake --build build -j8                               # tests are NOT built by the line above
-ctest --test-dir build --output-on-failure -j4        # 81 registered, 80 pass (~35-115 s depending on load) — smooth_tessellation_cache_test is the one failure, pre-existing, Bugs.md #11; frame_lag_test is machine-load-sensitive
+ctest --test-dir build --output-on-failure -j4        # 83 registered, 82 pass (~35-175 s depending on load) — smooth_tessellation_cache_test is the one failure, pre-existing, Bugs.md #11; frame_lag_test is machine-load-sensitive
 cmake --build build --target lag                       # just the frame-cost probe, with its report
 ```
 
@@ -171,6 +171,7 @@ honest rather than convenient:
 | `save_roundtrip_test` | Person Save As / Load. `saveStateWithLog` used to skip the first two Zone objects; `loadState` used to move the camera and not `Person.position`. json+.ecsave of one stem must list as one world; objects in a non-active Zone must survive |
 | `unsaved_preserve_test` | load used to erase unsaved work. Identity-stable Zones are kept across session load; `loadState` also writes `saves/backups/before-load.json` so Restore unsaved can rewind, and loading that slot does not re-stash over itself |
 | `zone_identity_test` | Home was copied into every "world" file, so loading another session showed an empty Home. Zones now have `saves/zones/<id>/zone.json`; sessions reference them; fork/diff are first-class |
+| `prophetic_rete_test` | **Section F is the point.** It guards the direction the Prophetic Rete analysis is allowed to be wrong in: a possibility-space filter that answers too NARROWLY makes a law go deaf — still registered, still enabled, still compiled, alpha memory simply empty — and nothing reports it. F fires real laws through a real `LawManager` and asserts they still hear, then checks all three fail-open paths (stale index, incomplete index, foreign alpha node). It also guards the change-feed fix: before 2026-09-01, `PropertyRef::set` was the ONLY caller of `notifyPropertyChanged` in the engine, so every `ComputedProperty`, every hand-written `Property` bridge, and every authored property was invisible to the Rete's dirty tracking. See `docs/architecture/law/PROPHETIC_RETE.md` §4 |
 | `frame_lag_test` | the frame quietly getting dearer. Guards three things nothing else could see: that per-frame cost stays sub-quadratic in the population, that an *idle* world fires no laws and grows no objects (CLAUDE.md's edge-not-level rule, measured rather than asserted), and that no being registers a property path twice (the `buildProperties()`-in-a-constructor bug, which doubles the cost of every law evaluation and shows up nowhere else) |
 | `zone_home_ontology_test` | manifesto Home/Zone: primary Home kernel-locked per Person (not "any owned Zone"); owner is Person/Relationship/Community; community-home / community-zone authored kinds; AuthorZone mints extras; unused `class Home` retired |
 

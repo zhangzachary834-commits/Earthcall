@@ -40,6 +40,26 @@ public:
     static void setPropertyChangeCallback(PropertyChangeCallback cb);
     static void notifyPropertyChanged(Singular* owner, const std::string& name);
 
+    // ------------------------------------------------------------------
+    // "This being is about to stop existing."
+    //
+    // ReteFacts hold RAW participant pointers and outlive the round that
+    // asserted them, so a fact about a freed being is a dangling read waiting
+    // for the next tick. ReteNetwork::retractFactsAbout exists exactly to
+    // prevent that, but only the law-driven unmaking path ever called it — a
+    // being freed by ordinary C++ scope exit (a stack-local Object, a Law and
+    // the provenance Relations it owns) left its facts behind, pointing at
+    // reclaimed memory.
+    //
+    // Called from ~Singular, which runs AFTER every derived destructor, so
+    // the listener gets a pointer and NOTHING ELSE: no virtual call is valid
+    // here, getIdentifier() least of all. Matching by pointer is all that is
+    // needed and all that is safe.
+    // ------------------------------------------------------------------
+    using BeingReleasedCallback = std::function<void(const Singular*)>;
+    static void setBeingReleasedCallback(BeingReleasedCallback cb);
+    static void notifyBeingReleased(const Singular* being);
+
     Formation* singular_properties();
     const Formation* singular_properties() const;
 

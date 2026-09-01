@@ -2,7 +2,10 @@
 
 #include "json.hpp"
 
+#include <algorithm>
+#include <cmath>
 #include <functional>
+#include <limits>
 #include <map>
 #include <memory>
 #include <optional>
@@ -44,6 +47,60 @@ namespace OntoMath {
 
 extern std::atomic<uint32_t> g_astEvaluations;
 
+// Interval arithmetic for conservative range evaluation
+struct Interval {
+    float lo = 0.0f;
+    float hi = 0.0f;
+    
+    Interval() = default;
+    Interval(float val) : lo(val), hi(val) {}
+    Interval(float l, float h) : lo(l), hi(h) {}
+    
+    static Interval infinite() { return Interval(-std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity()); }
+    
+    Interval operator+(const Interval& o) const { return Interval(lo + o.lo, hi + o.hi); }
+    Interval operator-(const Interval& o) const { return Interval(lo - o.hi, hi - o.lo); }
+    Interval operator-() const { return Interval(-hi, -lo); }
+    // NaN-safe. The corner products of an interval containing an infinity
+    // against one containing an exact zero give 0*inf = NaN, and std::min/max
+    // over a NaN is not a bound at all -- it silently poisons every interval
+    // downstream, including the straddle test the SDF tessellator culls cells
+    // with. The true product set contributes 0 at exactly those corners (every
+    // finite element times the 0 endpoint is 0), so NaN corners read as 0.
+    Interval operator*(const Interval& o) const {
+        const auto corner = [](float a, float b) {
+            const float p = a * b;
+            return std::isnan(p) ? 0.0f : p;
+        };
+        float a = corner(lo, o.lo), b = corner(lo, o.hi);
+        float c = corner(hi, o.lo), d = corner(hi, o.hi);
+        return Interval(std::min({a, b, c, d}), std::max({a, b, c, d}));
+    }
+    Interval operator/(const Interval& o) const {
+        if (o.lo <= 0.0f && o.hi >= 0.0f) return infinite(); // includes zero
+        float a = lo / o.lo, b = lo / o.hi, c = hi / o.lo, d = hi / o.hi;
+        return Interval(std::min({a, b, c, d}), std::max({a, b, c, d}));
+    }
+    
+    // Scale by scalar
+    Interval operator*(float s) const { return *this * Interval(s); }
+
+    // The lattice operations the abstract interpreter reasons with.
+    // joined = the smallest interval containing both (Any / a union of
+    // branches); met = the overlap, EMPTY when they are disjoint, which is
+    // the whole point: an empty meet is a proof that no value can satisfy
+    // both, and that proof is what lets a law path be ruled out in advance.
+    Interval joined(const Interval& o) const {
+        return Interval(std::min(lo, o.lo), std::max(hi, o.hi));
+    }
+    Interval met(const Interval& o) const {
+        return Interval(std::max(lo, o.lo), std::min(hi, o.hi));
+    }
+    bool empty() const { return lo > hi; }
+    bool overlaps(const Interval& o) const { return !met(o).empty(); }
+    bool bounded() const { return std::isfinite(lo) && std::isfinite(hi); }
+};
+
 // A transcendental factor: kind(scale·var + shift). This is what carries the
 // algebra past signomials — periodic (sin/cos), exponential (exp), and
 // logarithmic (ln) change become EXACT law-text, not curve approximations.
@@ -66,6 +123,11 @@ struct TransFactor {
           shift(k == Kind::Ln ? 0.0 : sh) {}
 
     std::optional<double> evaluate(double x) const;
+    // Conservative bound over an interval of x. Sin/Cos are bounded EXACTLY
+    // (the extrema inside the arc are found, not assumed to be +/-1); Exp is
+    // monotone; Ln outside its domain answers the unbounded interval rather
+    // than a guess.
+    Interval evalRange(const Interval& x) const;
     std::string print() const;
     nlohmann::json toJson() const;
     static TransFactor fromJson(const nlohmann::json& j);
@@ -92,6 +154,12 @@ struct Term {
     // Strict evaluation: every variable in the term must be bound — a law
     // must never fire on an unvalued symbol.
     std::optional<double> evaluate(const std::map<std::string, double>& vars) const;
+    // The abstract counterpart of evaluate(): every variable is given a RANGE
+    // instead of a value, and the answer contains every value the term can
+    // take over those ranges. An unbound variable is the unbounded interval,
+    // never an error -- abstract interpretation is asked exactly where
+    // concrete evaluation cannot go.
+    Interval evalRange(const std::map<std::string, Interval>& vars) const;
 
     Term times(const Term& other) const;     // coefficients multiply, exponents add
     bool sameShape(const Term& other) const {
@@ -124,6 +192,12 @@ struct ScalarForm {
                                double bias = 0.0, const std::string& var = "x");
 
     std::optional<double> evaluate(const std::map<std::string, double>& vars) const;
+    // Sum of the terms' ranges. SOUND, not tight: interval arithmetic loses
+    // the correlation between two terms sharing a variable, so x - x over
+    // x in [0,1] answers [-1,1] rather than [0,0]. Every use here treats the
+    // answer as an over-approximation and only ever concludes IMPOSSIBLE from
+    // it, never POSSIBLE-and-therefore-fire.
+    Interval evalRange(const std::map<std::string, Interval>& vars) const;
 
     // Exact algebra.
     ScalarForm plus(const ScalarForm& other) const;
@@ -250,33 +324,6 @@ inline constexpr float kDegenerateVectorLength = 1e-6f;
 // Degenerate-divisor threshold for Div, shared by CPU and GPU paths.
 inline constexpr double kDegenerateDivisor = 1e-6;
 
-// Interval arithmetic for conservative range evaluation
-struct Interval {
-    float lo = 0.0f;
-    float hi = 0.0f;
-    
-    Interval() = default;
-    Interval(float val) : lo(val), hi(val) {}
-    Interval(float l, float h) : lo(l), hi(h) {}
-    
-    static Interval infinite() { return Interval(-std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity()); }
-    
-    Interval operator+(const Interval& o) const { return Interval(lo + o.lo, hi + o.hi); }
-    Interval operator-(const Interval& o) const { return Interval(lo - o.hi, hi - o.lo); }
-    Interval operator-() const { return Interval(-hi, -lo); }
-    Interval operator*(const Interval& o) const {
-        float a = lo * o.lo, b = lo * o.hi, c = hi * o.lo, d = hi * o.hi;
-        return Interval(std::min({a, b, c, d}), std::max({a, b, c, d}));
-    }
-    Interval operator/(const Interval& o) const {
-        if (o.lo <= 0.0f && o.hi >= 0.0f) return infinite(); // includes zero
-        float a = lo / o.lo, b = lo / o.hi, c = hi / o.lo, d = hi / o.hi;
-        return Interval(std::min({a, b, c, d}), std::max({a, b, c, d}));
-    }
-    
-    // Scale by scalar
-    Interval operator*(float s) const { return *this * Interval(s); }
-};
 
 struct MathNode {
     // Serialized as ints — APPEND-ONLY

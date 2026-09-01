@@ -64,8 +64,10 @@ std::string PropertyPath::toString() const {
     return joined;
 }
 
-Property* PropertyPath::resolve(Singular& root, std::string* trailingComponent) const {
+Property* PropertyPath::resolve(Singular& root, std::string* trailingComponent,
+                                Singular** owner) const {
     if (trailingComponent) trailingComponent->clear();
+    if (owner) *owner = nullptr;
     if (segments.empty()) return nullptr;
 
     Singular* current = &root;
@@ -86,6 +88,7 @@ Property* PropertyPath::resolve(Singular& root, std::string* trailingComponent) 
         if (!found) return nullptr;
         i += consumed;
 
+        if (owner) *owner = current;
         if (i == segments.size()) return found;
 
         // Descend into a nested Singular.
@@ -134,7 +137,44 @@ PropertyPath::PathResult PropertyPath::getValue(Singular& root, PropertyValue& o
 
 PropertyPath::PathResult PropertyPath::setValue(Singular& root, const PropertyValue& v) const {
     std::string component;
-    Property* property = resolve(root, &component);
+    Singular* owner = nullptr;
+    Property* property = resolve(root, &component, &owner);
+
+    // ------------------------------------------------------------------
+    // EVERY successful write announces itself, from here.
+    //
+    // PropertyRef::set was the only place in the engine that called
+    // notifyPropertyChanged — so a property backed by anything ELSE was
+    // invisible to the change feed the Rete's dirty tracking is built on.
+    // That is not a corner: Object's `position` and `rotation` live in the
+    // transform matrix and are ComputedProperty; shape parameters, face
+    // colours, patch controls and every Relation property go through
+    // hand-written Property bridges; authored properties live in the dynamic
+    // map. None of them ever marked a fact dirty. A WhileTrue law watching
+    // `position.y` therefore matched only beings that ALREADY satisfied it
+    // when the network first met them, and went permanently deaf to anything
+    // that moved afterwards — silently, because the law was still registered,
+    // still enabled, still compiled, and its alpha memory simply stayed empty.
+    //
+    // The fix belongs HERE rather than in each Property subclass: this is the
+    // one seam every path-addressed write passes through, whatever backs the
+    // slot, so a new bridge cannot forget to announce itself. PropertyRef
+    // keeps its own notify for typed set() calls that never touch a path; a
+    // duplicate notification is harmless (markFactDirty is idempotent).
+    //
+    // What this still does NOT catch, stated plainly: a direct C++ setter
+    // (`obj.setPosition(...)`) writes the transform without going through the
+    // property vocabulary at all. That was always outside the property layer's
+    // reach — it is the boundary, not an oversight — and the per-frame world
+    // seeding is what keeps such writes from being lost entirely.
+    // ------------------------------------------------------------------
+    const auto announce = [&](PathResult result, Property* prop, Singular* on) {
+        if (result == PathResult::Ok && prop && on) {
+            Singular::notifyPropertyChanged(on, prop->name());
+        }
+        return result;
+    };
+
     if (!property) {
         if (segments.size() == 1) {
             PropertyValue cur;
@@ -142,7 +182,7 @@ PropertyPath::PathResult PropertyPath::setValue(Singular& root, const PropertyVa
                 propertyValuesEquivalent(cur, v)) {
                 return PathResult::Unchanged;
             }
-            root.setDynamicProperty(segments[0], v);
+            root.setDynamicProperty(segments[0], v);   // announces from there
             return PathResult::Ok;
         }
         return PathResult::NoSuchProperty;
@@ -150,7 +190,7 @@ PropertyPath::PathResult PropertyPath::setValue(Singular& root, const PropertyVa
 
     if (component.empty()) {
         if (propertyValuesEquivalent(property->value(), v)) return PathResult::Unchanged;
-        if (property->setValue(v)) return PathResult::Ok;
+        if (property->setValue(v)) return announce(PathResult::Ok, property, owner);
         // Arithmetic coercion retry: match the alternative the slot holds.
         double n = 0.0;
         PropertyValue coerced;
@@ -158,7 +198,7 @@ PropertyPath::PathResult PropertyPath::setValue(Singular& root, const PropertyVa
             if (propertyValuesEquivalent(property->value(), coerced)) {
                 return PathResult::Unchanged;
             }
-            if (property->setValue(coerced)) return PathResult::Ok;
+            if (property->setValue(coerced)) return announce(PathResult::Ok, property, owner);
         }
         // If setValue fails, we'll assume it's because the property rejected it, likely read-only or type mismatch.
         // For now, if types could coerce, it's ReadOnly. If not, it's TypeMismatch.
@@ -178,6 +218,6 @@ PropertyPath::PathResult PropertyPath::setValue(Singular& root, const PropertyVa
         return PathResult::Unchanged;
     }
     lane = static_cast<float>(n);
-    if (property->setValue(PropertyValue(*vec))) return PathResult::Ok;
+    if (property->setValue(PropertyValue(*vec))) return announce(PathResult::Ok, property, owner);
     return PathResult::ReadOnly;
 }
