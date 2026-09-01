@@ -81,20 +81,17 @@ glm::vec3 readFirstVertexPos(const wgpu::Device& gpu, WGPUBuffer buf) {
 void check(bool ok, const char* msg) {
     if (ok) {
         ++g_passed;
-        std::printf("  ok: %s
-", msg);
+        std::printf("  ok: %s\n", msg);
     } else {
         ++g_failed;
-        std::printf("  FAIL: %s
-", msg);
+        std::printf("  FAIL: %s\n", msg);
     }
 }
 
 } // namespace
 
 int main() {
-    std::printf("Running gpu_mastery_test...
-");
+    std::printf("Running gpu_mastery_test...\n");
 
     // -------------------------------------------------------------------
     // [1] ScreenChannel: First-mover registration and stable identifier
@@ -234,8 +231,7 @@ int main() {
     {\
         wgpu::Device gpu;
         if (!gpu.init()) {
-            std::printf("  [4] skipped: no WebGPU device available in this environment
-");
+            std::printf("  [4] skipped: no WebGPU device available in this environment\n");
         } else {
             using namespace Singularity::Screen::WebGPU;
 
@@ -346,8 +342,6 @@ int main() {
         }
     }
 
-    std::printf("
-gpu_mastery_test: %d/%d passed
-", g_passed, g_passed + g_failed);
+    std::printf("\ngpu_mastery_test: %d/%d passed\n", g_passed, g_passed + g_failed);
     return g_failed == 0 ? 0 : 1;
 }

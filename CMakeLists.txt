@@ -160,13 +160,18 @@ if(NOT EMSCRIPTEN AND OPENGL_FOUND)
     target_link_libraries(earthcall_core PUBLIC OpenGL::GL)
 endif()
 if (NOT EMSCRIPTEN)
-    target_link_libraries(earthcall_core PUBLIC 
+    target_link_libraries(earthcall_core PUBLIC
         ZLIB::ZLIB
         OpenSSL::SSL
         OpenSSL::Crypto
         ${GLFW_LIB}
-        uuid
     )
+    if (NOT APPLE)
+        # <uuid/uuid.h>'s symbols (uuid_generate/uuid_unparse, used by
+        # Lexeme.cpp) ship in libSystem on Apple platforms; elsewhere they
+        # need util-linux's separate libuuid.
+        target_link_libraries(earthcall_core PUBLIC uuid)
+    endif()
 endif()
 if(APPLE AND NOT EMSCRIPTEN)
     target_link_libraries(earthcall_core PUBLIC 
@@ -331,6 +336,17 @@ if(NOT EMSCRIPTEN)
             list(APPEND ALL_ACTIVE_TEST_TARGETS ${TEST_NAME})
         endif()
         add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
+
+        # ctest's default WORKING_DIRECTORY for an add_test() target is the
+        # build tree, not the source tree. synthesis_studio_app_test opens an
+        # authored save by a bare "saves/..." path (test_observation_load_test's
+        # equivalent fixture is optional and skips when absent; this one is the
+        # test's actual subject, so it must resolve), so it needs the source
+        # root as its CWD like the `lag` custom target above already gets.
+        if (${TEST_NAME} STREQUAL "synthesis_studio_app_test")
+            set_tests_properties(${TEST_NAME} PROPERTIES
+                WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+        endif()
 
         # The lag probe measures durations, so it must not be measured while
         # three other tests are fighting it for the machine: RUN_SERIAL makes

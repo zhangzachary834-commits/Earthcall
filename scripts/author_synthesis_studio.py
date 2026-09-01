@@ -231,128 +231,209 @@ def build_world():
         instance_rel("category.art", AUTHOR),
     ]
 
-    # 2. Zone Objects (The Studio Environment and Widgets)
+    # 2. Zone Objects (The Studio Environment, 3D Widgets, Signage, and 2D Screen-space HUD)
     zone_objects = []
 
     def make_face_colors(rgb):
         r, g, b = rgb
         return [[r, g, b] for _ in range(6)]
 
+    # -----------------------------------------------------------------------
+    # Environment & Studio Furniture
+    # -----------------------------------------------------------------------
     # Studio Floor
     zone_objects.append({
         "objectID": "studio.platform.floor",
         "shapeKind": 0,
         "geometryType": 0,
         "shapeParams": [0.5, 0.5, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0],
-        "transform": mat4_translate(0.0, -0.1, 0.0, (12.0, 0.2, 12.0)),
+        "transform": mat4_translate(0.0, -0.1, 0.0, (14.0, 0.2, 14.0)),
         "center": [0.0, -0.1, 0.0],
         "materialId": "material.studio.slate",
-        "faceColors": make_face_colors((0.18, 0.20, 0.24)),
+        "faceColors": make_face_colors((0.16, 0.18, 0.22)),
         "authoredProperties": {
             "displayName": pv("string", "Studio Platform Floor"),
             "isStudioSurface": pv("bool", True),
         },
     })
 
-    # Studio Central Console Table
+    # Studio Console Table (Modern Dark Walnut / Brushed Metal)
     zone_objects.append({
         "objectID": "studio.console.desk",
         "shapeKind": 0,
         "geometryType": 0,
         "shapeParams": [0.5, 0.5, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0],
-        "transform": mat4_translate(0.0, 0.4, 0.0, (4.8, 0.8, 2.2)),
+        "transform": mat4_translate(0.0, 0.4, 0.0, (5.2, 0.8, 2.4)),
         "center": [0.0, 0.4, 0.0],
         "materialId": "material.studio.walnut",
-        "faceColors": make_face_colors((0.12, 0.13, 0.16)),
+        "faceColors": make_face_colors((0.11, 0.12, 0.15)),
         "authoredProperties": {
             "displayName": pv("string", "Studio Control Console"),
         },
     })
 
-    # Drawing Easel / Canvas Board
+    # Central Easel Canvas (Drawing Board)
     zone_objects.append({
         "objectID": "studio.easel.canvas",
         "shapeKind": 0,
         "geometryType": 0,
         "shapeParams": [0.5, 0.5, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0],
-        "transform": mat4_translate(0.0, 2.1, 2.2, (3.8, 2.4, 0.1)),
-        "center": [0.0, 2.1, 2.2],
+        "transform": mat4_translate(0.0, 2.2, 2.4, (4.2, 2.4, 0.1)),
+        "center": [0.0, 2.2, 2.4],
         "materialId": "material.studio.canvas",
-        "faceColors": make_face_colors((0.92, 0.90, 0.86)),
+        "faceColors": make_face_colors((0.94, 0.92, 0.88)),
         "authoredProperties": {
             "displayName": pv("string", "Interactive Art Canvas"),
             "isCanvas": pv("bool", True),
         },
     })
 
-    # Harmonic Pedestal
+    # Canvas Title Plaque
+    zone_objects.append({
+        "objectID": "studio.sign.canvas",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [0.5, 0.5, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0],
+        "transform": mat4_translate(0.0, 3.55, 2.4, (3.2, 0.22, 0.06)),
+        "center": [0.0, 3.55, 2.4],
+        "materialId": "material.studio.sign",
+        "faceColors": make_face_colors((0.2, 0.24, 0.32)),
+        "authoredProperties": {
+            "displayName": pv("string", "✎ ART DRAWING CANVAS (Drag to draw light strokes)"),
+        },
+    })
+
+    # Central Crystal Pedestal
     zone_objects.append({
         "objectID": "studio.pedestal.crystal",
         "shapeKind": 2, # Cylinder
         "geometryType": 2,
-        "shapeParams": [0.4, 0.4, 0.4, 0.8, 0.0, 0.0, 0.0, 0.0, 0.0],
-        "transform": mat4_translate(0.0, 0.4, 1.2, (0.8, 0.8, 0.8)),
-        "center": [0.0, 0.4, 1.2],
+        "shapeParams": [0.45, 0.45, 0.45, 0.8, 0.0, 0.0, 0.0, 0.0, 0.0],
+        "transform": mat4_translate(0.0, 0.4, 1.25, (0.9, 0.8, 0.9)),
+        "center": [0.0, 0.4, 1.25],
         "materialId": "material.studio.crystal",
-        "faceColors": make_face_colors((0.3, 0.75, 0.9)),
+        "faceColors": make_face_colors((0.35, 0.78, 0.95)),
         "authoredProperties": {
             "displayName": pv("string", "Harmonic Crystal Pedestal"),
         },
     })
 
     # -----------------------------------------------------------------------
-    # Widget 1: Spawn Harmonic Orb Button
+    # 3D In-World Widgets with Beveled Cradles & Labeled Signs
     # -----------------------------------------------------------------------
+
+    # --- Widget 1: Spawn Orb Button ---
+    # Base Socket / Cradle
+    zone_objects.append({
+        "objectID": "studio.btn.spawn-orb.base",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [0.5, 0.5, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0],
+        "transform": mat4_translate(-1.5, 0.82, -0.35, (0.85, 0.08, 0.7)),
+        "center": [-1.5, 0.82, -0.35],
+        "materialId": "material.studio.socket",
+        "faceColors": make_face_colors((0.08, 0.09, 0.12)),
+        "authoredProperties": {"displayName": pv("string", "Spawn Button Frame")},
+    })
+    # Raised Push Button
     btn_orb_id = "studio.btn.spawn-orb"
     zone_objects.append({
         "objectID": btn_orb_id,
-        "shapeKind": 0, # Flat block button
+        "shapeKind": 0,
         "geometryType": 0,
         "shapeParams": [0.5, 0.5, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0],
-        "transform": mat4_translate(-1.4, 0.88, -0.35, (0.7, 0.16, 0.55)),
-        "center": [-1.4, 0.88, -0.35],
+        "transform": mat4_translate(-1.5, 0.89, -0.35, (0.7, 0.16, 0.55)),
+        "center": [-1.5, 0.89, -0.35],
         "materialId": "material.studio.btn.blue",
-        "faceColors": make_face_colors((0.15, 0.55, 0.95)),
+        "faceColors": make_face_colors((0.15, 0.58, 0.98)),
         "authoredProperties": {
-            "displayName": pv("string", "Button: Spawn Orb"),
+            "displayName": pv("string", "✦ Spawn Harmonic Orb"),
             "controlLabel": pv("string", "Spawn Harmonic Orb"),
             "buttonRole": pv("string", "spawn-orb"),
-            "restY": pv("double", 0.88),
+            "restY": pv("double", 0.89),
         },
     })
     relations.append(instance_rel(btn_orb_id, "category.control.button"))
 
-    # -----------------------------------------------------------------------
-    # Widget 2: Ambient Theme Toggle Switch
-    # -----------------------------------------------------------------------
+    # Labeled Plaque over Spawn Button
+    zone_objects.append({
+        "objectID": "studio.sign.spawn-orb",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [0.5, 0.5, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0],
+        "transform": mat4_translate(-1.5, 1.12, -0.35, (0.75, 0.12, 0.04)),
+        "center": [-1.5, 1.12, -0.35],
+        "materialId": "material.studio.sign.blue",
+        "faceColors": make_face_colors((0.12, 0.45, 0.8)),
+        "authoredProperties": {"displayName": pv("string", "[ ✦ SPAWN ORB ]")},
+    })
+
+    # --- Widget 2: Ambient Theme Toggle ---
+    # Base Socket
+    zone_objects.append({
+        "objectID": "studio.btn.toggle-theme.base",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [0.5, 0.5, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0],
+        "transform": mat4_translate(-0.55, 0.82, -0.35, (0.85, 0.08, 0.7)),
+        "center": [-0.55, 0.82, -0.35],
+        "materialId": "material.studio.socket",
+        "faceColors": make_face_colors((0.08, 0.09, 0.12)),
+        "authoredProperties": {"displayName": pv("string", "Theme Toggle Frame")},
+    })
+    # Raised Toggle Switch
     btn_toggle_id = "studio.btn.toggle-theme"
     zone_objects.append({
         "objectID": btn_toggle_id,
         "shapeKind": 0,
         "geometryType": 0,
         "shapeParams": [0.5, 0.5, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0],
-        "transform": mat4_translate(-0.5, 0.88, -0.35, (0.7, 0.16, 0.55)),
-        "center": [-0.5, 0.88, -0.35],
+        "transform": mat4_translate(-0.55, 0.89, -0.35, (0.7, 0.16, 0.55)),
+        "center": [-0.55, 0.89, -0.35],
         "materialId": "material.studio.btn.gold",
-        "faceColors": make_face_colors((1.0, 0.65, 0.1)),
+        "faceColors": make_face_colors((1.0, 0.7, 0.15)),
         "authoredProperties": {
-            "displayName": pv("string", "Toggle: Ambient Theme"),
+            "displayName": pv("string", "☼ Toggle Night/Day Theme"),
             "controlLabel": pv("string", "Toggle Night/Day Ambient"),
             "buttonRole": pv("string", "toggle-theme"),
             "controlOn": pv("bool", False),
-            "restY": pv("double", 0.88),
+            "restY": pv("double", 0.89),
         },
     })
     relations.append(instance_rel(btn_toggle_id, "category.control.toggle"))
 
-    # -----------------------------------------------------------------------
-    # Widget 3: Synthesizer Chord Pads (4 Musical Blocks)
-    # -----------------------------------------------------------------------
+    # Labeled Plaque over Theme Toggle
+    zone_objects.append({
+        "objectID": "studio.sign.toggle-theme",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [0.5, 0.5, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0],
+        "transform": mat4_translate(-0.55, 1.12, -0.35, (0.75, 0.12, 0.04)),
+        "center": [-0.55, 1.12, -0.35],
+        "materialId": "material.studio.sign.gold",
+        "faceColors": make_face_colors((0.8, 0.55, 0.1)),
+        "authoredProperties": {"displayName": pv("string", "[ ☼ DAY / NIGHT ]")},
+    })
+
+    # --- Widget 3: 4 Synthesizer Chord Pads (Piano Keyboard Row) ---
+    # Common Socket Frame
+    zone_objects.append({
+        "objectID": "studio.pads.frame",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [0.5, 0.5, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0],
+        "transform": mat4_translate(1.28, 0.82, -0.35, (2.35, 0.08, 0.7)),
+        "center": [1.28, 0.82, -0.35],
+        "materialId": "material.studio.socket",
+        "faceColors": make_face_colors((0.08, 0.09, 0.12)),
+        "authoredProperties": {"displayName": pv("string", "Chord Pad Frame")},
+    })
+
     chord_pads = [
-        ("studio.pad.c5", "Chord Pad: C5", 0.4, (0.95, 0.22, 0.32), 523.25, "C5"),
-        ("studio.pad.e5", "Chord Pad: E5", 0.95, (1.0, 0.72, 0.12), 659.25, "E5"),
-        ("studio.pad.g5", "Chord Pad: G5", 1.5, (0.18, 0.85, 0.42), 783.99, "G5"),
-        ("studio.pad.b5", "Chord Pad: B5", 2.05, (0.28, 0.45, 1.0), 987.77, "B5"),
+        ("studio.pad.c5", "♫ Note C5 (Do)", 0.42, (0.95, 0.22, 0.32), 523.25, "C5"),
+        ("studio.pad.e5", "♫ Note E5 (Mi)", 0.98, (1.0, 0.72, 0.12), 659.25, "E5"),
+        ("studio.pad.g5", "♫ Note G5 (Sol)", 1.54, (0.18, 0.88, 0.45), 783.99, "G5"),
+        ("studio.pad.b5", "♫ Note B5 (Ti)", 2.10, (0.28, 0.48, 1.0), 987.77, "B5"),
     ]
     for pad_id, pad_name, pos_x, rgb, freq, note in chord_pads:
         zone_objects.append({
@@ -360,8 +441,8 @@ def build_world():
             "shapeKind": 0,
             "geometryType": 0,
             "shapeParams": [0.5, 0.5, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0],
-            "transform": mat4_translate(pos_x, 0.87, -0.35, (0.45, 0.14, 0.5)),
-            "center": [pos_x, 0.87, -0.35],
+            "transform": mat4_translate(pos_x, 0.88, -0.35, (0.46, 0.14, 0.54)),
+            "center": [pos_x, 0.88, -0.35],
             "materialId": f"material.studio.{note}",
             "faceColors": make_face_colors(rgb),
             "authoredProperties": {
@@ -372,22 +453,33 @@ def build_world():
                 "acoustic.amplitude": pv("double", 0.85),
                 "acoustic.waveType": pv("string", "crystal"),
                 "isChordPad": pv("bool", True),
-                "restY": pv("double", 0.87),
+                "restY": pv("double", 0.88),
             },
         })
         relations.append(instance_rel(pad_id, "category.control.button"))
 
-    # -----------------------------------------------------------------------
-    # Widget 4: Continuous Pulse Slider
-    # -----------------------------------------------------------------------
+    # Labeled Plaque over Chord Pads
+    zone_objects.append({
+        "objectID": "studio.sign.music",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [0.5, 0.5, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0],
+        "transform": mat4_translate(1.28, 1.12, -0.35, (2.2, 0.12, 0.04)),
+        "center": [1.28, 1.12, -0.35],
+        "materialId": "material.studio.sign.dark",
+        "faceColors": make_face_colors((0.22, 0.25, 0.32)),
+        "authoredProperties": {"displayName": pv("string", "[ ♫ CHORD KEYS: C5 · E5 · G5 · B5 ]")},
+    })
+
+    # --- Widget 4: Pulse Resonance Slider ---
     slider_track_id = "studio.slider.track"
     zone_objects.append({
         "objectID": slider_track_id,
         "shapeKind": 0,
         "geometryType": 0,
         "shapeParams": [0.5, 0.5, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0],
-        "transform": mat4_translate(0.0, 0.83, 0.5, (2.6, 0.04, 0.18)),
-        "center": [0.0, 0.83, 0.5],
+        "transform": mat4_translate(0.0, 0.82, 0.55, (2.8, 0.04, 0.2)),
+        "center": [0.0, 0.82, 0.55],
         "materialId": "material.studio.track",
         "faceColors": make_face_colors((0.25, 0.27, 0.32)),
         "authoredProperties": {
@@ -401,8 +493,8 @@ def build_world():
         "shapeKind": 0,
         "geometryType": 0,
         "shapeParams": [0.5, 0.5, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0],
-        "transform": mat4_translate(0.0, 0.9, 0.5, (0.35, 0.14, 0.32)),
-        "center": [0.0, 0.9, 0.5],
+        "transform": mat4_translate(0.0, 0.9, 0.55, (0.38, 0.14, 0.34)),
+        "center": [0.0, 0.9, 0.55],
         "materialId": "material.studio.handle",
         "faceColors": make_face_colors((0.92, 0.94, 0.98)),
         "authoredProperties": {
@@ -417,7 +509,170 @@ def build_world():
     })
     relations.append(instance_rel(slider_handle_id, "category.control.slider"))
 
-    # State Being
+    # Labeled Plaque over Slider
+    zone_objects.append({
+        "objectID": "studio.sign.slider",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [0.5, 0.5, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0],
+        "transform": mat4_translate(0.0, 1.05, 0.55, (1.8, 0.1, 0.04)),
+        "center": [0.0, 1.05, 0.55],
+        "materialId": "material.studio.sign.dark",
+        "faceColors": make_face_colors((0.25, 0.28, 0.35)),
+        "authoredProperties": {"displayName": pv("string", "[ ⟷ RESONANCE SLIDER ]")},
+    })
+
+    # -----------------------------------------------------------------------
+    # 2D Screen-Space HUD Action Dock (ShapeKind::Shape2D = 12)
+    # Direct clickable screen controls overlaying the viewport
+    # -----------------------------------------------------------------------
+    # 1. Top Screen Banner Card
+    zone_objects.append({
+        "objectID": "hud.banner.title",
+        "shapeKind": 12, # Shape2D
+        "geometryType": 12,
+        "shapeParams": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        "transform": mat4_translate(0.0, 0.0, 0.0),
+        "center": [0.0, 0.0, 0.0],
+        "x2D": 320.0,
+        "y2D": 18.0,
+        "zOrder2D": 10,
+        "materialId": "",
+        "faceColors": make_face_colors((0.10, 0.12, 0.16)),
+        "authoredProperties": {
+            "displayName": pv("string", "✦ SYNTHESIS STUDIO ✦ Click HUD or 3D Widgets to Interact"),
+            "shape.width2D": pv("double", 640.0),
+            "shape.height2D": pv("double", 38.0),
+        },
+    })
+
+    # 2. Bottom Screen Dock Background
+    zone_objects.append({
+        "objectID": "hud.dock.bg",
+        "shapeKind": 12,
+        "geometryType": 12,
+        "shapeParams": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        "transform": mat4_translate(0.0, 0.0, 0.0),
+        "center": [0.0, 0.0, 0.0],
+        "x2D": 240.0,
+        "y2D": 645.0,
+        "zOrder2D": 10,
+        "materialId": "",
+        "faceColors": make_face_colors((0.08, 0.10, 0.14)),
+        "authoredProperties": {
+            "displayName": pv("string", "HUD Control Dock Background"),
+            "shape.width2D": pv("double", 800.0),
+            "shape.height2D": pv("double", 55.0),
+        },
+    })
+
+    # 3. 2D HUD Button: Spawn Orb
+    hud_btn_spawn = "hud.btn.spawn-orb"
+    zone_objects.append({
+        "objectID": hud_btn_spawn,
+        "shapeKind": 12,
+        "geometryType": 12,
+        "shapeParams": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        "transform": mat4_translate(0.0, 0.0, 0.0),
+        "center": [0.0, 0.0, 0.0],
+        "x2D": 255.0,
+        "y2D": 653.0,
+        "zOrder2D": 20,
+        "materialId": "",
+        "faceColors": make_face_colors((0.15, 0.58, 0.98)),
+        "authoredProperties": {
+            "displayName": pv("string", "HUD: Spawn Orb"),
+            "controlLabel": pv("string", "SPAWN ORB"),
+            "buttonRole": pv("string", "spawn-orb"),
+            "shape.width2D": pv("double", 130.0),
+            "shape.height2D": pv("double", 38.0),
+        },
+    })
+    relations.append(instance_rel(hud_btn_spawn, "category.control.button"))
+
+    # 4. 2D HUD Button: Theme Toggle
+    hud_btn_theme = "hud.btn.toggle-theme"
+    zone_objects.append({
+        "objectID": hud_btn_theme,
+        "shapeKind": 12,
+        "geometryType": 12,
+        "shapeParams": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        "transform": mat4_translate(0.0, 0.0, 0.0),
+        "center": [0.0, 0.0, 0.0],
+        "x2D": 395.0,
+        "y2D": 653.0,
+        "zOrder2D": 20,
+        "materialId": "",
+        "faceColors": make_face_colors((1.0, 0.70, 0.15)),
+        "authoredProperties": {
+            "displayName": pv("string", "HUD: Day/Night"),
+            "controlLabel": pv("string", "DAY / NIGHT"),
+            "buttonRole": pv("string", "toggle-theme"),
+            "shape.width2D": pv("double", 120.0),
+            "shape.height2D": pv("double", 38.0),
+        },
+    })
+    relations.append(instance_rel(hud_btn_theme, "category.control.toggle"))
+
+    # 5. 2D HUD Chord Keys (C5, E5, G5, B5)
+    hud_pads = [
+        ("hud.pad.c5", "HUD: Note C5", 525.0, (0.95, 0.22, 0.32), 523.25, "C5"),
+        ("hud.pad.e5", "HUD: Note E5", 585.0, (1.0, 0.72, 0.12), 659.25, "E5"),
+        ("hud.pad.g5", "HUD: Note G5", 645.0, (0.18, 0.88, 0.45), 783.99, "G5"),
+        ("hud.pad.b5", "HUD: Note B5", 705.0, (0.28, 0.48, 1.0), 987.77, "B5"),
+    ]
+    for hpad_id, hpad_name, x_pos, rgb, freq, note in hud_pads:
+        zone_objects.append({
+            "objectID": hpad_id,
+            "shapeKind": 12,
+            "geometryType": 12,
+            "shapeParams": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            "transform": mat4_translate(0.0, 0.0, 0.0),
+            "center": [0.0, 0.0, 0.0],
+            "x2D": x_pos,
+            "y2D": 653.0,
+            "zOrder2D": 20,
+            "materialId": "",
+            "faceColors": make_face_colors(rgb),
+            "authoredProperties": {
+                "displayName": pv("string", hpad_name),
+                "controlLabel": pv("string", note),
+                "noteName": pv("string", note),
+                "acoustic.frequency": pv("double", freq),
+                "acoustic.amplitude": pv("double", 0.85),
+                "acoustic.waveType": pv("string", "crystal"),
+                "isChordPad": pv("bool", True),
+                "shape.width2D": pv("double", 52.0),
+                "shape.height2D": pv("double", 38.0),
+            },
+        })
+        relations.append(instance_rel(hpad_id, "category.control.button"))
+
+    # 6. 2D HUD Button: Draw Stroke Mode Indicator
+    hud_btn_draw = "hud.btn.draw-stroke"
+    zone_objects.append({
+        "objectID": hud_btn_draw,
+        "shapeKind": 12,
+        "geometryType": 12,
+        "shapeParams": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        "transform": mat4_translate(0.0, 0.0, 0.0),
+        "center": [0.0, 0.0, 0.0],
+        "x2D": 768.0,
+        "y2D": 653.0,
+        "zOrder2D": 20,
+        "materialId": "",
+        "faceColors": make_face_colors((0.72, 0.32, 0.95)),
+        "authoredProperties": {
+            "displayName": pv("string", "HUD: Draw Canvas Mode"),
+            "controlLabel": pv("string", "DRAW STROKES"),
+            "buttonRole": pv("string", "draw-mode"),
+            "shape.width2D": pv("double", 155.0),
+            "shape.height2D": pv("double", 38.0),
+        },
+    })
+    relations.append(instance_rel(hud_btn_draw, "category.control.button"))
+
+    # Studio State Being
     state_id = "state.studio"
     zone_objects.append({
         "objectID": state_id,
@@ -460,13 +715,13 @@ def build_world():
         ["object-clicked"],
         related("instance-of", "category.control.toggle"),
         seq(
-            map_path("controlOn", {"o": "controlOn"}, offset_terms("o", 1.0)), # arithmetic flip mapped in math
+            map_path("controlOn", {"o": "controlOn"}, offset_terms("o", 1.0)),
             publish("control-activated"),
         ),
         scope=0,
     )
 
-    # 3. Domain Law: Spawn Harmonic Orb when Spawn Button is Activated
+    # 3. Domain Law: Spawn Harmonic Orb on Button Click
     add_law(
         "law-studio-spawn-orb",
         "Studio: Spawn Harmonic Orb on Button Click",
@@ -478,9 +733,9 @@ def build_world():
                 1, # Sphere
                 "interactive.harmonic.orb",
                 children=[
-                    set_path("scale", pv("vec3", [0.4, 0.4, 0.4])),
-                    set_path("color", pv("vec3", [1.0, 0.84, 0.22])),
-                    set_path("position", pv("vec3", [0.0, 1.6, 1.2])),
+                    set_path("scale", pv("vec3", [0.45, 0.45, 0.45])),
+                    set_path("color", pv("vec3", [1.0, 0.85, 0.22])),
+                    set_path("position", pv("vec3", [0.0, 1.6, 1.25])),
                     set_path("acoustic.frequency", pv("double", 880.0)),
                     set_path("acoustic.amplitude", pv("double", 0.9)),
                     add_relation("", "category.art.stroke", "instance-of"),
@@ -494,7 +749,7 @@ def build_world():
         scope=0,
     )
 
-    # 4. Domain Law: Toggle Theme Reaction (Switches Platform Visual Styling)
+    # 4. Domain Law: Switch Ambient Theme on Toggle Click
     add_law(
         "law-studio-theme-toggle",
         "Studio: Switch Ambient Theme on Toggle Click",
@@ -508,7 +763,7 @@ def build_world():
         scope=0,
     )
 
-    # 5. Domain Law: Synthesizer Chord Pad Activation (Plays Musical Notes)
+    # 5. Domain Law: Synthesizer Chord Pad Activation
     add_law(
         "law-studio-pad-play",
         "Studio: Play Musical Note on Chord Pad Click",
@@ -523,7 +778,7 @@ def build_world():
         scope=0,
     )
 
-    # 6. Tactile Button Release Spring (Restores Y after click)
+    # 6. Tactile Button Release Spring
     add_law(
         "law-studio-button-spring",
         "Studio: Restore Button Elevation",
@@ -534,7 +789,7 @@ def build_world():
         scope=0,
     )
 
-    # 7. Art Tool: Draw Stroke Singulars along cursor trajectory in Draw Mode
+    # 7. Art Tool: Draw Stroke Singulars along Pointer Trajectory
     add_law(
         "law-art-stroke-draw",
         "Art Tool: Draw Stroke Singulars along Pointer",
@@ -558,7 +813,7 @@ def build_world():
         scope=1, # Scope::Everyone
     )
 
-    # 8. Stroke Reactive Acoustic Law: Hovering over drawn stroke plays chime
+    # 8. Stroke Reactive Acoustic Law: Hovering over stroke plays chime
     add_law(
         "law-stroke-hover-sound",
         "Art Stroke: Sound Chime on Hover",
@@ -600,19 +855,24 @@ def build_world():
         "currentZone": 0,
         "currentZoneId": ZONE_ID,
         "flying": True,
-        "cameraPos": [0.0, 2.2, -4.2],
+        # Camera placed at comfortable eye level, looking forward and slightly down onto the console and canvas
+        "cameraPos": [0.0, 1.35, -2.6],
         "cameraFront": [0.0, -0.22, 0.97],
         "cameraUp": [0.0, 1.0, 0.0],
         "yaw": 90.0,
-        "pitch": -12.0,
+        "pitch": -13.0,
         "currentColor": [1.0, 1.0, 1.0],
         "materials": [
-            {"name": "material.studio.slate", "baseColor": [0.18, 0.20, 0.24], "opacity": 1.0},
-            {"name": "material.studio.walnut", "baseColor": [0.12, 0.13, 0.16], "opacity": 1.0},
-            {"name": "material.studio.canvas", "baseColor": [0.92, 0.90, 0.86], "opacity": 1.0},
-            {"name": "material.studio.crystal", "baseColor": [0.3, 0.75, 0.9], "opacity": 0.85},
-            {"name": "material.studio.btn.blue", "baseColor": [0.15, 0.55, 0.95], "opacity": 1.0},
-            {"name": "material.studio.btn.gold", "baseColor": [1.0, 0.65, 0.1], "opacity": 1.0},
+            {"name": "material.studio.slate", "baseColor": [0.16, 0.18, 0.22], "opacity": 1.0},
+            {"name": "material.studio.walnut", "baseColor": [0.11, 0.12, 0.15], "opacity": 1.0},
+            {"name": "material.studio.canvas", "baseColor": [0.94, 0.92, 0.88], "opacity": 1.0},
+            {"name": "material.studio.crystal", "baseColor": [0.35, 0.78, 0.95], "opacity": 0.85},
+            {"name": "material.studio.btn.blue", "baseColor": [0.15, 0.58, 0.98], "opacity": 1.0},
+            {"name": "material.studio.btn.gold", "baseColor": [1.0, 0.70, 0.15], "opacity": 1.0},
+            {"name": "material.studio.sign", "baseColor": [0.2, 0.24, 0.32], "opacity": 1.0},
+            {"name": "material.studio.socket", "baseColor": [0.08, 0.09, 0.12], "opacity": 1.0},
+            {"name": "material.studio.track", "baseColor": [0.25, 0.27, 0.32], "opacity": 1.0},
+            {"name": "material.studio.handle", "baseColor": [0.92, 0.94, 0.98], "opacity": 1.0},
         ],
         "categories": categories,
         "zoneRefs": [{"identifier": ZONE_ID, "kind": "studio"}],
