@@ -352,8 +352,7 @@ bool RelationManager::wouldFormCycle(const std::string& start, const std::string
             const Relation& rel = *relPtr;
             if (rel.type == relationType && rel.aId() == current) {
                 if (rel.bId() == start) return true;
-                if (visited.find(rel.bId()) == visited.end()) {
-                    visited.insert(rel.bId());
+                if (visited.insert(rel.bId()).second) {
                     queue.push_back(rel.bId());
                 }
             }
