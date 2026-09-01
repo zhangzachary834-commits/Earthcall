@@ -80,14 +80,15 @@ namespace Core {
         ShadingSystem::update(_camera->pos);
 
         {
-            currentRenderer().beginFrame(static_cast<uint32_t>(fbW), static_cast<uint32_t>(fbH),
-                                         glm::vec4(0.1f, 0.1f, 0.15f, 1.0f));
+            glm::vec4 clearColor(0.1f, 0.1f, 0.15f, 1.0f);
             if (_lawManager) {
                 if (auto* sc = Singularity::Screen::ScreenChannel::find(*_lawManager)) {
+                    clearColor = glm::vec4(sc->backgroundColor, 1.0f);
                     currentRenderer().setWireframe(sc->wireframe);
                     currentRenderer().setHeightGridDdaEnabled(sc->heightGridDdaEnabled);
                 }
             }
+            currentRenderer().beginFrame(static_cast<uint32_t>(fbW), static_cast<uint32_t>(fbH), clearColor);
         }
 
         // Draw all owned objects cleanly (no hardcoded baseline mutation or skipping ground)

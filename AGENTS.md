@@ -6,6 +6,8 @@ The engine here is not the order of truth in Earthcall—the ontology is, and th
 **You are almost certainly about to do the standard engineering thing, and it is usually wrong here** — not because 
 it is bad engineering, but because it is engineering for a different kind of system. Spend the two minutes on the refusals and router below.
 
+Don't use subagents because they tend to take up an enormous amount of tokens (120k just for basic lookups, which kills my usage quotas). 
+
 ---
 ## The Six Refusals.
 Zach: I had Opus 5 write these because they came up constantly. Learn them cold; everything else is detail.

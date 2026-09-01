@@ -1654,6 +1654,60 @@ std::optional<PropertyValue> MathNode::evaluate(const std::map<std::string, Prop
     return std::nullopt;
 }
 
+std::string MathNode::print() const {
+    // A missing child prints as "?" rather than crashing or vanishing —
+    // a malformed tree should look malformed, not silently plausible.
+    auto arg = [&](std::size_t i) -> std::string {
+        return (i < children.size() && children[i]) ? children[i]->print() : "?";
+    };
+    switch (op) {
+        case Op::ScalarLeaf:      return scalarForm.print();
+        case Op::ValueLeaf:       return variableName;
+        case Op::VectorConstruct: return "(" + arg(0) + ", " + arg(1) + ", " + arg(2) + ")";
+        case Op::Component:       return arg(0) + "." + stringArg;
+        case Op::Add:             return "(" + arg(0) + " + " + arg(1) + ")";
+        case Op::Sub:             return "(" + arg(0) + " - " + arg(1) + ")";
+        case Op::Scale:           return "(" + arg(0) + " * " + arg(1) + ")";
+        case Op::Dot:             return "dot(" + arg(0) + ", " + arg(1) + ")";
+        case Op::Cross:           return "cross(" + arg(0) + ", " + arg(1) + ")";
+        case Op::Hadamard:        return "(" + arg(0) + " .* " + arg(1) + ")";
+        case Op::Normalize:       return "normalize(" + arg(0) + ")";
+        case Op::Length:          return "length(" + arg(0) + ")";
+        case Op::Map:             return stringArg + "(" + arg(0) + ")";
+        case Op::Stochastic: {
+            std::string out = stringArg + "(";
+            for (std::size_t i = 0; i < children.size(); ++i) {
+                if (i) out += ", ";
+                out += arg(i);
+            }
+            return out + ")";
+        }
+        case Op::Project:      return "project(" + arg(0) + " onto " + arg(1) + ")";
+        case Op::Distance:     return "distance(" + arg(0) + ", " + arg(1) + ")";
+        case Op::Union:        return "union(" + arg(0) + ", " + arg(1) + ")";
+        case Op::Intersection: return "intersection(" + arg(0) + ", " + arg(1) + ")";
+        case Op::Difference:   return "difference(" + arg(0) + ", " + arg(1) + ")";
+        case Op::Div:          return "(" + arg(0) + " / " + arg(1) + ")";
+        case Op::Pow:          return "(" + arg(0) + " ^ " + arg(1) + ")";
+        case Op::Abs:          return "abs(" + arg(0) + ")";
+        case Op::Clamp:        return "clamp(" + arg(0) + ", " + arg(1) + ", " + arg(2) + ")";
+        case Op::Sqrt:         return "sqrt(" + arg(0) + ")";
+        case Op::Tan:          return "tan(" + arg(0) + ")";
+        case Op::Noise:        return "noise(" + arg(0) + ")";
+        case Op::SDF:          return "SDF(" + arg(0) + " @ " + arg(1) + ")";
+        case Op::Gradient:     return "gradient(" + arg(0) + " @ " + arg(1) + ")";
+        // Declared but not implemented anywhere (see evaluate() above) —
+        // say so plainly rather than printing a formula that never runs.
+        case Op::Raycast:      return "raycast(" + arg(0) + ", " + arg(1) + ") [not implemented]";
+        case Op::LineIntegral: return "lineIntegral(" + arg(0) + ", " + arg(1) + ") [not implemented]";
+        // An op this build does not know: the original JSON rides along in
+        // `unsupported` (see fromJson) — show that verbatim, never a stand-in.
+        case Op::Unsupported:
+            return unsupported ? ("[unsupported op: " + unsupported->dump() + "]")
+                                : "[unsupported op]";
+    }
+    return "[unknown op]";
+}
 
 std::optional<MathNode::RangeValue> MathNode::evalRange(const std::map<std::string, RangeValue>& vars) const {
     auto retInf = []() { return RangeValue::makeScalar(Interval::infinite()); };
@@ -2187,15 +2241,59 @@ void FunctionRegistry::loadFromJson(const nlohmann::json& j) {
     for (const auto& d : j["functions"]) define(FunctionDef::fromJson(d));
 }
 
-std::string Piecewise::print() const {
-    if (pieces.size() == 1 && !pieces[0].hasLo && !pieces[0].hasHi &&
-        !pieces[0].guard) {
-        return pieces[0].mathNode ? "[MathNode]" : "[Empty]";
+namespace {
+// The actual authored formula for one piece — never a stand-in like
+// "[MathNode]". Every way a piece can carry its value (a call, a fold, or
+// a math tree) and every way it can be gated (a guard, a pure inequality,
+// an interval) is rendered honestly, so the Map/Flow editor never shows
+// less than what will actually run.
+std::string printPiece(const Piecewise::Piece& piece, const std::string& inputVariable) {
+    std::string value;
+    if (piece.call) {
+        value = piece.call->function + "(";
+        for (std::size_t i = 0; i < piece.call->args.size(); ++i) {
+            if (i) value += ", ";
+            value += piece.call->args[i].print();
+        }
+        value += ")";
+    } else if (piece.fold) {
+        static const char* foldNames[] = {"sum", "mean", "min", "max", "count"};
+        const int idx = static_cast<int>(piece.fold->op);
+        const char* name = (idx >= 0 && idx < 5) ? foldNames[idx] : "fold";
+        value = std::string(name) + "(" + piece.fold->path + ")";
+    } else if (piece.mathNode) {
+        value = piece.mathNode->print();
+    } else {
+        value = "[empty]";
     }
-    bool anyGuard = false;
-    for (const auto& piece : pieces) anyGuard = anyGuard || piece.guard != nullptr;
-    return "piecewise(" + std::to_string(pieces.size()) +
-           (anyGuard ? " guarded" : " over " + inputVariable) + ")";
+
+    std::vector<std::string> conditions;
+    if (piece.guard) conditions.push_back(piece.guard->describe());
+    if (piece.whereLEZero) conditions.push_back(piece.whereLEZero->print() + " <= 0");
+    if (piece.hasLo || piece.hasHi) {
+        const std::string lo = piece.hasLo ? formatNumber(piece.lo) : "-inf";
+        const std::string hi = piece.hasHi ? formatNumber(piece.hi) : "+inf";
+        conditions.push_back(inputVariable + " in " + (piece.includeLo ? "[" : "(") + lo +
+                              ", " + hi + (piece.includeHi ? "]" : ")"));
+    }
+    if (conditions.empty()) return value;
+    std::string out = value + "  [if ";
+    for (std::size_t i = 0; i < conditions.size(); ++i) {
+        if (i) out += " and ";
+        out += conditions[i];
+    }
+    return out + "]";
+}
+} // namespace
+
+std::string Piecewise::print() const {
+    if (pieces.empty()) return "[undefined]";
+    std::string out;
+    for (std::size_t i = 0; i < pieces.size(); ++i) {
+        if (i) out += ";  ";
+        out += printPiece(pieces[i], inputVariable);
+    }
+    return out;
 }
 
 nlohmann::json Piecewise::toJson() const {

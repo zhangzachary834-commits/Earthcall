@@ -7,6 +7,7 @@
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "Singularity/OntoMath/ScalarForm.hpp"
 #include "Singularity/Screen/Renderer.hpp"
+#include "Singularity/Screen/ScreenChannel.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 
@@ -68,6 +69,49 @@ void renderPerformanceMetricsWindow(bool* open, Core::Engine* engine) {
         ImGui::Text("Pipeline Switches: %u", stats.pipelineSwitches);
         ImGui::Text("VRAM Allocations: %u", stats.bufferSuballocations);
         ImGui::Text("VRAM Uniform Bytes: %zu", stats.uniformBytesWritten);
+
+        // The raymarcher's cost is very close to linear in PIXELS and nothing
+        // else — measured 2026-08-31 on the Perlin floor at one fixed horizon
+        // camera: 5.4 ms at 512x512, 14.4 at 1024x1024, 35 at 2048x1152, ~90 at
+        // 2880x1800, i.e. a flat ~17 ns/pixel. So the same view costs wildly
+        // different milliseconds on different displays or window sizes, and
+        // "the horizon was 300 ms, then it was 100 ms" is answered by this line
+        // before it is answered by anything else. Derived from ImGui's own
+        // backend numbers rather than a new renderer accessor: DisplaySize is
+        // logical points, DisplayFramebufferScale the retina factor, and their
+        // product is the real framebuffer the fragment shader actually ran on.
+        {
+            const ImGuiIO& io = ImGui::GetIO();
+            const float fbW = io.DisplaySize.x * io.DisplayFramebufferScale.x;
+            const float fbH = io.DisplaySize.y * io.DisplayFramebufferScale.y;
+            ImGui::Text("Framebuffer: %.0f x %.0f  (%.2f Mpx)",
+                        fbW, fbH, (fbW * fbH) / 1.0e6f);
+        }
+
+        // ---- Render toggles ----------------------------------------------
+        // These are not window-local checkboxes: each one writes the SAME
+        // @screen-channel property a Law would write, and EngineRender.cpp
+        // pushes it to the renderer every frame. So a Person can flip it here
+        // or author it in law text, and both are the one source of truth —
+        // this window is a First Mover's hand on the existing property, not a
+        // second way to hold the same state (NO_BLACK_BOX.md §2).
+        if (LawManager* lm = engine->getLawManager()) {
+            if (auto* sc = Singularity::Screen::ScreenChannel::find(*lm)) {
+                ImGui::Separator();
+                ImGui::TextColored(ImVec4(0.4f, 0.8f, 1.0f, 1.0f), "Render Toggles");
+                ImGui::Checkbox("Height-grid DDA skip (@screen-channel.heightGridDdaEnabled)",
+                                &sc->heightGridDdaEnabled);
+                if (ImGui::IsItemHovered()) {
+                    ImGui::SetTooltip(
+                        "Skips stretches of a heightfield ray that a min/max grid PROVES\n"
+                        "cannot contain the surface. Only ever fires for a field authored\n"
+                        "as y - h(...); everything else renders identically either way.\n\n"
+                        "Off is the unmodified per-step marcher. Toggle it while watching\n"
+                        "'3D Render' below to see what it is actually worth on this view.");
+                }
+                ImGui::Checkbox("Wireframe (@screen-channel.wireframe)", &sc->wireframe);
+            }
+        }
 
         // ---- Engine::tick() Frame Timings Breakdown ----
         ImGui::Separator();

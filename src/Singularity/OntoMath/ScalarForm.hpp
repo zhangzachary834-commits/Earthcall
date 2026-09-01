@@ -390,6 +390,12 @@ struct MathNode {
     };
     std::optional<RangeValue> evalRange(const std::map<std::string, RangeValue>& vars) const;
 
+    // Human-legible rendering of the tree — what a Person authoring the law
+    // actually sees ("t" is not enough; "sin(2*t) * 0.5 + 0.5" is). Every
+    // Op below must render honestly, including the not-yet-implemented and
+    // Unsupported cases, so no authored math is ever a black box.
+    std::string print() const;
+
     // --- Canonical Geometric Primitive & CSG Helpers ---
     static std::unique_ptr<MathNode> sphere(double radius, const std::string& pVar = kAmbientPointVar);
     static std::unique_ptr<MathNode> box(glm::vec3 halfExtents, const std::string& pVar = kAmbientPointVar);

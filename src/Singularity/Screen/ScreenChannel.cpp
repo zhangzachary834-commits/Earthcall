@@ -55,6 +55,10 @@ void ScreenChannel::buildProperties() {
         _propertyRegistry.push_back(
             std::make_unique<PropertyRef<ScreenChannel, bool>>(name, this, member));
     };
+    const auto vector3 = [this](const char* name, glm::vec3 ScreenChannel::*member) {
+        _propertyRegistry.push_back(
+            std::make_unique<PropertyRef<ScreenChannel, glm::vec3>>(name, this, member));
+    };
 
     readOnlyInt("drawCalls", &ScreenChannel::getDrawCalls);
     readOnlyInt("trianglesDrawn", &ScreenChannel::getTrianglesDrawn);
@@ -65,6 +69,7 @@ void ScreenChannel::buildProperties() {
     readOnlyInt("cachedMeshesCount", &ScreenChannel::getCachedMeshesCount);
     boolean("wireframe", &ScreenChannel::wireframe);
     boolean("heightGridDdaEnabled", &ScreenChannel::heightGridDdaEnabled);
+    vector3("backgroundColor", &ScreenChannel::backgroundColor);
 }
 
 } // namespace Screen

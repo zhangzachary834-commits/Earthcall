@@ -1158,6 +1158,11 @@ void seedActionKind(ActionNode& node) {
         case ActionNode::Kind::AuthorZone:
             if (node.createType.empty()) node.createType = "new-zone";
             break;
+        case ActionNode::Kind::AddRelation:
+            // Tokens default to empty = "the law's subject" (source); the
+            // relation type tag has no honest default, so it is left for the
+            // author to name.
+            break;
         default:
             break;
     }
@@ -1172,10 +1177,10 @@ bool editActionNode(ActionNode& node) {
                                   "create object", "add property", "add element",
                                   "remove property", "remove element", "destroy",
                                   "synthesize (set-to-set)", "play audio",
-                                  "author zone"};
+                                  "author zone", "add relation"};
     int kind = static_cast<int>(node.kind);
     ImGui::SetNextItemWidth(200.0f);
-    if (ImGui::Combo("Action type", &kind, kinds, 20)) {
+    if (ImGui::Combo("Action type", &kind, kinds, 21)) {
         node.kind = static_cast<ActionNode::Kind>(kind);
         seedActionKind(node);
         changed = true;
@@ -1610,6 +1615,52 @@ bool editActionNode(ActionNode& node) {
             if (ImGui::InputText("Owner kind (person / relationship / community)", ownerKindBuf, sizeof(ownerKindBuf))) {
                 node.containerToken = ownerKindBuf;
                 changed = true;
+            }
+            break;
+        }
+
+        case ActionNode::Kind::AddRelation: {
+            ImGui::TextDisabled("Mint a first-class Relation between two beings in the active Zone.");
+            ImGui::TextDisabled("Relations are never empty: this is authoring an interaction, not a slot.");
+            // Participant token combos — same vocabulary as AddElement/Destroy.
+            const auto tokenCombo = [&](const char* label, std::string& token) {
+                const char* preview = token.empty() ? "the law's subject" : token.c_str();
+                ImGui::SetNextItemWidth(200.0f);
+                if (ImGui::BeginCombo(label, preview)) {
+                    if (ImGui::Selectable("the law's subject", token.empty())) {
+                        token.clear();
+                        changed = true;
+                    }
+                    if (ImGui::Selectable("@event.subject", token == "@event.subject")) {
+                        token = "@event.subject";
+                        changed = true;
+                    }
+                    if (ImGui::Selectable("@event.object", token == "@event.object")) {
+                        token = "@event.object";
+                        changed = true;
+                    }
+                    for (Singular* being : Universe::instance().beings()) {
+                        if (!being) continue;
+                        const std::string id = being->getIdentifier();
+                        if (ImGui::Selectable(id.c_str(), token == id)) {
+                            token = id;
+                            changed = true;
+                        }
+                    }
+                    ImGui::EndCombo();
+                }
+            };
+            tokenCombo("Source", node.containerToken);
+            tokenCombo("Target", node.elementToken);
+            char typeBuf[64];
+            copyToBuf(typeBuf, sizeof(typeBuf), node.propertyName);
+            ImGui::SetNextItemWidth(180.0f);
+            if (ImGui::InputText("Relation type", typeBuf, sizeof(typeBuf))) {
+                node.propertyName = typeBuf;
+                changed = true;
+            }
+            if (node.propertyName.empty()) {
+                ImGui::TextColored(ImVec4(0.9f, 0.6f, 0.2f, 1.0f), "No relation type authored — this action will refuse to fire.");
             }
             break;
         }

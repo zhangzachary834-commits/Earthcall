@@ -691,18 +691,15 @@ ECA::ActionExecutor ActionNode::compile() const {
                     return;
                 }
 
-                for (const auto& rel : zone->getRelations()) {
-                    if (rel && rel->a() == a && rel->b() == b && rel->getType() == relType) {
+                for (const auto* rel : Universe::instance().relations()) {
+                    if (rel && rel->a() == a && rel->b() == b && rel->type == relType) {
                         emitEffect("AddRelation", true, "relation already present");
                         return;
                     }
                 }
 
-                auto relation = std::make_shared<Relation>(a, b, relType);
-                if (Universe::instance().hasAuthorContext()) {
-                    relation->setAuthor(Universe::instance().currentAuthor());
-                }
-                zone->addRelation(relation);
+                auto relation = std::make_shared<Relation>(relType, *a, *b);
+                Universe::instance().addRelation(relation);
 
                 emitEffect("AddRelation", true);
                 Core::EventBus::instance().publish(
