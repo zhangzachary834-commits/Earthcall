@@ -26,7 +26,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 # We need OpenGL, OpenSSL, ZLIB
-find_package(OpenGL REQUIRED)
+find_package(OpenGL)
 if (NOT EMSCRIPTEN)
     find_package(ZLIB REQUIRED)
     find_package(OpenSSL REQUIRED)
@@ -148,7 +148,7 @@ set(IMGUI_SOURCES
     ${IMGUI_DIR}/backends/imgui_impl_opengl2.cpp
 )
 
-# Compile WebIntegration and RealWebView as Objective-C++ since they use macOS APIs
+# Compile WebIntegration and RealWebView as Objective-C++ since they use macOS APIs on Apple
 if(APPLE)
     set_source_files_properties(src/Singularity/Foreign/Web/RealWebView.cpp PROPERTIES LANGUAGE OBJCXX)
     set_source_files_properties(src/Singularity/Foreign/Web/WebIntegration.cpp PROPERTIES LANGUAGE OBJCXX)
@@ -156,7 +156,7 @@ endif()
 
 # Object library for shared code
 add_library(earthcall_core OBJECT ${SRC_FILES} ${IMGUI_SOURCES})
-if(NOT EMSCRIPTEN)
+if(NOT EMSCRIPTEN AND OPENGL_FOUND)
     target_link_libraries(earthcall_core PUBLIC OpenGL::GL)
 endif()
 if (NOT EMSCRIPTEN)
@@ -220,7 +220,7 @@ if(NOT EMSCRIPTEN)
 
     if(APPLE)
         target_link_libraries(earthcall_webgpu PRIVATE
-            OpenGL::GL
+            $<$<BOOL:${OPENGL_FOUND}>:OpenGL::GL>
             ${WGPU_NATIVE_DIR}/lib/libwgpu_native.a
             ${GLFW_LIB}
             ${COCOA_FW}
