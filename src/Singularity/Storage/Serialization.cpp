@@ -6,7 +6,6 @@
 #include "ConstructedBeing/CategoryManager.hpp"
 #include "ZonesOfEarth/HomesOfEarth/Home.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
-#include "Singularity/Storage/BinaryPack.hpp"
 #include "ConstructedBeing/Material/Material.hpp"
 #include "ConstructedBeing/Material/MaterialManager.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/SdfJson.hpp"
@@ -24,88 +23,6 @@
 extern MaterialManager materials;
 extern CategoryManager categories;
 
-// ------------------------------------------------------------------
-// Simple Base64 encode/decode for binary pixel buffers (RGBA8)
-// ------------------------------------------------------------------
-namespace {
-    static const char kBase64Table[] =
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-
-    std::string base64Encode(const std::vector<uint8_t>& data) {
-        std::string out;
-        out.reserve(((data.size() + 2) / 3) * 4);
-        size_t i = 0;
-        while (i + 3 <= data.size()) {
-            uint32_t n = (static_cast<uint32_t>(data[i]) << 16) |
-                         (static_cast<uint32_t>(data[i + 1]) << 8) |
-                         (static_cast<uint32_t>(data[i + 2]));
-            out.push_back(kBase64Table[(n >> 18) & 63]);
-            out.push_back(kBase64Table[(n >> 12) & 63]);
-            out.push_back(kBase64Table[(n >> 6) & 63]);
-            out.push_back(kBase64Table[n & 63]);
-            i += 3;
-        }
-        if (i < data.size()) {
-            uint32_t n = static_cast<uint32_t>(data[i]) << 16;
-            if (i + 1 < data.size()) n |= static_cast<uint32_t>(data[i + 1]) << 8;
-            out.push_back(kBase64Table[(n >> 18) & 63]);
-            out.push_back(kBase64Table[(n >> 12) & 63]);
-            if (i + 1 < data.size()) {
-                out.push_back(kBase64Table[(n >> 6) & 63]);
-            } else {
-                out.push_back('=');
-            }
-            out.push_back('=');
-        }
-        return out;
-    }
-
-    inline uint8_t b64Val(char c) {
-        if (c >= 'A' && c <= 'Z') return static_cast<uint8_t>(c - 'A');
-        if (c >= 'a' && c <= 'z') return static_cast<uint8_t>(c - 'a' + 26);
-        if (c >= '0' && c <= '9') return static_cast<uint8_t>(c - '0' + 52);
-        if (c == '+') return 62;
-        if (c == '/') return 63;
-        return 255; // invalid
-    }
-
-    std::vector<uint8_t> base64Decode(const std::string& input) {
-        // Remove whitespace
-        std::string s; s.reserve(input.size());
-        for (char c : input) {
-            if (c == '\n' || c == '\r' || c == '\t' || c == ' ') continue;
-            s.push_back(c);
-        }
-
-        size_t len = s.size();
-        if (len % 4 != 0) return {};
-        size_t pad = 0;
-        if (len >= 2) {
-            if (s[len - 1] == '=') pad++;
-            if (s[len - 2] == '=') pad++;
-        }
-        size_t outLen = (len / 4) * 3 - pad;
-        std::vector<uint8_t> out; out.reserve(outLen);
-        for (size_t i = 0; i < len; i += 4) {
-            uint8_t a = b64Val(s[i]);
-            uint8_t b = b64Val(s[i + 1]);
-            uint8_t c = s[i + 2] == '=' ? 0 : b64Val(s[i + 2]);
-            uint8_t d = s[i + 3] == '=' ? 0 : b64Val(s[i + 3]);
-            if (a == 255 || b == 255 || (s[i + 2] != '=' && c == 255) || (s[i + 3] != '=' && d == 255)) {
-                return {}; // invalid char
-            }
-            uint32_t n = (static_cast<uint32_t>(a) << 18) |
-                         (static_cast<uint32_t>(b) << 12) |
-                         (static_cast<uint32_t>(c) << 6) |
-                         (static_cast<uint32_t>(d));
-            out.push_back(static_cast<uint8_t>((n >> 16) & 0xFF));
-            if (s[i + 2] != '=') out.push_back(static_cast<uint8_t>((n >> 8) & 0xFF));
-            if (s[i + 3] != '=') out.push_back(static_cast<uint8_t>(n & 0xFF));
-        }
-        return out;
-    }
-} // namespace
-
 // Helper: serialise glm::mat4 to vector<float>
 static std::vector<float> mat4ToVector(const glm::mat4& m){
     std::vector<float> v(16);
@@ -120,9 +37,8 @@ static glm::mat4 vectorToMat4(const std::vector<float>& v){
 }
 
 // ------------------------------------------------------------------
-// Object
+// Object (.ecform / Semantic Text Substrate)
 // ------------------------------------------------------------------
-
 
 void to_json(nlohmann::json& j, const Object& obj){
     j = nlohmann::json{};
@@ -141,11 +57,27 @@ void to_json(nlohmann::json& j, const Object& obj){
     if (obj.hasPatch()) {
         const auto& p = obj.getPatchData();
         nlohmann::json pj;
-        pj["du"] = p.du; pj["dv"] = p.dv;
-        BinaryPack::Writer bw;
-        bw.writeArray(p.ctrl);
-        pj["ctrlBinary"] = bw.toBinaryJson();
+        pj["du"] = p.du;
+        pj["dv"] = p.dv;
+        nlohmann::json ctrl = nlohmann::json::array();
+        for (const auto& c : p.ctrl) ctrl.push_back({c.x, c.y, c.z});
+        pj["ctrl"] = std::move(ctrl);
         j["patch"] = std::move(pj);
+    }
+    if (obj.getShapeKind() == Object::ShapeKind::Polyhedron && !obj.getPolyhedronData().vertices.empty()) {
+        const auto& pd = obj.getPolyhedronData();
+        nlohmann::json pj;
+        nlohmann::json verts = nlohmann::json::array();
+        for (const auto& v : pd.vertices) verts.push_back({v.x, v.y, v.z});
+        pj["vertices"] = std::move(verts);
+        nlohmann::json fcs = nlohmann::json::array();
+        for (const auto& f : pd.faces) {
+            nlohmann::json fj = nlohmann::json::array();
+            for (int idx : f) fj.push_back(idx);
+            fcs.push_back(std::move(fj));
+        }
+        pj["faces"] = std::move(fcs);
+        j["polyhedron"] = std::move(pj);
     }
     j["objectID"] = obj.getIdentifier();
     j["materialId"] = obj.materialId(); // reference to a Material being, by identifier
@@ -159,66 +91,38 @@ void to_json(nlohmann::json& j, const Object& obj){
                             obj.getTargetRotationEulerDegrees().z};
     j["rotationResponsiveness"] = obj.getRotationResponsiveness();
     j["renderMode"] = static_cast<int>(obj.getRenderModeProp());
-    // Screen-space position for Shape2D / Text2D. Persisted so a 2D control
-    // survives save/load at the same screen position the Person placed it.
+    // Screen-space position for Shape2D / Text2D.
     j["x2D"] = obj.getX2D();
     j["y2D"] = obj.getY2D();
     j["zOrder2D"] = obj.getZOrder2D();
-    // Persist baseline marker so baseline demo objects remain identifiable after load
+    if (!obj.getTextString().empty()) {
+        j["textString"] = obj.getTextString();
+    }
+
+    // Persist all attributes & tags (eliminates Temporal Black Box)
+    if (!obj.getAttributes().empty()) {
+        nlohmann::json attrObj = nlohmann::json::object();
+        for (const auto& kv : obj.getAttributes()) {
+            attrObj[kv.first] = kv.second;
+        }
+        j["attributes"] = std::move(attrObj);
+    }
     if (obj.hasAttribute("baseline")) {
         j["baseline"] = obj.getAttribute("baseline");
     }
-    // Face colours (legacy: 6 faces)
+    if (obj.hasAttribute("mass")) {
+        j["mass"] = obj.getAttribute("mass");
+    }
+    if (!obj.getTags().empty()) {
+        j["tags"] = obj.getTags();
+    }
+
+    // Face colours (legacy / baseline tint)
     nlohmann::json faces = nlohmann::json::array();
     for(int f=0;f<6;++f){ faces.push_back({obj.faceColors[f][0], obj.faceColors[f][1], obj.faceColors[f][2]}); }
     j["faceColors"] = faces;
 
-    // If polyhedron, persist vertices and faces so geometry reconstructs on load
-    if (obj.getShapeKind() == Object::ShapeKind::Polyhedron) {
-        const auto& pd = obj.getPolyhedronData();
-        nlohmann::json pj;
-
-        BinaryPack::Writer wv;
-        wv.writeArray(pd.vertices);
-        pj["verticesBinary"] = wv.toBinaryJson();
-        
-        std::vector<int> flatFaces;
-        std::vector<int> faceSizes;
-        for (const auto& f : pd.faces) {
-            faceSizes.push_back(static_cast<int>(f.size()));
-            flatFaces.insert(flatFaces.end(), f.begin(), f.end());
-        }
-        BinaryPack::Writer wfd;
-        wfd.writeArray(flatFaces);
-        pj["facesDataBinary"] = wfd.toBinaryJson();
-        
-        BinaryPack::Writer wfs;
-        wfs.writeArray(faceSizes);
-        pj["facesSizesBinary"] = wfs.toBinaryJson();
-
-        // Fallback JSON
-        nlohmann::json verts = nlohmann::json::array();
-        for (const auto& v : pd.vertices) verts.push_back({v.x, v.y, v.z});
-        pj["vertices"] = std::move(verts);
-        nlohmann::json fcs = nlohmann::json::array();
-        for (const auto& f : pd.faces) {
-            nlohmann::json fj = nlohmann::json::array();
-            for (int idx : f) fj.push_back(idx);
-            fcs.push_back(std::move(fj));
-        }
-        pj["faces"] = std::move(fcs);
-        j["polyhedron"] = std::move(pj);
-    }
-
-    // Persist mass attribute if present
-    if (obj.hasAttribute("mass")) {
-        j["mass"] = obj.getAttribute("mass");
-    }
-
-    // Properties a LAW granted this being (ActionNode::AddProperty). The
-    // registered vocabulary above is what the engine gave and is implied by
-    // the type; this is what a Person added, and it exists only here — a
-    // granted property that vanished on save was never really granted.
+    // Properties a LAW granted this being (ActionNode::AddProperty).
     if (!obj.dynamicProperties().empty()) {
         nlohmann::json dyn = nlohmann::json::object();
         for (const auto& entry : obj.dynamicProperties()) {
@@ -241,8 +145,6 @@ void to_json(nlohmann::json& j, const Object& obj){
     }
 
     // Elements: what this object is composed of, remembered BY IDENTIFIER.
-    // Composition is a relation between beings, not ownership of them — the
-    // World owns every object; the loader re-links these once all are present.
     if (obj.elementCount() > 0) {
         nlohmann::json els = nlohmann::json::array();
         for (const Singular* member : obj.elementFormation().getMembers()) {
@@ -250,23 +152,6 @@ void to_json(nlohmann::json& j, const Object& obj){
         }
         j["elements"] = std::move(els);
     }
-
-    // Per-face textures (composited RGBA8, Base64-encoded)
-    // if (!obj.faceTextures.empty()) {
-    //     nlohmann::json texArr = nlohmann::json::array();
-    //     for (const auto& ft : obj.faceTextures) {
-    //         // If layers are used, composite into pixels before saving
-    //         if (ft.useLayers) {
-    //             ft.compositeLayers();
-    //         }
-    //         nlohmann::json ftj;
-    //         ftj["size"] = ft.size;
-    //         ftj["pixelsB64"] = base64Encode(ft.pixels);
-    //         texArr.push_back(std::move(ftj));
-    //     }
-    //     j["textureVersion"] = 1;
-    //     j["faceTextures"] = std::move(texArr);
-    // }
 }
 
 static Object::ShapeParams parseShapeParams(const nlohmann::json& j) {
@@ -286,11 +171,7 @@ void from_json(const nlohmann::json& j, Object& obj){
         const auto& pj = j["patch"];
         geom::BezierPatch p;
         p.du = pj.value("du", 3); p.dv = pj.value("dv", 3);
-        if (pj.contains("ctrlBinary")) {
-            const std::vector<uint8_t> ctrlBytes = BinaryPack::bytesFrom(pj["ctrlBinary"]);
-            BinaryPack::Reader br(ctrlBytes);
-            br.readArray(p.ctrl);
-        } else if (pj.contains("ctrl")) {
+        if (pj.contains("ctrl")) {
             for (const auto& c : pj["ctrl"])
                 p.ctrl.push_back(glm::vec3(c[0].get<float>(), c[1].get<float>(), c[2].get<float>()));
         }
@@ -334,15 +215,31 @@ void from_json(const nlohmann::json& j, Object& obj){
     if (j.contains("renderMode")) {
         obj.setRenderModeProp(j["renderMode"].get<int>());
     }
-    // Screen-space position for Shape2D / Text2D. Defaults match the field
-    // defaults in Object.hpp; older saves without these keys load cleanly.
+    // Screen-space position for Shape2D / Text2D.
     obj.setX2D(j.value("x2D", 100.0f));
     obj.setY2D(j.value("y2D", 100.0f));
     obj.setZOrder2D(j.value("zOrder2D", 0));
+    if (j.contains("textString") && j["textString"].is_string()) {
+        obj.setTextString(j["textString"].get<std::string>());
+    }
     if (j.contains("targetRotation") && j["targetRotation"].is_array() && j["targetRotation"].size() >= 3) {
         obj.setTargetRotationEulerDegrees(glm::vec3(j["targetRotation"][0].get<float>(),
                                                     j["targetRotation"][1].get<float>(),
                                                     j["targetRotation"][2].get<float>()));
+    }
+    if (j.contains("attributes") && j["attributes"].is_object()) {
+        for (auto it = j["attributes"].begin(); it != j["attributes"].end(); ++it) {
+            if (it.value().is_string()) {
+                obj.setAttribute(it.key(), it.value().get<std::string>());
+            }
+        }
+    }
+    if (j.contains("tags") && j["tags"].is_array()) {
+        for (const auto& tag : j["tags"]) {
+            if (tag.is_string()) {
+                obj.addTag(tag.get<std::string>());
+            }
+        }
     }
     if (j.contains("baseline") && j["baseline"].is_string()) {
         obj.setAttribute("baseline", j["baseline"].get<std::string>());
@@ -382,74 +279,34 @@ void from_json(const nlohmann::json& j, Object& obj){
             );
         }
     }
-    // For polyhedron, restore geometry first so textures can size correctly
+    // For polyhedron in legacy saves, restore geometry
     if (obj.getShapeKind() == Object::ShapeKind::Polyhedron && j.contains("polyhedron")) {
         const auto& pj = j["polyhedron"];
         std::vector<glm::vec3> verts;
         std::vector<std::vector<int>> faces;
-        
-        if (pj.contains("verticesBinary") && pj.contains("facesDataBinary") && pj.contains("facesSizesBinary")) {
-            const std::vector<uint8_t> vBytes = BinaryPack::bytesFrom(pj["verticesBinary"]);
-            BinaryPack::Reader vReader(vBytes);
-            vReader.readArray(verts);
-            
-            const std::vector<uint8_t> fDataBytes  = BinaryPack::bytesFrom(pj["facesDataBinary"]);
-            const std::vector<uint8_t> fSizesBytes = BinaryPack::bytesFrom(pj["facesSizesBinary"]);
-            BinaryPack::Reader fDataReader(fDataBytes);
-            BinaryPack::Reader fSizesReader(fSizesBytes);
-            std::vector<int> flatFaces;
-            std::vector<int> faceSizes;
-            fDataReader.readArray(flatFaces);
-            fSizesReader.readArray(faceSizes);
-            
-            int offset = 0;
-            faces.reserve(faceSizes.size());
-            for (int size : faceSizes) {
+        if (pj.contains("vertices")) {
+            const auto& vs = pj["vertices"];
+            verts.reserve(vs.size());
+            for (const auto& vj : vs) {
+                if (vj.size() >= 3) verts.emplace_back(vj[0].get<float>(), vj[1].get<float>(), vj[2].get<float>());
+            }
+        }
+        if (pj.contains("faces")) {
+            const auto& fs = pj["faces"];
+            faces.reserve(fs.size());
+            for (const auto& fj : fs) {
                 std::vector<int> face;
-                face.reserve(size);
-                for (int i = 0; i < size; ++i) {
-                    face.push_back(flatFaces[offset++]);
-                }
+                face.reserve(fj.size());
+                for (const auto& idx : fj) face.push_back(idx.get<int>());
                 faces.push_back(std::move(face));
-            }
-        } else {
-            if (pj.contains("vertices")) {
-                const auto& vs = pj["vertices"];
-                verts.reserve(vs.size());
-                for (const auto& vj : vs) {
-                    if (vj.size() >= 3) verts.emplace_back(vj[0].get<float>(), vj[1].get<float>(), vj[2].get<float>());
-                }
-            }
-            if (pj.contains("faces")) {
-                const auto& fs = pj["faces"];
-                faces.reserve(fs.size());
-                for (const auto& fj : fs) {
-                    std::vector<int> face;
-                    face.reserve(fj.size());
-                    for (const auto& idx : fj) face.push_back(idx.get<int>());
-                    faces.push_back(std::move(face));
-                }
             }
         }
         if (!verts.empty() && !faces.empty()) {
-            // Use setPolyhedronData so textures are resized appropriately
             obj.setPolyhedronData(PolyhedronData::createCustomPolyhedron(verts, faces));
         }
     }
 
-    // Face colours, AFTER the geometry restore: paint is sized from getFaces(),
-    // so a polyhedron coloured before its faces exist would size its textures
-    // for the wrong shape. This was written on save and silently never read
-    // back while setFaceColor did not exist — an object's colour did not
-    // survive a save/load at all.
-    //
-    // Loading is REINSTATEMENT, not a brush stroke, so the slots are written
-    // directly: setFaceColor diverges an object onto its own material, and
-    // doing that here would discard the materialId every object just loaded
-    // and mint a fresh material for each one in the file. Paint is put back
-    // only where the object already owned its surface when it was saved —
-    // an object that was sharing a material goes on sharing it, wearing that
-    // material's appearance exactly as it did before.
+    // Face colours
     if (j.contains("faceColors")) {
         const auto& faceCols = j["faceColors"];
         const bool ownsItsSurface = obj.materialId() == "material." + obj.getIdentifier();
@@ -460,8 +317,6 @@ void from_json(const nlohmann::json& j, Object& obj){
             obj.faceColors[f][0] = faceCols[f][0].get<float>();
             obj.faceColors[f][1] = faceCols[f][1].get<float>();
             obj.faceColors[f][2] = faceCols[f][2].get<float>();
-            // If the Home/Zone identity already reinstated this material's
-            // pixels, do not flatten them to a solid faceColors fill.
             if (ownsItsSurface && !texturesAlreadyHere) {
                 obj.setFaceColor(static_cast<int>(f),
                                  obj.faceColors[f][0], obj.faceColors[f][1],

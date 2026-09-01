@@ -46,6 +46,7 @@
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "Singularity/Storage/SaveSystem.hpp"
+#include "Singularity/Core/Logger.hpp"
 
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleWindow.hpp"
 #include <iostream>
@@ -101,6 +102,7 @@ std::filesystem::path findRepoRoot() {
 } // namespace
 
 bool Engine::init(int /*argc*/, char** /*argv*/) {
+    ECA::Logger::instance().log(ECA::LogCategory::System, "SYSTEM", "Engine::init starting");
     std::cout << "Engine::init starting" << std::endl;
     {
         const auto root = findRepoRoot();
@@ -200,12 +202,15 @@ bool Engine::init(int /*argc*/, char** /*argv*/) {
         std::cerr << "⚠️  Failed to initialise ImGui WebGPU backend!" << std::endl;
         return false;
     }
-#else
+#elif !defined(NO_OPENGL_RENDERER)
     ImGui_ImplGlfw_InitForOpenGL(_window, true);
     ImGui_ImplOpenGL2_Init();
+#else
+    ImGui_ImplGlfw_InitForOther(_window, true);
 #endif
     _running = true;
 
+    ECA::Logger::instance().log(ECA::LogCategory::System, "SYSTEM", "Engine initialised successfully");
     std::cout << "🌟 Engine initialised ("
 #ifdef EARTHCALL_WEBGPU
               << "WebGPU"
@@ -296,7 +301,7 @@ void Engine::tick(float dt) {
         if (fbw == 0 || fbh == 0) return; // minimised: nothing to draw into
     }
     ImGui_ImplWGPU_NewFrame();
-#else
+#elif !defined(NO_OPENGL_RENDERER)
     ImGui_ImplOpenGL2_NewFrame();
 #endif
     ImGui_ImplGlfw_NewFrame();
@@ -439,7 +444,7 @@ void Engine::tick(float dt) {
         ImGui_ImplWGPU_RenderDrawData(ImGui::GetDrawData(), pass);
     });
     _webgpu->renderer.present();
-#else
+#elif !defined(NO_OPENGL_RENDERER)
     ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
     glfwSwapBuffers(_window);
 #endif
@@ -459,7 +464,7 @@ void Engine::shutdown() {
     // Shutdown ImGui after window destruction but before GLFW termination
 #ifdef EARTHCALL_WEBGPU
     ImGui_ImplWGPU_Shutdown();
-#else
+#elif !defined(NO_OPENGL_RENDERER)
     ImGui_ImplOpenGL2_Shutdown();
 #endif
     ImGui_ImplGlfw_Shutdown();
@@ -491,6 +496,7 @@ void Engine::shutdown() {
     Singularity::Language::LanguageSystem::instance().clear();
 
     _running = false;
+    ECA::Logger::instance().log(ECA::LogCategory::System, "SYSTEM", "Engine shut down");
     std::cout << "👋 Engine shut down." << std::endl;
 }
 

@@ -582,11 +582,11 @@ struct WebSocketServer::Impl {
                                     }
 
                                     if (opStr == "==") cNode.op = ConditionNode::Op::Eq;
-                                    else if (opStr == "!=") cNode.op = ConditionNode::Op::Neq;
+                                    else if (opStr == "!=") cNode.op = ConditionNode::Op::Ne;
                                     else if (opStr == "<") cNode.op = ConditionNode::Op::Lt;
-                                    else if (opStr == "<=") cNode.op = ConditionNode::Op::Lte;
+                                    else if (opStr == "<=") cNode.op = ConditionNode::Op::Le;
                                     else if (opStr == ">") cNode.op = ConditionNode::Op::Gt;
-                                    else if (opStr == ">=") cNode.op = ConditionNode::Op::Gte;
+                                    else if (opStr == ">=") cNode.op = ConditionNode::Op::Ge;
 
                                     law->setConditionModel(cNode);
                                 }
@@ -624,7 +624,7 @@ struct WebSocketServer::Impl {
                             } else if (kind == "set") {
                                 auto valIt = aJson.find("value");
                                 if (valIt != aJson.end()) {
-                                    law->setActionModel(ActionNode::set(PropertyPath::parse(pathStr), propertyValueFromJson(*valIt)));
+                                    law->setActionModel(ActionNode::set(pathStr, propertyValueFromJson(*valIt)));
                                 }
                             } else if (kind == "spawn") {
                                 std::string conceptId = aJson.value("concept", "shape-cube");
@@ -731,7 +731,7 @@ struct WebSocketServer::Impl {
                             ActionNode mapX = ActionNode::map("position.x", OntoMath::Piecewise::continuous(xNode), timeBinding);
                             ActionNode mapZ = ActionNode::map("position.z", OntoMath::Piecewise::continuous(zNode), timeBinding);
 
-                            law->setActionModel(ActionNode::block({mapX, mapZ}));
+                            law->setActionModel(ActionNode::parallel({mapX, mapZ}));
                         }
                         // Template: Bounce
                         else if (identifier == "law-kinetic-bounce" || name.find("Bounce") != std::string::npos || activation == 1) {

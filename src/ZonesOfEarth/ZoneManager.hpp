@@ -101,6 +101,11 @@ public:
     // Home or the Person's other zones. DeveloperToolsWindow is the caller;
     // loadState is the replace-all office and must not be used for this.
     void loadTestObservation(const std::string& filename, SaveContext& ctx);
+    
+    // Split substrate (.ecmatter) FlatBuffer methods
+    std::vector<uint8_t> buildMatterFlatBuffer() const;
+    void applyMatterFlatBuffer(const std::vector<uint8_t>& buffer);
+
     std::vector<uint8_t> buildSaveChunkFlatBuffer();
     void loadSaveChunkFlatBuffer(const std::vector<uint8_t>& buffer);
 };

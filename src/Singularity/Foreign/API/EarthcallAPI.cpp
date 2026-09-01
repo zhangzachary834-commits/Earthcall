@@ -118,27 +118,226 @@ bool EarthcallAPI::exportBrushArtwork(const std::string& filename) {
     return true;
 }
 
+static glm::vec3 parseColorString(const std::string& colStr, const glm::vec3& defaultColor = glm::vec3(1.0f)) {
+    if (colStr.empty()) return defaultColor;
+    if (colStr[0] == '#') {
+        std::string hex = colStr.substr(1);
+        if (hex.length() == 6) {
+            unsigned int r = 0, g = 0, b = 0;
+            if (sscanf(hex.c_str(), "%02x%02x%02x", &r, &g, &b) == 3) {
+                return glm::vec3(r / 255.0f, g / 255.0f, b / 255.0f);
+            }
+        } else if (hex.length() == 3) {
+            unsigned int r = 0, g = 0, b = 0;
+            if (sscanf(hex.c_str(), "%1x%1x%1x", &r, &g, &b) == 3) {
+                return glm::vec3((r * 17) / 255.0f, (g * 17) / 255.0f, (b * 17) / 255.0f);
+            }
+        }
+    }
+    return defaultColor;
+}
+
 bool EarthcallAPI::createDesignElement(const DesignElement& element) {
     if (!_checkPermission("design_system")) {
         std::cout << "❌ Permission denied: design_system" << std::endl;
         return false;
     }
-    
-    std::cout << "🎨 Creating design element: " << element.name 
+
+    std::string elementName = element.name;
+    if (elementName.empty()) {
+        static int autoId = 1;
+        elementName = "element_" + std::to_string(autoId++);
+    }
+
+    std::cout << "🎨 Creating design element: " << elementName
               << " (type: " << element.type << ")" << std::endl;
-    // TODO: Actually create the design element
+
+    DesignElement recordElement = element;
+    recordElement.name = elementName;
+
+    DesignElementRecord record;
+    record.element = recordElement;
+    record.systemId = "";
+    record.systemType = "";
+
+    if (_designSystem) {
+        std::string typeLower = element.type;
+        for (auto& c : typeLower) c = std::tolower(c);
+
+        if (typeLower == "text") {
+            record.systemType = "text";
+            std::string textContent = elementName;
+            auto itText = element.properties.find("text");
+            if (itText != element.properties.end()) {
+                textContent = itText->second;
+            }
+            TextSystem::TextStyle textStyle;
+            auto itColor = element.properties.find("color");
+            if (itColor != element.properties.end()) {
+                textStyle.color = parseColorString(itColor->second, textStyle.color);
+            }
+            auto itFontSize = element.properties.find("fontSize");
+            if (itFontSize != element.properties.end()) {
+                try { textStyle.fontSize = std::stof(itFontSize->second); } catch (...) {}
+            }
+            if (_designSystem->getTextSystem()) {
+                record.systemId = _designSystem->getTextSystem()->addText(
+                    textContent,
+                    glm::vec2(element.position.x, element.position.y),
+                    textStyle
+                );
+            }
+        } else if (typeLower == "effect") {
+            record.systemType = "effect";
+            float intensity = 1.0f;
+            auto itIntensity = element.properties.find("intensity");
+            if (itIntensity != element.properties.end()) {
+                try { intensity = std::stof(itIntensity->second); } catch (...) {}
+            }
+            std::string effectKind = "blur";
+            auto itKind = element.properties.find("effect_type");
+            if (itKind != element.properties.end()) {
+                effectKind = itKind->second;
+            }
+            EffectsSystem::EffectType effectType = EffectsSystem::EffectType::Blur;
+            if (effectKind == "sharpen") effectType = EffectsSystem::EffectType::Sharpen;
+            else if (effectKind == "noise") effectType = EffectsSystem::EffectType::Noise;
+            else if (effectKind == "glow") effectType = EffectsSystem::EffectType::Glow;
+            else if (effectKind == "shadow") effectType = EffectsSystem::EffectType::Shadow;
+            else if (effectKind == "gradient") effectType = EffectsSystem::EffectType::Gradient;
+
+            if (_designSystem->getEffectsSystem()) {
+                record.systemId = _designSystem->getEffectsSystem()->addEffect(effectType, intensity);
+            }
+        } else {
+            // Default to shape (rectangle, ellipse, polygon, etc.)
+            record.systemType = "shape";
+            ShapeSystem::ShapeType shapeType = ShapeSystem::ShapeType::Rectangle;
+
+            std::string shapeKind = typeLower;
+            if (shapeKind == "shape" || shapeKind == "design_element") {
+                auto itShapeType = element.properties.find("shape_type");
+                if (itShapeType != element.properties.end()) {
+                    shapeKind = itShapeType->second;
+                    for (auto& c : shapeKind) c = std::tolower(c);
+                }
+            }
+
+            if (shapeKind == "ellipse" || shapeKind == "circle") {
+                shapeType = ShapeSystem::ShapeType::Ellipse;
+            } else if (shapeKind == "polygon") {
+                shapeType = ShapeSystem::ShapeType::Polygon;
+            } else if (shapeKind == "line") {
+                shapeType = ShapeSystem::ShapeType::Line;
+            } else if (shapeKind == "arrow") {
+                shapeType = ShapeSystem::ShapeType::Arrow;
+            } else if (shapeKind == "star") {
+                shapeType = ShapeSystem::ShapeType::Star;
+            } else if (shapeKind == "heart") {
+                shapeType = ShapeSystem::ShapeType::Heart;
+            } else {
+                shapeType = ShapeSystem::ShapeType::Rectangle;
+            }
+
+            ShapeSystem::ShapeStyle style;
+            auto itFill = element.properties.find("color");
+            if (itFill == element.properties.end()) itFill = element.properties.find("fillColor");
+            if (itFill != element.properties.end()) {
+                style.fillColor = parseColorString(itFill->second, style.fillColor);
+            }
+            auto itStroke = element.properties.find("strokeColor");
+            if (itStroke != element.properties.end()) {
+                style.strokeColor = parseColorString(itStroke->second, style.strokeColor);
+            }
+            auto itStrokeWidth = element.properties.find("strokeWidth");
+            if (itStrokeWidth != element.properties.end()) {
+                try { style.strokeWidth = std::stof(itStrokeWidth->second); } catch (...) {}
+            }
+
+            glm::vec2 size(
+                element.scale.x != 0.0f ? std::abs(element.scale.x) : 100.0f,
+                element.scale.y != 0.0f ? std::abs(element.scale.y) : 100.0f
+            );
+            auto itSize = element.properties.find("size");
+            if (itSize != element.properties.end()) {
+                try {
+                    float s = std::stof(itSize->second);
+                    size = glm::vec2(s, s);
+                } catch (...) {}
+            }
+
+            if (_designSystem->getShapeSystem()) {
+                record.systemId = _designSystem->getShapeSystem()->addShape(
+                    shapeType,
+                    glm::vec2(element.position.x, element.position.y),
+                    size,
+                    style
+                );
+                if (!record.systemId.empty() && element.rotation.z != 0.0f) {
+                    if (auto* shapeEl = _designSystem->getShapeSystem()->getShapeElement(record.systemId)) {
+                        shapeEl->rotation = element.rotation.z;
+                    }
+                }
+            }
+        }
+    }
+
+    _designElements[elementName] = record;
     return true;
 }
 
 bool EarthcallAPI::modifyDesignElement(const std::string& name, const DesignElement& element) {
-    (void)element; // Suppress unused parameter warning
     if (!_checkPermission("design_system")) {
         std::cout << "❌ Permission denied: design_system" << std::endl;
         return false;
     }
-    
+
     std::cout << "🎨 Modifying design element: " << name << std::endl;
-    // TODO: Actually modify the design element
+    auto it = _designElements.find(name);
+    if (it == _designElements.end()) {
+        std::cout << "❌ Design element not found: " << name << std::endl;
+        return false;
+    }
+
+    it->second.element = element;
+    it->second.element.name = name;
+
+    if (_designSystem && !it->second.systemId.empty()) {
+        if (it->second.systemType == "shape" && _designSystem->getShapeSystem()) {
+            glm::vec2 pos(element.position.x, element.position.y);
+            glm::vec2 size(
+                element.scale.x != 0.0f ? std::abs(element.scale.x) : 100.0f,
+                element.scale.y != 0.0f ? std::abs(element.scale.y) : 100.0f
+            );
+            auto itSize = element.properties.find("size");
+            if (itSize != element.properties.end()) {
+                try {
+                    float s = std::stof(itSize->second);
+                    size = glm::vec2(s, s);
+                } catch (...) {}
+            }
+            _designSystem->getShapeSystem()->updateShape(it->second.systemId, pos, size);
+            if (auto* shapeEl = _designSystem->getShapeSystem()->getShapeElement(it->second.systemId)) {
+                shapeEl->rotation = element.rotation.z;
+                auto itFill = element.properties.find("color");
+                if (itFill == element.properties.end()) itFill = element.properties.find("fillColor");
+                if (itFill != element.properties.end()) {
+                    shapeEl->style.fillColor = parseColorString(itFill->second, shapeEl->style.fillColor);
+                }
+                auto itStroke = element.properties.find("strokeColor");
+                if (itStroke != element.properties.end()) {
+                    shapeEl->style.strokeColor = parseColorString(itStroke->second, shapeEl->style.strokeColor);
+                }
+            }
+        } else if (it->second.systemType == "text" && _designSystem->getTextSystem()) {
+            _designSystem->getTextSystem()->setTextPosition(it->second.systemId, glm::vec2(element.position.x, element.position.y));
+            auto itText = element.properties.find("text");
+            if (itText != element.properties.end()) {
+                _designSystem->getTextSystem()->updateText(it->second.systemId, itText->second);
+            }
+        }
+    }
+
     return true;
 }
 
@@ -147,15 +346,33 @@ bool EarthcallAPI::deleteDesignElement(const std::string& name) {
         std::cout << "❌ Permission denied: design_system" << std::endl;
         return false;
     }
-    
+
     std::cout << "🎨 Deleting design element: " << name << std::endl;
-    // TODO: Actually delete the design element
+    auto it = _designElements.find(name);
+    if (it == _designElements.end()) {
+        std::cout << "❌ Design element not found for deletion: " << name << std::endl;
+        return false;
+    }
+
+    if (_designSystem && !it->second.systemId.empty()) {
+        if (it->second.systemType == "shape" && _designSystem->getShapeSystem()) {
+            _designSystem->getShapeSystem()->removeShape(it->second.systemId);
+        } else if (it->second.systemType == "text" && _designSystem->getTextSystem()) {
+            _designSystem->getTextSystem()->removeText(it->second.systemId);
+        } else if (it->second.systemType == "effect" && _designSystem->getEffectsSystem()) {
+            _designSystem->getEffectsSystem()->removeEffect(it->second.systemId);
+        }
+    }
+
+    _designElements.erase(it);
     return true;
 }
 
 std::vector<EarthcallAPI::DesignElement> EarthcallAPI::getDesignElements() {
     std::vector<DesignElement> elements;
-    // TODO: Get actual design elements
+    for (const auto& [name, record] : _designElements) {
+        elements.push_back(record.element);
+    }
     return elements;
 }
 
@@ -164,9 +381,52 @@ bool EarthcallAPI::applyDesignTemplate(const std::string& template_name) {
         std::cout << "❌ Permission denied: design_system" << std::endl;
         return false;
     }
-    
+
     std::cout << "🎨 Applying design template: " << template_name << std::endl;
-    // TODO: Actually apply the template
+
+    if (template_name == "banner" || template_name == "card" || template_name == "default" || template_name == "basic") {
+        DesignElement bg;
+        bg.name = template_name + "_background";
+        bg.type = "shape";
+        bg.position = glm::vec3(0.0f, 0.0f, 0.0f);
+        bg.scale = glm::vec3(400.0f, 200.0f, 1.0f);
+        bg.properties["shape_type"] = "rectangle";
+        bg.properties["color"] = "#2d3748";
+        bg.properties["strokeColor"] = "#4a5568";
+        bg.properties["strokeWidth"] = "2";
+        createDesignElement(bg);
+
+        DesignElement title;
+        title.name = template_name + "_title";
+        title.type = "text";
+        title.position = glm::vec3(0.0f, 50.0f, 0.0f);
+        title.properties["text"] = "Template: " + template_name;
+        title.properties["color"] = "#ffffff";
+        title.properties["fontSize"] = "28";
+        createDesignElement(title);
+
+        DesignElement subtitle;
+        subtitle.name = template_name + "_subtitle";
+        subtitle.type = "text";
+        subtitle.position = glm::vec3(0.0f, 10.0f, 0.0f);
+        subtitle.properties["text"] = "Created via EarthcallAPI";
+        subtitle.properties["color"] = "#a0aec0";
+        subtitle.properties["fontSize"] = "18";
+        createDesignElement(subtitle);
+
+        return true;
+    }
+
+    // Generic fall-back element for custom template names
+    DesignElement el;
+    el.name = template_name + "_element";
+    el.type = "shape";
+    el.position = glm::vec3(0.0f, 0.0f, 0.0f);
+    el.scale = glm::vec3(200.0f, 200.0f, 1.0f);
+    el.properties["shape_type"] = "rectangle";
+    el.properties["color"] = "#3182ce";
+    createDesignElement(el);
+
     return true;
 }
 

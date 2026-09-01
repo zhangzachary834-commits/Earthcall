@@ -371,12 +371,12 @@
                     <!-- VIEW 3: Interconnected Graph View -->
                     <div id="laws-graph-view" class="law-view-container">
                         <div class="law-graph-wrapper">
-                            <!-- Graph Toolbar -->
+                            <!-- Graph Floating Toolbar -->
                             <div class="graph-floating-toolbar">
                                 <div class="graph-tool-group">
                                     <button id="graph-zoom-in" class="btn btn-secondary btn-icon btn-sm" title="Zoom In">➕</button>
                                     <button id="graph-zoom-out" class="btn btn-secondary btn-icon btn-sm" title="Zoom Out">➖</button>
-                                    <button id="graph-zoom-reset" class="btn btn-secondary btn-icon btn-sm" title="Reset View (Center Graph)">⟲</button>
+                                    <button id="graph-zoom-reset" class="btn btn-secondary btn-icon btn-sm" title="Auto-Fit & Center Graph">⟲ Center</button>
                                 </div>
 
                                 <div class="graph-tool-group">
@@ -385,6 +385,15 @@
                                         <option value="force">Dynamic Force</option>
                                         <option value="flow">Hierarchical Flow</option>
                                         <option value="clusters">System Clusters</option>
+                                    </select>
+                                </div>
+
+                                <div class="graph-tool-group">
+                                    <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600;">Spacing:</span>
+                                    <select id="graph-spacing-mode" class="select-styled" style="padding: 4px 8px; font-size: 0.75rem; width: 130px;">
+                                        <option value="wide" selected>Wide (Expanded)</option>
+                                        <option value="spacious">Spacious</option>
+                                        <option value="compact">Compact</option>
                                     </select>
                                 </div>
 

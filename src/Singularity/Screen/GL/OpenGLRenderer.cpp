@@ -1,5 +1,7 @@
 #include "Singularity/Screen/GL/OpenGLRenderer.hpp"
 
+#if !defined(__EMSCRIPTEN__) && !defined(NO_OPENGL_RENDERER)
+
 #include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp" // geom::SdfNode, tessellateSdf
 
 #include <GLFW/glfw3.h>
@@ -327,3 +329,5 @@ void OpenGLRenderer::applyBeginFrame(uint32_t width, uint32_t height,
     glClearColor(clearColor.r, clearColor.g, clearColor.b, clearColor.a);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
+
+#endif

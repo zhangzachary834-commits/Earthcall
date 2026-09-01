@@ -196,7 +196,7 @@ std::vector<std::string> listFiles(SaveType type) {
         for (const auto& entry : std::filesystem::directory_iterator(folder, ec)) {
             if (entry.is_regular_file()) {
                 std::string ext = entry.path().extension().string();
-                if (ext == ".ecsave" || ext == ".json") {
+                if (ext == ".ecsave" || ext == ".json" || ext == ".ecform") {
                     valid.push_back(entry.path().string());
                 }
             }
@@ -223,6 +223,8 @@ std::vector<WorldEntry> listWorlds(SaveType type) {
             byStem.emplace(stem, std::move(row));
         } else if (ext == ".json") {
             it->second.path = path;
+        } else if (ext == ".ecform" && it->second.path.find(".json") == std::string::npos) {
+            it->second.path = path;
         }
     }
     std::vector<WorldEntry> out;
@@ -238,6 +240,8 @@ void removeWorld(const std::string& stem, SaveType type) {
     const std::string safe = sanitizeLabel(stem);
     if (safe.empty()) return;
     std::error_code ec;
+    std::filesystem::remove(folder + "/" + safe + ".ecform", ec);
+    std::filesystem::remove(folder + "/" + safe + ".ecmatter", ec);
     std::filesystem::remove(folder + "/" + safe + ".json", ec);
     std::filesystem::remove(folder + "/" + safe + ".ecsave", ec);
     std::filesystem::remove(folder + "/" + safe + "_delta.ecsave", ec);
@@ -466,31 +470,72 @@ void writeSaveDataAsync(const nlohmann::json& j, const std::string& customLabel,
 #endif
 }
 
-void writeSaveDataAsync(const std::vector<uint8_t>& data, const std::string& customLabel, const std::string& ext, SaveType type) {
+std::string writeMatterData(const std::vector<uint8_t>& data, const std::string& customLabel, SaveType type) {
+    std::string filename = makeFilename(customLabel, type, ".ecmatter");
+    if (filename.empty()) return "";
+    if (!permitted(filename)) return "";
+
+    std::ofstream out(filename, std::ios::binary);
+    if (!out.is_open()) {
+        std::cerr << "[SaveSystem] Failed to open " << filename << " for saving matter data.\n";
+        return "";
+    }
+    out.write(reinterpret_cast<const char*>(data.data()), data.size());
+    out.flush();
+    const bool wroteOk = static_cast<bool>(out);
+    out.close();
+    if (!wroteOk) {
+        std::cerr << "[SaveSystem] Failed to write matter data to " << filename << "\n";
+        return "";
+    }
+
+#ifdef __EMSCRIPTEN__
+    ensureIdbMounted();
+    syncIdb();
+#endif
+
+    return filename;
+}
+
+void writeMatterDataAsync(const std::vector<uint8_t>& data, const std::string& customLabel, SaveType type) {
     g_isSaving.store(true);
-    
 #ifdef __EMSCRIPTEN__
     try {
-        writeSaveData(data, customLabel, ext, type);
+        writeMatterData(data, customLabel, type);
     } catch (const std::exception& e) {
-        std::cerr << "[SaveSystem] save failed: " << e.what() << "\n";
+        std::cerr << "[SaveSystem] writeMatterData failed: " << e.what() << "\n";
     } catch (...) {
-        std::cerr << "[SaveSystem] save failed: unknown error\n";
+        std::cerr << "[SaveSystem] writeMatterData failed: unknown error\n";
     }
     g_isSaving.store(false);
 #else
-    // Deep copy the vector. See the note above on why nothing may escape here.
-    std::thread([data_copy = data, customLabel, ext, type]() {
+    std::thread([data_copy = data, customLabel, type]() {
         try {
-            writeSaveData(data_copy, customLabel, ext, type);
+            writeMatterData(data_copy, customLabel, type);
         } catch (const std::exception& e) {
-            std::cerr << "[SaveSystem] Async save failed: " << e.what() << "\n";
+            std::cerr << "[SaveSystem] Async writeMatterData failed: " << e.what() << "\n";
         } catch (...) {
-            std::cerr << "[SaveSystem] Async save failed: unknown error\n";
+            std::cerr << "[SaveSystem] Async writeMatterData failed: unknown error\n";
         }
         g_isSaving.store(false);
     }).detach();
 #endif
+}
+
+std::vector<uint8_t> readMatterData(const std::string& filepath) {
+    std::filesystem::path p(filepath);
+    if (p.extension() != ".ecmatter") {
+        p.replace_extension(".ecmatter");
+    }
+    std::error_code ec;
+    if (!std::filesystem::exists(p, ec)) {
+        return {};
+    }
+    std::ifstream in(p.string(), std::ios::binary);
+    if (!in.is_open()) {
+        return {};
+    }
+    return std::vector<uint8_t>((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
 }
 
 

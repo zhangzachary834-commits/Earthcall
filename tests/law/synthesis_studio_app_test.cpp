@@ -5,6 +5,7 @@
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "ConstructedBeing/CategoryManager.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
+#include "Relation/RelationManager.hpp"
 #include "Singularity/Input/Interaction/ControlPatterns.hpp"
 
 #include <cassert>
@@ -30,21 +31,21 @@ int main() {
     // 2. Setup live Universe & Zone from the authored save
     auto zone = std::make_unique<Zone>("SynthesisStudio", "studio");
     CategoryManager categories;
-    
-    Singular author;
-    author.setIdentifier("author.gemini-spark");
+
+    Object author;
+    author.setObjectID("author.gemini-spark");
 
     // Seed categories from worldJson
     std::vector<Singular*> beings{zone.get(), &author};
     for (const auto& catJson : worldJson["categories"]) {
         auto cat = categories.create(catJson["objectID"].get<std::string>());
-        if (cat) beings.push_back(cat);
+        if (cat) beings.push_back(cat.get());
     }
 
     // Load zone objects
     for (const auto& objJson : zoneJson["world"]["objects"]) {
         auto obj = std::make_unique<Object>();
-        obj->setIdentifier(objJson["objectID"].get<std::string>());
+        obj->setObjectID(objJson["objectID"].get<std::string>());
         obj->setShape(static_cast<Object::ShapeKind>(objJson["shapeKind"].get<int>()), Object::ShapeParams{});
         if (objJson.contains("authoredProperties")) {
             for (auto it = objJson["authoredProperties"].begin(); it != objJson["authoredProperties"].end(); ++it) {
@@ -60,6 +61,12 @@ int main() {
         zone->addObject(std::move(obj));
     }
 
+    // The world's relation graph: one RelationManager standing in for the
+    // active Zone's Formation, read by Related conditions and written both
+    // by the authored-save load below and by ActionNode::addRelation
+    // (mirrors control_patterns_test.cpp's setup).
+    RelationManager graph;
+
     // Load relations
     for (const auto& relJson : zoneJson["formationRelations"]) {
         const std::string aId = relJson["entityA"].get<std::string>();
@@ -72,24 +79,31 @@ int main() {
             if (o && o->getIdentifier() == aId) a = o.get();
             if (o && o->getIdentifier() == bId) b = o.get();
         }
-        if (!a) a = categories.get(aId);
-        if (!b) b = categories.get(bId);
+        if (!a) a = categories.get(aId).get();
+        if (!b) b = categories.get(bId).get();
 
         if (a && b) {
-            zone->addRelation(std::make_shared<Relation>(type, *a, *b, relJson["directed"].get<bool>(), 1.0f));
+            graph.add(std::make_shared<Relation>(type, *a, *b, relJson["directed"].get<bool>(), 1.0f));
         }
     }
 
-    Universe::instance().setProvider([&]() {
-        std::vector<Singular*> all = beings;
+    Universe::instance().setProvider([&](std::vector<Singular*>& all) {
+        for (Singular* being : beings) all.push_back(being);
         for (const auto& obj : zone->getOwnedObjects()) {
             if (obj) all.push_back(obj.get());
         }
-        return all;
     });
-    Universe::instance().setRelationProvider([&]() {
-        return zone->getRelations();
+    Universe::instance().setRelationProvider([&](std::vector<Relation*>& out) {
+        for (const auto& rel : graph.getAll()) {
+            if (rel) out.push_back(rel.get());
+        }
     });
+    Universe::instance().setRelationRegistrar(
+        [&](std::shared_ptr<Relation> rel) { graph.add(std::move(rel)); });
+
+    // A generic probe event for standalone ConditionNode::compile() checks
+    // below; only conditions keyed on "@event.subject/object" read its fields.
+    ECA::Event probe{"test", nullptr, nullptr, 0};
 
     // -----------------------------------------------------------------------
     // Test 1: Verify Studio Controls & Categories Exist
@@ -108,9 +122,9 @@ int main() {
 
     ConditionNode isButton = ConditionNode::related("instance-of", "category.control.button");
     ConditionNode isToggle = ConditionNode::related("instance-of", "category.control.toggle");
-    assert(isButton.evaluate(*btnSpawnOrb));
-    assert(isToggle.evaluate(*btnToggleTheme));
-    assert(isButton.evaluate(*padC5));
+    assert(isButton.compile()(probe, *btnSpawnOrb));
+    assert(isToggle.compile()(probe, *btnToggleTheme));
+    assert(isButton.compile()(probe, *padC5));
     std::cout << "[Test 1 PASS] Studio widgets loaded and evaluated category membership correctly." << std::endl;
 
     // -----------------------------------------------------------------------
@@ -148,8 +162,8 @@ int main() {
         // Verify the newborn Orb is in category.art.stroke and category.interactive.orb
         ConditionNode inStroke = ConditionNode::related("instance-of", "category.art.stroke");
         ConditionNode inOrb = ConditionNode::related("instance-of", "category.interactive.orb");
-        assert(inStroke.evaluate(*newbornOrb));
-        assert(inOrb.evaluate(*newbornOrb));
+        assert(inStroke.compile()(probe, *newbornOrb));
+        assert(inOrb.compile()(probe, *newbornOrb));
 
         std::cout << "[Test 2 PASS] Button click chain successfully spawned Harmonic Orb and related it to categories." << std::endl;
     }
@@ -196,7 +210,7 @@ int main() {
         assert(strokeDab != nullptr);
 
         ConditionNode inStroke = ConditionNode::related("instance-of", "category.art.stroke");
-        assert(inStroke.evaluate(*strokeDab));
+        assert(inStroke.compile()(probe, *strokeDab));
 
         // Test stroke hover glow reaction
         ActionNode glowAction = ActionNode::set("color", PropertyValue(glm::vec3(1.0f, 1.0f, 1.0f)));
@@ -208,6 +222,23 @@ int main() {
         assert(strokeDab->findProperty("color") != nullptr || strokeDab->getDynamicProperty("color", col));
 
         std::cout << "[Test 4 PASS] Art stroke drawing and behavior laws successfully applied." << std::endl;
+    }
+
+    // -----------------------------------------------------------------------
+    // Test 5: Verify Authored Laws Count & End-to-End Serialization
+    // -----------------------------------------------------------------------
+    {
+        const auto& lawsJson = worldJson["authoredLaws"]["laws"];
+        assert(lawsJson.size() == 11);
+
+        bool foundDrawToggle = false;
+        bool foundSliderSync = false;
+        for (const auto& law : lawsJson) {
+            if (law["id"] == "law-studio-draw-mode-toggle") foundDrawToggle = true;
+            if (law["id"] == "law-studio-slider-sync") foundSliderSync = true;
+        }
+        assert(foundDrawToggle && foundSliderSync);
+        std::cout << "[Test 5 PASS] All 11 authored laws verified in JSON serialization." << std::endl;
     }
 
     std::cout << "=== ALL SYNTHESIS STUDIO INTEGRATION TESTS PASSED ===" << std::endl;

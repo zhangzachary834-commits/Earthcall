@@ -540,8 +540,12 @@ std::vector<std::size_t> ConditionNode::compileToRete(ReteNetwork& rete,
             }
             ECA::Event dummy;
             return orig(dummy, *fact->subject);
-        });
-        
+        },
+        // The closure is opaque, but the TEXT behind it is this very tree —
+        // so the Prophetic index can account for what this node reads, and
+        // says so by tagging the node Authored rather than Foreign.
+        ReteNetwork::AlphaSource::Authored);
+
     if (leftId == 0) {
         return {alphaId};
     }

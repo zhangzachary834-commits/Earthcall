@@ -172,12 +172,11 @@ std::string Object::screenMode() const {
 
 void Object::setPolyhedronData(const PolyhedronData& data) {
     polyhedronData = data;
+    _shapeKind = ShapeKind::Polyhedron;
     _polyhedronDirty = true; // render mesh cache must follow the geometry
     _hasSmooth = false;   // a polyhedron is flat-faced, not a topology surface
     _hasComplex = false;
-    if (_shapeKind == ShapeKind::Polyhedron) {
-        rebuildGeometryCaches();
-    }
+    rebuildGeometryCaches();
 }
 
 void Object::createTetrahedron() {

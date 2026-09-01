@@ -201,14 +201,18 @@ void Law::clearActions() {
     _actions.clear();
 }
 
+std::uint64_t Law::s_textRevision = 0;
+
 void Law::setConditionModel(ConditionModel model) {
     _conditionModel = std::move(model);
     ++_conditionRevision;
+    bumpTextRevision();
     recompile();
 }
 
 void Law::setActionModel(ActionModel model) {
     _actionModel = std::move(model);
+    bumpTextRevision();
     recompile();
 }
 
@@ -1007,19 +1011,29 @@ void ReteNetwork::evaluateDirty() {
     }
 }
 
-void ReteNetwork::retractFactsAbout(const Singular* being) {
-    if (!being) return;
+std::vector<std::string> ReteNetwork::retractFactsAbout(const Singular* being) {
+    std::vector<std::string> orphanedSubjects;
+    if (!being) return orphanedSubjects;
     std::unordered_set<std::string> removedIds;
+    std::unordered_set<std::string> subjects;
     _facts.erase(std::remove_if(_facts.begin(), _facts.end(),
                                 [&](const FactPtr& fact) {
                                     if (fact->subject == being || fact->object == being) {
                                         removedIds.insert(fact->id);
+                                        // Only when it was the SUBJECT: a fact
+                                        // where the dead being was the other
+                                        // participant says nothing about
+                                        // whether its subject is still seeded.
+                                        if (fact->subject == being && !fact->subjectId.empty()) {
+                                            subjects.insert(fact->subjectId);
+                                        }
                                         return true;
                                     }
                                     return false;
                                 }),
                  _facts.end());
-    if (removedIds.empty()) return;
+    orphanedSubjects.assign(subjects.begin(), subjects.end());
+    if (removedIds.empty()) return orphanedSubjects;
 
     for (auto& alpha : _alphaNodes) {
         alpha.memory.erase(std::remove_if(alpha.memory.begin(), alpha.memory.end(),
@@ -1047,6 +1061,7 @@ void ReteNetwork::retractFactsAbout(const Singular* being) {
     _dirtyFacts.erase(std::remove_if(_dirtyFacts.begin(), _dirtyFacts.end(),
                                      [&](const FactPtr& f) { return removedIds.count(f->id) != 0; }),
                       _dirtyFacts.end());
+    return orphanedSubjects;
 }
 
 void ReteNetwork::clearFacts() {
@@ -1057,11 +1072,13 @@ void ReteNetwork::clearFacts() {
     for (auto& beta : _betaNodes) beta.memory.clear();
 }
 
-std::size_t ReteNetwork::addAlphaNode(const std::string& description, AlphaPredicate predicate) {
+std::size_t ReteNetwork::addAlphaNode(const std::string& description, AlphaPredicate predicate,
+                                     AlphaSource source) {
     AlphaNode node;
     node.id = _nextNodeId++;
     node.description = description;
     node.predicate = std::move(predicate);
+    node.source = source;
     _alphaNodes.push_back(std::move(node));
     return _alphaNodes.back().id;
 }
@@ -1190,7 +1207,8 @@ std::size_t ReteNetwork::internTypeAlpha(const std::string& eventType) {
     }
     const std::size_t id = addAlphaNode(
         "type == " + eventType,
-        [eventType](const FactPtr& f) { return f->type == eventType; });
+        [eventType](const FactPtr& f) { return f->type == eventType; },
+        AlphaSource::Interned);
     _typeAlphaIndex[eventType] = id;
     return id;
 }
@@ -1205,6 +1223,15 @@ bool ReteNetwork::hearsType(const std::string& eventType) const {
             auto betaBinding = _betaLawBindings.find(beta.id);
             if (betaBinding != _betaLawBindings.end() && !betaBinding->second.empty()) return true;
         }
+    }
+    return false;
+}
+
+bool ReteNetwork::hasForeignBoundAlpha() const {
+    for (const auto& binding : _alphaLawBindings) {
+        if (binding.second.empty()) continue;
+        const AlphaNode* alpha = findAlpha(binding.first);
+        if (alpha && alpha->source == AlphaSource::Foreign) return true;
     }
     return false;
 }
@@ -1384,6 +1411,9 @@ void LawManager::add(const std::shared_ptr<Law>& law) {
 
     _laws.push_back(law);
     _lawFormation.addMember(law.get());
+    // The register changed, so every conclusion the Prophetic index drew
+    // about it is now about a different set of laws.
+    Law::bumpTextRevision();
 
     // Compile continuous laws' conditions into Rete terminals at registration
     // time, so the O(Matching) path is ready from the first tick.
@@ -1402,9 +1432,24 @@ void LawManager::add(const std::shared_ptr<Law>& law) {
     Core::EventBus::instance().publish(echo);
 }
 
+// The one manager that owns the static Singular hooks. They are statics with
+// no owner of their own, and a LawManager is usually block-scoped in tests, so
+// somebody has to put them back.
+static LawManager* s_singularHookOwner = nullptr;
+
+LawManager::~LawManager() {
+    if (s_singularHookOwner == this) {
+        Singular::setPropertyChangeCallback(nullptr);
+        Singular::setBeingReleasedCallback(nullptr);
+        Universe::instance().setEventInterest(nullptr);
+        s_singularHookOwner = nullptr;
+    }
+}
+
 void LawManager::connectToEventBus() {
     if (_connected) return;
     _connected = true;
+    s_singularHookOwner = this;
 
     // "Is anyone listening for this?" — which lets a law skip publishing an
     // echo nobody hears (see Law::publishAppliedEvent). Asked of the NETWORK
@@ -1417,8 +1462,31 @@ void LawManager::connectToEventBus() {
         return _rete.hearsType(type) || _rete.hasOpaqueBoundAlpha();
     });
 
+    // A being that stops existing takes its facts with it. Facts hold RAW
+    // participant pointers, so one left behind is a dangling read on the next
+    // tick — and until now only the law-driven unmaking path retracted them,
+    // which left every being freed by ordinary scope exit (a stack-local
+    // Object, a Law and the provenance Relations it owns) behind as a corpse
+    // in the fact list. It went unnoticed because almost nothing ever
+    // RE-READ those facts: property changes on a ComputedProperty never
+    // marked them dirty. Now that they do, this is load-bearing.
+    //
+    // The pointer is all this may touch — see Singular::notifyBeingReleased.
+    Singular::setBeingReleasedCallback([this](const Singular* being) {
+        for (const std::string& subjectId : _rete.retractFactsAbout(being)) {
+            _seededSubjects.erase(subjectId);
+        }
+    });
+
     Singular::setPropertyChangeCallback([this](Singular* owner, const std::string& name) {
         if (!owner) return;
+        // Prophetic Rete, Pass 1/2: a property no authored condition can read
+        // cannot matter, whoever just wrote it. markFactDirty scans the whole
+        // fact list — one state fact per property per being — so this is the
+        // difference between O(world) and O(1) on the single hottest callback
+        // in the engine. It answers "no" only where the abstract
+        // interpretation PROVED no; see LawManager::propheticHears.
+        if (!propheticHears(name)) return;
         _rete.markFactDirty(owner->getIdentifier(), name);
         _dirty = true;
     });
@@ -1488,8 +1556,75 @@ void LawManager::connectToEventBus() {
     // duplicate noise on the hot path.
 }
 
+// ---------------------------------------------------------------------------
+// Prophetic Rete — the ahead-of-time half.
+//
+// Zach's realization (`docs/architecture/law/B-time Rete.md`): in Earthcall
+// nothing changes by itself. Every change comes from a Law doing authored
+// mathematics on an exposed property, or from a First Mover. The Laws are
+// data, and they exist before they fire — so the engine can work out where a
+// change could possibly matter BEFORE the change happens, and only has to
+// resolve the concrete value when it does.
+//
+// This is where that ahead-of-time work is kept current. The analysis lives in
+// PropheticRete.cpp; all that happens here is deciding when to redo it.
+// ---------------------------------------------------------------------------
+
+void LawManager::syncProphetic() {
+    const std::uint64_t revision = Law::textRevision();
+    if (_propheticRevision == revision) return;   // the law text has not moved
+
+    _prophetic.rebuild(_laws);
+    _propheticRevision = revision;
+
+    // Say what was concluded. A condition no authored law can drive into its
+    // satisfying range is exactly the thing an author stares at wondering why
+    // their law never fires, and the engine already knows.
+    for (const auto& finding : _prophetic.unreachable()) {
+        ECA::LawAuditLogger::instance().log(
+            "LAW",
+            std::string(finding.selfImpossible ? "Law \"" : "Law \"") + finding.lawId +
+                "\" has a condition on " + finding.path + " that cannot be satisfied: " +
+                finding.why,
+            {{"lawId", finding.lawId},
+             {"path", finding.path},
+             {"why", finding.why},
+             {"selfImpossible", finding.selfImpossible}});
+    }
+}
+
+bool LawManager::propheticHears(const std::string& propertyName) const {
+    ++_propheticCounters.asked;
+
+    // Three ways to fail open, in the order they are cheapest to check.
+    //
+    // (1) STALE. A law was added, removed, or edited since the last rebuild,
+    //     so the index describes a different law set than the one that is
+    //     live. One integer compare, and it is the reason the gate is safe to
+    //     consult from a callback that runs between ticks.
+    if (_propheticRevision != Law::textRevision()) return true;
+    // (2) INCOMPLETE. Some law reads through a closure, a collision test, or a
+    //     condition kind this build cannot read. Nothing may be pruned around
+    //     a law whose reads are not enumerable.
+    if (!_prophetic.complete()) return true;
+    // (3) FOREIGN ALPHA. A node bound with a hand-written predicate (the graph
+    //     editor, a test, a channel) matches on whatever it likes, and no law
+    //     text accounts for it. Deliberately NOT hasOpaqueBoundAlpha(), which
+    //     counts every compiled condition too — an authored condition's reads
+    //     are exactly the law's own text, which this index has read.
+    if (_rete.hasForeignBoundAlpha()) return true;
+
+    if (_prophetic.anyConditionReads(propertyName)) return true;
+    ++_propheticCounters.filtered;
+    return false;
+}
+
 std::vector<Law::ApplicationRecord> LawManager::tick() {
     auto T0 = glfwGetTime();
+
+    // Bring the possibility-space index up to date with the law text before
+    // anything consults it. Cheap when nothing moved: one integer compare.
+    syncProphetic();
 
     // Bring compiled terminals up to date with the conditions they were
     // compiled from, before anything reads either. Conditions are edited from
@@ -2021,6 +2156,7 @@ bool LawManager::remove(const std::string& lawId) {
     _compiledConditionRevision.erase(lawId);
     _lawFormation.removeMember(it->get());
     _laws.erase(it);
+    Law::bumpTextRevision();
     return true;
 }
 
@@ -2164,6 +2300,7 @@ void LawManager::loadFromJson(const nlohmann::json& j) {
     }
     _laws = std::move(firstMovers);
     _driveSessions.clear();
+    Law::bumpTextRevision();
     _reteTerminals.clear();
     _compiledConditionRevision.clear();
 

@@ -705,6 +705,66 @@ int main() {
             }
         }
 
+    // ------------------------------------------------------------------
+    // 15. MathNode operations and JSON roundtrip tests
+    // ------------------------------------------------------------------
+    {
+        std::map<std::string, PropertyValue> env;
+        env["x"] = PropertyValue(5.0);
+        env["y"] = PropertyValue(3.0);
+
+        OntoMath::MathNode addNode;
+        addNode.op = OntoMath::MathNode::Op::Add;
+        auto left = std::make_unique<OntoMath::MathNode>();
+        left->op = OntoMath::MathNode::Op::ScalarLeaf;
+        left->scalarForm = OntoMath::ScalarForm::constant(5.0);
+
+        auto right = std::make_unique<OntoMath::MathNode>();
+        right->op = OntoMath::MathNode::Op::ScalarLeaf;
+        right->scalarForm = OntoMath::ScalarForm::constant(3.0);
+
+        addNode.children.push_back(std::move(left));
+        addNode.children.push_back(std::move(right));
+
+        auto resScalar = addNode.evaluate(env);
+        assert(resScalar.has_value() && neard(*resScalar, 8.0));
+
+        // Test VectorConstruct and Component
+        OntoMath::MathNode vecNode;
+        vecNode.op = OntoMath::MathNode::Op::VectorConstruct;
+        auto xNode = std::make_unique<OntoMath::MathNode>();
+        xNode->op = OntoMath::MathNode::Op::ScalarLeaf;
+        xNode->scalarForm = OntoMath::ScalarForm::constant(1.0);
+        auto yNode = std::make_unique<OntoMath::MathNode>();
+        yNode->op = OntoMath::MathNode::Op::ScalarLeaf;
+        yNode->scalarForm = OntoMath::ScalarForm::constant(2.0);
+        auto zNode = std::make_unique<OntoMath::MathNode>();
+        zNode->op = OntoMath::MathNode::Op::ScalarLeaf;
+        zNode->scalarForm = OntoMath::ScalarForm::constant(3.0);
+        vecNode.children.push_back(std::move(xNode));
+        vecNode.children.push_back(std::move(yNode));
+        vecNode.children.push_back(std::move(zNode));
+
+        auto resVec = vecNode.evaluate(env);
+        assert(resVec.has_value() && std::holds_alternative<glm::vec3>(*resVec));
+        glm::vec3 v = std::get<glm::vec3>(*resVec);
+        assert(nearf(v.x, 1.0f) && nearf(v.y, 2.0f) && nearf(v.z, 3.0f));
+
+        OntoMath::MathNode compNode;
+        compNode.op = OntoMath::MathNode::Op::Component;
+        compNode.stringArg = "y";
+        compNode.children.push_back(std::make_unique<OntoMath::MathNode>(vecNode));
+        auto resComp = compNode.evaluate(env);
+        assert(resComp.has_value() && neard(*resComp, 2.0));
+
+        // JSON roundtrip
+        nlohmann::json j = addNode.toJson();
+        auto restored = OntoMath::MathNode::fromJson(j);
+        assert(restored && restored->op == OntoMath::MathNode::Op::Add);
+        auto resRestored = restored->evaluate(env);
+        assert(resRestored.has_value() && neard(*resRestored, 8.0));
+    }
+
     Universe::instance().setProvider({});
     std::puts("ontomath_test: ALL OK");
     return 0;

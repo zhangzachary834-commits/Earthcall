@@ -26,7 +26,13 @@ struct PropertyPath {
     // The deepest Property the path reaches, or nullptr. When the last segment
     // is a vec3 component it is reported through trailingComponent ("x"/"y"/"z")
     // and the returned Property is the vec3 itself.
-    Property* resolve(Singular& root, std::string* trailingComponent = nullptr) const;
+    //
+    // `owner` reports the Singular the returned Property is registered ON,
+    // which is NOT `root` once the path descends through a nested Singular
+    // ("body.head.position" resolves on the head). Change notification needs
+    // that being, not the one the walk started from.
+    Property* resolve(Singular& root, std::string* trailingComponent = nullptr,
+                      Singular** owner = nullptr) const;
 
     enum class PathResult {
         Ok,

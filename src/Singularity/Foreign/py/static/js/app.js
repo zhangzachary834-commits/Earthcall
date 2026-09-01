@@ -33,7 +33,7 @@ const App = {
         camera: null,
         renderer: null,
         controls: null,
-        meshMap: new Map(), // object_id -> THREE.Mesh
+        meshMap: new Map(),
         raycaster: null,
         mouse: null,
         playerMarker: null
@@ -53,7 +53,6 @@ document.addEventListener('DOMContentLoaded', () => {
     initRoboticsPanel();
     initEventLogStream();
     
-    // Initial fetch of state via REST API
     fetchState();
     fetchSaves();
 });
@@ -129,24 +128,20 @@ async function fetchState() {
 
 // --- Navigation & Tabs ---
 function initNavigation() {
-    const navItems = document.querySelectorAll('.nav-item');
-    navItems.forEach(item => {
+    document.querySelectorAll('.nav-item').forEach(item => {
         item.addEventListener('click', () => {
             const tabName = item.getAttribute('data-tab');
             switchTab(tabName);
         });
     });
 
-    // Top Header Zone Dropdown
     const zoneSelect = document.getElementById('header-zone-select');
     if (zoneSelect) {
         zoneSelect.addEventListener('change', (e) => {
-            const idx = parseInt(e.target.value, 10);
-            switchZone(idx);
+            switchZone(parseInt(e.target.value, 10));
         });
     }
 
-    // Top Header Quick Actions
     const quickSaveBtn = document.getElementById('quick-save-btn');
     if (quickSaveBtn) {
         quickSaveBtn.addEventListener('click', () => {
@@ -182,7 +177,6 @@ function switchTab(tabName) {
         el.classList.toggle('active', el.id === `tab-${tabName}`);
     });
 
-    // Trigger Three.js resize if switching to objects tab
     if (tabName === 'objects' && App.three.renderer) {
         setTimeout(onThreeResize, 50);
     }
@@ -196,18 +190,15 @@ function initThreeJS() {
     const container = document.getElementById('viewport-3d');
     if (!container || typeof THREE === 'undefined') return;
 
-    // Scene
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x070913);
     scene.fog = new THREE.FogExp2(0x070913, 0.025);
     App.three.scene = scene;
 
-    // Camera
     const camera = new THREE.PerspectiveCamera(60, container.clientWidth / container.clientHeight, 0.1, 1000);
     camera.position.set(0, 8, 14);
     App.three.camera = camera;
 
-    // Renderer
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(container.clientWidth, container.clientHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
@@ -215,7 +206,6 @@ function initThreeJS() {
     container.appendChild(renderer.domElement);
     App.three.renderer = renderer;
 
-    // Controls
     if (typeof THREE.OrbitControls !== 'undefined') {
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
@@ -224,12 +214,10 @@ function initThreeJS() {
         App.three.controls = controls;
     }
 
-    // Grid Helper
     const grid = new THREE.GridHelper(40, 40, 0x00f0ff, 0x1e293b);
     grid.position.y = 0;
     scene.add(grid);
 
-    // Lights
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
     scene.add(ambientLight);
 
@@ -241,7 +229,6 @@ function initThreeJS() {
     pointLight.position.set(-10, 10, -10);
     scene.add(pointLight);
 
-    // Player Marker
     const playerGeo = new THREE.ConeGeometry(0.4, 1.2, 8);
     playerGeo.rotateX(Math.PI / 2);
     const playerMat = new THREE.MeshStandardMaterial({ color: 0x10b981, emissive: 0x10b981, emissiveIntensity: 0.5 });
@@ -249,14 +236,12 @@ function initThreeJS() {
     scene.add(playerMesh);
     App.three.playerMarker = playerMesh;
 
-    // Raycasting for object selection
     App.three.raycaster = new THREE.Raycaster();
     App.three.mouse = new THREE.Vector2();
 
     renderer.domElement.addEventListener('pointerdown', onPointerDown);
     window.addEventListener('resize', onThreeResize);
 
-    // Animation Loop
     function animate() {
         requestAnimationFrame(animate);
         if (App.three.controls) App.three.controls.update();
@@ -301,26 +286,19 @@ function onPointerDown(event) {
 function createGeometryForShape(shapeKind, dims) {
     const s = dims || 1.0;
     switch (shapeKind) {
-        case 0: // Cube
-            return new THREE.BoxGeometry(s, s, s);
-        case 1: // Polyhedron
-            return new THREE.DodecahedronGeometry(s * 0.7);
-        case 2: // Sphere
-            return new THREE.SphereGeometry(s * 0.6, 24, 24);
-        case 3: // Cylinder
-            return new THREE.CylinderGeometry(s * 0.5, s * 0.5, s * 1.2, 24);
-        case 4: // Cone
-            return new THREE.ConeGeometry(s * 0.6, s * 1.2, 24);
-        case 5: // Ellipsoid
+        case 0: return new THREE.BoxGeometry(s, s, s);
+        case 1: return new THREE.DodecahedronGeometry(s * 0.7);
+        case 2: return new THREE.SphereGeometry(s * 0.6, 24, 24);
+        case 3: return new THREE.CylinderGeometry(s * 0.5, s * 0.5, s * 1.2, 24);
+        case 4: return new THREE.ConeGeometry(s * 0.6, s * 1.2, 24);
+        case 5: {
             const ellGeo = new THREE.SphereGeometry(s * 0.6, 24, 24);
             ellGeo.scale(1.4, 0.8, 1.0);
             return ellGeo;
-        case 8: // Torus
-            return new THREE.TorusGeometry(s * 0.6, s * 0.2, 16, 32);
-        case 9: // RoundedBox
-            return new THREE.BoxGeometry(s, s, s);
-        default:
-            return new THREE.BoxGeometry(s, s, s);
+        }
+        case 8: return new THREE.TorusGeometry(s * 0.6, s * 0.2, 16, 32);
+        case 9: return new THREE.BoxGeometry(s, s, s);
+        default: return new THREE.BoxGeometry(s, s, s);
     }
 }
 
@@ -352,7 +330,6 @@ function syncThreeScene(objects) {
             scene.add(mesh);
             App.three.meshMap.set(id, mesh);
         } else {
-            // Update shape if changed
             if (mesh.userData.shapeKind !== obj.shapeKind || mesh.userData.dimensions !== obj.dimensions) {
                 mesh.geometry.dispose();
                 mesh.geometry = createGeometryForShape(obj.shapeKind, obj.dimensions);
@@ -362,7 +339,6 @@ function syncThreeScene(objects) {
             mesh.material.color.copy(threeCol);
         }
 
-        // Transform
         if (obj.position) {
             mesh.position.set(obj.position[0], obj.position[1], obj.position[2]);
         }
@@ -374,7 +350,6 @@ function syncThreeScene(objects) {
             );
         }
 
-        // Highlight selected
         if (id === App.selectedObjectId) {
             mesh.material.emissive.setHex(0x00f0ff);
             mesh.material.emissiveIntensity = 0.35;
@@ -384,7 +359,6 @@ function syncThreeScene(objects) {
         }
     });
 
-    // Remove deleted objects from Three scene
     for (const [id, mesh] of App.three.meshMap.entries()) {
         if (!currentIds.has(id)) {
             scene.remove(mesh);
@@ -394,7 +368,6 @@ function syncThreeScene(objects) {
         }
     }
 
-    // Update Player Marker in scene
     if (App.three.playerMarker && App.state.player) {
         const pPos = App.state.player.position || [0, 1.8, 5];
         App.three.playerMarker.position.set(pPos[0], pPos[1] + 0.6, pPos[2]);
@@ -429,7 +402,6 @@ function initObjectStudio() {
         searchInput.addEventListener('input', () => renderObjectExplorer());
     }
 
-    // Spawner Quick Buttons
     document.querySelectorAll('.spawner-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const shape = btn.getAttribute('data-shape');
@@ -437,7 +409,6 @@ function initObjectStudio() {
         });
     });
 
-    // Inspector Live Inputs
     ['insp-pos-x', 'insp-pos-y', 'insp-pos-z',
      'insp-rot-x', 'insp-rot-y', 'insp-rot-z',
      'insp-dim', 'insp-shape', 'insp-mat', 'insp-name', 'insp-color-hex'].forEach(id => {
@@ -445,7 +416,6 @@ function initObjectStudio() {
         if (el) el.addEventListener('input', () => onInspectorFieldChange());
     });
 
-    // Inspector Action Buttons
     const deleteBtn = document.getElementById('insp-delete-btn');
     if (deleteBtn) {
         deleteBtn.addEventListener('click', () => {
@@ -552,7 +522,6 @@ function renderObjectInspector() {
     document.getElementById('insp-title-name').innerText = obj.name || obj.id;
     document.getElementById('insp-title-id').innerText = `@${obj.id}`;
 
-    // Set fields
     document.getElementById('insp-name').value = obj.name || '';
     document.getElementById('insp-shape').value = obj.shapeKind !== undefined ? obj.shapeKind : 0;
     document.getElementById('insp-mat').value = obj.materialId || 'material.default';
@@ -728,7 +697,6 @@ function categorizeLaw(law) {
 }
 
 function initLawWorkshop() {
-    // View Switcher Buttons
     const viewGridBtn = document.getElementById('view-mode-grid');
     const viewGroupedBtn = document.getElementById('view-mode-grouped');
     const viewGraphBtn = document.getElementById('view-mode-graph');
@@ -739,7 +707,6 @@ function initLawWorkshop() {
         viewGraphBtn.addEventListener('click', () => setLawViewMode('graph'));
     }
 
-    // System Filter Chips
     document.querySelectorAll('.system-chip').forEach(chip => {
         chip.addEventListener('click', () => {
             document.querySelectorAll('.system-chip').forEach(c => c.classList.remove('active'));
@@ -749,7 +716,6 @@ function initLawWorkshop() {
         });
     });
 
-    // Law Search Input
     const searchInput = document.getElementById('law-search-input');
     if (searchInput) {
         searchInput.addEventListener('input', (e) => {
@@ -761,9 +727,12 @@ function initLawWorkshop() {
     // Graph Toolbar Controls
     document.getElementById('graph-zoom-in')?.addEventListener('click', () => LawGraphEngine.zoom(1.2));
     document.getElementById('graph-zoom-out')?.addEventListener('click', () => LawGraphEngine.zoom(0.8));
-    document.getElementById('graph-zoom-reset')?.addEventListener('click', () => LawGraphEngine.resetView());
+    document.getElementById('graph-zoom-reset')?.addEventListener('click', () => LawGraphEngine.autoFit());
     document.getElementById('graph-layout-mode')?.addEventListener('change', (e) => {
         LawGraphEngine.setLayout(e.target.value);
+    });
+    document.getElementById('graph-spacing-mode')?.addEventListener('change', (e) => {
+        LawGraphEngine.setSpacing(e.target.value);
     });
     document.getElementById('close-graph-drawer')?.addEventListener('click', () => {
         document.getElementById('graph-node-drawer')?.classList.remove('open');
@@ -795,7 +764,6 @@ function initLawWorkshop() {
         });
     }
 
-    // Live update listeners for ECA node editor inputs
     ['eca-when-trigger', 'eca-when-activation', 'eca-when-scope',
      'eca-cond-enable-toggle', 'eca-cond-path', 'eca-cond-op', 'eca-cond-val',
      'eca-act-kind', 'eca-act-path', 'eca-act-amp', 'eca-act-freq', 'eca-act-phase', 'eca-act-offset'].forEach(id => {
@@ -806,13 +774,11 @@ function initLawWorkshop() {
         }
     });
 
-    // ECA Apply Button
     const applyEcaBtn = document.getElementById('eca-apply-btn');
     if (applyEcaBtn) {
         applyEcaBtn.addEventListener('click', () => saveAndApplyEcaNodes());
     }
 
-    // Law Template buttons
     document.querySelectorAll('.law-template-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const template = btn.getAttribute('data-template');
@@ -847,7 +813,6 @@ function initLawWorkshop() {
         });
     }
 
-    // Initialize Canvas Graph Engine
     LawGraphEngine.init();
 }
 
@@ -1093,13 +1058,11 @@ function openEcaPipelineModal(law) {
     document.getElementById('eca-modal-law-name').innerText = law.name || law.identifier;
     document.getElementById('eca-modal-law-id').innerText = `@${law.identifier}`;
 
-    // 1. Fill When Node fields
     const trigger = law.trigger || (law.activation === 1 ? 'contact-began' : 'universe.time');
     document.getElementById('eca-when-trigger').value = trigger;
     document.getElementById('eca-when-activation').value = law.activation !== undefined ? law.activation : 0;
     document.getElementById('eca-when-scope').value = law.scope !== undefined ? law.scope : 1;
 
-    // 2. Fill Condition Node fields
     const condToggle = document.getElementById('eca-cond-enable-toggle');
     const hasCond = (law.conditionDescription && !law.conditionDescription.includes('always')) || false;
     condToggle.checked = hasCond;
@@ -1108,7 +1071,6 @@ function openEcaPipelineModal(law) {
     document.getElementById('eca-cond-op').value = law.conditionOp || '==';
     document.getElementById('eca-cond-val').value = law.conditionVal !== undefined ? law.conditionVal : '0.0';
 
-    // 3. Fill Action Node fields
     const id = (law.identifier || '').toLowerCase();
     let actKind = 'map';
     let actPath = 'velocity.y';
@@ -1236,7 +1198,7 @@ function saveAndApplyEcaNodes() {
 }
 
 // ==========================================================================
-// INTERCONNECTED LAW GRAPH ENGINE (Canvas 2D Interactive Force/DAG Graph)
+// INTERCONNECTED LAW GRAPH ENGINE (Spacious, Clear Force/DAG Layout)
 // ==========================================================================
 
 const LawGraphEngine = {
@@ -1253,14 +1215,15 @@ const LawGraphEngine = {
     // Camera / Pan & Zoom
     panX: 0,
     panY: 0,
-    zoomScale: 1.0,
+    zoomScale: 0.85,
 
     isDragging: false,
     dragNode: null,
     lastMouseX: 0,
     lastMouseY: 0,
 
-    layoutMode: 'force', // 'force' | 'flow' | 'clusters'
+    layoutMode: 'force',    // 'force' | 'flow' | 'clusters'
+    spacingMode: 'wide',    // 'wide' | 'spacious' | 'compact'
     pulseTime: 0,
 
     init() {
@@ -1286,20 +1249,56 @@ const LawGraphEngine = {
         this.canvas.style.width = `${this.width}px`;
         this.canvas.style.height = `${this.height}px`;
 
-        if (this.nodes.length > 0 && this.panX === 0 && this.panY === 0) {
+        if (this.nodes.length > 0) {
+            this.autoFit();
+        } else {
             this.panX = this.width / 2;
             this.panY = this.height / 2;
         }
     },
 
     zoom(factor) {
-        this.zoomScale = Math.max(0.3, Math.min(3.0, this.zoomScale * factor));
+        this.zoomScale = Math.max(0.2, Math.min(3.0, this.zoomScale * factor));
+    },
+
+    setSpacing(mode) {
+        this.spacingMode = mode;
+        this.applyInitialPositions();
+    },
+
+    autoFit() {
+        if (this.nodes.length === 0) {
+            this.panX = this.width / 2;
+            this.panY = this.height / 2;
+            this.zoomScale = 0.85;
+            return;
+        }
+
+        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+        this.nodes.forEach(n => {
+            minX = Math.min(minX, n.x - (n.width || 40) / 2);
+            maxX = Math.max(maxX, n.x + (n.width || 40) / 2);
+            minY = Math.min(minY, n.y - (n.height || 40) / 2);
+            maxY = Math.max(maxY, n.y + (n.height || 40) / 2);
+        });
+
+        const graphW = Math.max(100, maxX - minX);
+        const graphH = Math.max(100, maxY - minY);
+        const padding = 140;
+
+        const scaleX = (this.width - padding) / graphW;
+        const scaleY = (this.height - padding) / graphH;
+        this.zoomScale = Math.min(1.0, Math.max(0.4, Math.min(scaleX, scaleY)));
+
+        const centerX = (minX + maxX) / 2;
+        const centerY = (minY + maxY) / 2;
+
+        this.panX = this.width / 2 - centerX * this.zoomScale;
+        this.panY = this.height / 2 - centerY * this.zoomScale;
     },
 
     resetView() {
-        this.zoomScale = 1.0;
-        this.panX = this.width / 2;
-        this.panY = this.height / 2;
+        this.autoFit();
     },
 
     setLayout(mode) {
@@ -1315,13 +1314,16 @@ const LawGraphEngine = {
         const filterText = (App.lawSearchQuery || '').toLowerCase();
         const systemFilter = App.lawSystemFilter || 'all';
 
-        // 1. Create Law Nodes
-        laws.forEach(law => {
+        laws.forEach((law, idx) => {
             const cat = categorizeLaw(law);
             if (systemFilter !== 'all' && cat.key !== systemFilter) return;
 
             const isMatch = (law.name || '').toLowerCase().includes(filterText) ||
                             (law.identifier || '').toLowerCase().includes(filterText);
+
+            const cols = 3;
+            const col = idx % cols;
+            const row = Math.floor(idx / cols);
 
             const lawNode = {
                 id: law.identifier,
@@ -1334,10 +1336,10 @@ const LawGraphEngine = {
                 activation: law.activation,
                 expression: law.expression,
                 isMatch: isMatch,
-                width: 150,
-                height: 48,
-                x: (Math.random() - 0.5) * 400,
-                y: (Math.random() - 0.5) * 300,
+                width: 165,
+                height: 52,
+                x: (col - 1) * 320 + (Math.random() - 0.5) * 40,
+                y: (row - 1) * 180 + (Math.random() - 0.5) * 40,
                 vx: 0,
                 vy: 0
             };
@@ -1346,7 +1348,6 @@ const LawGraphEngine = {
             this.nodeMap.set(lawNode.id, lawNode);
         });
 
-        // 2. Derive Event & Target Nodes & Interconnections
         laws.forEach(law => {
             if (!this.nodeMap.has(law.identifier)) return;
             const lawNode = this.nodeMap.get(law.identifier);
@@ -1374,9 +1375,9 @@ const LawGraphEngine = {
                         name: eventTrigger,
                         kind: 'event',
                         color: '#10b981',
-                        radius: 20,
-                        x: -250 + (Math.random() - 0.5) * 60,
-                        y: (Math.random() - 0.5) * 300,
+                        radius: 24,
+                        x: -520 + (Math.random() - 0.5) * 60,
+                        y: (this.nodes.length % 5 - 2) * 140,
                         vx: 0,
                         vy: 0
                     };
@@ -1413,9 +1414,9 @@ const LawGraphEngine = {
                         name: targetProp,
                         kind: 'target',
                         color: '#38bdf8',
-                        radius: 20,
-                        x: 250 + (Math.random() - 0.5) * 60,
-                        y: (Math.random() - 0.5) * 300,
+                        radius: 24,
+                        x: 520 + (Math.random() - 0.5) * 60,
+                        y: (this.nodes.length % 5 - 2) * 140,
                         vx: 0,
                         vy: 0
                     };
@@ -1431,7 +1432,7 @@ const LawGraphEngine = {
                 });
             }
 
-            // C. Metalaw Connections (Law governing Law)
+            // C. Metalaw Connections
             if (id === 'law-zero-g' && this.nodeMap.has('physics-gravity')) {
                 this.links.push({
                     source: lawNode,
@@ -1447,43 +1448,56 @@ const LawGraphEngine = {
     },
 
     applyInitialPositions() {
+        const mult = this.spacingMode === 'wide' ? 1.45 : (this.spacingMode === 'spacious' ? 1.15 : 0.85);
+
         if (this.layoutMode === 'flow') {
-            // Hierarchical flow: Events (left) -> Laws (middle) -> Targets (right)
             const events = this.nodes.filter(n => n.kind === 'event');
             const laws = this.nodes.filter(n => n.kind === 'law');
             const targets = this.nodes.filter(n => n.kind === 'target');
 
+            const eventGap = Math.max(140, 500 / Math.max(1, events.length)) * mult;
+            const lawGap = Math.max(130, 600 / Math.max(1, laws.length)) * mult;
+            const targetGap = Math.max(140, 500 / Math.max(1, targets.length)) * mult;
+
             events.forEach((n, i) => {
-                n.x = -260;
-                n.y = (i - (events.length - 1) / 2) * 90;
+                n.x = -520 * mult;
+                n.y = (i - (events.length - 1) / 2) * eventGap;
             });
             laws.forEach((n, i) => {
                 n.x = 0;
-                n.y = (i - (laws.length - 1) / 2) * 75;
+                n.y = (i - (laws.length - 1) / 2) * lawGap;
             });
             targets.forEach((n, i) => {
-                n.x = 260;
-                n.y = (i - (targets.length - 1) / 2) * 90;
+                n.x = 520 * mult;
+                n.y = (i - (targets.length - 1) / 2) * targetGap;
             });
         } else if (this.layoutMode === 'clusters') {
             const systemAngles = {
                 physics: 0,
-                acoustics: Math.PI * 0.35,
-                visual: Math.PI * 0.7,
-                motion: Math.PI * 1.05,
-                creation: Math.PI * 1.4,
-                input: Math.PI * 1.75,
+                acoustics: Math.PI * 0.33,
+                visual: Math.PI * 0.66,
+                motion: Math.PI * 1.0,
+                creation: Math.PI * 1.33,
+                input: Math.PI * 1.66,
                 custom: Math.PI * 0.5
             };
+            const R = 440 * mult;
             this.nodes.forEach(n => {
                 if (n.kind === 'law') {
                     const angle = systemAngles[n.system] || 0;
-                    const r = 180 + Math.random() * 50;
-                    n.x = Math.cos(angle) * r + (Math.random() - 0.5) * 40;
-                    n.y = Math.sin(angle) * r + (Math.random() - 0.5) * 40;
+                    n.x = Math.cos(angle) * R + (Math.random() - 0.5) * 60;
+                    n.y = Math.sin(angle) * R + (Math.random() - 0.5) * 60;
+                } else if (n.kind === 'event') {
+                    n.x = -300 * mult;
+                    n.y = (Math.random() - 0.5) * 300 * mult;
+                } else {
+                    n.x = 300 * mult;
+                    n.y = (Math.random() - 0.5) * 300 * mult;
                 }
             });
         }
+
+        setTimeout(() => this.autoFit(), 60);
     },
 
     setupEvents() {
@@ -1657,9 +1671,11 @@ const LawGraphEngine = {
     updatePhysics() {
         if (this.layoutMode !== 'force') return;
 
-        const kRepel = 2400;
-        const kSpring = 0.04;
-        const damping = 0.82;
+        const mult = this.spacingMode === 'wide' ? 1.5 : (this.spacingMode === 'spacious' ? 1.15 : 0.85);
+        const kRepel = 65000 * mult;
+        const kSpring = 0.02;
+        const desiredDist = 380 * mult;
+        const damping = 0.85;
 
         for (let i = 0; i < this.nodes.length; i++) {
             const n1 = this.nodes[i];
@@ -1671,7 +1687,7 @@ const LawGraphEngine = {
                 const dy = n2.y - n1.y;
                 const dist = Math.hypot(dx, dy) || 1;
 
-                if (dist < 320) {
+                if (dist < 900) {
                     const force = kRepel / (dist * dist);
                     const fx = (dx / dist) * force;
                     const fy = (dy / dist) * force;
@@ -1681,19 +1697,29 @@ const LawGraphEngine = {
                     n2.vx += fx;
                     n2.vy += fy;
                 }
+
+                const r1 = n1.kind === 'law' ? 95 : 35;
+                const r2 = n2.kind === 'law' ? 95 : 35;
+                const minDist = (r1 + r2) * 1.35 * mult;
+
+                if (dist < minDist) {
+                    const overlap = minDist - dist;
+                    const pushX = (dx / dist) * overlap * 0.45;
+                    const pushY = (dy / dist) * overlap * 0.45;
+
+                    if (n1 !== this.dragNode) { n1.x -= pushX; n1.y -= pushY; }
+                    if (n2 !== this.dragNode) { n2.x += pushX; n2.y += pushY; }
+                }
             }
 
-            // Center gravity
-            n1.vx -= n1.x * 0.005;
-            n1.vy -= n1.y * 0.005;
+            n1.vx -= n1.x * 0.0006;
+            n1.vy -= n1.y * 0.0006;
         }
 
-        // Links spring force
         this.links.forEach(l => {
             const dx = l.target.x - l.source.x;
             const dy = l.target.y - l.source.y;
             const dist = Math.hypot(dx, dy) || 1;
-            const desiredDist = 140;
             const force = (dist - desiredDist) * kSpring;
 
             const fx = (dx / dist) * force;
@@ -1709,7 +1735,6 @@ const LawGraphEngine = {
             }
         });
 
-        // Apply velocities
         this.nodes.forEach(n => {
             if (n === this.dragNode) return;
             n.vx *= damping;
@@ -1731,10 +1756,9 @@ const LawGraphEngine = {
         ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
         ctx.clearRect(0, 0, this.width, this.height);
 
-        // Background Grid Pattern
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
         ctx.lineWidth = 1;
-        const gridSize = 40 * this.zoomScale;
+        const gridSize = 45 * this.zoomScale;
         const startX = (this.panX % gridSize);
         const startY = (this.panY % gridSize);
 
@@ -1751,18 +1775,15 @@ const LawGraphEngine = {
             ctx.stroke();
         }
 
-        // Apply Pan & Zoom
         ctx.translate(this.panX, this.panY);
         ctx.scale(this.zoomScale, this.zoomScale);
 
         this.pulseTime += 0.03;
 
-        // Render Links
         this.links.forEach(link => {
             this.renderLink(ctx, link);
         });
 
-        // Render Nodes
         this.nodes.forEach(node => {
             this.renderNode(ctx, node);
         });
@@ -1781,33 +1802,31 @@ const LawGraphEngine = {
         ctx.globalAlpha = isSelected ? 1.0 : 0.45;
 
         if (link.type === 'metalaw') {
-            ctx.setLineDash([5, 5]);
+            ctx.setLineDash([6, 6]);
         } else {
             ctx.setLineDash([]);
         }
 
-        // Curve
         const midX = (s.x + t.x) / 2;
         const midY = (s.y + t.y) / 2;
 
         ctx.beginPath();
         ctx.moveTo(s.x, s.y);
-        ctx.quadraticCurveTo(midX, midY - 15, t.x, t.y);
+        ctx.quadraticCurveTo(midX, midY - 20, t.x, t.y);
         ctx.stroke();
         ctx.setLineDash([]);
 
-        // Animated Particle Pulse
         const pulseEnabled = document.getElementById('graph-pulse-edges')?.checked !== false;
         if (pulseEnabled) {
             const p = (this.pulseTime + (s.x * 0.01)) % 1.0;
             const px = (1 - p) * (1 - p) * s.x + 2 * (1 - p) * p * midX + p * p * t.x;
-            const py = (1 - p) * (1 - p) * s.y + 2 * (1 - p) * p * (midY - 15) + p * p * t.y;
+            const py = (1 - p) * (1 - p) * s.y + 2 * (1 - p) * p * (midY - 20) + p * p * t.y;
 
             ctx.fillStyle = isSelected ? '#00f0ff' : link.color;
             ctx.shadowColor = ctx.fillStyle;
             ctx.shadowBlur = 8;
             ctx.beginPath();
-            ctx.arc(px, py, 3, 0, Math.PI * 2);
+            ctx.arc(px, py, 3.5, 0, Math.PI * 2);
             ctx.fill();
             ctx.shadowBlur = 0;
         }
@@ -1843,27 +1862,24 @@ const LawGraphEngine = {
             ctx.stroke();
             ctx.shadowBlur = 0;
 
-            // Top system stripe
             ctx.fillStyle = node.color;
             ctx.beginPath();
             ctx.roundRect(x, y, w, 4, [r, r, 0, 0]);
             ctx.fill();
 
-            // Status Indicator Dot
             ctx.fillStyle = node.enabled ? '#10b981' : '#64748b';
             ctx.beginPath();
-            ctx.arc(x + 12, y + h / 2 + 2, 4, 0, Math.PI * 2);
+            ctx.arc(x + 12, y + h / 2 + 2, 4.5, 0, Math.PI * 2);
             ctx.fill();
 
-            // Text
             ctx.fillStyle = node.enabled ? '#ffffff' : '#94a3b8';
             ctx.font = '600 11px Inter, sans-serif';
             ctx.textAlign = 'left';
-            ctx.fillText(node.name.length > 16 ? node.name.substring(0, 15) + '…' : node.name, x + 24, y + 22);
+            ctx.fillText(node.name.length > 17 ? node.name.substring(0, 16) + '…' : node.name, x + 24, y + 23);
 
             ctx.fillStyle = node.color;
             ctx.font = '500 9px "JetBrains Mono", monospace';
-            ctx.fillText(`@${node.id.length > 18 ? node.id.substring(0, 17) + '…' : node.id}`, x + 24, y + 36);
+            ctx.fillText(`@${node.id.length > 19 ? node.id.substring(0, 18) + '…' : node.id}`, x + 24, y + 38);
 
         } else if (node.kind === 'event') {
             ctx.fillStyle = isSelected ? '#064e3b' : '#022c22';
@@ -2023,7 +2039,6 @@ function initLogosConsole() {
         });
     }
 
-    // Word Presets
     document.querySelectorAll('.preset-chip').forEach(chip => {
         chip.addEventListener('click', () => {
             const word = chip.getAttribute('data-word');

@@ -17,6 +17,10 @@ Singular::Singular() {
 }
 
 Singular::~Singular() {
+    // Announce BEFORE the count drops, and take nothing but the pointer:
+    // every derived destructor has already run, so this object is a Singular
+    // and nothing more. See the header for why this exists.
+    notifyBeingReleased(this);
     s_singularAliveCount.fetch_sub(1, std::memory_order_relaxed);
 }
 
@@ -71,9 +75,20 @@ Singular& Singular::operator=(Singular&& o) noexcept {
 }
 
 static Singular::PropertyChangeCallback s_propertyChangeCallback = nullptr;
+static Singular::BeingReleasedCallback s_beingReleasedCallback = nullptr;
 
 void Singular::setPropertyChangeCallback(PropertyChangeCallback cb) {
-    s_propertyChangeCallback = cb;
+    s_propertyChangeCallback = std::move(cb);
+}
+
+void Singular::setBeingReleasedCallback(BeingReleasedCallback cb) {
+    s_beingReleasedCallback = std::move(cb);
+}
+
+void Singular::notifyBeingReleased(const Singular* being) {
+    if (s_beingReleasedCallback) {
+        s_beingReleasedCallback(being);
+    }
 }
 
 void Singular::notifyPropertyChanged(Singular* owner, const std::string& name) {
@@ -214,6 +229,10 @@ bool Singular::getDynamicProperty(const std::string& name, PropertyValue& out) c
 
 void Singular::setDynamicProperty(const std::string& name, const PropertyValue& v) {
     _dynamicProperties[name] = v;
+    // An AUTHORED property is a property. It was invisible to the change feed
+    // for the same reason every non-PropertyRef slot was: nobody announced it.
+    // A law watching a name a Person granted must hear it move.
+    notifyPropertyChanged(this, name);
 }
 
 void Singular::addDataStructure(const DataStructure& ds) {

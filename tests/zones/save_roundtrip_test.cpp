@@ -121,9 +121,11 @@ int main() {
           "saveStateWithLog wrote a report and did not refuse");
 
     const auto jsonPath = sandbox / "worlds" / "roundtrip_world.json";
-    const auto ecsavePath = sandbox / "worlds" / "roundtrip_world.ecsave";
+    const auto ecformPath = sandbox / "worlds" / "roundtrip_world.ecform";
+    const auto ecmatterPath = sandbox / "worlds" / "roundtrip_world.ecmatter";
     check(std::filesystem::exists(jsonPath), "Save As writes the readable json sidecar");
-    check(std::filesystem::exists(ecsavePath), "Save As writes the binary .ecsave");
+    check(std::filesystem::exists(ecformPath), "Save As writes the .ecform semantic file");
+    check(std::filesystem::exists(ecmatterPath), "Save As writes the binary .ecmatter");
     check(std::filesystem::exists(sandbox / "zones" / "Sanctum of Beginnings" / "zone.json"),
           "Save As also writes the Sanctum identity under saves/zones/");
     check(std::filesystem::exists(sandbox / "homes" / "Home" / "home.json"),
@@ -178,13 +180,13 @@ int main() {
           "camera returns to the saved viewpoint");
 
     player.position() = glm::vec3(50.0f, 0.0f, 50.0f);
-    mgr.loadState(ecsavePath.string(), ctx);
+    mgr.loadState(ecformPath.string(), ctx);
     check(countId(mgr, "first-spawned") == 1 &&
               countId(mgr, "second-spawned") == 1 &&
               countId(mgr, "third-spawned") == 1,
-          "loading the .ecsave twin restores the same three beings");
+          "loading the .ecform twin restores the same three beings");
     check(glm::distance(player.position(), camera.pos - glm::vec3(0.0f, eyeH, 0.0f)) < 1e-3f,
-          "Person is settled after an .ecsave load too");
+          "Person is settled after an .ecform load too");
 
     mgr.switchTo(1);
     check(mgr.active().name() == "Home", "switched to Home before the second save");

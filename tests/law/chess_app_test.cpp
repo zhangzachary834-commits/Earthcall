@@ -2,36 +2,14 @@
 // can play — one board, 32 pieces on their squares, queens on their colours,
 // object-clicked walking a pawn, capture unmaking onto a rack, an illegal
 // self-check reverted.
-//
-// Build (from repo root, after the ordinary cmake configure):
-//   c++ -std=c++17 -UNDEBUG -Isrc -Iimgui -Ithird_party/flatbuffers/include \
-//       -Ilocal_deps/include -Ibuild/_deps/asio-src/asio/include \
-//       -Ibuild/_deps/websocketpp-src -DASIO_STANDALONE \
-//       scratch/probes/chess_app_probe.cpp \
-//       $(find build/CMakeFiles/earthcall_core.dir -name '*.o') \
-//       -o scratch/probes/chess_app_probe
 
-#include "ConstructedBeing/CategoryManager.hpp"
-#include "ConstructedBeing/Material/MaterialManager.hpp"
-#include "Person/Body/Body.hpp"
-#include "Person/Person.hpp"
-#include "Person/Soul/Soul.hpp"
-#include "Singularity/Input/Interaction/InteractionChannel.hpp"
-#include "Singularity/Input/Mouse/MouseHandler.hpp"
-#include "Singularity/Screen/Camera.hpp"
-#include "Singularity/Storage/SaveSystem.hpp"
-#include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
-#include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
-#include "ZonesOfEarth/ZoneManager.hpp"
+#include "support/test_harness.hpp"
 
 #include <cassert>
 #include <cmath>
 #include <filesystem>
 #include <iostream>
 #include <string>
-
-extern MaterialManager materials;
-extern CategoryManager categories;
 
 namespace {
 
@@ -97,68 +75,13 @@ int main(int argc, char** argv) {
     }
     std::cout << "--- chess_app_probe: " << filename << " ---\n";
 
-    Core::Camera camera;
-    MouseHandler mouseHandler;
-    Soul soul("Player");
-    Body body("humanoid", "default");
-    Person player(std::move(soul), std::move(body), "default");
-    LawManager lawManager;
-    lawManager.connectToEventBus();
+    TestSupport::BootedEngineHarness harness;
+    harness.loadWorld(filename);
 
-    float currentColor[3] = {1.0f, 1.0f, 1.0f};
-    double worldTime = 0.0;
-
-    SaveContext ctx;
-    ctx.camera = &camera;
-    ctx.mouseHandler = &mouseHandler;
-    ctx.currentColor = currentColor;
-    ctx.person = &player;
-    ctx.lawManager = &lawManager;
-    ctx.worldTime = &worldTime;
-    ctx.unpackForAuthoring = false;
-
-    Singularity::Input::InteractionChannel::syncRegister(lawManager);
-    auto* interaction = Singularity::Input::InteractionChannel::find(lawManager);
-    assert(interaction);
-    interaction->setEnabled(true);
-
-    ZoneManager zones;
-    Universe::instance().setProvider([&](std::vector<Singular*>& beings) {
-        if (zones.zones().empty()) return;
-        auto active = zones.zones()[zones.currentIndex()];
-        if (!active) return;
-        beings.push_back(active.get());
-        for (const auto& obj : active->getOwnedObjects()) {
-            if (obj) beings.push_back(obj.get());
-        }
-        for (const auto& rel : active->formation().relations().getAll()) {
-            if (rel) beings.push_back(rel.get());
-        }
-        for (const auto& law : lawManager.getAll()) {
-            if (law) beings.push_back(law.get());
-        }
-        for (const auto& material : materials.getAll()) {
-            if (material) beings.push_back(material.get());
-        }
-        for (const auto& category : categories.getAll()) {
-            if (category) beings.push_back(category.get());
-        }
-        beings.push_back(&player);
-    });
-    Universe::instance().setRelationProvider([&](std::vector<Relation*>& relations) {
-        if (zones.zones().empty()) return;
-        auto active = zones.zones()[zones.currentIndex()];
-        if (!active) return;
-        for (const auto& rel : active->formation().relations().getAll()) {
-            if (rel) relations.push_back(rel.get());
-        }
-    });
-
-    zones.loadState(filename, ctx);
-    std::cout << "loaded. zones=" << zones.zones().size()
-              << " current=" << zones.currentIndex() << "\n";
-    assert(!zones.zones().empty());
-    auto active = zones.zones()[zones.currentIndex()];
+    std::cout << "loaded. zones=" << harness.zones.zones().size()
+              << " current=" << harness.zones.currentIndex() << "\n";
+    assert(!harness.zones.zones().empty());
+    auto active = harness.zones.zones()[harness.zones.currentIndex()];
     assert(active);
     assert(active->getIdentifier() == "Chess");
 
@@ -206,7 +129,7 @@ int main(int argc, char** argv) {
     assert(top.pixels[d1] == 237 && top.pixels[d1 + 1] == 214);
     std::cout << "  board FaceTexture is a checkerboard; a1 dark, d1 light\n";
 
-    Law* clickLaw = lawManager.find("law-chess-click");
+    Law* clickLaw = harness.lawManager.find("law-chess-click");
     assert(clickLaw);
     assert(!clickLaw->authors().getMembers().empty());
 
@@ -217,12 +140,12 @@ int main(int argc, char** argv) {
     assert(std::fabs(whitePawnE2->getPosition().z + 2.5f) < 1e-3f);
 
     std::cout << "--- e2 pawn clicked, then e4 ---\n";
-    click(interaction, lawManager, whitePawnE2, 0.5f, 0.3f, -2.5f);
+    click(harness.interaction, harness.lawManager, whitePawnE2, 0.5f, 0.3f, -2.5f);
     assert(asBool(*whitePawnE2, "isSelected"));
     assert(asInt(*state, "selectedX") == 4);
     assert(asInt(*state, "selectedY") == 1);
 
-    click(interaction, lawManager, board, 0.5f, 0.0f, -0.5f);
+    click(harness.interaction, harness.lawManager, board, 0.5f, 0.0f, -0.5f);
     std::cout << "  e2 now (" << asInt(*whitePawnE2, "gridX") << ","
               << asInt(*whitePawnE2, "gridY") << ") turn="
               << asInt(*state, "turn") << " pos=("
@@ -239,8 +162,8 @@ int main(int argc, char** argv) {
     std::cout << "--- black e7-e5 ---\n";
     Object* blackPawnE7 = findObj(*active, "piece-black-pawn-4-6");
     assert(blackPawnE7);
-    click(interaction, lawManager, blackPawnE7, 0.5f, 0.3f, 2.5f);
-    click(interaction, lawManager, board, 0.5f, 0.0f, 0.5f);
+    click(harness.interaction, harness.lawManager, blackPawnE7, 0.5f, 0.3f, 2.5f);
+    click(harness.interaction, harness.lawManager, board, 0.5f, 0.0f, 0.5f);
     assert(asInt(*blackPawnE7, "gridY") == 4);
     assert(asInt(*state, "turn") == 0);
     std::cout << "  black pawn e7-e5\n";
@@ -248,12 +171,12 @@ int main(int argc, char** argv) {
     std::cout << "--- white d2-d4, black captures exd4 ---\n";
     Object* whitePawnD2 = findObj(*active, "piece-white-pawn-3-1");
     assert(whitePawnD2);
-    click(interaction, lawManager, whitePawnD2, -0.5f, 0.3f, -2.5f);
-    click(interaction, lawManager, board, -0.5f, 0.0f, -0.5f);
+    click(harness.interaction, harness.lawManager, whitePawnD2, -0.5f, 0.3f, -2.5f);
+    click(harness.interaction, harness.lawManager, board, -0.5f, 0.0f, -0.5f);
     assert(asInt(*whitePawnD2, "gridY") == 3);
 
-    click(interaction, lawManager, blackPawnE7, 0.5f, 0.3f, 0.5f);
-    click(interaction, lawManager, whitePawnD2, -0.5f, 0.3f, -0.5f);
+    click(harness.interaction, harness.lawManager, blackPawnE7, 0.5f, 0.3f, 0.5f);
+    click(harness.interaction, harness.lawManager, whitePawnD2, -0.5f, 0.3f, -0.5f);
     std::cout << "  black e5 at (" << asInt(*blackPawnE7, "gridX") << ","
               << asInt(*blackPawnE7, "gridY") << ") onBoard="
               << asBool(*blackPawnE7, "onBoard") << "\n";
@@ -271,54 +194,34 @@ int main(int argc, char** argv) {
     Object* whitePawnA2 = findObj(*active, "piece-white-pawn-0-1");
     assert(whitePawnA2);
     assert(asBool(*whitePawnA2, "onBoard"));
-    click(interaction, lawManager, whiteRookA1, -3.5f, 0.4f, -3.5f);
-    click(interaction, lawManager, board, -3.5f, 0.0f, -1.5f); // a3
+    click(harness.interaction, harness.lawManager, whiteRookA1, -3.5f, 0.4f, -3.5f);
+    click(harness.interaction, harness.lawManager, board, -3.5f, 0.0f, -1.5f); // a3
     assert(asInt(*whiteRookA1, "gridX") == 0);
     assert(asInt(*whiteRookA1, "gridY") == 0);
     std::cout << "  rook still on a1 (path blocked)\n";
 
     std::cout << "--- legal: white bishop c1 moves to e3 (slope +1 diagonal) ---\n";
     // d2 pawn is unmade, so c1 bishop has open path to e3 (2,0 -> 4,2)
-    click(interaction, lawManager, whiteBishopC1, -1.5f, 0.4f, -3.5f);
-    click(interaction, lawManager, board, 0.5f, 0.0f, -1.5f); // e3
+    click(harness.interaction, harness.lawManager, whiteBishopC1, -1.5f, 0.4f, -3.5f);
+    click(harness.interaction, harness.lawManager, board, 0.5f, 0.0f, -1.5f); // e3
     assert(asInt(*whiteBishopC1, "gridX") == 4);
     assert(asInt(*whiteBishopC1, "gridY") == 2);
     assert(asInt(*state, "turn") == 1);
     std::cout << "  bishop moved c1-e3\n";
 
-    std::cout << "--- legal: black queen d8 moves to a5 (slope -1 diagonal) giving distant check to white king at e1 ---\n";
-    // d8 is (3, 7). a5 is (0, 4). Path is (2, 6) c7 [black pawn], wait: d7 pawn was d7 (3,6)?
-    // d7 pawn is at (3,6), c7 is at (2,6). Let's check c7:
-    // d8 (3,7) to a5 (0,4): intervening square is (2,6) which is c7.
-    // Let's check black bishop or black queen diagonal:
-    // Black queen d8 to h4 (3,7 -> 7,3): dx=4, dy=-4 (slope -1 diagonal).
-    // Intervening squares: e7 (4,6) [e7 pawn moved to e5!], f6 (5,5) [empty], g5 (6,4) [empty].
-    // Path from d8 to h4 is completely clear!
-    click(interaction, lawManager, blackQueen, -0.5f, 0.4f, 3.5f); // d8
-    click(interaction, lawManager, board, 3.5f, 0.0f, -0.5f); // h4
+    std::cout << "--- legal: black queen d8 moves to h4 (slope -1 diagonal) giving distant check to white king at e1 ---\n";
+    click(harness.interaction, harness.lawManager, blackQueen, -0.5f, 0.4f, 3.5f); // d8
+    click(harness.interaction, harness.lawManager, board, 3.5f, 0.0f, -0.5f); // h4
     assert(asInt(*blackQueen, "gridX") == 7);
     assert(asInt(*blackQueen, "gridY") == 3);
     assert(asInt(*state, "turn") == 0);
     std::cout << "  black queen moved d8-h4 (clear slope -1 diagonal across board)\n";
 
     std::cout << "--- distant check test: black queen on h4 (7,3) attacks white king on e1 (4,0) ---\n";
-    // King is at e1 (4,0). Queen is at h4 (7,3).
-    // Intervening squares on diagonal from h4 (7,3) to e1 (4,0):
-    // g2 (6,1) has white pawn? g2 is (6,1). Let's check:
-    // If g2 white pawn moves g2-g3 (blocking the check), it is legal!
-    // But if white attempts a move that leaves king in distant check (e.g. moving a2-a3):
-    // White king would be exposed to distant check from black queen on h4 (7,3) along diagonal!
-    // dx = 7-4 = 3, dy = 3-0 = 3. Distance = 3 squares across board!
-    // But f2 pawn is at (5,1). Intervening square is (5,1) and (6,2).
-    // Let's test moving f2 pawn to f4 (5,1 -> 5,3):
-    // Moving f2-f4 vacates (5,1). But if g2 pawn is at (6,1), diagonal is (4,0)-(5,1)-(6,2)-(7,3).
-    // Square (5,1) was occupied by f2 pawn. When f2 moves to f4, (5,1) is VACATED and (6,2) is EMPTY!
-    // So the diagonal between black queen h4 (7,3) and white king e1 (4,0) becomes COMPLETELY OPEN!
-    // Thus white moving f2-f4 self-checks white king via distant queen on h4 and MUST BE REVERTED!
     Object* whitePawnF2 = findObj(*active, "piece-white-pawn-5-1");
     assert(whitePawnF2);
-    click(interaction, lawManager, whitePawnF2, 1.5f, 0.3f, -2.5f); // f2
-    click(interaction, lawManager, board, 1.5f, 0.0f, -0.5f); // f4 (vacates diagonal to king!)
+    click(harness.interaction, harness.lawManager, whitePawnF2, 1.5f, 0.3f, -2.5f); // f2
+    click(harness.interaction, harness.lawManager, board, 1.5f, 0.0f, -0.5f); // f4 (vacates diagonal to king!)
     // The move MUST be reverted because king is in distant diagonal check from Queen on h4!
     assert(asInt(*whitePawnF2, "gridX") == 5);
     assert(asInt(*whitePawnF2, "gridY") == 1);
