@@ -123,12 +123,37 @@ void ExternalWindow::_detachFromWindow() {
 
 void ExternalWindow::_setWindowStyle() {
     std::cout << "🪟 Setting overlay window style for: " << _config.name << std::endl;
-    // TODO: Set window to overlay style
+#ifdef _WIN32
+    if (_hwnd) {
+        LONG_PTR exStyle = GetWindowLongPtr(_hwnd, GWL_EXSTYLE);
+        exStyle |= WS_EX_TOPMOST | WS_EX_LAYERED;
+        SetWindowLongPtr(_hwnd, GWL_EXSTYLE, exStyle);
+        SetWindowPos(_hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+        BYTE alphaByte = static_cast<BYTE>(_transparency * 255.0f);
+        SetLayeredWindowAttributes(_hwnd, 0, alphaByte, LWA_ALPHA);
+    }
+#elif defined(__APPLE__)
+    if (_windowRef) {
+        // macOS window level and alpha configuration placeholder for native Cocoa window reference
+        std::cout << "🪟 Applying macOS overlay window level for: " << _config.name << std::endl;
+    }
+#endif
 }
 
 void ExternalWindow::_restoreWindowStyle() {
     std::cout << "🪟 Restoring normal window style for: " << _config.name << std::endl;
-    // TODO: Restore normal window style
+#ifdef _WIN32
+    if (_hwnd) {
+        LONG_PTR exStyle = GetWindowLongPtr(_hwnd, GWL_EXSTYLE);
+        exStyle &= ~WS_EX_TOPMOST;
+        SetWindowLongPtr(_hwnd, GWL_EXSTYLE, exStyle);
+        SetWindowPos(_hwnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+    }
+#elif defined(__APPLE__)
+    if (_windowRef) {
+        std::cout << "🪟 Restoring macOS normal window level for: " << _config.name << std::endl;
+    }
+#endif
 }
 
 // WindowManager implementation

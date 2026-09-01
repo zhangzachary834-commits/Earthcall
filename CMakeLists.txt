@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.5)
-project(Earthcall VERSION 1.0 LANGUAGES CXX OBJCXX)
+if(APPLE)
+    project(Earthcall VERSION 1.0 LANGUAGES CXX OBJCXX)
+else()
+    project(Earthcall VERSION 1.0 LANGUAGES CXX)
+endif()
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
@@ -144,8 +148,10 @@ set(IMGUI_SOURCES
 )
 
 # Compile WebIntegration and RealWebView as Objective-C++ since they use macOS APIs
-set_source_files_properties(src/Singularity/Foreign/Web/RealWebView.cpp PROPERTIES LANGUAGE OBJCXX)
-set_source_files_properties(src/Singularity/Foreign/Web/WebIntegration.cpp PROPERTIES LANGUAGE OBJCXX)
+if(APPLE)
+    set_source_files_properties(src/Singularity/Foreign/Web/RealWebView.cpp PROPERTIES LANGUAGE OBJCXX)
+    set_source_files_properties(src/Singularity/Foreign/Web/WebIntegration.cpp PROPERTIES LANGUAGE OBJCXX)
+endif()
 
 # Object library for shared code
 add_library(earthcall_core OBJECT ${SRC_FILES} ${IMGUI_SOURCES})
