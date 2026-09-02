@@ -21,6 +21,19 @@ ZONE_ID = "SynthesisStudio"
 
 
 def pv(t, v):
+    """A PropertyValue, in the shape propertyValueFromJson actually reads.
+
+    A vec3 does NOT serialize as {"t":"vec3","v":[x,y,z]} — it serializes as
+    {"t":"vec3","x":..,"y":..,"z":..} (Serialization's propertyValueToJson /
+    propertyValueFromJson). Every vec3 this file authored used the "v" form, so
+    every one of them deserialized to the ZERO VECTOR and nothing ever noticed,
+    because nothing read one back: the orbs' authored position (0, 1.6, 1.25)
+    was really (0,0,0) — they spawned inside the floor at the world origin —
+    the stroke colour was black, and the hover-glow's white was black too.
+    """
+    if t == "vec3":
+        x, y, z = v
+        return {"t": "vec3", "x": float(x), "y": float(y), "z": float(z)}
     return {"t": t, "v": v}
 
 
@@ -347,7 +360,7 @@ def build_world():
         "transform": mat4_translate(0.0, -0.1, 0.0, (14.0, 0.2, 14.0)),
         "center": [0.0, -0.1, 0.0],
         "materialId": "material.studio.slate",
-        "faceColors": make_face_colors((0.16, 0.18, 0.22)),
+        "faceColors": make_face_colors((0.13, 0.145, 0.185)),
         "authoredProperties": {
             "displayName": pv("string", "Studio Platform Floor"),
             "isStudioSurface": pv("bool", True),
@@ -363,7 +376,7 @@ def build_world():
         "transform": mat4_translate(0.0, 0.4, 0.0, (5.2, 0.8, 2.4)),
         "center": [0.0, 0.4, 0.0],
         "materialId": "material.studio.walnut",
-        "faceColors": make_face_colors((0.11, 0.12, 0.15)),
+        "faceColors": make_face_colors((0.085, 0.095, 0.125)),
         "authoredProperties": {
             "displayName": pv("string", "Studio Control Console"),
             "isStudioSurface": pv("bool", True),
@@ -395,7 +408,7 @@ def build_world():
         "transform": mat4_translate(0.0, 3.55, 2.4, (3.2, 0.22, 0.06)),
         "center": [0.0, 3.55, 2.4],
         "materialId": "material.studio.sign",
-        "faceColors": make_face_colors((0.2, 0.24, 0.32)),
+        "faceColors": make_face_colors((0.17, 0.20, 0.27)),
         "authoredProperties": {
             "displayName": pv("string", "✎ ART DRAWING CANVAS (Drag to draw light strokes)"),
         },
@@ -431,7 +444,7 @@ def build_world():
         "transform": mat4_translate(-1.5, 0.82, -0.35, (0.85, 0.08, 0.7)),
         "center": [-1.5, 0.82, -0.35],
         "materialId": "material.studio.socket",
-        "faceColors": make_face_colors((0.08, 0.09, 0.12)),
+        "faceColors": make_face_colors((0.055, 0.065, 0.09)),
         "authoredProperties": {"displayName": pv("string", "Spawn Button Frame")},
     })
     # Raised Push Button
@@ -444,11 +457,13 @@ def build_world():
         "transform": mat4_translate(-1.5, 0.89, -0.35, (0.7, 0.16, 0.55)),
         "center": [-1.5, 0.89, -0.35],
         "materialId": "material.studio.btn.blue",
-        "faceColors": make_face_colors((0.15, 0.58, 0.98)),
+        "faceColors": make_face_colors((0.16, 0.55, 0.92)),
         "authoredProperties": {
             "displayName": pv("string", "✦ Spawn Harmonic Orb"),
             "controlLabel": pv("string", "SPAWN ORB"),
             "buttonRole": pv("string", "spawn-orb"),
+            "acoustic.frequency": pv("double", 587.33),   # D5
+            "acoustic.amplitude": pv("double", 0.55),
             "restY": pv("double", 0.89),
         },
     })
@@ -477,7 +492,7 @@ def build_world():
         "transform": mat4_translate(-0.55, 0.82, -0.35, (0.85, 0.08, 0.7)),
         "center": [-0.55, 0.82, -0.35],
         "materialId": "material.studio.socket",
-        "faceColors": make_face_colors((0.08, 0.09, 0.12)),
+        "faceColors": make_face_colors((0.055, 0.065, 0.09)),
         "authoredProperties": {"displayName": pv("string", "Theme Toggle Frame")},
     })
     # Raised Toggle Switch
@@ -490,7 +505,7 @@ def build_world():
         "transform": mat4_translate(-0.55, 0.89, -0.35, (0.7, 0.16, 0.55)),
         "center": [-0.55, 0.89, -0.35],
         "materialId": "material.studio.btn.gold",
-        "faceColors": make_face_colors((1.0, 0.7, 0.15)),
+        "faceColors": make_face_colors((0.95, 0.68, 0.20)),
         "authoredProperties": {
             "displayName": pv("string", "☼ Toggle Night/Day Theme"),
             "controlLabel": pv("string", "DAY / NIGHT"),
@@ -526,15 +541,17 @@ def build_world():
         "transform": mat4_translate(1.28, 0.82, -0.35, (2.35, 0.08, 0.7)),
         "center": [1.28, 0.82, -0.35],
         "materialId": "material.studio.socket",
-        "faceColors": make_face_colors((0.08, 0.09, 0.12)),
+        "faceColors": make_face_colors((0.055, 0.065, 0.09)),
         "authoredProperties": {"displayName": pv("string", "Chord Pad Frame")},
     })
 
     chord_pads = [
-        ("studio.pad.c5", "♫ Note C5 (Do)", 0.42, (0.95, 0.22, 0.32), 523.25, "C5"),
-        ("studio.pad.e5", "♫ Note E5 (Mi)", 0.98, (1.0, 0.72, 0.12), 659.25, "E5"),
-        ("studio.pad.g5", "♫ Note G5 (Sol)", 1.54, (0.18, 0.88, 0.45), 783.99, "G5"),
-        ("studio.pad.b5", "♫ Note B5 (Ti)", 2.10, (0.28, 0.48, 1.0), 987.77, "B5"),
+        # The same four hues the dock uses, so a 3D pad and its screen twin
+        # read as one control seen twice rather than as two unrelated things.
+        ("studio.pad.c5", "♫ Note C5 (Do)", 0.42, (0.90, 0.28, 0.36), 523.25, "C5"),
+        ("studio.pad.e5", "♫ Note E5 (Mi)", 0.98, (0.96, 0.70, 0.18), 659.25, "E5"),
+        ("studio.pad.g5", "♫ Note G5 (Sol)", 1.54, (0.24, 0.82, 0.48), 783.99, "G5"),
+        ("studio.pad.b5", "♫ Note B5 (Ti)", 2.10, (0.34, 0.52, 0.96), 987.77, "B5"),
     ]
     for pad_id, pad_name, pos_x, rgb, freq, note in chord_pads:
         zone_objects.append({
@@ -568,7 +585,7 @@ def build_world():
         "transform": mat4_translate(1.28, 1.12, -0.35, (2.2, 0.12, 0.04)),
         "center": [1.28, 1.12, -0.35],
         "materialId": "material.studio.sign.dark",
-        "faceColors": make_face_colors((0.22, 0.25, 0.32)),
+        "faceColors": make_face_colors((0.17, 0.20, 0.27)),
         "authoredProperties": {"displayName": pv("string", "[ ♫ CHORD KEYS: C5 · E5 · G5 · B5 ]")},
     })
 
@@ -582,7 +599,7 @@ def build_world():
         "transform": mat4_translate(0.0, 0.82, 0.55, (2.8, 0.04, 0.2)),
         "center": [0.0, 0.82, 0.55],
         "materialId": "material.studio.track",
-        "faceColors": make_face_colors((0.25, 0.27, 0.32)),
+        "faceColors": make_face_colors((0.20, 0.22, 0.28)),
         "authoredProperties": {
             "displayName": pv("string", "Pulse Rate Slider Track"),
         },
@@ -626,171 +643,148 @@ def build_world():
         "transform": mat4_translate(0.0, 1.05, 0.55, (1.8, 0.1, 0.04)),
         "center": [0.0, 1.05, 0.55],
         "materialId": "material.studio.sign.dark",
-        "faceColors": make_face_colors((0.25, 0.28, 0.35)),
+        "faceColors": make_face_colors((0.17, 0.20, 0.27)),
         "authoredProperties": {"displayName": pv("string", "[ ⟷ RESONANCE SLIDER ]")},
     })
 
     # -----------------------------------------------------------------------
-    # 2D Screen-Space HUD Action Dock (ShapeKind::Shape2D = 12)
-    # Direct clickable screen controls overlaying the viewport
+    # The screen-space surface: a legend that says what this place is, and a
+    # dock of controls along the bottom.
+    #
+    # Laid out in WINDOW POINTS against the 1280x720 the engine opens with
+    # (Engine.cpp glfwCreateWindow) — the same space glfwGetCursorPos reports
+    # and, since the repair to Renderer::begin2D's contract, the same space
+    # these rectangles are drawn in. They used to be drawn in framebuffer
+    # pixels and picked in window points, so on a Retina display the dock
+    # appeared at half position with its hit region at double, and no control
+    # here could be clicked at all.
+    #
+    # Text2D beings carry no width, which is what keeps a caption out of the
+    # pick: getRect2D collapses to a zero-width strip, so a legend cannot
+    # swallow a click meant for the world behind it.
     # -----------------------------------------------------------------------
-    # 1. Top Screen Banner Card
-    zone_objects.append({
-        "objectID": "hud.banner.title",
-        "shapeKind": 12, # Shape2D
-        "geometryType": 12,
-        "shapeParams": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-        "transform": mat4_translate(0.0, 0.0, 0.0),
-        "center": [0.0, 0.0, 0.0],
-        "x2D": 320.0,
-        "y2D": 18.0,
-        "zOrder2D": 10,
-        "materialId": "",
-        "faceColors": make_face_colors((0.10, 0.12, 0.16)),
-        "authoredProperties": {
-            "displayName": pv("string", "✦ SYNTHESIS STUDIO ✦ Click HUD or 3D Widgets to Interact"),
-            "shape.width2D": pv("double", 640.0),
-            "shape.height2D": pv("double", 38.0),
-        },
-    })
+    INK = (0.93, 0.94, 0.97)
+    INK_DIM = (0.55, 0.60, 0.70)
+    GOLD = (1.0, 0.78, 0.32)
 
-    # 2. Bottom Screen Dock Background
-    zone_objects.append({
-        "objectID": "hud.dock.bg",
-        "shapeKind": 12,
-        "geometryType": 12,
-        "shapeParams": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-        "transform": mat4_translate(0.0, 0.0, 0.0),
-        "center": [0.0, 0.0, 0.0],
-        "x2D": 240.0,
-        "y2D": 645.0,
-        "zOrder2D": 10,
-        "materialId": "",
-        "faceColors": make_face_colors((0.08, 0.10, 0.14)),
-        "authoredProperties": {
-            "displayName": pv("string", "HUD Control Dock Background"),
-            "shape.width2D": pv("double", 800.0),
-            "shape.height2D": pv("double", 55.0),
-        },
-    })
-
-    # 3. 2D HUD Button: Spawn Orb
-    hud_btn_spawn = "hud.btn.spawn-orb"
-    zone_objects.append({
-        "objectID": hud_btn_spawn,
-        "shapeKind": 12,
-        "geometryType": 12,
-        "shapeParams": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-        "transform": mat4_translate(0.0, 0.0, 0.0),
-        "center": [0.0, 0.0, 0.0],
-        "x2D": 255.0,
-        "y2D": 653.0,
-        "zOrder2D": 20,
-        "materialId": "",
-        "faceColors": make_face_colors((0.15, 0.58, 0.98)),
-        "authoredProperties": {
-            "displayName": pv("string", "HUD: Spawn Orb"),
-            "controlLabel": pv("string", "SPAWN ORB"),
-            "buttonRole": pv("string", "spawn-orb"),
-            "acoustic.frequency": pv("double", 587.33),
-            "acoustic.amplitude": pv("double", 0.55),
-            "shape.width2D": pv("double", 130.0),
-            "shape.height2D": pv("double", 38.0),
-            "restY2D": pv("double", 653.0),
-        },
-    })
-    relations.append(instance_rel(hud_btn_spawn, "category.control.button"))
-
-    # 4. 2D HUD Button: Theme Toggle
-    hud_btn_theme = "hud.btn.toggle-theme"
-    zone_objects.append({
-        "objectID": hud_btn_theme,
-        "shapeKind": 12,
-        "geometryType": 12,
-        "shapeParams": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-        "transform": mat4_translate(0.0, 0.0, 0.0),
-        "center": [0.0, 0.0, 0.0],
-        "x2D": 395.0,
-        "y2D": 653.0,
-        "zOrder2D": 20,
-        "materialId": "",
-        "faceColors": make_face_colors((1.0, 0.70, 0.15)),
-        "authoredProperties": {
-            "displayName": pv("string", "HUD: Day/Night"),
-            "controlLabel": pv("string", "DAY / NIGHT"),
-            "buttonRole": pv("string", "toggle-theme"),
-            "acoustic.frequency": pv("double", 392.0),
-            "acoustic.amplitude": pv("double", 0.55),
-            "shape.width2D": pv("double", 120.0),
-            "shape.height2D": pv("double", 38.0),
-            "restY2D": pv("double", 653.0),
-        },
-    })
-    relations.append(instance_rel(hud_btn_theme, "category.control.toggle"))
-
-    # 5. 2D HUD Chord Keys (C5, E5, G5, B5)
-    hud_pads = [
-        ("hud.pad.c5", "HUD: Note C5", 525.0, (0.95, 0.22, 0.32), 523.25, "C5"),
-        ("hud.pad.e5", "HUD: Note E5", 585.0, (1.0, 0.72, 0.12), 659.25, "E5"),
-        ("hud.pad.g5", "HUD: Note G5", 645.0, (0.18, 0.88, 0.45), 783.99, "G5"),
-        ("hud.pad.b5", "HUD: Note B5", 705.0, (0.28, 0.48, 1.0), 987.77, "B5"),
-    ]
-    for hpad_id, hpad_name, x_pos, rgb, freq, note in hud_pads:
-        zone_objects.append({
-            "objectID": hpad_id,
-            "shapeKind": 12,
-            "geometryType": 12,
-            "shapeParams": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+    def text2d(object_id, text, x, y, size, rgb, z=30):
+        return {
+            "objectID": object_id,
+            "shapeKind": 13,  # Text2D
+            "geometryType": 13,
+            "shapeParams": [0.0] * 9,
             "transform": mat4_translate(0.0, 0.0, 0.0),
             "center": [0.0, 0.0, 0.0],
-            "x2D": x_pos,
-            "y2D": 653.0,
-            "zOrder2D": 20,
+            "x2D": float(x),
+            "y2D": float(y),
+            "zOrder2D": z,
             "materialId": "",
             "faceColors": make_face_colors(rgb),
             "authoredProperties": {
-                "displayName": pv("string", hpad_name),
-                "controlLabel": pv("string", note),
-                "noteName": pv("string", note),
-                "acoustic.frequency": pv("double", freq),
-                "acoustic.amplitude": pv("double", 0.85),
-                "acoustic.waveType": pv("string", "triangle"),
-                "isChordPad": pv("bool", True),
-                "shape.width2D": pv("double", 52.0),
-                "shape.height2D": pv("double", 38.0),
-                "restY2D": pv("double", 653.0),
+                "displayName": pv("string", text),
+                "label2D": pv("string", text),
+                "shape.width2D": pv("double", 0.0),
+                "shape.height2D": pv("double", float(size)),
             },
-        })
+        }
+
+    zone_objects.append(text2d("hud.title", "SYNTHESIS STUDIO", 30, 26, 24, GOLD))
+    zone_objects.append(
+        text2d("hud.title.sub", "a studio authored entirely as laws, beings and relations",
+               30, 54, 13, INK_DIM))
+
+    # The manual, in the world. Zach's play-test: "no tooltip visible, no
+    # manual, no button or lever-like widget indicators... what am I supposed
+    # to do with this". Nothing here was discoverable by looking, and the
+    # signs that were meant to say so were blank cubes.
+    for row, line in enumerate([
+        "CLICK a dock button below, or the matching block on the desk ahead.",
+        "SPAWN ORB   mints a harmonic orb; each one lands further around the ring.",
+        "DAY / NIGHT flips the studio's ambient. C5 E5 G5 B5 sound the chord.",
+        "DRAW        turns drawing on, then hold and drag across the white easel.",
+        "The slider on the desk sets the pulse rate the crystal breathes at.",
+    ]):
+        zone_objects.append(
+            text2d(f"hud.legend.{row}", line, 30, 92 + row * 19, 13,
+                   INK if row == 0 else INK_DIM))
+
+    # --- the dock ---------------------------------------------------------
+    DOCK_Y = 638.0
+    BTN_Y = 650.0
+    BTN_H = 40.0
+
+    def hud_plate(object_id, label, x, w, rgb, props=None, z=20, y=BTN_Y, h=BTN_H):
+        authored = {
+            "displayName": pv("string", label),
+            "controlLabel": pv("string", label),
+            "shape.width2D": pv("double", float(w)),
+            "shape.height2D": pv("double", float(h)),
+            "restY2D": pv("double", float(y)),
+        }
+        authored.update(props or {})
+        return {
+            "objectID": object_id,
+            "shapeKind": 12,
+            "geometryType": 12,
+            "shapeParams": [0.0] * 9,
+            "transform": mat4_translate(0.0, 0.0, 0.0),
+            "center": [0.0, 0.0, 0.0],
+            "x2D": float(x),
+            "y2D": float(y),
+            "zOrder2D": z,
+            "materialId": "",
+            "faceColors": make_face_colors(rgb),
+            "authoredProperties": authored,
+        }
+
+    dock = hud_plate("hud.dock.bg", "HUD Control Dock", 298, 684, (0.07, 0.08, 0.11),
+                     z=10, y=DOCK_Y, h=64.0)
+    dock["authoredProperties"].pop("controlLabel")   # a plate is not a control
+    zone_objects.append(dock)
+
+    hud_btn_spawn = "hud.btn.spawn-orb"
+    zone_objects.append(hud_plate(
+        hud_btn_spawn, "SPAWN ORB", 314, 132, (0.16, 0.55, 0.92), {
+            "buttonRole": pv("string", "spawn-orb"),
+            "acoustic.frequency": pv("double", 587.33),
+            "acoustic.amplitude": pv("double", 0.55),
+        }))
+    relations.append(instance_rel(hud_btn_spawn, "category.control.button"))
+
+    hud_btn_theme = "hud.btn.toggle-theme"
+    zone_objects.append(hud_plate(
+        hud_btn_theme, "DAY / NIGHT", 454, 126, (0.95, 0.68, 0.20), {
+            "buttonRole": pv("string", "toggle-theme"),
+            "acoustic.frequency": pv("double", 392.0),
+            "acoustic.amplitude": pv("double", 0.55),
+        }))
+    relations.append(instance_rel(hud_btn_theme, "category.control.toggle"))
+
+    hud_pads = [
+        ("hud.pad.c5", "C5", 590.0, (0.90, 0.28, 0.36), 523.25),
+        ("hud.pad.e5", "E5", 644.0, (0.96, 0.70, 0.18), 659.25),
+        ("hud.pad.g5", "G5", 698.0, (0.24, 0.82, 0.48), 783.99),
+        ("hud.pad.b5", "B5", 752.0, (0.34, 0.52, 0.96), 987.77),
+    ]
+    for hpad_id, note, x_pos, rgb, freq in hud_pads:
+        zone_objects.append(hud_plate(hpad_id, note, x_pos, 48, rgb, {
+            "noteName": pv("string", note),
+            "acoustic.frequency": pv("double", freq),
+            "acoustic.amplitude": pv("double", 0.85),
+            "acoustic.waveType": pv("string", "triangle"),
+            "isChordPad": pv("bool", True),
+        }))
         relations.append(instance_rel(hpad_id, "category.control.button"))
 
-    # 6. 2D HUD Button: Draw Stroke Mode Indicator
     hud_btn_draw = "hud.btn.draw-stroke"
-    zone_objects.append({
-        "objectID": hud_btn_draw,
-        "shapeKind": 12,
-        "geometryType": 12,
-        "shapeParams": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-        "transform": mat4_translate(0.0, 0.0, 0.0),
-        "center": [0.0, 0.0, 0.0],
-        "x2D": 768.0,
-        "y2D": 653.0,
-        "zOrder2D": 20,
-        "materialId": "",
-        "faceColors": make_face_colors((0.72, 0.32, 0.95)),
-        "authoredProperties": {
-            "displayName": pv("string", "HUD: Draw Canvas Mode"),
-            "controlLabel": pv("string", "DRAW: OFF"),
+    zone_objects.append(hud_plate(
+        hud_btn_draw, "DRAW: OFF", 810, 152, (0.62, 0.36, 0.90), {
             "buttonRole": pv("string", "draw-mode"),
-            "acoustic.frequency": pv("double", 493.88),   # B4
+            "acoustic.frequency": pv("double", 493.88),
             "acoustic.amplitude": pv("double", 0.55),
-            "shape.width2D": pv("double", 155.0),
-            "shape.height2D": pv("double", 38.0),
-            "restY2D": pv("double", 653.0),
-        },
-    })
+        }))
     relations.append(instance_rel(hud_btn_draw, "category.control.button"))
 
-    # Studio State Being
     # The studio's ambient state — the being every law addresses as
     # "@state.studio.*". It holds state, it is not a control, and it must not
     # look like one.
@@ -814,7 +808,7 @@ def build_world():
         "transform": mat4_translate(0.0, -4.0, 0.0, (0.02, 0.02, 0.02)),
         "center": [0.0, -4.0, 0.0],
         "materialId": "material.studio.slate",
-        "faceColors": make_face_colors((0.16, 0.18, 0.22)),
+        "faceColors": make_face_colors((0.13, 0.145, 0.185)),
         "authoredProperties": {
             "displayName": pv("string", "Studio Ambient State"),
             "themeNight": pv("bool", False),
@@ -862,6 +856,11 @@ def build_world():
         ["control-activated"],
         compare("buttonRole", 0, pv("string", "spawn-orb")),
         seq(
+            # The note comes FIRST. A Create node hands its children the newborn
+            # as their subject, and a sibling after it no longer reads the
+            # button — so a PlayAudio placed below the Create read the orb's
+            # slot on the button and sounded nothing at all.
+            play_audio("acoustic.frequency", "acoustic.amplitude", "triangle"),
             map_path("@state.studio.spawnCount", {"c": "@state.studio.spawnCount"}, offset_terms("c", 1.0)),
             create_object(
                 1,  # Sphere
@@ -895,8 +894,6 @@ def build_world():
                     add_relation("", "category.interactive.orb", "instance-of"),
                 ],
             ),
-            # The button sounds ITSELF now, not one shared 440 Hz constant.
-            play_audio("acoustic.frequency", "acoustic.amplitude", "triangle"),
             map_path("position.y", {"ry": "restY"}, offset_terms("ry", -0.04)),
             map_path("y2D", {"r": "restY2D"}, offset_terms("r", 3.0)),
             publish("orb-spawned", "state.studio"),

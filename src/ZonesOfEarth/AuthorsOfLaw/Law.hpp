@@ -875,6 +875,10 @@ private:
     // ------------------------------------------------------------------
     void seedStateFacts(Singular* being);
     std::unordered_set<std::string> _seededSubjects;
+    // Relation types any registered law's condition names. Maintained by
+    // compileConditionsToRete; see seedStateFacts for why the narrowing is
+    // sound and why it is worth doing.
+    std::unordered_set<std::string> _relationTypesInPlay;
     bool _connected = false;
     bool _dirty = false;
     TickTiming _tickTiming;

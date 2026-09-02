@@ -21,6 +21,38 @@ struct RelationCreatedEvent {
 // as well as serialize the entire relation graph to JSON for persistence.
 class RelationManager {
 public:
+    // ---------------------------------------------------------------------
+    // A being can leave the world while relations still point at it.
+    //
+    // That is not an error — control_patterns_test does it deliberately
+    // (`cats.remove(category.control.button)` with instance-of edges still in
+    // the graph), and the engine's answer is supposed to be "the edge is
+    // simply skipped." But a Relation holds its endpoints as raw pointers and
+    // `aId()`/`bId()` call a VIRTUAL getIdentifier() through them, so reading
+    // such an edge is `__cxa_pure_virtual` — an abort, from a query. Every
+    // graph walk (`isBetween`, `involves`, the Related condition) hits it.
+    //
+    // So the graph is told. `forgetBeingEverywhere` drops the pointer and
+    // keeps the NAME, which returns the relation to the same state a save
+    // holds before its endpoints are resolved — a state every reader already
+    // handles. The relation itself survives: an edge to a being that has left
+    // is still an authorship no one revoked.
+    //
+    // Anchored on the MANAGER rather than on Relation itself, deliberately.
+    // Relations are value-copied (fromJson returns one by value), so a
+    // per-Relation registry misses copies and its static teardown races the
+    // shared_ptrs that own them. Managers are few, stable, and own the
+    // relations that are actually reachable.
+    // ---------------------------------------------------------------------
+    static void forgetBeingEverywhere(const Singular* being);
+
+    RelationManager();
+    RelationManager(const RelationManager& other);
+    RelationManager(RelationManager&& other) noexcept;
+    RelationManager& operator=(const RelationManager& other);
+    RelationManager& operator=(RelationManager&& other) noexcept;
+    ~RelationManager();
+
     void add(const std::shared_ptr<Relation>& r);
 
     bool remove(const std::shared_ptr<Relation>& r);

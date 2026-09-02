@@ -30,7 +30,6 @@
 
 #include <cmath>
 #include <cstdio>
-#include <cstdlib>
 #include <fstream>
 #include <memory>
 #include <string>
@@ -131,6 +130,12 @@ int main() {
             for (int c = 0; c < 4; ++c)
                 for (int r = 0; r < 4; ++r) m[c][r] = t[c * 4 + r].get<float>();
             obj->setTransform(m);
+        }
+        if (objJson.contains("faceColors")) {
+            int face = 0;
+            for (const auto& c : objJson["faceColors"]) {
+                obj->setFaceColor(face++, c[0].get<float>(), c[1].get<float>(), c[2].get<float>());
+            }
         }
         if (objJson.contains("x2D")) obj->setX2D(objJson["x2D"].get<float>());
         if (objJson.contains("y2D")) obj->setY2D(objJson["y2D"].get<float>());
@@ -236,31 +241,11 @@ int main() {
     }
 
     std::time_t clock = std::time(nullptr);
-    const bool debug = std::getenv("STUDIO_DEBUG") != nullptr;
     const auto publish = [&](const char* type, Object* subject) {
         Core::EventBus::instance().publish(ECA::Event{type, subject, nullptr, ++clock});
-        auto recs = laws.tick();
-        if (debug) {
-            std::printf("  [%s on %s] %zu record(s)\n", type,
-                        subject ? subject->getIdentifier().c_str() : "null", recs.size());
-            for (const auto& r : recs)
-            {
-                std::printf("      %s / %s -> result %d changed=%d\n", r.lawId.c_str(),
-                            r.targetId.c_str(), (int)r.result, (int)r.changedSomething());
-                for (const auto& c : r.conditionDescriptions)
-                    std::printf("           cond: %s\n", c.c_str());
-            }
-        }
+        laws.tick();
     };
     const auto activate = [&](Object& being) { publish("control-activated", &being); };
-
-    if (debug) {
-        auto recs = laws.tick();
-        std::printf("--- bare tick: %zu record(s)\n", recs.size());
-        for (const auto& r : recs)
-            std::printf("      %s / %s -> result %d\n", r.lawId.c_str(), r.targetId.c_str(),
-                        (int)r.result);
-    }
 
     // ------------------------------------------------------------------
     // 2. PlayAudio actually sounds, and says so honestly when it cannot.
@@ -273,20 +258,7 @@ int main() {
     {
         registerAudioSink(nullptr);
         g_sounded.clear();
-        if (debug) {
-            PropertyValue v;
-            std::printf("  probe pre : isChordPad read=%d val=%d\n",
-                        (int)lawGetValue(*padC5, PropertyPath::parse("isChordPad"), v),
-                        (int)(std::holds_alternative<bool>(v) && std::get<bool>(v)));
-        }
         activate(*padC5);
-        if (debug) {
-            PropertyValue v;
-            std::printf("  probe post: isChordPad read=%d val=%d  freq read=%d\n",
-                        (int)lawGetValue(*padC5, PropertyPath::parse("isChordPad"), v),
-                        (int)(std::holds_alternative<bool>(v) && std::get<bool>(v)),
-                        (int)lawGetValue(*padC5, PropertyPath::parse("acoustic.frequency"), v));
-        }
         check(g_sounded.empty(), "with no audio channel bound, nothing is sounded");
 
         registerAudioSink([](Singular& subject, double frequency, double amplitude,
@@ -363,17 +335,6 @@ int main() {
         check(readBool(*stateStudio, "themeNight"), "one click turns night on");
         laws.tick();
         const double nightR = readNumber(*floorObj, "color.r");
-        if (debug) {
-            std::printf("  floor color.r = %f ; handle cv=%f px=%f ; pulse=%f\n", nightR,
-                        readNumber(*handle, "controlValue"),
-                        readNumber(*handle, "position.x"),
-                        readNumber(*stateStudio, "pulseRate"));
-            auto recs = laws.tick();
-            std::printf("  continuous tick: %zu record(s)\n", recs.size());
-            for (const auto& r : recs)
-                std::printf("      %s / %s -> %d changed=%d\n", r.lawId.c_str(),
-                            r.targetId.c_str(), (int)r.result, (int)r.changedSomething());
-        }
         check(nearly(nightR, 0.07, 0.02), "and the studio's surfaces take the night ambient");
 
         activate(*btnTheme);

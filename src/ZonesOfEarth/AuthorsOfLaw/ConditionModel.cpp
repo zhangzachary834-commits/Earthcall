@@ -486,6 +486,19 @@ std::vector<std::size_t> ConditionNode::compileToRete(ReteNetwork& rete,
         // holding c AND d matched nothing at all.
         std::vector<std::size_t> currents{leftId};
         for (const auto& child : children) {
+            // A conjunct that reads someone ELSE'S state is dropped from the
+            // index, not compiled into it. The terminals are a CANDIDATE
+            // filter — Law::applyTo re-evaluates the whole condition tree
+            // against the subject before it fires — so leaving a conjunct out
+            // widens the candidate set and changes no outcome. Compiling it in
+            // would narrow the set to nothing, because no fact carries an
+            // "@"-rooted attribute; and refusing the whole law an index would
+            // put it on the full sweep every tick, which is what a channel-
+            // reading law like art-stroke-draw-law does sixty times a second.
+            //
+            // Widen where uncertain, never narrow. PROPHETIC_RETE.md §2.
+            if (child.readsQualifiedRoot()) continue;
+
             std::vector<std::size_t> next;
             for (std::size_t left : currents) {
                 // leftId 0 is the "no left yet" sentinel, so it is never a node
@@ -502,6 +515,14 @@ std::vector<std::size_t> ConditionNode::compileToRete(ReteNetwork& rete,
         return currents;
     }
     if (kind == Kind::Any) {
+        // A DISJUNCT may not be dropped the way a conjunct can: "local OR
+        // remote" is satisfiable with the local half false, so leaving the
+        // remote half out would narrow the candidate set and make the law
+        // deaf exactly when the remote half is the reason it should fire.
+        // No index at all is the honest answer; the sweep still reaches it.
+        for (const auto& child : children) {
+            if (child.readsQualifiedRoot()) return {};
+        }
         std::vector<std::size_t> allTerminals;
         for (const auto& child : children) {
             auto t = child.compileToRete(rete, lawId, leftId, leftIsBeta);
@@ -530,12 +551,10 @@ std::vector<std::size_t> ConditionNode::compileToRete(ReteNetwork& rete,
     // vocabulary filter for the same reason, in the same words. This is that
     // rule, applied on the reactive path where it was missing: no filter is
     // correct here, and the compiled predicate below still decides the truth.
+    if (readsQualifiedRoot()) return {};
+
     std::string targetAttr = "";
-    if (kind == Kind::Compare) {
-        const bool qualifiedRoot = !path.segments.empty() && !path.segments.front().empty() &&
-                                   path.segments.front()[0] == '@';
-        if (!qualifiedRoot) targetAttr = path.segments.empty() ? "" : path.segments.front();
-    }
+    if (kind == Kind::Compare) targetAttr = path.segments.empty() ? "" : path.segments.front();
     else if (kind == Kind::Related) targetAttr = relationType;
     
     std::string desc = this->describe();
@@ -586,6 +605,26 @@ std::vector<std::size_t> ConditionNode::compileToRete(ReteNetwork& rete,
         });
         
     return {betaId};
+}
+
+void ConditionNode::collectRelationTypes(std::unordered_set<std::string>& out) const {
+    if (kind == Kind::Related && !relationType.empty()) out.insert(relationType);
+    for (const auto& child : children) child.collectRelationTypes(out);
+}
+
+bool ConditionNode::readsQualifiedRoot() const {
+    const auto qualified = [](const PropertyPath& p) {
+        return !p.segments.empty() && !p.segments.front().empty() &&
+               p.segments.front()[0] == '@';
+    };
+    if (qualified(path) || qualified(operandPath) || qualified(probe)) return true;
+    for (const auto& binding : bindings) {
+        if (qualified(binding.second)) return true;
+    }
+    for (const auto& child : children) {
+        if (child.readsQualifiedRoot()) return true;
+    }
+    return false;
 }
 
 void ConditionNode::collectPaths(std::vector<PropertyPath>& out) const {

@@ -1472,6 +1472,14 @@ void LawManager::connectToEventBus() {
         for (const std::string& subjectId : _rete.retractFactsAbout(being)) {
             _seededSubjects.erase(subjectId);
         }
+        // …and every RELATION that held it lets go of the pointer, keeping the
+        // name. Relations outlive their endpoints all the time (a Formation, a
+        // provenance record, a test's own graph), and aId()/bId() call a
+        // virtual through the pointer — so a stale endpoint is not a stale
+        // read, it is an abort in whatever next asks the graph a question.
+        // This is the one hook that hears about every being's death, so it is
+        // where the graph finds out too.
+        RelationManager::forgetBeingEverywhere(being);
     });
 
     Singular::setPropertyChangeCallback([this](Singular* owner, const std::string& name) {
@@ -2212,6 +2220,50 @@ void LawManager::seedStateFacts(Singular* being) {
         stateFact->dirty = false;
         _rete.assertFact(stateFact);
     }
+
+    // A being's EDGES are state too.
+    //
+    // ConditionNode::compileToRete has always filtered Related alphas on a
+    // "relation-state" fact type — and nothing in the tree ever asserted one.
+    // So a Related condition inside a CONTINUOUS law compiled to a terminal
+    // that no fact could ever reach, and because a law with terminals never
+    // falls through to the sweep, the law was deaf with no error anywhere:
+    // exactly what PROPHETIC_RETE.md §2 forbids. Every "every instance of this
+    // category, every tick" law in the tree was in that state, the Synthesis
+    // Studio's slider among them.
+    //
+    // One fact per edge the being is the SOURCE of, attributed by relation
+    // type, which is what the alpha filters on. The fact only has to wake the
+    // node with the right subject — the compiled predicate behind it still
+    // answers the real question against the live graph.
+    // Only the relation's own TYPE is read here, never its far endpoint.
+    // `Relation::bId()` dereferences `_b` for a virtual getIdentifier(), and a
+    // relation whose far end has already been destroyed is a real thing to
+    // find in a graph — control_patterns_test holds several, left behind by
+    // scoped Objects. This loop is not the place to discover that: it runs on
+    // every being on the first tick, and one stale edge would take the whole
+    // engine down. The alpha filter matches on `attribute` alone, and the
+    // compiled predicate behind it re-reads the live graph anyway, so the far
+    // end is not needed and is deliberately not touched.
+    // Narrowed to the relation types some law actually names. A Related alpha
+    // filters on nothing but the type, so a fact whose type no condition
+    // mentions can wake no node — this is a provably-IMPOSSIBLE narrowing, the
+    // only kind PROPHETIC_RETE.md §2 permits, and it keeps a graph of hundreds
+    // of edges from asserting a fact per edge per being.
+    if (!_relationTypesInPlay.empty()) {
+        for (Relation* relation : Universe::instance().relations()) {
+            if (!relation || relation->a() != being) continue;
+            if (!_relationTypesInPlay.count(relation->type)) continue;
+            auto edgeFact = std::make_shared<ReteFact>();
+            edgeFact->type = "relation-state";
+            edgeFact->subject = being;
+            edgeFact->subjectId = subjectId;
+            edgeFact->attribute = relation->type;
+            edgeFact->isState = true;
+            edgeFact->dirty = false;
+            _rete.assertFact(edgeFact);
+        }
+    }
 }
 
 void LawManager::syncReteCompilation(Law& law) {
@@ -2239,6 +2291,10 @@ void LawManager::syncReteCompilation(Law& law) {
 
 void LawManager::compileConditionsToRete(Law& law) {
     const std::string lawId = law.getIdentifier();
+    // Every relation type this law names joins the seeding vocabulary. Only
+    // grows: a type that was in play stays in play for the session, which
+    // costs a few facts and can never make a law deaf.
+    if (law.conditionModel()) law.conditionModel()->collectRelationTypes(_relationTypesInPlay);
     // Stamped first, and unconditionally: the paths below that give up early
     // (no model, nothing compilable) are still a complete answer for THIS
     // revision, and re-deciding it every tick would be a standing tax.

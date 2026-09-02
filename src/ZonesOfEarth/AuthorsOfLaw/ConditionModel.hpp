@@ -8,6 +8,7 @@
 #include "json.hpp"
 
 #include <memory>
+#include <unordered_set>
 #include <string>
 #include <vector>
 
@@ -118,6 +119,26 @@ struct ConditionNode {
                                            bool leftIsBeta = false) const;
 
     // One-line human summary for ApplicationRecord logs.
+    // Does this tree read a QUALIFIED ROOT — "@some-being.property",
+    // "@interaction-channel.leftDown", "@world.pointerOver"?
+    //
+    // Such a condition is about a being OTHER than the subject, and the
+    // incremental Rete cannot index it: a change to that other being marks
+    // ITS facts dirty, and the subjects whose match set just changed are
+    // every other being in the world. Propagation never reaches them, the
+    // terminal memory stays as it was, and — because a law that HAS terminals
+    // never falls through to the sweep — the law silently stops noticing.
+    //
+    // PROPHETIC_RETE.md §2: the analysis may only ever conclude IMPOSSIBLE.
+    // "I cannot index this" is a legitimate conclusion; "nothing matches" is
+    // not, and that is what the terminals were saying. LawManager consults
+    // this and declines to compile terminals for such a law, which costs it
+    // the O(1) path and leaves it correct on the sweep.
+    bool readsQualifiedRoot() const;
+
+    // Every relation type this tree's Related conditions name.
+    void collectRelationTypes(std::unordered_set<std::string>& out) const;
+
     std::string describe() const;
 
     // Every property this condition addresses ON ITS OWN SUBJECT — the

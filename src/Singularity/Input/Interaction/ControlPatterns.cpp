@@ -337,6 +337,21 @@ const std::vector<std::string>& controlPatternLawIds() {
 void syncRegisterControlPatterns(LawManager& laws, CategoryManager& categories,
                                  Singular& author) {
     seedControlCategories(categories, author);
+    // The art taxonomy is seeded on the same footing as the control taxonomy,
+    // and for a concrete reason: Zone hydration runs at BOOT, before any world
+    // file's categories are read, so a saved zone holding a
+    // "category.art.stroke subcategory-of category.art" edge found neither
+    // endpoint and Formation::addRelation refused it — the edge was dropped and
+    // then written back out missing on the next save. That is how the
+    // Synthesis Studio's Zone quietly lost three authored relations
+    // (SYNTHESIS_STUDIO_AUDIT_2026-09-02 §C1). seedArtCategories has existed
+    // since the stroke work landed and had no caller anywhere in src/.
+    //
+    // The three stroke LAW factories below it stay unregistered on purpose —
+    // a world that wants them adopts them, the way createKeyCommandLaw is
+    // adopted per key. Registering them here would double every stroke for any
+    // world that authored its own drawing law, which the Synthesis Studio has.
+    seedArtCategories(categories, author);
 
     struct Entry {
         std::shared_ptr<Law> law;

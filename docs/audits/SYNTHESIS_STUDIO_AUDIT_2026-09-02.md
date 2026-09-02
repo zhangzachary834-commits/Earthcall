@@ -551,3 +551,212 @@ document and the To-do list entry that accompanies it.
 
 ---
 *Claude Opus 5 · `session_01TE6SKxkBCVf2THDMpdwHPW` · 2026-09-02 01:48 PDT*
+
+---
+
+# REPAIR PASS — 2026-09-02, same session
+
+Zach: *"Antigravity is done now so you can build and compile. Can you fix the studio. Also make it
+look even more aesthetic after you're done fixing."*
+
+Everything in the audit above is now fixed, and the repair turned up **six engine defects the audit
+did not find by reading** — all of them wider than the Synthesis Studio, three of them silently
+breaking every authored world in the tree. The studio was not a badly-authored app sitting on a sound
+engine. It was a mostly-sound app sitting on a substrate where authored properties were invisible to
+the law network, authored `vec3`s deserialized to zero, and property lookups returned the wrong
+property.
+
+**Verification:** `cmake --build build -j8` clean; `ctest` 86 of 89 pass. The three failures are
+`smooth_tessellation_cache_test` (pre-existing, Bugs.md #11), `substrate_split_test` (pre-existing —
+verified failing on a stashed baseline before any of this), and `frame_lag_test` (a real regression I
+introduced, measured and recorded in §R12). `earthcall_webgpu` builds, boots, and runs.
+
+---
+
+## The six engine defects found while fixing
+
+### R1. Property lookups returned the WRONG property, engine-wide.
+
+`Singular::registerTelosProperty` and `findProperty`'s dynamic fallback each pushed the property's
+name into `_propertyNames` **and then called `registerProperty`, which pushes to both parallel
+arrays**. So `_propertyNames` ran one entry longer than `_propertyRegistry` from the first lookup on
+any being — and the lookup pairs them by index:
+
+```cpp
+for (size_t i = 0; i < _propertyNames.size(); ++i) {
+    if (_propertyNames[i] == id) return _propertyRegistry[i].get();   // off by one
+}
+```
+
+`registerTelosProperty` runs for **every being** at `buildProperties` time, so every property
+registered after `telos` resolved to the one registered before it. The symptom in the studio was a
+chord pad that answered `isChordPad == true` on the first click and `false` on every click after —
+each control worked exactly once per session. Fixed in `Singular.cpp`; both double-pushes removed.
+
+### R2. `listProperties()` omitted every authored property, so no law could watch one.
+
+`_propertyRegistry` only gains a `DynamicPropertyBridge` when `findProperty` is asked for that exact
+name, and `listProperties()` returned the registry as-is. Its most important caller is
+`LawManager::seedStateFacts`, which walks it to assert the `property-state` facts the Rete matches
+on. No fact, no match — so **a `WhileTrue` law conditioned on an authored property never fired for
+any being.** That is every continuous law the studio has, and every one in any other authored world.
+It also meant an authored property was invisible to inspection until something happened to touch it,
+which is Refusal 6 in the one place it is easiest to miss. `listProperties()` now materialises the
+bridges on demand.
+
+### R3. `relation-state` facts were filtered for and never produced.
+
+`ConditionNode::compileToRete` has always filtered `Related` alphas on a `"relation-state"` fact
+type. Nothing in the tree ever asserted one. So a `Related` condition inside a continuous law
+compiled to a terminal no fact could reach — and because a law that HAS terminals never falls
+through to the sweep, it was deaf with no error anywhere. Every "every instance of this category,
+every tick" law was in that state. `seedStateFacts` now asserts one fact per edge a being is the
+source of, narrowed to the relation types some law actually names (a provably-IMPOSSIBLE narrowing,
+the only kind `PROPHETIC_RETE.md` §2 permits).
+
+### R4. The Rete's attribute filter read a qualified root as a property name.
+
+`"@state.studio.themeNight"` parses to `["@state", "studio", "themeNight"]`, and the alpha filter
+took the first segment as the attribute to match. No fact anywhere carries an attribute rooted at
+`"@state"`, so the alpha rejected **every** fact. Any continuous law reading a channel or another
+being through an `@` root never matched anything — the ambient theme, the draw indicator, the slider
+clamp, the crystal's pulse, and the stroke-drawing law, all deaf.
+
+The fix is not to refuse the law an index (that puts channel-reading laws on the full sweep sixty
+times a second). The terminals are a **candidate filter** — `Law::applyTo` re-evaluates the whole
+condition tree before firing — so a qualified-root conjunct is now *dropped* from the index, which
+widens the candidate set and changes no outcome. A qualified-root **disjunct** cannot be dropped
+(that would narrow), so an `Any` containing one takes no index at all. Widen where uncertain, never
+narrow.
+
+### R5. A relation dereferenced a destroyed endpoint — an abort, from a read.
+
+`Relation::aId()`/`bId()` call a **virtual** `getIdentifier()` through raw endpoint pointers. A being
+can leave the world while relations still point at it — `control_patterns_test` does it deliberately
+(`cats.remove(category.control.button)` with `instance-of` edges still in the graph, testing that "an
+anchor that has left the world is skipped, never guessed"). Reading such an edge is
+`__cxa_pure_virtual`. Every graph walk hits it: `isBetween`, `involves`, the `Related` predicate.
+It had simply never been reached, because R3 meant nothing woke those predicates.
+
+`RelationManager::forgetBeingEverywhere` now drops the pointer and keeps the **name**, returning the
+relation to the same state a save holds before its endpoints are resolved — a state every reader
+already handles. Anchored on the manager rather than on `Relation` itself, because relations are
+value-copied (`fromJson` returns one by value) and a per-relation registry both misses copies and
+races the `shared_ptr`s that own them during static teardown. Both of those were tried; both crashed.
+
+### R6. Six debug `printf`s on the property hot path.
+
+`PropertyPath::resolve` and `setValue` carried bare `printf`s left over from the string-interning
+work — two of them printing on the SUCCESS path, all of them on the hottest lookup in the engine.
+Removed.
+
+---
+
+## The save-format defect that made every authored vec3 zero
+
+**A `vec3` PropertyValue does not serialize as `{"t":"vec3","v":[x,y,z]}`.** It serializes as
+`{"t":"vec3","x":..,"y":..,"z":..}` — `propertyValueFromJson` reads the `x`/`y`/`z` keys and ignores
+`v`. The authoring script used the `v` form for every vec3 it wrote, so **every one of them
+deserialized to the zero vector**, and nothing ever noticed because nothing read one back:
+
+- the orbs' authored `position (0, 1.6, 1.25)` was really `(0,0,0)` — they spawned inside the floor
+  at the world origin, which is why nothing appeared to happen;
+- the stroke colour was black; the hover-glow's white was black;
+- every `color` the theme laws would have written was black.
+
+Two more of the same family: `ActionNode::Set` **writes** an existing property and answers
+`NoSuchProperty` otherwise — it does not mint one — so every `set("acoustic.frequency", …)` aimed at
+a newborn failed silently, which is why spawned orbs and stroke segments had none of the acoustics
+`law-stroke-hover-sound` then tried to read (`AddProperty` is the node that grants). And `scale` is
+**not a registered property on Object** and never was, so `set("scale", …)` wrote nowhere and every
+orb came out at the default radius; `shape.r` is what a Sphere's size actually is.
+
+---
+
+## Every audit finding, resolved
+
+| # | Finding | Resolution |
+|---|---|---|
+| A0 | 2D draw and 2D pick in different coordinate spaces | `begin2D` now takes **window points**, stated as a contract in `Renderer.hpp`. Every `Shape2D` in the engine is clickable on HiDPI again. |
+| A1 | `PlayAudio` a stub with no listener, reporting success | Real executor reading its authored paths through a registered `AudioSink` (the `registerWorldReading` pattern, so no audio header enters `ActionModel`). Unbound → `emitEffect(false, "no audio channel bound")`. `AudioSystem` registers it; the infrasound Kernel floor still applies. |
+| A2 | Nothing rendered text | `draw2DObject` draws `Text2D` and centres a control's authored label on its plate, in whichever of black/white the fill can carry. Text comes from `label2D` → `controlLabel` → `displayName` — read from the being, never invented. |
+| A3 | `state.studio` a red click-eating square | Now a Cube parked below the floor: still a being, still addressable, no longer mistakable for a control. |
+| B1 | Theme toggle a one-way latch (`+1` on a bool) | `1 − v`, the form `createToggleLaw` carries the long-form argument for. |
+| B2 | Nothing read `themeNight` or `pulseRate` | Two new laws take the studio's surfaces to the night/day ambient; one more makes the crystal breathe at an authored sinusoid whose **amplitude the slider moves**. Both consequences are visible. |
+| B3 | Slider teleported, then ran unbounded | Placement now agrees with the law; `controlMin`/`controlMax` enforced by a three-piece Piecewise clamp (constant outside the bounds, so it stops rather than going undefined and freezing); `controlStep` retuned from a flick to a screen-width. |
+| B4 | Two laws duplicated engine first movers | Both deleted from the save, with the reasoning written where the next author will read it. The engine's three unregistered stroke factories now carry a comment saying they are deliberately adopt-per-world, like `createKeyCommandLaw`. |
+| B5 | "Draw mode" never toggled back; wrote an unknown mode | The studio keeps its own `drawMode` flag and flips it; the drawing law reads it. Two more laws make the button **say which state it is in**. |
+| B6 | Strokes landed at the origin or at screen pixels | The draw law now reads `isCanvas` — authored on the easel since the first draft and read by no law — plus `@world.pointerOver`. The authored constraint finally constrains. |
+| B7 | Newborn strokes inaudible; orbs stacked on one point | Newborns get their acoustics via `AddProperty`; `spawnCount` parameterises a ring, so the counter is something a Person can see. |
+| B8 | `restY` missing on HUD controls; no click feedback | `restY2D` authored on all five; the spring law writes both `position.y` and `y2D`, each a Map over a binding only one kind of control has. |
+| C1 | Zone file drifted, 3 relations lost | **Cause confirmed by running the app**, not inferred: `Zone 'SynthesisStudio': 3 saved formation relation(s) were REFUSED … with unbound Singular endpoints` — not a cycle. Zone hydration runs at boot, before a world file's categories load. `seedArtCategories` (written months ago, never called from `src/`) is now seeded at boot, which fixes the taxonomy edge; the two `authored-by` edges rebind when the world loads. The refusal message used to say "self-ground or a directed cycle" for every refusal and now names the actual cause. |
+| C2 | Seven dangling material ids | Minted. |
+| C3 | First Movers stored as categories | Left as-is — it is load-bearing for author reattachment and belongs to the First Mover framework task, now cross-referenced there. |
+| C4 | Generated `.ecform` silently shadows the `.json` | The authoring script deletes a stale `.ecform`/`.ecmatter` pair before rewriting. |
+| D | The test proved almost nothing | Rewritten. It loads the save, asserts every law reattached **authored**, publishes real events, ticks the `LawManager`, and asks the world what happened. 32 checks. It found R1–R5. |
+| E | No documentation, no `injected_by:` | This document; `injected_by` on both saves. |
+
+---
+
+## R12. The cost: `LawManager::tick` is ~43% slower
+
+Measured back-to-back on the same machine load (`frame_lag_test`, chess world): **11.63 ms baseline →
+16.67 ms**. Scaling stays linear (k = 1.100), so it is a constant factor, not a complexity change.
+Both numbers are far above the recorded 1.653 ms baseline because this machine was heavily loaded at
+the time (calibration ×1.8–2.2); the ratio is the meaningful figure.
+
+The cost buys R2 and R3: the law network can now see authored properties and relation edges at all.
+Every continuous law over an authored property or a category membership was previously firing zero
+times, which is cheap and wrong. The obvious next reduction is to seed only the property names some
+condition could read — `propheticHears` already answers exactly that question for the change callback
+— but it needs a re-seed when law text changes, or a law added later goes deaf, which is the failure
+this whole pass was about. Left as a task rather than done hastily.
+
+**The `frame_lag_baseline.txt` file has NOT been widened.** The LAG line is a real regression and
+should keep saying so until it is paid down.
+
+---
+
+## The aesthetic pass
+
+- **A legend, in the world.** The play-test's actual complaint — *"no tooltip visible, no manual, no
+  button or lever-like widget indicators… what am I supposed to do with this"* — is answered by five
+  `Text2D` lines at the top-left that say what each control does and how to draw. Now possible
+  because A2 made text render at all.
+- **A title** and a one-line subtitle, in the studio's gold.
+- **The dock, re-laid-out** in window points against the 1280×720 the engine opens with: centred,
+  even gutters, the four chord pads grouped, every plate carrying its own label.
+- **One palette instead of six.** A dark slate ground, a warm gold accent, a cool blue accent; the
+  3D pads retuned to the same four hues as their screen twins, so a pad and its dock button read as
+  one control seen twice.
+- `Text2D` beings carry no width, which keeps a caption out of the pick — a legend cannot swallow a
+  click meant for the world behind it.
+
+---
+
+## What a Person should see now
+
+Load **synthesis_studio** from the save menu.
+
+- A **titled legend** at the top-left telling you what to do, and a centred dock at the **bottom** of
+  the screen with nine **labelled** buttons.
+- **Click SPAWN ORB** — a gold sphere appears, and a D5 sounds. Click again: the next orb lands
+  further around a ring, not on top of the first.
+- **Click DAY / NIGHT** — the floor and console visibly darken. Click again: they come back. A G4
+  each time.
+- **Click a chord pad** — it dips, springs back, and sounds its own note: C5 523.25, E5 659.25,
+  G5 783.99, B5 987.77 Hz.
+- **Click DRAW** — the button turns green and reads **DRAW: ON**. Hold and drag across the white
+  easel: gold dabs follow the pointer, each of which chimes at 1046.5 Hz when you hover it later.
+  Click again to turn it off; the button says so.
+- **Drag the slider on the desk** — the handle stays on its track at both ends, and the crystal
+  pedestal's pulse deepens as you push the rate up.
+- The stray red square in the corner is gone.
+
+**Unfinished, and named rather than hidden:** the `frame_lag_test` regression in §R12; text renders
+only in 2D, so the five 3D signs on the desk are still unlabelled trim; `substrate_split_test`'s
+`.json` sidecar failure is pre-existing and untouched; and the two `authored-by` edges still refuse
+at boot hydration and rebind on world load, which is correct but noisy.
+
+---
+*Repair pass — Claude Opus 5 · `session_01TE6SKxkBCVf2THDMpdwHPW` · 2026-09-02*

@@ -54,6 +54,51 @@
 #include <unordered_set>
 #include <iostream>
 
+#include <unordered_set>
+
+// Leaked on purpose: a manager can be destroyed during static teardown, and a
+// registry destroyed before it would be erased from after its own death.
+namespace {
+std::unordered_set<RelationManager*>& liveManagers() {
+    static auto* live = new std::unordered_set<RelationManager*>();
+    return *live;
+}
+} // namespace
+
+void RelationManager::forgetBeingEverywhere(const Singular* being) {
+    if (!being) return;
+    for (RelationManager* manager : liveManagers()) {
+        if (!manager) continue;
+        for (const auto& relation : manager->relations) {
+            if (relation) relation->forgetEndpoint(being);
+        }
+    }
+}
+
+RelationManager::RelationManager() { liveManagers().insert(this); }
+
+RelationManager::RelationManager(const RelationManager& other)
+    : relations(other.relations) {
+    liveManagers().insert(this);
+}
+
+RelationManager::RelationManager(RelationManager&& other) noexcept
+    : relations(std::move(other.relations)) {
+    liveManagers().insert(this);
+}
+
+RelationManager& RelationManager::operator=(const RelationManager& other) {
+    if (this != &other) relations = other.relations;
+    return *this;
+}
+
+RelationManager& RelationManager::operator=(RelationManager&& other) noexcept {
+    if (this != &other) relations = std::move(other.relations);
+    return *this;
+}
+
+RelationManager::~RelationManager() { liveManagers().erase(this); }
+
 void RelationManager::add(const std::shared_ptr<Relation>& r) {
     if (!r) return;
     if (!r->hasEndpoints()) {

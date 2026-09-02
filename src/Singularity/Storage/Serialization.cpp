@@ -645,6 +645,7 @@ void applyFormationRelations(Zone& zone, const nlohmann::json& zj) {
     }
 
     size_t refused = 0;
+    size_t unbound = 0;
     for (const auto& relJson : zj["formationRelations"]) {
         auto rel = std::make_shared<Relation>(Relation::fromJson(relJson, [&](const std::string& id) {
             return resolveZoneEndpoint(zone, id);
@@ -653,17 +654,34 @@ void applyFormationRelations(Zone& zone, const nlohmann::json& zj) {
         if (existing.count(key)) continue;
         if (!zone.formation().add(rel)) {
             ++refused;
+            if (!rel->hasEndpoints()) ++unbound;
         } else {
             existing.insert(key);
         }
     }
     if (refused > 0) {
+        // Name the ACTUAL cause. This line used to say "self-ground or a
+        // directed cycle" for every refusal, and the common case is neither:
+        // an endpoint that is not in the world YET. Zone hydration runs at
+        // boot, before a world file's categories and authors are read, so a
+        // relation naming one of those finds nothing to bind to. Sending a
+        // reader to look for a cycle that is not there is the kind of
+        // confidently-wrong diagnostic that costs an afternoon.
         std::cout << "⚠️  Zone '" << zone.name() << "': " << refused
-                  << " saved formation relation(s) were REFUSED on load "
-                  << "(self-ground or a directed cycle). They are not in "
-                  << "the formation and will not be written back on the "
-                  << "next save. Fix them in the save file to keep them."
-                  << std::endl;
+                  << " saved formation relation(s) were REFUSED on load";
+        if (unbound > 0) {
+            std::cout << " — " << unbound << " because an endpoint is not in "
+                      << "the world yet (a being the world file has not "
+                      << "loaded, or one nothing authors)";
+            if (unbound < refused) std::cout << ", the rest";
+        }
+        if (unbound < refused) {
+            std::cout << " because the edge is a self-ground or closes a "
+                      << "directed cycle";
+        }
+        std::cout << ". They are not in the formation and will not be written "
+                  << "back on the next save. Fix them in the save file to keep "
+                  << "them." << std::endl;
     }
 }
 } // namespace
