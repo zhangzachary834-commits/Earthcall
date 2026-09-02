@@ -169,6 +169,23 @@ int main() {
         }
     }
 
+    // ---- 3c. implicit SDF / Field shape kind --------------------------------
+    {
+        channel.activeShapeKind = static_cast<int>(Object::ShapeKind::Field);
+        channel.activeImplicitExpr = "(sqrt(x*x + y*y) - 0.3)^2 + z*z - 0.01";
+        const std::size_t before = world.getOwnedObjects().size();
+        click();
+        check(world.getOwnedObjects().size() == before + 1, "field shape click births an Object");
+        if (world.getOwnedObjects().size() > before) {
+            const Object* born = world.getOwnedObjects().back().get();
+            check(born->getShapeKind() == Object::ShapeKind::Field,
+                  "newborn has ShapeKind::Field");
+            check(born->hasField(), "newborn has a field shape assigned");
+            check(born->getFieldData().expr == "(sqrt(x*x + y*y) - 0.3)^2 + z*z - 0.01",
+                  "newborn field shape preserves activeImplicitExpr");
+        }
+    }
+
     // ---- 4. every birth is its own being -----------------------------------
     // Counted relatively, not against a literal, so inserting a case above does
     // not silently move this one's goalposts.
