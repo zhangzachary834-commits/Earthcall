@@ -40,7 +40,11 @@ namespace Rendering {
             const bool pressed = ImGui::Button(label, ImVec2(118.0f, 0.0f));
             popActiveButtonStyle(active);
             if (pressed) {
-                apply3DMode(state, channel, mode);
+                if (active) {
+                    apply3DMode(state, channel, Mode3D::None);
+                } else {
+                    apply3DMode(state, channel, mode);
+                }
             }
         }
 

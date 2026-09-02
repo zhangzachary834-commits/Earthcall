@@ -22,7 +22,28 @@ void renderPerformanceMetricsWindow(bool* open, Core::Engine* engine) {
 
     if (ImGui::Begin("Performance & Coordinates", open, ImGuiWindowFlags_AlwaysAutoResize)) {
         ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "Core Metrics");
-        ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
+        ImGui::Text("FPS (instant): %.1f", ImGui::GetIO().Framerate);
+
+        // 5-second rolling average FPS
+        static float frameTimes[2048] = {0};
+        static int ftIdx = 0;
+        static int ftCount = 0;
+        
+        float dt = ImGui::GetIO().DeltaTime;
+        frameTimes[ftIdx] = dt;
+        ftIdx = (ftIdx + 1) % 2048;
+        if (ftCount < 2048) ftCount++;
+        
+        float sumDt = 0.0f;
+        int framesIn5s = 0;
+        for (int i = 0; i < ftCount; ++i) {
+            int idx = (ftIdx - 1 - i + 2048) % 2048;
+            sumDt += frameTimes[idx];
+            framesIn5s++;
+            if (sumDt >= 5.0f) break;
+        }
+        float avgFps5s = (sumDt > 0.0f) ? (framesIn5s / sumDt) : 0.0f;
+        ImGui::Text("FPS (5s avg):  %.1f", avgFps5s);
 
         Person* person = engine->getPerson();
         if (person) {

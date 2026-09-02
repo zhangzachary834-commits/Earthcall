@@ -298,6 +298,7 @@ void dispatchActiveTool(GLFWwindow* window, Core::Engine* engine,
 void stepCreationTools(GLFWwindow* window, Core::Engine* engine,
                        ZoneManager& zoneMgr, float dt,
                        bool creatorConsoleOpen) {
+    (void)creatorConsoleOpen;
     if (!engine) return;
 
     auto& state = getCreatorConsoleState();
@@ -305,14 +306,6 @@ void stepCreationTools(GLFWwindow* window, Core::Engine* engine,
         ? Singularity::Core::CreationChannel::find(*engine->getLawManager())
         : nullptr;
 
-    // Opening the 3D tab with no mode yet is the old chrome default:
-    // Create is selected. Doing that here — not in the initializer —
-    // keeps boot clicks from taking the developer bypass.
-    if (creatorConsoleOpen &&
-        state.currentSection == CreatorSection::Create3D &&
-        state.current3DMode == Mode3D::None) {
-        apply3DMode(state, channel, Mode3D::BrushCreate);
-    }
 
     if (channel) {
         handleCreateLawKey(window, *engine, *channel);
