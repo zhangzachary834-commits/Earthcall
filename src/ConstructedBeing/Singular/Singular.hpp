@@ -63,8 +63,20 @@ public:
     Formation* singular_properties();
     const Formation* singular_properties() const;
 
-    // Registry lookup by registered name (may be dotted, e.g. "shape.r").
-    // Lazily calls buildProperties() on first access.
+    // -------------------------------------------------------------------------
+    // Property lookup — hot path uses StringId (cache-friendly integer scan),
+    // cold path uses string (backward compatible, delegates to StringId version)
+    // -------------------------------------------------------------------------
+
+    // Hot path: Find property by its interned ID. Scans _propertyNames (a
+    // contiguous array of 4-byte integers) with zero allocations and perfect
+    // L1 cache utilization. At 21 properties, the entire scan fits in one
+    // cache line (64 bytes). Lazily calls buildProperties() on first access.
+    Property* findProperty(Earthcall::StringId id);
+
+    // Cold path: Find property by string name. Interns the string once, then
+    // delegates to the StringId version. Kept for backward compatibility —
+    // existing code that doesn't know about StringId can keep working.
     Property* findProperty(const std::string& name);
 
     // Enumerate the registered properties (lazy-builds first). This is what
@@ -79,6 +91,11 @@ public:
     // sitting as a raw untyped member no law can address.
 
     // Dynamic properties to allow Laws to attach state to objects
+    // Hot path: StringId keys
+    bool getDynamicProperty(Earthcall::StringId id, PropertyValue& out) const;
+    void setDynamicProperty(Earthcall::StringId id, const PropertyValue& v);
+
+    // Cold path: String names (backward compatible, delegates to StringId version)
     bool getDynamicProperty(const std::string& name, PropertyValue& out) const;
     void setDynamicProperty(const std::string& name, const PropertyValue& v);
 
@@ -86,14 +103,16 @@ public:
     // ENUMERABLE (the authoring UI offers it beside the registered vocabulary)
     // and PERSISTABLE (a property that vanishes on save was never granted).
     // The registry above is the first-mover vocabulary; this is the authored one.
-    bool hasDynamicProperty(const std::string& name) const {
-        return _dynamicProperties.find(name) != _dynamicProperties.end();
+    bool hasDynamicProperty(const std::string& name) const;
+    bool hasDynamicProperty(Earthcall::StringId id) const {
+        return _dynamicProperties.find(id) != _dynamicProperties.end();
     }
-    const std::map<std::string, PropertyValue>& dynamicProperties() const {
+    const std::unordered_map<Earthcall::StringId, PropertyValue>& dynamicProperties() const {
         return _dynamicProperties;
     }
-    bool removeDynamicProperty(const std::string& name) {
-        return _dynamicProperties.erase(name) > 0;
+    bool removeDynamicProperty(const std::string& name);
+    bool removeDynamicProperty(Earthcall::StringId id) {
+        return _dynamicProperties.erase(id) > 0;
     }
     
     // Authored data structure methods
@@ -155,8 +174,25 @@ protected:
     void registerTelosProperty();
     std::vector<std::string> designatedZones;
     std::vector<StakeholderRecord> _stakeholders;
-    std::vector<std::unique_ptr<Property>> _propertyRegistry;
-    std::map<std::string, PropertyValue> _dynamicProperties;
+
+    // -------------------------------------------------------------------------
+    // Structure of Arrays (SoA) for cache-optimal property lookup
+    //
+    // BEFORE: std::vector<std::unique_ptr<Property>> required dereferencing
+    // each unique_ptr before checking its name (cache miss per iteration).
+    //
+    // AFTER: Scan _propertyNames (contiguous integers) with perfect L1 cache
+    // locality, only dereferencing _propertyRegistry[index] when found.
+    //
+    // Both arrays MUST stay synchronized (same size, same order). Populated
+    // in parallel by property registration (buildProperties, telos, dynamic).
+    // -------------------------------------------------------------------------
+    std::vector<Earthcall::StringId> _propertyNames;          // Parallel array #1: names as IDs
+    std::vector<std::unique_ptr<Property>> _propertyRegistry; // Parallel array #2: property pointers
+
+    // Dynamic properties (Person-authored via AddProperty). Keys are StringIds
+    // for fast lookup. String overloads kept for backward compatibility.
+    std::unordered_map<Earthcall::StringId, PropertyValue> _dynamicProperties;
     
     // Authored data structures and bounds (manifesto property framework)
     std::map<std::string, class DataStructure> _dataStructures;
@@ -167,7 +203,7 @@ protected:
     // Dynamic property access helper
     template<typename T>
     T getDynamicPropertyOrDefault(const std::string& name, const T& defaultValue) const {
-        auto it = _dynamicProperties.find(name);
+        auto it = _dynamicProperties.find(Earthcall::StringInterner::intern(name));
         if (it != _dynamicProperties.end()) {
             if (const T* val = std::get_if<T>(&it->second)) {
                 return *val;

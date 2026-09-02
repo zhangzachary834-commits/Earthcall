@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Property.hpp"
+#include "Singularity/Core/StringId.hpp"
 
 #include <string>
 #include <typeinfo>
@@ -16,7 +17,13 @@ public:
     using Setter = void (Owner::*)(const T&);
 
     ComputedProperty(std::string propertyName, Owner* owner, Getter getter, Setter setter = nullptr)
-        : _name(std::move(propertyName)), _owner(owner), _getter(getter), _setter(setter) {}
+        : _name(std::move(propertyName)),
+          _nameId(Earthcall::StringInterner::intern(_name)),
+          _owner(owner),
+          _getter(getter),
+          _setter(setter) {}
+
+    Earthcall::StringId nameId() const override { return _nameId; }
 
     std::string name() const override { return _name; }
 
@@ -61,6 +68,7 @@ public:
 
 private:
     std::string _name;
+    Earthcall::StringId _nameId;  // Cached at construction, zero cost to access
     Owner* _owner;
     Getter _getter;
     Setter _setter;

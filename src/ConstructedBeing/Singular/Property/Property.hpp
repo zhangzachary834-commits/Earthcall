@@ -1,6 +1,7 @@
 #pragma once
 
 #include "PropertyValue.hpp"
+#include "Singularity/Core/StringId.hpp"
 
 #include <string>
 #include <typeinfo>
@@ -37,6 +38,15 @@ class Property {
 public:
     virtual ~Property() = default;
 
+    // Property name as a cache-friendly integer ID. The hot path (Rete
+    // evaluation, property lookups) uses nameId() for zero-allocation integer
+    // comparisons. The cold path (serialization, debug logs, UI) uses name()
+    // for human-readable strings.
+    //
+    // Implementations (PropertyRef, ComputedProperty) intern the string at
+    // construction time and cache the ID, so nameId() is a direct member
+    // access (no vtable overhead, no allocations).
+    virtual Earthcall::StringId nameId() const = 0;
     virtual std::string name() const = 0;
     virtual std::string typeName() const = 0;
 

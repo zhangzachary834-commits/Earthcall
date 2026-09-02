@@ -3,6 +3,7 @@
 #include "ConstructedBeing/Singular/Property/Property.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyValue.hpp"
 #include "ConstructedBeing/Singular/Singular.hpp"
+#include "Singularity/Core/StringId.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -40,9 +41,27 @@ bool isVec3Component(const std::string& c) {
 
 } // namespace
 
+// ============================================================================
+// COLD PATH: Parse and pre-calculate all joined combinations
+//
+// This happens ONCE at Law author time (when the Law text is compiled).
+// We intern every possible joined combination as StringIds, so resolve()
+// never allocates strings.
+//
+// Example: "shape.color.r" → segments ["shape", "color", "r"]
+//
+// Pre-calculate:
+//   From index 0: "shape", "shape.color", "shape.color.r"
+//   From index 1:          "color",       "color.r"
+//   From index 2:                         "r"
+//
+// Store as _joinedIds[segmentIndex][runLength - 1]
+// ============================================================================
 PropertyPath PropertyPath::parse(const std::string& dotted) {
     PropertyPath path;
     std::string current;
+
+    // Parse segments (unchanged)
     for (char ch : dotted) {
         if (ch == '.') {
             if (!current.empty()) path.segments.push_back(current);
@@ -52,6 +71,21 @@ PropertyPath PropertyPath::parse(const std::string& dotted) {
         }
     }
     if (!current.empty()) path.segments.push_back(current);
+
+    // Pre-calculate all joined combinations and intern as StringIds
+    path._joinedIds.resize(path.segments.size());
+    for (std::size_t i = 0; i < path.segments.size(); ++i) {
+        std::string joined;
+        for (std::size_t j = i; j < path.segments.size(); ++j) {
+            if (j > i) joined += '.';
+            joined += path.segments[j];
+
+            // Intern this combination
+            Earthcall::StringId id = Earthcall::StringInterner::intern(joined);
+            path._joinedIds[i].push_back(id);
+        }
+    }
+
     return path;
 }
 
@@ -64,6 +98,13 @@ std::string PropertyPath::toString() const {
     return joined;
 }
 
+// ============================================================================
+// HOT PATH: Resolve with zero allocations
+//
+// Uses pre-calculated _joinedIds for pure integer lookups. No string
+// allocations, no string comparisons. When a Law fires on 500 targets,
+// this runs 500 times with ZERO heap allocations.
+// ============================================================================
 Property* PropertyPath::resolve(Singular& root, std::string* trailingComponent,
                                 Singular** owner) const {
     if (trailingComponent) trailingComponent->clear();
@@ -74,17 +115,20 @@ Property* PropertyPath::resolve(Singular& root, std::string* trailingComponent,
     std::size_t i = 0;
     while (current && i < segments.size()) {
         // Longest dotted-name match against this Singular's registry.
+        // Use pre-calculated StringIds for zero-allocation lookup.
         Property* found = nullptr;
         std::size_t consumed = 0;
-        std::string joined;
-        for (std::size_t j = i; j < segments.size(); ++j) {
-            if (j > i) joined += '.';
-            joined += segments[j];
-            if (Property* candidate = current->findProperty(joined)) {
+
+        // Scan the pre-calculated IDs for this starting index
+        const auto& idsFromHere = _joinedIds[i];
+        for (std::size_t runLength = 1; runLength <= idsFromHere.size(); ++runLength) {
+            Earthcall::StringId id = idsFromHere[runLength - 1];
+            if (Property* candidate = current->findProperty(id)) {
                 found = candidate;
-                consumed = j + 1 - i;
+                consumed = runLength;
             }
         }
+
         if (!found) return nullptr;
         i += consumed;
 

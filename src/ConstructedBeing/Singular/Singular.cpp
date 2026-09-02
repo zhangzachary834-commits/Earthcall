@@ -3,6 +3,7 @@
 #include "ConstructedBeing/Singular/Property/Property.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
 #include "ConstructedBeing/Singular/Property/DataStructure.hpp"
+#include "Singularity/Core/StringId.hpp"
 
 #include <atomic>
 
@@ -43,7 +44,8 @@ Singular& Singular::operator=(const Singular& o) {
         name = o.name;
         _telosId = o._telosId;
     }
-    _propertyRegistry.clear();
+    _propertyNames.clear();        // Clear SoA array #1
+    _propertyRegistry.clear();      // Clear SoA array #2
     _property_formation = nullptr;
     _propertiesBuilt = false;
     return *this;
@@ -68,6 +70,7 @@ Singular& Singular::operator=(Singular&& o) noexcept {
         name = std::move(o.name);
         _telosId = std::move(o._telosId);
     }
+    _propertyNames.clear();
     _propertyRegistry.clear();
     _property_formation = nullptr;
     _propertiesBuilt = false;
@@ -125,10 +128,13 @@ bool coerceToHeldAlternative(const PropertyValue& like, double n, PropertyValue&
 
 class DynamicPropertyBridge : public Property {
     std::string _name;
+    Earthcall::StringId _nameId;
     Singular* _owner;
 public:
-    DynamicPropertyBridge(const std::string& name, Singular* owner) : _name(name), _owner(owner) {}
-    
+    DynamicPropertyBridge(const std::string& name, Singular* owner)
+        : _name(name), _nameId(Earthcall::StringInterner::intern(name)), _owner(owner) {}
+
+    Earthcall::StringId nameId() const override { return _nameId; }
     std::string name() const override { return _name; }
     std::string typeName() const override { return "dynamic"; }
     
@@ -177,31 +183,68 @@ public:
 };
 
 void Singular::registerTelosProperty() {
-    for (const auto& property : _propertyRegistry) {
-        if (property && property->name() == "telos") return;
+    Earthcall::StringId telosId = Earthcall::StringInterner::intern("telos");
+
+    // Check if already registered (scan the ID array)
+    for (size_t i = 0; i < _propertyNames.size(); ++i) {
+        if (_propertyNames[i] == telosId) return;
     }
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<Singular, std::string>>(
-        "telos", this, &Singular::_telosId));
+
+    // Register in both parallel arrays
+    auto prop = std::make_unique<PropertyRef<Singular, std::string>>(
+        "telos", this, &Singular::_telosId);
+    _propertyNames.push_back(telosId);
+    _propertyRegistry.push_back(std::move(prop));
 }
 
-Property* Singular::findProperty(const std::string& name) {
+// ============================================================================
+// HOT PATH: Find property by StringId (cache-optimal integer scan)
+//
+// Scans _propertyNames (contiguous array of 4-byte integers) with zero
+// allocations and perfect L1 cache locality. A 64-byte cache line holds 16
+// StringIds, so most property registries (under ~20 properties) complete the
+// entire scan without leaving the CPU cache.
+//
+// Only dereferences _propertyRegistry[index] when a match is found (once per
+// lookup, not once per iteration).
+// ============================================================================
+Property* Singular::findProperty(Earthcall::StringId id) {
     if (!_propertiesBuilt) {
         _propertiesBuilt = true;   // set first: buildProperties may itself query
         buildProperties();
         registerTelosProperty();
     }
-    for (auto& property : _propertyRegistry) {
-        if (property && property->name() == name) return property.get();
+
+    // Scan the integer array (cache-friendly)
+    for (size_t i = 0; i < _propertyNames.size(); ++i) {
+        if (_propertyNames[i] == id) {
+            return _propertyRegistry[i].get();
+        }
     }
-    
-    // Dynamic property fallback
-    if (_dynamicProperties.find(name) != _dynamicProperties.end()) {
-        auto bridge = std::make_unique<DynamicPropertyBridge>(name, this);
+
+    // Dynamic property fallback (check by ID)
+    auto it = _dynamicProperties.find(id);
+    if (it != _dynamicProperties.end()) {
+        // Lazy-create bridge, register in both arrays
+        auto bridge = std::make_unique<DynamicPropertyBridge>(
+            Earthcall::StringInterner::resolve(id), this);
         Property* p = bridge.get();
+        _propertyNames.push_back(id);
         _propertyRegistry.push_back(std::move(bridge));
         return p;
     }
+
     return nullptr;
+}
+
+// ============================================================================
+// COLD PATH: Find property by string name (backward compatible)
+//
+// Interns the string once to get its ID, then delegates to the hot path.
+// Kept for existing code that doesn't know about StringId yet.
+// ============================================================================
+Property* Singular::findProperty(const std::string& name) {
+    return findProperty(Earthcall::StringInterner::intern(name));
 }
 
 std::vector<Property*> Singular::listProperties() {
@@ -218,8 +261,19 @@ std::vector<Property*> Singular::listProperties() {
     return out;
 }
 
+// ============================================================================
+// Dynamic properties (Person-authored via AddProperty)
+//
+// Hot path uses StringId keys for O(1) hash map lookup with zero allocations.
+// String overloads kept for backward compatibility.
+// ============================================================================
+
 bool Singular::getDynamicProperty(const std::string& name, PropertyValue& out) const {
-    auto it = _dynamicProperties.find(name);
+    return getDynamicProperty(Earthcall::StringInterner::intern(name), out);
+}
+
+bool Singular::getDynamicProperty(Earthcall::StringId id, PropertyValue& out) const {
+    auto it = _dynamicProperties.find(id);
     if (it != _dynamicProperties.end()) {
         out = it->second;
         return true;
@@ -228,11 +282,27 @@ bool Singular::getDynamicProperty(const std::string& name, PropertyValue& out) c
 }
 
 void Singular::setDynamicProperty(const std::string& name, const PropertyValue& v) {
-    _dynamicProperties[name] = v;
+    setDynamicProperty(Earthcall::StringInterner::intern(name), v);
+}
+
+void Singular::setDynamicProperty(Earthcall::StringId id, const PropertyValue& v) {
+    _dynamicProperties[id] = v;
     // An AUTHORED property is a property. It was invisible to the change feed
     // for the same reason every non-PropertyRef slot was: nobody announced it.
     // A law watching a name a Person granted must hear it move.
-    notifyPropertyChanged(this, name);
+    //
+    // Notification uses the string name (resolve ID back to string) because
+    // the callback signature is (Singular*, const std::string&) — changing
+    // that signature is Phase 4 work (PropertyPath pre-calculation).
+    notifyPropertyChanged(this, Earthcall::StringInterner::resolve(id));
+}
+
+bool Singular::hasDynamicProperty(const std::string& name) const {
+    return hasDynamicProperty(Earthcall::StringInterner::intern(name));
+}
+
+bool Singular::removeDynamicProperty(const std::string& name) {
+    return removeDynamicProperty(Earthcall::StringInterner::intern(name));
 }
 
 void Singular::addDataStructure(const DataStructure& ds) {

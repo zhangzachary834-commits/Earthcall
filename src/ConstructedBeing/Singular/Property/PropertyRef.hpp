@@ -2,6 +2,7 @@
 
 #include "Property.hpp"
 #include "ConstructedBeing/Singular/Singular.hpp"
+#include "Singularity/Core/StringId.hpp"
 
 #include <string>
 #include <typeinfo>
@@ -11,10 +12,18 @@ template <typename Owner, typename T>
 class PropertyRef : public Property {
 public:
     PropertyRef(std::string propertyName, Owner* owner, T Owner::*member, Singular* singularOwner = nullptr)
-        : _name(std::move(propertyName)), _owner(owner), _member(member), _singularOwner(singularOwner) {
+        : _name(std::move(propertyName)),
+          _nameId(Earthcall::StringInterner::intern(_name)),
+          _owner(owner),
+          _member(member),
+          _singularOwner(singularOwner) {
         if constexpr (std::is_base_of_v<Singular, Owner>) {
             if (!_singularOwner) _singularOwner = static_cast<Singular*>(owner);
         }
+    }
+
+    Earthcall::StringId nameId() const override {
+        return _nameId;
     }
 
     std::string name() const override {
@@ -72,6 +81,7 @@ public:
 
 private:
     std::string _name;
+    Earthcall::StringId _nameId;  // Cached at construction, zero cost to access
     Owner* _owner;
     T Owner::*_member;
 public:
