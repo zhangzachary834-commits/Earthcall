@@ -10,7 +10,9 @@
 #include "../../ConstructedBeing/Singular/Object/Object.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleWindow.hpp"
 #include "Singularity/Screen/ScreenChannel.hpp"
+#include "Singularity/FirstMoverOntology/FirstMoverWindowTools/PerformanceMetricsWindow.hpp"
 
+#include <chrono>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -88,7 +90,10 @@ namespace Core {
                     currentRenderer().setHeightGridDdaEnabled(sc->heightGridDdaEnabled);
                 }
             }
+            auto tB0 = std::chrono::steady_clock::now();
             currentRenderer().beginFrame(static_cast<uint32_t>(fbW), static_cast<uint32_t>(fbH), clearColor);
+            auto tB1 = std::chrono::steady_clock::now();
+            g_frameTimings.wait_surface_ms = std::chrono::duration<float, std::milli>(tB1 - tB0).count();
         }
 
         // Draw all owned objects cleanly (no hardcoded baseline mutation or skipping ground)
@@ -156,7 +161,10 @@ namespace Core {
             }
         }
 
+        auto tE0 = std::chrono::steady_clock::now();
         currentRenderer().endFrame();
+        auto tE1 = std::chrono::steady_clock::now();
+        g_frameTimings.wait_submit_ms = std::chrono::duration<float, std::milli>(tE1 - tE0).count();
 
         if (_lawManager) {
             if (auto* sc = Singularity::Screen::ScreenChannel::find(*_lawManager)) {

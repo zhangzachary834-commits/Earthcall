@@ -124,7 +124,14 @@ void renderPerformanceMetricsWindow(bool* open, Core::Engine* engine) {
         ImGui::Text("  Laws (Rete):     %6.2f ms", g_frameTimings.laws_ms);
         ImGui::Text("  Language:        %6.2f ms", g_frameTimings.language_ms);
         ImGui::Text("  Audio:           %6.2f ms", g_frameTimings.audio_ms);
-        ImGui::Text("  3D Render:       %6.2f ms", g_frameTimings.render3d_ms);
+        float actual_3d = g_frameTimings.render3d_ms - g_frameTimings.wait_surface_ms - g_frameTimings.wait_submit_ms;
+        if (actual_3d < 0.0f) actual_3d = 0.0f;
+        ImGui::Text("  3D Render (Total): %6.2f ms", g_frameTimings.render3d_ms);
+        ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "    |- CPU Commits:  %6.2f ms", actual_3d);
+        ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "    |- Surface Wait: %6.2f ms", g_frameTimings.wait_surface_ms);
+        if (g_frameTimings.wait_submit_ms > 0.1f) {
+            ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "    |- GPU Blocked:  %6.2f ms", g_frameTimings.wait_submit_ms);
+        }
         ImGui::Text("  ImGui / Present: %6.2f ms", g_frameTimings.imgui_ms);
 
         // ---- LawManager tick() timing breakdown ----

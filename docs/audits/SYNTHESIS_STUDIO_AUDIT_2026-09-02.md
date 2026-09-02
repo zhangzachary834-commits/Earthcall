@@ -698,7 +698,39 @@ orb came out at the default radius; `shape.r` is what a Sphere's size actually i
 
 ---
 
-## R12. The cost: `LawManager::tick` is ~43% slower
+## R12. The cost: `LawManager::tick` is ~43% slower — in the chess world, which is not what you look at
+
+**Correction, prompted by Zach: "what zone were you in when you measured the baseline fps."** The
+right question, and the first version of this section did not say. `frame_lag_test` is a standalone
+headless binary whose default world is `saves/worlds/chess_app.json` (`frame_lag_test.cpp:799`) — the
+law-heaviest save in the tree, chess rules authored as laws over 35 objects. It reports a
+*simulation* frame with no rendering in it at all. So the numbers below describe the worst case for
+the code I touched, and say nothing about the app's frame rate.
+
+**What the app actually costs at boot**, measured with a temporary probe in `Engine::tick` reading
+`g_frameTimings`, in the zone the app opens into:
+
+```
+[PROBE] zone='Sanctum of Beginnings' objects=129  frame=30.428 ms (32.9 fps)
+        laws=0.544  zone=1.786  render3d=25.487
+```
+
+**`render3d` is 25.5 ms of a 30.4 ms frame — 84%. The entire law path is 0.544 ms, 1.8%.** My +43%
+on the law path is about +0.16 ms, half a percent of the frame. The 60 fps Zach remembers did not go
+into laws; it went into rendering 129 objects, which is code this pass never touched and a regression
+that predates it.
+
+That is worth its own task and is now one (Performance). Sanctum holds 129 objects and Ourverse
+Gathering 122 — these are lived-in zones, not the empty boot rooms the name suggests, so ~0.2 ms of
+render per object is the number to chase.
+
+**No clean "before this session" baseline exists to compare against.** Zach committed twice while the
+work was in progress — `bb69036e` swept in roughly half the engine edits mid-edit, `bc69a469` the
+rest — so there is no commit boundary at "before Claude" and `git stash` returns the same tree. The
+chess-world figures below are back-to-back on the same machine load and are the honest measure of the
+law path; the Sanctum figures above are the honest measure of what a Person experiences.
+
+### The chess-world measurement
 
 Measured back-to-back on the same machine load (`frame_lag_test`, chess world): **11.63 ms baseline →
 16.67 ms**. Scaling stays linear (k = 1.100), so it is a constant factor, not a complexity change.
@@ -713,7 +745,9 @@ condition could read — `propheticHears` already answers exactly that question 
 this whole pass was about. Left as a task rather than done hastily.
 
 **The `frame_lag_baseline.txt` file has NOT been widened.** The LAG line is a real regression and
-should keep saying so until it is paid down.
+should keep saying so until it is paid down — but note what it is a regression *in*: a headless
+simulation frame in the law-heaviest world in the tree. It is not the app's frame rate, and reading
+it as one is the mistake this section was corrected to prevent.
 
 ---
 

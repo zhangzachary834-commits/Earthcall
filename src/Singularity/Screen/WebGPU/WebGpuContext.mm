@@ -46,6 +46,9 @@ WindowContext createWindowContext(GLFWwindow* win) {
     CAMetalLayer* layer = [CAMetalLayer layer];
     layer.pixelFormat = MTLPixelFormatBGRA8Unorm;   // must match kSurfaceFormat
     layer.contentsScale = nswin.backingScaleFactor; // Retina: drawable in pixels
+    if (@available(macOS 10.13, *)) {
+        layer.displaySyncEnabled = NO;
+    }
     nswin.contentView.wantsLayer = YES;
     nswin.contentView.layer = layer;
     ctx.metalLayer = (void*)layer;
@@ -105,6 +108,9 @@ void configureSurface(WindowContext& ctx, uint32_t width, uint32_t height) {
     cfg.presentMode = WGPUPresentMode_Immediate; // vsync OFF
     cfg.alphaMode = WGPUCompositeAlphaMode_Auto;
     wgpuSurfaceConfigure(ctx.surface, &cfg);
+    if (@available(macOS 10.13, *)) {
+        layer.displaySyncEnabled = NO;
+    }
 }
 
 void destroyWindowContext(WindowContext& ctx) {

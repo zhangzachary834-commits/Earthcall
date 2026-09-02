@@ -15,6 +15,8 @@ struct FrameTimings {
     float language_ms     = 0.f; // LanguageSystem::tick
     float audio_ms        = 0.f; // AudioSystem::tick
     float render3d_ms     = 0.f; // Engine::render() — 3-D scene
+    float wait_surface_ms = 0.f; // wgpuSurfaceGetCurrentTexture block time
+    float wait_submit_ms  = 0.f; // wgpuQueueSubmit block time
     float imgui_ms        = 0.f; // ImGui::Render + swap/present
     float total_ms        = 0.f; // full tick wall-clock
 };
