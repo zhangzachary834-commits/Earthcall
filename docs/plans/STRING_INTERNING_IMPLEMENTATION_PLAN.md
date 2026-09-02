@@ -7,7 +7,7 @@
 ---
 
 ## The Goal
-Replace the current pointer-chasing, string-allocating property lookup system with an $O(1)$-equivalent, cache-friendly integer comparison architecture using String Interning and a Structure of Arrays (SoA) layout.
+Replace the current pointer-chasing, string-allocating property lookup system with an $O(1)$-equivalent, cache-friendly integer comparison architecture using String Interning and a Structure of Arrays (SoA) layout. This ensures that `ActionNode` property writes do not bleed performance across hundreds of matched entities.
 
 ---
 
@@ -46,12 +46,13 @@ Optimize the `Singular` property registry to eliminate cache misses and pointer 
 
 ---
 
-## 4. PropertyPath Pre-Calculation
-Remove all runtime string concatenation from Law evaluations.
+## 4. PropertyPath and ActionNode Optimization
+Remove all runtime string concatenation from Law evaluations, and ensure `ActionNode` passes integers instead of strings.
 
-**Files:** `src/ConstructedBeing/Singular/Property/PropertyPath.hpp`, `PropertyPath.cpp`
+**Files:** `src/ConstructedBeing/Singular/Property/PropertyPath.hpp`, `PropertyPath.cpp`, `src/ZonesOfEarth/AuthorsOfLaw/ActionModel.cpp`
 * `PropertyPath::parse` will pre-calculate and intern all joined sub-path combinations (e.g., `shape`, `shape.color`, `shape.color.r`) at parse time.
 * `PropertyPath::resolve` will query `Singular` using only these pre-calculated `StringId` arrays.
+* `ActionNode::compile` (in `ActionModel.cpp`) will capture the fully parsed/interned `PropertyPath`. The returned lambdas will pass these integer-backed paths to `lawSetValue()`, ensuring that when the lambda runs against 500 target objects, it is passing zero-allocation IDs.
 
 ---
 
