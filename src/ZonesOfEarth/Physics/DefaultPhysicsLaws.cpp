@@ -71,7 +71,14 @@ std::vector<std::shared_ptr<Law>> createDefaultPhysicsLaws() {
     gravity->setActionModel(gAction);
     laws.push_back(gravity);
 
-    // 2. Integration: Flow action over position (position := position + velocity * dt)
+    // 2. Collision: Solid body boundary interaction and response
+    auto collision = std::make_shared<FirstMoverLaw>("physics: collision");
+    collision->setLawIdentifier("physics-collision");
+    collision->setActivation(Law::Activation::WhileTrue);
+    collision->setScope(Law::Scope::Everyone);
+    laws.push_back(collision);
+
+    // 3. Integration: Flow action over position (position := position + velocity * dt)
     auto integration = std::make_shared<FirstMoverLaw>("physics: kinematics");
     integration->setLawIdentifier("physics-kinematics");
     integration->setActivation(Law::Activation::WhileTrue);
