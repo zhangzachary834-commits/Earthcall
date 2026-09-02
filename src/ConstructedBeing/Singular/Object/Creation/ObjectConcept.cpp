@@ -293,7 +293,7 @@ std::map<std::string, PropertyValue> captureState(Singular& source) {
         if (property) admit(property->name(), property->value());
     }
     for (const auto& authored : source.dynamicProperties()) {
-        admit(authored.first, authored.second);
+        admit(Earthcall::StringInterner::resolve(authored.first), authored.second);
     }
     return state;
 }
@@ -760,7 +760,7 @@ nlohmann::json ObjectConcept::toJson() const {
     for (const auto& t : _relationTemplates) relationsJson.push_back(t.toJson());
     nlohmann::json authored = nlohmann::json::object();
     for (const auto& entry : dynamicProperties()) {
-        authored[entry.first] = propertyValueToJson(entry.second);
+        authored[Earthcall::StringInterner::resolve(entry.first)] = propertyValueToJson(entry.second);
     }
     nlohmann::json attrs = nlohmann::json::object();
     for (const auto& entry : getAttributes()) attrs[entry.first] = entry.second;

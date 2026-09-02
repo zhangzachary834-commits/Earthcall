@@ -16,9 +16,10 @@ namespace geom {
 class AstBridge : public Property {
 public:
     explicit AstBridge(std::string name, OntoMath::Piecewise* ast)
-        : _name(std::move(name)), _ast(ast) {}
+        : _name(std::move(name)), _nameId(Earthcall::StringInterner::intern(_name)), _ast(ast) {}
 
     std::string name() const override { return _name; }
+    Earthcall::StringId nameId() const override { return _nameId; }
     std::string typeName() const override { return "string"; }
 
     PropertyValue value() const override {
@@ -37,6 +38,7 @@ public:
 
 private:
     std::string _name;
+    Earthcall::StringId _nameId;
     OntoMath::Piecewise* _ast;
 };
 

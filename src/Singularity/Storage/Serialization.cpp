@@ -86,7 +86,7 @@ void to_json(nlohmann::json& j, const Object& obj){
     if (!obj.dynamicProperties().empty()) {
         nlohmann::json dyn = nlohmann::json::object();
         for (const auto& entry : obj.dynamicProperties()) {
-            dyn[entry.first] = propertyValueToJson(entry.second);
+            dyn[Earthcall::StringInterner::resolve(entry.first)] = propertyValueToJson(entry.second);
         }
         j["authoredProperties"] = std::move(dyn);
     }

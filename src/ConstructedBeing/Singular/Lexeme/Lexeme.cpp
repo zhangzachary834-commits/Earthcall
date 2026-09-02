@@ -14,6 +14,10 @@ public:
     explicit ConceptualWeightProperty(Lexeme* owner) : _owner(owner) {}
 
     std::string name() const override { return "conceptualWeight"; }
+    Earthcall::StringId nameId() const override {
+        static Earthcall::StringId id = Earthcall::StringInterner::intern("conceptualWeight");
+        return id;
+    }
     std::string typeName() const override { return "PropertyValue"; }
 
     PropertyValue value() const override { return _owner->conceptualWeightValue(); }

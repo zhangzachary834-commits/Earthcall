@@ -10,6 +10,7 @@
 #include "ConstructedBeing/Material/MaterialManager.hpp"
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
+#include "Singularity/Core/StringId.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
 
@@ -53,6 +54,7 @@ public:
         : _name(std::move(name)), _owner(owner), _member(member) {}
 
     std::string name() const override { return _name; }
+    Earthcall::StringId nameId() const override { return Earthcall::StringInterner::intern(name()); }
     std::string typeName() const override { return "float"; }
 
     PropertyValue value() const override {
@@ -82,6 +84,7 @@ class ShapeKindBridge : public Property {
 public:
     explicit ShapeKindBridge(Object* owner) : _owner(owner) {}
     std::string name() const override { return "shape.kind"; }
+    Earthcall::StringId nameId() const override { return Earthcall::StringInterner::intern(name()); }
     std::string typeName() const override { return "int"; }
     PropertyValue value() const override {
         return PropertyValue(static_cast<int>(_owner->getShapeKind()));
@@ -130,6 +133,7 @@ public:
         : _name(std::move(name)), _owner(owner), _field(field) {}
 
     std::string name() const override { return _name; }
+    Earthcall::StringId nameId() const override { return Earthcall::StringInterner::intern(name()); }
     std::string typeName() const override {
         switch (_field) {
             case Field::Dims:
@@ -252,6 +256,7 @@ public:
         : _name(std::move(name)), _owner(owner), _index(index) {}
 
     std::string name() const override { return _name; }
+    Earthcall::StringId nameId() const override { return Earthcall::StringInterner::intern(name()); }
     std::string typeName() const override { return "vec3"; }
 
     // vec3(0) for a net that has no such point, matching what
@@ -284,6 +289,7 @@ public:
         : _name(std::move(name)), _owner(owner), _field(field) {}
 
     std::string name() const override { return _name; }
+    Earthcall::StringId nameId() const override { return Earthcall::StringInterner::intern(name()); }
     std::string typeName() const override { return "int"; }
     // 0 when there is no patch, which is what the accessors already report.
     PropertyValue value() const override {
@@ -311,6 +317,7 @@ public:
         : _name(std::move(name)), _owner(owner), _field(field) {}
 
     std::string name() const override { return _name; }
+    Earthcall::StringId nameId() const override { return Earthcall::StringInterner::intern(name()); }
     std::string typeName() const override {
         return _field == Field::Velocity ? "vec3" : "float";
     }
@@ -358,6 +365,7 @@ public:
         : _name(std::move(name)), _owner(owner), _face(face), _field(field) {}
 
     std::string name() const override { return _name; }
+    Earthcall::StringId nameId() const override { return Earthcall::StringInterner::intern(name()); }
     std::string typeName() const override {
         switch (_field) {
             case Field::Color: return "vec3";
