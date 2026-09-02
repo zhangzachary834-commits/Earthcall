@@ -116,12 +116,12 @@ int main() {
         probe.type = "test";
         Law someLaw("witness");
 
-        // instanceof: an Object is an Object; a Law is BOTH (extra-spatial
-        // Object) — honest C++ semantics; BeingKind::Law is the precise check.
+        // instanceof: an Object is an Object; a Law is just a Law (not an Object
+        // anymore). BeingKind::Law is the precise check.
         assert(ConditionNode::isKind(ConditionNode::BeingKind::Object).compile()(probe, a));
         assert(!ConditionNode::isKind(ConditionNode::BeingKind::Law).compile()(probe, a));
         assert(ConditionNode::isKind(ConditionNode::BeingKind::Law).compile()(probe, someLaw));
-        assert(ConditionNode::isKind(ConditionNode::BeingKind::Object).compile()(probe, someLaw));
+        assert(!ConditionNode::isKind(ConditionNode::BeingKind::Object).compile()(probe, someLaw));
 
         // Identity: this one specific being and no other.
         assert(ConditionNode::identity(a.getIdentifier()).compile()(probe, a));

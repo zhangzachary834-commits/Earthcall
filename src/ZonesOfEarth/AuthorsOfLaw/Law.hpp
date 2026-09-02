@@ -27,14 +27,16 @@
 // This class should eventually govern Physics. Physics should be extended from
 // this class.
 //
-// Law is identity (an Object); its condition/action models are its essence; the
+// Law is the identity of process (an Singular); its condition/action models are its essence; the
 // compiled ECA closures are its manifestation. Hard-coded closures are for first
 // movers only — Person-authored laws arrive as serializable models (see
 // LAW_AND_CREATION_SYSTEM.md, Stage 2). The relational aspect of a Law (its
-// provenance, its Formation of conditions) is carried by composition rather than
+// provenance, its Formation of conditions, and its ontological instances 
+// as interactions between the enforcer/authors and the targets/recipients) 
+// is carried by composition rather than
 // by also inheriting Relation: Object and Relation are both Singulars, and
 // Earthcall models Relation-Objects with member formations, not a diamond.
-class Law : public Object {
+class Law : public Singular {
 public:
     // A Law's authors, condition subjects and targets are FORMATIONS — beings
     // in their own right, with an identifier, legible properties, a place in
@@ -883,4 +885,5 @@ private:
     // stale and fails open.
     std::uint64_t _propheticRevision = static_cast<std::uint64_t>(-1);
     mutable PropheticCounters _propheticCounters;
+    int _maxChainRounds = 5;
 };

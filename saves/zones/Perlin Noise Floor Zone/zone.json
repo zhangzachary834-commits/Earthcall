@@ -30,6 +30,9 @@
   "world": {
     "objects": [
       {
+        "attributes": {
+          "baseline": "ground"
+        },
         "authoredProperties": {
           "displayName": {
             "t": "string",

@@ -124,7 +124,7 @@ int main() {
         PropertyValue fillet;
         assert(PropertyPath::parse("shape.fillet").getValue(obj, fillet) == PropertyPath::PathResult::Ok);
         assert(nearf(std::get<float>(fillet), 0.9f));  // gildLaw chained (round 2+)
-        assert(static_cast<int>(records.size()) <= LawManager::kMaxChainRounds + 1);
+        assert(static_cast<int>(records.size()) <= mgr.maxChainRounds() + 1);
 
         // ------------------------------------------------------------------
         // 6. Unbinding: a law released from its trigger goes silent (the

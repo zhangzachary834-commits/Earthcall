@@ -84,15 +84,12 @@ void claimLawIdAtLeast(const std::string& id) {
 
 void Law::initializeLawIdentity() {
     _lawId = "law-" + std::to_string(g_nextLawId.fetch_add(1));
-    setObjectID(_lawId);
-    setPhysicalObject(0);
     nameGroupFormations();
 }
 
 void Law::setLawIdentifier(const std::string& id) {
     if (id.empty()) return;
     _lawId = id;
-    setObjectID(_lawId);      // keep the inherited Object field in step
     claimLawIdAtLeast(_lawId);
     nameGroupFormations();
 }
@@ -277,7 +274,6 @@ std::shared_ptr<Law> Law::fromJson(const nlohmann::json& j) {
     // until authors are reattached the law stays Unauthored and cannot fire.)
     if (j.contains("id")) {
         law->_lawId = j["id"].get<std::string>();
-        law->setObjectID(law->_lawId);
         law->nameGroupFormations();
         claimLawIdAtLeast(law->_lawId);   // fresh ids stay fresh after loads
     }

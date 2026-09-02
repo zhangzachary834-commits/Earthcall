@@ -294,7 +294,9 @@ on a quiet machine) so the tripwire tightens behind the fix.
 
 **(These notes are now also `docs/architecture/law/B-time Rete.md`; the foundations are built — see `docs/architecture/law/PROPHETIC_RETE.md` and the ✅ entries under R&D. What remains unbuilt is listed there in §5, including the ⚑ AUTHOR decisions.)**
 
-## Findings from Clawd MYTHOS Audit (2026-09-01)
+## 
+
+## Findings from Clawd MYTHOS (Claude Fable 5.1) Audit (2026-09-01)
 - **The stakeholder log is an un-integrated log and grows unbounded.** `Singular::addStakeholder` appends a record on every write. Addresses use volatile identifiers (`law-N`). Action: Make stakeholding a `Relation` (e.g., `stakeholder-of`), using weight for count and `Moment` for interval, replacing records with graph edges.
 - **Rete facts are derived state but serialized in saves anyway.** 27,655 serialized facts in `authoredLaws.rete.facts` creates a second source of truth that can disagree with the beings they describe. Action: Stop serializing derived Rete facts since `LawManager::seedStateFacts` rebuilds them anyway on load.
 - **Dead members in `Singular` cost memory.** Action: Remove the two dead members in `Singular` (by-value vectors of parent and child `Formation` instances) that are deep-copied but never read/written. Also remove `satisfiesKernelBounds` if nothing calls it.

@@ -7489,22 +7489,6 @@
         "geometryType": 1,
         "materialId": "material.concept-shape-3d.birth-779.member-0",
         "objectID": "concept-shape-3d.birth-779.member-0",
-        "polyhedron": {
-          "faces": [],
-          "facesDataBinary": {
-            "bytes": [0, 0, 0, 0],
-            "subtype": null
-          },
-          "facesSizesBinary": {
-            "bytes": [0, 0, 0, 0],
-            "subtype": null
-          },
-          "vertices": [],
-          "verticesBinary": {
-            "bytes": [0, 0, 0, 0],
-            "subtype": null
-          }
-        },
         "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 1,
@@ -12464,22 +12448,6 @@
         "geometryType": 1,
         "materialId": "material.concept-shape-3d.birth-836.member-0",
         "objectID": "concept-shape-3d.birth-836.member-0",
-        "polyhedron": {
-          "faces": [],
-          "facesDataBinary": {
-            "bytes": [0, 0, 0, 0],
-            "subtype": null
-          },
-          "facesSizesBinary": {
-            "bytes": [0, 0, 0, 0],
-            "subtype": null
-          },
-          "vertices": [],
-          "verticesBinary": {
-            "bytes": [0, 0, 0, 0],
-            "subtype": null
-          }
-        },
         "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 1,
@@ -12567,22 +12535,6 @@
         "geometryType": 1,
         "materialId": "material.concept-shape-3d.birth-837.member-0",
         "objectID": "concept-shape-3d.birth-837.member-0",
-        "polyhedron": {
-          "faces": [],
-          "facesDataBinary": {
-            "bytes": [0, 0, 0, 0],
-            "subtype": null
-          },
-          "facesSizesBinary": {
-            "bytes": [0, 0, 0, 0],
-            "subtype": null
-          },
-          "vertices": [],
-          "verticesBinary": {
-            "bytes": [0, 0, 0, 0],
-            "subtype": null
-          }
-        },
         "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 1,
