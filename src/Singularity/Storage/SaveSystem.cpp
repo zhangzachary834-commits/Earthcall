@@ -221,9 +221,9 @@ std::vector<WorldEntry> listWorlds(SaveType type) {
         auto it = byStem.find(stem);
         if (it == byStem.end()) {
             byStem.emplace(stem, std::move(row));
-        } else if (ext == ".json") {
+        } else if (ext == ".ecform") {
             it->second.path = path;
-        } else if (ext == ".ecform" && it->second.path.find(".json") == std::string::npos) {
+        } else if (ext == ".json" && it->second.path.find(".ecform") == std::string::npos) {
             it->second.path = path;
         }
     }
@@ -349,29 +349,17 @@ static void reportCloudSyncResult(bool success, const std::string& filename) {
 }
 
 std::string writeSaveData(const nlohmann::json& j, const std::string& customLabel, SaveType type) {
-    std::string filename = makeFilename(customLabel, type, ".ecsave");
+    std::string filename = makeFilename(customLabel, type, ".ecform");
     if (filename.empty()) return "";
     if (!permitted(filename)) return "";
 
-    std::ofstream out(filename, std::ios::binary);
+    std::ofstream out(filename);
     if (!out.is_open()) {
-        std::cerr << "[SaveSystem] Failed to open binary file for writing: " << filename << "\n";
+        std::cerr << "[SaveSystem] Failed to open file for writing: " << filename << "\n";
         return "";
     }
     
-    // Encoding and compression both throw on failure. An empty return is this
-    // function's documented "did not write" signal, so failure is converted
-    // here rather than escaping into callers that never wrapped the call.
-    std::vector<uint8_t> v;
-    std::vector<uint8_t> compressed;
-    try {
-        v = nlohmann::json::to_msgpack(j);
-        compressed = compressData(v);
-    } catch (const std::exception& e) {
-        std::cerr << "[SaveSystem] Failed to encode " << filename << ": " << e.what() << "\n";
-        return "";
-    }
-    out.write(reinterpret_cast<const char*>(compressed.data()), compressed.size());
+    out << j.dump(2);
     out.flush();
     const bool wroteOk = static_cast<bool>(out);
     out.close();
@@ -389,12 +377,6 @@ std::string writeSaveData(const nlohmann::json& j, const std::string& customLabe
     ensureIdbMounted();
     syncIdb();
 #endif
-
-    // Upload Binary to cloud
-    Util::CloudStorage::uploadSaveAsync(filename, v, type, [filename](bool success) {
-        reportCloudSyncResult(success, filename);
-        // Here we would check keepLocal and potentially delete the local file
-    });
 
     return std::filesystem::absolute(filename).string();
 }
@@ -540,14 +522,37 @@ std::vector<uint8_t> readMatterData(const std::string& filepath) {
 
 
 nlohmann::json readSaveData(const std::string& filepath) {
-    std::ifstream in(filepath, std::ios::binary);
+    std::filesystem::path p(filepath);
+    std::string actualPath = filepath;
+    std::error_code ec;
+    if (!std::filesystem::exists(p, ec)) {
+        std::filesystem::path ecformPath = p;
+        ecformPath.replace_extension(".ecform");
+        if (std::filesystem::exists(ecformPath, ec)) {
+            actualPath = ecformPath.string();
+        } else {
+            std::filesystem::path ecsavePath = p;
+            ecsavePath.replace_extension(".ecsave");
+            if (std::filesystem::exists(ecsavePath, ec)) {
+                actualPath = ecsavePath.string();
+            } else {
+                std::filesystem::path jsonPath = p;
+                jsonPath.replace_extension(".json");
+                if (std::filesystem::exists(jsonPath, ec)) {
+                    actualPath = jsonPath.string();
+                }
+            }
+        }
+    }
+
+    std::ifstream in(actualPath, std::ios::binary);
     if (!in.is_open()) {
         std::cerr << "[SaveSystem] Failed to open file for reading: " << filepath << "\n";
         return nlohmann::json();
     }
     
     // Check magic bytes or extension to determine if it's msgpack
-    if (filepath.length() > 7 && filepath.substr(filepath.length() - 7) == ".ecsave") {
+    if (actualPath.length() > 7 && actualPath.substr(actualPath.length() - 7) == ".ecsave") {
         std::vector<uint8_t> bytes((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
         std::vector<uint8_t> decompressed = decompressData(bytes);
         try {

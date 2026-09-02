@@ -103,6 +103,8 @@ void CreationChannel::buildProperties() {
         "cursorHoveredBodyPart", this, &CreationChannel::cursorHoveredBodyPart));
     _propertyRegistry.push_back(std::make_unique<PropertyRef<CreationChannel, glm::vec3>>(
         "activeColor", this, &CreationChannel::activeColor));
+    _propertyRegistry.push_back(std::make_unique<PropertyRef<CreationChannel, std::string>>(
+        "activeImplicitExpr", this, &CreationChannel::activeImplicitExpr));
 }
 
 float CreationChannel::spawnSurfaceOffset(const glm::vec3& normal) const {

@@ -120,10 +120,8 @@ int main() {
               !mgr.getSaveLoadState().lastSaveReport.empty(),
           "saveStateWithLog wrote a report and did not refuse");
 
-    const auto jsonPath = sandbox / "worlds" / "roundtrip_world.json";
     const auto ecformPath = sandbox / "worlds" / "roundtrip_world.ecform";
     const auto ecmatterPath = sandbox / "worlds" / "roundtrip_world.ecmatter";
-    check(std::filesystem::exists(jsonPath), "Save As writes the readable json sidecar");
     check(std::filesystem::exists(ecformPath), "Save As writes the .ecform semantic file");
     check(std::filesystem::exists(ecmatterPath), "Save As writes the binary .ecmatter");
     check(std::filesystem::exists(sandbox / "zones" / "Sanctum of Beginnings" / "zone.json"),
@@ -132,7 +130,7 @@ int main() {
           "Save As writes Home under saves/homes/, not as a Zone file");
 
     {
-        std::ifstream in(jsonPath);
+        std::ifstream in(ecformPath);
         nlohmann::json j;
         in >> j;
         check(j.contains("objects") && j["objects"].is_array() && j["objects"].size() == 3,
@@ -155,15 +153,15 @@ int main() {
         ++rows;
         listedPath = w.path;
     }
-    check(rows == 1, "json and .ecsave of one stem are one list row");
-    check(listedPath.size() >= 5 &&
-              listedPath.compare(listedPath.size() - 5, 5, ".json") == 0,
-          "the list prefers the readable json");
+    check(rows == 1, "ecform and ecmatter of one stem are one list row");
+    check(listedPath.size() >= 7 &&
+              listedPath.compare(listedPath.size() - 7, 7, ".ecform") == 0,
+          "the list prefers the semantic .ecform");
 
     player.position() = glm::vec3(100.0f, 0.0f, 100.0f);
     camera.pos = glm::vec3(0.0f, 0.0f, 0.0f);
     worldTime = 0.0;
-    mgr.loadState(jsonPath.string(), ctx);
+    mgr.loadState(ecformPath.string(), ctx);
 
     check(countId(mgr, "first-spawned") == 1, "load restores the first spawned being");
     check(countId(mgr, "second-spawned") == 1, "load restores the second spawned being");
@@ -194,7 +192,7 @@ int main() {
           "switchTo Home does not steal Sanctum's objects");
     mgr.saveStateWithLog("saved_from_home", ctx);
     player.position() = glm::vec3(70.0f, 0.0f, 70.0f);
-    mgr.loadState((sandbox / "worlds" / "saved_from_home.json").string(), ctx);
+    mgr.loadState((sandbox / "worlds" / "saved_from_home.ecform").string(), ctx);
     check(mgr.currentIndex() == 1, "load restores Home as the current Zone");
     check(countId(mgr, "first-spawned") == 1 &&
               countId(mgr, "second-spawned") == 1 &&

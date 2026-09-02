@@ -105,8 +105,8 @@ int main() {
     SaveSystem::setSaveRoot(sandbox.string());
 
     Harness h;
-    const std::string worldA = (sandbox / "worlds" / "session_a.json").string();
-    const std::string worldB = (sandbox / "worlds" / "session_b.json").string();
+    const std::string worldA = (sandbox / "worlds" / "session_a.ecform").string();
+    const std::string worldB = (sandbox / "worlds" / "session_b.ecform").string();
 
     {
         ZoneManager mgr;

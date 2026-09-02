@@ -66,6 +66,7 @@ public:
     glm::vec3 manualAnchorForward{0.0f, 0.0f, -1.0f};
     std::string cursorHoveredBodyPart;
     glm::vec3 activeColor{1.0f, 1.0f, 1.0f};
+    std::string activeImplicitExpr;
 
     glm::vec3 computeSpawnPosition(const glm::vec3& cameraPos, const glm::vec3& cameraForward) const;
     float spawnSurfaceOffset(const glm::vec3& normal) const;

@@ -105,7 +105,7 @@ int main() {
     SaveSystem::setSaveRoot(sandbox.string());
 
     Harness h;
-    const std::string sessionFile = (sandbox / "worlds" / "chess_session.json").string();
+    const std::string sessionFile = (sandbox / "worlds" / "chess_session.ecform").string();
 
     auto pieceCategory = categories.create("category.chess.piece");
 
@@ -146,7 +146,7 @@ int main() {
         ZoneManager loaded;
         // Wire Universe relation provider to the active zone formation
         Universe::instance().setRelationProvider([&](std::vector<Relation*>& relations) {
-            if (loaded.zones().empty()) return;
+            if (loaded.zones().empty() || loaded.currentIndex() >= loaded.zones().size()) return;
             auto active = loaded.zones()[loaded.currentIndex()];
             if (!active) return;
             for (const auto& rel : active->getFormation().relations().getAll()) {

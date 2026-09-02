@@ -62,7 +62,7 @@ void Body::addAdornment(const std::string& item) {
 void Body::addPart(BodyPart* part) {
     if (!part) return;
     parts.push_back(part);
-    formation.addMember(static_cast<Object*>(part));
+    formation.addMember(part);
 }
 
 void Body::draw() const {
@@ -197,7 +197,7 @@ Body Body::createFromConcept(const ObjectConcept& concept) {
     for(const auto& member : concept.members()) {
         BodyPart* bp = new BodyPart("concept-part-" + std::to_string(index++), BodyPart::Type::Undefined, ObjectTypes::ShapeKind::Cube, glm::vec3(1.0f));
         if (member.hasGeometry) {
-            bp->setShape(member.kind);
+            bp->setPrimaryShape(member.kind);
             bp->setTransform(member.relativeTransform);
         }
         avatar.addPart(bp);

@@ -5,13 +5,15 @@
 
 BodyPart::BodyPart(const std::string& name, Type type, 
                    ObjectTypes::ShapeKind geometryType, const glm::vec3& dimensions)
-    : Object(name.empty() ? "" : "bodypart." + name), Formation(), partName(name), partType(type), _dimensions(dimensions)
+    : Formation(), partName(name), partType(type), _dimensions(dimensions)
 {
     isLiteral = true;
     isSymbolic = false;
     _localTransform = glm::mat4(1.0f);
     
-    setShapeKind(geometryType);
+    _primaryObject = std::make_unique<Object>(name.empty() ? "" : "bodypart." + name);
+    _primaryObject->setShape(geometryType);
+    addMember(_primaryObject.get());
     
     // initFaceTextures();
     
@@ -36,10 +38,10 @@ void BodyPart::draw() const {
     Renderer& r = currentRenderer();
 
     // Draw primary shape under body part's world transform
-    r.pushModel(transform);
+    r.pushModel(_transform);
     r.pushModel(glm::scale(glm::mat4(1.0f), _dimensions));
-    drawObject();
-    drawHighlightOutline();
+    _primaryObject->drawObject();
+    _primaryObject->drawHighlightOutline();
     r.popModel();
     r.popModel();
 
@@ -59,14 +61,15 @@ void BodyPart::update(float /*deltaTime*/) {
 }
 
 void BodyPart::setTransform(const glm::mat4& t) {
-    Object::setTransform(t);
+    _primaryObject->setTransform(t);
+    _transform = t;
     static const glm::mat4 I(1.0f);
     if (_localTransform == I) {
         _localTransform = t;
     }
 
     glm::mat4 scaled = t * glm::scale(glm::mat4(1.0f), _dimensions);
-    updateCollisionZone(scaled);
+    _primaryObject->updateCollisionZone(scaled);
 
     // Propagate world transform to every sub-object so raycasting,
     // collision zones, and tool targeting all use correct positions.
@@ -78,7 +81,7 @@ void BodyPart::setTransform(const glm::mat4& t) {
 }
 
 glm::mat4 BodyPart::getRaycastTransform() const {
-    return getTransform() * glm::scale(glm::mat4(1.0f), _dimensions);
+    return _transform * glm::scale(glm::mat4(1.0f), _dimensions);
 }
 
 
@@ -86,8 +89,9 @@ glm::mat4 BodyPart::getRaycastTransform() const {
 // -----------------------------------------------------------------
 // Shape management
 // -----------------------------------------------------------------
-void BodyPart::setPrimaryShape(Object::ShapeKind gt) {
-    setShapeKind(gt);
+void BodyPart::setPrimaryShape(ObjectTypes::ShapeKind gt) {
+    _primaryObject->setShape(gt);
+    
     // Through setFaceColor, which reinitialises this part's own material's
     // face textures to the new shape's face count and paints them — the
     // reinit that setShapeKind used to do while paint still lived on Object.
@@ -101,13 +105,13 @@ bool BodyPart::hasCustomTextures() const {
 // -----------------------------------------------------------------
 // Composite sub-object management
 // -----------------------------------------------------------------
-Object* BodyPart::addSubObject(Object::ShapeKind kind, const glm::mat4& localOffset) {
+Object* BodyPart::addSubObject(ObjectTypes::ShapeKind kind, const glm::mat4& localOffset) {
     std::string subId = getIdentifier() + ".sub-" + std::to_string(_subObjects.size());
     auto obj = std::make_unique<Object>(subId);
     obj->setShape(kind);
 
     // obj->setOwnerBodyPart(this);
-    glm::mat4 worldT = getTransform() * localOffset;
+    glm::mat4 worldT = _transform * localOffset;
     obj->setTransform(worldT);
     for (int f = 0; f < 6; ++f) obj->setFaceColor(f, color[0], color[1], color[2]);
     Object* raw = obj.get();
@@ -120,7 +124,7 @@ Object* BodyPart::addSubObject(Object::ShapeKind kind, const glm::mat4& localOff
 Object* BodyPart::addSubObject(std::unique_ptr<Object> obj, const glm::mat4& localOffset) {
     if (!obj) return nullptr;
     // obj->setOwnerBodyPart(this);
-    glm::mat4 worldT = getTransform() * localOffset;
+    glm::mat4 worldT = _transform * localOffset;
     obj->setTransform(worldT);
     Object* raw = obj.get();
     _subObjects.push_back(std::move(obj));
@@ -147,7 +151,7 @@ const Object* BodyPart::getSubObject(size_t index) const {
 
 std::vector<Object*> BodyPart::getAllObjects() {
     std::vector<Object*> result;
-    result.push_back(this);
+    if (_primaryObject) result.push_back(_primaryObject.get());
     for (auto& sub : _subObjects) {
         if (sub) result.push_back(sub.get());
     }
@@ -164,7 +168,15 @@ void BodyPart::setSubObjectLocalOffset(size_t index, const glm::mat4& localOffse
     _subObjectLocalOffsets[index] = localOffset;
     // Recompute world transform for this sub-object
     if (_subObjects[index]) {
-        glm::mat4 worldT = getTransform() * localOffset;
+        glm::mat4 worldT = _transform * localOffset;
         _subObjects[index]->setTransform(worldT);
     }
+}
+
+void BodyPart::setFaceColor(int faceIndex, float r, float g, float b) {
+    if (_primaryObject) _primaryObject->setFaceColor(faceIndex, r, g, b);
+}
+
+ObjectTypes::ShapeKind BodyPart::getPrimaryShape() const {
+    return _primaryObject ? _primaryObject->getShapeKind() : ObjectTypes::ShapeKind::Cube;
 }

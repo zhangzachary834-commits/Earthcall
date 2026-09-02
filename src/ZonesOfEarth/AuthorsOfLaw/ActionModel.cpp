@@ -161,7 +161,17 @@ void applySpawnOverrides(Object& newborn, Singular* source,
                     newborn.setBezierPatch(geom::makeBezierGrid(3, 3, 0.5f));
                 }
             } else if (k == static_cast<int>(Object::ShapeKind::Field)) {
-                if (!newborn.hasField()) {
+                PropertyValue exprVal;
+                std::string expr;
+                if (lawGetValue(*source, PropertyPath::parse("activeImplicitExpr"), exprVal) &&
+                    std::holds_alternative<std::string>(exprVal) && !std::get<std::string>(exprVal).empty()) {
+                    expr = std::get<std::string>(exprVal);
+                }
+                if (!expr.empty()) {
+                    geom::SdfNode node = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(0.5f));
+                    node.expr = expr;
+                    newborn.setFieldShape(node, glm::vec3(1.0f));
+                } else if (!newborn.hasField()) {
                     newborn.setFieldShape(geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(0.5f)), glm::vec3(1.0f));
                 }
             } else if (k >= 0 && k <= static_cast<int>(Object::ShapeKind::Text2D)) {

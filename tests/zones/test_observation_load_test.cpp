@@ -83,7 +83,8 @@ int main() {
         Person dumpPlayer = makePlayer();
         LawManager dumpLaws;
         dump_test_save("visible_cube", dumpWorld, dumpLaws, dumpPlayer, dumpPath);
-        check(std::filesystem::exists(dumpPath), "dump_test_save wrote the observation fixture");
+        check(std::filesystem::exists(dumpPath) || std::filesystem::exists(sandbox / "visible_cube.ecform"),
+              "dump_test_save wrote the observation fixture");
     }
 
     ZoneManager live;
