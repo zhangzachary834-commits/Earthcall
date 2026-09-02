@@ -215,6 +215,16 @@ Property* Singular::findProperty(Earthcall::StringId id) {
         registerTelosProperty();
     }
 
+    // Keep parallel arrays synchronized
+    while (_propertyNames.size() < _propertyRegistry.size()) {
+        size_t idx = _propertyNames.size();
+        if (_propertyRegistry[idx]) {
+            _propertyNames.push_back(Earthcall::StringInterner::intern(_propertyRegistry[idx]->name()));
+        } else {
+            _propertyNames.push_back(Earthcall::StringId{});
+        }
+    }
+
     // Scan the integer array (cache-friendly)
     for (size_t i = 0; i < _propertyNames.size(); ++i) {
         if (_propertyNames[i] == id) {
@@ -252,6 +262,14 @@ std::vector<Property*> Singular::listProperties() {
         _propertiesBuilt = true;
         buildProperties();
         registerTelosProperty();
+    }
+    while (_propertyNames.size() < _propertyRegistry.size()) {
+        size_t idx = _propertyNames.size();
+        if (_propertyRegistry[idx]) {
+            _propertyNames.push_back(Earthcall::StringInterner::intern(_propertyRegistry[idx]->name()));
+        } else {
+            _propertyNames.push_back(Earthcall::StringId{});
+        }
     }
     std::vector<Property*> out;
     out.reserve(_propertyRegistry.size());
