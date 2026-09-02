@@ -110,6 +110,12 @@ table Entity {
   
   // Dynamic components managed by the Law System
   laws: [LawComponent];
+
+  material_id: string;
+  center: Vec3;
+  authoritative_axis: Vec3;
+  target_rotation: Vec3;
+  rotation_responsiveness: float = 1.0;
 }
 
 // A Save Chunk represents a spatial region or category of entities (.ecmatter)

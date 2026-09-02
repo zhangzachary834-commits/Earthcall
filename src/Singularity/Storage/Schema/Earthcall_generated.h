@@ -1013,7 +1013,12 @@ struct Entity FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
     VT_FACE_TEXTURES = 18,
     VT_FACE_COLORS = 20,
     VT_SDF_NODES = 22,
-    VT_LAWS = 24
+    VT_LAWS = 24,
+    VT_MATERIAL_ID = 26,
+    VT_CENTER = 28,
+    VT_AUTHORITATIVE_AXIS = 30,
+    VT_TARGET_ROTATION = 32,
+    VT_ROTATION_RESPONSIVENESS = 34
   };
   const ::flatbuffers::String *id() const {
     return GetPointer<const ::flatbuffers::String *>(VT_ID);
@@ -1048,6 +1053,21 @@ struct Entity FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   const ::flatbuffers::Vector<::flatbuffers::Offset<Earthcall::Schema::LawComponent>> *laws() const {
     return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<Earthcall::Schema::LawComponent>> *>(VT_LAWS);
   }
+  const ::flatbuffers::String *material_id() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_MATERIAL_ID);
+  }
+  const Earthcall::Schema::Vec3 *center() const {
+    return GetStruct<const Earthcall::Schema::Vec3 *>(VT_CENTER);
+  }
+  const Earthcall::Schema::Vec3 *authoritative_axis() const {
+    return GetStruct<const Earthcall::Schema::Vec3 *>(VT_AUTHORITATIVE_AXIS);
+  }
+  const Earthcall::Schema::Vec3 *target_rotation() const {
+    return GetStruct<const Earthcall::Schema::Vec3 *>(VT_TARGET_ROTATION);
+  }
+  float rotation_responsiveness() const {
+    return GetField<float>(VT_ROTATION_RESPONSIVENESS, 1.0f);
+  }
   template <bool B = false>
   bool Verify(::flatbuffers::VerifierTemplate<B> &verifier) const {
     return VerifyTableStart(verifier) &&
@@ -1076,6 +1096,12 @@ struct Entity FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
            VerifyOffset(verifier, VT_LAWS) &&
            verifier.VerifyVector(laws()) &&
            verifier.VerifyVectorOfTables(laws()) &&
+           VerifyOffset(verifier, VT_MATERIAL_ID) &&
+           verifier.VerifyString(material_id()) &&
+           VerifyField<Earthcall::Schema::Vec3>(verifier, VT_CENTER, 4) &&
+           VerifyField<Earthcall::Schema::Vec3>(verifier, VT_AUTHORITATIVE_AXIS, 4) &&
+           VerifyField<Earthcall::Schema::Vec3>(verifier, VT_TARGET_ROTATION, 4) &&
+           VerifyField<float>(verifier, VT_ROTATION_RESPONSIVENESS, 4) &&
            verifier.EndTable();
   }
 };
@@ -1117,6 +1143,21 @@ struct EntityBuilder {
   void add_laws(::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<Earthcall::Schema::LawComponent>>> laws) {
     fbb_.AddOffset(Entity::VT_LAWS, laws);
   }
+  void add_material_id(::flatbuffers::Offset<::flatbuffers::String> material_id) {
+    fbb_.AddOffset(Entity::VT_MATERIAL_ID, material_id);
+  }
+  void add_center(const Earthcall::Schema::Vec3 *center) {
+    fbb_.AddStruct(Entity::VT_CENTER, center);
+  }
+  void add_authoritative_axis(const Earthcall::Schema::Vec3 *authoritative_axis) {
+    fbb_.AddStruct(Entity::VT_AUTHORITATIVE_AXIS, authoritative_axis);
+  }
+  void add_target_rotation(const Earthcall::Schema::Vec3 *target_rotation) {
+    fbb_.AddStruct(Entity::VT_TARGET_ROTATION, target_rotation);
+  }
+  void add_rotation_responsiveness(float rotation_responsiveness) {
+    fbb_.AddElement<float>(Entity::VT_ROTATION_RESPONSIVENESS, rotation_responsiveness, 1.0f);
+  }
   explicit EntityBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
@@ -1140,8 +1181,18 @@ inline ::flatbuffers::Offset<Entity> CreateEntity(
     ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<Earthcall::Schema::FaceTexture>>> face_textures = 0,
     ::flatbuffers::Offset<::flatbuffers::Vector<const Earthcall::Schema::Vec3 *>> face_colors = 0,
     ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<Earthcall::Schema::SdfNode>>> sdf_nodes = 0,
-    ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<Earthcall::Schema::LawComponent>>> laws = 0) {
+    ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<Earthcall::Schema::LawComponent>>> laws = 0,
+    ::flatbuffers::Offset<::flatbuffers::String> material_id = 0,
+    const Earthcall::Schema::Vec3 *center = nullptr,
+    const Earthcall::Schema::Vec3 *authoritative_axis = nullptr,
+    const Earthcall::Schema::Vec3 *target_rotation = nullptr,
+    float rotation_responsiveness = 1.0f) {
   EntityBuilder builder_(_fbb);
+  builder_.add_rotation_responsiveness(rotation_responsiveness);
+  builder_.add_target_rotation(target_rotation);
+  builder_.add_authoritative_axis(authoritative_axis);
+  builder_.add_center(center);
+  builder_.add_material_id(material_id);
   builder_.add_laws(laws);
   builder_.add_sdf_nodes(sdf_nodes);
   builder_.add_face_colors(face_colors);
@@ -1168,7 +1219,12 @@ inline ::flatbuffers::Offset<Entity> CreateEntityDirect(
     const std::vector<::flatbuffers::Offset<Earthcall::Schema::FaceTexture>> *face_textures = nullptr,
     const std::vector<Earthcall::Schema::Vec3> *face_colors = nullptr,
     const std::vector<::flatbuffers::Offset<Earthcall::Schema::SdfNode>> *sdf_nodes = nullptr,
-    const std::vector<::flatbuffers::Offset<Earthcall::Schema::LawComponent>> *laws = nullptr) {
+    const std::vector<::flatbuffers::Offset<Earthcall::Schema::LawComponent>> *laws = nullptr,
+    const char *material_id = nullptr,
+    const Earthcall::Schema::Vec3 *center = nullptr,
+    const Earthcall::Schema::Vec3 *authoritative_axis = nullptr,
+    const Earthcall::Schema::Vec3 *target_rotation = nullptr,
+    float rotation_responsiveness = 1.0f) {
   auto id__ = id ? _fbb.CreateString(id) : 0;
   auto name__ = name ? _fbb.CreateString(name) : 0;
   auto transform__ = transform ? _fbb.CreateVector<float>(*transform) : 0;
@@ -1176,6 +1232,7 @@ inline ::flatbuffers::Offset<Entity> CreateEntityDirect(
   auto face_colors__ = face_colors ? _fbb.CreateVectorOfStructs<Earthcall::Schema::Vec3>(*face_colors) : 0;
   auto sdf_nodes__ = sdf_nodes ? _fbb.CreateVector<::flatbuffers::Offset<Earthcall::Schema::SdfNode>>(*sdf_nodes) : 0;
   auto laws__ = laws ? _fbb.CreateVector<::flatbuffers::Offset<Earthcall::Schema::LawComponent>>(*laws) : 0;
+  auto material_id__ = material_id ? _fbb.CreateString(material_id) : 0;
   return Earthcall::Schema::CreateEntity(
       _fbb,
       id__,
@@ -1188,7 +1245,12 @@ inline ::flatbuffers::Offset<Entity> CreateEntityDirect(
       face_textures__,
       face_colors__,
       sdf_nodes__,
-      laws__);
+      laws__,
+      material_id__,
+      center,
+      authoritative_axis,
+      target_rotation,
+      rotation_responsiveness);
 }
 
 struct SaveChunk FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {

@@ -238,8 +238,8 @@ void Person::updatePose() {
         if (cached != resolvedWorld.end()) return cached->second;
 
         const glm::mat4 restLocal = part->localTransform();
-        const glm::mat4 animatedLocal = part->hasAutomations()
-            ? part->sampleAutomations(restLocal)
+        const glm::mat4 animatedLocal = part->getPrimaryObject()->hasAutomations()
+            ? part->getPrimaryObject()->sampleAutomations(restLocal)
             : restLocal;
 
         glm::mat4 worldT = base * animatedLocal;

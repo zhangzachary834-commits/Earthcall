@@ -32,7 +32,7 @@ namespace Rendering {
             const bool selected = part == state.selectedCharacterPart;
             if (ImGui::Selectable(part->getName().c_str(), selected)) {
                 state.selectedCharacterPart = part;
-                state.selectedObject3D = part;
+                state.selectedObject3D = part->getPrimaryObject();
             }
         }
 

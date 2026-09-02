@@ -444,7 +444,7 @@ void reinstatedMissingOwnMaterials(Zone& zone) {
 
 std::string ZoneManager::beforeLoadSnapshotPath() {
     return SaveSystem::ensureSaveTypeFolder(SaveSystem::SaveType::BACKUP) +
-           "/before-load.json";
+           "/before-load.ecform";
 }
 
 void ZoneManager::persistZones() const {
@@ -795,12 +795,16 @@ void ZoneManager::saveState(const std::string& filename, SaveContext& ctx) {
     // load rewind Home as a side effect.
     if (!isBeforeLoadSnapshot(filename)) persistZones();
     nlohmann::json j = buildSaveJson(ctx);
-    std::ofstream out(filename);
+    
+    std::filesystem::path p(filename);
+    if (!isBeforeLoadSnapshot(filename) && p.extension() != ".ecform") {
+        p.replace_extension(".ecform");
+    }
+    std::ofstream out(p.string());
     out << j.dump(2);
     
     // Also save matching .ecmatter if not a before-load snapshot
     if (!isBeforeLoadSnapshot(filename)) {
-        std::filesystem::path p(filename);
         p.replace_extension(".ecmatter");
         std::vector<uint8_t> matter = buildMatterFlatBuffer();
         if (!matter.empty()) {
@@ -809,7 +813,7 @@ void ZoneManager::saveState(const std::string& filename, SaveContext& ctx) {
         }
     }
 
-    logIo("SAVE " + filename + ": " +
+    logIo("SAVE " + p.string() + ": " +
           std::to_string(ctx.lawManager->getAll().size()) + " law(s), " +
           std::to_string(ConceptRegistry::instance().getAll().size()) + " concept(s)");
 }
@@ -841,23 +845,12 @@ void ZoneManager::saveStateWithLog(const std::string& customName, SaveContext& c
         }
     }
     
-    // 1. Semantic Text Substrate (.ecform and .json)
+    // 1. Semantic Text Substrate (.ecform)
     const std::string path = SaveSystem::writeSaveData(j, actualName, SaveSystem::SaveType::WORLD);
     if (path.empty()) {
         _saveLoad.lastSaveReport = "Save refused or failed for '" + actualName + "'.";
         logIo("SAVE FAILED '" + actualName + "'");
         return;
-    }
-    {
-        std::filesystem::path jsonPath(path);
-        jsonPath.replace_extension(".json");
-        std::ofstream jsonOut(jsonPath);
-        if (jsonOut) jsonOut << j.dump(2);
-
-        std::filesystem::path formPath(path);
-        formPath.replace_extension(".ecform");
-        std::ofstream formOut(formPath);
-        if (formOut) formOut << j.dump(2);
     }
 
     // 2. Physical Binary Substrate (.ecmatter via FlatBuffers)
@@ -960,17 +953,22 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
                 return;
             }
             saveState(stash, ctx);
-            std::ifstream probe(stash);
+            std::filesystem::path p(stash);
+            std::string actualEcform = stash;
+            if (p.extension() != ".ecform") {
+                actualEcform = (p.parent_path() / (p.stem().string() + ".ecform")).string();
+            }
+            std::ifstream probe(actualEcform);
             if (!probe) {
                 _saveLoad.lastLoadReport =
-                    "REFUSED load: could not preserve unsaved work to " + stash +
+                    "REFUSED load: could not preserve unsaved work to " + actualEcform +
                     ". The current world was not replaced.";
                 std::cerr << "[load] " << _saveLoad.lastLoadReport << "\n";
                 logIo("LOAD end:   " + _saveLoad.lastLoadReport);
                 return;
             }
-            preservedPath = stash;
-            logIo("PRESERVE unsaved -> " + stash);
+            preservedPath = actualEcform;
+            logIo("PRESERVE unsaved -> " + actualEcform);
         }
 
         // Reset physics registries
@@ -1478,6 +1476,12 @@ void ZoneManager::loadTestObservation(const std::string& filename, SaveContext& 
             globalObjects.push_back(obj);
         }
 
+        // Step 2: Physical matter injection (.ecmatter FlatBuffer)
+        std::vector<uint8_t> matterBytes = SaveSystem::readMatterData(filename);
+        if (!matterBytes.empty()) {
+            applyMatterFlatBuffer(matterBytes);
+        }
+
         switchTo(zoneIndex);
 
         const std::size_t objectCount = zone->getOwnedObjects().size();
@@ -1561,6 +1565,7 @@ std::vector<uint8_t> ZoneManager::buildMatterFlatBuffer() const {
 
             auto id_str = builder.CreateString(o->getIdentifier());
             auto name_str = builder.CreateString(o->getObjectType());
+            auto mat_id_str = builder.CreateString(o->materialId());
 
             // 1. Transform matrix (16 floats)
             glm::mat4 t = o->getTransform();
@@ -1638,7 +1643,30 @@ std::vector<uint8_t> ZoneManager::buildMatterFlatBuffer() const {
                 );
             }
 
-            // 5. Face Textures (from the object's resolved material)
+            // 5. Field Data
+            flatbuffers::Offset<Earthcall::Schema::FieldData> field_offset = 0;
+            if (o->hasField()) {
+                const auto& fd = o->getFieldData();
+                Earthcall::Schema::Vec3 f_ext(o->getFieldExtent().x, o->getFieldExtent().y, o->getFieldExtent().z);
+                Earthcall::Schema::Vec3 dims(fd.dims.x, fd.dims.y, fd.dims.z);
+                Earthcall::Schema::Vec3 offset(fd.offset.x, fd.offset.y, fd.offset.z);
+                auto expr_str = builder.CreateString(fd.expr);
+                auto root_node = Earthcall::Schema::CreateSdfNode(
+                    builder,
+                    static_cast<int>(fd.prim),
+                    static_cast<int>(fd.op),
+                    0, 0, 0,
+                    &dims,
+                    &offset,
+                    fd.p0,
+                    fd.p1,
+                    fd.t,
+                    expr_str
+                );
+                field_offset = Earthcall::Schema::CreateFieldData(builder, &f_ext, root_node);
+            }
+
+            // 6. Face Textures (from the object's resolved material)
             std::vector<flatbuffers::Offset<Earthcall::Schema::FaceTexture>> fts;
             auto mat = materials.get(o->materialId());
             if (mat) {
@@ -1653,13 +1681,17 @@ std::vector<uint8_t> ZoneManager::buildMatterFlatBuffer() const {
             }
             auto fts_vec = fts.empty() ? 0 : builder.CreateVector(fts);
 
-            // 6. Face Colors
+            // 7. Face Colors
             std::vector<Earthcall::Schema::Vec3> fbs_colors;
             for (int f = 0; f < 6; ++f) {
                 fbs_colors.push_back(Earthcall::Schema::Vec3(
                     o->faceColors[f][0], o->faceColors[f][1], o->faceColors[f][2]));
             }
             auto fbs_colors_vec = builder.CreateVectorOfStructs(fbs_colors);
+
+            Earthcall::Schema::Vec3 fbs_center(o->getCenter().x, o->getCenter().y, o->getCenter().z);
+            Earthcall::Schema::Vec3 fbs_axis(o->getAuthoritativeAxis().x, o->getAuthoritativeAxis().y, o->getAuthoritativeAxis().z);
+            Earthcall::Schema::Vec3 fbs_target_rot(o->getTargetRotationEulerDegrees().x, o->getTargetRotationEulerDegrees().y, o->getTargetRotationEulerDegrees().z);
 
             auto entity = Earthcall::Schema::CreateEntity(
                 builder,
@@ -1669,9 +1701,16 @@ std::vector<uint8_t> ZoneManager::buildMatterFlatBuffer() const {
                 poly_offset,
                 patch_offset,
                 smooth_offset,
-                0, // field
+                field_offset,
                 fts_vec,
-                fbs_colors_vec
+                fbs_colors_vec,
+                0, // sdf_nodes
+                0, // laws
+                mat_id_str,
+                &fbs_center,
+                &fbs_axis,
+                &fbs_target_rot,
+                o->getRotationResponsiveness()
             );
             entity_offsets.push_back(entity);
         }
@@ -1717,11 +1756,26 @@ void ZoneManager::applyMatterFlatBuffer(const std::vector<uint8_t>& buffer) {
         if (it == objMap.end()) continue;
         auto& o = it->second;
 
-        // 1. Transform
+        // 0. Material ID
+        if (entity->material_id() && entity->material_id()->size() > 0) {
+            o->setMaterialId(entity->material_id()->str());
+        }
+
+        // 1. Transform & Pose
         if (entity->transform() && entity->transform()->size() == 16) {
             std::vector<float> tvals(entity->transform()->begin(), entity->transform()->end());
             o->setTransform(vectorToMat4(tvals));
         }
+        if (entity->center()) {
+            o->setCenter(glm::vec3(entity->center()->x(), entity->center()->y(), entity->center()->z()));
+        }
+        if (entity->authoritative_axis()) {
+            o->setAuthoritativeAxis(glm::vec3(entity->authoritative_axis()->x(), entity->authoritative_axis()->y(), entity->authoritative_axis()->z()));
+        }
+        if (entity->target_rotation()) {
+            o->setTargetRotationEulerDegrees(glm::vec3(entity->target_rotation()->x(), entity->target_rotation()->y(), entity->target_rotation()->z()));
+        }
+        o->setRotationResponsiveness(entity->rotation_responsiveness());
 
         // 2. Polyhedron
         if (entity->polyhedron() && entity->polyhedron()->vertices() && entity->polyhedron()->face_data() && entity->polyhedron()->face_offsets()) {
@@ -1792,7 +1846,25 @@ void ZoneManager::applyMatterFlatBuffer(const std::vector<uint8_t>& buffer) {
             o->setSmoothSurface(sd);
         }
 
-        // 5. Face Textures
+        // 5. Field Shape
+        if (entity->field() && entity->field()->root_node()) {
+            const auto* fbsField = entity->field();
+            const auto* root = fbsField->root_node();
+            geom::SdfNode node;
+            node.prim = static_cast<geom::SdfPrim>(root->type());
+            node.op = static_cast<geom::SdfOp>(root->operation());
+            if (root->dims()) node.dims = glm::vec3(root->dims()->x(), root->dims()->y(), root->dims()->z());
+            if (root->offset()) node.offset = glm::vec3(root->offset()->x(), root->offset()->y(), root->offset()->z());
+            node.p0 = root->p0();
+            node.p1 = root->p1();
+            node.t = root->t();
+            if (root->expr()) node.expr = root->expr()->str();
+            glm::vec3 extent(1.0f);
+            if (fbsField->extent()) extent = glm::vec3(fbsField->extent()->x(), fbsField->extent()->y(), fbsField->extent()->z());
+            o->setFieldShape(node, extent);
+        }
+
+        // 6. Face Textures
         if (entity->face_textures()) {
             auto mat = materials.get(o->materialId());
             if (mat) {

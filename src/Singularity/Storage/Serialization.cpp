@@ -49,47 +49,9 @@ void to_json(nlohmann::json& j, const Object& obj){
         j["shapeParams"] = { sp.r, sp.ry, sp.rz, sp.halfH, sp.majorR,
                              sp.minorR, sp.paraboloidA, sp.ovoidAsym, sp.fillet };
     }
-    if (obj.getSpatialKind() == Object::SpatialKind::Field) {
-        j["field"] = geom::sdfToJson(obj.getFieldData());
-        const auto& ext = obj.getFieldExtent();
-        j["fieldExtent"] = {ext.x, ext.y, ext.z};
-    }
-    if (obj.hasPatch()) {
-        const auto& p = obj.getPatchData();
-        nlohmann::json pj;
-        pj["du"] = p.du;
-        pj["dv"] = p.dv;
-        nlohmann::json ctrl = nlohmann::json::array();
-        for (const auto& c : p.ctrl) ctrl.push_back({c.x, c.y, c.z});
-        pj["ctrl"] = std::move(ctrl);
-        j["patch"] = std::move(pj);
-    }
-    if (obj.getShapeKind() == Object::ShapeKind::Polyhedron && !obj.getPolyhedronData().vertices.empty()) {
-        const auto& pd = obj.getPolyhedronData();
-        nlohmann::json pj;
-        nlohmann::json verts = nlohmann::json::array();
-        for (const auto& v : pd.vertices) verts.push_back({v.x, v.y, v.z});
-        pj["vertices"] = std::move(verts);
-        nlohmann::json fcs = nlohmann::json::array();
-        for (const auto& f : pd.faces) {
-            nlohmann::json fj = nlohmann::json::array();
-            for (int idx : f) fj.push_back(idx);
-            fcs.push_back(std::move(fj));
-        }
-        pj["faces"] = std::move(fcs);
-        j["polyhedron"] = std::move(pj);
-    }
     j["objectID"] = obj.getIdentifier();
     j["materialId"] = obj.materialId(); // reference to a Material being, by identifier
-    j["transform"] = mat4ToVector(obj.getTransform());
-    j["center"] = {obj.getCenter().x, obj.getCenter().y, obj.getCenter().z};
-    j["authoritativeAxis"] = {obj.getAuthoritativeAxis().x,
-                               obj.getAuthoritativeAxis().y,
-                               obj.getAuthoritativeAxis().z};
-    j["targetRotation"] = {obj.getTargetRotationEulerDegrees().x,
-                            obj.getTargetRotationEulerDegrees().y,
-                            obj.getTargetRotationEulerDegrees().z};
-    j["rotationResponsiveness"] = obj.getRotationResponsiveness();
+
     j["renderMode"] = static_cast<int>(obj.getRenderModeProp());
     // Screen-space position for Shape2D / Text2D.
     j["x2D"] = obj.getX2D();
@@ -117,10 +79,8 @@ void to_json(nlohmann::json& j, const Object& obj){
         j["tags"] = obj.getTags();
     }
 
-    // Face colours (legacy / baseline tint)
-    nlohmann::json faces = nlohmann::json::array();
-    for(int f=0;f<6;++f){ faces.push_back({obj.faceColors[f][0], obj.faceColors[f][1], obj.faceColors[f][2]}); }
-    j["faceColors"] = faces;
+    // Face colours (legacy / baseline tint) are migrated to Material; 
+    // we omit them from new ecform serializations to complete the substrate split.
 
     // Properties a LAW granted this being (ActionNode::AddProperty).
     if (!obj.dynamicProperties().empty()) {
@@ -368,14 +328,14 @@ nlohmann::json bodyPartToJson(const BodyPart& part) {
 
     // Local transform (relative to body root)
     j["localTransform"] = mat4ToVector(part.localTransform());
-    j["center"] = {part.getCenter().x, part.getCenter().y, part.getCenter().z};
-    j["authoritativeAxis"] = {part.getAuthoritativeAxis().x,
-                               part.getAuthoritativeAxis().y,
-                               part.getAuthoritativeAxis().z};
-    j["targetRotation"] = {part.getTargetRotationEulerDegrees().x,
-                            part.getTargetRotationEulerDegrees().y,
-                            part.getTargetRotationEulerDegrees().z};
-    j["rotationResponsiveness"] = part.getRotationResponsiveness();
+    j["center"] = {part.getPrimaryObject()->getCenter().x, part.getPrimaryObject()->getCenter().y, part.getPrimaryObject()->getCenter().z};
+    j["authoritativeAxis"] = {part.getPrimaryObject()->getAuthoritativeAxis().x,
+                               part.getPrimaryObject()->getAuthoritativeAxis().y,
+                               part.getPrimaryObject()->getAuthoritativeAxis().z};
+    j["targetRotation"] = {part.getPrimaryObject()->getTargetRotationEulerDegrees().x,
+                            part.getPrimaryObject()->getTargetRotationEulerDegrees().y,
+                            part.getPrimaryObject()->getTargetRotationEulerDegrees().z};
+    j["rotationResponsiveness"] = part.getPrimaryObject()->getRotationResponsiveness();
 
     // Face textures — same format as Object serialization
     // if (!part.faceTextures.empty()) {
@@ -396,7 +356,7 @@ nlohmann::json bodyPartToJson(const BodyPart& part) {
     // Legacy faceColors
     nlohmann::json faces = nlohmann::json::array();
     for (int f = 0; f < 6; ++f) {
-        faces.push_back({part.faceColors[f][0], part.faceColors[f][1], part.faceColors[f][2]});
+        faces.push_back({part.getPrimaryObject()->faceColors[f][0], part.getPrimaryObject()->faceColors[f][1], part.getPrimaryObject()->faceColors[f][2]});
     }
     j["faceColors"] = faces;
 
@@ -448,20 +408,20 @@ void bodyPartFromJson(const nlohmann::json& j, BodyPart& part) {
         }
     }
     if (j.contains("center") && j["center"].is_array() && j["center"].size() >= 3) {
-        part.setCenter(glm::vec3(j["center"][0].get<float>(),
+        part.getPrimaryObject()->setCenter(glm::vec3(j["center"][0].get<float>(),
                                  j["center"][1].get<float>(),
                                  j["center"][2].get<float>()));
     }
     if (j.contains("authoritativeAxis") && j["authoritativeAxis"].is_array() && j["authoritativeAxis"].size() >= 3) {
-        part.setAuthoritativeAxis(glm::vec3(j["authoritativeAxis"][0].get<float>(),
+        part.getPrimaryObject()->setAuthoritativeAxis(glm::vec3(j["authoritativeAxis"][0].get<float>(),
                                             j["authoritativeAxis"][1].get<float>(),
                                             j["authoritativeAxis"][2].get<float>()));
     }
     if (j.contains("rotationResponsiveness")) {
-        part.setRotationResponsiveness(j["rotationResponsiveness"].get<float>());
+        part.getPrimaryObject()->setRotationResponsiveness(j["rotationResponsiveness"].get<float>());
     }
     if (j.contains("targetRotation") && j["targetRotation"].is_array() && j["targetRotation"].size() >= 3) {
-        part.setTargetRotationEulerDegrees(glm::vec3(j["targetRotation"][0].get<float>(),
+        part.getPrimaryObject()->setTargetRotationEulerDegrees(glm::vec3(j["targetRotation"][0].get<float>(),
                                                      j["targetRotation"][1].get<float>(),
                                                      j["targetRotation"][2].get<float>()));
     }
@@ -470,9 +430,9 @@ void bodyPartFromJson(const nlohmann::json& j, BodyPart& part) {
     if (j.contains("faceColors")) {
         const auto& faces = j["faceColors"];
         for (size_t f = 0; f < faces.size() && f < 6; ++f) {
-            part.faceColors[f][0] = faces[f][0];
-            part.faceColors[f][1] = faces[f][1];
-            part.faceColors[f][2] = faces[f][2];
+            part.getPrimaryObject()->faceColors[f][0] = faces[f][0];
+            part.getPrimaryObject()->faceColors[f][1] = faces[f][1];
+            part.getPrimaryObject()->faceColors[f][2] = faces[f][2];
         }
     }
 

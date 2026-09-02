@@ -5,10 +5,12 @@
 #include <ctime>
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "Relation/Formation/Formation.hpp"
+#include "ConstructedBeing/Singular/Object/Automation/Automation.hpp"
+
 #include "ConstructedBeing/Singular/Object/Object/ObjectTypes.hpp"
 #include <glm/glm.hpp>
 
-class BodyPart : public Object, public Formation {
+class BodyPart : public Formation {
 
     public:
 
@@ -43,14 +45,34 @@ class BodyPart : public Object, public Formation {
     const std::string& getName() const { return partName; }
     Type getType() const { return partType; }
     std::string getIdentifier() const override { return partName; }
-    glm::mat4 getRaycastTransform() const override;
+    glm::mat4 getRaycastTransform() const;
+    glm::mat4 getTransform() const { return _transform; }
+    void setFaceColor(int faceIndex, float r, float g, float b);
+
+    Object* getPrimaryObject() { return _primaryObject.get(); }
+    const Object* getPrimaryObject() const { return _primaryObject.get(); }
+
+
+    bool hasAutomations() const { return _primaryObject ? _primaryObject->hasAutomations() : false; }
+    glm::mat4 sampleAutomations(const glm::mat4& restTransform) { 
+        return _primaryObject ? _primaryObject->sampleAutomations(restTransform) : restTransform; 
+    }
+    void setAutomationRest(const glm::mat4& rest) { if (_primaryObject) _primaryObject->setAutomationRest(rest); }
+    void advanceAutomations(float dt) { if (_primaryObject) _primaryObject->advanceAutomations(dt); }
+    void clearAutomations() { if (_primaryObject) _primaryObject->clearAutomations(); }
+    void addAutomation(const Automation::Clip& clip) { if (_primaryObject) _primaryObject->addAutomation(clip); }
+    Automation::State& automationState() { return _primaryObject->automationState(); }
+    const Automation::State& automationState() const { return _primaryObject->automationState(); }
+
+
 
     // A literal body part is an actual limb or organ. Have a constant updater that always sets these variables to the opposite of each other.
     bool isLiteral, isSymbolic = true;
 
     // Override to ensure collision box follows visual scale
-    void setTransform(const glm::mat4& t) override;
+    void setTransform(const glm::mat4& t);
     void setLocalTransform(const glm::mat4& t) { _localTransform = t; setTransform(t); }
+
 
     // Color accessor
     void setColor(float r,float g,float b){color[0]=r;color[1]=g;color[2]=b;}
@@ -65,8 +87,8 @@ class BodyPart : public Object, public Formation {
     // -----------------------------------------------------------------
     // Shape management — change the primary shape of this body part
     // -----------------------------------------------------------------
-    void setPrimaryShape(Object::ShapeKind gt);
-    Object::ShapeKind getPrimaryShape() const { return getShapeKind(); }
+    void setPrimaryShape(ObjectTypes::ShapeKind gt);
+    ObjectTypes::ShapeKind getPrimaryShape() const;
 
     // True if any face texture has been painted (i.e. not a flat fill).
     bool hasCustomTextures() const;
@@ -77,7 +99,7 @@ class BodyPart : public Object, public Formation {
     // collision; the *local* offsets (relative to this body part) are
     // kept in a parallel vector so they survive transform propagation.
     // -----------------------------------------------------------------
-    Object* addSubObject(Object::ShapeKind kind,
+    Object* addSubObject(ObjectTypes::ShapeKind kind,
                          const glm::mat4& localOffset = glm::mat4(1.0f));
     Object* addSubObject(std::unique_ptr<Object> obj,
                          const glm::mat4& localOffset = glm::mat4(1.0f));
@@ -95,6 +117,8 @@ class BodyPart : public Object, public Formation {
 
 
     private:
+    std::unique_ptr<Object> _primaryObject;
+    glm::mat4 _transform = glm::mat4(1.0f);
 
     std::string partName;
     Type        partType {Type::Undefined};
