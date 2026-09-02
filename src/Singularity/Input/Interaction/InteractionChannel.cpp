@@ -136,23 +136,49 @@ void InteractionChannel::observe(const Sense& sense,
 
     // 2D pick: Shape2D / Text2D objects are in screen space, so their
     // "intersection" is a simple AABB test against the pointer pixel position.
-    // A 2D hit occludes 3D objects (the intent: screen-space controls sit on top
-    // of the world), so if a 2D object is hit we replace whatever the ray found.
+    //
+    // WHICH ONE WINS IS AUTHORED, not decided here.
+    //
+    // This used to read `if (hit2D) { hit = hit2D; }` — a screen-space being
+    // unconditionally occluded whatever the ray found, forever, with no way to
+    // say otherwise. Zach's words: "the 2d buttons get hidden behind 3d stuff;
+    // that should be an authorable property, not hardcoded layering
+    // limitations." He is right, and it is Refusal 7 exactly: a modality
+    // channel had decided what is IN FRONT, which is a fact about the beings,
+    // not about the machine's senses.
+    //
+    // So the channel now asks a property and compares numbers. `pickPriority`
+    // is registered on every Object (ObjectProperties.cpp), readable and
+    // writable by law like any other, and its DEFAULT preserves what the
+    // hardcoded rule used to mean — a 2D being defaults to its own zOrder2D, a
+    // 3D being to 0 — so an unauthored world behaves exactly as before. What
+    // is new is that a Person can now author a 3D being that sits in front of
+    // the HUD (`pickPriority 100`), or a caption that never takes a click
+    // (`-1`), and can write either from a law while the world runs.
+    //
+    // Only the PICK is authorable so far. Draw order still puts every 2D being
+    // after the 3D pass — see the task in the To-do list under
+    // Interaction · controls · GUI.
     if (!blind) {
         Object* hit2D = nullptr;
-        int bestZ = std::numeric_limits<int>::min();
+        double best2D = 0.0;
         for (Object* obj : reachable) {
             if (!obj || !obj->is2D()) continue;
             const glm::vec4 rect = obj->getRect2D(); // {x0, y0, x1, y1}
             if (sense.pointerX >= rect.x && sense.pointerX <= rect.z &&
                 sense.pointerY >= rect.y && sense.pointerY <= rect.w) {
-                if (obj->getZOrder2D() > bestZ) {
-                    bestZ = obj->getZOrder2D();
+                const double priority = obj->pickPriority();
+                if (!hit2D || priority > best2D) {
+                    best2D = priority;
                     hit2D = obj;
                 }
             }
         }
-        if (hit2D) {
+        // The 3D winner brings its own priority to the comparison. A tie goes
+        // to the screen-space being, which is the old behaviour and the right
+        // default: a control drawn over the world is meant to be in front of it.
+        const double priority3D = hit ? hit->pickPriority() : 0.0;
+        if (hit2D && (!hit || best2D >= priority3D)) {
             hit = hit2D;
             // No 3D surface hit — fill surface fields with safe defaults.
             surface.obj = hit2D;

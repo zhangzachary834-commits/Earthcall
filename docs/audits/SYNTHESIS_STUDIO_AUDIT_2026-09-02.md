@@ -794,3 +794,70 @@ at boot hydration and rebind on world load, which is correct but noisy.
 
 ---
 *Repair pass — Claude Opus 5 · `session_01TE6SKxkBCVf2THDMpdwHPW` · 2026-09-02*
+
+
+---
+
+# SECOND PLAY-TEST — 2026-09-02, Zach
+
+> *"the clicks are making real sounds (first time I ever actually tested and heard sounds in Earthcall!
+> And it being playable notes is so cool and a really pleasant first-encounter) … The day and night
+> changes the board platform … The 2d buttons are working when i click them … I can see the orb now"*
+
+Sound, the ambient toggle, the 2D dock and the orbs are all confirmed working in the app by a Person.
+Two new findings came with it, and one correction.
+
+## S1. "After a certain point the 2D buttons stop working" — the app was becoming a slideshow
+
+Not a pick bug. `law-art-stroke-draw` is `WhileTrue` with no movement gate, so it minted **one sphere
+per tick for as long as the button was held** — sixty a second, whether or not the pointer moved.
+Against the per-object render cost measured in Sanctum:
+
+| strokes laid | frame | fps |
+|---|---|---|
+| 0 | 25.5 ms | 39 |
+| 60 (one second) | 37.3 ms | 27 |
+| 300 (five seconds) | 84.8 ms | 12 |
+| 600 (ten seconds) | 144.0 ms | 7 |
+
+At 7 fps a click lands between frames and the controls feel dead. Two repairs: a **movement gate**
+(the law now requires at least six pixels of travel, so a held-but-still pointer lays nothing), and
+a shape fix — `create_object(1, …)` was authored with the comment `# Sphere`, but **ShapeKind 1 is
+`Polyhedron`, which draws one mesh per face**. Every orb and every stroke segment was costing a
+fistful of draw calls instead of one, and `shape.r` — a sphere parameter — did nothing on them.
+Both are now ShapeKind 2. The rewritten test covers the gate from both sides: a held pointer that is
+not moving lays nothing; one tick of real travel lays exactly one segment.
+
+## S2. Layering was hardcoded, and Zach was right that it should not be
+
+> *"the 2d buttons get hidden behind 3d stuff that should be a authorable property (overlap detection,
+> response laws) not hardcoded layering limitations"*
+
+`InteractionChannel::observe` read `if (hit2D) { hit = hit2D; }` — a screen-space being
+unconditionally occluded whatever the ray found, forever, with no way to say otherwise. That is
+Refusal 7 exactly: a modality channel deciding what is IN FRONT, which is a fact about the beings and
+not about the machine's senses.
+
+`Object::pickPriority()` is now an ordinary readable/writable property, and the channel compares
+numbers. The **default reproduces the old rule exactly** — a 2D being answers its own `zOrder2D`, a
+3D being answers 0 — so an unauthored world behaves as before. What is new: a Person can author a 3D
+being that takes the click in front of the HUD (`pickPriority 100`), or a caption that never takes
+one (`-1`), and can drive either from a law while the world runs.
+
+**Only the pick is authored so far.** Draw order still puts every 2D being after the whole 3D pass,
+unconditionally, so a 3D being still cannot be drawn in front of the HUD. That half, plus the
+"response laws" Zach named (an authored law firing on screen-space overlap), is a task rather than a
+claim — Agenda, Interaction · controls · GUI.
+
+## S3. Correction: the 60 fps was a panel cap, not a target
+
+> *"i found out the 60 fps was hard capped because im on macbook air when i hooked up my LG monitor
+> it went up to 200-300 fps (in a blank zone, not sanctum or chess app)"*
+
+So the earlier framing of a "60 → 33 fps regression" was wrong and is corrected in the Agenda. The
+engine is fine when empty — 200-300 fps on an external panel. The real datum is the one the probe
+gave: **~0.2 ms of `render3d` per object**, which is what makes a 129-object Sanctum a 33 fps zone
+and a 600-stroke canvas a 7 fps one. The law path remains 1.8% of the frame.
+
+---
+*Second play-test pass — Claude Opus 5 · `session_01TE6SKxkBCVf2THDMpdwHPW` · 2026-09-02*

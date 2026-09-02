@@ -344,6 +344,25 @@ public:
     float getX2D() const { return _x2D; }
     float getY2D() const { return _y2D; }
     int   getZOrder2D() const { return _zOrder2D; }
+
+    // WHO IS IN FRONT, as a number a Person can author.
+    //
+    // The interaction channel used to decide this in C++: a screen-space being
+    // always won the pick over anything the ray hit. That is a fact about the
+    // beings, not about the machine's senses, so it belongs to the ontology
+    // (Refusal 7). The DEFAULT reproduces the old rule exactly — a 2D being
+    // answers its own zOrder2D, a 3D being answers 0 — so nothing an
+    // unauthored world does changes. Author it (or drive it from a law) to put
+    // a 3D being in front of the HUD, or to take a caption out of the pick.
+    double pickPriority() const {
+        PropertyValue v;
+        double n = 0.0;
+        if (const_cast<Object*>(this)->getDynamicProperty("pickPriority", v) &&
+            propertyValueToNumber(v, n)) {
+            return n;
+        }
+        return is2D() ? static_cast<double>(_zOrder2D) : 0.0;
+    }
     void  setX2D(const float& v) { _x2D = v; }
     void  setY2D(const float& v) { _y2D = v; }
     void  setZOrder2D(const int& v) { _zOrder2D = v; }

@@ -863,7 +863,12 @@ def build_world():
             play_audio("acoustic.frequency", "acoustic.amplitude", "triangle"),
             map_path("@state.studio.spawnCount", {"c": "@state.studio.spawnCount"}, offset_terms("c", 1.0)),
             create_object(
-                1,  # Sphere
+                # ShapeKind 2 is Sphere. This said 1 and the comment said
+                # "Sphere" — 1 is POLYHEDRON, which draws one mesh PER FACE
+                # (ObjectRender's drawPolyhedron), so every orb and every
+                # stroke segment was costing a fistful of draw calls instead of
+                # one. `shape.r` is a sphere parameter and did nothing on it.
+                2,
                 "interactive.harmonic.orb",
                 children=[
                     # `scale` is not a registered property on Object — the
@@ -1111,9 +1116,23 @@ def build_world():
             compare("@state.studio.drawMode", 0, pv("bool", True)),
             compare("isCanvas", 0, pv("bool", True)),
             compare("@world.pointerOver", 0, pv("bool", True)),
+            # THE POINTER MUST HAVE MOVED. Without this the law is a level
+            # with no gate: WhileTrue fires every tick the button is held, so
+            # holding still on the canvas laid 60 spheres a second on the same
+            # spot. At the ~0.2 ms of render per object measured in Sanctum,
+            # ten seconds of that is a 7 fps slideshow — and a slideshow is
+            # what "the 2D buttons stop working after a certain point" was.
+            # Six pixels of travel is about a deliberate stroke and nothing
+            # else.
+            any_of(
+                compare("@interaction-channel.dragX", 4, pv("double", 6.0)),
+                compare("@interaction-channel.dragX", 2, pv("double", -6.0)),
+                compare("@interaction-channel.dragY", 4, pv("double", 6.0)),
+                compare("@interaction-channel.dragY", 2, pv("double", -6.0)),
+            ),
         ),
         create_object(
-            1,
+            2,  # Sphere — see the note on the orb above; this said 1 too
             "art.stroke.segment",
             placement_path="@interaction-channel.pointerWorld",
             children=[

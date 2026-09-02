@@ -4442,7 +4442,7 @@
             },
             {
               "kind": 11,
-              "shapeKind": 1,
+              "shapeKind": 2,
               "createType": "interactive.harmonic.orb",
               "children": [
                 {
@@ -5920,12 +5920,53 @@
                 "t": "bool",
                 "v": true
               }
+            },
+            {
+              "kind": 4,
+              "children": [
+                {
+                  "kind": 0,
+                  "path": "@interaction-channel.dragX",
+                  "op": 4,
+                  "operand": {
+                    "t": "double",
+                    "v": 6.0
+                  }
+                },
+                {
+                  "kind": 0,
+                  "path": "@interaction-channel.dragX",
+                  "op": 2,
+                  "operand": {
+                    "t": "double",
+                    "v": -6.0
+                  }
+                },
+                {
+                  "kind": 0,
+                  "path": "@interaction-channel.dragY",
+                  "op": 4,
+                  "operand": {
+                    "t": "double",
+                    "v": 6.0
+                  }
+                },
+                {
+                  "kind": 0,
+                  "path": "@interaction-channel.dragY",
+                  "op": 2,
+                  "operand": {
+                    "t": "double",
+                    "v": -6.0
+                  }
+                }
+              ]
             }
           ]
         },
         "actionModel": {
           "kind": 11,
-          "shapeKind": 1,
+          "shapeKind": 2,
           "createType": "art.stroke.segment",
           "spawnPlacementPath": "@interaction-channel.pointerWorld",
           "children": [

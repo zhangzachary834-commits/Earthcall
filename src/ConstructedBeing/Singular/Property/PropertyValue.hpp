@@ -52,6 +52,39 @@ using PropertyValue = std::variant<
     std::shared_ptr<OntoMath::VectorField>
 >;
 
+// Is this value one whose EQUALITY is the whole story?
+//
+// The scalars, the string, and the two glm types hold their content directly,
+// so comparing two of them answers "did anything change". The pointer and
+// shared_ptr alternatives do not: two equal pointers can address contents that
+// were mutated in place, and answering "unchanged" for those would lose a real
+// change. So the test is deliberately conservative — it says yes only where a
+// yes is provable.
+inline bool isValueComparable(const PropertyValue& v) {
+    return std::holds_alternative<int>(v) || std::holds_alternative<float>(v) ||
+           std::holds_alternative<double>(v) || std::holds_alternative<bool>(v) ||
+           std::holds_alternative<char>(v) || std::holds_alternative<long>(v) ||
+           std::holds_alternative<std::string>(v) || std::holds_alternative<glm::vec3>(v) ||
+           std::holds_alternative<glm::mat4>(v);
+}
+
+// "This write changed nothing" — the question every change feed should ask
+// before it wakes the world.
+//
+// A WhileTrue law re-writes its result every tick by design: the ambient theme
+// sets the same colour, the draw indicator sets the same label, the crystal's
+// pulse sets a value that is usually within a hair of the last one. Each of
+// those used to notify, and each notification runs markFactDirty, which SCANS
+// THE WHOLE FACT LIST. With a fact per property per being and a world that
+// grows as a Person draws, that is a per-frame cost rising with the size of
+// the world for writes that changed nothing at all. It is the reason the
+// Synthesis Studio's controls went dead after a few seconds of drawing.
+inline bool propertyValueUnchanged(const PropertyValue& a, const PropertyValue& b) {
+    if (a.index() != b.index()) return false;
+    if (!isValueComparable(a)) return false;
+    return a == b;
+}
+
 struct PropertyList {
     std::vector<PropertyValue> elements;
 };

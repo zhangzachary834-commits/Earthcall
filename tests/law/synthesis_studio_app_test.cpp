@@ -419,6 +419,8 @@ int main() {
         channel.setDynamicProperty("leftDown", PropertyValue(true));
         channel.setDynamicProperty("dragging", PropertyValue(true));
         channel.setDynamicProperty("pointerWorld", PropertyValue(glm::vec3(0.4f, 2.1f, 2.3f)));
+        channel.setDynamicProperty("dragX", PropertyValue(0.0));
+        channel.setDynamicProperty("dragY", PropertyValue(0.0));
         extras.push_back(&channel);
         registerWorldReading("@world.pointerOver", [](Singular& subject, PropertyValue& out) {
             out = PropertyValue(subject.getIdentifier() == "studio.easel.canvas");
@@ -426,10 +428,23 @@ int main() {
         });
         stateStudio->setDynamicProperty("drawMode", PropertyValue(true));
 
+        // A HELD BUTTON IS NOT A STROKE. Without a movement gate the law is a
+        // level with no edge — WhileTrue fires every tick the button is down,
+        // so resting on the canvas laid sixty spheres a second on one spot. At
+        // ~0.2 ms of render per object that is a 7 fps slideshow inside ten
+        // seconds, which is what "the 2D buttons stop working after a certain
+        // point" turned out to be.
+        const std::size_t still = zone->getOwnedObjects().size();
+        laws.tick();
+        laws.tick();
+        check(zone->getOwnedObjects().size() == still,
+              "a held pointer that is not moving lays no segments at all");
+
+        channel.setDynamicProperty("dragX", PropertyValue(9.0));
         const std::size_t before = zone->getOwnedObjects().size();
         laws.tick();
         const std::size_t drawn = zone->getOwnedObjects().size() - before;
-        check(drawn == 1, "one tick with the pointer on the canvas lays exactly one segment");
+        check(drawn == 1, "and one tick of real travel lays exactly one segment");
 
         if (drawn >= 1) {
             Object* dab = zone->getOwnedObjects().back().get();

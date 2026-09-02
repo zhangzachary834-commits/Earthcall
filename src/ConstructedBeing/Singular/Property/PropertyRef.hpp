@@ -1,5 +1,7 @@
 #pragma once
 
+#include <type_traits>
+
 #include "Property.hpp"
 #include "ConstructedBeing/Singular/Singular.hpp"
 #include "Singularity/Core/StringId.hpp"
@@ -43,8 +45,19 @@ public:
     }
 
     void set(const T& value) {
+        // A write that changed nothing must not wake the change feed —
+        // markFactDirty scans the whole fact list, and a WhileTrue law
+        // re-writes its result every tick by design. The path-addressed
+        // writes every law goes through are already guarded upstream
+        // (PropertyPath::setValue answers Unchanged); this covers the typed
+        // C++ set() calls that never touch a path.
+        bool same = false;
+        if constexpr (std::is_arithmetic_v<T> || std::is_same_v<T, std::string> ||
+                      std::is_same_v<T, glm::vec3> || std::is_same_v<T, glm::mat4>) {
+            same = (_owner->*_member == value);
+        }
         _owner->*_member = value;
-        if (_singularOwner) {
+        if (_singularOwner && !same) {
             Singular::notifyPropertyChanged(_singularOwner, _name);
         }
     }

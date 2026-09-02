@@ -325,8 +325,15 @@ void Singular::setDynamicProperty(const std::string& name, const PropertyValue& 
 }
 
 void Singular::setDynamicProperty(Earthcall::StringId id, const PropertyValue& v) {
-    if (_dynamicProperties.find(id) == _dynamicProperties.end()) {
+    auto existing = _dynamicProperties.find(id);
+    if (existing == _dynamicProperties.end()) {
         Universe::instance().bumpStructuralRevision();
+    } else if (propertyValueUnchanged(existing->second, v)) {
+        // A write that changed nothing is not a change, and must not wake the
+        // change feed. See propertyValueUnchanged for why this matters more
+        // than it looks: every WhileTrue law re-writes its result every tick.
+        existing->second = v;
+        return;
     }
     _dynamicProperties[id] = v;
     // An AUTHORED property is a property. It was invisible to the change feed
