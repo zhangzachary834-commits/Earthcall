@@ -1,31 +1,63 @@
 #include "ExecutionChannel.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 
 namespace Earthcall {
 namespace Execution {
 
-ExecutionChannel::ExecutionChannel() {
-    // Instantiate actual implementations of VM, JIT, and Index here.
-}
-
+ExecutionChannel::ExecutionChannel() = default;
 ExecutionChannel::~ExecutionChannel() = default;
 
-void ExecutionChannel::initialize() {
-    // Setup modality
+void ExecutionChannel::setPropheticIndex(std::unique_ptr<PropheticIndex> index) {
+    _propheticIndex = std::move(index);
 }
 
 void ExecutionChannel::executeLaw(const class Law& law, Singular& target) {
-    (void)law;
-    (void)target;
-    // In actual implementation:
-    // if (_isJITActive && _jitCache.has(law.id)) {
-    //     _jitCache.get(law.id)(target);
-    // } else {
-    //     _vm->execute(_vmCache.get(law.id), target);
-    // }
+    // If the index has fallen, we MUST fallback to the VM immediately.
+    // In a fully integrated system, the JIT would query disjointness per-path,
+    // but at the Channel orchestration level, if the Index is totally invalid,
+    // we drop the whole JIT state to avoid executing stale assembly.
+    if (_isJITActive && _propheticIndex) {
+        // Example check: query the index for structural stability
+        // (In reality, JIT cache invalidation handles this, but for Phase 4 orchestration
+        // we simulate the fallback logic).
+        PropertyPath dummyPath = PropertyPath::parse(""); // Checking global stability
+        auto interference = _propheticIndex->queryStructuralDisjointness(Earthcall::StringId(0), dummyPath);
+        if (interference == PropheticIndex::Interference::Intersects) {
+            triggerStructuralInvalidation();
+        }
+    }
+
+    if (_isJITActive) {
+        // _jitCache.get(law.id)(target);
+    } else {
+        auto it = _vmCache.find(law.getIdentifier());
+        if (it != _vmCache.end()) {
+            _vm.execute(it->second, target);
+        } else {
+            // Compile the bytecode just-in-time if not found
+            NativeBytecodeVM::Bytecode code = _vm.emit(law);
+            _vm.execute(code, target);
+            _vmCache[law.getIdentifier()] = std::move(code);
+        }
+    }
 }
 
-void ExecutionChannel::warmCaches(const std::vector<class Law>& universeLaws) {
-    (void)universeLaws;
+void ExecutionChannel::warmCaches(const std::vector<std::shared_ptr<class Law>>& universeLaws) {
+    _vmCache.clear();
+    for (const auto& law : universeLaws) {
+        _vmCache[law->getIdentifier()] = _vm.emit(*law);
+    }
+
+    // Attempt to promote to JIT if structurally stable
+    if (_propheticIndex) {
+        PropertyPath dummyPath = PropertyPath::parse("");
+        auto interference = _propheticIndex->queryStructuralDisjointness(Earthcall::StringId(0), dummyPath);
+        if (interference == PropheticIndex::Interference::Disjoint) {
+            _isJITActive = true;
+        } else {
+            _isJITActive = false;
+        }
+    }
 }
 
 void ExecutionChannel::triggerStructuralInvalidation() {
