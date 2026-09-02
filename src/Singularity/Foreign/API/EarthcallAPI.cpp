@@ -104,19 +104,52 @@ bool EarthcallAPI::createDesignElement(const DesignElement& element) {
     
     std::cout << "🎨 Creating design element: " << element.name 
               << " (type: " << element.type << ")" << std::endl;
-    // TODO: Actually create the design element
+    _designElements[element.name] = element;
+
+    if (_designSystem) {
+        if (element.type == "text" && _designSystem->getTextSystem()) {
+            _designSystem->getTextSystem()->addText(element.name, glm::vec2(element.position.x, element.position.y));
+        } else if (_designSystem->getShapeSystem()) {
+            _designSystem->getShapeSystem()->addShape(
+                ShapeSystem::ShapeType::Rectangle,
+                glm::vec2(element.position.x, element.position.y),
+                glm::vec2(element.scale.x, element.scale.y)
+            );
+        }
+    }
     return true;
 }
 
 bool EarthcallAPI::modifyDesignElement(const std::string& name, const DesignElement& element) {
-    (void)element; // Suppress unused parameter warning
     if (!_checkPermission("design_system")) {
         std::cout << "❌ Permission denied: design_system" << std::endl;
         return false;
     }
     
+    auto it = _designElements.find(name);
+    if (it == _designElements.end()) {
+        std::cout << "❌ Design element not found: " << name << std::endl;
+        return false;
+    }
+
     std::cout << "🎨 Modifying design element: " << name << std::endl;
-    // TODO: Actually modify the design element
+    it->second = element;
+    if (element.name != name && !element.name.empty()) {
+        _designElements.erase(it);
+        _designElements[element.name] = element;
+    }
+
+    if (_designSystem) {
+        if (element.type == "text" && _designSystem->getTextSystem()) {
+            _designSystem->getTextSystem()->addText(element.name, glm::vec2(element.position.x, element.position.y));
+        } else if (_designSystem->getShapeSystem()) {
+            _designSystem->getShapeSystem()->addShape(
+                ShapeSystem::ShapeType::Rectangle,
+                glm::vec2(element.position.x, element.position.y),
+                glm::vec2(element.scale.x, element.scale.y)
+            );
+        }
+    }
     return true;
 }
 
@@ -126,14 +159,24 @@ bool EarthcallAPI::deleteDesignElement(const std::string& name) {
         return false;
     }
     
+    auto it = _designElements.find(name);
+    if (it == _designElements.end()) {
+        return false;
+    }
+
     std::cout << "🎨 Deleting design element: " << name << std::endl;
-    // TODO: Actually delete the design element
+    _designElements.erase(it);
     return true;
 }
 
 std::vector<EarthcallAPI::DesignElement> EarthcallAPI::getDesignElements() {
     std::vector<DesignElement> elements;
-    // TODO: Get actual design elements
+    if (!_checkPermission("design_system")) {
+        return elements;
+    }
+    for (const auto& [name, elem] : _designElements) {
+        elements.push_back(elem);
+    }
     return elements;
 }
 

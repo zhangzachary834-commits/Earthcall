@@ -105,6 +105,9 @@ private:
     DesignSystem* _designSystem = nullptr;
     ZonesOfEarth::ZoneManager* _zoneManager = nullptr;
 
+    // Stored Design Elements
+    std::map<std::string, DesignElement> _designElements;
+
     // Permissions
     std::vector<std::string> _grantedPermissions;
     std::map<std::string, std::function<void(const std::string&)>> _callbacks;
