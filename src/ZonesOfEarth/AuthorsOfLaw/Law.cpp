@@ -617,17 +617,17 @@ const char* Law::resultName(ApplicationResult result) {
 // authorityLevel is deliberately absent — the ceiling is Singularity-granted,
 // never law-modifiable.
 void Law::registerEnabledProperty() {
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Law, bool>>(
+    registerProperty(std::make_unique<ComputedProperty<Law, bool>>(
         "enabled", this, &Law::propEnabled, &Law::propSetEnabled));
 }
 
 void Law::buildProperties() {
     registerEnabledProperty();
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Law, int>>(
+    registerProperty(std::make_unique<ComputedProperty<Law, int>>(
         "conditionMode", this, &Law::propConditionMode, &Law::propSetConditionMode));
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Law, std::string>>(
+    registerProperty(std::make_unique<ComputedProperty<Law, std::string>>(
         "name", this, &Law::propName, &Law::propSetName));
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Law, bool>>(
+    registerProperty(std::make_unique<ComputedProperty<Law, bool>>(
         "drives", this, &Law::propDrives, &Law::propSetDrives));
 }
 
@@ -1972,6 +1972,7 @@ void LawManager::reapUnmade() {
 void reapUnmadeBeings() {
     if (!Universe::instance().hasUnmakings()) return;
     std::vector<Singular*> victims = Universe::instance().takeUnmakings();
+    Universe::instance().bumpStructuralRevision();
 
     // Collect the Zones BEFORE any removal: beings() rebuilds from the
     // provider each call, and a Zone is not what we are freeing anyway.

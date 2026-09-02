@@ -1,3 +1,4 @@
+#include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "Zone.hpp"
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 #include "Singularity/Language/JoyHierarchy.hpp"
@@ -31,24 +32,24 @@ static const char* scopeToString(Scope scope) {
 std::string Zone::scopeName() const { return scopeToString(_scope); }
 
 void Zone::buildProperties() {
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Zone, std::string>>(
+    registerProperty(std::make_unique<ComputedProperty<Zone, std::string>>(
         "name", this, &Zone::propName));
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Zone, std::string>>(
+    registerProperty(std::make_unique<ComputedProperty<Zone, std::string>>(
         "scope", this, &Zone::scopeName));
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Zone, std::string>>(
+    registerProperty(std::make_unique<ComputedProperty<Zone, std::string>>(
         "owner", this, &Zone::propOwner));
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Zone, std::string>>(
+    registerProperty(std::make_unique<ComputedProperty<Zone, std::string>>(
         "ownerKind", this, &Zone::propOwnerKind));
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Zone, std::string>>(
+    registerProperty(std::make_unique<ComputedProperty<Zone, std::string>>(
         "kind", this, &Zone::propKind));
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Zone, bool>>(
+    registerProperty(std::make_unique<ComputedProperty<Zone, bool>>(
         "primary", this, &Zone::propPrimary));
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Zone, std::string>>(
+    registerProperty(std::make_unique<ComputedProperty<Zone, std::string>>(
         "joys", this, &Zone::propJoys, nullptr));
 
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<Zone, std::shared_ptr<OntoMath::ScalarField>>>(
+    registerProperty(std::make_unique<PropertyRef<Zone, std::shared_ptr<OntoMath::ScalarField>>>(
         "spatialField", this, &Zone::_spatialField));
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<Zone, std::shared_ptr<OntoMath::VectorField>>>(
+    registerProperty(std::make_unique<PropertyRef<Zone, std::shared_ptr<OntoMath::VectorField>>>(
         "spatialVectorField", this, &Zone::_spatialVectorField));
 }
 
@@ -350,6 +351,7 @@ void Zone::describe() const {
 }
 
 void Zone::addObject(std::shared_ptr<Object> obj) {
+    Universe::instance().bumpStructuralRevision();
     _objects.push_back(std::move(obj));
 }
 

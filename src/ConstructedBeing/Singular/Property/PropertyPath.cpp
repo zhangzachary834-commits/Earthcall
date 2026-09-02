@@ -89,6 +89,11 @@ PropertyPath PropertyPath::parse(const std::string& dotted) {
     return path;
 }
 
+Earthcall::StringId PropertyPath::fullId() const {
+    if (_joinedIds.empty() || _joinedIds[0].empty()) return Earthcall::StringId();
+    return _joinedIds[0].back();
+}
+
 std::string PropertyPath::toString() const {
     std::string joined;
     for (std::size_t i = 0; i < segments.size(); ++i) {
@@ -106,13 +111,13 @@ std::string PropertyPath::toString() const {
 // this runs 500 times with ZERO heap allocations.
 // ============================================================================
 Property* PropertyPath::resolve(Singular& root, std::string* trailingComponent,
-                                Singular** owner) const {
+                                Singular** owner, std::size_t startIndex) const {
     if (trailingComponent) trailingComponent->clear();
     if (owner) *owner = nullptr;
     if (segments.empty()) return nullptr;
 
     Singular* current = &root;
-    std::size_t i = 0;
+    std::size_t i = startIndex;
     while (current && i < segments.size()) {
         // Longest dotted-name match against this Singular's registry.
         // Use pre-calculated StringIds for zero-allocation lookup.
@@ -155,12 +160,12 @@ Property* PropertyPath::resolve(Singular& root, std::string* trailingComponent,
     return nullptr;
 }
 
-PropertyPath::PathResult PropertyPath::getValue(Singular& root, PropertyValue& out) const {
+PropertyPath::PathResult PropertyPath::getValue(Singular& root, PropertyValue& out, std::size_t startIndex) const {
     std::string component;
-    Property* property = resolve(root, &component);
+    Property* property = resolve(root, &component, nullptr, startIndex);
     if (!property) {
-        if (segments.size() == 1) {
-            if (root.getDynamicProperty(segments[0], out)) {
+        if (segments.size() - startIndex == 1) {
+            if (root.getDynamicProperty(segments[startIndex], out)) {
                 return PathResult::Ok;
             }
         }
@@ -179,10 +184,10 @@ PropertyPath::PathResult PropertyPath::getValue(Singular& root, PropertyValue& o
     return PathResult::Ok;
 }
 
-PropertyPath::PathResult PropertyPath::setValue(Singular& root, const PropertyValue& v) const {
+PropertyPath::PathResult PropertyPath::setValue(Singular& root, const PropertyValue& v, std::size_t startIndex) const {
     std::string component;
     Singular* owner = nullptr;
-    Property* property = resolve(root, &component, &owner);
+    Property* property = resolve(root, &component, &owner, startIndex);
 
     // ------------------------------------------------------------------
     // EVERY successful write announces itself, from here.
@@ -220,13 +225,13 @@ PropertyPath::PathResult PropertyPath::setValue(Singular& root, const PropertyVa
     };
 
     if (!property) {
-        if (segments.size() == 1) {
+        if (segments.size() - startIndex == 1) {
             PropertyValue cur;
-            if (root.getDynamicProperty(segments[0], cur) &&
+            if (root.getDynamicProperty(segments[startIndex], cur) &&
                 propertyValuesEquivalent(cur, v)) {
                 return PathResult::Unchanged;
             }
-            root.setDynamicProperty(segments[0], v);   // announces from there
+            root.setDynamicProperty(segments[startIndex], v);   // announces from there
             return PathResult::Ok;
         }
         return PathResult::NoSuchProperty;
@@ -253,10 +258,14 @@ PropertyPath::PathResult PropertyPath::setValue(Singular& root, const PropertyVa
     // Component write: read the whole vec3, mutate one lane, write back whole
     // (so setters like Object::setPosition run their full side effects).
     double n = 0.0;
-    if (!propertyValueToNumber(v, n)) return PathResult::TypeMismatch;
+    if (!propertyValueToNumber(v, n)) {
+        return PathResult::TypeMismatch;
+    }
     PropertyValue whole = property->value();
     glm::vec3* vec = std::get_if<glm::vec3>(&whole);
-    if (!vec) return PathResult::BadComponent;
+    if (!vec) {
+        return PathResult::BadComponent;
+    }
     float& lane = *componentOf(*vec, component);
     if (std::fabs(static_cast<double>(lane) - n) <= 1e-6 * std::max(1.0, std::fabs(n))) {
         return PathResult::Unchanged;

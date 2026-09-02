@@ -1,5 +1,6 @@
 #include "StringId.hpp"
 #include <cassert>
+#include <mutex>
 
 namespace Earthcall {
 
@@ -21,18 +22,17 @@ std::vector<std::string>& StringInterner::idToString() {
     return instance;
 }
 
+static std::mutex& getInternerMutex() {
+    static std::mutex instance;
+    return instance;
+}
+
 // ----------------------------------------------------------------------------
 // StringInterner::intern — map a string to its unique ID
-//
-// Algorithm:
-// 1. Check if the string is already interned (O(1) hash map lookup)
-// 2. If yes, return the existing ID
-// 3. If no, assign a new ID (next available index), store bidirectional mapping
-//
-// ID assignment starts at 1 (0 is reserved for "invalid").
 // ----------------------------------------------------------------------------
 
 StringId StringInterner::intern(const std::string& str) {
+    std::lock_guard<std::mutex> lock(getInternerMutex());
     auto& strToId = stringToId();
     auto& idToStr = idToString();
 
@@ -44,10 +44,6 @@ StringId StringInterner::intern(const std::string& str) {
 
     // Assign new ID (next index in the vector)
     uint32_t newId = static_cast<uint32_t>(idToStr.size());
-
-    // Sanity check: we're using uint32_t, so we can intern up to ~4 billion
-    // unique strings. If we somehow exceed that, fail loudly rather than
-    // silently wrapping around (which would cause ID collisions).
     assert(newId > 0 && "StringId overflow: exceeded 4 billion unique strings");
 
     // Store bidirectional mapping
@@ -59,11 +55,10 @@ StringId StringInterner::intern(const std::string& str) {
 
 // ----------------------------------------------------------------------------
 // StringInterner::resolve — recover the original string from its ID
-//
-// Returns empty string if ID is invalid (0, or out of bounds).
 // ----------------------------------------------------------------------------
 
 const std::string& StringInterner::resolve(StringId id) {
+    std::lock_guard<std::mutex> lock(getInternerMutex());
     auto& idToStr = idToString();
 
     // ID 0 is invalid (default-constructed StringId)
@@ -79,11 +74,12 @@ const std::string& StringInterner::resolve(StringId id) {
 // ----------------------------------------------------------------------------
 
 size_t StringInterner::internedCount() {
-    // Subtract 1 for the sentinel at index 0
+    std::lock_guard<std::mutex> lock(getInternerMutex());
     return idToString().size() - 1;
 }
 
 void StringInterner::clear() {
+    std::lock_guard<std::mutex> lock(getInternerMutex());
     stringToId().clear();
     idToString().clear();
     idToString().push_back("");  // Restore sentinel

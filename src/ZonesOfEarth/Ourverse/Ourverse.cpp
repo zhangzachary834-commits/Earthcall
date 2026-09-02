@@ -27,15 +27,15 @@ Ourverse::Ourverse() {
 }
 
 void Ourverse::buildProperties() {
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Ourverse, std::string>>(
+    registerProperty(std::make_unique<ComputedProperty<Ourverse, std::string>>(
         "gatheringZone", this, &Ourverse::propGatheringZone, nullptr));
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Ourverse, std::string>>(
+    registerProperty(std::make_unique<ComputedProperty<Ourverse, std::string>>(
         "joys", this, &Ourverse::propJoys, nullptr));
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Ourverse, int>>(
+    registerProperty(std::make_unique<ComputedProperty<Ourverse, int>>(
         "filamentCount", this, &Ourverse::propFilamentCount, nullptr));
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Ourverse, std::string>>(
+    registerProperty(std::make_unique<ComputedProperty<Ourverse, std::string>>(
         "metalaws", this, &Ourverse::propMetalaws, nullptr));
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Ourverse, std::string>>(
+    registerProperty(std::make_unique<ComputedProperty<Ourverse, std::string>>(
         "convenesToward", this, &Ourverse::propConvenesToward, nullptr));
 }
 

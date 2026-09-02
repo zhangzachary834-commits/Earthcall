@@ -117,17 +117,17 @@ void faceTexturesFromJson(Material& m, const json& arr) {
 } // namespace
 
 void Material::buildProperties() {
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<Material, glm::vec3>>(
+    registerProperty(std::make_unique<PropertyRef<Material, glm::vec3>>(
         "baseColor", this, &Material::baseColor));
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<Material, float>>(
+    registerProperty(std::make_unique<PropertyRef<Material, float>>(
         "opacity", this, &Material::opacity));
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<Material, float>>(
+    registerProperty(std::make_unique<PropertyRef<Material, float>>(
         "shininess", this, &Material::shininess));
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<Material, float>>(
+    registerProperty(std::make_unique<PropertyRef<Material, float>>(
         "specular", this, &Material::specular));
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<Material, float>>(
+    registerProperty(std::make_unique<PropertyRef<Material, float>>(
         "ambient", this, &Material::ambient));
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<Material, float>>(
+    registerProperty(std::make_unique<PropertyRef<Material, float>>(
         "diffuse", this, &Material::diffuse));
 }
 

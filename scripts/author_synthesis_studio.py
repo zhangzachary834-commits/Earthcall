@@ -12,7 +12,7 @@ Stakeholder: Zach
 
 from __future__ import annotations
 
-import base64
+import argparse
 import json
 from pathlib import Path
 
@@ -57,13 +57,93 @@ def set_path(path, operand):
     return {"kind": 0, "path": path, "operand": operand}
 
 
-def map_path(path, bindings, terms):
-    return {
-        "kind": 8,
-        "path": path,
-        "bindings": bindings,
-        "function": {"pieces": [{"expr": {"terms": terms}}]},
-    }
+def add_property(name, operand, owner=""):
+    """ActionNode::AddProperty — grant a being a property it did not have.
+
+    Set WRITES an existing property and answers NoSuchProperty otherwise; it
+    does not mint one. So every `set("acoustic.frequency", …)` aimed at a
+    NEWBORN failed silently against a being that had no such property yet —
+    which is why the spawned orbs and stroke segments came out with none of
+    the acoustics the hover-sound law then tried to read. Registered names
+    (position, color, shape.r) still take Set; authored ones take this.
+    """
+    node = {"kind": 12, "propertyName": name, "operand": operand}
+    if owner:
+        node["path"] = owner
+    return node
+
+
+def map_path(path, bindings, terms=None, pieces=None, input_var=None):
+    """ActionNode::Map — path := f(bindings).
+
+    `terms` is the one-piece shorthand. `pieces` + `input_var` is the real
+    thing: a Piecewise whose bounds are cut on `input_var`, which is how a
+    clamp is written in this substrate. Outside every piece the function is
+    UNDEFINED and the law does not fire, so a clamp must cover the whole line
+    with a constant piece on each side rather than leaving the ends open.
+    """
+    fn = {"pieces": pieces if pieces is not None else [{"expr": {"terms": terms or []}}]}
+    if input_var:
+        fn["input"] = input_var
+    return {"kind": 8, "path": path, "bindings": bindings, "function": fn}
+
+
+def piece(terms, lo=None, hi=None):
+    p = {"expr": {"terms": terms}}
+    if lo is not None:
+        p["lo"] = float(lo)
+        p["includeLo"] = True
+    if hi is not None:
+        p["hi"] = float(hi)
+        p["includeHi"] = True
+    return p
+
+
+def clamp_pieces(var, lo, hi, scale=1.0, offset=0.0):
+    """scale·clamp(var, lo, hi) + offset, as three exact pieces.
+
+    Below `lo` and above `hi` the value is the constant the bound maps to —
+    which is what makes it a clamp rather than a hole in the domain. A slider
+    whose model went undefined past its authored max would freeze instead of
+    stopping, and a frozen control reads as a broken one.
+    """
+    return [
+        piece(const_terms(scale * lo + offset), hi=lo),
+        piece([{"c": scale, "factors": {var: 1.0}}, {"c": offset, "factors": {}}], lo=lo, hi=hi),
+        piece(const_terms(scale * hi + offset), lo=hi),
+    ]
+
+
+# A transcendental factor: kind(scale·var + shift). Kind 0 = Sin, 1 = Cos.
+def sin_factor(var, scale=1.0, shift=0.0):
+    return {"kind": 0, "var": var, "scale": float(scale), "shift": float(shift)}
+
+
+def cos_factor(var, scale=1.0, shift=0.0):
+    return {"kind": 1, "var": var, "scale": float(scale), "shift": float(shift)}
+
+
+def wave_term(c, factors, trans):
+    """One product term carrying a sinusoid: c · Π var^exp · Π trans(...).
+
+    OntoMath's `trans` factors are what make an oscillation exact law text
+    rather than a curve approximation — see ScalarForm.hpp. `scale` inside the
+    factor is a constant, so a sinusoid's FREQUENCY is authored and its
+    AMPLITUDE is what a bound variable can move.
+    """
+    return {"c": float(c), "factors": factors, "trans": trans}
+
+
+def flip_terms(var):
+    """The toggle, as mathematics: v := 1 - v.
+
+    Authored as `v + 1` originally, which on a bool latches ON and never
+    returns — every click past the first coerced 2, 3, 4… back to true
+    (audit §B1). ControlPatterns.cpp's createToggleLaw carries the long-form
+    account of why the flip belongs in the mathematics and not in a pair of
+    laws; this is that same form, written as save data.
+    """
+    return [{"c": 1.0, "factors": {}}, {"c": -1.0, "factors": {var: 1.0}}]
 
 
 def publish(event, subject=""):
@@ -166,6 +246,23 @@ def instance_rel(a, b):
     }
 
 
+def authored_by_rel(a, b):
+    """The edge a category carries back to whoever authored it.
+
+    Was written as `instance-of` (audit §C1), which says the taxonomy is an
+    instance of Gemini Spark — not what anybody meant. `authored-by` is the type
+    ControlPatterns.cpp's seedArtCategories already uses for exactly this.
+    """
+    return {
+        "type": "authored-by",
+        "entityA": a,
+        "entityB": b,
+        "directed": True,
+        "weight": 1.0,
+        "events": [{"description": "authored-by", "deltaWeight": 1.0, "timestamp": 1787395000}],
+    }
+
+
 def subcategory_rel(a, b):
     return {
         "type": "subcategory-of",
@@ -227,8 +324,8 @@ def build_world():
         subcategory_rel("category.control.toggle", "category.control"),
         subcategory_rel("category.control.slider", "category.control"),
         subcategory_rel("category.art.stroke", "category.art"),
-        instance_rel("category.control", AUTHOR),
-        instance_rel("category.art", AUTHOR),
+        authored_by_rel("category.control", AUTHOR),
+        authored_by_rel("category.art", AUTHOR),
     ]
 
     # 2. Zone Objects (The Studio Environment, 3D Widgets, Signage, and 2D Screen-space HUD)
@@ -269,6 +366,7 @@ def build_world():
         "faceColors": make_face_colors((0.11, 0.12, 0.15)),
         "authoredProperties": {
             "displayName": pv("string", "Studio Control Console"),
+            "isStudioSurface": pv("bool", True),
         },
     })
 
@@ -315,6 +413,7 @@ def build_world():
         "faceColors": make_face_colors((0.35, 0.78, 0.95)),
         "authoredProperties": {
             "displayName": pv("string", "Harmonic Crystal Pedestal"),
+            "isPulseCrystal": pv("bool", True),
         },
     })
 
@@ -348,7 +447,7 @@ def build_world():
         "faceColors": make_face_colors((0.15, 0.58, 0.98)),
         "authoredProperties": {
             "displayName": pv("string", "✦ Spawn Harmonic Orb"),
-            "controlLabel": pv("string", "Spawn Harmonic Orb"),
+            "controlLabel": pv("string", "SPAWN ORB"),
             "buttonRole": pv("string", "spawn-orb"),
             "restY": pv("double", 0.89),
         },
@@ -394,8 +493,10 @@ def build_world():
         "faceColors": make_face_colors((1.0, 0.7, 0.15)),
         "authoredProperties": {
             "displayName": pv("string", "☼ Toggle Night/Day Theme"),
-            "controlLabel": pv("string", "Toggle Night/Day Ambient"),
+            "controlLabel": pv("string", "DAY / NIGHT"),
             "buttonRole": pv("string", "toggle-theme"),
+            "acoustic.frequency": pv("double", 392.0),    # G4
+            "acoustic.amplitude": pv("double", 0.55),
             "controlOn": pv("bool", False),
             "restY": pv("double", 0.89),
         },
@@ -451,7 +552,7 @@ def build_world():
                 "noteName": pv("string", note),
                 "acoustic.frequency": pv("double", freq),
                 "acoustic.amplitude": pv("double", 0.85),
-                "acoustic.waveType": pv("string", "crystal"),
+                "acoustic.waveType": pv("string", "triangle"),
                 "isChordPad": pv("bool", True),
                 "restY": pv("double", 0.88),
             },
@@ -493,8 +594,12 @@ def build_world():
         "shapeKind": 0,
         "geometryType": 0,
         "shapeParams": [0.5, 0.5, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0],
-        "transform": mat4_translate(0.0, 0.9, 0.55, (0.38, 0.14, 0.34)),
-        "center": [0.0, 0.9, 0.55],
+        # x = controlValue - 1.6, the same mapping law-studio-slider-sync
+        # writes every tick. Authored at x = 0 it used to TELEPORT to -0.6 on
+        # the first frame after load (audit §B3): the placement and the law
+        # disagreed, and the law wins immediately. They now agree.
+        "transform": mat4_translate(-0.6, 0.9, 0.55, (0.38, 0.14, 0.34)),
+        "center": [-0.6, 0.9, 0.55],
         "materialId": "material.studio.handle",
         "faceColors": make_face_colors((0.92, 0.94, 0.98)),
         "authoredProperties": {
@@ -503,7 +608,10 @@ def build_world():
             "controlValue": pv("double", 1.0),
             "controlMin": pv("double", 0.2),
             "controlMax": pv("double", 3.0),
-            "controlStep": pv("double", 0.1),
+            # dcontrolValue/dt = dragX·controlStep and dragX is a PIXEL delta,
+            # so this is "units per pixel per second". 0.1 swept the whole range
+            # in a flick; 0.02 gives the track about a screen-width of travel.
+            "controlStep": pv("double", 0.02),
             "restY": pv("double", 0.9),
         },
     })
@@ -584,8 +692,11 @@ def build_world():
             "displayName": pv("string", "HUD: Spawn Orb"),
             "controlLabel": pv("string", "SPAWN ORB"),
             "buttonRole": pv("string", "spawn-orb"),
+            "acoustic.frequency": pv("double", 587.33),
+            "acoustic.amplitude": pv("double", 0.55),
             "shape.width2D": pv("double", 130.0),
             "shape.height2D": pv("double", 38.0),
+            "restY2D": pv("double", 653.0),
         },
     })
     relations.append(instance_rel(hud_btn_spawn, "category.control.button"))
@@ -608,8 +719,11 @@ def build_world():
             "displayName": pv("string", "HUD: Day/Night"),
             "controlLabel": pv("string", "DAY / NIGHT"),
             "buttonRole": pv("string", "toggle-theme"),
+            "acoustic.frequency": pv("double", 392.0),
+            "acoustic.amplitude": pv("double", 0.55),
             "shape.width2D": pv("double", 120.0),
             "shape.height2D": pv("double", 38.0),
+            "restY2D": pv("double", 653.0),
         },
     })
     relations.append(instance_rel(hud_btn_theme, "category.control.toggle"))
@@ -640,10 +754,11 @@ def build_world():
                 "noteName": pv("string", note),
                 "acoustic.frequency": pv("double", freq),
                 "acoustic.amplitude": pv("double", 0.85),
-                "acoustic.waveType": pv("string", "crystal"),
+                "acoustic.waveType": pv("string", "triangle"),
                 "isChordPad": pv("bool", True),
                 "shape.width2D": pv("double", 52.0),
                 "shape.height2D": pv("double", 38.0),
+                "restY2D": pv("double", 653.0),
             },
         })
         relations.append(instance_rel(hpad_id, "category.control.button"))
@@ -664,27 +779,46 @@ def build_world():
         "faceColors": make_face_colors((0.72, 0.32, 0.95)),
         "authoredProperties": {
             "displayName": pv("string", "HUD: Draw Canvas Mode"),
-            "controlLabel": pv("string", "DRAW STROKES"),
+            "controlLabel": pv("string", "DRAW: OFF"),
             "buttonRole": pv("string", "draw-mode"),
+            "acoustic.frequency": pv("double", 493.88),   # B4
+            "acoustic.amplitude": pv("double", 0.55),
             "shape.width2D": pv("double", 155.0),
             "shape.height2D": pv("double", 38.0),
+            "restY2D": pv("double", 653.0),
         },
     })
     relations.append(instance_rel(hud_btn_draw, "category.control.button"))
 
     # Studio State Being
+    # The studio's ambient state — the being every law addresses as
+    # "@state.studio.*". It holds state, it is not a control, and it must not
+    # look like one.
+    #
+    # It was authored as Shape2D (12) with no size or position, which meant the
+    # engine's defaults applied: a 100x100 quad at screen (100,100), in the
+    # default red nobody chose. That is the red square in the corner of Zach's
+    # play-test (audit §A3) — and because a 2D hit unconditionally occludes the
+    # 3D pick, it also ate every click inside its rectangle. A pure state holder
+    # is a Cube parked below the floor: still a being, still addressable by law
+    # text, no longer a shape a Person can mistake for a button. (There is no
+    # save-side way to clear physicalObject the way CategoryManager does in C++;
+    # a comment saying "this is deliberately out of sight" is the honest
+    # alternative to a black box.)
     state_id = "state.studio"
     zone_objects.append({
         "objectID": state_id,
-        "shapeKind": 12,
-        "geometryType": 12,
-        "shapeParams": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-        "transform": mat4_translate(0.0, 0.0, 0.0, (0.01, 0.01, 0.01)),
-        "center": [0.0, 0.0, 0.0],
-        "materialId": "",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [0.5, 0.5, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0],
+        "transform": mat4_translate(0.0, -4.0, 0.0, (0.02, 0.02, 0.02)),
+        "center": [0.0, -4.0, 0.0],
+        "materialId": "material.studio.slate",
+        "faceColors": make_face_colors((0.16, 0.18, 0.22)),
         "authoredProperties": {
             "displayName": pv("string", "Studio Ambient State"),
             "themeNight": pv("bool", False),
+            "drawMode": pv("bool", False),
             "pulseRate": pv("double", 1.0),
             "spawnCount": pv("int", 0),
             "soundFreq": pv("double", 440.0),
@@ -696,32 +830,31 @@ def build_world():
     # Author Laws
     # -----------------------------------------------------------------------
 
-    # 1. Archetype Button Law (INTERACTION_AS_LAW.md §6a)
-    add_law(
-        "law-control-button-archetype",
-        "Control Archetype: Button Activation",
-        0, # Activation::OnEvent
-        ["object-clicked"],
-        related("instance-of", "category.control.button"),
-        publish("control-activated"),
-        scope=0, # Scope::Subject
-    )
+    # -----------------------------------------------------------------------
+    # THE ARCHETYPES ARE NOT HERE, AND THAT IS THE POINT.
+    #
+    # This file used to author `law-control-button-archetype` and
+    # `law-control-toggle-archetype` — byte-for-byte the same condition and
+    # (nearly) the same action as `control-button-law` and `control-toggle-law`,
+    # which EngineInit registers as FIRST MOVERS on every boot and which
+    # LawManager::loadFromJson deliberately preserves across a load. So both
+    # pairs loaded, the Law Graph showed a Person two button archetypes and two
+    # toggle archetypes, and disabling either changed nothing (audit §B4).
+    #
+    # The toggle pair was worse than redundant: the first mover writes
+    # `controlOn := 1 - o` and the save wrote `o + 1`, so which one a click left
+    # behind depended on evaluation order.
+    #
+    # A world that wants a DIFFERENT archetype overrides by REUSING the id —
+    # syncRegisterControlPatterns is first-wins precisely so a Person's revision
+    # of a law they were handed survives re-seeding. It does not need a second
+    # law wearing a different name.
+    #
+    # What remains below is only what is the studio's own: what activation
+    # MEANS here.
+    # -----------------------------------------------------------------------
 
-    # 2. Archetype Toggle Law (INTERACTION_AS_LAW.md §6b)
-    add_law(
-        "law-control-toggle-archetype",
-        "Control Archetype: Toggle Flip",
-        0,
-        ["object-clicked"],
-        related("instance-of", "category.control.toggle"),
-        seq(
-            map_path("controlOn", {"o": "controlOn"}, offset_terms("o", 1.0)),
-            publish("control-activated"),
-        ),
-        scope=0,
-    )
-
-    # 3. Domain Law: Spawn Harmonic Orb on Button Click
+    # 1. Spawn a Harmonic Orb.
     add_law(
         "law-studio-spawn-orb",
         "Studio: Spawn Harmonic Orb on Button Click",
@@ -731,26 +864,47 @@ def build_world():
         seq(
             map_path("@state.studio.spawnCount", {"c": "@state.studio.spawnCount"}, offset_terms("c", 1.0)),
             create_object(
-                1, # Sphere
+                1,  # Sphere
                 "interactive.harmonic.orb",
                 children=[
-                    set_path("scale", pv("vec3", [0.45, 0.45, 0.45])),
+                    # `scale` is not a registered property on Object — the
+                    # original set("scale", …) wrote nowhere, so every orb came
+                    # out at the default radius. `shape.r` is what a Sphere's
+                    # size actually is (ObjectProperties.cpp:512).
+                    set_path("shape.r", pv("double", 0.22)),
                     set_path("color", pv("vec3", [1.0, 0.85, 0.22])),
-                    set_path("position", pv("vec3", [0.0, 1.6, 1.25])),
-                    set_path("acoustic.frequency", pv("double", 880.0)),
-                    set_path("acoustic.amplitude", pv("double", 0.9)),
+                    set_path("position", pv("vec3", [0.0, 1.75, 1.25])),
+                    # Every orb used to spawn on the SAME point (audit §B7) while
+                    # spawnCount was incremented and read by nobody. The counter
+                    # is now the ring's parameter: orb n lands at angle 0.8n on a
+                    # circle in front of the easel, which is what makes the count
+                    # something a Person can see rather than a number in a file.
+                    map_path("position.x", {"n": "@state.studio.spawnCount"},
+                             [wave_term(1.35, {}, [sin_factor("n", 0.8)])]),
+                    map_path("position.z", {"n": "@state.studio.spawnCount"},
+                             [wave_term(0.55, {}, [cos_factor("n", 0.8)]),
+                              {"c": 1.25, "factors": {}}]),
+                    map_path("position.y", {"n": "@state.studio.spawnCount"},
+                             [wave_term(0.28, {}, [sin_factor("n", 1.7)]),
+                              {"c": 1.75, "factors": {}}]),
+                    add_property("acoustic.frequency", pv("double", 880.0)),
+                    add_property("acoustic.amplitude", pv("double", 0.5)),
+                    add_property("acoustic.waveType", pv("string", "triangle")),
+                    add_property("displayName", pv("string", "Harmonic Orb")),
                     add_relation("", "category.art.stroke", "instance-of"),
                     add_relation("", "category.interactive.orb", "instance-of"),
                 ],
             ),
-            play_audio("@state.studio.soundFreq", "@state.studio.soundAmp", "crystal"),
+            # The button sounds ITSELF now, not one shared 440 Hz constant.
+            play_audio("acoustic.frequency", "acoustic.amplitude", "triangle"),
             map_path("position.y", {"ry": "restY"}, offset_terms("ry", -0.04)),
+            map_path("y2D", {"r": "restY2D"}, offset_terms("r", 3.0)),
             publish("orb-spawned", "state.studio"),
         ),
         scope=0,
     )
 
-    # 4. Domain Law: Switch Ambient Theme on Toggle Click
+    # 2. Flip the ambient theme.
     add_law(
         "law-studio-theme-toggle",
         "Studio: Switch Ambient Theme on Toggle Click",
@@ -758,43 +912,135 @@ def build_world():
         ["control-activated"],
         compare("buttonRole", 0, pv("string", "toggle-theme")),
         seq(
-            map_path("@state.studio.themeNight", {"tn": "@state.studio.themeNight"}, offset_terms("tn", 1.0)),
-            play_audio("@state.studio.soundFreq", "@state.studio.soundAmp", "bell"),
+            map_path("@state.studio.themeNight", {"tn": "@state.studio.themeNight"}, flip_terms("tn")),
+            play_audio("acoustic.frequency", "acoustic.amplitude", "triangle"),
+            map_path("position.y", {"ry": "restY"}, offset_terms("ry", -0.04)),
+            map_path("y2D", {"r": "restY2D"}, offset_terms("r", 3.0)),
             publish("theme-toggled", "state.studio"),
         ),
         scope=0,
     )
 
-    # 4b. Domain Law: Draw Mode Toggle Button
+    # 2a/2b. …and what flipping it MEANS.
+    #
+    # `themeNight` was written by the law above and read by NOTHING (audit §B2):
+    # the toggle flipped a boolean and the world did not change, which from the
+    # Person's side is indistinguishable from a dead button. These two laws are
+    # the missing consequence.
+    #
+    # Two laws, not one, and they are a BRANCH rather than the loop
+    # ControlPatterns.cpp warns about: each reads `@state.studio.themeNight` and
+    # writes `color` on the studio's surfaces, so neither one's action can
+    # satisfy or invalidate the other's condition. The cascade rule is about
+    # actions that feed conditions; these do not.
+    for suffix, night, rgb in (("night", True, [0.07, 0.08, 0.13]),
+                               ("day", False, [0.38, 0.42, 0.50])):
+        add_law(
+            f"law-studio-theme-{suffix}",
+            f"Studio: Surfaces take the {suffix} ambient",
+            1,  # WhileTrue — a level, not an edge
+            [],
+            all_of(
+                compare("isStudioSurface", 0, pv("bool", True)),
+                compare("@state.studio.themeNight", 0, pv("bool", night)),
+            ),
+            set_path("color", pv("vec3", rgb)),
+            scope=1,  # Scope::Everyone — every surface that carries the mark
+        )
+
+    # 3. Draw mode, as a real toggle.
+    #
+    # Was `active3DMode := "Draw"`, unconditionally, with no inverse: there was
+    # no way out of draw mode from inside the studio, and "Draw" is not one of
+    # the ten modes kCreatorTools knows, so the Creator Console's mode display
+    # and the channel's mode silently diverged (audit §B5). The studio keeps its
+    # own `drawMode` flag instead — one being, one flip, and the drawing law
+    # reads it directly.
     add_law(
         "law-studio-draw-mode-toggle",
-        "Studio: Toggle Canvas Drawing Mode on Button Click",
+        "Studio: Toggle Canvas Drawing Mode",
         0,
         ["control-activated"],
         compare("buttonRole", 0, pv("string", "draw-mode")),
         seq(
-            set_path("@creation-channel.active3DMode", pv("string", "Draw")),
-            play_audio("@state.studio.soundFreq", "@state.studio.soundAmp", "crystal"),
+            map_path("@state.studio.drawMode", {"d": "@state.studio.drawMode"}, flip_terms("d")),
+            play_audio("acoustic.frequency", "acoustic.amplitude", "triangle"),
+            map_path("y2D", {"r": "restY2D"}, offset_terms("r", 3.0)),
             publish("draw-mode-toggled", "state.studio"),
         ),
         scope=0,
     )
 
-    # 4c. Domain Law: Slider Sync and Pulse Rate Mapping
+    # 3a/3b. The draw button shows its own state.
+    # A mode a Person cannot see they are in is a mode they will fight.
+    for suffix, on, rgb, label in (("on", True, [0.45, 0.92, 0.55], "DRAW: ON"),
+                                   ("off", False, [0.72, 0.32, 0.95], "DRAW: OFF")):
+        add_law(
+            f"law-studio-draw-indicator-{suffix}",
+            f"Studio: Draw button reads {label}",
+            1,
+            [],
+            all_of(
+                compare("buttonRole", 0, pv("string", "draw-mode")),
+                compare("@state.studio.drawMode", 0, pv("bool", on)),
+            ),
+            seq(
+                set_path("color", pv("vec3", rgb)),
+                set_path("controlLabel", pv("string", label)),
+            ),
+            scope=1,
+        )
+
+    # 4. The slider, clamped to the bounds it always carried.
+    #
+    # `controlMin` 0.2 and `controlMax` 3.0 were authored and read by nothing —
+    # neither the archetype nor this law — so the handle slid off its track in
+    # both directions and pulseRate went negative (audit §B3). The clamp is a
+    # three-piece Piecewise: constant below the floor, the value between, and
+    # constant above the ceiling. It writes controlValue back so the archetype's
+    # Flow cannot integrate past the end, which is the only place the runaway
+    # could be stopped without teaching the archetype about this slider.
     add_law(
         "law-studio-slider-sync",
         "Studio: Sync Pulse Rate from Slider Value",
-        1, # WhileTrue continuous sync
+        1,
         [],
         related("instance-of", "category.control.slider"),
         seq(
-            map_path("@state.studio.pulseRate", {"v": "controlValue"}, copy_terms("v")),
-            map_path("position.x", {"v": "controlValue"}, offset_terms("v", -1.6)),
+            map_path("controlValue", {"v": "controlValue"},
+                     pieces=clamp_pieces("v", 0.2, 3.0), input_var="v"),
+            map_path("@state.studio.pulseRate", {"v": "controlValue"},
+                     pieces=clamp_pieces("v", 0.2, 3.0), input_var="v"),
+            map_path("position.x", {"v": "controlValue"},
+                     pieces=clamp_pieces("v", 0.2, 3.0, offset=-1.6), input_var="v"),
         ),
         scope=0,
     )
 
-    # 5. Domain Law: Synthesizer Chord Pad Activation
+    # 4a. …and what the pulse rate MEANS.
+    #
+    # The other half of §B2: `pulseRate` was written every tick and read by
+    # nothing. The crystal breathes it. Frequency is authored (a TransFactor's
+    # scale is a constant); AMPLITUDE is what the slider moves, so the crystal
+    # sits still at the bottom of the track and swells at the top.
+    add_law(
+        "law-studio-crystal-pulse",
+        "Studio: Crystal breathes at the authored pulse rate",
+        1,
+        [],
+        compare("isPulseCrystal", 0, pv("bool", True)),
+        seq(
+            map_path("color.r", {"p": "@state.studio.pulseRate", "t": "time"},
+                     [{"c": 0.40, "factors": {}},
+                      wave_term(0.13, {"p": 1.0}, [sin_factor("t", 2.2)])]),
+            map_path("color.g", {"p": "@state.studio.pulseRate", "t": "time"},
+                     [{"c": 0.78, "factors": {}},
+                      wave_term(0.06, {"p": 1.0}, [sin_factor("t", 2.2)])]),
+        ),
+        scope=1,
+    )
+
+    # 5. The chord pads.
     add_law(
         "law-studio-pad-play",
         "Studio: Play Musical Note on Chord Pad Click",
@@ -802,64 +1048,110 @@ def build_world():
         ["control-activated"],
         compare("isChordPad", 0, pv("bool", True)),
         seq(
-            play_audio("acoustic.frequency", "acoustic.amplitude", "crystal"),
+            play_audio("acoustic.frequency", "acoustic.amplitude", "triangle"),
             map_path("position.y", {"ry": "restY"}, offset_terms("ry", -0.04)),
+            map_path("y2D", {"r": "restY2D"}, offset_terms("r", 3.0)),
             publish("note-played"),
         ),
         scope=0,
     )
 
-    # 6. Tactile Button Release Spring
+    # 6. The spring, for both bodies a control can have.
+    #
+    # A 3D control rises on `position.y`; a 2D one on `y2D`. The law used to
+    # write only the first, and the five HUD controls carried no `restY` at all,
+    # so the entire press-and-release affordance was 3D-only and the HUD gave no
+    # click feedback whatsoever (audit §B8). Both writes are here; each is a Map
+    # over a binding the other kind of control does not have, and an unread
+    # binding makes the node undefined, so each control gets exactly the one
+    # that applies to it. Undefined is not failure here — it is the branch.
     add_law(
         "law-studio-button-spring",
         "Studio: Restore Button Elevation",
         0,
         ["object-released"],
         related("instance-of", "category.control.button"),
-        map_path("position.y", {"ry": "restY"}, copy_terms("ry")),
+        seq(
+            map_path("position.y", {"ry": "restY"}, copy_terms("ry")),
+            map_path("y2D", {"r": "restY2D"}, copy_terms("r")),
+        ),
         scope=0,
     )
 
-    # 7. Art Tool: Draw Stroke Singulars along Pointer Trajectory
+    # 6a. Toggles spring too — they are not buttons and the law above will
+    # never see them.
+    add_law(
+        "law-studio-toggle-spring",
+        "Studio: Restore Toggle Elevation",
+        0,
+        ["object-released"],
+        related("instance-of", "category.control.toggle"),
+        seq(
+            map_path("position.y", {"ry": "restY"}, copy_terms("ry")),
+            map_path("y2D", {"r": "restY2D"}, copy_terms("r")),
+        ),
+        scope=0,
+    )
+
+    # 7. Drawing, on the canvas and only on the canvas.
+    #
+    # Two repairs (audit §B6). The condition now reads the studio's own
+    # `drawMode` rather than a creation-channel mode string nothing recognised.
+    # And it reads `isCanvas` — a property the easel has carried since the first
+    # draft while NO LAW read it, so strokes could be laid anywhere: on the sky,
+    # where `pointerWorld` is (0,0,0) and every segment piled on the origin, or
+    # across the HUD, where `pointerWorld` is screen pixels reinterpreted as
+    # world coordinates. Scope::Everyone sweeps, `isCanvas` selects, and the
+    # pointer decides where — so the authored constraint finally constrains.
     add_law(
         "law-art-stroke-draw",
         "Art Tool: Draw Stroke Singulars along Pointer",
-        1, # Activation::WhileTrue
+        1,
         [],
         all_of(
             compare("@interaction-channel.leftDown", 0, pv("bool", True)),
-            compare("@creation-channel.active3DMode", 0, pv("string", "Draw")),
             compare("@interaction-channel.dragging", 0, pv("bool", True)),
+            compare("@state.studio.drawMode", 0, pv("bool", True)),
+            compare("isCanvas", 0, pv("bool", True)),
+            compare("@world.pointerOver", 0, pv("bool", True)),
         ),
         create_object(
-            1, # Sphere
+            1,
             "art.stroke.segment",
             placement_path="@interaction-channel.pointerWorld",
             children=[
-                set_path("scale", pv("vec3", [0.08, 0.08, 0.08])),
+                set_path("shape.r", pv("double", 0.045)),
                 set_path("color", pv("vec3", [1.0, 0.85, 0.15])),
+                add_property("displayName", pv("string", "Stroke")),
+                # A stroke that could not be heard: law-stroke-hover-sound reads
+                # exactly these two paths, and the segments were created without
+                # them (audit §B7), so hovering a stroke was silent even with a
+                # working audio channel behind it.
+                add_property("acoustic.frequency", pv("double", 1046.5)),
+                add_property("acoustic.amplitude", pv("double", 0.32)),
+                add_property("acoustic.waveType", pv("string", "triangle")),
                 add_relation("", "category.art.stroke", "instance-of"),
             ],
         ),
-        scope=1, # Scope::Everyone
+        scope=1,
     )
 
-    # 8. Stroke Reactive Acoustic Law: Hovering over stroke plays chime
+    # 8. A stroke chimes when the pointer finds it.
     add_law(
         "law-stroke-hover-sound",
         "Art Stroke: Sound Chime on Hover",
         0,
         ["object-hover-entered"],
         related("instance-of", "category.art.stroke"),
-        play_audio("acoustic.frequency", "acoustic.amplitude", "crystal"),
+        play_audio("acoustic.frequency", "acoustic.amplitude", "triangle"),
         scope=0,
     )
 
-    # 9. Stroke Reactive Glow Law: Hovering over stroke illuminates it
+    # 9. …and lights while it is held.
     add_law(
         "law-stroke-hover-glow",
         "Art Stroke: Illuminate on Pointer Hover",
-        1, # Activation::WhileTrue
+        1,
         [],
         all_of(
             related("instance-of", "category.art.stroke"),
@@ -871,6 +1163,8 @@ def build_world():
 
     # Assemble Zone and Session
     zone = {
+        "injected_by": "Gemini Spark (authored) / Claude Opus 5 (repaired 2026-09-02)",
+        "authors": ["Zach"],
         "name": ZONE_ID,
         "identifier": ZONE_ID,
         "owner": "Player",
@@ -883,6 +1177,8 @@ def build_world():
 
     session = {
         "saveFormat": "zone-identity-v1",
+        "injected_by": "Gemini Spark (authored) / Claude Opus 5 (repaired 2026-09-02)",
+        "authors": ["Zach"],
         "currentZone": 0,
         "currentZoneId": ZONE_ID,
         "flying": True,
@@ -904,6 +1200,15 @@ def build_world():
             {"name": "material.studio.socket", "baseColor": [0.08, 0.09, 0.12], "opacity": 1.0},
             {"name": "material.studio.track", "baseColor": [0.25, 0.27, 0.32], "opacity": 1.0},
             {"name": "material.studio.handle", "baseColor": [0.92, 0.94, 0.98], "opacity": 1.0},
+            # The seven that objects named and nobody minted (audit §C2): the four
+            # chord pads and three sign variants resolved to the default material.
+            {"name": "material.studio.C5", "baseColor": [0.95, 0.22, 0.32], "opacity": 1.0},
+            {"name": "material.studio.E5", "baseColor": [1.0, 0.72, 0.12], "opacity": 1.0},
+            {"name": "material.studio.G5", "baseColor": [0.18, 0.88, 0.45], "opacity": 1.0},
+            {"name": "material.studio.B5", "baseColor": [0.28, 0.48, 1.0], "opacity": 1.0},
+            {"name": "material.studio.sign.blue", "baseColor": [0.16, 0.34, 0.52], "opacity": 1.0},
+            {"name": "material.studio.sign.gold", "baseColor": [0.42, 0.32, 0.12], "opacity": 1.0},
+            {"name": "material.studio.sign.dark", "baseColor": [0.20, 0.23, 0.30], "opacity": 1.0},
         ],
         "categories": categories,
         "zoneRefs": [{"identifier": ZONE_ID, "kind": "studio"}],
@@ -929,21 +1234,72 @@ def build_world():
 
 
 def main():
+    """Write the Synthesis Studio's two save files.
+
+    THE ZONE FILE IS NOT OURS TO OVERWRITE. `saves/zones/SynthesisStudio/zone.json`
+    is an identity-stable Zone: once the app has loaded this world even once, the
+    engine owns that file and it holds whatever a Person did in there — paint,
+    positions, spawned orbs, strokes. Re-running this script used to clobber it
+    unconditionally, with no backup and no merge (audit §C1), which is how the
+    on-disk copy came to be missing three authored taxonomy edges that only the
+    world file still carried.
+
+    So: refuse by default, say exactly what is in the way, and take a backup even
+    under --force. Save files are sacred.
+    """
+    parser = argparse.ArgumentParser(description="Author the Synthesis Studio save files.")
+    parser.add_argument("--force", action="store_true",
+                        help="overwrite an existing Zone identity file (a .bak is kept)")
+    args = parser.parse_args()
+
     root = Path(__file__).resolve().parents[1]
     session, zone = build_world()
     world_path = root / "saves" / "worlds" / "synthesis_studio.json"
     zone_path = root / "saves" / "zones" / ZONE_ID / "zone.json"
+
+    if zone_path.exists() and not args.force:
+        print(f"REFUSED: {zone_path} already exists.")
+        print("  That file is the live Zone — it holds whatever a Person did in the studio.")
+        print("  Re-run with --force to replace it (a .bak is kept), or delete it yourself")
+        print("  if you are certain there is nothing in it you want.")
+        return 1
+
     world_path.parent.mkdir(parents=True, exist_ok=True)
     zone_path.parent.mkdir(parents=True, exist_ok=True)
+
+    backups = []
+    for existing in (world_path, zone_path):
+        if existing.exists():
+            backup = existing.with_suffix(existing.suffix + ".bak")
+            backup.write_text(existing.read_text())
+            backups.append(backup)
+
+    # The engine writes a .ecform beside a legacy JSON world on first load, and
+    # SaveSystem::listWorlds then PREFERS it over the .json for the same stem —
+    # so a stale .ecform silently shadows everything written here (audit §C2).
+    shadowed = []
+    for ext in (".ecform", ".ecmatter"):
+        stale = world_path.with_suffix(ext)
+        if stale.exists():
+            stale.unlink()
+            shadowed.append(stale)
+
     world_path.write_text(json.dumps(session, indent=2) + "\n")
     zone_path.write_text(json.dumps(zone, indent=2) + "\n")
+
     print(f"Authored {world_path}")
     print(f"Authored {zone_path}")
+    for b in backups:
+        print(f"  Backed up      {b}")
+    for sh in shadowed:
+        print(f"  Removed stale  {sh} (it would have shadowed the .json on load)")
     print(f"  Zone Objects: {len(zone['world']['objects'])}")
     print(f"  Relations: {len(zone['formationRelations'])}")
     print(f"  Laws: {len(LAWS)}")
     print(f"  Author: {AUTHOR}")
+    print(f"  Injected by: Claude Opus 5 (session 01TE6SKxkBCVf2THDMpdwHPW), on Zach's authority")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

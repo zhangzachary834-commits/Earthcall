@@ -10,13 +10,13 @@ InferenceLawBridge::InferenceLawBridge(const std::string& bridgeName)
       _activeClassifier("default_heuristic") {}
 
 void InferenceLawBridge::buildProperties() {
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<InferenceLawBridge, bool>>(
+    registerProperty(std::make_unique<ComputedProperty<InferenceLawBridge, bool>>(
         "enabled", this, &InferenceLawBridge::propEnabled, &InferenceLawBridge::propSetEnabled));
         
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<InferenceLawBridge, float>>(
+    registerProperty(std::make_unique<ComputedProperty<InferenceLawBridge, float>>(
         "confidence_threshold", this, &InferenceLawBridge::propConfidenceThreshold, &InferenceLawBridge::propSetConfidenceThreshold));
         
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<InferenceLawBridge, std::string>>(
+    registerProperty(std::make_unique<ComputedProperty<InferenceLawBridge, std::string>>(
         "active_classifier", this, &InferenceLawBridge::propActiveClassifier, &InferenceLawBridge::propSetActiveClassifier));
 }
 

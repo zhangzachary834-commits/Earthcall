@@ -18,7 +18,7 @@ void PhysicalChannel::propSetEnabled(const bool& v) {
 }
 
 void PhysicalChannel::buildProperties() {
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<PhysicalChannel, bool>>(
+    registerProperty(std::make_unique<ComputedProperty<PhysicalChannel, bool>>(
         "enabled", this, &PhysicalChannel::propEnabled, &PhysicalChannel::propSetEnabled));
 }
 

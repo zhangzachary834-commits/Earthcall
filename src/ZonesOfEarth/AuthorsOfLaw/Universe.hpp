@@ -235,8 +235,12 @@ public:
         return out;
     }
 
+    std::uint64_t structuralRevision() const { return _structuralRevision; }
+    void bumpStructuralRevision() { ++_structuralRevision; }
+
 private:
     Universe() = default;
+
     Universe(const Universe&) = delete;
     Universe& operator=(const Universe&) = delete;
 
@@ -257,6 +261,7 @@ private:
     bool _eventSet = false;
 
     std::vector<Singular*> _unmaking;
+    std::uint64_t _structuralRevision = 0;
 };
 
 // Free every being whose unmaking has been requested, releasing it from the

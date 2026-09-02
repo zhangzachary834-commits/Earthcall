@@ -16,15 +16,15 @@ void Home::buildProperties() {
     Zone::buildProperties();
     // `primary` is already registered on Zone via virtual isPrimaryHome.
     // These are Home-only memory — they do not exist on Zone.
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Home, bool>>(
+    registerProperty(std::make_unique<ComputedProperty<Home, bool>>(
         "entryRequiresWill", this, &Home::propEntryRequiresWill));
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Home, bool>>(
+    registerProperty(std::make_unique<ComputedProperty<Home, bool>>(
         "cannotForceStay", this, &Home::propCannotForceStay));
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Home, std::string>>(
+    registerProperty(std::make_unique<ComputedProperty<Home, std::string>>(
         "stakes", this, &Home::propStakes, nullptr));
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Home, int>>(
+    registerProperty(std::make_unique<ComputedProperty<Home, int>>(
         "stakeCount", this, &Home::propStakeCount));
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Home, int>>(
+    registerProperty(std::make_unique<ComputedProperty<Home, int>>(
         "inhabitantCount", this, &Home::propInhabitantCount));
 }
 

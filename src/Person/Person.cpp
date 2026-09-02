@@ -28,18 +28,18 @@
 // If its "logging in," a Person should be created in the memory via loading.
 // If its "singing up", new Person data should first be added to the new txt and json files, and only then should Person created.
 void Person::buildProperties() {
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, glm::vec3>>(
+    registerProperty(std::make_unique<PropertyRef<Person, glm::vec3>>(
         "position", this, &Person::_position));
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, glm::vec3>>(
+    registerProperty(std::make_unique<PropertyRef<Person, glm::vec3>>(
         "velocity", this, &Person::_velocity));
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Person, std::string>>(
+    registerProperty(std::make_unique<ComputedProperty<Person, std::string>>(
         "name", this, &Person::propName));   // read-only: identity is not a slot
     // --- Law System Perception Properties ---
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, glm::vec3>>(
+    registerProperty(std::make_unique<PropertyRef<Person, glm::vec3>>(
         "cameraPos", this, &Person::cameraPos));
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<Person, glm::vec3>>(
+    registerProperty(std::make_unique<PropertyRef<Person, glm::vec3>>(
         "cameraForward", this, &Person::cameraForward));
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Person, std::string>>(
+    registerProperty(std::make_unique<ComputedProperty<Person, std::string>>(
         "joys", this, &Person::propJoys, nullptr));
 }
 

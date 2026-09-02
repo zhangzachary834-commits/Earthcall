@@ -1,5 +1,9 @@
 {
   "saveFormat": "zone-identity-v1",
+  "injected_by": "Gemini Spark (authored) / Claude Opus 5 (repaired 2026-09-02)",
+  "authors": [
+    "Zach"
+  ],
   "currentZone": 0,
   "currentZoneId": "SynthesisStudio",
   "flying": true,
@@ -113,6 +117,69 @@
         0.92,
         0.94,
         0.98
+      ],
+      "opacity": 1.0
+    },
+    {
+      "name": "material.studio.C5",
+      "baseColor": [
+        0.95,
+        0.22,
+        0.32
+      ],
+      "opacity": 1.0
+    },
+    {
+      "name": "material.studio.E5",
+      "baseColor": [
+        1.0,
+        0.72,
+        0.12
+      ],
+      "opacity": 1.0
+    },
+    {
+      "name": "material.studio.G5",
+      "baseColor": [
+        0.18,
+        0.88,
+        0.45
+      ],
+      "opacity": 1.0
+    },
+    {
+      "name": "material.studio.B5",
+      "baseColor": [
+        0.28,
+        0.48,
+        1.0
+      ],
+      "opacity": 1.0
+    },
+    {
+      "name": "material.studio.sign.blue",
+      "baseColor": [
+        0.16,
+        0.34,
+        0.52
+      ],
+      "opacity": 1.0
+    },
+    {
+      "name": "material.studio.sign.gold",
+      "baseColor": [
+        0.42,
+        0.32,
+        0.12
+      ],
+      "opacity": 1.0
+    },
+    {
+      "name": "material.studio.sign.dark",
+      "baseColor": [
+        0.2,
+        0.23,
+        0.3
       ],
       "opacity": 1.0
     }
@@ -587,6 +654,10 @@
   ],
   "zones": [
     {
+      "injected_by": "Gemini Spark (authored) / Claude Opus 5 (repaired 2026-09-02)",
+      "authors": [
+        "Zach"
+      ],
       "name": "SynthesisStudio",
       "identifier": "SynthesisStudio",
       "owner": "Player",
@@ -754,6 +825,10 @@
               "displayName": {
                 "t": "string",
                 "v": "Studio Control Console"
+              },
+              "isStudioSurface": {
+                "t": "bool",
+                "v": true
               }
             }
           },
@@ -992,6 +1067,10 @@
               "displayName": {
                 "t": "string",
                 "v": "Harmonic Crystal Pedestal"
+              },
+              "isPulseCrystal": {
+                "t": "bool",
+                "v": true
               }
             }
           },
@@ -1151,7 +1230,7 @@
               },
               "controlLabel": {
                 "t": "string",
-                "v": "Spawn Harmonic Orb"
+                "v": "SPAWN ORB"
               },
               "buttonRole": {
                 "t": "string",
@@ -1397,11 +1476,19 @@
               },
               "controlLabel": {
                 "t": "string",
-                "v": "Toggle Night/Day Ambient"
+                "v": "DAY / NIGHT"
               },
               "buttonRole": {
                 "t": "string",
                 "v": "toggle-theme"
+              },
+              "acoustic.frequency": {
+                "t": "double",
+                "v": 392.0
+              },
+              "acoustic.amplitude": {
+                "t": "double",
+                "v": 0.55
               },
               "controlOn": {
                 "t": "bool",
@@ -1663,7 +1750,7 @@
               },
               "acoustic.waveType": {
                 "t": "string",
-                "v": "crystal"
+                "v": "triangle"
               },
               "isChordPad": {
                 "t": "bool",
@@ -1769,7 +1856,7 @@
               },
               "acoustic.waveType": {
                 "t": "string",
-                "v": "crystal"
+                "v": "triangle"
               },
               "isChordPad": {
                 "t": "bool",
@@ -1875,7 +1962,7 @@
               },
               "acoustic.waveType": {
                 "t": "string",
-                "v": "crystal"
+                "v": "triangle"
               },
               "isChordPad": {
                 "t": "bool",
@@ -1981,7 +2068,7 @@
               },
               "acoustic.waveType": {
                 "t": "string",
-                "v": "crystal"
+                "v": "triangle"
               },
               "isChordPad": {
                 "t": "bool",
@@ -2177,13 +2264,13 @@
               0.0,
               0.34,
               0.0,
-              0.0,
+              -0.6,
               0.9,
               0.55,
               1.0
             ],
             "center": [
-              0.0,
+              -0.6,
               0.9,
               0.55
             ],
@@ -2243,7 +2330,7 @@
               },
               "controlStep": {
                 "t": "double",
-                "v": 0.1
+                "v": 0.02
               },
               "restY": {
                 "t": "double",
@@ -2594,6 +2681,14 @@
                 "t": "string",
                 "v": "spawn-orb"
               },
+              "acoustic.frequency": {
+                "t": "double",
+                "v": 587.33
+              },
+              "acoustic.amplitude": {
+                "t": "double",
+                "v": 0.55
+              },
               "shape.width2D": {
                 "t": "double",
                 "v": 130.0
@@ -2601,6 +2696,10 @@
               "shape.height2D": {
                 "t": "double",
                 "v": 38.0
+              },
+              "restY2D": {
+                "t": "double",
+                "v": 653.0
               }
             }
           },
@@ -2691,6 +2790,14 @@
                 "t": "string",
                 "v": "toggle-theme"
               },
+              "acoustic.frequency": {
+                "t": "double",
+                "v": 392.0
+              },
+              "acoustic.amplitude": {
+                "t": "double",
+                "v": 0.55
+              },
               "shape.width2D": {
                 "t": "double",
                 "v": 120.0
@@ -2698,6 +2805,10 @@
               "shape.height2D": {
                 "t": "double",
                 "v": 38.0
+              },
+              "restY2D": {
+                "t": "double",
+                "v": 653.0
               }
             }
           },
@@ -2798,7 +2909,7 @@
               },
               "acoustic.waveType": {
                 "t": "string",
-                "v": "crystal"
+                "v": "triangle"
               },
               "isChordPad": {
                 "t": "bool",
@@ -2811,6 +2922,10 @@
               "shape.height2D": {
                 "t": "double",
                 "v": 38.0
+              },
+              "restY2D": {
+                "t": "double",
+                "v": 653.0
               }
             }
           },
@@ -2911,7 +3026,7 @@
               },
               "acoustic.waveType": {
                 "t": "string",
-                "v": "crystal"
+                "v": "triangle"
               },
               "isChordPad": {
                 "t": "bool",
@@ -2924,6 +3039,10 @@
               "shape.height2D": {
                 "t": "double",
                 "v": 38.0
+              },
+              "restY2D": {
+                "t": "double",
+                "v": 653.0
               }
             }
           },
@@ -3024,7 +3143,7 @@
               },
               "acoustic.waveType": {
                 "t": "string",
-                "v": "crystal"
+                "v": "triangle"
               },
               "isChordPad": {
                 "t": "bool",
@@ -3037,6 +3156,10 @@
               "shape.height2D": {
                 "t": "double",
                 "v": 38.0
+              },
+              "restY2D": {
+                "t": "double",
+                "v": 653.0
               }
             }
           },
@@ -3137,7 +3260,7 @@
               },
               "acoustic.waveType": {
                 "t": "string",
-                "v": "crystal"
+                "v": "triangle"
               },
               "isChordPad": {
                 "t": "bool",
@@ -3150,6 +3273,10 @@
               "shape.height2D": {
                 "t": "double",
                 "v": 38.0
+              },
+              "restY2D": {
+                "t": "double",
+                "v": 653.0
               }
             }
           },
@@ -3234,11 +3361,19 @@
               },
               "controlLabel": {
                 "t": "string",
-                "v": "DRAW STROKES"
+                "v": "DRAW: OFF"
               },
               "buttonRole": {
                 "t": "string",
                 "v": "draw-mode"
+              },
+              "acoustic.frequency": {
+                "t": "double",
+                "v": 493.88
+              },
+              "acoustic.amplitude": {
+                "t": "double",
+                "v": 0.55
               },
               "shape.width2D": {
                 "t": "double",
@@ -3247,18 +3382,22 @@
               "shape.height2D": {
                 "t": "double",
                 "v": 38.0
+              },
+              "restY2D": {
+                "t": "double",
+                "v": 653.0
               }
             }
           },
           {
             "objectID": "state.studio",
-            "shapeKind": 12,
-            "geometryType": 12,
+            "shapeKind": 0,
+            "geometryType": 0,
             "shapeParams": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
+              0.5,
+              0.5,
+              0.5,
+              0.5,
               0.0,
               0.0,
               0.0,
@@ -3266,35 +3405,71 @@
               0.0
             ],
             "transform": [
-              0.01,
+              0.02,
               0.0,
               0.0,
               0.0,
               0.0,
-              0.01,
+              0.02,
               0.0,
               0.0,
               0.0,
               0.0,
-              0.01,
+              0.02,
               0.0,
               0.0,
-              0.0,
+              -4.0,
               0.0,
               1.0
             ],
             "center": [
               0.0,
-              0.0,
+              -4.0,
               0.0
             ],
-            "materialId": "",
+            "materialId": "material.studio.slate",
+            "faceColors": [
+              [
+                0.16,
+                0.18,
+                0.22
+              ],
+              [
+                0.16,
+                0.18,
+                0.22
+              ],
+              [
+                0.16,
+                0.18,
+                0.22
+              ],
+              [
+                0.16,
+                0.18,
+                0.22
+              ],
+              [
+                0.16,
+                0.18,
+                0.22
+              ],
+              [
+                0.16,
+                0.18,
+                0.22
+              ]
+            ],
             "authoredProperties": {
               "displayName": {
                 "t": "string",
                 "v": "Studio Ambient State"
               },
               "themeNight": {
+                "t": "bool",
+                "v": false
+              },
+              "drawMode": {
                 "t": "bool",
                 "v": false
               },
@@ -3376,28 +3551,28 @@
           ]
         },
         {
-          "type": "instance-of",
+          "type": "authored-by",
           "entityA": "category.control",
           "entityB": "author.gemini-spark",
           "directed": true,
           "weight": 1.0,
           "events": [
             {
-              "description": "instance-of",
+              "description": "authored-by",
               "deltaWeight": 1.0,
               "timestamp": 1787395000
             }
           ]
         },
         {
-          "type": "instance-of",
+          "type": "authored-by",
           "entityA": "category.art",
           "entityB": "author.gemini-spark",
           "directed": true,
           "weight": 1.0,
           "events": [
             {
-              "description": "instance-of",
+              "description": "authored-by",
               "deltaWeight": 1.0,
               "timestamp": 1787395000
             }
@@ -3614,139 +3789,23 @@
       "tool-create-3d-law": false
     },
     "formationMembers": [
-      "law-control-button-archetype",
-      "law-control-toggle-archetype",
       "law-studio-spawn-orb",
       "law-studio-theme-toggle",
+      "law-studio-theme-night",
+      "law-studio-theme-day",
       "law-studio-draw-mode-toggle",
+      "law-studio-draw-indicator-on",
+      "law-studio-draw-indicator-off",
       "law-studio-slider-sync",
+      "law-studio-crystal-pulse",
       "law-studio-pad-play",
       "law-studio-button-spring",
+      "law-studio-toggle-spring",
       "law-art-stroke-draw",
       "law-stroke-hover-sound",
       "law-stroke-hover-glow"
     ],
     "laws": [
-      {
-        "id": "law-control-button-archetype",
-        "name": "Control Archetype: Button Activation",
-        "enabled": true,
-        "authority": 0,
-        "activation": 0,
-        "scope": 0,
-        "drives": false,
-        "retrigger": 0,
-        "conditionMode": "all",
-        "authors": [
-          "author.gemini-spark"
-        ],
-        "conditionSubjects": [],
-        "targets": [],
-        "conditionModel": {
-          "kind": 2,
-          "relationType": "instance-of",
-          "otherId": "category.control.button"
-        },
-        "actionModel": {
-          "kind": 10,
-          "eventType": "control-activated",
-          "publishSubject": "",
-          "publishObject": ""
-        },
-        "provenance": [
-          {
-            "type": "authored-by",
-            "entityA": "law-control-button-archetype",
-            "entityB": "author.gemini-spark",
-            "directed": true,
-            "weight": 1.0,
-            "events": [
-              {
-                "description": "authored-by",
-                "deltaWeight": 1.0,
-                "timestamp": 1787395000
-              }
-            ]
-          }
-        ],
-        "applicationLog": []
-      },
-      {
-        "id": "law-control-toggle-archetype",
-        "name": "Control Archetype: Toggle Flip",
-        "enabled": true,
-        "authority": 0,
-        "activation": 0,
-        "scope": 0,
-        "drives": false,
-        "retrigger": 0,
-        "conditionMode": "all",
-        "authors": [
-          "author.gemini-spark"
-        ],
-        "conditionSubjects": [],
-        "targets": [],
-        "conditionModel": {
-          "kind": 2,
-          "relationType": "instance-of",
-          "otherId": "category.control.toggle"
-        },
-        "actionModel": {
-          "kind": 5,
-          "children": [
-            {
-              "kind": 8,
-              "path": "controlOn",
-              "bindings": {
-                "o": "controlOn"
-              },
-              "function": {
-                "pieces": [
-                  {
-                    "expr": {
-                      "terms": [
-                        {
-                          "c": 1.0,
-                          "factors": {
-                            "o": 1.0
-                          }
-                        },
-                        {
-                          "c": 1.0,
-                          "factors": {}
-                        }
-                      ]
-                    }
-                  }
-                ]
-              }
-            },
-            {
-              "kind": 10,
-              "eventType": "control-activated",
-              "publishSubject": "",
-              "publishObject": ""
-            }
-          ]
-        },
-        "provenance": [
-          {
-            "type": "authored-by",
-            "entityA": "law-control-toggle-archetype",
-            "entityB": "author.gemini-spark",
-            "directed": true,
-            "weight": 1.0,
-            "events": [
-              {
-                "description": "authored-by",
-                "deltaWeight": 1.0,
-                "timestamp": 1787395000
-              }
-            ]
-          }
-        ],
-        "applicationLog": []
-      },
       {
         "id": "law-studio-spawn-orb",
         "name": "Studio: Spawn Harmonic Orb on Button Click",
@@ -3808,14 +3867,10 @@
               "children": [
                 {
                   "kind": 0,
-                  "path": "scale",
+                  "path": "shape.r",
                   "operand": {
-                    "t": "vec3",
-                    "v": [
-                      0.45,
-                      0.45,
-                      0.45
-                    ]
+                    "t": "double",
+                    "v": 0.22
                   }
                 },
                 {
@@ -3837,25 +3892,136 @@
                     "t": "vec3",
                     "v": [
                       0.0,
-                      1.6,
+                      1.75,
                       1.25
                     ]
                   }
                 },
                 {
-                  "kind": 0,
-                  "path": "acoustic.frequency",
+                  "kind": 8,
+                  "path": "position.x",
+                  "bindings": {
+                    "n": "@state.studio.spawnCount"
+                  },
+                  "function": {
+                    "pieces": [
+                      {
+                        "expr": {
+                          "terms": [
+                            {
+                              "c": 1.35,
+                              "factors": {},
+                              "trans": [
+                                {
+                                  "kind": 0,
+                                  "var": "n",
+                                  "scale": 0.8,
+                                  "shift": 0.0
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "kind": 8,
+                  "path": "position.z",
+                  "bindings": {
+                    "n": "@state.studio.spawnCount"
+                  },
+                  "function": {
+                    "pieces": [
+                      {
+                        "expr": {
+                          "terms": [
+                            {
+                              "c": 0.55,
+                              "factors": {},
+                              "trans": [
+                                {
+                                  "kind": 1,
+                                  "var": "n",
+                                  "scale": 0.8,
+                                  "shift": 0.0
+                                }
+                              ]
+                            },
+                            {
+                              "c": 1.25,
+                              "factors": {}
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "kind": 8,
+                  "path": "position.y",
+                  "bindings": {
+                    "n": "@state.studio.spawnCount"
+                  },
+                  "function": {
+                    "pieces": [
+                      {
+                        "expr": {
+                          "terms": [
+                            {
+                              "c": 0.28,
+                              "factors": {},
+                              "trans": [
+                                {
+                                  "kind": 0,
+                                  "var": "n",
+                                  "scale": 1.7,
+                                  "shift": 0.0
+                                }
+                              ]
+                            },
+                            {
+                              "c": 1.75,
+                              "factors": {}
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "kind": 12,
+                  "propertyName": "acoustic.frequency",
                   "operand": {
                     "t": "double",
                     "v": 880.0
                   }
                 },
                 {
-                  "kind": 0,
-                  "path": "acoustic.amplitude",
+                  "kind": 12,
+                  "propertyName": "acoustic.amplitude",
                   "operand": {
                     "t": "double",
-                    "v": 0.9
+                    "v": 0.5
+                  }
+                },
+                {
+                  "kind": 12,
+                  "propertyName": "acoustic.waveType",
+                  "operand": {
+                    "t": "string",
+                    "v": "triangle"
+                  }
+                },
+                {
+                  "kind": 12,
+                  "propertyName": "displayName",
+                  "operand": {
+                    "t": "string",
+                    "v": "Harmonic Orb"
                   }
                 },
                 {
@@ -3874,9 +4040,9 @@
             },
             {
               "kind": 18,
-              "path": "@state.studio.soundFreq",
-              "input": "@state.studio.soundAmp",
-              "propertyName": "crystal"
+              "path": "acoustic.frequency",
+              "input": "acoustic.amplitude",
+              "propertyName": "triangle"
             },
             {
               "kind": 8,
@@ -3897,6 +4063,33 @@
                         },
                         {
                           "c": -0.04,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 8,
+              "path": "y2D",
+              "bindings": {
+                "r": "restY2D"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "r": 1.0
+                          }
+                        },
+                        {
+                          "c": 3.0,
                           "factors": {}
                         }
                       ]
@@ -3971,13 +4164,13 @@
                       "terms": [
                         {
                           "c": 1.0,
+                          "factors": {}
+                        },
+                        {
+                          "c": -1.0,
                           "factors": {
                             "tn": 1.0
                           }
-                        },
-                        {
-                          "c": 1.0,
-                          "factors": {}
                         }
                       ]
                     }
@@ -3987,9 +4180,63 @@
             },
             {
               "kind": 18,
-              "path": "@state.studio.soundFreq",
-              "input": "@state.studio.soundAmp",
-              "propertyName": "bell"
+              "path": "acoustic.frequency",
+              "input": "acoustic.amplitude",
+              "propertyName": "triangle"
+            },
+            {
+              "kind": 8,
+              "path": "position.y",
+              "bindings": {
+                "ry": "restY"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "ry": 1.0
+                          }
+                        },
+                        {
+                          "c": -0.04,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 8,
+              "path": "y2D",
+              "bindings": {
+                "r": "restY2D"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "r": 1.0
+                          }
+                        },
+                        {
+                          "c": 3.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
             },
             {
               "kind": 10,
@@ -4018,8 +4265,144 @@
         "applicationLog": []
       },
       {
+        "id": "law-studio-theme-night",
+        "name": "Studio: Surfaces take the night ambient",
+        "enabled": true,
+        "authority": 0,
+        "activation": 1,
+        "scope": 1,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "author.gemini-spark"
+        ],
+        "conditionSubjects": [],
+        "targets": [],
+        "conditionModel": {
+          "kind": 3,
+          "children": [
+            {
+              "kind": 0,
+              "path": "isStudioSurface",
+              "op": 0,
+              "operand": {
+                "t": "bool",
+                "v": true
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@state.studio.themeNight",
+              "op": 0,
+              "operand": {
+                "t": "bool",
+                "v": true
+              }
+            }
+          ]
+        },
+        "actionModel": {
+          "kind": 0,
+          "path": "color",
+          "operand": {
+            "t": "vec3",
+            "v": [
+              0.07,
+              0.08,
+              0.13
+            ]
+          }
+        },
+        "provenance": [
+          {
+            "type": "authored-by",
+            "entityA": "law-studio-theme-night",
+            "entityB": "author.gemini-spark",
+            "directed": true,
+            "weight": 1.0,
+            "events": [
+              {
+                "description": "authored-by",
+                "deltaWeight": 1.0,
+                "timestamp": 1787395000
+              }
+            ]
+          }
+        ],
+        "applicationLog": []
+      },
+      {
+        "id": "law-studio-theme-day",
+        "name": "Studio: Surfaces take the day ambient",
+        "enabled": true,
+        "authority": 0,
+        "activation": 1,
+        "scope": 1,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "author.gemini-spark"
+        ],
+        "conditionSubjects": [],
+        "targets": [],
+        "conditionModel": {
+          "kind": 3,
+          "children": [
+            {
+              "kind": 0,
+              "path": "isStudioSurface",
+              "op": 0,
+              "operand": {
+                "t": "bool",
+                "v": true
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@state.studio.themeNight",
+              "op": 0,
+              "operand": {
+                "t": "bool",
+                "v": false
+              }
+            }
+          ]
+        },
+        "actionModel": {
+          "kind": 0,
+          "path": "color",
+          "operand": {
+            "t": "vec3",
+            "v": [
+              0.38,
+              0.42,
+              0.5
+            ]
+          }
+        },
+        "provenance": [
+          {
+            "type": "authored-by",
+            "entityA": "law-studio-theme-day",
+            "entityB": "author.gemini-spark",
+            "directed": true,
+            "weight": 1.0,
+            "events": [
+              {
+                "description": "authored-by",
+                "deltaWeight": 1.0,
+                "timestamp": 1787395000
+              }
+            ]
+          }
+        ],
+        "applicationLog": []
+      },
+      {
         "id": "law-studio-draw-mode-toggle",
-        "name": "Studio: Toggle Canvas Drawing Mode on Button Click",
+        "name": "Studio: Toggle Canvas Drawing Mode",
         "enabled": true,
         "authority": 0,
         "activation": 0,
@@ -4045,18 +4428,64 @@
           "kind": 5,
           "children": [
             {
-              "kind": 0,
-              "path": "@creation-channel.active3DMode",
-              "operand": {
-                "t": "string",
-                "v": "Draw"
+              "kind": 8,
+              "path": "@state.studio.drawMode",
+              "bindings": {
+                "d": "@state.studio.drawMode"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {}
+                        },
+                        {
+                          "c": -1.0,
+                          "factors": {
+                            "d": 1.0
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
               }
             },
             {
               "kind": 18,
-              "path": "@state.studio.soundFreq",
-              "input": "@state.studio.soundAmp",
-              "propertyName": "crystal"
+              "path": "acoustic.frequency",
+              "input": "acoustic.amplitude",
+              "propertyName": "triangle"
+            },
+            {
+              "kind": 8,
+              "path": "y2D",
+              "bindings": {
+                "r": "restY2D"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "r": 1.0
+                          }
+                        },
+                        {
+                          "c": 3.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
             },
             {
               "kind": 10,
@@ -4070,6 +4499,168 @@
           {
             "type": "authored-by",
             "entityA": "law-studio-draw-mode-toggle",
+            "entityB": "author.gemini-spark",
+            "directed": true,
+            "weight": 1.0,
+            "events": [
+              {
+                "description": "authored-by",
+                "deltaWeight": 1.0,
+                "timestamp": 1787395000
+              }
+            ]
+          }
+        ],
+        "applicationLog": []
+      },
+      {
+        "id": "law-studio-draw-indicator-on",
+        "name": "Studio: Draw button reads DRAW: ON",
+        "enabled": true,
+        "authority": 0,
+        "activation": 1,
+        "scope": 1,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "author.gemini-spark"
+        ],
+        "conditionSubjects": [],
+        "targets": [],
+        "conditionModel": {
+          "kind": 3,
+          "children": [
+            {
+              "kind": 0,
+              "path": "buttonRole",
+              "op": 0,
+              "operand": {
+                "t": "string",
+                "v": "draw-mode"
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@state.studio.drawMode",
+              "op": 0,
+              "operand": {
+                "t": "bool",
+                "v": true
+              }
+            }
+          ]
+        },
+        "actionModel": {
+          "kind": 5,
+          "children": [
+            {
+              "kind": 0,
+              "path": "color",
+              "operand": {
+                "t": "vec3",
+                "v": [
+                  0.45,
+                  0.92,
+                  0.55
+                ]
+              }
+            },
+            {
+              "kind": 0,
+              "path": "controlLabel",
+              "operand": {
+                "t": "string",
+                "v": "DRAW: ON"
+              }
+            }
+          ]
+        },
+        "provenance": [
+          {
+            "type": "authored-by",
+            "entityA": "law-studio-draw-indicator-on",
+            "entityB": "author.gemini-spark",
+            "directed": true,
+            "weight": 1.0,
+            "events": [
+              {
+                "description": "authored-by",
+                "deltaWeight": 1.0,
+                "timestamp": 1787395000
+              }
+            ]
+          }
+        ],
+        "applicationLog": []
+      },
+      {
+        "id": "law-studio-draw-indicator-off",
+        "name": "Studio: Draw button reads DRAW: OFF",
+        "enabled": true,
+        "authority": 0,
+        "activation": 1,
+        "scope": 1,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "author.gemini-spark"
+        ],
+        "conditionSubjects": [],
+        "targets": [],
+        "conditionModel": {
+          "kind": 3,
+          "children": [
+            {
+              "kind": 0,
+              "path": "buttonRole",
+              "op": 0,
+              "operand": {
+                "t": "string",
+                "v": "draw-mode"
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@state.studio.drawMode",
+              "op": 0,
+              "operand": {
+                "t": "bool",
+                "v": false
+              }
+            }
+          ]
+        },
+        "actionModel": {
+          "kind": 5,
+          "children": [
+            {
+              "kind": 0,
+              "path": "color",
+              "operand": {
+                "t": "vec3",
+                "v": [
+                  0.72,
+                  0.32,
+                  0.95
+                ]
+              }
+            },
+            {
+              "kind": 0,
+              "path": "controlLabel",
+              "operand": {
+                "t": "string",
+                "v": "DRAW: OFF"
+              }
+            }
+          ]
+        },
+        "provenance": [
+          {
+            "type": "authored-by",
+            "entityA": "law-studio-draw-indicator-off",
             "entityB": "author.gemini-spark",
             "directed": true,
             "weight": 1.0,
@@ -4109,6 +4700,62 @@
           "children": [
             {
               "kind": 8,
+              "path": "controlValue",
+              "bindings": {
+                "v": "controlValue"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 0.2,
+                          "factors": {}
+                        }
+                      ]
+                    },
+                    "hi": 0.2,
+                    "includeHi": true
+                  },
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "v": 1.0
+                          }
+                        },
+                        {
+                          "c": 0.0,
+                          "factors": {}
+                        }
+                      ]
+                    },
+                    "lo": 0.2,
+                    "includeLo": true,
+                    "hi": 3.0,
+                    "includeHi": true
+                  },
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 3.0,
+                          "factors": {}
+                        }
+                      ]
+                    },
+                    "lo": 3.0,
+                    "includeLo": true
+                  }
+                ],
+                "input": "v"
+              }
+            },
+            {
+              "kind": 8,
               "path": "@state.studio.pulseRate",
               "bindings": {
                 "v": "controlValue"
@@ -4119,15 +4766,48 @@
                     "expr": {
                       "terms": [
                         {
+                          "c": 0.2,
+                          "factors": {}
+                        }
+                      ]
+                    },
+                    "hi": 0.2,
+                    "includeHi": true
+                  },
+                  {
+                    "expr": {
+                      "terms": [
+                        {
                           "c": 1.0,
                           "factors": {
                             "v": 1.0
                           }
+                        },
+                        {
+                          "c": 0.0,
+                          "factors": {}
                         }
                       ]
-                    }
+                    },
+                    "lo": 0.2,
+                    "includeLo": true,
+                    "hi": 3.0,
+                    "includeHi": true
+                  },
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 3.0,
+                          "factors": {}
+                        }
+                      ]
+                    },
+                    "lo": 3.0,
+                    "includeLo": true
                   }
-                ]
+                ],
+                "input": "v"
               }
             },
             {
@@ -4142,6 +4822,18 @@
                     "expr": {
                       "terms": [
                         {
+                          "c": -1.4000000000000001,
+                          "factors": {}
+                        }
+                      ]
+                    },
+                    "hi": 0.2,
+                    "includeHi": true
+                  },
+                  {
+                    "expr": {
+                      "terms": [
+                        {
                           "c": 1.0,
                           "factors": {
                             "v": 1.0
@@ -4150,6 +4842,142 @@
                         {
                           "c": -1.6,
                           "factors": {}
+                        }
+                      ]
+                    },
+                    "lo": 0.2,
+                    "includeLo": true,
+                    "hi": 3.0,
+                    "includeHi": true
+                  },
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.4,
+                          "factors": {}
+                        }
+                      ]
+                    },
+                    "lo": 3.0,
+                    "includeLo": true
+                  }
+                ],
+                "input": "v"
+              }
+            }
+          ]
+        },
+        "provenance": [
+          {
+            "type": "authored-by",
+            "entityA": "law-studio-slider-sync",
+            "entityB": "author.gemini-spark",
+            "directed": true,
+            "weight": 1.0,
+            "events": [
+              {
+                "description": "authored-by",
+                "deltaWeight": 1.0,
+                "timestamp": 1787395000
+              }
+            ]
+          }
+        ],
+        "applicationLog": []
+      },
+      {
+        "id": "law-studio-crystal-pulse",
+        "name": "Studio: Crystal breathes at the authored pulse rate",
+        "enabled": true,
+        "authority": 0,
+        "activation": 1,
+        "scope": 1,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "author.gemini-spark"
+        ],
+        "conditionSubjects": [],
+        "targets": [],
+        "conditionModel": {
+          "kind": 0,
+          "path": "isPulseCrystal",
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": true
+          }
+        },
+        "actionModel": {
+          "kind": 5,
+          "children": [
+            {
+              "kind": 8,
+              "path": "color.r",
+              "bindings": {
+                "p": "@state.studio.pulseRate",
+                "t": "time"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 0.4,
+                          "factors": {}
+                        },
+                        {
+                          "c": 0.13,
+                          "factors": {
+                            "p": 1.0
+                          },
+                          "trans": [
+                            {
+                              "kind": 0,
+                              "var": "t",
+                              "scale": 2.2,
+                              "shift": 0.0
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 8,
+              "path": "color.g",
+              "bindings": {
+                "p": "@state.studio.pulseRate",
+                "t": "time"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 0.78,
+                          "factors": {}
+                        },
+                        {
+                          "c": 0.06,
+                          "factors": {
+                            "p": 1.0
+                          },
+                          "trans": [
+                            {
+                              "kind": 0,
+                              "var": "t",
+                              "scale": 2.2,
+                              "shift": 0.0
+                            }
+                          ]
                         }
                       ]
                     }
@@ -4162,7 +4990,7 @@
         "provenance": [
           {
             "type": "authored-by",
-            "entityA": "law-studio-slider-sync",
+            "entityA": "law-studio-crystal-pulse",
             "entityB": "author.gemini-spark",
             "directed": true,
             "weight": 1.0,
@@ -4208,7 +5036,7 @@
               "kind": 18,
               "path": "acoustic.frequency",
               "input": "acoustic.amplitude",
-              "propertyName": "crystal"
+              "propertyName": "triangle"
             },
             {
               "kind": 8,
@@ -4229,6 +5057,33 @@
                         },
                         {
                           "c": -0.04,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 8,
+              "path": "y2D",
+              "bindings": {
+                "r": "restY2D"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "r": 1.0
+                          }
+                        },
+                        {
+                          "c": 3.0,
                           "factors": {}
                         }
                       ]
@@ -4284,32 +5139,149 @@
           "otherId": "category.control.button"
         },
         "actionModel": {
-          "kind": 8,
-          "path": "position.y",
-          "bindings": {
-            "ry": "restY"
-          },
-          "function": {
-            "pieces": [
-              {
-                "expr": {
-                  "terms": [
-                    {
-                      "c": 1.0,
-                      "factors": {
-                        "ry": 1.0
-                      }
+          "kind": 5,
+          "children": [
+            {
+              "kind": 8,
+              "path": "position.y",
+              "bindings": {
+                "ry": "restY"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "ry": 1.0
+                          }
+                        }
+                      ]
                     }
-                  ]
-                }
+                  }
+                ]
               }
-            ]
-          }
+            },
+            {
+              "kind": 8,
+              "path": "y2D",
+              "bindings": {
+                "r": "restY2D"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "r": 1.0
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
         },
         "provenance": [
           {
             "type": "authored-by",
             "entityA": "law-studio-button-spring",
+            "entityB": "author.gemini-spark",
+            "directed": true,
+            "weight": 1.0,
+            "events": [
+              {
+                "description": "authored-by",
+                "deltaWeight": 1.0,
+                "timestamp": 1787395000
+              }
+            ]
+          }
+        ],
+        "applicationLog": []
+      },
+      {
+        "id": "law-studio-toggle-spring",
+        "name": "Studio: Restore Toggle Elevation",
+        "enabled": true,
+        "authority": 0,
+        "activation": 0,
+        "scope": 0,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "author.gemini-spark"
+        ],
+        "conditionSubjects": [],
+        "targets": [],
+        "conditionModel": {
+          "kind": 2,
+          "relationType": "instance-of",
+          "otherId": "category.control.toggle"
+        },
+        "actionModel": {
+          "kind": 5,
+          "children": [
+            {
+              "kind": 8,
+              "path": "position.y",
+              "bindings": {
+                "ry": "restY"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "ry": 1.0
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 8,
+              "path": "y2D",
+              "bindings": {
+                "r": "restY2D"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "r": 1.0
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "provenance": [
+          {
+            "type": "authored-by",
+            "entityA": "law-studio-toggle-spring",
             "entityB": "author.gemini-spark",
             "directed": true,
             "weight": 1.0,
@@ -4353,16 +5325,34 @@
             },
             {
               "kind": 0,
-              "path": "@creation-channel.active3DMode",
+              "path": "@interaction-channel.dragging",
               "op": 0,
               "operand": {
-                "t": "string",
-                "v": "Draw"
+                "t": "bool",
+                "v": true
               }
             },
             {
               "kind": 0,
-              "path": "@interaction-channel.dragging",
+              "path": "@state.studio.drawMode",
+              "op": 0,
+              "operand": {
+                "t": "bool",
+                "v": true
+              }
+            },
+            {
+              "kind": 0,
+              "path": "isCanvas",
+              "op": 0,
+              "operand": {
+                "t": "bool",
+                "v": true
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@world.pointerOver",
               "op": 0,
               "operand": {
                 "t": "bool",
@@ -4379,14 +5369,10 @@
           "children": [
             {
               "kind": 0,
-              "path": "scale",
+              "path": "shape.r",
               "operand": {
-                "t": "vec3",
-                "v": [
-                  0.08,
-                  0.08,
-                  0.08
-                ]
+                "t": "double",
+                "v": 0.045
               }
             },
             {
@@ -4399,6 +5385,38 @@
                   0.85,
                   0.15
                 ]
+              }
+            },
+            {
+              "kind": 12,
+              "propertyName": "displayName",
+              "operand": {
+                "t": "string",
+                "v": "Stroke"
+              }
+            },
+            {
+              "kind": 12,
+              "propertyName": "acoustic.frequency",
+              "operand": {
+                "t": "double",
+                "v": 1046.5
+              }
+            },
+            {
+              "kind": 12,
+              "propertyName": "acoustic.amplitude",
+              "operand": {
+                "t": "double",
+                "v": 0.32
+              }
+            },
+            {
+              "kind": 12,
+              "propertyName": "acoustic.waveType",
+              "operand": {
+                "t": "string",
+                "v": "triangle"
               }
             },
             {
@@ -4451,7 +5469,7 @@
           "kind": 18,
           "path": "acoustic.frequency",
           "input": "acoustic.amplitude",
-          "propertyName": "crystal"
+          "propertyName": "triangle"
         },
         "provenance": [
           {
@@ -4537,12 +5555,6 @@
       }
     ],
     "triggers": {
-      "law-control-button-archetype": [
-        "object-clicked"
-      ],
-      "law-control-toggle-archetype": [
-        "object-clicked"
-      ],
       "law-studio-spawn-orb": [
         "control-activated"
       ],
@@ -4556,6 +5568,9 @@
         "control-activated"
       ],
       "law-studio-button-spring": [
+        "object-released"
+      ],
+      "law-studio-toggle-spring": [
         "object-released"
       ],
       "law-stroke-hover-sound": [

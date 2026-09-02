@@ -76,3 +76,168 @@ By mapping every `std::string` to a lightweight `uint32_t StringId` at load/pars
 ---
 
 *Written in accordance with Refusal 6 (No Black Box) and the Engine's performance mandates.*
+
+---
+
+# Counter-Audit Reply
+
+**Date:** 2026-09-02 01:15 PDT
+**Auditor:** Claude Opus 5, session `01Qq5ryb6Nz4GdqcTxtfv9JN`
+**Scope:** this audit's claims, checked against `a8a38e02` and the working tree at time of writing.
+**Occasion:** Zach asked for a reading of this audit and its companions, and told me that Claude
+Sonnet 4.5 had already implemented the plan derived from them. So this is an audit of an audit
+that has already been acted on — the findings below are about what is *now true in the code*.
+
+---
+
+## Verdict on the original audit
+
+**Sustained.** The diagnosis was correct and the recommendation was the right one. String
+interning plus a Structure-of-Arrays registry is what a high-performance engine does here, and
+declining to reach for `std::unordered_map` (§2, §3) was the right call for the reason given —
+hashing overhead and cache fragmentation would have bought less. The implementation exists and
+is sound. What follows are corrections and additions, not a reversal.
+
+---
+
+## Finding 1 — CRITICAL (transient): six `printf` calls in the hot path
+
+At the time of writing, the working tree carries six unstaged `printf` calls inside the exact
+function this audit was written to make fast:
+
+| Line | Call |
+|---|---|
+| `PropertyPath.cpp:137` | `"resolve failed: no property found for path! runLength loop exhausted."` |
+| `PropertyPath.cpp:152` | `"i=%zu segments.size()=%zu trailingComponent=%p isVec3=%d"` |
+| `PropertyPath.cpp:240` | `"setValue failed: NoSuchProperty, …"` |
+| `PropertyPath.cpp:266` | `"setValue failed: TypeMismatch in toNumber"` |
+| `PropertyPath.cpp:272` | `"setValue failed: BadComponent, …"` |
+| `PropertyPath.cpp:281` | `"setValue failed: ReadOnly (setValue returned false)"` |
+
+None is in `HEAD` (`git show HEAD:…` is clean); all six are in the unstaged diff. They are
+debugging residue from the in-flight `startIndex` refactor, not shipped code.
+
+Two are worse than leftovers:
+
+- **`:137` is unconditional and its message is false.** It sits after the longest-match loop
+  but *before* `if (!found)`, so it fires on every **successful** resolve, announcing failure.
+  One unbuffered stdio call per property resolution, per target, per law, per frame — at
+  microseconds each, against a lookup this audit reduced to nanoseconds. As the tree stands,
+  the optimization is inverted by about three orders of magnitude.
+- **`:152` calls `found->value()`** — a virtual call constructing and returning a
+  `PropertyValue` by value — purely to print an `isVec3` flag. Precisely the category of
+  hidden per-iteration cost §1.1 of the analysis exists to eliminate.
+
+(`:240` also contains a literal `\\n` and prints a backslash-n. Cosmetic.)
+
+**Consequence for verification:** no number taken from this tree means anything until these are
+swept. That is why the "Performance" step of the implementation plan's verification section
+cannot be signed off yet.
+
+## Finding 2 — the thread-safety note in `StringId.hpp` is factually wrong
+
+`src/Singularity/Core/StringId.hpp:76-80` states:
+
+> "Earthcall's Law system is currently single-threaded (all property lookups happen on the main
+> thread during `LawManager::tick`)."
+
+They do not. `WebSocketServer::Impl::on_message` is bound at `WebSocketServer.cpp:922`, runs on
+the websocketpp io worker started at `:938`, and there is no dispatch back to the main thread —
+no queue, no deferred-command pump. At `:320` that handler calls `PropertyPath::parse` and then
+`path.setValue` directly against live beings pulled from `Universe::instance().beings()`.
+
+This was already a data race on being state before this pass, and that race is not this audit's
+fault. But interning **enlarged its blast radius from local to global**. `StringInterner::intern`
+mutates a process-wide `std::unordered_map` and `std::vector`:
+
+- a rehash concurrent with an insert is undefined behavior, and
+- `resolve()` returns `const std::string&` into a `std::vector` that can reallocate underneath
+  the caller.
+
+Previously a race corrupted one object's property. Now it can corrupt the name table every
+being in the world shares.
+
+**No test in `tests/` uses `std::thread`** — I checked the whole directory — so nothing guards
+this.
+
+Two fixes, in preference order:
+1. Defer websocket commands onto the main thread. This is the correct fix for the pre-existing
+   race as well, and it costs the interner nothing.
+2. Failing that, make the interner thread-safe. Since strings are never evicted, a `std::deque`
+   plus a `std::shared_mutex` gives stable references cheaply — a `vector` cannot, because
+   reallocation invalidates the reference `resolve()` already handed out.
+
+Either way, the comment must be corrected. A comment asserting an invariant the code does not
+hold is worse than no comment: it is the thing the next reader trusts instead of checking.
+
+## Finding 3 — §2's "~20-30 properties" threshold does not hold
+
+§2.1 reasons from a vector limit of twenty to thirty properties. `Singular::findProperty`
+(`Singular.cpp:229-233`) lazily constructs a `DynamicPropertyBridge` on a dynamic-property hit
+and **pushes it into `_propertyNames` and `_propertyRegistry`**. Every property a Person
+authors therefore permanently lengthens the array whose shortness the threshold assumes.
+
+The bridge is correct and required — Refusal 6 wants authored properties enumerable — but it
+means the registered array grows with authorship, in an engine built for unbounded authorship.
+The threshold in §2 should be restated as a function of authored state, not as a constant, and
+the point at which the linear scan stops paying should be *measured* rather than assumed.
+
+Also worth stating: `listProperties()` now returns bridges alongside the C++ vocabulary, and
+does so only for dynamic properties that have already been looked up once. Enumeration is
+therefore history-dependent. I believe that is harmless today; it is the kind of thing that
+stops being harmless when an authoring UI starts trusting the list.
+
+## Finding 4 — the magnitude claim in §3.2 should be withdrawn
+
+> "A 64-byte cache line holds 16 `StringId`s, meaning the CPU scans through them in a single
+> clock cycle with zero cache misses."
+
+One cache line is one miss avoided, not one comparison performed. Sixteen `StringId`s is
+sixteen compare-and-branch pairs scalar; a few operations if vectorized, which over a
+runtime-bounded loop with an early return it generally will not be. The companion tradeoffs
+document independently estimates the same operation at 5–15 cycles, so the doc set contradicts
+itself by an order of magnitude.
+
+The accurate claim is stronger than the inaccurate one: **21 pointer dereferences and 21 string
+allocations per lookup, reduced to zero.**
+
+## Finding 5 — the audit missed the largest allocation in the path
+
+The audit's §1.4 correctly identifies the multiplier but attributes it to the wrong term. Until
+the uncommitted `startIndex` work, `lawGetValue` and `lawSetValue` in `MathBinding.hpp`
+constructed a `PropertyPath remainder` per call — a `std::vector<std::string>` suffix copy, so
+one heap allocation per remaining segment plus the vector buffer, *per target, per law, per
+frame*, before the scan this audit measured even began.
+
+That was strictly larger than the per-iteration `name()` copy, because it was paid regardless
+of scan length. It is not named anywhere in this audit or in the implementation plan. It was
+found during implementation, and replacing it with a `std::size_t` offset is the more valuable
+half of the whole pass.
+
+The lesson for future audits of this kind: an audit scoped to
+`Singular.{hpp,cpp}`/`PropertyPath.cpp`/`ActionModel.cpp` will systematically miss costs paid
+in the *caller*. `MathBinding.hpp` was one file outside the scope line and held the dominant
+term.
+
+## Finding 6 — document hygiene
+
+- The cross-links in this file and its companions use `../analysis/…`; git tracks the directory
+  as `docs/Analysis`. Resolves on this case-insensitive Mac, 404s on GitHub and on Linux.
+- This audit carries an auditor and a date but no session ID or timestamp; the two Analysis
+  documents and `LAW_EXECUTION_FRONTIER.md` carry no signature at all. `CLAUDE.md` asks for
+  name, session ID, date, and timestamp.
+- None of this work appears in `docs/Agenda/Tasks/To-do list.md` — no entry for string
+  interning, the bytecode VM, or the Prophetic JIT. `CLAUDE.md` requires that anything worked
+  on be listed.
+
+---
+
+## What is verified and what is not
+
+**Verified by reading source:** every file:line citation above.
+**Verified by running:** nothing yet. A full `cmake --build build -j8` was in progress and
+error-free at the time of writing; `ctest` results and a `frame_lag_test` before/after are
+owed, and are blocked on Finding 1.
+
+*Written in the same spirit as the original: Refusal 6 says state that is not legible cannot be
+governed. A performance claim that is not measured is the same failure one level up.*

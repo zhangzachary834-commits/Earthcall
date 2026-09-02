@@ -193,6 +193,23 @@ public:
     // blending on — i.e. the glOrtho/glPushMatrix/glDisable(GL_DEPTH_TEST) preamble
     // that every 2D overlay used to repeat by hand. end2D restores the 3D camera
     // from the last setCamera. Calls do not nest.
+    //
+    // THE UNIT IS WINDOW POINTS — pass glfwGetWindowSize, not
+    // glfwGetFramebufferSize. This is a contract, not a preference: `x2D`/`y2D`
+    // on a 2D being are picked against glfwGetCursorPos, which reports window
+    // points, so a caller that opens the bracket in framebuffer pixels puts the
+    // drawing and its hit region in different places on every HiDPI display —
+    // the Synthesis Studio's HUD drew at half position and was clickable at
+    // double it, and no 2D control could be reached at all (audit
+    // SYNTHESIS_STUDIO_AUDIT_2026-09-02 §A0). Two callers used to disagree;
+    // they no longer do. Points are also resolution-independent, so an authored
+    // layout lands in the same place on every screen.
+    //
+    // The one legitimate exception is a caller whose coordinates ALREADY came
+    // out of the framebuffer-space viewport — Person::drawNametag projects a
+    // world point through camera.viewport and must open the bracket in the same
+    // space it projected into. Consistency is within a caller, and the unit is
+    // whatever that caller picks against.
     virtual void begin2D(uint32_t width, uint32_t height) = 0;
     virtual void end2D() = 0;
     virtual void drawTris2D(const std::vector<glm::vec2>& tris, const glm::vec4& color) = 0;

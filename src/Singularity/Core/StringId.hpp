@@ -74,10 +74,8 @@ namespace Earthcall {
 // StringInterner — global registry mapping strings to StringIds and back.
 //
 // **Thread Safety:**
-// NOT thread-safe in this implementation. Earthcall's Law system is currently
-// single-threaded (all property lookups happen on the main thread during
-// LawManager::tick). If multi-threading is added later, wrap intern() and
-// resolve() bodies with std::lock_guard<std::mutex>.
+// Fully thread-safe. A std::mutex protects internal maps against concurrent
+// access from the WebSocket server and the main tick thread.
 //
 // **Lifecycle:**
 // The interner is a static singleton that lives for the program's lifetime.

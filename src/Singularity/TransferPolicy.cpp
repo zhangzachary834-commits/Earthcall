@@ -80,10 +80,10 @@ void TransferPolicy::buildProperties() {
         GateBridge* raw = bridge.get();
         bridges.push_back(std::move(bridge));
         if (entry.second == Tier::Kernel) {
-            _propertyRegistry.push_back(std::make_unique<ComputedProperty<GateBridge, bool>>(
+            registerProperty(std::make_unique<ComputedProperty<GateBridge, bool>>(
                 "gate." + entry.first, raw, &GateBridge::get, nullptr));
         } else {
-            _propertyRegistry.push_back(std::make_unique<ComputedProperty<GateBridge, bool>>(
+            registerProperty(std::make_unique<ComputedProperty<GateBridge, bool>>(
                 "gate." + entry.first, raw, &GateBridge::get, &GateBridge::set));
         }
     }

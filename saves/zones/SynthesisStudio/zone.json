@@ -1,1178 +1,89 @@
 {
-  "deletable": {
-    "Player": true
-  },
-  "formationRelations": [
-    {
-      "attachment": {
-        "childAnchor": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "enabled": false,
-        "inheritRotation": true,
-        "inheritScale": true,
-        "inheritTranslation": true,
-        "localOffset": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0
-        ],
-        "parentAnchor": [
-          0.0,
-          0.0,
-          0.0
-        ]
-      },
-      "directed": true,
-      "entityA": "category.control.button",
-      "entityB": "category.control",
-      "events": [
-        {
-          "deltaWeight": 1.0,
-          "description": "subcategory-of",
-          "timestamp": 1787395000
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "subcategory-of",
-          "timestamp": 1788309957
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "subcategory-of",
-          "timestamp": 1788309957
-        },
-        {
-          "deltaWeight": 0.8644843697547913,
-          "description": "subcategory-of",
-          "timestamp": 1788310313
-        },
-        {
-          "deltaWeight": 0.8644843697547913,
-          "description": "subcategory-of",
-          "timestamp": 1788310313
-        }
-      ],
-      "type": "subcategory-of",
-      "weight": 0.8644843697547913
-    },
-    {
-      "attachment": {
-        "childAnchor": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "enabled": false,
-        "inheritRotation": true,
-        "inheritScale": true,
-        "inheritTranslation": true,
-        "localOffset": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0
-        ],
-        "parentAnchor": [
-          0.0,
-          0.0,
-          0.0
-        ]
-      },
-      "directed": true,
-      "entityA": "category.control.toggle",
-      "entityB": "category.control",
-      "events": [
-        {
-          "deltaWeight": 1.0,
-          "description": "subcategory-of",
-          "timestamp": 1787395000
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "subcategory-of",
-          "timestamp": 1788309957
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "subcategory-of",
-          "timestamp": 1788309957
-        },
-        {
-          "deltaWeight": 0.8644843697547913,
-          "description": "subcategory-of",
-          "timestamp": 1788310313
-        },
-        {
-          "deltaWeight": 0.8644843697547913,
-          "description": "subcategory-of",
-          "timestamp": 1788310313
-        }
-      ],
-      "type": "subcategory-of",
-      "weight": 0.8644843697547913
-    },
-    {
-      "attachment": {
-        "childAnchor": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "enabled": false,
-        "inheritRotation": true,
-        "inheritScale": true,
-        "inheritTranslation": true,
-        "localOffset": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0
-        ],
-        "parentAnchor": [
-          0.0,
-          0.0,
-          0.0
-        ]
-      },
-      "directed": true,
-      "entityA": "category.control.slider",
-      "entityB": "category.control",
-      "events": [
-        {
-          "deltaWeight": 1.0,
-          "description": "subcategory-of",
-          "timestamp": 1787395000
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "subcategory-of",
-          "timestamp": 1788309957
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "subcategory-of",
-          "timestamp": 1788309957
-        },
-        {
-          "deltaWeight": 0.8644843697547913,
-          "description": "subcategory-of",
-          "timestamp": 1788310313
-        },
-        {
-          "deltaWeight": 0.8644843697547913,
-          "description": "subcategory-of",
-          "timestamp": 1788310313
-        }
-      ],
-      "type": "subcategory-of",
-      "weight": 0.8644843697547913
-    },
-    {
-      "attachment": {
-        "childAnchor": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "enabled": false,
-        "inheritRotation": true,
-        "inheritScale": true,
-        "inheritTranslation": true,
-        "localOffset": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0
-        ],
-        "parentAnchor": [
-          0.0,
-          0.0,
-          0.0
-        ]
-      },
-      "directed": true,
-      "entityA": "studio.btn.spawn-orb",
-      "entityB": "category.control.button",
-      "events": [
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1787395000
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1788309957
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1788309957
-        },
-        {
-          "deltaWeight": 0.8644843697547913,
-          "description": "instance-of",
-          "timestamp": 1788310313
-        },
-        {
-          "deltaWeight": 0.8644843697547913,
-          "description": "instance-of",
-          "timestamp": 1788310313
-        }
-      ],
-      "type": "instance-of",
-      "weight": 0.8644843697547913
-    },
-    {
-      "attachment": {
-        "childAnchor": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "enabled": false,
-        "inheritRotation": true,
-        "inheritScale": true,
-        "inheritTranslation": true,
-        "localOffset": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0
-        ],
-        "parentAnchor": [
-          0.0,
-          0.0,
-          0.0
-        ]
-      },
-      "directed": true,
-      "entityA": "studio.btn.toggle-theme",
-      "entityB": "category.control.toggle",
-      "events": [
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1787395000
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1788309957
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1788309957
-        },
-        {
-          "deltaWeight": 0.8644843697547913,
-          "description": "instance-of",
-          "timestamp": 1788310313
-        },
-        {
-          "deltaWeight": 0.8644843697547913,
-          "description": "instance-of",
-          "timestamp": 1788310313
-        }
-      ],
-      "type": "instance-of",
-      "weight": 0.8644843697547913
-    },
-    {
-      "attachment": {
-        "childAnchor": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "enabled": false,
-        "inheritRotation": true,
-        "inheritScale": true,
-        "inheritTranslation": true,
-        "localOffset": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0
-        ],
-        "parentAnchor": [
-          0.0,
-          0.0,
-          0.0
-        ]
-      },
-      "directed": true,
-      "entityA": "studio.pad.c5",
-      "entityB": "category.control.button",
-      "events": [
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1787395000
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1788309957
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1788309957
-        },
-        {
-          "deltaWeight": 0.8644843697547913,
-          "description": "instance-of",
-          "timestamp": 1788310313
-        },
-        {
-          "deltaWeight": 0.8644843697547913,
-          "description": "instance-of",
-          "timestamp": 1788310313
-        }
-      ],
-      "type": "instance-of",
-      "weight": 0.8644843697547913
-    },
-    {
-      "attachment": {
-        "childAnchor": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "enabled": false,
-        "inheritRotation": true,
-        "inheritScale": true,
-        "inheritTranslation": true,
-        "localOffset": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0
-        ],
-        "parentAnchor": [
-          0.0,
-          0.0,
-          0.0
-        ]
-      },
-      "directed": true,
-      "entityA": "studio.pad.e5",
-      "entityB": "category.control.button",
-      "events": [
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1787395000
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1788309957
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1788309957
-        },
-        {
-          "deltaWeight": 0.8644843697547913,
-          "description": "instance-of",
-          "timestamp": 1788310313
-        },
-        {
-          "deltaWeight": 0.8644843697547913,
-          "description": "instance-of",
-          "timestamp": 1788310313
-        }
-      ],
-      "type": "instance-of",
-      "weight": 0.8644843697547913
-    },
-    {
-      "attachment": {
-        "childAnchor": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "enabled": false,
-        "inheritRotation": true,
-        "inheritScale": true,
-        "inheritTranslation": true,
-        "localOffset": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0
-        ],
-        "parentAnchor": [
-          0.0,
-          0.0,
-          0.0
-        ]
-      },
-      "directed": true,
-      "entityA": "studio.pad.g5",
-      "entityB": "category.control.button",
-      "events": [
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1787395000
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1788309957
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1788309957
-        },
-        {
-          "deltaWeight": 0.8644843697547913,
-          "description": "instance-of",
-          "timestamp": 1788310313
-        },
-        {
-          "deltaWeight": 0.8644843697547913,
-          "description": "instance-of",
-          "timestamp": 1788310313
-        }
-      ],
-      "type": "instance-of",
-      "weight": 0.8644843697547913
-    },
-    {
-      "attachment": {
-        "childAnchor": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "enabled": false,
-        "inheritRotation": true,
-        "inheritScale": true,
-        "inheritTranslation": true,
-        "localOffset": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0
-        ],
-        "parentAnchor": [
-          0.0,
-          0.0,
-          0.0
-        ]
-      },
-      "directed": true,
-      "entityA": "studio.pad.b5",
-      "entityB": "category.control.button",
-      "events": [
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1787395000
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1788309957
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1788309957
-        },
-        {
-          "deltaWeight": 0.8644843697547913,
-          "description": "instance-of",
-          "timestamp": 1788310313
-        },
-        {
-          "deltaWeight": 0.8644843697547913,
-          "description": "instance-of",
-          "timestamp": 1788310313
-        }
-      ],
-      "type": "instance-of",
-      "weight": 0.8644843697547913
-    },
-    {
-      "attachment": {
-        "childAnchor": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "enabled": false,
-        "inheritRotation": true,
-        "inheritScale": true,
-        "inheritTranslation": true,
-        "localOffset": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0
-        ],
-        "parentAnchor": [
-          0.0,
-          0.0,
-          0.0
-        ]
-      },
-      "directed": true,
-      "entityA": "studio.slider.handle",
-      "entityB": "category.control.slider",
-      "events": [
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1787395000
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1788309957
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1788309957
-        },
-        {
-          "deltaWeight": 0.8644843697547913,
-          "description": "instance-of",
-          "timestamp": 1788310313
-        },
-        {
-          "deltaWeight": 0.8644843697547913,
-          "description": "instance-of",
-          "timestamp": 1788310313
-        }
-      ],
-      "type": "instance-of",
-      "weight": 0.8644843697547913
-    },
-    {
-      "attachment": {
-        "childAnchor": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "enabled": false,
-        "inheritRotation": true,
-        "inheritScale": true,
-        "inheritTranslation": true,
-        "localOffset": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0
-        ],
-        "parentAnchor": [
-          0.0,
-          0.0,
-          0.0
-        ]
-      },
-      "directed": true,
-      "entityA": "hud.btn.spawn-orb",
-      "entityB": "category.control.button",
-      "events": [
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1787395000
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1788309957
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1788309957
-        },
-        {
-          "deltaWeight": 0.8644843697547913,
-          "description": "instance-of",
-          "timestamp": 1788310313
-        },
-        {
-          "deltaWeight": 0.8644843697547913,
-          "description": "instance-of",
-          "timestamp": 1788310313
-        }
-      ],
-      "type": "instance-of",
-      "weight": 0.8644843697547913
-    },
-    {
-      "attachment": {
-        "childAnchor": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "enabled": false,
-        "inheritRotation": true,
-        "inheritScale": true,
-        "inheritTranslation": true,
-        "localOffset": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0
-        ],
-        "parentAnchor": [
-          0.0,
-          0.0,
-          0.0
-        ]
-      },
-      "directed": true,
-      "entityA": "hud.btn.toggle-theme",
-      "entityB": "category.control.toggle",
-      "events": [
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1787395000
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1788309957
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1788309957
-        },
-        {
-          "deltaWeight": 0.8644843697547913,
-          "description": "instance-of",
-          "timestamp": 1788310313
-        },
-        {
-          "deltaWeight": 0.8644843697547913,
-          "description": "instance-of",
-          "timestamp": 1788310313
-        }
-      ],
-      "type": "instance-of",
-      "weight": 0.8644843697547913
-    },
-    {
-      "attachment": {
-        "childAnchor": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "enabled": false,
-        "inheritRotation": true,
-        "inheritScale": true,
-        "inheritTranslation": true,
-        "localOffset": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0
-        ],
-        "parentAnchor": [
-          0.0,
-          0.0,
-          0.0
-        ]
-      },
-      "directed": true,
-      "entityA": "hud.pad.c5",
-      "entityB": "category.control.button",
-      "events": [
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1787395000
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1788309957
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1788309957
-        },
-        {
-          "deltaWeight": 0.8644843697547913,
-          "description": "instance-of",
-          "timestamp": 1788310313
-        },
-        {
-          "deltaWeight": 0.8644843697547913,
-          "description": "instance-of",
-          "timestamp": 1788310313
-        }
-      ],
-      "type": "instance-of",
-      "weight": 0.8644843697547913
-    },
-    {
-      "attachment": {
-        "childAnchor": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "enabled": false,
-        "inheritRotation": true,
-        "inheritScale": true,
-        "inheritTranslation": true,
-        "localOffset": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0
-        ],
-        "parentAnchor": [
-          0.0,
-          0.0,
-          0.0
-        ]
-      },
-      "directed": true,
-      "entityA": "hud.pad.e5",
-      "entityB": "category.control.button",
-      "events": [
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1787395000
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1788309957
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1788309957
-        },
-        {
-          "deltaWeight": 0.8644843697547913,
-          "description": "instance-of",
-          "timestamp": 1788310313
-        },
-        {
-          "deltaWeight": 0.8644843697547913,
-          "description": "instance-of",
-          "timestamp": 1788310313
-        }
-      ],
-      "type": "instance-of",
-      "weight": 0.8644843697547913
-    },
-    {
-      "attachment": {
-        "childAnchor": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "enabled": false,
-        "inheritRotation": true,
-        "inheritScale": true,
-        "inheritTranslation": true,
-        "localOffset": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0
-        ],
-        "parentAnchor": [
-          0.0,
-          0.0,
-          0.0
-        ]
-      },
-      "directed": true,
-      "entityA": "hud.pad.g5",
-      "entityB": "category.control.button",
-      "events": [
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1787395000
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1788309957
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1788309957
-        },
-        {
-          "deltaWeight": 0.8644843697547913,
-          "description": "instance-of",
-          "timestamp": 1788310313
-        },
-        {
-          "deltaWeight": 0.8644843697547913,
-          "description": "instance-of",
-          "timestamp": 1788310313
-        }
-      ],
-      "type": "instance-of",
-      "weight": 0.8644843697547913
-    },
-    {
-      "attachment": {
-        "childAnchor": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "enabled": false,
-        "inheritRotation": true,
-        "inheritScale": true,
-        "inheritTranslation": true,
-        "localOffset": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0
-        ],
-        "parentAnchor": [
-          0.0,
-          0.0,
-          0.0
-        ]
-      },
-      "directed": true,
-      "entityA": "hud.pad.b5",
-      "entityB": "category.control.button",
-      "events": [
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1787395000
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1788309957
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1788309957
-        },
-        {
-          "deltaWeight": 0.8644843697547913,
-          "description": "instance-of",
-          "timestamp": 1788310313
-        },
-        {
-          "deltaWeight": 0.8644843697547913,
-          "description": "instance-of",
-          "timestamp": 1788310313
-        }
-      ],
-      "type": "instance-of",
-      "weight": 0.8644843697547913
-    },
-    {
-      "attachment": {
-        "childAnchor": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "enabled": false,
-        "inheritRotation": true,
-        "inheritScale": true,
-        "inheritTranslation": true,
-        "localOffset": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0
-        ],
-        "parentAnchor": [
-          0.0,
-          0.0,
-          0.0
-        ]
-      },
-      "directed": true,
-      "entityA": "hud.btn.draw-stroke",
-      "entityB": "category.control.button",
-      "events": [
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1787395000
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1788309957
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1788309957
-        },
-        {
-          "deltaWeight": 0.8644843697547913,
-          "description": "instance-of",
-          "timestamp": 1788310313
-        },
-        {
-          "deltaWeight": 0.8644843697547913,
-          "description": "instance-of",
-          "timestamp": 1788310313
-        }
-      ],
-      "type": "instance-of",
-      "weight": 0.8644843697547913
-    }
+  "injected_by": "Gemini Spark (authored) / Claude Opus 5 (repaired 2026-09-02)",
+  "authors": [
+    "Zach"
   ],
-  "identifier": "SynthesisStudio",
-  "lexemes": [],
   "name": "SynthesisStudio",
+  "identifier": "SynthesisStudio",
   "owner": "Player",
   "parentZone": "",
-  "qualities": {
-    "kind": "studio",
-    "ownerKind": "person"
-  },
   "scope": "Local",
+  "qualities": {
+    "kind": "studio"
+  },
   "world": {
     "objects": [
       {
+        "objectID": "studio.platform.floor",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [
+          0.5,
+          0.5,
+          0.5,
+          0.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          14.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.2,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          14.0,
+          0.0,
+          0.0,
+          -0.1,
+          0.0,
+          1.0
+        ],
+        "center": [
+          0.0,
+          -0.1,
+          0.0
+        ],
+        "materialId": "material.studio.slate",
+        "faceColors": [
+          [
+            0.16,
+            0.18,
+            0.22
+          ],
+          [
+            0.16,
+            0.18,
+            0.22
+          ],
+          [
+            0.16,
+            0.18,
+            0.22
+          ],
+          [
+            0.16,
+            0.18,
+            0.22
+          ],
+          [
+            0.16,
+            0.18,
+            0.22
+          ],
+          [
+            0.16,
+            0.18,
+            0.22
+          ]
+        ],
         "authoredProperties": {
           "displayName": {
             "t": "string",
@@ -1182,55 +93,12 @@
             "t": "bool",
             "v": true
           }
-        },
-        "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
-        ],
-        "center": [
-          0.0,
-          -0.10000000149011612,
-          0.0
-        ],
-        "faceColors": [
-          [
-            0.1599999964237213,
-            0.18000000715255737,
-            0.2199999988079071
-          ],
-          [
-            0.1599999964237213,
-            0.18000000715255737,
-            0.2199999988079071
-          ],
-          [
-            0.1599999964237213,
-            0.18000000715255737,
-            0.2199999988079071
-          ],
-          [
-            0.1599999964237213,
-            0.18000000715255737,
-            0.2199999988079071
-          ],
-          [
-            0.1599999964237213,
-            0.18000000715255737,
-            0.2199999988079071
-          ],
-          [
-            0.1599999964237213,
-            0.18000000715255737,
-            0.2199999988079071
-          ]
-        ],
-        "geometryType": 0,
-        "materialId": "material.studio.slate",
-        "objectID": "studio.platform.floor",
-        "renderMode": 0,
-        "rotationResponsiveness": 10.0,
+        }
+      },
+      {
+        "objectID": "studio.console.desk",
         "shapeKind": 0,
+        "geometryType": 0,
         "shapeParams": [
           0.5,
           0.5,
@@ -1242,88 +110,77 @@
           0.0,
           0.0
         ],
-        "targetRotation": [
-          0.0,
-          -0.0,
-          0.0
-        ],
         "transform": [
-          14.0,
+          5.2,
           0.0,
           0.0,
           0.0,
           0.0,
-          0.20000000298023224,
+          0.8,
           0.0,
           0.0,
           0.0,
           0.0,
-          14.0,
+          2.4,
           0.0,
           0.0,
-          0.10000000149011612,
+          0.4,
           0.0,
           1.0
         ],
-        "x2D": 100.0,
-        "y2D": 100.0,
-        "zOrder2D": 0
-      },
-      {
+        "center": [
+          0.0,
+          0.4,
+          0.0
+        ],
+        "materialId": "material.studio.walnut",
+        "faceColors": [
+          [
+            0.11,
+            0.12,
+            0.15
+          ],
+          [
+            0.11,
+            0.12,
+            0.15
+          ],
+          [
+            0.11,
+            0.12,
+            0.15
+          ],
+          [
+            0.11,
+            0.12,
+            0.15
+          ],
+          [
+            0.11,
+            0.12,
+            0.15
+          ],
+          [
+            0.11,
+            0.12,
+            0.15
+          ]
+        ],
         "authoredProperties": {
           "displayName": {
             "t": "string",
             "v": "Studio Control Console"
+          },
+          "isStudioSurface": {
+            "t": "bool",
+            "v": true
           }
-        },
-        "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
-        ],
-        "center": [
-          0.0,
-          0.4000000059604645,
-          0.0
-        ],
-        "faceColors": [
-          [
-            0.10999999940395355,
-            0.11999999731779099,
-            0.15000000596046448
-          ],
-          [
-            0.10999999940395355,
-            0.11999999731779099,
-            0.15000000596046448
-          ],
-          [
-            0.10999999940395355,
-            0.11999999731779099,
-            0.15000000596046448
-          ],
-          [
-            0.10999999940395355,
-            0.11999999731779099,
-            0.15000000596046448
-          ],
-          [
-            0.10999999940395355,
-            0.11999999731779099,
-            0.15000000596046448
-          ],
-          [
-            0.10999999940395355,
-            0.11999999731779099,
-            0.15000000596046448
-          ]
-        ],
-        "geometryType": 0,
-        "materialId": "material.studio.walnut",
-        "objectID": "studio.console.desk",
-        "renderMode": 0,
-        "rotationResponsiveness": 10.0,
+        }
+      },
+      {
+        "objectID": "studio.easel.canvas",
         "shapeKind": 0,
+        "geometryType": 0,
         "shapeParams": [
           0.5,
           0.5,
@@ -1335,34 +192,62 @@
           0.0,
           0.0
         ],
-        "targetRotation": [
-          0.0,
-          -0.0,
-          0.0
-        ],
         "transform": [
-          5.199999809265137,
+          4.2,
           0.0,
           0.0,
           0.0,
           0.0,
-          0.800000011920929,
+          2.4,
           0.0,
           0.0,
           0.0,
           0.0,
-          2.4000000953674316,
+          0.1,
           0.0,
           0.0,
-          0.4000000059604645,
-          0.0,
+          2.2,
+          2.4,
           1.0
         ],
-        "x2D": 100.0,
-        "y2D": 100.0,
-        "zOrder2D": 0
-      },
-      {
+        "center": [
+          0.0,
+          2.2,
+          2.4
+        ],
+        "materialId": "material.studio.canvas",
+        "faceColors": [
+          [
+            0.94,
+            0.92,
+            0.88
+          ],
+          [
+            0.94,
+            0.92,
+            0.88
+          ],
+          [
+            0.94,
+            0.92,
+            0.88
+          ],
+          [
+            0.94,
+            0.92,
+            0.88
+          ],
+          [
+            0.94,
+            0.92,
+            0.88
+          ],
+          [
+            0.94,
+            0.92,
+            0.88
+          ]
+        ],
         "authoredProperties": {
           "displayName": {
             "t": "string",
@@ -1372,55 +257,12 @@
             "t": "bool",
             "v": true
           }
-        },
-        "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
-        ],
-        "center": [
-          0.0,
-          2.200000047683716,
-          2.4000000953674316
-        ],
-        "faceColors": [
-          [
-            0.9399999976158142,
-            0.9200000166893005,
-            0.8799999952316284
-          ],
-          [
-            0.9399999976158142,
-            0.9200000166893005,
-            0.8799999952316284
-          ],
-          [
-            0.9399999976158142,
-            0.9200000166893005,
-            0.8799999952316284
-          ],
-          [
-            0.9399999976158142,
-            0.9200000166893005,
-            0.8799999952316284
-          ],
-          [
-            0.9399999976158142,
-            0.9200000166893005,
-            0.8799999952316284
-          ],
-          [
-            0.9399999976158142,
-            0.9200000166893005,
-            0.8799999952316284
-          ]
-        ],
-        "geometryType": 0,
-        "materialId": "material.studio.canvas",
-        "objectID": "studio.easel.canvas",
-        "renderMode": 0,
-        "rotationResponsiveness": 10.0,
+        }
+      },
+      {
+        "objectID": "studio.sign.canvas",
         "shapeKind": 0,
+        "geometryType": 0,
         "shapeParams": [
           0.5,
           0.5,
@@ -1432,379 +274,233 @@
           0.0,
           0.0
         ],
-        "targetRotation": [
-          0.0,
-          -0.0,
-          0.0
-        ],
         "transform": [
-          4.199999809265137,
+          3.2,
           0.0,
           0.0,
           0.0,
           0.0,
-          2.4000000953674316,
+          0.22,
           0.0,
           0.0,
           0.0,
           0.0,
-          0.10000000149011612,
+          0.06,
           0.0,
           0.0,
-          2.200000047683716,
-          2.4000000953674316,
+          3.55,
+          2.4,
           1.0
         ],
-        "x2D": 100.0,
-        "y2D": 100.0,
-        "zOrder2D": 0
-      },
-      {
+        "center": [
+          0.0,
+          3.55,
+          2.4
+        ],
+        "materialId": "material.studio.sign",
+        "faceColors": [
+          [
+            0.2,
+            0.24,
+            0.32
+          ],
+          [
+            0.2,
+            0.24,
+            0.32
+          ],
+          [
+            0.2,
+            0.24,
+            0.32
+          ],
+          [
+            0.2,
+            0.24,
+            0.32
+          ],
+          [
+            0.2,
+            0.24,
+            0.32
+          ],
+          [
+            0.2,
+            0.24,
+            0.32
+          ]
+        ],
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "✎ ART DRAWING CANVAS (Drag to draw light strokes)"
+            "v": "\u270e ART DRAWING CANVAS (Drag to draw light strokes)"
           }
-        },
-        "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
-        ],
-        "center": [
-          0.0,
-          3.549999952316284,
-          2.4000000953674316
-        ],
-        "faceColors": [
-          [
-            0.20000000298023224,
-            0.23999999463558197,
-            0.3199999928474426
-          ],
-          [
-            0.20000000298023224,
-            0.23999999463558197,
-            0.3199999928474426
-          ],
-          [
-            0.20000000298023224,
-            0.23999999463558197,
-            0.3199999928474426
-          ],
-          [
-            0.20000000298023224,
-            0.23999999463558197,
-            0.3199999928474426
-          ],
-          [
-            0.20000000298023224,
-            0.23999999463558197,
-            0.3199999928474426
-          ],
-          [
-            0.20000000298023224,
-            0.23999999463558197,
-            0.3199999928474426
-          ]
-        ],
-        "geometryType": 0,
-        "materialId": "material.studio.sign",
-        "objectID": "studio.sign.canvas",
-        "renderMode": 0,
-        "rotationResponsiveness": 10.0,
-        "shapeKind": 0,
+        }
+      },
+      {
+        "objectID": "studio.pedestal.crystal",
+        "shapeKind": 2,
+        "geometryType": 2,
         "shapeParams": [
-          0.5,
-          0.5,
-          0.5,
-          0.5,
+          0.45,
+          0.45,
+          0.45,
+          0.8,
           0.0,
           0.0,
           0.0,
           0.0,
-          0.0
-        ],
-        "targetRotation": [
-          0.0,
-          -0.0,
           0.0
         ],
         "transform": [
-          3.200000047683716,
+          0.9,
           0.0,
           0.0,
           0.0,
           0.0,
-          0.2199999988079071,
+          0.8,
           0.0,
           0.0,
           0.0,
           0.0,
-          0.05999999865889549,
+          0.9,
           0.0,
           0.0,
-          3.549999952316284,
-          2.4000000953674316,
+          0.4,
+          1.25,
           1.0
         ],
-        "x2D": 100.0,
-        "y2D": 100.0,
-        "zOrder2D": 0
-      },
-      {
+        "center": [
+          0.0,
+          0.4,
+          1.25
+        ],
+        "materialId": "material.studio.crystal",
+        "faceColors": [
+          [
+            0.35,
+            0.78,
+            0.95
+          ],
+          [
+            0.35,
+            0.78,
+            0.95
+          ],
+          [
+            0.35,
+            0.78,
+            0.95
+          ],
+          [
+            0.35,
+            0.78,
+            0.95
+          ],
+          [
+            0.35,
+            0.78,
+            0.95
+          ],
+          [
+            0.35,
+            0.78,
+            0.95
+          ]
+        ],
         "authoredProperties": {
           "displayName": {
             "t": "string",
             "v": "Harmonic Crystal Pedestal"
+          },
+          "isPulseCrystal": {
+            "t": "bool",
+            "v": true
           }
-        },
-        "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
-        ],
-        "center": [
-          0.0,
-          0.4000000059604645,
-          1.25
-        ],
-        "faceColors": [
-          [
-            0.3499999940395355,
-            0.7799999713897705,
-            0.949999988079071
-          ],
-          [
-            0.3499999940395355,
-            0.7799999713897705,
-            0.949999988079071
-          ],
-          [
-            0.3499999940395355,
-            0.7799999713897705,
-            0.949999988079071
-          ],
-          [
-            0.3499999940395355,
-            0.7799999713897705,
-            0.949999988079071
-          ],
-          [
-            0.3499999940395355,
-            0.7799999713897705,
-            0.949999988079071
-          ],
-          [
-            0.3499999940395355,
-            0.7799999713897705,
-            0.949999988079071
-          ]
-        ],
-        "geometryType": 2,
-        "materialId": "material.studio.crystal",
-        "objectID": "studio.pedestal.crystal",
-        "renderMode": 0,
-        "rotationResponsiveness": 10.0,
-        "shapeKind": 2,
+        }
+      },
+      {
+        "objectID": "studio.btn.spawn-orb.base",
+        "shapeKind": 0,
+        "geometryType": 0,
         "shapeParams": [
-          0.44999998807907104,
-          0.44999998807907104,
-          0.44999998807907104,
-          0.800000011920929,
+          0.5,
+          0.5,
+          0.5,
+          0.5,
           0.0,
           0.0,
           0.0,
           0.0,
-          0.0
-        ],
-        "targetRotation": [
-          0.0,
-          -0.0,
           0.0
         ],
         "transform": [
-          0.8999999761581421,
+          0.85,
           0.0,
           0.0,
           0.0,
           0.0,
-          0.800000011920929,
+          0.08,
           0.0,
           0.0,
           0.0,
           0.0,
-          0.8999999761581421,
+          0.7,
           0.0,
-          0.0,
-          0.4000000059604645,
-          1.25,
+          -1.5,
+          0.82,
+          -0.35,
           1.0
         ],
-        "x2D": 100.0,
-        "y2D": 100.0,
-        "zOrder2D": 0
-      },
-      {
+        "center": [
+          -1.5,
+          0.82,
+          -0.35
+        ],
+        "materialId": "material.studio.socket",
+        "faceColors": [
+          [
+            0.08,
+            0.09,
+            0.12
+          ],
+          [
+            0.08,
+            0.09,
+            0.12
+          ],
+          [
+            0.08,
+            0.09,
+            0.12
+          ],
+          [
+            0.08,
+            0.09,
+            0.12
+          ],
+          [
+            0.08,
+            0.09,
+            0.12
+          ],
+          [
+            0.08,
+            0.09,
+            0.12
+          ]
+        ],
         "authoredProperties": {
           "displayName": {
             "t": "string",
             "v": "Spawn Button Frame"
           }
-        },
-        "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
-        ],
-        "center": [
-          -1.5,
-          0.8199999928474426,
-          -0.3499999940395355
-        ],
-        "faceColors": [
-          [
-            0.07999999821186066,
-            0.09000000357627869,
-            0.11999999731779099
-          ],
-          [
-            0.07999999821186066,
-            0.09000000357627869,
-            0.11999999731779099
-          ],
-          [
-            0.07999999821186066,
-            0.09000000357627869,
-            0.11999999731779099
-          ],
-          [
-            0.07999999821186066,
-            0.09000000357627869,
-            0.11999999731779099
-          ],
-          [
-            0.07999999821186066,
-            0.09000000357627869,
-            0.11999999731779099
-          ],
-          [
-            0.07999999821186066,
-            0.09000000357627869,
-            0.11999999731779099
-          ]
-        ],
-        "geometryType": 0,
-        "materialId": "material.studio.socket",
-        "objectID": "studio.btn.spawn-orb.base",
-        "renderMode": 0,
-        "rotationResponsiveness": 10.0,
-        "shapeKind": 0,
-        "shapeParams": [
-          0.5,
-          0.5,
-          0.5,
-          0.5,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "targetRotation": [
-          0.0,
-          -0.0,
-          0.0
-        ],
-        "transform": [
-          0.8500000238418579,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.07999999821186066,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.699999988079071,
-          0.0,
-          -1.5,
-          0.8199999928474426,
-          -0.3499999940395355,
-          1.0
-        ],
-        "x2D": 100.0,
-        "y2D": 100.0,
-        "zOrder2D": 0
+        }
       },
       {
-        "authoredProperties": {
-          "buttonRole": {
-            "t": "string",
-            "v": "spawn-orb"
-          },
-          "controlLabel": {
-            "t": "string",
-            "v": "Spawn Harmonic Orb"
-          },
-          "displayName": {
-            "t": "string",
-            "v": "✦ Spawn Harmonic Orb"
-          },
-          "restY": {
-            "t": "double",
-            "v": 0.89
-          }
-        },
-        "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
-        ],
-        "center": [
-          -1.5,
-          0.8899999856948853,
-          -0.3499999940395355
-        ],
-        "faceColors": [
-          [
-            0.15000000596046448,
-            0.5799999833106995,
-            0.9800000190734863
-          ],
-          [
-            0.15000000596046448,
-            0.5799999833106995,
-            0.9800000190734863
-          ],
-          [
-            0.15000000596046448,
-            0.5799999833106995,
-            0.9800000190734863
-          ],
-          [
-            0.15000000596046448,
-            0.5799999833106995,
-            0.9800000190734863
-          ],
-          [
-            0.15000000596046448,
-            0.5799999833106995,
-            0.9800000190734863
-          ],
-          [
-            0.15000000596046448,
-            0.5799999833106995,
-            0.9800000190734863
-          ]
-        ],
-        "geometryType": 0,
-        "materialId": "material.studio.btn.blue",
         "objectID": "studio.btn.spawn-orb",
-        "renderMode": 0,
-        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
+        "geometryType": 0,
         "shapeParams": [
           0.5,
           0.5,
@@ -1816,2385 +512,1772 @@
           0.0,
           0.0
         ],
-        "targetRotation": [
-          0.0,
-          -0.0,
-          0.0
-        ],
         "transform": [
-          0.699999988079071,
+          0.7,
           0.0,
           0.0,
           0.0,
           0.0,
-          0.1599999964237213,
+          0.16,
           0.0,
           0.0,
           0.0,
           0.0,
-          0.550000011920929,
+          0.55,
           0.0,
           -1.5,
-          0.8899999856948853,
-          -0.3499999940395355,
+          0.89,
+          -0.35,
           1.0
-        ],
-        "x2D": 100.0,
-        "y2D": 100.0,
-        "zOrder2D": 0
-      },
-      {
-        "authoredProperties": {
-          "displayName": {
-            "t": "string",
-            "v": "[ ✦ SPAWN ORB ]"
-          }
-        },
-        "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
         ],
         "center": [
           -1.5,
-          1.1200000047683716,
-          -0.3499999940395355
+          0.89,
+          -0.35
         ],
+        "materialId": "material.studio.btn.blue",
         "faceColors": [
           [
-            0.11999999731779099,
-            0.44999998807907104,
-            0.800000011920929
+            0.15,
+            0.58,
+            0.98
           ],
           [
-            0.11999999731779099,
-            0.44999998807907104,
-            0.800000011920929
+            0.15,
+            0.58,
+            0.98
           ],
           [
-            0.11999999731779099,
-            0.44999998807907104,
-            0.800000011920929
+            0.15,
+            0.58,
+            0.98
           ],
           [
-            0.11999999731779099,
-            0.44999998807907104,
-            0.800000011920929
+            0.15,
+            0.58,
+            0.98
           ],
           [
-            0.11999999731779099,
-            0.44999998807907104,
-            0.800000011920929
+            0.15,
+            0.58,
+            0.98
           ],
           [
-            0.11999999731779099,
-            0.44999998807907104,
-            0.800000011920929
+            0.15,
+            0.58,
+            0.98
           ]
         ],
-        "geometryType": 0,
-        "materialId": "material.studio.sign.blue",
-        "objectID": "studio.sign.spawn-orb",
-        "renderMode": 0,
-        "rotationResponsiveness": 10.0,
-        "shapeKind": 0,
-        "shapeParams": [
-          0.5,
-          0.5,
-          0.5,
-          0.5,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "targetRotation": [
-          0.0,
-          -0.0,
-          0.0
-        ],
-        "transform": [
-          0.75,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.11999999731779099,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.03999999910593033,
-          0.0,
-          -1.5,
-          1.1200000047683716,
-          -0.3499999940395355,
-          1.0
-        ],
-        "x2D": 100.0,
-        "y2D": 100.0,
-        "zOrder2D": 0
-      },
-      {
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Theme Toggle Frame"
-          }
-        },
-        "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
-        ],
-        "center": [
-          -0.550000011920929,
-          0.8199999928474426,
-          -0.3499999940395355
-        ],
-        "faceColors": [
-          [
-            0.07999999821186066,
-            0.09000000357627869,
-            0.11999999731779099
-          ],
-          [
-            0.07999999821186066,
-            0.09000000357627869,
-            0.11999999731779099
-          ],
-          [
-            0.07999999821186066,
-            0.09000000357627869,
-            0.11999999731779099
-          ],
-          [
-            0.07999999821186066,
-            0.09000000357627869,
-            0.11999999731779099
-          ],
-          [
-            0.07999999821186066,
-            0.09000000357627869,
-            0.11999999731779099
-          ],
-          [
-            0.07999999821186066,
-            0.09000000357627869,
-            0.11999999731779099
-          ]
-        ],
-        "geometryType": 0,
-        "materialId": "material.studio.socket",
-        "objectID": "studio.btn.toggle-theme.base",
-        "renderMode": 0,
-        "rotationResponsiveness": 10.0,
-        "shapeKind": 0,
-        "shapeParams": [
-          0.5,
-          0.5,
-          0.5,
-          0.5,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "targetRotation": [
-          0.0,
-          -0.0,
-          0.0
-        ],
-        "transform": [
-          0.8500000238418579,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.07999999821186066,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.699999988079071,
-          0.0,
-          -0.550000011920929,
-          0.8199999928474426,
-          -0.3499999940395355,
-          1.0
-        ],
-        "x2D": 100.0,
-        "y2D": 100.0,
-        "zOrder2D": 0
-      },
-      {
-        "authoredProperties": {
-          "buttonRole": {
-            "t": "string",
-            "v": "toggle-theme"
-          },
-          "controlLabel": {
-            "t": "string",
-            "v": "Toggle Night/Day Ambient"
-          },
-          "controlOn": {
-            "t": "bool",
-            "v": false
-          },
-          "displayName": {
-            "t": "string",
-            "v": "☼ Toggle Night/Day Theme"
-          },
-          "restY": {
-            "t": "double",
-            "v": 0.89
-          }
-        },
-        "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
-        ],
-        "center": [
-          -0.550000011920929,
-          0.8899999856948853,
-          -0.3499999940395355
-        ],
-        "faceColors": [
-          [
-            1.0,
-            0.699999988079071,
-            0.15000000596046448
-          ],
-          [
-            1.0,
-            0.699999988079071,
-            0.15000000596046448
-          ],
-          [
-            1.0,
-            0.699999988079071,
-            0.15000000596046448
-          ],
-          [
-            1.0,
-            0.699999988079071,
-            0.15000000596046448
-          ],
-          [
-            1.0,
-            0.699999988079071,
-            0.15000000596046448
-          ],
-          [
-            1.0,
-            0.699999988079071,
-            0.15000000596046448
-          ]
-        ],
-        "geometryType": 0,
-        "materialId": "material.studio.btn.gold",
-        "objectID": "studio.btn.toggle-theme",
-        "renderMode": 0,
-        "rotationResponsiveness": 10.0,
-        "shapeKind": 0,
-        "shapeParams": [
-          0.5,
-          0.5,
-          0.5,
-          0.5,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "targetRotation": [
-          0.0,
-          -0.0,
-          0.0
-        ],
-        "transform": [
-          0.699999988079071,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.1599999964237213,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.550000011920929,
-          0.0,
-          -0.550000011920929,
-          0.8899999856948853,
-          -0.3499999940395355,
-          1.0
-        ],
-        "x2D": 100.0,
-        "y2D": 100.0,
-        "zOrder2D": 0
-      },
-      {
-        "authoredProperties": {
-          "displayName": {
-            "t": "string",
-            "v": "[ ☼ DAY / NIGHT ]"
-          }
-        },
-        "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
-        ],
-        "center": [
-          -0.550000011920929,
-          1.1200000047683716,
-          -0.3499999940395355
-        ],
-        "faceColors": [
-          [
-            0.800000011920929,
-            0.550000011920929,
-            0.10000000149011612
-          ],
-          [
-            0.800000011920929,
-            0.550000011920929,
-            0.10000000149011612
-          ],
-          [
-            0.800000011920929,
-            0.550000011920929,
-            0.10000000149011612
-          ],
-          [
-            0.800000011920929,
-            0.550000011920929,
-            0.10000000149011612
-          ],
-          [
-            0.800000011920929,
-            0.550000011920929,
-            0.10000000149011612
-          ],
-          [
-            0.800000011920929,
-            0.550000011920929,
-            0.10000000149011612
-          ]
-        ],
-        "geometryType": 0,
-        "materialId": "material.studio.sign.gold",
-        "objectID": "studio.sign.toggle-theme",
-        "renderMode": 0,
-        "rotationResponsiveness": 10.0,
-        "shapeKind": 0,
-        "shapeParams": [
-          0.5,
-          0.5,
-          0.5,
-          0.5,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "targetRotation": [
-          0.0,
-          -0.0,
-          0.0
-        ],
-        "transform": [
-          0.75,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.11999999731779099,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.03999999910593033,
-          0.0,
-          -0.550000011920929,
-          1.1200000047683716,
-          -0.3499999940395355,
-          1.0
-        ],
-        "x2D": 100.0,
-        "y2D": 100.0,
-        "zOrder2D": 0
-      },
-      {
-        "authoredProperties": {
-          "displayName": {
-            "t": "string",
-            "v": "Chord Pad Frame"
-          }
-        },
-        "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
-        ],
-        "center": [
-          1.2799999713897705,
-          0.8199999928474426,
-          -0.3499999940395355
-        ],
-        "faceColors": [
-          [
-            0.07999999821186066,
-            0.09000000357627869,
-            0.11999999731779099
-          ],
-          [
-            0.07999999821186066,
-            0.09000000357627869,
-            0.11999999731779099
-          ],
-          [
-            0.07999999821186066,
-            0.09000000357627869,
-            0.11999999731779099
-          ],
-          [
-            0.07999999821186066,
-            0.09000000357627869,
-            0.11999999731779099
-          ],
-          [
-            0.07999999821186066,
-            0.09000000357627869,
-            0.11999999731779099
-          ],
-          [
-            0.07999999821186066,
-            0.09000000357627869,
-            0.11999999731779099
-          ]
-        ],
-        "geometryType": 0,
-        "materialId": "material.studio.socket",
-        "objectID": "studio.pads.frame",
-        "renderMode": 0,
-        "rotationResponsiveness": 10.0,
-        "shapeKind": 0,
-        "shapeParams": [
-          0.5,
-          0.5,
-          0.5,
-          0.5,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "targetRotation": [
-          0.0,
-          -0.0,
-          0.0
-        ],
-        "transform": [
-          2.3499999046325684,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.07999999821186066,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.699999988079071,
-          0.0,
-          1.2799999713897705,
-          0.8199999928474426,
-          -0.3499999940395355,
-          1.0
-        ],
-        "x2D": 100.0,
-        "y2D": 100.0,
-        "zOrder2D": 0
-      },
-      {
-        "authoredProperties": {
-          "acoustic.amplitude": {
-            "t": "double",
-            "v": 0.85
-          },
-          "acoustic.frequency": {
-            "t": "double",
-            "v": 523.25
-          },
-          "acoustic.waveType": {
-            "t": "string",
-            "v": "crystal"
-          },
-          "controlLabel": {
-            "t": "string",
-            "v": "Play Note C5"
-          },
-          "displayName": {
-            "t": "string",
-            "v": "♫ Note C5 (Do)"
-          },
-          "isChordPad": {
-            "t": "bool",
-            "v": true
-          },
-          "noteName": {
-            "t": "string",
-            "v": "C5"
-          },
-          "restY": {
-            "t": "double",
-            "v": 0.88
-          }
-        },
-        "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
-        ],
-        "center": [
-          0.41999998688697815,
-          0.8799999952316284,
-          -0.3499999940395355
-        ],
-        "faceColors": [
-          [
-            0.949999988079071,
-            0.2199999988079071,
-            0.3199999928474426
-          ],
-          [
-            0.949999988079071,
-            0.2199999988079071,
-            0.3199999928474426
-          ],
-          [
-            0.949999988079071,
-            0.2199999988079071,
-            0.3199999928474426
-          ],
-          [
-            0.949999988079071,
-            0.2199999988079071,
-            0.3199999928474426
-          ],
-          [
-            0.949999988079071,
-            0.2199999988079071,
-            0.3199999928474426
-          ],
-          [
-            0.949999988079071,
-            0.2199999988079071,
-            0.3199999928474426
-          ]
-        ],
-        "geometryType": 0,
-        "materialId": "material.studio.C5",
-        "objectID": "studio.pad.c5",
-        "renderMode": 0,
-        "rotationResponsiveness": 10.0,
-        "shapeKind": 0,
-        "shapeParams": [
-          0.5,
-          0.5,
-          0.5,
-          0.5,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "targetRotation": [
-          0.0,
-          -0.0,
-          0.0
-        ],
-        "transform": [
-          0.46000000834465027,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.14000000059604645,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.5400000214576721,
-          0.0,
-          0.41999998688697815,
-          0.8799999952316284,
-          -0.3499999940395355,
-          1.0
-        ],
-        "x2D": 100.0,
-        "y2D": 100.0,
-        "zOrder2D": 0
-      },
-      {
-        "authoredProperties": {
-          "acoustic.amplitude": {
-            "t": "double",
-            "v": 0.85
-          },
-          "acoustic.frequency": {
-            "t": "double",
-            "v": 659.25
-          },
-          "acoustic.waveType": {
-            "t": "string",
-            "v": "crystal"
-          },
-          "controlLabel": {
-            "t": "string",
-            "v": "Play Note E5"
-          },
-          "displayName": {
-            "t": "string",
-            "v": "♫ Note E5 (Mi)"
-          },
-          "isChordPad": {
-            "t": "bool",
-            "v": true
-          },
-          "noteName": {
-            "t": "string",
-            "v": "E5"
-          },
-          "restY": {
-            "t": "double",
-            "v": 0.88
-          }
-        },
-        "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
-        ],
-        "center": [
-          0.9800000190734863,
-          0.8799999952316284,
-          -0.3499999940395355
-        ],
-        "faceColors": [
-          [
-            1.0,
-            0.7200000286102295,
-            0.11999999731779099
-          ],
-          [
-            1.0,
-            0.7200000286102295,
-            0.11999999731779099
-          ],
-          [
-            1.0,
-            0.7200000286102295,
-            0.11999999731779099
-          ],
-          [
-            1.0,
-            0.7200000286102295,
-            0.11999999731779099
-          ],
-          [
-            1.0,
-            0.7200000286102295,
-            0.11999999731779099
-          ],
-          [
-            1.0,
-            0.7200000286102295,
-            0.11999999731779099
-          ]
-        ],
-        "geometryType": 0,
-        "materialId": "material.studio.E5",
-        "objectID": "studio.pad.e5",
-        "renderMode": 0,
-        "rotationResponsiveness": 10.0,
-        "shapeKind": 0,
-        "shapeParams": [
-          0.5,
-          0.5,
-          0.5,
-          0.5,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "targetRotation": [
-          0.0,
-          -0.0,
-          0.0
-        ],
-        "transform": [
-          0.46000000834465027,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.14000000059604645,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.5400000214576721,
-          0.0,
-          0.9800000190734863,
-          0.8799999952316284,
-          -0.3499999940395355,
-          1.0
-        ],
-        "x2D": 100.0,
-        "y2D": 100.0,
-        "zOrder2D": 0
-      },
-      {
-        "authoredProperties": {
-          "acoustic.amplitude": {
-            "t": "double",
-            "v": 0.85
-          },
-          "acoustic.frequency": {
-            "t": "double",
-            "v": 783.99
-          },
-          "acoustic.waveType": {
-            "t": "string",
-            "v": "crystal"
-          },
-          "controlLabel": {
-            "t": "string",
-            "v": "Play Note G5"
-          },
-          "displayName": {
-            "t": "string",
-            "v": "♫ Note G5 (Sol)"
-          },
-          "isChordPad": {
-            "t": "bool",
-            "v": true
-          },
-          "noteName": {
-            "t": "string",
-            "v": "G5"
-          },
-          "restY": {
-            "t": "double",
-            "v": 0.88
-          }
-        },
-        "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
-        ],
-        "center": [
-          1.5399999618530273,
-          0.8799999952316284,
-          -0.3499999940395355
-        ],
-        "faceColors": [
-          [
-            0.18000000715255737,
-            0.8799999952316284,
-            0.44999998807907104
-          ],
-          [
-            0.18000000715255737,
-            0.8799999952316284,
-            0.44999998807907104
-          ],
-          [
-            0.18000000715255737,
-            0.8799999952316284,
-            0.44999998807907104
-          ],
-          [
-            0.18000000715255737,
-            0.8799999952316284,
-            0.44999998807907104
-          ],
-          [
-            0.18000000715255737,
-            0.8799999952316284,
-            0.44999998807907104
-          ],
-          [
-            0.18000000715255737,
-            0.8799999952316284,
-            0.44999998807907104
-          ]
-        ],
-        "geometryType": 0,
-        "materialId": "material.studio.G5",
-        "objectID": "studio.pad.g5",
-        "renderMode": 0,
-        "rotationResponsiveness": 10.0,
-        "shapeKind": 0,
-        "shapeParams": [
-          0.5,
-          0.5,
-          0.5,
-          0.5,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "targetRotation": [
-          0.0,
-          -0.0,
-          0.0
-        ],
-        "transform": [
-          0.46000000834465027,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.14000000059604645,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.5400000214576721,
-          0.0,
-          1.5399999618530273,
-          0.8799999952316284,
-          -0.3499999940395355,
-          1.0
-        ],
-        "x2D": 100.0,
-        "y2D": 100.0,
-        "zOrder2D": 0
-      },
-      {
-        "authoredProperties": {
-          "acoustic.amplitude": {
-            "t": "double",
-            "v": 0.85
-          },
-          "acoustic.frequency": {
-            "t": "double",
-            "v": 987.77
-          },
-          "acoustic.waveType": {
-            "t": "string",
-            "v": "crystal"
-          },
-          "controlLabel": {
-            "t": "string",
-            "v": "Play Note B5"
-          },
-          "displayName": {
-            "t": "string",
-            "v": "♫ Note B5 (Ti)"
-          },
-          "isChordPad": {
-            "t": "bool",
-            "v": true
-          },
-          "noteName": {
-            "t": "string",
-            "v": "B5"
-          },
-          "restY": {
-            "t": "double",
-            "v": 0.88
-          }
-        },
-        "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
-        ],
-        "center": [
-          2.0999999046325684,
-          0.8799999952316284,
-          -0.3499999940395355
-        ],
-        "faceColors": [
-          [
-            0.2800000011920929,
-            0.47999998927116394,
-            1.0
-          ],
-          [
-            0.2800000011920929,
-            0.47999998927116394,
-            1.0
-          ],
-          [
-            0.2800000011920929,
-            0.47999998927116394,
-            1.0
-          ],
-          [
-            0.2800000011920929,
-            0.47999998927116394,
-            1.0
-          ],
-          [
-            0.2800000011920929,
-            0.47999998927116394,
-            1.0
-          ],
-          [
-            0.2800000011920929,
-            0.47999998927116394,
-            1.0
-          ]
-        ],
-        "geometryType": 0,
-        "materialId": "material.studio.B5",
-        "objectID": "studio.pad.b5",
-        "renderMode": 0,
-        "rotationResponsiveness": 10.0,
-        "shapeKind": 0,
-        "shapeParams": [
-          0.5,
-          0.5,
-          0.5,
-          0.5,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "targetRotation": [
-          0.0,
-          -0.0,
-          0.0
-        ],
-        "transform": [
-          0.46000000834465027,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.14000000059604645,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.5400000214576721,
-          0.0,
-          2.0999999046325684,
-          0.8799999952316284,
-          -0.3499999940395355,
-          1.0
-        ],
-        "x2D": 100.0,
-        "y2D": 100.0,
-        "zOrder2D": 0
-      },
-      {
-        "authoredProperties": {
-          "displayName": {
-            "t": "string",
-            "v": "[ ♫ CHORD KEYS: C5 · E5 · G5 · B5 ]"
-          }
-        },
-        "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
-        ],
-        "center": [
-          1.2799999713897705,
-          1.1200000047683716,
-          -0.3499999940395355
-        ],
-        "faceColors": [
-          [
-            0.2199999988079071,
-            0.25,
-            0.3199999928474426
-          ],
-          [
-            0.2199999988079071,
-            0.25,
-            0.3199999928474426
-          ],
-          [
-            0.2199999988079071,
-            0.25,
-            0.3199999928474426
-          ],
-          [
-            0.2199999988079071,
-            0.25,
-            0.3199999928474426
-          ],
-          [
-            0.2199999988079071,
-            0.25,
-            0.3199999928474426
-          ],
-          [
-            0.2199999988079071,
-            0.25,
-            0.3199999928474426
-          ]
-        ],
-        "geometryType": 0,
-        "materialId": "material.studio.sign.dark",
-        "objectID": "studio.sign.music",
-        "renderMode": 0,
-        "rotationResponsiveness": 10.0,
-        "shapeKind": 0,
-        "shapeParams": [
-          0.5,
-          0.5,
-          0.5,
-          0.5,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "targetRotation": [
-          0.0,
-          -0.0,
-          0.0
-        ],
-        "transform": [
-          2.200000047683716,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.11999999731779099,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.03999999910593033,
-          0.0,
-          1.2799999713897705,
-          1.1200000047683716,
-          -0.3499999940395355,
-          1.0
-        ],
-        "x2D": 100.0,
-        "y2D": 100.0,
-        "zOrder2D": 0
-      },
-      {
-        "authoredProperties": {
-          "displayName": {
-            "t": "string",
-            "v": "Pulse Rate Slider Track"
-          }
-        },
-        "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
-        ],
-        "center": [
-          0.0,
-          0.8199999928474426,
-          0.550000011920929
-        ],
-        "faceColors": [
-          [
-            0.25,
-            0.27000001072883606,
-            0.3199999928474426
-          ],
-          [
-            0.25,
-            0.27000001072883606,
-            0.3199999928474426
-          ],
-          [
-            0.25,
-            0.27000001072883606,
-            0.3199999928474426
-          ],
-          [
-            0.25,
-            0.27000001072883606,
-            0.3199999928474426
-          ],
-          [
-            0.25,
-            0.27000001072883606,
-            0.3199999928474426
-          ],
-          [
-            0.25,
-            0.27000001072883606,
-            0.3199999928474426
-          ]
-        ],
-        "geometryType": 0,
-        "materialId": "material.studio.track",
-        "objectID": "studio.slider.track",
-        "renderMode": 0,
-        "rotationResponsiveness": 10.0,
-        "shapeKind": 0,
-        "shapeParams": [
-          0.5,
-          0.5,
-          0.5,
-          0.5,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "targetRotation": [
-          0.0,
-          -0.0,
-          0.0
-        ],
-        "transform": [
-          2.799999952316284,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.03999999910593033,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.20000000298023224,
-          0.0,
-          0.0,
-          0.8199999928474426,
-          0.550000011920929,
-          1.0
-        ],
-        "x2D": 100.0,
-        "y2D": 100.0,
-        "zOrder2D": 0
-      },
-      {
-        "authoredProperties": {
-          "controlLabel": {
-            "t": "string",
-            "v": "Pulse Rate"
-          },
-          "controlMax": {
-            "t": "double",
-            "v": 3.0
-          },
-          "controlMin": {
-            "t": "double",
-            "v": 0.2
-          },
-          "controlStep": {
-            "t": "double",
-            "v": 0.1
-          },
-          "controlValue": {
-            "t": "double",
-            "v": 1.0
-          },
-          "displayName": {
-            "t": "string",
-            "v": "Pulse Rate Handle"
-          },
-          "restY": {
-            "t": "double",
-            "v": 0.9
-          }
-        },
-        "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
-        ],
-        "center": [
-          0.0,
-          0.8999999761581421,
-          0.550000011920929
-        ],
-        "faceColors": [
-          [
-            0.9200000166893005,
-            0.9399999976158142,
-            0.9800000190734863
-          ],
-          [
-            0.9200000166893005,
-            0.9399999976158142,
-            0.9800000190734863
-          ],
-          [
-            0.9200000166893005,
-            0.9399999976158142,
-            0.9800000190734863
-          ],
-          [
-            0.9200000166893005,
-            0.9399999976158142,
-            0.9800000190734863
-          ],
-          [
-            0.9200000166893005,
-            0.9399999976158142,
-            0.9800000190734863
-          ],
-          [
-            0.9200000166893005,
-            0.9399999976158142,
-            0.9800000190734863
-          ]
-        ],
-        "geometryType": 0,
-        "materialId": "material.studio.handle",
-        "objectID": "studio.slider.handle",
-        "renderMode": 0,
-        "rotationResponsiveness": 10.0,
-        "shapeKind": 0,
-        "shapeParams": [
-          0.5,
-          0.5,
-          0.5,
-          0.5,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "targetRotation": [
-          0.0,
-          -0.0,
-          0.0
-        ],
-        "transform": [
-          0.3799999952316284,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.14000000059604645,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.3400000035762787,
-          0.0,
-          0.0,
-          0.8999999761581421,
-          0.550000011920929,
-          1.0
-        ],
-        "x2D": 100.0,
-        "y2D": 100.0,
-        "zOrder2D": 0
-      },
-      {
-        "authoredProperties": {
-          "displayName": {
-            "t": "string",
-            "v": "[ ⟷ RESONANCE SLIDER ]"
-          }
-        },
-        "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
-        ],
-        "center": [
-          0.0,
-          1.0499999523162842,
-          0.550000011920929
-        ],
-        "faceColors": [
-          [
-            0.25,
-            0.2800000011920929,
-            0.3499999940395355
-          ],
-          [
-            0.25,
-            0.2800000011920929,
-            0.3499999940395355
-          ],
-          [
-            0.25,
-            0.2800000011920929,
-            0.3499999940395355
-          ],
-          [
-            0.25,
-            0.2800000011920929,
-            0.3499999940395355
-          ],
-          [
-            0.25,
-            0.2800000011920929,
-            0.3499999940395355
-          ],
-          [
-            0.25,
-            0.2800000011920929,
-            0.3499999940395355
-          ]
-        ],
-        "geometryType": 0,
-        "materialId": "material.studio.sign.dark",
-        "objectID": "studio.sign.slider",
-        "renderMode": 0,
-        "rotationResponsiveness": 10.0,
-        "shapeKind": 0,
-        "shapeParams": [
-          0.5,
-          0.5,
-          0.5,
-          0.5,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "targetRotation": [
-          0.0,
-          -0.0,
-          0.0
-        ],
-        "transform": [
-          1.7999999523162842,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.10000000149011612,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.03999999910593033,
-          0.0,
-          0.0,
-          1.0499999523162842,
-          0.550000011920929,
-          1.0
-        ],
-        "x2D": 100.0,
-        "y2D": 100.0,
-        "zOrder2D": 0
-      },
-      {
-        "authoredProperties": {
-          "displayName": {
-            "t": "string",
-            "v": "✦ SYNTHESIS STUDIO ✦ Click HUD or 3D Widgets to Interact"
-          },
-          "shape.height2D": {
-            "t": "double",
-            "v": 38.0
-          },
-          "shape.width2D": {
-            "t": "double",
-            "v": 640.0
-          }
-        },
-        "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
-        ],
-        "center": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "faceColors": [
-          [
-            0.10000000149011612,
-            0.11999999731779099,
-            0.1599999964237213
-          ],
-          [
-            0.10000000149011612,
-            0.11999999731779099,
-            0.1599999964237213
-          ],
-          [
-            0.10000000149011612,
-            0.11999999731779099,
-            0.1599999964237213
-          ],
-          [
-            0.10000000149011612,
-            0.11999999731779099,
-            0.1599999964237213
-          ],
-          [
-            0.10000000149011612,
-            0.11999999731779099,
-            0.1599999964237213
-          ],
-          [
-            0.10000000149011612,
-            0.11999999731779099,
-            0.1599999964237213
-          ]
-        ],
-        "geometryType": 12,
-        "materialId": "",
-        "objectID": "hud.banner.title",
-        "renderMode": 0,
-        "rotationResponsiveness": 10.0,
-        "shapeKind": 12,
-        "shapeParams": [
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "targetRotation": [
-          0.0,
-          -0.0,
-          0.0
-        ],
-        "transform": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.5,
-          0.0,
-          1.0
-        ],
-        "x2D": 320.0,
-        "y2D": 18.0,
-        "zOrder2D": 10
-      },
-      {
-        "authoredProperties": {
-          "displayName": {
-            "t": "string",
-            "v": "HUD Control Dock Background"
-          },
-          "shape.height2D": {
-            "t": "double",
-            "v": 55.0
-          },
-          "shape.width2D": {
-            "t": "double",
-            "v": 800.0
-          }
-        },
-        "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
-        ],
-        "center": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "faceColors": [
-          [
-            0.07999999821186066,
-            0.10000000149011612,
-            0.14000000059604645
-          ],
-          [
-            0.07999999821186066,
-            0.10000000149011612,
-            0.14000000059604645
-          ],
-          [
-            0.07999999821186066,
-            0.10000000149011612,
-            0.14000000059604645
-          ],
-          [
-            0.07999999821186066,
-            0.10000000149011612,
-            0.14000000059604645
-          ],
-          [
-            0.07999999821186066,
-            0.10000000149011612,
-            0.14000000059604645
-          ],
-          [
-            0.07999999821186066,
-            0.10000000149011612,
-            0.14000000059604645
-          ]
-        ],
-        "geometryType": 12,
-        "materialId": "",
-        "objectID": "hud.dock.bg",
-        "renderMode": 0,
-        "rotationResponsiveness": 10.0,
-        "shapeKind": 12,
-        "shapeParams": [
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "targetRotation": [
-          0.0,
-          -0.0,
-          0.0
-        ],
-        "transform": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.5,
-          0.0,
-          1.0
-        ],
-        "x2D": 240.0,
-        "y2D": 645.0,
-        "zOrder2D": 10
-      },
-      {
-        "authoredProperties": {
-          "buttonRole": {
-            "t": "string",
-            "v": "spawn-orb"
+            "v": "\u2726 Spawn Harmonic Orb"
           },
           "controlLabel": {
             "t": "string",
             "v": "SPAWN ORB"
           },
-          "displayName": {
+          "buttonRole": {
             "t": "string",
-            "v": "HUD: Spawn Orb"
+            "v": "spawn-orb"
           },
-          "shape.height2D": {
+          "restY": {
             "t": "double",
-            "v": 38.0
-          },
-          "shape.width2D": {
-            "t": "double",
-            "v": 130.0
+            "v": 0.89
           }
-        },
-        "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
-        ],
-        "center": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "faceColors": [
-          [
-            0.15000000596046448,
-            0.5799999833106995,
-            0.9800000190734863
-          ],
-          [
-            0.15000000596046448,
-            0.5799999833106995,
-            0.9800000190734863
-          ],
-          [
-            0.15000000596046448,
-            0.5799999833106995,
-            0.9800000190734863
-          ],
-          [
-            0.15000000596046448,
-            0.5799999833106995,
-            0.9800000190734863
-          ],
-          [
-            0.15000000596046448,
-            0.5799999833106995,
-            0.9800000190734863
-          ],
-          [
-            0.15000000596046448,
-            0.5799999833106995,
-            0.9800000190734863
-          ]
-        ],
-        "geometryType": 12,
-        "materialId": "",
-        "objectID": "hud.btn.spawn-orb",
-        "renderMode": 0,
-        "rotationResponsiveness": 10.0,
-        "shapeKind": 12,
+        }
+      },
+      {
+        "objectID": "studio.sign.spawn-orb",
+        "shapeKind": 0,
+        "geometryType": 0,
         "shapeParams": [
+          0.5,
+          0.5,
+          0.5,
+          0.5,
           0.0,
           0.0,
           0.0,
           0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "targetRotation": [
-          0.0,
-          -0.0,
           0.0
         ],
         "transform": [
-          1.0,
+          0.75,
           0.0,
           0.0,
           0.0,
           0.0,
-          1.0,
+          0.12,
           0.0,
           0.0,
           0.0,
           0.0,
-          1.0,
+          0.04,
           0.0,
-          0.0,
-          0.5,
-          0.0,
+          -1.5,
+          1.12,
+          -0.35,
           1.0
         ],
-        "x2D": 255.0,
-        "y2D": 653.0,
-        "zOrder2D": 20
+        "center": [
+          -1.5,
+          1.12,
+          -0.35
+        ],
+        "materialId": "material.studio.sign.blue",
+        "faceColors": [
+          [
+            0.12,
+            0.45,
+            0.8
+          ],
+          [
+            0.12,
+            0.45,
+            0.8
+          ],
+          [
+            0.12,
+            0.45,
+            0.8
+          ],
+          [
+            0.12,
+            0.45,
+            0.8
+          ],
+          [
+            0.12,
+            0.45,
+            0.8
+          ],
+          [
+            0.12,
+            0.45,
+            0.8
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "[ \u2726 SPAWN ORB ]"
+          }
+        }
       },
       {
+        "objectID": "studio.btn.toggle-theme.base",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [
+          0.5,
+          0.5,
+          0.5,
+          0.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          0.85,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.08,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.7,
+          0.0,
+          -0.55,
+          0.82,
+          -0.35,
+          1.0
+        ],
+        "center": [
+          -0.55,
+          0.82,
+          -0.35
+        ],
+        "materialId": "material.studio.socket",
+        "faceColors": [
+          [
+            0.08,
+            0.09,
+            0.12
+          ],
+          [
+            0.08,
+            0.09,
+            0.12
+          ],
+          [
+            0.08,
+            0.09,
+            0.12
+          ],
+          [
+            0.08,
+            0.09,
+            0.12
+          ],
+          [
+            0.08,
+            0.09,
+            0.12
+          ],
+          [
+            0.08,
+            0.09,
+            0.12
+          ]
+        ],
         "authoredProperties": {
-          "buttonRole": {
+          "displayName": {
             "t": "string",
-            "v": "toggle-theme"
+            "v": "Theme Toggle Frame"
+          }
+        }
+      },
+      {
+        "objectID": "studio.btn.toggle-theme",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [
+          0.5,
+          0.5,
+          0.5,
+          0.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          0.7,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.16,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.55,
+          0.0,
+          -0.55,
+          0.89,
+          -0.35,
+          1.0
+        ],
+        "center": [
+          -0.55,
+          0.89,
+          -0.35
+        ],
+        "materialId": "material.studio.btn.gold",
+        "faceColors": [
+          [
+            1.0,
+            0.7,
+            0.15
+          ],
+          [
+            1.0,
+            0.7,
+            0.15
+          ],
+          [
+            1.0,
+            0.7,
+            0.15
+          ],
+          [
+            1.0,
+            0.7,
+            0.15
+          ],
+          [
+            1.0,
+            0.7,
+            0.15
+          ],
+          [
+            1.0,
+            0.7,
+            0.15
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "\u263c Toggle Night/Day Theme"
           },
           "controlLabel": {
             "t": "string",
             "v": "DAY / NIGHT"
           },
-          "displayName": {
+          "buttonRole": {
             "t": "string",
-            "v": "HUD: Day/Night"
+            "v": "toggle-theme"
           },
-          "shape.height2D": {
+          "acoustic.frequency": {
             "t": "double",
-            "v": 38.0
+            "v": 392.0
           },
-          "shape.width2D": {
+          "acoustic.amplitude": {
             "t": "double",
-            "v": 120.0
+            "v": 0.55
+          },
+          "controlOn": {
+            "t": "bool",
+            "v": false
+          },
+          "restY": {
+            "t": "double",
+            "v": 0.89
           }
-        },
-        "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
-        ],
-        "center": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "faceColors": [
-          [
-            1.0,
-            0.699999988079071,
-            0.15000000596046448
-          ],
-          [
-            1.0,
-            0.699999988079071,
-            0.15000000596046448
-          ],
-          [
-            1.0,
-            0.699999988079071,
-            0.15000000596046448
-          ],
-          [
-            1.0,
-            0.699999988079071,
-            0.15000000596046448
-          ],
-          [
-            1.0,
-            0.699999988079071,
-            0.15000000596046448
-          ],
-          [
-            1.0,
-            0.699999988079071,
-            0.15000000596046448
-          ]
-        ],
-        "geometryType": 12,
-        "materialId": "",
-        "objectID": "hud.btn.toggle-theme",
-        "renderMode": 0,
-        "rotationResponsiveness": 10.0,
-        "shapeKind": 12,
+        }
+      },
+      {
+        "objectID": "studio.sign.toggle-theme",
+        "shapeKind": 0,
+        "geometryType": 0,
         "shapeParams": [
+          0.5,
+          0.5,
+          0.5,
+          0.5,
           0.0,
           0.0,
           0.0,
           0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "targetRotation": [
-          0.0,
-          -0.0,
           0.0
         ],
         "transform": [
-          1.0,
+          0.75,
           0.0,
           0.0,
           0.0,
           0.0,
-          1.0,
+          0.12,
           0.0,
           0.0,
           0.0,
           0.0,
-          1.0,
+          0.04,
           0.0,
-          0.0,
-          0.5,
-          0.0,
+          -0.55,
+          1.12,
+          -0.35,
           1.0
         ],
-        "x2D": 395.0,
-        "y2D": 653.0,
-        "zOrder2D": 20
+        "center": [
+          -0.55,
+          1.12,
+          -0.35
+        ],
+        "materialId": "material.studio.sign.gold",
+        "faceColors": [
+          [
+            0.8,
+            0.55,
+            0.1
+          ],
+          [
+            0.8,
+            0.55,
+            0.1
+          ],
+          [
+            0.8,
+            0.55,
+            0.1
+          ],
+          [
+            0.8,
+            0.55,
+            0.1
+          ],
+          [
+            0.8,
+            0.55,
+            0.1
+          ],
+          [
+            0.8,
+            0.55,
+            0.1
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "[ \u263c DAY / NIGHT ]"
+          }
+        }
       },
       {
+        "objectID": "studio.pads.frame",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [
+          0.5,
+          0.5,
+          0.5,
+          0.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          2.35,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.08,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.7,
+          0.0,
+          1.28,
+          0.82,
+          -0.35,
+          1.0
+        ],
+        "center": [
+          1.28,
+          0.82,
+          -0.35
+        ],
+        "materialId": "material.studio.socket",
+        "faceColors": [
+          [
+            0.08,
+            0.09,
+            0.12
+          ],
+          [
+            0.08,
+            0.09,
+            0.12
+          ],
+          [
+            0.08,
+            0.09,
+            0.12
+          ],
+          [
+            0.08,
+            0.09,
+            0.12
+          ],
+          [
+            0.08,
+            0.09,
+            0.12
+          ],
+          [
+            0.08,
+            0.09,
+            0.12
+          ]
+        ],
         "authoredProperties": {
-          "acoustic.amplitude": {
-            "t": "double",
-            "v": 0.85
+          "displayName": {
+            "t": "string",
+            "v": "Chord Pad Frame"
+          }
+        }
+      },
+      {
+        "objectID": "studio.pad.c5",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [
+          0.5,
+          0.5,
+          0.5,
+          0.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          0.46,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.14,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.54,
+          0.0,
+          0.42,
+          0.88,
+          -0.35,
+          1.0
+        ],
+        "center": [
+          0.42,
+          0.88,
+          -0.35
+        ],
+        "materialId": "material.studio.C5",
+        "faceColors": [
+          [
+            0.95,
+            0.22,
+            0.32
+          ],
+          [
+            0.95,
+            0.22,
+            0.32
+          ],
+          [
+            0.95,
+            0.22,
+            0.32
+          ],
+          [
+            0.95,
+            0.22,
+            0.32
+          ],
+          [
+            0.95,
+            0.22,
+            0.32
+          ],
+          [
+            0.95,
+            0.22,
+            0.32
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "\u266b Note C5 (Do)"
+          },
+          "controlLabel": {
+            "t": "string",
+            "v": "Play Note C5"
+          },
+          "noteName": {
+            "t": "string",
+            "v": "C5"
           },
           "acoustic.frequency": {
             "t": "double",
             "v": 523.25
           },
+          "acoustic.amplitude": {
+            "t": "double",
+            "v": 0.85
+          },
           "acoustic.waveType": {
             "t": "string",
-            "v": "crystal"
-          },
-          "controlLabel": {
-            "t": "string",
-            "v": "C5"
-          },
-          "displayName": {
-            "t": "string",
-            "v": "HUD: Note C5"
+            "v": "triangle"
           },
           "isChordPad": {
             "t": "bool",
             "v": true
           },
-          "noteName": {
-            "t": "string",
-            "v": "C5"
-          },
-          "shape.height2D": {
+          "restY": {
             "t": "double",
-            "v": 38.0
-          },
-          "shape.width2D": {
-            "t": "double",
-            "v": 52.0
+            "v": 0.88
           }
-        },
-        "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
-        ],
-        "center": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "faceColors": [
-          [
-            0.949999988079071,
-            0.2199999988079071,
-            0.3199999928474426
-          ],
-          [
-            0.949999988079071,
-            0.2199999988079071,
-            0.3199999928474426
-          ],
-          [
-            0.949999988079071,
-            0.2199999988079071,
-            0.3199999928474426
-          ],
-          [
-            0.949999988079071,
-            0.2199999988079071,
-            0.3199999928474426
-          ],
-          [
-            0.949999988079071,
-            0.2199999988079071,
-            0.3199999928474426
-          ],
-          [
-            0.949999988079071,
-            0.2199999988079071,
-            0.3199999928474426
-          ]
-        ],
-        "geometryType": 12,
-        "materialId": "",
-        "objectID": "hud.pad.c5",
-        "renderMode": 0,
-        "rotationResponsiveness": 10.0,
-        "shapeKind": 12,
+        }
+      },
+      {
+        "objectID": "studio.pad.e5",
+        "shapeKind": 0,
+        "geometryType": 0,
         "shapeParams": [
+          0.5,
+          0.5,
+          0.5,
+          0.5,
           0.0,
           0.0,
           0.0,
           0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "targetRotation": [
-          0.0,
-          -0.0,
           0.0
         ],
         "transform": [
-          1.0,
+          0.46,
           0.0,
           0.0,
           0.0,
           0.0,
-          1.0,
+          0.14,
           0.0,
           0.0,
           0.0,
           0.0,
-          1.0,
+          0.54,
           0.0,
-          0.0,
-          0.5,
-          0.0,
+          0.98,
+          0.88,
+          -0.35,
           1.0
         ],
-        "x2D": 525.0,
-        "y2D": 653.0,
-        "zOrder2D": 20
-      },
-      {
+        "center": [
+          0.98,
+          0.88,
+          -0.35
+        ],
+        "materialId": "material.studio.E5",
+        "faceColors": [
+          [
+            1.0,
+            0.72,
+            0.12
+          ],
+          [
+            1.0,
+            0.72,
+            0.12
+          ],
+          [
+            1.0,
+            0.72,
+            0.12
+          ],
+          [
+            1.0,
+            0.72,
+            0.12
+          ],
+          [
+            1.0,
+            0.72,
+            0.12
+          ],
+          [
+            1.0,
+            0.72,
+            0.12
+          ]
+        ],
         "authoredProperties": {
-          "acoustic.amplitude": {
-            "t": "double",
-            "v": 0.85
+          "displayName": {
+            "t": "string",
+            "v": "\u266b Note E5 (Mi)"
+          },
+          "controlLabel": {
+            "t": "string",
+            "v": "Play Note E5"
+          },
+          "noteName": {
+            "t": "string",
+            "v": "E5"
           },
           "acoustic.frequency": {
             "t": "double",
             "v": 659.25
           },
+          "acoustic.amplitude": {
+            "t": "double",
+            "v": 0.85
+          },
           "acoustic.waveType": {
             "t": "string",
-            "v": "crystal"
-          },
-          "controlLabel": {
-            "t": "string",
-            "v": "E5"
-          },
-          "displayName": {
-            "t": "string",
-            "v": "HUD: Note E5"
+            "v": "triangle"
           },
           "isChordPad": {
             "t": "bool",
             "v": true
           },
-          "noteName": {
-            "t": "string",
-            "v": "E5"
-          },
-          "shape.height2D": {
+          "restY": {
             "t": "double",
-            "v": 38.0
-          },
-          "shape.width2D": {
-            "t": "double",
-            "v": 52.0
+            "v": 0.88
           }
-        },
-        "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
-        ],
-        "center": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "faceColors": [
-          [
-            1.0,
-            0.7200000286102295,
-            0.11999999731779099
-          ],
-          [
-            1.0,
-            0.7200000286102295,
-            0.11999999731779099
-          ],
-          [
-            1.0,
-            0.7200000286102295,
-            0.11999999731779099
-          ],
-          [
-            1.0,
-            0.7200000286102295,
-            0.11999999731779099
-          ],
-          [
-            1.0,
-            0.7200000286102295,
-            0.11999999731779099
-          ],
-          [
-            1.0,
-            0.7200000286102295,
-            0.11999999731779099
-          ]
-        ],
-        "geometryType": 12,
-        "materialId": "",
-        "objectID": "hud.pad.e5",
-        "renderMode": 0,
-        "rotationResponsiveness": 10.0,
-        "shapeKind": 12,
+        }
+      },
+      {
+        "objectID": "studio.pad.g5",
+        "shapeKind": 0,
+        "geometryType": 0,
         "shapeParams": [
+          0.5,
+          0.5,
+          0.5,
+          0.5,
           0.0,
           0.0,
           0.0,
           0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "targetRotation": [
-          0.0,
-          -0.0,
           0.0
         ],
         "transform": [
-          1.0,
+          0.46,
           0.0,
           0.0,
           0.0,
           0.0,
-          1.0,
+          0.14,
           0.0,
           0.0,
           0.0,
           0.0,
-          1.0,
+          0.54,
           0.0,
-          0.0,
-          0.5,
-          0.0,
+          1.54,
+          0.88,
+          -0.35,
           1.0
         ],
-        "x2D": 585.0,
-        "y2D": 653.0,
-        "zOrder2D": 20
-      },
-      {
+        "center": [
+          1.54,
+          0.88,
+          -0.35
+        ],
+        "materialId": "material.studio.G5",
+        "faceColors": [
+          [
+            0.18,
+            0.88,
+            0.45
+          ],
+          [
+            0.18,
+            0.88,
+            0.45
+          ],
+          [
+            0.18,
+            0.88,
+            0.45
+          ],
+          [
+            0.18,
+            0.88,
+            0.45
+          ],
+          [
+            0.18,
+            0.88,
+            0.45
+          ],
+          [
+            0.18,
+            0.88,
+            0.45
+          ]
+        ],
         "authoredProperties": {
-          "acoustic.amplitude": {
-            "t": "double",
-            "v": 0.85
+          "displayName": {
+            "t": "string",
+            "v": "\u266b Note G5 (Sol)"
+          },
+          "controlLabel": {
+            "t": "string",
+            "v": "Play Note G5"
+          },
+          "noteName": {
+            "t": "string",
+            "v": "G5"
           },
           "acoustic.frequency": {
             "t": "double",
             "v": 783.99
           },
+          "acoustic.amplitude": {
+            "t": "double",
+            "v": 0.85
+          },
           "acoustic.waveType": {
             "t": "string",
-            "v": "crystal"
-          },
-          "controlLabel": {
-            "t": "string",
-            "v": "G5"
-          },
-          "displayName": {
-            "t": "string",
-            "v": "HUD: Note G5"
+            "v": "triangle"
           },
           "isChordPad": {
             "t": "bool",
             "v": true
           },
-          "noteName": {
-            "t": "string",
-            "v": "G5"
-          },
-          "shape.height2D": {
+          "restY": {
             "t": "double",
-            "v": 38.0
-          },
-          "shape.width2D": {
-            "t": "double",
-            "v": 52.0
+            "v": 0.88
           }
-        },
-        "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
-        ],
-        "center": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "faceColors": [
-          [
-            0.18000000715255737,
-            0.8799999952316284,
-            0.44999998807907104
-          ],
-          [
-            0.18000000715255737,
-            0.8799999952316284,
-            0.44999998807907104
-          ],
-          [
-            0.18000000715255737,
-            0.8799999952316284,
-            0.44999998807907104
-          ],
-          [
-            0.18000000715255737,
-            0.8799999952316284,
-            0.44999998807907104
-          ],
-          [
-            0.18000000715255737,
-            0.8799999952316284,
-            0.44999998807907104
-          ],
-          [
-            0.18000000715255737,
-            0.8799999952316284,
-            0.44999998807907104
-          ]
-        ],
-        "geometryType": 12,
-        "materialId": "",
-        "objectID": "hud.pad.g5",
-        "renderMode": 0,
-        "rotationResponsiveness": 10.0,
-        "shapeKind": 12,
+        }
+      },
+      {
+        "objectID": "studio.pad.b5",
+        "shapeKind": 0,
+        "geometryType": 0,
         "shapeParams": [
+          0.5,
+          0.5,
+          0.5,
+          0.5,
           0.0,
           0.0,
           0.0,
           0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "targetRotation": [
-          0.0,
-          -0.0,
           0.0
         ],
         "transform": [
-          1.0,
+          0.46,
           0.0,
           0.0,
           0.0,
           0.0,
-          1.0,
+          0.14,
           0.0,
           0.0,
           0.0,
           0.0,
-          1.0,
+          0.54,
           0.0,
-          0.0,
-          0.5,
-          0.0,
+          2.1,
+          0.88,
+          -0.35,
           1.0
         ],
-        "x2D": 645.0,
-        "y2D": 653.0,
-        "zOrder2D": 20
-      },
-      {
+        "center": [
+          2.1,
+          0.88,
+          -0.35
+        ],
+        "materialId": "material.studio.B5",
+        "faceColors": [
+          [
+            0.28,
+            0.48,
+            1.0
+          ],
+          [
+            0.28,
+            0.48,
+            1.0
+          ],
+          [
+            0.28,
+            0.48,
+            1.0
+          ],
+          [
+            0.28,
+            0.48,
+            1.0
+          ],
+          [
+            0.28,
+            0.48,
+            1.0
+          ],
+          [
+            0.28,
+            0.48,
+            1.0
+          ]
+        ],
         "authoredProperties": {
-          "acoustic.amplitude": {
-            "t": "double",
-            "v": 0.85
+          "displayName": {
+            "t": "string",
+            "v": "\u266b Note B5 (Ti)"
+          },
+          "controlLabel": {
+            "t": "string",
+            "v": "Play Note B5"
+          },
+          "noteName": {
+            "t": "string",
+            "v": "B5"
           },
           "acoustic.frequency": {
             "t": "double",
             "v": 987.77
           },
+          "acoustic.amplitude": {
+            "t": "double",
+            "v": 0.85
+          },
           "acoustic.waveType": {
             "t": "string",
-            "v": "crystal"
-          },
-          "controlLabel": {
-            "t": "string",
-            "v": "B5"
-          },
-          "displayName": {
-            "t": "string",
-            "v": "HUD: Note B5"
+            "v": "triangle"
           },
           "isChordPad": {
             "t": "bool",
             "v": true
           },
-          "noteName": {
+          "restY": {
+            "t": "double",
+            "v": 0.88
+          }
+        }
+      },
+      {
+        "objectID": "studio.sign.music",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [
+          0.5,
+          0.5,
+          0.5,
+          0.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          2.2,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.12,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.04,
+          0.0,
+          1.28,
+          1.12,
+          -0.35,
+          1.0
+        ],
+        "center": [
+          1.28,
+          1.12,
+          -0.35
+        ],
+        "materialId": "material.studio.sign.dark",
+        "faceColors": [
+          [
+            0.22,
+            0.25,
+            0.32
+          ],
+          [
+            0.22,
+            0.25,
+            0.32
+          ],
+          [
+            0.22,
+            0.25,
+            0.32
+          ],
+          [
+            0.22,
+            0.25,
+            0.32
+          ],
+          [
+            0.22,
+            0.25,
+            0.32
+          ],
+          [
+            0.22,
+            0.25,
+            0.32
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
             "t": "string",
-            "v": "B5"
+            "v": "[ \u266b CHORD KEYS: C5 \u00b7 E5 \u00b7 G5 \u00b7 B5 ]"
+          }
+        }
+      },
+      {
+        "objectID": "studio.slider.track",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [
+          0.5,
+          0.5,
+          0.5,
+          0.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          2.8,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.04,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.2,
+          0.0,
+          0.0,
+          0.82,
+          0.55,
+          1.0
+        ],
+        "center": [
+          0.0,
+          0.82,
+          0.55
+        ],
+        "materialId": "material.studio.track",
+        "faceColors": [
+          [
+            0.25,
+            0.27,
+            0.32
+          ],
+          [
+            0.25,
+            0.27,
+            0.32
+          ],
+          [
+            0.25,
+            0.27,
+            0.32
+          ],
+          [
+            0.25,
+            0.27,
+            0.32
+          ],
+          [
+            0.25,
+            0.27,
+            0.32
+          ],
+          [
+            0.25,
+            0.27,
+            0.32
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Pulse Rate Slider Track"
+          }
+        }
+      },
+      {
+        "objectID": "studio.slider.handle",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [
+          0.5,
+          0.5,
+          0.5,
+          0.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          0.38,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.14,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.34,
+          0.0,
+          -0.6,
+          0.9,
+          0.55,
+          1.0
+        ],
+        "center": [
+          -0.6,
+          0.9,
+          0.55
+        ],
+        "materialId": "material.studio.handle",
+        "faceColors": [
+          [
+            0.92,
+            0.94,
+            0.98
+          ],
+          [
+            0.92,
+            0.94,
+            0.98
+          ],
+          [
+            0.92,
+            0.94,
+            0.98
+          ],
+          [
+            0.92,
+            0.94,
+            0.98
+          ],
+          [
+            0.92,
+            0.94,
+            0.98
+          ],
+          [
+            0.92,
+            0.94,
+            0.98
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Pulse Rate Handle"
+          },
+          "controlLabel": {
+            "t": "string",
+            "v": "Pulse Rate"
+          },
+          "controlValue": {
+            "t": "double",
+            "v": 1.0
+          },
+          "controlMin": {
+            "t": "double",
+            "v": 0.2
+          },
+          "controlMax": {
+            "t": "double",
+            "v": 3.0
+          },
+          "controlStep": {
+            "t": "double",
+            "v": 0.02
+          },
+          "restY": {
+            "t": "double",
+            "v": 0.9
+          }
+        }
+      },
+      {
+        "objectID": "studio.sign.slider",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [
+          0.5,
+          0.5,
+          0.5,
+          0.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          1.8,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.1,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.04,
+          0.0,
+          0.0,
+          1.05,
+          0.55,
+          1.0
+        ],
+        "center": [
+          0.0,
+          1.05,
+          0.55
+        ],
+        "materialId": "material.studio.sign.dark",
+        "faceColors": [
+          [
+            0.25,
+            0.28,
+            0.35
+          ],
+          [
+            0.25,
+            0.28,
+            0.35
+          ],
+          [
+            0.25,
+            0.28,
+            0.35
+          ],
+          [
+            0.25,
+            0.28,
+            0.35
+          ],
+          [
+            0.25,
+            0.28,
+            0.35
+          ],
+          [
+            0.25,
+            0.28,
+            0.35
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "[ \u27f7 RESONANCE SLIDER ]"
+          }
+        }
+      },
+      {
+        "objectID": "hud.banner.title",
+        "shapeKind": 12,
+        "geometryType": 12,
+        "shapeParams": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "x2D": 320.0,
+        "y2D": 18.0,
+        "zOrder2D": 10,
+        "materialId": "",
+        "faceColors": [
+          [
+            0.1,
+            0.12,
+            0.16
+          ],
+          [
+            0.1,
+            0.12,
+            0.16
+          ],
+          [
+            0.1,
+            0.12,
+            0.16
+          ],
+          [
+            0.1,
+            0.12,
+            0.16
+          ],
+          [
+            0.1,
+            0.12,
+            0.16
+          ],
+          [
+            0.1,
+            0.12,
+            0.16
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "\u2726 SYNTHESIS STUDIO \u2726 Click HUD or 3D Widgets to Interact"
+          },
+          "shape.width2D": {
+            "t": "double",
+            "v": 640.0
           },
           "shape.height2D": {
             "t": "double",
             "v": 38.0
+          }
+        }
+      },
+      {
+        "objectID": "hud.dock.bg",
+        "shapeKind": 12,
+        "geometryType": 12,
+        "shapeParams": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "x2D": 240.0,
+        "y2D": 645.0,
+        "zOrder2D": 10,
+        "materialId": "",
+        "faceColors": [
+          [
+            0.08,
+            0.1,
+            0.14
+          ],
+          [
+            0.08,
+            0.1,
+            0.14
+          ],
+          [
+            0.08,
+            0.1,
+            0.14
+          ],
+          [
+            0.08,
+            0.1,
+            0.14
+          ],
+          [
+            0.08,
+            0.1,
+            0.14
+          ],
+          [
+            0.08,
+            0.1,
+            0.14
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "HUD Control Dock Background"
+          },
+          "shape.width2D": {
+            "t": "double",
+            "v": 800.0
+          },
+          "shape.height2D": {
+            "t": "double",
+            "v": 55.0
+          }
+        }
+      },
+      {
+        "objectID": "hud.btn.spawn-orb",
+        "shapeKind": 12,
+        "geometryType": 12,
+        "shapeParams": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "x2D": 255.0,
+        "y2D": 653.0,
+        "zOrder2D": 20,
+        "materialId": "",
+        "faceColors": [
+          [
+            0.15,
+            0.58,
+            0.98
+          ],
+          [
+            0.15,
+            0.58,
+            0.98
+          ],
+          [
+            0.15,
+            0.58,
+            0.98
+          ],
+          [
+            0.15,
+            0.58,
+            0.98
+          ],
+          [
+            0.15,
+            0.58,
+            0.98
+          ],
+          [
+            0.15,
+            0.58,
+            0.98
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "HUD: Spawn Orb"
+          },
+          "controlLabel": {
+            "t": "string",
+            "v": "SPAWN ORB"
+          },
+          "buttonRole": {
+            "t": "string",
+            "v": "spawn-orb"
+          },
+          "acoustic.frequency": {
+            "t": "double",
+            "v": 587.33
+          },
+          "acoustic.amplitude": {
+            "t": "double",
+            "v": 0.55
+          },
+          "shape.width2D": {
+            "t": "double",
+            "v": 130.0
+          },
+          "shape.height2D": {
+            "t": "double",
+            "v": 38.0
+          },
+          "restY2D": {
+            "t": "double",
+            "v": 653.0
+          }
+        }
+      },
+      {
+        "objectID": "hud.btn.toggle-theme",
+        "shapeKind": 12,
+        "geometryType": 12,
+        "shapeParams": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "x2D": 395.0,
+        "y2D": 653.0,
+        "zOrder2D": 20,
+        "materialId": "",
+        "faceColors": [
+          [
+            1.0,
+            0.7,
+            0.15
+          ],
+          [
+            1.0,
+            0.7,
+            0.15
+          ],
+          [
+            1.0,
+            0.7,
+            0.15
+          ],
+          [
+            1.0,
+            0.7,
+            0.15
+          ],
+          [
+            1.0,
+            0.7,
+            0.15
+          ],
+          [
+            1.0,
+            0.7,
+            0.15
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "HUD: Day/Night"
+          },
+          "controlLabel": {
+            "t": "string",
+            "v": "DAY / NIGHT"
+          },
+          "buttonRole": {
+            "t": "string",
+            "v": "toggle-theme"
+          },
+          "acoustic.frequency": {
+            "t": "double",
+            "v": 392.0
+          },
+          "acoustic.amplitude": {
+            "t": "double",
+            "v": 0.55
+          },
+          "shape.width2D": {
+            "t": "double",
+            "v": 120.0
+          },
+          "shape.height2D": {
+            "t": "double",
+            "v": 38.0
+          },
+          "restY2D": {
+            "t": "double",
+            "v": 653.0
+          }
+        }
+      },
+      {
+        "objectID": "hud.pad.c5",
+        "shapeKind": 12,
+        "geometryType": 12,
+        "shapeParams": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "x2D": 525.0,
+        "y2D": 653.0,
+        "zOrder2D": 20,
+        "materialId": "",
+        "faceColors": [
+          [
+            0.95,
+            0.22,
+            0.32
+          ],
+          [
+            0.95,
+            0.22,
+            0.32
+          ],
+          [
+            0.95,
+            0.22,
+            0.32
+          ],
+          [
+            0.95,
+            0.22,
+            0.32
+          ],
+          [
+            0.95,
+            0.22,
+            0.32
+          ],
+          [
+            0.95,
+            0.22,
+            0.32
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "HUD: Note C5"
+          },
+          "controlLabel": {
+            "t": "string",
+            "v": "C5"
+          },
+          "noteName": {
+            "t": "string",
+            "v": "C5"
+          },
+          "acoustic.frequency": {
+            "t": "double",
+            "v": 523.25
+          },
+          "acoustic.amplitude": {
+            "t": "double",
+            "v": 0.85
+          },
+          "acoustic.waveType": {
+            "t": "string",
+            "v": "triangle"
+          },
+          "isChordPad": {
+            "t": "bool",
+            "v": true
           },
           "shape.width2D": {
             "t": "double",
             "v": 52.0
-          }
-        },
-        "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
-        ],
-        "center": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "faceColors": [
-          [
-            0.2800000011920929,
-            0.47999998927116394,
-            1.0
-          ],
-          [
-            0.2800000011920929,
-            0.47999998927116394,
-            1.0
-          ],
-          [
-            0.2800000011920929,
-            0.47999998927116394,
-            1.0
-          ],
-          [
-            0.2800000011920929,
-            0.47999998927116394,
-            1.0
-          ],
-          [
-            0.2800000011920929,
-            0.47999998927116394,
-            1.0
-          ],
-          [
-            0.2800000011920929,
-            0.47999998927116394,
-            1.0
-          ]
-        ],
-        "geometryType": 12,
-        "materialId": "",
-        "objectID": "hud.pad.b5",
-        "renderMode": 0,
-        "rotationResponsiveness": 10.0,
-        "shapeKind": 12,
-        "shapeParams": [
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "targetRotation": [
-          0.0,
-          -0.0,
-          0.0
-        ],
-        "transform": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.5,
-          0.0,
-          1.0
-        ],
-        "x2D": 705.0,
-        "y2D": 653.0,
-        "zOrder2D": 20
-      },
-      {
-        "authoredProperties": {
-          "buttonRole": {
-            "t": "string",
-            "v": "draw-mode"
-          },
-          "controlLabel": {
-            "t": "string",
-            "v": "DRAW STROKES"
-          },
-          "displayName": {
-            "t": "string",
-            "v": "HUD: Draw Canvas Mode"
           },
           "shape.height2D": {
             "t": "double",
             "v": 38.0
           },
-          "shape.width2D": {
+          "restY2D": {
             "t": "double",
-            "v": 155.0
+            "v": 653.0
           }
-        },
-        "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
-        ],
-        "center": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "faceColors": [
-          [
-            0.7200000286102295,
-            0.3199999928474426,
-            0.949999988079071
-          ],
-          [
-            0.7200000286102295,
-            0.3199999928474426,
-            0.949999988079071
-          ],
-          [
-            0.7200000286102295,
-            0.3199999928474426,
-            0.949999988079071
-          ],
-          [
-            0.7200000286102295,
-            0.3199999928474426,
-            0.949999988079071
-          ],
-          [
-            0.7200000286102295,
-            0.3199999928474426,
-            0.949999988079071
-          ],
-          [
-            0.7200000286102295,
-            0.3199999928474426,
-            0.949999988079071
-          ]
-        ],
-        "geometryType": 12,
-        "materialId": "",
-        "objectID": "hud.btn.draw-stroke",
-        "renderMode": 0,
-        "rotationResponsiveness": 10.0,
+        }
+      },
+      {
+        "objectID": "hud.pad.e5",
         "shapeKind": 12,
+        "geometryType": 12,
         "shapeParams": [
           0.0,
           0.0,
@@ -4204,11 +2287,6 @@
           0.0,
           0.0,
           0.0,
-          0.0
-        ],
-        "targetRotation": [
-          0.0,
-          -0.0,
           0.0
         ],
         "transform": [
@@ -4225,127 +2303,821 @@
           1.0,
           0.0,
           0.0,
-          0.5,
+          0.0,
           0.0,
           1.0
         ],
-        "x2D": 768.0,
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "x2D": 585.0,
         "y2D": 653.0,
-        "zOrder2D": 20
+        "zOrder2D": 20,
+        "materialId": "",
+        "faceColors": [
+          [
+            1.0,
+            0.72,
+            0.12
+          ],
+          [
+            1.0,
+            0.72,
+            0.12
+          ],
+          [
+            1.0,
+            0.72,
+            0.12
+          ],
+          [
+            1.0,
+            0.72,
+            0.12
+          ],
+          [
+            1.0,
+            0.72,
+            0.12
+          ],
+          [
+            1.0,
+            0.72,
+            0.12
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "HUD: Note E5"
+          },
+          "controlLabel": {
+            "t": "string",
+            "v": "E5"
+          },
+          "noteName": {
+            "t": "string",
+            "v": "E5"
+          },
+          "acoustic.frequency": {
+            "t": "double",
+            "v": 659.25
+          },
+          "acoustic.amplitude": {
+            "t": "double",
+            "v": 0.85
+          },
+          "acoustic.waveType": {
+            "t": "string",
+            "v": "triangle"
+          },
+          "isChordPad": {
+            "t": "bool",
+            "v": true
+          },
+          "shape.width2D": {
+            "t": "double",
+            "v": 52.0
+          },
+          "shape.height2D": {
+            "t": "double",
+            "v": 38.0
+          },
+          "restY2D": {
+            "t": "double",
+            "v": 653.0
+          }
+        }
       },
       {
+        "objectID": "hud.pad.g5",
+        "shapeKind": 12,
+        "geometryType": 12,
+        "shapeParams": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "x2D": 645.0,
+        "y2D": 653.0,
+        "zOrder2D": 20,
+        "materialId": "",
+        "faceColors": [
+          [
+            0.18,
+            0.88,
+            0.45
+          ],
+          [
+            0.18,
+            0.88,
+            0.45
+          ],
+          [
+            0.18,
+            0.88,
+            0.45
+          ],
+          [
+            0.18,
+            0.88,
+            0.45
+          ],
+          [
+            0.18,
+            0.88,
+            0.45
+          ],
+          [
+            0.18,
+            0.88,
+            0.45
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "HUD: Note G5"
+          },
+          "controlLabel": {
+            "t": "string",
+            "v": "G5"
+          },
+          "noteName": {
+            "t": "string",
+            "v": "G5"
+          },
+          "acoustic.frequency": {
+            "t": "double",
+            "v": 783.99
+          },
+          "acoustic.amplitude": {
+            "t": "double",
+            "v": 0.85
+          },
+          "acoustic.waveType": {
+            "t": "string",
+            "v": "triangle"
+          },
+          "isChordPad": {
+            "t": "bool",
+            "v": true
+          },
+          "shape.width2D": {
+            "t": "double",
+            "v": 52.0
+          },
+          "shape.height2D": {
+            "t": "double",
+            "v": 38.0
+          },
+          "restY2D": {
+            "t": "double",
+            "v": 653.0
+          }
+        }
+      },
+      {
+        "objectID": "hud.pad.b5",
+        "shapeKind": 12,
+        "geometryType": 12,
+        "shapeParams": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "x2D": 705.0,
+        "y2D": 653.0,
+        "zOrder2D": 20,
+        "materialId": "",
+        "faceColors": [
+          [
+            0.28,
+            0.48,
+            1.0
+          ],
+          [
+            0.28,
+            0.48,
+            1.0
+          ],
+          [
+            0.28,
+            0.48,
+            1.0
+          ],
+          [
+            0.28,
+            0.48,
+            1.0
+          ],
+          [
+            0.28,
+            0.48,
+            1.0
+          ],
+          [
+            0.28,
+            0.48,
+            1.0
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "HUD: Note B5"
+          },
+          "controlLabel": {
+            "t": "string",
+            "v": "B5"
+          },
+          "noteName": {
+            "t": "string",
+            "v": "B5"
+          },
+          "acoustic.frequency": {
+            "t": "double",
+            "v": 987.77
+          },
+          "acoustic.amplitude": {
+            "t": "double",
+            "v": 0.85
+          },
+          "acoustic.waveType": {
+            "t": "string",
+            "v": "triangle"
+          },
+          "isChordPad": {
+            "t": "bool",
+            "v": true
+          },
+          "shape.width2D": {
+            "t": "double",
+            "v": 52.0
+          },
+          "shape.height2D": {
+            "t": "double",
+            "v": 38.0
+          },
+          "restY2D": {
+            "t": "double",
+            "v": 653.0
+          }
+        }
+      },
+      {
+        "objectID": "hud.btn.draw-stroke",
+        "shapeKind": 12,
+        "geometryType": 12,
+        "shapeParams": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "x2D": 768.0,
+        "y2D": 653.0,
+        "zOrder2D": 20,
+        "materialId": "",
+        "faceColors": [
+          [
+            0.72,
+            0.32,
+            0.95
+          ],
+          [
+            0.72,
+            0.32,
+            0.95
+          ],
+          [
+            0.72,
+            0.32,
+            0.95
+          ],
+          [
+            0.72,
+            0.32,
+            0.95
+          ],
+          [
+            0.72,
+            0.32,
+            0.95
+          ],
+          [
+            0.72,
+            0.32,
+            0.95
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "HUD: Draw Canvas Mode"
+          },
+          "controlLabel": {
+            "t": "string",
+            "v": "DRAW: OFF"
+          },
+          "buttonRole": {
+            "t": "string",
+            "v": "draw-mode"
+          },
+          "acoustic.frequency": {
+            "t": "double",
+            "v": 493.88
+          },
+          "acoustic.amplitude": {
+            "t": "double",
+            "v": 0.55
+          },
+          "shape.width2D": {
+            "t": "double",
+            "v": 155.0
+          },
+          "shape.height2D": {
+            "t": "double",
+            "v": 38.0
+          },
+          "restY2D": {
+            "t": "double",
+            "v": 653.0
+          }
+        }
+      },
+      {
+        "objectID": "state.studio",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [
+          0.5,
+          0.5,
+          0.5,
+          0.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          0.02,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.02,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.02,
+          0.0,
+          0.0,
+          -4.0,
+          0.0,
+          1.0
+        ],
+        "center": [
+          0.0,
+          -4.0,
+          0.0
+        ],
+        "materialId": "material.studio.slate",
+        "faceColors": [
+          [
+            0.16,
+            0.18,
+            0.22
+          ],
+          [
+            0.16,
+            0.18,
+            0.22
+          ],
+          [
+            0.16,
+            0.18,
+            0.22
+          ],
+          [
+            0.16,
+            0.18,
+            0.22
+          ],
+          [
+            0.16,
+            0.18,
+            0.22
+          ],
+          [
+            0.16,
+            0.18,
+            0.22
+          ]
+        ],
         "authoredProperties": {
           "displayName": {
             "t": "string",
             "v": "Studio Ambient State"
           },
+          "themeNight": {
+            "t": "bool",
+            "v": false
+          },
+          "drawMode": {
+            "t": "bool",
+            "v": false
+          },
           "pulseRate": {
             "t": "double",
             "v": 1.0
-          },
-          "soundAmp": {
-            "t": "double",
-            "v": 0.8
-          },
-          "soundFreq": {
-            "t": "double",
-            "v": 440.0
           },
           "spawnCount": {
             "t": "int",
             "v": 0
           },
-          "themeNight": {
-            "t": "bool",
-            "v": false
+          "soundFreq": {
+            "t": "double",
+            "v": 440.0
+          },
+          "soundAmp": {
+            "t": "double",
+            "v": 0.8
           }
-        },
-        "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
-        ],
-        "center": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "faceColors": [
-          [
-            1.0,
-            0.0,
-            0.0
-          ],
-          [
-            1.0,
-            0.0,
-            0.0
-          ],
-          [
-            0.0,
-            1.0,
-            0.0
-          ],
-          [
-            0.0,
-            1.0,
-            0.0
-          ],
-          [
-            0.0,
-            0.0,
-            1.0
-          ],
-          [
-            0.0,
-            0.0,
-            1.0
-          ]
-        ],
-        "geometryType": 12,
-        "materialId": "",
-        "objectID": "state.studio",
-        "renderMode": 0,
-        "rotationResponsiveness": 10.0,
-        "shapeKind": 12,
-        "shapeParams": [
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "targetRotation": [
-          0.0,
-          -0.0,
-          0.0
-        ],
-        "transform": [
-          0.009999999776482582,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.009999999776482582,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.009999999776482582,
-          0.0,
-          0.0,
-          0.004999999888241291,
-          0.0,
-          1.0
-        ],
-        "x2D": 100.0,
-        "y2D": 100.0,
-        "zOrder2D": 0
+        }
       }
     ]
-  }
+  },
+  "formationRelations": [
+    {
+      "type": "subcategory-of",
+      "entityA": "category.control.button",
+      "entityB": "category.control",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "subcategory-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "subcategory-of",
+      "entityA": "category.control.toggle",
+      "entityB": "category.control",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "subcategory-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "subcategory-of",
+      "entityA": "category.control.slider",
+      "entityB": "category.control",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "subcategory-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "subcategory-of",
+      "entityA": "category.art.stroke",
+      "entityB": "category.art",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "subcategory-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "authored-by",
+      "entityA": "category.control",
+      "entityB": "author.gemini-spark",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "authored-by",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "authored-by",
+      "entityA": "category.art",
+      "entityB": "author.gemini-spark",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "authored-by",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "studio.btn.spawn-orb",
+      "entityB": "category.control.button",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "studio.btn.toggle-theme",
+      "entityB": "category.control.toggle",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "studio.pad.c5",
+      "entityB": "category.control.button",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "studio.pad.e5",
+      "entityB": "category.control.button",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "studio.pad.g5",
+      "entityB": "category.control.button",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "studio.pad.b5",
+      "entityB": "category.control.button",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "studio.slider.handle",
+      "entityB": "category.control.slider",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "hud.btn.spawn-orb",
+      "entityB": "category.control.button",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "hud.btn.toggle-theme",
+      "entityB": "category.control.toggle",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "hud.pad.c5",
+      "entityB": "category.control.button",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "hud.pad.e5",
+      "entityB": "category.control.button",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "hud.pad.g5",
+      "entityB": "category.control.button",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "hud.pad.b5",
+      "entityB": "category.control.button",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "hud.btn.draw-stroke",
+      "entityB": "category.control.button",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    }
+  ]
 }

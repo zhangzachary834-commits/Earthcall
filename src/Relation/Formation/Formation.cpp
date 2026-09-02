@@ -17,13 +17,13 @@
 #include "Singularity/Screen/Renderer.hpp"
 
 void Formation::buildProperties() {
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<Formation, std::string>>(
+    registerProperty(std::make_unique<PropertyRef<Formation, std::string>>(
         "relationTypeTag", this, &Formation::relationTypeTag));
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Formation, std::string>>(
+    registerProperty(std::make_unique<ComputedProperty<Formation, std::string>>(
         "root", this, &Formation::propRoot, nullptr));
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Formation, int>>(
+    registerProperty(std::make_unique<ComputedProperty<Formation, int>>(
         "memberCount", this, &Formation::propMemberCount, nullptr));
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Formation, std::shared_ptr<PropertyList>>>(
+    registerProperty(std::make_unique<ComputedProperty<Formation, std::shared_ptr<PropertyList>>>(
         "members", this, &Formation::propMembers, nullptr));
 }
 

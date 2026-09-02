@@ -40,6 +40,7 @@ struct PropertyPath {
     static PropertyPath parse(const std::string& dotted);
 
     std::string toString() const;
+    Earthcall::StringId fullId() const;
     bool empty() const { return segments.empty(); }
 
 private:
@@ -68,7 +69,7 @@ public:
     // ("body.head.position" resolves on the head). Change notification needs
     // that being, not the one the walk started from.
     Property* resolve(Singular& root, std::string* trailingComponent = nullptr,
-                      Singular** owner = nullptr) const;
+                      Singular** owner = nullptr, std::size_t startIndex = 0) const;
 
     enum class PathResult {
         Ok,
@@ -79,6 +80,6 @@ public:
         Unchanged  // the slot already held this value; not a write
     };
 
-    PathResult getValue(Singular& root, PropertyValue& out) const;
-    PathResult setValue(Singular& root, const PropertyValue& v) const;
+    PathResult getValue(Singular& root, PropertyValue& out, std::size_t startIndex = 0) const;
+    PathResult setValue(Singular& root, const PropertyValue& v, std::size_t startIndex = 0) const;
 };

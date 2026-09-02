@@ -42,15 +42,15 @@ void PhysicsLawBridge::propSetDirection(const glm::vec3& v) {
 }
 
 void PhysicsLawBridge::buildProperties() {
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<PhysicsLawBridge, bool>>(
+    registerProperty(std::make_unique<ComputedProperty<PhysicsLawBridge, bool>>(
         "enabled", this, &PhysicsLawBridge::propEnabled, &PhysicsLawBridge::propSetEnabled));
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<PhysicsLawBridge, float>>(
+    registerProperty(std::make_unique<ComputedProperty<PhysicsLawBridge, float>>(
         "strength", this, &PhysicsLawBridge::propStrength,
         &PhysicsLawBridge::propSetStrength));
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<PhysicsLawBridge, float>>(
+    registerProperty(std::make_unique<ComputedProperty<PhysicsLawBridge, float>>(
         "damping", this, &PhysicsLawBridge::propDamping,
         &PhysicsLawBridge::propSetDamping));
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<PhysicsLawBridge, glm::vec3>>(
+    registerProperty(std::make_unique<ComputedProperty<PhysicsLawBridge, glm::vec3>>(
         "direction", this, &PhysicsLawBridge::propDirection,
         &PhysicsLawBridge::propSetDirection));
 }

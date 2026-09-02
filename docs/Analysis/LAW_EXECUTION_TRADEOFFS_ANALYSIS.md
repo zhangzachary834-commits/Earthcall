@@ -20,7 +20,7 @@ Entity Component Systems (ECS) achieve blistering speed by strictly grouping ide
 * **Violates Refusal 1 (No new C++ class for a domain noun):** Traditional ECS requires carving domain concepts into the C++ type system upfront to define the memory layout.
 * **Archetype Fragmentation:** "Dynamic ECS" attempts to solve this by grouping objects that share the exact same dynamic properties into "Archetypes". However, in Earthcall, every Person can author highly unique properties per-object. If one tree is granted an `is_burning` property, it changes memory shape and forces an array reallocation. In a deeply heterogeneous, authored universe, these arrays would fragment into thousands of tiny arrays holding 1-2 objects each, completely destroying the SIMD performance benefit while saddling the engine with immense complexity.
 
-**Verdict:** Incompatible with a highly authored, heterogenous ontology.
+**Verdict:** Incompatible with a highly authored, heterogenous ontology if implemented as C++ types. However, a purely *runtime* archetype table keyed by authored property sets—which carves nothing into the type system—is viable and legible to law, even if it leads to empirical fragmentation.
 
 ---
 
@@ -31,10 +31,10 @@ Compile Laws into a custom, lightweight "Earthcall Bytecode". A static, tightly 
 
 **The Calculus of Overhead:**
 If Hardcoded C++ costs 1 cycle:
-* **The Current Engine:** ~300-500 cycles (string allocations, virtual lambda captures, cache misses).
+* **The Current Engine:** (Baseline heavily dominated by world load/terrain tessellation, but lookup previously suffered from string allocations before Phase 1 Interning).
 * **The VM:** ~15-30 cycles.
   * Dispatch overhead (Opcode switch jump table): ~2-3 cycles.
-  * Property Lookup (Structure of Arrays linear integer scan): ~5-15 cycles.
+  * Property Lookup (Structure of Arrays `startIndex` offset lookup): 1 cycle (zero-allocation).
   * Type Boxing (std::variant check and extraction): ~5-10 cycles.
 
 **The Tradeoff:**
@@ -42,6 +42,7 @@ If Hardcoded C++ costs 1 cycle:
 * **High Security:** Because the C++ engine controls the interpreter loop, it is impossible for bytecode to execute arbitrary system instructions. 
 
 **Verdict:** The optimal, scale-ready solution that protects Earthcall's ontological principles for normal planetary simulation.
+*Crucially, this satisfies Refusal 6 (No black box)*: The bytecode remains the authoritative form, fully legible, diffable, and transparent to Persons. Native code is only ever a pure cache of it.
 
 ---
 
@@ -57,7 +58,7 @@ movss xmm0, [rcx+16]  ; (1 cycle) If yes, execute the fast memory fetch.
 ```
 This fundamental paranoia means a traditional JIT can never reach 1.0x C++ speed. It is strictly bound to 1.1x–1.5x overhead due to speculative Shape checks.
 
-### The Earthcall Breakthrough: Prophetic JIT
+### The Earthcall Breakthrough: Prophetic JIT (Originated by Zach)
 Earthcall completely shatters the traditional JIT ceiling by cross-pollinating compiler design with the engine's unique **Prophetic Rete (B-Time Rete)** framework.
 
 In Earthcall, changes are not arbitrary; they are strictly governed by Laws and First Movers. The Prophetic Rete already executes an ahead-of-time abstract interpretation over the entire Law set, calculating the exact write-effects and range bounds of every action. 
@@ -75,7 +76,12 @@ movss xmm0, [rcx+16]  ; (1 cycle) Pure C++ memory fetch. Zero guards.
 By using the Prophetic Rete as a mathematical shield to prove the memory topology ahead of time, Earthcall's JIT bypasses the speculative overhead entirely, executing fully dynamic, runtime-authored Laws at the exact instruction-level speed of hardcoded, ahead-of-time C++.
 
 **The Invalidation Path (First Movers):**
-If a First Mover (a human author or an external API) suddenly injects a structural change, it bypasses the Laws. However, Earthcall's architecture is already fail-safe: any such intervention bumps `Law::textRevision()`, instantly dirtying the Prophetic Index.
+If a First Mover (a human author or an external API) suddenly injects a structural change, it bypasses the Laws. However, Earthcall's architecture is now fail-safe: any such intervention (adding/removing properties, or spawning/destroying beings) bumps `Universe::instance().structuralRevision()`, instantly dirtying the Prophetic Index.
 When the Index falls, Earthcall simply flushes the JIT executable cache, falls back to the CPU Bytecode VM (Phase 2), and allows the Prophetic Rete to recalculate the universe's possibility space before JITing the new, unguarded reality.
+
+**Opacity, Disjointness, and Fallback Economics:**
+For this 1.0x proof to hold, the Prophetic Rete must prove a "No" (disjointness). However, many actions (like `Create`, `Spawn`, `FirstMoverLaw`) are structurally opaque. A single opaque action makes the write set unbounded, returning "I cannot say."
+In a real law register, a non-zero fraction of laws can be proven quiescent only if opacity is *path-granular*—bounding *which* properties an opaque action can touch. If the Rete cannot prove disjointness (the likely reality for heavily dynamic zones), the JIT falls back to inserting bailout guards, mirroring V8.
+In this fallback scenario, the JIT operates at the standard **1.1x–1.5x C++ speed**, which remains the quoted, empirically defensible baseline for unguarded paths.
 
 **Verdict:** The ultimate fusion of AI rules-engine architecture and compiler optimization, unlocking AAA hardware performance for a perfectly dynamic, non-black-box universe.

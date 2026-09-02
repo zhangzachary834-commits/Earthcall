@@ -4,6 +4,7 @@
 #include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
 #include "ConstructedBeing/Singular/Property/DataStructure.hpp"
 #include "Singularity/Core/StringId.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 
 #include <atomic>
 
@@ -190,11 +191,16 @@ void Singular::registerTelosProperty() {
         if (_propertyNames[i] == telosId) return;
     }
 
-    // Register in both parallel arrays
+    // registerProperty registers in BOTH parallel arrays — pushing the id here
+    // too appended a name with no property behind it, and since this runs for
+    // EVERY being at buildProperties time, `_propertyNames` was one entry
+    // longer than `_propertyRegistry` from the first lookup onward. The scan
+    // pairs them by index, so every property registered after `telos` resolved
+    // to the property registered one slot BEFORE it — a being answering a
+    // read with a different property's value, engine-wide.
     auto prop = std::make_unique<PropertyRef<Singular, std::string>>(
         "telos", this, &Singular::_telosId);
-    _propertyNames.push_back(telosId);
-    _propertyRegistry.push_back(std::move(prop));
+    registerProperty(std::move(prop));
 }
 
 // ============================================================================
@@ -222,15 +228,27 @@ Property* Singular::findProperty(Earthcall::StringId id) {
         }
     }
 
-    // Dynamic property fallback (check by ID)
+    // Dynamic property fallback (check by ID).
+    //
+    // registerProperty pushes to BOTH arrays — that is the whole of its job,
+    // and the two are indexed in parallel by the scan above. Pushing the id
+    // here as well appended a SECOND copy of the name with no property behind
+    // it, so from the first lazy bridge onward `_propertyNames` ran one entry
+    // longer than `_propertyRegistry` and every later index was off by one:
+    // the next dynamic property looked up on the same being read
+    // `_propertyRegistry[i]` past the end.
+    //
+    // The symptom was not a crash. It was an authored property that read
+    // correctly ONCE and then stopped — the Synthesis Studio's chord pad
+    // answered `isChordPad == true` on the first click and false on every
+    // click after it, so a Person could work each control exactly one time
+    // per session. Every authored property in every save was exposed to this.
     auto it = _dynamicProperties.find(id);
     if (it != _dynamicProperties.end()) {
-        // Lazy-create bridge, register in both arrays
         auto bridge = std::make_unique<DynamicPropertyBridge>(
             Earthcall::StringInterner::resolve(id), this);
         Property* p = bridge.get();
-        _propertyNames.push_back(id);
-        _propertyRegistry.push_back(std::move(bridge));
+        registerProperty(std::move(bridge));
         return p;
     }
 
@@ -253,6 +271,27 @@ std::vector<Property*> Singular::listProperties() {
         buildProperties();
         registerTelosProperty();
     }
+
+    // AUTHORED PROPERTIES ARE AS REAL AS FIRST-MOVER ONES, and this is where
+    // that stopped being true. `_propertyRegistry` only gains a
+    // DynamicPropertyBridge when findProperty is asked for that exact name, so
+    // an authored property nobody had looked up yet was absent from every
+    // caller of this function — and the callers are the ones that matter:
+    //
+    //   * LawManager::seedStateFacts walks listProperties() to assert the
+    //     property-state facts the Rete matches on. No fact, no match, so a
+    //     WhileTrue law conditioned on an authored property never fired for
+    //     any being — which is every continuous law the Synthesis Studio has.
+    //   * The inspection surfaces read it too, so an authored property was
+    //     invisible until something happened to touch it. Refusal #6 says a
+    //     field law can read is a field law can SEE.
+    //
+    // Materialising the bridges here makes the registry complete on demand,
+    // which is what every caller already assumed it was.
+    for (const auto& entry : _dynamicProperties) {
+        findProperty(entry.first);   // creates the bridge if it is not there yet
+    }
+
     std::vector<Property*> out;
     out.reserve(_propertyRegistry.size());
     for (auto& property : _propertyRegistry) {
@@ -286,6 +325,9 @@ void Singular::setDynamicProperty(const std::string& name, const PropertyValue& 
 }
 
 void Singular::setDynamicProperty(Earthcall::StringId id, const PropertyValue& v) {
+    if (_dynamicProperties.find(id) == _dynamicProperties.end()) {
+        Universe::instance().bumpStructuralRevision();
+    }
     _dynamicProperties[id] = v;
     // An AUTHORED property is a property. It was invisible to the change feed
     // for the same reason every non-PropertyRef slot was: nobody announced it.
@@ -303,6 +345,14 @@ bool Singular::hasDynamicProperty(const std::string& name) const {
 
 bool Singular::removeDynamicProperty(const std::string& name) {
     return removeDynamicProperty(Earthcall::StringInterner::intern(name));
+}
+
+bool Singular::removeDynamicProperty(Earthcall::StringId id) {
+    if (_dynamicProperties.erase(id)) {
+        Universe::instance().bumpStructuralRevision();
+        return true;
+    }
+    return false;
 }
 
 void Singular::addDataStructure(const DataStructure& ds) {

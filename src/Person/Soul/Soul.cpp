@@ -42,6 +42,6 @@ std::string Soul::propPerson() const {
 }
 
 void Soul::buildProperties() {
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Soul, std::string>>(
+    registerProperty(std::make_unique<ComputedProperty<Soul, std::string>>(
         "person", this, &Soul::propPerson, nullptr));
 }

@@ -19,17 +19,17 @@
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 
 void Body::buildProperties() {
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<Body, std::string>>(
+    registerProperty(std::make_unique<PropertyRef<Body, std::string>>(
         "shape", this, &Body::shape));
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<Body, std::string>>(
+    registerProperty(std::make_unique<PropertyRef<Body, std::string>>(
         "artStyle", this, &Body::artStyle));
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<Body, float>>(
+    registerProperty(std::make_unique<PropertyRef<Body, float>>(
         "height", this, &Body::height));
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<Body, float>>(
+    registerProperty(std::make_unique<PropertyRef<Body, float>>(
         "hitboxHeight", this, &Body::hitboxHeight));
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Body, float>>(
+    registerProperty(std::make_unique<ComputedProperty<Body, float>>(
         "eyeHeight", this, &Body::getEyeHeight, nullptr));
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Body, float>>(
+    registerProperty(std::make_unique<ComputedProperty<Body, float>>(
         "nametagHeight", this, &Body::getNametagHeight, nullptr));
 }
 

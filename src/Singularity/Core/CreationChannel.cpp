@@ -54,56 +54,56 @@ void CreationChannel::writeLiveSelection(const std::string& tool,
 
 void CreationChannel::buildProperties() {
     registerEnabledProperty();
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<CreationChannel, std::string>>(
+    registerProperty(std::make_unique<PropertyRef<CreationChannel, std::string>>(
         "activeTool", this, &CreationChannel::activeTool));
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<CreationChannel, std::string>>(
+    registerProperty(std::make_unique<PropertyRef<CreationChannel, std::string>>(
         "active3DMode", this, &CreationChannel::active3DMode));
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<CreationChannel, bool>>(
+    registerProperty(std::make_unique<PropertyRef<CreationChannel, bool>>(
         "spawnLawArmed", this, &CreationChannel::spawnLawArmed));
     // The selected shape kind is law-readable like the rest of the selection:
     // ActionNode::spawn's spawnShapeKindPath points at it, and the authoring
     // window already offers "activeShapeKind" as a Creation-channel path. The
     // field was here but never registered, so every such law silently kept the
     // concept's template kind instead of the author's live choice.
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<CreationChannel, int>>(
+    registerProperty(std::make_unique<PropertyRef<CreationChannel, int>>(
         "activeShapeKind", this, &CreationChannel::activeShapeKind));
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<CreationChannel, glm::vec3>>(
+    registerProperty(std::make_unique<PropertyRef<CreationChannel, glm::vec3>>(
         "cursorHitPos", this, &CreationChannel::cursorHitPos));
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<CreationChannel, glm::vec3>>(
+    registerProperty(std::make_unique<PropertyRef<CreationChannel, glm::vec3>>(
         "cursorHitNormal", this, &CreationChannel::cursorHitNormal));
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<CreationChannel, glm::vec3>>(
+    registerProperty(std::make_unique<PropertyRef<CreationChannel, glm::vec3>>(
         "cursorSpawnPos", this, &CreationChannel::cursorSpawnPos));
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<CreationChannel, glm::vec3>>(
+    registerProperty(std::make_unique<PropertyRef<CreationChannel, glm::vec3>>(
         "cursorSpawnRot", this, &CreationChannel::cursorSpawnRot));
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<CreationChannel, glm::vec3>>(
+    registerProperty(std::make_unique<PropertyRef<CreationChannel, glm::vec3>>(
         "cursorSpawnScale", this, &CreationChannel::cursorSpawnScale));
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<CreationChannel, glm::mat4>>(
+    registerProperty(std::make_unique<ComputedProperty<CreationChannel, glm::mat4>>(
         "cursorSpawnTransform", this, &CreationChannel::getCursorSpawnTransform, nullptr));
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<CreationChannel, std::string>>(
+    registerProperty(std::make_unique<PropertyRef<CreationChannel, std::string>>(
         "placementMode", this, &CreationChannel::placementMode));
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<CreationChannel, bool>>(
+    registerProperty(std::make_unique<PropertyRef<CreationChannel, bool>>(
         "gridSnap", this, &CreationChannel::gridSnap));
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<CreationChannel, float>>(
+    registerProperty(std::make_unique<PropertyRef<CreationChannel, float>>(
         "gridSnapSize", this, &CreationChannel::gridSnapSize));
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<CreationChannel, float>>(
+    registerProperty(std::make_unique<PropertyRef<CreationChannel, float>>(
         "inFrontDistance", this, &CreationChannel::inFrontDistance));
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<CreationChannel, glm::vec3>>(
+    registerProperty(std::make_unique<PropertyRef<CreationChannel, glm::vec3>>(
         "manualOffset", this, &CreationChannel::manualOffset));
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<CreationChannel, bool>>(
+    registerProperty(std::make_unique<PropertyRef<CreationChannel, bool>>(
         "manualAnchorValid", this, &CreationChannel::manualAnchorValid));
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<CreationChannel, glm::vec3>>(
+    registerProperty(std::make_unique<PropertyRef<CreationChannel, glm::vec3>>(
         "manualAnchorPos", this, &CreationChannel::manualAnchorPos));
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<CreationChannel, glm::vec3>>(
+    registerProperty(std::make_unique<PropertyRef<CreationChannel, glm::vec3>>(
         "manualAnchorRight", this, &CreationChannel::manualAnchorRight));
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<CreationChannel, glm::vec3>>(
+    registerProperty(std::make_unique<PropertyRef<CreationChannel, glm::vec3>>(
         "manualAnchorUp", this, &CreationChannel::manualAnchorUp));
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<CreationChannel, glm::vec3>>(
+    registerProperty(std::make_unique<PropertyRef<CreationChannel, glm::vec3>>(
         "manualAnchorForward", this, &CreationChannel::manualAnchorForward));
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<CreationChannel, std::string>>(
+    registerProperty(std::make_unique<PropertyRef<CreationChannel, std::string>>(
         "cursorHoveredBodyPart", this, &CreationChannel::cursorHoveredBodyPart));
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<CreationChannel, glm::vec3>>(
+    registerProperty(std::make_unique<PropertyRef<CreationChannel, glm::vec3>>(
         "activeColor", this, &CreationChannel::activeColor));
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<CreationChannel, std::string>>(
+    registerProperty(std::make_unique<PropertyRef<CreationChannel, std::string>>(
         "activeImplicitExpr", this, &CreationChannel::activeImplicitExpr));
 }
 

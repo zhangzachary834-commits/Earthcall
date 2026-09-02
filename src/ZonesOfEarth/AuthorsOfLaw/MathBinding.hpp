@@ -1,6 +1,8 @@
 #pragma once
 
 #include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
+#include "Singularity/Core/StringId.hpp"
+#include <unordered_map>
 #include "ConstructedBeing/Singular/Singular.hpp"
 #include "Universe.hpp"
 #include "json.hpp"
@@ -44,14 +46,14 @@ using MathBindings = std::map<std::string, PropertyPath>;
 // on an unproven referent.
 // ---------------------------------------------------------------------------
 inline Singular* resolveLawRoot(Singular& subject, const PropertyPath& path,
-                                PropertyPath& remainder) {
+                                std::size_t& startIndex) {
     if (path.segments.empty() || path.segments[0].empty() ||
         path.segments[0][0] != '@') {
-        remainder = path;
+        startIndex = 0;
         return &subject;
     }
     if (path.segments[0] == "@event" && path.segments.size() >= 2) {
-        remainder.segments.assign(path.segments.begin() + 2, path.segments.end());
+        startIndex = 2;
         if (!Universe::instance().hasApplicationEvent()) return nullptr;
         if (path.segments[1] == "subject") {
             return Universe::instance().applicationEventSubject();
@@ -71,7 +73,6 @@ inline Singular* resolveLawRoot(Singular& subject, const PropertyPath& path,
     // down: LONGEST dotted-name match first, most specific wins. A being named
     // "material.clay" beats one named "material", and the segments it consumed
     // are not offered to the property lookup.
-    remainder.segments.assign(path.segments.begin() + 1, path.segments.end());
     const std::vector<Singular*> beings = Universe::instance().beings();
     std::string candidate = path.segments[0].substr(1);
     Singular* best = nullptr;
@@ -87,8 +88,7 @@ inline Singular* resolveLawRoot(Singular& subject, const PropertyPath& path,
         }
     }
     if (!best) return nullptr;   // the named being is not in the world: no value
-    remainder.segments.assign(path.segments.begin() + bestConsumed,
-                              path.segments.end());
+    startIndex = bestConsumed;
     return best;
 }
 
@@ -162,8 +162,8 @@ inline bool isTimePath(const PropertyPath& path) {
 // ---------------------------------------------------------------------------
 using WorldReading = std::function<bool(Singular& subject, PropertyValue& out)>;
 
-inline std::map<std::string, WorldReading>& worldReadings() {
-    static std::map<std::string, WorldReading> readings;
+inline std::unordered_map<Earthcall::StringId, WorldReading>& worldReadings() {
+    static std::unordered_map<Earthcall::StringId, WorldReading> readings;
     return readings;
 }
 
@@ -171,11 +171,12 @@ inline std::map<std::string, WorldReading>& worldReadings() {
 // (e.g. "@world.occlusionToCamera") — the name a Person writes.
 inline void registerWorldReading(const std::string& dottedName, WorldReading reading) {
     if (dottedName.rfind("@world.", 0) != 0) return;   // the referent is reserved
+    Earthcall::StringId id = Earthcall::StringInterner::intern(dottedName);
     if (!reading) {
-        worldReadings().erase(dottedName);
+        worldReadings().erase(id);
         return;
     }
-    worldReadings()[dottedName] = std::move(reading);
+    worldReadings()[id] = std::move(reading);
 }
 
 inline bool isWorldReadingPath(const PropertyPath& path) {
@@ -187,26 +188,26 @@ inline bool lawGetValue(Singular& subject, const PropertyPath& path, PropertyVal
     if (isWorldReadingPath(path)) {
         const auto& readings = worldReadings();
         if (readings.empty()) return false;          // no channel answers "@world.*"
-        const auto found = readings.find(path.toString());
+        const auto found = readings.find(path.fullId());
         if (found == readings.end() || !found->second) return false;
         return found->second(subject, out);
     }
-    PropertyPath remainder;
-    Singular* root = resolveLawRoot(subject, path, remainder);
-    return root && (remainder.getValue(*root, out) == PropertyPath::PathResult::Ok);
+    std::size_t startIndex = 0;
+    Singular* root = resolveLawRoot(subject, path, startIndex);
+    return root && (path.getValue(*root, out, startIndex) == PropertyPath::PathResult::Ok);
 }
 
 inline PropertyPath::PathResult lawSetValue(Singular& subject, const PropertyPath& path, const PropertyValue& v) {
     if (isTimePath(path)) return PropertyPath::PathResult::ReadOnly;
     // A world reading is an observation, not a dial: the world is not written
     // by asserting a measurement of it.
-    if (isWorldReadingPath(path) && worldReadings().count(path.toString())) {
+    if (isWorldReadingPath(path) && worldReadings().count(path.fullId())) {
         return PropertyPath::PathResult::ReadOnly;
     }
-    PropertyPath remainder;
-    Singular* root = resolveLawRoot(subject, path, remainder);
+    std::size_t startIndex = 0;
+    Singular* root = resolveLawRoot(subject, path, startIndex);
     if (!root) return PropertyPath::PathResult::NoSuchProperty;
-    return remainder.setValue(*root, v);
+    return path.setValue(*root, v, startIndex);
 }
 
 inline std::optional<std::map<std::string, double>> readMathBindings(

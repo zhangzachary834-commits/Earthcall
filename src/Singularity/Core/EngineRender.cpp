@@ -117,9 +117,28 @@ namespace Core {
         // Draw 2D objects (Shape2D / Text2D) in screen space, after the 3D scene.
         // begin2D / end2D bracket installs the orthographic projection; objects are
         // sorted by zOrder2D so authored z-ordering is honoured.
+        //
+        // WINDOW POINTS, not framebuffer pixels — and the distinction is the whole
+        // bug this line fixes. `x2D`/`y2D` are picked against `glfwGetCursorPos`,
+        // which reports window points; opening the bracket with the FRAMEBUFFER
+        // size made every Shape2D draw at 1/scale of its authored position while
+        // staying clickable at the authored one, so on any Retina display the
+        // visible rectangle and its hit region were in different places and no 2D
+        // control could be clicked at all. Worse, the orphaned hit regions still
+        // occluded the 3D pick, swallowing clicks aimed at the world behind them.
+        // Invisible at scale 1, which is why it survived.
+        //
+        // Window points is the space to standardise on: it is what the cursor is
+        // in, what ImGui is in, what Menu::draw already passes, and it is
+        // resolution-independent, so an authored HUD lands in the same place on
+        // every display. See Renderer::begin2D's contract.
         {
-            const uint32_t fbWu = static_cast<uint32_t>(fbW);
-            const uint32_t fbHu = static_cast<uint32_t>(fbH);
+            int winW = fbW, winH = fbH;
+            glfwGetWindowSize(_window, &winW, &winH);
+            if (winW <= 0) winW = fbW;
+            if (winH <= 0) winH = fbH;
+            const uint32_t fbWu = static_cast<uint32_t>(winW);
+            const uint32_t fbHu = static_cast<uint32_t>(winH);
             std::vector<Object*> objects2D;
             for (const auto& obj : objects) {
                 if (obj && obj->is2D()) objects2D.push_back(obj.get());

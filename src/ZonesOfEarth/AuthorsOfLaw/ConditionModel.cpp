@@ -511,8 +511,31 @@ std::vector<std::size_t> ConditionNode::compileToRete(ReteNetwork& rete,
     }
     
     // For leaf nodes:
+    //
+    // A QUALIFIED ROOT ADDRESSES SOMEONE ELSE, and must not narrow which fact
+    // wakes this node. "@state.studio.themeNight" parses to segments
+    // ["@state", "studio", "themeNight"]; taking the first as the attribute
+    // filter asked for a property-state fact whose attribute root is "@state",
+    // and no fact anywhere has one — so the alpha rejected EVERY fact and any
+    // continuous law comparing a rooted path never matched a single being.
+    //
+    // Deaf, and silent about it. That is the exact failure PROPHETIC_RETE.md
+    // §2 exists to forbid: an analysis narrower than the truth. It cost the
+    // Synthesis Studio every WhileTrue law it had — the ambient theme, the
+    // draw-mode indicator, the slider clamp, the crystal's pulse, and the
+    // stroke-drawing law, all of which read a channel or a state being through
+    // an "@" root.
+    //
+    // Law::rebuildRequiredProperties already excludes @-rooted paths from the
+    // vocabulary filter for the same reason, in the same words. This is that
+    // rule, applied on the reactive path where it was missing: no filter is
+    // correct here, and the compiled predicate below still decides the truth.
     std::string targetAttr = "";
-    if (kind == Kind::Compare) targetAttr = path.segments.empty() ? "" : path.segments.front();
+    if (kind == Kind::Compare) {
+        const bool qualifiedRoot = !path.segments.empty() && !path.segments.front().empty() &&
+                                   path.segments.front()[0] == '@';
+        if (!qualifiedRoot) targetAttr = path.segments.empty() ? "" : path.segments.front();
+    }
     else if (kind == Kind::Related) targetAttr = relationType;
     
     std::string desc = this->describe();

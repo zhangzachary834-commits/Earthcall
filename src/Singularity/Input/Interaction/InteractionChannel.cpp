@@ -529,19 +529,19 @@ void InteractionChannel::buildProperties() {
     registerEnabledProperty();
 
     const auto flt = [this](const char* name, float InteractionChannel::*member) {
-        _propertyRegistry.push_back(
+        registerProperty(
             std::make_unique<PropertyRef<InteractionChannel, float>>(name, this, member));
     };
     const auto boolean = [this](const char* name, bool InteractionChannel::*member) {
-        _propertyRegistry.push_back(
+        registerProperty(
             std::make_unique<PropertyRef<InteractionChannel, bool>>(name, this, member));
     };
     const auto text = [this](const char* name, std::string InteractionChannel::*member) {
-        _propertyRegistry.push_back(
+        registerProperty(
             std::make_unique<PropertyRef<InteractionChannel, std::string>>(name, this, member));
     };
     const auto vector3 = [this](const char* name, glm::vec3 InteractionChannel::*member) {
-        _propertyRegistry.push_back(
+        registerProperty(
             std::make_unique<PropertyRef<InteractionChannel, glm::vec3>>(name, this, member));
     };
 
@@ -552,7 +552,7 @@ void InteractionChannel::buildProperties() {
     flt("pointerDistance", &InteractionChannel::pointerDistance);
 
     text("hoveredId", &InteractionChannel::hoveredId);
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<InteractionChannel, int>>(
+    registerProperty(std::make_unique<PropertyRef<InteractionChannel, int>>(
         "hoveredFace", this, &InteractionChannel::hoveredFace));
     flt("hoveredU", &InteractionChannel::hoveredU);
     flt("hoveredV", &InteractionChannel::hoveredV);
@@ -585,7 +585,7 @@ void InteractionChannel::buildProperties() {
     boolean("middleDragging", &InteractionChannel::middleDragging);
 
     text("lastKey", &InteractionChannel::lastKey);
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<InteractionChannel, int>>(
+    registerProperty(std::make_unique<PropertyRef<InteractionChannel, int>>(
         "lastKeyCode", this, &InteractionChannel::lastKeyCode));
     boolean("keyDown", &InteractionChannel::keyDown);
     boolean("shiftDown", &InteractionChannel::shiftDown);

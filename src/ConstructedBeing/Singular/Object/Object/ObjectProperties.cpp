@@ -489,26 +489,26 @@ private:
 
 // Build the property registry for this Object
 void Object::buildProperties() {
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Object, glm::vec3>>(
+    registerProperty(std::make_unique<ComputedProperty<Object, glm::vec3>>(
         "position", this, &Object::getPosition, &Object::setPosition));
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Object, glm::vec3>>(
+    registerProperty(std::make_unique<ComputedProperty<Object, glm::vec3>>(
         "rotation", this, &Object::getRotationEulerDegrees, &Object::setRotationEulerDegrees));
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Object, glm::mat4>>(
+    registerProperty(std::make_unique<ComputedProperty<Object, glm::mat4>>(
         "transform", this, &Object::getTransform, &Object::setTransform));
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<Object, glm::vec3>>(
+    registerProperty(std::make_unique<PropertyRef<Object, glm::vec3>>(
         "center", this, &Object::center));
     // A Law can reassign which Material being paints this object, by identifier.
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<Object, std::string>>(
+    registerProperty(std::make_unique<PropertyRef<Object, std::string>>(
         "material", this, &Object::_materialId));
 
     // Shape parameters, flat under dotted names. v1 is raw read/write;
     // geometry regeneration on change follows through the setShape path
     // (LAW_AND_CREATION_SYSTEM.md, Stage 2 follow-up).
     auto addShapeParam = [this](const char* name, float ShapeParams::*member) {
-        _propertyRegistry.push_back(
+        registerProperty(
             std::make_unique<ShapeParamBridge>(name, this, member));
     };
-    _propertyRegistry.push_back(std::make_unique<ShapeKindBridge>(this));
+    registerProperty(std::make_unique<ShapeKindBridge>(this));
     addShapeParam("shape.r", &ShapeParams::r);
     addShapeParam("shape.ry", &ShapeParams::ry);
     addShapeParam("shape.rz", &ShapeParams::rz);
@@ -525,11 +525,11 @@ void Object::buildProperties() {
     // Registered on ALL objects (not just 2D ones) — the same principle as
     // center and velocity: a field carried by every Object is visible on every
     // Object, and "nobody reads it on a cube" is not a permission level.
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Object, float>>(
+    registerProperty(std::make_unique<ComputedProperty<Object, float>>(
         "x2D", this, &Object::getX2D, &Object::setX2D));
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Object, float>>(
+    registerProperty(std::make_unique<ComputedProperty<Object, float>>(
         "y2D", this, &Object::getY2D, &Object::setY2D));
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Object, int>>(
+    registerProperty(std::make_unique<ComputedProperty<Object, int>>(
         "zOrder2D", this, &Object::getZOrder2D, &Object::setZOrder2D));
 
     // Representation control (Refusal #7): a Law may ask for the tessellated
@@ -537,10 +537,10 @@ void Object::buildProperties() {
     // trade exactness for the instanced draw-call batching only the mesh path
     // gets (WebGpuRenderer::flushMeshDraws). Never a domain kind; see
     // ObjectTypes::RenderMode.
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Object, int>>(
+    registerProperty(std::make_unique<ComputedProperty<Object, int>>(
         "renderMode", this, &Object::getRenderModeProp, &Object::setRenderModeProp));
 
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<Object, std::string>>(
+    registerProperty(std::make_unique<PropertyRef<Object, std::string>>(
         "textString", this, &Object::_textString));
 
     // --- Rung 5: the sculpted geometry's mathematics -----------------------
@@ -548,7 +548,7 @@ void Object::buildProperties() {
     // meshed field, so a law can breathe a blend or grow a radius over time.
     {
         auto addField = [this](const char* leaf, FieldShapeBridge::Field f) {
-            _propertyRegistry.push_back(std::make_unique<FieldShapeBridge>(
+            registerProperty(std::make_unique<FieldShapeBridge>(
                 std::string("field.") + leaf, this, f));
         };
         addField("extent", FieldShapeBridge::Field::Extent);
@@ -570,20 +570,20 @@ void Object::buildProperties() {
     // runs before the object has a patch at all. A net elevated past bicubic
     // (geom::elevateU / elevateV) has control points beyond index 15 that no
     // path yet names; see Specific Tasks/Geometry_OntoMath_Remaining_Rungs.md.
-    _propertyRegistry.push_back(std::make_unique<PatchInfoBridge>(
+    registerProperty(std::make_unique<PatchInfoBridge>(
         "patch.degreeU", this, PatchInfoBridge::Field::DegreeU));
-    _propertyRegistry.push_back(std::make_unique<PatchInfoBridge>(
+    registerProperty(std::make_unique<PatchInfoBridge>(
         "patch.degreeV", this, PatchInfoBridge::Field::DegreeV));
-    _propertyRegistry.push_back(std::make_unique<PatchInfoBridge>(
+    registerProperty(std::make_unique<PatchInfoBridge>(
         "patch.controlCount", this, PatchInfoBridge::Field::ControlCount));
     for (int i = 0; i < 16; ++i) {
-        _propertyRegistry.push_back(std::make_unique<PatchControlBridge>(
+        registerProperty(std::make_unique<PatchControlBridge>(
             "patch.ctrl." + std::to_string(i), this, i));
     }
 
     // Whether the world's physics touches this being — governable state
     // ("make this object immaterial while the ritual runs").
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Object, bool>>(
+    registerProperty(std::make_unique<ComputedProperty<Object, bool>>(
         "physical", this, &Object::propPhysical, &Object::propSetPhysical));
     // Is the Person pointing at this being, and where. Read-only: both are
     // DERIVED from the pointer by Singularity/Input/Interaction/InteractionChannel, and a
@@ -592,18 +592,18 @@ void Object::buildProperties() {
     // refusal #6 violation — engine state about a being that no law could
     // read, granted by accident to whoever wrote the header
     // (INTERACTION_AS_LAW.md §5).
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Object, bool>>(
+    registerProperty(std::make_unique<ComputedProperty<Object, bool>>(
         "hovered", this, &Object::getIsHovered, nullptr));
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Object, glm::vec3>>(
+    registerProperty(std::make_unique<ComputedProperty<Object, glm::vec3>>(
         "hoverPoint", this, &Object::getHoverPoint, nullptr));
     // Motion state: the rigid form's truth, addressable — collision RESPONSE
     // becomes authorable law-text.
-    _propertyRegistry.push_back(std::make_unique<RigidFormBridge>(
+    registerProperty(std::make_unique<RigidFormBridge>(
         "velocity", this, RigidFormBridge::Field::Velocity));
-    _propertyRegistry.push_back(std::make_unique<RigidFormBridge>(
+    registerProperty(std::make_unique<RigidFormBridge>(
         "mass", this, RigidFormBridge::Field::Mass));
     // The object's tint (uniform across faces when written; face 0 when read).
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Object, glm::vec3>>(
+    registerProperty(std::make_unique<ComputedProperty<Object, glm::vec3>>(
         "color", this, &Object::propColor, &Object::propSetColor));
 
     // The whole face-texture surface, face by face (color, layers, opacity,
@@ -620,7 +620,7 @@ void Object::buildProperties() {
     for (int f = 0; f < 6; ++f) {
         const std::string base = "face." + std::to_string(f) + ".";
         auto addFace = [&](const char* leaf, FacePropertyBridge::Field field) {
-            _propertyRegistry.push_back(std::make_unique<FacePropertyBridge>(
+            registerProperty(std::make_unique<FacePropertyBridge>(
                 base + leaf, this, f, field));
         };
         addFace("color", FacePropertyBridge::Field::Color);

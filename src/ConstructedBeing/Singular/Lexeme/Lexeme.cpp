@@ -68,9 +68,9 @@ bool Lexeme::setConceptualWeightValue(const PropertyValue& v) {
 }
 
 void Lexeme::buildProperties() {
-    _propertyRegistry.push_back(
+    registerProperty(
         std::make_unique<PropertyRef<Lexeme, std::string>>("symbol", this, &Lexeme::_symbol));
-    _propertyRegistry.push_back(std::make_unique<ConceptualWeightProperty>(this));
+    registerProperty(std::make_unique<ConceptualWeightProperty>(this));
     _propertiesBuilt = true;
 }
 

@@ -626,17 +626,47 @@ ECA::ActionExecutor ActionNode::compile() const {
             };
         }
         case Kind::PlayAudio: {
+            // The three authored paths are READ, not merely captured. `path` is
+            // where the frequency lives, `input` where the amplitude lives, and
+            // both are ordinary PropertyPaths — so a pad sounds its own
+            // `acoustic.frequency` and a button sounds `@state.studio.soundFreq`
+            // with the same node, exactly as the law text reads.
             const PropertyPath freqPath = path;
             const PropertyPath ampPath = input;
-            const std::string matType = propertyName;
-            
-            return [freqPath, ampPath, matType](const ECA::Event& event, Singular& subject) {
-                // Publish an AudioSynthesisEvent to the bus.
-                // The AudioSystem listens to this.
+            const std::string timbre = propertyName;
+
+            return [freqPath, ampPath, timbre](const ECA::Event&, Singular& subject) {
+                const AudioSink& sink = audioSink();
+                if (!sink) {
+                    emitEffect("PlayAudio", false, "no audio channel bound");
+                    return;
+                }
+
+                // Undefined mathematics is not a sound. A law never fires on a
+                // value it could not read, and it must not report that it did.
+                PropertyValue fv, av;
+                double frequency = 0.0, amplitude = 0.0;
+                if (!lawGetValue(subject, freqPath, fv) ||
+                    !propertyValueToNumber(fv, frequency)) {
+                    emitEffect("PlayAudio", false,
+                               "frequency '" + freqPath.toString() + "' does not read");
+                    return;
+                }
+                if (!lawGetValue(subject, ampPath, av) ||
+                    !propertyValueToNumber(av, amplitude)) {
+                    emitEffect("PlayAudio", false,
+                               "amplitude '" + ampPath.toString() + "' does not read");
+                    return;
+                }
+
+                sink(subject, frequency, amplitude, timbre);
+
+                // The event stays, now as a genuine past-tense record that a
+                // being sounded — an edge other laws may condition on. It is no
+                // longer the delivery mechanism.
                 Core::EventBus::instance().publish(
                     ECA::Event{"audio-synthesized", &subject, nullptr, std::time(nullptr)}
                 );
-                
                 emitEffect("PlayAudio", true);
             };
         }
@@ -955,8 +985,8 @@ ECA::ActionExecutor ActionNode::compile() const {
                     emitEffect("AddProperty", false, "no property name authored");
                     return;
                 }
-                PropertyPath remainder;
-                Singular* being = resolveLawRoot(subject, owner, remainder);
+                std::size_t startIndex = 0;
+                Singular* being = resolveLawRoot(subject, owner, startIndex);
                 if (!being) {
                     emitEffect("AddProperty", false, "unproven owner: " + owner.toString());
                     return;
@@ -978,8 +1008,8 @@ ECA::ActionExecutor ActionNode::compile() const {
                     emitEffect("RemoveProperty", false, "no property name authored");
                     return;
                 }
-                PropertyPath remainder;
-                Singular* being = resolveLawRoot(subject, owner, remainder);
+                std::size_t startIndex = 0;
+                Singular* being = resolveLawRoot(subject, owner, startIndex);
                 if (!being) {
                     emitEffect("RemoveProperty", false, "unproven owner: " + owner.toString());
                     return;

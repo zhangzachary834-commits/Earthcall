@@ -169,32 +169,32 @@ Relation Relation::fromJson(const json& j, const RelationEndpointResolver& resol
 // A Relation is a legible Singular: type/weight/directed are governable
 // state; the endpoints are read-only (they ARE the relation's identity).
 void Relation::buildProperties() {
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<Relation, std::string>>(
+    registerProperty(std::make_unique<PropertyRef<Relation, std::string>>(
         "type", this, &Relation::type));
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<Relation, bool>>(
+    registerProperty(std::make_unique<PropertyRef<Relation, bool>>(
         "directed", this, &Relation::directed));
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Relation, float>>(
+    registerProperty(std::make_unique<ComputedProperty<Relation, float>>(
         "weight", this, &Relation::getWeight, &Relation::setWeight));
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Relation, std::string>>(
+    registerProperty(std::make_unique<ComputedProperty<Relation, std::string>>(
         "entityA", this, &Relation::propEntityA));
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Relation, std::string>>(
+    registerProperty(std::make_unique<ComputedProperty<Relation, std::string>>(
         "entityB", this, &Relation::propEntityB));
 
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Relation, bool>>(
+    registerProperty(std::make_unique<ComputedProperty<Relation, bool>>(
         "attachment.enabled", this, &Relation::getAttachmentEnabled, &Relation::setAttachmentEnabled));
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Relation, glm::mat4>>(
+    registerProperty(std::make_unique<ComputedProperty<Relation, glm::mat4>>(
         "attachment.localOffset", this, &Relation::getAttachmentLocalOffset, &Relation::setAttachmentLocalOffset));
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Relation, glm::vec3>>(
+    registerProperty(std::make_unique<ComputedProperty<Relation, glm::vec3>>(
         "attachment.parentAnchor", this, &Relation::getAttachmentParentAnchor, &Relation::setAttachmentParentAnchor));
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Relation, glm::vec3>>(
+    registerProperty(std::make_unique<ComputedProperty<Relation, glm::vec3>>(
         "attachment.childAnchor", this, &Relation::getAttachmentChildAnchor, &Relation::setAttachmentChildAnchor));
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Relation, bool>>(
+    registerProperty(std::make_unique<ComputedProperty<Relation, bool>>(
         "attachment.inheritTranslation", this, &Relation::getAttachmentInheritTranslation, &Relation::setAttachmentInheritTranslation));
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Relation, bool>>(
+    registerProperty(std::make_unique<ComputedProperty<Relation, bool>>(
         "attachment.inheritRotation", this, &Relation::getAttachmentInheritRotation, &Relation::setAttachmentInheritRotation));
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Relation, bool>>(
+    registerProperty(std::make_unique<ComputedProperty<Relation, bool>>(
         "attachment.inheritScale", this, &Relation::getAttachmentInheritScale, &Relation::setAttachmentInheritScale));
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<Relation, std::shared_ptr<PropertyList>>>(
+    registerProperty(std::make_unique<ComputedProperty<Relation, std::shared_ptr<PropertyList>>>(
         "events", this, &Relation::getEventsList, &Relation::setEventsList));
 }
 

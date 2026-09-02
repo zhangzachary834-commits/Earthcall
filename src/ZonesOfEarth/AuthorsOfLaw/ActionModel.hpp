@@ -7,9 +7,45 @@
 #include "Singularity/OntoMath/ScalarForm.hpp"
 #include "json.hpp"
 
+#include <functional>
 #include <string>
 #include <vector>
 #include <ctime>
+
+// ---------------------------------------------------------------------------
+// The audio sink — where ActionNode::PlayAudio's authored tone leaves the law
+// engine, and the exact counterpart of MathBinding's `registerWorldReading`.
+//
+// PlayAudio used to capture its three authored paths, read none of them,
+// publish an "audio-synthesized" event that nothing anywhere subscribed to,
+// and then report emitEffect(..., true) — so a law that made no sound at all
+// logged a successful application. Five of the Synthesis Studio's eleven laws
+// were silent that way, and the audit log said they played
+// (SYNTHESIS_STUDIO_AUDIT_2026-09-02 §A1).
+//
+// The fix is not an #include. `MathBinding.hpp` records why at length: a
+// hardcoded branch there once dragged the whole foreign-software surface into
+// ActionModel, ConditionModel and Universe, and "the hottest path in the engine
+// may not know what occlusion is." It may not know what a timbre is either. So
+// the modality channel registers what it can sound, and the law engine knows
+// only that such a sink may exist.
+//
+// Nothing is registered by default. An unregistered sink is not silence
+// disguised as success — PlayAudio answers `false` with "no audio channel
+// bound", which is the honest report the old stub owed and never made.
+// ---------------------------------------------------------------------------
+using AudioSink = std::function<void(Singular& subject, double frequency,
+                                     double amplitude, const std::string& timbre)>;
+
+inline AudioSink& audioSink() {
+    static AudioSink sink;
+    return sink;
+}
+
+// Idempotent-by-replacement, expected once at channel init. Passing an empty
+// function unregisters, which is how a channel that shuts down stops claiming
+// it can sound anything.
+inline void registerAudioSink(AudioSink sink) { audioSink() = std::move(sink); }
 
 // The law's action as data (LAW_AND_CREATION_SYSTEM.md §2b): a mutation tree
 // over PropertyPaths, serializable and Person-authorable, compiled once into

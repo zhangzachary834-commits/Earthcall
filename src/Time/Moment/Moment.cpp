@@ -82,13 +82,13 @@ void Moment::setEnd(const double& t) {
 }
 
 void Moment::buildProperties() {
-    _propertyRegistry.push_back(
+    registerProperty(
         std::make_unique<ComputedProperty<Moment, int>>(
             "kind", this, &Moment::propKind, &Moment::setKind));
-    _propertyRegistry.push_back(
+    registerProperty(
         std::make_unique<ComputedProperty<Moment, double>>(
             "start", this, &Moment::propStart, &Moment::setStart));
-    _propertyRegistry.push_back(
+    registerProperty(
         std::make_unique<ComputedProperty<Moment, double>>(
             "end", this, &Moment::propEnd, &Moment::setEnd));
     _propertiesBuilt = true;

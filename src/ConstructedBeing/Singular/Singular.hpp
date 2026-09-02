@@ -111,9 +111,7 @@ public:
         return _dynamicProperties;
     }
     bool removeDynamicProperty(const std::string& name);
-    bool removeDynamicProperty(Earthcall::StringId id) {
-        return _dynamicProperties.erase(id) > 0;
-    }
+    bool removeDynamicProperty(Earthcall::StringId id);
     
     // Authored data structure methods
     void addDataStructure(const class DataStructure& ds);
@@ -199,6 +197,12 @@ protected:
     Formation* _property_formation = nullptr;
     // Subclasses will deserialize their own specific properties here.
     virtual void buildProperties() = 0;
+
+    void registerProperty(std::unique_ptr<Property> prop) {
+        if (!prop) return;
+        _propertyNames.push_back(prop->nameId());
+        _propertyRegistry.push_back(std::move(prop));
+    }
     
     // Dynamic property access helper
     template<typename T>

@@ -39,15 +39,15 @@ LocomotionChannel* LocomotionChannel::find(LawManager& laws) {
 
 void LocomotionChannel::buildProperties() {
     registerEnabledProperty();
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<LocomotionChannel, bool>>(
+    registerProperty(std::make_unique<PropertyRef<LocomotionChannel, bool>>(
         "grounded", this, &LocomotionChannel::grounded));
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<LocomotionChannel, bool>>(
+    registerProperty(std::make_unique<PropertyRef<LocomotionChannel, bool>>(
         "moving", this, &LocomotionChannel::moving));
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<LocomotionChannel, bool>>(
+    registerProperty(std::make_unique<PropertyRef<LocomotionChannel, bool>>(
         "flying", this, &LocomotionChannel::flying));
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<LocomotionChannel, bool>>(
+    registerProperty(std::make_unique<PropertyRef<LocomotionChannel, bool>>(
         "canMove", this, &LocomotionChannel::canMove));
-    _propertyRegistry.push_back(std::make_unique<PropertyRef<LocomotionChannel, float>>(
+    registerProperty(std::make_unique<PropertyRef<LocomotionChannel, float>>(
         "speed", this, &LocomotionChannel::speed));
 }
 

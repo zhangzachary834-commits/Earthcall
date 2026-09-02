@@ -72,14 +72,14 @@ public:
 protected:
     void buildProperties() override {
         // Expose spatial transform
-        _propertyRegistry.push_back(std::make_unique<PropertyRef<FieldNode, glm::vec3>>("origin", this, &FieldNode::origin));
-        _propertyRegistry.push_back(std::make_unique<PropertyRef<FieldNode, glm::vec3>>("scale", this, &FieldNode::scale));
+        registerProperty(std::make_unique<PropertyRef<FieldNode, glm::vec3>>("origin", this, &FieldNode::origin));
+        registerProperty(std::make_unique<PropertyRef<FieldNode, glm::vec3>>("scale", this, &FieldNode::scale));
 
         // Expose mathematical configuration from the underlying OntoMath field
         if (field) {
-            _propertyRegistry.push_back(std::make_unique<PropertyRef<OntoMath::ScalarField, float>>("field.baseDensity", field.get(), &OntoMath::ScalarField::baseDensity));
-            _propertyRegistry.push_back(std::make_unique<PropertyRef<OntoMath::ScalarField, float>>("field.frequency", field.get(), &OntoMath::ScalarField::frequency));
-            _propertyRegistry.push_back(std::make_unique<PropertyRef<OntoMath::ScalarField, float>>("field.amplitude", field.get(), &OntoMath::ScalarField::amplitude));
+            registerProperty(std::make_unique<PropertyRef<OntoMath::ScalarField, float>>("field.baseDensity", field.get(), &OntoMath::ScalarField::baseDensity));
+            registerProperty(std::make_unique<PropertyRef<OntoMath::ScalarField, float>>("field.frequency", field.get(), &OntoMath::ScalarField::frequency));
+            registerProperty(std::make_unique<PropertyRef<OntoMath::ScalarField, float>>("field.amplitude", field.get(), &OntoMath::ScalarField::amplitude));
             
             // The AST itself, as its own serialized form. It used to reach no
             // property path at all -- the note here said the Law system could
@@ -92,17 +92,17 @@ protected:
             // rest of the engine exposes recursive state -- as the JSON it
             // already round-trips through. Readable in full; writable, with a
             // malformed document REFUSED rather than half-applied.
-            _propertyRegistry.push_back(std::make_unique<AstBridge>(
+            registerProperty(std::make_unique<AstBridge>(
                 "field.ast", &field->astDefinition));
         }
 
         if (vectorField) {
-            _propertyRegistry.push_back(std::make_unique<PropertyRef<OntoMath::VectorField, float>>("vectorField.baseFlowX", vectorField.get(), &OntoMath::VectorField::baseFlowX));
-            _propertyRegistry.push_back(std::make_unique<PropertyRef<OntoMath::VectorField, float>>("vectorField.baseFlowY", vectorField.get(), &OntoMath::VectorField::baseFlowY));
-            _propertyRegistry.push_back(std::make_unique<PropertyRef<OntoMath::VectorField, float>>("vectorField.baseFlowZ", vectorField.get(), &OntoMath::VectorField::baseFlowZ));
-            _propertyRegistry.push_back(std::make_unique<PropertyRef<OntoMath::VectorField, float>>("vectorField.frequency", vectorField.get(), &OntoMath::VectorField::frequency));
-            _propertyRegistry.push_back(std::make_unique<PropertyRef<OntoMath::VectorField, float>>("vectorField.amplitude", vectorField.get(), &OntoMath::VectorField::amplitude));
-            _propertyRegistry.push_back(std::make_unique<AstBridge>(
+            registerProperty(std::make_unique<PropertyRef<OntoMath::VectorField, float>>("vectorField.baseFlowX", vectorField.get(), &OntoMath::VectorField::baseFlowX));
+            registerProperty(std::make_unique<PropertyRef<OntoMath::VectorField, float>>("vectorField.baseFlowY", vectorField.get(), &OntoMath::VectorField::baseFlowY));
+            registerProperty(std::make_unique<PropertyRef<OntoMath::VectorField, float>>("vectorField.baseFlowZ", vectorField.get(), &OntoMath::VectorField::baseFlowZ));
+            registerProperty(std::make_unique<PropertyRef<OntoMath::VectorField, float>>("vectorField.frequency", vectorField.get(), &OntoMath::VectorField::frequency));
+            registerProperty(std::make_unique<PropertyRef<OntoMath::VectorField, float>>("vectorField.amplitude", vectorField.get(), &OntoMath::VectorField::amplitude));
+            registerProperty(std::make_unique<AstBridge>(
                 "vectorField.ast", &vectorField->astDefinition));
         }
     }

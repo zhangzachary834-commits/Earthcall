@@ -44,19 +44,19 @@ void ScreenChannel::buildProperties() {
     // (ComputedProperty.hpp), which no_black_box_test already treats as a
     // valid answer rather than a hidden field.
     const auto readOnlyInt = [this](const char* name, int (ScreenChannel::*getter)() const) {
-        _propertyRegistry.push_back(
+        registerProperty(
             std::make_unique<ComputedProperty<ScreenChannel, int>>(name, this, getter));
     };
     const auto readOnlyDouble = [this](const char* name, double (ScreenChannel::*getter)() const) {
-        _propertyRegistry.push_back(
+        registerProperty(
             std::make_unique<ComputedProperty<ScreenChannel, double>>(name, this, getter));
     };
     const auto boolean = [this](const char* name, bool ScreenChannel::*member) {
-        _propertyRegistry.push_back(
+        registerProperty(
             std::make_unique<PropertyRef<ScreenChannel, bool>>(name, this, member));
     };
     const auto vector3 = [this](const char* name, glm::vec3 ScreenChannel::*member) {
-        _propertyRegistry.push_back(
+        registerProperty(
             std::make_unique<PropertyRef<ScreenChannel, glm::vec3>>(name, this, member));
     };
 

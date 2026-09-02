@@ -13,13 +13,13 @@ ForeignChannel::ForeignChannel(const std::string& foreignAppName)
       _rateLimit(1.0f) {}
 
 void ForeignChannel::buildProperties() {
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<ForeignChannel, bool>>(
+    registerProperty(std::make_unique<ComputedProperty<ForeignChannel, bool>>(
         "enabled", this, &ForeignChannel::propEnabled, &ForeignChannel::propSetEnabled));
     
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<ForeignChannel, bool>>(
+    registerProperty(std::make_unique<ComputedProperty<ForeignChannel, bool>>(
         "connected", this, &ForeignChannel::propConnected, nullptr));
 
-    _propertyRegistry.push_back(std::make_unique<ComputedProperty<ForeignChannel, float>>(
+    registerProperty(std::make_unique<ComputedProperty<ForeignChannel, float>>(
         "rate_limit", this, &ForeignChannel::propRateLimit, &ForeignChannel::propSetRateLimit));
 }
 

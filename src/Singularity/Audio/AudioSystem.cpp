@@ -12,6 +12,7 @@
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp"   // registerAudioSink
 #include "Singularity/Core/Logger.hpp"
 
 extern ZoneManager mgr;
@@ -120,7 +121,35 @@ void AudioSystem::playSound(const std::string& filepath) {
 
 void AudioSystem::setupAudioEventListeners() {
     if (!_initialized) return;
-    // We no longer subscribe to "audio-synthesized" - we use continuous sound-emitter objects.
+    // A continuous sound-emitter object (see tick()) is how a being that IS
+    // sounding stays sounding. This is the other half: the one-shot, the
+    // struck note — what ActionNode::PlayAudio authors when a law says "sound
+    // this frequency, now".
+    //
+    // Registered as a SINK rather than an event subscription, and the
+    // difference is the bug it fixes. The old contract was an
+    // "audio-synthesized" event this function once listened for and stopped
+    // listening for; the publish on the other side was never removed, so every
+    // authored note went into a bus with no subscriber while the law engine
+    // logged a successful application. A sink cannot rot that way — when it is
+    // absent, PlayAudio says so and reports failure (ActionModel.hpp).
+    //
+    // The channel decides how a frequency becomes pressure, and nothing else
+    // does: playProceduralCollisionSound already spatializes, applies the
+    // speed-of-sound delay, and — the part that matters — enforces the
+    // infrasound floor (kAudibleFloorHz), which is a Kernel guard on the path
+    // to a Person's body and must not be reachable from law text.
+    registerAudioSink([](Singular& subject, double frequency, double amplitude,
+                         const std::string& timbre) {
+        glm::vec3 position(0.0f);
+        if (auto* obj = dynamic_cast<Object*>(&subject)) position = obj->getPosition();
+        // Authored timbre names that are not waveforms fall back to sine
+        // inside playProceduralCollisionSound; "crystal" and "bell" are the
+        // Synthesis Studio's, and they are names for a sound the synthesizer
+        // does not yet have rather than errors.
+        AudioSystem::instance().playProceduralCollisionSound(
+            position, glm::vec3(0.0f), frequency, amplitude, timbre);
+    });
 }
 
 void AudioSystem::tick() {

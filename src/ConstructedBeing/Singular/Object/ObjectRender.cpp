@@ -7,6 +7,8 @@
 #include "Automation/AutomationEvents.hpp"
 #include "Singularity/Screen/Renderer.hpp"
 #include "Singularity/Screen/RenderMaterial.hpp"
+#include "Relation/Formation/Menu/stb_easy_font.h"   // draw2DObject's labels
+#include <string>
 #include <GLFW/glfw3.h>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/matrix_transform.hpp> // glm::translate / glm::rotate for cap placement
@@ -550,10 +552,69 @@ void Object::drawPolyhedron() const {
                                    resolveRenderMaterial(_materialId, faceAlbedo(f)));
 }
 
+// ---------------------------------------------------------------------
+// The 2D label.
+//
+// A control that cannot say what it is is not a control — it is a colored
+// rectangle a Person has to guess at, which is what the Synthesis Studio
+// shipped as (audit SYNTHESIS_STUDIO_AUDIT_2026-09-02 §A2): fifteen authored
+// `controlLabel`s, none of which reached a pixel.
+//
+// The text is READ FROM THE BEING, never decided here. `label2D` first, then
+// the control vocabulary's `controlLabel`, then `displayName` — the same
+// authored property names law text already writes. A being with none of them
+// draws no text at all; the renderer does not invent a caption out of an
+// identifier.
+// ---------------------------------------------------------------------
+namespace {
+
+std::string authoredLabel(const Singular& being) {
+    for (const char* name : {"label2D", "controlLabel", "displayName"}) {
+        PropertyValue v;
+        if (being.getDynamicProperty(name, v) && std::holds_alternative<std::string>(v)) {
+            const std::string& s = std::get<std::string>(v);
+            if (!s.empty()) return s;
+        }
+    }
+    return {};
+}
+
+// stb_easy_font's cell is 16 px tall at scale 1 and ~6 px per character wide.
+constexpr float kGlyphCell = 16.0f;
+constexpr float kGlyphAdvance = 6.0f;
+
+// Black or white, whichever the fill can actually carry. Rec. 601 luma is
+// close enough for a two-way choice and needs no color-space machinery.
+glm::vec4 readableOn(const glm::vec4& fill) {
+    const float luma = 0.299f * fill.r + 0.587f * fill.g + 0.114f * fill.b;
+    return luma > 0.55f ? glm::vec4(0.06f, 0.07f, 0.09f, 1.0f)
+                        : glm::vec4(0.97f, 0.97f, 0.95f, 1.0f);
+}
+
+// Draw `text` with its top-left at (x, y), scaled so the cell is `pixelHeight`
+// tall. Returns the width it occupied, so a caller can centre by measuring.
+float drawLabelText(const std::string& text, float x, float y,
+                    float pixelHeight, const glm::vec4& color) {
+    if (text.empty()) return 0.0f;
+    char buf[24000];
+    const int quads = stb_easy_font_print(0.0f, 0.0f, const_cast<char*>(text.c_str()),
+                                          nullptr, buf, sizeof(buf));
+    if (quads <= 0) return 0.0f;
+    const float scale = pixelHeight / kGlyphCell;
+    std::vector<glm::vec2> tris = draw::easyFontToTris(buf, quads);
+    for (glm::vec2& p : tris) p = glm::vec2(x, y) + p * scale;
+    currentRenderer().drawTris2D(tris, color);
+    return static_cast<float>(text.size()) * kGlyphAdvance * scale;
+}
+
+} // namespace
+
 void Object::draw2DObject(uint32_t screenW, uint32_t screenH) const {
     // Shape2D is a screen-space axis-aligned rectangle. It is drawn AFTER the
     // 3D pass, in a begin2D / end2D bracket, so depth testing is off and the
-    // ortho is already (0,0) top-left to (screenW,screenH) bottom-right.
+    // ortho is already (0,0) top-left to (screenW,screenH) bottom-right —
+    // in WINDOW POINTS (Renderer::begin2D's contract), the same space
+    // InteractionChannel picks in.
     //
     // Color comes from faceColors[0], matching the 3D convention so a law
     // that sets "color" paints both 3D and 2D objects with the same path.
@@ -565,6 +626,17 @@ void Object::draw2DObject(uint32_t screenW, uint32_t screenH) const {
     const float x1 = x0 + _shapeParams.width2D;
     const float y1 = y0 + _shapeParams.height2D;
     const glm::vec4 color(faceColors[0][0], faceColors[0][1], faceColors[0][2], 1.0f);
+    const std::string label = authoredLabel(*this);
+
+    // Text2D is the label WITHOUT a plate behind it — a caption, a title, a
+    // legend. It carries no fill and no border, and its color is faceColors[0]
+    // directly rather than a contrast pick, because there is no ground here to
+    // contrast against. `shape.height2D` sets the type size.
+    if (_shapeKind == ShapeKind::Text2D) {
+        const float size = _shapeParams.height2D > 0.0f ? _shapeParams.height2D : kGlyphCell;
+        drawLabelText(label, x0, y0, size, color);
+        return;
+    }
 
     // Two triangles covering the rect (CCW, top-left origin matches ortho).
     const std::vector<glm::vec2> tris = {
@@ -582,4 +654,31 @@ void Object::draw2DObject(uint32_t screenW, uint32_t screenH) const {
         {x0, y1}, {x0, y0},
     };
     currentRenderer().drawLines2D(border, borderColor, 1.0f);
+
+    // …and the label centred on the plate, in whichever of black or white the
+    // fill can carry. Type size is `label.size2D` when the being authored one,
+    // otherwise a fraction of the plate's height, capped so a long label in a
+    // short button still fits its box rather than spilling past the border.
+    if (label.empty()) return;
+    const float boxW = x1 - x0;
+    const float boxH = y1 - y0;
+    if (boxW <= 4.0f || boxH <= 4.0f) return;
+
+    float size = 0.0f;
+    PropertyValue authoredSize;
+    double n = 0.0;
+    if (getDynamicProperty("label.size2D", authoredSize) &&
+        propertyValueToNumber(authoredSize, n) && n > 0.0) {
+        size = static_cast<float>(n);
+    } else {
+        size = boxH * 0.5f;
+    }
+    const float widest = (boxW - 8.0f) / (static_cast<float>(label.size()) * kGlyphAdvance);
+    size = std::min(size, widest * kGlyphCell);
+    size = std::min(size, boxH - 6.0f);
+    if (size < 5.0f) return;
+
+    const float textW = static_cast<float>(label.size()) * kGlyphAdvance * (size / kGlyphCell);
+    drawLabelText(label, x0 + (boxW - textW) * 0.5f, y0 + (boxH - size) * 0.5f,
+                  size, readableOn(color));
 }

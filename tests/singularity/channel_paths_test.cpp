@@ -131,7 +131,7 @@ int main() {
             // is deliberately undefined while nothing is under the pointer),
             // and interaction_channel_test case 11 is where that is held.
             ++g_checked;
-            if (worldReadings().count(option.path) == 0) {
+            if (worldReadings().count(Earthcall::StringInterner::intern(option.path)) == 0) {
                 fail(option.path, option.group,
                      "names a world reading no channel registered — the picker "
                      "offers it, the law binds it, and the read fails silently");
