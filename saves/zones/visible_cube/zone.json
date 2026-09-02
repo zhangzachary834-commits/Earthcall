@@ -1,0 +1,55 @@
+{
+  "deletable": {
+    "Player": true
+  },
+  "formationRelations": [],
+  "identifier": "visible_cube",
+  "lexemes": [],
+  "materials": [
+    {
+      "ambient": 0.20000000298023224,
+      "baseColor": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "diffuse": 0.800000011920929,
+      "name": "default",
+      "opacity": 1.0,
+      "shininess": 32.0,
+      "specular": 1.0
+    }
+  ],
+  "name": "visible_cube",
+  "owner": "Player",
+  "parentZone": "",
+  "qualities": {
+    "ownerKind": "person"
+  },
+  "scope": "Local",
+  "world": {
+    "objects": [
+      {
+        "geometryType": 0,
+        "materialId": "material.default",
+        "objectID": "witness-cube",
+        "renderMode": 0,
+        "shapeKind": 0,
+        "shapeParams": [
+          0.5,
+          0.3199999928474426,
+          0.5,
+          0.5,
+          0.3499999940395355,
+          0.15000000596046448,
+          2.0,
+          0.25,
+          0.11999999731779099
+        ],
+        "x2D": 100.0,
+        "y2D": 100.0,
+        "zOrder2D": 0
+      }
+    ]
+  }
+}

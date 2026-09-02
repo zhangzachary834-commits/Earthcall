@@ -70,14 +70,18 @@ question, zero new systems.
   a Person exists and is present in a shared Zone; a co-present Person who cannot
   be perceived *at all* is a ghost, and ghosts are a consent violation in the other
   direction. **⚑ AUTHOR:** the exact contents of that floor.
-- **⚑ AUTHOR:** the default posture between Persons with *no* authored Relation —
-  open-by-default (the Ourverse instinct: trust first, gather freely) or
-  closed-by-default (the dignity instinct: disclosure is a gift, not a leak). This
-  is the single most consequential unmade decision in the framework, it is a
-  theological decision, and no agent may make it.
-
-Zach here: I've yet to fully make the decisions but one note for myself on the manifesto is 
-we need a first class distinction between a representative channel (even if it's the "primary avatar") and a real-life vessel (anything that directly corresponds to the real person's physical self. 
+- **⚑ AUTHOR (Zachary, 2026-09-01, reported by Antigravity Gemini 3.1 Pro):** The default posture between Persons with *no* authored Relation is neither a simple open nor closed, but a **third path projecting vertically through both, governed by a stakes framework**:
+  1. **Constitutive Properties (Closed by default):** Anything constitutive of Persons (hardcoded properties, `Body`, `Soul`) is strictly closed by default. The `Soul` framework models a Person's internal journey; nothing constitutively owned by the Soul (internal thoughts, etc.) may *ever* be exposed by default.
+  2. **Authored/Incidental Properties (Evaluated by Stakes):** Non-constitutive state is evaluated by a stakes framework. The engine compares the "level-tier" of stakes of the reader and the property. Ontological categories of stakes include:
+     - **Belonging:** Ownership, authorship, governance, or telos (modeled by Lexemes as a benefit/good received).
+     - **Effect on properties.**
+     - **Intensity of Relations.**
+     - **Scale ("how much").**
+  3. **Context and History:** Adjudication is further modulated by Zone (jurisdiction, community vs. home, overlap), Ourverse-level effect, and history (relational and formational).
+  4. **The Mechanism (Positive Law vs. Engine Kernel):** The engine handles baseline tier-matching, but it *must not* hardcode the human meaning of stakes (the "Kernel-as-babel" anti-pattern). A Person may elevate the stakes of their authored properties, but not as an arbitrary, isolated override (which would induce chaos, since claiming stakes affects others). 
+  5. **Societal Framework:** For non-hardcoded properties, stakes must be recognized in a shared context—positive law, governed communally by Zone, functioning as a social contract. As stated in the manifesto, because this system relies on human rule and jurisdiction, it collapses into either relational tyranny or anarchy without Christ at the foundation.
+  
+  *(Zach's note: We also need a first-class distinction between a representative channel—even if it's the "primary avatar"—and a real-life vessel corresponding directly to the real person's physical self. A real body has inviolable rights, but a in-world avatar that doesn't correspond to the real body may have a unique representative stake, but does not have the same inviolable rights a real body does.)*
 
 ---
 
