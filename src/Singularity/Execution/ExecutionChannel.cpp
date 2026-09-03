@@ -9,6 +9,7 @@ ExecutionChannel::~ExecutionChannel() = default;
 
 void ExecutionChannel::setPropheticIndex(std::unique_ptr<PropheticIndex> index) {
     _propheticIndex = std::move(index);
+    if (_propheticIndex) _propheticIndex->recalculatePossibilitySpace();
 }
 
 void ExecutionChannel::executeLaw(const class Law& law, Singular& target) {

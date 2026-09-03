@@ -1404,6 +1404,7 @@ void LawManager::add(const std::shared_ptr<Law>& law) {
         return candidate && candidate->getIdentifier() == id;
     });
     if (existing != _laws.end()) return;
+    Universe::instance().bumpStructuralRevision();
 
     _laws.push_back(law);
     _lawFormation.addMember(law.get());
@@ -2154,6 +2155,7 @@ bool LawManager::remove(const std::string& lawId) {
         return law && law->getIdentifier() == lawId;
     });
     if (it == _laws.end()) return false;
+    Universe::instance().bumpStructuralRevision();
 
     _rete.unbindLaw(lawId);
     _triggers.erase(lawId);
@@ -2352,6 +2354,7 @@ void LawManager::loadFromJson(const nlohmann::json& j) {
         _compiledConditionRevision.erase(law->getIdentifier());
     }
     _laws = std::move(firstMovers);
+    Universe::instance().bumpStructuralRevision();
     _driveSessions.clear();
     Law::bumpTextRevision();
     _reteTerminals.clear();

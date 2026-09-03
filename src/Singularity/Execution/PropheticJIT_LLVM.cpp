@@ -146,6 +146,24 @@ private:
                 }
                 break;
             }
+            case ActionNode::Kind::Scale:
+            case ActionNode::Kind::Lerp:
+            case ActionNode::Kind::Drive:
+            case ActionNode::Kind::Spawn:
+            case ActionNode::Kind::Map:
+            case ActionNode::Kind::Flow:
+            case ActionNode::Kind::Publish:
+            case ActionNode::Kind::Create:
+            case ActionNode::Kind::AddProperty:
+            case ActionNode::Kind::RemoveProperty:
+            case ActionNode::Kind::AddElement:
+            case ActionNode::Kind::RemoveElement:
+            case ActionNode::Kind::Destroy:
+            case ActionNode::Kind::PlayAudio:
+            case ActionNode::Kind::AuthorZone:
+            case ActionNode::Kind::AddRelation:
+            case ActionNode::Kind::Synthesize:
+                break;
             case ActionNode::Kind::Sequence:
             case ActionNode::Kind::Parallel: {
                 for (const auto& child : node.children) {

@@ -2,7 +2,7 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include "Body.hpp"
+#include "Body/Body.hpp"
 #include <glm/glm.hpp>
 #include "ConstructedBeing/Singular/Singular.hpp"
 #include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
