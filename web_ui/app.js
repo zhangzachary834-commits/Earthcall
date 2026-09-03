@@ -78,4 +78,8 @@ document.addEventListener('DOMContentLoaded', () => {
             emitUtterance();
         }
     });
+
+    inputField.addEventListener('input', () => {
+        emitBtn.disabled = inputField.value.trim() === '';
+    });
 });

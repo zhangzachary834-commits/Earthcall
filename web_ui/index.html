@@ -57,6 +57,12 @@
             outline: none;
         }
 
+        #utterance-input:focus-visible {
+            outline: 2px solid #4a90e2;
+            outline-offset: 2px;
+            border-radius: 4px;
+        }
+
         #utterance-input::placeholder {
             color: rgba(255, 255, 255, 0.4);
         }
@@ -70,11 +76,21 @@
             font-size: 1em;
             font-weight: bold;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: background 0.2s, opacity 0.2s;
         }
 
-        #emit-btn:hover {
+        #emit-btn:hover:not(:disabled) {
             background: #357abd;
+        }
+
+        #emit-btn:focus-visible {
+            outline: 2px solid #4a90e2;
+            outline-offset: 2px;
+        }
+
+        #emit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
 
         #connection-status {
@@ -112,8 +128,8 @@
         </div>
 
         <div id="logos-interface">
-            <input type="text" id="utterance-input" placeholder="Speak a word into the World... (e.g. 'Joy')" autocomplete="off">
-            <button id="emit-btn">Emit</button>
+            <input type="text" id="utterance-input" placeholder="Speak a word into the World... (e.g. 'Joy')" autocomplete="off" aria-label="Speak a word into the World">
+            <button id="emit-btn" disabled>Emit</button>
         </div>
     </div>
 
