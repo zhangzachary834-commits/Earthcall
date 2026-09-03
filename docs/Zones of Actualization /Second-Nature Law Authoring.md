@@ -8,3 +8,5 @@ So we need to author a much more human version with Laws.
 This philosophy is critical: Laws must be as easy to author as keyboard and mouse. Ordinarily, law creation has to be as so intuitive and human-fitted that its second-nature.
 
 And yes, this is going to be Metalaws. 
+
+The ultimate computer should not merely execute laws authored by humans. It should become a medium in which humans can author laws as naturally as they presently manipulate matter, symbols, images, and language.
