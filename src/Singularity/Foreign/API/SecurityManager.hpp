@@ -192,8 +192,8 @@ private:
     bool _isRateLimited(const std::string& source);
     
     // Pattern matching
-    std::vector<std::regex> _suspiciousPatterns;
-    std::vector<std::regex> _maliciousPatterns;
+    std::regex _suspiciousRegex;
+    std::regex _maliciousRegex;
     void _initializePatterns();
     
     // Rate limiting

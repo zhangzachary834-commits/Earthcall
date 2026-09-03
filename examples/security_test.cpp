@@ -1,4 +1,4 @@
-#include "../src/Integration/SecurityManager.hpp"
+#include "../src/Singularity/Foreign/API/SecurityManager.hpp"
 #include <iostream>
 
 using namespace Integration;
