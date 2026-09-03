@@ -56,6 +56,8 @@ Addendum: Also ensure save system works in every case and everything that needs 
 - What about children? It's not like kids should have full Earthcall agency, and they need special protection. - Zach
 
 ### Joys · Ourverse · Zones
+- ✅ **Innovative Zones Specification (2026-09-03)** — done (2026-09-03): Authored complete specifications for 4 groundbreaking Zones (Resonant Cathedral, Chrono-Horizon, Abyssal Far Lands, Agora of Liturgy) extending Zach's core vision. … → [full task](Specific%20Tasks/Innovative_Zones_Specification/Innovative_Zones_Specification.md)
+- ✅ **Second-Nature Law & Zone Features Specification (2026-09-03)** — done (2026-09-03): Authored complete specifications for 4 major features (Second-Nature MetaLaws, Chrono-Symmetry $Cmd+Z/Cmd+Y$ Undo, Prophetic-Rete Holograms, Procedural Shader Brush) extending Zach's core vision. … → [full task](Specific%20Tasks/Second_Nature_Law_and_Zone_Features/Second_Nature_Law_and_Zone_Features.md)
 - Define the Hierarchy of Joys precisely; make it operationally load bearing. **First rung (2026-08-18):** see near-term 4 / `docs/architecture/ontology/HIERARCHY_OF_JOYS.md`. Remaining: kernel-tick enforcement, authored substance above the seed, ranking-as-Law.
 - Zone jurisdiction resolution. Overlapping Zone / Home friction is Person-agreed synthesis or a metalaw/first-mover default — the machine does not silently pick a winner (`EarthcallOurverse.md`; SECOND_PERSON_FRAMEWORK ⚑ AUTHOR still open).
 - **Home / Zone ontology vs manifesto** — PARTIAL (2026-08-22). → [full task](Specific%20Tasks/Home_Zone_ontology_vs_manifesto/Home_Zone_ontology_vs_manifesto.md)
