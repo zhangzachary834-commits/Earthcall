@@ -12,13 +12,20 @@
 #include "Singularity/Screen/Renderer.hpp"
 
 #include <GLFW/glfw3.h>
+#ifndef NO_OPENGL_RENDERER
+#ifdef __APPLE__
 #include <OpenGL/gl.h>
+#else
+#include <GL/gl.h>
+#endif
+#endif
 #include <cassert>
 #include <cstdio>
 #include <vector>
 
 extern MaterialManager materials;
 
+#ifndef NO_OPENGL_RENDERER
 namespace {
 
 const int bg[3] = {64, 128, 191}; // clear colour 0.25/0.5/0.75
@@ -64,8 +71,13 @@ long long brightness(Object& obj) {
 }
 
 } // namespace
+#endif // !NO_OPENGL_RENDERER
 
 int main() {
+#ifdef NO_OPENGL_RENDERER
+    std::printf("primitive_render_test: SKIPPED (NO_OPENGL_RENDERER)\n");
+    return 0;
+#else
     if (!glfwInit()) { std::fprintf(stderr, "primitive_render_test: glfwInit failed\n"); return 1; }
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
     GLFWwindow* window = glfwCreateWindow(64, 64, "primitive_render_test", nullptr, nullptr);
@@ -164,4 +176,5 @@ int main() {
     glfwTerminate();
     std::printf("primitive_render_test: ALL OK\n");
     return 0;
+#endif
 }
