@@ -46,8 +46,6 @@
 #include <memory>
 #include <string>
 
-// Forward declaration to break circular dependency
-class BodyPart;
 // Material includes FaceTexture, which includes Renderer.hpp; an Object only
 // ever holds its material by identifier, so the declaration is enough here.
 class Material;
@@ -160,8 +158,6 @@ private:
     std::string _entityName;
     std::string objectType;
     std::string objectID;
-
-    // BodyPart* part = nullptr; // MOVED to elementFormation or removed
 
     // The primitive shape this Object represents. Default is Cube for compatibility and easy testing.
     ShapeKind _shapeKind = ShapeKind::Cube;
@@ -678,10 +674,7 @@ public:
                                const std::vector<std::vector<int>>& faces);
 
     virtual ~Object();
-
-    // Owning form part (non-null when this Object is a sub-object of a BodyPart)
-    // void setOwnerBodyPart(BodyPart* owner) { part = owner; }
-    // BodyPart* getOwnerBodyPart() const { return part; }
+ 
     // Singular interface implementation
     std::string getIdentifier() const override { return objectID; }
 

@@ -109,6 +109,7 @@ void Formation::addMember(Singular* s) {
     // Relations may already name this being — that is what loading a save
     // does. Integrate them now rather than never.
     reintegrateRelationsFor(s);
+    retryPendingRelations();
 }
 
 bool Formation::setRoot(Singular* s) {
@@ -253,9 +254,19 @@ bool Formation::mayAdmitRelation(const std::shared_ptr<Relation>& r) const {
 bool Formation::addRelation(const std::shared_ptr<Relation>& r) {
     if (!r) return false;
     if (!r->hasEndpoints()) {
+        Singular* aBeing = r->a() ? r->a() : findMemberByIdentifier(r->aId());
+        Singular* bBeing = r->b() ? r->b() : findMemberByIdentifier(r->bId());
+        if (aBeing && bBeing) {
+            r->bind(aBeing, bBeing);
+        }
+    }
+    if (!r->hasEndpoints()) {
+        if (std::find(pendingRelations.begin(), pendingRelations.end(), r) == pendingRelations.end()) {
+            pendingRelations.push_back(r);
+        }
         std::fprintf(stderr,
-            "Formation '%s': REFUSED relation '%s' with unbound Singular endpoints.\n",
-            getIdentifier().c_str(), r->type.c_str());
+            "Formation '%s': PENDING relation '%s' (%s -> %s) waiting for Singular endpoints.\n",
+            getIdentifier().c_str(), r->type.c_str(), r->aId().c_str(), r->bId().c_str());
         return false;
     }
     if (!mayAdmitRelation(r)) {
@@ -276,9 +287,23 @@ bool Formation::addRelation(const std::shared_ptr<Relation>& r) {
         }
         return false;
     }
+    auto pit = std::find(pendingRelations.begin(), pendingRelations.end(), r);
+    if (pit != pendingRelations.end()) {
+        pendingRelations.erase(pit);
+    }
     relationMgr.add(r);
     integrateRelationTopology(r);
     return true;
+}
+
+void Formation::retryPendingRelations() {
+    if (pendingRelations.empty() || _integrating) return;
+    auto pending = pendingRelations;
+    pendingRelations.clear();
+    for (const auto& r : pending) {
+        if (!r) continue;
+        addRelation(r);
+    }
 }
 
 bool Formation::removeRelation(const std::shared_ptr<Relation>& r) {

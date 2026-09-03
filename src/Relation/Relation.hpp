@@ -3,6 +3,12 @@
 #include "json.hpp" // nlohmann::json single-header
 #include "ConstructedBeing/Singular/Singular.hpp"
 #include <vector>
+
+namespace Singularity {
+namespace Language {
+class Lexeme;
+}
+}
 #include <ctime>
 #include <functional>
 #include <glm/glm.hpp>
@@ -57,78 +63,81 @@ public:
     // ---------------------------------------------------------------------
     Relation() = default;
 
-    // BRUHHHHHHHHH WHO MADE THIS INTO "std::string" BRUHHHHHH ITS SUPPOSED TO BE A LEXEME
     Relation(const std::string& type,
              Singular& aBeing,
              Singular& bBeing,
              bool directed = false,
              float initialWeight = -1.0f);
 
-    // const Singular& is accepted so existing call sites (physics, provenance)
-    // keep compiling. The stored pointer is non-owning identity, same as
-    // Formation members.
-    // BRUHHHHHHHHH WHO MADE THIS INTO "std::string" BRUHHHHHH ITS SUPPOSED TO BE A LEXEME
     Relation(const std::string& type,
              const Singular& aBeing,
              const Singular& bBeing,
              bool directed = false,
              float initialWeight = -1.0f);
 
+    // Lexeme-typed Relation constructors
+    Relation(Singularity::Language::Lexeme& typeLexeme,
+             Singular& aBeing,
+             Singular& bBeing,
+             bool directed = false,
+             float initialWeight = -1.0f);
+
+    Relation(Singularity::Language::Lexeme& typeLexeme,
+             const Singular& aBeing,
+             const Singular& bBeing,
+             bool directed = false,
+             float initialWeight = -1.0f);
+
+    Singularity::Language::Lexeme* getTypeLexeme() const { return _typeLexeme; }
+    void setTypeLexeme(Singularity::Language::Lexeme* lexeme);
+
     // ---------------------------------------------------------------------
     // Endpoints — the beings this relation holds, not their names.
     // ---------------------------------------------------------------------
-    Singular* a() const { return _a; }
-    Singular* b() const { return _b; }
-    bool hasEndpoints() const { return _a && _b; }
+    struct Endpoint {
+        Singular* ptr = nullptr;
+        std::string savedId;
+        mutable std::string cachedId;
 
-    // Identifier of an endpoint. Law-text and JSON address beings by these
-    // strings; the pointer is the relation's actual state. When the being is
-    // not in this world (provenance load, a dangling save), the registered
-    // identifier property still holds the saved name.
-    std::string aId() const {
-        if (!_a) return _savedA;
-        _cachedAId = _a->getIdentifier();
-        return _cachedAId;
-    }
-    std::string bId() const {
-        if (!_b) return _savedB;
-        _cachedBId = _b->getIdentifier();
-        return _cachedBId;
-    }
+        void bind(Singular* s) {
+            ptr = s;
+            if (ptr) savedId.clear();
+        }
+
+        void forget(const Singular* s) {
+            if (ptr && ptr == s) {
+                if (savedId.empty()) savedId = cachedId;
+                ptr = nullptr;
+            }
+        }
+
+        std::string id() const {
+            if (ptr) {
+                cachedId = ptr->getIdentifier();
+                return cachedId;
+            }
+            return savedId;
+        }
+
+        bool hasValue() const { return ptr != nullptr; }
+    };
+
+    Singular* a() const { return _endpointA.ptr; }
+    Singular* b() const { return _endpointB.ptr; }
+    bool hasEndpoints() const { return _endpointA.hasValue() && _endpointB.hasValue(); }
+
+    std::string aId() const { return _endpointA.id(); }
+    std::string bId() const { return _endpointB.id(); }
 
     void bind(Singular* aBeing, Singular* bBeing) {
-        _a = aBeing;
-        _b = bBeing;
-        if (_a) _savedA.clear();
-        if (_b) _savedB.clear();
+        _endpointA.bind(aBeing);
+        _endpointB.bind(bBeing);
     }
 
-    // An endpoint has left the world. Keep the NAME and drop the pointer.
-    //
-    // A Relation outlives the beings it holds — a Formation, a provenance
-    // record, or a test's own graph goes on owning it after a scoped Object
-    // is gone — and `aId()`/`bId()` call a VIRTUAL getIdentifier() through
-    // that pointer. Against a destroyed being that is `__cxa_pure_virtual`:
-    // an abort, from a read. Every relation query walks these
-    // (`isBetween`, `involves`), so one stale edge takes down whatever asks
-    // the graph a question, whenever it happens to ask.
-    //
-    // The saved id is exactly the right thing to fall back to: it is what a
-    // relation loaded from a save holds before its endpoints are resolved, so
-    // the "endpoint not in this world" state already existed and is already
-    // handled everywhere. This just returns a relation to it.
-    //
-    // Called from RelationManager::forgetBeingEverywhere.
     void forgetEndpoint(const Singular* being) {
         if (!being) return;
-        if (_a == being) {
-            if (_savedA.empty()) _savedA = _cachedAId;
-            _a = nullptr;
-        }
-        if (_b == being) {
-            if (_savedB.empty()) _savedB = _cachedBId;
-            _b = nullptr;
-        }
+        _endpointA.forget(being);
+        _endpointB.forget(being);
     }
 
 
@@ -156,8 +165,8 @@ public:
     // Singular interface
     std::string getIdentifier() const override { return aId() + "-" + type + "-" + bId(); }
 
-    // `type` is a hardcoded string property: the semantic tag of the bond
-    // (attachment, instance-of, is_pos, …). It is not an endpoint.
+    // `type` is the string symbol/tag of the bond (attachment, instance-of, is_pos, …).
+    // When grounded in a Lexeme, `_typeLexeme` points to that Lexeme being.
     std::string type;
 
     static bool s_developerMode;
@@ -191,21 +200,9 @@ public:
     void setEventsList(const std::shared_ptr<PropertyList>& list);
 
 private:
-    // Non-owning. The beings live in a Zone / LanguageSystem / Formation.
-    // Registered to law as the identifier properties `entityA` / `entityB`
-    // (JSON and law-text still speak identifiers). The pointer is the
-    // in-memory handle of that same fact — not a second, ungoverned endpoint.
-    Singular* _a = nullptr;
-    Singular* _b = nullptr;
-    // Saved identifier when the being is absent from this world. Same fact
-    // as the registered `entityA` / `entityB` properties, not a second
-    // endpoint. Bind() clears these.
-    std::string _savedA;
-    std::string _savedB;
-    // Last-known names, kept so forgetEndpoint has something to fall back to
-    // when a being dies. Mutable because reading an id is a const operation.
-    mutable std::string _cachedAId;
-    mutable std::string _cachedBId;
+    Endpoint _endpointA;
+    Endpoint _endpointB;
+    Singularity::Language::Lexeme* _typeLexeme = nullptr;
 
     void buildProperties() override;
     std::string propEntityA() const { return aId(); }

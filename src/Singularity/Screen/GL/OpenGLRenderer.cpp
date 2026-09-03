@@ -1,6 +1,6 @@
 #include "Singularity/Screen/GL/OpenGLRenderer.hpp"
 
-#if !defined(__EMSCRIPTEN__) && !defined(NO_OPENGL_RENDERER) && !defined(GLFW_INCLUDE_NONE)
+#if !defined(__EMSCRIPTEN__) && !defined(NO_OPENGL_RENDERER) && !defined(EARTHCALL_WEBGPU)
 
 #include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp" // geom::SdfNode, tessellateSdf
 
@@ -329,5 +329,27 @@ void OpenGLRenderer::applyBeginFrame(uint32_t width, uint32_t height,
     glClearColor(clearColor.r, clearColor.g, clearColor.b, clearColor.a);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
+
+#elif !defined(__EMSCRIPTEN__)
+
+// No-op fallback stubs for headless environments without OpenGL headers.
+void OpenGLRenderer::applyCamera(const glm::mat4&, const glm::mat4&, const glm::vec3&) {}
+void OpenGLRenderer::applyModel(const glm::mat4&) {}
+void OpenGLRenderer::drawMesh(const geom::TessMesh&, const RenderMaterial&) {}
+void OpenGLRenderer::drawImplicit(const geom::SdfNode&, const glm::vec3&, const RenderMaterial&, const geom::FieldNode*, uint64_t, uint32_t, const geom::HeightGrid*) {}
+void OpenGLRenderer::drawLines(const std::vector<std::pair<glm::vec3, glm::vec3>>&, const glm::vec4&, float, Blend) {}
+void OpenGLRenderer::setWireframe(bool) {}
+void OpenGLRenderer::drawOverlay(const geom::TessMesh&, const glm::vec4&, float, bool) {}
+void OpenGLRenderer::drawSolid(const std::vector<glm::vec3>&, const glm::vec4&, Blend, bool) {}
+void OpenGLRenderer::begin2D(uint32_t, uint32_t) {}
+void OpenGLRenderer::end2D() {}
+void OpenGLRenderer::drawTris2D(const std::vector<glm::vec2>&, const glm::vec4&) {}
+void OpenGLRenderer::drawLines2D(const std::vector<glm::vec2>&, const glm::vec4&, float) {}
+void OpenGLRenderer::drawImage2D(const uint8_t*, uint32_t, uint32_t, const glm::vec4&, const glm::vec4&) {}
+void OpenGLRenderer::applyLight() {}
+void OpenGLRenderer::applyLightingEnabled(bool) {}
+TextureHandle OpenGLRenderer::uploadTexture(TextureHandle, const uint8_t*, uint32_t, uint32_t) { return 0; }
+void OpenGLRenderer::releaseTexture(TextureHandle) {}
+void OpenGLRenderer::applyBeginFrame(uint32_t, uint32_t, const glm::vec4&) {}
 
 #endif

@@ -1,4 +1,5 @@
 #include "Relation.hpp"
+#include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
 #include "ConstructedBeing/Singular/Singular.hpp"
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
@@ -68,7 +69,8 @@ Relation::Relation(const std::string& type,
                    Singular& bBeing,
                    bool directed,
                    float initialWeight)
-    : type(type), directed(directed), _a(&aBeing), _b(&bBeing) {
+    : type(type), directed(directed) {
+    bind(&aBeing, &bBeing);
     if (initialWeight != -1.0f) setWeight(initialWeight);
 }
 
@@ -77,10 +79,36 @@ Relation::Relation(const std::string& type,
                    const Singular& bBeing,
                    bool directed,
                    float initialWeight)
-    : type(type), directed(directed),
-      _a(const_cast<Singular*>(&aBeing)),
-      _b(const_cast<Singular*>(&bBeing)) {
+    : type(type), directed(directed) {
+    bind(const_cast<Singular*>(&aBeing), const_cast<Singular*>(&bBeing));
     if (initialWeight != -1.0f) setWeight(initialWeight);
+}
+
+Relation::Relation(Singularity::Language::Lexeme& typeLexeme,
+                   Singular& aBeing,
+                   Singular& bBeing,
+                   bool directed,
+                   float initialWeight)
+    : type(typeLexeme.getSymbol()), _typeLexeme(&typeLexeme), directed(directed) {
+    bind(&aBeing, &bBeing);
+    if (initialWeight != -1.0f) setWeight(initialWeight);
+}
+
+Relation::Relation(Singularity::Language::Lexeme& typeLexeme,
+                   const Singular& aBeing,
+                   const Singular& bBeing,
+                   bool directed,
+                   float initialWeight)
+    : type(typeLexeme.getSymbol()), _typeLexeme(&typeLexeme), directed(directed) {
+    bind(const_cast<Singular*>(&aBeing), const_cast<Singular*>(&bBeing));
+    if (initialWeight != -1.0f) setWeight(initialWeight);
+}
+
+void Relation::setTypeLexeme(Singularity::Language::Lexeme* lexeme) {
+    _typeLexeme = lexeme;
+    if (_typeLexeme) {
+        type = _typeLexeme->getSymbol();
+    }
 }
 
 void Relation::describe() const {
@@ -92,11 +120,11 @@ void Relation::describe() const {
 }
 
 bool Relation::involves(const Singular* being) const {
-    return being && (_a == being || _b == being);
+    return being && (a() == being || b() == being);
 }
 
 bool Relation::involves(const Singular& being) const {
-    return _a == &being || _b == &being;
+    return a() == &being || b() == &being;
 }
 
 bool Relation::involves(const std::string& identifier) const {
@@ -106,9 +134,9 @@ bool Relation::involves(const std::string& identifier) const {
 
 bool Relation::isBetween(const Singular& aBeing, const Singular& bBeing) const {
     if (directed) {
-        return _a == &aBeing && _b == &bBeing;
+        return a() == &aBeing && b() == &bBeing;
     }
-    return (_a == &aBeing && _b == &bBeing) || (_a == &bBeing && _b == &aBeing);
+    return (a() == &aBeing && b() == &bBeing) || (a() == &bBeing && b() == &aBeing);
 }
 
 bool Relation::isBetween(const std::string& a, const std::string& b) const {
@@ -147,20 +175,20 @@ Relation Relation::fromJson(const json& j, const RelationEndpointResolver& resol
         r.attachment = AttachmentData::fromJson(j["attachment"]);
     }
 
-    r._savedA = j.value("entityA", std::string{});
-    r._savedB = j.value("entityB", std::string{});
+    std::string savedA = j.value("entityA", std::string{});
+    std::string savedB = j.value("entityB", std::string{});
+    r._endpointA.savedId = savedA;
+    r._endpointB.savedId = savedB;
+
     if (resolve) {
-        r._a = r._savedA.empty() ? nullptr : resolve(r._savedA);
-        r._b = r._savedB.empty() ? nullptr : resolve(r._savedB);
-        if (r._a) r._savedA.clear();
-        if (r._b) r._savedB.clear();
-        if ((!j.value("entityA", std::string{}).empty() && !r._a) ||
-            (!j.value("entityB", std::string{}).empty() && !r._b)) {
+        Singular* aPtr = savedA.empty() ? nullptr : resolve(savedA);
+        Singular* bPtr = savedB.empty() ? nullptr : resolve(savedB);
+        r.bind(aPtr, bPtr);
+        if ((!savedA.empty() && !r.a()) || (!savedB.empty() && !r.b())) {
             std::fprintf(stderr,
                 "Relation::fromJson: unbound endpoint(s) type='%s' a='%s' b='%s'. "
                 "Identifier properties kept; the relation holds no being until bind.\n",
-                r.type.c_str(), j.value("entityA", std::string{}).c_str(),
-                j.value("entityB", std::string{}).c_str());
+                r.type.c_str(), savedA.c_str(), savedB.c_str());
         }
     }
     return r;

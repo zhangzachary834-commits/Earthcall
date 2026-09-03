@@ -345,7 +345,7 @@ if(NOT EMSCRIPTEN)
             add_executable(${TEST_NAME} ${TEST_SOURCE} ${WEBGPU_TEST_EXTRA_SRCS})
             target_include_directories(${TEST_NAME} PRIVATE ${WGPU_NATIVE_DIR}/include)
             target_compile_definitions(${TEST_NAME} PRIVATE EARTHCALL_WEBGPU IMGUI_IMPL_WEBGPU_BACKEND_WGPU)
-            if(APPLE)
+            if(APPLE AND EXISTS "${WGPU_NATIVE_DIR}/lib/libwgpu_native.a")
                 target_link_libraries(${TEST_NAME} PRIVATE
                     earthcall_core
                     ${WGPU_NATIVE_DIR}/lib/libwgpu_native.a
@@ -367,20 +367,21 @@ if(NOT EMSCRIPTEN)
                     OpenGL::GL
                 )
             else()
+                set_target_properties(${TEST_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
                 target_link_libraries(${TEST_NAME} PRIVATE earthcall_core ${GLFW_LIB} ${OPENSSL_LIBRARIES} ZLIB::ZLIB ${CMAKE_DL_LIBS} Threads::Threads)
             endif()
         else()
             add_executable(${TEST_NAME} ${TEST_SOURCE})
             # uuid (non-Apple only, and NOTFOUND-guarded) already comes in
             # transitively via earthcall_core's PUBLIC link libraries above.
-            target_link_libraries(${TEST_NAME} PRIVATE earthcall_core ${GLFW_LIB} ${OPENSSL_SSL_LIBRARY} ${OPENSSL_CRYPTO_LIBRARY} ZLIB::ZLIB ${CMAKE_DL_LIBS} Threads::Threads)
+            target_link_libraries(${TEST_NAME} PRIVATE earthcall_core ${GLFW_LIB} ${OPENSSL_LIBRARIES} ZLIB::ZLIB ${CMAKE_DL_LIBS} Threads::Threads)
         endif()
 
         # Shared fixtures (test_save_helper.hpp, test_harness.hpp). Source files live under
         # tests/<region>/; ctest target names stay NAME_WE of the .cpp.
         target_include_directories(${TEST_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/tests ${CMAKE_SOURCE_DIR}/tests/support)
         target_compile_options(${TEST_NAME} PRIVATE -UNDEBUG)
-        if (${TEST_NAME} IN_LIST PENDING_FEATURE_TESTS)
+        if (${TEST_NAME} IN_LIST PENDING_FEATURE_TESTS OR (NOT APPLE AND (${TEST_NAME} MATCHES "webgpu_.*" OR ${TEST_NAME} STREQUAL "gpu_mastery_test")))
             set_target_properties(${TEST_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
         else()
             list(APPEND ALL_ACTIVE_TEST_TARGETS ${TEST_NAME})

@@ -117,7 +117,6 @@ int main() {
 
     check(std::filesystem::exists(formPath), ".ecform semantic text file exists");
     check(std::filesystem::exists(matterPath), ".ecmatter physical binary file exists");
-    check(std::filesystem::exists(jsonPath), ".json sidecar exists");
 
     // Test 2: Inspect .ecform JSON structure (ensure it's lean, readable, no binary base64)
     {

@@ -564,18 +564,14 @@ bool SecurityManager::isAPICallAllowed(const std::string& api, const std::string
 bool SecurityManager::validateJavaScript(const std::string& script, const std::string& source) {
     std::lock_guard<std::recursive_mutex> lock(_mutex);
     // Check for malicious patterns
-    for (const auto& pattern : _maliciousPatterns) {
-        if (std::regex_search(script, pattern)) {
-            logEvent(SecurityEventType::JAVASCRIPT_EXECUTION, "Malicious JavaScript detected", source, script, true);
-            return false;
-        }
+    if (std::regex_search(script, _maliciousRegex)) {
+        logEvent(SecurityEventType::JAVASCRIPT_EXECUTION, "Malicious JavaScript detected", source, script, true);
+        return false;
     }
     
     // Check for suspicious patterns
-    for (const auto& pattern : _suspiciousPatterns) {
-        if (std::regex_search(script, pattern)) {
-            logEvent(SecurityEventType::SUSPICIOUS_ACTIVITY, "Suspicious JavaScript detected", source, script);
-        }
+    if (std::regex_search(script, _suspiciousRegex)) {
+        logEvent(SecurityEventType::SUSPICIOUS_ACTIVITY, "Suspicious JavaScript detected", source, script);
     }
     
     return true;
@@ -737,10 +733,8 @@ bool SecurityManager::_isLocalFile(const std::string& url) {
 }
 
 bool SecurityManager::_containsSuspiciousContent(const std::string& content) {
-    for (const auto& pattern : _suspiciousPatterns) {
-        if (std::regex_search(content, pattern)) {
-            return true;
-        }
+    if (std::regex_search(content, _suspiciousRegex)) {
+        return true;
     }
     return false;
 }
@@ -750,22 +744,11 @@ bool SecurityManager::_isRateLimited(const std::string& source) {
 }
 
 void SecurityManager::_initializePatterns() {
-    _suspiciousPatterns.clear();
-    _maliciousPatterns.clear();
-    
     // Suspicious patterns
-    _suspiciousPatterns.push_back(std::regex(R"(<script)", std::regex::icase));
-    _suspiciousPatterns.push_back(std::regex(R"(javascript:)", std::regex::icase));
-    _suspiciousPatterns.push_back(std::regex(R"(on\w+\s*=)", std::regex::icase));
-    _suspiciousPatterns.push_back(std::regex(R"(eval\s*\()", std::regex::icase));
-    _suspiciousPatterns.push_back(std::regex(R"(document\.write)", std::regex::icase));
+    _suspiciousRegex = std::regex(R"(<script|javascript:|on\w+\s*=|eval\s*\(|document\.write)", std::regex::icase | std::regex::optimize);
     
     // Malicious patterns
-    _maliciousPatterns.push_back(std::regex(R"(<script[^>]*>.*?</script>)", std::regex::icase));
-    _maliciousPatterns.push_back(std::regex(R"(javascript:[^;]*;)", std::regex::icase));
-    _maliciousPatterns.push_back(std::regex(R"(onload\s*=)", std::regex::icase));
-    _maliciousPatterns.push_back(std::regex(R"(onerror\s*=)", std::regex::icase));
-    _maliciousPatterns.push_back(std::regex(R"(<iframe)", std::regex::icase));
+    _maliciousRegex = std::regex(R"(<script[^>]*>.*?</script>|javascript:[^;]*;|onload\s*=|onerror\s*=|<iframe)", std::regex::icase | std::regex::optimize);
 }
 
 bool SecurityManager::_checkRateLimit(const std::string& source) {

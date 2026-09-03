@@ -391,7 +391,7 @@ nlohmann::json bodyPartToJson(const BodyPart& part) {
 void bodyPartFromJson(const nlohmann::json& j, BodyPart& part) {
     // Primary 3D shape (must come before texture load so face count is correct)
     if (j.contains("geometryType")) {
-        part.setPrimaryShape(static_cast<Object::ShapeKind>(j["geometryType"].get<int>()));
+        part.setPrimaryShape(static_cast<ObjectTypes::ShapeKind>(j["geometryType"].get<int>()));
     }
 
     // Geometry dimensions

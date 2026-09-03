@@ -1,0 +1,1654 @@
+{
+  "saveFormat": "zone-identity-v1",
+  "injected_by": "Gemini Spark (authored)",
+  "authors": [
+    "Zach"
+  ],
+  "currentZone": 0,
+  "currentZoneId": "FarLands",
+  "flying": true,
+  "cameraPos": [
+    0.0,
+    2.0,
+    5.0
+  ],
+  "cameraFront": [
+    0.0,
+    0.0,
+    -1.0
+  ],
+  "cameraUp": [
+    0.0,
+    1.0,
+    0.0
+  ],
+  "yaw": -90.0,
+  "pitch": 0.0,
+  "currentColor": [
+    1.0,
+    1.0,
+    1.0
+  ],
+  "materials": [
+    {
+      "name": "material.farlands.safezone",
+      "baseColor": [
+        0.4,
+        0.4,
+        0.5
+      ],
+      "opacity": 1.0
+    },
+    {
+      "name": "material.farlands.terrain",
+      "baseColor": [
+        0.1,
+        0.8,
+        0.2
+      ],
+      "opacity": 1.0
+    },
+    {
+      "name": "material.farlands.dark",
+      "baseColor": [
+        0.1,
+        0.1,
+        0.1
+      ],
+      "opacity": 1.0
+    }
+  ],
+  "categories": [
+    {
+      "objectID": "author.gemini-spark",
+      "shapeKind": 12,
+      "geometryType": 12,
+      "shapeParams": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "transform": [
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "center": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "materialId": "",
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Gemini Spark"
+        }
+      }
+    },
+    {
+      "objectID": "Zach",
+      "shapeKind": 12,
+      "geometryType": 12,
+      "shapeParams": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "transform": [
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "center": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "materialId": "",
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Zachary Zhang"
+        }
+      }
+    },
+    {
+      "objectID": "category.farlands",
+      "shapeKind": 12,
+      "geometryType": 12,
+      "shapeParams": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "transform": [
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "center": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "materialId": "",
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Far Lands"
+        }
+      }
+    },
+    {
+      "objectID": "category.farlands.field",
+      "shapeKind": 12,
+      "geometryType": 12,
+      "shapeParams": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "transform": [
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "center": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "materialId": "",
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Far Lands Mathematical Field"
+        }
+      }
+    },
+    {
+      "objectID": "category.farlands.control",
+      "shapeKind": 12,
+      "geometryType": 12,
+      "shapeParams": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "transform": [
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "center": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "materialId": "",
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Far Lands Control"
+        }
+      }
+    },
+    {
+      "objectID": "category.control",
+      "shapeKind": 12,
+      "geometryType": 12,
+      "shapeParams": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "transform": [
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "center": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "materialId": "",
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "UI Controls"
+        }
+      }
+    },
+    {
+      "objectID": "category.control.slider",
+      "shapeKind": 12,
+      "geometryType": 12,
+      "shapeParams": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "transform": [
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "center": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "materialId": "",
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Continuous Slider"
+        }
+      }
+    },
+    {
+      "objectID": "category.control.button",
+      "shapeKind": 12,
+      "geometryType": 12,
+      "shapeParams": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "transform": [
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "center": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "materialId": "",
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Action Button"
+        }
+      }
+    }
+  ],
+  "zoneRefs": [
+    {
+      "identifier": "FarLands",
+      "kind": "farlands"
+    }
+  ],
+  "zones": [
+    {
+      "injected_by": "Gemini Spark (authored)",
+      "authors": [
+        "Zach"
+      ],
+      "name": "FarLands",
+      "identifier": "FarLands",
+      "owner": "Player",
+      "parentZone": "",
+      "scope": "Local",
+      "qualities": {
+        "kind": "farlands"
+      },
+      "world": {
+        "objects": [
+          {
+            "objectID": "object.farlands.core_field",
+            "shapeKind": 10,
+            "geometryType": 10,
+            "shapeParams": [
+              1.0,
+              1.0,
+              1.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              1000.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1000.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1000.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "center": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "materialId": "material.farlands.terrain",
+            "faceColors": [
+              [
+                0.1,
+                0.8,
+                0.2
+              ],
+              [
+                0.1,
+                0.8,
+                0.2
+              ],
+              [
+                0.1,
+                0.8,
+                0.2
+              ],
+              [
+                0.1,
+                0.8,
+                0.2
+              ],
+              [
+                0.1,
+                0.8,
+                0.2
+              ],
+              [
+                0.1,
+                0.8,
+                0.2
+              ]
+            ],
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "The Far Lands Spatial Math Field"
+              },
+              "field.frequency": {
+                "t": "double",
+                "v": 1.0
+              },
+              "field.amplitude": {
+                "t": "double",
+                "v": 1.0
+              },
+              "farlands.active": {
+                "t": "bool",
+                "v": true
+              },
+              "astDefinition": {
+                "t": "string",
+                "v": "\n            {\n                \"kind\": \"sdf\",\n                \"op\": \"noise\",\n                \"scale\": 1.0,\n                \"children\": [\n                    {\"kind\": \"var\", \"name\": \"position\"}\n                ]\n            }\n            "
+              }
+            }
+          },
+          {
+            "objectID": "state.farlands",
+            "shapeKind": 0,
+            "geometryType": 0,
+            "shapeParams": [
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              0.01,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.01,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.01,
+              0.0,
+              0.0,
+              -10.0,
+              0.0,
+              1.0
+            ],
+            "center": [
+              0.0,
+              -10.0,
+              0.0
+            ],
+            "materialId": "material.farlands.dark",
+            "faceColors": [
+              [
+                0.1,
+                0.1,
+                0.1
+              ],
+              [
+                0.1,
+                0.1,
+                0.1
+              ],
+              [
+                0.1,
+                0.1,
+                0.1
+              ],
+              [
+                0.1,
+                0.1,
+                0.1
+              ],
+              [
+                0.1,
+                0.1,
+                0.1
+              ],
+              [
+                0.1,
+                0.1,
+                0.1
+              ]
+            ],
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "Far Lands State"
+              },
+              "distanceFromOrigin": {
+                "t": "double",
+                "v": 0.0
+              },
+              "corruptionLevel": {
+                "t": "double",
+                "v": 0.0
+              },
+              "musicIntensity": {
+                "t": "double",
+                "v": 0.0
+              }
+            }
+          },
+          {
+            "objectID": "object.farlands.spawn_platform",
+            "shapeKind": 0,
+            "geometryType": 0,
+            "shapeParams": [
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              20.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              20.0,
+              0.0,
+              0.0,
+              -2.0,
+              0.0,
+              1.0
+            ],
+            "center": [
+              0.0,
+              -2.0,
+              0.0
+            ],
+            "materialId": "material.farlands.safezone",
+            "faceColors": [
+              [
+                0.4,
+                0.4,
+                0.5
+              ],
+              [
+                0.4,
+                0.4,
+                0.5
+              ],
+              [
+                0.4,
+                0.4,
+                0.5
+              ],
+              [
+                0.4,
+                0.4,
+                0.5
+              ],
+              [
+                0.4,
+                0.4,
+                0.5
+              ],
+              [
+                0.4,
+                0.4,
+                0.5
+              ]
+            ],
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "Spawn Safezone"
+              }
+            }
+          },
+          {
+            "objectID": "hud.title",
+            "shapeKind": 13,
+            "geometryType": 13,
+            "shapeParams": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              28.0
+            ],
+            "transform": [
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "center": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "x2D": 30.0,
+            "y2D": 30.0,
+            "zOrder2D": 30,
+            "materialId": "",
+            "faceColors": [
+              [
+                0.8,
+                0.2,
+                0.8
+              ],
+              [
+                0.8,
+                0.2,
+                0.8
+              ],
+              [
+                0.8,
+                0.2,
+                0.8
+              ],
+              [
+                0.8,
+                0.2,
+                0.8
+              ],
+              [
+                0.8,
+                0.2,
+                0.8
+              ],
+              [
+                0.8,
+                0.2,
+                0.8
+              ]
+            ],
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "EARTHCALL FAR LANDS"
+              },
+              "label2D": {
+                "t": "string",
+                "v": "EARTHCALL FAR LANDS"
+              },
+              "shape.width2D": {
+                "t": "double",
+                "v": 0.0
+              },
+              "shape.height2D": {
+                "t": "double",
+                "v": 28.0
+              },
+              "pickPriority": {
+                "t": "double",
+                "v": -1.0
+              }
+            }
+          },
+          {
+            "objectID": "hud.subtitle",
+            "shapeKind": 13,
+            "geometryType": 13,
+            "shapeParams": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              14.0
+            ],
+            "transform": [
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "center": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "x2D": 30.0,
+            "y2D": 60.0,
+            "zOrder2D": 30,
+            "materialId": "",
+            "faceColors": [
+              [
+                0.6,
+                0.6,
+                0.6
+              ],
+              [
+                0.6,
+                0.6,
+                0.6
+              ],
+              [
+                0.6,
+                0.6,
+                0.6
+              ],
+              [
+                0.6,
+                0.6,
+                0.6
+              ],
+              [
+                0.6,
+                0.6,
+                0.6
+              ],
+              [
+                0.6,
+                0.6,
+                0.6
+              ]
+            ],
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "Walk outward to witness math corrupt geometry."
+              },
+              "label2D": {
+                "t": "string",
+                "v": "Walk outward to witness math corrupt geometry."
+              },
+              "shape.width2D": {
+                "t": "double",
+                "v": 0.0
+              },
+              "shape.height2D": {
+                "t": "double",
+                "v": 14.0
+              },
+              "pickPriority": {
+                "t": "double",
+                "v": -1.0
+              }
+            }
+          },
+          {
+            "objectID": "hud.dist",
+            "shapeKind": 13,
+            "geometryType": 13,
+            "shapeParams": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              14.0
+            ],
+            "transform": [
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "center": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "x2D": 30.0,
+            "y2D": 90.0,
+            "zOrder2D": 30,
+            "materialId": "",
+            "faceColors": [
+              [
+                0.9,
+                0.9,
+                0.2
+              ],
+              [
+                0.9,
+                0.9,
+                0.2
+              ],
+              [
+                0.9,
+                0.9,
+                0.2
+              ],
+              [
+                0.9,
+                0.9,
+                0.2
+              ],
+              [
+                0.9,
+                0.9,
+                0.2
+              ],
+              [
+                0.9,
+                0.9,
+                0.2
+              ]
+            ],
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "Distance: [calculated dynamically]"
+              },
+              "label2D": {
+                "t": "string",
+                "v": "Distance: [calculated dynamically]"
+              },
+              "shape.width2D": {
+                "t": "double",
+                "v": 0.0
+              },
+              "shape.height2D": {
+                "t": "double",
+                "v": 14.0
+              },
+              "pickPriority": {
+                "t": "double",
+                "v": -1.0
+              }
+            }
+          }
+        ]
+      },
+      "formationRelations": [
+        {
+          "type": "subcategory-of",
+          "entityA": "category.farlands.field",
+          "entityB": "category.farlands",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "subcategory-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787395000
+            }
+          ]
+        },
+        {
+          "type": "subcategory-of",
+          "entityA": "category.farlands.control",
+          "entityB": "category.farlands",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "subcategory-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787395000
+            }
+          ]
+        },
+        {
+          "type": "subcategory-of",
+          "entityA": "category.control.slider",
+          "entityB": "category.control",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "subcategory-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787395000
+            }
+          ]
+        },
+        {
+          "type": "subcategory-of",
+          "entityA": "category.control.button",
+          "entityB": "category.control",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "subcategory-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787395000
+            }
+          ]
+        },
+        {
+          "type": "authored-by",
+          "entityA": "category.farlands",
+          "entityB": "author.gemini-spark",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "authored-by",
+              "deltaWeight": 1.0,
+              "timestamp": 1787395000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "object.farlands.core_field",
+          "entityB": "category.farlands.field",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787395000
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "authoredLaws": {
+    "firstMoverEnabled": {
+      "physics-gravity": true,
+      "physics-kinematics": true,
+      "physics-acoustics": true,
+      "interaction-channel": true,
+      "locomotion-channel": true,
+      "creation-channel": true,
+      "shape-generator-3d-law": false,
+      "tool-create-3d-law": false
+    },
+    "formationMembers": [
+      "law-farlands-calc-dist",
+      "law-farlands-field-corruption",
+      "law-farlands-hud-sync",
+      "law-farlands-ambient-sound"
+    ],
+    "laws": [
+      {
+        "id": "law-farlands-calc-dist",
+        "name": "Calculate Player Distance from Center",
+        "enabled": true,
+        "authority": 0,
+        "activation": 1,
+        "scope": 1,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "author.gemini-spark"
+        ],
+        "conditionSubjects": [],
+        "targets": [],
+        "conditionModel": {
+          "kind": 0,
+          "path": "displayName",
+          "op": 0,
+          "operand": {
+            "t": "string",
+            "v": "Far Lands State"
+          }
+        },
+        "actionModel": {
+          "kind": 5,
+          "children": [
+            {
+              "kind": 8,
+              "path": "distanceFromOrigin",
+              "bindings": {
+                "x": "@locomotion-channel.playerX",
+                "z": "@locomotion-channel.playerZ"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 0.01,
+                          "factors": {
+                            "x": 2.0
+                          }
+                        },
+                        {
+                          "c": 0.01,
+                          "factors": {
+                            "z": 2.0
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "provenance": [
+          {
+            "type": "authored-by",
+            "entityA": "law-farlands-calc-dist",
+            "entityB": "author.gemini-spark",
+            "directed": true,
+            "weight": 1.0,
+            "events": [
+              {
+                "description": "authored-by",
+                "deltaWeight": 1.0,
+                "timestamp": 1787395000
+              }
+            ]
+          }
+        ],
+        "applicationLog": []
+      },
+      {
+        "id": "law-farlands-field-corruption",
+        "name": "Modulate Terrain Math Field Based on Distance",
+        "enabled": true,
+        "authority": 0,
+        "activation": 1,
+        "scope": 1,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "author.gemini-spark"
+        ],
+        "conditionSubjects": [],
+        "targets": [],
+        "conditionModel": {
+          "kind": 2,
+          "relationType": "instance-of",
+          "otherId": "category.farlands.field"
+        },
+        "actionModel": {
+          "kind": 5,
+          "children": [
+            {
+              "kind": 8,
+              "path": "field.frequency",
+              "bindings": {
+                "d": "@state.farlands.distanceFromOrigin"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {}
+                        },
+                        {
+                          "c": 0.005,
+                          "factors": {
+                            "d": 1.0
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 8,
+              "path": "field.amplitude",
+              "bindings": {
+                "d": "@state.farlands.distanceFromOrigin"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {}
+                        },
+                        {
+                          "c": 0.002,
+                          "factors": {
+                            "d": 1.0
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "provenance": [
+          {
+            "type": "authored-by",
+            "entityA": "law-farlands-field-corruption",
+            "entityB": "author.gemini-spark",
+            "directed": true,
+            "weight": 1.0,
+            "events": [
+              {
+                "description": "authored-by",
+                "deltaWeight": 1.0,
+                "timestamp": 1787395000
+              }
+            ]
+          }
+        ],
+        "applicationLog": []
+      },
+      {
+        "id": "law-farlands-hud-sync",
+        "name": "Update HUD with current corruption level",
+        "enabled": true,
+        "authority": 0,
+        "activation": 1,
+        "scope": 1,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "author.gemini-spark"
+        ],
+        "conditionSubjects": [],
+        "targets": [],
+        "conditionModel": {
+          "kind": 0,
+          "path": "displayName",
+          "op": 0,
+          "operand": {
+            "t": "string",
+            "v": "Distance: [calculated dynamically]"
+          }
+        },
+        "actionModel": {
+          "kind": 5,
+          "children": [
+            {
+              "kind": 8,
+              "path": "color.r",
+              "bindings": {
+                "d": "@state.farlands.distanceFromOrigin"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 0.2,
+                          "factors": {}
+                        }
+                      ]
+                    },
+                    "hi": 0.0,
+                    "includeHi": true
+                  },
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 0.001,
+                          "factors": {
+                            "d": 1.0
+                          }
+                        },
+                        {
+                          "c": 0.2,
+                          "factors": {}
+                        }
+                      ]
+                    },
+                    "lo": 0.0,
+                    "includeLo": true,
+                    "hi": 1000.0,
+                    "includeHi": true
+                  },
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.2,
+                          "factors": {}
+                        }
+                      ]
+                    },
+                    "lo": 1000.0,
+                    "includeLo": true
+                  }
+                ],
+                "input": "d"
+              }
+            },
+            {
+              "kind": 8,
+              "path": "color.g",
+              "bindings": {
+                "d": "@state.farlands.distanceFromOrigin"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 0.8,
+                          "factors": {}
+                        }
+                      ]
+                    },
+                    "hi": 0.0,
+                    "includeHi": true
+                  },
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": -0.001,
+                          "factors": {
+                            "d": 1.0
+                          }
+                        },
+                        {
+                          "c": 0.8,
+                          "factors": {}
+                        }
+                      ]
+                    },
+                    "lo": 0.0,
+                    "includeLo": true,
+                    "hi": 1000.0,
+                    "includeHi": true
+                  },
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": -0.19999999999999996,
+                          "factors": {}
+                        }
+                      ]
+                    },
+                    "lo": 1000.0,
+                    "includeLo": true
+                  }
+                ],
+                "input": "d"
+              }
+            },
+            {
+              "kind": 8,
+              "path": "color.b",
+              "bindings": {
+                "d": "@state.farlands.distanceFromOrigin"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 0.2,
+                          "factors": {}
+                        }
+                      ]
+                    },
+                    "hi": 0.0,
+                    "includeHi": true
+                  },
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 0.001,
+                          "factors": {
+                            "d": 1.0
+                          }
+                        },
+                        {
+                          "c": 0.2,
+                          "factors": {}
+                        }
+                      ]
+                    },
+                    "lo": 0.0,
+                    "includeLo": true,
+                    "hi": 1000.0,
+                    "includeHi": true
+                  },
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.2,
+                          "factors": {}
+                        }
+                      ]
+                    },
+                    "lo": 1000.0,
+                    "includeLo": true
+                  }
+                ],
+                "input": "d"
+              }
+            }
+          ]
+        },
+        "provenance": [
+          {
+            "type": "authored-by",
+            "entityA": "law-farlands-hud-sync",
+            "entityB": "author.gemini-spark",
+            "directed": true,
+            "weight": 1.0,
+            "events": [
+              {
+                "description": "authored-by",
+                "deltaWeight": 1.0,
+                "timestamp": 1787395000
+              }
+            ]
+          }
+        ],
+        "applicationLog": []
+      },
+      {
+        "id": "law-farlands-ambient-sound",
+        "name": "Ambient Harmonic Resonance of the Far Lands",
+        "enabled": true,
+        "authority": 0,
+        "activation": 1,
+        "scope": 1,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "author.gemini-spark"
+        ],
+        "conditionSubjects": [],
+        "targets": [],
+        "conditionModel": {
+          "kind": 2,
+          "relationType": "instance-of",
+          "otherId": "category.farlands.field"
+        },
+        "actionModel": {
+          "kind": 5,
+          "children": [
+            {
+              "kind": 8,
+              "path": "acoustic.frequency",
+              "bindings": {
+                "d": "@state.farlands.distanceFromOrigin"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 40.0,
+                          "factors": {}
+                        },
+                        {
+                          "c": -0.05,
+                          "factors": {
+                            "d": 1.0
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 8,
+              "path": "acoustic.amplitude",
+              "bindings": {
+                "d": "@state.farlands.distanceFromOrigin"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 0.1,
+                          "factors": {}
+                        }
+                      ]
+                    },
+                    "hi": 0.0,
+                    "includeHi": true
+                  },
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 0.0001,
+                          "factors": {
+                            "d": 1.0
+                          }
+                        },
+                        {
+                          "c": 0.1,
+                          "factors": {}
+                        }
+                      ]
+                    },
+                    "lo": 0.0,
+                    "includeLo": true,
+                    "hi": 5000.0,
+                    "includeHi": true
+                  },
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 0.6,
+                          "factors": {}
+                        }
+                      ]
+                    },
+                    "lo": 5000.0,
+                    "includeLo": true
+                  }
+                ],
+                "input": "d"
+              }
+            },
+            {
+              "kind": 0,
+              "path": "acoustic.waveType",
+              "operand": {
+                "t": "string",
+                "v": "sine"
+              }
+            },
+            {
+              "kind": 0,
+              "path": "acoustic.isSoundEmitter",
+              "operand": {
+                "t": "bool",
+                "v": true
+              }
+            }
+          ]
+        },
+        "provenance": [
+          {
+            "type": "authored-by",
+            "entityA": "law-farlands-ambient-sound",
+            "entityB": "author.gemini-spark",
+            "directed": true,
+            "weight": 1.0,
+            "events": [
+              {
+                "description": "authored-by",
+                "deltaWeight": 1.0,
+                "timestamp": 1787395000
+              }
+            ]
+          }
+        ],
+        "applicationLog": []
+      }
+    ],
+    "triggers": {}
+  }
+}
