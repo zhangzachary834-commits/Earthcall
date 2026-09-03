@@ -62,6 +62,7 @@ public:
     Formation(const Formation& o)
         : Singular(o), members(o.members), relationMgr(o.relationMgr),
           subformations(cloneSubformations(o.subformations, 0)),
+          pendingRelations(o.pendingRelations),
           relationTypeTag(o.relationTypeTag), _root(o._root) {}
     Formation& operator=(const Formation& o) {
         if (this != &o) {
@@ -71,6 +72,7 @@ public:
             subformations = cloneSubformations(o.subformations, 0);
             relationTypeTag = o.relationTypeTag;
             _root = o._root;
+            pendingRelations = o.pendingRelations;
             // _formationId intentionally kept: assignment replaces content,
             // not identity.
         }
@@ -144,6 +146,8 @@ public:
     void rebuildCompleteGraph();
     void applyAttachmentRelations();
     const std::vector<std::shared_ptr<Formation>>& getSubformations() const { return subformations; }
+    const std::vector<std::shared_ptr<Relation>>& getPendingRelations() const { return pendingRelations; }
+    void retryPendingRelations();
     std::string getRelationTypeTag() const { return relationTypeTag; }
     void setRelationTypeTag(const std::string& type) { relationTypeTag = type; }
 
@@ -280,6 +284,7 @@ private:
     std::vector<Singular*> members;
     RelationManager relationMgr;
     std::vector<std::shared_ptr<Formation>> subformations;
+    std::vector<std::shared_ptr<Relation>> pendingRelations;
     std::string relationTypeTag;
 
     // The being this Formation is ABOUT. Non-owning, like every member, and
