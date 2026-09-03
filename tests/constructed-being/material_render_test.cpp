@@ -12,13 +12,20 @@
 #include "ConstructedBeing/Material/MaterialManager.hpp"
 
 #include <GLFW/glfw3.h>
+#if defined(NO_OPENGL_RENDERER)
+// No OpenGL headers
+#elif defined(__APPLE__) && !defined(__EMSCRIPTEN__)
 #include <OpenGL/gl.h>
+#else
+#include <GL/gl.h>
+#endif
 #include <cassert>
 #include <cstdio>
 #include <vector>
 
 extern MaterialManager materials; // the global the renderer resolves against
 
+#ifndef NO_OPENGL_RENDERER
 namespace {
 
 // Total red channel over the framebuffer. Geometry and background are identical
@@ -45,8 +52,10 @@ long long renderAndSumRed(Object& obj) {
 }
 
 } // namespace
+#endif
 
 int main() {
+#ifndef NO_OPENGL_RENDERER
     if (!glfwInit()) { std::fprintf(stderr, "material_render_test: glfwInit failed\n"); return 1; }
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
     GLFWwindow* window = glfwCreateWindow(64, 64, "material_render_test", nullptr, nullptr);
@@ -82,6 +91,9 @@ int main() {
 
     glfwDestroyWindow(window);
     glfwTerminate();
+#else
+    std::printf("  material_render_test: OpenGL renderer disabled, skipping render pass\n");
+#endif
     std::printf("material_render_test: ALL OK\n");
     return 0;
 }

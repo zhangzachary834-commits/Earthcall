@@ -12,13 +12,20 @@
 #include "Singularity/Screen/Renderer.hpp"
 
 #include <GLFW/glfw3.h>
+#if defined(NO_OPENGL_RENDERER)
+// No OpenGL headers
+#elif defined(__APPLE__) && !defined(__EMSCRIPTEN__)
 #include <OpenGL/gl.h>
+#else
+#include <GL/gl.h>
+#endif
 #include <cassert>
 #include <cstdio>
 #include <vector>
 
 extern MaterialManager materials;
 
+#ifndef NO_OPENGL_RENDERER
 namespace {
 
 const int bg[3] = {64, 128, 191}; // clear colour 0.25/0.5/0.75
@@ -64,8 +71,10 @@ long long brightness(Object& obj) {
 }
 
 } // namespace
+#endif
 
 int main() {
+#ifndef NO_OPENGL_RENDERER
     if (!glfwInit()) { std::fprintf(stderr, "primitive_render_test: glfwInit failed\n"); return 1; }
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
     GLFWwindow* window = glfwCreateWindow(64, 64, "primitive_render_test", nullptr, nullptr);
@@ -162,6 +171,9 @@ int main() {
 
     glfwDestroyWindow(window);
     glfwTerminate();
+#else
+    std::printf("  primitive_render_test: OpenGL renderer disabled, skipping render pass\n");
+#endif
     std::printf("primitive_render_test: ALL OK\n");
     return 0;
 }

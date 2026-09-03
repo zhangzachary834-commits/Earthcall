@@ -16,6 +16,13 @@
 #include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
 
 #include <GLFW/glfw3.h>
+#if defined(NO_OPENGL_RENDERER)
+// No OpenGL headers
+#elif defined(__APPLE__) && !defined(__EMSCRIPTEN__)
+#include <OpenGL/gl.h>
+#else
+#include <GL/gl.h>
+#endif
 #include <cassert>
 #include <cstdio>
 #include <cstdlib>
@@ -150,6 +157,7 @@ int main() {
         std::printf("  switch:  smooth -> complex leaves only the complex cache\n");
     }
 
+#ifndef NO_OPENGL_RENDERER
     // --- The cached mesh must actually reach the framebuffer ----------------
     // Everything above passes even with an empty cache, because the support cloud
     // was always rebuilt. If _smoothMesh were empty the object would simply render
@@ -195,6 +203,7 @@ int main() {
         std::printf("  render:  cached mesh drew %zu px at r=0.3, %zu px at r=0.9\n",
                     smallPx, bigPx);
     }
+#endif
 
     glfwDestroyWindow(window);
     glfwTerminate();
