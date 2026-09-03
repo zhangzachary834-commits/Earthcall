@@ -11,9 +11,7 @@
 class BrushSystem;
 class DesignSystem;
 
-namespace ZonesOfEarth {
-    class ZoneManager;
-}
+class ZoneManager;
 
 namespace Integration {
 
@@ -93,7 +91,7 @@ public:
     // System Access Setters
     void setBrushSystem(BrushSystem* system) { _brushSystem = system; }
     void setDesignSystem(DesignSystem* system) { _designSystem = system; }
-    void setZoneManager(ZonesOfEarth::ZoneManager* manager) { _zoneManager = manager; }
+    void setZoneManager(ZoneManager* manager) { _zoneManager = manager; }
 
     // Lifecycle
     void update();
@@ -109,7 +107,7 @@ private:
     // System references
     BrushSystem* _brushSystem = nullptr;
     DesignSystem* _designSystem = nullptr;
-    ZonesOfEarth::ZoneManager* _zoneManager = nullptr;
+    ZoneManager* _zoneManager = nullptr;
 
     // Design Elements Storage
     std::map<std::string, DesignElementRecord> _designElements;
