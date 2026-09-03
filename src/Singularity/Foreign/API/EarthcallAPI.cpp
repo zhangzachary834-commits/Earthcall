@@ -3,6 +3,7 @@
 #include "Singularity/Screen/BrushSystem.hpp"
 #include "Singularity/FirstMoverOntology/Legacy/DesignSystem.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
+#include "ZonesOfEarth/Zone/Zone.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
 #include <iostream>
@@ -530,8 +531,10 @@ bool EarthcallAPI::deleteObject(const std::string& id) {
     }
     
     std::cout << "🌍 Deleting object: " << id << std::endl;
-    // TODO: Actually delete the object
-    return true;
+    if (_zoneManager) {
+        return _zoneManager->active().removeObjectById(id);
+    }
+    return false;
 }
 
 glm::vec3 EarthcallAPI::getCameraPosition() {
