@@ -129,8 +129,19 @@ int main() {
     for (const auto& objJson : zoneJson["world"]["objects"]) {
         auto obj = std::make_unique<Object>();
         obj->setObjectID(objJson["objectID"].get<std::string>());
-        obj->setShape(static_cast<Object::ShapeKind>(objJson["shapeKind"].get<int>()),
-                      Object::ShapeParams{});
+        Object::ShapeParams sp{};
+        if (objJson.contains("shapeParams") && objJson["shapeParams"].is_array()) {
+            const auto& a = objJson["shapeParams"];
+            if (a.size() >= 9) {
+                sp.r = a[0]; sp.ry = a[1]; sp.rz = a[2]; sp.halfH = a[3]; sp.majorR = a[4];
+                sp.minorR = a[5]; sp.paraboloidA = a[6]; sp.ovoidAsym = a[7]; sp.fillet = a[8];
+            }
+            if (a.size() >= 11) {
+                sp.width2D = a[9].get<float>();
+                sp.height2D = a[10].get<float>();
+            }
+        }
+        obj->setShape(static_cast<Object::ShapeKind>(objJson["shapeKind"].get<int>()), sp);
         if (objJson.contains("transform")) {
             glm::mat4 m(1.0f);
             const auto& t = objJson["transform"];
@@ -761,6 +772,52 @@ int main() {
               "3D raycast from camera hits studio.btn.spawn-orb on desk");
         check(rayTo("studio.pad.c5") == "studio.pad.c5",
               "3D raycast from camera hits studio.pad.c5 on desk");
+
+        // Sequential pad clicks across all 7 pads multiple times
+        {
+            const std::vector<std::string> padIds = {
+                "hud.pad.c5", "hud.pad.d5", "hud.pad.e5", "hud.pad.f5",
+                "hud.pad.g5", "hud.pad.a5", "hud.pad.b5"
+            };
+            size_t soundsStart = g_sounded.size();
+            bool allPadsSucceeded = true;
+            for (int pass = 0; pass < 3; ++pass) {
+                for (size_t p = 0; p < padIds.size(); ++p) {
+                    const auto& padId = padIds[p];
+                    Object* pad = findObject(padId.c_str());
+                    if (!pad) {
+                        std::printf("  FAILED: pad %s not found\n", padId.c_str());
+                        allPadsSucceeded = false;
+                        break;
+                    }
+                    glm::vec4 r = pad->getRect2D();
+                    float cx = (r.x + r.z) * 0.5f;
+                    float cy = (r.y + r.w) * 0.5f;
+                    
+                    reachable.clear();
+                    for (const auto& o : zone->getOwnedObjects()) if (o) reachable.push_back(o.get());
+
+                    Singularity::Input::InteractionChannel::Sense sPad;
+                    sPad.pointerX = cx;
+                    sPad.pointerY = cy;
+                    sPad.left = true;
+                    interaction.observe(sPad, reachable);
+                    sPad.left = false;
+                    interaction.observe(sPad, reachable);
+                    laws.tick();
+
+                    if (interaction.hoveredId != padId) {
+                        std::printf("  FAILED at pass %d pad %s: hoveredId is '%s', rect is [%.1f, %.1f, %.1f, %.1f], pointer at (%.1f, %.1f)\n",
+                                    pass, padId.c_str(), interaction.hoveredId.c_str(), r.x, r.y, r.z, r.w, cx, cy);
+                        allPadsSucceeded = false;
+                    }
+                }
+            }
+            std::printf("  After 21 pad clicks: sounded %zu notes (expected %zu)\n",
+                        g_sounded.size() - soundsStart, (size_t)21);
+            check(allPadsSucceeded && (g_sounded.size() - soundsStart == 21),
+                  "clicking all 7 pads in sequence for 3 passes sounds all 21 notes");
+        }
     }
 
     if (g_failures == 0) {
