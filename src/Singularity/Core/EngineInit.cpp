@@ -237,9 +237,9 @@ void Engine::initLogic() {
         ctx.unpackForAuthoring = mgr.getSaveLoadState().unpackForAuthoring;
         mgr.saveStateWithLog("", ctx);
     });
-    _mainMenu.addOption("Save As...", GLFW_KEY_A, [this]() { mgr.getSaveLoadState().showSaveWindow = true; });
-    _mainMenu.addOption("Load", GLFW_KEY_L, [this]() { mgr.updateSaveFiles(); mgr.getSaveLoadState().showLoadWindow = true; });
-    _mainMenu.addOption("Save Manager", GLFW_KEY_G, [this]() { mgr.getSaveLoadState().showManager = true; });
+    _mainMenu.addOption("Save As...", GLFW_KEY_A, [this]() { mgr.getSaveLoadState().showSaveWindow = true; ensureCursorUnlocked(); });
+    _mainMenu.addOption("Load", GLFW_KEY_L, [this]() { mgr.updateSaveFiles(); mgr.getSaveLoadState().showLoadWindow = true; ensureCursorUnlocked(); });
+    _mainMenu.addOption("Save Manager", GLFW_KEY_G, [this]() { mgr.getSaveLoadState().showManager = true; ensureCursorUnlocked(); });
     _mainMenu.addOption("Toggle Chat", GLFW_KEY_H, [this]() {
         _showChatWindow = !_showChatWindow;
         if (_showChatWindow) ensureCursorUnlocked();
@@ -496,10 +496,15 @@ void Engine::registerCallbacks() {
             // WantCaptureMouse: observe()'s own `blind` gate is what decides
             // whether a captured frame's edges mean anything, the same way a
             // polled level would have been gated.
-            if (button == GLFW_MOUSE_BUTTON_LEFT && self->getLawManager()) {
-                if (auto* interaction =
-                        Singularity::Input::InteractionChannel::find(*self->getLawManager())) {
-                    interaction->noteMouseButton(action == GLFW_PRESS);
+            if (button == GLFW_MOUSE_BUTTON_LEFT) {
+                if (action == GLFW_PRESS) {
+                    self->noteMouseLeftJustPressed();
+                }
+                if (self->getLawManager()) {
+                    if (auto* interaction =
+                            Singularity::Input::InteractionChannel::find(*self->getLawManager())) {
+                        interaction->noteMouseButton(action == GLFW_PRESS);
+                    }
                 }
             }
 

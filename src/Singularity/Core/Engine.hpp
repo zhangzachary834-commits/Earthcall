@@ -68,6 +68,15 @@ public:
     bool isMouseLeftPressedLast() const { return _mouseLeftPressedLast; }
     void setMouseLeftPressedLast(bool v) { _mouseLeftPressedLast = v; }
 
+    bool isMouseLeftJustPressed() const { return _mouseLeftJustPressed; }
+    void noteMouseLeftJustPressed() { _mouseLeftJustPressed = true; }
+    bool consumeMouseLeftJustPressed() {
+        const bool p = _mouseLeftJustPressed;
+        _mouseLeftJustPressed = false;
+        return p;
+    }
+    void clearMouseLeftJustPressed() { _mouseLeftJustPressed = false; }
+
     bool& devToolsWindowOpen() { return _devToolsWindowOpen; }
     bool& performanceMetricsWindowOpen() { return _performanceMetricsWindowOpen; }
         
@@ -117,6 +126,7 @@ private:
     double _worldTime = 0.0;
 
     bool _mouseLeftPressedLast = false;
+    bool _mouseLeftJustPressed = false;
     bool _devToolsWindowOpen = false;
     bool _performanceMetricsWindowOpen = false;
     bool _creationConsoleOpen = false;

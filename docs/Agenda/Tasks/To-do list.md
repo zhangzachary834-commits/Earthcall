@@ -130,6 +130,7 @@ Addendum: Also ensure save system works in every case and everything that needs 
 - **Revise `INTELLECTUAL_LINEAGE.md` against the verification audit** — §4 (bounds), §5 (capabilities vs. the `TransferPolicy` ACL), §7 (attestation already built in `Identity/`), §11 (partial reversibility), plus six smaller corrections. → [`INTELLECTUAL_LINEAGE_VERIFICATION_2026-09-03.md`](../../audits/INTELLECTUAL_LINEAGE_VERIFICATION_2026-09-03.md) §§8-9
 - **Threat model and trust boundary for `SECURITY_FEATURES.md`** — 397 lines, still names neither; the real TCB includes wgpu-native, Dawn, ImGui, four vendored C++ libraries, two OpenSSL trees, and a Python venv carrying Flask and Playwright. → same audit §4
 - **Write `Time_Chronos_and_Kairos.md`, or drop the pointer to it** — `INTELLECTUAL_LINEAGE.md` §9 cites it; no such file has ever existed and nothing else in the tree mentions kairos.
+- ✅ **In-world and tool click lockout across zones** — done and verified (2026-09-03): Reconciled Dear ImGui physical mouse button releases each frame before `NewFrame` to prevent stuck drag states from latching `WantCaptureMouse`, and wired edge-accurate callback press consumption to 3D creation tools. Verified: `creation_tools_test`, `interaction_channel_test`, `synthesis_studio_app_test`, `earthcall_webgpu` build.
 
 ## Things to explore and deliberate on:**
 - To what extent should Earthcall use OOP versus ECS?

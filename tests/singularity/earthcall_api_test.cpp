@@ -126,7 +126,8 @@ int main() {
     assert(api.setZoneTheme("zone1", "forest"));
     assert(api.getZones().empty()); // Hardcoded to empty right now
     assert(api.createObject("rock", glm::vec3(0.0f)));
-    assert(api.modifyObject("rock1", glm::vec3(1.0f), glm::vec3(1.0f)));
+    // modifyObject returns false when _zoneManager is null
+    assert(!api.modifyObject("rock1", glm::vec3(1.0f), glm::vec3(1.0f)));
     // deleteObject returns false when _zoneManager is null
     assert(!api.deleteObject("rock1"));
     assert(api.setCameraPosition(glm::vec3(10.0f)));

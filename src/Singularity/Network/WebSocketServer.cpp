@@ -916,6 +916,7 @@ WebSocketServer::WebSocketServer() : _impl(std::make_unique<Impl>()) {
     _impl->server.set_access_channels(websocketpp::log::alevel::access_core);
     
     _impl->server.init_asio();
+    _impl->server.set_reuse_addr(true);
     _impl->server.set_max_message_size(4 * 1024 * 1024); // 4 MB limit
     
     _impl->server.set_validate_handler(std::bind(&Impl::on_validate, _impl.get(), std::placeholders::_1));
@@ -930,34 +931,71 @@ WebSocketServer::~WebSocketServer() {
 
 void WebSocketServer::start(uint16_t port) {
     if (_impl->running) return;
-    _impl->running = true;
-    
-    _impl->server.listen("127.0.0.1", std::to_string(port));
-    _impl->server.start_accept();
-    
-    _impl->worker = std::thread([this, port]() {
-        std::cout << "[WebSocketServer] Earthcall C++ WebSocket Server listening on ws://127.0.0.1:" << port << std::endl;
-        _impl->server.run();
-    });
+
+    try {
+        _impl->server.set_reuse_addr(true);
+        websocketpp::lib::error_code ec;
+        _impl->server.listen("127.0.0.1", std::to_string(port), ec);
+        if (ec) {
+            std::cerr << "[WebSocketServer] Warning: Failed to listen on ws://127.0.0.1:" << port 
+                      << " (" << ec.message() << "). Port is already in use by another instance or process.\n"
+                      << "[WebSocketServer] WebSocket bridge disabled for this session; Earthcall will continue running." 
+                      << std::endl;
+            return;
+        }
+
+        _impl->server.start_accept(ec);
+        if (ec) {
+            std::cerr << "[WebSocketServer] Warning: Failed to accept connections on ws://127.0.0.1:" << port 
+                      << " (" << ec.message() << ")." << std::endl;
+            return;
+        }
+
+        _impl->running = true;
+        _impl->worker = std::thread([this, port]() {
+            std::cout << "[WebSocketServer] Earthcall C++ WebSocket Server listening on ws://127.0.0.1:" << port << std::endl;
+            try {
+                _impl->server.run();
+            } catch (const std::exception& e) {
+                std::cerr << "[WebSocketServer] Worker error: " << e.what() << std::endl;
+            } catch (...) {
+                std::cerr << "[WebSocketServer] Worker unknown error." << std::endl;
+            }
+        });
+    } catch (const std::exception& e) {
+        std::cerr << "[WebSocketServer] Exception starting server: " << e.what() 
+                  << ". Earthcall will continue running without WebSocket bridge." << std::endl;
+        _impl->running = false;
+    } catch (...) {
+        std::cerr << "[WebSocketServer] Unknown exception starting server. Earthcall will continue running without WebSocket bridge." << std::endl;
+        _impl->running = false;
+    }
 }
 
 void WebSocketServer::stop() {
     if (!_impl->running) return;
     _impl->running = false;
-    
-    _impl->server.stop_listening();
-    {
-        std::lock_guard<std::mutex> lock(_impl->connections_mutex);
-        for (auto& hdl : _impl->connections) {
-            websocketpp::lib::error_code ec;
-            _impl->server.close(hdl, websocketpp::close::status::normal, "Server shutting down", ec);
+
+    try {
+        websocketpp::lib::error_code ec;
+        _impl->server.stop_listening(ec);
+        {
+            std::lock_guard<std::mutex> lock(_impl->connections_mutex);
+            for (auto& hdl : _impl->connections) {
+                websocketpp::lib::error_code close_ec;
+                _impl->server.close(hdl, websocketpp::close::status::normal, "Server shutting down", close_ec);
+            }
+            _impl->connections.clear();
         }
-        _impl->connections.clear();
-    }
-    _impl->server.stop();
-    
-    if (_impl->worker.joinable()) {
-        _impl->worker.join();
+        _impl->server.stop();
+
+        if (_impl->worker.joinable()) {
+            _impl->worker.join();
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "[WebSocketServer] Exception stopping server: " << e.what() << std::endl;
+    } catch (...) {
+        std::cerr << "[WebSocketServer] Unknown exception stopping server." << std::endl;
     }
 }
 

@@ -305,6 +305,24 @@ void Engine::tick(float dt) {
     ImGui_ImplOpenGL2_NewFrame();
 #endif
     ImGui_ImplGlfw_NewFrame();
+
+    // Physical button reconciliation for Dear ImGui:
+    // On macOS / GLFW, focus transitions, popup windows, or rapid trackpad clicks can
+    // drop GLFW_RELEASE events. If io.MouseDown[i] remains true when the physical button
+    // is released, ImGui treats it as an active drag and holds io.WantCaptureMouse = true
+    // indefinitely across the entire screen, blinding world interaction and 3D tools.
+    // Dispatched before ImGui::NewFrame() so the queued release event is processed immediately.
+    {
+        ImGuiIO& io = ImGui::GetIO();
+        const bool winFocused = (_window && glfwGetWindowAttrib(_window, GLFW_FOCUSED) != 0);
+        for (int i = 0; i < IM_ARRAYSIZE(io.MouseDown); ++i) {
+            const bool physicalDown = winFocused && (_window && glfwGetMouseButton(_window, i) == GLFW_PRESS);
+            if (!physicalDown && io.MouseDown[i]) {
+                io.AddMouseButtonEvent(i, false);
+            }
+        }
+    }
+
     ImGui::NewFrame();
 
     // 1. Process physical & logical simulation (populates input, locomotion, creation, interaction, zone)

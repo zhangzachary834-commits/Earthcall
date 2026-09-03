@@ -134,6 +134,7 @@ namespace Core {
         
         _keyboardHandler->update();
         _mouseHandler->update();
+        _mouseLeftPressedLast = (_window && glfwGetMouseButton(_window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS);
 
         // Update camera front from mouse handler
         _camera->front = _mouseHandler->calculateCameraFront();
@@ -191,5 +192,7 @@ namespace Core {
         Universe::instance().setClock(_worldTime, static_cast<double>(dt));
         auto tZone1 = clock::now();
         g_frameTimings.zone_ms = getMs(tZone0, tZone1);
+
+        clearMouseLeftJustPressed();
     }
 }

@@ -442,7 +442,8 @@ void Tool::ShapeGenerator3D(GLFWwindow *window, Core::Engine *engine, ZoneManage
     // off an ImGui window, would spawn on release of nothing.
     static bool devToolMouseLeftPressedLast = false;
     const bool mouseLeftNow = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
-    const bool justPressed = mouseLeftNow && !devToolMouseLeftPressedLast;
+    const bool justPressed = (engine && engine->consumeMouseLeftJustPressed()) ||
+                             (mouseLeftNow && !devToolMouseLeftPressedLast);
     devToolMouseLeftPressedLast = mouseLeftNow;
     if (!justPressed) return;
 
