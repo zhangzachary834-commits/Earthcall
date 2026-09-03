@@ -493,16 +493,34 @@ bool EarthcallAPI::createObject(const std::string& type, const glm::vec3& positi
 }
 
 bool EarthcallAPI::modifyObject(const std::string& id, const glm::vec3& position, const glm::vec3& scale) {
-    (void)position; // Suppress unused parameter warning
-    (void)scale;    // Suppress unused parameter warning
     if (!_checkPermission("world_access")) {
         std::cout << "❌ Permission denied: world_access" << std::endl;
         return false;
     }
     
     std::cout << "🌍 Modifying object: " << id << std::endl;
-    // TODO: Actually modify the object
-    return true;
+
+    if (_zoneManager) {
+        for (auto& zone : _zoneManager->zones()) {
+            for (auto& obj : zone->getOwnedObjectsMutable()) {
+                if (obj->getIdentifier() == id) {
+                    glm::mat4 t = obj->getTransform();
+                    glm::vec3 oldScale(glm::length(glm::vec3(t[0])), glm::length(glm::vec3(t[1])), glm::length(glm::vec3(t[2])));
+
+                    if (oldScale.x > 1e-6f) t[0] = (t[0] / oldScale.x) * scale.x;
+                    if (oldScale.y > 1e-6f) t[1] = (t[1] / oldScale.y) * scale.y;
+                    if (oldScale.z > 1e-6f) t[2] = (t[2] / oldScale.z) * scale.z;
+
+                    t[3] = glm::vec4(position, 1.0f);
+                    obj->setTransform(t);
+                    return true;
+                }
+            }
+        }
+    }
+
+    std::cout << "❌ Object not found: " << id << std::endl;
+    return false;
 }
 
 bool EarthcallAPI::deleteObject(const std::string& id) {
