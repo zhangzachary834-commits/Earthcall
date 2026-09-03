@@ -360,6 +360,7 @@ bool Zone::removeObject(Object* obj) {
     auto it = std::find_if(_objects.begin(), _objects.end(),
                            [obj](const std::shared_ptr<Object>& p) { return p.get() == obj; });
     if (it == _objects.end()) return false;
+    Universe::instance().bumpStructuralRevision();
 
     Core::EventBus::instance().publish(
         ECA::Event{"object-destroyed", obj, nullptr, std::time(nullptr)});

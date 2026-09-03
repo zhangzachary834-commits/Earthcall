@@ -33,6 +33,22 @@ public:
         
         // Math Operations
         Add,           // R[dst] = R[src1] + R[src2_reg]
+        Lerp,          // R[dst] = R[dst] + (R[src1] - R[dst]) * R[src2]
+        Drive,
+        Spawn,
+        Map,
+        Flow,
+        Publish,
+        Create,
+        AddProperty,
+        RemoveProperty,
+        AddElement,
+        RemoveElement,
+        Destroy,
+        PlayAudio,
+        AuthorZone,
+        AddRelation,
+        Synthesize,
         Sub,           // R[dst] = R[src1] - R[src2_reg]
         Mul,           // R[dst] = R[src1] * R[src2_reg]
         
