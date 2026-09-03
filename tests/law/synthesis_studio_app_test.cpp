@@ -23,6 +23,8 @@
 #include "Singularity/Core/EventBus.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ConditionModel.hpp"
+#include "Singularity/Input/Interaction/InteractionChannel.hpp"
+#include "Singularity/Input/Interaction/ControlPatterns.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
@@ -81,10 +83,15 @@ void applyAuthoredProperties(Object& obj, const nlohmann::json& props) {
         const std::string name = it.key();
         const auto& val = it.value();
         const std::string type = val.value("t", std::string{});
-        if (type == "string") obj.setDynamicProperty(name, PropertyValue(val["v"].get<std::string>()));
-        else if (type == "bool") obj.setDynamicProperty(name, PropertyValue(val["v"].get<bool>()));
-        else if (type == "int") obj.setDynamicProperty(name, PropertyValue(val["v"].get<int>()));
-        else if (type == "double") obj.setDynamicProperty(name, PropertyValue(val["v"].get<double>()));
+        PropertyValue pv;
+        if (type == "string") pv = PropertyValue(val["v"].get<std::string>());
+        else if (type == "bool") pv = PropertyValue(val["v"].get<bool>());
+        else if (type == "int") pv = PropertyValue(val["v"].get<int>());
+        else if (type == "double") pv = PropertyValue(val["v"].get<double>());
+        if (Property* p = obj.findProperty(name)) {
+            p->setValue(pv);
+        }
+        obj.setDynamicProperty(name, pv);
     }
 }
 
@@ -131,6 +138,11 @@ int main() {
                 for (int r = 0; r < 4; ++r) m[c][r] = t[c * 4 + r].get<float>();
             obj->setTransform(m);
         }
+        if (objJson.contains("center")) {
+            obj->setCenter(glm::vec3(objJson["center"][0].get<float>(),
+                                     objJson["center"][1].get<float>(),
+                                     objJson["center"][2].get<float>()));
+        }
         if (objJson.contains("faceColors")) {
             int face = 0;
             for (const auto& c : objJson["faceColors"]) {
@@ -139,6 +151,7 @@ int main() {
         }
         if (objJson.contains("x2D")) obj->setX2D(objJson["x2D"].get<float>());
         if (objJson.contains("y2D")) obj->setY2D(objJson["y2D"].get<float>());
+        if (objJson.contains("zOrder2D")) obj->setZOrder2D(objJson["zOrder2D"].get<int>());
         if (objJson.contains("authoredProperties"))
             applyAuthoredProperties(*obj, objJson["authoredProperties"]);
         zone->addObject(std::move(obj));
@@ -252,8 +265,8 @@ int main() {
     //
     //    With no sink registered the node must FAIL, not report success —
     //    that inversion is the whole of audit §A1. With a sink, the authored
-    //    frequency must arrive: the pad sounds 523.25 Hz because that is what
-    //    the pad carries, not because anything here said so.
+    //    frequency must arrive: each pad sounds its own authored frequency
+    //    across all seven notes of the major scale (C5 to B5).
     // ------------------------------------------------------------------
     {
         registerAudioSink(nullptr);
@@ -265,24 +278,68 @@ int main() {
                              const std::string& timbre) {
             g_sounded.push_back({subject.getIdentifier(), frequency, amplitude, timbre});
         });
-        g_sounded.clear();
-        activate(*padC5);
-        check(g_sounded.size() == 1, "clicking the C5 pad sounds exactly one note");
-        if (g_sounded.size() == 1) {
-            check(nearly(g_sounded[0].frequency, 523.25),
-                  "the note is the pad's own authored 523.25 Hz");
-            check(g_sounded[0].subject == "studio.pad.c5",
-                  "the note is sounded by the pad, not by some shared emitter");
-            check(g_sounded[0].timbre == "triangle",
-                  "the timbre is one the synthesizer has (\"crystal\" was not)");
-        }
 
-        // …and the tactile half of the same law.
-        check(nearly(readNumber(*padC5, "position.y"), 0.88 - 0.04),
-              "the pad dips 4 cm under the press");
-        publish("object-released", padC5);
-        check(nearly(readNumber(*padC5, "position.y"), 0.88),
-              "and springs back to its authored rest height on release");
+        struct ScaleNote {
+            const char* pad3d;
+            const char* pad2d;
+            double freq;
+            const char* noteName;
+        };
+        const ScaleNote majorScale[] = {
+            {"studio.pad.c5", "hud.pad.c5", 523.25, "C5"},
+            {"studio.pad.d5", "hud.pad.d5", 587.33, "D5"},
+            {"studio.pad.e5", "hud.pad.e5", 659.25, "E5"},
+            {"studio.pad.f5", "hud.pad.f5", 698.46, "F5"},
+            {"studio.pad.g5", "hud.pad.g5", 783.99, "G5"},
+            {"studio.pad.a5", "hud.pad.a5", 880.00, "A5"},
+            {"studio.pad.b5", "hud.pad.b5", 987.77, "B5"},
+        };
+
+        for (const auto& note : majorScale) {
+            Object* p3d = findObject(note.pad3d);
+            Object* p2d = findObject(note.pad2d);
+            check(p3d != nullptr, std::string("3D major scale pad exists: ") + note.pad3d);
+            check(p2d != nullptr, std::string("2D HUD major scale pad exists: ") + note.pad2d);
+
+            if (p3d) {
+                g_sounded.clear();
+                activate(*p3d);
+                check(g_sounded.size() == 1,
+                      std::string("clicking 3D pad ") + note.noteName + " sounds exactly one note");
+                if (!g_sounded.empty()) {
+                    check(nearly(g_sounded[0].frequency, note.freq),
+                          std::string("3D pad ") + note.noteName + " plays " + std::to_string(note.freq) + " Hz");
+                    check(g_sounded[0].subject == note.pad3d,
+                          std::string("note sounded by ") + note.pad3d);
+                    check(g_sounded[0].timbre == "triangle",
+                          "the timbre is triangle");
+                }
+                check(nearly(readNumber(*p3d, "position.y"), 0.88 - 0.04),
+                      std::string("3D pad ") + note.noteName + " dips under press");
+                publish("object-released", p3d);
+                check(nearly(readNumber(*p3d, "position.y"), 0.88),
+                      std::string("3D pad ") + note.noteName + " springs back on release");
+            }
+
+            if (p2d) {
+                g_sounded.clear();
+                activate(*p2d);
+                check(g_sounded.size() == 1,
+                      std::string("clicking 2D pad ") + note.noteName + " sounds exactly one note");
+                if (!g_sounded.empty()) {
+                    check(nearly(g_sounded[0].frequency, note.freq),
+                          std::string("2D pad ") + note.noteName + " plays " + std::to_string(note.freq) + " Hz");
+                    check(g_sounded[0].subject == note.pad2d,
+                          std::string("note sounded by ") + note.pad2d);
+                }
+                const double restY2D = readNumber(*p2d, "restY2D");
+                check(nearly(readNumber(*p2d, "y2D"), restY2D + 3.0),
+                      std::string("2D pad ") + note.noteName + " shifts y2D under press");
+                publish("object-released", p2d);
+                check(nearly(readNumber(*p2d, "y2D"), restY2D),
+                      std::string("2D pad ") + note.noteName + " springs back on release");
+            }
+        }
     }
 
     // ------------------------------------------------------------------
@@ -473,7 +530,238 @@ int main() {
         extras.pop_back();
     }
 
-    registerAudioSink(nullptr);
+    registerAudioSink([](Singular& subject, double frequency, double amplitude,
+                         const std::string& timbre) {
+        g_sounded.push_back({subject.getIdentifier(), frequency, amplitude, timbre});
+    });
+
+    // ------------------------------------------------------------------
+    // 9. Real mouse picking and click registration via InteractionChannel.
+    //
+    //    Guards the 4 root causes found in the click registration investigation:
+    //    (1) shape.width2D/height2D correctly loaded from authoredProperties;
+    //    (2) 2D controls pick accurately across their full width without overlap;
+    //    (3) captions/text with negative pickPriority never swallow clicks;
+    //    (4) real click (down + up) publishes object-clicked, fires
+    //        control-button-law, and triggers the studio's action laws.
+    // ------------------------------------------------------------------
+    {
+        Object* btnSpawn = findObject("hud.btn.spawn-orb");
+        Object* dock = findObject("hud.dock.bg");
+        Object* padC5 = findObject("hud.pad.c5");
+        Object* padD5 = findObject("hud.pad.d5");
+        Object* btnDraw = findObject("hud.btn.draw-stroke");
+        Object* hudTitle = findObject("hud.title");
+
+        check(btnSpawn && btnSpawn->getShapeParams().width2D == 132.0f,
+              "hud.btn.spawn-orb loaded authored width2D (132)");
+        check(dock && dock->getShapeParams().width2D == 820.0f,
+              "hud.dock.bg loaded authored width2D (820)");
+        check(padC5 && padD5 && padC5->getRect2D().z <= padD5->getRect2D().x,
+              "2D HUD pads do not overlap (pad C5 ends before pad D5 begins)");
+        check(hudTitle && hudTitle->pickPriority() < 0.0,
+              "captions carry negative pickPriority and are transparent to picking");
+
+        Singularity::Input::InteractionChannel interaction;
+        interaction.setEnabled(true);
+
+        std::vector<Object*> reachable;
+        for (const auto& o : zone->getOwnedObjects()) {
+            if (o) reachable.push_back(o.get());
+        }
+
+        auto pickAt = [&](float x, float y) -> std::string {
+            Singularity::Input::InteractionChannel::Sense s;
+            s.pointerX = x;
+            s.pointerY = y;
+            interaction.observe(s, reachable);
+            return interaction.hoveredId;
+        };
+
+        check(pickAt(260.0f, 660.0f) == "hud.btn.spawn-orb",
+              "picking left side of spawn button hits hud.btn.spawn-orb");
+        check(pickAt(360.0f, 660.0f) == "hud.btn.spawn-orb",
+              "picking right side of spawn button hits hud.btn.spawn-orb");
+        check(pickAt(585.0f, 660.0f) == "hud.pad.d5",
+              "picking center of pad D5 hits hud.pad.d5 (not stolen by C5)");
+        check(pickAt(635.0f, 660.0f) == "hud.pad.e5",
+              "picking center of pad E5 hits hud.pad.e5 (not stolen by D5)");
+        check(pickAt(1000.0f, 660.0f) == "hud.btn.draw-stroke",
+              "picking right side of draw button hits hud.btn.draw-stroke");
+        check(pickAt(80.0f, 50.0f) == "",
+              "caption text2d does not swallow clicks at (80, 50)");
+
+        // Register control patterns (control-button-law, control-toggle-law)
+        Singular* author = findBeing("Zach");
+        if (author) {
+            Singularity::Input::syncRegisterControlPatterns(laws, categories, *author);
+        }
+
+        // Real click on spawn button: mouse down + mouse up
+        const size_t countBeforeClick = zone->getOwnedObjects().size();
+        Singularity::Input::InteractionChannel::Sense sDown;
+        sDown.pointerX = 300.0f;
+        sDown.pointerY = 660.0f;
+        sDown.left = true;
+        interaction.observe(sDown, reachable);
+
+        Singularity::Input::InteractionChannel::Sense sUp;
+        sUp.pointerX = 300.0f;
+        sUp.pointerY = 660.0f;
+        sUp.left = false;
+        interaction.observe(sUp, reachable);
+
+        // Process triggered events
+        laws.tick();
+
+        const size_t countAfterClick = zone->getOwnedObjects().size();
+        check(countAfterClick == countBeforeClick + 1,
+              "real mouse click through InteractionChannel fires control-button-law and spawns an orb");
+
+        // Repeat 20 clicks to test multi-click stability (user reported issue after ~15 clicks)
+        bool multiClickOk = true;
+        for (int i = 0; i < 20; ++i) {
+            reachable.clear();
+            for (const auto& o : zone->getOwnedObjects()) {
+                if (o) reachable.push_back(o.get());
+            }
+            interaction.observe(sDown, reachable);
+            interaction.observe(sUp, reachable);
+            laws.tick();
+            if (zone->getOwnedObjects().size() != countAfterClick + i + 1) {
+                std::printf("  FAILED at click %d: count is %zu, expected %zu\n",
+                            i + 1, zone->getOwnedObjects().size(), countAfterClick + i + 1);
+                multiClickOk = false;
+                break;
+            }
+        }
+        check(multiClickOk, "20 successive clicks through InteractionChannel reliably spawn 20 orbs");
+
+        // Test UI capture transitions (switching to ImGui and back)
+        {
+            reachable.clear();
+            for (const auto& o : zone->getOwnedObjects()) {
+                if (o) reachable.push_back(o.get());
+            }
+
+            // Scenario A: Click happened entirely inside ImGui
+            Singularity::Input::InteractionChannel::Sense sImGuiDown = sDown;
+            sImGuiDown.uiCaptured = true;
+            interaction.observe(sImGuiDown, reachable);
+            Singularity::Input::InteractionChannel::Sense sImGuiUp = sUp;
+            sImGuiUp.uiCaptured = true;
+            interaction.observe(sImGuiUp, reachable);
+            laws.tick();
+
+            // Scenario B: Mouse pressed inside ImGui, released outside in the world
+            interaction.observe(sImGuiDown, reachable);
+            interaction.observe(sUp, reachable);
+            laws.tick();
+
+            // Scenario C: Now regular click in the world on pad C5
+            const size_t soundsBefore = g_sounded.size();
+            Singularity::Input::InteractionChannel::Sense sPadDown;
+            sPadDown.pointerX = 535.0f; // center of pad C5
+            sPadDown.pointerY = 660.0f;
+            sPadDown.left = true;
+            interaction.observe(sPadDown, reachable);
+
+            Singularity::Input::InteractionChannel::Sense sPadUp = sPadDown;
+            sPadUp.left = false;
+            interaction.observe(sPadUp, reachable);
+            laws.tick();
+
+            check(g_sounded.size() == soundsBefore + 1,
+                  "click on pad C5 works after ImGui UI-captured events");
+        }
+
+        // Test click with small tremor (within clickSlopPixels)
+        {
+            reachable.clear();
+            for (const auto& o : zone->getOwnedObjects()) {
+                if (o) reachable.push_back(o.get());
+            }
+            const size_t orbsBefore = zone->getOwnedObjects().size();
+            Singularity::Input::InteractionChannel::Sense sJitterDown;
+            sJitterDown.pointerX = 260.0f; // on spawn button (x: 236..368)
+            sJitterDown.pointerY = 660.0f;
+            sJitterDown.left = true;
+            interaction.observe(sJitterDown, reachable);
+
+            // Move 4 pixels while held down (< 12px clickSlopPixels)
+            Singularity::Input::InteractionChannel::Sense sJitterMove = sJitterDown;
+            sJitterMove.pointerX = 264.0f;
+            interaction.observe(sJitterMove, reachable);
+            check(!interaction.dragging, "pointer moved 4px does not set dragging flag");
+
+            // Release inside the button
+            Singularity::Input::InteractionChannel::Sense sJitterUp = sJitterMove;
+            sJitterUp.left = false;
+            interaction.observe(sJitterUp, reachable);
+            laws.tick();
+
+            check(zone->getOwnedObjects().size() == orbsBefore + 1,
+                  "click with natural hand tremor reliably fires object-clicked and spawns orb");
+        }
+
+        // Test window focus loss mid-press and clean recovery
+        {
+            reachable.clear();
+            for (const auto& o : zone->getOwnedObjects()) {
+                if (o) reachable.push_back(o.get());
+            }
+
+            // Mouse button pressed down
+            Singularity::Input::InteractionChannel::Sense sDownOnBtn;
+            sDownOnBtn.pointerX = 260.0f;
+            sDownOnBtn.pointerY = 660.0f;
+            sDownOnBtn.left = true;
+            interaction.observe(sDownOnBtn, reachable);
+            check(interaction.leftDown, "button is held down before focus loss");
+
+            // Window loses focus (e.g. user Cmd-Tabs or switches tabs)
+            interaction.onWindowFocus(false);
+            check(!interaction.leftDown && interaction.pressedId.empty(),
+                  "focus loss clears held button and in-flight pressedId");
+
+            // Window regains focus
+            interaction.onWindowFocus(true);
+
+            // Fresh click on Pad D5 works cleanly without being blocked
+            const size_t soundsBefore = g_sounded.size();
+            Singularity::Input::InteractionChannel::Sense sPadD5;
+            sPadD5.pointerX = 585.0f; // pad D5
+            sPadD5.pointerY = 660.0f;
+            sPadD5.left = true;
+            interaction.observe(sPadD5, reachable);
+            sPadD5.left = false;
+            interaction.observe(sPadD5, reachable);
+            laws.tick();
+
+            check(g_sounded.size() == soundsBefore + 1,
+                  "fresh click immediately succeeds after window focus loss and recovery");
+        }
+
+        // 3D picking from camera position
+        glm::vec3 camPos(0.0f, 1.35f, -2.6f);
+        auto rayTo = [&](const char* targetId) -> std::string {
+            Object* target = findObject(targetId);
+            if (!target) return "";
+            glm::vec3 dir = glm::normalize(target->getCenter() - camPos);
+            Singularity::Input::InteractionChannel::Sense s3D;
+            s3D.rayOrigin = camPos;
+            s3D.rayDirection = dir;
+            s3D.pointerX = -999.0f;
+            s3D.pointerY = -999.0f;
+            interaction.observe(s3D, reachable);
+            return interaction.hoveredId;
+        };
+
+        check(rayTo("studio.btn.spawn-orb") == "studio.btn.spawn-orb",
+              "3D raycast from camera hits studio.btn.spawn-orb on desk");
+        check(rayTo("studio.pad.c5") == "studio.pad.c5",
+              "3D raycast from camera hits studio.pad.c5 on desk");
+    }
 
     if (g_failures == 0) {
         std::printf("=== Synthesis Studio: all checks passed ===\n");

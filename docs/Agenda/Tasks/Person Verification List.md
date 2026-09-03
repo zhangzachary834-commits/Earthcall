@@ -67,3 +67,12 @@
 - [ ] `/` → press `/` → verify the intended `/` action occurs | Zach: I tried this with no windows loaded and "/" changed nothing visible. The intended behavior is unclear to me.
 - [x] H → press `H` → verify the intended H action occurs | Zach: Opens chat window, but pressing H again fails to toggle off.
 - [x] K → press `K` → verify the intended K action occurs | 
+## Synthesis Studio (added 2026-09-02, from the play-test that corrected the audit's first pass)
+- [ ] **2D controls on a HiDPI/Retina display** → open the Synthesis Studio → click any 2D HUD dock control → verify it responds. **Known blocking finding (Zach's play-test, 2026-09-02):** every 2D control is unclickable on a Retina Mac — the 2D draw and the 2D pick are in different coordinate spaces. See [SYNTHESIS_STUDIO_AUDIT_2026-09-02.md](../../audits/SYNTHESIS_STUDIO_AUDIT_2026-09-02.md) §A0. Re-verify here after the fix, on both a Retina and a non-Retina display.
+- [ ] 3D console → click the two buttons and the four chord pads → verify orbs spawn and notes sound (audit reports every sound in the studio is currently silent)
+- [ ] Slider → set a value → save → reload → verify the slider does not teleport on load
+- [ ] Ambient theme toggle → toggle on → toggle off → verify it is not a one-way latch
+
+*Note (2026-09-02): the HiDPI finding above was found by walking, not by a test, and was
+recorded first in an audit rather than here. Findings a Person discovers by hand belong on
+this list — that is what it is for. See [The Week the Chorus Became a Queue](../../Reflections%20on%20Earthcall%27s%20Progression/Reflections%20on%20Trajectory/The_Week_The_Chorus_Became_A_Queue.md) §6.*

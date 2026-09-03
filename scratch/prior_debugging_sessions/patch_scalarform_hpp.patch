@@ -1,0 +1,19 @@
+--- src/Singularity/OntoMath/ScalarForm.hpp
++++ src/Singularity/OntoMath/ScalarForm.hpp
+@@ -10,6 +10,7 @@
+ #include <string>
+ #include <variant>
+ #include <vector>
++#include <atomic>
+ 
+ namespace OntoMath {
+ 
+@@ -17,6 +18,8 @@
+ struct RangeValue { double lo; double hi; };
+ struct MathNode;
+ 
++extern std::atomic<uint32_t> g_astEvaluations;
++
+ // A single mathematical term. It is a product of a coefficient and zero or
+ // more named variables (which may have negative or fractional exponents).
+ // Used as the building block for ScalarForm polynomials.

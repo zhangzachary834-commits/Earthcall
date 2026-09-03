@@ -1,1 +1,0 @@
-Earthcall Ourverse Manifesto/EarthcallOurverse.md

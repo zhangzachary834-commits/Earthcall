@@ -1,0 +1,16 @@
+--- src/Singularity/OntoMath/ScalarForm.cpp
++++ src/Singularity/OntoMath/ScalarForm.cpp
+@@ -1209,7 +1209,12 @@
+ }
+ 
+ std::optional<PropertyValue> MathNode::evaluate(const std::map<std::string, PropertyValue>& vars, const Singular* subject) const {
+-    g_astEvaluations.fetch_add(1, std::memory_order_relaxed);
++    thread_local uint32_t t_localCount = 0;
++    t_localCount++;
++    if (t_localCount >= 1024) {
++        g_astEvaluations.fetch_add(t_localCount, std::memory_order_relaxed);
++        t_localCount = 0;
++    }
+     switch(op) {
+         case Op::ScalarLeaf: {
+             // Bind only what this form actually reads. Term::evaluate looks

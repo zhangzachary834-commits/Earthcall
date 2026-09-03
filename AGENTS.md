@@ -189,6 +189,8 @@ you read the source—run things**, and **after finishing, ask whether anything 
 ## The Agenda
 - The To-Do List is `docs/Agenda/Tasks/To-do list.md`. Consult it whenever a prompt asks what Earthcall needs next, unless the prompt says otherwise.
 - Anything you work on that isn't listed goes in it — create categories as needed, and add tasks any other document implies but the list omits.
+- **The To-Do list is an index, not a record: one sentence per bullet.** Detail goes in that task's own folder, `docs/Agenda/Tasks/Specific Tasks/<Task_Slug>/<Task_Slug>.md`, and the bullet links to it. Never grow a bullet into a paragraph.
+- **If your work leaves anything only a Person can confirm — a control to click, a thing to look at, a feel to judge — write the check into `docs/Agenda/Tasks/Person Verification List.md` before you finish.** Not the To-Do list, not an audit. This applies to every session, not just ones asked "what's next", and it is the rule agents miss most: that file has one commit in its life and Zach wrote it. A green suite is not a witness. — Zach's instruction, hoisted here 2026-09-02 because line 6 of the To-Do list was never being read.
 
 ## Document Conventions
 - Audits belong in `docs/audits/`. Implementation plans go to `docs/plans/`. 

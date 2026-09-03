@@ -1,0 +1,9 @@
+# `LawManager::tick` is ~43% slower after the 2026-09-02 law-legibility fixes, and `frame_lag_test` LAGs because of it
+
+**Status:** open  
+**Section in the To-Do list:** Performance (opened 2026-08-24 by `tests/singularity/frame_lag_test.cpp`)  
+**Split out of `docs/Agenda/Tasks/To-do list.md` on 2026-09-02** by Claude Opus 5 (session `session_01GsrBySNw4oG1zof5AQ21KM`), per Zach's instruction that each To-Do bullet be one sentence linking to its own task document. **Content below is the original bullet, verbatim — nothing was summarized away.**
+
+---
+
+**`LawManager::tick` is ~43% slower after the 2026-09-02 law-legibility fixes, and `frame_lag_test` LAGs because of it.** Measured back-to-back on the same machine load, **in `frame_lag_test`'s default world — `saves/worlds/chess_app.json`, headless, simulation-only, the law-heaviest save in the tree**, NOT the app's boot zone: 11.63 ms baseline -> 16.67 ms. In the actual boot zone the whole law path is 0.544 ms of a 30.4 ms frame, so this costs about +0.16 ms there (see the entry above). Scaling stays linear (k = 1.100), so it is a constant factor. The cost buys the law network being able to SEE authored properties and relation edges at all — before it, every continuous law over an authored property or a category membership fired zero times, which is cheap and wrong (see the Synthesis Studio audit's REPAIR PASS §R2, §R3). **`tests/singularity/frame_lag_baseline.txt` was deliberately NOT widened** — the LAG line is real and should keep saying so until it is paid down. Next reduction: seed only the property names some condition could read; `propheticHears` already answers exactly that for the change callback, but it needs a re-seed when law text changes or a law added later goes deaf, which is the failure this whole pass was about. Do it carefully or not at all. — Claude Opus 5, 2026-09-02

@@ -1,6 +1,6 @@
 {
   "saveFormat": "zone-identity-v1",
-  "injected_by": "Gemini Spark (authored) / Claude Opus 5 (repaired 2026-09-02)",
+  "injected_by": "Gemini Spark (authored) / Claude Opus 5 (repaired) / Antigravity (major scale 2026-09-02)",
   "authors": [
     "Zach"
   ],
@@ -130,6 +130,15 @@
       "opacity": 1.0
     },
     {
+      "name": "material.studio.D5",
+      "baseColor": [
+        0.98,
+        0.5,
+        0.18
+      ],
+      "opacity": 1.0
+    },
+    {
       "name": "material.studio.E5",
       "baseColor": [
         1.0,
@@ -139,11 +148,29 @@
       "opacity": 1.0
     },
     {
+      "name": "material.studio.F5",
+      "baseColor": [
+        0.35,
+        0.8,
+        0.25
+      ],
+      "opacity": 1.0
+    },
+    {
       "name": "material.studio.G5",
       "baseColor": [
         0.18,
         0.88,
         0.45
+      ],
+      "opacity": 1.0
+    },
+    {
+      "name": "material.studio.A5",
+      "baseColor": [
+        0.18,
+        0.62,
+        0.98
       ],
       "opacity": 1.0
     },
@@ -654,7 +681,7 @@
   ],
   "zones": [
     {
-      "injected_by": "Gemini Spark (authored) / Claude Opus 5 (repaired 2026-09-02)",
+      "injected_by": "Gemini Spark (authored) / Claude Opus 5 (repaired) / Antigravity (major scale 2026-09-02)",
       "authors": [
         "Zach"
       ],
@@ -1680,7 +1707,7 @@
               0.0
             ],
             "transform": [
-              0.46,
+              0.28,
               0.0,
               0.0,
               0.0,
@@ -1692,13 +1719,13 @@
               0.0,
               0.54,
               0.0,
-              0.42,
+              0.29,
               0.88,
               -0.35,
               1.0
             ],
             "center": [
-              0.42,
+              0.29,
               0.88,
               -0.35
             ],
@@ -1771,6 +1798,112 @@
             }
           },
           {
+            "objectID": "studio.pad.d5",
+            "shapeKind": 0,
+            "geometryType": 0,
+            "shapeParams": [
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              0.28,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.14,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.54,
+              0.0,
+              0.62,
+              0.88,
+              -0.35,
+              1.0
+            ],
+            "center": [
+              0.62,
+              0.88,
+              -0.35
+            ],
+            "materialId": "material.studio.D5",
+            "faceColors": [
+              [
+                0.95,
+                0.5,
+                0.2
+              ],
+              [
+                0.95,
+                0.5,
+                0.2
+              ],
+              [
+                0.95,
+                0.5,
+                0.2
+              ],
+              [
+                0.95,
+                0.5,
+                0.2
+              ],
+              [
+                0.95,
+                0.5,
+                0.2
+              ],
+              [
+                0.95,
+                0.5,
+                0.2
+              ]
+            ],
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "\u266b Note D5 (Re)"
+              },
+              "controlLabel": {
+                "t": "string",
+                "v": "Play Note D5"
+              },
+              "noteName": {
+                "t": "string",
+                "v": "D5"
+              },
+              "acoustic.frequency": {
+                "t": "double",
+                "v": 587.33
+              },
+              "acoustic.amplitude": {
+                "t": "double",
+                "v": 0.85
+              },
+              "acoustic.waveType": {
+                "t": "string",
+                "v": "triangle"
+              },
+              "isChordPad": {
+                "t": "bool",
+                "v": true
+              },
+              "restY": {
+                "t": "double",
+                "v": 0.88
+              }
+            }
+          },
+          {
             "objectID": "studio.pad.e5",
             "shapeKind": 0,
             "geometryType": 0,
@@ -1786,7 +1919,7 @@
               0.0
             ],
             "transform": [
-              0.46,
+              0.28,
               0.0,
               0.0,
               0.0,
@@ -1798,13 +1931,13 @@
               0.0,
               0.54,
               0.0,
-              0.98,
+              0.95,
               0.88,
               -0.35,
               1.0
             ],
             "center": [
-              0.98,
+              0.95,
               0.88,
               -0.35
             ],
@@ -1877,6 +2010,112 @@
             }
           },
           {
+            "objectID": "studio.pad.f5",
+            "shapeKind": 0,
+            "geometryType": 0,
+            "shapeParams": [
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              0.28,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.14,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.54,
+              0.0,
+              1.28,
+              0.88,
+              -0.35,
+              1.0
+            ],
+            "center": [
+              1.28,
+              0.88,
+              -0.35
+            ],
+            "materialId": "material.studio.F5",
+            "faceColors": [
+              [
+                0.38,
+                0.78,
+                0.26
+              ],
+              [
+                0.38,
+                0.78,
+                0.26
+              ],
+              [
+                0.38,
+                0.78,
+                0.26
+              ],
+              [
+                0.38,
+                0.78,
+                0.26
+              ],
+              [
+                0.38,
+                0.78,
+                0.26
+              ],
+              [
+                0.38,
+                0.78,
+                0.26
+              ]
+            ],
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "\u266b Note F5 (Fa)"
+              },
+              "controlLabel": {
+                "t": "string",
+                "v": "Play Note F5"
+              },
+              "noteName": {
+                "t": "string",
+                "v": "F5"
+              },
+              "acoustic.frequency": {
+                "t": "double",
+                "v": 698.46
+              },
+              "acoustic.amplitude": {
+                "t": "double",
+                "v": 0.85
+              },
+              "acoustic.waveType": {
+                "t": "string",
+                "v": "triangle"
+              },
+              "isChordPad": {
+                "t": "bool",
+                "v": true
+              },
+              "restY": {
+                "t": "double",
+                "v": 0.88
+              }
+            }
+          },
+          {
             "objectID": "studio.pad.g5",
             "shapeKind": 0,
             "geometryType": 0,
@@ -1892,7 +2131,7 @@
               0.0
             ],
             "transform": [
-              0.46,
+              0.28,
               0.0,
               0.0,
               0.0,
@@ -1904,13 +2143,13 @@
               0.0,
               0.54,
               0.0,
-              1.54,
+              1.61,
               0.88,
               -0.35,
               1.0
             ],
             "center": [
-              1.54,
+              1.61,
               0.88,
               -0.35
             ],
@@ -1983,6 +2222,112 @@
             }
           },
           {
+            "objectID": "studio.pad.a5",
+            "shapeKind": 0,
+            "geometryType": 0,
+            "shapeParams": [
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              0.28,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.14,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.54,
+              0.0,
+              1.94,
+              0.88,
+              -0.35,
+              1.0
+            ],
+            "center": [
+              1.94,
+              0.88,
+              -0.35
+            ],
+            "materialId": "material.studio.A5",
+            "faceColors": [
+              [
+                0.2,
+                0.62,
+                0.94
+              ],
+              [
+                0.2,
+                0.62,
+                0.94
+              ],
+              [
+                0.2,
+                0.62,
+                0.94
+              ],
+              [
+                0.2,
+                0.62,
+                0.94
+              ],
+              [
+                0.2,
+                0.62,
+                0.94
+              ],
+              [
+                0.2,
+                0.62,
+                0.94
+              ]
+            ],
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "\u266b Note A5 (La)"
+              },
+              "controlLabel": {
+                "t": "string",
+                "v": "Play Note A5"
+              },
+              "noteName": {
+                "t": "string",
+                "v": "A5"
+              },
+              "acoustic.frequency": {
+                "t": "double",
+                "v": 880.0
+              },
+              "acoustic.amplitude": {
+                "t": "double",
+                "v": 0.85
+              },
+              "acoustic.waveType": {
+                "t": "string",
+                "v": "triangle"
+              },
+              "isChordPad": {
+                "t": "bool",
+                "v": true
+              },
+              "restY": {
+                "t": "double",
+                "v": 0.88
+              }
+            }
+          },
+          {
             "objectID": "studio.pad.b5",
             "shapeKind": 0,
             "geometryType": 0,
@@ -1998,7 +2343,7 @@
               0.0
             ],
             "transform": [
-              0.46,
+              0.28,
               0.0,
               0.0,
               0.0,
@@ -2010,13 +2355,13 @@
               0.0,
               0.54,
               0.0,
-              2.1,
+              2.27,
               0.88,
               -0.35,
               1.0
             ],
             "center": [
-              2.1,
+              2.27,
               0.88,
               -0.35
             ],
@@ -2162,7 +2507,7 @@
             "authoredProperties": {
               "displayName": {
                 "t": "string",
-                "v": "[ \u266b CHORD KEYS: C5 \u00b7 E5 \u00b7 G5 \u00b7 B5 ]"
+                "v": "[ \u266b MAJOR SCALE: C5 \u00b7 D5 \u00b7 E5 \u00b7 F5 \u00b7 G5 \u00b7 A5 \u00b7 B5 ]"
               }
             }
           },
@@ -2437,7 +2782,9 @@
               0.0,
               0.0,
               0.0,
-              0.0
+              0.0,
+              0.0,
+              24.0
             ],
             "transform": [
               1.0,
@@ -2514,6 +2861,10 @@
               "shape.height2D": {
                 "t": "double",
                 "v": 24.0
+              },
+              "pickPriority": {
+                "t": "double",
+                "v": -1.0
               }
             }
           },
@@ -2530,7 +2881,9 @@
               0.0,
               0.0,
               0.0,
-              0.0
+              0.0,
+              0.0,
+              13.0
             ],
             "transform": [
               1.0,
@@ -2607,6 +2960,10 @@
               "shape.height2D": {
                 "t": "double",
                 "v": 13.0
+              },
+              "pickPriority": {
+                "t": "double",
+                "v": -1.0
               }
             }
           },
@@ -2623,7 +2980,9 @@
               0.0,
               0.0,
               0.0,
-              0.0
+              0.0,
+              0.0,
+              13.0
             ],
             "transform": [
               1.0,
@@ -2700,6 +3059,10 @@
               "shape.height2D": {
                 "t": "double",
                 "v": 13.0
+              },
+              "pickPriority": {
+                "t": "double",
+                "v": -1.0
               }
             }
           },
@@ -2716,7 +3079,9 @@
               0.0,
               0.0,
               0.0,
-              0.0
+              0.0,
+              0.0,
+              13.0
             ],
             "transform": [
               1.0,
@@ -2793,6 +3158,10 @@
               "shape.height2D": {
                 "t": "double",
                 "v": 13.0
+              },
+              "pickPriority": {
+                "t": "double",
+                "v": -1.0
               }
             }
           },
@@ -2809,7 +3178,9 @@
               0.0,
               0.0,
               0.0,
-              0.0
+              0.0,
+              0.0,
+              13.0
             ],
             "transform": [
               1.0,
@@ -2873,11 +3244,11 @@
             "authoredProperties": {
               "displayName": {
                 "t": "string",
-                "v": "DAY / NIGHT flips the studio's ambient. C5 E5 G5 B5 sound the chord."
+                "v": "DAY / NIGHT flips the studio's ambient. C5 to B5 play the major scale."
               },
               "label2D": {
                 "t": "string",
-                "v": "DAY / NIGHT flips the studio's ambient. C5 E5 G5 B5 sound the chord."
+                "v": "DAY / NIGHT flips the studio's ambient. C5 to B5 play the major scale."
               },
               "shape.width2D": {
                 "t": "double",
@@ -2886,6 +3257,10 @@
               "shape.height2D": {
                 "t": "double",
                 "v": 13.0
+              },
+              "pickPriority": {
+                "t": "double",
+                "v": -1.0
               }
             }
           },
@@ -2902,7 +3277,9 @@
               0.0,
               0.0,
               0.0,
-              0.0
+              0.0,
+              0.0,
+              13.0
             ],
             "transform": [
               1.0,
@@ -2979,6 +3356,10 @@
               "shape.height2D": {
                 "t": "double",
                 "v": 13.0
+              },
+              "pickPriority": {
+                "t": "double",
+                "v": -1.0
               }
             }
           },
@@ -2995,7 +3376,9 @@
               0.0,
               0.0,
               0.0,
-              0.0
+              0.0,
+              0.0,
+              13.0
             ],
             "transform": [
               1.0,
@@ -3072,6 +3455,10 @@
               "shape.height2D": {
                 "t": "double",
                 "v": 13.0
+              },
+              "pickPriority": {
+                "t": "double",
+                "v": -1.0
               }
             }
           },
@@ -3088,7 +3475,9 @@
               0.0,
               0.0,
               0.0,
-              0.0
+              0.0,
+              820.0,
+              64.0
             ],
             "transform": [
               1.0,
@@ -3113,7 +3502,7 @@
               0.0,
               0.0
             ],
-            "x2D": 298.0,
+            "x2D": 230.0,
             "y2D": 638.0,
             "zOrder2D": 10,
             "materialId": "",
@@ -3156,7 +3545,7 @@
               },
               "shape.width2D": {
                 "t": "double",
-                "v": 684.0
+                "v": 820.0
               },
               "shape.height2D": {
                 "t": "double",
@@ -3181,7 +3570,9 @@
               0.0,
               0.0,
               0.0,
-              0.0
+              0.0,
+              132.0,
+              40.0
             ],
             "transform": [
               1.0,
@@ -3206,7 +3597,7 @@
               0.0,
               0.0
             ],
-            "x2D": 314.0,
+            "x2D": 246.0,
             "y2D": 650.0,
             "zOrder2D": 20,
             "materialId": "",
@@ -3290,7 +3681,9 @@
               0.0,
               0.0,
               0.0,
-              0.0
+              0.0,
+              126.0,
+              40.0
             ],
             "transform": [
               1.0,
@@ -3315,7 +3708,7 @@
               0.0,
               0.0
             ],
-            "x2D": 454.0,
+            "x2D": 386.0,
             "y2D": 650.0,
             "zOrder2D": 20,
             "materialId": "",
@@ -3399,7 +3792,9 @@
               0.0,
               0.0,
               0.0,
-              0.0
+              0.0,
+              44.0,
+              40.0
             ],
             "transform": [
               1.0,
@@ -3424,7 +3819,7 @@
               0.0,
               0.0
             ],
-            "x2D": 590.0,
+            "x2D": 522.0,
             "y2D": 650.0,
             "zOrder2D": 20,
             "materialId": "",
@@ -3471,7 +3866,7 @@
               },
               "shape.width2D": {
                 "t": "double",
-                "v": 48.0
+                "v": 44.0
               },
               "shape.height2D": {
                 "t": "double",
@@ -3504,7 +3899,7 @@
             }
           },
           {
-            "objectID": "hud.pad.e5",
+            "objectID": "hud.pad.d5",
             "shapeKind": 12,
             "geometryType": 12,
             "shapeParams": [
@@ -3516,7 +3911,9 @@
               0.0,
               0.0,
               0.0,
-              0.0
+              0.0,
+              44.0,
+              40.0
             ],
             "transform": [
               1.0,
@@ -3541,7 +3938,126 @@
               0.0,
               0.0
             ],
-            "x2D": 644.0,
+            "x2D": 572.0,
+            "y2D": 650.0,
+            "zOrder2D": 20,
+            "materialId": "",
+            "faceColors": [
+              [
+                0.95,
+                0.5,
+                0.2
+              ],
+              [
+                0.95,
+                0.5,
+                0.2
+              ],
+              [
+                0.95,
+                0.5,
+                0.2
+              ],
+              [
+                0.95,
+                0.5,
+                0.2
+              ],
+              [
+                0.95,
+                0.5,
+                0.2
+              ],
+              [
+                0.95,
+                0.5,
+                0.2
+              ]
+            ],
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "D5"
+              },
+              "controlLabel": {
+                "t": "string",
+                "v": "D5"
+              },
+              "shape.width2D": {
+                "t": "double",
+                "v": 44.0
+              },
+              "shape.height2D": {
+                "t": "double",
+                "v": 40.0
+              },
+              "restY2D": {
+                "t": "double",
+                "v": 650.0
+              },
+              "noteName": {
+                "t": "string",
+                "v": "D5"
+              },
+              "acoustic.frequency": {
+                "t": "double",
+                "v": 587.33
+              },
+              "acoustic.amplitude": {
+                "t": "double",
+                "v": 0.85
+              },
+              "acoustic.waveType": {
+                "t": "string",
+                "v": "triangle"
+              },
+              "isChordPad": {
+                "t": "bool",
+                "v": true
+              }
+            }
+          },
+          {
+            "objectID": "hud.pad.e5",
+            "shapeKind": 12,
+            "geometryType": 12,
+            "shapeParams": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              44.0,
+              40.0
+            ],
+            "transform": [
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "center": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "x2D": 622.0,
             "y2D": 650.0,
             "zOrder2D": 20,
             "materialId": "",
@@ -3588,7 +4104,7 @@
               },
               "shape.width2D": {
                 "t": "double",
-                "v": 48.0
+                "v": 44.0
               },
               "shape.height2D": {
                 "t": "double",
@@ -3621,7 +4137,7 @@
             }
           },
           {
-            "objectID": "hud.pad.g5",
+            "objectID": "hud.pad.f5",
             "shapeKind": 12,
             "geometryType": 12,
             "shapeParams": [
@@ -3633,7 +4149,9 @@
               0.0,
               0.0,
               0.0,
-              0.0
+              0.0,
+              44.0,
+              40.0
             ],
             "transform": [
               1.0,
@@ -3658,7 +4176,126 @@
               0.0,
               0.0
             ],
-            "x2D": 698.0,
+            "x2D": 672.0,
+            "y2D": 650.0,
+            "zOrder2D": 20,
+            "materialId": "",
+            "faceColors": [
+              [
+                0.38,
+                0.78,
+                0.26
+              ],
+              [
+                0.38,
+                0.78,
+                0.26
+              ],
+              [
+                0.38,
+                0.78,
+                0.26
+              ],
+              [
+                0.38,
+                0.78,
+                0.26
+              ],
+              [
+                0.38,
+                0.78,
+                0.26
+              ],
+              [
+                0.38,
+                0.78,
+                0.26
+              ]
+            ],
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "F5"
+              },
+              "controlLabel": {
+                "t": "string",
+                "v": "F5"
+              },
+              "shape.width2D": {
+                "t": "double",
+                "v": 44.0
+              },
+              "shape.height2D": {
+                "t": "double",
+                "v": 40.0
+              },
+              "restY2D": {
+                "t": "double",
+                "v": 650.0
+              },
+              "noteName": {
+                "t": "string",
+                "v": "F5"
+              },
+              "acoustic.frequency": {
+                "t": "double",
+                "v": 698.46
+              },
+              "acoustic.amplitude": {
+                "t": "double",
+                "v": 0.85
+              },
+              "acoustic.waveType": {
+                "t": "string",
+                "v": "triangle"
+              },
+              "isChordPad": {
+                "t": "bool",
+                "v": true
+              }
+            }
+          },
+          {
+            "objectID": "hud.pad.g5",
+            "shapeKind": 12,
+            "geometryType": 12,
+            "shapeParams": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              44.0,
+              40.0
+            ],
+            "transform": [
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "center": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "x2D": 722.0,
             "y2D": 650.0,
             "zOrder2D": 20,
             "materialId": "",
@@ -3705,7 +4342,7 @@
               },
               "shape.width2D": {
                 "t": "double",
-                "v": 48.0
+                "v": 44.0
               },
               "shape.height2D": {
                 "t": "double",
@@ -3738,7 +4375,7 @@
             }
           },
           {
-            "objectID": "hud.pad.b5",
+            "objectID": "hud.pad.a5",
             "shapeKind": 12,
             "geometryType": 12,
             "shapeParams": [
@@ -3750,7 +4387,9 @@
               0.0,
               0.0,
               0.0,
-              0.0
+              0.0,
+              44.0,
+              40.0
             ],
             "transform": [
               1.0,
@@ -3775,7 +4414,126 @@
               0.0,
               0.0
             ],
-            "x2D": 752.0,
+            "x2D": 772.0,
+            "y2D": 650.0,
+            "zOrder2D": 20,
+            "materialId": "",
+            "faceColors": [
+              [
+                0.2,
+                0.62,
+                0.94
+              ],
+              [
+                0.2,
+                0.62,
+                0.94
+              ],
+              [
+                0.2,
+                0.62,
+                0.94
+              ],
+              [
+                0.2,
+                0.62,
+                0.94
+              ],
+              [
+                0.2,
+                0.62,
+                0.94
+              ],
+              [
+                0.2,
+                0.62,
+                0.94
+              ]
+            ],
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "A5"
+              },
+              "controlLabel": {
+                "t": "string",
+                "v": "A5"
+              },
+              "shape.width2D": {
+                "t": "double",
+                "v": 44.0
+              },
+              "shape.height2D": {
+                "t": "double",
+                "v": 40.0
+              },
+              "restY2D": {
+                "t": "double",
+                "v": 650.0
+              },
+              "noteName": {
+                "t": "string",
+                "v": "A5"
+              },
+              "acoustic.frequency": {
+                "t": "double",
+                "v": 880.0
+              },
+              "acoustic.amplitude": {
+                "t": "double",
+                "v": 0.85
+              },
+              "acoustic.waveType": {
+                "t": "string",
+                "v": "triangle"
+              },
+              "isChordPad": {
+                "t": "bool",
+                "v": true
+              }
+            }
+          },
+          {
+            "objectID": "hud.pad.b5",
+            "shapeKind": 12,
+            "geometryType": 12,
+            "shapeParams": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              44.0,
+              40.0
+            ],
+            "transform": [
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "center": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "x2D": 822.0,
             "y2D": 650.0,
             "zOrder2D": 20,
             "materialId": "",
@@ -3822,7 +4580,7 @@
               },
               "shape.width2D": {
                 "t": "double",
-                "v": 48.0
+                "v": 44.0
               },
               "shape.height2D": {
                 "t": "double",
@@ -3867,7 +4625,9 @@
               0.0,
               0.0,
               0.0,
-              0.0
+              0.0,
+              152.0,
+              40.0
             ],
             "transform": [
               1.0,
@@ -3892,7 +4652,7 @@
               0.0,
               0.0
             ],
-            "x2D": 810.0,
+            "x2D": 876.0,
             "y2D": 650.0,
             "zOrder2D": 20,
             "materialId": "",
@@ -4196,6 +4956,20 @@
         },
         {
           "type": "instance-of",
+          "entityA": "studio.pad.d5",
+          "entityB": "category.control.button",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787395000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
           "entityA": "studio.pad.e5",
           "entityB": "category.control.button",
           "directed": true,
@@ -4210,7 +4984,35 @@
         },
         {
           "type": "instance-of",
+          "entityA": "studio.pad.f5",
+          "entityB": "category.control.button",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787395000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
           "entityA": "studio.pad.g5",
+          "entityB": "category.control.button",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787395000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "studio.pad.a5",
           "entityB": "category.control.button",
           "directed": true,
           "weight": 1.0,
@@ -4294,6 +5096,20 @@
         },
         {
           "type": "instance-of",
+          "entityA": "hud.pad.d5",
+          "entityB": "category.control.button",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787395000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
           "entityA": "hud.pad.e5",
           "entityB": "category.control.button",
           "directed": true,
@@ -4308,7 +5124,35 @@
         },
         {
           "type": "instance-of",
+          "entityA": "hud.pad.f5",
+          "entityB": "category.control.button",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787395000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
           "entityA": "hud.pad.g5",
+          "entityB": "category.control.button",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787395000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "hud.pad.a5",
           "entityB": "category.control.button",
           "directed": true,
           "weight": 1.0,

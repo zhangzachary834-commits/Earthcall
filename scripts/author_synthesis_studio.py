@@ -546,12 +546,21 @@ def build_world():
     })
 
     chord_pads = [
-        # The same four hues the dock uses, so a 3D pad and its screen twin
-        # read as one control seen twice rather than as two unrelated things.
-        ("studio.pad.c5", "♫ Note C5 (Do)", 0.42, (0.90, 0.28, 0.36), 523.25, "C5"),
-        ("studio.pad.e5", "♫ Note E5 (Mi)", 0.98, (0.96, 0.70, 0.18), 659.25, "E5"),
-        ("studio.pad.g5", "♫ Note G5 (Sol)", 1.54, (0.24, 0.82, 0.48), 783.99, "G5"),
-        ("studio.pad.b5", "♫ Note B5 (Ti)", 2.10, (0.34, 0.52, 0.96), 987.77, "B5"),
+        # All seven notes of the C major scale across the visible spectrum:
+        # C5 (Do) - Crimson Red
+        # D5 (Re) - Amber Orange
+        # E5 (Mi) - Warm Gold
+        # F5 (Fa) - Fresh Green
+        # G5 (Sol) - Emerald Teal
+        # A5 (La) - Azure Blue
+        # B5 (Ti) - Royal Indigo
+        ("studio.pad.c5", "♫ Note C5 (Do)", 0.29, (0.90, 0.28, 0.36), 523.25, "C5"),
+        ("studio.pad.d5", "♫ Note D5 (Re)", 0.62, (0.95, 0.50, 0.20), 587.33, "D5"),
+        ("studio.pad.e5", "♫ Note E5 (Mi)", 0.95, (0.96, 0.70, 0.18), 659.25, "E5"),
+        ("studio.pad.f5", "♫ Note F5 (Fa)", 1.28, (0.38, 0.78, 0.26), 698.46, "F5"),
+        ("studio.pad.g5", "♫ Note G5 (Sol)", 1.61, (0.24, 0.82, 0.48), 783.99, "G5"),
+        ("studio.pad.a5", "♫ Note A5 (La)", 1.94, (0.20, 0.62, 0.94), 880.00, "A5"),
+        ("studio.pad.b5", "♫ Note B5 (Ti)", 2.27, (0.34, 0.52, 0.96), 987.77, "B5"),
     ]
     for pad_id, pad_name, pos_x, rgb, freq, note in chord_pads:
         zone_objects.append({
@@ -559,7 +568,7 @@ def build_world():
             "shapeKind": 0,
             "geometryType": 0,
             "shapeParams": [0.5, 0.5, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0],
-            "transform": mat4_translate(pos_x, 0.88, -0.35, (0.46, 0.14, 0.54)),
+            "transform": mat4_translate(pos_x, 0.88, -0.35, (0.28, 0.14, 0.54)),
             "center": [pos_x, 0.88, -0.35],
             "materialId": f"material.studio.{note}",
             "faceColors": make_face_colors(rgb),
@@ -576,7 +585,7 @@ def build_world():
         })
         relations.append(instance_rel(pad_id, "category.control.button"))
 
-    # Labeled Plaque over Chord Pads
+    # Labeled Plaque over Scale Pads
     zone_objects.append({
         "objectID": "studio.sign.music",
         "shapeKind": 0,
@@ -586,7 +595,7 @@ def build_world():
         "center": [1.28, 1.12, -0.35],
         "materialId": "material.studio.sign.dark",
         "faceColors": make_face_colors((0.17, 0.20, 0.27)),
-        "authoredProperties": {"displayName": pv("string", "[ ♫ CHORD KEYS: C5 · E5 · G5 · B5 ]")},
+        "authoredProperties": {"displayName": pv("string", "[ ♫ MAJOR SCALE: C5 · D5 · E5 · F5 · G5 · A5 · B5 ]")},
     })
 
     # --- Widget 4: Pulse Resonance Slider ---
@@ -672,7 +681,7 @@ def build_world():
             "objectID": object_id,
             "shapeKind": 13,  # Text2D
             "geometryType": 13,
-            "shapeParams": [0.0] * 9,
+            "shapeParams": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, float(size)],
             "transform": mat4_translate(0.0, 0.0, 0.0),
             "center": [0.0, 0.0, 0.0],
             "x2D": float(x),
@@ -685,6 +694,7 @@ def build_world():
                 "label2D": pv("string", text),
                 "shape.width2D": pv("double", 0.0),
                 "shape.height2D": pv("double", float(size)),
+                "pickPriority": pv("double", -1.0),
             },
         }
 
@@ -700,7 +710,7 @@ def build_world():
     for row, line in enumerate([
         "CLICK a dock button below, or the matching block on the desk ahead.",
         "SPAWN ORB   mints a harmonic orb; each one lands further around the ring.",
-        "DAY / NIGHT flips the studio's ambient. C5 E5 G5 B5 sound the chord.",
+        "DAY / NIGHT flips the studio's ambient. C5 to B5 play the major scale.",
         "DRAW        turns drawing on, then hold and drag across the white easel.",
         "The slider on the desk sets the pulse rate the crystal breathes at.",
     ]):
@@ -726,7 +736,7 @@ def build_world():
             "objectID": object_id,
             "shapeKind": 12,
             "geometryType": 12,
-            "shapeParams": [0.0] * 9,
+            "shapeParams": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, float(w), float(h)],
             "transform": mat4_translate(0.0, 0.0, 0.0),
             "center": [0.0, 0.0, 0.0],
             "x2D": float(x),
@@ -737,14 +747,14 @@ def build_world():
             "authoredProperties": authored,
         }
 
-    dock = hud_plate("hud.dock.bg", "HUD Control Dock", 298, 684, (0.07, 0.08, 0.11),
+    dock = hud_plate("hud.dock.bg", "HUD Control Dock", 230, 820, (0.07, 0.08, 0.11),
                      z=10, y=DOCK_Y, h=64.0)
     dock["authoredProperties"].pop("controlLabel")   # a plate is not a control
     zone_objects.append(dock)
 
     hud_btn_spawn = "hud.btn.spawn-orb"
     zone_objects.append(hud_plate(
-        hud_btn_spawn, "SPAWN ORB", 314, 132, (0.16, 0.55, 0.92), {
+        hud_btn_spawn, "SPAWN ORB", 246, 132, (0.16, 0.55, 0.92), {
             "buttonRole": pv("string", "spawn-orb"),
             "acoustic.frequency": pv("double", 587.33),
             "acoustic.amplitude": pv("double", 0.55),
@@ -753,7 +763,7 @@ def build_world():
 
     hud_btn_theme = "hud.btn.toggle-theme"
     zone_objects.append(hud_plate(
-        hud_btn_theme, "DAY / NIGHT", 454, 126, (0.95, 0.68, 0.20), {
+        hud_btn_theme, "DAY / NIGHT", 386, 126, (0.95, 0.68, 0.20), {
             "buttonRole": pv("string", "toggle-theme"),
             "acoustic.frequency": pv("double", 392.0),
             "acoustic.amplitude": pv("double", 0.55),
@@ -761,13 +771,16 @@ def build_world():
     relations.append(instance_rel(hud_btn_theme, "category.control.toggle"))
 
     hud_pads = [
-        ("hud.pad.c5", "C5", 590.0, (0.90, 0.28, 0.36), 523.25),
-        ("hud.pad.e5", "E5", 644.0, (0.96, 0.70, 0.18), 659.25),
-        ("hud.pad.g5", "G5", 698.0, (0.24, 0.82, 0.48), 783.99),
-        ("hud.pad.b5", "B5", 752.0, (0.34, 0.52, 0.96), 987.77),
+        ("hud.pad.c5", "C5", 522.0, (0.90, 0.28, 0.36), 523.25),
+        ("hud.pad.d5", "D5", 572.0, (0.95, 0.50, 0.20), 587.33),
+        ("hud.pad.e5", "E5", 622.0, (0.96, 0.70, 0.18), 659.25),
+        ("hud.pad.f5", "F5", 672.0, (0.38, 0.78, 0.26), 698.46),
+        ("hud.pad.g5", "G5", 722.0, (0.24, 0.82, 0.48), 783.99),
+        ("hud.pad.a5", "A5", 772.0, (0.20, 0.62, 0.94), 880.00),
+        ("hud.pad.b5", "B5", 822.0, (0.34, 0.52, 0.96), 987.77),
     ]
     for hpad_id, note, x_pos, rgb, freq in hud_pads:
-        zone_objects.append(hud_plate(hpad_id, note, x_pos, 48, rgb, {
+        zone_objects.append(hud_plate(hpad_id, note, x_pos, 44, rgb, {
             "noteName": pv("string", note),
             "acoustic.frequency": pv("double", freq),
             "acoustic.amplitude": pv("double", 0.85),
@@ -778,7 +791,7 @@ def build_world():
 
     hud_btn_draw = "hud.btn.draw-stroke"
     zone_objects.append(hud_plate(
-        hud_btn_draw, "DRAW: OFF", 810, 152, (0.62, 0.36, 0.90), {
+        hud_btn_draw, "DRAW: OFF", 876, 152, (0.62, 0.36, 0.90), {
             "buttonRole": pv("string", "draw-mode"),
             "acoustic.frequency": pv("double", 493.88),
             "acoustic.amplitude": pv("double", 0.55),
@@ -1179,7 +1192,7 @@ def build_world():
 
     # Assemble Zone and Session
     zone = {
-        "injected_by": "Gemini Spark (authored) / Claude Opus 5 (repaired 2026-09-02)",
+        "injected_by": "Gemini Spark (authored) / Claude Opus 5 (repaired) / Antigravity (major scale 2026-09-02)",
         "authors": ["Zach"],
         "name": ZONE_ID,
         "identifier": ZONE_ID,
@@ -1193,7 +1206,7 @@ def build_world():
 
     session = {
         "saveFormat": "zone-identity-v1",
-        "injected_by": "Gemini Spark (authored) / Claude Opus 5 (repaired 2026-09-02)",
+        "injected_by": "Gemini Spark (authored) / Claude Opus 5 (repaired) / Antigravity (major scale 2026-09-02)",
         "authors": ["Zach"],
         "currentZone": 0,
         "currentZoneId": ZONE_ID,
@@ -1216,11 +1229,13 @@ def build_world():
             {"name": "material.studio.socket", "baseColor": [0.08, 0.09, 0.12], "opacity": 1.0},
             {"name": "material.studio.track", "baseColor": [0.25, 0.27, 0.32], "opacity": 1.0},
             {"name": "material.studio.handle", "baseColor": [0.92, 0.94, 0.98], "opacity": 1.0},
-            # The seven that objects named and nobody minted (audit §C2): the four
-            # chord pads and three sign variants resolved to the default material.
+            # All seven notes of the major scale, plus the three sign variants:
             {"name": "material.studio.C5", "baseColor": [0.95, 0.22, 0.32], "opacity": 1.0},
+            {"name": "material.studio.D5", "baseColor": [0.98, 0.50, 0.18], "opacity": 1.0},
             {"name": "material.studio.E5", "baseColor": [1.0, 0.72, 0.12], "opacity": 1.0},
+            {"name": "material.studio.F5", "baseColor": [0.35, 0.80, 0.25], "opacity": 1.0},
             {"name": "material.studio.G5", "baseColor": [0.18, 0.88, 0.45], "opacity": 1.0},
+            {"name": "material.studio.A5", "baseColor": [0.18, 0.62, 0.98], "opacity": 1.0},
             {"name": "material.studio.B5", "baseColor": [0.28, 0.48, 1.0], "opacity": 1.0},
             {"name": "material.studio.sign.blue", "baseColor": [0.16, 0.34, 0.52], "opacity": 1.0},
             {"name": "material.studio.sign.gold", "baseColor": [0.42, 0.32, 0.12], "opacity": 1.0},
@@ -1313,7 +1328,7 @@ def main():
     print(f"  Relations: {len(zone['formationRelations'])}")
     print(f"  Laws: {len(LAWS)}")
     print(f"  Author: {AUTHOR}")
-    print(f"  Injected by: Claude Opus 5 (session 01TE6SKxkBCVf2THDMpdwHPW), on Zach's authority")
+    print(f"  Injected by: Antigravity (major scale 2026-09-02), on Zach's authority")
     return 0
 
 

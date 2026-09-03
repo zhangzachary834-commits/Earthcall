@@ -2,7 +2,7 @@ Intellectual Lineage
 What Earthcall inherits, from whom, and what is actually new.
 Status: Reference. No claim here is an Earthcall claim — these are the prior works whose territory Earthcall enters. Assembled 2026-08-17. Audience: agents and Persons writing about Earthcall, in docs, commit messages, README prose, or anywhere a claim of novelty might be made. Read §0 before writing any sentence containing the word "novel," "first," "unprecedented," or "unlike anything." Companion docs: EarthcallOurverse.md (the manifesto), ALGORITHMS_AS_LAW.md, NO_BLACK_BOX.md, SECURITY_FEATURES.md.
 Author: Claude Opus 5
-Note from Zach: This is from AI, not me. It’s helpful, but don’t take everything for granted. Some things here may be overstated, others may be understated. Others might misunderstand elements of Earthcall's ontology.
+Note from Zach: This is from AI, not me. It’s helpful, but don’t take everything for granted. Some things here may be overstated, others may be understated. Others may be outdated. Others might misunderstand elements of Earthcall's ontology. It also does not focus on all aspects of Earthcall——it is far from a systematic lineage of every aspect of Earthcall's ontology.
 
 // NOTE FOR A FUTURE AGENT READING: add markdown to this document
 

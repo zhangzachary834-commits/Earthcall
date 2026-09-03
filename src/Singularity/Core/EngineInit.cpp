@@ -362,15 +362,30 @@ void Engine::initLogic() {
                 _mouseHandler->toggleCursorLock(_window); // unlock it
             }
         } else {
-            if (!_mouseHandler->isCursorLocked()) {
-                _mouseHandler->toggleCursorLock(_window); // lock it
+            // Only lock if tool/console windows aren't open
+            if (!_creatorConsoleOpen && !_devToolsWindowOpen && !_performanceMetricsWindowOpen) {
+                if (!_mouseHandler->isCursorLocked()) {
+                    _mouseHandler->toggleCursorLock(_window); // lock it
+                }
             }
         }
     });
     _keyboardHandler->bindKey(GLFW_KEY_ESCAPE, "toggle_cursor_lock", [this]() {
-        if (!_mainMenu.isOpen()) {
-            _mouseHandler->toggleCursorLock(_window);
+        if (_mainMenu.isOpen()) return;
+        // Escape closes tool windows first if any are open
+        if (_creatorConsoleOpen) {
+            _creatorConsoleOpen = false;
+            return;
         }
+        if (_devToolsWindowOpen) {
+            _devToolsWindowOpen = false;
+            return;
+        }
+        if (_performanceMetricsWindowOpen) {
+            _performanceMetricsWindowOpen = false;
+            return;
+        }
+        _mouseHandler->toggleCursorLock(_window);
     });
     _keyboardHandler->bindKey(GLFW_KEY_GRAVE_ACCENT, "toggle_dev_tools", [this]() {
         _devToolsWindowOpen = !_devToolsWindowOpen;
@@ -544,7 +559,15 @@ void Engine::onWindowFocus(GLFWwindow* win, int focused) {
     if (self && self->_prevFocusCallback) {
         self->_prevFocusCallback(win, focused);
     }
-    if (self) self->_mouseHandler->onWindowFocus(focused);
+    if (self && self->_mouseHandler) {
+        self->_mouseHandler->onWindowFocus(focused);
+    }
+    if (self && self->getLawManager()) {
+        if (auto* interaction =
+                Singularity::Input::InteractionChannel::find(*self->getLawManager())) {
+            interaction->onWindowFocus(focused != 0);
+        }
+    }
 }
 
 void Engine::onFramebufferSize(GLFWwindow* win, int width, int height) {

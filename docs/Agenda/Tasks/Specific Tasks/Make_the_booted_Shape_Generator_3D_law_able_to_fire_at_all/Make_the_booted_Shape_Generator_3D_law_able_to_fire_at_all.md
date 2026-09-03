@@ -1,0 +1,9 @@
+# Make the booted Shape Generator 3D law able to fire at all
+
+**Status:** ✅ done and verified  
+**Section in the To-Do list:** Feature-sized (split out of Housekeeping 2026-08-13):  
+**Split out of `docs/Agenda/Tasks/To-do list.md` on 2026-09-02** by Claude Opus 5 (session `session_01GsrBySNw4oG1zof5AQ21KM`), per Zach's instruction that each To-Do bullet be one sentence linking to its own task document. **Content below is the original bullet, verbatim — nothing was summarized away.**
+
+---
+
+✅ **Make the booted Shape Generator 3D law able to fire at all** — done and verified (2026-08-17): the law `Engine::initLogic` instantiated (added 2026-08-16, `aa6bf9ba`) could never fire for three independent reasons, each proven with a probe against the real construction: it was never authored (`Law::applyTo` returns `Unauthored` and refuses; `isFirstMover()` governs serialization, not the authorship gate); its condition compared a `type` path the `CreationChannel` does not carry, so it was unsatisfiable — and had it resolved it would have been trivially true and spawned on every click in every mode, because the mode gate that used to live in `DeveloperToolsWindow`'s publish site was deleted when the click moved to a global GLFW callback; and `setObjectID("shape-generator-3d-law")` was a silent no-op, since `Law` overrides `getIdentifier()` to return `_lawId`, leaving the law answering to a generated `law-N`. Extracted the construction into `Singularity::Core::createShapeGenerator3DLaw` (next to the `CreationChannel` whose properties it reads, mirroring `Physics::createDefaultPhysicsLaws`) so a test can exercise what boot instantiates; added `Law::setLawIdentifier`; guarded by `tests/shape_generator_law_test.cpp` (19 checks). Also fixed the `L` arming key, which sat below a `!*open` early return and so only worked while the developer window happened to be open — contradicting the comment directly above it.

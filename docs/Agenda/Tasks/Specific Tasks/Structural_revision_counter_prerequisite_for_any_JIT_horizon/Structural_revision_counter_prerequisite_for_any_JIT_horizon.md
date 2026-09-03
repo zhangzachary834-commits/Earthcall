@@ -1,0 +1,9 @@
+# Structural revision counter, prerequisite for any JIT horizon
+
+**Status:** open  
+**Section in the To-Do list:** Performance (opened 2026-08-24 by `tests/singularity/frame_lag_test.cpp`)  
+**Split out of `docs/Agenda/Tasks/To-do list.md` on 2026-09-02** by Claude Opus 5 (session `session_01GsrBySNw4oG1zof5AQ21KM`), per Zach's instruction that each To-Do bullet be one sentence linking to its own task document. **Content below is the original bullet, verbatim — nothing was summarized away.**
+
+---
+
+⚑ AUTHOR — **Structural revision counter, prerequisite for any JIT horizon.** The Prophetic-Rete-instead-of-JIT-guards idea is **Zach's**; the bytecode VM and LLVM JIT are Gemini's. [LAW_EXECUTION_TRADEOFFS_ANALYSIS.md](../../Analysis/LAW_EXECUTION_TRADEOFFS_ANALYSIS.md) §3, writing it up, claims a First Mover's structural change "bumps `Law::textRevision()`, instantly dirtying the Prophetic Index." It does not: all six `bumpTextRevision()` call sites are law-text or law-register changes (`Law.cpp:206, 212, 1412, 2155, 2299`; `Law.hpp:334, 363`), and `Singular.cpp` never touches it — so `setDynamicProperty`/`removeDynamicProperty` and being create/destroy leave the index clean and stale. Benign today (stale filters fail open by design, per `PROPHETIC_RETE.md` §2); a wrong memory offset under unguarded native code. A counter distinct from `textRevision`, bumped on dynamic-property insert/erase and being create/destroy, is cheap and worth having regardless — several subsystems will want to ask "did the shape of the world change." **Hard prerequisite for [LAW_EXECUTION_FRONTIER.md](../../architecture/law/LAW_EXECUTION_FRONTIER.md) §4** — and note this is what it costs to *earn* Zach's idea, not an objection to it: the idea is sound, and none of the three faults found in the write-up touch it.

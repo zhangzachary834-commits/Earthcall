@@ -1,0 +1,9 @@
+# Home / Zone ontology vs manifesto
+
+**Status:** open  
+**Section in the To-Do list:** Joys · Ourverse · Zones  
+**Split out of `docs/Agenda/Tasks/To-do list.md` on 2026-09-02** by Claude Opus 5 (session `session_01GsrBySNw4oG1zof5AQ21KM`), per Zach's instruction that each To-Do bullet be one sentence linking to its own task document. **Content below is the original bullet, verbatim — nothing was summarized away.**
+
+---
+
+**Home / Zone ontology vs manifesto** — PARTIAL (2026-08-22). **Done and verified (tests):** `class Home : public Zone` is the dwelling (constitutive, named in `Singularity::Earthcall` — not a domain noun). Primary Home kernel-locked; owner is Person/Relationship/Community; Community Home is still `Home` (stakes = the Community that owns it); Community Zone stays `Zone`. Mint/load construct `Home` when kind is home/community-home. Dwelling memory is not Zone memory: `_primary`, `_stakes`/`_stakeIds`, `_inhabitants`, kernel `entryRequiresWill` / `cannotForceStay` (`sizeof(Home) > sizeof(Zone)`); identity file is `saves/homes/<id>/home.json`. Unused stub replaced with this. Guarded by `tests/zones/zone_home_ontology_test.cpp`. See [HOME_AND_ZONE_MANIFESTO_AUDIT_2026-08-22.md](../../audits/HOME_AND_ZONE_MANIFESTO_AUDIT_2026-08-22.md). **FaceTextures (2026-08-23, tests; in-app re-click open):** shapes persisted across session loads because Home objects are identity-stable; paint went white because FaceTextures live on Material beings and `saves/homes/Home/home.json` stored only `materialId`. Identity now embeds those materials; session load merges instead of replacing; keep-live objects with a missing own-material reinstate from `faceColors`. Guarded by `zone_home_ontology_test` and `zone_facetexture_test`. **Remaining:** Second-Person will / forced entry (⚑ AUTHOR); joy-bounds as dwelling vs Backroom; live Relationship being (`Relationship.cpp` empty); in-app click that paint survives loading another save and walking to Home.

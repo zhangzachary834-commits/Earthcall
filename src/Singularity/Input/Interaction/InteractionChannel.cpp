@@ -168,6 +168,7 @@ void InteractionChannel::observe(const Sense& sense,
             if (sense.pointerX >= rect.x && sense.pointerX <= rect.z &&
                 sense.pointerY >= rect.y && sense.pointerY <= rect.w) {
                 const double priority = obj->pickPriority();
+                if (priority < 0.0) continue;
                 if (!hit2D || priority > best2D) {
                     best2D = priority;
                     hit2D = obj;
@@ -278,9 +279,7 @@ void InteractionChannel::observe(const Sense& sense,
             publishEdge("object-drag-ended", pressed);
         } else if (pressed && pressed == hit) {
             // A click is press and release on the SAME being, without travel.
-            // Releasing somewhere else is a cancelled click — the gesture every
-            // pointer surface in the world honours, and the reason
-            // object-clicked is not just "the button came up".
+            // Releasing somewhere else is a cancelled click or completed drag.
             publishEdge("object-clicked", pressed);
         }
         pressedId.clear();
@@ -424,9 +423,27 @@ void InteractionChannel::step(GLFWwindow* window, ::Core::Camera& camera,
     sense.pointerX = static_cast<float>(cx);
     sense.pointerY = static_cast<float>(cy);
 
-    // Left comes from noteMouseButton()'s callback-latched level, not a poll
-    // — see its doc comment. Right/middle stay polled: nothing in the tree
-    // publishes edges for them yet, so there is nothing for a poll to drop.
+    // Reconcile window focus & physical button state with callback latches:
+    // If window is not focused, inputs belong to other applications. Clear latches.
+    const bool windowFocused = (glfwGetWindowAttrib(window, GLFW_FOCUSED) != 0);
+    if (!windowFocused) {
+        _liveLeftDown = false;
+        _pressSeenSinceLastStep = false;
+        _pendingFullClick = false;
+        sense.uiCaptured = true;
+    } else {
+        // If the physical mouse button is RELEASED according to the OS, and no
+        // unconsumed press callback is waiting, _liveLeftDown cannot be true.
+        // This heals any dropped GLFW_RELEASE events (e.g. window focus switch,
+        // off-screen cursor release, or trackpad gesture drops).
+        const bool physicalLeft = (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS);
+        if (!physicalLeft && !_pressSeenSinceLastStep && !_pendingFullClick) {
+            _liveLeftDown = false;
+        }
+    }
+
+    // Left comes from noteMouseButton()'s callback-latched level, reconciled above.
+    // Right/middle stay polled: nothing in the tree publishes edges for them yet.
     sense.left = _liveLeftDown;
     sense.right = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS;
     sense.middle = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS;
@@ -466,6 +483,8 @@ void InteractionChannel::step(GLFWwindow* window, ::Core::Camera& camera,
         float fbX = 0.0f, fbY = 0.0f;
         if (pointerLocked) {
             // Crosshair / centre of viewport when cursor is locked
+            sense.pointerX = static_cast<float>(winW) * 0.5f;
+            sense.pointerY = static_cast<float>(winH) * 0.5f;
             fbX = static_cast<float>(vp[0]) + static_cast<float>(vp[2]) * 0.5f;
             fbY = static_cast<float>(vp[1]) + static_cast<float>(vp[3]) * 0.5f;
         } else {
@@ -545,6 +564,29 @@ void InteractionChannel::noteMouseButton(bool pressed) {
         if (_pressSeenSinceLastStep) _pendingFullClick = true;
         _liveLeftDown = false;
         _pressSeenSinceLastStep = false;
+    }
+}
+
+void InteractionChannel::onWindowFocus(bool focused) {
+    if (!focused) {
+        _liveLeftDown = false;
+        _pressSeenSinceLastStep = false;
+        _pendingFullClick = false;
+        _prevLeft = false;
+        _prevRight = false;
+        _prevMiddle = false;
+        leftDown = false;
+        rightDown = false;
+        middleDown = false;
+        pressedId.clear();
+        rightPressedId.clear();
+        middlePressedId.clear();
+        dragging = false;
+        rightDragging = false;
+        middleDragging = false;
+        dragTotalX = 0.0f;
+        dragTotalY = 0.0f;
+        hoveredId.clear();
     }
 }
 

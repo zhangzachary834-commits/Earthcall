@@ -117,6 +117,11 @@ public:
     // than lose them. See CHESS_GESTURE_HANDOFF_2026-08-26.md §3.
     void noteMouseButton(bool pressed);
 
+    // Window focus gained or lost. Losing focus drops any held mouse press,
+    // clears dragging, and cancels in-flight gestures so an unfocused window
+    // cannot leak a stuck button or phantom drag across tab switches.
+    void onWindowFocus(bool focused);
+
     // Registered as "@world.pointerOver" / "@world.pointerDistance": readings
     // ABOUT the subject rather than properties ON it, so "if the pointer is
     // over me" is authorable on a being that carries no interaction state of

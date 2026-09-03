@@ -47,7 +47,8 @@ void to_json(nlohmann::json& j, const Object& obj){
     {
         const auto& sp = obj.getShapeParams();
         j["shapeParams"] = { sp.r, sp.ry, sp.rz, sp.halfH, sp.majorR,
-                             sp.minorR, sp.paraboloidA, sp.ovoidAsym, sp.fillet };
+                             sp.minorR, sp.paraboloidA, sp.ovoidAsym, sp.fillet,
+                             sp.width2D, sp.height2D };
     }
     j["objectID"] = obj.getIdentifier();
     j["materialId"] = obj.materialId(); // reference to a Material being, by identifier
@@ -120,6 +121,10 @@ static Object::ShapeParams parseShapeParams(const nlohmann::json& j) {
         const auto& a = j["shapeParams"];
         sp.r = a[0]; sp.ry = a[1]; sp.rz = a[2]; sp.halfH = a[3]; sp.majorR = a[4];
         sp.minorR = a[5]; sp.paraboloidA = a[6]; sp.ovoidAsym = a[7]; sp.fillet = a[8];
+        if (a.size() >= 11) {
+            sp.width2D = a[9].get<float>();
+            sp.height2D = a[10].get<float>();
+        }
     }
     return sp;
 }
@@ -220,7 +225,12 @@ void from_json(const nlohmann::json& j, Object& obj){
     if (j.contains("authoredProperties") && j["authoredProperties"].is_object()) {
         for (auto it = j["authoredProperties"].begin();
              it != j["authoredProperties"].end(); ++it) {
-            obj.setDynamicProperty(it.key(), propertyValueFromJson(it.value()));
+            const std::string& key = it.key();
+            PropertyValue val = propertyValueFromJson(it.value());
+            if (Property* prop = obj.findProperty(key)) {
+                prop->setValue(val);
+            }
+            obj.setDynamicProperty(key, val);
         }
     }
     if (j.contains("elements") && j["elements"].is_array()) {
