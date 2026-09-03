@@ -78,6 +78,10 @@ Addendum: Also ensure save system works in every case and everything that needs 
 - **Rete Action branch conflicts:** Make it so that PERSONS can author it so that coinciding laws can be executed in order, or synthesized via Singular/Law set-to-set-creation. Persons can also author defaults resolution frameworks for laws in their jurisdiction that apply automatically (e.g. a default a Person could author could be that Laws are executed in the order they were originally registered). If no default is authored, they should refuse to fire.  
 - **In the Law Authoring window, when I go into the dropdown that says "th** — In the Law Authoring window, when I go into the dropdown that says "the subject of the event/law/the event's other subject", it's not clear whether the … → [full task](Specific%20Tasks/In_the_Law_Authoring_window_when_I_go_into_the_dropdown_that/In_the_Law_Authoring_window_when_I_go_into_the_dropdown_that.md)
 
+- **`maxChainRounds` is a default, not a ceiling** — serialized, settable, unclamped on load (`Law.cpp:2360`); clamp it or promote it to `constexpr`, since `ALGORITHMS_AS_LAW.md` and `INTELLECTUAL_LINEAGE.md` both cite it as constitutional. → [`INTELLECTUAL_LINEAGE_VERIFICATION_2026-09-03.md`](../../audits/INTELLECTUAL_LINEAGE_VERIFICATION_2026-09-03.md) §2
+- **`kMaxBirthsPerTick` — nothing bounds creation** — a `Create` in a `WhileTrue` mints beings forever; no rate limit, object cap, or birth budget exists anywhere in `ZonesOfEarth/`. Bounded time with unbounded creation is still Babel. → same audit §2b
+- **Law provenance beyond the text log** — `LawAuditLogger` is a capped façade over `Logger`; the replayable chain of laws and facts behind any state change is unbuilt, and the largest authored world is still only 43 laws. → same audit §7
+
 ### Person-facing surface
 - Make `Key` and `KeyBind` `Singular`s and integrate into Earthcall. *(Person Interface programme — near-term 7. `KeyboardHandler`'s ten `setup*Bindings()` presets are dead scaffolding with empty callbacks and no caller; delete rather than fix.)*
 - ✅ Register the cursor a first mover avatar — **done and verified (2026-08-18)**: `Singularity/Input/Interaction/InteractionChannel` is a first-mover `Law` (`interaction-channel`), stepped from `Engine::update`, with the pointer's whole state registered and its edges (`object-pressed/released/clicked/scrolled/drag-started/drag-ended/focused/unfocused`, `key-pressed/released`) published past-tense. Verified: `interaction_channel_test` (14 cases, headless), `channel_paths_test`, `earthcall` builds. See [INTERACTION_AS_LAW.md](../../architecture/law/INTERACTION_AS_LAW.md).
@@ -120,6 +124,11 @@ Addendum: Also ensure save system works in every case and everything that needs 
 - ✅ **Update `README.md`** — done and verified (2026-09-01): Updated root `README.md` Core Philosophy to include `Time` in top-level directory list and reflect un-symlinked `Formation` under `Relation/`, and updated build target instructions to `earthcall_webgpu`.
 - ✅ **Split `docs/architecture/` into subject folders** — done (2026-08-19): `ontology/`, `law/`, `events/`, `mathematics/`, `ourverse/`, `migration/`; `Integration/` left in place (framework name is not a directory name). Index: [`docs/architecture/README.md`](../../architecture/README.md). Router in `AGENTS.md` updated. Do not put files back at the `architecture/` root.
 - Gyroid implicit (Creator Console) — flashing cube of holes. Audit: [`GYROID_IMPLICIT_AUDIT_2026-08-19.md`](../../audits/GYROID_IMPLICIT_AUDIT_2026-08-19.md). Marcher AABB-clipped; preset thickened one-cell. Parity test 20/20. **Needs a Person click to confirm.** 
+
+- **Correct `kMaxChainRounds` in `ALGORITHMS_AS_LAW.md`** (lines 42, 515, 590) — the constant does not exist; `INTELLECTUAL_LINEAGE.md` inherited the error from there.
+- **Revise `INTELLECTUAL_LINEAGE.md` against the verification audit** — §4 (bounds), §5 (capabilities vs. the `TransferPolicy` ACL), §7 (attestation already built in `Identity/`), §11 (partial reversibility), plus six smaller corrections. → [`INTELLECTUAL_LINEAGE_VERIFICATION_2026-09-03.md`](../../audits/INTELLECTUAL_LINEAGE_VERIFICATION_2026-09-03.md) §§8-9
+- **Threat model and trust boundary for `SECURITY_FEATURES.md`** — 397 lines, still names neither; the real TCB includes wgpu-native, Dawn, ImGui, four vendored C++ libraries, two OpenSSL trees, and a Python venv carrying Flask and Playwright. → same audit §4
+- **Write `Time_Chronos_and_Kairos.md`, or drop the pointer to it** — `INTELLECTUAL_LINEAGE.md` §9 cites it; no such file has ever existed and nothing else in the tree mentions kairos.
 
 ## Things to explore and deliberate on:**
 - To what extent should Earthcall use OOP versus ECS?
@@ -292,9 +301,12 @@ on a quiet machine) so the tripwire tightens behind the fix.
 **(These notes are now also `docs/architecture/law/B-time Rete.md`; the foundations are built — see `docs/architecture/law/PROPHETIC_RETE.md` and the ✅ entries under R&D. What remains unbuilt is listed there in §5, including the ⚑ AUTHOR decisions.)**
 
 ## Production-facing Programs:
-- Sanctum of Beginnings fully developed idea. See the doc I wrote about it - Zach
-- The Unified Art-Mathematics-Physics environment Zone. See the doc I wrote about it - Zach
-- Earthcall Far Lands - see the doc I wrote about it
+*(These are the **Zones of Actualization** — Zach's aspirational destination zones, written in his own voice at `docs/Zones of Actualization/`. Linked here 2026-09-03; the docs are the record, these bullets are the index.)*
+- **Sanctum of Beginnings** — the onboarding Zone authored in-world, teaching Christ and the Hierarchy of Joys *first* and the ontological primitives only after, ending at Time and Moment. → [vision doc](../../Zones%20of%20Actualization/Sanctum%20of%20Beginnings.md)
+- **Universal Artistic-Math-Simulation (AMS) environment Zone** — the origin motivation: art tools, modeling engines, and physics sims differ only in *which laws are authorable and when*, and Earthcall is the one that lets you author them at runtime. → [vision doc](../../Zones%20of%20Actualization/Universal%20Artistic-Math-Simulation%20Environment.md)
+- **Earthcall's Far Lands** — Minecraft's Far Lands feeling of cosmic enormity, but generated by Laws and OntoMath as exact mathematics rather than by a floating-point bug. → [vision doc](../../Zones%20of%20Actualization/Earthcall%27s%20Far%20Lands.md) · framework already specified in [FAR_LANDS_FRAMEWORK.md](../../architecture/mathematics/FAR_LANDS_FRAMEWORK.md) (design done, not implemented)
+- **Second-Nature Law Authoring** — the Law Authoring window is expressive but too tedious for a human, so the authoring surface itself must be authored as Metalaws. → [vision doc](../../Zones%20of%20Actualization/Second-Nature%20Law%20Authoring.md) · blocked: no `ActionNode::Kind` authors a Law — see [full task](Specific%20Tasks/Law_concepts_MetaLaws_that_author_laws/Law_concepts_MetaLaws_that_author_laws.md)
+- **Animation / Automation Zone** — placeholder; Zach is writing it after the AMS doc. → [stub](../../Zones%20of%20Actualization/Animation/Automation.md)
 
 ## Findings from Clawd MYTHOS (Claude Fable 5.1) Audit (2026-09-01)
 - **The stakeholder log is an un-integrated log and grows unbounded.** `Singular::addStakeholder` appends a record on every write. Addresses use volatile identifiers (`law-N`). Action: Make stakeholding a `Relation` (e.g., `stakeholder-of`), using weight for count and `Moment` for interval, replacing records with graph edges.
