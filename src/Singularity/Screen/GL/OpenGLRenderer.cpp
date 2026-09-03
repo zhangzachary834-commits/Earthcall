@@ -1,6 +1,6 @@
 #include "Singularity/Screen/GL/OpenGLRenderer.hpp"
 
-#if !defined(__EMSCRIPTEN__) && !defined(NO_OPENGL_RENDERER)
+#if !defined(__EMSCRIPTEN__) && !defined(NO_OPENGL_RENDERER) && !defined(GLFW_INCLUDE_NONE)
 
 #include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp" // geom::SdfNode, tessellateSdf
 
