@@ -6,8 +6,8 @@
 // (it targets wasm32-unknown-emscripten, not a Darwin triple), so this
 // particular guard was latently correct; fixed here anyway so it is not the
 // next person's landmine.
-#if defined(NO_OPENGL_RENDERER)
-// No OpenGL available; provide dummy declarations for functions if needed or omit gl.h
+#if defined(NO_OPENGL_RENDERER) || defined(EARTHCALL_WEBGPU)
+// No OpenGL available or WebGPU build; provide dummy declarations for functions if needed or omit gl.h
 #elif defined(__APPLE__) && !defined(__EMSCRIPTEN__)
 #include <OpenGL/gl.h>
 #else
@@ -62,7 +62,7 @@ bool unProject(double winX, double winY, double winZ,
 
 void lookAtMul(const glm::vec3& eye, const glm::vec3& center, const glm::vec3& up) {
     glm::mat4 view = glm::lookAt(eye, center, up);
-#ifndef NO_OPENGL_RENDERER
+#if !defined(NO_OPENGL_RENDERER) && !defined(EARTHCALL_WEBGPU)
     glMultMatrixf(glm::value_ptr(view));
 #else
     (void)view;

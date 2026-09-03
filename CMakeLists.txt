@@ -266,7 +266,7 @@ if(NOT EMSCRIPTEN)
 
     add_executable(earthcall_webgpu src/entry.cpp ${WEBGPU_APP_SOURCES} ${IMGUI_WEBGPU_SOURCES})
     target_include_directories(earthcall_webgpu PRIVATE ${WGPU_NATIVE_DIR}/include)
-    target_compile_definitions(earthcall_webgpu PRIVATE EARTHCALL_WEBGPU IMGUI_IMPL_WEBGPU_BACKEND_WGPU)
+    target_compile_definitions(earthcall_webgpu PRIVATE EARTHCALL_WEBGPU IMGUI_IMPL_WEBGPU_BACKEND_WGPU GLFW_INCLUDE_NONE)
 
     if(APPLE)
         target_link_libraries(earthcall_webgpu PRIVATE
@@ -287,6 +287,18 @@ if(NOT EMSCRIPTEN)
             ZLIB::ZLIB
             OpenSSL::SSL
             OpenSSL::Crypto
+        )
+    else()
+        target_link_libraries(earthcall_webgpu PRIVATE
+            $<$<BOOL:${OPENGL_FOUND}>:OpenGL::GL>
+            ${WGPU_NATIVE_DIR}/lib/libwgpu_native.a
+            ${GLFW_LIB}
+            ZLIB::ZLIB
+            OpenSSL::SSL
+            OpenSSL::Crypto
+            ${UUID_LIB}
+            ${CMAKE_DL_LIBS}
+            Threads::Threads
         )
     endif()
 
