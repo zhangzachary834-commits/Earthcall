@@ -194,6 +194,9 @@ if(NOT EMSCRIPTEN AND OpenGL_FOUND)
 else()
     target_compile_definitions(earthcall_core PUBLIC NO_OPENGL_RENDERER GLFW_INCLUDE_NONE)
 endif()
+if(NOT APPLE AND NOT EXISTS "/usr/include/GL/gl.h")
+    target_compile_definitions(earthcall_core PUBLIC GLFW_INCLUDE_NONE)
+endif()
 if (NOT EMSCRIPTEN)
     target_link_libraries(earthcall_core PUBLIC
         ${GLFW_LIB}
@@ -296,7 +299,6 @@ if(NOT EMSCRIPTEN)
             ZLIB::ZLIB
             OpenSSL::SSL
             OpenSSL::Crypto
-            ${UUID_LIB}
             ${CMAKE_DL_LIBS}
             Threads::Threads
         )

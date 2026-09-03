@@ -92,9 +92,9 @@ int main() {
     // Object construction reaches the renderer boundary; give it a context.
     if (!glfwInit()) { std::fprintf(stderr, "channel_paths_test: glfwInit failed\n"); return 1; }
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     GLFWwindow* window = glfwCreateWindow(64, 64, "channel_paths_test", nullptr, nullptr);
     if (!window) { std::fprintf(stderr, "channel_paths_test: no GL context\n"); glfwTerminate(); return 1; }
-    glfwMakeContextCurrent(window);
 
     Object object;
     Law law("channel-paths-probe");

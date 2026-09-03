@@ -299,9 +299,9 @@ int main() {
     // touch the renderer is constructed.
     if (!glfwInit()) { std::fprintf(stderr, "no_black_box_test: no GLFW\n"); return 1; }
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     GLFWwindow* window = glfwCreateWindow(64, 64, "no-black-box", nullptr, nullptr);
     if (!window) { std::fprintf(stderr, "no_black_box_test: no GL context\n"); glfwTerminate(); return 1; }
-    glfwMakeContextCurrent(window);
 
     std::printf("no_black_box_test — the sixth refusal (NO_BLACK_BOX.md)\n\n");
 
