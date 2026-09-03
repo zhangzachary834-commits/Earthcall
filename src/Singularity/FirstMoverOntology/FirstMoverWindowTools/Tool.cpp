@@ -58,39 +58,28 @@ void configureStrokeTool(Zone& zone, Tool::Type type) {}
 void applyToolTransform(Object* obj, const glm::mat4& worldTransform, const glm::mat4* avatarRoot) {
     if (!obj) return;
 
-    // Primary body part — update via local transform relative to avatar root
-    if (auto* part = dynamic_cast<BodyPart*>(obj)) {
-        if (avatarRoot) {
-            glm::mat4 local = glm::inverse(*avatarRoot) * worldTransform;
-            part->setLocalTransform(local);
-        } else {
-            part->setTransform(worldTransform);
+    // Body part transform delegation (BodyPart is a Formation, not an Object):
+    // If the object being transformed belongs to the selected character BodyPart,
+    // update the BodyPart or sub-object accordingly.
+    const auto& consoleState = Rendering::getCreatorConsoleState();
+    if (consoleState.selectedCharacterPart) {
+        if (consoleState.selectedCharacterPart->getPrimaryObject() == obj) {
+            if (avatarRoot) {
+                glm::mat4 local = glm::inverse(*avatarRoot) * worldTransform;
+                consoleState.selectedCharacterPart->setLocalTransform(local);
+            } else {
+                consoleState.selectedCharacterPart->setTransform(worldTransform);
+            }
+            return;
         }
-        return;
-    }
-
-    // Sub-object belonging to a body part — convert world transform to
-    // body-part-local offset so the sub-object stays attached correctly
-    // Since getOwnerBodyPart is removed, we search the active person's body if possible.
-    // Or we can rely on a helper to find it. For now, we'll just check if it's in the active person's body.
-    // (A better architectural fix is needed to find parent formations).
-    
-    // As a temporary fix since we removed obj->getOwnerBodyPart():
-    // For now, if we can't find the owner, just set transform directly. 
-    // The true fix is to pass the owner down or use relation graph.
-    // For now, just set the transform.
-    /*
-    if (BodyPart* owner = obj->getOwnerBodyPart()) {
-        glm::mat4 localOffset = glm::inverse(owner->getTransform()) * worldTransform;
-        for (size_t i = 0; i < owner->getSubObjectCount(); ++i) {
-            if (owner->getSubObject(i) == obj) {
-                owner->setSubObjectLocalOffset(i, localOffset);
-                break;
+        for (size_t i = 0; i < consoleState.selectedCharacterPart->getSubObjectCount(); ++i) {
+            if (consoleState.selectedCharacterPart->getSubObject(i) == obj) {
+                glm::mat4 localOffset = glm::inverse(consoleState.selectedCharacterPart->getTransform()) * worldTransform;
+                consoleState.selectedCharacterPart->setSubObjectLocalOffset(i, localOffset);
+                return;
             }
         }
-        return;
     }
-    */
 
     obj->setTransform(worldTransform);
 }
