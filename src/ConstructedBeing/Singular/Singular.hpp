@@ -32,10 +32,6 @@ public:
     
     static int getAliveCount();
 
-    // Checks if this Singular satisfies the strict Kernel bounds required for set-to-set synthesis.
-    // Placeholder for when we define these bounds later.
-    virtual bool satisfiesKernelBounds() const { return true; }
-
     using PropertyChangeCallback = std::function<void(Singular*, const std::string&)>;
     static void setPropertyChangeCallback(PropertyChangeCallback cb);
     static void notifyPropertyChanged(Singular* owner, const std::string& name);
@@ -219,15 +215,5 @@ protected:
     std::string name;
     bool _propertiesBuilt = false;
     std::string _telosId;
-
-    /*
-     * RELATION AND FORMATION OWNERSHIP AND POINTERS
-     * Every Singular knows the Relations and Formations its part of */
-
-    // Parent Formation instances that this Singular is a part of
-    std::vector<Formation> parentFormationInstances;
-
-    // Child Formation instances that are within this Singular
-    std::vector<Formation> childFormationInstances;
 
 };
