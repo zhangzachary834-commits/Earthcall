@@ -7,10 +7,12 @@
 #include <string>
 
 int main() {
-    std::cout << "=== Running EarthcallAPI Design Element Test ===" << std::endl;
+    std::cout << "=== Running EarthcallAPI Tests ===" << std::endl;
 
     Integration::EarthcallAPI api;
 
+    // --- DESIGN SYSTEM TESTS ---
+    std::cout << "\n--- Design System Tests ---" << std::endl;
     // 1. Permission check: creation should fail without "design_system" permission
     Integration::EarthcallAPI::DesignElement elem1;
     elem1.name = "box_1";
@@ -98,6 +100,91 @@ int main() {
     bool deleteNonExistent = api.deleteDesignElement("non_existent_element");
     assert(!deleteNonExistent && "Deletion of non-existent element should fail");
 
-    std::cout << "=== ALL Design Element Tests Passed Successfully! ===" << std::endl;
+    // --- WORLD/ENVIRONMENT ACCESS TESTS ---
+    std::cout << "\n--- World/Environment Access Tests ---" << std::endl;
+    assert(!api.createZone("zone1", 0, 0, 100, 100));
+    assert(!api.addZoneObject("zone1", "tree", 10, 10));
+    assert(!api.setZoneTheme("zone1", "forest"));
+    assert(api.getZones().empty());
+    assert(!api.createObject("rock", glm::vec3(0.0f)));
+    assert(!api.modifyObject("rock1", glm::vec3(1.0f), glm::vec3(1.0f)));
+    assert(!api.deleteObject("rock1"));
+    assert(!api.setCameraPosition(glm::vec3(10.0f)));
+
+    // getCameraPosition doesn't check permissions and returns hardcoded vec3(0,0,0) right now
+    auto camPos = api.getCameraPosition();
+    assert(camPos.x == 0.0f && camPos.y == 0.0f && camPos.z == 0.0f);
+
+    Integration::SecurityManager::instance().grantPermission(
+        Integration::PermissionType::WORLD_ACCESS, "earthcall_api"
+    );
+    assert(api.hasPermission("world_access"));
+
+    // createZone returns false when _zoneManager is null
+    assert(!api.createZone("zone1", 0, 0, 100, 100));
+    assert(api.addZoneObject("zone1", "tree", 10, 10));
+    assert(api.setZoneTheme("zone1", "forest"));
+    assert(api.getZones().empty()); // Hardcoded to empty right now
+    assert(api.createObject("rock", glm::vec3(0.0f)));
+    assert(api.modifyObject("rock1", glm::vec3(1.0f), glm::vec3(1.0f)));
+    assert(api.deleteObject("rock1"));
+    assert(api.setCameraPosition(glm::vec3(10.0f)));
+
+    // --- DATA/SAVE ACCESS TESTS ---
+    std::cout << "\n--- Data/Save Access Tests ---" << std::endl;
+    assert(!api.saveData("key1", "value1"));
+    assert(api.loadData("key1") == "");
+    assert(api.getDataKeys().empty());
+
+    Integration::SecurityManager::instance().grantPermission(
+        Integration::PermissionType::DATA_ACCESS, "earthcall_api"
+    );
+    assert(api.hasPermission("data_access"));
+
+    assert(api.saveData("key1", "value1"));
+    assert(api.loadData("key1") == ""); // Hardcoded
+    assert(api.getDataKeys().empty()); // Hardcoded
+
+
+    // --- COMMUNICATION TESTS ---
+    std::cout << "\n--- Communication Tests ---" << std::endl;
+    bool event_received = false;
+    api.registerCallback("test_event", [&event_received](const std::string& data) {
+        event_received = true;
+        assert(data == "data");
+    });
+    api.sendEvent("test_event", "data");
+    assert(event_received);
+
+    event_received = false;
+    api.unregisterCallback("test_event");
+    api.sendEvent("test_event", "data");
+    assert(!event_received);
+
+
+    // --- PERMISSIONS TESTS ---
+    std::cout << "\n--- Permissions Tests ---" << std::endl;
+    assert(!api.hasPermission("ui_control"));
+    api.requestPermission("ui_control");
+    // Depending on SecurityManager, it might auto-grant or just queue.
+    // We explicitly grant to test getGrantedPermissions properly.
+    Integration::SecurityManager::instance().grantPermission(
+        Integration::PermissionType::UI_CONTROL, "earthcall_api"
+    );
+    assert(api.hasPermission("ui_control"));
+
+    auto granted = api.getGrantedPermissions();
+    // Check if the granted string vector contains the mapped integer for UI_CONTROL
+    bool foundUiControl = false;
+    std::string uiControlIntStr = std::to_string(static_cast<int>(Integration::PermissionType::UI_CONTROL));
+    for (const auto& p : granted) {
+        if (p == uiControlIntStr) {
+            foundUiControl = true;
+            break;
+        }
+    }
+    assert(foundUiControl && "Granted permissions should include ui_control");
+
+    std::cout << "\n=== ALL Tests Passed Successfully! ===" << std::endl;
     return 0;
 }
