@@ -1,13 +1,16 @@
 #pragma once
 
+#include "ConstructedBeing/Singular/Singular.hpp"
+
 #include <algorithm>
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
-class Singular;
 class Relation;
 
 // The law engine's working set — not a being, not the vessel (Ourverse),
@@ -238,7 +241,26 @@ public:
     std::uint64_t structuralRevision() const { return _structuralRevision; }
     void bumpStructuralRevision() { ++_structuralRevision; }
 
+    Singular* findBeing(const std::string& id) const {
+        if (id.empty()) return nullptr;
+        ensureBeingIndex();
+        auto it = _beingIndex.find(id);
+        return it != _beingIndex.end() ? it->second : nullptr;
+    }
+
 private:
+    void ensureBeingIndex() const {
+        if (_beingIndexRevision != _structuralRevision) {
+            _beingIndex.clear();
+            for (Singular* b : beings()) {
+                if (b) {
+                    const std::string& bId = b->getIdentifier();
+                    if (!bId.empty()) _beingIndex[bId] = b;
+                }
+            }
+            _beingIndexRevision = _structuralRevision;
+        }
+    }
     Universe() = default;
 
     Universe(const Universe&) = delete;
@@ -262,6 +284,8 @@ private:
 
     std::vector<Singular*> _unmaking;
     std::uint64_t _structuralRevision = 0;
+    mutable std::unordered_map<std::string, Singular*> _beingIndex;
+    mutable std::uint64_t _beingIndexRevision = 0;
 };
 
 // Free every being whose unmaking has been requested, releasing it from the

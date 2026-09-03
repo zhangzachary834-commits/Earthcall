@@ -26,12 +26,9 @@ int main() {
     }
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
     GLFWwindow* window = glfwCreateWindow(64, 64, "formation_topology_test", nullptr, nullptr);
-    if (!window) {
-        std::fprintf(stderr, "formation_topology_test: no GL context\n");
-        glfwTerminate();
-        return 1;
+    if (window) {
+        glfwMakeContextCurrent(window);
     }
-    glfwMakeContextCurrent(window);
 
     // Create objects
     std::vector<std::unique_ptr<Object>> beings;
@@ -127,7 +124,7 @@ int main() {
     assert(form.getMembers().size() == 4);   // membership untouched by the asking
 
     beings.clear();
-    glfwDestroyWindow(window);
+    if (window) glfwDestroyWindow(window);
     glfwTerminate();
 
     std::printf("formation_topology_test: OK\n");

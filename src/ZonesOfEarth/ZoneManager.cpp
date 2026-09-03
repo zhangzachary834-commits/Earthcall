@@ -1301,6 +1301,8 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
             _saveLoad.customName[sizeof(_saveLoad.customName) - 1] = '\0';
         }
 
+        Universe::instance().bumpStructuralRevision();
+
         const std::string zoneName = _zones.empty() ? std::string("?") : _zones[_currentIndex]->name();
         _saveLoad.lastLoadReport =
             "Loaded session '" + _saveLoad.loadedSaveName + "' (Zones of Earth stay "

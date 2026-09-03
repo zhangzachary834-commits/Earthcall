@@ -74,12 +74,9 @@ int main() {
     }
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
     GLFWwindow* window = glfwCreateWindow(64, 64, "control_patterns_test", nullptr, nullptr);
-    if (!window) {
-        std::fprintf(stderr, "control_patterns_test: no GL context\n");
-        glfwTerminate();
-        return 1;
+    if (window) {
+        glfwMakeContextCurrent(window);
     }
-    glfwMakeContextCurrent(window);
 
     std::printf("Running control patterns test...\n");
 
@@ -430,7 +427,7 @@ int main() {
     Universe::instance().setRelationProvider({});
     Universe::instance().setRelationRegistrar({});
 
-    glfwDestroyWindow(window);
+    if (window) glfwDestroyWindow(window);
     glfwTerminate();
 
     if (g_failures) {

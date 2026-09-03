@@ -319,19 +319,17 @@ if(NOT EMSCRIPTEN)
             target_compile_definitions(${TEST_NAME} PRIVATE GLFW_INCLUDE_NONE)
             target_link_libraries(${TEST_NAME} PRIVATE earthcall_core)
         elseif (${TEST_NAME} MATCHES "webgpu_.*" OR ${TEST_NAME} STREQUAL "gpu_mastery_test")
-            set(WEBGPU_TEST_EXTRA_SRCS
-                src/Singularity/Screen/WebGPU/WebGpuRenderer.cpp
-                src/Singularity/Screen/WebGPU/SdfWgsl.cpp
-                src/Singularity/Screen/WebGPU/GpuBufferPool.cpp
-                src/Singularity/Screen/WebGPU/GpuMeshCache.cpp)
             if(APPLE)
-                list(APPEND WEBGPU_TEST_EXTRA_SRCS src/Singularity/Screen/WebGPU/WebGpuContext.mm)
+                set(WEBGPU_TEST_EXTRA_SRCS
+                    src/Singularity/Screen/WebGPU/WebGpuRenderer.cpp
+                    src/Singularity/Screen/WebGPU/SdfWgsl.cpp
+                    src/Singularity/Screen/WebGPU/GpuBufferPool.cpp
+                    src/Singularity/Screen/WebGPU/GpuMeshCache.cpp
+                    src/Singularity/Screen/WebGPU/WebGpuContext.mm)
                 set_source_files_properties(src/Singularity/Screen/WebGPU/WebGpuContext.mm PROPERTIES LANGUAGE OBJCXX)
-            endif()
-            add_executable(${TEST_NAME} ${TEST_SOURCE} ${WEBGPU_TEST_EXTRA_SRCS})
-            target_include_directories(${TEST_NAME} PRIVATE ${WGPU_NATIVE_DIR}/include)
-            target_compile_definitions(${TEST_NAME} PRIVATE EARTHCALL_WEBGPU IMGUI_IMPL_WEBGPU_BACKEND_WGPU)
-            if(APPLE)
+                add_executable(${TEST_NAME} ${TEST_SOURCE} ${WEBGPU_TEST_EXTRA_SRCS})
+                target_include_directories(${TEST_NAME} PRIVATE ${WGPU_NATIVE_DIR}/include)
+                target_compile_definitions(${TEST_NAME} PRIVATE EARTHCALL_WEBGPU IMGUI_IMPL_WEBGPU_BACKEND_WGPU)
                 target_link_libraries(${TEST_NAME} PRIVATE
                     earthcall_core
                     ${WGPU_NATIVE_DIR}/lib/libwgpu_native.a
@@ -352,8 +350,6 @@ if(NOT EMSCRIPTEN)
                     OpenSSL::Crypto
                     OpenGL::GL
                 )
-            else()
-                target_link_libraries(${TEST_NAME} PRIVATE earthcall_core ${GLFW_LIB} ${OPENSSL_LIBRARIES} ZLIB::ZLIB ${CMAKE_DL_LIBS} Threads::Threads)
             endif()
         else()
             add_executable(${TEST_NAME} ${TEST_SOURCE})
@@ -364,14 +360,16 @@ if(NOT EMSCRIPTEN)
 
         # Shared fixtures (test_save_helper.hpp, test_harness.hpp). Source files live under
         # tests/<region>/; ctest target names stay NAME_WE of the .cpp.
-        target_include_directories(${TEST_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/tests ${CMAKE_SOURCE_DIR}/tests/support)
-        target_compile_options(${TEST_NAME} PRIVATE -UNDEBUG)
-        if (${TEST_NAME} IN_LIST PENDING_FEATURE_TESTS)
-            set_target_properties(${TEST_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
-        else()
-            list(APPEND ALL_ACTIVE_TEST_TARGETS ${TEST_NAME})
+        if (TARGET ${TEST_NAME})
+            target_include_directories(${TEST_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/tests ${CMAKE_SOURCE_DIR}/tests/support)
+            target_compile_options(${TEST_NAME} PRIVATE -UNDEBUG)
+            if (${TEST_NAME} IN_LIST PENDING_FEATURE_TESTS)
+                set_target_properties(${TEST_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
+            else()
+                list(APPEND ALL_ACTIVE_TEST_TARGETS ${TEST_NAME})
+            endif()
+            add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
         endif()
-        add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
 
         # ctest's default WORKING_DIRECTORY for an add_test() target is the
         # build tree, not the source tree. synthesis_studio_app_test opens an
@@ -379,22 +377,24 @@ if(NOT EMSCRIPTEN)
         # equivalent fixture is optional and skips when absent; this one is the
         # test's actual subject, so it must resolve), so it needs the source
         # root as its CWD like the `lag` custom target above already gets.
-        if (${TEST_NAME} STREQUAL "synthesis_studio_app_test")
-            set_tests_properties(${TEST_NAME} PROPERTIES
-                WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-        endif()
+        if (TARGET ${TEST_NAME})
+            if (${TEST_NAME} STREQUAL "synthesis_studio_app_test")
+                set_tests_properties(${TEST_NAME} PROPERTIES
+                    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+            endif()
 
-        # The lag probe measures durations, so it must not be measured while
-        # three other tests are fighting it for the machine: RUN_SERIAL makes
-        # ctest give it the box to itself. (It survives contention either way
-        # — it detects a moving machine and stops enforcing its timings — but
-        # a run where nothing is enforced is a run that checked nothing.)
-        if (${TEST_NAME} STREQUAL "frame_lag_test" OR
-            ${TEST_NAME} STREQUAL "webgpu_micro_mastery_lag_test")
-            set_tests_properties(${TEST_NAME} PROPERTIES
-                RUN_SERIAL TRUE
-                TIMEOUT 300
-                LABELS "lag")
+            # The lag probe measures durations, so it must not be measured while
+            # three other tests are fighting it for the machine: RUN_SERIAL makes
+            # ctest give it the box to itself. (It survives contention either way
+            # — it detects a moving machine and stops enforcing its timings — but
+            # a run where nothing is enforced is a run that checked nothing.)
+            if (${TEST_NAME} STREQUAL "frame_lag_test" OR
+                ${TEST_NAME} STREQUAL "webgpu_micro_mastery_lag_test")
+                set_tests_properties(${TEST_NAME} PROPERTIES
+                    RUN_SERIAL TRUE
+                    TIMEOUT 300
+                    LABELS "lag")
+            endif()
         endif()
     endforeach()
 

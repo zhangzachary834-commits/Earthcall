@@ -1624,7 +1624,12 @@ bool LawManager::propheticHears(const std::string& propertyName) const {
 }
 
 std::vector<Law::ApplicationRecord> LawManager::tick() {
-    auto T0 = glfwGetTime();
+    using Clock = std::chrono::high_resolution_clock;
+    auto getTimeSec = []() {
+        return std::chrono::duration<double>(Clock::now().time_since_epoch()).count();
+    };
+
+    auto T0 = getTimeSec();
 
     // Bring the possibility-space index up to date with the law text before
     // anything consults it. Cheap when nothing moved: one integer compare.
@@ -1638,7 +1643,7 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
     for (const auto& law : _laws) {
         if (law) syncReteCompilation(*law);
     }
-    auto T1 = glfwGetTime();
+    auto T1 = getTimeSec();
 
     // Introduce any being the network has not met. Only while connected: the
     // property-change callback installed by connectToEventBus() is what keeps
@@ -1651,7 +1656,7 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
         }
     }
 
-    auto T2 = glfwGetTime();
+    auto T2 = getTimeSec();
 
     if (_rete.hasDirtyFacts()) {
         _rete.evaluateDirty();
@@ -1878,11 +1883,11 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
         }
     }
 
-    auto T3 = glfwGetTime();
+    auto T3 = getTimeSec();
     runDriveSessions(records);
-    auto T4 = glfwGetTime();
+    auto T4 = getTimeSec();
     reapUnmade();
-    auto T5 = glfwGetTime();
+    auto T5 = getTimeSec();
 
     _tickTiming.syncMs  = static_cast<float>((T1 - T0) * 1000.0);
     _tickTiming.seedMs  = static_cast<float>((T2 - T1) * 1000.0);

@@ -69,6 +69,8 @@ Relation::Relation(const std::string& type,
                    bool directed,
                    float initialWeight)
     : type(type), directed(directed), _a(&aBeing), _b(&bBeing) {
+    _cachedAId = _a ? _a->getIdentifier() : "";
+    _cachedBId = _b ? _b->getIdentifier() : "";
     if (initialWeight != -1.0f) setWeight(initialWeight);
 }
 
@@ -80,6 +82,8 @@ Relation::Relation(const std::string& type,
     : type(type), directed(directed),
       _a(const_cast<Singular*>(&aBeing)),
       _b(const_cast<Singular*>(&bBeing)) {
+    _cachedAId = _a ? _a->getIdentifier() : "";
+    _cachedBId = _b ? _b->getIdentifier() : "";
     if (initialWeight != -1.0f) setWeight(initialWeight);
 }
 

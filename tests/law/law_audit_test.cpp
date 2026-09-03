@@ -76,12 +76,9 @@ int main() {
     }
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
     GLFWwindow* window = glfwCreateWindow(64, 64, "law_audit_test", nullptr, nullptr);
-    if (!window) {
-        std::fprintf(stderr, "law_audit_test: no GL context\n");
-        glfwTerminate();
-        return 1;
+    if (window) {
+        glfwMakeContextCurrent(window);
     }
-    glfwMakeContextCurrent(window);
 
     const MathBindings tBinding{{"t", PropertyPath::parse("time.sinceApplied")}};
 
@@ -378,7 +375,7 @@ int main() {
 
     std::cout << "\nSUCCESS — " << g_checks << " checks passed." << std::endl;
 
-    glfwDestroyWindow(window);
+    if (window) glfwDestroyWindow(window);
     glfwTerminate();
     return 0;
 }

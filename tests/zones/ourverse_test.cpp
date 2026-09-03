@@ -25,12 +25,9 @@ int main() {
     }
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
     GLFWwindow* window = glfwCreateWindow(64, 64, "ourverse_test", nullptr, nullptr);
-    if (!window) {
-        std::fprintf(stderr, "ourverse_test: no GL context\n");
-        glfwTerminate();
-        return 1;
+    if (window) {
+        glfwMakeContextCurrent(window);
     }
-    glfwMakeContextCurrent(window);
 
     Ourverse ourverse;
     assert(ourverse.getIdentifier() == "Ourverse");
@@ -88,7 +85,7 @@ int main() {
     assert(laws.find("ourverse-gathering-unowned")->isFirstMover());
 
     Singularity::Language::LanguageSystem::instance().clear();
-    glfwDestroyWindow(window);
+    if (window) glfwDestroyWindow(window);
     glfwTerminate();
     std::puts("ourverse_test: ALL OK");
     return 0;

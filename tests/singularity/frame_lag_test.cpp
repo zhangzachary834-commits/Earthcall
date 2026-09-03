@@ -827,6 +827,24 @@ int main(int argc, char** argv) {
         return (gFailures + gClockFailures) == 0 ? 0 : 1;
     }
 
+    class DummyLagRenderer : public Renderer {
+    public:
+        void drawMesh(const geom::TessMesh&, const RenderMaterial&) override {}
+        void drawImplicit(const geom::SdfNode&, const glm::vec3&, const RenderMaterial&, const geom::FieldNode*, uint64_t, uint32_t, const geom::HeightGrid*) override {}
+        void drawLines(const std::vector<std::pair<glm::vec3, glm::vec3>>&, const glm::vec4&, float, Blend) override {}
+        void drawOverlay(const geom::TessMesh&, const glm::vec4&, float, bool) override {}
+        void drawSolid(const std::vector<glm::vec3>&, const glm::vec4&, Blend, bool) override {}
+        void drawImage2D(const uint8_t*, uint32_t, uint32_t, const glm::vec4&, const glm::vec4&) override {}
+        TextureHandle uploadTexture(TextureHandle, const uint8_t*, uint32_t, uint32_t) override { return 1; }
+        void releaseTexture(TextureHandle) override {}
+        void begin2D(uint32_t, uint32_t) override {}
+        void end2D() override {}
+        void drawLines2D(const std::vector<glm::vec2>&, const glm::vec4&, float) override {}
+        void drawTris2D(const std::vector<glm::vec2>&, const glm::vec4&) override {}
+    };
+    DummyLagRenderer dummyRenderer;
+    setCurrentRenderer(&dummyRenderer);
+
     Core::Camera camera;
     MouseHandler mouseHandler;
     Soul soul("Player");

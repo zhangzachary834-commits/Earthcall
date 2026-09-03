@@ -31,12 +31,9 @@ int main() {
     }
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
     GLFWwindow* window = glfwCreateWindow(64, 64, "object_concept_test", nullptr, nullptr);
-    if (!window) {
-        std::fprintf(stderr, "object_concept_test: no GL context\n");
-        glfwTerminate();
-        return 1;
+    if (window) {
+        glfwMakeContextCurrent(window);
     }
-    glfwMakeContextCurrent(window);
 
     {
         Object author;
@@ -291,7 +288,7 @@ int main() {
         Universe::instance().setProvider({});
     }
 
-    glfwDestroyWindow(window);
+    if (window) glfwDestroyWindow(window);
     glfwTerminate();
     std::puts("object_concept_test: ALL OK");
     return 0;

@@ -84,12 +84,9 @@ int main() {
     }
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
     GLFWwindow* window = glfwCreateWindow(64, 64, "rete_compile_test", nullptr, nullptr);
-    if (!window) {
-        std::fprintf(stderr, "rete_compile_test: no GL context\n");
-        glfwTerminate();
-        return 1;
+    if (window) {
+        glfwMakeContextCurrent(window);
     }
-    glfwMakeContextCurrent(window);
 
     {
         Object author;
@@ -291,7 +288,7 @@ int main() {
         Universe::instance().setProvider({});   // leave no dangling refs
     }
 
-    glfwDestroyWindow(window);
+    if (window) glfwDestroyWindow(window);
     glfwTerminate();
     std::puts("rete_compile_test: ALL OK");
     return 0;

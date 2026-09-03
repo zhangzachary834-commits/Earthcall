@@ -241,8 +241,9 @@ int main() {
     if (!glfwInit()) { std::fprintf(stderr, "object_roundtrip_test: glfwInit failed\n"); return 1; }
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
     GLFWwindow* window = glfwCreateWindow(64, 64, "object_roundtrip_test", nullptr, nullptr);
-    if (!window) { std::fprintf(stderr, "object_roundtrip_test: no GL context\n"); glfwTerminate(); return 1; }
-    glfwMakeContextCurrent(window);
+    if (window) {
+        glfwMakeContextCurrent(window);
+    }
 
     // ------------------------------------------------------------------
     // 1. Pose and placement: where the object is, which way it faces, and how
@@ -424,7 +425,7 @@ int main() {
         std::printf("  material reference survives by identifier OK\n");
     }
 
-    glfwDestroyWindow(window);
+    if (window) glfwDestroyWindow(window);
     glfwTerminate();
     std::printf("object_roundtrip_test: ALL OK\n");
     return 0;

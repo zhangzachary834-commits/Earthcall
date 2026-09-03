@@ -76,10 +76,7 @@ Singular* resolveParticipantToken(const std::string& token) {
                    ? Universe::instance().applicationEventSubject()
                    : Universe::instance().applicationEventObject();
     }
-    for (Singular* being : Universe::instance().beings()) {
-        if (being && being->getIdentifier() == token) return being;
-    }
-    return nullptr;
+    return Universe::instance().findBeing(token);
 }
 
 // Kinds this build can actually evaluate. Deliberately a whitelist of the
@@ -312,27 +309,35 @@ ECA::ConditionPredicate ConditionNode::compile() const {
             const std::string type = relationType;
             const std::string otherSpec = otherId;
             return [type, otherSpec](const ECA::Event&, const Singular& subject) {
+                Singular* otherBeing = nullptr;
                 std::string other = otherSpec;
                 if (otherSpec == "@event.subject" || otherSpec == "@event.object") {
                     if (!Universe::instance().hasApplicationEvent()) return false;
-                    Singular* participant =
-                        otherSpec == "@event.subject"
-                            ? Universe::instance().applicationEventSubject()
-                            : Universe::instance().applicationEventObject();
-                    if (!participant) return false;   // unproven referent
-                    other = participant->getIdentifier();
+                    otherBeing = otherSpec == "@event.subject"
+                        ? Universe::instance().applicationEventSubject()
+                        : Universe::instance().applicationEventObject();
+                    if (!otherBeing) return false;   // unproven referent
+                    other = otherBeing->getIdentifier();
+                } else if (!otherSpec.empty()) {
+                    otherBeing = resolveParticipantToken(otherSpec);
                 }
-                const std::string id = subject.getIdentifier();
+
                 for (const Relation* rel : Universe::instance().relations()) {
                     if (!rel) continue;
                     if (!type.empty() && rel->type != type) continue;
-                    if (other.empty()) {
-                        if (rel->directed ? rel->aId() == id : rel->involves(id)) {
-                            return true;
+                    if (!otherSpec.empty()) {
+                        if (otherBeing) {
+                            if (rel->isBetween(subject, *otherBeing)) return true;
+                        } else {
+                            if (rel->isBetween(subject.getIdentifier(), other)) return true;
                         }
-                        continue;
+                    } else {
+                        if (rel->directed) {
+                            if (rel->a() == &subject) return true;
+                        } else {
+                            if (rel->a() == &subject || rel->b() == &subject) return true;
+                        }
                     }
-                    if (rel->isBetween(id, other)) return true;
                 }
                 return false;
             };

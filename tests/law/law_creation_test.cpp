@@ -56,12 +56,9 @@ int main() {
     }
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
     GLFWwindow* window = glfwCreateWindow(64, 64, "law_creation_test", nullptr, nullptr);
-    if (!window) {
-        std::cout << "law_creation_test: window creation failed" << std::endl;
-        glfwTerminate();
-        return 1;
+    if (window) {
+        glfwMakeContextCurrent(window);
     }
-    glfwMakeContextCurrent(window);
 
     Zone world("test-zone", "default");
     Object subject;

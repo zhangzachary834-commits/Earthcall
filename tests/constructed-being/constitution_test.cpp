@@ -26,16 +26,14 @@ int main() {
     }
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
     GLFWwindow* window = glfwCreateWindow(64, 64, "constitution_test", nullptr, nullptr);
-    if (!window) {
-        std::fprintf(stderr, "constitution_test: no GL context\n");
-        glfwTerminate();
-        return 1;
+    if (window) {
+        glfwMakeContextCurrent(window);
     }
+
     Person target(Soul("target"), Body::createBasicAvatar("Voxel"), "strict");
     Person dictator(Soul("dictator"), Body::createBasicAvatar("Voxel"), "strict");
 
     Zone prison("Prison", "default");
-    glfwMakeContextCurrent(window);
 
     {
         Object zack;

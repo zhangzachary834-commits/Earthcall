@@ -12,13 +12,18 @@
 #include "ConstructedBeing/Material/MaterialManager.hpp"
 
 #include <GLFW/glfw3.h>
+#ifdef __APPLE__
 #include <OpenGL/gl.h>
+#elif !defined(NO_OPENGL_RENDERER)
+#include <GL/gl.h>
+#endif
 #include <cassert>
 #include <cstdio>
 #include <vector>
 
 extern MaterialManager materials; // the global the renderer resolves against
 
+#if !defined(NO_OPENGL_RENDERER)
 namespace {
 
 // Total red channel over the framebuffer. Geometry and background are identical
@@ -45,13 +50,19 @@ long long renderAndSumRed(Object& obj) {
 }
 
 } // namespace
+#endif
 
 int main() {
+#if defined(NO_OPENGL_RENDERER)
+    std::printf("material_render_test: SKIPPED (NO_OPENGL_RENDERER)\n");
+    return 0;
+#else
     if (!glfwInit()) { std::fprintf(stderr, "material_render_test: glfwInit failed\n"); return 1; }
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
     GLFWwindow* window = glfwCreateWindow(64, 64, "material_render_test", nullptr, nullptr);
-    if (!window) { std::fprintf(stderr, "material_render_test: no GL context\n"); glfwTerminate(); return 1; }
-    glfwMakeContextCurrent(window);
+    if (window) {
+        glfwMakeContextCurrent(window);
+    }
 
     Object obj;
     Object::ShapeParams p; p.r = 0.8f;
@@ -80,8 +91,9 @@ int main() {
     assert(restored > dimmed);
     std::printf("  restore: reassigning material.default brightens again (%lld)\n", restored);
 
-    glfwDestroyWindow(window);
+    if (window) glfwDestroyWindow(window);
     glfwTerminate();
     std::printf("material_render_test: ALL OK\n");
     return 0;
+#endif
 }

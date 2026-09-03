@@ -12,13 +12,18 @@
 #include "Singularity/Screen/Renderer.hpp"
 
 #include <GLFW/glfw3.h>
+#ifdef __APPLE__
 #include <OpenGL/gl.h>
+#elif !defined(NO_OPENGL_RENDERER)
+#include <GL/gl.h>
+#endif
 #include <cassert>
 #include <cstdio>
 #include <vector>
 
 extern MaterialManager materials;
 
+#if !defined(NO_OPENGL_RENDERER)
 namespace {
 
 const int bg[3] = {64, 128, 191}; // clear colour 0.25/0.5/0.75
@@ -64,13 +69,19 @@ long long brightness(Object& obj) {
 }
 
 } // namespace
+#endif
 
 int main() {
+#if defined(NO_OPENGL_RENDERER)
+    std::printf("primitive_render_test: SKIPPED (NO_OPENGL_RENDERER)\n");
+    return 0;
+#else
     if (!glfwInit()) { std::fprintf(stderr, "primitive_render_test: glfwInit failed\n"); return 1; }
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
     GLFWwindow* window = glfwCreateWindow(64, 64, "primitive_render_test", nullptr, nullptr);
-    if (!window) { std::fprintf(stderr, "primitive_render_test: no GL context\n"); glfwTerminate(); return 1; }
-    glfwMakeContextCurrent(window);
+    if (window) {
+        glfwMakeContextCurrent(window);
+    }
 
     // Each legacy primitive reaches the framebuffer through the renderer boundary.
     {
@@ -160,8 +171,9 @@ int main() {
                     lineCov, overlayCov);
     }
 
-    glfwDestroyWindow(window);
+    if (window) glfwDestroyWindow(window);
     glfwTerminate();
     std::printf("primitive_render_test: ALL OK\n");
     return 0;
+#endif
 }

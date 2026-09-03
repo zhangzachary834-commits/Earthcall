@@ -57,8 +57,9 @@ int main() {
     if (!glfwInit()) { std::fprintf(stderr, "paint_test: glfwInit failed\n"); return 1; }
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
     GLFWwindow* window = glfwCreateWindow(64, 64, "paint_test", nullptr, nullptr);
-    if (!window) { std::fprintf(stderr, "paint_test: no GL context\n"); glfwTerminate(); return 1; }
-    glfwMakeContextCurrent(window);
+    if (window) {
+        glfwMakeContextCurrent(window);
+    }
 
     // ------------------------------------------------------------------
     // 1. Unpainted is SHARED, and carries no paint of its own. This is the
@@ -226,7 +227,7 @@ int main() {
         std::printf("  material faceTextures survive JSON round-trip OK\n");
     }
 
-    glfwDestroyWindow(window);
+    if (window) glfwDestroyWindow(window);
     glfwTerminate();
     std::printf("paint_test: ALL OK\n");
     return 0;
