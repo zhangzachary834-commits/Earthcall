@@ -84,6 +84,47 @@ class TestEarthcallAgent(unittest.TestCase):
 
         self.assertEqual(str(context.exception), "Test Exception")
 
+    @patch("src.Singularity.Foreign.py.agent.earthcall_agent.sync_playwright")
+    def test_open_url_success(self, mock_sync_playwright):
+        # Setup mock playwright structure
+        mock_p = MagicMock()
+        mock_browser = MagicMock()
+        mock_ctx = MagicMock()
+        mock_page = MagicMock()
+
+        mock_sync_playwright.return_value.__enter__.return_value = mock_p
+        mock_p.chromium.launch.return_value = mock_browser
+        mock_browser.new_context.return_value = mock_ctx
+        mock_ctx.new_page.return_value = mock_page
+
+        url_to_open = "https://example.com"
+        result = earthcall_agent.open_url(url_to_open)
+
+        self.assertEqual(result, 0)
+        mock_page.goto.assert_called_once_with(url_to_open)
+
+    @patch("src.Singularity.Foreign.py.agent.earthcall_agent.sync_playwright")
+    def test_open_url_exception(self, mock_sync_playwright):
+        # Setup mock playwright structure
+        mock_p = MagicMock()
+        mock_browser = MagicMock()
+        mock_ctx = MagicMock()
+        mock_page = MagicMock()
+
+        mock_sync_playwright.return_value.__enter__.return_value = mock_p
+        mock_p.chromium.launch.return_value = mock_browser
+        mock_browser.new_context.return_value = mock_ctx
+        mock_ctx.new_page.return_value = mock_page
+
+        mock_page.goto.side_effect = Exception("Network Error")
+
+        url_to_open = "https://invalid-url.com"
+        with self.assertRaises(Exception) as context:
+            earthcall_agent.open_url(url_to_open)
+
+        self.assertEqual(str(context.exception), "Network Error")
+        mock_page.goto.assert_called_once_with(url_to_open)
+
 
 if __name__ == "__main__":
     unittest.main()
