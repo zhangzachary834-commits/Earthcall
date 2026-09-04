@@ -367,6 +367,9 @@ int main() {
         Body body("humanoid", "default");
         Person person(std::move(named), std::move(body), "default");
         auditReachability("Person", person, advertised);
+
+        Singularity::Language::Lexeme lexemeProbe("probe");
+        auditReachability("Lexeme", lexemeProbe, advertised);
     }
 
     std::printf("\nno_black_box_test: %d property writes probed, %d failures\n",

@@ -30,6 +30,7 @@
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp"
 #include "ZonesOfEarth/Ourverse/Ourverse.hpp"
+#include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
 
 #include <GLFW/glfw3.h>
 #include <cstdio>
@@ -111,6 +112,7 @@ int main() {
     Formation formation;
     Soul soulProbe;
     Ourverse ourverse;
+    Singularity::Language::Lexeme lexemeProbe("probe");
 
     int skipped = 0;
     for (const Rendering::PathOption& option : Rendering::knownPathOptions()) {
@@ -140,6 +142,7 @@ int main() {
         else if (groupIs(option.group, "Formation"))      check(option, formation);
         else if (groupIs(option.group, "Soul"))           check(option, soulProbe);
         else if (groupIs(option.group, "Ourverse"))       check(option, ourverse);
+        else if (groupIs(option.group, "Language — Lexeme")) check(option, lexemeProbe);
         else if (groupIs(option.group, "Time")) {
             // The world clock is not a property of any being — Singularity owns
             // time, and `time`, `time.delta`, `time.sinceApplied` are resolved
