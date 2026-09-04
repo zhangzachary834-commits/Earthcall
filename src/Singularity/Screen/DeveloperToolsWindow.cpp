@@ -3,6 +3,9 @@
 #include "imgui.h"
 #include "GLFW/glfw3.h"
 
+#include "Singularity/Input/Interaction/InteractionChannel.hpp"
+
+
 #include "Singularity/Core/Engine.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleState.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
@@ -72,6 +75,28 @@ void renderDeveloperToolsWindow(bool* open, GLFWwindow* window, Core::Engine* en
     // used to live here, above the `*open` return. They now run in
     // Rendering::stepCreationTools from Engine::update — this window is
     // the test-save loader, not a first-mover step hiding in a render.
+
+
+    if (ImGui::Begin("Interaction Diagnostics", open)) {
+        if (engine && engine->getLawManager()) {
+            if (auto* chan = Singularity::Input::InteractionChannel::find(*engine->getLawManager())) {
+                ImGui::Text("Hovered ID: %s", chan->hoveredId.c_str());
+                ImGui::Text("Pressed ID: %s", chan->pressedId.c_str());
+                ImGui::Text("Left Down: %s", chan->leftDown ? "true" : "false");
+                ImGui::Text("Dragging: %s", chan->dragging ? "true" : "false");
+                ImGui::Text("_liveLeftDown: %s", chan->liveLeftDown() ? "true" : "false");
+                ImGui::Text("_pendingFullClick: %s", chan->pendingFullClick() ? "true" : "false");
+                ImGui::Text("_pressSeenSinceLastStep: %s", chan->pressSeenSinceLastStep() ? "true" : "false");
+                ImGui::Text("WantCaptureMouse: %s", ImGui::GetIO().WantCaptureMouse ? "true" : "false");
+
+                int rawState = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
+                ImGui::Text("glfwGetMouseButton (RAW): %s", rawState == GLFW_PRESS ? "PRESS" : "RELEASE");
+            } else {
+                ImGui::TextDisabled("InteractionChannel not found.");
+            }
+        }
+    }
+    ImGui::End();
 
     if (ImGui::Begin("Developer: Test World Saves", open)) {
         static std::vector<TestSaveRow> testSaves;
