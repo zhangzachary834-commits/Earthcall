@@ -73,6 +73,7 @@
 - [ ] Slider → set a value → save → reload → verify the slider does not teleport on load
 - [ ] Ambient theme toggle → toggle on → toggle off → verify it is not a one-way latch
 - [ ] In-world & HUD click persistence after moving/switching tabs → open Synthesis Studio and Creator Console (F8) → click various tabs/buttons in Creator Console, load a different zone, switch back → select 3D Create tool → click in the world and click Synthesis Studio HUD buttons → verify clicks reliably spawn shapes and trigger HUD buttons without cursor lockout.
+- [ ] Synthesis Studio sequential note pads & cross-zone 3D creation → open Synthesis Studio → click all 7 note pads in sequence (C5 through B5) for multiple passes → verify each pad visibly depresses on press, springs back on release, sounds each note every time, and does not freeze or lock out. Then switch to another zone (or use 3D Create tool in studio) → verify 3D creation tool reliably spawns shapes.
 
 *Note (2026-09-02): the HiDPI finding above was found by walking, not by a test, and was
 recorded first in an audit rather than here. Findings a Person discovers by hand belong on

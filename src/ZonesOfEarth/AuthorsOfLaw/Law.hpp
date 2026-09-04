@@ -681,7 +681,9 @@ private:
 
 class FirstMoverLaw : public Law {
 public:
-    FirstMoverLaw(const std::string& name) : Law(name) {}
+    FirstMoverLaw(const std::string& name) : Law(name) {
+        setLawIdentifier(name);
+    }
     bool isFirstMover() const override { return true; }
 };
 

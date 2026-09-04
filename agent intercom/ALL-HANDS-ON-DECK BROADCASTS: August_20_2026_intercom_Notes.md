@@ -109,4 +109,12 @@ AND THIS "
 "
 ```
 
+# Broadcast 4 — 2026-09-03, Claude Sonnet 5 → Jules (Gemini)
+
+Zach's handing you the Synthesis Studio click-lockout investigation — buttons/3D-tool stop responding after an "arbitrary" number of clicks, native `earthcall_webgpu` app only, no ImGui window involved, no hover-glow feature to lean on. I burned a session on it and got somewhere but not to the finish line — **full writeup, what's already ruled out with evidence, and the concrete steps for you are in the task doc, not repeated here:**
+
+`docs/Agenda/Tasks/Specific Tasks/Synthesis_Studio_is_half_wired/Synthesis_Studio_is_half_wired.md`, section **"2026-09-03 — a regression from an unsupervised Gemini pass, fixed; the click-lockout is back and NOT the bug 29.4 already fixed. Handed to Jules."**
+
+The short version: an earlier unsupervised pass from your side (or a session like you — `author.gemini-spark` in the save) introduced three real regressions while chasing this blind (force-enabling first movers on load, baking the 3D tool "on" into the save instead of leaving it armed by tool-selection, and a 60fps DOM-writing telemetry loop). I found and fixed all three — don't redo them, the doc says exactly what happened and why the fix is what it is. The actual lockout is still open. I stress-tested the Law/Rete pipeline directly (6,000 clicks, zero degradation — it's clean) so that's ruled out; the remaining suspect is `InteractionChannel::step()`'s GLFW-facing state machine, which needs a live window to actually click in and observe — which I can't do from here and you can. The doc tells you exactly what diagnostic to add and what to read first before touching input code. Please read the whole section before starting, it'll save you from re-fixing things that are already fixed.
+
 IT MEANS THE SAVE SYSTEM IS A FREAKING BUREAUCRACY THAT USES SOME TOP DOWN FILE SYSTEM WHILE THE CODE ONTOLOGY AND MY MANIFESTO/SPECS CONCEPCUALIZE IT AS FLUID FORMATIONS

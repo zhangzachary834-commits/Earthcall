@@ -23,7 +23,7 @@
     <div class="bg-glow-orb cyan"></div>
     <div class="bg-glow-orb purple"></div>
 
-    <!-- Top Header Bar -->
+    <!-- Top Header Bar with Live Telemetry HUD -->
     <header id="top-header">
         <div class="brand-area">
             <div class="logo-symbol">🌍</div>
@@ -51,11 +51,34 @@
         </div>
 
         <div class="header-actions">
+            <!-- Live Framerate & Frame Budget HUD Pill -->
+            <div id="header-fps-hud" class="telemetry-hud-pill" title="Framerate and Delta Frame Budget">
+                <span class="hud-indicator-dot green" id="header-fps-dot"></span>
+                <span id="header-fps-text">60.0 FPS</span>
+                <span class="hud-divider">|</span>
+                <span id="header-frametime-text">16.6ms</span>
+            </div>
+
+            <!-- WebSocket Ping & Latency Pill -->
+            <div id="header-rtt-hud" class="telemetry-hud-pill" title="WebSocket Ping / Roundtrip Latency">
+                <span>⚡ <strong id="header-rtt-text">2ms</strong></span>
+            </div>
+
+            <!-- Memory / VRAM Footprint Pill -->
+            <div id="header-vram-hud" class="telemetry-hud-pill" title="Estimated WebGPU / Substrate VRAM">
+                <span>💾 <strong id="header-vram-text">18.4 MB</strong></span>
+            </div>
+
             <!-- Engine Connection Indicator -->
             <div id="connection-indicator" class="connection-pill">
                 <div class="pulse-dot"></div>
                 <span id="connection-text">Connecting...</span>
             </div>
+
+            <!-- Diagnostics Cockpit Drawer Toggle -->
+            <button id="open-metrics-drawer-btn" class="btn btn-secondary btn-sm" title="Toggle System Diagnostics & Live Telemetry">
+                <span>📊 Diagnostics</span>
+            </button>
 
             <button id="toggle-flight-btn" class="btn btn-secondary btn-sm" title="Toggle Flight Mode (F)">
                 <span>🕊️ Flight</span>
@@ -110,7 +133,38 @@
                 <span>Live Event Stream</span>
             </div>
 
+            <!-- Rich Substrate Telemetry HUD Sidebar Footer -->
             <div class="sidebar-footer">
+                <div class="telemetry-bar-group">
+                    <div class="telemetry-bar-label">
+                        <span>Engine Tick Rate</span>
+                        <span id="sidebar-hz-val" style="color: var(--accent-emerald);">60 Hz</span>
+                    </div>
+                    <div class="meter-bar-track">
+                        <div class="meter-bar-fill" id="sidebar-tick-bar" style="width: 100%; background: var(--accent-emerald);"></div>
+                    </div>
+                </div>
+
+                <div class="telemetry-bar-group">
+                    <div class="telemetry-bar-label">
+                        <span>Substrate Heap</span>
+                        <span id="sidebar-heap-val" style="color: var(--accent-cyan);">24.8 MB</span>
+                    </div>
+                    <div class="meter-bar-track">
+                        <div class="meter-bar-fill" id="sidebar-heap-bar" style="width: 28%; background: var(--accent-cyan);"></div>
+                    </div>
+                </div>
+
+                <div class="telemetry-item">
+                    <span>EventBus Rate</span>
+                    <span id="sidebar-eventbus-val" class="telemetry-val" style="color: var(--accent-purple);">0 ev/s</span>
+                </div>
+
+                <div class="telemetry-item">
+                    <span>Rete Agenda</span>
+                    <span id="sidebar-rete-val" class="telemetry-val" style="color: var(--accent-amber);">Nominal</span>
+                </div>
+
                 <div class="telemetry-item">
                     <span>Engine Link</span>
                     <span class="telemetry-val">Port 8080</span>
@@ -122,10 +176,6 @@
                 <div class="telemetry-item">
                     <span>Engine Uptime</span>
                     <span id="uptime-display" class="telemetry-val">0s</span>
-                </div>
-                <div class="telemetry-item">
-                    <span>Sync Packets</span>
-                    <span id="msgs-display" class="telemetry-val">0</span>
                 </div>
             </div>
         </aside>
@@ -145,6 +195,44 @@
                                 <span>Right-Click: Pan</span>
                                 <span>•</span>
                                 <span>Scroll: Zoom</span>
+                            </div>
+                        </div>
+
+                        <!-- 3D Viewport In-Engine Metrics HUD Overlay -->
+                        <div id="viewport-metrics-hud" class="viewport-metrics-overlay">
+                            <div class="viewport-hud-card">
+                                <div class="hud-card-header">
+                                    <div class="hud-card-title"><span>🛰️</span> Viewport Telemetry</div>
+                                    <button id="toggle-viewport-hud-btn" class="hud-min-btn" title="Minimize / Expand">−</button>
+                                </div>
+                                <div id="viewport-hud-body" class="hud-card-body">
+                                    <div class="hud-metric-row">
+                                        <span class="hud-label">Draw Calls</span>
+                                        <span class="hud-val" id="vp-drawcalls">12</span>
+                                    </div>
+                                    <div class="hud-metric-row">
+                                        <span class="hud-label">Vertices</span>
+                                        <span class="hud-val" id="vp-vertices">2,496</span>
+                                    </div>
+                                    <div class="hud-metric-row">
+                                        <span class="hud-label">Altitude (Y)</span>
+                                        <span class="hud-val" id="vp-altitude">+1.80 m</span>
+                                    </div>
+                                    <div class="hud-metric-row">
+                                        <span class="hud-label">Heading</span>
+                                        <span class="hud-val" id="vp-heading">270° (W)</span>
+                                    </div>
+                                    <div class="hud-metric-row">
+                                        <span class="hud-label">Spatial Bounds</span>
+                                        <span class="hud-val" id="vp-bounds">6.0 × 2.5 × 4.0 m</span>
+                                    </div>
+                                    <div class="hud-viewport-toggles">
+                                        <button class="vp-toggle-btn" id="vp-wireframe-toggle" title="Wireframe Overlay">🕸️ Wire</button>
+                                        <button class="vp-toggle-btn active" id="vp-grid-toggle" title="Ground Grid">▦ Grid</button>
+                                        <button class="vp-toggle-btn active" id="vp-light-toggle" title="Dynamic Lights">💡 Lights</button>
+                                        <button class="vp-toggle-btn" id="vp-turntable-toggle" title="Auto Turntable Rotation">🔄 Spin</button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -275,7 +363,7 @@
                 </div>
             </div>
 
-            <!-- STUDIO 2: Authors of Law (with Grouping & Graph Mode) -->
+            <!-- STUDIO 2: Authors of Law (with Grouping, Graph Mode & Ecosystem Bar) -->
             <div id="tab-laws" class="tab-pane">
                 <div class="full-page-studio">
                     <!-- Banner -->
@@ -285,6 +373,38 @@
                             <div class="banner-desc">Earthcall simulation is driven by active Person-authored Laws. Group by ontological systems or inspect interconnected causation graphs.</div>
                         </div>
                         <button id="open-create-law-modal" class="btn btn-primary">➕ Author New Law</button>
+                    </div>
+
+                    <!-- Law Ecosystem & Rete Telemetry Strip -->
+                    <div class="law-ecosystem-metrics-bar">
+                        <div class="eco-metric-card">
+                            <div class="eco-card-header">
+                                <span class="eco-label">Ontological System Distribution</span>
+                                <span class="eco-tag" id="eco-total-laws-tag">0 Registered Laws</span>
+                            </div>
+                            <div class="segmented-system-bar" id="eco-segmented-bar">
+                                <div class="seg-fill seg-physics" id="seg-physics-fill" style="width: 25%;" title="Physics"></div>
+                                <div class="seg-fill seg-acoustics" id="seg-acoustics-fill" style="width: 20%;" title="Acoustics"></div>
+                                <div class="seg-fill seg-visual" id="seg-visual-fill" style="width: 20%;" title="Visual"></div>
+                                <div class="seg-fill seg-motion" id="seg-motion-fill" style="width: 15%;" title="Motion"></div>
+                                <div class="seg-fill seg-creation" id="seg-creation-fill" style="width: 10%;" title="Creation"></div>
+                                <div class="seg-fill seg-custom" id="seg-custom-fill" style="width: 10%;" title="Custom"></div>
+                            </div>
+                        </div>
+                        <div class="eco-mini-stats">
+                            <div class="eco-stat-box">
+                                <span class="eco-stat-val" id="eco-active-ratio">100%</span>
+                                <span class="eco-stat-lbl">Active Ratio</span>
+                            </div>
+                            <div class="eco-stat-box">
+                                <span class="eco-stat-val" id="eco-rete-eval">38 μs</span>
+                                <span class="eco-stat-lbl">Rete Eval / Tick</span>
+                            </div>
+                            <div class="eco-stat-box">
+                                <span class="eco-stat-val" id="eco-edges-count">0</span>
+                                <span class="eco-stat-lbl">Causation Edges</span>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Law Studio Controls & View Switcher Bar -->
@@ -534,6 +654,60 @@
                             </div>
                         </div>
 
+                        <!-- Kinetic Speedometer & Velocity Vector Widget -->
+                        <div class="law-card">
+                            <div class="law-card-header">
+                                <div class="law-name">Kinetic Speedometer & Vector</div>
+                            </div>
+                            <div class="speedometer-display-box">
+                                <span class="speedometer-num" id="kinetic-speed-val">0.00</span>
+                                <span class="speedometer-unit">m/s • Speed</span>
+                            </div>
+                            <div class="vector-axis-grid">
+                                <div class="vector-axis-card">
+                                    <span class="vector-axis-title">Vx</span>
+                                    <span class="vector-axis-val" id="vector-vx">0.00</span>
+                                </div>
+                                <div class="vector-axis-card">
+                                    <span class="vector-axis-title">Vy</span>
+                                    <span class="vector-axis-val" id="vector-vy">0.00</span>
+                                </div>
+                                <div class="vector-axis-card">
+                                    <span class="vector-axis-title">Vz</span>
+                                    <span class="vector-axis-val" id="vector-vz">0.00</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Gravitation & Buoyancy Widget -->
+                        <div class="law-card">
+                            <div class="law-card-header">
+                                <div class="law-name">Gravitation & Buoyancy</div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 0.82rem; color: var(--text-secondary);">Gravity Vector:</span>
+                                <strong id="gravity-vector-val" style="color: var(--accent-amber); font-family: var(--font-mono);">-9.81 m/s²</strong>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px;">
+                                <span style="font-size: 0.82rem; color: var(--text-secondary);">State:</span>
+                                <span id="vessel-substrate-state" class="brand-badge" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald);">GROUNDED</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                                <span>🕊️ Flight Mode (Fly / No Clip)</span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="physics-flying-toggle">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                                <span>🌐 Gravity Field Visualization</span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="physics-gravviz-toggle">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+
                         <!-- Custom Teleport Card -->
                         <div class="law-card">
                             <div class="law-card-header">
@@ -545,27 +719,6 @@
                                 <div class="input-with-label"><span>Z</span><input type="number" id="tp-custom-z" value="0" class="input-number"></div>
                             </div>
                             <button id="tp-custom-btn" class="btn btn-primary btn-sm" style="margin-top: 12px;">Warp Player</button>
-                        </div>
-
-                        <!-- Physics Controls Card -->
-                        <div class="law-card">
-                            <div class="law-card-header">
-                                <div class="law-name">Physics Simulation Modes</div>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <span>🕊️ Flight Mode (Fly / No Clip)</span>
-                                <label class="toggle-switch">
-                                    <input type="checkbox" id="physics-flying-toggle">
-                                    <span class="toggle-slider"></span>
-                                </label>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
-                                <span>🌐 Gravity Vector Visualization</span>
-                                <label class="toggle-switch">
-                                    <input type="checkbox" id="physics-gravviz-toggle">
-                                    <span class="toggle-slider"></span>
-                                </label>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -582,6 +735,7 @@
                     </div>
 
                     <div class="cards-grid">
+                        <!-- Robot Arm Actuators -->
                         <div class="law-card">
                             <div class="law-card-header">
                                 <div class="law-name">Actuator Joints (Robot Arm)</div>
@@ -601,6 +755,33 @@
                             <div class="control-group">
                                 <div class="control-label">End-Effector Gripper <span id="rob-gripper-val" style="color: var(--accent-cyan);">0°</span></div>
                                 <input type="range" id="rob-gripper" class="slider" min="0" max="100" value="0" data-joint="arm.gripper">
+                            </div>
+                        </div>
+
+                        <!-- Actuator Load & End-Effector Telemetry Card -->
+                        <div class="law-card">
+                            <div class="law-card-header">
+                                <div class="law-name">Actuator Loads & TCP Spatial Reach</div>
+                            </div>
+                            <div class="diag-widget-card" style="margin-top: 4px;">
+                                <div class="joint-telemetry-row">
+                                    <span>Base Joint Torque</span>
+                                    <div class="joint-load-bar"><div class="joint-load-fill" id="rob-torque-1" style="width: 20%;"></div></div>
+                                    <span id="rob-torque-1-text">4.2 N·m</span>
+                                </div>
+                                <div class="joint-telemetry-row">
+                                    <span>Shoulder Load</span>
+                                    <div class="joint-load-bar"><div class="joint-load-fill" id="rob-torque-2" style="width: 55%; background: var(--accent-amber);"></div></div>
+                                    <span id="rob-torque-2-text">12.8 N·m</span>
+                                </div>
+                                <div class="joint-telemetry-row">
+                                    <span>Elbow Load</span>
+                                    <div class="joint-load-bar"><div class="joint-load-fill" id="rob-torque-3" style="width: 35%;"></div></div>
+                                    <span id="rob-torque-3-text">7.1 N·m</span>
+                                </div>
+                            </div>
+                            <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 8px;">
+                                Tool Center Point (TCP): <strong id="rob-tcp-coords" style="color: var(--accent-cyan); font-family: var(--font-mono);">[0.45, 0.82, 0.30] m</strong>
                             </div>
                         </div>
                     </div>
@@ -628,6 +809,78 @@
             </div>
 
         </main>
+    </div>
+
+    <!-- FLOATING REAL-TIME METRICS & DIAGNOSTICS PROFILER DRAWER -->
+    <div id="metrics-diagnostics-drawer" class="metrics-diagnostics-drawer">
+        <div class="diag-header">
+            <div class="diag-title">
+                <span>📊</span> System Diagnostics & Performance Profiler
+            </div>
+            <button id="close-metrics-drawer-btn" class="btn btn-secondary btn-icon btn-sm">✕</button>
+        </div>
+        <div class="diag-body">
+            <!-- 1. Live Framerate Waveform Canvas -->
+            <div class="diag-widget-card">
+                <div class="diag-widget-title">
+                    <span>⚡ Framerate & Frame Budget (60s)</span>
+                    <span id="diag-fps-numeric" style="color: var(--accent-emerald);">60.0 FPS</span>
+                </div>
+                <div class="diag-canvas-box">
+                    <canvas id="diag-fps-canvas" class="diag-spark-canvas"></canvas>
+                </div>
+            </div>
+
+            <!-- 2. Live EventBus Traffic Waveform Canvas -->
+            <div class="diag-widget-card">
+                <div class="diag-widget-title">
+                    <span>📜 EventBus Throughput (Signals / sec)</span>
+                    <span id="diag-events-numeric" style="color: var(--accent-purple);">0 ev/s</span>
+                </div>
+                <div class="diag-canvas-box">
+                    <canvas id="diag-event-canvas" class="diag-spark-canvas"></canvas>
+                </div>
+            </div>
+
+            <!-- 3. Geometric Entity & Shape Composition -->
+            <div class="diag-widget-card">
+                <div class="diag-widget-title">
+                    <span>🪐 Entity Geometry Distribution</span>
+                    <span id="diag-entities-count" style="color: var(--accent-cyan);">0 Beings</span>
+                </div>
+                <div class="segmented-system-bar" id="diag-shape-bar" style="height: 10px;">
+                    <div class="seg-fill" id="diag-cube-seg" style="width: 50%; background: #38bdf8;" title="Cube"></div>
+                    <div class="seg-fill" id="diag-sphere-seg" style="width: 25%; background: #fbbf24;" title="Sphere"></div>
+                    <div class="seg-fill" id="diag-torus-seg" style="width: 25%; background: #c084fc;" title="Torus"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--text-muted); font-family: var(--font-mono); margin-top: 2px;">
+                    <span>🧊 Cubes: <strong id="diag-cubes-val" style="color: #38bdf8;">1</strong></span>
+                    <span>🔮 Spheres: <strong id="diag-spheres-val" style="color: #fbbf24;">1</strong></span>
+                    <span>🍩 Rings: <strong id="diag-rings-val" style="color: #c084fc;">1</strong></span>
+                </div>
+            </div>
+
+            <!-- 4. Subsystem Performance Matrix -->
+            <div class="diag-widget-card">
+                <div class="diag-widget-title">Subsystem Resource Allocation</div>
+                <div class="hud-metric-row">
+                    <span class="hud-label">Rete Pattern Matcher</span>
+                    <span class="hud-val" id="diag-rete-ms">0.04 ms</span>
+                </div>
+                <div class="hud-metric-row">
+                    <span class="hud-label">Physics Kinematics</span>
+                    <span class="hud-val" id="diag-physics-ms">0.85 ms</span>
+                </div>
+                <div class="hud-metric-row">
+                    <span class="hud-label">WebGL Viewport Render</span>
+                    <span class="hud-val" id="diag-render-ms">1.20 ms</span>
+                </div>
+                <div class="hud-metric-row">
+                    <span class="hud-label">WebSocket Sync Stream</span>
+                    <span class="hud-val" id="diag-sync-latency">2.0 ms</span>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- MODAL 1: Create Law -->
@@ -857,7 +1110,7 @@
     <!-- Toast Notification Container -->
     <div id="toast-container"></div>
 
-    <!-- Application Script -->
+    <!-- Application Scripts -->
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
 </html>

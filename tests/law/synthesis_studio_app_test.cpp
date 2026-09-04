@@ -215,18 +215,23 @@ int main() {
     //    Law::applyTo refuses all of them — silently, as far as any assertion
     //    about object counts is concerned. Check it directly.
     // ------------------------------------------------------------------
+    // Register first-mover survivors that the engine stands up at boot
+    laws.add(std::make_shared<FirstMoverLaw>("shape-generator-3d-law"));
+    laws.add(std::make_shared<FirstMoverLaw>("tool-create-3d-law"));
     laws.loadFromJson(world["authoredLaws"]);
     laws.connectToEventBus();
 
     {
         const std::size_t authored = world["authoredLaws"]["laws"].size();
-        check(laws.getAll().size() == authored,
+        std::size_t authoredCount = 0;
+        for (const auto& l : laws.getAll()) if (l && !l->isFirstMover()) ++authoredCount;
+        check(authoredCount == authored,
               "every authored law in the save is in the register (" +
                   std::to_string(authored) + ")");
 
         bool allAuthored = true, allText = true;
         for (const auto& law : laws.getAll()) {
-            if (!law) continue;
+            if (!law || law->isFirstMover()) continue;
             if (!law->isAuthored()) {
                 std::printf("    unauthored: %s\n", law->getIdentifier().c_str());
                 allAuthored = false;
@@ -314,6 +319,9 @@ int main() {
 
             if (p3d) {
                 g_sounded.clear();
+                publish("object-pressed", p3d);
+                check(nearly(readNumber(*p3d, "position.y"), 0.88 - 0.04),
+                      std::string("3D pad ") + note.noteName + " dips under press");
                 activate(*p3d);
                 check(g_sounded.size() == 1,
                       std::string("clicking 3D pad ") + note.noteName + " sounds exactly one note");
@@ -325,8 +333,6 @@ int main() {
                     check(g_sounded[0].timbre == "triangle",
                           "the timbre is triangle");
                 }
-                check(nearly(readNumber(*p3d, "position.y"), 0.88 - 0.04),
-                      std::string("3D pad ") + note.noteName + " dips under press");
                 publish("object-released", p3d);
                 check(nearly(readNumber(*p3d, "position.y"), 0.88),
                       std::string("3D pad ") + note.noteName + " springs back on release");
@@ -334,6 +340,10 @@ int main() {
 
             if (p2d) {
                 g_sounded.clear();
+                publish("object-pressed", p2d);
+                const double restY2D = readNumber(*p2d, "restY2D");
+                check(nearly(readNumber(*p2d, "y2D"), restY2D + 3.0),
+                      std::string("2D pad ") + note.noteName + " shifts y2D under press");
                 activate(*p2d);
                 check(g_sounded.size() == 1,
                       std::string("clicking 2D pad ") + note.noteName + " sounds exactly one note");
@@ -343,9 +353,6 @@ int main() {
                     check(g_sounded[0].subject == note.pad2d,
                           std::string("note sounded by ") + note.pad2d);
                 }
-                const double restY2D = readNumber(*p2d, "restY2D");
-                check(nearly(readNumber(*p2d, "y2D"), restY2D + 3.0),
-                      std::string("2D pad ") + note.noteName + " shifts y2D under press");
                 publish("object-released", p2d);
                 check(nearly(readNumber(*p2d, "y2D"), restY2D),
                       std::string("2D pad ") + note.noteName + " springs back on release");
@@ -773,7 +780,57 @@ int main() {
         check(rayTo("studio.pad.c5") == "studio.pad.c5",
               "3D raycast from camera hits studio.pad.c5 on desk");
 
-        // Sequential pad clicks across all 7 pads multiple times
+        // The 3D creation tool starts OFF in Synthesis Studio -- a Person turns
+        // it on by selecting the tool, not by the world merely loading. The
+        // save's firstMoverEnabled explicitly says false for both; loadFromJson
+        // must honor that, not silently re-arm them.
+        {
+            Law* shapeLaw = laws.find("shape-generator-3d-law");
+            check(shapeLaw && !shapeLaw->isEnabled(),
+                  "shape-generator-3d-law starts disabled in synthesis studio (armed by tool selection, not by load)");
+            Law* createLaw = laws.find("tool-create-3d-law");
+            check(createLaw && !createLaw->isEnabled(),
+                  "tool-create-3d-law starts disabled in synthesis studio (armed by tool selection, not by load)");
+        }
+
+        // Boot-default contract: a key OMITTED from firstMoverEnabled leaves the
+        // first mover exactly where it already was -- loadFromJson never invents
+        // an opinion about a first mover the world's author did not address.
+        {
+            nlohmann::json poisonJson = {
+                {"firstMoverEnabled", {{"shape-generator-3d-law", false}}}
+            };
+            laws.loadFromJson(poisonJson);
+            Law* shapeLaw = laws.find("shape-generator-3d-law");
+            check(shapeLaw && !shapeLaw->isEnabled(),
+                  "first mover can be explicitly disabled by a world");
+
+            nlohmann::json cleanJson = {
+                {"firstMoverEnabled", nlohmann::json::object()}
+            };
+            laws.loadFromJson(cleanJson);
+            check(shapeLaw && !shapeLaw->isEnabled(),
+                  "omitted first mover is left untouched on world load, not reset to any default");
+
+            // The reverse: explicitly enable it, then load a world that omits
+            // it too -- it must stay enabled, proving "omitted" means "leave
+            // alone" in both directions, not "force to a fixed boot value".
+            nlohmann::json armJson = {
+                {"firstMoverEnabled", {{"shape-generator-3d-law", true}}}
+            };
+            laws.loadFromJson(armJson);
+            check(shapeLaw && shapeLaw->isEnabled(),
+                  "first mover can be explicitly re-enabled by a world");
+            laws.loadFromJson(cleanJson);
+            check(shapeLaw && shapeLaw->isEnabled(),
+                  "omitted first mover stays enabled too -- omission never overrides either way");
+
+            // Reload synthesis studio laws for the pad test
+            laws.loadFromJson(world["authoredLaws"]);
+        }
+
+        // Sequential pad clicks across all 7 pads for 5 passes:
+        // verify object-pressed depresses, object-released restores, and control-activated plays
         {
             const std::vector<std::string> padIds = {
                 "hud.pad.c5", "hud.pad.d5", "hud.pad.e5", "hud.pad.f5",
@@ -781,7 +838,9 @@ int main() {
             };
             size_t soundsStart = g_sounded.size();
             bool allPadsSucceeded = true;
-            for (int pass = 0; pass < 3; ++pass) {
+            bool elevationsCorrect = true;
+
+            for (int pass = 0; pass < 5; ++pass) {
                 for (size_t p = 0; p < padIds.size(); ++p) {
                     const auto& padId = padIds[p];
                     Object* pad = findObject(padId.c_str());
@@ -790,21 +849,46 @@ int main() {
                         allPadsSucceeded = false;
                         break;
                     }
+
+                    // Before click: pad must be at rest elevation 650.0
+                    if (std::abs(pad->getY2D() - 650.0f) > 0.01f) {
+                        std::printf("  FAILED at pass %d pad %s: pre-click y2D is %.2f (expected 650.0)\n",
+                                    pass, padId.c_str(), pad->getY2D());
+                        elevationsCorrect = false;
+                    }
+
                     glm::vec4 r = pad->getRect2D();
                     float cx = (r.x + r.z) * 0.5f;
                     float cy = (r.y + r.w) * 0.5f;
-                    
+
                     reachable.clear();
                     for (const auto& o : zone->getOwnedObjects()) if (o) reachable.push_back(o.get());
 
+                    // Frame 1: Mouse down -> object-pressed -> law-studio-button-depress
                     Singularity::Input::InteractionChannel::Sense sPad;
                     sPad.pointerX = cx;
                     sPad.pointerY = cy;
                     sPad.left = true;
                     interaction.observe(sPad, reachable);
+                    laws.tick();
+
+                    if (std::abs(pad->getY2D() - 653.0f) > 0.01f) {
+                        std::printf("  FAILED at pass %d pad %s: pressed y2D is %.2f (expected 653.0)\n",
+                                    pass, padId.c_str(), pad->getY2D());
+                        elevationsCorrect = false;
+                    }
+
+                    // Frame 2: Mouse up -> object-released (button-spring) + object-clicked (pad-play)
                     sPad.left = false;
                     interaction.observe(sPad, reachable);
                     laws.tick();
+
+                    // After tick: pad must have sprung back to rest elevation 650.0
+                    if (std::abs(pad->getY2D() - 650.0f) > 0.01f) {
+                        std::printf("  FAILED at pass %d pad %s: post-release y2D is %.2f (expected 650.0)\n",
+                                    pass, padId.c_str(), pad->getY2D());
+                        elevationsCorrect = false;
+                    }
 
                     if (interaction.hoveredId != padId) {
                         std::printf("  FAILED at pass %d pad %s: hoveredId is '%s', rect is [%.1f, %.1f, %.1f, %.1f], pointer at (%.1f, %.1f)\n",
@@ -813,10 +897,12 @@ int main() {
                     }
                 }
             }
-            std::printf("  After 21 pad clicks: sounded %zu notes (expected %zu)\n",
-                        g_sounded.size() - soundsStart, (size_t)21);
-            check(allPadsSucceeded && (g_sounded.size() - soundsStart == 21),
-                  "clicking all 7 pads in sequence for 3 passes sounds all 21 notes");
+            std::printf("  After 35 pad clicks (5 passes): sounded %zu notes (expected 35)\n",
+                        g_sounded.size() - soundsStart);
+            check(allPadsSucceeded && (g_sounded.size() - soundsStart == 35),
+                  "clicking all 7 pads in sequence for 5 passes sounds all 35 notes without lockout");
+            check(elevationsCorrect,
+                  "button elevation depresses on press (653.0) and springs back on release (650.0) every click");
         }
     }
 
