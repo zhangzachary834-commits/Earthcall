@@ -54,10 +54,20 @@ Object* InteractionChannel::findReachable(const std::vector<Object*>& reachable,
     return nullptr;
 }
 
-void InteractionChannel::publishEdge(const std::string& type, Object* subject) const {
-    if (!Universe::instance().anyoneHears(type)) return;
+void InteractionChannel::publishEdge(const std::string& type, Object* object) const {
+    if (!object) {
+        std::cout << "[InteractionChannel] publishEdge: " << type << " FAILED (object is NULL)\n";
+        return;
+    }
+
+    if (!Universe::instance().anyoneHears(type)) {
+        std::cout << "[InteractionChannel] publishEdge: " << type << " FAILED (nobody hears it)\n";
+        return;
+    }
+
+    std::cout << "[InteractionChannel] publishEdge: " << type << " SUCCESS on " << object->getIdentifier() << "\n";
     ::Core::EventBus::instance().publish(
-        ECA::Event{type, subject, nullptr, std::time(nullptr)});
+        ECA::Event{type, object, nullptr, std::time(nullptr)});
 }
 
 // ---------------------------------------------------------------------------
@@ -192,7 +202,7 @@ void InteractionChannel::observe(const Sense& sense,
 
     const glm::vec3 hitPoint = hit ? surface.point : glm::vec3(0.0f);
 
-    // --- Levels -----------------------------------------------------------
+    // --- Hover edges -----------------------------------------------------------
     pointerX = sense.pointerX;
     pointerY = sense.pointerY;
     hoveredId = hit ? hit->getIdentifier() : std::string();
@@ -274,13 +284,20 @@ void InteractionChannel::observe(const Sense& sense,
 
     if (leftReleasedNow) {
         Object* pressed = findReachable(reachable, pressedId);
-        if (pressed) publishEdge("object-released", pressed);
+        std::cout << "[InteractionChannel] leftReleasedNow! pressedId: " << pressedId << " found=" << (pressed!=nullptr) << " dragging=" << dragging << "\n";
+        if (pressed) {
+            publishEdge("object-released", pressed);
+            std::cout << "[InteractionChannel] hit is: " << (hit ? hit->getIdentifier() : "null") << "\n";
+        }
         if (dragging) {
             publishEdge("object-drag-ended", pressed);
         } else if (pressed && pressed == hit) {
             // A click is press and release on the SAME being, without travel.
             // Releasing somewhere else is a cancelled click or completed drag.
+            std::cout << "[InteractionChannel] CONDITIONS MET! Publishing object-clicked...\n";
             publishEdge("object-clicked", pressed);
+        } else {
+            std::cout << "[InteractionChannel] CONDITIONS FAILED for click: pressed == hit is " << (pressed == hit) << "\n";
         }
         pressedId.clear();
         dragging = false;
@@ -423,13 +440,10 @@ void InteractionChannel::step(GLFWwindow* window, ::Core::Camera& camera,
     sense.pointerX = static_cast<float>(cx);
     sense.pointerY = static_cast<float>(cy);
 
-    // Reconcile window focus & physical button state with callback latches:
-    // If window is not focused, inputs belong to other applications. Clear latches.
     const bool windowFocused = (glfwGetWindowAttrib(window, GLFW_FOCUSED) != 0);
     if (!windowFocused) {
         _liveLeftDown = false;
-        _pressSeenSinceLastStep = false;
-        _pendingFullClick = false;
+        _pendingLeftEdges.clear();
         sense.uiCaptured = true;
     } else {
         // If the physical mouse button is RELEASED according to the OS, and no
@@ -437,7 +451,7 @@ void InteractionChannel::step(GLFWwindow* window, ::Core::Camera& camera,
         // This heals any dropped GLFW_RELEASE events (e.g. window focus switch,
         // off-screen cursor release, or trackpad gesture drops).
         const bool physicalLeft = (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS);
-        if (!physicalLeft && !_pressSeenSinceLastStep && !_pendingFullClick) {
+        if (!physicalLeft && _pendingLeftEdges.empty()) {
             _liveLeftDown = false;
         }
     }
@@ -524,21 +538,19 @@ void InteractionChannel::step(GLFWwindow* window, ::Core::Camera& camera,
         if (obj) reachable.push_back(obj.get());
     }
 
-    // A press and release that both landed since the last step() (one
-    // glfwPollEvents() batch) would otherwise vanish: sense.left already
-    // reads false (the button is back up by now), so a single observe()
-    // call would never see the press at all. Replay it as two frames —
-    // press, then release — before this frame's regular level. Consumed
-    // here regardless of `blind`: if the world is not listening this frame,
-    // observe() already degrades both calls to nothing, same as it would a
-    // single call.
-    if (_pendingFullClick) {
-        _pendingFullClick = false;
-        Sense pressSense = sense;
-        pressSense.left = true;
-        observe(pressSense, reachable);
+    // A rapid sequence of press/release callbacks that land inside one
+    // glfwPollEvents() batch would otherwise vanish. We replay every edge
+    // in order before observing the final frame state. Consumed here
+    // regardless of `blind`: if the world is not listening this frame,
+    // observe() already degrades both calls to nothing.
+    if (!_pendingLeftEdges.empty()) {
+        for (size_t i = 0; i < _pendingLeftEdges.size() - 1; ++i) {
+            Sense edgeSense = sense;
+            edgeSense.left = _pendingLeftEdges[i];
+            observe(edgeSense, reachable);
+        }
+        _pendingLeftEdges.clear();
     }
-    _pressSeenSinceLastStep = false;
 
     observe(sense, reachable);
 }
@@ -549,29 +561,14 @@ void InteractionChannel::noteScroll(float dx, float dy) {
 }
 
 void InteractionChannel::noteMouseButton(bool pressed) {
-    if (pressed) {
-        _liveLeftDown = true;
-        _pressSeenSinceLastStep = true;
-    } else {
-        // If a step() already ran while this press was live, that step()'s
-        // Sense.left = true replayed the press normally, and
-        // _pressSeenSinceLastStep was cleared at the end of it — this
-        // release is the ordinary next-frame edge, nothing pending. If no
-        // step() has run since the press (both callbacks landed inside one
-        // glfwPollEvents() batch), the whole gesture is about to vanish
-        // between two polls; latch it so step() can replay press-then-
-        // release itself instead of losing it.
-        if (_pressSeenSinceLastStep) _pendingFullClick = true;
-        _liveLeftDown = false;
-        _pressSeenSinceLastStep = false;
-    }
+    _liveLeftDown = pressed;
+    _pendingLeftEdges.push_back(pressed);
 }
 
 void InteractionChannel::onWindowFocus(bool focused) {
     if (!focused) {
         _liveLeftDown = false;
-        _pressSeenSinceLastStep = false;
-        _pendingFullClick = false;
+        _pendingLeftEdges.clear();
         _prevLeft = false;
         _prevRight = false;
         _prevMiddle = false;

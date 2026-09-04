@@ -65,6 +65,7 @@
 - [x] F8 → press F8 → verify the intended F8 action occurs
 - [x] F9 → press F9 → verify the intended F9 action occurs
 - [ ] F3 Performance Metrics (`F3`) & `Esc` → press `F3` to open performance metrics window → press `Esc` → verify the window remains open and cursor lock toggles as expected (rather than automatically closing the metrics window) → press `F3` again to toggle off
+- [ ] Developer Tools Window (`~`) & `Esc` → press `~` to open Developer Tools window → press `Esc` → verify the window remains open and cursor lock toggles as expected (rather than automatically closing the dev tools window) → press `~` again to toggle off
 - [ ] `/` → press `/` → verify the intended `/` action occurs | Zach: I tried this with no windows loaded and "/" changed nothing visible. The intended behavior is unclear to me.
 - [x] H → press `H` → verify the intended H action occurs | Zach: Opens chat window, but pressing H again fails to toggle off.
 - [x] K → press `K` → verify the intended K action occurs | 

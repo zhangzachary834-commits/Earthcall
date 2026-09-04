@@ -1516,12 +1516,19 @@ void LawManager::connectToEventBus() {
             _rete.retractStateFactsBySubject(e.subject->getIdentifier());
         }
 
+        if (e.type == "object-clicked") {
+            std::cout << "[LawManager] EventBus sent object-clicked! subject: " << (e.subject ? e.subject->getIdentifier() : "null") << "\n";
+        }
+        
         auto fact = std::make_shared<ReteFact>();
         fact->type = e.type;
         fact->subject = e.subject;
         fact->subjectId = subjectId;
         fact->object = e.object;
         _rete.assertFact(fact);
+        if (e.type == "object-clicked") {
+            std::cout << "[LawManager] fact asserted and _dirty = true!\n";
+        }
         _dirty = true;
 
         if ((e.type == "object-created" || e.type == "relation-formed") && e.subject) {
@@ -1659,7 +1666,7 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
     }
 
     std::vector<Law::ApplicationRecord> records;
-    for (int round = 0; round < _maxChainRounds && _dirty; ++round) {
+    for (int round = 0; round < _maxChainRounds && _dirty; ++round) { if(round == 7) std::cout << "MAX CHAIN ROUNDS HIT!" << std::endl;
         _dirty = false;
         // Facts asserted before this round are consumed by it; facts asserted
         // DURING it (laws firing events from applyTo) survive into the next

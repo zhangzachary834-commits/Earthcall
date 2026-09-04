@@ -1,0 +1,19 @@
+--- src/Singularity/Core/EngineUpdate.cpp
++++ src/Singularity/Core/EngineUpdate.cpp
+@@ -176,6 +176,17 @@
+         auto tInteract0 = clock::now();
+         if (auto* interaction = Singularity::Input::InteractionChannel::find(*_lawManager)) {
+             interaction->step(_window, *_camera, mgr, ImGui::GetIO().WantCaptureMouse);
++            static int frameCount = 0;
++            frameCount++;
++            if (frameCount % 60 == 0) {
++                std::cout << "[INJECT] Firing synthetic noteMouseButton(true)\n";
++                interaction->noteMouseButton(true);
++            }
++            if (frameCount % 60 == 3) {
++                std::cout << "[INJECT] Firing synthetic noteMouseButton(false)\n";
++                interaction->noteMouseButton(false);
++            }
+         }
+         auto tInteract1 = clock::now();
+         g_frameTimings.interaction_ms = getMs(tInteract0, tInteract1);

@@ -1,0 +1,19 @@
+--- src/Singularity/Input/Interaction/InteractionChannel.cpp
++++ src/Singularity/Input/Interaction/InteractionChannel.cpp
+@@ -232,6 +232,15 @@
+     const glm::vec3 hitPoint = hit ? surface.point : glm::vec3(0.0f);
+ 
+     // --- Hover edges ------------------------------------------------------
++    
++    // FORCE HIT FOR TESTING
++    if (!hit) {
++        for (Object* obj : reachable) {
++            if (obj && obj->getIdentifier() == "hud.pad.c5") {
++                hit = obj;
++                break;
++            }
++        }
++    }
++
+     for (Object* obj : reachable) {
+         if (!obj) continue;

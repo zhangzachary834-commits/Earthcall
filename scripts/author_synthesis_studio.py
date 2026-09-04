@@ -912,8 +912,6 @@ def build_world():
                     add_relation("", "category.interactive.orb", "instance-of"),
                 ],
             ),
-            map_path("position.y", {"ry": "restY"}, offset_terms("ry", -0.04)),
-            map_path("y2D", {"r": "restY2D"}, offset_terms("r", 3.0)),
             publish("orb-spawned", "state.studio"),
         ),
         scope=0,
@@ -929,8 +927,6 @@ def build_world():
         seq(
             map_path("@state.studio.themeNight", {"tn": "@state.studio.themeNight"}, flip_terms("tn")),
             play_audio("acoustic.frequency", "acoustic.amplitude", "triangle"),
-            map_path("position.y", {"ry": "restY"}, offset_terms("ry", -0.04)),
-            map_path("y2D", {"r": "restY2D"}, offset_terms("r", 3.0)),
             publish("theme-toggled", "state.studio"),
         ),
         scope=0,
@@ -980,7 +976,6 @@ def build_world():
         seq(
             map_path("@state.studio.drawMode", {"d": "@state.studio.drawMode"}, flip_terms("d")),
             play_audio("acoustic.frequency", "acoustic.amplitude", "triangle"),
-            map_path("y2D", {"r": "restY2D"}, offset_terms("r", 3.0)),
             publish("draw-mode-toggled", "state.studio"),
         ),
         scope=0,
@@ -1064,8 +1059,6 @@ def build_world():
         compare("isChordPad", 0, pv("bool", True)),
         seq(
             play_audio("acoustic.frequency", "acoustic.amplitude", "triangle"),
-            map_path("position.y", {"ry": "restY"}, offset_terms("ry", -0.04)),
-            map_path("y2D", {"r": "restY2D"}, offset_terms("r", 3.0)),
             publish("note-played"),
         ),
         scope=0,

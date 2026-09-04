@@ -233,13 +233,13 @@ private:
     // GLFW callback instead of a per-frame glfwGetMouseButton() poll (see
     // noteMouseButton's doc comment for why polling drops fast clicks).
     bool _liveLeftDown = false;
-    bool _pressSeenSinceLastStep = false;  // a press the last step() has not replayed yet
-    bool _pendingFullClick = false;
+    std::vector<bool> _pendingLeftEdges;
 
 public:
     bool liveLeftDown() const { return _liveLeftDown; }
-    bool pressSeenSinceLastStep() const { return _pressSeenSinceLastStep; }
-    bool pendingFullClick() const { return _pendingFullClick; }        // press AND release both landed since the last step()
+    // Test helpers to emulate step() in headless tests
+    const std::vector<bool>& pendingLeftEdges() const { return _pendingLeftEdges; }
+    void clearPendingLeftEdges() { _pendingLeftEdges.clear(); }
 };
 
 } // namespace Input

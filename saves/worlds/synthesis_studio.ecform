@@ -239,60 +239,6 @@
               "shapeKind": 2
             },
             {
-              "bindings": {
-                "ry": "restY"
-              },
-              "function": {
-                "pieces": [
-                  {
-                    "expr": {
-                      "terms": [
-                        {
-                          "c": 1.0,
-                          "factors": {
-                            "ry": 1.0
-                          }
-                        },
-                        {
-                          "c": -0.04,
-                          "factors": {}
-                        }
-                      ]
-                    }
-                  }
-                ]
-              },
-              "kind": 8,
-              "path": "position.y"
-            },
-            {
-              "bindings": {
-                "r": "restY2D"
-              },
-              "function": {
-                "pieces": [
-                  {
-                    "expr": {
-                      "terms": [
-                        {
-                          "c": 1.0,
-                          "factors": {
-                            "r": 1.0
-                          }
-                        },
-                        {
-                          "c": 3.0,
-                          "factors": {}
-                        }
-                      ]
-                    }
-                  }
-                ]
-              },
-              "kind": 8,
-              "path": "y2D"
-            },
-            {
               "eventType": "orb-spawned",
               "kind": 10,
               "publishObject": "",
@@ -377,60 +323,6 @@
               "kind": 18,
               "path": "acoustic.frequency",
               "propertyName": "triangle"
-            },
-            {
-              "bindings": {
-                "ry": "restY"
-              },
-              "function": {
-                "pieces": [
-                  {
-                    "expr": {
-                      "terms": [
-                        {
-                          "c": 1.0,
-                          "factors": {
-                            "ry": 1.0
-                          }
-                        },
-                        {
-                          "c": -0.04,
-                          "factors": {}
-                        }
-                      ]
-                    }
-                  }
-                ]
-              },
-              "kind": 8,
-              "path": "position.y"
-            },
-            {
-              "bindings": {
-                "r": "restY2D"
-              },
-              "function": {
-                "pieces": [
-                  {
-                    "expr": {
-                      "terms": [
-                        {
-                          "c": 1.0,
-                          "factors": {
-                            "r": 1.0
-                          }
-                        },
-                        {
-                          "c": 3.0,
-                          "factors": {}
-                        }
-                      ]
-                    }
-                  }
-                ]
-              },
-              "kind": 8,
-              "path": "y2D"
             },
             {
               "eventType": "theme-toggled",
@@ -649,33 +541,6 @@
               "kind": 18,
               "path": "acoustic.frequency",
               "propertyName": "triangle"
-            },
-            {
-              "bindings": {
-                "r": "restY2D"
-              },
-              "function": {
-                "pieces": [
-                  {
-                    "expr": {
-                      "terms": [
-                        {
-                          "c": 1.0,
-                          "factors": {
-                            "r": 1.0
-                          }
-                        },
-                        {
-                          "c": 3.0,
-                          "factors": {}
-                        }
-                      ]
-                    }
-                  }
-                ]
-              },
-              "kind": 8,
-              "path": "y2D"
             },
             {
               "eventType": "draw-mode-toggled",
@@ -1223,60 +1088,6 @@
               "kind": 18,
               "path": "acoustic.frequency",
               "propertyName": "triangle"
-            },
-            {
-              "bindings": {
-                "ry": "restY"
-              },
-              "function": {
-                "pieces": [
-                  {
-                    "expr": {
-                      "terms": [
-                        {
-                          "c": 1.0,
-                          "factors": {
-                            "ry": 1.0
-                          }
-                        },
-                        {
-                          "c": -0.04,
-                          "factors": {}
-                        }
-                      ]
-                    }
-                  }
-                ]
-              },
-              "kind": 8,
-              "path": "position.y"
-            },
-            {
-              "bindings": {
-                "r": "restY2D"
-              },
-              "function": {
-                "pieces": [
-                  {
-                    "expr": {
-                      "terms": [
-                        {
-                          "c": 1.0,
-                          "factors": {
-                            "r": 1.0
-                          }
-                        },
-                        {
-                          "c": 3.0,
-                          "factors": {}
-                        }
-                      ]
-                    }
-                  }
-                ]
-              },
-              "kind": 8,
-              "path": "y2D"
             },
             {
               "eventType": "note-played",

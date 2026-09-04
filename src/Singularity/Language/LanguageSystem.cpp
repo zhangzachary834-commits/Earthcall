@@ -199,7 +199,9 @@ void LanguageSystem::tick(float deltaTime) {
     
     for (const auto& rel : activeZone.formation().relations().getAll()) {
         // Skip structural/authored ontology relations
-        if (rel->type == "is_pos" || rel->type == "resolves_to" || rel->type == "member" || rel->type == "attachment" || rel->type == "speaks") {
+        if (rel->type == "is_pos" || rel->type == "resolves_to" || rel->type == "member" || 
+            rel->type == "attachment" || rel->type == "speaks" || 
+            rel->type == "instance-of" || rel->type == "subcategory-of" || rel->type == "authored-by") {
             continue;
         }
         
