@@ -577,18 +577,6 @@ bool SecurityManager::validateJavaScript(const std::string& script, const std::s
     return true;
 }
 
-std::string SecurityManager::sanitizeJavaScript(const std::string& script) {
-    std::string sanitized = script;
-    sanitized = std::regex_replace(sanitized, std::regex(R"(eval\s*\()"), "// BLOCKED: eval(");
-    sanitized = std::regex_replace(sanitized, std::regex(R"(window\[\s*['"]eval['"]\s*\])"), "// BLOCKED: eval");
-    sanitized = std::regex_replace(sanitized, std::regex(R"(Function\s*\()"), "// BLOCKED: Function(");
-    sanitized = std::regex_replace(sanitized, std::regex(R"(setTimeout\s*\()"), "// BLOCKED: setTimeout(");
-    sanitized = std::regex_replace(sanitized, std::regex(R"(setInterval\s*\()"), "// BLOCKED: setInterval(");
-    sanitized = std::regex_replace(sanitized, std::regex(R"(document\.write\s*\()"), "// BLOCKED: document.write(");
-    sanitized = std::regex_replace(sanitized, std::regex(R"(innerHTML\s*=)"), "// BLOCKED: innerHTML =");
-    return sanitized;
-}
-
 void SecurityManager::saveSecurityData() {
     std::lock_guard<std::recursive_mutex> lock(_mutex);
     try {

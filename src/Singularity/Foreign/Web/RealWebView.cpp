@@ -416,7 +416,10 @@ void RealWebView::executeJavaScript(const std::string& script) {
             return;
         }
         
-        NSString* nsScript = [NSString stringWithUTF8String:script.c_str()];
+        std::string lockdown = "window.eval = undefined; window.Function = undefined; window.setTimeout = undefined; window.setInterval = undefined; document.write = undefined;";
+        std::string clampedScript = "(function() { " + lockdown + " " + script + " })();";
+
+        NSString* nsScript = [NSString stringWithUTF8String:clampedScript.c_str()];
         [_webView evaluateJavaScript:nsScript completionHandler:^(id result, NSError* error) {
             if (error) {
                 std::cout << "🌐 JavaScript error: " << [error.localizedDescription UTF8String] << std::endl;
