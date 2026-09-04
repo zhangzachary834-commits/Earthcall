@@ -69,6 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         inputField.value = '';
+        inputField.dispatchEvent(new Event('input'));
     }
     
     emitBtn.addEventListener('click', emitUtterance);

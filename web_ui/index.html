@@ -122,7 +122,7 @@
         <!-- The canvas is used if running in Emscripten WASM mode -->
         <canvas id="earthcall-canvas" oncontextmenu="event.preventDefault()"></canvas>
         
-        <div id="connection-status">
+        <div id="connection-status" role="status" aria-live="polite">
             <div class="status-dot" id="status-indicator"></div>
             <span id="status-text">Initializing...</span>
         </div>
