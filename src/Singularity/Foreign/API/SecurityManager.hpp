@@ -143,7 +143,6 @@ public:
     
     // JavaScript security
     bool validateJavaScript(const std::string& script, const std::string& source);
-    std::string sanitizeJavaScript(const std::string& script);
     
     // Save/Load
     void saveSecurityData();
