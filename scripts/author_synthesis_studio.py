@@ -1050,6 +1050,24 @@ def build_world():
         scope=1,
     )
 
+    # 7. Synaptic Plasticity Laws
+    add_law(
+        "law-language-decay-semantic-pathways", "Language: Decay Semantic Pathways", 0, [],
+        compare("decayRate", 4, pv("float", 0.0)),
+        map_path("weight", {"w": "weight", "dr": "decayRate", "dt": "time.delta"},
+                 [{"c": 1.0, "factors": {"w": 1.0}},
+                  {"c": -1.0, "factors": {"dr": 1.0, "dt": 1.0}}])
+    )
+    add_law(
+        "law-language-forget-dead-pathways", "Language: Forget Dead Pathways", 0, [],
+        all_of(
+            compare("decayRate", 4, pv("float", 0.0)),
+            compare("weight", 3, pv("float", 0.0))
+        ),
+        destroy()
+    )
+
+
     # 5. Visual Button Depress Laws
     add_law(
         "law-studio-button-depress", "Studio: Depress Button on Press", 0, ["object-pressed"],

@@ -125,7 +125,7 @@ void LanguageSystem::remove(const std::string& symbol) {
     }
 }
 
-void LanguageSystem::tick(float deltaTime) {
+void LanguageSystem::tick(float) {
     // 1. Process queued utterances from WebSocket/WebBindings
     std::queue<PendingUtterance> localQueue;
     {
@@ -195,34 +195,8 @@ void LanguageSystem::tick(float deltaTime) {
     }
 
     // 2. Synaptic Plasticity (Decay semantic weights)
-    Zone& activeZone = mgr.active();
-    std::vector<std::shared_ptr<Relation>> toRemove;
-    for (const auto& rel : activeZone.formation().relations().getAll()) {
-        PropertyValue drOut;
-        if (rel->getDynamicProperty("decayRate", drOut)) {
-            float decayRate = std::get<float>(drOut);
-            float w = rel->getWeight();
-            if (w > 0.0f && decayRate > 0.0f) {
-                w -= decayRate * deltaTime;
-                if (w <= 0.0f) {
-                    toRemove.push_back(rel);
-                    ECA::Logger::instance().log(
-                        ECA::LogCategory::Language,
-                        "PATHWAY_DECAY",
-                        "Semantic pathway decayed and forgotten: " + rel->getIdentifier(),
-                        nlohmann::json{{"relationId", rel->getIdentifier()}}
-                    );
-                    std::cout << "[LanguageSystem] Semantic pathway decayed and forgotten: " << rel->getIdentifier() << std::endl;
-                } else {
-                    rel->setWeight(w);
-                }
-            }
-        }
-    }
-    
-    for (const auto& rel : toRemove) {
-        activeZone.formation().removeRelation(rel);
-    }
+    // Removed. Synaptic Plasticity is now a fully authored OntoMath function
+    // running as a Law in the world.
 }
 
 void LanguageSystem::queueUtterance(const std::string& payload, const std::string& sourceClient, const std::string& targetSingularId) {
