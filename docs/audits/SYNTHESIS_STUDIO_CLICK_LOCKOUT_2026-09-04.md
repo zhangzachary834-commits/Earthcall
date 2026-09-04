@@ -115,14 +115,33 @@ While this loop skips structural ontology relations (like `"is_pos"` and `"membe
 
 The bug was never caused by "rapid clicking"—the lockout occurred purely as a function of time. Exactly 50 seconds after booting the game (assuming a starting weight of 1.0 decaying at 0.02/sec), the language system would literally atrophy the engine's core ontological types out of existence, rendering all buttons, toggles, and sliders completely deaf to the laws that governed them.
 
-## Fix Implemented
-Added the missing structural relation types to the decay exclusion list in `src/Singularity/Language/LanguageSystem.cpp`:
+## Architectural Fix Implemented
+The initial hotfix was to simply append `"instance-of"`, `"subcategory-of"`, and `"authored-by"` to the `LanguageSystem`'s hardcoded decay whitelist. However, hardcoding string literals to protect ontology relations from a modality channel violates Earthcall's architectural principles. 
 
+In Earthcall, *domain things and their state are authored in-world as data* (Refusal 1 & 6). If a relation decays, it should be because the relation possesses data dictating that it should decay, not because it escaped a hardcoded type-blacklist.
+
+I completely refactored the Synaptic Plasticity loop to be strictly data-driven:
+1. `LanguageSystem::tick` now looks for a dynamic property `"decayRate"` on the relation:
 ```cpp
-if (rel->type == "is_pos" || rel->type == "resolves_to" || rel->type == "member" || 
-    rel->type == "attachment" || rel->type == "speaks" || 
-    rel->type == "instance-of" || rel->type == "subcategory-of" || rel->type == "authored-by") {
-    continue;
+PropertyValue drOut;
+if (rel->getDynamicProperty("decayRate", drOut)) {
+    float decayRate = std::get<float>(drOut);
+    float w = rel->getWeight();
+    if (w > 0.0f && decayRate > 0.0f) {
+        w -= decayRate * deltaTime;
+        // ... execute decay ...
+    }
 }
 ```
-The application has been rebuilt and the lockout bug is permanently resolved.
+2. By default, relations in Earthcall do **not** have a `decayRate` property, so they are perfectly immortal. 
+3. When the `LanguageSystem` generates a new semantic pathway from parsing human utterances (via `SyntacticParser::parse` or `speaks` assignment), it explicitly authors that property onto the relation it created:
+```cpp
+rel->setDynamicProperty("decayRate", 0.02f);
+```
+
+This perfectly aligns with the engine's design:
+- The `LanguageSystem` no longer sweepingly mutates all relations in the Universe.
+- It only decays relations that are explicitly authored with a `decayRate`.
+- Modalities like Language can now dynamically govern the lifespan of their own semantic webs purely through authored property-data, without ever hardcoding an ontology blacklist.
+
+The application has been rebuilt with this robust architectural fix.

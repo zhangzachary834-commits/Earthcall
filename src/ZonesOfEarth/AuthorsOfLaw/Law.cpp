@@ -1516,9 +1516,6 @@ void LawManager::connectToEventBus() {
             _rete.retractStateFactsBySubject(e.subject->getIdentifier());
         }
 
-        if (e.type == "object-clicked") {
-            std::cout << "[LawManager] EventBus sent object-clicked! subject: " << (e.subject ? e.subject->getIdentifier() : "null") << "\n";
-        }
         
         auto fact = std::make_shared<ReteFact>();
         fact->type = e.type;
@@ -1526,9 +1523,6 @@ void LawManager::connectToEventBus() {
         fact->subjectId = subjectId;
         fact->object = e.object;
         _rete.assertFact(fact);
-        if (e.type == "object-clicked") {
-            std::cout << "[LawManager] fact asserted and _dirty = true!\n";
-        }
         _dirty = true;
 
         if ((e.type == "object-created" || e.type == "relation-formed") && e.subject) {

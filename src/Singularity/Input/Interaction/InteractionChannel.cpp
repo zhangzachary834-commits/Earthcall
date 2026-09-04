@@ -56,16 +56,13 @@ Object* InteractionChannel::findReachable(const std::vector<Object*>& reachable,
 
 void InteractionChannel::publishEdge(const std::string& type, Object* object) const {
     if (!object) {
-        std::cout << "[InteractionChannel] publishEdge: " << type << " FAILED (object is NULL)\n";
         return;
     }
 
     if (!Universe::instance().anyoneHears(type)) {
-        std::cout << "[InteractionChannel] publishEdge: " << type << " FAILED (nobody hears it)\n";
         return;
     }
 
-    std::cout << "[InteractionChannel] publishEdge: " << type << " SUCCESS on " << object->getIdentifier() << "\n";
     ::Core::EventBus::instance().publish(
         ECA::Event{type, object, nullptr, std::time(nullptr)});
 }
@@ -284,20 +281,15 @@ void InteractionChannel::observe(const Sense& sense,
 
     if (leftReleasedNow) {
         Object* pressed = findReachable(reachable, pressedId);
-        std::cout << "[InteractionChannel] leftReleasedNow! pressedId: " << pressedId << " found=" << (pressed!=nullptr) << " dragging=" << dragging << "\n";
         if (pressed) {
             publishEdge("object-released", pressed);
-            std::cout << "[InteractionChannel] hit is: " << (hit ? hit->getIdentifier() : "null") << "\n";
         }
         if (dragging) {
             publishEdge("object-drag-ended", pressed);
         } else if (pressed && pressed == hit) {
             // A click is press and release on the SAME being, without travel.
             // Releasing somewhere else is a cancelled click or completed drag.
-            std::cout << "[InteractionChannel] CONDITIONS MET! Publishing object-clicked...\n";
             publishEdge("object-clicked", pressed);
-        } else {
-            std::cout << "[InteractionChannel] CONDITIONS FAILED for click: pressed == hit is " << (pressed == hit) << "\n";
         }
         pressedId.clear();
         dragging = false;
