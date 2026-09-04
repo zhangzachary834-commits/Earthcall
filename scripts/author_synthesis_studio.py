@@ -1050,7 +1050,41 @@ def build_world():
         scope=1,
     )
 
-    # 5. The chord pads.
+    # 5. Visual Button Depress Laws
+    add_law(
+        "law-studio-button-depress", "Studio: Depress Button on Press", 0, ["object-pressed"],
+        related("instance-of", "category.control.button"),
+        seq(
+            map_path("position.y", {"ry": "restY"}, offset_terms("ry", -0.04)),
+            map_path("y2D", {"r": "restY2D"}, offset_terms("r", 3.0))
+        )
+    )
+    add_law(
+        "law-studio-button-spring", "Studio: Restore Button Elevation", 0, ["object-released"],
+        related("instance-of", "category.control.button"),
+        seq(
+            map_path("position.y", {"ry": "restY"}, copy_terms("ry")),
+            map_path("y2D", {"r": "restY2D"}, copy_terms("r"))
+        )
+    )
+    add_law(
+        "law-studio-toggle-depress", "Studio: Depress Toggle on Press", 0, ["object-pressed"],
+        related("instance-of", "category.control.toggle"),
+        seq(
+            map_path("position.y", {"ry": "restY"}, offset_terms("ry", -0.04)),
+            map_path("y2D", {"r": "restY2D"}, offset_terms("r", 3.0))
+        )
+    )
+    add_law(
+        "law-studio-toggle-spring", "Studio: Restore Toggle Elevation", 0, ["object-released"],
+        related("instance-of", "category.control.toggle"),
+        seq(
+            map_path("position.y", {"ry": "restY"}, copy_terms("ry")),
+            map_path("y2D", {"r": "restY2D"}, copy_terms("r"))
+        )
+    )
+
+    # 6. The chord pads.
     add_law(
         "law-studio-pad-play",
         "Studio: Play Musical Note on Chord Pad Click",
