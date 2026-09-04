@@ -1,0 +1,22 @@
+{
+  "identifier": "Basic2DButtonZone",
+  "name": "Basic 2D Button Zone",
+  "owner": "Zach",
+  "world": {
+    "objects": [
+      {
+        "objectID": "my-2d-button",
+        "shapeKind": 12,
+        "geometryType": 12,
+        "shapeParams": [1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 100.0, 50.0],
+        "x2D": 100.0,
+        "y2D": 100.0,
+        "transform": [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,2,0,1],
+        "center": [0, 0, 0],
+        "faceColors": [[1,0.5,0],[1,0.5,0],[1,0.5,0],[1,0.5,0],[1,0.5,0],[1,0.5,0]]
+      }
+    ]
+  },
+  "materials": [],
+  "formationRelations": []
+}

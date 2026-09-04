@@ -78,3 +78,8 @@
 *Note (2026-09-02): the HiDPI finding above was found by walking, not by a test, and was
 recorded first in an audit rather than here. Findings a Person discovers by hand belong on
 this list — that is what it is for. See [The Week the Chorus Became a Queue](../../Reflections%20on%20Earthcall%27s%20Progression/Reflections%20on%20Trajectory/The_Week_The_Chorus_Became_A_Queue.md) §6.*
+
+## Basic 2D Button
+- [ ] Load `basic_2d_button` in-app -> verify 2D button renders on screen.
+- [ ] Click the button -> verify it visibly shifts (y increases).
+- [ ] Save -> reload -> click again -> verify it continues shifting.
