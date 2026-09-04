@@ -489,8 +489,17 @@ bool EarthcallAPI::createObject(const std::string& type, const glm::vec3& positi
     
     std::cout << "🌍 Creating object: " << type 
               << " at (" << position.x << ", " << position.y << ", " << position.z << ")" << std::endl;
-    // TODO: Actually create the object
-    return true;
+
+    if (_zoneManager) {
+        auto obj = std::make_shared<Object>();
+        obj->setPosition(position);
+        obj->setObjectType(type);
+        obj->setName(type);
+        _zoneManager->active().addObject(obj);
+        return true;
+    }
+
+    return false;
 }
 
 bool EarthcallAPI::modifyObject(const std::string& id, const glm::vec3& position, const glm::vec3& scale) {
