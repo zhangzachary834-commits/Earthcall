@@ -381,10 +381,6 @@ void Engine::initLogic() {
             _devToolsWindowOpen = false;
             return;
         }
-        if (_performanceMetricsWindowOpen) {
-            _performanceMetricsWindowOpen = false;
-            return;
-        }
         _mouseHandler->toggleCursorLock(_window);
     });
     _keyboardHandler->bindKey(GLFW_KEY_GRAVE_ACCENT, "toggle_dev_tools", [this]() {
