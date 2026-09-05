@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""First-Mover authoring of the Earthcall Far Lands generative app.
+"""Authoring of the Earthcall Far Lands generative zone and world.
 
-This creates a Zone representing the Far Lands, a Minecraft-style concept built entirely
+Creates a Zone representing the Far Lands, an iconic concept built entirely
 out of Earthcall's generative Laws and OntoMath.
 """
 
@@ -22,6 +22,71 @@ def pv(t, v):
     return {"t": t, "v": v}
 
 
+# --- OntoMath MathNode AST Constructors ---
+
+def math_scalar(v):
+    return {
+        "op": 0,
+        "scalarForm": {
+            "terms": [
+                {"c": float(v), "factors": {}}
+            ]
+        }
+    }
+
+
+def math_var(name):
+    return {
+        "op": 1,
+        "var": name
+    }
+
+
+def math_vec3(x, y, z):
+    return {
+        "op": 2,
+        "children": [x, y, z]
+    }
+
+
+def math_comp(vec, axis):
+    return {
+        "op": 3,
+        "arg": axis,
+        "children": [vec]
+    }
+
+
+def math_add(a, b):
+    return {
+        "op": 4,
+        "children": [a, b]
+    }
+
+
+def math_sub(a, b):
+    return {
+        "op": 5,
+        "children": [a, b]
+    }
+
+
+def math_scale(a, b):
+    return {
+        "op": 6,
+        "children": [a, b]
+    }
+
+
+def math_noise(vec):
+    return {
+        "op": 29,
+        "children": [vec]
+    }
+
+
+# --- Law Condition & Action Constructors ---
+
 def compare(path, op, operand=None, operand_path=None):
     node = {"kind": 0, "path": path, "op": op}
     if operand is not None:
@@ -33,18 +98,6 @@ def compare(path, op, operand=None, operand_path=None):
 
 def related(rel_type, other):
     return {"kind": 2, "relationType": rel_type, "otherId": other}
-
-
-def all_of(*children):
-    return {"kind": 3, "children": list(children)}
-
-
-def any_of(*children):
-    return {"kind": 4, "children": list(children)}
-
-
-def not_of(child):
-    return {"kind": 5, "children": [child]}
 
 
 def seq(*children):
@@ -69,46 +122,11 @@ def map_path(path, bindings, terms=None, pieces=None, input_var=None):
     return {"kind": 8, "path": path, "bindings": bindings, "function": fn}
 
 
-def flow_path(path, bindings, terms=None, pieces=None, input_var=None):
-    fn = {"pieces": pieces if pieces is not None else [{"expr": {"terms": terms or []}}]}
-    if input_var:
-        fn["input"] = input_var
-    return {"kind": 9, "path": path, "bindings": bindings, "function": fn}
-
-
-def piece(terms, lo=None, hi=None):
-    p = {"expr": {"terms": terms}}
-    if lo is not None:
-        p["lo"] = float(lo)
-        p["includeLo"] = True
-    if hi is not None:
-        p["hi"] = float(hi)
-        p["includeHi"] = True
-    return p
-
-
-def clamp_pieces(var, lo, hi, scale=1.0, offset=0.0):
+def offset_terms(var, offset):
     return [
-        piece([{"c": scale * lo + offset, "factors": {}}], hi=lo),
-        piece([{"c": scale, "factors": {var: 1.0}}, {"c": offset, "factors": {}}], lo=lo, hi=hi),
-        piece([{"c": scale * hi + offset, "factors": {}}], lo=hi),
+        {"c": 1.0, "factors": {var: 1.0}},
+        {"c": float(offset), "factors": {}},
     ]
-
-
-def sin_factor(var, scale=1.0, shift=0.0):
-    return {"kind": 0, "var": var, "scale": float(scale), "shift": float(shift)}
-
-
-def cos_factor(var, scale=1.0, shift=0.0):
-    return {"kind": 1, "var": var, "scale": float(scale), "shift": float(shift)}
-
-
-def wave_term(c, factors, trans):
-    return {"c": float(c), "factors": factors, "trans": trans}
-
-
-def flip_terms(var):
-    return [{"c": 1.0, "factors": {}}, {"c": -1.0, "factors": {var: 1.0}}]
 
 
 def publish(event, subject=""):
@@ -127,43 +145,6 @@ def play_audio(freq_path, amp_path, wave_type="crystal"):
         "input": amp_path,
         "propertyName": wave_type,
     }
-
-
-def add_relation(source_token, target_token, rel_type):
-    return {
-        "kind": 20,
-        "sourceToken": source_token,
-        "targetToken": target_token,
-        "relationType": rel_type,
-    }
-
-
-def create_object(shape_kind, create_type, placement_path="", children=None):
-    node = {
-        "kind": 11,
-        "shapeKind": shape_kind,
-        "createType": create_type,
-    }
-    if placement_path:
-        node["spawnPlacementPath"] = placement_path
-    if children:
-        node["children"] = list(children)
-    return node
-
-
-def copy_terms(var):
-    return [{"c": 1.0, "factors": {var: 1.0}}]
-
-
-def offset_terms(var, offset):
-    return [
-        {"c": 1.0, "factors": {var: 1.0}},
-        {"c": float(offset), "factors": {}},
-    ]
-
-
-def const_terms(value):
-    return [{"c": float(value), "factors": {}}]
 
 
 def provenance(law_id):
@@ -192,7 +173,7 @@ def category_being(object_id, display_name):
         "objectID": object_id,
         "shapeKind": 12,
         "geometryType": 12,
-        "shapeParams": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        "shapeParams": [0.0] * 11,
         "transform": mat4_translate(0.0, 0.0, 0.0, (0.01, 0.01, 0.01)),
         "center": [0.0, 0.0, 0.0],
         "materialId": "",
@@ -269,16 +250,14 @@ def build_world():
         category_being("Zach", "Zachary Zhang"),
         category_being("category.farlands", "Far Lands"),
         category_being("category.farlands.field", "Far Lands Mathematical Field"),
-        category_being("category.farlands.control", "Far Lands Control"),
+        category_being("category.farlands.monolith", "Far Lands Horizon Beacon"),
         category_being("category.control", "UI Controls"),
-        category_being("category.control.slider", "Continuous Slider"),
         category_being("category.control.button", "Action Button"),
     ]
 
     relations = [
         subcategory_rel("category.farlands.field", "category.farlands"),
-        subcategory_rel("category.farlands.control", "category.farlands"),
-        subcategory_rel("category.control.slider", "category.control"),
+        subcategory_rel("category.farlands.monolith", "category.farlands"),
         subcategory_rel("category.control.button", "category.control"),
         authored_by_rel("category.farlands", AUTHOR),
     ]
@@ -289,73 +268,165 @@ def build_world():
         r, g, b = rgb
         return [[r, g, b] for _ in range(6)]
 
-    # 1. The Core Far Lands Math Field! (ShapeKind 10: Field)
-    far_lands_field_id = "object.farlands.core_field"
+    # -------------------------------------------------------------------------
+    # 1. The Core Far Lands Math Field (ShapeKind 10: Field, Prim 7: Expr)
+    # -------------------------------------------------------------------------
+    # Constructs the legendary Far Lands landscape via pure OntoMath:
+    # 2D component-extracted coordinates (Component(p, "x") and Component(p, "z"))
+    # ensure exact heightfield classification (isHeightfieldExpr) and tight
+    # Lipschitz bounds (estimateLipschitz), giving both fast GPU DDA raymarching
+    # and solid marching-tetrahedra physical collision.
+    px = math_comp(math_var("p"), "x")
+    pz = math_comp(math_var("p"), "z")
+
+    def make_octave(freq_x, freq_z, amp):
+        nx = math_scale(math_scalar(freq_x), px)
+        nz = math_scale(math_scalar(freq_z), pz)
+        arg = math_vec3(nx, math_scalar(0.0), nz)
+        return math_scale(math_scalar(amp), math_noise(arg))
+
+    # Octave 0: Macro-continental rolling terrain
+    oct0 = make_octave(0.003, 0.003, 20.0)
+
+    # Octave 1: Rolling foothills and landscape variance
+    oct1 = make_octave(0.009, 0.009, 12.0)
+
+    # Octave 2 & 3: Edge Far Lands - Z Axis Vertical Wall Curtains
+    # Stretched along X, tightly oscillating along Z -> colossal parallel walls
+    oct2 = make_octave(0.004, 0.035, 45.0)
+    oct3 = make_octave(0.002, 0.070, 22.0)
+
+    # Octave 4 & 5: Edge Far Lands - X Axis Vertical Wall Curtains
+    # Stretched along Z, tightly oscillating along X -> orthogonal cross-walls
+    oct4 = make_octave(0.035, 0.004, 45.0)
+    oct5 = make_octave(0.070, 0.002, 22.0)
+
+    # Octave 6: Geological striations & micro-wall fluting
+    oct6 = make_octave(0.060, 0.060, 8.0)
+
+    # Sum of all octaves: forms Edge Walls, Corner Monolithic Towers, and Canyons
+    h_walls = math_add(
+        math_add(oct0, oct1),
+        math_add(
+            math_add(oct2, oct3),
+            math_add(math_add(oct4, oct5), oct6)
+        )
+    )
+
+    # Ground surface SDF: y - h(x, z) = 0
+    sdf_math = math_sub(math_var("y"), h_walls)
+
+    field_node = {
+        "op": 0,      # Leaf
+        "prim": 7,    # Expr
+        "dims": [0.5, 0.5, 0.5],
+        "offset": [0.0, 0.0, 0.0],
+        "p0": 0.0,
+        "p1": 0.0,
+        "t": 0.5,
+        "mathNode": sdf_math,
+    }
+
+    far_lands_field_id = "object.farlands.terrain"
     zone_objects.append({
         "objectID": far_lands_field_id,
         "shapeKind": 10,
         "geometryType": 10,
-        "shapeParams": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-        "transform": mat4_translate(0.0, 0.0, 0.0, (1000.0, 1000.0, 1000.0)),
+        "shapeParams": [0.0] * 11,
+        "transform": mat4_translate(0.0, 0.0, 0.0),
         "center": [0.0, 0.0, 0.0],
         "materialId": "material.farlands.terrain",
-        "faceColors": make_face_colors((0.1, 0.8, 0.2)),
+        "baseline": "ground",
+        "attributes": {"baseline": "ground"},
         "authoredProperties": {
-            "displayName": pv("string", "The Far Lands Spatial Math Field"),
-            "field.frequency": pv("double", 1.0),
-            "field.amplitude": pv("double", 1.0),
-            "farlands.active": pv("bool", True),
-            # Explicit SDF node mapping an OntoMath Noise (Perlin-style) as our base
-            # which will be modulated by Laws to create the Far Lands effect.
-            "astDefinition": pv("string", """
-            {
-                "kind": "sdf",
-                "op": "noise",
-                "scale": 1.0,
-                "children": [
-                    {"kind": "var", "name": "position"}
-                ]
-            }
-            """)
+            "displayName": pv("string", "The Far Lands Mathematical Field"),
         },
+        "fieldExtent": [1500.0, 180.0, 1500.0],
+        "field": field_node,
     })
     relations.append(instance_rel(far_lands_field_id, "category.farlands.field"))
 
-    # 2. State Container for distance tracking and dynamic modifiers
+    # -------------------------------------------------------------------------
+    # 2. Spawn Observation Dais & Horizon Beacon
+    # -------------------------------------------------------------------------
+    # Instead of an empty, flat rectangular slab in a void, the spawn area
+    # features an elegant observation dais nestled into the terrain at origin,
+    # accompanied by a monolith beacon and an interactive resonance crystal.
+    dais_id = "object.farlands.dais"
+    zone_objects.append({
+        "objectID": dais_id,
+        "shapeKind": 3,  # Cylinder plinth
+        "geometryType": 3,
+        "shapeParams": [6.0, 0.0, 0.0, 0.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        "transform": mat4_translate(0.0, -0.1, 0.0, (12.0, 0.4, 12.0)),
+        "center": [0.0, -0.1, 0.0],
+        "materialId": "material.farlands.safezone",
+        "faceColors": make_face_colors((0.18, 0.18, 0.22)),
+        "authoredProperties": {
+            "displayName": pv("string", "Spawn Observation Dais"),
+        },
+    })
+
+    # Slender observation beacon pylon
+    beacon_id = "object.farlands.beacon"
+    zone_objects.append({
+        "objectID": beacon_id,
+        "shapeKind": 9,  # RoundedBox
+        "geometryType": 9,
+        "shapeParams": [0.4, 0.4, 0.4, 1.2, 0.0, 0.0, 0.0, 0.0, 0.1, 0.0, 0.0],
+        "transform": mat4_translate(0.0, 1.2, -4.0, (0.8, 2.4, 0.8)),
+        "center": [0.0, 1.2, -4.0],
+        "materialId": "material.farlands.rock",
+        "faceColors": make_face_colors((0.25, 0.28, 0.32)),
+        "authoredProperties": {
+            "displayName": pv("string", "Far Lands Horizon Beacon"),
+        },
+    })
+    relations.append(instance_rel(beacon_id, "category.farlands.monolith"))
+
+    # Interactive floating crystal core
+    crystal_id = "object.farlands.resonance_crystal"
+    zone_objects.append({
+        "objectID": crystal_id,
+        "shapeKind": 2,  # Sphere
+        "geometryType": 2,
+        "shapeParams": [0.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        "transform": mat4_translate(0.0, 2.8, -4.0, (0.8, 0.8, 0.8)),
+        "center": [0.0, 2.8, -4.0],
+        "materialId": "material.farlands.beacon",
+        "faceColors": make_face_colors((0.3, 0.85, 0.95)),
+        "authoredProperties": {
+            "displayName": pv("string", "Harmonic Resonance Core"),
+            "buttonRole": pv("string", "farlands-pulse"),
+            "acoustic.frequency": pv("double", 528.0),
+            "acoustic.amplitude": pv("double", 0.6),
+            "acoustic.waveType": pv("string", "crystal"),
+        },
+    })
+    relations.append(instance_rel(crystal_id, "category.control.button"))
+
+    # -------------------------------------------------------------------------
+    # 3. State Container & Dynamic Tracking
+    # -------------------------------------------------------------------------
     state_id = "state.farlands"
     zone_objects.append({
         "objectID": state_id,
         "shapeKind": 0,
         "geometryType": 0,
-        "shapeParams": [0.5, 0.5, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0],
-        "transform": mat4_translate(0.0, -10.0, 0.0, (0.01, 0.01, 0.01)),
-        "center": [0.0, -10.0, 0.0],
-        "materialId": "material.farlands.dark",
+        "shapeParams": [0.5, 0.5, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        "transform": mat4_translate(0.0, -20.0, 0.0, (0.01, 0.01, 0.01)),
+        "center": [0.0, -20.0, 0.0],
+        "materialId": "material.farlands.safezone",
         "faceColors": make_face_colors((0.1, 0.1, 0.1)),
         "authoredProperties": {
             "displayName": pv("string", "Far Lands State"),
-            "distanceFromOrigin": pv("double", 0.0),
-            "corruptionLevel": pv("double", 0.0),
-            "musicIntensity": pv("double", 0.0),
+            "pulseCount": pv("double", 0.0),
         },
     })
 
-    # 3. Base Platform so we don't fall infinitely right away
-    zone_objects.append({
-        "objectID": "object.farlands.spawn_platform",
-        "shapeKind": 0,
-        "geometryType": 0,
-        "shapeParams": [0.5, 0.5, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0],
-        "transform": mat4_translate(0.0, -2.0, 0.0, (20.0, 1.0, 20.0)),
-        "center": [0.0, -2.0, 0.0],
-        "materialId": "material.farlands.safezone",
-        "faceColors": make_face_colors((0.4, 0.4, 0.5)),
-        "authoredProperties": {
-            "displayName": pv("string", "Spawn Safezone"),
-        },
-    })
-
-    # 4. HUD / Text Elements for flavor
+    # -------------------------------------------------------------------------
+    # 4. HUD / Text Elements
+    # -------------------------------------------------------------------------
     def text2d(object_id, text, x, y, size, rgb, z=30):
         return {
             "objectID": object_id,
@@ -378,110 +449,69 @@ def build_world():
             },
         }
 
-    zone_objects.append(text2d("hud.title", "EARTHCALL FAR LANDS", 30, 30, 28, (0.8, 0.2, 0.8)))
-    zone_objects.append(text2d("hud.subtitle", "Walk outward to witness math corrupt geometry.", 30, 60, 14, (0.6, 0.6, 0.6)))
-    zone_objects.append(text2d("hud.dist", "Distance: [calculated dynamically]", 30, 90, 14, (0.9, 0.9, 0.2)))
+    zone_objects.append(text2d("hud.title", "EARTHCALL FAR LANDS", 30, 30, 26, (0.4, 0.9, 0.6)))
+    zone_objects.append(text2d("hud.subtitle", "Generative OntoMath Landscape — Traverse the mathematical horizon.", 30, 60, 13, (0.7, 0.7, 0.75)))
+    zone_objects.append(text2d("hud.hint", "Click the Resonance Core to sound the harmonic pulse.", 30, 82, 12, (0.3, 0.85, 0.95)))
 
-
-    # --- LAWS ---
-
-    # Law 1: Calculate Distance from Origin using a Law Map (approximate length via max of absolute x/z for grid-like expansion, or simple x+z if we want linear drift).
-    # Since we don't have a direct sqrt in our basic nodes, we'll use a fast Manhattan-ish distance or just rely on Z-axis movement for demo.
-    # Let's say Far Lands is reached by moving along the Z axis (forward/back) primarily, or X. We'll sum abs(X) and abs(Z).
+    # -------------------------------------------------------------------------
+    # 5. Laws
+    # -------------------------------------------------------------------------
+    # Law 1: Resonance Crystal Pulse Sound & Event
     add_law(
-        "law-farlands-calc-dist",
-        "Calculate Player Distance from Center",
-        1, # WhileTrue
-        [],
-        # Target the state object
-        compare("displayName", 0, pv("string", "Far Lands State")),
+        "law-farlands-pulse",
+        "Far Lands: Sound Resonance Pulse on Core Activation",
+        0,  # OnDemand / Action
+        ["control-activated"],
+        compare("buttonRole", 0, pv("string", "farlands-pulse")),
         seq(
-            # Using Map to grab locomotion channel's world X and Z, approximate distance
-            map_path("distanceFromOrigin", {"x": "@locomotion-channel.playerX", "z": "@locomotion-channel.playerZ"},
-                     pieces=[piece([
-                         # naive dist = x*x + z*z mapped directly, or just x+z.
-                         # Actually we can just do Math: |x| + |z|. Wait, OntoMath doesn't have an easy abs here unless we do piecewise.
-                         # Let's just do distance = (x*x + z*z) * 0.01 for simplicity!
-                         {"c": 0.01, "factors": {"x": 2.0}},
-                         {"c": 0.01, "factors": {"z": 2.0}},
-                     ])])
+            play_audio("acoustic.frequency", "acoustic.amplitude", "crystal"),
+            map_path("@state.farlands.pulseCount", {"c": "@state.farlands.pulseCount"}, offset_terms("c", 1.0)),
+            publish("farlands-pulsed", "state.farlands"),
         ),
-        scope=1
+        scope=1,
     )
 
-    # Law 2: Modulate Field Frequency based on Distance
-    # This is Path A Procedural math integration from FAR_LANDS_FRAMEWORK.md!
-    # "flow @field.frequency += 0.01 * dt"
-    # Wait, if we use distance to directly drive frequency: frequency = 1.0 + dist * 0.005
-    add_law(
-        "law-farlands-field-corruption",
-        "Modulate Terrain Math Field Based on Distance",
-        1,
-        [],
-        related("instance-of", "category.farlands.field"),
-        seq(
-            # As distance grows, field frequency increases, causing the geometry to become wilder and more corrugated
-            map_path("field.frequency", {"d": "@state.farlands.distanceFromOrigin"},
-                     terms=[
-                         {"c": 1.0, "factors": {}},
-                         {"c": 0.005, "factors": {"d": 1.0}}
-                     ]),
-            # Amplitude also increases slightly to make the terrain "fold" higher
-            map_path("field.amplitude", {"d": "@state.farlands.distanceFromOrigin"},
-                     terms=[
-                         {"c": 1.0, "factors": {}},
-                         {"c": 0.002, "factors": {"d": 1.0}}
-                     ])
-        ),
-        scope=1
-    )
-
-    # Law 3: Update HUD distance
-    add_law(
-        "law-farlands-hud-sync",
-        "Update HUD with current corruption level",
-        1,
-        [],
-        compare("displayName", 0, pv("string", "Distance: [calculated dynamically]")),
-        # We can't directly string-concat in our basic Actions easily, so we will just change color as it gets further!
-        seq(
-            map_path("color.r", {"d": "@state.farlands.distanceFromOrigin"},
-                     pieces=clamp_pieces("d", 0.0, 1000.0, scale=0.001, offset=0.2), input_var="d"),
-            map_path("color.g", {"d": "@state.farlands.distanceFromOrigin"},
-                     pieces=clamp_pieces("d", 0.0, 1000.0, scale=-0.001, offset=0.8), input_var="d"),
-            map_path("color.b", {"d": "@state.farlands.distanceFromOrigin"},
-                     pieces=clamp_pieces("d", 0.0, 1000.0, scale=0.001, offset=0.2), input_var="d"),
-        ),
-        scope=1
-    )
-
-
-    # Law 4: The Sound of the Far Lands
-    # From the docs: "The recursive farLayer function, evaluated with time as a variable instead of spatial coordinates, produces a pressure wave."
-    # We will dynamically play a sound whose frequency and amplitude shift with distance.
-    add_law(
-        "law-farlands-ambient-sound",
-        "Ambient Harmonic Resonance of the Far Lands",
-        1, # WhileTrue
-        [],
-        # Target the core field, so it emits the sound
-        related("instance-of", "category.farlands.field"),
-        seq(
-            map_path("acoustic.frequency", {"d": "@state.farlands.distanceFromOrigin"},
-                     # Base low drone (40Hz) that goes down to infrasound floor as distance increases!
-                     # 40 - dist * 0.05
-                     terms=[
-                         {"c": 40.0, "factors": {}},
-                         {"c": -0.05, "factors": {"d": 1.0}}
-                     ]),
-            map_path("acoustic.amplitude", {"d": "@state.farlands.distanceFromOrigin"},
-                     pieces=clamp_pieces("d", 0.0, 5000.0, scale=0.0001, offset=0.1), input_var="d"),
-            set_path("acoustic.waveType", pv("string", "sine")),
-            set_path("acoustic.isSoundEmitter", pv("bool", True))
-        ),
-        scope=1
-    )
-
+    # -------------------------------------------------------------------------
+    # 6. Materials & Zone Assembly
+    # -------------------------------------------------------------------------
+    materials = [
+        {
+            "name": "material.farlands.terrain",
+            "baseColor": [0.15, 0.65, 0.35],
+            "ambient": 0.25,
+            "diffuse": 0.85,
+            "specular": 0.15,
+            "shininess": 12.0,
+            "opacity": 1.0,
+        },
+        {
+            "name": "material.farlands.rock",
+            "baseColor": [0.25, 0.28, 0.32],
+            "ambient": 0.20,
+            "diffuse": 0.80,
+            "specular": 0.20,
+            "shininess": 16.0,
+            "opacity": 1.0,
+        },
+        {
+            "name": "material.farlands.beacon",
+            "baseColor": [0.30, 0.85, 0.95],
+            "ambient": 0.50,
+            "diffuse": 0.90,
+            "specular": 0.90,
+            "shininess": 64.0,
+            "opacity": 1.0,
+        },
+        {
+            "name": "material.farlands.safezone",
+            "baseColor": [0.18, 0.18, 0.22],
+            "ambient": 0.30,
+            "diffuse": 0.70,
+            "specular": 0.30,
+            "shininess": 24.0,
+            "opacity": 1.0,
+        },
+    ]
 
     zone = {
         "injected_by": "Gemini Spark (authored)",
@@ -503,17 +533,13 @@ def build_world():
         "currentZone": 0,
         "currentZoneId": ZONE_ID,
         "flying": True,
-        "cameraPos": [0.0, 2.0, 5.0],
-        "cameraFront": [0.0, 0.0, -1.0],
+        "cameraPos": [0.0, 3.0, 6.0],
+        "cameraFront": [0.0, -0.05, -1.0],
         "cameraUp": [0.0, 1.0, 0.0],
         "yaw": -90.0,
-        "pitch": 0.0,
+        "pitch": -3.0,
         "currentColor": [1.0, 1.0, 1.0],
-        "materials": [
-            {"name": "material.farlands.safezone", "baseColor": [0.4, 0.4, 0.5], "opacity": 1.0},
-            {"name": "material.farlands.terrain", "baseColor": [0.1, 0.8, 0.2], "opacity": 1.0},
-            {"name": "material.farlands.dark", "baseColor": [0.1, 0.1, 0.1], "opacity": 1.0},
-        ],
+        "materials": materials,
         "categories": categories,
         "zoneRefs": [{"identifier": ZONE_ID, "kind": "farlands"}],
         "zones": [zone],

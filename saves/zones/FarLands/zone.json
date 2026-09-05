@@ -14,14 +14,16 @@
   "world": {
     "objects": [
       {
-        "objectID": "object.farlands.core_field",
+        "objectID": "object.farlands.terrain",
         "shapeKind": 10,
         "geometryType": 10,
         "shapeParams": [
-          1.0,
-          1.0,
-          1.0,
-          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.0,
           0.0,
           0.0,
@@ -29,17 +31,17 @@
           0.0
         ],
         "transform": [
-          1000.0,
+          1.0,
           0.0,
           0.0,
           0.0,
           0.0,
-          1000.0,
+          1.0,
           0.0,
           0.0,
           0.0,
           0.0,
-          1000.0,
+          1.0,
           0.0,
           0.0,
           0.0,
@@ -52,58 +54,954 @@
           0.0
         ],
         "materialId": "material.farlands.terrain",
+        "baseline": "ground",
+        "attributes": {
+          "baseline": "ground"
+        },
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "The Far Lands Mathematical Field"
+          }
+        },
+        "fieldExtent": [
+          1500.0,
+          180.0,
+          1500.0
+        ],
+        "field": {
+          "op": 0,
+          "prim": 7,
+          "dims": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "offset": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "p0": 0.0,
+          "p1": 0.0,
+          "t": 0.5,
+          "mathNode": {
+            "op": 5,
+            "children": [
+              {
+                "op": 1,
+                "var": "y"
+              },
+              {
+                "op": 4,
+                "children": [
+                  {
+                    "op": 4,
+                    "children": [
+                      {
+                        "op": 6,
+                        "children": [
+                          {
+                            "op": 0,
+                            "scalarForm": {
+                              "terms": [
+                                {
+                                  "c": 20.0,
+                                  "factors": {}
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "op": 29,
+                            "children": [
+                              {
+                                "op": 2,
+                                "children": [
+                                  {
+                                    "op": 6,
+                                    "children": [
+                                      {
+                                        "op": 0,
+                                        "scalarForm": {
+                                          "terms": [
+                                            {
+                                              "c": 0.003,
+                                              "factors": {}
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      {
+                                        "op": 3,
+                                        "arg": "x",
+                                        "children": [
+                                          {
+                                            "op": 1,
+                                            "var": "p"
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "op": 0,
+                                    "scalarForm": {
+                                      "terms": [
+                                        {
+                                          "c": 0.0,
+                                          "factors": {}
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  {
+                                    "op": 6,
+                                    "children": [
+                                      {
+                                        "op": 0,
+                                        "scalarForm": {
+                                          "terms": [
+                                            {
+                                              "c": 0.003,
+                                              "factors": {}
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      {
+                                        "op": 3,
+                                        "arg": "z",
+                                        "children": [
+                                          {
+                                            "op": 1,
+                                            "var": "p"
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "op": 6,
+                        "children": [
+                          {
+                            "op": 0,
+                            "scalarForm": {
+                              "terms": [
+                                {
+                                  "c": 12.0,
+                                  "factors": {}
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "op": 29,
+                            "children": [
+                              {
+                                "op": 2,
+                                "children": [
+                                  {
+                                    "op": 6,
+                                    "children": [
+                                      {
+                                        "op": 0,
+                                        "scalarForm": {
+                                          "terms": [
+                                            {
+                                              "c": 0.009,
+                                              "factors": {}
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      {
+                                        "op": 3,
+                                        "arg": "x",
+                                        "children": [
+                                          {
+                                            "op": 1,
+                                            "var": "p"
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "op": 0,
+                                    "scalarForm": {
+                                      "terms": [
+                                        {
+                                          "c": 0.0,
+                                          "factors": {}
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  {
+                                    "op": 6,
+                                    "children": [
+                                      {
+                                        "op": 0,
+                                        "scalarForm": {
+                                          "terms": [
+                                            {
+                                              "c": 0.009,
+                                              "factors": {}
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      {
+                                        "op": 3,
+                                        "arg": "z",
+                                        "children": [
+                                          {
+                                            "op": 1,
+                                            "var": "p"
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": 4,
+                    "children": [
+                      {
+                        "op": 4,
+                        "children": [
+                          {
+                            "op": 6,
+                            "children": [
+                              {
+                                "op": 0,
+                                "scalarForm": {
+                                  "terms": [
+                                    {
+                                      "c": 45.0,
+                                      "factors": {}
+                                    }
+                                  ]
+                                }
+                              },
+                              {
+                                "op": 29,
+                                "children": [
+                                  {
+                                    "op": 2,
+                                    "children": [
+                                      {
+                                        "op": 6,
+                                        "children": [
+                                          {
+                                            "op": 0,
+                                            "scalarForm": {
+                                              "terms": [
+                                                {
+                                                  "c": 0.004,
+                                                  "factors": {}
+                                                }
+                                              ]
+                                            }
+                                          },
+                                          {
+                                            "op": 3,
+                                            "arg": "x",
+                                            "children": [
+                                              {
+                                                "op": 1,
+                                                "var": "p"
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "op": 0,
+                                        "scalarForm": {
+                                          "terms": [
+                                            {
+                                              "c": 0.0,
+                                              "factors": {}
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      {
+                                        "op": 6,
+                                        "children": [
+                                          {
+                                            "op": 0,
+                                            "scalarForm": {
+                                              "terms": [
+                                                {
+                                                  "c": 0.035,
+                                                  "factors": {}
+                                                }
+                                              ]
+                                            }
+                                          },
+                                          {
+                                            "op": 3,
+                                            "arg": "z",
+                                            "children": [
+                                              {
+                                                "op": 1,
+                                                "var": "p"
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "op": 6,
+                            "children": [
+                              {
+                                "op": 0,
+                                "scalarForm": {
+                                  "terms": [
+                                    {
+                                      "c": 22.0,
+                                      "factors": {}
+                                    }
+                                  ]
+                                }
+                              },
+                              {
+                                "op": 29,
+                                "children": [
+                                  {
+                                    "op": 2,
+                                    "children": [
+                                      {
+                                        "op": 6,
+                                        "children": [
+                                          {
+                                            "op": 0,
+                                            "scalarForm": {
+                                              "terms": [
+                                                {
+                                                  "c": 0.002,
+                                                  "factors": {}
+                                                }
+                                              ]
+                                            }
+                                          },
+                                          {
+                                            "op": 3,
+                                            "arg": "x",
+                                            "children": [
+                                              {
+                                                "op": 1,
+                                                "var": "p"
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "op": 0,
+                                        "scalarForm": {
+                                          "terms": [
+                                            {
+                                              "c": 0.0,
+                                              "factors": {}
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      {
+                                        "op": 6,
+                                        "children": [
+                                          {
+                                            "op": 0,
+                                            "scalarForm": {
+                                              "terms": [
+                                                {
+                                                  "c": 0.07,
+                                                  "factors": {}
+                                                }
+                                              ]
+                                            }
+                                          },
+                                          {
+                                            "op": 3,
+                                            "arg": "z",
+                                            "children": [
+                                              {
+                                                "op": 1,
+                                                "var": "p"
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "op": 4,
+                        "children": [
+                          {
+                            "op": 4,
+                            "children": [
+                              {
+                                "op": 6,
+                                "children": [
+                                  {
+                                    "op": 0,
+                                    "scalarForm": {
+                                      "terms": [
+                                        {
+                                          "c": 45.0,
+                                          "factors": {}
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  {
+                                    "op": 29,
+                                    "children": [
+                                      {
+                                        "op": 2,
+                                        "children": [
+                                          {
+                                            "op": 6,
+                                            "children": [
+                                              {
+                                                "op": 0,
+                                                "scalarForm": {
+                                                  "terms": [
+                                                    {
+                                                      "c": 0.035,
+                                                      "factors": {}
+                                                    }
+                                                  ]
+                                                }
+                                              },
+                                              {
+                                                "op": 3,
+                                                "arg": "x",
+                                                "children": [
+                                                  {
+                                                    "op": 1,
+                                                    "var": "p"
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          },
+                                          {
+                                            "op": 0,
+                                            "scalarForm": {
+                                              "terms": [
+                                                {
+                                                  "c": 0.0,
+                                                  "factors": {}
+                                                }
+                                              ]
+                                            }
+                                          },
+                                          {
+                                            "op": 6,
+                                            "children": [
+                                              {
+                                                "op": 0,
+                                                "scalarForm": {
+                                                  "terms": [
+                                                    {
+                                                      "c": 0.004,
+                                                      "factors": {}
+                                                    }
+                                                  ]
+                                                }
+                                              },
+                                              {
+                                                "op": 3,
+                                                "arg": "z",
+                                                "children": [
+                                                  {
+                                                    "op": 1,
+                                                    "var": "p"
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "op": 6,
+                                "children": [
+                                  {
+                                    "op": 0,
+                                    "scalarForm": {
+                                      "terms": [
+                                        {
+                                          "c": 22.0,
+                                          "factors": {}
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  {
+                                    "op": 29,
+                                    "children": [
+                                      {
+                                        "op": 2,
+                                        "children": [
+                                          {
+                                            "op": 6,
+                                            "children": [
+                                              {
+                                                "op": 0,
+                                                "scalarForm": {
+                                                  "terms": [
+                                                    {
+                                                      "c": 0.07,
+                                                      "factors": {}
+                                                    }
+                                                  ]
+                                                }
+                                              },
+                                              {
+                                                "op": 3,
+                                                "arg": "x",
+                                                "children": [
+                                                  {
+                                                    "op": 1,
+                                                    "var": "p"
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          },
+                                          {
+                                            "op": 0,
+                                            "scalarForm": {
+                                              "terms": [
+                                                {
+                                                  "c": 0.0,
+                                                  "factors": {}
+                                                }
+                                              ]
+                                            }
+                                          },
+                                          {
+                                            "op": 6,
+                                            "children": [
+                                              {
+                                                "op": 0,
+                                                "scalarForm": {
+                                                  "terms": [
+                                                    {
+                                                      "c": 0.002,
+                                                      "factors": {}
+                                                    }
+                                                  ]
+                                                }
+                                              },
+                                              {
+                                                "op": 3,
+                                                "arg": "z",
+                                                "children": [
+                                                  {
+                                                    "op": 1,
+                                                    "var": "p"
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "op": 6,
+                            "children": [
+                              {
+                                "op": 0,
+                                "scalarForm": {
+                                  "terms": [
+                                    {
+                                      "c": 8.0,
+                                      "factors": {}
+                                    }
+                                  ]
+                                }
+                              },
+                              {
+                                "op": 29,
+                                "children": [
+                                  {
+                                    "op": 2,
+                                    "children": [
+                                      {
+                                        "op": 6,
+                                        "children": [
+                                          {
+                                            "op": 0,
+                                            "scalarForm": {
+                                              "terms": [
+                                                {
+                                                  "c": 0.06,
+                                                  "factors": {}
+                                                }
+                                              ]
+                                            }
+                                          },
+                                          {
+                                            "op": 3,
+                                            "arg": "x",
+                                            "children": [
+                                              {
+                                                "op": 1,
+                                                "var": "p"
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "op": 0,
+                                        "scalarForm": {
+                                          "terms": [
+                                            {
+                                              "c": 0.0,
+                                              "factors": {}
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      {
+                                        "op": 6,
+                                        "children": [
+                                          {
+                                            "op": 0,
+                                            "scalarForm": {
+                                              "terms": [
+                                                {
+                                                  "c": 0.06,
+                                                  "factors": {}
+                                                }
+                                              ]
+                                            }
+                                          },
+                                          {
+                                            "op": 3,
+                                            "arg": "z",
+                                            "children": [
+                                              {
+                                                "op": 1,
+                                                "var": "p"
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "objectID": "object.farlands.dais",
+        "shapeKind": 3,
+        "geometryType": 3,
+        "shapeParams": [
+          6.0,
+          0.0,
+          0.0,
+          0.2,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          12.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.4,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          12.0,
+          0.0,
+          0.0,
+          -0.1,
+          0.0,
+          1.0
+        ],
+        "center": [
+          0.0,
+          -0.1,
+          0.0
+        ],
+        "materialId": "material.farlands.safezone",
         "faceColors": [
           [
-            0.1,
-            0.8,
-            0.2
+            0.18,
+            0.18,
+            0.22
           ],
           [
-            0.1,
-            0.8,
-            0.2
+            0.18,
+            0.18,
+            0.22
           ],
           [
-            0.1,
-            0.8,
-            0.2
+            0.18,
+            0.18,
+            0.22
           ],
           [
-            0.1,
-            0.8,
-            0.2
+            0.18,
+            0.18,
+            0.22
           ],
           [
-            0.1,
-            0.8,
-            0.2
+            0.18,
+            0.18,
+            0.22
           ],
           [
-            0.1,
-            0.8,
-            0.2
+            0.18,
+            0.18,
+            0.22
           ]
         ],
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "The Far Lands Spatial Math Field"
-          },
-          "field.frequency": {
-            "t": "double",
-            "v": 1.0
-          },
-          "field.amplitude": {
-            "t": "double",
-            "v": 1.0
-          },
-          "farlands.active": {
-            "t": "bool",
-            "v": true
-          },
-          "astDefinition": {
+            "v": "Spawn Observation Dais"
+          }
+        }
+      },
+      {
+        "objectID": "object.farlands.beacon",
+        "shapeKind": 9,
+        "geometryType": 9,
+        "shapeParams": [
+          0.4,
+          0.4,
+          0.4,
+          1.2,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.1,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          0.8,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          2.4,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.8,
+          0.0,
+          0.0,
+          1.2,
+          -4.0,
+          1.0
+        ],
+        "center": [
+          0.0,
+          1.2,
+          -4.0
+        ],
+        "materialId": "material.farlands.rock",
+        "faceColors": [
+          [
+            0.25,
+            0.28,
+            0.32
+          ],
+          [
+            0.25,
+            0.28,
+            0.32
+          ],
+          [
+            0.25,
+            0.28,
+            0.32
+          ],
+          [
+            0.25,
+            0.28,
+            0.32
+          ],
+          [
+            0.25,
+            0.28,
+            0.32
+          ],
+          [
+            0.25,
+            0.28,
+            0.32
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
             "t": "string",
-            "v": "\n            {\n                \"kind\": \"sdf\",\n                \"op\": \"noise\",\n                \"scale\": 1.0,\n                \"children\": [\n                    {\"kind\": \"var\", \"name\": \"position\"}\n                ]\n            }\n            "
+            "v": "Far Lands Horizon Beacon"
+          }
+        }
+      },
+      {
+        "objectID": "object.farlands.resonance_crystal",
+        "shapeKind": 2,
+        "geometryType": 2,
+        "shapeParams": [
+          0.4,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          0.8,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.8,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.8,
+          0.0,
+          0.0,
+          2.8,
+          -4.0,
+          1.0
+        ],
+        "center": [
+          0.0,
+          2.8,
+          -4.0
+        ],
+        "materialId": "material.farlands.beacon",
+        "faceColors": [
+          [
+            0.3,
+            0.85,
+            0.95
+          ],
+          [
+            0.3,
+            0.85,
+            0.95
+          ],
+          [
+            0.3,
+            0.85,
+            0.95
+          ],
+          [
+            0.3,
+            0.85,
+            0.95
+          ],
+          [
+            0.3,
+            0.85,
+            0.95
+          ],
+          [
+            0.3,
+            0.85,
+            0.95
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Harmonic Resonance Core"
+          },
+          "buttonRole": {
+            "t": "string",
+            "v": "farlands-pulse"
+          },
+          "acoustic.frequency": {
+            "t": "double",
+            "v": 528.0
+          },
+          "acoustic.amplitude": {
+            "t": "double",
+            "v": 0.6
+          },
+          "acoustic.waveType": {
+            "t": "string",
+            "v": "crystal"
           }
         }
       },
@@ -120,6 +1018,8 @@
           0.0,
           0.0,
           0.0,
+          0.0,
+          0.0,
           0.0
         ],
         "transform": [
@@ -136,16 +1036,16 @@
           0.01,
           0.0,
           0.0,
-          -10.0,
+          -20.0,
           0.0,
           1.0
         ],
         "center": [
           0.0,
-          -10.0,
+          -20.0,
           0.0
         ],
-        "materialId": "material.farlands.dark",
+        "materialId": "material.farlands.safezone",
         "faceColors": [
           [
             0.1,
@@ -183,95 +1083,9 @@
             "t": "string",
             "v": "Far Lands State"
           },
-          "distanceFromOrigin": {
+          "pulseCount": {
             "t": "double",
             "v": 0.0
-          },
-          "corruptionLevel": {
-            "t": "double",
-            "v": 0.0
-          },
-          "musicIntensity": {
-            "t": "double",
-            "v": 0.0
-          }
-        }
-      },
-      {
-        "objectID": "object.farlands.spawn_platform",
-        "shapeKind": 0,
-        "geometryType": 0,
-        "shapeParams": [
-          0.5,
-          0.5,
-          0.5,
-          0.5,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "transform": [
-          20.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          20.0,
-          0.0,
-          0.0,
-          -2.0,
-          0.0,
-          1.0
-        ],
-        "center": [
-          0.0,
-          -2.0,
-          0.0
-        ],
-        "materialId": "material.farlands.safezone",
-        "faceColors": [
-          [
-            0.4,
-            0.4,
-            0.5
-          ],
-          [
-            0.4,
-            0.4,
-            0.5
-          ],
-          [
-            0.4,
-            0.4,
-            0.5
-          ],
-          [
-            0.4,
-            0.4,
-            0.5
-          ],
-          [
-            0.4,
-            0.4,
-            0.5
-          ],
-          [
-            0.4,
-            0.4,
-            0.5
-          ]
-        ],
-        "authoredProperties": {
-          "displayName": {
-            "t": "string",
-            "v": "Spawn Safezone"
           }
         }
       },
@@ -290,7 +1104,7 @@
           0.0,
           0.0,
           0.0,
-          28.0
+          26.0
         ],
         "transform": [
           1.0,
@@ -321,34 +1135,34 @@
         "materialId": "",
         "faceColors": [
           [
-            0.8,
-            0.2,
-            0.8
+            0.4,
+            0.9,
+            0.6
           ],
           [
-            0.8,
-            0.2,
-            0.8
+            0.4,
+            0.9,
+            0.6
           ],
           [
-            0.8,
-            0.2,
-            0.8
+            0.4,
+            0.9,
+            0.6
           ],
           [
-            0.8,
-            0.2,
-            0.8
+            0.4,
+            0.9,
+            0.6
           ],
           [
-            0.8,
-            0.2,
-            0.8
+            0.4,
+            0.9,
+            0.6
           ],
           [
-            0.8,
-            0.2,
-            0.8
+            0.4,
+            0.9,
+            0.6
           ]
         ],
         "authoredProperties": {
@@ -366,7 +1180,7 @@
           },
           "shape.height2D": {
             "t": "double",
-            "v": 28.0
+            "v": 26.0
           },
           "pickPriority": {
             "t": "double",
@@ -389,7 +1203,7 @@
           0.0,
           0.0,
           0.0,
-          14.0
+          13.0
         ],
         "transform": [
           1.0,
@@ -420,44 +1234,44 @@
         "materialId": "",
         "faceColors": [
           [
-            0.6,
-            0.6,
-            0.6
+            0.7,
+            0.7,
+            0.75
           ],
           [
-            0.6,
-            0.6,
-            0.6
+            0.7,
+            0.7,
+            0.75
           ],
           [
-            0.6,
-            0.6,
-            0.6
+            0.7,
+            0.7,
+            0.75
           ],
           [
-            0.6,
-            0.6,
-            0.6
+            0.7,
+            0.7,
+            0.75
           ],
           [
-            0.6,
-            0.6,
-            0.6
+            0.7,
+            0.7,
+            0.75
           ],
           [
-            0.6,
-            0.6,
-            0.6
+            0.7,
+            0.7,
+            0.75
           ]
         ],
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Walk outward to witness math corrupt geometry."
+            "v": "Generative OntoMath Landscape \u2014 Traverse the mathematical horizon."
           },
           "label2D": {
             "t": "string",
-            "v": "Walk outward to witness math corrupt geometry."
+            "v": "Generative OntoMath Landscape \u2014 Traverse the mathematical horizon."
           },
           "shape.width2D": {
             "t": "double",
@@ -465,7 +1279,7 @@
           },
           "shape.height2D": {
             "t": "double",
-            "v": 14.0
+            "v": 13.0
           },
           "pickPriority": {
             "t": "double",
@@ -474,7 +1288,7 @@
         }
       },
       {
-        "objectID": "hud.dist",
+        "objectID": "hud.hint",
         "shapeKind": 13,
         "geometryType": 13,
         "shapeParams": [
@@ -488,7 +1302,7 @@
           0.0,
           0.0,
           0.0,
-          14.0
+          12.0
         ],
         "transform": [
           1.0,
@@ -514,49 +1328,49 @@
           0.0
         ],
         "x2D": 30.0,
-        "y2D": 90.0,
+        "y2D": 82.0,
         "zOrder2D": 30,
         "materialId": "",
         "faceColors": [
           [
-            0.9,
-            0.9,
-            0.2
+            0.3,
+            0.85,
+            0.95
           ],
           [
-            0.9,
-            0.9,
-            0.2
+            0.3,
+            0.85,
+            0.95
           ],
           [
-            0.9,
-            0.9,
-            0.2
+            0.3,
+            0.85,
+            0.95
           ],
           [
-            0.9,
-            0.9,
-            0.2
+            0.3,
+            0.85,
+            0.95
           ],
           [
-            0.9,
-            0.9,
-            0.2
+            0.3,
+            0.85,
+            0.95
           ],
           [
-            0.9,
-            0.9,
-            0.2
+            0.3,
+            0.85,
+            0.95
           ]
         ],
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Distance: [calculated dynamically]"
+            "v": "Click the Resonance Core to sound the harmonic pulse."
           },
           "label2D": {
             "t": "string",
-            "v": "Distance: [calculated dynamically]"
+            "v": "Click the Resonance Core to sound the harmonic pulse."
           },
           "shape.width2D": {
             "t": "double",
@@ -564,7 +1378,7 @@
           },
           "shape.height2D": {
             "t": "double",
-            "v": 14.0
+            "v": 12.0
           },
           "pickPriority": {
             "t": "double",
@@ -591,22 +1405,8 @@
     },
     {
       "type": "subcategory-of",
-      "entityA": "category.farlands.control",
+      "entityA": "category.farlands.monolith",
       "entityB": "category.farlands",
-      "directed": true,
-      "weight": 1.0,
-      "events": [
-        {
-          "description": "subcategory-of",
-          "deltaWeight": 1.0,
-          "timestamp": 1787395000
-        }
-      ]
-    },
-    {
-      "type": "subcategory-of",
-      "entityA": "category.control.slider",
-      "entityB": "category.control",
       "directed": true,
       "weight": 1.0,
       "events": [
@@ -647,8 +1447,36 @@
     },
     {
       "type": "instance-of",
-      "entityA": "object.farlands.core_field",
+      "entityA": "object.farlands.terrain",
       "entityB": "category.farlands.field",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "object.farlands.beacon",
+      "entityB": "category.farlands.monolith",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "object.farlands.resonance_crystal",
+      "entityB": "category.control.button",
       "directed": true,
       "weight": 1.0,
       "events": [
