@@ -486,7 +486,7 @@ bool WebGpuRenderer::init(const wgpu::Device& gpu, WGPUTextureFormat colorFormat
     ppd.multisample.count = 1; ppd.multisample.mask = 0xFFFFFFFFu;
     _particlePipe = wgpuDeviceCreateRenderPipeline(_device, &ppd);
 
-    _bufferPool.init(_device, _queue);
+    for (int i = 0; i < 4; ++i) _bufferPools[i].init(_device, _queue);
     _meshCache.init(_device, _queue);
 
     return _sampler && _whiteView && _flatShader && _flatLayout && _imagePipe && _particlePipe;
@@ -516,7 +516,7 @@ WGPURenderPipeline WebGpuRenderer::flatPipeline(WGPUPrimitiveTopology topo, Blen
 void WebGpuRenderer::shutdown() {
     releaseGpuTimestampQueries();
     _meshCache.shutdown();
-    _bufferPool.shutdown();
+    for (int i = 0; i < 4; ++i) _bufferPools[i].shutdown();
     releaseFrameResources();
     if (_depthView) { wgpuTextureViewRelease(_depthView); _depthView = nullptr; }
     if (_depthTex)  { wgpuTextureRelease(_depthTex); _depthTex = nullptr; }
@@ -861,7 +861,7 @@ void WebGpuRenderer::flushMeshDraws() {
         WGPUBuffer vbuf = _meshCache.getOrUpload(mesh);
         uint64_t voffset = 0;
         if (!vbuf) {
-            auto vAlloc = _bufferPool.suballocateVertex(mesh.tris.data(), vbytes);
+            auto vAlloc = bufferPool().suballocateVertex(mesh.tris.data(), vbytes);
             vbuf = vAlloc.buffer;
             voffset = vAlloc.offset;
         }
@@ -871,9 +871,9 @@ void WebGpuRenderer::flushMeshDraws() {
         u.lightPos  = glm::vec4(lightPos(), 1.0f);
         u.params    = key.shading;
         u.eyePos    = glm::vec4(_eyePos, 1.0f);
-        auto uAlloc = _bufferPool.suballocateUniform(&u, sizeof(MeshUniforms));
+        auto uAlloc = bufferPool().suballocateUniform(&u, sizeof(MeshUniforms));
 
-        auto instAlloc = _bufferPool.suballocateStorage(
+        auto instAlloc = bufferPool().suballocateStorage(
             instances.data(), instances.size() * sizeof(InstanceData));
 
         WGPUBindGroupEntry bge[3] = {};
@@ -1159,7 +1159,7 @@ void WebGpuRenderer::drawParticles(const geom::FieldNode& field, int count) {
     pu.flowDir = glm::vec4(flowDir, 0.0f);
     pu.scale = glm::vec4(field.scale, 0.0f);
 
-    auto uAlloc = _bufferPool.suballocateUniform(&pu, sizeof(ParticleUniforms));
+    auto uAlloc = bufferPool().suballocateUniform(&pu, sizeof(ParticleUniforms));
 
     WGPUBindGroupEntry bge = {};
     bge.binding = 0;
@@ -1183,10 +1183,10 @@ void WebGpuRenderer::drawFlat(WGPURenderPipeline pipe, const std::vector<glm::ve
     bindPipeline(pipe);
 
     const size_t vbytes = verts.size() * sizeof(glm::vec3);
-    auto vAlloc = _bufferPool.suballocateVertex(verts.data(), vbytes);
+    auto vAlloc = bufferPool().suballocateVertex(verts.data(), vbytes);
 
     FlatUniforms fu{ mvp, color };
-    auto uAlloc = _bufferPool.suballocateUniform(&fu, sizeof(FlatUniforms));
+    auto uAlloc = bufferPool().suballocateUniform(&fu, sizeof(FlatUniforms));
 
     WGPUBindGroupEntry bge = {};
     bge.binding = 0; bge.buffer = uAlloc.buffer; bge.offset = uAlloc.offset; bge.size = uAlloc.size;
@@ -1250,7 +1250,7 @@ void WebGpuRenderer::flushSdfDraws() {
     }
     u.limits = glm::vec4(farDist, 0.0f, 0.0f, 0.0f);
 
-    auto uAlloc = _bufferPool.suballocateUniform(&u, sizeof(SdfGlobalUniforms));
+    auto uAlloc = bufferPool().suballocateUniform(&u, sizeof(SdfGlobalUniforms));
 
     for (auto& kv : _sdfBatches) {
         const SdfPipeline* sp = kv.first;
@@ -1259,8 +1259,8 @@ void WebGpuRenderer::flushSdfDraws() {
         
         const auto& params = _sdfParamsBatches[sp];
         
-        auto pAlloc = _bufferPool.suballocateStorage(params.data(), params.size() * sizeof(float));
-        auto instAlloc = _bufferPool.suballocateStorage(instances.data(), instances.size() * sizeof(SdfInstanceData));
+        auto pAlloc = bufferPool().suballocateStorage(params.data(), params.size() * sizeof(float));
+        auto instAlloc = bufferPool().suballocateStorage(instances.data(), instances.size() * sizeof(SdfInstanceData));
 
         // Group 0: Globals and Parameters
         WGPUBindGroupEntry bge[2] = {};
@@ -1279,7 +1279,7 @@ void WebGpuRenderer::flushSdfDraws() {
         // it is never indexed).
         auto& hgCells = _sdfHeightGridBatches[sp];
         if (hgCells.empty()) hgCells.push_back(glm::vec2(0.0f));
-        auto hgAlloc = _bufferPool.suballocateStorage(hgCells.data(), hgCells.size() * sizeof(glm::vec2));
+        auto hgAlloc = bufferPool().suballocateStorage(hgCells.data(), hgCells.size() * sizeof(glm::vec2));
 
         WGPUBindGroupEntry ibge[2] = {};
         ibge[0].binding = 0; ibge[0].buffer = instAlloc.buffer; ibge[0].offset = instAlloc.offset; ibge[0].size = instAlloc.size;
@@ -1334,13 +1334,14 @@ void WebGpuRenderer::endFrame() {
     _encoder = nullptr;
 
     auto& fs = mutableFrameStats();
-    fs.vramAllocatedBytes = _bufferPool.totalVramBytes() + _meshCache.totalCachedBytes();
-    fs.uniformBytesWritten = _bufferPool.bytesWrittenThisFrame();
-    fs.bufferSuballocations = _bufferPool.suballocationsThisFrame();
+    fs.vramAllocatedBytes = bufferPool().totalVramBytes() + _meshCache.totalCachedBytes();
+    fs.uniformBytesWritten = bufferPool().bytesWrittenThisFrame();
+    fs.bufferSuballocations = bufferPool().suballocationsThisFrame();
     fs.cachedMeshesCount = static_cast<uint32_t>(_meshCache.cachedMeshCount());
 
     // The submit is done recording; reset the allocation pool heads.
-    _bufferPool.resetFrame();
+    _currentBufferPoolIndex = (_currentBufferPoolIndex + 1) % 4;
+    bufferPool().resetFrame();
     _meshCache.endFrame();
 
     // The submit is done recording; the resources it referenced can go now.
@@ -1442,12 +1443,12 @@ void WebGpuRenderer::drawImage2D(const uint8_t* rgba, uint32_t width, uint32_t h
         {{rect.z, rect.w, 0.0f}, {1.0f, 1.0f}},
         {{rect.x, rect.w, 0.0f}, {0.0f, 1.0f}},
     };
-    auto vAlloc = _bufferPool.suballocateVertex(quad, sizeof(quad));
+    auto vAlloc = bufferPool().suballocateVertex(quad, sizeof(quad));
 
     FlatUniforms u{};
     u.mvp = _ortho2D;
     u.color = tint;
-    auto uAlloc = _bufferPool.suballocateUniform(&u, sizeof(u));
+    auto uAlloc = bufferPool().suballocateUniform(&u, sizeof(u));
 
     WGPUBindGroupEntry bge[3] = {};
     bge[0].binding = 0; bge[0].buffer = uAlloc.buffer; bge[0].offset = uAlloc.offset; bge[0].size = uAlloc.size;

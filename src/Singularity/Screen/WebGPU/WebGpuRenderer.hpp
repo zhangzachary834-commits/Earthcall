@@ -130,8 +130,8 @@ public:
     void releaseTexture(TextureHandle handle) override;
 
     // CPU-GPU micro-mastery pool & persistent mesh cache
-    Singularity::Screen::WebGPU::GpuBufferPool& bufferPool() { return _bufferPool; }
-    const Singularity::Screen::WebGPU::GpuBufferPool& bufferPool() const { return _bufferPool; }
+    Singularity::Screen::WebGPU::GpuBufferPool& bufferPool() { return _bufferPools[_currentBufferPoolIndex]; }
+    const Singularity::Screen::WebGPU::GpuBufferPool& bufferPool() const { return _bufferPools[_currentBufferPoolIndex]; }
     Singularity::Screen::WebGPU::GpuMeshCache& meshCache() { return _meshCache; }
     const Singularity::Screen::WebGPU::GpuMeshCache& meshCache() const { return _meshCache; }
 
@@ -285,9 +285,9 @@ private:
     std::vector<WGPUTexture>     _frameTextures;
     std::vector<WGPUTextureView> _frameTextureViews;
 
-    Singularity::Screen::WebGPU::GpuBufferPool _bufferPool;
-    Singularity::Screen::WebGPU::GpuMeshCache  _meshCache;
-    uint64_t _frameCount = 0;
+    Singularity::Screen::WebGPU::GpuBufferPool _bufferPools[4];
+    int _currentBufferPoolIndex = 0;
+    Singularity::Screen::WebGPU::GpuMeshCache  _meshCache;    uint64_t _frameCount = 0;
 
     // ---- Instanced mesh batching (CPU-GPU micro-mastery Phase 4.3) ----
     // drawMesh no longer draws immediately: it groups by everything that has
