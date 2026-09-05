@@ -5,14 +5,18 @@
 extern "C" {
 
 void Earthcall_JIT_SetDoubleProperty(Singular* target, uint32_t stringIdVal, double value) {
+    if (!target) return;
     Earthcall::StringId id(stringIdVal);
     auto* prop = target->findProperty(id);
     if (prop) {
         prop->setValue(value);
+    } else {
+        target->setDynamicProperty(Earthcall::StringInterner::resolve(id), value);
     }
 }
 
 void Earthcall_JIT_AddDoubleProperty(Singular* target, uint32_t stringIdVal, double value) {
+    if (!target) return;
     Earthcall::StringId id(stringIdVal);
     auto* prop = target->findProperty(id);
     if (prop && std::holds_alternative<double>(prop->value())) {
@@ -22,6 +26,7 @@ void Earthcall_JIT_AddDoubleProperty(Singular* target, uint32_t stringIdVal, dou
 }
 
 void Earthcall_JIT_ScaleDoubleProperty(Singular* target, uint32_t stringIdVal, double value) {
+    if (!target) return;
     Earthcall::StringId id(stringIdVal);
     auto* prop = target->findProperty(id);
     if (prop && std::holds_alternative<double>(prop->value())) {
@@ -31,6 +36,7 @@ void Earthcall_JIT_ScaleDoubleProperty(Singular* target, uint32_t stringIdVal, d
 }
 
 int Earthcall_JIT_CheckDoubleGt(Singular* target, uint32_t stringIdVal, double value) {
+    if (!target) return 0;
     Earthcall::StringId id(stringIdVal);
     auto* prop = target->findProperty(id);
     if (prop && std::holds_alternative<double>(prop->value())) {

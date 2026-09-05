@@ -47,6 +47,11 @@ public:
     // Check if the engine is currently running in mathematically-proven 1.0x native mode.
     bool isJITActive() const { return _isJITActive; }
 
+    // Manually register a JIT closure in the cache (for testing or direct injection)
+    void setJITClosure(const std::string& lawId, PropheticJIT::NativeLawClosure closure) {
+        _jitCache[lawId] = closure;
+    }
+
 private:
     NativeBytecodeVM _vm;
     std::unique_ptr<PropheticJIT> _jit;
@@ -54,6 +59,9 @@ private:
 
     // Cache of pre-compiled bytecodes
     std::unordered_map<std::string, NativeBytecodeVM::Bytecode> _vmCache;
+
+    // Cache of pre-compiled JIT closures
+    std::unordered_map<std::string, PropheticJIT::NativeLawClosure> _jitCache;
 
     // True if we are currently running in the mathematically proven JIT phase.
     bool _isJITActive = false;
