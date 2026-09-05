@@ -495,6 +495,9 @@ int main() {
         channel.setDynamicProperty("leftDown", PropertyValue(true));
         channel.setDynamicProperty("dragging", PropertyValue(true));
         channel.setDynamicProperty("pointerWorld", PropertyValue(glm::vec3(0.4f, 2.1f, 2.3f)));
+        channel.setDynamicProperty("pointerWorldX", PropertyValue(0.4));
+        channel.setDynamicProperty("pointerWorldY", PropertyValue(2.1));
+        channel.setDynamicProperty("pointerWorldZ", PropertyValue(2.3));
         channel.setDynamicProperty("dragX", PropertyValue(0.0));
         channel.setDynamicProperty("dragY", PropertyValue(0.0));
         extras.push_back(&channel);
@@ -507,23 +510,37 @@ int main() {
         check(tidalInk != nullptr, "the Tidal ink selector exists");
         if (tidalInk) activate(*tidalInk);
 
-        // A HELD BUTTON IS NOT A STROKE. Without a movement gate the law is a
-        // level with no edge — WhileTrue fires every tick the button is down,
-        // so resting on the canvas laid sixty spheres a second on one spot. At
-        // ~0.2 ms of render per object that is a 7 fps slideshow inside ten
-        // seconds, which is what "the 2D buttons stop working after a certain
-        // point" turned out to be.
+        // A held pointer is not a stroke. The Law requires actual movement,
+        // then measures world-space distance from its last dab. This makes
+        // deliberate slow drawing work without returning to one birth/frame.
         const std::size_t still = zone->getOwnedObjects().size();
         laws.tick();
         laws.tick();
         check(zone->getOwnedObjects().size() == still,
               "a held pointer that is not moving lays no segments at all");
 
-        channel.setDynamicProperty("dragX", PropertyValue(9.0));
+        // One window-point of actual travel is enough to begin a stroke. The
+        // old six-points-per-frame gate made a normal slow hand completely
+        // silent; the spatial spacing below controls density instead.
+        channel.setDynamicProperty("dragX", PropertyValue(1.0));
         const std::size_t before = zone->getOwnedObjects().size();
         laws.tick();
         const std::size_t drawn = zone->getOwnedObjects().size() - before;
-        check(drawn == 1, "and one tick of real travel lays exactly one segment");
+        check(drawn == 1, "slow real travel starts a stroke with exactly one segment");
+        check(nearly(readNumber(*stateStudio, "lastStrokeX"), 0.4),
+              "the Law records the emitted dab's world position");
+
+        channel.setDynamicProperty("pointerWorld", PropertyValue(glm::vec3(0.44f, 2.1f, 2.3f)));
+        channel.setDynamicProperty("pointerWorldX", PropertyValue(0.44));
+        laws.tick();
+        check(zone->getOwnedObjects().size() == before + drawn,
+              "sub-spacing movement does not create a frame-rate-dependent flood");
+
+        channel.setDynamicProperty("pointerWorld", PropertyValue(glm::vec3(0.50f, 2.1f, 2.3f)));
+        channel.setDynamicProperty("pointerWorldX", PropertyValue(0.50));
+        laws.tick();
+        check(zone->getOwnedObjects().size() == before + drawn + 1,
+              "accumulated slow travel reaches the authored spacing and lays the next segment");
 
         if (drawn >= 1) {
             Object* dab = zone->getOwnedObjects().back().get();

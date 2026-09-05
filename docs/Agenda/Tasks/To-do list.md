@@ -40,6 +40,7 @@ Addendum: Also ensure save system works in every case and everything that needs 
 ### Singular · Relation · Formation
 - Ensure `Relation` and `Formation` ontology is load bearing.
 - Ensure Singularity-level actions are done through `Relation`s and `Formation`s.
+- **PARTIAL (2026-09-05) — Restructure serialization by Singular persistence roots** — landed the compatibility facade plus Object/Body/Zone/Home, Relation/Formation, and Ourverse source boundaries; Ourverse loading and writer retirement remain. → [full task](Specific%20Tasks/Singular_Serialization_Topology/Singular_Serialization_Topology.md)
 - **PARTIAL (2026-08-23)** — endpoints are `Singular*` (`a()` / `b()`), not name-strings. → [full task](Specific%20Tasks/PARTIAL_2026_08_23/PARTIAL_2026_08_23.md)
 - **Authored properties on a base Singular** — the innate slot exists, ungated, on `Singular` itself (arbitrary count, every `PropertyValue` kind at runtime, `AddProperty` does not ask TransferPolicy). → [full task](Specific%20Tasks/Authored_properties_on_a_base_Singular/Authored_properties_on_a_base_Singular.md)
 - ✅ **Singular and Object set-to-set creation** — done and verified (2026-08-16): Exposed all 19 `ActionNode::Kind` values in `LawGraphWindow.cpp`; reworked kind 17 (`Synthesize`) into composed child actions (`Create`, `AddProperty`, `Map`); verified via `tests/singular_set_to_set_test.cpp` (45/45 pass). See [Specific Tasks/Singular_and_Object_Set_to_Set_Creation.md](Specific%20Tasks/Singular_and_Object_Set_to_Set_Creation.md).

@@ -136,6 +136,13 @@ public:
     float pointerX = 0.0f;
     float pointerY = 0.0f;
     glm::vec3 pointerWorld{0.0f};      // ray hit on the picked being
+    // Read-only scalar views of the sensed hit point. OntoMath's scalar
+    // bindings use these when a Law needs to compare a current hit with an
+    // authored spatial memory (for example, the distance between paint dabs).
+    // They are derived sense, not an additional decision or state store.
+    float propPointerWorldX() const { return pointerWorld.x; }
+    float propPointerWorldY() const { return pointerWorld.y; }
+    float propPointerWorldZ() const { return pointerWorld.z; }
     glm::vec3 pointerNormal{0.0f, 1.0f, 0.0f};
     float pointerDistance = 0.0f;      // along the ray to the hit; 0 = no hit
 

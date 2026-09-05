@@ -2,6 +2,7 @@
 
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/Tool.hpp"
+#include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "Singularity/Screen/Camera.hpp"
@@ -605,6 +606,16 @@ void InteractionChannel::buildProperties() {
     flt("pointerX", &InteractionChannel::pointerX);
     flt("pointerY", &InteractionChannel::pointerY);
     vector3("pointerWorld", &InteractionChannel::pointerWorld);
+    // Scalar projections make the sensed point available to scalar OntoMath
+    // without copying it into a second mutable channel state. Read-only is
+    // deliberate: a Law may reason from what the channel sensed, not tell the
+    // channel where the pointer was.
+    registerProperty(std::make_unique<ComputedProperty<InteractionChannel, float>>(
+        "pointerWorldX", this, &InteractionChannel::propPointerWorldX, nullptr));
+    registerProperty(std::make_unique<ComputedProperty<InteractionChannel, float>>(
+        "pointerWorldY", this, &InteractionChannel::propPointerWorldY, nullptr));
+    registerProperty(std::make_unique<ComputedProperty<InteractionChannel, float>>(
+        "pointerWorldZ", this, &InteractionChannel::propPointerWorldZ, nullptr));
     vector3("pointerNormal", &InteractionChannel::pointerNormal);
     flt("pointerDistance", &InteractionChannel::pointerDistance);
 

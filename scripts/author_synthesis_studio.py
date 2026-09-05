@@ -826,6 +826,13 @@ def build_world():
             "displayName": pv("string", "Studio Ambient State"),
             "themeNight": pv("bool", False),
             "drawMode": pv("bool", False),
+            # The Law's own spatial memory: when the current hit is this far
+            # from the previous dab, it may make the next one. This is a
+            # Person-authored spacing, never a frame-rate threshold.
+            "strokeSpacing": pv("double", 0.09),
+            "lastStrokeX": pv("double", 0.0),
+            "lastStrokeY": pv("double", 0.0),
+            "lastStrokeZ": pv("double", 0.0),
             "pulseRate": pv("double", 1.0),
             "spawnCount": pv("int", 0),
             "soundFreq": pv("double", 440.0),
@@ -1174,38 +1181,62 @@ def build_world():
             compare("@state.studio.drawMode", 0, pv("bool", True)),
             compare("isCanvas", 0, pv("bool", True)),
             compare("@world.pointerOver", 0, pv("bool", True)),
-            # THE POINTER MUST HAVE MOVED. Without this the law is a level
-            # with no gate: WhileTrue fires every tick the button is held, so
-            # holding still on the canvas laid 60 spheres a second on the same
-            # spot. At the ~0.2 ms of render per object measured in Sanctum,
-            # ten seconds of that is a 7 fps slideshow — and a slideshow is
-            # what "the 2D buttons stop working after a certain point" was.
-            # Six pixels of travel is about a deliberate stroke and nothing
-            # else.
+            # The pointer must have moved THIS frame, but the spacing decision
+            # is made in world space against the last authored dab. A prior
+            # version demanded six screen points in one frame: slow human
+            # drawing samples below that at 60 Hz and therefore drew nothing.
             any_of(
-                compare("@interaction-channel.dragX", 4, pv("double", 6.0)),
-                compare("@interaction-channel.dragX", 2, pv("double", -6.0)),
-                compare("@interaction-channel.dragY", 4, pv("double", 6.0)),
-                compare("@interaction-channel.dragY", 2, pv("double", -6.0)),
+                compare("@interaction-channel.dragX", 1, pv("double", 0.0)),
+                compare("@interaction-channel.dragY", 1, pv("double", 0.0)),
             ),
+            {
+                "kind": 6,
+                "function": {"input": "px", "pieces": [{"expr": {"terms": [
+                    {"c": 1.0, "factors": {"px": 2.0}},
+                    {"c": -2.0, "factors": {"px": 1.0, "lx": 1.0}},
+                    {"c": 1.0, "factors": {"lx": 2.0}},
+                    {"c": 1.0, "factors": {"py": 2.0}},
+                    {"c": -2.0, "factors": {"py": 1.0, "ly": 1.0}},
+                    {"c": 1.0, "factors": {"ly": 2.0}},
+                    {"c": 1.0, "factors": {"pz": 2.0}},
+                    {"c": -2.0, "factors": {"pz": 1.0, "lz": 1.0}},
+                    {"c": 1.0, "factors": {"lz": 2.0}},
+                    {"c": -1.0, "factors": {"s": 2.0}},
+                ]}}]},
+                "bindings": {
+                    "px": "@interaction-channel.pointerWorldX",
+                    "py": "@interaction-channel.pointerWorldY",
+                    "pz": "@interaction-channel.pointerWorldZ",
+                    "lx": "@state.studio.lastStrokeX",
+                    "ly": "@state.studio.lastStrokeY",
+                    "lz": "@state.studio.lastStrokeZ",
+                    "s": "@state.studio.strokeSpacing",
+                },
+                "lo": pv("double", 0.0),
+            },
         ),
-        create_object(
-            2,  # Sphere — see the note on the orb above; this said 1 too
-            "art.stroke.segment",
-            placement_path="@interaction-channel.pointerWorld",
-            children=[
-                set_path("shape.r", pv("double", 0.045)),
-                set_path("color", pv("vec3", [1.0, 0.85, 0.15])),
-                add_property("displayName", pv("string", "Stroke")),
-                # A stroke that could not be heard: law-stroke-hover-sound reads
-                # exactly these two paths, and the segments were created without
-                # them (audit §B7), so hovering a stroke was silent even with a
-                # working audio channel behind it.
-                add_property("acoustic.frequency", pv("double", 1046.5)),
-                add_property("acoustic.amplitude", pv("double", 0.32)),
-                add_property("acoustic.waveType", pv("string", "triangle")),
-                add_relation("", "category.art.stroke", "instance-of"),
-            ],
+        seq(
+            create_object(
+                2,  # Sphere — see the note on the orb above; this said 1 too
+                "art.stroke.segment",
+                placement_path="@interaction-channel.pointerWorld",
+                children=[
+                    set_path("shape.r", pv("double", 0.045)),
+                    set_path("color", pv("vec3", [1.0, 0.85, 0.15])),
+                    add_property("displayName", pv("string", "Stroke")),
+                    # A stroke that could not be heard: law-stroke-hover-sound reads
+                    # exactly these two paths, and the segments were created without
+                    # them (audit §B7), so hovering a stroke was silent even with a
+                    # working audio channel behind it.
+                    add_property("acoustic.frequency", pv("double", 1046.5)),
+                    add_property("acoustic.amplitude", pv("double", 0.32)),
+                    add_property("acoustic.waveType", pv("string", "triangle")),
+                    add_relation("", "category.art.stroke", "instance-of"),
+                ],
+            ),
+            map_path("@state.studio.lastStrokeX", {"x": "@interaction-channel.pointerWorldX"}, copy_terms("x")),
+            map_path("@state.studio.lastStrokeY", {"y": "@interaction-channel.pointerWorldY"}, copy_terms("y")),
+            map_path("@state.studio.lastStrokeZ", {"z": "@interaction-channel.pointerWorldZ"}, copy_terms("z")),
         ),
         scope=1,
     )

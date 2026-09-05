@@ -16,11 +16,11 @@ import shutil
 import tempfile
 
 from author_synthesis_studio import (
-    all_of, compare, clamp_pieces, copy_terms, map_path, mat4_translate,
+    all_of, any_of, compare, clamp_pieces, copy_terms, map_path, mat4_translate,
     offset_terms, play_audio, publish, pv, seq, set_path, sin_factor, wave_term,
 )
 
-REVISION = "resonance-1"
+REVISION = "resonance-3"
 MOVER = "studio.author.codex"
 INK = (0.88, 0.93, 0.96)
 DIM = (0.46, 0.57, 0.64)
@@ -126,7 +126,11 @@ def upgrade(document):
     state = by_id["state.studio"]["authoredProperties"]
     for name, value in {"voice": pv("string", "triangle"),
                         "inkR": pv("double", 1.0), "inkG": pv("double", 0.85),
-                        "inkB": pv("double", 0.15)}.items():
+                        "inkB": pv("double", 0.15),
+                        "strokeSpacing": pv("double", 0.09),
+                        "lastStrokeX": pv("double", 0.0),
+                        "lastStrokeY": pv("double", 0.0),
+                        "lastStrokeZ": pv("double", 0.0)}.items():
         state.setdefault(name, value)
 
     put(caption("hud.title", "SYNTHESIS / STUDIO", 32, 26, 28, INK))
@@ -255,9 +259,39 @@ def upgrade(document):
         original = existing["law-studio-pad-play"]
         original["conditionModel"] = all_of(original["conditionModel"],
             compare("@state.studio.voice", 0, pv("string", "triangle")))
-        original.setdefault("provenance", []).append(relation(original["id"], MOVER, "revised-by"))
+        revision_edge = relation(original["id"], MOVER, "revised-by")
+        if not any(all(edge.get(k) == revision_edge[k]
+                       for k in ("type", "entityA", "entityB"))
+                   for edge in original.setdefault("provenance", [])):
+            original["provenance"].append(revision_edge)
+        # Drawing is measured from the last dab in world space, not from a
+        # one-frame cursor delta: slow real drawing must remain expressive.
+        draw_law = existing["law-art-stroke-draw"]
+        draw_law["conditionModel"] = all_of(
+            compare("@interaction-channel.leftDown", 0, pv("bool", True)),
+            compare("@interaction-channel.dragging", 0, pv("bool", True)),
+            compare("@state.studio.drawMode", 0, pv("bool", True)),
+            compare("isCanvas", 0, pv("bool", True)),
+            compare("@world.pointerOver", 0, pv("bool", True)),
+            any_of(compare("@interaction-channel.dragX", 1, pv("double", 0.0)),
+                   compare("@interaction-channel.dragY", 1, pv("double", 0.0))),
+            {"kind": 6, "function": {"input": "px", "pieces": [{"expr": {"terms": [
+                {"c": 1.0, "factors": {"px": 2.0}}, {"c": -2.0, "factors": {"px": 1.0, "lx": 1.0}}, {"c": 1.0, "factors": {"lx": 2.0}},
+                {"c": 1.0, "factors": {"py": 2.0}}, {"c": -2.0, "factors": {"py": 1.0, "ly": 1.0}}, {"c": 1.0, "factors": {"ly": 2.0}},
+                {"c": 1.0, "factors": {"pz": 2.0}}, {"c": -2.0, "factors": {"pz": 1.0, "lz": 1.0}}, {"c": 1.0, "factors": {"lz": 2.0}},
+                {"c": -1.0, "factors": {"s": 2.0}},
+            ]}}]}, "bindings": {"px": "@interaction-channel.pointerWorldX", "py": "@interaction-channel.pointerWorldY", "pz": "@interaction-channel.pointerWorldZ", "lx": "@state.studio.lastStrokeX", "ly": "@state.studio.lastStrokeY", "lz": "@state.studio.lastStrokeZ", "s": "@state.studio.strokeSpacing"}, "lo": pv("double", 0.0)},
+        )
+        create = draw_law["actionModel"]
+        if create.get("kind") != 5:
+            draw_law["actionModel"] = seq(
+                create,
+                map_path("@state.studio.lastStrokeX", {"x": "@interaction-channel.pointerWorldX"}, copy_terms("x")),
+                map_path("@state.studio.lastStrokeY", {"y": "@interaction-channel.pointerWorldY"}, copy_terms("y")),
+                map_path("@state.studio.lastStrokeZ", {"z": "@interaction-channel.pointerWorldZ"}, copy_terms("z")),
+            )
         # A new stroke receives the selected ink through ordinary property paths.
-        draw = existing["law-art-stroke-draw"]["actionModel"]
+        draw = draw_law["actionModel"]
         def tint_births(node):
             if node.get("kind") == 11:
                 node.setdefault("children", []).extend(
@@ -267,8 +301,18 @@ def upgrade(document):
                 for child in node.get("children", []):
                     tint_births(child)
         tint_births(draw)
+        # An upgrade revises these authored laws; it never means "add a second
+        # identical orchestra." This also repairs the resonance-2 pass, whose
+        # revision bump re-appended the 21 existing laws before its marker was
+        # written. The IDs are stable, so replacing only these Law records is
+        # surgical and leaves Person-authored Laws untouched.
+        authored_ids = {entry["id"] for entry in authored_laws}
+        register["laws"] = [entry for entry in register["laws"]
+                            if entry.get("id") not in authored_ids]
         register["laws"].extend(authored_laws)
-        register["formationMembers"].extend(l["id"] for l in authored_laws)
+        register["formationMembers"] = [identifier for identifier in register["formationMembers"]
+                                        if identifier not in authored_ids]
+        register["formationMembers"].extend(entry["id"] for entry in authored_laws)
         register.setdefault("triggers", {}).update(triggers)
     doc["studioUpgrade"] = REVISION
     # Retain earlier attribution verbatim and add this intervention explicitly.
@@ -313,7 +357,7 @@ def main():
     for path, after in changes:
         path.write_text(json.dumps(after, indent=2) + "\n")
     print(f"Preserved originals: {backup}")
-    print(f"Added 7 resonators, 7 meters, 6 selectors, captions and 21 Laws; mover {MOVER}, requested by Zach.")
+    print(f"Revised the Studio's authored draw spacing and reconciled its 21 resonance Laws; mover {MOVER}, requested by Zach.")
 
 
 if __name__ == "__main__":
