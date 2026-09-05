@@ -310,6 +310,9 @@ private:
         glm::vec4 baseColor;
         glm::vec4 shading;
         glm::vec4 extents;
+        // misc = (isProvenHeightfield, surfaceEps, insideMarchLength, damping).
+        // The proof bit is separate from damping: generic gradient marching is
+        // not permission to use heightfield-only early exits.
         glm::vec4 misc;
         uint32_t paramOffset;
         // Min/max heightfield grid (Phase C): this instance's cells live at
