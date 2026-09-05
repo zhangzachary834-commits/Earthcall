@@ -80,7 +80,7 @@ void renderPerformanceMetricsWindow(bool* open, Core::Engine* engine) {
         ImGui::TextDisabled("Total ASTs lifetime: %u", currentAstEvals);
 
         ImGui::Separator();
-        ImGui::TextColored(ImVec4(0.4f, 0.8f, 1.0f, 1.0f), "GPU Frame Stats");
+        ImGui::TextColored(ImVec4(0.4f, 0.8f, 1.0f, 1.0f), "GPU Submission Stats");
 
         const auto& stats = currentRenderer().frameStats();
         ImGui::Text("Total Draw Calls: %u", stats.drawCalls);
@@ -120,15 +120,17 @@ void renderPerformanceMetricsWindow(bool* open, Core::Engine* engine) {
             if (auto* sc = Singularity::Screen::ScreenChannel::find(*lm)) {
                 ImGui::Separator();
                 ImGui::TextColored(ImVec4(0.4f, 0.8f, 1.0f, 1.0f), "Render Toggles");
-                ImGui::Checkbox("Height-grid DDA skip (@screen-channel.heightGridDdaEnabled)",
+                ImGui::BeginDisabled();
+                ImGui::Checkbox("Height-grid DDA skip (temporarily quarantined)",
                                 &sc->heightGridDdaEnabled);
+                ImGui::EndDisabled();
                 if (ImGui::IsItemHovered()) {
                     ImGui::SetTooltip(
-                        "Skips stretches of a heightfield ray that a min/max grid PROVES\n"
-                        "cannot contain the surface. Only ever fires for a field authored\n"
-                        "as y - h(...); everything else renders identically either way.\n\n"
-                        "Off is the unmodified per-step marcher. Toggle it while watching\n"
-                        "'3D Render' below to see what it is actually worth on this view.");
+                        "Native Metal parity found a grazing-root mismatch in DDA traversal,\n"
+                        "so this optimization is suspended rather than allowed to erase a\n"
+                        "rendered surface. The Perlin floor reads p.y and was already on\n"
+                        "the generic exact marcher. The timing below is CPU wall-clock,\n"
+                        "not a GPU execution timestamp.");
                 }
                 ImGui::Checkbox("Wireframe (@screen-channel.wireframe)", &sc->wireframe);
             }
@@ -145,13 +147,23 @@ void renderPerformanceMetricsWindow(bool* open, Core::Engine* engine) {
         ImGui::Text("  Laws (Rete):     %6.2f ms", g_frameTimings.laws_ms);
         ImGui::Text("  Language:        %6.2f ms", g_frameTimings.language_ms);
         ImGui::Text("  Audio:           %6.2f ms", g_frameTimings.audio_ms);
+        // WebGPU submission is asynchronous. These are main-thread wall-clock
+        // durations around recording, surface acquisition, and queue submission;
+        // a late surface/submit stall often reports accumulated queue pressure,
+        // not the execution time of just this frame's SDF draw.
         float actual_3d = g_frameTimings.render3d_ms - g_frameTimings.wait_surface_ms - g_frameTimings.wait_submit_ms;
         if (actual_3d < 0.0f) actual_3d = 0.0f;
-        ImGui::Text("  3D Render (Total): %6.2f ms", g_frameTimings.render3d_ms);
-        ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "    |- CPU Commits:  %6.2f ms", actual_3d);
-        ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "    |- Surface Wait: %6.2f ms", g_frameTimings.wait_surface_ms);
+        ImGui::Text("  3D phase (CPU wall-clock): %6.2f ms", g_frameTimings.render3d_ms);
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip(
+                "This is not a GPU execution timestamp. It includes command recording\n"
+                "plus any blocking surface-acquisition or queue-submit work observed\n"
+                "by the main thread. GPU timestamps are not available in this build.");
+        }
+        ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "    |- Command recording:     %6.2f ms", actual_3d);
+        ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "    |- Surface acquire wait:  %6.2f ms", g_frameTimings.wait_surface_ms);
         if (g_frameTimings.wait_submit_ms > 0.1f) {
-            ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "    |- GPU Blocked:  %6.2f ms", g_frameTimings.wait_submit_ms);
+            ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "    |- Queue-submit wait:     %6.2f ms", g_frameTimings.wait_submit_ms);
         }
         ImGui::Text("  ImGui / Present: %6.2f ms", g_frameTimings.imgui_ms);
 
