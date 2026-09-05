@@ -3,6 +3,7 @@
 #include "WebSocketServer.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "Singularity/Core/Engine.hpp"
+#include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleState.hpp"
 #include "Singularity/Screen/Camera.hpp"
 #include "Person/Person.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
@@ -120,7 +121,7 @@ static nlohmann::json buildWorldSnapshotJson() {
     root["objects"] = objList;
 
     // Player & Camera Status
-    Core::Engine& eng = Core::Engine::instance();
+    ::Core::Engine& eng = ::Core::Engine::instance();
     Person* p = eng.getPerson();
     if (p) {
         nlohmann::json pj;
@@ -128,7 +129,7 @@ static nlohmann::json buildWorldSnapshotJson() {
         glm::vec3 pPos = p->position();
         pj["position"] = {pPos.x, pPos.y, pPos.z};
         
-        Core::Camera* cam = eng.getCamera();
+        ::Core::Camera* cam = eng.getCamera();
         if (cam) {
             glm::vec3 camFront = cam->getFront();
             pj["camera_forward"] = {camFront.x, camFront.y, camFront.z};
@@ -275,12 +276,12 @@ struct WebSocketServer::Impl {
             if (type == "utterance") {
                 auto it = j.find("payload");
                 if (it != j.end() && it->is_string()) {
-                    Core::Event::Utterance evt;
+                    ::Core::Event::Utterance evt;
                     evt.payload = it->get<std::string>();
                     evt.sourceClient = j.value("sourceClient", clientId);
                     evt.targetSingularId = j.value("targetSingularId", "");
 
-                    Core::EventBus::instance().publish(evt);
+                    ::Core::EventBus::instance().publish(evt);
                     std::cout << "[WebSocketServer] Received utterance: \"" << evt.payload << "\" from " << evt.sourceClient << std::endl;
 
                     nlohmann::json reply;
@@ -303,7 +304,7 @@ struct WebSocketServer::Impl {
                     Singular* targetBeing = nullptr;
                     
                     if (target == "@player" || target == "player" || target == "Player") {
-                        targetBeing = Core::Engine::instance().getPerson();
+                        targetBeing = ::Core::Engine::instance().getPerson();
                     } else if (target == "@active_zone" || target == "active_zone" || target == "zone") {
                         targetBeing = &mgr.active();
                     } else {
@@ -364,7 +365,7 @@ struct WebSocketServer::Impl {
                     float pz = j["position"][2].get<float>();
                     obj->setPosition(glm::vec3(px, py, pz));
                 } else {
-                    Person* p = Core::Engine::instance().getPerson();
+                    Person* p = ::Core::Engine::instance().getPerson();
                     if (p) {
                         glm::vec3 pPos = p->position();
                         glm::vec3 fwd = p->cameraForward;
@@ -500,7 +501,7 @@ struct WebSocketServer::Impl {
             if (type == "toggle_law" || type == "set_law_enabled") {
                 std::string identifier = j.value("identifier", j.value("id", ""));
                 bool enabled = j.value("enabled", true);
-                LawManager* lm = Core::Engine::instance().getLawManager();
+                LawManager* lm = ::Core::Engine::instance().getLawManager();
                 if (lm && !identifier.empty()) {
                     bool found = false;
                     for (auto& law : lm->getAll()) {
@@ -528,8 +529,8 @@ struct WebSocketServer::Impl {
             // 8. Update Law Nodes (Modifying When -> Condition -> Action Nodes Live)
             if (type == "update_law_nodes" || type == "update_law" || type == "modify_law_nodes") {
                 std::string identifier = j.value("identifier", j.value("id", ""));
-                LawManager* lm = Core::Engine::instance().getLawManager();
-                Person* p = Core::Engine::instance().getPerson();
+                LawManager* lm = ::Core::Engine::instance().getLawManager();
+                Person* p = ::Core::Engine::instance().getPerson();
 
                 if (lm && !identifier.empty()) {
                     Law* law = nullptr;
@@ -656,8 +657,8 @@ struct WebSocketServer::Impl {
                 int activation = j.value("activation", 0);
                 std::string expr = j.value("expression", "");
 
-                LawManager* lm = Core::Engine::instance().getLawManager();
-                Person* p = Core::Engine::instance().getPerson();
+                LawManager* lm = ::Core::Engine::instance().getLawManager();
+                Person* p = ::Core::Engine::instance().getPerson();
 
                 if (lm) {
                     Law* existing = nullptr;
@@ -769,7 +770,7 @@ struct WebSocketServer::Impl {
             // 10. Delete Law
             if (type == "delete_law" || type == "remove_law") {
                 std::string identifier = j.value("identifier", j.value("id", ""));
-                LawManager* lm = Core::Engine::instance().getLawManager();
+                LawManager* lm = ::Core::Engine::instance().getLawManager();
                 if (lm && !identifier.empty()) {
                     bool removed = lm->remove(identifier);
                     nlohmann::json reply;
@@ -810,7 +811,7 @@ struct WebSocketServer::Impl {
             if (type == "create_zone") {
                 std::string zname = j.value("name", "New Zone");
                 std::string kind = j.value("kind", "zone");
-                Person* p = Core::Engine::instance().getPerson();
+                Person* p = ::Core::Engine::instance().getPerson();
                 std::string owner = p ? p->getIdentifier() : "Player";
                 mgr.authorZone(zname, owner, kind);
                 broadcast(buildWorldSnapshotJson().dump());
@@ -824,10 +825,10 @@ struct WebSocketServer::Impl {
                     float py = j["position"][1].get<float>();
                     float pz = j["position"][2].get<float>();
                     
-                    Person* p = Core::Engine::instance().getPerson();
+                    Person* p = ::Core::Engine::instance().getPerson();
                     if (p) p->position() = glm::vec3(px, py, pz);
                     
-                    Core::Camera* cam = Core::Engine::instance().getCamera();
+                    ::Core::Camera* cam = ::Core::Engine::instance().getCamera();
                     if (cam) cam->pos = glm::vec3(px, py + 1.8f, pz);
 
                     broadcast(buildWorldSnapshotJson().dump());
@@ -850,9 +851,10 @@ struct WebSocketServer::Impl {
             // 15. Quick Save
             if (type == "quick_save" || type == "save_world") {
                 SaveContext ctx;
-                Core::Engine& eng = Core::Engine::instance();
+                ::Core::Engine& eng = ::Core::Engine::instance();
                 ctx.camera = eng.getCamera();
                 ctx.mouseHandler = eng.getMouseHandler();
+                ctx.currentColor = Rendering::getCreatorConsoleState().currentColor;
                 ctx.person = eng.getPerson();
                 ctx.lawManager = eng.getLawManager();
                 ctx.ourverse = &eng.getWorld();

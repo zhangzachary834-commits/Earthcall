@@ -8,6 +8,7 @@
 - [x] Save As → verify no crash
 - [x] Save As → quit/reopen → Load → verify state
 - [ ] Ourverse root → Save As → reload → verify the gathering Zone and a cross-Zone filament survive as one shared root graph
+- [ ] Person root → Save As → reload → verify the current Body and camera-relative placement survive without a duplicate legacy body payload
 
 - [x] Load `my_world` in-app
 
@@ -91,3 +92,6 @@ this list — that is what it is for. See [The Week the Chorus Became a Queue](.
 - [ ] Load `basic_2d_button` in-app -> verify 2D button renders on screen.
 - [ ] Click the button -> verify it visibly shifts (y increases).
 - [ ] Save -> reload -> click again -> verify it continues shifting.
+
+## Perlin Noise Floor & 3D Raymarching
+- [ ] **Perlin Noise Floor Hill Zone rendering performance (session 2026-09-05):** Load `Perlin Noise Floor Zone` in WebGPU app (`Run Earthcall.command`). Look out toward the horizon and build/place objects (e.g. cubes or house structures). Press `F3` to check "3D Render" ms. Verify frame time remains smooth and does not spike to 40 ms, and objects placed on the hills render and occlude cleanly without GPU hitching.

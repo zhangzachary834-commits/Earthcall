@@ -1,6 +1,6 @@
 # Singular serialization topology
 
-**Status:** Phase 3 landed — Person-root serialization now writes and hydrates beside the semantic Ourverse root; legacy writer retirement remains open.
+**Status:** Phase 4 landed — the semantic Person root is the sole current writer; legacy `playerBody` remains a read-only compatibility bridge.
 **Agenda section:** Singular · Relation · Formation  
 **Author:** Codex, session `01a0707e-f743-71b1-8fb9-63975012e66d`, 2026-09-05 01:00 PDT
 
@@ -77,13 +77,30 @@ The Person root now has an extracted codec at
 and `Person::deserialize` delegate to it, while preserving the exact
 PersonDatabase profile keys (`displayName`, `soulName`, identity, pose, velocity,
 and Body). Session saves additionally emit a semantic `person` root whenever a
-Person is present. Load hydrates that root before the legacy `playerBody` bridge;
-old sessions without `person` therefore remain readable, and new sessions do not
-apply the same body twice.
+Person is present. Load hydrates that root (or the legacy `playerBody` bridge) before
+the session's canonical camera pose is reconciled to the Person; old sessions without
+`person` therefore remain readable, and new sessions do not apply the same body twice
+or break the Person/camera locomotion latch.
 
 `person_serialization_test` proves schema presence, delegation, and pose round-trip;
 `ourverse_serialization_test` now also proves Person-root emission through the
-session writer. No authored save file was modified.
+session writer. The WebSocket Quick Save context now supplies its live creator color
+to the same writer, rather than leaving a required SaveContext field null. No authored
+save file was modified.
+
+## Phase 4 landed — 2026-09-05
+
+**Update author:** Codex, session `01a0707e-f743-71b1-8fb9-63975012e66d`, 2026-09-05 02:35 PDT
+
+The duplicate `playerBody` writer is retired. A current session records a Person exactly
+once, under the semantic `person` root; the legacy `playerBody` reader remains only for
+older authored sessions that lack that root. Person/Body hydration still precedes camera
+reconciliation, so the active Body determines the eye-height used to re-establish the
+locomotion invariant.
+
+`save_roundtrip_test` now proves both directions: a new Save As contains `person` and no
+`playerBody`, while a synthesized legacy session containing only `playerBody` restores its
+Body. The First Mover save-format map and Person Verification List name this boundary.
 
 ## Target source layout
 
@@ -157,7 +174,7 @@ a direct regression test for populated Zones.
 
 | Root | Current state | Required decision |
 |---|---|---|
-| Person | Person-side codec now owns `serialize`/`deserialize`; session writer emits a semantic root and keeps `playerBody` as a bridge | Retire the legacy duplicate writer only after the split substrate owns this root. |
+| Person | Person-side codec owns `serialize`/`deserialize`; current sessions write only the semantic root | Retain `playerBody` as a reader-only bridge for older authored sessions. |
 | Zone | `ZonesOfEarth/ZoneSerialization` owns the extracted codec and graph assembly | Keep base fields, object references, and graph binding phased. |
 | Home | `HomeSerialization` owns dwelling augmentation | Preserve Zone composition; do not duplicate base Zone state. |
 | Ourverse | `OurverseSerialization` emits and hydrates the semantic root record | Retire the legacy multi-write path only after the split substrate owns this root. |
@@ -180,9 +197,8 @@ a direct regression test for populated Zones.
 
 ## Boundary of this pass
 
-This pass did not modify authored save files, delete legacy writers, or invent a DSL.
-The focused graph, identity, Save As, and Person database tests pass; the Home ontology
-binary stalls on this host's HomeServices/XPC connection before producing test output.
-The legacy `playerBody` writer remains as a compatibility bridge and is separately
-tracked before the open split-substrate task can claim the save system is fully fluid
-across roots.
+This pass did not modify authored save files, remove the legacy reader, or invent a DSL.
+The focused graph, identity, Save As, Person database, and legacy-body bridge tests pass;
+the Home ontology binary stalls on this host's HomeServices/XPC connection before producing
+test output. The next topology rung is the cross-root integration proof, not another
+duplicate Person payload.

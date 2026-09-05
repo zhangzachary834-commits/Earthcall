@@ -731,8 +731,8 @@ nlohmann::json ZoneManager::buildSaveJson(const SaveContext& ctx) const {
         j["ourverse"] = ourverseToJson(*ctx.ourverse);
     }
     if (ctx.person) {
-        // Semantic Person root. Keep playerBody below as a compatibility bridge
-        // until the legacy session writer is retired in a later phase.
+        // Semantic Person root. Legacy playerBody is reader-only below in
+        // loadState; current sessions never duplicate this Body payload.
         j["person"] = personToJson(*ctx.person);
     }
 
@@ -781,9 +781,6 @@ nlohmann::json ZoneManager::buildSaveJson(const SaveContext& ctx) const {
         j["physicsLaws"] = lawsJ;
     }
     j["flying"] = Physics::getFlying();
-
-    // Player avatar body
-    j["playerBody"] = bodyToJson(ctx.person->getBody());
 
     // Authored register
     j["authoredLaws"] = ctx.lawManager->toJson();
@@ -1158,6 +1155,25 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
         }
         switchTo(switchIdx);
 
+        // A session's camera is the canonical visible pose. Hydrate the
+        // Person root (including Body) before reconciling that pose, so the
+        // current body eye-height participates in the Person/camera latch.
+        // Profiles still use personFromJson directly and retain their own
+        // position and velocity without this session-specific reconciliation.
+        stage("person", [&] {
+            if (ctx.person && j.contains("person")) {
+                personFromJson(j["person"], *ctx.person);
+            }
+        });
+
+        // Player avatar body (legacy bridge). Old sessions have no semantic
+        // Person root, so establish their Body before the same camera latch.
+        stage("player-body", [&] {
+            if (ctx.person && !j.contains("person") && j.contains("playerBody")) {
+                bodyFromJson(j["playerBody"], ctx.person->getBody());
+            }
+        });
+
         // Load camera and player view
         if (j.contains("cameraPos")) {
             ctx.camera->pos = glm::vec3(j["cameraPos"][0], j["cameraPos"][1], j["cameraPos"][2]);
@@ -1234,21 +1250,6 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
                 Physics::addLaw(law);
             }
         }
-        });
-
-        // Semantic Person root. Older sessions have only playerBody; the
-        // fallback below keeps those files readable without double-applying.
-        stage("person", [&] {
-            if (ctx.person && j.contains("person")) {
-                personFromJson(j["person"], *ctx.person);
-            }
-        });
-
-        // Player avatar body (legacy bridge)
-        stage("player-body", [&] {
-            if (ctx.person && !j.contains("person") && j.contains("playerBody")) {
-                bodyFromJson(j["playerBody"], ctx.person->getBody());
-            }
         });
 
         // The authored register

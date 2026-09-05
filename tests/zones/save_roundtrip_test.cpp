@@ -122,6 +122,7 @@ int main() {
 
     const auto ecformPath = sandbox / "worlds" / "roundtrip_world.ecform";
     const auto ecmatterPath = sandbox / "worlds" / "roundtrip_world.ecmatter";
+    const auto legacyEcformPath = sandbox / "worlds" / "legacy_player_body.ecform";
     check(std::filesystem::exists(ecformPath), "Save As writes the .ecform semantic file");
     check(std::filesystem::exists(ecmatterPath), "Save As writes the binary .ecmatter");
     check(std::filesystem::exists(sandbox / "zones" / "Sanctum of Beginnings" / "zone.json"),
@@ -143,6 +144,19 @@ int main() {
         }
         check(zoneObjs == 3, "zone world JSON also keeps all three spawns");
         check(j.value("currentZone", 99) == 0, "saved currentZone is the Sanctum");
+        check(j.contains("person") && j["person"].contains("body"),
+              "new sessions write the semantic Person root");
+        check(!j.contains("playerBody"),
+              "new sessions retire the duplicate legacy playerBody writer");
+
+        // Old files carry Body directly at the session root. The current
+        // reader must keep this bridge until every authored save predates it.
+        nlohmann::json legacy = j;
+        legacy["playerBody"] = legacy["person"]["body"];
+        legacy["playerBody"]["height"] = 2.75f;
+        legacy.erase("person");
+        std::ofstream legacyOut(legacyEcformPath);
+        legacyOut << legacy.dump(2);
     }
 
     auto listed = SaveSystem::listWorlds(SaveSystem::SaveType::WORLD);
@@ -176,6 +190,11 @@ int main() {
           "Person.position matches camera after loadState so locomotion will not snap the view");
     check(glm::distance(camera.pos, glm::vec3(4.0f, 6.0f, 8.0f)) < 1e-3f,
           "camera returns to the saved viewpoint");
+
+    player.getBody().height = 1.0f;
+    mgr.loadState(legacyEcformPath.string(), ctx);
+    check(std::fabs(player.getBody().height - 2.75f) < 1e-3f,
+          "legacy playerBody remains readable after the writer retires");
 
     player.position() = glm::vec3(50.0f, 0.0f, 50.0f);
     mgr.loadState(ecformPath.string(), ctx);

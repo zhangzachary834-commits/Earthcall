@@ -223,8 +223,11 @@ click-through (Zach, 2026-08-21) that retired the stagnant "World" bag.
 | `transferPolicy` | the Singularity gate state | — |
 | `mathFunctions` | the OntoMath `FunctionRegistry` | — |
 | `materials` | Material beings | — |
-| `playerBody`, `cameraPos`, `cameraFront`, `cameraUp`, `yaw`, `pitch` | the Person's situated view | — |
+| `person`, `cameraPos`, `cameraFront`, `cameraUp`, `yaw`, `pitch` | semantic Person root plus the Person's situated view | — |
 | `currentZone`, `currentColor`, `currentTool`, `worldMode`, `worldPhysics`, `flying`, `worldTime` | session state | — |
+
+`playerBody` is accepted only as a legacy input key. Current writers emit the Body through
+the `person` root and must not recreate the duplicate payload.
 
 **What is deliberately absent:** first-mover laws. They are skipped on write and
 *preserved across load* rather than restored — `LawManager::loadFromJson` pulls them

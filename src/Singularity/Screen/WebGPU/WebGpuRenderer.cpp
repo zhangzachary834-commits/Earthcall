@@ -953,12 +953,6 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     // further than the cap vanish, and a large authored terrain is exactly the case
     // that trips it.
     float maxDim = glm::max(glm::max(extent.x, extent.y), extent.z);
-    // damping selects the marcher: < 0.5 is the Lipschitz-corrected path for an
-    // authored expression, >= 0.5 the over-relaxed path for an exact distance field.
-    inst.misc = glm::vec4(1.0f, 1e-4f, maxDim * 8.0f, prog.needsGradientStep ? 0.25f : 1.0f);
-
-    inst.paramOffset = static_cast<uint32_t>(_sdfParamsBatches[sp].size());
-
     // Min/max heightfield grid (Phase C): wired only when the caller found a
     // proven heightfield (Object::getHeightGrid()) AND the property that
     // governs it is live. Defaulted zero otherwise, which the shader reads as
@@ -966,14 +960,29 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     inst.heightGridOffset = 0;
     inst.heightGridDimX = 0;
     inst.heightGridDimZ = 0;
-    if (_heightGridDdaEnabled && heightGrid && heightGrid->dimX > 0 && heightGrid->dimZ > 0 &&
-        !heightGrid->cells.empty()) {
+    const bool isProvenHeightfield = (heightGrid && heightGrid->dimX > 0 && heightGrid->dimZ > 0);
+    if (_heightGridDdaEnabled && isProvenHeightfield && !heightGrid->cells.empty()) {
         auto& hgBatch = _sdfHeightGridBatches[sp];
         inst.heightGridOffset = static_cast<uint32_t>(hgBatch.size());
         inst.heightGridDimX = static_cast<uint32_t>(heightGrid->dimX);
         inst.heightGridDimZ = static_cast<uint32_t>(heightGrid->dimZ);
         hgBatch.insert(hgBatch.end(), heightGrid->cells.begin(), heightGrid->cells.end());
     }
+
+    // damping selects the marcher: < 0.5 is the Lipschitz-corrected path for an
+    // authored expression, >= 0.5 the over-relaxed path for an exact distance field.
+    // A proven heightfield f(p) = y - h(x,z) has df/dy = 1, so |grad f| >= 1.0 everywhere.
+    // The vertical distance |y - h(x,z)| strictly upper-bounds the true distance to the surface,
+    // so standard sphere tracing with overstep pullback does not tunnel. It does not suffer
+    // from the quadratic distance overestimation of generic algebraic implicits (e.g. x^2+y^2=r^2)
+    // and does not need 0.25x step throttling or per-step tetrahedral gradient evaluations.
+    float damping = 1.0f;
+    if (prog.needsGradientStep) {
+        damping = isProvenHeightfield ? 1.0f : 0.25f;
+    }
+    inst.misc = glm::vec4(1.0f, 1e-4f, maxDim * 8.0f, damping);
+
+    inst.paramOffset = static_cast<uint32_t>(_sdfParamsBatches[sp].size());
 
     _sdfBatches[sp].push_back(inst);
     _sdfParamsBatches[sp].insert(_sdfParamsBatches[sp].end(), prog.params.begin(), prog.params.end());

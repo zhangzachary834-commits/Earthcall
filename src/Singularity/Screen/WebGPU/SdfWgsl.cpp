@@ -795,14 +795,14 @@ fn fs(in: VSOut) -> FSOut {
     // every grid-eligible object today: there is no volumetric accumulation
     // this skip could drop. If a heightfield object is ever given a density
     // field too, this must jump t forward instead of discarding.
-    if (damping < 0.5) {
+    if (inst.heightGridDimX > 0u || damping < 0.5) {
         let adv = heightGridAdvance(inst, ro, rd, t, maxDist);
         if (adv.y < 0.5) { discard; }
         t = adv.x;
     }
 
     // Heightfield planar leap: If ray starts above the upper extent and points down, leap to top plane in 1 step
-    if (damping < 0.5 && rd.y < -1e-4 && (ro.y + rd.y * t) > inst.extents.y) {
+    if ((inst.heightGridDimX > 0u || damping < 0.5) && rd.y < -1e-4 && (ro.y + rd.y * t) > inst.extents.y) {
         let planeT = (inst.extents.y - ro.y) / rd.y;
         t = max(t, planeT);
     }
@@ -822,7 +822,7 @@ fn fs(in: VSOut) -> FSOut {
         let p = ro + rd * t;
         
         // Analytical early-exit: If ray is above maximum height and traveling upwards, it can never hit ground
-        if (damping < 0.5 && rd.y > 1e-4 && p.y > inst.extents.y) {
+        if ((inst.heightGridDimX > 0u || damping < 0.5) && rd.y > 1e-4 && p.y > inst.extents.y) {
             break;
         }
 
@@ -868,7 +868,14 @@ fn fs(in: VSOut) -> FSOut {
             // Tracing", §3.1. `candidate_step` is the step that got us HERE and
             // `prev_d` the radius it was based on; if those two spheres fail to
             // overlap, the last leap left the region the field vouched for.
-            if (d < current_eps) { hit = true; break; }
+            if (d <= 0.0 || abs(d) < current_eps) {
+                hit = true;
+                if (d < 0.0 && prev_d > 0.0 && candidate_step > 0.0) {
+                    let frac = clamp(prev_d / (prev_d - d), 0.0, 1.0);
+                    t = (t - candidate_step) + candidate_step * frac;
+                }
+                break;
+            }
 
             if (omega > 1.0 && d + prev_d < candidate_step) {
                 // Undo the over-relaxed leap, redo it at the conservative
