@@ -224,6 +224,14 @@ const std::vector<PathOption>& knownPathOptions() {
             else if (std::holds_alternative<bool>(probe)) type = "toggle";
             options.push_back({property->name(), "Language — Lexeme", type, false});
         }
+        
+        // Acoustics — properties driven by First Mover laws or authored directly
+        options.push_back({"acoustic.isSoundEmitter", "Acoustics — properties", "toggle", false});
+        options.push_back({"acoustic.frequency", "Acoustics — properties", "number", false});
+        options.push_back({"acoustic.amplitude", "Acoustics — properties", "number", false});
+        options.push_back({"acoustic.waveType", "Acoustics — properties", "text", false});
+        options.push_back({"acoustic.lowpassCutoff", "Acoustics — properties", "number", false});
+        options.push_back({"acoustic.baseFrequency", "Acoustics — properties", "number", false});
     }
     return options;
 }

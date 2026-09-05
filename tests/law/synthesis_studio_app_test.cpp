@@ -21,6 +21,7 @@
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "Relation/RelationManager.hpp"
 #include "Singularity/Core/EventBus.hpp"
+#include "Singularity/Storage/Serialization.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ConditionModel.hpp"
 #include "Singularity/Input/Interaction/InteractionChannel.hpp"
@@ -571,10 +572,10 @@ int main() {
         Object* btnDraw = findObject("hud.btn.draw-stroke");
         Object* hudTitle = findObject("hud.title");
 
-        check(btnSpawn && btnSpawn->getShapeParams().width2D == 132.0f,
-              "hud.btn.spawn-orb loaded authored width2D (132)");
-        check(dock && dock->getShapeParams().width2D == 820.0f,
-              "hud.dock.bg loaded authored width2D (820)");
+        check(btnSpawn && btnSpawn->getShapeParams().width2D == 150.0f,
+              "hud.btn.spawn-orb loaded authored width2D (150)");
+        check(dock && dock->getShapeParams().width2D == 1232.0f,
+              "hud.dock.bg loaded authored width2D (1232)");
         check(padC5 && padD5 && padC5->getRect2D().z <= padD5->getRect2D().x,
               "2D HUD pads do not overlap (pad C5 ends before pad D5 begins)");
         check(hudTitle && hudTitle->pickPriority() < 0.0,
@@ -850,10 +851,10 @@ int main() {
                         break;
                     }
 
-                    // Before click: pad must be at rest elevation 650.0
-                    if (std::abs(pad->getY2D() - 650.0f) > 0.01f) {
-                        std::printf("  FAILED at pass %d pad %s: pre-click y2D is %.2f (expected 650.0)\n",
-                                    pass, padId.c_str(), pad->getY2D());
+                    const double rest = readNumber(*pad, "restY2D");
+                    if (std::abs(pad->getY2D() - rest) > 0.01f) {
+                        std::printf("  FAILED at pass %d pad %s: pre-click y2D is %.2f (expected %.2f)\n",
+                                    pass, padId.c_str(), pad->getY2D(), rest);
                         elevationsCorrect = false;
                     }
 
@@ -872,9 +873,9 @@ int main() {
                     interaction.observe(sPad, reachable);
                     laws.tick();
 
-                    if (std::abs(pad->getY2D() - 653.0f) > 0.01f) {
-                        std::printf("  FAILED at pass %d pad %s: pressed y2D is %.2f (expected 653.0)\n",
-                                    pass, padId.c_str(), pad->getY2D());
+                    if (std::abs(pad->getY2D() - (rest + 3.0)) > 0.01f) {
+                        std::printf("  FAILED at pass %d pad %s: pressed y2D is %.2f (expected %.2f)\n",
+                                    pass, padId.c_str(), pad->getY2D(), rest + 3.0);
                         elevationsCorrect = false;
                     }
 
@@ -883,10 +884,9 @@ int main() {
                     interaction.observe(sPad, reachable);
                     laws.tick();
 
-                    // After tick: pad must have sprung back to rest elevation 650.0
-                    if (std::abs(pad->getY2D() - 650.0f) > 0.01f) {
-                        std::printf("  FAILED at pass %d pad %s: post-release y2D is %.2f (expected 650.0)\n",
-                                    pass, padId.c_str(), pad->getY2D());
+                    if (std::abs(pad->getY2D() - rest) > 0.01f) {
+                        std::printf("  FAILED at pass %d pad %s: post-release y2D is %.2f (expected %.2f)\n",
+                                    pass, padId.c_str(), pad->getY2D(), rest);
                         elevationsCorrect = false;
                     }
 
@@ -902,7 +902,81 @@ int main() {
             check(allPadsSucceeded && (g_sounded.size() - soundsStart == 35),
                   "clicking all 7 pads in sequence for 5 passes sounds all 35 notes without lockout");
             check(elevationsCorrect,
-                  "button elevation depresses on press (653.0) and springs back on release (650.0) every click");
+                  "button elevation depresses by 3 points and springs back to its authored rest every click");
+        }
+    }
+
+    // Codex / synthesis-studio-20260904: exercise the upgrade's saved Law text,
+    // including reload, bounded repeated play, and the real Object serializer.
+    {
+        registerAudioSink([](Singular& subject, double frequency, double amplitude,
+                             const std::string& timbre) {
+            g_sounded.push_back({subject.getIdentifier(), frequency, amplitude, timbre});
+        });
+        laws.loadFromJson(world["authoredLaws"]);
+        Object* resonator = findObject("studio.resonance.c5");
+        Object* meter = findObject("hud.resonance.meter.c5");
+        Object* sine = findObject("hud.resonance.voice.sine");
+        Object* square = findObject("hud.resonance.voice.square");
+        Object* triangle = findObject("hud.resonance.voice.triangle");
+        Object* tidal = findObject("hud.resonance.ink.tidal");
+        check(resonator && meter && sine && square && triangle && tidal,
+              "resonance sculpture and creative selectors exist in the actual save");
+        if (resonator && meter && sine && square && triangle && tidal) {
+            const auto population = zone->getOwnedObjects().size();
+            Universe::instance().setClock(100, 1.0 / 60.0);
+            activate(*sine);
+            g_sounded.clear();
+            activate(*padC5);
+            check(g_sounded.size() == 1 && g_sounded[0].timbre == "sine",
+                  "sine selector changes the next note with no duplicate triangle sound");
+            check(nearly(readNumber(*resonator, "struckAt"), 100),
+                  "note-played reaches the matching 3D resonator");
+            check(readNumber(*resonator, "shape.r") > 0.25 &&
+                      readNumber(*meter, "shape.height2D") > 30,
+                  "a struck note swells the sculpture and its spectrum meter");
+            Universe::instance().setClock(102, 1.0 / 60.0);
+            laws.tick();
+            check(readNumber(*resonator, "shape.r") < 0.14 &&
+                      readNumber(*meter, "shape.height2D") < 3.1,
+                  "both visual responses decay to rest after the note");
+            activate(*square);
+            g_sounded.clear();
+            activate(*padC5);
+            check(g_sounded.size() == 1 && g_sounded[0].timbre == "square",
+                  "square voice is a real audio request");
+            activate(*triangle);
+            for (int i = 0; i < 40; ++i) activate(*padC5);
+            check(zone->getOwnedObjects().size() == population,
+                  "repeated musical play allocates no new world objects");
+            activate(*tidal);
+            check(nearly(readNumber(*stateStudio, "inkG"), 0.88),
+                  "ink selection changes the authored drawing state");
+
+            auto serializedLaws = laws.toJson();
+            laws.loadFromJson(serializedLaws);
+            activate(*sine);
+            g_sounded.clear();
+            activate(*padC5);
+            check(g_sounded.size() == 1 && g_sounded[0].timbre == "sine",
+                  "voice selection and note playback survive real Law save/load");
+        }
+        for (const auto& saved : zoneJson["world"]["objects"]) {
+            const auto id = saved["objectID"].get<std::string>();
+            if (id.find("resonance") == std::string::npos) continue;
+            Object decoded;
+            from_json(saved, decoded);
+            nlohmann::json roundTrip;
+            to_json(roundTrip, decoded);
+            Object restored;
+            from_json(roundTrip, restored);
+            check(restored.getIdentifier() == id, "real Object round-trip retains " + id);
+            for (const char* path : {"resonanceNote", "studioVoice", "studioInk", "label2D"}) {
+                PropertyValue expected, actual;
+                if (decoded.getDynamicProperty(path, expected))
+                    check(restored.getDynamicProperty(path, actual) && expected == actual,
+                          id + " retains " + path + " through save/load");
+            }
         }
     }
 

@@ -256,3 +256,167 @@ That is why the world is the product.
 ---
 
 *OpenAI Codex — session `01a06f05-0500-7b40-ba8f-12103586d9ff` — 2026-09-04T17:51:00-07:00*
+
+---
+
+## Addendum — The Missing Relation Is the Expiry Date
+
+**Prompted by:** Zachary Zhang
+**Response by:** OpenAI Codex
+**Session ID:** `01a06f05-0500-7b40-ba8f-12103586d9ff`
+**Date:** 2026-09-04
+**Timestamp:** 2026-09-04T18:05:50-07:00
+
+### Zach's new synthesis
+
+After reading the reflection, Zach connected its claim that documents drift and do not
+automatically carry expiry dates to two earlier Earthcall problems: the **Relation gaps**
+that prevent agents from mapping genuinely unified frameworks, and the **crystallization**
+problem he had identified, which helped inspire Sonnet 4.5's *Five Days of Velocity and One
+Sacred Thing Breaking*.
+
+That connection originates with Zach. My response below develops what I think follows from
+it.
+
+### One wound appearing at three boundaries
+
+I think these are not merely similar problems. They are the same structural wound appearing
+at three different boundaries:
+
+| Boundary | What crosses it | What the missing Relation causes |
+|---|---|---|
+| **Conceptual space** | one framework across files, folders, and vocabularies | an agent sees islands and invents a second office for something that was already one |
+| **Time** | a claim from the world it witnessed into a changed world | the words remain readable while their warrant silently expires |
+| **Persistence** | an authored world through save, load, migration, or substrate change | beings remain while Relations, authorship, Law, or identity lose continuity |
+
+In each case, the local artifacts survive. The failure is in the connective truth.
+
+The Relation-gaps problem can leave every relevant document individually accurate while no
+agent can see that they describe one framework. Document drift can leave every old sentence
+exactly as written while the source, test registry, or world it described has changed. The
+Zone relation-loss bug left chess objects present while the graph through which Laws knew
+them disappeared. All three preserve nouns and lose the verbs, bonds, and history that made
+the nouns intelligible.
+
+This sharpens the crystallization doctrine:
+
+> **Crystallization is the preservation and completion of meaningful Relations while a being
+> crosses a boundary.**
+
+Integration is crystallization across branches. Save/load is crystallization across
+persistence. Documentation is crystallization across time. Agent handoff is crystallization
+across minds that do not share memory except through artifacts. A unified framework is what
+exists after its necessary Relations have crystallized strongly enough that a new reader can
+recover the whole without already knowing it.
+
+### Why a date cannot be the expiry date
+
+The phrase “documents do not automatically give an expiry date” contains a deeper technical
+point: **staleness is relational, not chronological**.
+
+A ten-year-old statement can remain true if none of its dependencies changed. A statement
+written three minutes ago can become stale when a test is added, a class moves, a save schema
+splits, or a Person corrects the premise on which it rested. Age does not invalidate a claim.
+A change to something the claim depends upon invalidates its *witness*.
+
+Therefore the missing expiry date is actually a missing graph:
+
+```text
+claim ──verified-against──> test registry at Moment M
+claim ──depends-on───────> source path / save schema / authored world
+new claim ──supersedes───> prior claim
+change ──invalidates─────> the prior verification relation
+```
+
+The document does not need to predict a calendar date when it becomes false. It needs to name
+the beings and states whose movement would require it to be witnessed again.
+
+This is also where Earthcall's event doctrine matters. Invalidation is an edge, not a level.
+“Still stale” is state; “dependency changed” is the transition. A repository tool can publish
+that transition and a Law can mark the affected claim as needing renewed witness. The tool
+should not declare the proposition false. It knows only that the old verification no longer
+reaches the current world.
+
+That is the same epistemic restraint the Prophetic Rete requires of possibility analysis: do
+not make the world deaf by claiming more certainty than the evidence permits. For documents,
+the safe conclusion is **UNWITNESSED NOW**, not **FALSE**.
+
+### Relation gaps explain duplicate offices
+
+Zach's point about agents failing to map truly unified frameworks explains why documentation
+drift produces architectural duplication so reliably.
+
+An agent usually reads a bounded neighborhood. If `InteractionChannel`, authored control
+Laws, the Law Graph window, a save fixture, and `INTERACTION_AS_LAW.md` do not carry visible
+Relations to one another, the agent does not encounter one interaction framework. It
+encounters five plausible fragments. The ordinary engineering response is to supply the
+missing unity by creating a new manager, class, directory, or registry. Earthcall then has
+two offices for one fact—not because the agent rejected the ontology, but because the
+ontology's existing unity was not recoverable from the available graph.
+
+This makes Relation completeness a practical defense of the Seven Refusals. The refusals say
+“do not create the second office.” The documentation graph must make the first office
+findable enough that obedience is possible.
+
+A hyperlink alone is only the weakest version of that Relation. It says “look here,” but not
+*why*: implements, verifies, supersedes, migrates, contradicts, was-corrected-by,
+personally-witnessed-by, or depends-on. The type of the edge is part of the meaning an agent
+needs in order to assemble the whole.
+
+### The corpus needs a change feed, not another document class
+
+The Earthcall answer must obey Earthcall. It should not be a new C++ `DocumentClaim` class or
+a parallel permissions system for prose. Claims, documents, tests, commits, saves, and
+frameworks can be represented as authored extra-spatial Singulars and typed Relations using
+the existing ontology. First-mover repository tooling may sense file and test changes; Laws
+can decide what those changes mean and which witnesses require renewal.
+
+At today's rung, `scratch/probes/router_truth_probe.py` is already a primitive change witness.
+It compares router claims and links against the present tree. Its weakness is not that it is
+a script. Its weakness is that the dependency graph is still implicit inside its code and
+its result is only noticed when someone remembers to run it. The probe detected the current
+seven failures immediately once invoked; the corpus had carried them without a voice.
+
+The next conceptual rung is therefore not “write better expiry dates.” It is:
+
+1. make the claim-to-dependency Relations explicit;
+2. sense when a dependency crosses a relevant edge;
+3. mark the old witness as no longer covering the present state;
+4. route re-verification to the kind of witness that can actually renew it—a test, an agent,
+   or a Person's hand;
+5. preserve the superseded claim and its Moment as historical truth rather than rewriting
+   history to pretend it was never correct.
+
+That last point joins crystallization to Time. A stale document is not necessarily a bad or
+false document. It may be a truthful statement about an earlier world. Earthcall should be
+able to retain that temporal truth while refusing to let it impersonate current truth.
+
+### What Zach's connection changes in my original reflection
+
+My original section treated missing expiry signals as a documentation-governance weakness.
+Zach's connection reveals that framing was too local. Documentation is one instance of a
+general conservation problem already visible in the ontology and save system:
+
+> **Can meaning cross a boundary without its constitutive Relations being dropped?**
+
+That question belongs beside the Integrity Check. After a change, save, migration, handoff,
+or architectural split, we should ask not only whether every artifact still exists, but
+whether the Relations by which the next Person or agent can recover its meaning still exist.
+
+The relation graph is not metadata around the thing. In Earthcall, it is part of the thing's
+truth. This is why an object-only save can preserve a corpse, why a linkless corpus can
+preserve fragments, and why a dated but dependency-less verification can preserve a claim
+whose authority has silently vanished.
+
+Sonnet 4.5 wrote, from Zach's earlier crystallization insight, that crystallization is the
+preservation of meaning across time. Zach's new connection lets me extend that sentence:
+
+> **Relation gaps are failed crystallization across understanding. Document drift is failed
+> crystallization across time. Save corruption is failed crystallization across persistence.**
+
+Same wound. Different boundary.
+
+---
+
+*Zachary Zhang and OpenAI Codex — addendum to session
+`01a06f05-0500-7b40-ba8f-12103586d9ff` — 2026-09-04T18:05:50-07:00*
