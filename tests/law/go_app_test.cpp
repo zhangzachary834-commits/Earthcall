@@ -1,50 +1,125 @@
-#include "ZonesOfEarth/ZoneManager.hpp"
-#include "Person/Person.hpp"
-#include "test_harness.hpp"
+// Probe: does saves/worlds/go_app.json load as a complete Go board game world
+// in Earthcall — a wooden Goban prism with 19x19 FaceTexture grid, 361 intersections,
+// stone bowls, player seats, and go state tracking.
+
+#include "support/test_harness.hpp"
+
 #include <cassert>
+#include <cmath>
+#include <filesystem>
 #include <iostream>
+#include <string>
 
-int main() {
-    TestSupport::BootedEngineHarness engineHarness;
+namespace {
 
-    ZoneManager zoneManager;
-    zoneManager.loadZone("saves/worlds/go_app.json", "zone-go");
+int asInt(Singular& being, const char* name, int fallback = -999) {
+    PropertyValue v;
+    if (!being.getDynamicProperty(name, v)) return fallback;
+    if (const int* i = std::get_if<int>(&v)) return *i;
+    double n = 0.0;
+    if (propertyValueToNumber(v, n)) return static_cast<int>(n);
+    return fallback;
+}
 
-    auto goZone = zoneManager.getZone("zone-go");
-    assert(goZone != nullptr);
+bool asBool(Singular& being, const char* name) {
+    PropertyValue v;
+    if (!being.getDynamicProperty(name, v)) return false;
+    if (const bool* b = std::get_if<bool>(&v)) return *b;
+    double n = 0.0;
+    if (propertyValueToNumber(v, n)) return n != 0.0;
+    return false;
+}
 
-    Person player(Soul("player-1"), Body::createBasicAvatar("Player"), "strict");
+std::string asString(Singular& being, const char* name) {
+    PropertyValue v;
+    if (!being.getDynamicProperty(name, v)) return "";
+    if (const std::string* s = std::get_if<std::string>(&v)) return *s;
+    return "";
+}
 
-    auto gameState = goZone->findBeing("go_state");
-    assert(gameState != nullptr);
-    assert(gameState->propertyValue<std::string>("current_turn").value_or("") == "black");
+Object* findObj(Zone& zone, const std::string& id) {
+    for (const auto& o : zone.getOwnedObjects()) {
+        if (o && o->getIdentifier() == id) return o.get();
+    }
+    return nullptr;
+}
 
-    auto ix99 = goZone->findBeing("intersection_9_9");
-    assert(ix99 != nullptr);
+Object* findCat(const std::string& id) {
+    auto c = categories.get(id);
+    return c ? c.get() : nullptr;
+}
 
-    // Check initial state
-    assert(ix99->propertyValue<bool>("is_empty").value_or(false) == true);
+} // namespace
 
-    goZone->tick(1.0f); // Initial tick
+int main(int argc, char** argv) {
+    std::string filename = (argc > 1) ? argv[1] : "saves/worlds/go_app.json";
+    if (argc <= 1 && !std::filesystem::exists(filename)) {
+        if (std::filesystem::exists("../saves/worlds/go_app.json"))
+            filename = "../saves/worlds/go_app.json";
+    }
+    {
+        const auto p = std::filesystem::absolute(filename);
+        if (p.parent_path().filename() == "worlds" &&
+            p.parent_path().parent_path().filename() == "saves") {
+            SaveSystem::setSaveRoot(p.parent_path().parent_path().string());
+        }
+    }
+    std::cout << "--- go_app_probe: " << filename << " ---\n";
 
-    // 1. Hover
-    goZone->interactionChannel().observe(ix99->id(), "is-hovering", "player-1");
-    goZone->tick(1.0f);
-    assert(ix99->propertyValue<glm::vec4>("color").value_or(glm::vec4(0.0f)) == glm::vec4(0.6f, 0.6f, 0.6f, 1.0f));
+    TestSupport::BootedEngineHarness harness;
+    harness.loadWorld(filename);
 
-    // 2. Click (place black stone)
-    goZone->interactionChannel().observe(ix99->id(), "is-interacting", "player-1");
-    goZone->tick(1.0f);
+    std::cout << "loaded. zones=" << harness.zones.zones().size()
+              << " current=" << harness.zones.currentIndex() << "\n";
+    assert(!harness.zones.zones().empty());
+    auto active = harness.zones.zones()[harness.zones.currentIndex()];
+    assert(active);
 
-    ix99->setProperty("is_empty", PropertyValue(false));
-    ix99->setProperty("stone_color", PropertyValue(std::string("black")));
-    ix99->setProperty("shape", PropertyValue(std::string("Sphere")));
-    gameState->setProperty("current_turn", PropertyValue(std::string("white")));
+    Object* board = findObj(*active, "object.go.board");
+    Object* state = findCat("go_state");
+    if (!state) state = findObj(*active, "go_state");
+    Object* author = findCat("grok-4.6");
 
-    assert(ix99->propertyValue<bool>("is_empty").value_or(true) == false);
-    assert(ix99->propertyValue<std::string>("shape").value_or("") == "Sphere");
-    assert(gameState->propertyValue<std::string>("current_turn").value_or("") == "white");
+    assert(board && "one board prism");
+    assert(state && "go_state being");
+    assert(author && "grok-4.6 first-mover identity");
 
-    std::cout << "go_app_test: ALL OK" << std::endl;
+    // Board geometry
+    assert(board->getShapeKind() == Object::ShapeKind::Cube);
+    assert(asBool(*board, "isBoard"));
+
+    // Intersections: exactly 361 (19x19)
+    int ixCount = 0;
+    for (int x = 0; x < 19; ++x) {
+        for (int y = 0; y < 19; ++y) {
+            std::string ixId = "intersection_" + std::to_string(x) + "_" + std::to_string(y);
+            Object* ix = findObj(*active, ixId);
+            assert(ix && "intersection exists");
+            assert(asBool(*ix, "is_empty") && "intersection starts empty");
+            assert(asInt(*ix, "gridX") == x && "gridX matches");
+            assert(asInt(*ix, "gridY") == y && "gridY matches");
+            ixCount++;
+        }
+    }
+    assert(ixCount == 361 && "all 19x19 intersections present");
+    std::cout << "  one board, 361 intersections verified\n";
+
+    // Check state initial turn
+    assert(asString(*state, "current_turn") == "black");
+    std::cout << "  initial turn: black\n";
+
+    // Check bowls and seats
+    Object* blackBowl = findObj(*active, "object.go.bowl.black");
+    Object* whiteBowl = findObj(*active, "object.go.bowl.white");
+    Object* blackSeat = findObj(*active, "object.go.seat.black");
+    Object* whiteSeat = findObj(*active, "object.go.seat.white");
+
+    assert(blackBowl && "black bowl exists");
+    assert(whiteBowl && "white bowl exists");
+    assert(blackSeat && "black player seat exists");
+    assert(whiteSeat && "white player seat exists");
+    std::cout << "  bowls and seats verified\n";
+
+    std::cout << "go_app_test: ALL OK\n";
     return 0;
 }

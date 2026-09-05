@@ -122,12 +122,11 @@ int main(int argc, char** argv) {
     assert(boardMat && boardMat->faceTextures.size() >= 3);
     const auto& top = boardMat->faceTextures[2];
     assert(top.size == 64 && top.pixels.size() == 64u * 64u * 4u);
-    // a1 (file 0, rank 0) is dark: pixel x=0 (rank), y=0 (file).
-    assert(top.pixels[0] == 117 && top.pixels[1] == 69 && top.pixels[2] == 33);
-    // d1 (file 3, rank 0) is light: x=0, y = 3*8 = 24.
+    // Board rotated 180° so White has the white-side pattern ("white on right", d1 light):
+    assert(top.pixels[0] == 237 && top.pixels[1] == 214);
     const size_t d1 = (24u * 64u + 0u) * 4u;
-    assert(top.pixels[d1] == 237 && top.pixels[d1 + 1] == 214);
-    std::cout << "  board FaceTexture is a checkerboard; a1 dark, d1 light\n";
+    assert(top.pixels[d1] == 117 && top.pixels[d1 + 1] == 69);
+    std::cout << "  board FaceTexture is a checkerboard; rotated 180 deg (white on right, d1 light)\n";
 
     Law* clickLaw = harness.lawManager.find("law-chess-click");
     assert(clickLaw);

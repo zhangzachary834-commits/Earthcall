@@ -225,13 +225,8 @@ const std::vector<PathOption>& knownPathOptions() {
             options.push_back({property->name(), "Language — Lexeme", type, false});
         }
         
-        // Acoustics — properties driven by First Mover laws or authored directly
-        options.push_back({"acoustic.isSoundEmitter", "Acoustics — properties", "toggle", false});
-        options.push_back({"acoustic.frequency", "Acoustics — properties", "number", false});
-        options.push_back({"acoustic.amplitude", "Acoustics — properties", "number", false});
-        options.push_back({"acoustic.waveType", "Acoustics — properties", "text", false});
-        options.push_back({"acoustic.lowpassCutoff", "Acoustics — properties", "number", false});
-        options.push_back({"acoustic.baseFrequency", "Acoustics — properties", "number", false});
+        options.push_back({"studioInk", "Synthesis Studio — tools", "text", false});
+        options.push_back({"studioVoice", "Synthesis Studio — tools", "text", false});
     }
     return options;
 }

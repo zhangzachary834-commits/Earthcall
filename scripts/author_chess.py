@@ -175,6 +175,15 @@ def occupied_at(file_path, rank_path):
     )
 
 
+def occupied_at_const(file_val, rank_val):
+    return for_any(
+        IS_PIECE,
+        ON_BOARD,
+        compare("gridX", 0, pv("int", file_val)),
+        compare("gridY", 0, pv("int", rank_val)),
+    )
+
+
 def path_blocked_rank():
     return for_any(
         IS_PIECE,
@@ -394,16 +403,16 @@ def solid_face(size, rgb):
 
 
 def checkerboard_face(size=64):
-    # Face 2 (+Y): U grows with world Z (rank), V grows with world X (file).
-    # Pixel x → U → rank; pixel y → V → file.
-    # a1 (file 0, rank 0) is dark. Light iff (file + rank) is odd.
+    # Face 2 (+Y): Board rotated 180° so White's side has the correct white-side pattern:
+    # White queen (d1) on light square, White king (e1) on dark square,
+    # and White's bottom-right corner (h1) on light square ("white on right").
     light = (237, 214, 166)
     dark = (117, 69, 33)
 
     def paint(x, y, s):
         rank = x * 8 // s
         file_ = y * 8 // s
-        return light if ((file_ + rank) % 2 == 1) else dark
+        return light if ((file_ + rank) % 2 == 0) else dark
 
     pixels = rgba_bytes(size, paint)
     return {"size": size, "pixelsB64": base64.b64encode(pixels).decode("ascii")}
@@ -551,6 +560,11 @@ def move_action():
             {"hm": "hasMoved"},
             copy_terms("hm"),
         ),
+        set_path("@state.chess.castleMove", pv("int", 0)),
+        set_path("@state.chess.nextEnPassantFile", pv("int", -1)),
+        set_path("@state.chess.nextEnPassantTargetY", pv("int", -1)),
+        set_path("@state.chess.nextEnPassantVictimY", pv("int", -1)),
+        map_path("@state.chess.repCount", {"r": "@state.chess.repCount"}, offset_terms("r", 1)),
         publish("enemy-captured"),
         map_path("gridX", {"tx": "@state.chess.targetX"}, copy_terms("tx")),
         map_path("gridY", {"ty": "@state.chess.targetY"}, copy_terms("ty")),
@@ -562,6 +576,147 @@ def move_action():
         set_path("@state.chess.selectionActive", pv("bool", False)),
         publish("move-committed", "state.chess"),
     )
+
+
+def pawn_move_action():
+    return seq(
+        map_path("@state.chess.prevX", {"gx": "gridX"}, copy_terms("gx")),
+        map_path("@state.chess.prevY", {"gy": "gridY"}, copy_terms("gy")),
+        set_path("@state.chess.prevHasMoved", pv("bool", False)),
+        map_path(
+            "@state.chess.prevHasMoved",
+            {"hm": "hasMoved"},
+            copy_terms("hm"),
+        ),
+        set_path("@state.chess.castleMove", pv("int", 0)),
+        set_path("@state.chess.nextEnPassantFile", pv("int", -1)),
+        set_path("@state.chess.nextEnPassantTargetY", pv("int", -1)),
+        set_path("@state.chess.nextEnPassantVictimY", pv("int", -1)),
+        set_path("@state.chess.repCount", pv("int", 0)),
+        publish("enemy-captured"),
+        map_path("gridX", {"tx": "@state.chess.targetX"}, copy_terms("tx")),
+        map_path("gridY", {"ty": "@state.chess.targetY"}, copy_terms("ty")),
+        map_path("position.x", {"tx": "@state.chess.targetX"}, offset_terms("tx", -3.5)),
+        map_path("position.z", {"ty": "@state.chess.targetY"}, offset_terms("ty", -3.5)),
+        unlift_action(),
+        set_path("isSelected", pv("bool", False)),
+        set_path("hasMoved", pv("bool", True)),
+        set_path("@state.chess.selectionActive", pv("bool", False)),
+        publish("move-committed", "state.chess"),
+    )
+
+
+def pawn_double_w_action():
+    return seq(
+        map_path("@state.chess.prevX", {"gx": "gridX"}, copy_terms("gx")),
+        map_path("@state.chess.prevY", {"gy": "gridY"}, copy_terms("gy")),
+        set_path("@state.chess.prevHasMoved", pv("bool", False)),
+        map_path(
+            "@state.chess.prevHasMoved",
+            {"hm": "hasMoved"},
+            copy_terms("hm"),
+        ),
+        set_path("@state.chess.castleMove", pv("int", 0)),
+        map_path("@state.chess.nextEnPassantFile", {"gx": "gridX"}, copy_terms("gx")),
+        set_path("@state.chess.nextEnPassantTargetY", pv("int", 2)),
+        set_path("@state.chess.nextEnPassantVictimY", pv("int", 3)),
+        set_path("@state.chess.repCount", pv("int", 0)),
+        publish("enemy-captured"),
+        map_path("gridX", {"tx": "@state.chess.targetX"}, copy_terms("tx")),
+        map_path("gridY", {"ty": "@state.chess.targetY"}, copy_terms("ty")),
+        map_path("position.x", {"tx": "@state.chess.targetX"}, offset_terms("tx", -3.5)),
+        map_path("position.z", {"ty": "@state.chess.targetY"}, offset_terms("ty", -3.5)),
+        unlift_action(),
+        set_path("isSelected", pv("bool", False)),
+        set_path("hasMoved", pv("bool", True)),
+        set_path("@state.chess.selectionActive", pv("bool", False)),
+        publish("move-committed", "state.chess"),
+    )
+
+
+def pawn_double_b_action():
+    return seq(
+        map_path("@state.chess.prevX", {"gx": "gridX"}, copy_terms("gx")),
+        map_path("@state.chess.prevY", {"gy": "gridY"}, copy_terms("gy")),
+        set_path("@state.chess.prevHasMoved", pv("bool", False)),
+        map_path(
+            "@state.chess.prevHasMoved",
+            {"hm": "hasMoved"},
+            copy_terms("hm"),
+        ),
+        set_path("@state.chess.castleMove", pv("int", 0)),
+        map_path("@state.chess.nextEnPassantFile", {"gx": "gridX"}, copy_terms("gx")),
+        set_path("@state.chess.nextEnPassantTargetY", pv("int", 5)),
+        set_path("@state.chess.nextEnPassantVictimY", pv("int", 4)),
+        set_path("@state.chess.repCount", pv("int", 0)),
+        publish("enemy-captured"),
+        map_path("gridX", {"tx": "@state.chess.targetX"}, copy_terms("tx")),
+        map_path("gridY", {"ty": "@state.chess.targetY"}, copy_terms("ty")),
+        map_path("position.x", {"tx": "@state.chess.targetX"}, offset_terms("tx", -3.5)),
+        map_path("position.z", {"ty": "@state.chess.targetY"}, offset_terms("ty", -3.5)),
+        unlift_action(),
+        set_path("isSelected", pv("bool", False)),
+        set_path("hasMoved", pv("bool", True)),
+        set_path("@state.chess.selectionActive", pv("bool", False)),
+        publish("move-committed", "state.chess"),
+    )
+
+
+def en_passant_action():
+    return seq(
+        map_path("@state.chess.prevX", {"gx": "gridX"}, copy_terms("gx")),
+        map_path("@state.chess.prevY", {"gy": "gridY"}, copy_terms("gy")),
+        set_path("@state.chess.prevHasMoved", pv("bool", False)),
+        map_path(
+            "@state.chess.prevHasMoved",
+            {"hm": "hasMoved"},
+            copy_terms("hm"),
+        ),
+        set_path("@state.chess.castleMove", pv("int", 0)),
+        set_path("@state.chess.nextEnPassantFile", pv("int", -1)),
+        set_path("@state.chess.nextEnPassantTargetY", pv("int", -1)),
+        set_path("@state.chess.nextEnPassantVictimY", pv("int", -1)),
+        set_path("@state.chess.repCount", pv("int", 0)),
+        publish("en-passant-captured", "state.chess"),
+        map_path("gridX", {"tx": "@state.chess.targetX"}, copy_terms("tx")),
+        map_path("gridY", {"ty": "@state.chess.targetY"}, copy_terms("ty")),
+        map_path("position.x", {"tx": "@state.chess.targetX"}, offset_terms("tx", -3.5)),
+        map_path("position.z", {"ty": "@state.chess.targetY"}, offset_terms("ty", -3.5)),
+        unlift_action(),
+        set_path("isSelected", pv("bool", False)),
+        set_path("hasMoved", pv("bool", True)),
+        set_path("@state.chess.selectionActive", pv("bool", False)),
+        publish("move-committed", "state.chess"),
+    )
+
+
+def castle_king_action(dest_x, dest_y, castle_code):
+    return seq(
+        map_path("@state.chess.prevX", {"gx": "gridX"}, copy_terms("gx")),
+        map_path("@state.chess.prevY", {"gy": "gridY"}, copy_terms("gy")),
+        set_path("@state.chess.prevHasMoved", pv("bool", False)),
+        map_path(
+            "@state.chess.prevHasMoved",
+            {"hm": "hasMoved"},
+            copy_terms("hm"),
+        ),
+        set_path("@state.chess.castleMove", pv("int", castle_code)),
+        set_path("@state.chess.nextEnPassantFile", pv("int", -1)),
+        set_path("@state.chess.nextEnPassantTargetY", pv("int", -1)),
+        set_path("@state.chess.nextEnPassantVictimY", pv("int", -1)),
+        map_path("@state.chess.repCount", {"r": "@state.chess.repCount"}, offset_terms("r", 1)),
+        publish("castle-rook-step", "state.chess"),
+        map_path("gridX", {"tx": "@state.chess.targetX"}, copy_terms("tx")),
+        map_path("gridY", {"ty": "@state.chess.targetY"}, copy_terms("ty")),
+        map_path("position.x", {"tx": "@state.chess.targetX"}, offset_terms("tx", -3.5)),
+        map_path("position.z", {"ty": "@state.chess.targetY"}, offset_terms("ty", -3.5)),
+        unlift_action(),
+        set_path("isSelected", pv("bool", False)),
+        set_path("hasMoved", pv("bool", True)),
+        set_path("@state.chess.selectionActive", pv("bool", False)),
+        publish("move-committed", "state.chess"),
+    )
+
 
 
 def selected_mover(*extra):
@@ -748,7 +903,7 @@ def build_laws():
             compare("@state.chess.dy", 0, pv("int", 1)),
             not_of(occupied_at_target()),
         ),
-        move_action(),
+        pawn_move_action(),
     )
     add_law(
         "law-chess-pawn-w-double",
@@ -765,7 +920,7 @@ def build_laws():
             not_of(occupied_at_target()),
             not_of(occupied_at("@state.chess.selectedX", "@state.chess.midY")),
         ),
-        move_action(),
+        pawn_double_w_action(),
     )
     add_law(
         "law-chess-pawn-w-capture",
@@ -782,7 +937,28 @@ def build_laws():
             ),
             occupied_at_target("enemy"),
         ),
-        move_action(),
+        pawn_move_action(),
+    )
+    add_law(
+        "law-chess-pawn-w-en-passant",
+        "move-white-pawn-en-passant",
+        0,
+        ["square-clicked"],
+        selected_mover(
+            is_role(0),
+            compare("chessColor", 0, pv("int", 0)),
+            compare("gridY", 0, pv("int", 4)),
+            compare("@state.chess.dy", 0, pv("int", 1)),
+            compare("@state.chess.targetY", 0, pv("int", 5)),
+            compare("@state.chess.targetX", 0, operand_path="@state.chess.enPassantFile"),
+            any_of(
+                compare("@state.chess.dx", 0, pv("int", 1)),
+                compare("@state.chess.dx", 0, pv("int", -1)),
+            ),
+            compare("@state.chess.enPassantFile", 5, pv("int", 0)),
+            not_of(occupied_at_target()),
+        ),
+        en_passant_action(),
     )
     add_law(
         "law-chess-pawn-b-step",
@@ -796,7 +972,7 @@ def build_laws():
             compare("@state.chess.dy", 0, pv("int", -1)),
             not_of(occupied_at_target()),
         ),
-        move_action(),
+        pawn_move_action(),
     )
     add_law(
         "law-chess-pawn-b-double",
@@ -813,7 +989,7 @@ def build_laws():
             not_of(occupied_at_target()),
             not_of(occupied_at("@state.chess.selectedX", "@state.chess.midYBlack")),
         ),
-        move_action(),
+        pawn_double_b_action(),
     )
     add_law(
         "law-chess-pawn-b-capture",
@@ -830,7 +1006,28 @@ def build_laws():
             ),
             occupied_at_target("enemy"),
         ),
-        move_action(),
+        pawn_move_action(),
+    )
+    add_law(
+        "law-chess-pawn-b-en-passant",
+        "move-black-pawn-en-passant",
+        0,
+        ["square-clicked"],
+        selected_mover(
+            is_role(0),
+            compare("chessColor", 0, pv("int", 1)),
+            compare("gridY", 0, pv("int", 3)),
+            compare("@state.chess.dy", 0, pv("int", -1)),
+            compare("@state.chess.targetY", 0, pv("int", 2)),
+            compare("@state.chess.targetX", 0, operand_path="@state.chess.enPassantFile"),
+            any_of(
+                compare("@state.chess.dx", 0, pv("int", 1)),
+                compare("@state.chess.dx", 0, pv("int", -1)),
+            ),
+            compare("@state.chess.enPassantFile", 5, pv("int", 0)),
+            not_of(occupied_at_target()),
+        ),
+        en_passant_action(),
     )
 
     dxdy = {"dx": "@state.chess.dx", "dy": "@state.chess.dy"}
@@ -908,6 +1105,240 @@ def build_laws():
         move_action(),
     )
 
+    # Castling
+    add_law(
+        "law-chess-castle-white-kingside",
+        "castle-white-kingside",
+        0,
+        ["square-clicked"],
+        selected_mover(
+            is_role(5),
+            compare("chessColor", 0, pv("int", 0)),
+            compare("hasMoved", 0, pv("bool", False)),
+            compare("gridX", 0, pv("int", 4)),
+            compare("gridY", 0, pv("int", 0)),
+            compare("@state.chess.dx", 0, pv("int", 2)),
+            compare("@state.chess.dy", 0, pv("int", 0)),
+            for_any(
+                identity("piece-white-rook-7-0"),
+                ON_BOARD,
+                compare("hasMoved", 0, pv("bool", False)),
+            ),
+            not_of(occupied_at_const(5, 0)),
+            not_of(occupied_at_const(6, 0)),
+        ),
+        castle_king_action(6, 0, 1),
+    )
+    add_law(
+        "law-chess-castle-white-queenside",
+        "castle-white-queenside",
+        0,
+        ["square-clicked"],
+        selected_mover(
+            is_role(5),
+            compare("chessColor", 0, pv("int", 0)),
+            compare("hasMoved", 0, pv("bool", False)),
+            compare("gridX", 0, pv("int", 4)),
+            compare("gridY", 0, pv("int", 0)),
+            compare("@state.chess.dx", 0, pv("int", -2)),
+            compare("@state.chess.dy", 0, pv("int", 0)),
+            for_any(
+                identity("piece-white-rook-0-0"),
+                ON_BOARD,
+                compare("hasMoved", 0, pv("bool", False)),
+            ),
+            not_of(occupied_at_const(1, 0)),
+            not_of(occupied_at_const(2, 0)),
+            not_of(occupied_at_const(3, 0)),
+        ),
+        castle_king_action(2, 0, 2),
+    )
+    add_law(
+        "law-chess-castle-black-kingside",
+        "castle-black-kingside",
+        0,
+        ["square-clicked"],
+        selected_mover(
+            is_role(5),
+            compare("chessColor", 0, pv("int", 1)),
+            compare("hasMoved", 0, pv("bool", False)),
+            compare("gridX", 0, pv("int", 4)),
+            compare("gridY", 0, pv("int", 7)),
+            compare("@state.chess.dx", 0, pv("int", 2)),
+            compare("@state.chess.dy", 0, pv("int", 0)),
+            for_any(
+                identity("piece-black-rook-7-7"),
+                ON_BOARD,
+                compare("hasMoved", 0, pv("bool", False)),
+            ),
+            not_of(occupied_at_const(5, 7)),
+            not_of(occupied_at_const(6, 7)),
+        ),
+        castle_king_action(6, 7, 3),
+    )
+    add_law(
+        "law-chess-castle-black-queenside",
+        "castle-black-queenside",
+        0,
+        ["square-clicked"],
+        selected_mover(
+            is_role(5),
+            compare("chessColor", 0, pv("int", 1)),
+            compare("hasMoved", 0, pv("bool", False)),
+            compare("gridX", 0, pv("int", 4)),
+            compare("gridY", 0, pv("int", 7)),
+            compare("@state.chess.dx", 0, pv("int", -2)),
+            compare("@state.chess.dy", 0, pv("int", 0)),
+            for_any(
+                identity("piece-black-rook-0-7"),
+                ON_BOARD,
+                compare("hasMoved", 0, pv("bool", False)),
+            ),
+            not_of(occupied_at_const(1, 7)),
+            not_of(occupied_at_const(2, 7)),
+            not_of(occupied_at_const(3, 7)),
+        ),
+        castle_king_action(2, 7, 4),
+    )
+
+    add_law(
+        "law-chess-castle-rook-wk",
+        "reposition-white-kingside-rook",
+        0,
+        ["castle-rook-step"],
+        all_of(
+            identity("piece-white-rook-7-0"),
+            compare("@state.chess.castleMove", 0, pv("int", 1)),
+        ),
+        seq(
+            set_path("gridX", pv("int", 5)),
+            set_path("gridY", pv("int", 0)),
+            set_path("position.x", pv("double", 1.5)),
+            set_path("position.z", pv("double", -3.5)),
+            set_path("hasMoved", pv("bool", True)),
+        ),
+    )
+    add_law(
+        "law-chess-castle-rook-wq",
+        "reposition-white-queenside-rook",
+        0,
+        ["castle-rook-step"],
+        all_of(
+            identity("piece-white-rook-0-0"),
+            compare("@state.chess.castleMove", 0, pv("int", 2)),
+        ),
+        seq(
+            set_path("gridX", pv("int", 3)),
+            set_path("gridY", pv("int", 0)),
+            set_path("position.x", pv("double", -0.5)),
+            set_path("position.z", pv("double", -3.5)),
+            set_path("hasMoved", pv("bool", True)),
+        ),
+    )
+    add_law(
+        "law-chess-castle-rook-bk",
+        "reposition-black-kingside-rook",
+        0,
+        ["castle-rook-step"],
+        all_of(
+            identity("piece-black-rook-7-7"),
+            compare("@state.chess.castleMove", 0, pv("int", 3)),
+        ),
+        seq(
+            set_path("gridX", pv("int", 5)),
+            set_path("gridY", pv("int", 7)),
+            set_path("position.x", pv("double", 1.5)),
+            set_path("position.z", pv("double", 3.5)),
+            set_path("hasMoved", pv("bool", True)),
+        ),
+    )
+    add_law(
+        "law-chess-castle-rook-bq",
+        "reposition-black-queenside-rook",
+        0,
+        ["castle-rook-step"],
+        all_of(
+            identity("piece-black-rook-0-7"),
+            compare("@state.chess.castleMove", 0, pv("int", 4)),
+        ),
+        seq(
+            set_path("gridX", pv("int", 3)),
+            set_path("gridY", pv("int", 7)),
+            set_path("position.x", pv("double", -0.5)),
+            set_path("position.z", pv("double", 3.5)),
+            set_path("hasMoved", pv("bool", True)),
+        ),
+    )
+
+    add_law(
+        "law-chess-castle-rook-revert-wk",
+        "revert-white-kingside-rook",
+        0,
+        ["move-reverted"],
+        all_of(
+            identity("piece-white-rook-7-0"),
+            compare("@state.chess.castleMove", 0, pv("int", 1)),
+        ),
+        seq(
+            set_path("gridX", pv("int", 7)),
+            set_path("gridY", pv("int", 0)),
+            set_path("position.x", pv("double", 3.5)),
+            set_path("position.z", pv("double", -3.5)),
+            set_path("hasMoved", pv("bool", False)),
+        ),
+    )
+    add_law(
+        "law-chess-castle-rook-revert-wq",
+        "revert-white-queenside-rook",
+        0,
+        ["move-reverted"],
+        all_of(
+            identity("piece-white-rook-0-0"),
+            compare("@state.chess.castleMove", 0, pv("int", 2)),
+        ),
+        seq(
+            set_path("gridX", pv("int", 0)),
+            set_path("gridY", pv("int", 0)),
+            set_path("position.x", pv("double", -3.5)),
+            set_path("position.z", pv("double", -3.5)),
+            set_path("hasMoved", pv("bool", False)),
+        ),
+    )
+    add_law(
+        "law-chess-castle-rook-revert-bk",
+        "revert-black-kingside-rook",
+        0,
+        ["move-reverted"],
+        all_of(
+            identity("piece-black-rook-7-7"),
+            compare("@state.chess.castleMove", 0, pv("int", 3)),
+        ),
+        seq(
+            set_path("gridX", pv("int", 7)),
+            set_path("gridY", pv("int", 7)),
+            set_path("position.x", pv("double", 3.5)),
+            set_path("position.z", pv("double", 3.5)),
+            set_path("hasMoved", pv("bool", False)),
+        ),
+    )
+    add_law(
+        "law-chess-castle-rook-revert-bq",
+        "revert-black-queenside-rook",
+        0,
+        ["move-reverted"],
+        all_of(
+            identity("piece-black-rook-0-7"),
+            compare("@state.chess.castleMove", 0, pv("int", 4)),
+        ),
+        seq(
+            set_path("gridX", pv("int", 0)),
+            set_path("gridY", pv("int", 7)),
+            set_path("position.x", pv("double", -3.5)),
+            set_path("position.z", pv("double", 3.5)),
+            set_path("hasMoved", pv("bool", False)),
+        ),
+    )
+
     add_law(
         "law-chess-capture",
         "unmake-captured-piece",
@@ -918,6 +1349,47 @@ def build_laws():
             ON_BOARD,
             compare("gridX", 0, operand_path="@state.chess.targetX"),
             compare("gridY", 0, operand_path="@state.chess.targetY"),
+            compare("chessColor", 1, operand_path="@state.chess.turn"),
+        ),
+        seq(
+            set_path("onBoard", pv("bool", False)),
+            set_path("capturedThisMove", pv("bool", True)),
+            map_path(
+                "capturedSlot",
+                {"n": "@state.chess.nextCapturedSlot"},
+                copy_terms("n"),
+            ),
+            map_path(
+                "position.x",
+                {"c": "chessColor"},
+                [
+                    {"c": 5.6, "factors": {}},
+                    {"c": -11.2, "factors": {"c": 1.0}},
+                ],
+            ),
+            map_path(
+                "position.z",
+                {"s": "capturedSlot"},
+                offset_terms("s", -3.5),
+            ),
+            map_path(
+                "@state.chess.nextCapturedSlot",
+                {"n": "@state.chess.nextCapturedSlot"},
+                offset_terms("n", 1),
+            ),
+        ),
+    )
+
+    add_law(
+        "law-chess-capture-en-passant",
+        "unmake-en-passant-victim",
+        0,
+        ["en-passant-captured"],
+        all_of(
+            IS_PIECE,
+            ON_BOARD,
+            compare("gridX", 0, operand_path="@state.chess.enPassantFile"),
+            compare("gridY", 0, operand_path="@state.chess.enPassantVictimY"),
             compare("chessColor", 1, operand_path="@state.chess.turn"),
         ),
         seq(
@@ -1281,6 +1753,13 @@ def build_laws():
             ),
             set_path("selectedX", pv("int", -1)),
             set_path("selectedY", pv("int", -1)),
+            set_path("castleMove", pv("int", 0)),
+            map_path("enPassantFile", {"f": "nextEnPassantFile"}, copy_terms("f")),
+            map_path("enPassantTargetY", {"y": "nextEnPassantTargetY"}, copy_terms("y")),
+            map_path("enPassantVictimY", {"y": "nextEnPassantVictimY"}, copy_terms("y")),
+            set_path("nextEnPassantFile", pv("int", -1)),
+            set_path("nextEnPassantTargetY", pv("int", -1)),
+            set_path("nextEnPassantVictimY", pv("int", -1)),
             publish("turn-changed", "state.chess"),
         ),
         scope=0,
@@ -1321,6 +1800,102 @@ def build_laws():
             compare("gridY", 0, pv("int", 0)),
         ),
         set_path("chessRole", pv("int", 4)),
+    )
+
+    add_law(
+        "law-chess-promote-white-event",
+        "promote-white-pawn-on-turn",
+        0,
+        ["turn-changed"],
+        all_of(
+            IS_PIECE,
+            ON_BOARD,
+            is_role(0),
+            compare("chessColor", 0, pv("int", 0)),
+            compare("gridY", 0, pv("int", 7)),
+        ),
+        seq(
+            set_path("chessRole", pv("int", 4)),
+            set_path("restY", pv("double", 0.42)),
+        ),
+    )
+    add_law(
+        "law-chess-promote-black-event",
+        "promote-black-pawn-on-turn",
+        0,
+        ["turn-changed"],
+        all_of(
+            IS_PIECE,
+            ON_BOARD,
+            is_role(0),
+            compare("chessColor", 0, pv("int", 1)),
+            compare("gridY", 0, pv("int", 0)),
+        ),
+        seq(
+            set_path("chessRole", pv("int", 4)),
+            set_path("restY", pv("double", 0.42)),
+        ),
+    )
+
+    add_law(
+        "law-chess-threefold-draw",
+        "draw-on-threefold-repetition",
+        0,
+        ["turn-changed"],
+        all_of(
+            identity("state.chess"),
+            compare("repCount", 5, pv("int", 6)),
+            compare("gameOver", 0, pv("bool", False)),
+        ),
+        seq(
+            set_path("gameOver", pv("bool", True)),
+            set_path("result", pv("int", 2)),
+            set_path("isDraw", pv("bool", True)),
+            set_path("drawReason", pv("string", "Threefold repetition")),
+        ),
+        scope=0,
+    )
+
+    add_law(
+        "law-chess-stalemate-draw",
+        "draw-on-stalemate-or-insufficient",
+        0,
+        ["turn-changed"],
+        all_of(
+            identity("state.chess"),
+            compare("gameOver", 0, pv("bool", False)),
+            not_of(for_any(
+                IS_PIECE,
+                ON_BOARD,
+                compare("chessRole", 1, pv("int", 5)),
+            )),
+        ),
+        seq(
+            set_path("gameOver", pv("bool", True)),
+            set_path("result", pv("int", 2)),
+            set_path("isDraw", pv("bool", True)),
+            set_path("drawReason", pv("string", "Stalemate / Insufficient material")),
+        ),
+        scope=0,
+    )
+
+    add_law(
+        "law-chess-claim-stalemate",
+        "claim-stalemate-draw",
+        0,
+        ["claim-stalemate"],
+        all_of(
+            identity("state.chess"),
+            compare("gameOver", 0, pv("bool", False)),
+            compare("inCheck", 0, pv("bool", False)),
+        ),
+        seq(
+            set_path("gameOver", pv("bool", True)),
+            set_path("result", pv("int", 2)),
+            set_path("isDraw", pv("bool", True)),
+            set_path("drawReason", pv("string", "Stalemate")),
+        ),
+        scope=0,
     )
 
     # Idle placement is constant because move/capture already Map position
@@ -1448,6 +2023,16 @@ def build_world():
             "selectionActive": pv("bool", False),
             "dx": pv("int", 0),
             "dy": pv("int", 0),
+            "castleMove": pv("int", 0),
+            "enPassantFile": pv("int", -1),
+            "enPassantTargetY": pv("int", -1),
+            "enPassantVictimY": pv("int", -1),
+            "nextEnPassantFile": pv("int", -1),
+            "nextEnPassantTargetY": pv("int", -1),
+            "nextEnPassantVictimY": pv("int", -1),
+            "repCount": pv("int", 0),
+            "isDraw": pv("bool", False),
+            "drawReason": pv("string", ""),
             "prevX": pv("int", -1),
             "prevY": pv("int", -1),
             "prevHasMoved": pv("bool", False),
@@ -1640,12 +2225,15 @@ def main():
     root = Path(__file__).resolve().parents[1]
     session, zone = build_world()
     world_path = root / "saves" / "worlds" / "chess_app.json"
+    ecform_path = root / "saves" / "worlds" / "chess_app.ecform"
     zone_path = root / "saves" / "zones" / ZONE_ID / "zone.json"
     world_path.parent.mkdir(parents=True, exist_ok=True)
     zone_path.parent.mkdir(parents=True, exist_ok=True)
     world_path.write_text(json.dumps(session, indent=2) + "\n")
+    ecform_path.write_text(json.dumps(session, indent=2) + "\n")
     zone_path.write_text(json.dumps(zone, indent=2) + "\n")
     print(f"Authored {world_path}")
+    print(f"Authored {ecform_path}")
     print(f"Authored {zone_path}")
     print(f"  zone objects: {len(zone['world']['objects'])}")
     print(f"  pieces: {sum(1 for o in zone['world']['objects'] if o['objectID'].startswith('piece-'))}")
