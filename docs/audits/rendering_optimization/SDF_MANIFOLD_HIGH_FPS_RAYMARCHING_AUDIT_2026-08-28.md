@@ -1,6 +1,6 @@
 # Audit — High-FPS Complex Round Manifold SDF Raymarching & Field Acceleration — 2026-08-28
 
-**Document:** `docs/audits/SDF_MANIFOLD_HIGH_FPS_RAYMARCHING_AUDIT_2026-08-28.md`  
+**Document:** `docs/audits/rendering_optimization/SDF_MANIFOLD_HIGH_FPS_RAYMARCHING_AUDIT_2026-08-28.md`  
 **Reporter / Requester:** Zach (session 2026-08-28 22:37 PDT)  
 **Author:** Antigravity (Gemini 3.7 Flash), session `fb329b04-fd0d-42e8-b6c8-8f30c3e28deb`  
 **Scope:** `src/Singularity/Screen/WebGPU/SdfWgsl.cpp`, `WebGpuRenderer.cpp`, `saves/zones/NoiseFloorWorld/zone.json`, OntoMath AST evaluation, GPU raymarching pipeline, and comparison to frontier real-time SDF engines (*Claybook*, *Dreams*, UE5 Lumen Mesh SDFs).

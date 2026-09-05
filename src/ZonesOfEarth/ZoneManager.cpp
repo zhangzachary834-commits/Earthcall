@@ -725,16 +725,8 @@ nlohmann::json ZoneManager::buildSaveJson(const SaveContext& ctx) const {
         if (kind != q.end()) ref["kind"] = kind->second;
         zoneRefs.push_back(std::move(ref));
     }
-    j["zones"] = zonesJson;
-    j["zoneRefs"] = zoneRefs;
-    if (ctx.ourverse) {
-        j["ourverse"] = ourverseToJson(*ctx.ourverse);
-    }
-    if (ctx.person) {
-        // Semantic Person root. Legacy playerBody is reader-only below in
-        // loadState; current sessions never duplicate this Body payload.
-        j["person"] = personToJson(*ctx.person);
-    }
+    writeSemanticRoots(j, std::move(zonesJson), std::move(zoneRefs),
+                       ctx.person, ctx.ourverse);
 
     j["materials"] = materials.toJson();
     j["categories"] = categories.toJson();
@@ -922,6 +914,17 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
         // saves/worlds/ourverse.json (0 bytes) and .ecsave twins were
         // offered as independent worlds and a failed read still replaced
         // nothing — or, worse, a `{}` would have wiped every Zone.
+        std::string semanticRootsError;
+        const SemanticRootsReadResult semanticRoots = materializeSemanticRoots(j, &semanticRootsError);
+        if (semanticRoots == SemanticRootsReadResult::Malformed) {
+            _saveLoad.lastLoadReport = "REFUSED: '" + filename +
+                "' advertises malformed semantic roots: " + semanticRootsError +
+                ". The current world was not replaced.";
+            std::cerr << "[load] " << _saveLoad.lastLoadReport << "\n";
+            logIo("LOAD end:   " + _saveLoad.lastLoadReport);
+            return;
+        }
+
         const bool looksLikeWorld =
             j.is_object() &&
             ((j.contains("zones") && j["zones"].is_array()) ||

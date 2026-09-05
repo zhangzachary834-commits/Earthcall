@@ -2,6 +2,7 @@
 // its Zone/Formations endpoints exist. No Zone owns the root graph.
 
 #include "Singularity/Storage/Serialization/ZonesOfEarth/OurverseSerialization.hpp"
+#include "Singularity/Storage/Serialization/SessionSemanticRoots.hpp"
 #include "Singularity/Input/Mouse/MouseHandler.hpp"
 #include "Singularity/Language/LanguageSystem.hpp"
 #include "Singularity/Screen/Camera.hpp"
@@ -43,10 +44,16 @@ int main() {
     saveContext.ourverse = &source;
     saveContext.worldTime = &worldTime;
     const nlohmann::json session = sourceZones.buildSaveJson(saveContext);
-    assert(session.contains("ourverse"));
-    assert(session.contains("person"));
-    assert(session["person"]["displayName"] == person.getDisplayName());
-    assert(session["ourverse"]["gatheringZone"] == gathering.getIdentifier());
+    assert(session.contains(kSemanticRootsKey));
+    const auto& roots = session[kSemanticRootsKey];
+    assert(roots["format"] == kSemanticRootsFormat);
+    assert(roots["version"] == kSemanticRootsVersion);
+    assert(roots.contains("ourverse"));
+    assert(roots.contains("person"));
+    assert(!session.contains("person"));
+    assert(!session.contains("ourverse"));
+    assert(roots["person"]["displayName"] == person.getDisplayName());
+    assert(roots["ourverse"]["gatheringZone"] == gathering.getIdentifier());
 
     const nlohmann::json saved = ourverseToJson(source);
     assert(saved.value("identifier", std::string{}) == "Ourverse");

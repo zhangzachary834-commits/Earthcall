@@ -90,6 +90,19 @@ void renderPerformanceMetricsWindow(bool* open, Core::Engine* engine) {
         ImGui::Text("Pipeline Switches: %u", stats.pipelineSwitches);
         ImGui::Text("VRAM Allocations: %u", stats.bufferSuballocations);
         ImGui::Text("VRAM Uniform Bytes: %zu", stats.uniformBytesWritten);
+        if (stats.gpuMainPassTimingSupported && stats.gpuMainPassTimingValid) {
+            ImGui::Text("GPU main render pass (delayed): %.2f ms", stats.gpuMainPassMs);
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip(
+                    "GPU timestamp-query result from an earlier submitted frame. It brackets\n"
+                    "the main render pass before ImGui's overlay; the delay avoids blocking\n"
+                    "the queue merely to measure it.");
+            }
+        } else if (stats.gpuMainPassTimingSupported) {
+            ImGui::TextDisabled("GPU main render pass: waiting for first timestamp sample");
+        } else {
+            ImGui::TextDisabled("GPU main render pass: timestamps unsupported by this adapter");
+        }
 
         // The raymarcher's cost is very close to linear in PIXELS and nothing
         // else — measured 2026-08-31 on the Perlin floor at one fixed horizon
@@ -129,8 +142,8 @@ void renderPerformanceMetricsWindow(bool* open, Core::Engine* engine) {
                         "Native Metal parity found a grazing-root mismatch in DDA traversal,\n"
                         "so this optimization is suspended rather than allowed to erase a\n"
                         "rendered surface. The Perlin floor reads p.y and was already on\n"
-                        "the generic exact marcher. The timing below is CPU wall-clock,\n"
-                        "not a GPU execution timestamp.");
+                        "the generic exact marcher. Engine::tick timing remains CPU\n"
+                        "wall-clock; an available GPU timestamp is shown separately above.");
                 }
                 ImGui::Checkbox("Wireframe (@screen-channel.wireframe)", &sc->wireframe);
             }
@@ -158,7 +171,8 @@ void renderPerformanceMetricsWindow(bool* open, Core::Engine* engine) {
             ImGui::SetTooltip(
                 "This is not a GPU execution timestamp. It includes command recording\n"
                 "plus any blocking surface-acquisition or queue-submit work observed\n"
-                "by the main thread. GPU timestamps are not available in this build.");
+                "by the main thread. If this adapter supports timestamp queries, the GPU\n"
+                "main-render-pass sample above is the separate execution measurement.");
         }
         ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "    |- Command recording:     %6.2f ms", actual_3d);
         ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "    |- Surface acquire wait:  %6.2f ms", g_frameTimings.wait_surface_ms);

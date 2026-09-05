@@ -146,7 +146,7 @@ speed against the reference and stops; if that number will not hold still, nothi
 test measures will either. Pass a save path as the first argument to measure a different
 world (the baseline is only ever written from the default one).
 
-What it found on its first run is written up in `docs/audits/2026-08-24_frame_lag_probe.md`
+What it found on its first run is written up in `docs/audits/rendering_optimization/2026-08-24_frame_lag_probe.md`
 and tracked in the to-do list's **Performance** section: `Physics::updateBodies` is all-pairs
 with no broadphase, so `Zone::update` costs 1.1 / 3.3 / 11.1 / 40.7 ms at 64 / 128 / 256 / 512
 objects — a fitted `n^1.75`. The chess world itself is fine at 35 objects (6-7 ms simulation

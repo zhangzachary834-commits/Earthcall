@@ -213,6 +213,7 @@ click-through (Zach, 2026-08-21) that retired the stagnant "World" bag.
 | Key | Holds | Section |
 |---|---|---|
 | `saveFormat` | `"zone-identity-v1"` when the file was written by this path | §4f |
+| `semanticRoots` | versioned Person, Zone/Home, and Ourverse root records; authoritative when present | §4f |
 | `zoneRefs[]` | `{identifier, kind?}` — the working set, pointing at the Zone store | §4f |
 | `currentZoneId` | identifier of the active Zone (preferred over the index) | §4f |
 | `zones[]` | dual-write snapshot of each Zone (legacy readers; identity is the store) | §4a, §4b, §4f |
@@ -223,11 +224,11 @@ click-through (Zach, 2026-08-21) that retired the stagnant "World" bag.
 | `transferPolicy` | the Singularity gate state | — |
 | `mathFunctions` | the OntoMath `FunctionRegistry` | — |
 | `materials` | Material beings | — |
-| `person`, `cameraPos`, `cameraFront`, `cameraUp`, `yaw`, `pitch` | semantic Person root plus the Person's situated view | — |
+| `cameraPos`, `cameraFront`, `cameraUp`, `yaw`, `pitch` | the Person's situated view; their semantic record lives in `semanticRoots.person` | — |
 | `currentZone`, `currentColor`, `currentTool`, `worldMode`, `worldPhysics`, `flying`, `worldTime` | session state | — |
 
 `playerBody` is accepted only as a legacy input key. Current writers emit the Body through
-the `person` root and must not recreate the duplicate payload.
+the `semanticRoots.person` root and must not recreate a duplicate payload.
 
 **What is deliberately absent:** first-mover laws. They are skipped on write and
 *preserved across load* rather than restored — `LawManager::loadFromJson` pulls them

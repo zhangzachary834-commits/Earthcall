@@ -761,6 +761,7 @@ fn fs(in: VSOut) -> FSOut {
     // this ray, so this stays right under any invertible model transform,
     // non-uniform scale included.
     let farField = u.limits.x * length(rdField);
+    let isHeightfield = inst.misc.x > 0.5;
     let eps     = inst.misc.y;
     let damping = inst.misc.w;
     let box     = rayAabb(ro, rd, inst.extents.xyz);
@@ -784,25 +785,31 @@ fn fs(in: VSOut) -> FSOut {
     let maxDist = min(min(box.y, t + inst.misc.z), farField);
 
     // Min/max heightfield grid skip (Phase C): for a proven heightfield
-    // (inst.heightGridDimX/Z > 0, wired only from geom::isHeightfieldExpr),
-    // fast-forward t past any stretch the grid proves cannot contain the
-    // surface, or discard the whole fragment on a proven miss -- BEFORE
-    // paying for the fine per-step marcher below, which this does not modify.
-    // Discarding outright (rather than jumping t to maxDist and letting the
-    // loop below exit on its own) is sound only because Object::drawFieldModel
-    // -- the sole caller that ever sets heightGridDimX/Z nonzero -- always
-    // passes fieldNode=nullptr, so fieldEval is a hardcoded `return 0.0` for
-    // every grid-eligible object today: there is no volumetric accumulation
-    // this skip could drop. If a heightfield object is ever given a density
-    // field too, this must jump t forward instead of discarding.
-    if (inst.heightGridDimX > 0u || damping < 0.5) {
+    // (inst.misc.x > 0.5, with dimensions nonzero when traversal is enabled),
+    // fast-forward t past a stretch the grid proves cannot contain the surface
+    // BEFORE paying for the fine per-step marcher below, which this does not
+    // modify. A whole-ray DDA miss deliberately falls open to that marcher;
+    // see the guarded hand-off below.
+    if (inst.heightGridDimX > 0u || (isHeightfield && damping < 0.5)) {
         let adv = heightGridAdvance(inst, ro, rd, t, maxDist);
-        if (adv.y < 0.5) { discard; }
-        t = adv.x;
+        if (adv.y >= 0.5) {
+            // DDA cell ownership and the fine marcher's hit test use finite f32
+            // precision. Resume one of the marcher's own distance-scaled hit
+            // tolerances before the candidate boundary: the preceding cells are
+            // proved empty, so this cannot add a false hit, and it prevents a root
+            // on the shared boundary from belonging to neither traversal.
+            let boundaryEps = max(eps, adv.x * 0.001);
+            t = max(t, adv.x - boundaryEps);
+        }
+        // A full-ray DDA miss once disagreed with the generic renderer at
+        // grazing boundaries. Until that proof is independently repaired and
+        // covered, do not discard: leave `t` at the original AABB entry and let
+        // the exact generic marcher decide. The grid may accelerate a candidate
+        // hand-off, never become an authority to erase a rendered root.
     }
 
     // Heightfield planar leap: If ray starts above the upper extent and points down, leap to top plane in 1 step
-    if ((inst.heightGridDimX > 0u || damping < 0.5) && rd.y < -1e-4 && (ro.y + rd.y * t) > inst.extents.y) {
+    if ((isHeightfield && damping < 0.5) && rd.y < -1e-4 && (ro.y + rd.y * t) > inst.extents.y) {
         let planeT = (inst.extents.y - ro.y) / rd.y;
         t = max(t, planeT);
     }
@@ -822,7 +829,7 @@ fn fs(in: VSOut) -> FSOut {
         let p = ro + rd * t;
         
         // Analytical early-exit: If ray is above maximum height and traveling upwards, it can never hit ground
-        if ((inst.heightGridDimX > 0u || damping < 0.5) && rd.y > 1e-4 && p.y > inst.extents.y) {
+        if (isHeightfield && rd.y > 1e-4 && p.y > inst.extents.y) {
             break;
         }
 

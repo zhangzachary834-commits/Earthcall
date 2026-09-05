@@ -17,6 +17,7 @@
 #include "Singularity/Input/Mouse/MouseHandler.hpp"
 #include "Singularity/Screen/Camera.hpp"
 #include "Singularity/Storage/SaveSystem.hpp"
+#include "Singularity/Storage/Serialization/SessionSemanticRoots.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/SaveContext.hpp"
 #include "ZonesOfEarth/HomesOfEarth/Home.hpp"
@@ -144,17 +145,21 @@ int main() {
         }
         check(zoneObjs == 3, "zone world JSON also keeps all three spawns");
         check(j.value("currentZone", 99) == 0, "saved currentZone is the Sanctum");
-        check(j.contains("person") && j["person"].contains("body"),
-              "new sessions write the semantic Person root");
+        check(j.contains(kSemanticRootsKey) &&
+                  j[kSemanticRootsKey].contains("person") &&
+                  j[kSemanticRootsKey]["person"].contains("body"),
+              "new sessions write the semantic Person root envelope");
+        check(!j.contains("person"),
+              "current sessions do not duplicate the Person root at top level");
         check(!j.contains("playerBody"),
               "new sessions retire the duplicate legacy playerBody writer");
 
         // Old files carry Body directly at the session root. The current
         // reader must keep this bridge until every authored save predates it.
         nlohmann::json legacy = j;
-        legacy["playerBody"] = legacy["person"]["body"];
+        legacy["playerBody"] = legacy[kSemanticRootsKey]["person"]["body"];
         legacy["playerBody"]["height"] = 2.75f;
-        legacy.erase("person");
+        legacy.erase(kSemanticRootsKey);
         std::ofstream legacyOut(legacyEcformPath);
         legacyOut << legacy.dump(2);
     }

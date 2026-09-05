@@ -135,7 +135,7 @@ void Ourverse::registerMetalaws(LawManager& laws) {
         // was capping the frame rate at 20-40 fps; disabling them let it reach
         // 200-600 (or 60, vsync-bound). Rendering was never the cost -- a whole
         // optimization campaign chased this, see
-        // docs/audits/RENDERING_OPTIMIZATION_CAMPAIGN_REVIEW_2026-08-31.md.
+        // docs/audits/rendering_optimization/RENDERING_OPTIMIZATION_CAMPAIGN_REVIEW_2026-08-31.md.
         //
         // This sets the DEFAULT only. A world that recorded a choice in its
         // firstMoverEnabled map still wins on load, in either direction: the
@@ -150,4 +150,3 @@ void Ourverse::registerMetalaws(LawManager& laws) {
     addIfMissing("ourverse-gathering-unowned", "ourverse: gathering unowned");
     addIfMissing("ourverse-filaments-mutual", "ourverse: filaments are mutual");
 }
-

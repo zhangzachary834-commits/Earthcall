@@ -47,6 +47,12 @@ public:
         uint32_t bufferSuballocations = 0;
         uint32_t pipelineSwitches = 0;
         uint32_t cachedMeshesCount = 0;
+        // Kernel timing, resolved asynchronously from optional GPU timestamp
+        // queries. It covers the main render pass only (before the ImGui overlay)
+        // and describes an earlier submitted frame, never a CPU wall-clock span.
+        bool     gpuMainPassTimingSupported = false;
+        bool     gpuMainPassTimingValid = false;
+        float    gpuMainPassMs = 0.0f;
     };
 
     const FrameStats& frameStats() const { return _frameStats; }

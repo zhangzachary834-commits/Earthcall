@@ -6,6 +6,8 @@
 
 #include "Singularity/Screen/WebGPU/WebGpuContext.hpp"
 
+#include <webgpu/wgpu.h>
+
 #import <Cocoa/Cocoa.h>
 #import <QuartzCore/CAMetalLayer.h>
 
@@ -77,17 +79,44 @@ WindowContext createWindowContext(GLFWwindow* win) {
     if (!ar.adapter) { std::fprintf(stderr, "[WebGPU] no compatible adapter\n"); return ctx; }
     ctx.adapter = ar.adapter;
 
+    // GPU timestamps are optional instrumentation. Request the native encoder
+    // write capability only when the presenting adapter advertises both pieces;
+    // a rejection falls back to the ordinary visual device below.
+    WGPUDeviceDescriptor dd = {};
+    const WGPUFeatureName timestampFeatures[] = {
+        WGPUFeatureName_TimestampQuery,
+        static_cast<WGPUFeatureName>(WGPUNativeFeature_TimestampQueryInsideEncoders),
+    };
+    const bool canTimestamp =
+        wgpuAdapterHasFeature(ctx.adapter, WGPUFeatureName_TimestampQuery) &&
+        wgpuAdapterHasFeature(
+            ctx.adapter,
+            static_cast<WGPUFeatureName>(WGPUNativeFeature_TimestampQueryInsideEncoders));
+    if (canTimestamp) {
+        dd.requiredFeatureCount = 2;
+        dd.requiredFeatures = timestampFeatures;
+    }
+
+    const bool requestedTimestampQueries = dd.requiredFeatureCount != 0;
     DeviceResult dr;
     WGPURequestDeviceCallbackInfo dcb = {};
     dcb.mode = WGPUCallbackMode_AllowProcessEvents;
     dcb.callback = onDevice;
     dcb.userdata1 = &dr;
-    wgpuAdapterRequestDevice(ctx.adapter, nullptr, dcb);
+    wgpuAdapterRequestDevice(ctx.adapter, dd.requiredFeatureCount ? &dd : nullptr, dcb);
     while (!dr.done) wgpuInstanceProcessEvents(ctx.instance);
+    const bool timestampRequestAccepted =
+        dd.requiredFeatureCount != 0 && dr.device != nullptr;
+    if (!dr.device && dd.requiredFeatureCount) {
+        dr = {};
+        wgpuAdapterRequestDevice(ctx.adapter, nullptr, dcb);
+        while (!dr.done) wgpuInstanceProcessEvents(ctx.instance);
+    }
     if (!dr.device) { std::fprintf(stderr, "[WebGPU] device request failed\n"); return ctx; }
 
     ctx.device = dr.device;
     ctx.queue = wgpuDeviceGetQueue(ctx.device);
+    ctx.timestampQueries = requestedTimestampQueries && timestampRequestAccepted;
     return ctx;
 }
 

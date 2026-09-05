@@ -17,6 +17,7 @@
 #include "Singularity/Screen/WebGPU/SdfWgsl.hpp"
 
 #include <webgpu/webgpu.h>
+#include <array>
 #include <glm/glm.hpp>
 #include <unordered_map>
 #include <functional>
@@ -237,7 +238,7 @@ private:
 
     // Window surface, when running live (null for offscreen/tests).
     WGPUSurface  _surface  = nullptr;
-    WGPUInstance _instance = nullptr;
+    WGPUInstance _instance = nullptr; // surface lifecycle and async timestamp maps
     // The surface texture acquired for THIS frame. Held from beginFrame until
     // present() so an overlay pass can run between them.
     WGPUTexture     _surfaceTex  = nullptr;
@@ -249,6 +250,34 @@ private:
     glm::mat4 _viewProj{1.0f};
     glm::mat4 _model{1.0f};
     glm::vec3 _eyePos{0.0f};
+
+    // Optional execution timing. Query writes bracket the main command encoder's
+    // render pass; each result is copied into a small readback ring and consumed
+    // on a later frame. That delay is intentional: waiting here would recreate
+    // the queue stall this instrumentation exists to distinguish.
+    struct GpuTimestampSlot {
+        WGPUBuffer resolve = nullptr;
+        WGPUBuffer readback = nullptr;
+        bool mapPending = false;
+        bool mapReady = false;
+        WGPUMapAsyncStatus mapStatus = WGPUMapAsyncStatus_Error;
+    };
+    static constexpr size_t kGpuTimestampReadbackSlots = 4;
+    WGPUQuerySet _gpuTimestampQuerySet = nullptr;
+    std::array<GpuTimestampSlot, kGpuTimestampReadbackSlots> _gpuTimestampSlots{};
+    bool _gpuTimestampQueriesEnabled = false;
+    float _gpuTimestampPeriodNs = 0.0f;
+    float _latestGpuMainPassMs = 0.0f;
+    bool _hasGpuMainPassTiming = false;
+    int _timestampSlotForFrame = -1;
+    size_t _nextTimestampSlot = 0;
+    bool initGpuTimestampQueries(bool deviceCapability);
+    void releaseGpuTimestampQueries();
+    void collectGpuTimestampResults();
+    void beginGpuTimestampFrame();
+    void endGpuTimestampFrame();
+    static void onGpuTimestampMap(WGPUMapAsyncStatus status, WGPUStringView message,
+                                  void* userdata1, void* userdata2);
 
     // Resources created per draw must outlive the submit; released in endFrame.
     std::vector<WGPUBuffer>      _frameBuffers;

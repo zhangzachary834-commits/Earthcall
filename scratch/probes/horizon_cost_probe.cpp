@@ -17,9 +17,12 @@
 namespace { constexpr uint32_t W=512,H=512; struct MapR{bool done=false;};
 void onMap(WGPUMapAsyncStatus,WGPUStringView,void*u,void*){static_cast<MapR*>(u)->done=true;} }
 int main(int argc, char** argv){
-    // A/B toggle for controlled before/after comparison on one machine state:
-    // `--no-grid` disables Phase C's height grid, reproducing the unmodified
-    // marcher's cost in the SAME binary/process as the default (grid-on) run.
+    // A/B toggle retained only to exercise the renderer's optional cache-pointer
+    // boundary. It is NOT a Perlin acceleration switch: the saved expression
+    // reads p.y inside noise, so isHeightfieldExpr correctly refuses its grid;
+    // native parity also quarantined DDA traversal for every expression until
+    // its grazing-root proof is repaired. `--no-grid` therefore changes neither
+    // the saved field's path nor its meaning.
     bool gridEnabled = true;
     for (int i = 1; i < argc; ++i) if (std::string(argv[i]) == "--no-grid") gridEnabled = false;
     std::setvbuf(stdout,nullptr,_IONBF,0);
@@ -47,13 +50,11 @@ int main(int argc, char** argv){
         const glm::mat4 proj=glm::perspectiveZO(glm::radians(60.f),1.f,0.1f,1000.f);
         const glm::mat4 viewM=glm::lookAt(eye,target,glm::vec3(0,1,0));
         RenderMaterial mat; mat.baseColor=glm::vec3(0.3f,0.7f,0.3f);
-        // Min/max heightfield grid (Phase C): this probe calls WebGpuRenderer
-        // directly, bypassing Object::drawFieldModel -- the ONLY call site that
-        // otherwise builds and passes one -- so without this, the probe would
-        // silently exercise the unmodified marcher no matter what this phase
-        // changed. Same resolution derivation Object::rebuildHeightGrid uses.
-        // Empty (dimX=0) for the trivial "y" field, which is correct: a bare
-        // ValueLeaf is not the Sub(y,h) pattern, so it stays a control, unaffected.
+        // This direct renderer probe builds the same optional cache an object
+        // would pass. For the saved Perlin field it is deliberately empty: the
+        // AST reads ambient y through p, therefore it is not y-h(x,z). Keeping
+        // the calculation here verifies the structural eligibility boundary;
+        // it does not turn an empirical or syntactic approximation into a skip.
         geom::HeightGrid heightGrid;
         const OntoMath::MathNode* h = nullptr;
         if (geom::isHeightfieldExpr(field, &h) && h) {

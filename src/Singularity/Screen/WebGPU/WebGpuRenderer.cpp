@@ -202,8 +202,14 @@ WGPURenderPipeline makeFlatPipeline(WGPUDevice dev, WGPUPipelineLayout layout,
 bool WebGpuRenderer::init(const wgpu::Device& gpu, WGPUTextureFormat colorFormat) {
     _device = gpu.device;
     _queue  = gpu.queue;
+    _instance = gpu.instance;
     _colorFormat = colorFormat;
     if (!_device || !_queue) return false;
+
+    // This is observational kernel infrastructure only. Failure or absence is
+    // deliberately non-fatal: Earthcall must render identically without a GPU
+    // timestamp extension, and F3 will say that no execution sample is present.
+    initGpuTimestampQueries(gpu.timestampQueries);
 
     WGPUShaderSourceWGSL src = {};
     src.chain.sType = WGPUSType_ShaderSourceWGSL;
@@ -508,6 +514,7 @@ WGPURenderPipeline WebGpuRenderer::flatPipeline(WGPUPrimitiveTopology topo, Blen
 }
 
 void WebGpuRenderer::shutdown() {
+    releaseGpuTimestampQueries();
     _meshCache.shutdown();
     _bufferPool.shutdown();
     releaseFrameResources();
@@ -542,6 +549,117 @@ void WebGpuRenderer::shutdown() {
     if (_instanceBgl) { wgpuBindGroupLayoutRelease(_instanceBgl); _instanceBgl = nullptr; }
     if (_sdfInstanceBgl) { wgpuBindGroupLayoutRelease(_sdfInstanceBgl); _sdfInstanceBgl = nullptr; }
     _meshBatches.clear();
+}
+
+bool WebGpuRenderer::initGpuTimestampQueries(bool deviceCapability) {
+    if (!deviceCapability || !_device || !_queue || !_instance) return false;
+
+    WGPUQuerySetDescriptor qd = {};
+    qd.type = WGPUQueryType_Timestamp;
+    qd.count = 2;
+    _gpuTimestampQuerySet = wgpuDeviceCreateQuerySet(_device, &qd);
+    if (!_gpuTimestampQuerySet) return false;
+
+    for (auto& slot : _gpuTimestampSlots) {
+        WGPUBufferDescriptor resolveDesc = {};
+        resolveDesc.size = 2 * sizeof(uint64_t);
+        resolveDesc.usage = WGPUBufferUsage_QueryResolve | WGPUBufferUsage_CopySrc;
+        slot.resolve = wgpuDeviceCreateBuffer(_device, &resolveDesc);
+
+        WGPUBufferDescriptor readbackDesc = {};
+        readbackDesc.size = 2 * sizeof(uint64_t);
+        readbackDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_MapRead;
+        slot.readback = wgpuDeviceCreateBuffer(_device, &readbackDesc);
+        if (!slot.resolve || !slot.readback) {
+            releaseGpuTimestampQueries();
+            return false;
+        }
+    }
+
+    _gpuTimestampPeriodNs = wgpuQueueGetTimestampPeriod(_queue);
+    if (!std::isfinite(_gpuTimestampPeriodNs) || _gpuTimestampPeriodNs <= 0.0f) {
+        releaseGpuTimestampQueries();
+        return false;
+    }
+    _gpuTimestampQueriesEnabled = true;
+    return true;
+}
+
+void WebGpuRenderer::releaseGpuTimestampQueries() {
+    for (auto& slot : _gpuTimestampSlots) {
+        if (slot.mapReady && slot.mapStatus == WGPUMapAsyncStatus_Success && slot.readback) {
+            wgpuBufferUnmap(slot.readback);
+        }
+        if (slot.readback) { wgpuBufferRelease(slot.readback); slot.readback = nullptr; }
+        if (slot.resolve)  { wgpuBufferRelease(slot.resolve); slot.resolve = nullptr; }
+        slot = GpuTimestampSlot{};
+    }
+    if (_gpuTimestampQuerySet) {
+        wgpuQuerySetRelease(_gpuTimestampQuerySet);
+        _gpuTimestampQuerySet = nullptr;
+    }
+    _gpuTimestampQueriesEnabled = false;
+    _timestampSlotForFrame = -1;
+    _hasGpuMainPassTiming = false;
+}
+
+void WebGpuRenderer::onGpuTimestampMap(WGPUMapAsyncStatus status, WGPUStringView,
+                                       void* userdata1, void*) {
+    auto* slot = static_cast<GpuTimestampSlot*>(userdata1);
+    if (!slot) return;
+    slot->mapStatus = status;
+    slot->mapReady = true;
+}
+
+void WebGpuRenderer::collectGpuTimestampResults() {
+    if (!_gpuTimestampQueriesEnabled || !_instance) return;
+    // AllowProcessEvents callbacks are delivered here on the rendering thread.
+    // No wait/poll is permitted: a late sample is simply displayed next frame.
+    wgpuInstanceProcessEvents(_instance);
+    for (auto& slot : _gpuTimestampSlots) {
+        if (!slot.mapReady) continue;
+        slot.mapReady = false;
+        slot.mapPending = false;
+        if (slot.mapStatus != WGPUMapAsyncStatus_Success || !slot.readback) continue;
+
+        const void* mapped = wgpuBufferGetMappedRange(slot.readback, 0, 2 * sizeof(uint64_t));
+        if (mapped) {
+            uint64_t timestamps[2] = {};
+            std::memcpy(timestamps, mapped, sizeof(timestamps));
+            if (timestamps[1] >= timestamps[0]) {
+                const double ns = static_cast<double>(timestamps[1] - timestamps[0]) *
+                                  static_cast<double>(_gpuTimestampPeriodNs);
+                const double ms = ns / 1.0e6;
+                if (std::isfinite(ms) && ms >= 0.0 && ms <= 60000.0) {
+                    _latestGpuMainPassMs = static_cast<float>(ms);
+                    _hasGpuMainPassTiming = true;
+                }
+            }
+        }
+        wgpuBufferUnmap(slot.readback);
+    }
+}
+
+void WebGpuRenderer::beginGpuTimestampFrame() {
+    _timestampSlotForFrame = -1;
+    if (!_gpuTimestampQueriesEnabled || !_encoder) return;
+    for (size_t offset = 0; offset < _gpuTimestampSlots.size(); ++offset) {
+        const size_t candidate = (_nextTimestampSlot + offset) % _gpuTimestampSlots.size();
+        if (_gpuTimestampSlots[candidate].mapPending || _gpuTimestampSlots[candidate].mapReady) continue;
+        _timestampSlotForFrame = static_cast<int>(candidate);
+        _nextTimestampSlot = (candidate + 1) % _gpuTimestampSlots.size();
+        wgpuCommandEncoderWriteTimestamp(_encoder, _gpuTimestampQuerySet, 0);
+        return;
+    }
+}
+
+void WebGpuRenderer::endGpuTimestampFrame() {
+    if (_timestampSlotForFrame < 0 || !_encoder || !_gpuTimestampQuerySet) return;
+    auto& slot = _gpuTimestampSlots[static_cast<size_t>(_timestampSlotForFrame)];
+    wgpuCommandEncoderWriteTimestamp(_encoder, _gpuTimestampQuerySet, 1);
+    wgpuCommandEncoderResolveQuerySet(_encoder, _gpuTimestampQuerySet, 0, 2, slot.resolve, 0);
+    wgpuCommandEncoderCopyBufferToBuffer(
+        _encoder, slot.resolve, 0, slot.readback, 0, 2 * sizeof(uint64_t));
 }
 
 void WebGpuRenderer::ensureDepth(uint32_t w, uint32_t h) {
@@ -620,10 +738,15 @@ void WebGpuRenderer::present() {
 void WebGpuRenderer::beginFrameOffscreen(WGPUTextureView target, uint32_t width, uint32_t height,
                                          const glm::vec4& clear) {
     mutableFrameStats() = FrameStats{};
+    collectGpuTimestampResults();
+    mutableFrameStats().gpuMainPassTimingSupported = _gpuTimestampQueriesEnabled;
+    mutableFrameStats().gpuMainPassTimingValid = _hasGpuMainPassTiming;
+    mutableFrameStats().gpuMainPassMs = _latestGpuMainPassMs;
     _frameCount++;
     _meshCache.beginFrame(_frameCount);
     ensureDepth(width, height);
     _encoder = wgpuDeviceCreateCommandEncoder(_device, nullptr);
+    beginGpuTimestampFrame();
     WGPURenderPassColorAttachment ca = {};
     ca.view = target;
     ca.depthSlice = WGPU_DEPTH_SLICE_UNDEFINED;
@@ -858,11 +981,13 @@ const WebGpuRenderer::SdfPipeline* WebGpuRenderer::sdfPipeline(const std::string
     pd.layout = layout;
     pd.vertex.module = shader; pd.vertex.entryPoint = wgpu::Device::str("vs");
     pd.vertex.bufferCount = 1; pd.vertex.buffers = &vbl;
-    // Culling off: the marcher traces the true eye ray, so it does not matter
-    // which face of the bounding box produced the fragment — and with culling on,
-    // a camera inside the box would get no fragments at all.
+    // Exactly one proxy surface launches the analytic ray. The shared cube's
+    // triangles are inward-wound, so back-face culling retains the far/exit
+    // surface when the eye is outside and the enclosing interior surface when
+    // it is inside. The analytic ray/AABB interval remains authoritative;
+    // rasterizing both sides merely duplicated the expensive field program.
     pd.primitive.topology = WGPUPrimitiveTopology_TriangleList;
-    pd.primitive.cullMode = WGPUCullMode_None;
+    pd.primitive.cullMode = WGPUCullMode_Back;
     pd.depthStencil = &ds;
     pd.multisample.count = 1; pd.multisample.mask = 0xFFFFFFFFu;
     pd.fragment = &frag;
@@ -944,7 +1069,32 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     }
     inst.baseColor = glm::vec4(mat.baseColor * albedo, mat.opacity);
     inst.shading = glm::vec4(mat.ambient, mat.diffuse, mat.specular, mat.shininess);
-    inst.extents = glm::vec4(extent * 1.05f, 0.0f);
+    // These are deliberately separate facts. The AST proves whether heightfield
+    // reasoning is lawful; the optional pointer says only whether a separately
+    // derived conservative grid happened to be supplied for this draw. A test,
+    // diagnostic, or disabled traversal must not change proxy coverage merely by
+    // omitting that cache.
+    const bool isProvenHeightfield = geom::isHeightfieldExpr(field, nullptr);
+    const bool hasConservativeHeightGrid = heightGrid &&
+                                           heightGrid->dimX > 0 && heightGrid->dimZ > 0;
+    // DDA traversal is quarantined after the native Metal sweep found that its
+    // candidate-cell hand-off could miss grazing roots. Keep computing a
+    // conservative grid for the proof/test seam, but do not upload or select
+    // the traversal until the full on/off camera corpus is exact. This is not a
+    // performance regression for the saved Perlin floor: it is y-dependent and
+    // was already ineligible for a grid.
+    constexpr bool kHeightGridDdaTraversalVerified = false;
+    const bool gridActive = kHeightGridDdaTraversalVerified &&
+                            _heightGridDdaEnabled && isProvenHeightfield &&
+                            hasConservativeHeightGrid &&
+                            !heightGrid->cells.empty();
+    // A grid's cell coordinates are authored over `extent` by Object::rebuildHeightGrid.
+    // Keep that exact interval for every proved heightfield, whether DDA traversal
+    // is enabled or disabled: toggling the skip may not quietly change the proxy
+    // coverage that the comparison is meant to judge. Other fields retain the
+    // small rasterization guard band for roots on an authored boundary.
+    const glm::vec3 proxyExtent = isProvenHeightfield ? extent : extent * 1.05f;
+    inst.extents = glm::vec4(proxyExtent, 0.0f);
     
     // The box is grown slightly past the extent so a surface sitting exactly on the
     // boundary still gets fragments. surfaceEps/maxDist mirror the CPU raycaster's
@@ -960,8 +1110,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     inst.heightGridOffset = 0;
     inst.heightGridDimX = 0;
     inst.heightGridDimZ = 0;
-    const bool isProvenHeightfield = (heightGrid && heightGrid->dimX > 0 && heightGrid->dimZ > 0);
-    if (_heightGridDdaEnabled && isProvenHeightfield && !heightGrid->cells.empty()) {
+    if (gridActive) {
         auto& hgBatch = _sdfHeightGridBatches[sp];
         inst.heightGridOffset = static_cast<uint32_t>(hgBatch.size());
         inst.heightGridDimX = static_cast<uint32_t>(heightGrid->dimX);
@@ -969,18 +1118,19 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         hgBatch.insert(hgBatch.end(), heightGrid->cells.begin(), heightGrid->cells.end());
     }
 
-    // damping selects the marcher: < 0.5 is the Lipschitz-corrected path for an
-    // authored expression, >= 0.5 the over-relaxed path for an exact distance field.
-    // A proven heightfield f(p) = y - h(x,z) has df/dy = 1, so |grad f| >= 1.0 everywhere.
-    // The vertical distance |y - h(x,z)| strictly upper-bounds the true distance to the surface,
-    // so standard sphere tracing with overstep pullback does not tunnel. It does not suffer
-    // from the quadratic distance overestimation of generic algebraic implicits (e.g. x^2+y^2=r^2)
-    // and does not need 0.25x step throttling or per-step tetrahedral gradient evaluations.
-    float damping = 1.0f;
-    if (prog.needsGradientStep) {
-        damping = isProvenHeightfield ? 1.0f : 0.25f;
-    }
-    inst.misc = glm::vec4(1.0f, 1e-4f, maxDim * 8.0f, damping);
+    // damping selects the marcher: < 0.5 is the gradient-corrected path for an
+    // authored expression, >= 0.5 the over-relaxed path for an exact distance
+    // field. Even a proved f=y-h(x,z) is not generally a distance field: |f| is
+    // the VERTICAL distance and can exceed the Euclidean distance when h slopes.
+    // A min/max grid may conservatively skip empty cells, but it does not license
+    // distance-field stepping inside a candidate cell.
+    const float damping = prog.needsGradientStep ? 0.25f : 1.0f;
+    // misc.x is a distinct proof bit: damping selects the step policy, while
+    // only a structurally-proved y-h(x,z) field may use heightfield-only
+    // planar/vertical early exits. Keep the two latches separate so a generic
+    // gradient-marched Perlin expression cannot inherit those assumptions.
+    inst.misc = glm::vec4(isProvenHeightfield ? 1.0f : 0.0f,
+                          1e-4f, maxDim * 8.0f, damping);
 
     inst.paramOffset = static_cast<uint32_t>(_sdfParamsBatches[sp].size());
 
@@ -1164,8 +1314,21 @@ void WebGpuRenderer::endFrame() {
     wgpuRenderPassEncoderRelease(_pass);
     _pass = nullptr;
 
+    endGpuTimestampFrame();
+
     WGPUCommandBuffer cmd = wgpuCommandEncoderFinish(_encoder, nullptr);
     wgpuQueueSubmit(_queue, 1, &cmd);
+    if (_timestampSlotForFrame >= 0) {
+        auto& slot = _gpuTimestampSlots[static_cast<size_t>(_timestampSlotForFrame)];
+        slot.mapPending = true;
+        WGPUBufferMapCallbackInfo mapCallback = {};
+        mapCallback.mode = WGPUCallbackMode_AllowProcessEvents;
+        mapCallback.callback = onGpuTimestampMap;
+        mapCallback.userdata1 = &slot;
+        wgpuBufferMapAsync(slot.readback, WGPUMapMode_Read, 0,
+                           2 * sizeof(uint64_t), mapCallback);
+    }
+    _timestampSlotForFrame = -1;
     wgpuCommandBufferRelease(cmd);
     wgpuCommandEncoderRelease(_encoder);
     _encoder = nullptr;

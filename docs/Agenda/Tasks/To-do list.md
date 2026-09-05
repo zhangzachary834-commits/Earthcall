@@ -40,7 +40,7 @@ Addendum: Also ensure save system works in every case and everything that needs 
 ### Singular · Relation · Formation
 - Ensure `Relation` and `Formation` ontology is load bearing.
 - Ensure Singularity-level actions are done through `Relation`s and `Formation`s.
-- **PARTIAL (2026-09-05) — Restructure serialization by Singular persistence roots** — landed the compatibility facade, ontology-aligned source boundaries, semantic Ourverse root write/load, Person root codec/session hydration, and retirement of the duplicate Person writer; cross-root integration proof remains. → [full task](Specific%20Tasks/Singular_Serialization_Topology/Singular_Serialization_Topology.md)
+- **PARTIAL (2026-09-05) — Restructure serialization by Singular persistence roots** — landed ontology-aligned Object, Person/Body, Relation/Formation, Zone/Home, and Ourverse codecs plus versioned semantic-root orchestration; Zone compatibility projections remain. → [full task](Specific%20Tasks/Singular_Serialization_Topology/Singular_Serialization_Topology.md)
 - **PARTIAL (2026-08-23)** — endpoints are `Singular*` (`a()` / `b()`), not name-strings. → [full task](Specific%20Tasks/PARTIAL_2026_08_23/PARTIAL_2026_08_23.md)
 - **Authored properties on a base Singular** — the innate slot exists, ungated, on `Singular` itself (arbitrary count, every `PropertyValue` kind at runtime, `AddProperty` does not ask TransferPolicy). → [full task](Specific%20Tasks/Authored_properties_on_a_base_Singular/Authored_properties_on_a_base_Singular.md)
 - ✅ **Singular and Object set-to-set creation** — done and verified (2026-08-16): Exposed all 19 `ActionNode::Kind` values in `LawGraphWindow.cpp`; reworked kind 17 (`Synthesize`) into composed child actions (`Create`, `AddProperty`, `Map`); verified via `tests/singular_set_to_set_test.cpp` (45/45 pass). See [Specific Tasks/Singular_and_Object_Set_to_Set_Creation.md](Specific%20Tasks/Singular_and_Object_Set_to_Set_Creation.md).
@@ -190,7 +190,7 @@ Addendum: Also ensure save system works in every case and everything that needs 
 - **`LawManager::tick` is ~43% slower after the 2026-09-02 law-legibility fixes, and `frame_lag_test` LAGs because of it** — Measured back-to-back on the same machine load, **in `frame_lag_test`'s default world — `saves/worlds/chess_app.json`, headless, simulation-only, the … → [full task](Specific%20Tasks/LawManager_tick_is_43_slower_after_the_2026_09_02_law/LawManager_tick_is_43_slower_after_the_2026_09_02_law.md)
 Every item here is a **STANDING** line the lag probe prints on every run. Baseline
 numbers live in `tests/singularity/frame_lag_baseline.txt`; the reasoning, the sampled
-call stacks and the caveats are in [audits/2026-08-24_frame_lag_probe.md](../../audits/2026-08-24_frame_lag_probe.md).
+call stacks and the caveats are in [audits/rendering_optimization/2026-08-24_frame_lag_probe.md](../../audits/rendering_optimization/2026-08-24_frame_lag_probe.md).
 Re-record the baseline **downward** as each one lands (`./build/frame_lag_test --rebaseline`,
 on a quiet machine) so the tripwire tightens behind the fix.
 
@@ -202,15 +202,15 @@ on a quiet machine) so the tripwire tightens behind the fix.
 
 - **Opening a world costs 3.7x what it did on 2026-08-26, and ~5.4 s of that is unexplained** — (opened 2026-08-31.) `load.ms` was 1868.93 on 08-26 and measures **6024 / 6440 / 6791 / 6931 ms** over four steady runs now (drift 1.00-1.06), against a … → [full task](Specific%20Tasks/Opening_a_world_costs_3_7x_what_it_did_on_2026_08_26_and_5_4/Opening_a_world_costs_3_7x_what_it_did_on_2026_08_26_and_5_4.md)
 
-- **The horizon frame is now the ceiling, and the cost is FIELD EVALUATION — not marching** — (opened 2026-08-31, measured.) With the interaction bloat gone (Bugs.md #16), Zach reports the Perlin world's 3D Render phase at **~70 ms at the horizon** … → [full task](Specific%20Tasks/The_horizon_frame_is_now_the_ceiling_and_the_cost_is_FIELD/The_horizon_frame_is_now_the_ceiling_and_the_cost_is_FIELD.md)
+- **The Perlin horizon/45-degree frame is the ceiling, and exact FIELD EVALUATION at native Retina resolution is the dominant cost** — re-audited 2026-09-05 after Zach reported the current ~8 FPS regression; reproduced at 117.83 ms at 2880x1800, with the truth-preserving implementation order in the [plan](../../plans/PERLIN_NOISE_FLOOR_RENDERING_RECOVERY_PLAN_2026-09-05.md). → [full task](Specific%20Tasks/The_horizon_frame_is_now_the_ceiling_and_the_cost_is_FIELD/The_horizon_frame_is_now_the_ceiling_and_the_cost_is_FIELD.md)
 
-- ✅ **Min/max heightfield grid DDA skip (expansion plan Phase C)** — done and verified (2026-08-31/09-01). → [full task](Specific%20Tasks/Min_max_heightfield_grid_DDA_skip_expansion_plan_Phase_C/Min_max_heightfield_grid_DDA_skip_expansion_plan_Phase_C.md)
+- ⚑ **Min/max heightfield grid DDA skip (expansion plan Phase C)** — original implementation re-audited 2026-09-05: the saved Perlin field now refuses the unproved Noise bound, and native GPU parity remains required for the one-face proxy/DDA slice. → [full task](Specific%20Tasks/Min_max_heightfield_grid_DDA_skip_expansion_plan_Phase_C/Min_max_heightfield_grid_DDA_skip_expansion_plan_Phase_C.md)
 
 - ⚑ AUTHOR — **Phase F (Hi-Z pre-pass) needs a bigger change than scoped, not yet built** — Investigated 2026-09-01 while implementing Phase C. → [full task](Specific%20Tasks/Phase_F_Hi_Z_pre_pass_needs_a_bigger_change_than_scoped_not/Phase_F_Hi_Z_pre_pass_needs_a_bigger_change_than_scoped_not.md)
 
-- ✅ **Review of Antigravity's two SDF rendering plans** — done (2026-08-31), [REVIEW_OF_ANTIGRAVITY_SDF_RENDERING_PLANS_2026-08-31.md](../../audits/REVIEW_OF_ANTIGRAVITY_SDF_RENDERING_PLANS_2026-08-31.md). → [full task](Specific%20Tasks/Review_of_Antigravity_s_two_SDF_rendering_plans/Review_of_Antigravity_s_two_SDF_rendering_plans.md)
+- ✅ **Review of Antigravity's two SDF rendering plans** — done (2026-08-31), [REVIEW_OF_ANTIGRAVITY_SDF_RENDERING_PLANS_2026-08-31.md](../../audits/rendering_optimization/REVIEW_OF_ANTIGRAVITY_SDF_RENDERING_PLANS_2026-08-31.md). → [full task](Specific%20Tasks/Review_of_Antigravity_s_two_SDF_rendering_plans/Review_of_Antigravity_s_two_SDF_rendering_plans.md)
 
-- ✅ **Review of the August 2026 rendering-optimization campaign** — done (2026-08-31), [RENDERING_OPTIMIZATION_CAMPAIGN_REVIEW_2026-08-31.md](../../audits/RENDERING_OPTIMIZATION_CAMPAIGN_REVIEW_2026-08-31.md). → [full task](Specific%20Tasks/Review_of_the_August_2026_rendering_optimization_campaign/Review_of_the_August_2026_rendering_optimization_campaign.md)
+- ✅ **Review of the August 2026 rendering-optimization campaign** — done (2026-08-31), [RENDERING_OPTIMIZATION_CAMPAIGN_REVIEW_2026-08-31.md](../../audits/rendering_optimization/RENDERING_OPTIMIZATION_CAMPAIGN_REVIEW_2026-08-31.md). → [full task](Specific%20Tasks/Review_of_the_August_2026_rendering_optimization_campaign/Review_of_the_August_2026_rendering_optimization_campaign.md)
 
 - ✅ **WebGPU High-FPS Manifold SDF Acceleration & Adaptive Marching** — done and verified (2026-08-28): Implemented Keinert et al. → [full task](Specific%20Tasks/WebGPU_High_FPS_Manifold_SDF_Acceleration_Adaptive_Marching/WebGPU_High_FPS_Manifold_SDF_Acceleration_Adaptive_Marching.md)
 

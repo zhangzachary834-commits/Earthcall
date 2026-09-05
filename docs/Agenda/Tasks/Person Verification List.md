@@ -8,7 +8,8 @@
 - [x] Save As → verify no crash
 - [x] Save As → quit/reopen → Load → verify state
 - [ ] Ourverse root → Save As → reload → verify the gathering Zone and a cross-Zone filament survive as one shared root graph
-- [ ] Person root → Save As → reload → verify the current Body and camera-relative placement survive without a duplicate legacy body payload
+- [ ] Semantic root envelope → Save As → reload → verify the current Body and camera-relative placement survive without a duplicate legacy body payload
+- [ ] Cross-root session → Save As → reload → verify the Person-owned Home, another Zone, the gathering Zone, and their filament survive as one graph
 
 - [x] Load `my_world` in-app
 
@@ -94,4 +95,4 @@ this list — that is what it is for. See [The Week the Chorus Became a Queue](.
 - [ ] Save -> reload -> click again -> verify it continues shifting.
 
 ## Perlin Noise Floor & 3D Raymarching
-- [ ] **Perlin Noise Floor Hill Zone rendering performance (session 2026-09-05):** Load `Perlin Noise Floor Zone` in WebGPU app (`Run Earthcall.command`). Look out toward the horizon and build/place objects (e.g. cubes or house structures). Press `F3` to check "3D Render" ms. Verify frame time remains smooth and does not spike to 40 ms, and objects placed on the hills render and occlude cleanly without GPU hitching.
+- [ ] **Perlin Noise Floor Hill Zone rendering performance (implementation pass, session 2026-09-05):** Load `Perlin Noise Floor Zone` in the WebGPU app (`Run Earthcall.command`). Look toward the horizon and at 45 degrees, then build/place objects (cubes or house structures). Press `F3`: it should label the 3D phase, surface acquire, and queue-submit values as CPU wall-clock observations rather than GPU duration. If the adapter exposes timestamp queries, it should additionally show a delayed `GPU main render pass` duration that changes with the scene but does not stall the UI; otherwise it must say timestamps are unsupported. Verify the authored Perlin surface remains unchanged, the 3D phase does not show recurring 100–300 ms stalls, and placed objects render, occlude, and settle on the same hills without a GPU hitch. The pass also needs a camera-inside-proxy check and ground selection/highlight check.

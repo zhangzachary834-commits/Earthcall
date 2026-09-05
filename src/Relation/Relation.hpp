@@ -200,6 +200,9 @@ public:
     void setEventsList(const std::shared_ptr<PropertyList>& list);
 
 private:
+    friend Relation relationFromJson(const nlohmann::json& json,
+                                     const RelationEndpointResolver& resolve);
+
     Endpoint _endpointA;
     Endpoint _endpointB;
     Singularity::Language::Lexeme* _typeLexeme = nullptr;

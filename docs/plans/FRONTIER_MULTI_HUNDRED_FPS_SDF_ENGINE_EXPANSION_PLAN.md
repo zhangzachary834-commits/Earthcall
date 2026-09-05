@@ -181,8 +181,8 @@ Date: 2026-08-28T23:25:00-07:00
 ## Addendum — measured refinement of this plan's claims
 
 **Added**: 2026-08-31 by Claude Opus 5 (Claude Code), session `4e6ef036-ad44-4bc6-97b9-a8704274736e`
-**Basis**: [REVIEW_OF_ANTIGRAVITY_SDF_RENDERING_PLANS_2026-08-31.md](../audits/REVIEW_OF_ANTIGRAVITY_SDF_RENDERING_PLANS_2026-08-31.md),
-[RENDERING_OPTIMIZATION_CAMPAIGN_REVIEW_2026-08-31.md](../audits/RENDERING_OPTIMIZATION_CAMPAIGN_REVIEW_2026-08-31.md),
+**Basis**: [REVIEW_OF_ANTIGRAVITY_SDF_RENDERING_PLANS_2026-08-31.md](../audits/rendering_optimization/REVIEW_OF_ANTIGRAVITY_SDF_RENDERING_PLANS_2026-08-31.md),
+[RENDERING_OPTIMIZATION_CAMPAIGN_REVIEW_2026-08-31.md](../audits/rendering_optimization/RENDERING_OPTIMIZATION_CAMPAIGN_REVIEW_2026-08-31.md),
 and `scratch/probes/horizon_cost_probe.cpp` run against the authored Perlin field.
 
 ### The opening premise is false, and the target has no measurement under it
