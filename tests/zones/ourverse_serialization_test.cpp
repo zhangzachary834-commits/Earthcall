@@ -44,6 +44,8 @@ int main() {
     saveContext.worldTime = &worldTime;
     const nlohmann::json session = sourceZones.buildSaveJson(saveContext);
     assert(session.contains("ourverse"));
+    assert(session.contains("person"));
+    assert(session["person"]["displayName"] == person.getDisplayName());
     assert(session["ourverse"]["gatheringZone"] == gathering.getIdentifier());
 
     const nlohmann::json saved = ourverseToJson(source);

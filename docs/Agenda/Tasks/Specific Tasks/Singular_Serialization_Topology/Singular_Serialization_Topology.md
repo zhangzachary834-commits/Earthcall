@@ -1,6 +1,6 @@
 # Singular serialization topology
 
-**Status:** Phase 2 landed — the semantic Ourverse root now writes and hydrates in graph order; Person-root extraction and legacy writer retirement remain open.
+**Status:** Phase 3 landed — Person-root serialization now writes and hydrates beside the semantic Ourverse root; legacy writer retirement remains open.
 **Agenda section:** Singular · Relation · Formation  
 **Author:** Codex, session `01a0707e-f743-71b1-8fb9-63975012e66d`, 2026-09-05 01:00 PDT
 
@@ -67,6 +67,23 @@ without an `ourverse` record continue to load unchanged.
 The new headless `ourverse_serialization_test` proves root emission through
 `ZoneManager::buildSaveJson` and a full semantic root round-trip, including a
 cross-Zone filament.
+
+## Phase 3 landed — 2026-09-05
+
+**Update author:** Codex, session `01a0707e-f743-71b1-8fb9-63975012e66d`, 2026-09-05 02:10 PDT
+
+The Person root now has an extracted codec at
+`Singularity/Storage/Serialization/Person/PersonSerialization.*`. `Person::serialize`
+and `Person::deserialize` delegate to it, while preserving the exact
+PersonDatabase profile keys (`displayName`, `soulName`, identity, pose, velocity,
+and Body). Session saves additionally emit a semantic `person` root whenever a
+Person is present. Load hydrates that root before the legacy `playerBody` bridge;
+old sessions without `person` therefore remain readable, and new sessions do not
+apply the same body twice.
+
+`person_serialization_test` proves schema presence, delegation, and pose round-trip;
+`ourverse_serialization_test` now also proves Person-root emission through the
+session writer. No authored save file was modified.
 
 ## Target source layout
 
@@ -140,7 +157,7 @@ a direct regression test for populated Zones.
 
 | Root | Current state | Required decision |
 |---|---|---|
-| Person | Member `serialize`/`deserialize`; Body helpers now have a Person-side module | Add a Person root adapter without changing PersonDatabase format. |
+| Person | Person-side codec now owns `serialize`/`deserialize`; session writer emits a semantic root and keeps `playerBody` as a bridge | Retire the legacy duplicate writer only after the split substrate owns this root. |
 | Zone | `ZonesOfEarth/ZoneSerialization` owns the extracted codec and graph assembly | Keep base fields, object references, and graph binding phased. |
 | Home | `HomeSerialization` owns dwelling augmentation | Preserve Zone composition; do not duplicate base Zone state. |
 | Ourverse | `OurverseSerialization` emits and hydrates the semantic root record | Retire the legacy multi-write path only after the split substrate owns this root. |
@@ -154,8 +171,9 @@ a direct regression test for populated Zones.
    Ourverse, Relation and Formation crossing those roots; save/load; assert identity,
    endpoint binding, Home-only state, and material/geometry references survive.
 3. Run the focused tests: `save_roundtrip_test`, `zone_identity_test`,
-   `zone_relation_roundtrip_test`, `object_roundtrip_test`, `person_database_test`, and
-   `ourverse_serialization_test`, then run the full suite.
+   `zone_relation_roundtrip_test`, `object_roundtrip_test`, `person_database_test`,
+   `person_serialization_test`, and `ourverse_serialization_test`, then run the full
+   suite.
 4. A Person must still click Save → quit → reopen → Load and inspect a cross-Zone
    Relation. Add that check to the Person Verification List only when code changes make
    it newly relevant.
@@ -165,5 +183,6 @@ a direct regression test for populated Zones.
 This pass did not modify authored save files, delete legacy writers, or invent a DSL.
 The focused graph, identity, Save As, and Person database tests pass; the Home ontology
 binary stalls on this host's HomeServices/XPC connection before producing test output.
-Person-root extraction and writer retirement are separately tracked before the open
-split-substrate task can claim the save system is fully fluid across roots.
+The legacy `playerBody` writer remains as a compatibility bridge and is separately
+tracked before the open split-substrate task can claim the save system is fully fluid
+across roots.

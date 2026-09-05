@@ -730,6 +730,11 @@ nlohmann::json ZoneManager::buildSaveJson(const SaveContext& ctx) const {
     if (ctx.ourverse) {
         j["ourverse"] = ourverseToJson(*ctx.ourverse);
     }
+    if (ctx.person) {
+        // Semantic Person root. Keep playerBody below as a compatibility bridge
+        // until the legacy session writer is retired in a later phase.
+        j["person"] = personToJson(*ctx.person);
+    }
 
     j["materials"] = materials.toJson();
     j["categories"] = categories.toJson();
@@ -1231,9 +1236,17 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
         }
         });
 
-        // Player avatar body
+        // Semantic Person root. Older sessions have only playerBody; the
+        // fallback below keeps those files readable without double-applying.
+        stage("person", [&] {
+            if (ctx.person && j.contains("person")) {
+                personFromJson(j["person"], *ctx.person);
+            }
+        });
+
+        // Player avatar body (legacy bridge)
         stage("player-body", [&] {
-            if (j.contains("playerBody")) {
+            if (ctx.person && !j.contains("person") && j.contains("playerBody")) {
                 bodyFromJson(j["playerBody"], ctx.person->getBody());
             }
         });

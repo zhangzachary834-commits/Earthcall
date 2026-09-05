@@ -78,57 +78,11 @@ void Person::setDisplayName(const std::string& name) {
 }
 
 nlohmann::json Person::serialize() const {
-    nlohmann::json j;
-    j["displayName"] = getDisplayName();
-    if (_called) j["displayLexemeId"] = _called->getIdentifier();
-    // "soulName" is still written so a save from here still opens in a build
-    // from before the split. It is a label in both directions and never the
-    // identity, so emitting it grants nothing.
-    j["soulName"] = getDisplayName();
-    if (_personId.canAuthenticate()) j["personId"] = _personId.toString();
-    j["position"] = {_position.x, _position.y, _position.z};
-    j["velocity"] = {_velocity.x, _velocity.y, _velocity.z};
-    
-    // Save body and body parts
-    j["body"] = ::bodyToJson(getBody());
-    
-    return j;
+    return personToJson(*this);
 }
 
 void Person::deserialize(const nlohmann::json& j) {
-    // Type-checked: this reads save data, which is untrusted by construction.
-    // Prefer the new key, fall back to the pre-split one.
-    if (j.contains("displayName") && j["displayName"].is_string()) {
-        setDisplayName(j["displayName"].get<std::string>());
-    } else if (j.contains("soulName") && j["soulName"].is_string()) {
-        setDisplayName(j["soulName"].get<std::string>());
-    }
-
-    // A personId read from a file is only a CLAIM to that identity. Parsing it
-    // records who this Person says they are; it proves nothing on its own,
-    // because the public key is public — anyone can copy one into a save. What
-    // makes it binding is a signed Claim verified against it, which is the
-    // authority layer's job, not this one's. Legacy saves simply have none,
-    // and migration mints a key for them on first load.
-    if (j.contains("personId") && j["personId"].is_string()) {
-        Identity::SingularId claimed =
-            Identity::SingularId::parse(j["personId"].get<std::string>());
-        if (claimed.canAuthenticate()) _personId = claimed;
-    }
-    if (j.contains("position") && j["position"].is_array() && j["position"].size() >= 3) {
-        _position = glm::vec3(j["position"][0], j["position"][1], j["position"][2]);
-    }
-    if (j.contains("velocity") && j["velocity"].is_array() && j["velocity"].size() >= 3) {
-        _velocity = glm::vec3(j["velocity"][0], j["velocity"][1], j["velocity"][2]);
-    }
-    // grounded / wasGrounded / wasMoving / jumpKeyDownLast used to serialize
-    // here as Game leftovers. They live on LocomotionChannel now (and the
-    // edge bits are kernel). Old saves may still carry the keys; ignore them.
-    
-    // Load body and body parts
-    if (j.contains("body")) {
-        if (!bodies.empty()) ::bodyFromJson(j["body"], bodies[activeBodyIndex]);
-    }
+    personFromJson(j, *this);
 }
 
 

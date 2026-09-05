@@ -7,6 +7,7 @@
 #include "Person/Body/Body.hpp"
 #include "Singularity/Storage/Serialization/ConstructedBeing/ObjectSerialization.hpp"
 #include "Singularity/Storage/Serialization/Person/BodySerialization.hpp"
+#include "Singularity/Storage/Serialization/Person/PersonSerialization.hpp"
 #include "Singularity/Storage/Serialization/Relation/FormationSerialization.hpp"
 #include "Singularity/Storage/Serialization/ZonesOfEarth/HomeSerialization.hpp"
 #include "Singularity/Storage/Serialization/ZonesOfEarth/OurverseSerialization.hpp"
