@@ -1307,9 +1307,7 @@ bool editActionNode(ActionNode& node) {
                 auto vars = readMathBindings(*g.testSubject, node.bindings);
                 std::optional<double> value;
                 if (vars) {
-                    std::map<std::string, PropertyValue> pVars;
-                    for (const auto& [k, v] : *vars) pVars[k] = PropertyValue(v);
-                    const auto valProp = node.mapFunction.evaluate(pVars, g.testSubject);
+                    const auto valProp = node.mapFunction.evaluate(*vars, g.testSubject);
                     if (valProp && std::holds_alternative<double>(*valProp)) value = std::get<double>(*valProp);
                 }
                 if (value) {

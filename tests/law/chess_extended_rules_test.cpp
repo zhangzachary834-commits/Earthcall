@@ -1,9 +1,8 @@
 // Extended rules test for chess_app:
 // 1. Board orientation & square colors (White on right, queen on own color)
-// 2. En Passant capture (White & Black)
+// 2. En Passant capture (White)
 // 3. Pawn Promotion on back-rank capture + visible options (Queen, Knight, Rook, Bishop)
 // 4. Threefold repetition draw
-// 5. Stalemate claim
 
 #include "support/test_harness.hpp"
 
@@ -179,47 +178,73 @@ int main(int argc, char** argv) {
 
     // -------------------------------------------------------------
     // 3. Pawn Promotion on Back-Rank Capture:
-    // Black plays c7-c5 (double step).
-    // White pawn on d6 captures on c7 (diagonal capture).
-    // Black plays a6-a5.
-    // White pawn on c7 captures Black Queen on d8!
+    // White advances h-pawn: h2-h4, h4-h5, h5-h6, h6xg7, g7xh8=Q!
     // -------------------------------------------------------------
     std::cout << "--- 3. Verifying Pawn Promotion on Back-Rank Capture ---\n";
-    Object* blackPawnC7 = findObj(*active, "piece-black-pawn-2-6");
-    assert(blackPawnC7);
+    Object* whitePawnH2 = findObj(*active, "piece-white-pawn-7-1");
+    Object* blackPawnB7 = findObj(*active, "piece-black-pawn-1-6");
+    Object* blackPawnG7 = findObj(*active, "piece-black-pawn-6-6");
+    Object* blackRookH8 = findObj(*active, "piece-black-rook-7-7");
 
-    // Black plays 3... c7-c5
-    click(harness.interaction, harness.lawManager, blackPawnC7, squareX(2), 0.3f, squareZ(6));
-    click(harness.interaction, harness.lawManager, board, squareX(2), 0.0f, squareZ(4));
-    assert(asInt(*blackPawnC7, "gridX") == 2 && asInt(*blackPawnC7, "gridY") == 4);
+    // Black plays 3... b7-b5
+    click(harness.interaction, harness.lawManager, blackPawnB7, squareX(1), 0.3f, squareZ(6));
+    click(harness.interaction, harness.lawManager, board, squareX(1), 0.0f, squareZ(4));
+    assert(asInt(*blackPawnB7, "gridX") == 1 && asInt(*blackPawnB7, "gridY") == 4);
     assert(asInt(*state, "turn") == 0);
 
-    // White pawn advances d6 to d7
-    click(harness.interaction, harness.lawManager, whitePawnE2, squareX(3), 0.3f, squareZ(5));
-    click(harness.interaction, harness.lawManager, board, squareX(3), 0.0f, squareZ(6));
-    assert(asInt(*whitePawnE2, "gridX") == 3 && asInt(*whitePawnE2, "gridY") == 6);
+    // White plays 4. h2-h4
+    click(harness.interaction, harness.lawManager, whitePawnH2, squareX(7), 0.3f, squareZ(1));
+    click(harness.interaction, harness.lawManager, board, squareX(7), 0.0f, squareZ(3));
+    assert(asInt(*whitePawnH2, "gridX") == 7 && asInt(*whitePawnH2, "gridY") == 3);
     assert(asInt(*state, "turn") == 1);
 
-    // Black King escapes check: moves e8 to d7? No, e8 to e7!
-    Object* blackKing = findObj(*active, "piece-black-king-4-7");
-    assert(blackKing);
-    click(harness.interaction, harness.lawManager, blackKing, squareX(4), 0.48f, squareZ(7));
-    click(harness.interaction, harness.lawManager, board, squareX(4), 0.0f, squareZ(6)); // e7
-    assert(asInt(*blackKing, "gridX") == 4 && asInt(*blackKing, "gridY") == 6);
+    // Black plays 4... b5-b4
+    click(harness.interaction, harness.lawManager, blackPawnB7, squareX(1), 0.3f, squareZ(4));
+    click(harness.interaction, harness.lawManager, board, squareX(1), 0.0f, squareZ(3));
     assert(asInt(*state, "turn") == 0);
 
-    // White pawn on d7 captures on c8 (Black Bishop on c8)! Back-rank capture!
-    Object* blackBishopC8 = findObj(*active, "piece-black-bishop-2-7");
-    assert(blackBishopC8);
-    click(harness.interaction, harness.lawManager, whitePawnE2, squareX(3), 0.3f, squareZ(6));
-    assert(asBool(*whitePawnE2, "isSelected"));
-    click(harness.interaction, harness.lawManager, blackBishopC8, squareX(2), 0.4f, squareZ(7)); // c8
+    // White plays 5. h4-h5
+    click(harness.interaction, harness.lawManager, whitePawnH2, squareX(7), 0.3f, squareZ(3));
+    click(harness.interaction, harness.lawManager, board, squareX(7), 0.0f, squareZ(4));
+    assert(asInt(*whitePawnH2, "gridX") == 7 && asInt(*whitePawnH2, "gridY") == 4);
+    assert(asInt(*state, "turn") == 1);
 
-    assert(asInt(*whitePawnE2, "gridX") == 2 && asInt(*whitePawnE2, "gridY") == 7);
-    assert(!asBool(*blackBishopC8, "onBoard")); // Bishop captured on c8
+    // Black plays 5... a6-a5
+    click(harness.interaction, harness.lawManager, blackPawnA7, squareX(0), 0.3f, squareZ(5));
+    click(harness.interaction, harness.lawManager, board, squareX(0), 0.0f, squareZ(4));
+    assert(asInt(*state, "turn") == 0);
 
-    int promoRole = asInt(*whitePawnE2, "chessRole");
-    int promoShape = asInt(*whitePawnE2, "shape.kind");
+    // White plays 6. h5-h6
+    click(harness.interaction, harness.lawManager, whitePawnH2, squareX(7), 0.3f, squareZ(4));
+    click(harness.interaction, harness.lawManager, board, squareX(7), 0.0f, squareZ(5));
+    assert(asInt(*whitePawnH2, "gridX") == 7 && asInt(*whitePawnH2, "gridY") == 5);
+    assert(asInt(*state, "turn") == 1);
+
+    // Black plays 6... a5-a4
+    click(harness.interaction, harness.lawManager, blackPawnA7, squareX(0), 0.3f, squareZ(4));
+    click(harness.interaction, harness.lawManager, board, squareX(0), 0.0f, squareZ(3));
+    assert(asInt(*state, "turn") == 0);
+
+    // White pawn on h6 captures on g7!
+    click(harness.interaction, harness.lawManager, whitePawnH2, squareX(7), 0.3f, squareZ(5));
+    click(harness.interaction, harness.lawManager, blackPawnG7, squareX(6), 0.3f, squareZ(6));
+    assert(asInt(*whitePawnH2, "gridX") == 6 && asInt(*whitePawnH2, "gridY") == 6);
+    assert(asInt(*state, "turn") == 1);
+
+    // Black plays 7... a4-a3
+    click(harness.interaction, harness.lawManager, blackPawnA7, squareX(0), 0.3f, squareZ(3));
+    click(harness.interaction, harness.lawManager, board, squareX(0), 0.0f, squareZ(2));
+    assert(asInt(*state, "turn") == 0);
+
+    // White pawn on g7 captures on h8 (Black Rook on h8)! Back-rank capture and promotion!
+    click(harness.interaction, harness.lawManager, whitePawnH2, squareX(6), 0.3f, squareZ(6));
+    click(harness.interaction, harness.lawManager, blackRookH8, squareX(7), 0.36f, squareZ(7));
+
+    assert(asInt(*whitePawnH2, "gridX") == 7 && asInt(*whitePawnH2, "gridY") == 7);
+    assert(!asBool(*blackRookH8, "onBoard")); // Rook captured on back rank!
+
+    int promoRole = asInt(*whitePawnH2, "chessRole");
+    int promoShape = asInt(*whitePawnH2, "shape.kind");
     std::cout << "  Promoted piece role: " << promoRole << " (expected 4 = Queen)\n";
     std::cout << "  Promoted piece shape: " << promoShape << " (expected 6 = Ovoid)\n";
     assert(promoRole == 4 && "Pawn on rank 7 promotes to Queen");
@@ -229,16 +254,16 @@ int main(int argc, char** argv) {
     Object* btnKnight = findObj(*active, "hud.chess.promo.knight");
     assert(btnKnight);
     click(harness.interaction, harness.lawManager, btnKnight, 480.0f, 0.0f, 24.0f);
-    assert(asInt(*whitePawnE2, "chessRole") == 2);
-    assert(asInt(*whitePawnE2, "shape.kind") == 5); // Ellipsoid
+    assert(asInt(*whitePawnH2, "chessRole") == 2);
+    assert(asInt(*whitePawnH2, "shape.kind") == 5); // Ellipsoid
     std::cout << "  Underpromoted to Knight via HUD button verified!\n";
 
     // Click Queen button to switch to Queen
     Object* btnQueen = findObj(*active, "hud.chess.promo.queen");
     assert(btnQueen);
     click(harness.interaction, harness.lawManager, btnQueen, 340.0f, 0.0f, 24.0f);
-    assert(asInt(*whitePawnE2, "chessRole") == 4);
-    assert(asInt(*whitePawnE2, "shape.kind") == 6); // Ovoid
+    assert(asInt(*whitePawnH2, "chessRole") == 4);
+    assert(asInt(*whitePawnH2, "shape.kind") == 6); // Ovoid
     std::cout << "  Promoted back to Queen via HUD button verified!\n";
 
     // -------------------------------------------------------------

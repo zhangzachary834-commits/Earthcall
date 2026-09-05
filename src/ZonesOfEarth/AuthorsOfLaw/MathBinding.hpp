@@ -210,16 +210,21 @@ inline PropertyPath::PathResult lawSetValue(Singular& subject, const PropertyPat
     return path.setValue(*root, v, startIndex);
 }
 
-inline std::optional<std::map<std::string, double>> readMathBindings(
+inline std::optional<std::map<std::string, PropertyValue>> readMathBindings(
     Singular& subject, const MathBindings& bindings) {
-    std::map<std::string, double> vars;
+    std::map<std::string, PropertyValue> vars;
     for (const auto& entry : bindings) {
         PropertyValue value;
-        double x = 0.0;
-        if (!lawGetValue(subject, entry.second, value) || !propertyValueToNumber(value, x)) {
+        if (!lawGetValue(subject, entry.second, value)) {
             return std::nullopt;
         }
-        vars[entry.first] = x;
+        
+        double x = 0.0;
+        if (propertyValueToNumber(value, x)) {
+            vars[entry.first] = PropertyValue(x);
+        } else {
+            vars[entry.first] = value;
+        }
     }
     return vars;
 }

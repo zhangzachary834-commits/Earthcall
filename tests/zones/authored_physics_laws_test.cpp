@@ -76,12 +76,20 @@ int main() {
     obj->findProperty("rotation")->setValue(glm::vec3(0.0f));
     obj->findProperty("angularVelocity")->setValue(glm::vec3(0.0f, 90.0f, 0.0f));
     
+    // Nothing enters the world without an author.
+    auto authorObj = std::make_shared<Object>();
+    kinLaw->addAuthor(*authorObj);
+
     // Apply law for dt = 0.5s: rotation.y should advance by ~45 deg
     Universe::instance().setClock(0.5, 0.5);
-    kinLaw->applyTo(*obj);
+    auto res = kinLaw->applyTo(*obj);
 
     auto rotVal = obj->findProperty("rotation")->value();
     const auto* rot = std::get_if<glm::vec3>(&rotVal);
+    std::printf("res = %s, rot = %p\n", Law::resultName(res), rot);
+    if (rot) {
+        std::printf("rot = (%.2f, %.2f, %.2f)\n", rot->x, rot->y, rot->z);
+    }
     check(rot != nullptr && std::abs(rot->y - 45.0f) < 1e-2f,
           "law-angular-kinematics flows angularVelocity into rotation: 90 deg/s * 0.5s = 45 deg");
 

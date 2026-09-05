@@ -801,9 +801,7 @@ ECA::ActionExecutor ActionNode::compile() const {
                     emitEffect("Map", false, "a bound variable does not read on this subject");
                     return;
                 }
-                std::map<std::string, PropertyValue> pVars;
-                for (const auto& [k, v] : *vars) pVars[k] = PropertyValue(v);
-                const auto valProp = f.evaluate(pVars, &subject);
+                const auto valProp = f.evaluate(*vars, &subject);
                 if (!valProp) {
                     emitEffect("Map", false, "outside the authored bounds");
                     return;
@@ -844,9 +842,7 @@ ECA::ActionExecutor ActionNode::compile() const {
                     emitEffect("Flow", false, "a bound variable does not read on this subject");
                     return;
                 }
-                std::map<std::string, PropertyValue> pVars;
-                for (const auto& [k, v] : *vars) pVars[k] = PropertyValue(v);
-                const auto valProp = f.evaluate(pVars, &subject);
+                const auto valProp = f.evaluate(*vars, &subject);
                 // Undefined math flows NOTHING — outside the authored bounds
                 // is the law ending, not the law failing. Recorded as a
                 // non-write so a drive session sees it and lets go.
@@ -1212,9 +1208,7 @@ bool ActionNode::definedFor(Singular& subject) const {
             // variable the bounds cut.
             auto vars = readMathBindings(subject, bindings);
             if (!vars) return false;
-            std::map<std::string, PropertyValue> pVars;
-            for (const auto& [k, v] : *vars) pVars[k] = PropertyValue(v);
-            return mapFunction.evaluate(pVars, &subject).has_value();
+            return mapFunction.evaluate(*vars, &subject).has_value();
         }
         case Kind::Drive: {
             // A curve is total: defined whenever its input is readable.
@@ -1512,13 +1506,14 @@ std::optional<PropertyValue> ActionNode::valueSecondsAgo(Singular& subject,
     if (!vars) return std::nullopt;
     const auto clock = vars->find(*timeVar);
     if (clock == vars->end()) return std::nullopt;
-    const double now = clock->second;
+    
+    double now = 0.0;
+    if (!propertyValueToNumber(clock->second, now)) return std::nullopt;
     const double then = now - secondsAgo;
 
     if (kind == Kind::Map) {
         // p = F(t): the past is the same function, one interval earlier.
-        std::map<std::string, PropertyValue> pVars;
-        for (const auto& [key, value] : *vars) pVars[key] = PropertyValue(value);
+        std::map<std::string, PropertyValue> pVars = *vars;
         pVars[*timeVar] = PropertyValue(then);
         return mapFunction.evaluate(pVars, &subject);
     }
@@ -1530,8 +1525,15 @@ std::optional<PropertyValue> ActionNode::valueSecondsAgo(Singular& subject,
         !propertyValueToNumber(current, currentNum)) {
         return std::nullopt;
     }
-    std::map<std::string, double> others = *vars;
-    others.erase(*timeVar);
+    std::map<std::string, double> others;
+    for (const auto& [key, value] : *vars) {
+        if (key != *timeVar) {
+            double v = 0.0;
+            if (propertyValueToNumber(value, v)) {
+                others[key] = v;
+            }
+        }
+    }
     const auto travelled =
         OntoMath::definiteIntegral(mapFunction, *timeVar, then, now, others, &why);
     if (!travelled) return std::nullopt;

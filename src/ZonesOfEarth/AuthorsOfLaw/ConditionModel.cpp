@@ -364,9 +364,7 @@ ECA::ConditionPredicate ConditionNode::compile() const {
             return [f, binds, zlo, zhi](const ECA::Event&, const Singular& target) {
                 auto vars = readMathBindings(const_cast<Singular&>(target), binds);
                 if (!vars) return false;
-                std::map<std::string, PropertyValue> pVars;
-                for (const auto& [k, v] : *vars) pVars[k] = PropertyValue(v);
-                const auto valProp = f.evaluate(pVars, &target);
+                const auto valProp = f.evaluate(*vars, &target);
                 std::optional<double> value;
                 if (valProp) {
                     double d = 0.0;
