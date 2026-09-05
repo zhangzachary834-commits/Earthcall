@@ -403,16 +403,14 @@ def solid_face(size, rgb):
 
 
 def checkerboard_face(size=64):
-    # Face 2 (+Y): Board rotated 180° so White's side has the correct white-side pattern:
-    # White queen (d1) on light square, White king (e1) on dark square,
-    # and White's bottom-right corner (h1) on light square ("white on right").
+    # Face 2 (+Y): White on right (h1 light), white queen on light (d1 light).
     light = (237, 214, 166)
     dark = (117, 69, 33)
 
     def paint(x, y, s):
         rank = x * 8 // s
         file_ = y * 8 // s
-        return light if ((file_ + rank) % 2 == 0) else dark
+        return light if ((file_ + rank) % 2 == 1) else dark
 
     pixels = rgba_bytes(size, paint)
     return {"size": size, "pixelsB64": base64.b64encode(pixels).decode("ascii")}
@@ -1776,8 +1774,8 @@ def build_laws():
     add_law(
         "law-chess-promote-white",
         "promote-white-pawn",
-        2,  # OnBecomeTrue
-        [],
+        0,
+        ["turn-changed", "move-committed"],
         all_of(
             IS_PIECE,
             ON_BOARD,
@@ -1785,13 +1783,21 @@ def build_laws():
             compare("chessColor", 0, pv("int", 0)),
             compare("gridY", 0, pv("int", 7)),
         ),
-        set_path("chessRole", pv("int", 4)),
+        seq(
+            set_path("chessRole", pv("int", 4)),
+            set_path("shape.kind", pv("int", 6)),  # Ovoid (Queen)
+            set_path("shape.r", pv("double", 0.24)),
+            set_path("shape.ovoidAsym", pv("double", 0.35)),
+            set_path("restY", pv("double", 0.42)),
+            set_path("position.y", pv("double", 0.42)),
+            set_path("@state.chess.promoActive", pv("bool", True)),
+        ),
     )
     add_law(
         "law-chess-promote-black",
         "promote-black-pawn",
-        2,
-        [],
+        0,
+        ["turn-changed", "move-committed"],
         all_of(
             IS_PIECE,
             ON_BOARD,
@@ -1799,41 +1805,146 @@ def build_laws():
             compare("chessColor", 0, pv("int", 1)),
             compare("gridY", 0, pv("int", 0)),
         ),
-        set_path("chessRole", pv("int", 4)),
+        seq(
+            set_path("chessRole", pv("int", 4)),
+            set_path("shape.kind", pv("int", 6)),  # Ovoid (Queen)
+            set_path("shape.r", pv("double", 0.24)),
+            set_path("shape.ovoidAsym", pv("double", 0.35)),
+            set_path("restY", pv("double", 0.42)),
+            set_path("position.y", pv("double", 0.42)),
+            set_path("@state.chess.promoActive", pv("bool", True)),
+        ),
+    )
+
+    # Promotion button selection laws
+    add_law(
+        "law-chess-promo-btn-queen",
+        "choose-promotion-queen",
+        0,
+        ["object-clicked"],
+        identity("hud.chess.promo.queen"),
+        publish("promo-select-queen", "state.chess"),
+        scope=0,
+    )
+    add_law(
+        "law-chess-promo-apply-queen",
+        "apply-promotion-queen",
+        0,
+        ["promo-select-queen"],
+        all_of(
+            IS_PIECE,
+            ON_BOARD,
+            any_of(
+                compare("gridY", 0, pv("int", 7)),
+                compare("gridY", 0, pv("int", 0)),
+            ),
+        ),
+        seq(
+            set_path("chessRole", pv("int", 4)),
+            set_path("shape.kind", pv("int", 6)),  # Ovoid
+            set_path("shape.r", pv("double", 0.24)),
+            set_path("shape.ovoidAsym", pv("double", 0.35)),
+            set_path("restY", pv("double", 0.42)),
+            set_path("position.y", pv("double", 0.42)),
+            set_path("@state.chess.promoActive", pv("bool", False)),
+        ),
     )
 
     add_law(
-        "law-chess-promote-white-event",
-        "promote-white-pawn-on-turn",
+        "law-chess-promo-btn-knight",
+        "choose-promotion-knight",
         0,
-        ["turn-changed"],
-        all_of(
-            IS_PIECE,
-            ON_BOARD,
-            is_role(0),
-            compare("chessColor", 0, pv("int", 0)),
-            compare("gridY", 0, pv("int", 7)),
-        ),
-        seq(
-            set_path("chessRole", pv("int", 4)),
-            set_path("restY", pv("double", 0.42)),
-        ),
+        ["object-clicked"],
+        identity("hud.chess.promo.knight"),
+        publish("promo-select-knight", "state.chess"),
+        scope=0,
     )
     add_law(
-        "law-chess-promote-black-event",
-        "promote-black-pawn-on-turn",
+        "law-chess-promo-apply-knight",
+        "apply-promotion-knight",
         0,
-        ["turn-changed"],
+        ["promo-select-knight"],
         all_of(
             IS_PIECE,
             ON_BOARD,
-            is_role(0),
-            compare("chessColor", 0, pv("int", 1)),
-            compare("gridY", 0, pv("int", 0)),
+            any_of(
+                compare("gridY", 0, pv("int", 7)),
+                compare("gridY", 0, pv("int", 0)),
+            ),
         ),
         seq(
-            set_path("chessRole", pv("int", 4)),
-            set_path("restY", pv("double", 0.42)),
+            set_path("chessRole", pv("int", 2)),
+            set_path("shape.kind", pv("int", 5)),  # Ellipsoid
+            set_path("shape.r", pv("double", 0.28)),
+            set_path("shape.ry", pv("double", 0.20)),
+            set_path("shape.rz", pv("double", 0.32)),
+            set_path("restY", pv("double", 0.32)),
+            set_path("position.y", pv("double", 0.32)),
+            set_path("@state.chess.promoActive", pv("bool", False)),
+        ),
+    )
+
+    add_law(
+        "law-chess-promo-btn-rook",
+        "choose-promotion-rook",
+        0,
+        ["object-clicked"],
+        identity("hud.chess.promo.rook"),
+        publish("promo-select-rook", "state.chess"),
+        scope=0,
+    )
+    add_law(
+        "law-chess-promo-apply-rook",
+        "apply-promotion-rook",
+        0,
+        ["promo-select-rook"],
+        all_of(
+            IS_PIECE,
+            ON_BOARD,
+            any_of(
+                compare("gridY", 0, pv("int", 7)),
+                compare("gridY", 0, pv("int", 0)),
+            ),
+        ),
+        seq(
+            set_path("chessRole", pv("int", 1)),
+            set_path("shape.kind", pv("int", 0)),  # Cube
+            set_path("restY", pv("double", 0.36)),
+            set_path("position.y", pv("double", 0.36)),
+            set_path("@state.chess.promoActive", pv("bool", False)),
+        ),
+    )
+
+    add_law(
+        "law-chess-promo-btn-bishop",
+        "choose-promotion-bishop",
+        0,
+        ["object-clicked"],
+        identity("hud.chess.promo.bishop"),
+        publish("promo-select-bishop", "state.chess"),
+        scope=0,
+    )
+    add_law(
+        "law-chess-promo-apply-bishop",
+        "apply-promotion-bishop",
+        0,
+        ["promo-select-bishop"],
+        all_of(
+            IS_PIECE,
+            ON_BOARD,
+            any_of(
+                compare("gridY", 0, pv("int", 7)),
+                compare("gridY", 0, pv("int", 0)),
+            ),
+        ),
+        seq(
+            set_path("chessRole", pv("int", 3)),
+            set_path("shape.kind", pv("int", 4)),  # Cone
+            set_path("shape.r", pv("double", 0.24)),
+            set_path("shape.halfH", pv("double", 0.40)),
+            set_path("restY", pv("double", 0.40)),
+            set_path("position.y", pv("double", 0.40)),
+            set_path("@state.chess.promoActive", pv("bool", False)),
         ),
     )
 
@@ -2010,6 +2121,12 @@ def build_world():
         category_being("category.chess.piece", "Chess piece"),
         category_being("category.chess.board", "Chess board"),
         category_being("category.chess.player", "Chess player"),
+        category_being("category.control", "UI Controls"),
+        category_being("category.control.button", "Action Button"),
+        category_being("category.control", "UI Controls"),
+        category_being("category.control.button", "Action Button"),
+        category_being("category.control", "UI Controls"),
+        category_being("category.control.button", "Action Button"),
         extra_spatial(AUTHOR, {
             "kind": pv("string", "first-mover"),
             "onBehalfOf": pv("string", "Zach"),
@@ -2166,15 +2283,48 @@ def build_world():
 
     seats = [seat(0, 0.0, -5.4), seat(1, 0.0, 5.4)]
 
-    zone_objects = [board] + pieces + seats
+    def hud_button(object_id, label, x, y, w, h, rgb):
+        authored = {
+            "displayName": pv("string", label),
+            "controlLabel": pv("string", label),
+            "shape.width2D": pv("double", float(w)),
+            "shape.height2D": pv("double", float(h)),
+            "pickPriority": pv("double", 100.0),
+        }
+        return {
+            "objectID": object_id,
+            "shapeKind": 12,  # Shape2D
+            "geometryType": 12,
+            "shapeParams": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, float(w), float(h)],
+            "transform": mat4_translate(0.0, 0.0, 0.0),
+            "center": [0.0, 0.0, 0.0],
+            "x2D": float(x),
+            "y2D": float(y),
+            "zOrder2D": 20,
+            "materialId": "",
+            "faceColors": [[c for c in rgb] for _ in range(6)],
+            "authoredProperties": authored,
+        }
+
+    promo_buttons = [
+        hud_button("hud.chess.promo.queen", "PROMOTE: QUEEN", 340, 24, 130, 32, (0.85, 0.70, 0.20)),
+        hud_button("hud.chess.promo.knight", "KNIGHT", 480, 24, 90, 32, (0.20, 0.65, 0.40)),
+        hud_button("hud.chess.promo.rook", "ROOK", 580, 24, 80, 32, (0.25, 0.50, 0.85)),
+        hud_button("hud.chess.promo.bishop", "BISHOP", 670, 24, 90, 32, (0.65, 0.35, 0.80)),
+    ]
+
+    zone_objects = [board] + pieces + seats + promo_buttons
     relations = [instance_rel("object.chess.board", "category.chess.board")]
     relations.append(subcategory_rel("category.chess.piece", "category.chess"))
     relations.append(subcategory_rel("category.chess.board", "category.chess"))
     relations.append(subcategory_rel("category.chess.player", "category.chess"))
+    relations.append(subcategory_rel("category.control.button", "category.control"))
     for pid in piece_ids:
         relations.append(instance_rel(pid, "category.chess.piece"))
     relations.append(instance_rel("object.chess.seat.white", "category.chess.player"))
     relations.append(instance_rel("object.chess.seat.black", "category.chess.player"))
+    for b in promo_buttons:
+        relations.append(instance_rel(b["objectID"], "category.control.button"))
 
     zone = {
         "name": ZONE_ID,

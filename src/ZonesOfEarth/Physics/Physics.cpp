@@ -495,6 +495,14 @@ namespace Physics {
         // Keep form mass synchronized with object's declared mass attribute (if present)
         float attributeMass = getObjectMass(obj, form.mass);
         if (attributeMass > 0.0f && std::isfinite(attributeMass)) form.mass = attributeMass;
+        if (obj && glm::length(form.centerOfMassOffset) == 0.0f && glm::length(obj->getCenter()) > 0.0f) {
+            form.centerOfMassOffset = obj->getCenter();
+        }
+        if (form.momentOfInertia <= 0.0f) {
+            float r = 0.5f;
+            if (obj && obj->getShapeParams().r > 0.0f) r = obj->getShapeParams().r;
+            form.momentOfInertia = std::max(0.01f, 0.4f * form.mass * r * r);
+        }
         return form;
     }
 
@@ -517,8 +525,17 @@ namespace Physics {
         form.accumulatedForce += force;
     }
 
+    void applyTorque(RigidForm& form, const glm::vec3& torque) {
+        form.accumulatedTorque += torque;
+    }
+
+    void clearTorque(RigidForm& form) {
+        form.accumulatedTorque = glm::vec3(0.0f);
+    }
+
     void clearForces(RigidForm& form) {
         form.accumulatedForce = glm::vec3(0.0f);
+        form.accumulatedTorque = glm::vec3(0.0f);
     }
 
     void integrate(RigidForm& form, glm::vec3& position, float deltaTime, float airResistance, float groundY) {

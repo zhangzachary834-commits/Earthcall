@@ -70,6 +70,11 @@
 - [x] H → press `H` → verify the intended H action occurs | Zach: Opens chat window, but pressing H again fails to toggle off.
 - [x] K → press `K` → verify the intended K action occurs | 
 ## Synthesis Studio (added 2026-09-02, from the play-test that corrected the audit's first pass)
+
+- [ ] **Resonance Studio upgrade — Codex, session `synthesis-studio-20260904`, 2026-09-04 22:00 PDT:** reopen Earthcall and load `synthesis_studio` at the default 1280×720 window size; verify the full spectrum dock and upper-right voice/ink controls fit, text is readable, and the floating resonators remain visible above the easel.
+- [ ] **Play the room:** play C5 through B5 on both the desk and dock; each matching sphere should swell/rise, its colored meter should jump then settle, and the last-note caption should change; play repeatedly for over a minute and check responsiveness and animation feel.
+- [ ] **Sound and ink:** select TRI, SINE, then SQR and compare their audible character; select TIDAL or ORCHID, enable DRAW, and drag on the easel to see the selected color; confirm existing artwork remains. Save/reload and repeat. Automated sink/serialization checks pass; actual sound and desktop feel still need a Person's witness.
+
 - [ ] **2D controls on a HiDPI/Retina display** → open the Synthesis Studio → click any 2D HUD dock control → verify it responds. **Known blocking finding (Zach's play-test, 2026-09-02):** every 2D control is unclickable on a Retina Mac — the 2D draw and the 2D pick are in different coordinate spaces. See [SYNTHESIS_STUDIO_AUDIT_2026-09-02.md](../../audits/SYNTHESIS_STUDIO_AUDIT_2026-09-02.md) §A0. Re-verify here after the fix, on both a Retina and a non-Retina display.
 - [ ] 3D console → click the two buttons and the four chord pads → verify orbs spawn and notes sound (audit reports every sound in the studio is currently silent)
 - [ ] Slider → set a value → save → reload → verify the slider does not teleport on load

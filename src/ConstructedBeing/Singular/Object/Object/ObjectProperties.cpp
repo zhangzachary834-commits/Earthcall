@@ -312,19 +312,39 @@ private:
 // Motion state bridge: connects physics rigid form to property system
 class RigidFormBridge : public Property {
 public:
-    enum class Field { Velocity, Mass };
+    enum class Field { Velocity, Mass, AngularVelocity, CenterOfMass, MomentOfInertia };
     RigidFormBridge(std::string name, Object* owner, Field field)
         : _name(std::move(name)), _owner(owner), _field(field) {}
 
     std::string name() const override { return _name; }
     Earthcall::StringId nameId() const override { return Earthcall::StringInterner::intern(name()); }
     std::string typeName() const override {
-        return _field == Field::Velocity ? "vec3" : "float";
+        switch (_field) {
+            case Field::Velocity:
+            case Field::AngularVelocity:
+            case Field::CenterOfMass:
+                return "vec3";
+            case Field::Mass:
+            case Field::MomentOfInertia:
+                return "float";
+        }
+        return "float";
     }
     PropertyValue value() const override {
         Physics::RigidForm& form = Physics::getFormFor(_owner);
-        return _field == Field::Velocity ? PropertyValue(form.velocity)
-                                         : PropertyValue(form.mass);
+        switch (_field) {
+            case Field::Velocity:
+                return PropertyValue(form.velocity);
+            case Field::AngularVelocity:
+                return PropertyValue(form.angularVelocity);
+            case Field::CenterOfMass:
+                return PropertyValue(form.centerOfMassOffset);
+            case Field::Mass:
+                return PropertyValue(form.mass);
+            case Field::MomentOfInertia:
+                return PropertyValue(form.momentOfInertia);
+        }
+        return PropertyValue(0.0f);
     }
     bool setValue(const PropertyValue& v) override {
         Physics::RigidForm& form = Physics::getFormFor(_owner);
@@ -334,10 +354,31 @@ public:
             form.velocity = *vec;
             return true;
         }
-        double n = 0.0;
-        if (!propertyValueToNumber(v, n) || n <= 0.0) return false;   // massless
-        form.mass = static_cast<float>(n);                            // is a lie
-        return true;
+        if (_field == Field::AngularVelocity) {
+            const auto* vec = std::get_if<glm::vec3>(&v);
+            if (!vec) return false;
+            form.angularVelocity = *vec;
+            return true;
+        }
+        if (_field == Field::CenterOfMass) {
+            const auto* vec = std::get_if<glm::vec3>(&v);
+            if (!vec) return false;
+            form.centerOfMassOffset = *vec;
+            return true;
+        }
+        if (_field == Field::Mass) {
+            double n = 0.0;
+            if (!propertyValueToNumber(v, n) || n <= 0.0) return false;   // massless
+            form.mass = static_cast<float>(n);                            // is a lie
+            return true;
+        }
+        if (_field == Field::MomentOfInertia) {
+            double n = 0.0;
+            if (!propertyValueToNumber(v, n) || n <= 0.0) return false;
+            form.momentOfInertia = static_cast<float>(n);
+            return true;
+        }
+        return false;
     }
 
 private:
@@ -597,11 +638,17 @@ void Object::buildProperties() {
     registerProperty(std::make_unique<ComputedProperty<Object, glm::vec3>>(
         "hoverPoint", this, &Object::getHoverPoint, nullptr));
     // Motion state: the rigid form's truth, addressable — collision RESPONSE
-    // becomes authorable law-text.
+    // and rotational dynamics become authorable law-text.
     registerProperty(std::make_unique<RigidFormBridge>(
         "velocity", this, RigidFormBridge::Field::Velocity));
     registerProperty(std::make_unique<RigidFormBridge>(
         "mass", this, RigidFormBridge::Field::Mass));
+    registerProperty(std::make_unique<RigidFormBridge>(
+        "angularVelocity", this, RigidFormBridge::Field::AngularVelocity));
+    registerProperty(std::make_unique<RigidFormBridge>(
+        "centerOfMass", this, RigidFormBridge::Field::CenterOfMass));
+    registerProperty(std::make_unique<RigidFormBridge>(
+        "momentOfInertia", this, RigidFormBridge::Field::MomentOfInertia));
     // The object's tint (uniform across faces when written; face 0 when read).
     registerProperty(std::make_unique<ComputedProperty<Object, glm::vec3>>(
         "color", this, &Object::propColor, &Object::propSetColor));

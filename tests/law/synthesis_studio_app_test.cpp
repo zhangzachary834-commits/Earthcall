@@ -242,7 +242,7 @@ int main() {
                 allText = false;
             }
         }
-        check(allAuthored, "every law reattached to author.gemini-spark — the structural gate");
+        check(allAuthored, "every law reattached to its recorded author — the structural gate");
         check(allText, "every law carries a readable condition tree");
 
         // The archetypes belong to the engine (ControlPatterns.cpp) and were
@@ -503,6 +503,9 @@ int main() {
             return true;
         });
         stateStudio->setDynamicProperty("drawMode", PropertyValue(true));
+        Object* tidalInk = findObject("hud.resonance.ink.tidal");
+        check(tidalInk != nullptr, "the Tidal ink selector exists");
+        if (tidalInk) activate(*tidalInk);
 
         // A HELD BUTTON IS NOT A STROKE. Without a movement gate the law is a
         // level with no edge — WhileTrue fires every tick the button is down,
@@ -524,6 +527,10 @@ int main() {
 
         if (drawn >= 1) {
             Object* dab = zone->getOwnedObjects().back().get();
+            check(nearly(readNumber(*dab, "color.r"), 0.22) &&
+                      nearly(readNumber(*dab, "color.g"), 0.88) &&
+                      nearly(readNumber(*dab, "color.b"), 0.82),
+                  "the selected Tidal ink reaches the newly drawn stroke");
             check(nearly(readNumber(*dab, "acoustic.frequency"), 1046.5),
                   "the segment carries the acoustics law-stroke-hover-sound reads");
 
@@ -597,15 +604,25 @@ int main() {
             return interaction.hoveredId;
         };
 
-        check(pickAt(260.0f, 660.0f) == "hud.btn.spawn-orb",
+        const auto pointOn = [](Object& obj, float across = 0.5f) {
+            const glm::vec4 rect = obj.getRect2D();
+            return glm::vec2(rect.x + across * (rect.z - rect.x), (rect.y + rect.w) * 0.5f);
+        };
+        const auto spawnPoint = pointOn(*btnSpawn);
+        const auto spawnLeft = pointOn(*btnSpawn, 0.1f);
+        const auto spawnRight = pointOn(*btnSpawn, 0.9f);
+        const auto d5Point = pointOn(*padD5);
+        const auto e5Point = pointOn(*findObject("hud.pad.e5"));
+        const auto drawRight = pointOn(*btnDraw, 0.9f);
+        check(pickAt(spawnLeft.x, spawnLeft.y) == "hud.btn.spawn-orb",
               "picking left side of spawn button hits hud.btn.spawn-orb");
-        check(pickAt(360.0f, 660.0f) == "hud.btn.spawn-orb",
+        check(pickAt(spawnRight.x, spawnRight.y) == "hud.btn.spawn-orb",
               "picking right side of spawn button hits hud.btn.spawn-orb");
-        check(pickAt(585.0f, 660.0f) == "hud.pad.d5",
+        check(pickAt(d5Point.x, d5Point.y) == "hud.pad.d5",
               "picking center of pad D5 hits hud.pad.d5 (not stolen by C5)");
-        check(pickAt(635.0f, 660.0f) == "hud.pad.e5",
+        check(pickAt(e5Point.x, e5Point.y) == "hud.pad.e5",
               "picking center of pad E5 hits hud.pad.e5 (not stolen by D5)");
-        check(pickAt(1000.0f, 660.0f) == "hud.btn.draw-stroke",
+        check(pickAt(drawRight.x, drawRight.y) == "hud.btn.draw-stroke",
               "picking right side of draw button hits hud.btn.draw-stroke");
         check(pickAt(80.0f, 50.0f) == "",
               "caption text2d does not swallow clicks at (80, 50)");
@@ -619,14 +636,14 @@ int main() {
         // Real click on spawn button: mouse down + mouse up
         const size_t countBeforeClick = zone->getOwnedObjects().size();
         Singularity::Input::InteractionChannel::Sense sDown;
-        sDown.pointerX = 300.0f;
-        sDown.pointerY = 660.0f;
+        sDown.pointerX = spawnPoint.x;
+        sDown.pointerY = spawnPoint.y;
         sDown.left = true;
         interaction.observe(sDown, reachable);
 
         Singularity::Input::InteractionChannel::Sense sUp;
-        sUp.pointerX = 300.0f;
-        sUp.pointerY = 660.0f;
+        sUp.pointerX = spawnPoint.x;
+        sUp.pointerY = spawnPoint.y;
         sUp.left = false;
         interaction.observe(sUp, reachable);
 
@@ -680,8 +697,9 @@ int main() {
             // Scenario C: Now regular click in the world on pad C5
             const size_t soundsBefore = g_sounded.size();
             Singularity::Input::InteractionChannel::Sense sPadDown;
-            sPadDown.pointerX = 535.0f; // center of pad C5
-            sPadDown.pointerY = 660.0f;
+            const auto c5Point = pointOn(*padC5);
+            sPadDown.pointerX = c5Point.x;
+            sPadDown.pointerY = c5Point.y;
             sPadDown.left = true;
             interaction.observe(sPadDown, reachable);
 
@@ -702,14 +720,14 @@ int main() {
             }
             const size_t orbsBefore = zone->getOwnedObjects().size();
             Singularity::Input::InteractionChannel::Sense sJitterDown;
-            sJitterDown.pointerX = 260.0f; // on spawn button (x: 236..368)
-            sJitterDown.pointerY = 660.0f;
+            sJitterDown.pointerX = spawnLeft.x;
+            sJitterDown.pointerY = spawnLeft.y;
             sJitterDown.left = true;
             interaction.observe(sJitterDown, reachable);
 
             // Move 4 pixels while held down (< 12px clickSlopPixels)
             Singularity::Input::InteractionChannel::Sense sJitterMove = sJitterDown;
-            sJitterMove.pointerX = 264.0f;
+            sJitterMove.pointerX += 4.0f;
             interaction.observe(sJitterMove, reachable);
             check(!interaction.dragging, "pointer moved 4px does not set dragging flag");
 
@@ -732,8 +750,8 @@ int main() {
 
             // Mouse button pressed down
             Singularity::Input::InteractionChannel::Sense sDownOnBtn;
-            sDownOnBtn.pointerX = 260.0f;
-            sDownOnBtn.pointerY = 660.0f;
+            sDownOnBtn.pointerX = spawnPoint.x;
+            sDownOnBtn.pointerY = spawnPoint.y;
             sDownOnBtn.left = true;
             interaction.observe(sDownOnBtn, reachable);
             check(interaction.leftDown, "button is held down before focus loss");

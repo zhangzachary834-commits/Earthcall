@@ -88,6 +88,11 @@ def upgrade(document):
     zone = next(z for z in zones if z.get("identifier", z.get("name")) == "SynthesisStudio")
     objects = zone["world"]["objects"]
     by_id = {o["objectID"]: o for o in objects}
+    # Top-level annotations are not guaranteed to survive an engine save.
+    # The authoring marker's registered revision does, so a later Person edit
+    # must remain protected even after those annotations have been dropped.
+    if by_id.get(MOVER, {}).get("authoredProperties", {}).get("revision", {}).get("v") == REVISION:
+        return doc
     edges = zone.setdefault("formationRelations", [])
 
     def put(obj, button=False):

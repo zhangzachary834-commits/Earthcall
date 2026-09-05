@@ -17,6 +17,7 @@
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
 #include "ZonesOfEarth/Physics/DefaultPhysicsLaws.hpp"
+#include "ZonesOfEarth/Physics/AuthoredPhysicsLaws.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "Singularity/TransferPolicy.hpp"
 #include "ConstructedBeing/Material/MaterialManager.hpp"

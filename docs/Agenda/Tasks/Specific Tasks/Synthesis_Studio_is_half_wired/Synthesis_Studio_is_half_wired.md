@@ -1,8 +1,29 @@
 # Synthesis Studio is half-wired
 
 **Status:** open  
+**Latest pass:** resonance Studio upgrade authored; automated behavior verified, live visual/audio acceptance pending (see below).
 **Section in the To-Do list:** Interaction · controls · GUI  
 **Split out of `docs/Agenda/Tasks/To-do list.md` on 2026-09-02** by Claude Opus 5 (session `session_01GsrBySNw4oG1zof5AQ21KM`), per Zach's instruction that each To-Do bullet be one sentence linking to its own task document. **Content below is the original bullet, verbatim — nothing was summarized away.**
+
+---
+
+## 2026-09-04 — Play the room: resonance Studio
+
+**Codex · session `synthesis-studio-20260904` · 2026-09-04 22:00 PDT.** Zach requested “make the synthesis studio way cooler” and subsequently asked to continue after a usage limit. The music-and-light direction, layout, and authored implementation are Codex's extension of that request; the Person-authorship and save-preservation requirements come from Zach's AGENTS.md.
+
+Implemented in `scripts/upgrade_synthesis_studio.py` and applied to `saves/worlds/synthesis_studio.json`, its `.ecform` sibling, and `saves/zones/SynthesisStudio/zone.json`: a wider spectrum dock, larger note pads, seven fixed floating resonators, seven note-decay meters, a last-note readout, triangle/sine/square voice selection, and Solar/Tidal/Orchid drawing inks. The shipped save lacked press Laws; two authored press Laws restore 2D/3D depression. Existing release Laws provide the spring. The new animation never creates objects during musical play. Runtime behavior remains Law data; no Studio-specific engine code was added.
+
+There are 21 new Laws and 28 new Objects (seven resonators, seven meters, six selectors, seven captions, and the authoring marker `studio.author.codex`). New Laws name that Object as their author. Its `onBehalfOf` property names Zach, and both saves retain earlier attribution while recording Codex's intervention. The original pad playback Law retains its identity and attribution with a `revised-by` edge. The drawing Law now applies the selected ink to newborn strokes. Existing unrelated beings, user properties, and the `.ecmatter` binary remain preserved.
+
+Original files, including the binary companion, are recoverable under `saves/backups/synthesis-studio-20260905T014017Z-zwfhvjcu/`. The upgrade operates on each existing document rather than regenerating the Zone. Repeated execution is a no-op, including after top-level annotations disappear during an engine save: the authoring Object's persisted revision protects later Person edits.
+
+Verification: the WebGPU app and Studio test build; the Studio regression checks cover 35 sequential pad clicks, 20 repeated orb clicks, press/release, all seven pitches, exactly one sound per selected voice, matched light response and decay, constant population during 40 note activations, and real Law/Object serialization round-trips. The updater was also exercised against an extra Person-owned sentinel being and a later paint edit, which survived. This does not establish audible timbre quality, real desktop input, or visual layout. The computer-use preview failed to open through macOS Launch Services; hands-on acceptance is listed in `Person Verification List.md`. The layout is authored for the existing 1280×720 window-point viewport; responsive layout remains outside this pass.
+
+Use the normal saved-world picker to load **synthesis_studio** after reopening Earthcall. Voice and ink controls are at the upper right; notes, orb creation, theme, and drawing mode are in the bottom dock. Visual and audible acceptance remain open; the older audit below is retained as history, not a description of the new pass's test results.
+
+Build integration note (Codex, same session, 2026-09-04 22:53 PDT): concurrent Physics work initially blocked the final rebuild by reading private `Object::center`; the two reads now call the existing `getCenter()` accessor. No physics formula changed in this correction.
+
+Final verification (Codex, same session, 2026-09-04 22:59 PDT): the rebuilt Studio test exits 0, including the selected Tidal color on a newly drawn stroke and all prior checks. The WebGPU app built successfully earlier in this pass. A subsequent app rebuild picked up ongoing unrelated engine changes and was stopped to reduce machine load (load average exceeded 50); no claim is made that the latest concurrent engine work has completed its app build. The three Studio documents have identical object content; their attribution/revision envelopes intentionally differ by document. No preview process remains running.
 
 ---
 

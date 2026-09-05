@@ -3907,6 +3907,402 @@
             "v": "Player"
           }
         }
+      },
+      {
+        "objectID": "hud.chess.promo.queen",
+        "shapeKind": 12,
+        "geometryType": 12,
+        "shapeParams": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          130.0,
+          32.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "x2D": 340.0,
+        "y2D": 24.0,
+        "zOrder2D": 20,
+        "materialId": "",
+        "faceColors": [
+          [
+            0.85,
+            0.7,
+            0.2
+          ],
+          [
+            0.85,
+            0.7,
+            0.2
+          ],
+          [
+            0.85,
+            0.7,
+            0.2
+          ],
+          [
+            0.85,
+            0.7,
+            0.2
+          ],
+          [
+            0.85,
+            0.7,
+            0.2
+          ],
+          [
+            0.85,
+            0.7,
+            0.2
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "PROMOTE: QUEEN"
+          },
+          "controlLabel": {
+            "t": "string",
+            "v": "PROMOTE: QUEEN"
+          },
+          "shape.width2D": {
+            "t": "double",
+            "v": 130.0
+          },
+          "shape.height2D": {
+            "t": "double",
+            "v": 32.0
+          },
+          "pickPriority": {
+            "t": "double",
+            "v": 100.0
+          }
+        }
+      },
+      {
+        "objectID": "hud.chess.promo.knight",
+        "shapeKind": 12,
+        "geometryType": 12,
+        "shapeParams": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          90.0,
+          32.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "x2D": 480.0,
+        "y2D": 24.0,
+        "zOrder2D": 20,
+        "materialId": "",
+        "faceColors": [
+          [
+            0.2,
+            0.65,
+            0.4
+          ],
+          [
+            0.2,
+            0.65,
+            0.4
+          ],
+          [
+            0.2,
+            0.65,
+            0.4
+          ],
+          [
+            0.2,
+            0.65,
+            0.4
+          ],
+          [
+            0.2,
+            0.65,
+            0.4
+          ],
+          [
+            0.2,
+            0.65,
+            0.4
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "KNIGHT"
+          },
+          "controlLabel": {
+            "t": "string",
+            "v": "KNIGHT"
+          },
+          "shape.width2D": {
+            "t": "double",
+            "v": 90.0
+          },
+          "shape.height2D": {
+            "t": "double",
+            "v": 32.0
+          },
+          "pickPriority": {
+            "t": "double",
+            "v": 100.0
+          }
+        }
+      },
+      {
+        "objectID": "hud.chess.promo.rook",
+        "shapeKind": 12,
+        "geometryType": 12,
+        "shapeParams": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          80.0,
+          32.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "x2D": 580.0,
+        "y2D": 24.0,
+        "zOrder2D": 20,
+        "materialId": "",
+        "faceColors": [
+          [
+            0.25,
+            0.5,
+            0.85
+          ],
+          [
+            0.25,
+            0.5,
+            0.85
+          ],
+          [
+            0.25,
+            0.5,
+            0.85
+          ],
+          [
+            0.25,
+            0.5,
+            0.85
+          ],
+          [
+            0.25,
+            0.5,
+            0.85
+          ],
+          [
+            0.25,
+            0.5,
+            0.85
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "ROOK"
+          },
+          "controlLabel": {
+            "t": "string",
+            "v": "ROOK"
+          },
+          "shape.width2D": {
+            "t": "double",
+            "v": 80.0
+          },
+          "shape.height2D": {
+            "t": "double",
+            "v": 32.0
+          },
+          "pickPriority": {
+            "t": "double",
+            "v": 100.0
+          }
+        }
+      },
+      {
+        "objectID": "hud.chess.promo.bishop",
+        "shapeKind": 12,
+        "geometryType": 12,
+        "shapeParams": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          90.0,
+          32.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "x2D": 670.0,
+        "y2D": 24.0,
+        "zOrder2D": 20,
+        "materialId": "",
+        "faceColors": [
+          [
+            0.65,
+            0.35,
+            0.8
+          ],
+          [
+            0.65,
+            0.35,
+            0.8
+          ],
+          [
+            0.65,
+            0.35,
+            0.8
+          ],
+          [
+            0.65,
+            0.35,
+            0.8
+          ],
+          [
+            0.65,
+            0.35,
+            0.8
+          ],
+          [
+            0.65,
+            0.35,
+            0.8
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "BISHOP"
+          },
+          "controlLabel": {
+            "t": "string",
+            "v": "BISHOP"
+          },
+          "shape.width2D": {
+            "t": "double",
+            "v": 90.0
+          },
+          "shape.height2D": {
+            "t": "double",
+            "v": 32.0
+          },
+          "pickPriority": {
+            "t": "double",
+            "v": 100.0
+          }
+        }
       }
     ]
   },
@@ -3957,6 +4353,20 @@
       "type": "subcategory-of",
       "entityA": "category.chess.player",
       "entityB": "category.chess",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "subcategory-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787390000
+        }
+      ]
+    },
+    {
+      "type": "subcategory-of",
+      "entityA": "category.control.button",
+      "entityB": "category.control",
       "directed": true,
       "weight": 1.0,
       "events": [
@@ -4433,6 +4843,62 @@
       "type": "instance-of",
       "entityA": "object.chess.seat.black",
       "entityB": "category.chess.player",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787390000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "hud.chess.promo.queen",
+      "entityB": "category.control.button",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787390000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "hud.chess.promo.knight",
+      "entityB": "category.control.button",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787390000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "hud.chess.promo.rook",
+      "entityB": "category.control.button",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787390000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "hud.chess.promo.bishop",
+      "entityB": "category.control.button",
       "directed": true,
       "weight": 1.0,
       "events": [

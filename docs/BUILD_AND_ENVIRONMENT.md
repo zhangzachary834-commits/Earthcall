@@ -161,6 +161,7 @@ honest rather than convenient:
 
 | Test | Guards against |
 |---|---|
+| `synthesis_studio_app_test` | the actual Studio save's controls losing their actions: repeated input, press/release, voice selection, selected ink reaching new strokes, note-reactive geometry, bounded musical play, and real Object/Law round-trips; click targets follow authored rectangles. Live visual/audio acceptance remains in `docs/Agenda/Tasks/Person Verification List.md`. Updated by Codex, session `synthesis-studio-20260904`, 2026-09-04 22:53 PDT. |
 | `paint_test` | paint written through a *shared* material (repaints the world), and a `color` property that does not read back what was written — `propSetColor` was an empty function for a month |
 | `object_roundtrip_test` | a field `to_json` writes and `from_json` drops. `faceColors` was write-only for a month with the write side making it look covered; `serialization_compat_test` covers the msgpack/Frontier *plumbing* and cannot see this |
 | `channel_paths_test` | the law-authoring picker offering a property path no registry answers. `CreationChannel::activeShapeKind` was advertised and unregistered, so every law reading it silently fell back |
@@ -302,4 +303,3 @@ lived beside it until 2026-08-11 and was deleted. Formation is `Relation/Formati
 (all includes point directly to `Relation/Formation/Formation.hpp`). Lexeme is a Singular, not a Language-channel type.
 
 **Test harnesses (`TestLabInterfaces/`, `TestLabAI/`)** sit at the repository root as external harness interfaces (renamed from `TestLab/` in commit e813b6b6 to distinguish interface tools from the ontology).
-
