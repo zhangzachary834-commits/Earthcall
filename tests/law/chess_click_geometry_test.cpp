@@ -236,6 +236,81 @@ int main() {
     bool blackMoveOk = blackPawnSelected && (b_gx == 4 && b_gy == 4) && (asInt(*state, "turn") == 0);
     allHit = allHit && blackMoveOk;
 
+    // ------------------------------------------------------------------
+    // Phase 4: Camera projection pick with realistic mouse movement
+    // Moves white queen d1 -> f3.
+    // ------------------------------------------------------------------
+    Object* whiteQueen = findObj(*active, "piece-white-queen-3-0");
+    assert(whiteQueen);
+    std::cout << "--- Phase 4: white queen d1 -> f3 via camera perspective picking ---\n";
+    glm::vec3 qPos = whiteQueen->getPosition();
+    glm::vec4 qClip = proj * view * glm::vec4(qPos, 1.0f);
+    glm::vec3 qNdc = glm::vec3(qClip) / qClip.w;
+    float qSx = (qNdc.x + 1.0f) * 0.5f * fbW;
+    float qSy = (1.0f - qNdc.y) * 0.5f * fbH;
+
+    glm::vec3 f3Pos(1.5f, 0.0f, -1.5f);
+    glm::vec4 f3Clip = proj * view * glm::vec4(f3Pos, 1.0f);
+    glm::vec3 f3Ndc = glm::vec3(f3Clip) / f3Clip.w;
+    float f3Sx = (f3Ndc.x + 1.0f) * 0.5f * fbW;
+    float f3Sy = (1.0f - f3Ndc.y) * 0.5f * fbH;
+
+    unprojectScreen(qSx - 25.0f, qSy - 30.0f, simSense.rayOrigin, simSense.rayDirection);
+    simSense.pointerX = qSx - 25.0f;
+    simSense.pointerY = qSy - 30.0f;
+    simSense.left = false;
+    harness.interaction->observe(simSense, reachable);
+
+    glm::vec3 qRayOrig, qRayDir;
+    unprojectScreen(qSx, qSy, qRayOrig, qRayDir);
+    float tQ = 0.0f, tBoard = 0.0f;
+    int fQ = -1, fBoard = -1;
+    glm::vec2 uvQ, uvBoard;
+    bool hitQ = whiteQueen->raycastFace(qRayOrig, qRayDir, tQ, fQ, uvQ);
+    bool hitBoard = board->raycastFace(qRayOrig, qRayDir, tBoard, fBoard, uvBoard);
+    std::cout << "  DEBUG RAY: orig=(" << qRayOrig.x << "," << qRayOrig.y << "," << qRayOrig.z
+              << ") dir=(" << qRayDir.x << "," << qRayDir.y << "," << qRayDir.z << ")\n";
+    std::cout << "  DEBUG hitQ=" << hitQ << " tQ=" << tQ << " fQ=" << fQ << "\n";
+    std::cout << "  DEBUG hitBoard=" << hitBoard << " tBoard=" << tBoard << " fBoard=" << fBoard << "\n";
+
+    unprojectScreen(qSx, qSy, simSense.rayOrigin, simSense.rayDirection);
+    simSense.pointerX = qSx;
+    simSense.pointerY = qSy;
+    simSense.left = true;
+    harness.interaction->observe(simSense, reachable);
+
+    simSense.left = false;
+    harness.interaction->observe(simSense, reachable);
+    harness.lawManager.tick();
+
+    bool whiteQueenSelected = asBool(*whiteQueen, "isSelected");
+    std::cout << "  white queen hovered: \"" << harness.interaction->hoveredId << "\" isSelected=" << whiteQueenSelected << "\n";
+    if (!whiteQueenSelected) {
+        std::cout << "  **white queen d1 was not selected after click**\n";
+    }
+
+    unprojectScreen(f3Sx - 40.0f, f3Sy - 40.0f, simSense.rayOrigin, simSense.rayDirection);
+    simSense.pointerX = f3Sx - 40.0f;
+    simSense.pointerY = f3Sy - 40.0f;
+    simSense.left = false;
+    harness.interaction->observe(simSense, reachable);
+
+    unprojectScreen(f3Sx, f3Sy, simSense.rayOrigin, simSense.rayDirection);
+    simSense.pointerX = f3Sx;
+    simSense.pointerY = f3Sy;
+    simSense.left = true;
+    harness.interaction->observe(simSense, reachable);
+
+    simSense.left = false;
+    harness.interaction->observe(simSense, reachable);
+    harness.lawManager.tick();
+
+    const int q_gx = asInt(*whiteQueen, "gridX");
+    const int q_gy = asInt(*whiteQueen, "gridY");
+    std::cout << "  white queen now at (" << q_gx << "," << q_gy << ") turn=" << asInt(*state, "turn") << "\n";
+    bool queenMoveOk = whiteQueenSelected && (q_gx == 5 && q_gy == 2) && (asInt(*state, "turn") == 1);
+    allHit = allHit && queenMoveOk;
+
     std::cout << "==================================================\n";
     std::cout << (allHit ? "chess_click_geometry_test: ALL OK"
                           : "chess_click_geometry_test: FAILURES FOUND")
