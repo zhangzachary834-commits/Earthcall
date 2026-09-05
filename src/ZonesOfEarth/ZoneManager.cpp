@@ -14,6 +14,7 @@
 #include "ConstructedBeing/Singular/Object/Object/ObjectIdentity.hpp"
 #include "Singularity/OntoMath/ScalarForm.hpp"
 #include "Singularity/TransferPolicy.hpp"
+#include "Singularity/Language/LanguageSystem.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "Singularity/Screen/Camera.hpp"
 #include "Singularity/Input/Mouse/MouseHandler.hpp"
@@ -726,6 +727,9 @@ nlohmann::json ZoneManager::buildSaveJson(const SaveContext& ctx) const {
     }
     j["zones"] = zonesJson;
     j["zoneRefs"] = zoneRefs;
+    if (ctx.ourverse) {
+        j["ourverse"] = ourverseToJson(*ctx.ourverse);
+    }
 
     j["materials"] = materials.toJson();
     j["categories"] = categories.toJson();
@@ -1260,6 +1264,43 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
             if (j.contains("authoredLaws")) {
                 ctx.lawManager->loadFromJson(j["authoredLaws"]);
             }
+        });
+        stage("ourverse", [&] {
+            if (!ctx.ourverse || !j.contains("ourverse")) return;
+
+            auto resolveZone = [this](const std::string& id) -> std::shared_ptr<Zone> {
+                if (id.empty()) return nullptr;
+                for (const auto& zone : _zones) {
+                    if (zone && zone->getIdentifier() == id) return zone;
+                }
+                return nullptr;
+            };
+            auto resolveMember = [&ctx, &resolveZone](const std::string& id) -> Singular* {
+                if (id.empty()) return nullptr;
+                if (auto zone = resolveZone(id)) return zone.get();
+                if (ctx.person && ctx.person->getIdentifier() == id) return ctx.person;
+                if (ctx.lawManager) {
+                    if (auto* law = ctx.lawManager->find(id)) return law;
+                }
+                if (auto category = categories.get(id)) return category.get();
+                if (auto material = materials.get(id)) return material.get();
+                auto& language = Singularity::Language::LanguageSystem::instance();
+                if (auto lexeme = language.findById(id)) {
+                    return lexeme.get();
+                }
+                if (auto lexeme = language.findBySymbol(id)) {
+                    return lexeme.get();
+                }
+                for (Singular* being : Universe::instance().beings()) {
+                    if (being && being->getIdentifier() == id) return being;
+                }
+                return nullptr;
+            };
+            if (!ourverseFromJson(*ctx.ourverse, j["ourverse"],
+                                 resolveZone, resolveMember)) {
+                throw std::runtime_error("Ourverse root contained no loadable state");
+            }
+            logIo("Ourverse semantic root hydrated after Zones and laws.");
         });
         stage("physical-matter", [&] {
             std::vector<uint8_t> matterBytes = SaveSystem::readMatterData(filename);

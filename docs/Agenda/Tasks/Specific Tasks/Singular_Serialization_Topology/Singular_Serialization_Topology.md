@@ -1,6 +1,6 @@
 # Singular serialization topology
 
-**Status:** Phase 1 landed — source boundaries moved without changing the save schema; Ourverse load integration and writer retirement remain open.  
+**Status:** Phase 2 landed — the semantic Ourverse root now writes and hydrates in graph order; Person-root extraction and legacy writer retirement remain open.
 **Agenda section:** Singular · Relation · Formation  
 **Author:** Codex, session `01a0707e-f743-71b1-8fb9-63975012e66d`, 2026-09-05 01:00 PDT
 
@@ -51,6 +51,22 @@ boundaries; relation endpoint resolution and formation hydration live in
 emits an Ourverse root record that names its gathering Zone and Formation records.
 This remains a source-topology migration: the legacy save schema and compatibility
 entry point are preserved, while Ourverse loading and writer retirement stay open.
+
+## Phase 2 landed — 2026-09-05
+
+**Update author:** Codex, session `01a0707e-f743-71b1-8fb9-63975012e66d`, 2026-09-05 01:55 PDT
+
+`SaveContext` now carries the live Ourverse root. Runtime Save As, Quick Save, and
+WebSocket saves emit an `ourverse` record beside the session's Zone references.
+`ZoneManager::loadState` hydrates that record after Zones, categories, materials,
+and authored laws exist, using stable-identifier resolvers for the gathering Zone,
+Joys hierarchy, filaments, and metalaws. Formation identity and relation-type tags
+are preserved, and `convenesToward` has an explicit hydration path. Legacy sessions
+without an `ourverse` record continue to load unchanged.
+
+The new headless `ourverse_serialization_test` proves root emission through
+`ZoneManager::buildSaveJson` and a full semantic root round-trip, including a
+cross-Zone filament.
 
 ## Target source layout
 
@@ -127,7 +143,7 @@ a direct regression test for populated Zones.
 | Person | Member `serialize`/`deserialize`; Body helpers now have a Person-side module | Add a Person root adapter without changing PersonDatabase format. |
 | Zone | `ZonesOfEarth/ZoneSerialization` owns the extracted codec and graph assembly | Keep base fields, object references, and graph binding phased. |
 | Home | `HomeSerialization` owns dwelling augmentation | Preserve Zone composition; do not duplicate base Zone state. |
-| Ourverse | `OurverseSerialization` emits the semantic root record; load is not wired | Add root loading and a graph-link regression test. |
+| Ourverse | `OurverseSerialization` emits and hydrates the semantic root record | Retire the legacy multi-write path only after the split substrate owns this root. |
 | Relation / Formation | Formation link hydration is extracted and idempotent | Extend file orchestration without embedding links as Zone-owned subtrees. |
 | Object | `ConstructedBeing/ObjectSerialization` owns the extracted ADL codec | Later separate semantic records from legacy geometry/material adapters. |
 
@@ -139,7 +155,7 @@ a direct regression test for populated Zones.
    endpoint binding, Home-only state, and material/geometry references survive.
 3. Run the focused tests: `save_roundtrip_test`, `zone_identity_test`,
    `zone_relation_roundtrip_test`, `object_roundtrip_test`, `person_database_test`, and
-   the new topology test. Then run the full suite.
+   `ourverse_serialization_test`, then run the full suite.
 4. A Person must still click Save → quit → reopen → Load and inspect a cross-Zone
    Relation. Add that check to the Person Verification List only when code changes make
    it newly relevant.
@@ -149,5 +165,5 @@ a direct regression test for populated Zones.
 This pass did not modify authored save files, delete legacy writers, or invent a DSL.
 The focused graph, identity, Save As, and Person database tests pass; the Home ontology
 binary stalls on this host's HomeServices/XPC connection before producing test output.
-Ourverse load integration and writer retirement are separately tracked before the
-open split-substrate task can claim the save system is fully fluid across roots.
+Person-root extraction and writer retirement are separately tracked before the open
+split-substrate task can claim the save system is fully fluid across roots.

@@ -41,6 +41,9 @@ public:
     const Formation& getLaws() const { return _metalaws; }
 
     const std::string& convenesToward() const { return _convenesToward; }
+    // Hydration hook for the serialized semantic root. Authoring still goes
+    // through the in-world law/formation surface; this restores authored state.
+    void loadConvenesToward(const std::string& value) { _convenesToward = value; }
 
     // Mint (or reclaim) the unowned gathering Zone. All may participate;
     // no one owns it.
@@ -74,4 +77,3 @@ private:
     Formation _metalaws;
     std::string _convenesToward;
 };
-

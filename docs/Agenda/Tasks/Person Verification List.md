@@ -7,6 +7,7 @@
 
 - [x] Save As → verify no crash
 - [x] Save As → quit/reopen → Load → verify state
+- [ ] Ourverse root → Save As → reload → verify the gathering Zone and a cross-Zone filament survive as one shared root graph
 
 - [x] Load `my_world` in-app
 

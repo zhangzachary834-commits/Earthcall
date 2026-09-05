@@ -234,6 +234,7 @@ void Engine::initLogic() {
         ctx.currentColor = Rendering::getCreatorConsoleState().currentColor;
         ctx.person = getPerson();
         ctx.lawManager = getLawManager();
+        ctx.ourverse = &_world;
         ctx.worldTime = &_worldTime;
         ctx.unpackForAuthoring = mgr.getSaveLoadState().unpackForAuthoring;
         mgr.saveStateWithLog("", ctx);

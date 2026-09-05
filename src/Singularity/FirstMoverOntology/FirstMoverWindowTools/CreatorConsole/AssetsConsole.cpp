@@ -26,6 +26,7 @@ namespace Rendering {
             ctx.currentColor = getCreatorConsoleState().currentColor;
             ctx.person = engine->getPerson();
             ctx.lawManager = engine->getLawManager();
+            ctx.ourverse = &engine->getWorld();
             ctx.worldTime = engine->worldTimePtr();
             ctx.unpackForAuthoring = mgr.getSaveLoadState().unpackForAuthoring;
             return ctx;

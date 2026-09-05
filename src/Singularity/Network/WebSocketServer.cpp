@@ -855,6 +855,7 @@ struct WebSocketServer::Impl {
                 ctx.mouseHandler = eng.getMouseHandler();
                 ctx.person = eng.getPerson();
                 ctx.lawManager = eng.getLawManager();
+                ctx.ourverse = &eng.getWorld();
                 ctx.worldTime = eng.worldTimePtr();
                 std::string customName = j.value("name", "");
                 mgr.saveStateWithLog(customName, ctx);
