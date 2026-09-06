@@ -400,7 +400,8 @@ void Object::rebuildHeightGrid() const {
     _heightGrid = geom::HeightGrid{}; // default: not eligible (dimX=0)
 
     const OntoMath::MathNode* h = nullptr;
-    if (!geom::isHeightfieldExpr(fieldData, &h) || !h) return;
+    // Always build regional grid for Expr leaves to accelerate large terrains.
+    if (!(fieldData.op == geom::SdfOp::Leaf && fieldData.prim == geom::SdfPrim::Expr)) return;
 
     // Same per-axis budget rebuildFieldMesh() already uses for x/z (kMinRes=24,
     // kMaxRes=128, one cell per 5 extent units unauthored) -- reused, not
@@ -411,7 +412,7 @@ void Object::rebuildHeightGrid() const {
     const int dimX = std::clamp(static_cast<int>(_fieldExtent.x / 5.0f), kMinRes, kMaxRes);
     const int dimZ = std::clamp(static_cast<int>(_fieldExtent.z / 5.0f), kMinRes, kMaxRes);
 
-    _heightGrid = geom::computeHeightGrid(*h, _fieldExtent, dimX, dimZ);
+    _heightGrid = geom::computeRegionalHeightGrid(fieldData, _fieldExtent, dimX, dimZ);
 }
 
 glm::vec3 Object::getLocalSupportPoint(const glm::vec3& localDirection) const {

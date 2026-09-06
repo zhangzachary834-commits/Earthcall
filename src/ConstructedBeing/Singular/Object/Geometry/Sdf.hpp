@@ -161,6 +161,7 @@ bool isHeightfieldExpr(const SdfNode& n, const OntoMath::MathNode** outH);
 // if called directly with a y-dependent expression. Returns an empty grid when h
 // contains an operation the estimate cannot cover soundly: "no acceleration"
 // is always a safe answer, an unsound tightened bound never is.
+HeightGrid computeRegionalHeightGrid(const SdfNode& n, const glm::vec3& halfExtent, int dimX, int dimZ);
 HeightGrid computeHeightGrid(const OntoMath::MathNode& h, const glm::vec3& halfExtent,
                              int dimX, int dimZ);
 // Central-difference surface normal.

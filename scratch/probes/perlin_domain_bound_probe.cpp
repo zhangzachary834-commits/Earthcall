@@ -1,10 +1,14 @@
 // ============================================================================
-// Certified Perlin Domain Bound Probe
+// Perlin Domain Sampled Grid Probe (Exploratory Sampling — Non-Certified)
 //
-// Evaluates the continuous behavior of the authored terrain field:
+// Samples the behavior of the authored terrain field across a discrete lattice grid:
 //   f(p) = p.y - 40.0 * cnoise3(0.008 * (p + vec3(100, 0, 100)))
 // over the finite authored domain:
 //   p in [-1000, 1000] x [-30, 30] x [-1000, 1000]
+//
+// NOTE: Exploratory sampling only; does NOT constitute a continuous mathematical
+// certificate (which requires outward-rounded interval arithmetic or Bernstein
+// polynomial enclosure). It carries NO acceleration authority.
 // ============================================================================
 
 #include <glm/glm.hpp>
@@ -243,19 +247,20 @@ int main() {
     std::printf("  min f(x, y=+30, z) = %+.6f (requires >= 0 for existence)\n\n", minF_upperBound);
 
     std::printf("=================================================================\n");
-    std::printf("   CERTIFIED CONCLUSION                                          \n");
+    std::printf("   EMPIRICAL SAMPLING SUMMARY (NON-CERTIFIED)                    \n");
     std::printf("=================================================================\n");
     if (minDfDy_domain > 0.0f) {
-        std::printf("1. Strict Y-Monotonicity: HOLDS in authored domain (min df/dy = %.4f > 0).\n", minDfDy_domain);
+        std::printf("1. Sampled Y-Monotonicity: Observed positive across grid points (min df/dy = %.4f > 0).\n", minDfDy_domain);
+        std::printf("   NOTE: Sampling alone does not prove continuity between lattice samples.\n");
     } else {
-        std::printf("1. Strict Y-Monotonicity: FAILS in authored domain.\n");
+        std::printf("1. Sampled Y-Monotonicity: Falsified on sampled grid.\n");
     }
 
     if (maxF_lowerBound <= 0.0f && minF_upperBound >= 0.0f) {
-        std::printf("2. Bounded Root Existence on [-30, 30]: HOLDS.\n");
+        std::printf("2. Bounded Root Existence on [-30, 30]: Sampled boundary values bracket 0.\n");
     } else {
-        std::printf("2. Bounded Root Existence on [-30, 30]: FAILS (peaks/valleys exceed [-30, 30]).\n");
-        std::printf("   -> Mandatory action per Section 10: Fail open to exact 3D marcher.\n");
+        std::printf("2. Bounded Root Existence on [-30, 30]: Sampled boundaries fail to bracket 0.\n");
+        std::printf("   -> Mandatory action: Fail open to exact 3D marcher.\n");
     }
     std::printf("=================================================================\n");
 

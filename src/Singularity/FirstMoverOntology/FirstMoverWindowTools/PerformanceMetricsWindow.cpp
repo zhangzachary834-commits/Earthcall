@@ -181,6 +181,62 @@ void renderPerformanceMetricsWindow(bool* open, Core::Engine* engine) {
         }
         ImGui::Text("  ImGui / Present: %6.2f ms", g_frameTimings.imgui_ms);
 
+        // ---- Cold-to-Warm Convergence Telemetry (First 120 Frames) ----
+        struct ColdWarmSample {
+            float recordingMs;
+            float acquireWaitMs;
+            float submitWaitMs;
+            float total3dMs;
+        };
+        static std::vector<ColdWarmSample> s_telemetryHistory;
+        if (s_telemetryHistory.size() < 120) {
+            s_telemetryHistory.push_back({actual_3d, g_frameTimings.wait_surface_ms, g_frameTimings.wait_submit_ms, g_frameTimings.render3d_ms});
+        }
+        
+        ImGui::Separator();
+        ImGui::TextColored(ImVec4(0.3f, 0.9f, 0.9f, 1.0f), "Cold-to-Warm Telemetry (%zu/120 frames):", s_telemetryHistory.size());
+        ImGui::SameLine();
+        if (ImGui::SmallButton("Reset Telemetry")) {
+            s_telemetryHistory.clear();
+        }
+
+        if (!s_telemetryHistory.empty()) {
+            std::vector<float> coldTotals, warmTotals;
+            for (size_t i = 0; i < s_telemetryHistory.size(); ++i) {
+                if (i < 30) coldTotals.push_back(s_telemetryHistory[i].total3dMs);
+                else if (i >= 60) warmTotals.push_back(s_telemetryHistory[i].total3dMs);
+            }
+            auto calcP = [](std::vector<float>& v, float pct) -> float {
+                if (v.empty()) return 0.0f;
+                std::sort(v.begin(), v.end());
+                size_t idx = static_cast<size_t>(pct * (v.size() - 1));
+                return v[idx];
+            };
+
+            if (!coldTotals.empty()) {
+                float coldP50 = calcP(coldTotals, 0.50f);
+                float coldP95 = calcP(coldTotals, 0.95f);
+                ImGui::Text("  Cold  (1-30):   p50: %5.1f ms | p95: %5.1f ms", coldP50, coldP95);
+            }
+            if (!warmTotals.empty()) {
+                float warmP50 = calcP(warmTotals, 0.50f);
+                float warmP95 = calcP(warmTotals, 0.95f);
+                ImGui::Text("  Warm (60-120):  p50: %5.1f ms | p95: %5.1f ms", warmP50, warmP95);
+            }
+            int steadyFrame = -1;
+            for (size_t i = 0; i < s_telemetryHistory.size(); ++i) {
+                if (s_telemetryHistory[i].total3dMs <= 20.0f) {
+                    steadyFrame = static_cast<int>(i + 1);
+                    break;
+                }
+            }
+            if (steadyFrame > 0) {
+                ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "  Time-to-steady-state: Frame %d", steadyFrame);
+            } else if (s_telemetryHistory.size() >= 30) {
+                ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.2f, 1.0f), "  Time-to-steady-state: Pending convergence");
+            }
+        }
+
         // ---- LawManager tick() timing breakdown ----
         if (LawManager* lm = engine->getLawManager()) {
             const auto& t = lm->lastTickTiming();

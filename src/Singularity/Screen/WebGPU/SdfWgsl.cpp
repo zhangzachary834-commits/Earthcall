@@ -1049,7 +1049,7 @@ fn heightGridAdvance(inst: SdfInstanceData, ro: vec3<f32>, rd: vec3<f32>,
         let y1 = ro.y + rd.y * tCellExit;
         let yLo = min(y0, y1);
         let yHi = max(y0, y1);
-        if (!(yHi < cell.x || yLo > cell.y)) {
+        if (!(yHi < cell.x - 1e-4 || yLo > cell.y + 1e-4)) {
             return vec2<f32>(t, 1.0); // candidate cell -- hand off to the fine marcher
         }
 
