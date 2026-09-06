@@ -1,0 +1,293 @@
+# Implementation Plan — Exact Perlin Value/Gradient Reuse
+
+**Status:** approved plan; derivation and implementation not yet accepted
+**Requested and approved by:** Zach
+**Author:** Codex
+**Session:** `01a072e2-017b-7b03-aa4a-1ef25dab65d1`
+**Timestamp:** 2026-09-05T22:31:36-07:00
+**Parent plan:** [`PERLIN_NOISE_FLOOR_RENDERING_RECOVERY_PLAN_2026-09-05.md`](PERLIN_NOISE_FLOOR_RENDERING_RECOVERY_PLAN_2026-09-05.md)
+**Audit:** [`2026-09-05_perlin_noise_floor_rendering_regression_audit.md`](../audits/rendering_optimization/2026-09-05_perlin_noise_floor_rendering_regression_audit.md)
+
+## 1. Outcome
+
+Make the authored Perlin Noise Floor continuously usable for movement and house-building
+by removing redundant evaluation of the same mathematics in the WebGPU fragment marcher.
+The optimization must preserve the represented field, its full three-dimensional input,
+its zero set, and agreement among rendering, collision, and selection.
+
+This plan originates in Zach's runtime witness on 2026-09-05:
+
+- the earlier 1/100/300 ms oscillation is gone;
+- command recording and queue submission remain consistently below approximately 0.5 ms;
+- surface acquisition accounts for almost the entire 100–300 ms 3D phase;
+- looking down at nearby ground costs approximately 40–60 ms, while horizon/grazing views
+  can cost approximately 200–300 ms and yield about 4 FPS;
+- timestamp-query instrumentation caused movement-dependent temporal ghosting in 3D and
+  ImGui and remains disabled.
+
+The interpretation added by Codex is that surface acquisition is the location where GPU
+queue debt becomes visible to the CPU, not the work that creates it. The view-angle
+dependence points to fragment/ray cost: horizon rays traverse farther and execute more
+field samples than downward rays.
+
+## 2. Representation invariants
+
+The saved expression remains unchanged:
+
+```text
+f(p) = p.y - 40 * noise(0.008 * (p + vec3(100, 0, 100)))
+```
+
+The implementation must obey these boundaries:
+
+1. Preserve `p.y`. This is a three-dimensional field and may not be silently rewritten as
+   `noise(p.x, 0, p.z)` or admitted to a two-dimensional heightfield path.
+2. Preserve the current classic-Perlin value calculation. A visually similar noise,
+   sampled texture, altered repeat period, or approximate interpolation is a different
+   function.
+3. Preserve roots and coverage. Faster normals alone are insufficient if marching adds or
+   removes hits.
+4. Fall back to the existing generic finite-difference evaluator for any AST operation
+   whose derivative is unsupported, discontinuous, undefined at the sample, or cannot be
+   represented under the current semantics.
+5. Add no domain noun, authored category, enum kind, or save-file state. This is a Screen
+   channel compilation optimization over existing OntoMath.
+6. Keep native GPU timestamp queries disabled. A diagnostic already demonstrated that it
+   could corrupt the Person-visible temporal result.
+
+## 3. Current cost model
+
+For an authored implicit expression, each marcher step currently performs:
+
+```text
+raw = sdfEval(p)                  // one complete field evaluation
+g   = sdfGrad(p)                 // four offset sdfEval evaluations
+d   = raw / length(g)            // gradient-corrected step
+```
+
+For this save, every `sdfEval` reaches `cnoise3`. A step therefore performs about five
+complete classic-Perlin evaluations. Each repeats lattice coordinates, permutation/hash
+work, eight corner-gradient construction and normalization operations, eight dot
+products, quintic fade, and interpolation. A ray may execute up to 192 steps.
+
+The first target is cost per step, not an unproved reduction in the number of steps.
+
+## 4. Target representation in generated WGSL
+
+Generate an evaluation result that carries a scalar value and its spatial derivative:
+
+```text
+ScalarJet {
+    value: f32,
+    grad: vec3<f32>
+}
+```
+
+The name is illustrative; implementation naming follows the existing compiler vocabulary.
+The shader should evaluate each differentiable AST node once and propagate its value and
+gradient by the chain rule. `Noise` must call a fused helper that returns classic-Perlin
+value and analytic input gradient from the same lattice intermediates.
+
+For the saved field, with
+
+```text
+q = 0.008 * (p + vec3(100, 0, 100))
+```
+
+the derivative is:
+
+```text
+grad(f) = vec3(0, 1, 0) - 0.32 * grad(noise(q))
+```
+
+The factor `0.32` is `40 * 0.008`; it follows from the authored expression and ordinary
+chain rule. It is not a terrain-specific constant to hardcode.
+
+Classic Perlin uses quintic fade
+
+```text
+fade(t)  = 6t^5 - 15t^4 + 10t^3
+fade'(t) = 30t^2(t - 1)^2
+```
+
+The fused helper must reuse the same eight generated corner gradients and corner dot
+products for both the value interpolation and its derivative. It must not call `cnoise3`
+again internally.
+
+## 5. Work division
+
+Zach's updated direction supersedes the earlier default division in the all-hands
+broadcast: Gemini Spark is the code writer for this implementation. Codex and Antigravity
+Gemini 3.1 Pro supervise only after Spark hands over a reviewable implementation and its
+evidence. They must not concurrently edit the same implementation while Spark is working.
+
+### Gemini Spark — implementation ownership
+
+Spark will:
+
+1. Use the completed derivation and falsification probe as the starting evidence.
+2. Implement the fused classic-Perlin value/gradient helper while preserving the current
+   value operation order.
+3. Integrate general OntoMath value/gradient propagation into the existing WGSL compiler.
+4. Retain an explicit finite-difference fallback for every unsupported operation or
+   boundary case.
+5. Add focused numeric, root, coverage, and regression tests without changing any save.
+6. Build and run the relevant targets, then report the exact changed files and evidence
+   in the Perlin intercom thread for supervisory review.
+
+Spark is authorized to edit the production source and tests needed by this bounded plan.
+Spark is not authorized to edit saves, promise a frame rate, re-enable timestamp queries
+or DDA, or declare the optimization complete before supervisory review and Zach's lived
+witness.
+
+### Antigravity Gemini 3.1 Pro — architectural and mathematical supervision
+
+After Spark's handoff, Antigravity will review the implementation for mathematical
+soundness, doctrinal fit, truth preservation, conservative fallback behavior, and claims
+that exceed the available evidence.
+
+### Codex — supervisory review and acceptance ownership
+
+Codex will:
+
+1. Review Spark's diff against the actual source and independently check the chain rule.
+2. Verify the generic fallback covers every unproved operation and boundary case.
+3. Review the focused numeric, root, coverage, and regression evidence and identify any
+   missing falsification case before acceptance.
+4. Build and run the native WebGPU verification targets after the implementation handoff.
+5. Compare fixed native traces and hand the result to Zach for the final lived witness.
+
+Codex and Antigravity may request corrections or make a clearly attributed review fix
+after handoff, but Spark remains the primary author of the implementation.
+
+## 6. Admission and fallback policy
+
+The compiler may emit the fused path only when the whole expression's derivative is
+supported under its actual value kinds and guards. At minimum, the review must classify:
+
+- constants and ambient point/components;
+- vector construction and component extraction;
+- addition, subtraction, multiplication, guarded division, and powers;
+- trigonometric functions, square root, absolute value, clamp, min/max and CSG forms;
+- classic Perlin `Noise`;
+- operations with discontinuities, branch boundaries, degenerate divisors, or undefined
+  derivatives.
+
+At an ambiguous boundary, “unsupported” means the current finite-difference path. A
+guessed gradient may not authorize a larger march step or silently erase a root.
+
+Value generation should preserve the existing operation order wherever practical. If the
+CPU `glm::perlin` and WGSL `cnoise3` are not already value-identical, that pre-existing
+boundary must be documented rather than hidden by loose tolerances. The optimized shader
+is compared first against the current WGSL reference, then against CPU semantics as a
+separate cross-channel truth check.
+
+## 7. Verification ladder
+
+### Gate A — fused noise numeric proof
+
+- Compare fused value against the current WGSL `cnoise3` over deterministic random points.
+- Include negative coordinates, large authored-domain coordinates, exact lattice
+  boundaries, and representable points immediately on each side of a boundary.
+- Compare analytic gradients against a high-accuracy numerical reference over several
+  finite-difference scales; choose tolerances from observed f32 error and record them.
+- Fail on NaN, infinity, discontinuous value, or unjustified tolerance widening.
+
+### Gate B — AST derivative proof
+
+- Compare generated value and gradient for small expressions covering every admitted op.
+- Include the exact saved Perlin expression without recognizing it by object identifier or
+  string spelling.
+- Prove fallback selection for unsupported and boundary-ambiguous expressions.
+
+### Gate C — ray and image truth
+
+- Compare hit/miss classification and root depth against the existing generic marcher.
+- Cover downward, 45-degree, horizon/grazing, and inside/outside-proxy cameras.
+- Check field/mesh occlusion, ground selection and highlight, and placed-house geometry.
+- Any missing or added hit blocks the optimization until explained and repaired.
+
+### Gate D — native build and temporal integrity
+
+- Build `earthcall_webgpu` and all focused SDF/WGSL tests.
+- Run native Metal tests, not syntax-only substitutes.
+- Move the camera, fall objects under gravity, and drag an ImGui window. No temporal
+  ghosting is acceptable.
+- Timestamp feature negotiation, query writes, and callback pumping remain absent.
+
+### Gate E — performance evidence
+
+At 2880x1800, use the unchanged save and fixed camera poses for:
+
+1. downward nearby ground;
+2. 45-degree terrain;
+3. horizon/grazing terrain;
+4. horizon with representative house geometry.
+
+Warm up first. Record at least three runs and report FPS plus F3 3D-phase,
+command-recording, surface-acquire, and queue-submit p50/p95. Because timestamp queries are
+disabled, do not label any of these as GPU execution duration. Compare an empty/trivial
+field control to distinguish general presentation cost from Perlin debt.
+
+## 8. Acceptance criteria
+
+The first implementation slice is accepted only when:
+
+- the save and authored expression are byte-unchanged;
+- the fused value remains within a justified f32 tolerance of current WGSL output;
+- admitted gradients pass the numeric corpus and unsupported cases fall back;
+- deterministic ray tests show no added or missing hits;
+- native camera/coverage tests pass;
+- moving 3D and ImGui content remains temporally coherent;
+- native horizon surface-acquire p95 improves repeatably by at least 10 percent;
+- Zach can move, turn, select ground, and build/place representative objects without a
+  new visual or interaction regression.
+
+A 10-percent gate prevents retaining complexity with no material lived benefit. It is not
+the final inhabitable-zone target and must not be misreported as such.
+
+## 9. If fused differentiation is insufficient
+
+Five-to-one evaluation reduction is an upper-bound arithmetic intuition, not a frame-time
+promise. Other shader work and step count remain. If the verified result is still above
+the interaction target, proceed to a conservative three-dimensional interval hierarchy:
+
+1. Derive interval/derivative bounds compositionally from OntoMath.
+2. Build a revision-keyed coarse hierarchy over the full 3D field domain.
+3. Skip a region only when its conservative interval proves that zero cannot occur there.
+4. Fail open to the exact marcher whenever proof is unavailable.
+5. Re-run the same root, coverage, native p95, and Person-verification gates.
+
+This second lever reduces the number of steps; it does not alter the meaning of a step.
+
+## 10. Explicit refusals
+
+This plan does not authorize:
+
+- rewriting the saved field to XZ-only noise;
+- treating the present 3D field as a heightfield;
+- re-enabling the quarantined DDA traversal;
+- replacing classic Perlin with a texture or similar-looking function;
+- half-resolution rendering presented as identical representation;
+- arbitrary step caps, larger epsilons, or minimum steps;
+- simulation `dt` clamping as a rendering optimization;
+- native timestamp queries during this pass;
+- a 16 ms or 60 FPS claim before native evidence and Zach's witness.
+
+---
+
+**Signed:** Codex
+**Session:** `01a072e2-017b-7b03-aa4a-1ef25dab65d1`
+**Date:** 2026-09-05
+**Timestamp:** 2026-09-05T22:31:36-07:00
+
+### Ownership correction — Zach's updated direction
+
+Zach explicitly assigned Gemini Spark as the implementation code writer and assigned
+Codex and Antigravity Gemini 3.1 Pro to supervise the completed work. Section 5 now records
+that authorship and review boundary; it replaces the earlier broadcast-derived split.
+
+**Signed:** Codex
+**Session:** `01a072e2-017b-7b03-aa4a-1ef25dab65d1`
+**Date:** 2026-09-05
+**Timestamp:** 2026-09-05T22:48:25-07:00

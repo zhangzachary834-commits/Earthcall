@@ -486,7 +486,7 @@ bool WebGpuRenderer::init(const wgpu::Device& gpu, WGPUTextureFormat colorFormat
     ppd.multisample.count = 1; ppd.multisample.mask = 0xFFFFFFFFu;
     _particlePipe = wgpuDeviceCreateRenderPipeline(_device, &ppd);
 
-    for (int i = 0; i < 4; ++i) _bufferPools[i].init(_device, _queue);
+    _bufferPool.init(_device, _queue);
     _meshCache.init(_device, _queue);
 
     return _sampler && _whiteView && _flatShader && _flatLayout && _imagePipe && _particlePipe;
@@ -516,7 +516,7 @@ WGPURenderPipeline WebGpuRenderer::flatPipeline(WGPUPrimitiveTopology topo, Blen
 void WebGpuRenderer::shutdown() {
     releaseGpuTimestampQueries();
     _meshCache.shutdown();
-    for (int i = 0; i < 4; ++i) _bufferPools[i].shutdown();
+    _bufferPool.shutdown();
     releaseFrameResources();
     if (_depthView) { wgpuTextureViewRelease(_depthView); _depthView = nullptr; }
     if (_depthTex)  { wgpuTextureRelease(_depthTex); _depthTex = nullptr; }
@@ -981,11 +981,9 @@ const WebGpuRenderer::SdfPipeline* WebGpuRenderer::sdfPipeline(const std::string
     pd.layout = layout;
     pd.vertex.module = shader; pd.vertex.entryPoint = wgpu::Device::str("vs");
     pd.vertex.bufferCount = 1; pd.vertex.buffers = &vbl;
-    // Exactly one proxy surface launches the analytic ray. The shared cube's
-    // triangles are inward-wound, so back-face culling retains the far/exit
-    // surface when the eye is outside and the enclosing interior surface when
-    // it is inside. The analytic ray/AABB interval remains authoritative;
-    // rasterizing both sides merely duplicated the expensive field program.
+    // The proxy is inward-wound. Back-face culling retains the covering face
+    // for both inside and outside cameras, so one fragment program traces each
+    // analytic ray. The ray/AABB interval remains authoritative.
     pd.primitive.topology = WGPUPrimitiveTopology_TriangleList;
     pd.primitive.cullMode = WGPUCullMode_Back;
     pd.depthStencil = &ds;
@@ -1339,8 +1337,9 @@ void WebGpuRenderer::endFrame() {
     fs.bufferSuballocations = bufferPool().suballocationsThisFrame();
     fs.cachedMeshesCount = static_cast<uint32_t>(_meshCache.cachedMeshCount());
 
-    // The submit is done recording; reset the allocation pool heads.
-    _currentBufferPoolIndex = (_currentBufferPoolIndex + 1) % 4;
+    // Queue-ordered writes are part of this frame's submission; reuse the
+    // allocation offsets for the next recorded frame without multiplying the
+    // pool's resident GPU memory.
     bufferPool().resetFrame();
     _meshCache.endFrame();
 

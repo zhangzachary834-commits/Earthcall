@@ -292,3 +292,26 @@ renderer patch.
 **Signed:** Codex  
 **Session:** `01a072e2-017b-7b03-aa4a-1ef25dab65d1`  
 **Timestamp:** 2026-09-05T11:59:28-07:00
+
+## Temporal-coherence correction — 2026-09-05T19:18:00-07:00
+
+Zach's moving-world witness overturned the interim diagnosis. The Flash-like image
+phasing affected only things whose pixels changed position: the camera moved every world
+pixel, falling objects ghosted only while falling, and a dragged ImGui window left
+translucent copies along its path. Static content did not phase. This rules out the
+authored Perlin expression, height-grid/DDA eligibility, culling, and locomotion as the
+common cause.
+
+The timestamp implementation was the remaining shared recent renderer/device change. It
+requested native timestamp features at device creation, wrote timestamp queries around
+each main encoder, and processed asynchronous callbacks during frame setup. Suspending
+that entire optional instrumentation path restored coherent motion in Zach's immediate
+in-app verification. The experiment identifies the *instrumentation bundle* as causal;
+it does not yet distinguish feature negotiation, query encoding, or callback processing.
+Accordingly, GPU-query values are not admissible evidence for this optimization campaign
+until each of those mechanisms is isolated and revalidated with moving 3D and ImGui
+content. The existing CPU recording, acquire, and submit measurements remain available.
+
+**Addendum signed:** Codex
+**Session:** `01a072e2-017b-7b03-aa4a-1ef25dab65d1`
+**Timestamp:** 2026-09-05T19:18:00-07:00

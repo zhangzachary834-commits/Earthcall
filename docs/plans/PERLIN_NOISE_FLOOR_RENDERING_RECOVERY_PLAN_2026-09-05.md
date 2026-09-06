@@ -420,8 +420,8 @@ recording and frame lifecycle, while surface acquisition and queue submission ar
 as separate CPU waits. This responds directly to Zach's reported rapid 1/100/300 ms
 oscillation without pretending the application has GPU timestamps it does not have.
 
-**Addendum signed:** Codex  
-**Session:** `01a072e2-017b-7b03-aa4a-1ef25dab65d1`  
+**Addendum signed:** Codex
+**Session:** `01a072e2-017b-7b03-aa4a-1ef25dab65d1`
 **Timestamp:** 2026-09-05T14:44:43-07:00
 
 ## Native parity addendum — 2026-09-05T14:49:48-07:00
@@ -475,3 +475,30 @@ preserving roots; no improvement is claimed by this addendum.
 **Addendum signed:** Codex
 **Session:** `01a072e2-017b-7b03-aa4a-1ef25dab65d1`
 **Timestamp:** 2026-09-05T16:16:00-07:00
+
+## Timestamp instrumentation hold — 2026-09-05T19:18:00-07:00
+
+Zach's direct moving-content test found that the timestamp-query implementation caused
+temporal incoherence across both the 3D and ImGui paths. Disabling it restored coherent
+motion. Leave timestamp feature negotiation, encoder writes, and callback pumping
+disabled in the live WebGPU device until a later, isolated diagnostic pass identifies a
+safe subset and proves it with moving camera, falling-object, and dragged-ImGui tests.
+Do not re-enable it merely to obtain a more attractive F3 number. The current CPU
+wall-clock, surface-acquire, and queue-submit measurements are the legitimate baseline
+for the next exact-Perlin optimization pass.
+
+**Addendum signed:** Codex
+**Session:** `01a072e2-017b-7b03-aa4a-1ef25dab65d1`
+**Timestamp:** 2026-09-05T19:18:00-07:00
+
+## Approved exact-value/gradient implementation plan — 2026-09-05T22:31:36-07:00
+
+Zach approved the next implementation direction after localizing almost the entire
+100–300 ms 3D phase to surface-acquire backpressure and observing a 40–60 ms downward
+view versus a 200–300 ms horizon view. The detailed work division, automatic-
+differentiation design, proof ladder, native benchmarks, and fallback path now live in
+[`PERLIN_EXACT_VALUE_GRADIENT_IMPLEMENTATION_PLAN_2026-09-05.md`](PERLIN_EXACT_VALUE_GRADIENT_IMPLEMENTATION_PLAN_2026-09-05.md).
+
+**Addendum signed:** Codex
+**Session:** `01a072e2-017b-7b03-aa4a-1ef25dab65d1`
+**Timestamp:** 2026-09-05T22:31:36-07:00

@@ -83,15 +83,18 @@ WindowContext createWindowContext(GLFWwindow* win) {
     if (!ar.adapter) { std::fprintf(stderr, "[WebGPU] no compatible adapter\n"); return ctx; }
     ctx.adapter = ar.adapter;
 
-    // GPU timestamps are optional instrumentation. Request the native encoder
-    // write capability only when the presenting adapter advertises both pieces;
-    // a rejection falls back to the ordinary visual device below.
+    // GPU timestamps are optional instrumentation. Suspend them while the
+    // native frame stream is being checked for temporal coherence: they change
+    // device feature negotiation, encoder contents, and callback processing,
+    // none of which is permitted to stand between a Person and a coherent
+    // visible frame. The ordinary device is the visual baseline.
+    constexpr bool kGpuTimestampInstrumentationEnabled = false;
     WGPUDeviceDescriptor dd = {};
     const WGPUFeatureName timestampFeatures[] = {
         WGPUFeatureName_TimestampQuery,
         static_cast<WGPUFeatureName>(WGPUNativeFeature_TimestampQueryInsideEncoders),
     };
-    const bool canTimestamp =
+    const bool canTimestamp = kGpuTimestampInstrumentationEnabled &&
         wgpuAdapterHasFeature(ctx.adapter, WGPUFeatureName_TimestampQuery) &&
         wgpuAdapterHasFeature(
             ctx.adapter,
