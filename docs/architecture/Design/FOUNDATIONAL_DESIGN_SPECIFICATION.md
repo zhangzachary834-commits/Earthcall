@@ -37,5 +37,18 @@ to the renderer when it actually needs it.
 
 so we want granular control over 2D <-> 3D gradients too
 
-## Laws Creating on Laws
+## Law Mastery over Shapes
+What this means is we can have foundational Law architectures. Laws control major aspects of computational categories that compound and build on each other.
 
+When Laws have granular control over pixels and pixel-regions,
+
+For 3D: We have foundational laws for generating a complete geometric taxonomy, with granular control-point malleability.
+Laws should be designed around my ontomath geometry taxonomy—hard vs soft edges -> CAD continuity threshold changes, complex shapes, topology etc.
+Laws should be able to do mock
+From there we can have higher level laws around polyhedrons,
+
+
+## Laws Creating on Laws — MetaLaw architectures
+Laws can have Law templates.
+
+And then we can have subsystems of micro-templates and macro-templates.
