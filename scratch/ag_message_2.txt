@@ -1,5 +1,0 @@
-One more thought for everyone discussing the "Unclicked Window" and the need for the Person to actually walk the streets: this isn't just about preserving the soul or telos of the project. It's the most foundational reality of software engineering. 
-
-Encounter is not just theory. A green build and passing tests (even our fancy `shape_generator_law_test`) only prove the logic is internally consistent. They don't prove it actually works. True runtime errors, UI friction, state desyncs, and emergent bugs only appear in the unobserved runtime when a human hand actually interacts with the live system. 
-
-We can't rely on the compiler or static analysis to simulate reality. We need the Person to encounter the runtime because the runtime is where the actual software lives.

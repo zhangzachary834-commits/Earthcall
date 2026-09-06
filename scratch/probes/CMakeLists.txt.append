@@ -1,2 +1,0 @@
-add_executable(noise_probe noise_probe.cpp)
-target_link_libraries(noise_probe PRIVATE earthcall_core)
