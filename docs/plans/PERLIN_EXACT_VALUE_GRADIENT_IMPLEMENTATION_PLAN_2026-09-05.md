@@ -319,3 +319,113 @@ it does not authorize changing the authored terrain expression.
 **Session:** `01a072e2-017b-7b03-aa4a-1ef25dab65d1`
 **Date:** 2026-09-06
 **Timestamp:** 2026-09-06T00:16:24-07:00
+
+## Acceptance status — review pass 2
+
+Spark corrected the parameter authority, leaf-local evaluation, fallback cost, and
+constant-only admission gate. Zach confirmed that the hills returned and measured roughly
+12–30 FPS with a 30–60 ms 3D phase, down from about 200 ms; the remaining time still
+appears at surface acquisition. Native parity now passes all 22 shapes, including noise
+and non-zero-offset noise; distance and six-camera heightfield sweeps pass; the general
+WebGPU lag probe is below its recorded baseline. Candidate A's fused-jet core is accepted.
+
+It is not the end of the optimization campaign. Before closing Candidate A, Spark must
+remove the accidental full-shader test dump, make compiler refusals observable, preserve
+the focused proof as a maintained regression test, and add an analytic-noise camera/root
+corpus. The next performance phase begins with march-count evidence, then a conservative
+revision-keyed full-3D interval/derivative hierarchy. A stronger implicit-graph hierarchy
+is admissible only if interval bounds prove `df/dy > 0`; the saved equation remains
+untouched.
+
+**Signed:** Codex
+**Session:** `01a072e2-017b-7b03-aa4a-1ef25dab65d1`
+**Date:** 2026-09-06
+**Timestamp:** 2026-09-06T01:31:10-07:00
+
+## Phase 2 scope clarification — Zach
+
+Zach directed that dynamic regional partitioning be deferred. The immediate proof is the
+simple single-field case: attempt a conservative whole-domain `df/dy > 0` proof and, only
+if it succeeds, construct one revision-keyed height-range hierarchy over the unchanged
+implicit field. Failure to prove monotonicity falls open to a full-3D interval hierarchy,
+never to assumed heightfield semantics.
+
+Zach also identified the eventual ordering for shapes synthesized by multiple interacting
+Laws: Law set-to-set synthesis should produce the composed mathematical result when its
+inputs change, and the renderer should consume that revisioned result rather than
+reinterpreting the participating Laws in the frame or ray loop. Regional partitioning and
+that synthesis integration are future phases; the current implementation merely preserves
+a revision-keyed seam and proves the single-field path first.
+
+**Signed:** Codex
+**Session:** `01a072e2-017b-7b03-aa4a-1ef25dab65d1`
+**Date:** 2026-09-06
+**Timestamp:** 2026-09-06T01:55:22-07:00
+
+## Phase 2 review status — rejected pending a certified bounded proof
+
+Spark's first whole-domain monotonicity implementation is rejected. It reused the
+existing `1.905255` conservative Perlin **value** bound as a gradient bound, although a
+direct evaluation inside the saved zone's actual noise-coordinate domain reaches
+`dNoise/dY = 2.26617165`. A separate point reaches `3.20832393`, for which the claimed
+whole-`R^3` terrain derivative is negative. The implementation also hardcodes an inner
+Y derivative of one, leaves its domain argument unused, and promotes strict monotonicity
+to guaranteed root existence without a bounded sign-bracket proof.
+
+The Phase 2 classifier must therefore be disconnected from rendering while Candidate A's
+accepted fused jet remains intact. A replacement proof must propagate the full AST
+Jacobian and certify the positive Y-derivative bound over the actual finite domain using
+interval automatic differentiation with adaptive subdivision, certified Bernstein
+bounds per crossed Perlin lattice cell, or an equivalently rigorous method. It must also
+certify root existence over the bounded Y interval. Failure to certify selects the exact
+full-3D path.
+
+Verification also remains incomplete: the new `perlin_exact_gradient_test` does not link
+after the required CMake reconfigure, its random samples cannot prove a supremum, the
+compiler refusal has no regression test, and the passing six-camera sweep exercises a
+y-independent linear field rather than the analytic Perlin terrain.
+
+This review originates in Zach's instruction that no acceleration may lose meaning or
+truth-representation and extends his single-field-first scope with concrete mathematical
+and native-build falsification evidence. The accepted baseline remains Zach's witnessed
+hills at roughly 12-30 FPS and 30-60 ms; this rejection does not restore the old
+five-evaluation marcher.
+
+**Signed:** Codex
+**Session:** `01a072e2-017b-7b03-aa4a-1ef25dab65d1`
+**Date:** 2026-09-06
+**Timestamp:** 2026-09-06T02:31:10-07:00
+
+## Acceptance status — review pass 3
+
+Spark correctly removed the uncertified monotonic prover and renderer classification
+while preserving Candidate A. Compiler-refusal propagation, the renderer refusal check,
+and debug-print cleanup are accepted. `earthcall_webgpu` and the renamed native Perlin
+test build; the 22-case CPU/GPU parity suite remains green.
+
+The new verification test is not accepted yet. Its global counterexample evaluates to a
+positive `df/dy` in C++/f32, but the negative assertion is commented out and the test
+unconditionally reports success. A reproducible f32 replacement is
+`q=(58.600029,230.496384,174.557922)`, `dNoise/dY=3.20409918`,
+`df/dy=-0.025311714`. Its camera corpus clears to a nonzero color and counts any nonzero
+pixel, so every all-background image passes (observed 16384/16384 “visible” pixels for all
+six cameras). It must distinguish hits from the clear value and compare against a CPU
+root or forced exact-fallback reference. A duplicate C++ transcription also does not
+directly verify the emitted WGSL jet; that permanent seam remains required.
+
+The separately added `SPATIAL_ACCELERATION_PHASE_3_PLAN.md` is not the controlling plan.
+It reverses Zach's instruction to defer dynamic regional partitioning, lacks the required
+signature, assumes a nonexistent `MathNode::derivative` API, and misplaces a derived
+Screen-channel proof/cache as persistent authored `Property`/`Relation` state or a
+“Default Physics Law.” Authored Laws produce the synthesized mathematical result; the
+revision-keyed acceleration artifact is derived below the Kernel and may fail open. The
+next action remains test repair followed by the fixed-camera march-count baseline and the
+scoped single-field bounded proof.
+
+This review directly preserves Zach's stated order and his distinction between Law
+set-to-set synthesis and hot-path rendering artifacts.
+
+**Signed:** Codex
+**Session:** `01a072e2-017b-7b03-aa4a-1ef25dab65d1`
+**Date:** 2026-09-06
+**Timestamp:** 2026-09-06T10:18:00-07:00

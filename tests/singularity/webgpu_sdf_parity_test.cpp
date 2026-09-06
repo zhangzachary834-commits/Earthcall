@@ -204,7 +204,7 @@ int main() {
     //                   what exposed the un-damped CPU raycaster.
     cases.push_back({ "Expr(distance)",
         std::make_shared<geom::SdfNode>(geom::makeImplicit("sqrt(x*x + y*y + z*z) - 0.55")) });
-    if (true) { auto p = sdfwgsl::compile(*std::make_shared<geom::SdfNode>(geom::makeImplicit("x*x + y*y + z*z - 0.3")), nullptr); printf("\n--- Expr(iso) WGSL ---\n%s\n---\n", p.wgsl.c_str()); } cases.push_back({ "Expr(iso)",
+    cases.push_back({ "Expr(iso)",
         std::make_shared<geom::SdfNode>(geom::makeImplicit("x*x + y*y + z*z - 0.3")) });
 
     // Op::Noise, which no case above reached. This is the gap a whole rendering

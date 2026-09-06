@@ -1388,6 +1388,12 @@ Program compile(const geom::SdfNode& root, const geom::FieldNode* fieldNode) {
     prog.params = std::move(e.params);
     prog.needsGradientStep = e.sawExpr;
 
+    if (e.refused) {
+        prog.ok = false;
+        prog.error = e.refusal;
+        prog.wgsl = "// REFUSED: " + e.refusal + "\n";
+    }
+
     // A storage array of length zero is invalid, and a field with no parameters at
     // all is possible (a bare degenerate tree). One unused float keeps the binding
     // legal without the shader having to know.

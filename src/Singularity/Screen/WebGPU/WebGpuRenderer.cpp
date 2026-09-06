@@ -1023,6 +1023,10 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     }
     if (needsCompile) {
         prog = sdfwgsl::compile(field, fieldNode);
+        if (!prog.ok) {
+            std::fprintf(stderr, "[WebGPU] SdfWgsl compile refused: %s\n", prog.error.c_str());
+            return;
+        }
         sp = sdfPipeline(prog.wgsl);
         if (memoId != 0) {
             auto& entry = _programCache[memoId];
