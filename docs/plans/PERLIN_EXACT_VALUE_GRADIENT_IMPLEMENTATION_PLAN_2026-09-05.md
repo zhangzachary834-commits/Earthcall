@@ -291,3 +291,31 @@ that authorship and review boundary; it replaces the earlier broadcast-derived s
 **Session:** `01a072e2-017b-7b03-aa4a-1ef25dab65d1`
 **Date:** 2026-09-05
 **Timestamp:** 2026-09-05T22:48:25-07:00
+
+## Acceptance status — review pass 1
+
+Spark's standalone fused-Perlin value/gradient proof passed, but Codex rejected the first
+production integration on 2026-09-06. The native GPU parity test rendered both analytic
+expression cases as empty (`Expr(iso)` 0 versus CPU 164; `Expr(noise)` 0 versus CPU 261).
+
+The blocking causes are recorded in the canonical Perlin intercom thread:
+
+1. the analytic emitter's independent parameter cursor starts in the expression leaf's
+   offset slots and evaluates at raw `p` rather than the leaf-local point;
+2. unconditional `sdfEvalGrad` changes ordinary one-evaluation march steps into a
+   seven-evaluation value-plus-central-gradient fallback even when the gradient is unused;
+3. every `ScalarLeaf` is admitted although non-constant `ScalarForm` values and gradients
+   are not faithfully emitted.
+
+The implementation is not admitted and is not ready for Person verification. Spark owns
+the correction pass; Codex and Antigravity remain reviewers after re-handoff.
+
+Zach subsequently ran the rejected candidate and confirmed the visible consequence: the
+Perlin hills disappeared and the zone rendered as a superflat green plane. The save tree
+remained clean after the run. This confirms a renderer/compiler representation failure;
+it does not authorize changing the authored terrain expression.
+
+**Signed:** Codex
+**Session:** `01a072e2-017b-7b03-aa4a-1ef25dab65d1`
+**Date:** 2026-09-06
+**Timestamp:** 2026-09-06T00:16:24-07:00

@@ -20,14 +20,22 @@ oh yeah this is why we need Form as a first order primitive I made it a year ago
 and had that intuition but didn't quite fully grasp it until now
 cause otherwise it'll be harder to address 
 
-uhhhhh what else
-yeah so Laws can draw and change 2d stuff and those stuff become Singulars/Objects
+## Process creates noun-beings, nouns-beings then own trigger processes 
+Laws can draw and change 2d stuff and those stuff become Singulars/Objects
 animations are just Laws that change their properties over time
 
 we need all kinds of Relations 
 
-law and singular set-to-set and flexible adaptible property sharing means stuff like ovrlayign transparent interfaces can all jsut mathematically add up the sums of of their individual values into one singular property so you can reference the finishe dproperty instead of having to add up all those at once.
-also can calculate all teh values in advance if you have hte Laws that dtermine their color over time, and then hand it to the renderer when it actually needs it.
+## 
+
+law and singular set-to-set and flexible adaptible property sharing means stuff 
+like overlaying transparent interfaces can all just mathematically 
+add up the sums of of their individual values into one singular property so you can reference the finished property 
+instead of having to add up all those at once.
+also can calculate all teh values in advance if you have hte Laws that dtermine their color over time, and then hand it 
+to the renderer when it actually needs it.
 
 so we want granular control over 2D <-> 3D gradients too
+
+## Laws Creating on Laws
 

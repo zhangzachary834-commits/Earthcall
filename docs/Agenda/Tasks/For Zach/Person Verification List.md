@@ -46,16 +46,26 @@
 - [x] Open an Earthcall UI window → verify the mouse pointer unlocks and can interact with the UI
 - [ ] Close the UI window → verify normal 3D-world pointer interaction returns | Zach: I don't know what I'm supposed to be looking for here:
 
-- [ ] Chess: click a pawn on the chess board | Zach: I tried clicking and it did not do anything visible. Most other functionality below can't be tested unless this is working.
-- [ ] Select pawn → click a pawn and verify it becomes the selected piece | Zach: How am I supposed to tell it's the selected piece?
-- [ ] Make legal move → select a pawn and click a legal destination square → verify the pawn moves there
-- [ ] Capture piece → make a legal capture → verify the captured piece is removed/moved appropriately
-- [ ] Try illegal move → select a piece and click an illegal destination → verify the move is rejected and the piece remains in its original position
-- [ ] Test board path blocking → use a sliding piece such as a rook/bishop/queen with a piece blocking its path → attempt to move through the blocker → verify the move is rejected
+## Chess
+- [x] Chess: click a pawn on the chess board | Zach: I tried clicking and it did not do anything visible. Most other functionality below can't be tested unless this is working. | Zach: This was fixed about two weeks ago
+- [x] Select pawn → click a pawn and verify it becomes the selected piece | Zach: How am I supposed to tell it's the selected piece?
+- [x] Queens move (there was an bug where the raycasting for ovoid wasn't working properly. Sphere-tracing raycasts for the Ovoid primitive overstepped and missed from camera angles. Queen used ovoid, so those hits didn't work. This was fixed.)
+- [x] Make legal move → select a pawn and click a legal destination square → verify the pawn moves there
+- [x] Capture piece → make a legal capture → verify the captured piece is removed/moved appropriately
+- [x] Try illegal move → select a piece and click an illegal destination → verify the move is rejected and the piece remains in its original position
+- [x] Test board path blocking → use a sliding piece such as a rook/bishop/queen with a piece blocking its path → attempt to move through the blocker → verify the move is rejected 
+**Special chess rules**: 
+- [ ] Promotion works (one path verified, not necessarily all type combinations)
+- [x] Castling works. Verified both black and white
+- [ ] Threefold repetition
+- [ ] Stalemate
+- [ ] En passant
 
+## First Mover Laws
 - [ ] First Mover/Law toggle: disable → save → reload → verify disabled
 - [ ] Re-enable → verify action works → re-enable the First Mover/Law → trigger its corresponding action → verify it executes
 
+## Observe Test Feature
 - [ ] Look through the Observe Test feature. Zach: Only four tests show despite their being 60+ tests at the time of writing. Two of them are epistemically opaque. One does not load at all (the patch test) it throws an error. Only one of the tests displays something—spanws cubes throughout the place. I just can't verify without looking at the code and an in-world tool that lets me see positions whether they were supposed to be in that exact position.   
 
 - [ ] Law Author: inspect/create/edit a Law → open Law Author → inspect an existing Law → create or edit a Law → verify the displayed Law is correct
@@ -71,15 +81,17 @@
 - [ ] Developer Tools Window (`~`) & `Esc` → press `~` to open Developer Tools window → press `Esc` → verify the window remains open and cursor lock toggles as expected (rather than automatically closing the dev tools window) → press `~` again to toggle off
 - [ ] `/` → press `/` → verify the intended `/` action occurs | Zach: I tried this with no windows loaded and "/" changed nothing visible. The intended behavior is unclear to me.
 - [x] H → press `H` → verify the intended H action occurs | Zach: Opens chat window, but pressing H again fails to toggle off.
-- [x] K → press `K` → verify the intended K action occurs | 
+- [x] K → press `K` → verify the intended K action occurs |
+
+
 ## Synthesis Studio (added 2026-09-02, from the play-test that corrected the audit's first pass)
 
 - [ ] **Resonance Studio upgrade — Codex, session `synthesis-studio-20260904`, 2026-09-04 22:00 PDT:** reopen Earthcall and load `synthesis_studio` at the default 1280×720 window size; verify the full spectrum dock and upper-right voice/ink controls fit, text is readable, and the floating resonators remain visible above the easel.
-- [ ] **Play the room:** play C5 through B5 on both the desk and dock; each matching sphere should swell/rise, its colored meter should jump then settle, and the last-note caption should change; play repeatedly for over a minute and check responsiveness and animation feel.
+- [x] **Play the room:** play C5 through B5 on both the desk and dock; each matching sphere should swell/rise, its colored meter should jump then settle, and the last-note caption should change; play repeatedly for over a minute and check responsiveness and animation feel.
 - [ ] **Sound and ink:** select TRI, SINE, then SQR and compare their audible character; select TIDAL or ORCHID, enable DRAW, and drag on the easel to see the selected color; confirm existing artwork remains. Save/reload and repeat. Automated sink/serialization checks pass; actual sound and desktop feel still need a Person's witness.
 
-- [ ] **2D controls on a HiDPI/Retina display** → open the Synthesis Studio → click any 2D HUD dock control → verify it responds. **Known blocking finding (Zach's play-test, 2026-09-02):** every 2D control is unclickable on a Retina Mac — the 2D draw and the 2D pick are in different coordinate spaces. See [SYNTHESIS_STUDIO_AUDIT_2026-09-02.md](../../audits/SYNTHESIS_STUDIO_AUDIT_2026-09-02.md) §A0. Re-verify here after the fix, on both a Retina and a non-Retina display.
-- [ ] 3D console → click the two buttons and the four chord pads → verify orbs spawn and notes sound (audit reports every sound in the studio is currently silent)
+- [ ] **2D controls on a HiDPI/Retina display** → open the Synthesis Studio → click any 2D HUD dock control → verify it responds. **Known blocking finding (Zach's play-test, 2026-09-02):** every 2D control is unclickable on a Retina Mac — the 2D draw and the 2D pick are in different coordinate spaces. See [SYNTHESIS_STUDIO_AUDIT_2026-09-02.md](../../../audits/SYNTHESIS_STUDIO_AUDIT_2026-09-02.md) §A0. Re-verify here after the fix, on both a Retina and a non-Retina display.
+- [x] 3D console → click the two buttons and the four chord pads → verify orbs spawn and notes sound (audit reports every sound in the studio is currently silent)
 - [ ] Slider → set a value → save → reload → verify the slider does not teleport on load
 - [ ] Ambient theme toggle → toggle on → toggle off → verify it is not a one-way latch
 - [ ] In-world & HUD click persistence after moving/switching tabs → open Synthesis Studio and Creator Console (F8) → click various tabs/buttons in Creator Console, load a different zone, switch back → select 3D Create tool → click in the world and click Synthesis Studio HUD buttons → verify clicks reliably spawn shapes and trigger HUD buttons without cursor lockout.
@@ -87,7 +99,7 @@
 
 *Note (2026-09-02): the HiDPI finding above was found by walking, not by a test, and was
 recorded first in an audit rather than here. Findings a Person discovers by hand belong on
-this list — that is what it is for. See [The Week the Chorus Became a Queue](../../Reflections%20on%20Earthcall%27s%20Progression/Reflections%20on%20Trajectory/The_Week_The_Chorus_Became_A_Queue.md) §6.*
+this list — that is what it is for. See [The Week the Chorus Became a Queue](../../../Reflections%20on%20Earthcall's%20Progression/Reflections%20on%20Trajectory/The_Week_The_Chorus_Became_A_Queue.md) §6.*
 
 ## Basic 2D Button
 - [ ] Load `basic_2d_button` in-app -> verify 2D button renders on screen.

@@ -204,7 +204,7 @@ int main() {
     //                   what exposed the un-damped CPU raycaster.
     cases.push_back({ "Expr(distance)",
         std::make_shared<geom::SdfNode>(geom::makeImplicit("sqrt(x*x + y*y + z*z) - 0.55")) });
-    cases.push_back({ "Expr(iso)",
+    if (true) { auto p = sdfwgsl::compile(*std::make_shared<geom::SdfNode>(geom::makeImplicit("x*x + y*y + z*z - 0.3")), nullptr); printf("\n--- Expr(iso) WGSL ---\n%s\n---\n", p.wgsl.c_str()); } cases.push_back({ "Expr(iso)",
         std::make_shared<geom::SdfNode>(geom::makeImplicit("x*x + y*y + z*z - 0.3")) });
 
     // Op::Noise, which no case above reached. This is the gap a whole rendering
@@ -256,6 +256,36 @@ int main() {
         // the transcription correct the two agree to 2 pixels of 261; changing the
         // noise's amplitude by a third moves 20. Ten separates them with room.
         cases.push_back({ "Expr(noise)", n, glm::mat4(1.0f), 10 });
+    }
+
+    // Focused test: Expr(noise) with a NON-ZERO leaf offset, ensuring leaf-local
+    // point evaluation (lp = p - offset) and correct parameter slot alignment.
+    {
+        auto num = [](double c) {
+            return nlohmann::json{{"op", 0}, {"scalarForm", {{"terms",
+                     nlohmann::json::array({ {{"c", c}, {"factors", nlohmann::json::object()}} })}}}};
+        };
+        const nlohmann::json pv{{"op", 1}, {"var", "p"}};
+        nlohmann::json j = {
+            {"op", 5}, {"children", nlohmann::json::array({
+                nlohmann::json{{"op", 11}, {"children", nlohmann::json::array({ pv })}},
+                nlohmann::json{{"op", 4}, {"children", nlohmann::json::array({
+                    num(0.7),
+                    nlohmann::json{{"op", 6}, {"children", nlohmann::json::array({
+                        num(0.35),
+                        nlohmann::json{{"op", 29}, {"children", nlohmann::json::array({
+                            nlohmann::json{{"op", 6}, {"children", nlohmann::json::array({
+                                num(1.2), pv })}}
+                        })}}
+                    })}}
+                })}}
+            })}};
+        auto n = std::make_shared<geom::SdfNode>();
+        n->op = geom::SdfOp::Leaf;
+        n->prim = geom::SdfPrim::Expr;
+        n->offset = glm::vec3(0.15f, -0.2f, 0.1f);
+        n->mathNode = std::shared_ptr<OntoMath::MathNode>(OntoMath::MathNode::fromJson(j).release());
+        cases.push_back({ "Expr(noise_offset)", n, glm::mat4(1.0f), 10 });
     }
 
     // Every operator.

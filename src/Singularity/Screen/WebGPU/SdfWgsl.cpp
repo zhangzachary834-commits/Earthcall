@@ -172,6 +172,117 @@ fn cnoise3(P: vec3<f32>) -> f32 {
     let n_xyz = mix(n_yz.x, n_yz.y, fade_xyz.x); 
     return 2.2 * n_xyz;
 }
+struct PerlinJet {
+    value: f32,
+    grad: vec3<f32>,
+};
+struct StepSample {
+    raw: f32,
+    gradLen: f32,
+};
+
+fn cnoise3_grad(P: vec3<f32>) -> PerlinJet {
+    let Pi0 = floor(P);
+    let Pi1 = Pi0 + vec3<f32>(1.0);
+    let Pi0_mod = mod289_3(Pi0);
+    let Pi1_mod = mod289_3(Pi1);
+    let Pf0 = fract(P);
+    let Pf1 = Pf0 - vec3<f32>(1.0);
+    let ix = vec4<f32>(Pi0_mod.x, Pi1_mod.x, Pi0_mod.x, Pi1_mod.x);
+    let iy = vec4<f32>(Pi0_mod.y, Pi0_mod.y, Pi1_mod.y, Pi1_mod.y);
+    let iz0 = vec4<f32>(Pi0_mod.z);
+    let iz1 = vec4<f32>(Pi1_mod.z);
+
+    let ixy = permute4(permute4(ix) + iy);
+    let ixy0 = permute4(ixy + iz0);
+    let ixy1 = permute4(ixy + iz1);
+
+    var gx0 = ixy0 / 7.0;
+    var gy0 = fract(floor(gx0) / 7.0) - 0.5;
+    gx0 = fract(gx0);
+    var gz0 = vec4<f32>(0.5) - abs(gx0) - abs(gy0);
+    let sz0 = step(gz0, vec4<f32>(0.0));
+    gx0 = gx0 - sz0 * (step(vec4<f32>(0.0), gx0) - 0.5);
+    gy0 = gy0 - sz0 * (step(vec4<f32>(0.0), gy0) - 0.5);
+
+    var gx1 = ixy1 / 7.0;
+    var gy1 = fract(floor(gx1) / 7.0) - 0.5;
+    gx1 = fract(gx1);
+    var gz1 = vec4<f32>(0.5) - abs(gx1) - abs(gy1);
+    let sz1 = step(gz1, vec4<f32>(0.0));
+    gx1 = gx1 - sz1 * (step(vec4<f32>(0.0), gx1) - 0.5);
+    gy1 = gy1 - sz1 * (step(vec4<f32>(0.0), gy1) - 0.5);
+
+    var g000 = vec3<f32>(gx0.x, gy0.x, gz0.x);
+    var g100 = vec3<f32>(gx0.y, gy0.y, gz0.y);
+    var g010 = vec3<f32>(gx0.z, gy0.z, gz0.z);
+    var g110 = vec3<f32>(gx0.w, gy0.w, gz0.w);
+    var g001 = vec3<f32>(gx1.x, gy1.x, gz1.x);
+    var g101 = vec3<f32>(gx1.y, gy1.y, gz1.y);
+    var g011 = vec3<f32>(gx1.z, gy1.z, gz1.z);
+    var g111 = vec3<f32>(gx1.w, gy1.w, gz1.w);
+
+    let norm0 = taylorInvSqrt(vec4<f32>(dot(g000, g000), dot(g010, g010), dot(g100, g100), dot(g110, g110)));
+    g000 = g000 * norm0.x;
+    g010 = g010 * norm0.y;
+    g100 = g100 * norm0.z;
+    g110 = g110 * norm0.w;
+    let norm1 = taylorInvSqrt(vec4<f32>(dot(g001, g001), dot(g011, g011), dot(g101, g101), dot(g111, g111)));
+    g001 = g001 * norm1.x;
+    g011 = g011 * norm1.y;
+    g101 = g101 * norm1.z;
+    g111 = g111 * norm1.w;
+
+    let n000 = dot(g000, Pf0);
+    let n100 = dot(g100, vec3<f32>(Pf1.x, Pf0.y, Pf0.z));
+    let n010 = dot(g010, vec3<f32>(Pf0.x, Pf1.y, Pf0.z));
+    let n110 = dot(g110, vec3<f32>(Pf1.x, Pf1.y, Pf0.z));
+    let n001 = dot(g001, vec3<f32>(Pf0.x, Pf0.y, Pf1.z));
+    let n101 = dot(g101, vec3<f32>(Pf1.x, Pf0.y, Pf1.z));
+    let n011 = dot(g011, vec3<f32>(Pf0.x, Pf1.y, Pf1.z));
+    let n111 = dot(g111, Pf1);
+
+    let fade_xyz = Pf0 * Pf0 * Pf0 * (Pf0 * (Pf0 * 6.0 - 15.0) + 10.0);
+    let dfade_xyz = 30.0 * Pf0 * Pf0 * (Pf0 - vec3<f32>(1.0)) * (Pf0 - vec3<f32>(1.0));
+
+    let u = fade_xyz.x;
+    let v = fade_xyz.y;
+    let w = fade_xyz.z;
+
+    let n_z0 = mix(n000, n001, w);
+    let n_z1 = mix(n100, n101, w);
+    let n_z2 = mix(n010, n011, w);
+    let n_z3 = mix(n110, n111, w);
+
+    let n_yz0 = mix(n_z0, n_z2, v);
+    let n_yz1 = mix(n_z1, n_z3, v);
+
+    let n_xyz = mix(n_yz0, n_yz1, u);
+    let val = 2.2 * n_xyz;
+
+    let dx_fade = dfade_xyz.x * (n_yz1 - n_yz0);
+
+    let n_x_y0 = mix(n_z0, n_z1, u);
+    let n_x_y1 = mix(n_z2, n_z3, u);
+    let dy_fade = dfade_xyz.y * (n_x_y1 - n_x_y0);
+
+    let n_xy_z0 = mix(mix(n000, n100, u), mix(n010, n110, u), v);
+    let n_xy_z1 = mix(mix(n001, n101, u), mix(n011, n111, u), v);
+    let dz_fade = dfade_xyz.z * (n_xy_z1 - n_xy_z0);
+
+    let g_z0 = mix(g000, g001, w);
+    let g_z1 = mix(g100, g101, w);
+    let g_z2 = mix(g010, g011, w);
+    let g_z3 = mix(g110, g111, w);
+
+    let g_yz0 = mix(g_z0, g_z2, v);
+    let g_yz1 = mix(g_z1, g_z3, v);
+
+    let g_interp = mix(g_yz0, g_yz1, u);
+
+    let grad = 2.2 * (g_interp + vec3<f32>(dx_fade, dy_fade, dz_fade));
+    return PerlinJet(val, grad);
+}
 )WGSL";
 
 // A WGSL float literal for a C++ constant, so a threshold shared with the CPU
@@ -498,6 +609,229 @@ void emitPiecewise(const OntoMath::Piecewise& pw, Emit& e, const std::string& pt
     }
 }
 
+enum class JetKind { Scalar, Vector };
+struct JetExpr {
+    JetKind kind = JetKind::Scalar;
+    std::string value;
+    std::string grad;
+    std::string gradX;
+    std::string gradY;
+    std::string gradZ;
+};
+
+bool astContainsNoise(const OntoMath::MathNode& node) {
+    if (node.op == OntoMath::MathNode::Op::Noise) return true;
+    for (const auto& c : node.children) {
+        if (c && astContainsNoise(*c)) return true;
+    }
+    return false;
+}
+
+bool isDifferentiableAst(const OntoMath::MathNode& node) {
+    switch (node.op) {
+        case OntoMath::MathNode::Op::ScalarLeaf: {
+            for (const auto& term : node.scalarForm.terms) {
+                if (!term.factors.empty() || !term.trans.empty()) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        case OntoMath::MathNode::Op::ValueLeaf:
+            return (node.variableName == OntoMath::kAmbientPointVar ||
+                    node.variableName == "x" ||
+                    node.variableName == "y" ||
+                    node.variableName == "z");
+        case OntoMath::MathNode::Op::VectorConstruct: {
+            if (node.children.size() != 3) return false;
+            for (const auto& c : node.children) {
+                if (!c || !isDifferentiableAst(*c)) return false;
+            }
+            return true;
+        }
+        case OntoMath::MathNode::Op::Component: {
+            if (node.children.empty() || !node.children[0]) return false;
+            if (node.stringArg != "x" && node.stringArg != "y" && node.stringArg != "z") return false;
+            return isDifferentiableAst(*node.children[0]);
+        }
+        case OntoMath::MathNode::Op::Add:
+        case OntoMath::MathNode::Op::Sub:
+        case OntoMath::MathNode::Op::Scale: {
+            if (node.children.size() != 2 || !node.children[0] || !node.children[1]) return false;
+            return isDifferentiableAst(*node.children[0]) && isDifferentiableAst(*node.children[1]);
+        }
+        case OntoMath::MathNode::Op::Noise: {
+            if (node.children.empty() || !node.children[0]) return false;
+            return isDifferentiableAst(*node.children[0]);
+        }
+        case OntoMath::MathNode::Op::Dot: {
+            if (node.children.size() != 2 || !node.children[0] || !node.children[1]) return false;
+            return isDifferentiableAst(*node.children[0]) && isDifferentiableAst(*node.children[1]);
+        }
+        case OntoMath::MathNode::Op::Length: {
+            if (node.children.size() != 1 || !node.children[0]) return false;
+            return isDifferentiableAst(*node.children[0]);
+        }
+        default:
+            return false;
+    }
+}
+
+JetExpr emitMathNodeGrad(const OntoMath::MathNode& node, Emit& e,
+                         const std::string& pt, std::string& body, int& nextVar) {
+    using Op = OntoMath::MathNode::Op;
+    switch (node.op) {
+        case Op::ScalarLeaf: {
+            if (node.scalarForm.terms.empty()) {
+                return JetExpr{ JetKind::Scalar, "0.0", "vec3<f32>(0.0)", "", "", "" };
+            }
+            std::string v = "";
+            for (size_t ti = 0; ti < node.scalarForm.terms.size(); ++ti) {
+                const auto& term = node.scalarForm.terms[ti];
+                if (!term.factors.empty() || !term.trans.empty()) {
+                    e.refuse("ScalarLeaf with non-constant factors reached analytic gradient emitter");
+                    return JetExpr{ JetKind::Scalar, "0.0", "vec3<f32>(0.0)", "", "", "" };
+                }
+                std::string tStr = e.param(static_cast<float>(term.coefficient));
+                if (ti == 0) v = tStr;
+                else v += " + " + tStr;
+            }
+            return JetExpr{ JetKind::Scalar, "(" + v + ")", "vec3<f32>(0.0)", "", "", "" };
+        }
+        case Op::ValueLeaf: {
+            if (node.variableName == OntoMath::kAmbientPointVar) {
+                return JetExpr{ JetKind::Vector, "(" + pt + ")", "",
+                                "vec3<f32>(1.0, 0.0, 0.0)",
+                                "vec3<f32>(0.0, 1.0, 0.0)",
+                                "vec3<f32>(0.0, 0.0, 1.0)" };
+            }
+            if (node.variableName == "x") {
+                return JetExpr{ JetKind::Scalar, "(" + pt + ").x", "vec3<f32>(1.0, 0.0, 0.0)", "", "", "" };
+            }
+            if (node.variableName == "y") {
+                return JetExpr{ JetKind::Scalar, "(" + pt + ").y", "vec3<f32>(0.0, 1.0, 0.0)", "", "", "" };
+            }
+            if (node.variableName == "z") {
+                return JetExpr{ JetKind::Scalar, "(" + pt + ").z", "vec3<f32>(0.0, 0.0, 1.0)", "", "", "" };
+            }
+            e.refuse("unsupported variable in analytic gradient emitter: " + node.variableName);
+            return JetExpr{ JetKind::Scalar, "0.0", "vec3<f32>(0.0)", "", "", "" };
+        }
+        case Op::VectorConstruct: {
+            if (node.children.size() != 3 || !node.children[0] || !node.children[1] || !node.children[2]) {
+                e.refuse("VectorConstruct arity invalid in analytic gradient emitter");
+                return JetExpr{ JetKind::Vector, "vec3<f32>(0.0)", "", "vec3<f32>(0.0)", "vec3<f32>(0.0)", "vec3<f32>(0.0)" };
+            }
+            JetExpr c0 = emitMathNodeGrad(*node.children[0], e, pt, body, nextVar);
+            JetExpr c1 = emitMathNodeGrad(*node.children[1], e, pt, body, nextVar);
+            JetExpr c2 = emitMathNodeGrad(*node.children[2], e, pt, body, nextVar);
+            std::string v = "vec3<f32>(" + c0.value + ", " + c1.value + ", " + c2.value + ")";
+            return JetExpr{ JetKind::Vector, v, "", c0.grad, c1.grad, c2.grad };
+        }
+        case Op::Component: {
+            if (node.children.empty() || !node.children[0]) {
+                e.refuse("Component missing argument in analytic gradient emitter");
+                return JetExpr{ JetKind::Scalar, "0.0", "vec3<f32>(0.0)", "", "", "" };
+            }
+            JetExpr c = emitMathNodeGrad(*node.children[0], e, pt, body, nextVar);
+            if (node.stringArg == "x") return JetExpr{ JetKind::Scalar, "(" + c.value + ").x", c.gradX, "", "", "" };
+            if (node.stringArg == "y") return JetExpr{ JetKind::Scalar, "(" + c.value + ").y", c.gradY, "", "", "" };
+            if (node.stringArg == "z") return JetExpr{ JetKind::Scalar, "(" + c.value + ").z", c.gradZ, "", "", "" };
+            e.refuse("Component invalid axis in analytic gradient emitter: " + node.stringArg);
+            return JetExpr{ JetKind::Scalar, "0.0", "vec3<f32>(0.0)", "", "", "" };
+        }
+        case Op::Add: {
+            JetExpr a = emitMathNodeGrad(*node.children[0], e, pt, body, nextVar);
+            JetExpr b = emitMathNodeGrad(*node.children[1], e, pt, body, nextVar);
+            if (a.kind == JetKind::Scalar && b.kind == JetKind::Scalar) {
+                return JetExpr{ JetKind::Scalar, "(" + a.value + " + " + b.value + ")",
+                                "(" + a.grad + " + " + b.grad + ")", "", "", "" };
+            } else if (a.kind == JetKind::Vector && b.kind == JetKind::Vector) {
+                return JetExpr{ JetKind::Vector, "(" + a.value + " + " + b.value + ")", "",
+                                "(" + a.gradX + " + " + b.gradX + ")",
+                                "(" + a.gradY + " + " + b.gradY + ")",
+                                "(" + a.gradZ + " + " + b.gradZ + ")" };
+            }
+            e.refuse("type mismatch in Add for analytic gradient emitter");
+            return JetExpr{ JetKind::Scalar, "0.0", "vec3<f32>(0.0)", "", "", "" };
+        }
+        case Op::Sub: {
+            JetExpr a = emitMathNodeGrad(*node.children[0], e, pt, body, nextVar);
+            JetExpr b = emitMathNodeGrad(*node.children[1], e, pt, body, nextVar);
+            if (a.kind == JetKind::Scalar && b.kind == JetKind::Scalar) {
+                return JetExpr{ JetKind::Scalar, "(" + a.value + " - " + b.value + ")",
+                                "(" + a.grad + " - " + b.grad + ")", "", "", "" };
+            } else if (a.kind == JetKind::Vector && b.kind == JetKind::Vector) {
+                return JetExpr{ JetKind::Vector, "(" + a.value + " - " + b.value + ")", "",
+                                "(" + a.gradX + " - " + b.gradX + ")",
+                                "(" + a.gradY + " - " + b.gradY + ")",
+                                "(" + a.gradZ + " - " + b.gradZ + ")" };
+            }
+            e.refuse("type mismatch in Sub for analytic gradient emitter");
+            return JetExpr{ JetKind::Scalar, "0.0", "vec3<f32>(0.0)", "", "", "" };
+        }
+        case Op::Scale: {
+            JetExpr a = emitMathNodeGrad(*node.children[0], e, pt, body, nextVar);
+            JetExpr b = emitMathNodeGrad(*node.children[1], e, pt, body, nextVar);
+            if (a.kind == JetKind::Scalar && b.kind == JetKind::Scalar) {
+                std::string v = "(" + a.value + " * " + b.value + ")";
+                std::string g = "((" + a.value + ") * (" + b.grad + ") + (" + b.value + ") * (" + a.grad + "))";
+                return JetExpr{ JetKind::Scalar, v, g, "", "", "" };
+            } else if (a.kind == JetKind::Scalar && b.kind == JetKind::Vector) {
+                std::string v = "((" + a.value + ") * (" + b.value + "))";
+                std::string gx = "((" + a.value + ") * (" + b.gradX + ") + (" + b.value + ").x * (" + a.grad + "))";
+                std::string gy = "((" + a.value + ") * (" + b.gradY + ") + (" + b.value + ").y * (" + a.grad + "))";
+                std::string gz = "((" + a.value + ") * (" + b.gradZ + ") + (" + b.value + ").z * (" + a.grad + "))";
+                return JetExpr{ JetKind::Vector, v, "", gx, gy, gz };
+            } else if (a.kind == JetKind::Vector && b.kind == JetKind::Scalar) {
+                std::string v = "((" + a.value + ") * (" + b.value + "))";
+                std::string gx = "((" + b.value + ") * (" + a.gradX + ") + (" + a.value + ").x * (" + b.grad + "))";
+                std::string gy = "((" + b.value + ") * (" + a.gradY + ") + (" + a.value + ").y * (" + b.grad + "))";
+                std::string gz = "((" + b.value + ") * (" + a.gradZ + ") + (" + a.value + ").z * (" + b.grad + "))";
+                return JetExpr{ JetKind::Vector, v, "", gx, gy, gz };
+            }
+            e.refuse("type mismatch in Scale for analytic gradient emitter");
+            return JetExpr{ JetKind::Scalar, "0.0", "vec3<f32>(0.0)", "", "", "" };
+        }
+        case Op::Noise: {
+            JetExpr q = emitMathNodeGrad(*node.children[0], e, pt, body, nextVar);
+            std::string jv = "j" + std::to_string(nextVar++);
+            body += "    let " + jv + " = cnoise3_grad(" + q.value + ");\n";
+            std::string v = jv + ".value";
+            std::string g = "((" + jv + ".grad.x * (" + q.gradX + ")) + (" +
+                                  jv + ".grad.y * (" + q.gradY + ")) + (" +
+                                  jv + ".grad.z * (" + q.gradZ + ")))";
+            return JetExpr{ JetKind::Scalar, v, g, "", "", "" };
+        }
+        case Op::Dot: {
+            JetExpr a = emitMathNodeGrad(*node.children[0], e, pt, body, nextVar);
+            JetExpr b = emitMathNodeGrad(*node.children[1], e, pt, body, nextVar);
+            if (a.kind != JetKind::Vector || b.kind != JetKind::Vector) {
+                e.refuse("Dot expects vector operands in analytic gradient emitter");
+                return JetExpr{ JetKind::Scalar, "0.0", "vec3<f32>(0.0)", "", "", "" };
+            }
+            std::string v = "dot(" + a.value + ", " + b.value + ")";
+            std::string g = "(((" + a.value + ").x * (" + b.gradX + ") + (" + b.value + ").x * (" + a.gradX + ")) + " +
+                            "((" + a.value + ").y * (" + b.gradY + ") + (" + b.value + ").y * (" + a.gradY + ")) + " +
+                            "((" + a.value + ").z * (" + b.gradZ + ") + (" + b.value + ").z * (" + a.gradZ + ")))";
+            return JetExpr{ JetKind::Scalar, v, g, "", "", "" };
+        }
+        case Op::Length: {
+            JetExpr a = emitMathNodeGrad(*node.children[0], e, pt, body, nextVar);
+            if (a.kind != JetKind::Vector) {
+                e.refuse("Length expects vector operand in analytic gradient emitter");
+                return JetExpr{ JetKind::Scalar, "0.0", "vec3<f32>(0.0)", "", "", "" };
+            }
+            std::string v = "length(" + a.value + ")";
+            std::string dg = "(((" + a.value + ").x * (" + a.gradX + ")) + ((" + a.value + ").y * (" + a.gradY + ")) + ((" + a.value + ").z * (" + a.gradZ + ")))";
+            std::string g = "select(vec3<f32>(0.0), (" + dg + ") / max(length(" + a.value + "), 1e-6), length(" + a.value + ") > 1e-6)";
+            return JetExpr{ JetKind::Scalar, v, g, "", "", "" };
+        }
+        default:
+            e.refuse(std::string("unsupported operation in analytic gradient emitter: ") + OntoMath::mathOpName(node.op));
+            return JetExpr{ JetKind::Scalar, "0.0", "vec3<f32>(0.0)", "", "", "" };
+    }
+}
 
 // Emit one node, returning the name of the temporary holding its distance.
 std::string emitNode(const geom::SdfNode& n, Emit& e) {
@@ -640,29 +974,7 @@ fn vs(@location(0) pos: vec3<f32>, @builtin(instance_index) instIdx: u32) -> VSO
     return o;
 }
 
-fn sdfGrad(p: vec3<f32>) -> vec3<f32> {
-    let e = 1e-3;
-    return vec3<f32>(
-        sdfEval(p + vec3<f32>(e, 0.0, 0.0)) - sdfEval(p - vec3<f32>(e, 0.0, 0.0)),
-        sdfEval(p + vec3<f32>(0.0, e, 0.0)) - sdfEval(p - vec3<f32>(0.0, e, 0.0)),
-        sdfEval(p + vec3<f32>(0.0, 0.0, e)) - sdfEval(p - vec3<f32>(0.0, 0.0, e))) / (2.0 * e);
-}
-
-fn sdfNormal(p: vec3<f32>) -> vec3<f32> {
-    // Tetrahedral gradient (4 evaluations instead of 6) for isotropic precision and 33% lower cost
-    let e = 1e-3;
-    let k0 = vec3<f32>( 1.0, -1.0, -1.0);
-    let k1 = vec3<f32>(-1.0, -1.0,  1.0);
-    let k2 = vec3<f32>(-1.0,  1.0, -1.0);
-    let k3 = vec3<f32>( 1.0,  1.0,  1.0);
-    let g = k0 * sdfEval(p + k0 * e) +
-            k1 * sdfEval(p + k1 * e) +
-            k2 * sdfEval(p + k2 * e) +
-            k3 * sdfEval(p + k3 * e);
-    let l = length(g);
-    if (l < 1e-8) { return vec3<f32>(0.0, 1.0, 0.0); }
-    return g / l;
-}
+// sdfGrad, sdfNormal and sdfEvalGrad emitted dynamically above before kMarcher
 
 struct FSOut {
     @location(0) color: vec4<f32>,
@@ -833,34 +1145,27 @@ fn fs(in: VSOut) -> FSOut {
             break;
         }
 
-        let raw = sdfEval(p);
-        
-        // Scale epsilon by distance (cone stepping) to prevent infinite steps on the horizon
         let current_eps = max(eps, t * 0.001);
-
-        var d = raw;
+        var d = 0.0;
+        var raw = 0.0;
 
         if (damping < 0.5) {
-            // Implicit ASTs: an authored expression is NOT a distance field, so its
-            // value overstates the distance to its own zero set by |grad f|. Dividing
-            // by the gradient length is the Lipschitz correction, and it is the only
-            // step rule here that is correct for an ARBITRARY authored expression
-            // rather than for terrain in particular. A heuristic minimum step (this
-            // read `max(d * 0.95, max(1.5, t * 0.06))`) tunnels through anything
-            // thinner than the constant, and 1.5 world units is thicker than most
-            // things a Person builds.
-            let ge = 1e-3;
-            let g = vec3<f32>(
-                sdfEval(p + vec3<f32>(ge, 0.0, 0.0)) - raw,
-                sdfEval(p + vec3<f32>(0.0, ge, 0.0)) - raw,
-                sdfEval(p + vec3<f32>(0.0, 0.0, ge)) - raw) / ge;
-            let gl = length(g);
-            if (gl > 1e-6) { d = raw / gl; }
+            let s = sdfSampleStep(p);
+            raw = s.raw;
+            var gl = s.gradLen;
+            if (gl <= 1e-6) {
+                let ge = 1e-3;
+                let g = vec3<f32>(
+                    sdfEval(p + vec3<f32>(ge, 0.0, 0.0)) - raw,
+                    sdfEval(p + vec3<f32>(0.0, ge, 0.0)) - raw,
+                    sdfEval(p + vec3<f32>(0.0, 0.0, ge)) - raw) / ge;
+                gl = length(g);
+            }
+            d = select(raw, raw / gl, gl > 1e-6);
 
             if (d <= 0.0 || abs(d) < current_eps) {
                 hit = true;
                 if (d < 0.0 && prev_d > 0.0 && candidate_step > 0.0) {
-                    // Secant root refinement for an exact sub-pixel boundary hit.
                     let frac = clamp(prev_d / (prev_d - d), 0.0, 1.0);
                     t = (t - candidate_step) + candidate_step * frac;
                 }
@@ -871,10 +1176,9 @@ fn fs(in: VSOut) -> FSOut {
             prev_d = d;
             t = t + candidate_step;
         } else {
-            // Exact manifold SDFs: Keinert et al. 2014, "Enhanced Sphere
-            // Tracing", §3.1. `candidate_step` is the step that got us HERE and
-            // `prev_d` the radius it was based on; if those two spheres fail to
-            // overlap, the last leap left the region the field vouched for.
+            raw = sdfEval(p);
+            d = raw;
+
             if (d <= 0.0 || abs(d) < current_eps) {
                 hit = true;
                 if (d < 0.0 && prev_d > 0.0 && candidate_step > 0.0) {
@@ -885,19 +1189,6 @@ fn fs(in: VSOut) -> FSOut {
             }
 
             if (omega > 1.0 && d + prev_d < candidate_step) {
-                // Undo the over-relaxed leap, redo it at the conservative
-                // length, and RE-EVALUATE there -- this sample is discarded.
-                // It was taken at a point the ray never legitimately reached,
-                // and a 1-Lipschitz field permits it to be LARGER than the
-                // radius at the corrected position, so spending it as a step
-                // reintroduces exactly the overshoot the rollback exists to
-                // undo. Spending it is what this read before: it rolled `t`
-                // back correctly and then added `d` from the bad sample, so a
-                // ray that overstepped once could sail straight through the
-                // surface -- worst where curvature is highest and the
-                // relaxation bites, which is a torus's inner ring and a
-                // rounded box's corners, and visible as geometry that comes
-                // apart differently as the camera moves.
                 t = t - candidate_step + prev_d;
                 omega = 1.0;
                 candidate_step = 0.0;
@@ -993,16 +1284,61 @@ fn fs(in: VSOut) -> FSOut {
 
 Program compile(const geom::SdfNode& root, const geom::FieldNode* fieldNode) {
     Emit e;
-    const std::string result = emitNode(root, e);
 
-    // Order matters: WGSL has no forward declarations, so a function must appear
-    // before anything that calls it. Primitives, then the generated sdfEval, then
-    // the marcher which calls both.
+    const bool hasAnalyticGrad = (root.op == geom::SdfOp::Leaf &&
+                                  root.prim == geom::SdfPrim::Expr &&
+                                  root.mathNode &&
+                                  astContainsNoise(*root.mathNode) &&
+                                  isDifferentiableAst(*root.mathNode));
+
+    std::string evalGradFunc;
+    if (hasAnalyticGrad) {
+        e.sawExpr = true;
+        const std::string off = e.param3(root.offset);
+        const std::string lp = e.fresh();
+        std::string gradBody = "    let " + lp + " = p - " + off + ";\n";
+        int nextVar = 0;
+        JetExpr je = emitMathNodeGrad(*root.mathNode, e, lp, gradBody, nextVar);
+        evalGradFunc = "\nfn sdfEvalGrad(p: vec3<f32>) -> PerlinJet {\n" +
+                       gradBody +
+                       "    return PerlinJet(" + je.value + ", " + je.grad + ");\n}\n";
+    }
+
     Program prog;
-    prog.wgsl  = kPrimitives;
-    prog.wgsl += "\nfn sdfEval(p: vec3<f32>) -> f32 {\n";
-    prog.wgsl += e.body;
-    prog.wgsl += "    return " + result + ";\n}\n";
+    prog.wgsl = kPrimitives;
+
+    if (hasAnalyticGrad) {
+        prog.wgsl += evalGradFunc;
+        prog.wgsl += "\nfn sdfEval(p: vec3<f32>) -> f32 {\n"
+                     "    return sdfEvalGrad(p).value;\n}\n";
+        prog.wgsl += "\nfn sdfSampleStep(p: vec3<f32>) -> StepSample {\n"
+                     "    let jet = sdfEvalGrad(p);\n"
+                     "    return StepSample(jet.value, length(jet.grad));\n}\n";
+        prog.wgsl += "\nfn sdfNormal(p: vec3<f32>) -> vec3<f32> {\n"
+                     "    let jet = sdfEvalGrad(p);\n"
+                     "    let gl = length(jet.grad);\n"
+                     "    return select(vec3<f32>(0.0, 1.0, 0.0), jet.grad / gl, gl > 1e-8);\n}\n";
+    } else {
+        const std::string result = emitNode(root, e);
+        prog.wgsl += "\nfn sdfEval(p: vec3<f32>) -> f32 {\n";
+        prog.wgsl += e.body;
+        prog.wgsl += "    return " + result + ";\n}\n";
+        prog.wgsl += "\nfn sdfSampleStep(p: vec3<f32>) -> StepSample {\n"
+                     "    let raw = sdfEval(p);\n"
+                     "    return StepSample(raw, 0.0);\n}\n";
+        prog.wgsl += "\nfn sdfNormal(p: vec3<f32>) -> vec3<f32> {\n"
+                     "    let e = 1e-3;\n"
+                     "    let k0 = vec3<f32>( 1.0, -1.0, -1.0);\n"
+                     "    let k1 = vec3<f32>(-1.0, -1.0,  1.0);\n"
+                     "    let k2 = vec3<f32>(-1.0,  1.0, -1.0);\n"
+                     "    let k3 = vec3<f32>( 1.0,  1.0,  1.0);\n"
+                     "    return normalize(\n"
+                     "        k0 * sdfEval(p + k0 * e) +\n"
+                     "        k1 * sdfEval(p + k1 * e) +\n"
+                     "        k2 * sdfEval(p + k2 * e) +\n"
+                     "        k3 * sdfEval(p + k3 * e));\n"
+                     "}\n";
+    }
 
     // --- Dual-Path Field Compiler ---
     prog.wgsl += "\nfn fieldEval(p: vec3<f32>) -> f32 {\n";

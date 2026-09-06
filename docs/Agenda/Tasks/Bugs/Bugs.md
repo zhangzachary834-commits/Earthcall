@@ -91,3 +91,5 @@ Bugs:
 21. Putting a modest number of cubes quickly increases the "update" ms and the ms of something else I forgot.
 
 22. Earlier there was an issue where if the cubes slid off from a gradually steepening slope in the perlin noise world, it would at a certain point just teleport back to the original location. Not sure if this is still happening, recent tests suggests it may be fixed already but I need to verify again to be sure.
+
+23. There's an issue sometimes when I try to load a conglomerate save file when another conglomerate is already loaded, it crashes. I tried loading the far lands zone after having had chess_app loaded (or something like that, maybe I forgot the exact files and exact order), and it crashed.

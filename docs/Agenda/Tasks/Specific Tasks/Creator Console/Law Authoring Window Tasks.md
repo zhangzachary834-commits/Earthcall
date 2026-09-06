@@ -1,1 +1,2 @@
-- 
+- Formation Rete
+- Option to condition and act -> both check sets or ∀ in window. Both to check conditions about Sets (like Set A or Set B) and ∀, and act on sets-derived properties and ∀-derived properties 
