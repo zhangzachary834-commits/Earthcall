@@ -49,7 +49,11 @@ WindowContext createWindowContext(GLFWwindow* win) {
     layer.pixelFormat = MTLPixelFormatBGRA8Unorm;   // must match kSurfaceFormat
     layer.contentsScale = nswin.backingScaleFactor; // Retina: drawable in pixels
     if (@available(macOS 10.13, *)) {
-        layer.displaySyncEnabled = NO;
+        // Present at the current display's cadence. Immediate presentation can
+        // report CPU-submitted frames faster than a 60 Hz panel can show them
+        // and, more importantly, exposes partially replaced frames as visual
+        // tearing. A high-refresh external display still receives its own rate.
+        layer.displaySyncEnabled = YES;
     }
     nswin.contentView.wantsLayer = YES;
     nswin.contentView.layer = layer;
@@ -134,11 +138,14 @@ void configureSurface(WindowContext& ctx, uint32_t width, uint32_t height) {
     cfg.usage = WGPUTextureUsage_RenderAttachment;
     cfg.width = width;
     cfg.height = height;
-    cfg.presentMode = WGPUPresentMode_Immediate; // vsync OFF
+    // FIFO is the compositor-safe WebGPU presentation mode. It prevents an
+    // in-progress CAMetalLayer drawable from being replaced mid-scanout; do not
+    // trade a coherent Person-visible frame for a higher submitted-FPS counter.
+    cfg.presentMode = WGPUPresentMode_Fifo;
     cfg.alphaMode = WGPUCompositeAlphaMode_Auto;
     wgpuSurfaceConfigure(ctx.surface, &cfg);
     if (@available(macOS 10.13, *)) {
-        layer.displaySyncEnabled = NO;
+        layer.displaySyncEnabled = YES;
     }
 }
 

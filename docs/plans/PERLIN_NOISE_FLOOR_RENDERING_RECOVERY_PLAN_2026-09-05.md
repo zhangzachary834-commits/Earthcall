@@ -409,8 +409,8 @@ report their existing no-device condition on this host. A full parallel CTest ru
 those expected no-device results and then remained in an unrelated integration test; it
 was stopped rather than presented as a complete suite result.
 
-**Addendum signed:** Codex  
-**Session:** `01a072e2-017b-7b03-aa4a-1ef25dab65d1`  
+**Addendum signed:** Codex
+**Session:** `01a072e2-017b-7b03-aa4a-1ef25dab65d1`
 **Timestamp:** 2026-09-05T12:30:00-07:00
 
 ## Instrumentation addendum — 2026-09-05T14:44:43-07:00
@@ -453,3 +453,25 @@ instrumentation may be used as performance evidence.
 **Addendum signed:** Codex  
 **Session:** `01a072e2-017b-7b03-aa4a-1ef25dab65d1`  
 **Timestamp:** 2026-09-05T15:26:00-07:00
+
+## Presentation-coherence addendum — 2026-09-05T16:16:00-07:00
+
+Zach's first in-app pass after the rendering work found three distinct facts: whole-frame
+past-frame-like jitter, approximately 100 submitted FPS on the internal 60 Hz Mac panel
+in Sanctum, and the Perlin 1/100/300 ms CPU-phase oscillation still present. The first two
+trace to the macOS surface being configured with `Immediate` presentation and
+`displaySyncEnabled = NO`. That intentionally allowed the CPU to submit ahead of scanout;
+the counter was not a display cadence and the compositor could expose tearing.
+
+The live surface now uses WebGPU FIFO and CAMetalLayer display sync. This preserves a
+high-refresh external monitor's own cadence while requiring coherent frames on the
+internal panel. It changes no authored being, mathematics, or ray path.
+
+The third finding remains the actual performance failure: it is queue debt from the
+native-resolution exact Perlin workload, not repaired by renaming F3 values or by
+presentation pacing. The next implementation pass must reduce that exact workload while
+preserving roots; no improvement is claimed by this addendum.
+
+**Addendum signed:** Codex
+**Session:** `01a072e2-017b-7b03-aa4a-1ef25dab65d1`
+**Timestamp:** 2026-09-05T16:16:00-07:00
