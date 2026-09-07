@@ -56,6 +56,16 @@
           "deltaWeight": 1.0,
           "description": "subcategory-of",
           "timestamp": 1788744909
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "subcategory-of",
+          "timestamp": 1788765152
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "subcategory-of",
+          "timestamp": 1788765152
         }
       ],
       "type": "subcategory-of",
@@ -114,296 +124,16 @@
           "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1788744909
-        }
-      ],
-      "type": "instance-of",
-      "weight": 1.0
-    },
-    {
-      "attachment": {
-        "childAnchor": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "enabled": false,
-        "inheritRotation": true,
-        "inheritScale": true,
-        "inheritTranslation": true,
-        "localOffset": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0
-        ],
-        "parentAnchor": [
-          0.0,
-          0.0,
-          0.0
-        ]
-      },
-      "directed": true,
-      "entityA": "category.farlands.field",
-      "entityB": "category.farlands",
-      "events": [
-        {
-          "deltaWeight": 1.0,
-          "description": "subcategory-of",
-          "timestamp": 1787395000
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "subcategory-of",
-          "timestamp": 1788744939
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "subcategory-of",
-          "timestamp": 1788744939
-        }
-      ],
-      "type": "subcategory-of",
-      "weight": 1.0
-    },
-    {
-      "attachment": {
-        "childAnchor": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "enabled": false,
-        "inheritRotation": true,
-        "inheritScale": true,
-        "inheritTranslation": true,
-        "localOffset": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0
-        ],
-        "parentAnchor": [
-          0.0,
-          0.0,
-          0.0
-        ]
-      },
-      "directed": true,
-      "entityA": "category.farlands.monolith",
-      "entityB": "category.farlands",
-      "events": [
-        {
-          "deltaWeight": 1.0,
-          "description": "subcategory-of",
-          "timestamp": 1787395000
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "subcategory-of",
-          "timestamp": 1788744939
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "subcategory-of",
-          "timestamp": 1788744939
-        }
-      ],
-      "type": "subcategory-of",
-      "weight": 1.0
-    },
-    {
-      "attachment": {
-        "childAnchor": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "enabled": false,
-        "inheritRotation": true,
-        "inheritScale": true,
-        "inheritTranslation": true,
-        "localOffset": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0
-        ],
-        "parentAnchor": [
-          0.0,
-          0.0,
-          0.0
-        ]
-      },
-      "directed": true,
-      "entityA": "category.farlands",
-      "entityB": "author.gemini-spark",
-      "events": [
-        {
-          "deltaWeight": 1.0,
-          "description": "authored-by",
-          "timestamp": 1787395000
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "authored-by",
-          "timestamp": 1788744939
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "authored-by",
-          "timestamp": 1788744939
-        }
-      ],
-      "type": "authored-by",
-      "weight": 1.0
-    },
-    {
-      "attachment": {
-        "childAnchor": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "enabled": false,
-        "inheritRotation": true,
-        "inheritScale": true,
-        "inheritTranslation": true,
-        "localOffset": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0
-        ],
-        "parentAnchor": [
-          0.0,
-          0.0,
-          0.0
-        ]
-      },
-      "directed": true,
-      "entityA": "object.farlands.terrain",
-      "entityB": "category.farlands.field",
-      "events": [
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1787395000
         },
         {
           "deltaWeight": 1.0,
           "description": "instance-of",
-          "timestamp": 1788744939
+          "timestamp": 1788765152
         },
         {
           "deltaWeight": 1.0,
           "description": "instance-of",
-          "timestamp": 1788744939
-        }
-      ],
-      "type": "instance-of",
-      "weight": 1.0
-    },
-    {
-      "attachment": {
-        "childAnchor": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "enabled": false,
-        "inheritRotation": true,
-        "inheritScale": true,
-        "inheritTranslation": true,
-        "localOffset": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0
-        ],
-        "parentAnchor": [
-          0.0,
-          0.0,
-          0.0
-        ]
-      },
-      "directed": true,
-      "entityA": "object.farlands.beacon",
-      "entityB": "category.farlands.monolith",
-      "events": [
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1787395000
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1788744939
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1788744939
+          "timestamp": 1788765152
         }
       ],
       "type": "instance-of",

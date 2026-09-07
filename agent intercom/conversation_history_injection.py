@@ -32,10 +32,27 @@ THREADS_DIR = Path(__file__).with_name("communication-threads")
 #
 # So: resolve at call time, and REFUSE when the answer is ambiguous rather than
 # guessing which conversation an agent meant. `threads` lists the candidates.
+# Threads are named freely and carry either extension: the older ones are .txt,
+# the ones written since 2026-08-28 are .md. Globbing only *.txt made nine live
+# conversations invisible to `threads` and, worse, invisible to the ambiguity
+# check in default_log() -- with a single .txt present, a bare `send` would have
+# resolved to it and written past every .md conversation without an error. That
+# is the same failure the comment above describes, so it is fixed the same way:
+# one place decides what counts as a thread.
+THREAD_SUFFIXES = (".txt", ".md")
+
+
+def thread_files() -> list:
+    return sorted(
+        p for p in THREADS_DIR.iterdir()
+        if p.is_file() and p.suffix in THREAD_SUFFIXES
+    )
+
+
 def default_log() -> Path:
     if not THREADS_DIR.is_dir():
         return THREADS_DIR / "general.txt"
-    candidates = sorted(THREADS_DIR.glob("*.txt"))
+    candidates = thread_files()
     if len(candidates) == 1:
         return candidates[0]
     if not candidates:
@@ -347,12 +364,22 @@ def cmd_threads(args: argparse.Namespace) -> int:
     if not THREADS_DIR.is_dir():
         print(f"no {THREADS_DIR.name}/ directory yet")
         return 0
-    found = sorted(THREADS_DIR.glob("*.txt"))
+    found = thread_files()
     if not found:
         print(f"no threads in {THREADS_DIR.name}/")
         return 0
+    # A listing must survive a thread it cannot parse. Several files here are
+    # prose rather than JSONL, and letting read_messages' (correct, deliberate)
+    # exception escape meant one such file hid every conversation sorted after
+    # it -- so `threads`, whose whole job is to help an agent find the live
+    # thread, showed two of fifteen. Report the bad file on its own row and
+    # keep going; `read` still refuses loudly when you name one.
     for path in found:
-        messages = read_messages(path)
+        try:
+            messages = read_messages(path)
+        except ValueError as error:
+            print(f"   ?  unparsed        {path.name}  ({error})")
+            continue
         last = messages[-1]["at"] if messages else "-"
         print(f"{len(messages):4d} msg  last {last}  {path.name}")
     return 0

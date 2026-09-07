@@ -17690,6 +17690,570 @@
         80.0,
         1.0
       ]
+    },
+    {
+      "objectID": "codex-gpt5",
+      "shapeKind": 12,
+      "geometryType": 12,
+      "shapeParams": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "transform": [
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        80.0,
+        80.0,
+        80.0,
+        1.0
+      ],
+      "center": [
+        80.0,
+        80.0,
+        80.0
+      ],
+      "materialId": "",
+      "authoredProperties": {
+        "kind": {
+          "t": "string",
+          "v": "first-mover"
+        },
+        "onBehalfOf": {
+          "t": "string",
+          "v": "Zach"
+        },
+        "authoredWork": {
+          "t": "string",
+          "v": "Chess Law category taxonomy"
+        },
+        "displayName": {
+          "t": "string",
+          "v": "Codex GPT-5 (First Mover)"
+        }
+      }
+    },
+    {
+      "objectID": "category.chess.law",
+      "shapeKind": 12,
+      "geometryType": 12,
+      "shapeParams": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "transform": [
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "center": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "materialId": "",
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Chess Laws"
+        }
+      }
+    },
+    {
+      "objectID": "category.chess.law.interaction",
+      "shapeKind": 12,
+      "geometryType": 12,
+      "shapeParams": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "transform": [
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "center": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "materialId": "",
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Picking & Interaction"
+        }
+      }
+    },
+    {
+      "objectID": "category.chess.law.movement",
+      "shapeKind": 12,
+      "geometryType": 12,
+      "shapeParams": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "transform": [
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "center": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "materialId": "",
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Movement"
+        }
+      }
+    },
+    {
+      "objectID": "category.chess.law.movement.pawn",
+      "shapeKind": 12,
+      "geometryType": 12,
+      "shapeParams": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "transform": [
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "center": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "materialId": "",
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Pawn Movement"
+        }
+      }
+    },
+    {
+      "objectID": "category.chess.law.movement.piece",
+      "shapeKind": 12,
+      "geometryType": 12,
+      "shapeParams": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "transform": [
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "center": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "materialId": "",
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Piece Movement"
+        }
+      }
+    },
+    {
+      "objectID": "category.chess.law.movement.castling",
+      "shapeKind": 12,
+      "geometryType": 12,
+      "shapeParams": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "transform": [
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "center": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "materialId": "",
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Castling"
+        }
+      }
+    },
+    {
+      "objectID": "category.chess.law.capture",
+      "shapeKind": 12,
+      "geometryType": 12,
+      "shapeParams": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "transform": [
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "center": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "materialId": "",
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Capture"
+        }
+      }
+    },
+    {
+      "objectID": "category.chess.law.king-safety",
+      "shapeKind": 12,
+      "geometryType": 12,
+      "shapeParams": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "transform": [
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "center": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "materialId": "",
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Check & King Safety"
+        }
+      }
+    },
+    {
+      "objectID": "category.chess.law.promotion",
+      "shapeKind": 12,
+      "geometryType": 12,
+      "shapeParams": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "transform": [
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "center": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "materialId": "",
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Promotion"
+        }
+      }
+    },
+    {
+      "objectID": "category.chess.law.turn-state",
+      "shapeKind": 12,
+      "geometryType": 12,
+      "shapeParams": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "transform": [
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "center": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "materialId": "",
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Turn State"
+        }
+      }
+    },
+    {
+      "objectID": "category.chess.law.conclusion",
+      "shapeKind": 12,
+      "geometryType": 12,
+      "shapeParams": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "transform": [
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "center": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "materialId": "",
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Draw & Game Conclusion"
+        }
+      }
     }
   ],
   "currentColor": [
@@ -18432,6 +18996,1406 @@
           ],
           "type": "instance-of",
           "weight": 1.0
+        },
+        {
+          "type": "authored-by",
+          "entityA": "category.chess.law",
+          "entityB": "codex-gpt5",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "authored-by",
+              "deltaWeight": 1.0,
+              "timestamp": 1788768000
+            }
+          ]
+        },
+        {
+          "type": "authored-by",
+          "entityA": "category.chess.law.interaction",
+          "entityB": "codex-gpt5",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "authored-by",
+              "deltaWeight": 1.0,
+              "timestamp": 1788768000
+            }
+          ]
+        },
+        {
+          "type": "subcategory-of",
+          "entityA": "category.chess.law.interaction",
+          "entityB": "category.chess.law",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "subcategory-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "authored-by",
+          "entityA": "category.chess.law.movement",
+          "entityB": "codex-gpt5",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "authored-by",
+              "deltaWeight": 1.0,
+              "timestamp": 1788768000
+            }
+          ]
+        },
+        {
+          "type": "subcategory-of",
+          "entityA": "category.chess.law.movement",
+          "entityB": "category.chess.law",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "subcategory-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "authored-by",
+          "entityA": "category.chess.law.movement.pawn",
+          "entityB": "codex-gpt5",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "authored-by",
+              "deltaWeight": 1.0,
+              "timestamp": 1788768000
+            }
+          ]
+        },
+        {
+          "type": "subcategory-of",
+          "entityA": "category.chess.law.movement.pawn",
+          "entityB": "category.chess.law.movement",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "subcategory-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "authored-by",
+          "entityA": "category.chess.law.movement.piece",
+          "entityB": "codex-gpt5",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "authored-by",
+              "deltaWeight": 1.0,
+              "timestamp": 1788768000
+            }
+          ]
+        },
+        {
+          "type": "subcategory-of",
+          "entityA": "category.chess.law.movement.piece",
+          "entityB": "category.chess.law.movement",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "subcategory-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "authored-by",
+          "entityA": "category.chess.law.movement.castling",
+          "entityB": "codex-gpt5",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "authored-by",
+              "deltaWeight": 1.0,
+              "timestamp": 1788768000
+            }
+          ]
+        },
+        {
+          "type": "subcategory-of",
+          "entityA": "category.chess.law.movement.castling",
+          "entityB": "category.chess.law.movement",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "subcategory-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "authored-by",
+          "entityA": "category.chess.law.capture",
+          "entityB": "codex-gpt5",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "authored-by",
+              "deltaWeight": 1.0,
+              "timestamp": 1788768000
+            }
+          ]
+        },
+        {
+          "type": "subcategory-of",
+          "entityA": "category.chess.law.capture",
+          "entityB": "category.chess.law",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "subcategory-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "authored-by",
+          "entityA": "category.chess.law.king-safety",
+          "entityB": "codex-gpt5",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "authored-by",
+              "deltaWeight": 1.0,
+              "timestamp": 1788768000
+            }
+          ]
+        },
+        {
+          "type": "subcategory-of",
+          "entityA": "category.chess.law.king-safety",
+          "entityB": "category.chess.law",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "subcategory-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "authored-by",
+          "entityA": "category.chess.law.promotion",
+          "entityB": "codex-gpt5",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "authored-by",
+              "deltaWeight": 1.0,
+              "timestamp": 1788768000
+            }
+          ]
+        },
+        {
+          "type": "subcategory-of",
+          "entityA": "category.chess.law.promotion",
+          "entityB": "category.chess.law",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "subcategory-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "authored-by",
+          "entityA": "category.chess.law.turn-state",
+          "entityB": "codex-gpt5",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "authored-by",
+              "deltaWeight": 1.0,
+              "timestamp": 1788768000
+            }
+          ]
+        },
+        {
+          "type": "subcategory-of",
+          "entityA": "category.chess.law.turn-state",
+          "entityB": "category.chess.law",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "subcategory-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "authored-by",
+          "entityA": "category.chess.law.conclusion",
+          "entityB": "codex-gpt5",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "authored-by",
+              "deltaWeight": 1.0,
+              "timestamp": 1788768000
+            }
+          ]
+        },
+        {
+          "type": "subcategory-of",
+          "entityA": "category.chess.law.conclusion",
+          "entityB": "category.chess.law",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "subcategory-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-click",
+          "entityB": "category.chess.law.interaction",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-select",
+          "entityB": "category.chess.law.interaction",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-drag-pick",
+          "entityB": "category.chess.law.interaction",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-drag-drop",
+          "entityB": "category.chess.law.interaction",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-deselect-others",
+          "entityB": "category.chess.law.interaction",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-pawn-w-step",
+          "entityB": "category.chess.law.movement.pawn",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-pawn-w-double",
+          "entityB": "category.chess.law.movement.pawn",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-pawn-w-capture",
+          "entityB": "category.chess.law.movement.pawn",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-pawn-w-capture",
+          "entityB": "category.chess.law.capture",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-pawn-w-en-passant",
+          "entityB": "category.chess.law.movement.pawn",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-pawn-b-step",
+          "entityB": "category.chess.law.movement.pawn",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-pawn-b-double",
+          "entityB": "category.chess.law.movement.pawn",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-pawn-b-capture",
+          "entityB": "category.chess.law.movement.pawn",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-pawn-b-capture",
+          "entityB": "category.chess.law.capture",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-pawn-b-en-passant",
+          "entityB": "category.chess.law.movement.pawn",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-knight",
+          "entityB": "category.chess.law.movement.piece",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-bishop",
+          "entityB": "category.chess.law.movement.piece",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-rook",
+          "entityB": "category.chess.law.movement.piece",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-queen",
+          "entityB": "category.chess.law.movement.piece",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-king",
+          "entityB": "category.chess.law.movement.piece",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-castle-white-kingside",
+          "entityB": "category.chess.law.movement.castling",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-castle-white-queenside",
+          "entityB": "category.chess.law.movement.castling",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-castle-black-kingside",
+          "entityB": "category.chess.law.movement.castling",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-castle-black-queenside",
+          "entityB": "category.chess.law.movement.castling",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-castle-rook-wk",
+          "entityB": "category.chess.law.movement.castling",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-castle-rook-wq",
+          "entityB": "category.chess.law.movement.castling",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-castle-rook-bk",
+          "entityB": "category.chess.law.movement.castling",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-castle-rook-bq",
+          "entityB": "category.chess.law.movement.castling",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-castle-rook-revert-wk",
+          "entityB": "category.chess.law.movement.castling",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-castle-rook-revert-wk",
+          "entityB": "category.chess.law.king-safety",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-castle-rook-revert-wq",
+          "entityB": "category.chess.law.movement.castling",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-castle-rook-revert-wq",
+          "entityB": "category.chess.law.king-safety",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-castle-rook-revert-bk",
+          "entityB": "category.chess.law.movement.castling",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-castle-rook-revert-bk",
+          "entityB": "category.chess.law.king-safety",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-castle-rook-revert-bq",
+          "entityB": "category.chess.law.movement.castling",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-castle-rook-revert-bq",
+          "entityB": "category.chess.law.king-safety",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-capture",
+          "entityB": "category.chess.law.capture",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-capture-en-passant",
+          "entityB": "category.chess.law.capture",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-king-track-white",
+          "entityB": "category.chess.law.king-safety",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-king-track-black",
+          "entityB": "category.chess.law.king-safety",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-check-reset",
+          "entityB": "category.chess.law.king-safety",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-probe-white-king",
+          "entityB": "category.chess.law.king-safety",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-probe-black-king",
+          "entityB": "category.chess.law.king-safety",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-check-pawn-w",
+          "entityB": "category.chess.law.king-safety",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-check-pawn-b",
+          "entityB": "category.chess.law.king-safety",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-check-knight",
+          "entityB": "category.chess.law.king-safety",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-check-king",
+          "entityB": "category.chess.law.king-safety",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-check-slider-rank-candidate",
+          "entityB": "category.chess.law.king-safety",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-check-slider-file-candidate",
+          "entityB": "category.chess.law.king-safety",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-check-slider-diag-candidate",
+          "entityB": "category.chess.law.king-safety",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-eval-slider-rank",
+          "entityB": "category.chess.law.king-safety",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-eval-slider-file",
+          "entityB": "category.chess.law.king-safety",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-eval-slider-diag",
+          "entityB": "category.chess.law.king-safety",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-check-scan-complete",
+          "entityB": "category.chess.law.king-safety",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-check-evaluated",
+          "entityB": "category.chess.law.king-safety",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-revert",
+          "entityB": "category.chess.law.king-safety",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-revert-capture",
+          "entityB": "category.chess.law.king-safety",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-revert-capture",
+          "entityB": "category.chess.law.capture",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-commit",
+          "entityB": "category.chess.law.king-safety",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-commit",
+          "entityB": "category.chess.law.turn-state",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-clear-capture-flag",
+          "entityB": "category.chess.law.king-safety",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-clear-capture-flag",
+          "entityB": "category.chess.law.capture",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-clear-capture-flag",
+          "entityB": "category.chess.law.turn-state",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-promote-white",
+          "entityB": "category.chess.law.promotion",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-promote-black",
+          "entityB": "category.chess.law.promotion",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-promo-btn-queen",
+          "entityB": "category.chess.law.promotion",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-promo-apply-queen",
+          "entityB": "category.chess.law.promotion",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-promo-btn-knight",
+          "entityB": "category.chess.law.promotion",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-promo-apply-knight",
+          "entityB": "category.chess.law.promotion",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-promo-btn-rook",
+          "entityB": "category.chess.law.promotion",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-promo-apply-rook",
+          "entityB": "category.chess.law.promotion",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-promo-btn-bishop",
+          "entityB": "category.chess.law.promotion",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-promo-apply-bishop",
+          "entityB": "category.chess.law.promotion",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-threefold-draw",
+          "entityB": "category.chess.law.conclusion",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-stalemate-draw",
+          "entityB": "category.chess.law.conclusion",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-claim-stalemate",
+          "entityB": "category.chess.law.conclusion",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-king-unmade-is-mate",
+          "entityB": "category.chess.law.conclusion",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-seat-white",
+          "entityB": "category.chess.law.turn-state",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "law-chess-seat-black",
+          "entityB": "category.chess.law.turn-state",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787390000
+            }
+          ]
         }
       ],
       "identifier": "Chess",

@@ -163,8 +163,8 @@ Earthcall was built by Zach, but not alone. The git history records contribution
 - **Claude** (Opus 4.7, Opus 5, Sonnet 4.5, Sonnet 5, Fable 5.1) — law system architecture, chess fixes, audits, reflections
 - **Gemini** — the chess attempt (roasted, then redeemed), GPU optimization, audits, "HOW IS GEMINI SO SMARTTTTTTT"
 - **Grok** — chess app authoring, roasting, Perlin terrain, the Cyber Deity
-- **GPT** (4o, 5.6 Sol) — audits, alien language, queens that move
-- **Jules** — test authoring, Go app, diffZones coverage
+- **GPT / OpenCode / Codex** (4o, 5.6 Sol, 5.6 Terra, 5.6 Luna, one 6 Astra pass) — used sparingly and always at high impact: the First Mover trust floor, the Three Offices, the recursive Singular/Relation grammar, Luna's Prophetic Rete specification, the serialization-topology rewrite, and acceptance review over the Perlin campaign. Alien language and queens that move.
+- **Jules** (a Google harness running Gemini 3.6 Flash, or 3.1 Pro when Zach routes it something conceptually new) — **the infrastructure that scales everyone else up**: ~100 VM-isolated sessions a day, directed by the other agents rather than speaking beside them. Test authoring, the Go app, diffZones coverage, and PRs #1–30.
 
 Each left their mark. Each was directed by the Person at the center.
 

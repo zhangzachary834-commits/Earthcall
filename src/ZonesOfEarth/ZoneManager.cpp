@@ -1281,6 +1281,25 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
             if (j.contains("authoredLaws")) {
                 ctx.lawManager->loadFromJson(j["authoredLaws"]);
             }
+
+            // Zone graphs hydrate before authored Laws because Objects and
+            // categories must exist first. A saved Law -> instance-of ->
+            // category edge therefore has one legitimately missing endpoint
+            // during that first pass and relation hydration defers it. Re-run the
+            // idempotent relation hydration now that the Law register exists.
+            // This is what makes authored Law categories persisted ontology,
+            // not JSON decoration visible only to a file reader.
+            if (!j.contains("zones") || !j["zones"].is_array()) return;
+            for (const auto& zoneJson : j["zones"]) {
+                const std::string id = zoneIdFromJson(zoneJson);
+                if (id.empty()) continue;
+                for (const auto& zone : _zones) {
+                    if (zone && zone->getIdentifier() == id) {
+                        applyFormationRelations(*zone, zoneJson);
+                        break;
+                    }
+                }
+            }
         });
         stage("ourverse", [&] {
             if (!ctx.ourverse || !j.contains("ourverse")) return;

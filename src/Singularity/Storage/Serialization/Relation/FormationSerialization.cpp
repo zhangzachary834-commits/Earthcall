@@ -88,7 +88,7 @@ void applyFormationRelations(Zone& zone, const nlohmann::json& zj) {
 
     if (refused == 0) return;
     std::cout << "⚠️  Zone '" << zone.name() << "': " << refused
-              << " saved formation relation(s) were REFUSED on load";
+              << " saved relation(s) remain pending after this hydration pass";
     if (unbound > 0) {
         std::cout << " — " << unbound
                   << " because an endpoint is not in the world yet";
@@ -97,7 +97,7 @@ void applyFormationRelations(Zone& zone, const nlohmann::json& zj) {
     if (unbound < refused) {
         std::cout << " because the edge is a self-ground or closes a directed cycle";
     }
-    std::cout << ". They are not in the formation and will not be written back on "
-              << "the next save. Fix them in the save file to keep them."
+    std::cout << ". A later hydration pass may bind newly available endpoints; any "
+              << "still unresolved at save time will not be written back."
               << std::endl;
 }

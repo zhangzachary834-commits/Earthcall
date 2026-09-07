@@ -18,9 +18,14 @@ from __future__ import annotations
 
 import base64
 import json
+import sys
 from pathlib import Path
 
 AUTHOR = "grok-4.6"
+# Zach commissioned Codex to originate the first Law-category taxonomy on
+# 2026-09-07. Keep that authorship distinct from grok-4.6, which authored the
+# chess Laws themselves; both act on Zach's authority as First Movers.
+LAW_CATEGORY_AUTHOR = "codex-gpt5"
 ZONE_ID = "Chess"
 TILE = 1.0
 BOARD_DEPTH = 0.28
@@ -491,6 +496,84 @@ def subcategory_rel(a, b):
         "weight": 1.0,
         "events": [{"description": "subcategory-of", "deltaWeight": 1.0, "timestamp": 1787390000}],
     }
+
+
+def authored_by_rel(being_id, author_id):
+    return {
+        "type": "authored-by",
+        "entityA": being_id,
+        "entityB": author_id,
+        "directed": True,
+        "weight": 1.0,
+        "events": [{"description": "authored-by", "deltaWeight": 1.0, "timestamp": 1788768000}],
+    }
+
+
+# A Category is a raw Singular–Relation DAG, not automatically a Formation.
+# Formationhood requires the richer non-hub, three-Singular topology Zach
+# specified on 2026-09-07. These roots classify Laws; they do not claim that
+# each resulting star is itself a Formation.
+LAW_CATEGORY_DEFINITIONS = [
+    ("category.chess.law", "Chess Laws", None),
+    ("category.chess.law.interaction", "Picking & Interaction", "category.chess.law"),
+    ("category.chess.law.movement", "Movement", "category.chess.law"),
+    ("category.chess.law.movement.pawn", "Pawn Movement", "category.chess.law.movement"),
+    ("category.chess.law.movement.piece", "Piece Movement", "category.chess.law.movement"),
+    ("category.chess.law.movement.castling", "Castling", "category.chess.law.movement"),
+    ("category.chess.law.capture", "Capture", "category.chess.law"),
+    ("category.chess.law.king-safety", "Check & King Safety", "category.chess.law"),
+    ("category.chess.law.promotion", "Promotion", "category.chess.law"),
+    ("category.chess.law.turn-state", "Turn State", "category.chess.law"),
+    ("category.chess.law.conclusion", "Draw & Game Conclusion", "category.chess.law"),
+]
+
+
+def law_category_memberships(law_id):
+    interaction = {
+        "law-chess-click", "law-chess-select", "law-chess-drag-pick",
+        "law-chess-drag-drop", "law-chess-deselect-others",
+    }
+    piece_movement = {
+        "law-chess-knight", "law-chess-bishop", "law-chess-rook",
+        "law-chess-queen", "law-chess-king",
+    }
+    if law_id in interaction:
+        memberships = ["category.chess.law.interaction"]
+    elif law_id.startswith("law-chess-pawn-"):
+        memberships = ["category.chess.law.movement.pawn"]
+    elif law_id in piece_movement:
+        memberships = ["category.chess.law.movement.piece"]
+    elif law_id.startswith("law-chess-castle-"):
+        memberships = ["category.chess.law.movement.castling"]
+    elif law_id.startswith("law-chess-capture"):
+        memberships = ["category.chess.law.capture"]
+    elif law_id.startswith("law-chess-promote-") or law_id.startswith("law-chess-promo-"):
+        memberships = ["category.chess.law.promotion"]
+    elif law_id.startswith("law-chess-seat-"):
+        memberships = ["category.chess.law.turn-state"]
+    elif (law_id.startswith("law-chess-threefold") or
+          law_id.startswith("law-chess-stalemate") or
+          law_id.startswith("law-chess-claim-stalemate") or
+          law_id == "law-chess-king-unmade-is-mate"):
+        memberships = ["category.chess.law.conclusion"]
+    elif (law_id.startswith("law-chess-king-track-") or
+          law_id.startswith("law-chess-check-") or
+          law_id.startswith("law-chess-probe-") or
+          law_id.startswith("law-chess-eval-") or
+          law_id.startswith("law-chess-revert") or
+          law_id in {"law-chess-commit", "law-chess-clear-capture-flag"}):
+        memberships = ["category.chess.law.king-safety"]
+    else:
+        raise ValueError(f"Law category judgment missing for {law_id}")
+
+    # Cross-membership says something real without forcing one exclusive bin.
+    if "capture" in law_id and "category.chess.law.capture" not in memberships:
+        memberships.append("category.chess.law.capture")
+    if law_id in {"law-chess-commit", "law-chess-clear-capture-flag"}:
+        memberships.append("category.chess.law.turn-state")
+    if "revert" in law_id and "category.chess.law.king-safety" not in memberships:
+        memberships.append("category.chess.law.king-safety")
+    return memberships
 
 
 # ---------------------------------------------------------------------------
@@ -2131,6 +2214,11 @@ def build_world():
             "kind": pv("string", "first-mover"),
             "onBehalfOf": pv("string", "Zach"),
         }, "grok-4.6 (First Mover)"),
+        extra_spatial(LAW_CATEGORY_AUTHOR, {
+            "kind": pv("string", "first-mover"),
+            "onBehalfOf": pv("string", "Zach"),
+            "authoredWork": pv("string", "Chess Law category taxonomy"),
+        }, "Codex GPT-5 (First Mover)"),
         extra_spatial("state.chess", {
             "turn": pv("int", 0),
             "selectedX": pv("int", -1),
@@ -2179,6 +2267,8 @@ def build_world():
             "phase": pv("string", "playing"),
         }, "Chess status"),
     ]
+    categories.extend(category_being(category_id, display_name)
+                      for category_id, display_name, _ in LAW_CATEGORY_DEFINITIONS)
 
     board_sx, board_sy, board_sz = 8.0 * TILE, BOARD_DEPTH, 8.0 * TILE
     board = {
@@ -2325,6 +2415,20 @@ def build_world():
     relations.append(instance_rel("object.chess.seat.black", "category.chess.player"))
     for b in promo_buttons:
         relations.append(instance_rel(b["objectID"], "category.control.button"))
+    for category_id, _, parent_id in LAW_CATEGORY_DEFINITIONS:
+        relations.append(authored_by_rel(category_id, LAW_CATEGORY_AUTHOR))
+        if parent_id:
+            relations.append(subcategory_rel(category_id, parent_id))
+    categorized = set()
+    for law in LAWS:
+        law_id = law["id"]
+        for category_id in law_category_memberships(law_id):
+            relations.append(instance_rel(law_id, category_id))
+            categorized.add(law_id)
+    if categorized != set(FORMATION):
+        missing = sorted(set(FORMATION) - categorized)
+        extra = sorted(categorized - set(FORMATION))
+        raise ValueError(f"Law category coverage mismatch: missing={missing}, extra={extra}")
 
     zone = {
         "name": ZONE_ID,
@@ -2371,9 +2475,107 @@ def build_world():
     return session, zone
 
 
+def merge_law_categories(root, authored_session, authored_zone):
+    """Surgically add this taxonomy without regenerating or reformatting a Person's world."""
+    category_ids = {category_id for category_id, _, _ in LAW_CATEGORY_DEFINITIONS}
+    category_ids.add(LAW_CATEGORY_AUTHOR)
+    category_payloads = {
+        item["objectID"]: item for item in authored_session["categories"]
+        if item["objectID"] in category_ids
+    }
+    relation_payloads = [
+        relation for relation in authored_zone["formationRelations"]
+        if ((relation["type"] == "subcategory-of" and
+             relation["entityA"] in category_ids and relation["entityB"] in category_ids) or
+            (relation["type"] == "instance-of" and relation["entityB"] in category_ids) or
+            (relation["type"] == "authored-by" and relation["entityA"] in category_ids))
+    ]
+
+    def array_end(text, key):
+        key_position = text.find(f'"{key}"')
+        if key_position < 0:
+            raise ValueError(f"{key} array is absent; refusing an ambiguous save rewrite")
+        start = text.find("[", key_position)
+        depth = 0
+        in_string = False
+        escaped = False
+        for position in range(start, len(text)):
+            char = text[position]
+            if in_string:
+                if escaped:
+                    escaped = False
+                elif char == "\\":
+                    escaped = True
+                elif char == '"':
+                    in_string = False
+                continue
+            if char == '"':
+                in_string = True
+            elif char == "[":
+                depth += 1
+            elif char == "]":
+                depth -= 1
+                if depth == 0:
+                    return key_position, start, position
+        raise ValueError(f"{key} array is unterminated")
+
+    def append_array_items(text, key, items):
+        if not items:
+            return text
+        key_position, start, end = array_end(text, key)
+        line_start = text.rfind("\n", 0, key_position) + 1
+        key_indent = len(text[line_start:key_position])
+        item_indent = " " * (key_indent + 2)
+        rendered = []
+        for item in items:
+            lines = json.dumps(item, indent=2).splitlines()
+            rendered.append("\n".join(item_indent + line for line in lines))
+        has_items = bool(text[start + 1:end].strip())
+        prefix = text[:end].rstrip()
+        separator = ",\n" if has_items else "\n"
+        return prefix + separator + ",\n".join(rendered) + "\n" + " " * key_indent + text[end:]
+
+    def missing_relations(existing_relations):
+        existing = {(r.get("type"), r.get("entityA"), r.get("entityB"))
+                    for r in existing_relations}
+        return [r for r in relation_payloads
+                if (r["type"], r["entityA"], r["entityB"]) not in existing]
+
+    for path in [root / "saves/worlds/chess_app.json",
+                 root / "saves/worlds/chess_app.ecform"]:
+        original = path.read_text()
+        document = json.loads(original)
+        existing_categories = {item.get("objectID", item.get("id"))
+                               for item in document.get("categories", [])}
+        new_categories = [payload for category_id, payload in category_payloads.items()
+                          if category_id not in existing_categories]
+        chess_zone = next((zone for zone in document.get("zones", [])
+                           if zone.get("identifier", zone.get("name")) == ZONE_ID), None)
+        if chess_zone is None:
+            raise ValueError(f"Chess Zone absent from {path}; refusing mutation")
+        new_relations = missing_relations(chess_zone.get("formationRelations", []))
+        updated = append_array_items(original, "categories", new_categories)
+        updated = append_array_items(updated, "formationRelations", new_relations)
+        path.write_text(updated)
+        print(f"Merged authored Law categories into {path}")
+
+    zone_path = root / "saves/zones" / ZONE_ID / "zone.json"
+    original = zone_path.read_text()
+    document = json.loads(original)
+    updated = append_array_items(original, "formationRelations",
+                                 missing_relations(document.get("formationRelations", [])))
+    zone_path.write_text(updated)
+    print(f"Merged authored Law categories into {zone_path}")
+
+
 def main():
     root = Path(__file__).resolve().parents[1]
     session, zone = build_world()
+    if "--merge-law-categories" in sys.argv:
+        merge_law_categories(root, session, zone)
+        print(f"  Law categories: {len(LAW_CATEGORY_DEFINITIONS)}")
+        print(f"  author: {LAW_CATEGORY_AUTHOR}, on behalf of Zach")
+        return
     world_path = root / "saves" / "worlds" / "chess_app.json"
     ecform_path = root / "saves" / "worlds" / "chess_app.ecform"
     zone_path = root / "saves" / "zones" / ZONE_ID / "zone.json"
@@ -2388,6 +2590,7 @@ def main():
     print(f"  zone objects: {len(zone['world']['objects'])}")
     print(f"  pieces: {sum(1 for o in zone['world']['objects'] if o['objectID'].startswith('piece-'))}")
     print(f"  laws: {len(LAWS)}")
+    print(f"  Law categories: {len(LAW_CATEGORY_DEFINITIONS)} (author: {LAW_CATEGORY_AUTHOR}, on behalf of Zach)")
     print(f"  author: {AUTHOR}")
     print("  board: object.chess.board (one 8×8×D prism)")
     print("  queens: piece-white-queen-3-0 on light, piece-black-queen-3-7 on dark")
@@ -2395,4 +2598,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

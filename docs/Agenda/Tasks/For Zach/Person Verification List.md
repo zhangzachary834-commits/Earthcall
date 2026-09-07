@@ -70,6 +70,8 @@
 
 - [ ] Law Author: inspect/create/edit a Law → open Law Author → inspect an existing Law → create or edit a Law → verify the displayed Law is correct
 - [ ] Save → reload → verify Law persists → save the Law/world → reload → reopen Law Author → verify the Law and its configuration remain
+- [ ] Law Author Library & Relation Graph (Zach taxonomy/Formation correction + Codex implementation, session `01a07a4c-2b09-7f62-b975-3a23084ddeaf`, 2026-09-07 00:44 PDT) → load `saves/worlds/chess_app.json`, open Law Author, then open both new windows. Confirm the Library shows the nested authored Chess Law categories, all 69 Laws are absent from Uncategorized, cross-membership is intelligible, category/Law search narrows the tree, and clicking a Law focuses its editor. Author or load a Relation whose endpoints are two Laws and confirm the Relation Graph draws exactly that edge and focuses a clicked Law; confirm unrelated Laws are not joined visually.
+- [ ] Searchable Property Lens redesign (Zach feedback + Codex, session `01a07a4c-2b09-7f62-b975-3a23084ddeaf`, 2026-09-07 00:00 PDT) → edit any IF/THEN property in Law Author and confirm one three-column palette opens instead of a row of dropdowns; choose Specific Singular, type part of a name/ID/kind, select it, and verify only that instance's registered properties appear. Repeat with Law/Event subject plus the Relation and First Mover Law runtime filters, search for a property by typing, select it, and confirm the resulting path names the intended referent.
 
 - [x] Assets window: open → verify assets → save/load → verify again
 - [x] Chat window → open Chat → send a test message → verify it appears correctly
@@ -117,3 +119,18 @@ this list — that is what it is for. See [The Week the Chorus Became a Queue](.
 ## Far Lands
 
 - [ ] **Gravity defaults off (authorized by Zach; Codex session `01a072e2`, 2026-09-06 18:34 PDT):** Load the `far_lands` world from a fresh application start and verify `physics-gravity` appears disabled immediately. Place or release an object and confirm it does not fall until the existing gravity Law is explicitly enabled; then enable it and confirm falling resumes.
+
+## Attribution in the Synthesis Studio saves — resolved
+
+- [x] ~~**Which Synthesis Studio pass was Astra, not Codex?**~~ **Answered by Zach's own Broadcast #5**, restored 2026-09-07: he asked Astra *"make the Synthesis Studio cooler"*, which is the `## 2026-09-04 — Play the room: resonance Studio` pass. Astra ran **through the Codex harness**, so `studio.author.codex` in the saves is truthful and stays; only the prose needs the model added. → [full task](../Specific%20Tasks/Resolve_the_Codex_signature_into_named_models/Resolve_the_Codex_signature_into_named_models.md)
+
+## Synthesis Studio — Astra's pass, from Broadcast #5 (2026-09-07)
+
+*These are Zach's own play-test findings, transcribed here from the broadcast so they stop living
+only in an intercom file. Marked done where Zach has already stated the verdict.*
+
+- [x] ~~Resonance rectangle + sound-blip animation above the note pads~~ — **verified good by Zach**: *"like an actual blip that feels like sound… like a professional music DJ software would animate it."* Most of Astra's pass **worked on the first try**.
+- [x] ~~Design writing ("C major" in the note pad, purpose-named parts)~~ — **verified good by Zach**, and he read it as making the scope explicit so it can be widened later.
+- [x] ~~Resonance rectangle rendered *just barely* lighter than the pad beneath it~~ — **verified good by Zach**: *"barely perceptible but it changes the feel from 'oh just another block' to 'oh this is the thing but sound version'."* Do not "fix" this contrast; it is deliberate and it works.
+- [ ] **Blue/violet hue inconsistency (Zach's one complaint).** Every note pad and its amplifier rectangle share a hue, except the blue one — its amplifier is not merely lighter, it is **more violet**. Zach: the discrepancy **predates Astra**, which left it in place. He wants **consistency**, because the point is for the pair to represent the same note colour: *"if u wanted violet dispreancy on purpose u gotta make it mean somethign real not just a random quirk."* Fix the blue pair to one hue, and see the note below about giving violet a pad of its own.
+- [ ] **Draw pad enrichment is unverifiable.** Astra also enriched the draw pad, but the draw pad **was already broken before Astra arrived**, so Zach has never seen that part. Re-check once the draw pad works — this is downstream of the Synthesis Studio click-lockout work, not a separate defect.

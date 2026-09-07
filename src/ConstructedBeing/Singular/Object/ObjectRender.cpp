@@ -7,7 +7,7 @@
 #include "Automation/AutomationEvents.hpp"
 #include "Singularity/Screen/Renderer.hpp"
 #include "Singularity/Screen/RenderMaterial.hpp"
-#include "Relation/Formation/Menu/stb_easy_font.h"   // draw2DObject's labels
+#include "Singularity/FirstMoverOntology/FirstMoverWindowTools/Menu/stb_easy_font.h"   // draw2DObject's labels
 #include <string>
 #include <GLFW/glfw3.h>
 #include <glm/gtc/quaternion.hpp>

@@ -102,3 +102,49 @@ Hand-tracing `InteractionChannel::step()` / `noteMouseButton()` (`src/Singularit
 6. **Add regression coverage once fixed.** `tests/law/synthesis_studio_app_test.cpp` and this repo's existing `synthesis_studio_click_stress` probe pattern (Part B above) only exercise `observe()` directly — if the bug is genuinely in `step()`'s GLFW-facing state machine, headless coverage needs a real (can be hidden/offscreen) `GLFWwindow*` driving `step()` with `noteMouseButton()` calls standing in for the OS callback and the polled `glfwGetMouseButton()` reading real (unpressed) hardware — which is itself a useful way to synthesize the "callback says X, poll says Y" disagreement without needing a live click.
 
 **Before you finish:** update this file with what you found (dated section, your name/agent id per this repo's convention), and — per `CLAUDE.md`'s standing rule — anything only Zach can visually confirm goes in `docs/Agenda/Tasks/Person Verification List.md`, not just this doc. There's already a relevant line there ("In-world & HUD click persistence after moving/switching tabs... verify clicks reliably spawn shapes and trigger HUD buttons without cursor lockout" and a follow-up about sequential note pads) — extend it rather than duplicating, if your fix changes what needs checking.
+
+## 2026-09-07 — the 09-04 pass was Astra, and Zach's play-test asked for three more things
+
+Recorded by Claude Opus 5 (session `session_01K1PtKNZtSDU9XGwKZQ7ZzF`) from **Broadcast #5**, which
+Zach restored on 2026-09-07 after it was accidentally deleted. Everything in this section is Zach's;
+the arrangement is mine.
+
+**Attribution.** The `## 2026-09-04 — Play the room: resonance Studio` pass above is signed bare
+`Codex`. Broadcast #5 identifies it: Zach asked **GPT-6 Astra** to *"make the Synthesis Studio
+cooler."* Astra was reached **through the Codex harness**, so `studio.author.codex` and the 21 Laws
+authored by it are **truthful and must not be renamed** — the harness is right, only the model is
+missing from the prose. See
+[Resolve the bare `Codex` signature](../Resolve_the_Codex_signature_into_named_models/Resolve_the_Codex_signature_into_named_models.md).
+
+**What Zach liked, and must not be "fixed" by a later pass:** the sound-blip animation above the
+pads (*"like a professional music DJ software would animate it"*); the design writing, especially
+`C major` on the pad, which makes the scope explicit so it can be widened; and the resonance
+rectangle being rendered *barely* lighter than the pad beneath it — a contrast most people would
+never consciously notice, which Zach reports changes the read from *"just another block"* to
+*"this is the thing but **sound version**."* That near-imperceptible delta is a feature.
+
+### Three requests out of the play-test
+
+1. **Pads should respond to the hand.** On click, a note pad should change colour and carry *"a
+   magical pulse feeling from my mouse"*, and **reverberate with the sound blip above it** — the
+   pad and its resonator reading as one instrument rather than two widgets.
+2. **The full chromatic scale and an octave switcher.** The pads are seven, `C5`–`B5`, i.e. C major
+   — Astra's caption made that bound legible, and Zach wants it widened to **all twelve chromatic
+   notes plus octave switching**. Zach's aim for the Studio is real composition (*"THOMAS BERGERSEN
+   MAKE UR EPIC TSFH MUSIC WITH THE SYNTHESIS STU—"*), which seven diatonic pads in one octave
+   cannot reach.
+3. **Fix the blue/violet hue break.** Every pad and its amplifier rectangle share a hue except the
+   blue pair, whose amplifier is not merely lighter but **more violet**. The discrepancy
+   **predates Astra** — there was already a rectangle at the top — and Astra left it. Zach wants
+   the pair unified, on the principle that *"the point is to have the things represent the same
+   note colour"*: an intentional break must **mean something real, not be a random quirk**. He
+   would rather **violet earn its own pad** in the rainbow, which the chromatic expansion in (2)
+   would naturally give it.
+
+Zach notes OpenAI trains Astra not to work beyond a task's scope, and explicitly respects the
+instinct — while pointing out the prompt was *"make it cooler"*, about as open-ended as a scope gets.
+That tension is worth remembering when routing work to Astra: **it will do what it is asked
+extremely well on the first try, and will not adopt neighbouring problems.** Bounds are the
+director's job.
+
+**Signed:** Claude Opus 5 · session `session_01K1PtKNZtSDU9XGwKZQ7ZzF` · 2026-09-07

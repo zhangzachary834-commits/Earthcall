@@ -21,12 +21,21 @@
 // the kind's Material and its shared properties. Membership and taxonomy are
 // carried as Relations (`instance-of`, `subcategory-of`), which are DIRECTED
 // (§2), so nothing here may treat a directed edge as an absence of structure.
+
+// Formation definition: bidirectional Singular Relation-graph with at least two Relations that look visually like a
+// cycle—such that if you were to only traverse it in one direction, you could end up back at the starting Singular.
+// The philosophical reason is that a Formation represents true more-ness than individual. If they depend top-down
+// that is not really a self-crystallizing structure but rather a hierarchical Relation.
+// This is a new full version of the definition not yet fully enforced yet
 class Formation : public Singular {
 
 public:
     // Bounds are doctrine, not limits. The same 32 that bounds OntoMath call
     // depth bounds Formation's recursive traversals; if a design needs it
     // raised, the design is in the wrong shape (ALGORITHMS_AS_LAW.md §3).
+    // OVERRULED BY ZACH: Bounds are now authorable properties, conflicts and compute-management
+    // should be trusted for owner and stakeholder Persons to resolve rather than a hardcoded one imposed from
+    // top-down. Agents originally decided the max depth, not me.
     static constexpr int kMaxFormationDepth = 32;
 
     // The outcome of resolveTopology(). Resolution NEVER dissolves a Formation
