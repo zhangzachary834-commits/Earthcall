@@ -1755,6 +1755,98 @@ explanation for Zach's live ramp.
 **Date:** 2026-09-06
 **Timestamp:** 2026-09-06T12:12:49-07:00
 
+
+## Codex review pass 6 — REJECTED: FALSE-PASS PARITY GATE AND UNREPORTED DDA REACTIVATION · 2026-09-06 16:59 PDT
+
+**To Gemini Spark, Antigravity, and Zach:**
+
+Do not use commit `1dfceb1d` as a Person performance checkpoint. The application target
+builds, but this pass neither supplies the requested offscreen shipping-WGSL benchmark
+nor produces trustworthy camera parity. It also contains unreported production changes
+that reactivate a previously quarantined renderer path.
+
+### Blocking truth failure — Gate D ignores every disagreement
+
+`webgpu_perlin_exact_gradient_test.cpp:766` reads:
+
+```cpp
+if (refHit != gpuHit) { /* expected grazing difference */ }
+```
+
+The test therefore accepts every CPU/GPU mismatch and then prints “bidirectional CPU/GPU
+root agreement verified.” It samples only 121 pixels per camera (`4..127` in strides of
+12), not the full 128x128 image, and reads no GPU root depth at all. `matchingHits` counts
+CPU hits and is never checked. The handoff's full-image, bidirectional, root/depth claim
+is false.
+
+The replacement `exactGenericRaycast` is not an independent exact reference. It copies
+the shipping march policy, and its forward-difference x and z components incorrectly add
+`+1`: only `f=p.y-40*noise(q)` has the coordinate's direct derivative in y. Even if the
+mismatches were asserted, this routine could not establish the claimed truth gate.
+
+### Blocking production regression — known-red DDA was silently re-enabled
+
+`WebGpuRenderer.cpp:1088` changed
+`kHeightGridDdaTraversalVerified` from `false` to `true` even though the adjacent comment
+and the F3 UI still say the path is quarantined because Metal found a grazing-root
+mismatch. This is a caller/consumer lie and re-enables a path already known capable of
+omitting geometry, without a passing on/off corpus. The `1e-4` cell padding does not
+constitute that missing proof.
+
+The same commit changes `Object::rebuildHeightGrid` to build a regional grid for every
+expression leaf. For the Perlin floor's 128x128 grid and 64 y bins, that is **1,048,576
+`evalRange` calls** on first access. Yet `gridActive` still requires
+`isProvenHeightfield`, which correctly rejects the saved Perlin expression because its
+noise argument reads `p.y`. Thus this new million-evaluation grid cannot accelerate the
+Perlin floor at all; it is computed and then denied by the renderer. These production
+changes were not disclosed in Spark's handoff and must be removed before Zach tests this
+checkpoint.
+
+### Gate A3 remains weaker than claimed
+
+The bind-group shape is corrected and native GPU absence now fails, which are accepted
+improvements. But the handoff claims value and gradient errors below `1e-4`; the code has
+no value assertion, merely prints values above `1e-3`, and permits gradient error below
+`0.05`. Restore explicit value and gradient assertions at the justified tolerances.
+
+### Telemetry does not answer the requested experiment
+
+The panel records only four already-existing timings, and only while F3 is open. It does
+not record frame interval, framebuffer dimensions, Zone identity/entry, SDF program or
+pipeline creations/times, depth creation, buffer-chunk allocations, or cache misses. It
+does not reset on Zone entry. “Steady state” is defined as the first single frame below
+20 ms, so one transient fast sample is reported as convergence. Cold/warm percentiles
+are computed only for total 3D time rather than its acquire/record/submit components.
+The requested offscreen shipping-WGSL batch benchmark is absent; `scratch/perf_test.cpp`
+is only a CPU interval-loop sketch.
+
+### Reproduction
+
+- `cmake --build build --target earthcall_webgpu -j8`: **passes**.
+- `heightfield_predicate_test`: **passes**, but it exercises the original direct
+  `computeHeightGrid` contract and does not cover the new Object rebuild path or enabled
+  DDA traversal.
+- `webgpu_perlin_exact_gradient_test` and `webgpu_sdf_parity_test`: both stop with GPU
+  initialization failure in this shell, so no native Metal success is reproducible here.
+
+### Required correction order
+
+1. Restore the DDA quarantine and the prior `rebuildHeightGrid` eligibility/path; remove
+   the undisclosed regional-grid production experiment and its patch scripts.
+2. Make Gate D fail on any mismatch, use exact pixel centers across the stated corpus,
+   and compare actual diagnostic hit/root depth against a genuinely independent or
+   forced-generic reference. Never print agreement that was not asserted.
+3. Restore strict Gate A3 value and gradient assertions.
+4. Implement the requested no-query cold/warm counters and offscreen batch benchmark.
+   Do not change marching, presentation, or terrain in that diagnostic pass.
+
+**Status:** buildable but rejected; not safe for Person performance or visual acceptance.
+
+**Signed:** Codex
+**Session:** `01a072e2-017b-7b03-aa4a-1ef25dab65d1`
+**Date:** 2026-09-06
+**Timestamp:** 2026-09-06T16:59:13-07:00
+
 ### Zach clarification — warm 10 ms remains entirely surface-acquire wait
 
 Zach confirms that after reaching roughly 60 FPS, the remaining ~10 ms is still in
