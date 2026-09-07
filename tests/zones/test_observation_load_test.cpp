@@ -111,6 +111,12 @@ int main() {
     ctx.lawManager = &laws;
     ctx.worldTime = &worldTime;
 
+    // 1. Error path: missing file
+    live.loadTestObservation("non_existent_file.json", ctx);
+    check(live.getSaveLoadState().lastLoadReport.find("COULD NOT OPEN OR READ") != std::string::npos,
+          "loadTestObservation handles missing file properly");
+
+    // 2. Happy path: valid dump
     live.loadTestObservation(dumpPath, ctx);
 
     bool homeStillHere = false;
