@@ -70,6 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         inputField.value = '';
         inputField.dispatchEvent(new Event('input'));
+        inputField.focus();
     }
     
     emitBtn.addEventListener('click', emitUtterance);

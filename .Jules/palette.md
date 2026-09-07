@@ -4,3 +4,6 @@
 ## 2024-11-20 - [Added WASM Start Overlay Keyboard Accessibility]
 **Learning:** Adding `tabindex="0"`, `role="button"`, and `aria-label` to custom `div` overlays is crucial for keyboard navigation. However, the `keydown` event listener for `Enter` and `Space` needs `event.preventDefault()` specifically for the spacebar to prevent page scrolling, ensuring a smooth activation experience.
 **Action:** Always include `event.preventDefault()` on spacebar `keydown` handlers for custom interactive elements.
+## 2024-11-21 - [Focus dropping on disabled buttons]
+**Learning:** If a user clicks or presses a button that modifies state in a way that causes the button to become disabled (such as submitting an utterance that clears the input), focus is dropped to the document `<body>`. This completely disrupts the keyboard navigation flow.
+**Action:** When disabling the currently focused element due to a state change, explicitly shift focus to the next logical element (e.g., the input field) using `.focus()`.
