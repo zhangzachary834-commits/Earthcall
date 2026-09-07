@@ -8,7 +8,10 @@
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ConstructedBeing/Material/Material.hpp"
 #include "Person/Person.hpp"
+#include "Person/Body/BodyPart/BodyPart.hpp"
 #include "Person/Soul/Soul.hpp"
+#include "Time/Moment/Moment.hpp"
+#include "ZonesOfEarth/HomesOfEarth/Home.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "ZonesOfEarth/Ourverse/Ourverse.hpp"
 #include "Singularity/Core/CreationChannel.hpp"
@@ -232,9 +235,6 @@ const std::vector<PathOption>& knownPathOptions() {
             else if (std::holds_alternative<bool>(probe)) type = "toggle";
             options.push_back({property->name(), "Language — Lexeme", type, false});
         }
-        
-        options.push_back({"studioInk", "Synthesis Studio — tools", "text", false});
-        options.push_back({"studioVoice", "Synthesis Studio — tools", "text", false});
     }
     return options;
 }
@@ -502,10 +502,17 @@ const char* propertyTypeName(const PropertyValue& value) {
     if (std::holds_alternative<std::string>(value)) return "text";
     if (std::holds_alternative<bool>(value)) return "toggle";
     if (std::holds_alternative<std::shared_ptr<PropertyList>>(value)) return "list";
+    if (std::holds_alternative<std::shared_ptr<PropertyDict>>(value)) return "dictionary";
+    if (std::holds_alternative<Singular*>(value) ||
+        std::holds_alternative<Object*>(value) ||
+        std::holds_alternative<Relation*>(value) ||
+        std::holds_alternative<Formation*>(value)) return "nested Singular";
     return "number";
 }
 
 const char* singularRuntimeType(const Singular& being) {
+    if (dynamic_cast<const BodyPart*>(&being)) return "Body Part";
+    if (dynamic_cast<const Home*>(&being)) return "Home";
     if (const auto* law = dynamic_cast<const Law*>(&being)) {
         return law->isFirstMover() ? "First Mover Law" : "Law";
     }
@@ -519,6 +526,7 @@ const char* singularRuntimeType(const Singular& being) {
     if (dynamic_cast<const Singularity::Language::Lexeme*>(&being)) return "Lexeme";
     if (dynamic_cast<const Soul*>(&being)) return "Soul";
     if (dynamic_cast<const Ourverse*>(&being)) return "Ourverse";
+    if (dynamic_cast<const Moment*>(&being)) return "Moment";
     return "Singular";
 }
 
@@ -536,6 +544,13 @@ bool lensTypeMatches(const Singular& being, int type) {
             const auto* law = dynamic_cast<const Law*>(&being);
             return law && law->isFirstMover();
         }
+        case 9: return dynamic_cast<const Material*>(&being) != nullptr;
+        case 10: return dynamic_cast<const Soul*>(&being) != nullptr;
+        case 11: return dynamic_cast<const Ourverse*>(&being) != nullptr;
+        case 12: return dynamic_cast<const TransferPolicy*>(&being) != nullptr;
+        case 13: return dynamic_cast<const Moment*>(&being) != nullptr;
+        case 14: return dynamic_cast<const BodyPart*>(&being) != nullptr;
+        case 15: return dynamic_cast<const Home*>(&being) != nullptr;
     }
     return false;
 }
@@ -571,10 +586,13 @@ bool pathPicker(const char* label, PropertyPath& path) {
     fieldCaption(label, "Choose a referent, one Singular, then one of its registered properties");
     if (ImGui::Button((current + "##open-property-lens").c_str(), ImVec2(lensButtonWidth, 0))) {
         g.activePropertyLens = label;
-        g.lensReferent = qualifierPrefix.empty() ? 0
+        const bool contextPath = (!path.segments.empty() && path.segments[0] == "time") ||
+                                 (!qualifierPrefix.empty() && qualifierPrefix[0] == "@world");
+        g.lensReferent = contextPath ? 4
+            : qualifierPrefix.empty() ? 0
             : qualifierPrefix[0] == "@event" && qualifierPrefix.size() > 1 && qualifierPrefix[1] == "subject" ? 1
             : qualifierPrefix[0] == "@event" ? 2 : 3;
-        g.lensBeingId = g.lensReferent == 3 ? qualifierPrefix[0].substr(1) : std::string();
+        if (g.lensReferent == 3) g.lensBeingId = qualifierPrefix[0].substr(1);
         g.lensBeingSearch[0] = '\0';
         g.lensPropertySearch[0] = '\0';
         ImGui::OpenPopup("Property Lens");
@@ -588,7 +606,106 @@ bool pathPicker(const char* label, PropertyPath& path) {
     if (ImGui::IsItemHovered()) {
         ImGui::SetTooltip("type a custom path for properties of other Singulars");
     }
-    ImGui::SetNextWindowSize(ImVec2(860, 480), ImGuiCond_Appearing);
+
+    // Once a path exists, expose its syntax as semantic controls. Authors can
+    // move the same property between runtime referents or choose a vector
+    // component without hand-editing dots and @ qualifiers.
+    if (!path.empty()) {
+        const bool contextPath = (!path.segments.empty() && path.segments[0] == "time") ||
+                                 (!path.segments.empty() && path.segments[0] == "@world");
+        const int currentReferent = qualifierPrefix.empty() ? 0
+            : qualifierPrefix[0] == "@event" && qualifierPrefix.size() > 1 &&
+                      qualifierPrefix[1] == "subject" ? 1
+            : qualifierPrefix[0] == "@event" ? 2 : 3;
+        const auto setReferent = [&](int referent) {
+            path = tempPath;
+            if (referent == 1) path.segments.insert(path.segments.begin(), {"@event", "subject"});
+            else if (referent == 2) path.segments.insert(path.segments.begin(), {"@event", "object"});
+            else if (referent == 3 && !g.lensBeingId.empty()) {
+                path.segments.insert(path.segments.begin(), "@" + g.lensBeingId);
+            }
+            changed = true;
+        };
+        if (!contextPath) {
+            fieldCaption("Reference encoded by this path");
+            static const char* referenceLabels[] = {"Law subject", "Event subject", "Event other"};
+            for (int i = 0; i < 3; ++i) {
+                if (i) ImGui::SameLine();
+                const bool active = currentReferent == i;
+                if (active) ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.20f, 0.39f, 0.58f, 1.0f));
+                if (ImGui::SmallButton(referenceLabels[i]) && !active) setReferent(i);
+                if (active) ImGui::PopStyleColor();
+            }
+            if (!g.lensBeingId.empty()) {
+                ImGui::SameLine();
+                const bool active = currentReferent == 3;
+                if (active) ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.20f, 0.39f, 0.58f, 1.0f));
+                const std::string label = "Named: " + g.lensBeingId;
+                if (ImGui::SmallButton(label.c_str()) && !active) setReferent(3);
+                if (active) ImGui::PopStyleColor();
+            }
+        }
+
+        bool hasComponent = tempPath.segments.size() > 1 &&
+            (tempPath.segments.back() == "x" || tempPath.segments.back() == "y" ||
+             tempPath.segments.back() == "z" || tempPath.segments.back() == "r" ||
+             tempPath.segments.back() == "g" || tempPath.segments.back() == "b");
+        PropertyPath vectorBase = tempPath;
+        if (hasComponent) vectorBase.segments.pop_back();
+        bool vectorProperty = false;
+        if (const PathOption* option = findPathOption(vectorBase.toString())) {
+            vectorProperty = option->wholeVector;
+        }
+        Singular* exemplar = nullptr;
+        const std::string exemplarId = currentReferent == 3 && !qualifierPrefix.empty()
+            ? qualifierPrefix[0].substr(1) : g.lensBeingId;
+        for (Singular* being : Universe::instance().beings()) {
+            if (being && being->getIdentifier() == exemplarId) {
+                exemplar = being;
+                break;
+            }
+        }
+        if (!vectorProperty && exemplar) {
+            std::string trailing;
+            if (Property* property = vectorBase.resolve(*exemplar, &trailing)) {
+                vectorProperty = std::holds_alternative<glm::vec3>(property->value());
+            }
+        }
+        if (vectorProperty) {
+            std::string semanticName = vectorBase.toString();
+            std::transform(semanticName.begin(), semanticName.end(), semanticName.begin(), ::tolower);
+            const bool colorSemantic = semanticName.find("color") != std::string::npos ||
+                                       semanticName.find("colour") != std::string::npos ||
+                                       semanticName.find("paint") != std::string::npos ||
+                                       semanticName.find("ink") != std::string::npos;
+            fieldCaption(colorSemantic ? "Color channels" : "Vector granularity");
+            const auto chooseComponent = [&](const char* component) {
+                PropertyPath next = vectorBase;
+                if (component && component[0]) next.segments.emplace_back(component);
+                path = next;
+                if (currentReferent == 1) path.segments.insert(path.segments.begin(), {"@event", "subject"});
+                else if (currentReferent == 2) path.segments.insert(path.segments.begin(), {"@event", "object"});
+                else if (currentReferent == 3 && !qualifierPrefix.empty()) {
+                    path.segments.insert(path.segments.begin(), qualifierPrefix[0]);
+                }
+                changed = true;
+            };
+            static const char* vectorComponents[] = {"Whole vector", "x", "y", "z"};
+            static const char* colorComponents[] = {"Whole color", "r", "g", "b"};
+            const char* const* components = colorSemantic ? colorComponents : vectorComponents;
+            for (int i = 0; i < 4; ++i) {
+                if (i) ImGui::SameLine();
+                const bool active = i == 0 ? !hasComponent :
+                    hasComponent && tempPath.segments.back() == components[i];
+                if (active) ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.20f, 0.39f, 0.58f, 1.0f));
+                if (ImGui::SmallButton(components[i]) && !active) {
+                    chooseComponent(i == 0 ? "" : components[i]);
+                }
+                if (active) ImGui::PopStyleColor();
+            }
+        }
+    }
+    ImGui::SetNextWindowSize(ImVec2(980, 580), ImGuiCond_Appearing);
     if (ImGui::BeginPopup("Property Lens")) {
         ImGui::TextColored(kHeaderColor, "PROPERTY LENS");
         ImGui::SameLine();
@@ -596,20 +713,24 @@ bool pathPicker(const char* label, PropertyPath& path) {
         ImGui::Separator();
 
         static const char* referents[] = {
-            "Law subject", "Event subject", "Event other", "Specific Singular", "World / time"
+            "Law subject", "Event subject", "Event other", "Named Singular", "World / time"
         };
-        ImGui::BeginChild("referent", ImVec2(170, 390), true);
-        ImGui::TextDisabled("1  REFERENT");
-        ImGui::TextWrapped("Who will this path read or change?");
-        ImGui::Spacing();
+        ImGui::TextDisabled("PATH REFERENCE — which actual being will carry the property at runtime?");
         for (int i = 0; i < 5; ++i) {
-            if (ImGui::Selectable(referents[i], g.lensReferent == i, 0, ImVec2(0, 34))) {
-                g.lensReferent = i;
-                if (i != 3) g.lensBeingId.clear();
+            if (i) ImGui::SameLine();
+            const bool active = g.lensReferent == i;
+            if (active) {
+                ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.20f, 0.39f, 0.58f, 1.0f));
             }
+            if (ImGui::Button(referents[i])) g.lensReferent = i;
+            if (active) ImGui::PopStyleColor();
         }
-        ImGui::EndChild();
-        ImGui::SameLine();
+        ImGui::TextDisabled(g.lensReferent == 3
+            ? "The chosen Singular's stable identifier becomes part of the path."
+            : g.lensReferent == 4
+                ? "Context readings are the explicit exception: they are not owned properties."
+                : "The chosen instance below exposes the exact property vocabulary; the runtime referent remains dynamic.");
+        ImGui::Separator();
 
         std::vector<Singular*> liveBeings = Universe::instance().beings();
         std::sort(liveBeings.begin(), liveBeings.end(), [](const Singular* a, const Singular* b) {
@@ -624,40 +745,63 @@ bool pathPicker(const char* label, PropertyPath& path) {
                 break;
             }
         }
-        ImGui::BeginChild("singular", ImVec2(270, 390), true);
-        if (g.lensReferent == 3) {
-            ImGui::TextDisabled("2  SPECIFIC SINGULAR");
+        static const char* types[] = {
+            "Any Singular", "Object", "Person", "Relation", "Formation", "Law",
+            "Zone", "Lexeme", "First Mover Law", "Material", "Soul", "Ourverse",
+            "Transfer Policy", "Moment", "Body Part", "Home"
+        };
+        ImGui::BeginChild("singular-type", ImVec2(190, 390), true);
+        ImGui::TextDisabled("1  SINGULAR TYPE");
+        if (g.lensReferent == 4) {
+            ImGui::TextWrapped("Not applicable to context readings.");
+        } else {
+            ImGui::TextWrapped("Choose an ontological C++ kind.");
+            for (int i = 0; i < 16; ++i) {
+                if (ImGui::Selectable(types[i], g.lensType == i, 0, ImVec2(0, 28))) {
+                    g.lensType = i;
+                    if (selectedBeing && !lensTypeMatches(*selectedBeing, i)) {
+                        g.lensBeingId.clear();
+                        selectedBeing = nullptr;
+                    }
+                }
+            }
+        }
+        ImGui::EndChild();
+        ImGui::SameLine();
+
+        ImGui::BeginChild("specific-singular", ImVec2(285, 390), true);
+        ImGui::TextDisabled("2  SPECIFIC SINGULAR");
+        if (g.lensReferent == 4) {
+            ImGui::TextWrapped("World and time expose readings directly; no Singular is fabricated to own them.");
+        } else {
+            ImGui::TextWrapped(g.lensReferent == 3
+                ? "Choose the actual Singular encoded by the path."
+                : "Choose a live instance whose registry defines the property.");
             ImGui::SetNextItemWidth(-1);
             ImGui::InputTextWithHint("##being-search", "Type a name, ID, or C++ kind…",
                                      g.lensBeingSearch, sizeof(g.lensBeingSearch));
+            ImGui::BeginChild("being-results", ImVec2(0.0f, 290.0f), false);
+            std::size_t visibleBeingCount = 0;
             for (Singular* being : liveBeings) {
-                if (!being) continue;
+                if (!being || !lensTypeMatches(*being, g.lensType)) continue;
                 const std::string id = being->getIdentifier();
                 const std::string searchable = id + " " + singularRuntimeType(*being);
                 if (!searchMatches(searchable, g.lensBeingSearch)) continue;
+                ++visibleBeingCount;
                 ImGui::PushID(being);
-                if (ImGui::Selectable(id.c_str(), id == g.lensBeingId, 0, ImVec2(0, 30))) {
+                if (ImGui::Selectable(id.c_str(), id == g.lensBeingId, 0, ImVec2(0, 31))) {
                     g.lensBeingId = id;
+                    selectedBeing = being;
+                    g.lensPropertySearch[0] = '\0';
                 }
                 ImGui::SameLine();
                 ImGui::TextDisabled("%s", singularRuntimeType(*being));
                 ImGui::PopID();
-                if (id == g.lensBeingId) selectedBeing = being;
             }
-            if (liveBeings.empty()) ImGui::TextDisabled("No live Singulars are visible to Law.");
-        } else if (g.lensReferent == 4) {
-            ImGui::TextDisabled("2  CONTEXT");
-            ImGui::TextWrapped("World readings and time are runtime context, not properties owned by a Singular.");
-        } else {
-            static const char* types[] = {
-                "Any Singular", "Object", "Person", "Relation", "Formation",
-                "Law", "Zone", "Lexeme", "First Mover Law"
-            };
-            ImGui::TextDisabled("2  EXPECTED RUNTIME TYPE");
-            ImGui::TextWrapped("This narrows the vocabulary; the Law still resolves the referent at runtime.");
-            for (int i = 0; i < 9; ++i) {
-                if (ImGui::Selectable(types[i], g.lensType == i, 0, ImVec2(0, 28))) g.lensType = i;
+            if (visibleBeingCount == 0) {
+                ImGui::TextWrapped("No live Singular of this type matches the search.");
             }
+            ImGui::EndChild();
         }
         ImGui::EndChild();
         ImGui::SameLine();
@@ -669,20 +813,38 @@ bool pathPicker(const char* label, PropertyPath& path) {
                     return p.path == name;
                 }) == properties.end()) properties.push_back({name, type});
         };
-        const auto addBeingProperties = [&](Singular& being) {
+        std::function<void(Singular&, const std::string&,
+                           std::unordered_set<const Singular*>&, int)> addBeingProperties;
+        addBeingProperties = [&](Singular& being, const std::string& prefix,
+                                 std::unordered_set<const Singular*>& visited, int depth) {
+            if (depth > 4 || visited.count(&being)) return;
+            visited.insert(&being);
             for (Property* property : being.listProperties()) {
                 if (!property) continue;
                 const PropertyValue value = property->value();
-                addProperty(property->name(), propertyTypeName(value));
+                const std::string propertyPath = prefix + property->name();
+                addProperty(propertyPath, propertyTypeName(value));
                 if (std::holds_alternative<glm::vec3>(value)) {
-                    addProperty(property->name() + ".x", "number");
-                    addProperty(property->name() + ".y", "number");
-                    addProperty(property->name() + ".z", "number");
+                    std::string semanticName = propertyPath;
+                    std::transform(semanticName.begin(), semanticName.end(),
+                                   semanticName.begin(), ::tolower);
+                    const bool colorSemantic = semanticName.find("color") != std::string::npos ||
+                                               semanticName.find("colour") != std::string::npos ||
+                                               semanticName.find("paint") != std::string::npos ||
+                                               semanticName.find("ink") != std::string::npos;
+                    addProperty(propertyPath + (colorSemantic ? ".r" : ".x"), "number");
+                    addProperty(propertyPath + (colorSemantic ? ".g" : ".y"), "number");
+                    addProperty(propertyPath + (colorSemantic ? ".b" : ".z"), "number");
+                }
+                if (Singular* nested = property->asSingular()) {
+                    addBeingProperties(*nested, propertyPath + ".", visited, depth + 1);
                 }
             }
+            visited.erase(&being);
         };
-        if (g.lensReferent == 3 && selectedBeing) {
-            addBeingProperties(*selectedBeing);
+        if (g.lensReferent != 4 && selectedBeing) {
+            std::unordered_set<const Singular*> visited;
+            addBeingProperties(*selectedBeing, "", visited, 0);
         } else if (g.lensReferent == 4) {
             for (const auto& option : knownPathOptions()) {
                 const std::string group = option.group;
@@ -690,22 +852,18 @@ bool pathPicker(const char* label, PropertyPath& path) {
                     addProperty(option.path, option.type);
                 }
             }
-        } else if (g.lensReferent < 3) {
-            for (Singular* being : liveBeings) {
-                if (being && lensTypeMatches(*being, g.lensType)) addBeingProperties(*being);
-            }
         }
         std::sort(properties.begin(), properties.end(), [](const LensProperty& a, const LensProperty& b) {
             return a.path < b.path;
         });
 
         ImGui::BeginChild("property", ImVec2(0, 390), true);
-        ImGui::TextDisabled("3  PROPERTY (%zu)", properties.size());
+        ImGui::TextDisabled("3  SPECIFIC PROPERTY (%zu)", properties.size());
         ImGui::SetNextItemWidth(-1);
         ImGui::InputTextWithHint("##property-search", "Type a property name…",
                                  g.lensPropertySearch, sizeof(g.lensPropertySearch));
-        if (g.lensReferent == 3 && !selectedBeing) {
-            ImGui::TextWrapped("Choose one concrete Singular to see exactly its registered properties.");
+        if (g.lensReferent != 4 && !selectedBeing) {
+            ImGui::TextWrapped("Choose an actual Singular in the middle column. Its live registry—not a global property list—will appear here.");
         } else if (properties.empty()) {
             ImGui::TextWrapped("No live Singular of this runtime type exposes a property yet.");
         }

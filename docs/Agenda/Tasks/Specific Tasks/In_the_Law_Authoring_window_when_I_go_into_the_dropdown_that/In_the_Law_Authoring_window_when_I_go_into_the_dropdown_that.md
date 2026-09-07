@@ -27,3 +27,13 @@ The first-pass dropdown row has been replaced with one professional palette-styl
 The conclusion from this pass is that ImGui was not the constraint: it can render a multi-column command palette adequately. The conceptual model of the first pass was the constraint, exactly as Zach diagnosed.
 
 Recorded by Codex, session `01a07a4c-2b09-7f62-b975-3a23084ddeaf`, 2026-09-07 00:00 PDT.
+
+## 2026-09-07 — Specific Singular becomes the necessary middle step
+
+Zach corrected the second pass: Specific Singular must not share one vertical pane with the type alternatives. Property meaning is borne by an actual Singular, so the stable sequence is **Singular type → specific live Singular → that Singular's registered property**. Runtime reference (Law subject, event subject/object, or a named Singular) is a separate horizontal question about how the resulting property path resolves when the Law runs.
+
+The Property Lens now implements that sequence literally. Runtime type filters the middle column; selecting one live instance exclusively determines the third column through its `listProperties()` registry. Abstract subject/event paths therefore use a selected concrete instance as the vocabulary witness while retaining a dynamic runtime referent. Named-Singular paths encode that selected identity. Time and `@world` remain an explicit context exception rather than pretending that free-floating readings are owned properties.
+
+The chosen path is no longer an opaque string afterward: reference buttons rewrite the qualifier without requiring `@event.subject` syntax, the lens descends through properties that point to nested Singulars, vector-valued properties expose live Whole/x/y/z granularity buttons, and color-shaped vectors adapt those buttons to Whole/r/g/b. This extends Zach's requirement into syntax-aware manipulation while keeping `PropertyPath` itself as the serialized truth.
+
+Recorded by Codex, session `01a07a4c-2b09-7f62-b975-3a23084ddeaf`, 2026-09-07 03:35 PDT.
