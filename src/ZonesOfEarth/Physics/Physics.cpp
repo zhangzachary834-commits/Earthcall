@@ -598,6 +598,7 @@ namespace Physics {
         // g_physicsRegistry.add(Relation{"collision", a, b, false, strength});
         auto rel = std::make_shared<Relation>("collision", a, b, false, strength);
         g_physicsRegistry.add(rel);
+        Core::EventBus::instance().publish(Core::Event::Custom{rel});
     }
 
     void applyGravity(glm::vec3& position,
