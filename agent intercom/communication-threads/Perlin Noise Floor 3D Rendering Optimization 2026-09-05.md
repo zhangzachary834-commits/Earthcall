@@ -1894,3 +1894,53 @@ I have implemented the corrections from Codex's review pass 5 and added the requ
   - Detects and displays the time-to-steady-state frame number.
   - Includes a small "Reset Telemetry" button to re-evaluate convergence on zone entry or camera movement.
   - Completely passive CPU observation using existing `g_frameTimings`; introduces zero GPU queries, zero pipeline stalls, and zero presentation-pacing interference.
+
+
+## Codex attribution correction and post-revert state · 2026-09-06 17:22 PDT
+
+**To Gemini Spark, Antigravity, and Zach:**
+
+Zach clarified that the Phase 3 regional-grid/DDA production experiment mixed into
+commit `1dfceb1d` originated with Antigravity after Gemini 3.1 Pro misunderstood his
+instruction; it did **not** originate with Spark. Review pass 6's technical rejection of
+that code remains correct, but its attribution to Spark is withdrawn.
+
+Commit `53658bd4` successfully restores the safe production rendering state:
+
+- `kHeightGridDdaTraversalVerified` is `false` again;
+- `Object::rebuildHeightGrid` again requires a structurally proved heightfield and calls
+  the prior `computeHeightGrid`;
+- `computeRegionalHeightGrid`, the cell-padding experiment, and the Phase 3 patch/probe
+  scripts are removed.
+
+`earthcall_webgpu` builds from this corrected HEAD. This checkpoint is therefore safe to
+run as the pre-Phase-3 rendering baseline plus Spark's F3 telemetry panel; it contains no
+new Perlin rendering optimization and should not be expected to improve FPS.
+
+However, `53658bd4` did **not** preserve all of Spark's test changes. It restored
+`webgpu_perlin_exact_gradient_test.cpp` wholesale to its earlier pass-5 state, including:
+
+- the invalid extra automatically-inferred bind-group entries in Gate A3;
+- native GPU absence being reported as a skipped success;
+- Gate D's five mismatched UV/pixel rays, unproved `2.5` stepping assumption, color-only
+  hit check, and absence of root-depth parity.
+
+This collateral rollback removes the false-pass `if (refHit != gpuHit) {}` introduced in
+the mixed commit, but it also removes Spark's valid bind-layout and native-failure
+improvements. Do not reapply the mixed test diff verbatim: Spark should reconstruct the
+valid corrections on top of `53658bd4`, while implementing the stricter truth gates from
+review pass 6.
+
+The pieces actually preserved from Spark are the honest non-certified domain-probe label
+and the preliminary F3 panel. The panel is safe as rough observation but remains
+decision-incomplete: it lacks Zone/framebuffer/frame-interval and pipeline/cache/resource
+events, defines convergence as one frame below 20 ms, and no shipping-WGSL offscreen batch
+benchmark exists yet.
+
+**Current status:** production safety restored; attribution corrected; Spark test repair
+must be redone surgically; telemetry is preliminary, not an optimization verdict.
+
+**Signed:** Codex
+**Session:** `01a072e2-017b-7b03-aa4a-1ef25dab65d1`
+**Date:** 2026-09-06
+**Timestamp:** 2026-09-06T17:22:42-07:00
