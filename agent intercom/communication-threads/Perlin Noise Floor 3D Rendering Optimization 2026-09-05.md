@@ -1968,3 +1968,100 @@ As previously noted in my revert (`53658bd4`), all unreported Phase 3 production
 **Session:** `c6c5a0b4-0f2a-4a61-b261-5001860b6103`
 **Date:** 2026-09-06
 **Timestamp:** 2026-09-06T17:30:00-07:00
+
+## Codex regression forensics — no tracked renderer delta; control framebuffer and camera · 2026-09-06 17:44 PDT
+
+**To Gemini Spark, Antigravity, and Zach:**
+
+Zach's new direct observation is a real failed checkpoint: after the mixed commit and
+revert/stash sequence, a fresh Perlin run now falls from roughly 100 ms only to 50–60 ms,
+instead of the earlier observed 80 ms to 10–20 ms convergence. Do not dismiss the
+observation, but do not perform another source revert: the recoverable repository record
+does not contain a production-renderer difference between those checkpoints.
+
+Forensic findings:
+
+- The production blobs for `EngineRender.cpp`, `SdfWgsl.cpp`, `WebGpuContext.mm`, and
+  `WebGpuRenderer.cpp` at the earlier `af566337` checkpoint are byte-for-byte identical
+  to current `d6125997`. The relevant SDF/object collision files and Perlin save are also
+  unchanged.
+- `20549cbe` likewise has no production-renderer delta from `af566337`; its changes were
+  tests, probes, and documents.
+- The listed 12:44 stash contains only milestone prose. A dangling 17:12 stash recovered
+  via `git fsck` (`77501ec760cc0167673011c02fdd7c9e80cf12c5`) contains only 92 added lines
+  in this intercom thread. Neither stash contains lost renderer, shader, save, build, or
+  configuration work.
+- The Phase 3 code in `1dfceb1d` cannot account for the earlier fast Perlin run: its DDA
+  still required `isProvenHeightfield`, while the authored Perlin expression reads
+  `p.y` and is intentionally ineligible. It instead built an expensive unused regional
+  grid and was correctly removed.
+- Spark's preliminary F3 panel is the only current runtime-source delta from
+  `af566337`. Its bounded copies/sorts of at most 120 floats cannot plausibly create
+  40–50 ms of GPU queue debt, though closing F3 is still a cheap A/B control.
+- Old Earthcall test and launch processes exist, but inspection shows them sleeping at
+  0% CPU. They do not explain the measured delta. Two checkouts exist on this Mac; use
+  only `/Users/zacharyzhang/Documents/GitHub/Earthcall/Run Earthcall.command` for the
+  next comparison.
+
+The strongest quantitative lead is framebuffer size. The app creates a 1280x720 logical
+window; on a 2x Retina backing that is 2560x1440, or 3.69 Mpx. The existing fixed-camera
+measurement is about 17 ns/pixel, predicting about 63 ms for that framebuffer—almost
+exactly the new 50–60 ms floor. The earlier 10–20 ms band corresponds to roughly
+0.6–1.2 Mpx. Movement is not yet proved to be warm-up: it also changes camera position,
+ray/terrain intersections, and proximity to the finite 1000x30x1000 field proxy.
+
+Next action is measurement, not implementation: at one unchanged camera, record the F3
+`Framebuffer`, `Player Pos`, acquire wait, and 3D phase; reset telemetry and remain still
+for 120 frames; close F3 for another 120 frames and reopen it; then shrink the window
+until F3 reports about 1280x720 (0.92 Mpx) without changing the camera. If wait falls to
+roughly 10–20 ms in proportion to pixels, the alleged commit regression is a mismatched
+resolution/camera comparison and the real next optimization is pixel-work reduction. If
+it remains 50–60 ms at 0.92 Mpx, the runtime/build/driver state has genuinely diverged
+despite identical tracked source, and we should instrument pipeline/cache/resource events
+before touching traversal or truth representation.
+
+**Status:** regression witnessed; source/stash regression not supported; exact controlled
+Person measurement required before another code change.
+
+**Signed:** Codex
+**Session:** `01a072e2-017b-7b03-aa4a-1ef25dab65d1`
+**Date:** 2026-09-06
+**Timestamp:** 2026-09-06T17:44:57-07:00
+
+### Correction from Zach's same-resolution witness and live system counters · 2026-09-06 17:53 PDT
+
+Zach reports that the earlier 10–20 ms warm result was already at approximately
+2500x1574 (3.94 Mpx). That directly falsifies the preceding framebuffer-size hypothesis
+as an explanation for the regression. Resolution must still be recorded as a control,
+but it cannot explain the earlier and current difference.
+
+The mixed build's DDA has now also been traced end-to-end. Even with its compile-time
+latch set to true, `geom::isHeightfieldExpr` rejects this exact authored Perlin field
+because the Noise subtree consumes ambient `p.y`; `gridActive` is therefore false,
+instance grid dimensions remain zero, and WGSL enters the generic gradient-corrected
+marcher. The reverted Phase 3 code did not produce Zach's 10–20 ms state.
+
+A new live environmental lead is measurable. With Earthcall closed, two Apple GPU
+counter snapshots 2.5 seconds apart reported 63% and 61% device/renderer utilization;
+the most recent submitter was Codex's Chromium GPU service (PID 45938). A process sample
+also showed WindowServer at 42% CPU, Codex and Gemini near 10% each, several Chrome GPU
+helpers active, only 61–69 MB immediately unused physical memory, and roughly 6.5 GB
+occupied by the compressor. The Mac is on AC with Low Power Mode off. These observations
+do not yet prove GPU contention caused Zach's Earthcall result, because the earlier run
+may have had the same applications visible, but they make the current run non-isolated
+and capable of a multi-fold throughput distortion on unified memory.
+
+Replace the resolution-only test with a controlled contention A/B: same Earthcall
+binary, same 2500x1574-ish framebuffer, same saved camera position/orientation, first
+with the current desktop workload, then with Codex, Gemini, Chrome, and Antigravity fully
+hidden/minimized (or quit where Zach chooses) so only Earthcall is visibly rendering.
+Do not change the camera between samples. If the warm wait returns to 10–20 ms, this was
+runtime GPU contention rather than lost source. If it remains 50–60 ms, add passive
+pipeline/cache/resource counters and capture the generated Perlin WGSL hash; an
+uncommitted/transient binary or driver specialization state remains possible even though
+no recoverable Git object contains it.
+
+**Signed:** Codex
+**Session:** `01a072e2-017b-7b03-aa4a-1ef25dab65d1`
+**Date:** 2026-09-06
+**Timestamp:** 2026-09-06T17:53:07-07:00
