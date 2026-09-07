@@ -4,6 +4,8 @@
 
 #include <imgui.h>
 
+#include <algorithm>
+#include <cctype>
 #include <cstring>
 #include <string>
 
@@ -17,6 +19,31 @@ const ImVec4 kWarnColor(1.0f, 0.6f, 0.2f, 1.0f);
 void copyToBuf(char* buf, std::size_t size, const std::string& value) {
     std::strncpy(buf, value.c_str(), size - 1);
     buf[size - 1] = '\0';
+}
+
+bool containsCaseInsensitive(const std::string& haystack, const char* needleText) {
+    if (!needleText || !needleText[0]) return true;
+    std::string a = haystack;
+    std::string b = needleText;
+    std::transform(a.begin(), a.end(), a.begin(),
+                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    std::transform(b.begin(), b.end(), b.begin(),
+                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    return a.find(b) != std::string::npos;
+}
+
+void fieldCaption(const char* label, const char* help = nullptr) {
+    ImGui::TextDisabled("%s", label);
+    if (help && ImGui::IsItemHovered()) ImGui::SetTooltip("%s", help);
+}
+
+bool textField(const char* label, char* value, std::size_t size, const char* hint) {
+    ImGui::PushID(label);
+    fieldCaption(label);
+    ImGui::SetNextItemWidth(-1.0f);
+    const bool changed = ImGui::InputTextWithHint("##value", hint, value, size);
+    ImGui::PopID();
+    return changed;
 }
 } // namespace
 
@@ -37,19 +64,18 @@ bool editMathBindings(MathBindings& bindings, const PathPickerFn& pathPicker) {
         changed = true;
     }
     static char varBuf[32] = "";
-    ImGui::SetNextItemWidth(56.0f);
-    ImGui::InputText("##bindvar", varBuf, sizeof(varBuf));
-    if (ImGui::IsItemHovered()) ImGui::SetTooltip("variable name, e.g. x");
-    ImGui::SameLine();
+    textField("New variable name", varBuf, sizeof(varBuf), "for example: x or elapsed");
     static PropertyPath pendingBindPath;
-    if (pathPicker) pathPicker("##bindpath", pendingBindPath);
-    ImGui::SameLine();
-    if (ImGui::Button("Add variable") && varBuf[0] != '\0' && !pendingBindPath.empty()) {
+    if (pathPicker) pathPicker("Property supplying its value", pendingBindPath);
+    const bool ready = varBuf[0] != '\0' && !pendingBindPath.empty();
+    if (!ready) ImGui::BeginDisabled();
+    if (ImGui::Button("Bind this variable", ImVec2(-1.0f, 0.0f)) && ready) {
         bindings[varBuf] = pendingBindPath;
         varBuf[0] = '\0';
         pendingBindPath = PropertyPath{};
         changed = true;
     }
+    if (!ready) ImGui::EndDisabled();
     return changed;
 }
 
@@ -59,29 +85,38 @@ bool editExpression(OntoMath::ScalarForm& e, const MathBindings& bindings) {
     for (std::size_t t = 0; t < e.terms.size(); ++t) {
         auto& term = e.terms[t];
         ImGui::PushID(static_cast<int>(t) + 100);
-        ImGui::SetNextItemWidth(80.0f);
+        ImGui::TextColored(kHeaderColor, "Term %zu", t + 1);
         double c = term.coefficient;
-        if (ImGui::InputDouble("coeff", &c)) { term.coefficient = c; changed = true; }
+        fieldCaption("Coefficient");
+        ImGui::SetNextItemWidth(-1.0f);
+        if (ImGui::InputDouble("##coefficient", &c, 0.0, 0.0, "%.4f")) {
+            term.coefficient = c;
+            changed = true;
+        }
         for (auto& factor : term.factors) {
-            ImGui::SameLine();
-            ImGui::SetNextItemWidth(56.0f);
+            ImGui::PushID(factor.first.c_str());
+            const std::string label = "Exponent of " + factor.first;
+            fieldCaption(label.c_str());
+            ImGui::SetNextItemWidth(-1.0f);
             double exp = factor.second;
-            if (ImGui::InputDouble(factor.first.c_str(), &exp)) {
+            if (ImGui::InputDouble("##exponent", &exp, 0.0, 0.0, "%.4f")) {
                 factor.second = exp;
                 changed = true;
             }
+            ImGui::PopID();
         }
+        ImGui::TextDisabled("Multiply by another bound variable");
         for (const auto& binding : bindings) {
             if (term.factors.count(binding.first)) continue;
-            ImGui::SameLine();
             if (ImGui::SmallButton(("*" + binding.first).c_str())) {
                 term.factors[binding.first] = 1.0;
                 changed = true;
             }
+            ImGui::SameLine();
         }
+        ImGui::NewLine();
         // Transcendental factors: exact sin/cos/exp/ln of a bound variable.
-        ImGui::SameLine();
-        if (ImGui::SmallButton("+f()")) ImGui::OpenPopup("addtrans");
+        if (ImGui::SmallButton("+ transcendental factor")) ImGui::OpenPopup("addtrans");
         if (ImGui::IsItemHovered()) {
             ImGui::SetTooltip("multiply in an exact transcendental factor:\n"
                               "sin / cos / exp / ln of a bound variable");
@@ -103,7 +138,7 @@ bool editExpression(OntoMath::ScalarForm& e, const MathBindings& bindings) {
             ImGui::EndPopup();
         }
         ImGui::SameLine();
-        if (ImGui::SmallButton("x##rmterm")) removeTerm = static_cast<int>(t);
+        if (ImGui::SmallButton("remove term")) removeTerm = static_cast<int>(t);
 
         int removeTrans = -1;
         for (std::size_t tfIndex = 0; tfIndex < term.trans.size(); ++tfIndex) {
@@ -186,8 +221,9 @@ bool editPiecewise(OntoMath::Piecewise& f, const MathBindings& bindings) {
     bool anyBounded = f.pieces.size() > 1;
     for (const auto& piece : f.pieces) anyBounded = anyBounded || piece.hasLo || piece.hasHi;
     if (anyBounded && !bindings.empty()) {
-        ImGui::SetNextItemWidth(80.0f);
-        if (ImGui::BeginCombo("bounds cut", f.inputVariable.c_str())) {
+        fieldCaption("Variable cut by the piece boundaries");
+        ImGui::SetNextItemWidth(-1.0f);
+        if (ImGui::BeginCombo("##bounds-variable", f.inputVariable.c_str())) {
             for (const auto& binding : bindings) {
                 if (ImGui::Selectable(binding.first.c_str(),
                                       binding.first == f.inputVariable)) {
@@ -277,24 +313,27 @@ bool editPiecewise(OntoMath::Piecewise& f, const MathBindings& bindings) {
 
         if (!piece.guard && (f.pieces.size() > 1 || piece.hasLo || piece.hasHi)) {
             ImGui::Text("Piece %zu over %s:", p + 1, f.inputVariable.c_str());
-            if (ImGui::Checkbox("lo", &piece.hasLo)) changed = true;
+            if (ImGui::Checkbox("Use lower boundary", &piece.hasLo)) changed = true;
             if (piece.hasLo) {
-                ImGui::SameLine();
-                ImGui::SetNextItemWidth(80.0f);
                 double lo = piece.lo;
-                if (ImGui::InputDouble("##lo", &lo)) { piece.lo = lo; changed = true; }
-                ImGui::SameLine();
-                if (ImGui::Checkbox("incl##lo", &piece.includeLo)) changed = true;
+                fieldCaption("Lower boundary");
+                ImGui::SetNextItemWidth(-1.0f);
+                if (ImGui::InputDouble("##lo", &lo, 0.0, 0.0, "%.4f")) {
+                    piece.lo = lo;
+                    changed = true;
+                }
+                if (ImGui::Checkbox("Include the lower boundary", &piece.includeLo)) changed = true;
             }
-            ImGui::SameLine();
-            if (ImGui::Checkbox("hi", &piece.hasHi)) changed = true;
+            if (ImGui::Checkbox("Use upper boundary", &piece.hasHi)) changed = true;
             if (piece.hasHi) {
-                ImGui::SameLine();
-                ImGui::SetNextItemWidth(80.0f);
                 double hi = piece.hi;
-                if (ImGui::InputDouble("##hi", &hi)) { piece.hi = hi; changed = true; }
-                ImGui::SameLine();
-                if (ImGui::Checkbox("incl##hi", &piece.includeHi)) changed = true;
+                fieldCaption("Upper boundary");
+                ImGui::SetNextItemWidth(-1.0f);
+                if (ImGui::InputDouble("##hi", &hi, 0.0, 0.0, "%.4f")) {
+                    piece.hi = hi;
+                    changed = true;
+                }
+                if (ImGui::Checkbox("Include the upper boundary", &piece.includeHi)) changed = true;
             }
         }
 
@@ -343,18 +382,16 @@ bool editPiecewise(OntoMath::Piecewise& f, const MathBindings& bindings) {
             }
             if (piece.fold) {
                 int op = static_cast<int>(piece.fold->op);
-                ImGui::SetNextItemWidth(90.0f);
+                fieldCaption("Aggregation");
+                ImGui::SetNextItemWidth(-1.0f);
                 if (ImGui::Combo("##foldop", &op, foldOps, 5)) {
                     piece.fold->op = static_cast<OntoMath::Fold::Op>(op);
                     changed = true;
                 }
-                ImGui::SameLine();
-                ImGui::TextDisabled("of");
-                ImGui::SameLine();
                 char pathBuf[96];
                 copyToBuf(pathBuf, sizeof(pathBuf), piece.fold->path);
-                ImGui::SetNextItemWidth(140.0f);
-                if (ImGui::InputText("##foldpath", pathBuf, sizeof(pathBuf))) {
+                if (textField("Property read from each being", pathBuf, sizeof(pathBuf),
+                              "for example: position.y")) {
                     piece.fold->path = pathBuf;
                     changed = true;
                 }
@@ -362,10 +399,6 @@ bool editPiecewise(OntoMath::Piecewise& f, const MathBindings& bindings) {
                     ImGui::SetTooltip("property read on each being (e.g. position.y);\n"
                                       "leave empty with 'count' to count beings");
                 }
-                ImGui::SameLine();
-                ImGui::TextDisabled("across every");
-                ImGui::SameLine();
-                ImGui::SetNextItemWidth(110.0f);
                 int foldDisplay = 0;
                 for (int i = 0; i < 7; ++i) {
                     if (foldKindEnums[i] == piece.fold->beingKind) {
@@ -373,6 +406,8 @@ bool editPiecewise(OntoMath::Piecewise& f, const MathBindings& bindings) {
                         break;
                     }
                 }
+                fieldCaption("Across every");
+                ImGui::SetNextItemWidth(-1.0f);
                 if (ImGui::Combo("##foldkind", &foldDisplay, foldKinds, 7)) {
                     piece.fold->beingKind = foldKindEnums[foldDisplay];
                     changed = true;
@@ -459,15 +494,11 @@ void editFunctionRegistry() {
 
     static char nameBuf[48] = "";
     static char paramsBuf[96] = "x";
-    ImGui::SetNextItemWidth(120.0f);
-    ImGui::InputText("##fnname", nameBuf, sizeof(nameBuf));
-    if (ImGui::IsItemHovered()) ImGui::SetTooltip("function name");
-    ImGui::SameLine();
-    ImGui::SetNextItemWidth(120.0f);
-    ImGui::InputText("##fnparams", paramsBuf, sizeof(paramsBuf));
-    if (ImGui::IsItemHovered()) ImGui::SetTooltip("parameters, comma-separated: x, n");
-    ImGui::SameLine();
-    if (ImGui::Button("Define") && nameBuf[0] != '\0') {
+    textField("Function name", nameBuf, sizeof(nameBuf), "name this reusable function…");
+    textField("Parameters", paramsBuf, sizeof(paramsBuf), "comma-separated, for example: x, n");
+    const bool canDefine = nameBuf[0] != '\0';
+    if (!canDefine) ImGui::BeginDisabled();
+    if (ImGui::Button("Define this function", ImVec2(-1.0f, 0.0f)) && canDefine) {
         OntoMath::FunctionDef def;
         def.name = nameBuf;
         std::string token;
@@ -487,6 +518,7 @@ void editFunctionRegistry() {
         selected = static_cast<int>(registry.getAll().size()) - 1;
         nameBuf[0] = '\0';
     }
+    if (!canDefine) ImGui::EndDisabled();
 
     if (selected >= 0 && selected < static_cast<int>(registry.getAll().size())) {
         // Edit the selected definition's body. Its "bindings" are its own
@@ -561,16 +593,42 @@ bool editMathNode(OntoMath::MathNode& node, const MathBindings& bindings) {
 
     ImGui::PushID(&node);
 
-    ImGui::SetNextItemWidth(180.0f);
-    if (ImGui::BeginCombo("Op", descriptors[currentOpIndex].name)) {
+    static char opSearch[96] = "";
+    fieldCaption("Mathematical form");
+    if (ImGui::Button(descriptors[currentOpIndex].name, ImVec2(-1.0f, 0.0f))) {
+        opSearch[0] = '\0';
+        ImGui::OpenPopup("choose-math-form");
+    }
+    if (ImGui::BeginPopup("choose-math-form")) {
+        ImGui::TextColored(kHeaderColor, "CHOOSE A MATHEMATICAL FORM");
+        ImGui::SetNextItemWidth(420.0f);
+        ImGui::InputTextWithHint("##op-search", "type an operation…",
+                                 opSearch, sizeof(opSearch));
+        ImGui::Separator();
+        ImGui::BeginChild("op-results", ImVec2(420.0f, 330.0f), false);
+        const char* previousGroup = nullptr;
         for (int i = 0; i < numDescriptors; ++i) {
-            if (ImGui::Selectable(descriptors[i].name, i == currentOpIndex)) {
+            if (!containsCaseInsensitive(descriptors[i].name, opSearch)) continue;
+            const char* group = i <= 3 ? "VALUES"
+                                : i <= 10 ? "ARITHMETIC & VECTORS"
+                                : i <= 14 ? "TRANSFORMS"
+                                : i <= 23 ? "SPACE & FIELDS"
+                                          : "FUNCTIONS";
+            if (!previousGroup || std::strcmp(group, previousGroup) != 0) {
+                ImGui::TextDisabled("%s", group);
+                previousGroup = group;
+            }
+            if (ImGui::Selectable(descriptors[i].name, i == currentOpIndex,
+                                  0, ImVec2(0.0f, 31.0f))) {
                 node.op = descriptors[i].op;
                 currentOpIndex = i;
                 changed = true;
+                opSearch[0] = '\0';
+                ImGui::CloseCurrentPopup();
             }
         }
-        ImGui::EndCombo();
+        ImGui::EndChild();
+        ImGui::EndPopup();
     }
 
     const auto& desc = descriptors[currentOpIndex];
@@ -594,7 +652,8 @@ bool editMathNode(OntoMath::MathNode& node, const MathBindings& bindings) {
     }
 
     if (desc.isValueLeaf) {
-        ImGui::SameLine();
+        fieldCaption("Variable");
+        ImGui::SetNextItemWidth(-1.0f);
         if (ImGui::BeginCombo("##valleafvar", node.variableName.c_str())) {
             for (const auto& b : bindings) {
                 if (ImGui::Selectable(b.first.c_str(), b.first == node.variableName)) {
@@ -607,11 +666,10 @@ bool editMathNode(OntoMath::MathNode& node, const MathBindings& bindings) {
     }
 
     if (desc.hasStringArg) {
-        ImGui::SameLine();
         char argBuf[64];
         copyToBuf(argBuf, sizeof(argBuf), node.stringArg);
-        ImGui::SetNextItemWidth(120.0f);
-        if (ImGui::InputText(desc.stringArgLabel ? desc.stringArgLabel : "arg", argBuf, sizeof(argBuf))) {
+        if (textField(desc.stringArgLabel ? desc.stringArgLabel : "Argument",
+                      argBuf, sizeof(argBuf), "enter an argument…")) {
             node.stringArg = argBuf;
             changed = true;
         }

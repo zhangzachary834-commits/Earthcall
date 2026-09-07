@@ -10,6 +10,7 @@
 #include "Singularity/Screen/Renderer.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/Menu/stb_easy_font.h"
 #include "Singularity/Storage/Serialization.hpp"
+#include "Singularity/Storage/Serialization/Person/PersonSerialization.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "PersonEvents.hpp"
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
@@ -51,7 +52,7 @@ Person::Person(Soul soul, Body body, const std::string& foundationSymbol) : _sou
     // this Person's (personId / called Lexeme). Binding clears the hint so
     // Soul cannot keep a second name.
     std::string seedName = _soul.constructionName();
-    if (seedName.empty()) seedName = "Person";
+    if (seedName.empty() || seedName == "Player" || seedName == "player") seedName = "Person";
     setDisplayName(seedName);
     _soul.bindPerson(this);
 
@@ -73,8 +74,18 @@ const std::string& Person::getDisplayName() const {
 }
 
 void Person::setDisplayName(const std::string& name) {
-    _called = Singularity::Language::LanguageSystem::instance().resolve(
-        name.empty() ? "Person" : name);
+    std::string resolved = (name.empty() || name == "Player" || name == "player") ? "Person" : name;
+    _called = Singularity::Language::LanguageSystem::instance().resolve(resolved);
+}
+
+void Person::rename(const std::string& newName) {
+    std::string oldName = getDisplayName();
+    std::string cleanName = newName;
+    if (cleanName.empty() || cleanName == "Player" || cleanName == "player") {
+        cleanName = "Person";
+    }
+    setDisplayName(cleanName);
+    updatePriorPersonSerializations(*this, oldName);
 }
 
 nlohmann::json Person::serialize() const {

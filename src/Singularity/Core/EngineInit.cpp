@@ -63,7 +63,7 @@ void Engine::initLogic() {
     if (!_mouseHandler) _mouseHandler = std::make_unique<MouseHandler>();
     if (!_keyboardHandler) _keyboardHandler = std::make_unique<KeyboardHandler>();
     if (!_person) {
-        Soul soul("Player");
+        Soul soul("Person");
         Body body("humanoid", "default");
         _person = std::make_unique<Person>(std::move(soul), std::move(body), "default");
     }

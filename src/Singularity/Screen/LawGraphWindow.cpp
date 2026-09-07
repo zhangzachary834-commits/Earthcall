@@ -250,6 +250,8 @@ struct SessionState {
 
     int eventCombo = 0;
     char eventBuf[64] = "";
+    char eventSearch[96] = "";
+    char conceptSearch[96] = "";
     char filterBuf[48] = "";
 
     char pathBuf[128] = "";
@@ -361,6 +363,84 @@ double numericOr(const PropertyValue& v, double fallback) {
     double out = fallback;
     propertyValueToNumber(v, out);
     return out;
+}
+
+// Inspector controls use labels as headings, not as cramped suffixes after a
+// tiny input. This is UI-only structure: the authored node remains the truth.
+void fieldCaption(const char* label, const char* help = nullptr) {
+    ImGui::TextDisabled("%s", label);
+    if (help && ImGui::IsItemHovered()) ImGui::SetTooltip("%s", help);
+}
+
+bool textField(const char* label, char* value, std::size_t size,
+               const char* hint = "Type a value…") {
+    ImGui::PushID(label);
+    fieldCaption(label);
+    ImGui::SetNextItemWidth(-1.0f);
+    const bool changed = ImGui::InputTextWithHint("##value", hint, value, size);
+    ImGui::PopID();
+    return changed;
+}
+
+bool doubleField(const char* label, double& value, const char* help = nullptr) {
+    ImGui::PushID(label);
+    fieldCaption(label, help);
+    ImGui::SetNextItemWidth(-1.0f);
+    const bool changed = ImGui::InputDouble("##value", &value, 0.0, 0.0, "%.4f");
+    ImGui::PopID();
+    return changed;
+}
+
+bool floatField(const char* label, float& value, float speed = 0.02f,
+                float minimum = 0.0f, float maximum = 0.0f,
+                const char* help = nullptr) {
+    ImGui::PushID(label);
+    fieldCaption(label, help);
+    ImGui::SetNextItemWidth(-1.0f);
+    const bool changed = ImGui::DragFloat("##value", &value, speed, minimum, maximum);
+    ImGui::PopID();
+    return changed;
+}
+
+bool intField(const char* label, int& value) {
+    ImGui::PushID(label);
+    fieldCaption(label);
+    ImGui::SetNextItemWidth(-1.0f);
+    const bool changed = ImGui::InputInt("##value", &value);
+    ImGui::PopID();
+    return changed;
+}
+
+bool vectorField(const char* label, glm::vec3& value) {
+    ImGui::PushID(label);
+    fieldCaption(label);
+    ImGui::SetNextItemWidth(-1.0f);
+    const bool changed = ImGui::DragFloat3("##value", &value.x, 0.1f);
+    ImGui::PopID();
+    return changed;
+}
+
+bool comboField(const char* label, int& current, const char* const* choices,
+                int choiceCount, const char* help = nullptr) {
+    ImGui::PushID(label);
+    fieldCaption(label, help);
+    ImGui::SetNextItemWidth(-1.0f);
+    const bool changed = ImGui::Combo("##value", &current, choices, choiceCount);
+    ImGui::PopID();
+    return changed;
+}
+
+void inspectorHeading(const char* eyebrow, const char* title,
+                      const char* description, const ImVec4& color) {
+    ImGui::TextColored(color, "%s", eyebrow);
+    ImGui::SameLine();
+    ImGui::TextUnformatted(title);
+    if (description && description[0]) {
+        ImGui::PushTextWrapPos(0.0f);
+        ImGui::TextDisabled("%s", description);
+        ImGui::PopTextWrapPos();
+    }
+    ImGui::Separator();
 }
 
 // ---------------------------------------------------------------------------
@@ -487,7 +567,9 @@ bool pathPicker(const char* label, PropertyPath& path) {
     }
     ImGui::PushID(label);
     const std::string current = path.empty() ? "Choose Singular and property…" : path.toString();
-    if (ImGui::Button((current + "##open-property-lens").c_str(), ImVec2(430.0f, 0))) {
+    const float lensButtonWidth = std::max(220.0f, ImGui::GetContentRegionAvail().x - 34.0f);
+    fieldCaption(label, "Choose a referent, one Singular, then one of its registered properties");
+    if (ImGui::Button((current + "##open-property-lens").c_str(), ImVec2(lensButtonWidth, 0))) {
         g.activePropertyLens = label;
         g.lensReferent = qualifierPrefix.empty() ? 0
             : qualifierPrefix[0] == "@event" && qualifierPrefix.size() > 1 && qualifierPrefix[1] == "subject" ? 1
@@ -649,14 +731,123 @@ bool pathPicker(const char* label, PropertyPath& path) {
     }
     ImGui::PopID();
     if (g.customPathTarget == label) {
-        ImGui::SetNextItemWidth(200.0f);
-        if (ImGui::InputText("custom path (enter)", g.pathBuf, sizeof(g.pathBuf),
+        ImGui::PushID(label);
+        fieldCaption("Custom property path");
+        ImGui::SetNextItemWidth(-1.0f);
+        if (ImGui::InputTextWithHint("##custom-path", "Type a path and press Enter…",
+                             g.pathBuf, sizeof(g.pathBuf),
                              ImGuiInputTextFlags_EnterReturnsTrue)) {
             path = PropertyPath::parse(g.pathBuf);
             g.customPathTarget.clear();
             changed = true;
         }
+        ImGui::PopID();
     }
+    return changed;
+}
+
+// Shared participant picker for Relation endpoints, event participants, and
+// identity-like action inputs. Unlike an exhaustive combo, it stays useful in
+// a world with thousands of Singulars because names and runtime kinds filter
+// as the Person types.
+bool singularTokenPicker(const char* label, std::string& token,
+                         const char* emptyChoice, bool allowEventReferences = true) {
+    bool changed = false;
+    const char* preview = token.empty() ? emptyChoice : token.c_str();
+    ImGui::PushID(label);
+    fieldCaption(label);
+    if (ImGui::Button((std::string(preview) + "##choose").c_str(), ImVec2(-1.0f, 0.0f))) {
+        g.textBuf[0] = '\0';
+        ImGui::OpenPopup("singular-token-picker");
+    }
+    ImGui::SetNextWindowSize(ImVec2(520, 460), ImGuiCond_Appearing);
+    if (ImGui::BeginPopup("singular-token-picker")) {
+        ImGui::TextColored(kHeaderColor, "CHOOSE A SINGULAR");
+        ImGui::TextDisabled("%s", label);
+        ImGui::SetNextItemWidth(-1.0f);
+        ImGui::InputTextWithHint("##search", "Type a name, identifier, or runtime kind…",
+                                 g.textBuf, sizeof(g.textBuf));
+        if (searchMatches(emptyChoice, g.textBuf) &&
+            ImGui::Selectable(emptyChoice, token.empty(), 0, ImVec2(0.0f, 32.0f))) {
+            token.clear();
+            changed = true;
+            ImGui::CloseCurrentPopup();
+        }
+        if (allowEventReferences) {
+            struct Reference { const char* label; const char* token; };
+            static constexpr Reference references[] = {
+                {"The event's subject", "@event.subject"},
+                {"The event's other object", "@event.object"},
+            };
+            for (const auto& reference : references) {
+                if (!searchMatches(std::string(reference.label) + " " + reference.token,
+                                   g.textBuf)) continue;
+                if (ImGui::Selectable(reference.label, token == reference.token, 0,
+                                      ImVec2(0.0f, 32.0f))) {
+                    token = reference.token;
+                    changed = true;
+                    ImGui::CloseCurrentPopup();
+                }
+            }
+        }
+        ImGui::Separator();
+        std::vector<Singular*> beings = Universe::instance().beings();
+        std::sort(beings.begin(), beings.end(), [](const Singular* a, const Singular* b) {
+            if (!a || !b) return a != nullptr;
+            return a->getIdentifier() < b->getIdentifier();
+        });
+        ImGui::BeginChild("results", ImVec2(0.0f, 340.0f), false);
+        for (Singular* being : beings) {
+            if (!being) continue;
+            const std::string id = being->getIdentifier();
+            if (!searchMatches(id + " " + singularRuntimeType(*being), g.textBuf)) continue;
+            if (ImGui::Selectable(id.c_str(), token == id, 0, ImVec2(0.0f, 31.0f))) {
+                token = id;
+                changed = true;
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::SameLine();
+            ImGui::TextDisabled("%s", singularRuntimeType(*being));
+        }
+        ImGui::EndChild();
+        ImGui::EndPopup();
+    }
+    ImGui::PopID();
+    return changed;
+}
+
+bool conceptPicker(std::string& conceptId) {
+    bool changed = false;
+    const auto& concepts = ConceptRegistry::instance().getAll();
+    ImGui::PushID("concept-picker");
+    fieldCaption("Concept", "Choose the captured set whose members will be born.");
+    const char* preview = conceptId.empty() ? "Choose a captured set…" : conceptId.c_str();
+    if (ImGui::Button((std::string(preview) + "##choose").c_str(), ImVec2(-1.0f, 0.0f))) {
+        g.conceptSearch[0] = '\0';
+        ImGui::OpenPopup("choose-concept");
+    }
+    if (ImGui::BeginPopup("choose-concept")) {
+        ImGui::TextColored(kHeaderColor, "CHOOSE A CAPTURED SET");
+        ImGui::SetNextItemWidth(420.0f);
+        ImGui::InputTextWithHint("##search", "type a concept name or identifier…",
+                                 g.conceptSearch, sizeof(g.conceptSearch));
+        ImGui::Separator();
+        if (concepts.empty()) ImGui::TextDisabled("No concepts have been captured yet.");
+        for (const auto& concept : concepts) {
+            if (!concept) continue;
+            const std::string searchable = concept->name() + " " + concept->getIdentifier();
+            if (!searchMatches(searchable, g.conceptSearch)) continue;
+            const std::string label = concept->name() + "\n" + concept->getIdentifier();
+            if (ImGui::Selectable(label.c_str(), concept->getIdentifier() == conceptId,
+                                  0, ImVec2(420.0f, 42.0f))) {
+                conceptId = concept->getIdentifier();
+                changed = true;
+                ImGui::CloseCurrentPopup();
+            }
+        }
+        ImGui::EndPopup();
+    }
+    ImGui::PopID();
     return changed;
 }
 
@@ -696,31 +887,56 @@ void editTriggers(LawManager& laws, Law& law) {
         laws.unbindTrigger(law.getIdentifier(), removeType);
     }
 
-    // Add a trigger: pick an engine event (with its meaning shown), or the
-    // last entry to name a custom event.
+    // Events are a vocabulary, not a tiny enum disguised as a dropdown. The
+    // chooser keeps their meaning visible and lets an author find one by
+    // typing either its name or what it represents.
     const bool custom = g.eventCombo >= kEngineEventCount;
-    const char* preview = custom ? "(custom event...)" : kEngineEvents[g.eventCombo].type;
-    ImGui::SetNextItemWidth(220.0f);
-    if (ImGui::BeginCombo("##eventpick", preview)) {
-        for (int i = 0; i < kEngineEventCount; ++i) {
-            if (ImGui::Selectable(kEngineEvents[i].type, g.eventCombo == i)) g.eventCombo = i;
-            if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", kEngineEvents[i].meaning);
-        }
-        if (ImGui::Selectable("(custom event...)", custom)) g.eventCombo = kEngineEventCount;
-        ImGui::EndCombo();
+    const char* preview = custom ? "Custom event" : kEngineEvents[g.eventCombo].type;
+    fieldCaption("Add a trigger", "Choose the event that occasions this law.");
+    if (ImGui::Button(preview, ImVec2(-1.0f, 0.0f))) {
+        g.eventSearch[0] = '\0';
+        ImGui::OpenPopup("choose-trigger-event");
     }
-    if (!custom) {
-        ImGui::SameLine();
-        ImGui::TextDisabled("?");
-        if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", kEngineEvents[g.eventCombo].meaning);
+    if (ImGui::BeginPopup("choose-trigger-event")) {
+        ImGui::TextColored(kHeaderColor, "CHOOSE AN EVENT");
+        ImGui::SetNextItemWidth(420.0f);
+        ImGui::InputTextWithHint("##event-search", "type a name or meaning...",
+                                 g.eventSearch, sizeof(g.eventSearch));
+        ImGui::Separator();
+        ImGui::BeginChild("event-results", ImVec2(420.0f, 300.0f), false);
+        for (int i = 0; i < kEngineEventCount; ++i) {
+            const bool matches = searchMatches(kEngineEvents[i].type, g.eventSearch) ||
+                                 searchMatches(kEngineEvents[i].meaning, g.eventSearch);
+            if (!matches) continue;
+            ImGui::PushID(i);
+            const bool selected = g.eventCombo == i;
+            if (ImGui::Selectable(kEngineEvents[i].type, selected, 0,
+                                  ImVec2(0.0f, 42.0f))) {
+                g.eventCombo = i;
+                ImGui::CloseCurrentPopup();
+            }
+            const ImVec2 rowMin = ImGui::GetItemRectMin();
+            ImGui::GetWindowDrawList()->AddText(
+                ImVec2(rowMin.x + 8.0f, rowMin.y + 22.0f),
+                IM_COL32(175, 180, 190, 255), kEngineEvents[i].meaning);
+            ImGui::PopID();
+        }
+        ImGui::Separator();
+        if (ImGui::Selectable("Custom event — enter an authored event name",
+                              custom, 0, ImVec2(0.0f, 34.0f))) {
+            g.eventCombo = kEngineEventCount;
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndChild();
+        ImGui::EndPopup();
     }
     if (custom) {
-        ImGui::SameLine();
-        ImGui::SetNextItemWidth(150.0f);
-        ImGui::InputText("##customevent", g.eventBuf, sizeof(g.eventBuf));
+        textField("Custom event name", g.eventBuf, sizeof(g.eventBuf),
+                  "for example: chess-piece-picked");
+    } else {
+        ImGui::TextWrapped("%s", kEngineEvents[g.eventCombo].meaning);
     }
-    ImGui::SameLine();
-    if (ImGui::Button("Bind trigger")) {
+    if (ImGui::Button("Bind this trigger", ImVec2(-1.0f, 0.0f))) {
         const std::string type = custom ? std::string(g.eventBuf)
                                         : std::string(kEngineEvents[g.eventCombo].type);
         if (!type.empty()) {
@@ -916,40 +1132,81 @@ bool beingKindCombo(ConditionNode& node) {
     }
     const char* names[8];
     for (int i = 0; i < n; ++i) names[i] = kOfferedBeingKinds[i].name;
-    ImGui::SetNextItemWidth(130.0f);
-    if (ImGui::Combo("Being kind", &current, names, n)) {
+    if (comboField("Being kind", current, names, n,
+                   "The runtime Singular kind tested by this condition")) {
         node.beingKind = kOfferedBeingKinds[current].kind;
         return true;
     }
     return false;
 }
 
+bool conditionKindPalette(ConditionNode& node) {
+    struct Choice {
+        ConditionNode::Kind kind;
+        const char* group;
+        const char* title;
+        const char* summary;
+    };
+    static constexpr Choice choices[] = {
+        {ConditionNode::Kind::Compare,   "VALUES",        "Compare a property", "Property equals, exceeds, nears, or falls within a value."},
+        {ConditionNode::Kind::Zone,      "VALUES",        "Math zone", "Authored mathematics falls inside optional lower and upper bounds."},
+        {ConditionNode::Kind::InRegion,  "SPACE",         "Inside a shape region", "A probed point lies inside authored geometry."},
+        {ConditionNode::Kind::Overlaps,  "SPACE",         "Touching another being", "The subject geometrically overlaps another being."},
+        {ConditionNode::Kind::Related,   "RELATIONSHIPS", "Related to a being", "A first-class Relation joins the subject to another Singular."},
+        {ConditionNode::Kind::Identity,  "IDENTITY",      "One specific being", "Only the Singular with this stable identifier passes."},
+        {ConditionNode::Kind::IsKind,    "IDENTITY",      "Runtime Singular kind", "Object, Person, Relation, Formation, Law, Zone, or Lexeme."},
+        {ConditionNode::Kind::All,       "LOGIC",         "All conditions", "Every child condition must hold."},
+        {ConditionNode::Kind::Any,       "LOGIC",         "Any condition", "At least one child condition must hold."},
+        {ConditionNode::Kind::Not,       "LOGIC",         "Not", "Invert one child condition."},
+        {ConditionNode::Kind::ForAny,    "UNIVERSE",      "For any being", "At least one being of a runtime kind passes the child test."},
+        {ConditionNode::Kind::ForAll,    "UNIVERSE",      "For all beings", "Every being of a runtime kind passes the child test."},
+    };
+    const Choice* selected = nullptr;
+    for (const auto& choice : choices) if (choice.kind == node.kind) selected = &choice;
+    if (node.kind == ConditionNode::Kind::Unsupported) {
+        inspectorHeading("IF", "Unsupported condition", "Preserved law text from another build.",
+                         ImVec4(1.0f, 0.55f, 0.25f, 1.0f));
+        return false;
+    }
+    inspectorHeading("IF", selected ? selected->title : "Condition",
+                     selected ? selected->summary : "Choose what must be true.",
+                     ImVec4(0.35f, 0.72f, 1.0f, 1.0f));
+    if (ImGui::Button("Change condition type…", ImVec2(-1.0f, 0.0f))) {
+        ImGui::OpenPopup("condition-kind-palette");
+    }
+    bool changed = false;
+    ImGui::SetNextWindowSize(ImVec2(650, 570), ImGuiCond_Appearing);
+    if (ImGui::BeginPopup("condition-kind-palette")) {
+        ImGui::TextColored(kHeaderColor, "CHOOSE WHAT MUST BE TRUE");
+        ImGui::TextDisabled("Grouped by meaning; this changes the selected condition card.");
+        ImGui::Separator();
+        const char* group = nullptr;
+        for (const auto& choice : choices) {
+            if (!group || std::strcmp(group, choice.group) != 0) {
+                group = choice.group;
+                ImGui::Spacing();
+                ImGui::TextDisabled("%s", group);
+            }
+            ImGui::PushID(static_cast<int>(choice.kind));
+            const std::string label = std::string(choice.title) + "\n" + choice.summary;
+            if (ImGui::Selectable(label.c_str(), node.kind == choice.kind, 0,
+                                  ImVec2(0.0f, 46.0f))) {
+                node.kind = choice.kind;
+                seedConditionKind(node);
+                changed = true;
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::PopID();
+        }
+        ImGui::EndPopup();
+    }
+    ImGui::Spacing();
+    return changed;
+}
+
 bool editConditionNode(ConditionNode& node) {
     bool changed = false;
-
-    // Index in this list IS the Kind value, so it must stay in lockstep with
-    // the enum. The retired pair quantifiers (12, 13) were removed from Kind
-    // but left here, so picking one produced an out-of-range kind that no
-    // switch matched: a card that edited nothing and a condition that could
-    // never hold. An Unsupported node is not offered — it is a landing place
-    // for law text from another build, not something to author.
-    static const char* kinds[] = {"compare", "in shape region", "related to...",
-                                  "all of... (&&)", "any of... (||)", "not (!)",
-                                  "math zone", "is a (type)", "this specific being",
-                                  "for ANY being...", "for ALL beings...",
-                                  "overlaps (touching)"};
-    constexpr int kKindCount = static_cast<int>(IM_ARRAYSIZE(kinds));
-    if (node.kind == ConditionNode::Kind::Unsupported) {
-        ImGui::TextDisabled("Condition type: unsupported");
-    } else {
-        int kind = static_cast<int>(node.kind);
-        ImGui::SetNextItemWidth(170.0f);
-        if (ImGui::Combo("Condition type", &kind, kinds, kKindCount)) {
-            node.kind = static_cast<ConditionNode::Kind>(kind);
-            seedConditionKind(node);
-            changed = true;
-        }
-    }
+    if (conditionKindPalette(node)) changed = true;
 
     switch (node.kind) {
         case ConditionNode::Kind::Compare: {
@@ -960,8 +1217,8 @@ bool editConditionNode(ConditionNode& node) {
             warnIfWholeVector(node.path);
             static const char* ops[] = {"==", "!=", "<", "<=", ">", ">=", "near", "in-range"};
             int op = static_cast<int>(node.op);
-            ImGui::SetNextItemWidth(90.0f);
-            if (ImGui::Combo("Compares", &op, ops, 8)) {
+            if (comboField("Relationship", op, ops, 8,
+                           "How the selected property is compared")) {
                 node.op = static_cast<ConditionNode::Op>(op);
                 changed = true;
             }
@@ -976,8 +1233,7 @@ bool editConditionNode(ConditionNode& node) {
                 else if (std::holds_alternative<int>(node.operand) || std::holds_alternative<long>(node.operand)) typeIdx = 1;
                 else typeIdx = 0;
 
-                ImGui::SetNextItemWidth(140.0f);
-                if (ImGui::Combo("Type", &typeIdx, typeNames, 5)) {
+                if (comboField("Value type", typeIdx, typeNames, 5)) {
                     if (typeIdx == 0) node.operand = PropertyValue(0.0);
                     else if (typeIdx == 1) node.operand = PropertyValue(0);
                     else if (typeIdx == 2) node.operand = PropertyValue(std::string(""));
@@ -986,68 +1242,64 @@ bool editConditionNode(ConditionNode& node) {
                     changed = true;
                 }
 
-                ImGui::SetNextItemWidth(120.0f);
                 if (typeIdx == 2) { // String
                     const std::string* strVal = std::get_if<std::string>(&node.operand);
                     char buf[256];
                     std::strncpy(buf, strVal ? strVal->c_str() : "", sizeof(buf));
                     buf[sizeof(buf) - 1] = '\0';
-                    if (ImGui::InputText("Value", buf, sizeof(buf))) {
+                    if (textField("Value", buf, sizeof(buf), "Type the text to compare…")) {
                         node.operand = PropertyValue(std::string(buf));
                         changed = true;
                     }
                 } else if (typeIdx == 3) { // Boolean
                     bool b = std::holds_alternative<bool>(node.operand) ? std::get<bool>(node.operand) : false;
-                    if (ImGui::Checkbox("Value", &b)) {
+                    fieldCaption("Value");
+                    if (ImGui::Checkbox(b ? "True##condition-value" : "False##condition-value", &b)) {
                         node.operand = PropertyValue(b);
                         changed = true;
                     }
                 } else if (typeIdx == 4) { // Vector3
                     glm::vec3 v = std::holds_alternative<glm::vec3>(node.operand) ? std::get<glm::vec3>(node.operand) : glm::vec3(0.0f);
-                    if (ImGui::DragFloat3("Value", &v.x, 0.1f)) {
+                    if (vectorField("Value", v)) {
                         node.operand = PropertyValue(v);
                         changed = true;
                     }
                 } else if (typeIdx == 1) { // Integer
                     int i = std::holds_alternative<int>(node.operand) ? std::get<int>(node.operand) : (std::holds_alternative<long>(node.operand) ? static_cast<int>(std::get<long>(node.operand)) : 0);
-                    if (ImGui::InputInt("Value", &i)) {
+                    if (intField("Value", i)) {
                         node.operand = PropertyValue(i);
                         changed = true;
                     }
                 } else { // Decimal
                     double value = numericOr(node.operand, 0.0);
-                    if (ImGui::InputDouble("Value", &value)) {
+                    if (doubleField("Value", value)) {
                         node.operand = PropertyValue(value);
                         changed = true;
                     }
                 }
-                ImGui::SameLine();
-                if (ImGui::SmallButton("compare to a property instead")) {
+                if (ImGui::SmallButton("Use another property as the comparison value →")) {
                     node.operandPath = PropertyPath::parse("position.y");
                     changed = true;
                 }
             } else {
                 if (pathPicker("Against", node.operandPath)) changed = true;
-                ImGui::SameLine();
-                if (ImGui::SmallButton("use a primitive data type instead")) {
+                if (ImGui::SmallButton("Use a literal value instead →")) {
                     node.operandPath = PropertyPath{};
                     changed = true;
                 }
             }
             if (node.op == ConditionNode::Op::Near) {
                 double tol = node.tolerance;
-                ImGui::SetNextItemWidth(120.0f);
-                if (ImGui::InputDouble("Tolerance", &tol)) {
+                if (doubleField("Tolerance", tol,
+                                "Maximum distance between the two numeric values")) {
                     node.tolerance = tol;
                     changed = true;
                 }
             }
             if (node.op == ConditionNode::Op::InRange) {
                 double lo = numericOr(node.lo, 0.0), hi = numericOr(node.hi, 0.0);
-                ImGui::SetNextItemWidth(120.0f);
-                if (ImGui::InputDouble("Low", &lo)) { node.lo = PropertyValue(lo); changed = true; }
-                ImGui::SetNextItemWidth(120.0f);
-                if (ImGui::InputDouble("High", &hi)) { node.hi = PropertyValue(hi); changed = true; }
+                if (doubleField("Minimum", lo)) { node.lo = PropertyValue(lo); changed = true; }
+                if (doubleField("Maximum", hi)) { node.hi = PropertyValue(hi); changed = true; }
             }
             break;
         }
@@ -1058,8 +1310,7 @@ bool editConditionNode(ConditionNode& node) {
             if (node.region.op == geom::SdfOp::Leaf &&
                 node.region.prim == geom::SdfPrim::Sphere) {
                 float radius = node.region.dims.x;
-                ImGui::SetNextItemWidth(120.0f);
-                if (ImGui::DragFloat("Sphere radius", &radius, 0.02f, 0.01f, 100.0f)) {
+                if (floatField("Sphere radius", radius, 0.02f, 0.01f, 100.0f)) {
                     node.region.dims.x = radius;
                     changed = true;
                 }
@@ -1071,30 +1322,8 @@ bool editConditionNode(ConditionNode& node) {
             ImGui::TextDisabled("the engine's collision test, as an ordinary condition.");
             ImGui::TextDisabled("Perception is authorable: pair with a 'publish event'");
             ImGui::TextDisabled("action and you have written a perception law.");
-            const char* preview = node.otherId.empty() ? "(choose the other)"
-                                                       : node.otherId.c_str();
-            ImGui::SetNextItemWidth(200.0f);
-            if (ImGui::BeginCombo("Touching", preview)) {
-                if (ImGui::Selectable("the event's subject",
-                                      node.otherId == "@event.subject")) {
-                    node.otherId = "@event.subject";
-                    changed = true;
-                }
-                if (ImGui::Selectable("the event's other object",
-                                      node.otherId == "@event.object")) {
-                    node.otherId = "@event.object";
-                    changed = true;
-                }
-                for (Singular* being : Universe::instance().beings()) {
-                    if (!being) continue;
-                    const std::string id = being->getIdentifier();
-                    if (ImGui::Selectable(id.c_str(), node.otherId == id)) {
-                        node.otherId = id;
-                        changed = true;
-                    }
-                }
-                ImGui::EndCombo();
-            }
+            if (singularTokenPicker("Touching", node.otherId, "Choose the other being…"))
+                changed = true;
             break;
         }
         case ConditionNode::Kind::Unsupported: {
@@ -1114,8 +1343,8 @@ bool editConditionNode(ConditionNode& node) {
             ImGui::TextDisabled("their source (\"a owns b\" holds OF a, not of b).");
             char typeBuf[64];
             copyToBuf(typeBuf, sizeof(typeBuf), node.relationType);
-            ImGui::SetNextItemWidth(150.0f);
-            if (ImGui::InputText("Relation type", typeBuf, sizeof(typeBuf))) {
+            if (textField("Relation type", typeBuf, sizeof(typeBuf),
+                          "attachment, friend, owns… (empty accepts any type)")) {
                 node.relationType = typeBuf;
                 changed = true;
             }
@@ -1123,34 +1352,7 @@ bool editConditionNode(ConditionNode& node) {
                 ImGui::SetTooltip("free-form: \"attachment\", \"friend\", \"owns\"...\n"
                                   "leave empty to accept ANY relation kind");
             }
-            const char* preview =
-                node.otherId.empty() ? "(anyone)" : node.otherId.c_str();
-            ImGui::SetNextItemWidth(200.0f);
-            if (ImGui::BeginCombo("Related to", preview)) {
-                if (ImGui::Selectable("(anyone)", node.otherId.empty())) {
-                    node.otherId.clear();
-                    changed = true;
-                }
-                if (ImGui::Selectable("the event's subject",
-                                      node.otherId == "@event.subject")) {
-                    node.otherId = "@event.subject";
-                    changed = true;
-                }
-                if (ImGui::Selectable("the event's other object",
-                                      node.otherId == "@event.object")) {
-                    node.otherId = "@event.object";
-                    changed = true;
-                }
-                for (Singular* being : Universe::instance().beings()) {
-                    if (!being) continue;
-                    const std::string id = being->getIdentifier();
-                    if (ImGui::Selectable(id.c_str(), node.otherId == id)) {
-                        node.otherId = id;
-                        changed = true;
-                    }
-                }
-                ImGui::EndCombo();
-            }
+            if (singularTokenPicker("Related to", node.otherId, "Anyone")) changed = true;
             break;
         }
         case ConditionNode::Kind::All:
@@ -1183,28 +1385,30 @@ bool editConditionNode(ConditionNode& node) {
         }
         case ConditionNode::Kind::Zone: {
             ImGui::TextDisabled("True when f(variables) lies inside the zone bounds.");
+            ImGui::TextDisabled("Turn either boundary off to leave that side unbounded.");
             bool hasLo = !std::holds_alternative<std::monostate>(node.lo);
-            if (ImGui::Checkbox("zone lo", &hasLo)) {
+            if (ImGui::Checkbox("Use a lower boundary", &hasLo)) {
                 node.lo = hasLo ? PropertyValue(0.0) : PropertyValue{};
                 changed = true;
             }
             if (hasLo) {
-                ImGui::SameLine();
-                ImGui::SetNextItemWidth(90.0f);
                 double lo = numericOr(node.lo, 0.0);
-                if (ImGui::InputDouble("##zlo", &lo)) { node.lo = PropertyValue(lo); changed = true; }
+                if (doubleField("Lower boundary", lo)) {
+                    node.lo = PropertyValue(lo);
+                    changed = true;
+                }
             }
-            ImGui::SameLine();
             bool hasHi = !std::holds_alternative<std::monostate>(node.hi);
-            if (ImGui::Checkbox("zone hi", &hasHi)) {
+            if (ImGui::Checkbox("Use an upper boundary", &hasHi)) {
                 node.hi = hasHi ? PropertyValue(0.0) : PropertyValue{};
                 changed = true;
             }
             if (hasHi) {
-                ImGui::SameLine();
-                ImGui::SetNextItemWidth(90.0f);
                 double hi = numericOr(node.hi, 0.0);
-                if (ImGui::InputDouble("##zhi", &hi)) { node.hi = PropertyValue(hi); changed = true; }
+                if (doubleField("Upper boundary", hi)) {
+                    node.hi = PropertyValue(hi);
+                    changed = true;
+                }
             }
             if (editMathBindings(node.bindings)) changed = true;
             if (editPiecewise(node.zoneFunction, node.bindings)) changed = true;
@@ -1218,13 +1422,8 @@ bool editConditionNode(ConditionNode& node) {
         }
         case ConditionNode::Kind::Identity: {
             ImGui::TextDisabled("True only for one specific being, by identity.");
-            char idBuf[96];
-            copyToBuf(idBuf, sizeof(idBuf), node.otherId);
-            ImGui::SetNextItemWidth(180.0f);
-            if (ImGui::InputText("Being id", idBuf, sizeof(idBuf))) {
-                node.otherId = idBuf;
-                changed = true;
-            }
+            if (singularTokenPicker("Specific Singular", node.otherId,
+                                    "Choose a Singular…", false)) changed = true;
             break;
         }
         case ConditionNode::Kind::ForAny:
@@ -1248,12 +1447,11 @@ bool editConditionNode(ConditionNode& node) {
                 node.exceptIds.erase(node.exceptIds.begin() + removeIdx);
                 changed = true;
             }
-            ImGui::SetNextItemWidth(150.0f);
-            ImGui::InputText("##exceptid", g.textBuf, sizeof(g.textBuf));
-            ImGui::SameLine();
-            if (ImGui::Button("Add exception") && g.textBuf[0] != '\0') {
-                node.exceptIds.emplace_back(g.textBuf);
-                g.textBuf[0] = '\0';
+            std::string exception;
+            if (singularTokenPicker("Add an exception", exception,
+                                    "Choose a specific Singular…", false) &&
+                !exception.empty()) {
+                node.exceptIds.emplace_back(std::move(exception));
                 changed = true;
             }
             ImGui::TextDisabled("The child card is the inner test each instance must pass.");
@@ -1331,23 +1529,77 @@ void seedActionKind(ActionNode& node) {
     }
 }
 
+bool actionKindPalette(ActionNode& node) {
+    struct Choice {
+        ActionNode::Kind kind;
+        const char* group;
+        const char* title;
+        const char* summary;
+    };
+    static constexpr Choice choices[] = {
+        {ActionNode::Kind::Set,            "PROPERTY",     "Set", "Replace a property's value."},
+        {ActionNode::Kind::Add,            "PROPERTY",     "Add", "Add a numeric amount to a property."},
+        {ActionNode::Kind::Scale,          "PROPERTY",     "Scale", "Multiply a numeric property."},
+        {ActionNode::Kind::Lerp,           "PROPERTY",     "Blend", "Move a property toward a value by a factor."},
+        {ActionNode::Kind::Map,            "AUTHORED MATH", "Map", "Set a property from multivariate, piecewise OntoMath."},
+        {ActionNode::Kind::Flow,           "AUTHORED MATH", "Flow", "Integrate an authored rate of change each tick."},
+        {ActionNode::Kind::Drive,          "AUTHORED MATH", "Drive a curve", "Set a property from one input and a curve."},
+        {ActionNode::Kind::Sequence,       "COMPOSITION",   "Sequence", "Run child steps in authored order."},
+        {ActionNode::Kind::Parallel,       "COMPOSITION",   "Parallel", "Run child steps together."},
+        {ActionNode::Kind::AddElement,     "COMPOSITION",   "Add element", "Place a being inside a container's element Formation."},
+        {ActionNode::Kind::RemoveElement,  "COMPOSITION",   "Remove element", "Take a being out of a container."},
+        {ActionNode::Kind::Spawn,          "CREATION",      "Spawn concept", "Manifest the objects captured by an ObjectConcept."},
+        {ActionNode::Kind::Create,         "CREATION",      "Create object", "Mint and shape one new Object."},
+        {ActionNode::Kind::Synthesize,     "CREATION",      "Synthesize", "Compose set-to-set creation from ordinary steps."},
+        {ActionNode::Kind::Destroy,        "CREATION",      "Destroy", "Remove an Object from its Zone."},
+        {ActionNode::Kind::Publish,        "SIGNALS",       "Publish event", "Mint an event that other Laws can hear."},
+        {ActionNode::Kind::PlayAudio,      "SIGNALS",       "Play audio", "Act through procedural audio properties."},
+        {ActionNode::Kind::AddProperty,    "ONTOLOGY",      "Add property", "Grant authored state to a Singular."},
+        {ActionNode::Kind::RemoveProperty, "ONTOLOGY",      "Remove property", "Take an authored property back."},
+        {ActionNode::Kind::AddRelation,    "ONTOLOGY",      "Add relation", "Mint a first-class Relation between Singulars."},
+        {ActionNode::Kind::AuthorZone,     "ONTOLOGY",      "Author zone", "Mint a Zone with authored ownership."},
+    };
+    const Choice* selected = nullptr;
+    for (const auto& choice : choices) if (choice.kind == node.kind) selected = &choice;
+    inspectorHeading("THEN", selected ? selected->title : "Action",
+                     selected ? selected->summary : "Choose what the Law changes.",
+                     ImVec4(0.38f, 0.88f, 0.56f, 1.0f));
+    if (ImGui::Button("Change action type…", ImVec2(-1.0f, 0.0f))) {
+        ImGui::OpenPopup("action-kind-palette");
+    }
+    bool changed = false;
+    ImGui::SetNextWindowSize(ImVec2(680, 690), ImGuiCond_Appearing);
+    if (ImGui::BeginPopup("action-kind-palette")) {
+        ImGui::TextColored(kHeaderColor, "CHOOSE WHAT THIS LAW DOES");
+        ImGui::TextDisabled("Grouped by intent; this changes the selected action card.");
+        ImGui::Separator();
+        const char* group = nullptr;
+        for (const auto& choice : choices) {
+            if (!group || std::strcmp(group, choice.group) != 0) {
+                group = choice.group;
+                ImGui::Spacing();
+                ImGui::TextDisabled("%s", group);
+            }
+            ImGui::PushID(static_cast<int>(choice.kind));
+            const std::string label = std::string(choice.title) + "\n" + choice.summary;
+            if (ImGui::Selectable(label.c_str(), node.kind == choice.kind, 0,
+                                  ImVec2(0.0f, 44.0f))) {
+                node.kind = choice.kind;
+                seedActionKind(node);
+                changed = true;
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::PopID();
+        }
+        ImGui::EndPopup();
+    }
+    ImGui::Spacing();
+    return changed;
+}
+
 bool editActionNode(ActionNode& node) {
     bool changed = false;
-
-    static const char* kinds[] = {"set", "add", "scale", "lerp", "drive (curve)",
-                                  "sequence", "parallel", "spawn concept", "map (math)",
-                                  "flow (rate of change)", "publish event",
-                                  "create object", "add property", "add element",
-                                  "remove property", "remove element", "destroy",
-                                  "synthesize (set-to-set)", "play audio",
-                                  "author zone", "add relation"};
-    int kind = static_cast<int>(node.kind);
-    ImGui::SetNextItemWidth(200.0f);
-    if (ImGui::Combo("Action type", &kind, kinds, 21)) {
-        node.kind = static_cast<ActionNode::Kind>(kind);
-        seedActionKind(node);
-        changed = true;
-    }
+    if (actionKindPalette(node)) changed = true;
 
     switch (node.kind) {
 
@@ -1366,15 +1618,14 @@ bool editActionNode(ActionNode& node) {
             if (pathPicker("Property", node.path)) changed = true;
             warnIfWholeVector(node.path);
             double value = numericOr(node.operand, 0.0);
-            ImGui::SetNextItemWidth(120.0f);
-            if (ImGui::InputDouble("Value", &value)) {
+            if (doubleField("Value", value)) {
                 node.operand = PropertyValue(value);
                 changed = true;
             }
             if (node.kind == ActionNode::Kind::Lerp) {
                 double factor = node.factor;
-                ImGui::SetNextItemWidth(120.0f);
-                if (ImGui::InputDouble("Blend", &factor)) {
+                if (doubleField("Blend factor", factor,
+                                "0 keeps the old value; 1 reaches the authored value")) {
                     node.factor = factor;
                     changed = true;
                 }
@@ -1388,8 +1639,7 @@ bool editActionNode(ActionNode& node) {
             if (pathPicker("Input", node.input)) changed = true;
             static const char* forms[] = {"constant", "polynomial", "sinusoid"};
             int form = static_cast<int>(node.curve.form);
-            ImGui::SetNextItemWidth(120.0f);
-            if (ImGui::Combo("Curve", &form, forms, 3)) {
+            if (comboField("Curve form", form, forms, 3)) {
                 node.curve.form = static_cast<CurveModel::Form>(form);
                 changed = true;
             }
@@ -1397,11 +1647,9 @@ bool editActionNode(ActionNode& node) {
                 node.curve.form == CurveModel::Form::Polynomial) {
                 if (node.curve.coeffs.size() < 2) node.curve.coeffs.resize(2, 0.0);
                 double c0 = node.curve.coeffs[0], c1 = node.curve.coeffs[1];
-                ImGui::SetNextItemWidth(120.0f);
-                if (ImGui::InputDouble("c0", &c0)) { node.curve.coeffs[0] = c0; changed = true; }
+                if (doubleField("Constant (c0)", c0)) { node.curve.coeffs[0] = c0; changed = true; }
                 if (node.curve.form == CurveModel::Form::Polynomial) {
-                    ImGui::SetNextItemWidth(120.0f);
-                    if (ImGui::InputDouble("c1 (slope)", &c1)) {
+                    if (doubleField("Slope (c1)", c1)) {
                         node.curve.coeffs[1] = c1;
                         changed = true;
                     }
@@ -1409,14 +1657,10 @@ bool editActionNode(ActionNode& node) {
             } else {
                 double amp = node.curve.amplitude, freq = node.curve.frequency;
                 double phase = node.curve.phase, bias = node.curve.bias;
-                ImGui::SetNextItemWidth(120.0f);
-                if (ImGui::InputDouble("Amplitude", &amp)) { node.curve.amplitude = amp; changed = true; }
-                ImGui::SetNextItemWidth(120.0f);
-                if (ImGui::InputDouble("Frequency", &freq)) { node.curve.frequency = freq; changed = true; }
-                ImGui::SetNextItemWidth(120.0f);
-                if (ImGui::InputDouble("Phase", &phase)) { node.curve.phase = phase; changed = true; }
-                ImGui::SetNextItemWidth(120.0f);
-                if (ImGui::InputDouble("Bias", &bias)) { node.curve.bias = bias; changed = true; }
+                if (doubleField("Amplitude", amp)) { node.curve.amplitude = amp; changed = true; }
+                if (doubleField("Frequency", freq)) { node.curve.frequency = freq; changed = true; }
+                if (doubleField("Phase", phase)) { node.curve.phase = phase; changed = true; }
+                if (doubleField("Bias", bias)) { node.curve.bias = bias; changed = true; }
             }
             break;
         }
@@ -1458,50 +1702,18 @@ bool editActionNode(ActionNode& node) {
             ImGui::TextDisabled("trigger. Cascades stay under the anti-Babel ceiling.");
             char typeBuf[64];
             copyToBuf(typeBuf, sizeof(typeBuf), node.eventType);
-            ImGui::SetNextItemWidth(180.0f);
-            if (ImGui::InputText("Event type", typeBuf, sizeof(typeBuf))) {
+            if (textField("Event name", typeBuf, sizeof(typeBuf),
+                          "Name the past-tense event being published…")) {
                 node.eventType = typeBuf;
                 changed = true;
             }
             if (ImGui::IsItemHovered()) {
                 ImGui::SetTooltip("any name — new event kinds are minted by naming them");
             }
-            const auto participantCombo = [&](const char* label, std::string& token,
-                                              bool allowLawSubject) {
-                const char* preview =
-                    token.empty() ? (allowLawSubject ? "the law's subject" : "(none)")
-                                  : token.c_str();
-                ImGui::SetNextItemWidth(200.0f);
-                if (ImGui::BeginCombo(label, preview)) {
-                    if (ImGui::Selectable(allowLawSubject ? "the law's subject"
-                                                          : "(none)",
-                                          token.empty())) {
-                        token.clear();
-                        changed = true;
-                    }
-                    if (ImGui::Selectable("the event's subject",
-                                          token == "@event.subject")) {
-                        token = "@event.subject";
-                        changed = true;
-                    }
-                    if (ImGui::Selectable("the event's other object",
-                                          token == "@event.object")) {
-                        token = "@event.object";
-                        changed = true;
-                    }
-                    for (Singular* being : Universe::instance().beings()) {
-                        if (!being) continue;
-                        const std::string id = being->getIdentifier();
-                        if (ImGui::Selectable(id.c_str(), token == id)) {
-                            token = id;
-                            changed = true;
-                        }
-                    }
-                    ImGui::EndCombo();
-                }
-            };
-            participantCombo("Its subject", node.publishSubject, true);
-            participantCombo("Its object", node.publishObject, false);
+            if (singularTokenPicker("Event subject", node.publishSubject,
+                                    "The Law's subject")) changed = true;
+            if (singularTokenPicker("Event object", node.publishObject,
+                                    "None")) changed = true;
             break;
         }
         case ActionNode::Kind::Sequence:
@@ -1530,26 +1742,7 @@ bool editActionNode(ActionNode& node) {
         case ActionNode::Kind::Spawn: {
             ImGui::TextDisabled("Births the concept's objects into the law's target Zone.");
             ImGui::TextDisabled("Bind the law to an event whose SUBJECT is the Zone.");
-            const auto& concepts = ConceptRegistry::instance().getAll();
-            const char* preview = node.conceptId.empty() ? "(choose concept)"
-                                                         : node.conceptId.c_str();
-            ImGui::SetNextItemWidth(220.0f);
-            if (ImGui::BeginCombo("Concept", preview)) {
-                if (concepts.empty()) {
-                    ImGui::TextDisabled("No concepts captured yet.");
-                }
-                for (const auto& concept : concepts) {
-                    if (!concept) continue;
-                    const std::string label =
-                        concept->name() + "  [" + concept->getIdentifier() + "]";
-                    if (ImGui::Selectable(label.c_str(),
-                                          concept->getIdentifier() == node.conceptId)) {
-                        node.conceptId = concept->getIdentifier();
-                        changed = true;
-                    }
-                }
-                ImGui::EndCombo();
-            }
+            if (conceptPicker(node.conceptId)) changed = true;
             if (pathPicker("Parent Path", node.spawnParentPath)) {
                 changed = true;
             }
@@ -1567,14 +1760,13 @@ bool editActionNode(ActionNode& node) {
                 "Cube", "Polyhedron", "Sphere", "Cylinder", "Cone",
                 "Ellipsoid", "Ovoid", "Paraboloid", "Torus", "RoundedBox",
                 "Field", "Patch", "Shape2D", "Text2D"};
-            ImGui::SetNextItemWidth(140.0f);
-            if (ImGui::Combo("Shape", &node.createShapeKind, shapeNames, 14)) {
+            if (comboField("Shape", node.createShapeKind, shapeNames, 14)) {
                 changed = true;
             }
             char typeBuf[64];
             copyToBuf(typeBuf, sizeof(typeBuf), node.createType);
-            ImGui::SetNextItemWidth(180.0f);
-            if (ImGui::InputText("Type label", typeBuf, sizeof(typeBuf))) {
+            if (textField("Optional type label", typeBuf, sizeof(typeBuf),
+                          "Leave empty or name an authored classification label…")) {
                 node.createType = typeBuf;
                 changed = true;
             }
@@ -1611,14 +1803,13 @@ bool editActionNode(ActionNode& node) {
             if (pathPicker("Owner", node.path)) changed = true;
             char nameBuf[64];
             copyToBuf(nameBuf, sizeof(nameBuf), node.propertyName);
-            ImGui::SetNextItemWidth(180.0f);
-            if (ImGui::InputText("Property name", nameBuf, sizeof(nameBuf))) {
+            if (textField("Property name", nameBuf, sizeof(nameBuf),
+                          "Name the authored property…")) {
                 node.propertyName = nameBuf;
                 changed = true;
             }
             double value = numericOr(node.operand, 0.0);
-            ImGui::SetNextItemWidth(120.0f);
-            if (ImGui::InputDouble("Initial value", &value)) {
+            if (doubleField("Initial value", value)) {
                 node.operand = PropertyValue(value);
                 changed = true;
             }
@@ -1631,8 +1822,8 @@ bool editActionNode(ActionNode& node) {
             if (pathPicker("Owner", node.path)) changed = true;
             char nameBuf[64];
             copyToBuf(nameBuf, sizeof(nameBuf), node.propertyName);
-            ImGui::SetNextItemWidth(180.0f);
-            if (ImGui::InputText("Property name", nameBuf, sizeof(nameBuf))) {
+            if (textField("Property name", nameBuf, sizeof(nameBuf),
+                          "Name the property to remove…")) {
                 node.propertyName = nameBuf;
                 changed = true;
             }
@@ -1645,70 +1836,18 @@ bool editActionNode(ActionNode& node) {
             ImGui::TextDisabled(adding
                 ? "Compose: put a being inside another's element Formation."
                 : "Decompose: take a being out of a container. The element keeps living.");
-            // Participant token combos — same vocabulary as Publish.
-            const auto tokenCombo = [&](const char* label, std::string& token) {
-                const char* preview = token.empty() ? "the law's subject" : token.c_str();
-                ImGui::SetNextItemWidth(200.0f);
-                if (ImGui::BeginCombo(label, preview)) {
-                    if (ImGui::Selectable("the law's subject", token.empty())) {
-                        token.clear();
-                        changed = true;
-                    }
-                    if (ImGui::Selectable("@event.subject", token == "@event.subject")) {
-                        token = "@event.subject";
-                        changed = true;
-                    }
-                    if (ImGui::Selectable("@event.object", token == "@event.object")) {
-                        token = "@event.object";
-                        changed = true;
-                    }
-                    for (Singular* being : Universe::instance().beings()) {
-                        if (!being) continue;
-                        const std::string id = being->getIdentifier();
-                        if (ImGui::Selectable(id.c_str(), token == id)) {
-                            token = id;
-                            changed = true;
-                        }
-                    }
-                    ImGui::EndCombo();
-                }
-            };
-            tokenCombo("Container", node.containerToken);
-            tokenCombo("Element", node.elementToken);
+            if (singularTokenPicker("Container", node.containerToken,
+                                    "The Law's subject")) changed = true;
+            if (singularTokenPicker("Element", node.elementToken,
+                                    "The Law's subject")) changed = true;
             break;
         }
 
         case ActionNode::Kind::Destroy: {
             ImGui::TextDisabled("Remove an Object from the Zone — the delete tool as law-text.");
             ImGui::TextDisabled("Every element Formation that held it releases it first.");
-            const auto tokenCombo = [&](const char* label, std::string& token) {
-                const char* preview = token.empty() ? "the law's subject" : token.c_str();
-                ImGui::SetNextItemWidth(200.0f);
-                if (ImGui::BeginCombo(label, preview)) {
-                    if (ImGui::Selectable("the law's subject", token.empty())) {
-                        token.clear();
-                        changed = true;
-                    }
-                    if (ImGui::Selectable("@event.subject", token == "@event.subject")) {
-                        token = "@event.subject";
-                        changed = true;
-                    }
-                    if (ImGui::Selectable("@event.object", token == "@event.object")) {
-                        token = "@event.object";
-                        changed = true;
-                    }
-                    for (Singular* being : Universe::instance().beings()) {
-                        if (!being) continue;
-                        const std::string id = being->getIdentifier();
-                        if (ImGui::Selectable(id.c_str(), token == id)) {
-                            token = id;
-                            changed = true;
-                        }
-                    }
-                    ImGui::EndCombo();
-                }
-            };
-            tokenCombo("Victim", node.elementToken);
+            if (singularTokenPicker("Victim", node.elementToken,
+                                    "The Law's subject")) changed = true;
             break;
         }
 
@@ -1740,8 +1879,8 @@ bool editActionNode(ActionNode& node) {
             if (pathPicker("Amplitude path", node.input)) changed = true;
             char waveBuf[64];
             copyToBuf(waveBuf, sizeof(waveBuf), node.propertyName);
-            ImGui::SetNextItemWidth(140.0f);
-            if (ImGui::InputText("Wave type", waveBuf, sizeof(waveBuf))) {
+            if (textField("Wave type", waveBuf, sizeof(waveBuf),
+                          "sine, square, sawtooth…")) {
                 node.propertyName = waveBuf;
                 changed = true;
             }
@@ -1755,25 +1894,29 @@ bool editActionNode(ActionNode& node) {
             ImGui::TextDisabled("Mint a Zone into saves/zones/<id>/, owned by a Person, Relationship, or Community. Not a widget — this is the law text.");
             char idBuf[128];
             copyToBuf(idBuf, sizeof(idBuf), node.createType);
-            if (ImGui::InputText("Zone identifier", idBuf, sizeof(idBuf))) {
+            if (textField("Zone identifier", idBuf, sizeof(idBuf),
+                          "Stable identifier for the new Zone…")) {
                 node.createType = idBuf;
                 changed = true;
             }
             char kindBuf[64];
             copyToBuf(kindBuf, sizeof(kindBuf), node.propertyName);
-            if (ImGui::InputText("Kind (home / community-home / community-zone)", kindBuf, sizeof(kindBuf))) {
+            if (textField("Authored kind", kindBuf, sizeof(kindBuf),
+                          "home, community-home, community-zone…")) {
                 node.propertyName = kindBuf;
                 changed = true;
             }
             char ownerBuf[128];
             copyToBuf(ownerBuf, sizeof(ownerBuf), node.elementToken);
-            if (ImGui::InputText("Owner token (empty = law subject)", ownerBuf, sizeof(ownerBuf))) {
+            if (textField("Owner", ownerBuf, sizeof(ownerBuf),
+                          "Empty means the Law's subject…")) {
                 node.elementToken = ownerBuf;
                 changed = true;
             }
             char ownerKindBuf[64];
             copyToBuf(ownerKindBuf, sizeof(ownerKindBuf), node.containerToken);
-            if (ImGui::InputText("Owner kind (person / relationship / community)", ownerKindBuf, sizeof(ownerKindBuf))) {
+            if (textField("Owner kind", ownerKindBuf, sizeof(ownerKindBuf),
+                          "person, relationship, community…")) {
                 node.containerToken = ownerKindBuf;
                 changed = true;
             }
@@ -1783,40 +1926,14 @@ bool editActionNode(ActionNode& node) {
         case ActionNode::Kind::AddRelation: {
             ImGui::TextDisabled("Mint a first-class Relation between two beings in the active Zone.");
             ImGui::TextDisabled("Relations are never empty: this is authoring an interaction, not a slot.");
-            // Participant token combos — same vocabulary as AddElement/Destroy.
-            const auto tokenCombo = [&](const char* label, std::string& token) {
-                const char* preview = token.empty() ? "the law's subject" : token.c_str();
-                ImGui::SetNextItemWidth(200.0f);
-                if (ImGui::BeginCombo(label, preview)) {
-                    if (ImGui::Selectable("the law's subject", token.empty())) {
-                        token.clear();
-                        changed = true;
-                    }
-                    if (ImGui::Selectable("@event.subject", token == "@event.subject")) {
-                        token = "@event.subject";
-                        changed = true;
-                    }
-                    if (ImGui::Selectable("@event.object", token == "@event.object")) {
-                        token = "@event.object";
-                        changed = true;
-                    }
-                    for (Singular* being : Universe::instance().beings()) {
-                        if (!being) continue;
-                        const std::string id = being->getIdentifier();
-                        if (ImGui::Selectable(id.c_str(), token == id)) {
-                            token = id;
-                            changed = true;
-                        }
-                    }
-                    ImGui::EndCombo();
-                }
-            };
-            tokenCombo("Source", node.containerToken);
-            tokenCombo("Target", node.elementToken);
+            if (singularTokenPicker("Source", node.containerToken,
+                                    "The Law's subject")) changed = true;
+            if (singularTokenPicker("Target", node.elementToken,
+                                    "The Law's subject")) changed = true;
             char typeBuf[64];
             copyToBuf(typeBuf, sizeof(typeBuf), node.propertyName);
-            ImGui::SetNextItemWidth(180.0f);
-            if (ImGui::InputText("Relation type", typeBuf, sizeof(typeBuf))) {
+            if (textField("Relation type", typeBuf, sizeof(typeBuf),
+                          "Name the relationship being authored…")) {
                 node.propertyName = typeBuf;
                 changed = true;
             }
@@ -1828,21 +1945,24 @@ bool editActionNode(ActionNode& node) {
     }
     
     ImGui::Separator();
-    ImGui::Separator();
-    if (g.testSubject) {
-        if (ImGui::Button("Debug: Run this action now")) {
-            ECA::Event event;
-            event.type = "debug-test";
-            event.subject = g.testSubject;
-            event.timestamp = std::time(nullptr);
-            node.compile()(event, *g.testSubject);
-        }
-    } else {
-        ImGui::BeginDisabled();
-        ImGui::Button("Debug: Run this action now");
-        ImGui::EndDisabled();
-        if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
-            ImGui::SetTooltip("Select a subject in the world to test this action against.");
+    if (ImGui::CollapsingHeader("Test this action step")) {
+        ImGui::TextDisabled("Runs only this selected step, outside the Law's trigger and IF.");
+        if (g.testSubject) {
+            const std::string label = "Run now on " + g.selectedSubjectId;
+            if (ImGui::Button(label.c_str(), ImVec2(-1.0f, 0.0f))) {
+                ECA::Event event;
+                event.type = "debug-test";
+                event.subject = g.testSubject;
+                event.timestamp = std::time(nullptr);
+                node.compile()(event, *g.testSubject);
+            }
+        } else {
+            ImGui::BeginDisabled();
+            ImGui::Button("Select a Singular in the world to test", ImVec2(-1.0f, 0.0f));
+            ImGui::EndDisabled();
+            if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
+                ImGui::SetTooltip("Select a subject in the world to test this action against.");
+            }
         }
     }
     
@@ -2151,19 +2271,33 @@ void refreshEditBuffers() {
 
 void renderLawGraphWindow(bool* open, LawManager& laws, Singular& person,
                           Singular* testSubject) {
-    // A touch of finish: rounded frames throughout the window. RAII so the
-    // pops survive every early return.
-    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.0f);
-    ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 6.0f);
+    // The author is an inspector workspace: generous control targets, quiet
+    // surfaces, and enough spacing to scan authored meaning before values.
+    // RAII keeps every early-return path balanced.
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 6.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 8.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_PopupRounding, 8.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(10.0f, 7.0f));
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8.0f, 9.0f));
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemInnerSpacing, ImVec2(7.0f, 5.0f));
+    ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.10f, 0.12f, 0.16f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(0.14f, 0.17f, 0.22f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.14f, 0.18f, 0.24f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.20f, 0.29f, 0.40f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.16f, 0.22f, 0.30f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(0.22f, 0.32f, 0.44f, 1.0f));
     struct StyleScope {
-        ~StyleScope() { ImGui::PopStyleVar(2); }
+        ~StyleScope() {
+            ImGui::PopStyleColor(6);
+            ImGui::PopStyleVar(6);
+        }
     } styleScope;
 
     subscribeEventFeed();
     g.selectedSubjectId = testSubject ? testSubject->getIdentifier() : std::string();
     g.testSubject = testSubject;
 
-    ImGui::SetNextWindowSize(ImVec2(920, 560), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(1120, 720), ImGuiCond_FirstUseEver);
     if (!ImGui::Begin("Law Author", open)) {
         ImGui::End();
         if (g.showLawLibrary) renderLawLibraryWindow(&g.showLawLibrary, laws);
@@ -2171,17 +2305,19 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& person,
         return;
     }
 
-    if (ImGui::Button("Open Law Library")) g.showLawLibrary = true;
+    ImGui::TextColored(kHeaderColor, "LAW AUTHOR");
     ImGui::SameLine();
-    if (ImGui::Button("Open Relation Graph")) g.showLawRelations = true;
+    ImGui::TextDisabled("shape a law as WHEN / IF / THEN");
+    ImGui::SameLine(ImGui::GetWindowWidth() - 370.0f);
+    if (ImGui::Button("Law Library")) g.showLawLibrary = true;
     ImGui::SameLine();
-    ImGui::TextDisabled("Browse Laws and their authored Relations in separate windows.");
+    if (ImGui::Button("Relation Graph")) g.showLawRelations = true;
     ImGui::Separator();
 
     // ------------------------------------------------------------------
     // Left: the register of laws, and the concept registry.
     // ------------------------------------------------------------------
-    ImGui::BeginChild("law-list", ImVec2(240, 0), true);
+    ImGui::BeginChild("law-list", ImVec2(270, 0), true);
     if (ImGui::Button("+ New Law", ImVec2(-1, 0))) {
         ImGui::OpenPopup("new-law-templates");
     }
@@ -2443,13 +2579,16 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& person,
         g.selectedCard = 0;
     }
     const LawCard& card = cards[g.selectedCard];
-    ImGui::TextColored(kHeaderColor, "Editing: %s", card.label.c_str());
 
     if (g.selectedCard == 0) {
+        inspectorHeading("LAW", law->name().c_str(),
+                         "The whole authored principle. Open a section to change its meaning.",
+                         ImVec4(0.48f, 0.72f, 1.0f, 1.0f));
         char nameBuf[96];
         copyToBuf(nameBuf, sizeof(nameBuf), law->name());
-        ImGui::SetNextItemWidth(240.0f);
-        if (ImGui::InputText("Name", nameBuf, sizeof(nameBuf))) law->setName(nameBuf);
+        if (textField("Name", nameBuf, sizeof(nameBuf), "name this law")) {
+            law->setName(nameBuf);
+        }
 
         // The law's health at a glance — one row of chips.
         {
@@ -2506,16 +2645,18 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& person,
             const auto& boundTypes = laws.triggersOf(g.selectedLawId);
             ImGui::TextWrapped("%s", lawSentence(*law, &boundTypes).c_str());
         }
+        ImGui::Spacing();
 
         // Edge vs level: does the law wait for events, or watch continuously?
-        {
+        if (ImGui::CollapsingHeader("Behavior & timing",
+                                    ImGuiTreeNodeFlags_DefaultOpen)) {
             static const char* modes[] = {
                 "on event (fires when a bound trigger fires)",
                 "while true (watches every frame; fires each frame it holds)",
                 "on becoming true (watches every frame; fires once per onset)"};
             int mode = static_cast<int>(law->activation());
-            ImGui::SetNextItemWidth(360.0f);
-            if (ImGui::Combo("Activation", &mode, modes, 3)) {
+            if (comboField("Activation", mode, modes, 3,
+                           "Choose whether an event or a watched condition occasions the law.")) {
                 law->setActivation(static_cast<Law::Activation>(mode));
             }
             if (law->activation() != Law::Activation::OnEvent) {
@@ -2526,8 +2667,7 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& person,
                 static const char* watches[] = {
                     "every being in the Universe",
                     "only its targets (add them under Targets below)"};
-                ImGui::SetNextItemWidth(360.0f);
-                if (ImGui::Combo("Watches", &watch, watches, 2)) {
+                if (comboField("Watches", watch, watches, 2)) {
                     if (watch == 0) law->clearTargets();
                 }
                 if (watch == 1 && !hasTargets) {
@@ -2541,7 +2681,6 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& person,
                                        "condition alone gates it.");
                 }
             }
-        }
 
         // The drive: an authored choice — after its trigger, the law keeps
         // applying every frame until its function's authored bounds end.
@@ -2569,9 +2708,8 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& person,
                     "absorb it (the running process keeps its clock)",
                     "restart (the new trigger is a new t = 0)"};
                 int retrigger = static_cast<int>(law->retrigger());
-                ImGui::SetNextItemWidth(360.0f);
-                if (ImGui::Combo("While driving, a re-trigger will", &retrigger,
-                                 retriggerModes, 2)) {
+                if (comboField("While driving, a re-trigger will", retrigger,
+                               retriggerModes, 2)) {
                     law->setRetrigger(static_cast<Law::Retrigger>(retrigger));
                 }
             } else if (law->hasActionModel() &&
@@ -2591,16 +2729,19 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& person,
                 "the event's subject (the being the event is about)",
                 "EVERY being that satisfies the IF (the event is the occasion)"};
             int scope = static_cast<int>(law->scope());
-            ImGui::SetNextItemWidth(360.0f);
-            if (ImGui::Combo("Applies to", &scope, scopes, 2)) {
+            if (comboField("Applies to", scope, scopes, 2,
+                           "Choose who receives the action when this law fires.")) {
                 law->setScope(static_cast<Law::Scope>(scope));
             }
+        }
         }
 
         // Targets: scope a law to specific beings; empty = the Universe for
         // Everyone/continuous laws.
-        {
-            ImGui::TextColored(kHeaderColor, "Targets");
+        if (ImGui::CollapsingHeader("Reach & authorship",
+                                    ImGuiTreeNodeFlags_DefaultOpen)) {
+          {
+            ImGui::TextColored(kHeaderColor, "Targets — the named beings in reach");
             const auto members = law->targets().getMembers();
             if (members.empty()) {
                 ImGui::TextDisabled("None — Everyone/continuous laws range over the whole Universe.");
@@ -2649,13 +2790,18 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& person,
             } else {
                 ImGui::TextDisabled("Authored by: %s", authors.c_str());
             }
+          }
         }
 
-        editTriggers(laws, *law);
-        ImGui::Separator();
+        if (ImGui::CollapsingHeader("Triggers",
+                                    ImGuiTreeNodeFlags_DefaultOpen)) {
+            editTriggers(laws, *law);
+        }
 
         // Feedback: what this law has actually done. Authoring without
         // feedback is guessing.
+        if (ImGui::CollapsingHeader("Test & observe",
+                                    ImGuiTreeNodeFlags_DefaultOpen)) {
         ImGui::TextColored(kHeaderColor, "Recent applications");
         const auto& log = law->applicationLog();
         if (log.empty()) {
@@ -2702,9 +2848,11 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& person,
         } else {
             ImGui::TextDisabled("Select an object in the 3D world to test-apply this law.");
         }
-        ImGui::Separator();
+        }
 
-        if (!law->hasConditionModel()) {
+        if (ImGui::CollapsingHeader("Structure",
+                                    ImGuiTreeNodeFlags_DefaultOpen)) {
+          if (!law->hasConditionModel()) {
             if (ImGui::Button("+ Add condition")) {
                 ConditionNode seed;
                 seed.kind = ConditionNode::Kind::Compare;
@@ -2724,8 +2872,10 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& person,
             }
             ImGui::SameLine();
             ImGui::TextDisabled("(no action: the law recognizes but does not act)");
+          }
         }
 
+        if (ImGui::CollapsingHeader("Law management")) {
         if (ImGui::Button("Duplicate law")) {
             nlohmann::json copy = law->toJson();
             copy.erase("id");   // a duplicate is a NEW being, not an alias
@@ -2771,7 +2921,10 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& person,
             if (ImGui::Button("Cancel", ImVec2(120, 0))) ImGui::CloseCurrentPopup();
             ImGui::EndPopup();
         }
+        }
     } else if (card.kind == LawCard::Kind::Event) {
+        inspectorHeading("WHEN", "Triggers", "The events that occasion this law.",
+                         ImVec4(0.72f, 0.52f, 0.94f, 1.0f));
         editTriggers(laws, *law);
     } else if (card.kind == LawCard::Kind::Condition && law->hasConditionModel()) {
         ConditionModel model = *law->conditionModel();

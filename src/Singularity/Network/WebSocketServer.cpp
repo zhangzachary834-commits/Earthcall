@@ -76,7 +76,7 @@ static nlohmann::json buildWorldSnapshotJson() {
     } else {
         root["active_zone_name"] = "Default Zone";
         root["active_zone_id"] = "zone-default";
-        root["active_zone_owner"] = "Player";
+        root["active_zone_owner"] = "Person";
     }
 
     auto& zones = mgr.zones();
@@ -812,7 +812,7 @@ struct WebSocketServer::Impl {
                 std::string zname = j.value("name", "New Zone");
                 std::string kind = j.value("kind", "zone");
                 Person* p = ::Core::Engine::instance().getPerson();
-                std::string owner = p ? p->getIdentifier() : "Player";
+                std::string owner = p ? p->getIdentifier() : "Person";
                 mgr.authorZone(zname, owner, kind);
                 broadcast(buildWorldSnapshotJson().dump());
                 return;

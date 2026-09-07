@@ -3,6 +3,7 @@
 #include "Person/Body/Body.hpp"
 #include "Person/Body/BodyPart/BodyPart.hpp"
 #include <imgui.h>
+#include <cstring>
 
 namespace Rendering {
 
@@ -18,7 +19,47 @@ namespace Rendering {
         auto& state = getCreatorConsoleState();
         Body& body = player->getBody();
 
-        ImGui::Text("Person: %s", player->getIdentifier().c_str());
+        // Person ID is read-only (what this Person IS)
+        if (player->hasIdentity()) {
+            ImGui::Text("Person ID: %s", player->personId().toString().c_str());
+        } else {
+            ImGui::TextDisabled("Person ID: (unauthenticated)");
+        }
+
+        // Editable Display Name (what this Person is CALLED)
+        static char nameBuf[128] = "";
+        static Person* lastPerson = nullptr;
+        static std::string lastSyncedName = "";
+        static std::string renameStatus = "";
+
+        if (player != lastPerson || (player->getDisplayName() != lastSyncedName && !ImGui::IsItemActive())) {
+            std::strncpy(nameBuf, player->getDisplayName().c_str(), sizeof(nameBuf) - 1);
+            nameBuf[sizeof(nameBuf) - 1] = '\0';
+            lastPerson = player;
+            lastSyncedName = player->getDisplayName();
+            renameStatus.clear();
+        }
+
+        ImGui::SetNextItemWidth(200.0f);
+        bool enterPressed = ImGui::InputText("Name", nameBuf, sizeof(nameBuf), ImGuiInputTextFlags_EnterReturnsTrue);
+        ImGui::SameLine();
+        if (ImGui::Button("Rename") || enterPressed) {
+            std::string newName(nameBuf);
+            if (newName.empty() || newName == "Player" || newName == "player") {
+                newName = "Person";
+            }
+            if (newName != player->getDisplayName()) {
+                player->rename(newName);
+                lastSyncedName = player->getDisplayName();
+                std::strncpy(nameBuf, lastSyncedName.c_str(), sizeof(nameBuf) - 1);
+                nameBuf[sizeof(nameBuf) - 1] = '\0';
+                renameStatus = "Renamed to " + newName;
+            }
+        }
+        if (!renameStatus.empty()) {
+            ImGui::TextColored(ImVec4(0.4f, 0.9f, 0.4f, 1.0f), "%s", renameStatus.c_str());
+        }
+
         ImGui::Checkbox("Design Lock", &state.characterDesignLocked);
 
         if (!state.selectedCharacterPart && !body.parts.empty()) {
