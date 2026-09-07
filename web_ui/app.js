@@ -81,6 +81,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     inputField.addEventListener('input', () => {
-        emitBtn.disabled = inputField.value.trim() === '';
+        const isEmpty = inputField.value.trim() === '';
+        emitBtn.disabled = isEmpty;
+        emitBtn.title = isEmpty ? "Enter a word to emit" : "Emit word (Enter)";
+        emitBtn.setAttribute('aria-disabled', isEmpty.toString());
     });
 });
