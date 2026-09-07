@@ -6862,7 +6862,7 @@
       ],
       "identifier": "Go Game",
       "name": "Go Game",
-      "owner": "Player",
+      "owner": "Zach",
       "parentZone": "",
       "qualities": {
         "kind": "go"

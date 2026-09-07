@@ -1127,7 +1127,6 @@
         ],
         "conditionMode": "all",
         "conditionModel": {
-          "kind": 3,
           "children": [
             {
               "kind": 0,
@@ -1140,14 +1139,15 @@
             },
             {
               "kind": 0,
-              "path": "@state.studio.voice",
               "op": 0,
               "operand": {
                 "t": "string",
                 "v": "triangle"
-              }
+              },
+              "path": "@state.studio.voice"
             }
-          ]
+          ],
+          "kind": 3
         },
         "conditionSubjects": [],
         "drives": false,
@@ -1170,12 +1170,12 @@
             "weight": 1.0
           },
           {
-            "type": "revised-by",
+            "directed": true,
             "entityA": "law-studio-pad-play",
             "entityB": "studio.author.codex",
-            "directed": true,
-            "weight": 1.0,
-            "events": []
+            "events": [],
+            "type": "revised-by",
+            "weight": 1.0
           }
         ],
         "retrigger": 0,
@@ -1420,8 +1420,6 @@
               "targetToken": "category.art.stroke"
             },
             {
-              "kind": 8,
-              "path": "color.r",
               "bindings": {
                 "v": "@state.studio.inkR"
               },
@@ -1440,11 +1438,11 @@
                     }
                   }
                 ]
-              }
+              },
+              "kind": 8,
+              "path": "color.r"
             },
             {
-              "kind": 8,
-              "path": "color.g",
               "bindings": {
                 "v": "@state.studio.inkG"
               },
@@ -1463,11 +1461,11 @@
                     }
                   }
                 ]
-              }
+              },
+              "kind": 8,
+              "path": "color.g"
             },
             {
-              "kind": 8,
-              "path": "color.b",
               "bindings": {
                 "v": "@state.studio.inkB"
               },
@@ -1486,7 +1484,9 @@
                     }
                   }
                 ]
-              }
+              },
+              "kind": 8,
+              "path": "color.b"
             }
           ],
           "createType": "art.stroke.segment",
@@ -1724,32 +1724,7 @@
         "targets": []
       },
       {
-        "id": "law-studio-resonance-press-2d",
-        "name": "Studio: Press feedback in 2d",
-        "enabled": true,
-        "authority": 0,
-        "activation": 0,
-        "scope": 0,
-        "drives": false,
-        "retrigger": 0,
-        "conditionMode": "all",
-        "authors": [
-          "studio.author.codex"
-        ],
-        "conditionSubjects": [],
-        "targets": [],
-        "conditionModel": {
-          "kind": 0,
-          "path": "restY2D",
-          "op": 4,
-          "operand": {
-            "t": "double",
-            "v": -100
-          }
-        },
         "actionModel": {
-          "kind": 8,
-          "path": "y2D",
           "bindings": {
             "r": "restY2D"
           },
@@ -1772,47 +1747,47 @@
                 }
               }
             ]
-          }
+          },
+          "kind": 8,
+          "path": "y2D"
         },
-        "provenance": [
-          {
-            "type": "authored-by",
-            "entityA": "law-studio-resonance-press-2d",
-            "entityB": "studio.author.codex",
-            "directed": true,
-            "weight": 1.0,
-            "events": []
-          }
-        ],
-        "applicationLog": []
-      },
-      {
-        "id": "law-studio-resonance-press-3d",
-        "name": "Studio: Press feedback in 3d",
-        "enabled": true,
-        "authority": 0,
         "activation": 0,
-        "scope": 0,
-        "drives": false,
-        "retrigger": 0,
-        "conditionMode": "all",
+        "applicationLog": [],
+        "authority": 0,
         "authors": [
           "studio.author.codex"
         ],
-        "conditionSubjects": [],
-        "targets": [],
+        "conditionMode": "all",
         "conditionModel": {
           "kind": 0,
-          "path": "restY",
           "op": 4,
           "operand": {
             "t": "double",
             "v": -100
-          }
+          },
+          "path": "restY2D"
         },
+        "conditionSubjects": [],
+        "drives": false,
+        "enabled": true,
+        "id": "law-studio-resonance-press-2d",
+        "name": "Studio: Press feedback in 2d",
+        "provenance": [
+          {
+            "directed": true,
+            "entityA": "law-studio-resonance-press-2d",
+            "entityB": "studio.author.codex",
+            "events": [],
+            "type": "authored-by",
+            "weight": 1.0
+          }
+        ],
+        "retrigger": 0,
+        "scope": 0,
+        "targets": []
+      },
+      {
         "actionModel": {
-          "kind": 8,
-          "path": "position.y",
           "bindings": {
             "r": "restY"
           },
@@ -1835,568 +1810,571 @@
                 }
               }
             ]
-          }
+          },
+          "kind": 8,
+          "path": "position.y"
         },
-        "provenance": [
-          {
-            "type": "authored-by",
-            "entityA": "law-studio-resonance-press-3d",
-            "entityB": "studio.author.codex",
-            "directed": true,
-            "weight": 1.0,
-            "events": []
-          }
-        ],
-        "applicationLog": []
-      },
-      {
-        "id": "law-studio-resonance-voice-triangle",
-        "name": "Studio: Select triangle voice",
-        "enabled": true,
-        "authority": 0,
         "activation": 0,
-        "scope": 0,
-        "drives": false,
-        "retrigger": 0,
-        "conditionMode": "all",
+        "applicationLog": [],
+        "authority": 0,
         "authors": [
           "studio.author.codex"
         ],
-        "conditionSubjects": [],
-        "targets": [],
+        "conditionMode": "all",
         "conditionModel": {
           "kind": 0,
-          "path": "studioVoice",
+          "op": 4,
+          "operand": {
+            "t": "double",
+            "v": -100
+          },
+          "path": "restY"
+        },
+        "conditionSubjects": [],
+        "drives": false,
+        "enabled": true,
+        "id": "law-studio-resonance-press-3d",
+        "name": "Studio: Press feedback in 3d",
+        "provenance": [
+          {
+            "directed": true,
+            "entityA": "law-studio-resonance-press-3d",
+            "entityB": "studio.author.codex",
+            "events": [],
+            "type": "authored-by",
+            "weight": 1.0
+          }
+        ],
+        "retrigger": 0,
+        "scope": 0,
+        "targets": []
+      },
+      {
+        "actionModel": {
+          "children": [
+            {
+              "kind": 0,
+              "operand": {
+                "t": "string",
+                "v": "triangle"
+              },
+              "path": "@state.studio.voice"
+            },
+            {
+              "kind": 0,
+              "operand": {
+                "t": "string",
+                "v": "VOICE / TRIANGLE"
+              },
+              "path": "@hud.resonance.voice-caption.label2D"
+            }
+          ],
+          "kind": 5
+        },
+        "activation": 0,
+        "applicationLog": [],
+        "authority": 0,
+        "authors": [
+          "studio.author.codex"
+        ],
+        "conditionMode": "all",
+        "conditionModel": {
+          "kind": 0,
           "op": 0,
           "operand": {
             "t": "string",
             "v": "triangle"
-          }
+          },
+          "path": "studioVoice"
         },
+        "conditionSubjects": [],
+        "drives": false,
+        "enabled": true,
+        "id": "law-studio-resonance-voice-triangle",
+        "name": "Studio: Select triangle voice",
+        "provenance": [
+          {
+            "directed": true,
+            "entityA": "law-studio-resonance-voice-triangle",
+            "entityB": "studio.author.codex",
+            "events": [],
+            "type": "authored-by",
+            "weight": 1.0
+          }
+        ],
+        "retrigger": 0,
+        "scope": 0,
+        "targets": []
+      },
+      {
         "actionModel": {
-          "kind": 5,
           "children": [
             {
               "kind": 0,
-              "path": "@state.studio.voice",
               "operand": {
                 "t": "string",
-                "v": "triangle"
-              }
+                "v": "sine"
+              },
+              "path": "@state.studio.voice"
             },
             {
               "kind": 0,
-              "path": "@hud.resonance.voice-caption.label2D",
               "operand": {
                 "t": "string",
-                "v": "VOICE / TRIANGLE"
-              }
+                "v": "VOICE / SINE"
+              },
+              "path": "@hud.resonance.voice-caption.label2D"
             }
-          ]
+          ],
+          "kind": 5
         },
-        "provenance": [
-          {
-            "type": "authored-by",
-            "entityA": "law-studio-resonance-voice-triangle",
-            "entityB": "studio.author.codex",
-            "directed": true,
-            "weight": 1.0,
-            "events": []
-          }
-        ],
-        "applicationLog": []
-      },
-      {
-        "id": "law-studio-resonance-voice-sine",
-        "name": "Studio: Select sine voice",
-        "enabled": true,
-        "authority": 0,
         "activation": 0,
-        "scope": 0,
-        "drives": false,
-        "retrigger": 0,
-        "conditionMode": "all",
+        "applicationLog": [],
+        "authority": 0,
         "authors": [
           "studio.author.codex"
         ],
-        "conditionSubjects": [],
-        "targets": [],
+        "conditionMode": "all",
         "conditionModel": {
           "kind": 0,
-          "path": "studioVoice",
           "op": 0,
           "operand": {
             "t": "string",
             "v": "sine"
-          }
+          },
+          "path": "studioVoice"
         },
-        "actionModel": {
-          "kind": 5,
-          "children": [
-            {
-              "kind": 0,
-              "path": "@state.studio.voice",
-              "operand": {
-                "t": "string",
-                "v": "sine"
-              }
-            },
-            {
-              "kind": 0,
-              "path": "@hud.resonance.voice-caption.label2D",
-              "operand": {
-                "t": "string",
-                "v": "VOICE / SINE"
-              }
-            }
-          ]
-        },
+        "conditionSubjects": [],
+        "drives": false,
+        "enabled": true,
+        "id": "law-studio-resonance-voice-sine",
+        "name": "Studio: Select sine voice",
         "provenance": [
           {
-            "type": "authored-by",
+            "directed": true,
             "entityA": "law-studio-resonance-voice-sine",
             "entityB": "studio.author.codex",
-            "directed": true,
-            "weight": 1.0,
-            "events": []
+            "events": [],
+            "type": "authored-by",
+            "weight": 1.0
           }
         ],
-        "applicationLog": []
+        "retrigger": 0,
+        "scope": 0,
+        "targets": []
       },
       {
-        "id": "law-studio-resonance-play-sine",
-        "name": "Studio: Play sine note",
-        "enabled": true,
-        "authority": 0,
+        "actionModel": {
+          "children": [
+            {
+              "input": "acoustic.amplitude",
+              "kind": 18,
+              "path": "acoustic.frequency",
+              "propertyName": "sine"
+            },
+            {
+              "eventType": "note-played",
+              "kind": 10,
+              "publishObject": "",
+              "publishSubject": ""
+            }
+          ],
+          "kind": 5
+        },
         "activation": 0,
-        "scope": 0,
-        "drives": false,
-        "retrigger": 0,
-        "conditionMode": "all",
+        "applicationLog": [],
+        "authority": 0,
         "authors": [
           "studio.author.codex"
         ],
-        "conditionSubjects": [],
-        "targets": [],
+        "conditionMode": "all",
         "conditionModel": {
-          "kind": 3,
           "children": [
             {
               "kind": 0,
-              "path": "isChordPad",
               "op": 0,
               "operand": {
                 "t": "bool",
                 "v": true
-              }
+              },
+              "path": "isChordPad"
             },
             {
               "kind": 0,
-              "path": "@state.studio.voice",
               "op": 0,
               "operand": {
                 "t": "string",
                 "v": "sine"
-              }
+              },
+              "path": "@state.studio.voice"
             }
-          ]
+          ],
+          "kind": 3
         },
-        "actionModel": {
-          "kind": 5,
-          "children": [
-            {
-              "kind": 18,
-              "path": "acoustic.frequency",
-              "input": "acoustic.amplitude",
-              "propertyName": "sine"
-            },
-            {
-              "kind": 10,
-              "eventType": "note-played",
-              "publishSubject": "",
-              "publishObject": ""
-            }
-          ]
-        },
+        "conditionSubjects": [],
+        "drives": false,
+        "enabled": true,
+        "id": "law-studio-resonance-play-sine",
+        "name": "Studio: Play sine note",
         "provenance": [
           {
-            "type": "authored-by",
+            "directed": true,
             "entityA": "law-studio-resonance-play-sine",
             "entityB": "studio.author.codex",
-            "directed": true,
-            "weight": 1.0,
-            "events": []
+            "events": [],
+            "type": "authored-by",
+            "weight": 1.0
           }
         ],
-        "applicationLog": []
+        "retrigger": 0,
+        "scope": 0,
+        "targets": []
       },
       {
-        "id": "law-studio-resonance-voice-square",
-        "name": "Studio: Select square voice",
-        "enabled": true,
-        "authority": 0,
+        "actionModel": {
+          "children": [
+            {
+              "kind": 0,
+              "operand": {
+                "t": "string",
+                "v": "square"
+              },
+              "path": "@state.studio.voice"
+            },
+            {
+              "kind": 0,
+              "operand": {
+                "t": "string",
+                "v": "VOICE / SQUARE"
+              },
+              "path": "@hud.resonance.voice-caption.label2D"
+            }
+          ],
+          "kind": 5
+        },
         "activation": 0,
-        "scope": 0,
-        "drives": false,
-        "retrigger": 0,
-        "conditionMode": "all",
+        "applicationLog": [],
+        "authority": 0,
         "authors": [
           "studio.author.codex"
         ],
-        "conditionSubjects": [],
-        "targets": [],
+        "conditionMode": "all",
         "conditionModel": {
           "kind": 0,
-          "path": "studioVoice",
           "op": 0,
           "operand": {
             "t": "string",
             "v": "square"
-          }
+          },
+          "path": "studioVoice"
         },
-        "actionModel": {
-          "kind": 5,
-          "children": [
-            {
-              "kind": 0,
-              "path": "@state.studio.voice",
-              "operand": {
-                "t": "string",
-                "v": "square"
-              }
-            },
-            {
-              "kind": 0,
-              "path": "@hud.resonance.voice-caption.label2D",
-              "operand": {
-                "t": "string",
-                "v": "VOICE / SQUARE"
-              }
-            }
-          ]
-        },
+        "conditionSubjects": [],
+        "drives": false,
+        "enabled": true,
+        "id": "law-studio-resonance-voice-square",
+        "name": "Studio: Select square voice",
         "provenance": [
           {
-            "type": "authored-by",
+            "directed": true,
             "entityA": "law-studio-resonance-voice-square",
             "entityB": "studio.author.codex",
-            "directed": true,
-            "weight": 1.0,
-            "events": []
+            "events": [],
+            "type": "authored-by",
+            "weight": 1.0
           }
         ],
-        "applicationLog": []
+        "retrigger": 0,
+        "scope": 0,
+        "targets": []
       },
       {
-        "id": "law-studio-resonance-play-square",
-        "name": "Studio: Play square note",
-        "enabled": true,
-        "authority": 0,
+        "actionModel": {
+          "children": [
+            {
+              "input": "acoustic.amplitude",
+              "kind": 18,
+              "path": "acoustic.frequency",
+              "propertyName": "square"
+            },
+            {
+              "eventType": "note-played",
+              "kind": 10,
+              "publishObject": "",
+              "publishSubject": ""
+            }
+          ],
+          "kind": 5
+        },
         "activation": 0,
-        "scope": 0,
-        "drives": false,
-        "retrigger": 0,
-        "conditionMode": "all",
+        "applicationLog": [],
+        "authority": 0,
         "authors": [
           "studio.author.codex"
         ],
-        "conditionSubjects": [],
-        "targets": [],
+        "conditionMode": "all",
         "conditionModel": {
-          "kind": 3,
           "children": [
             {
               "kind": 0,
-              "path": "isChordPad",
               "op": 0,
               "operand": {
                 "t": "bool",
                 "v": true
-              }
+              },
+              "path": "isChordPad"
             },
             {
               "kind": 0,
-              "path": "@state.studio.voice",
               "op": 0,
               "operand": {
                 "t": "string",
                 "v": "square"
-              }
+              },
+              "path": "@state.studio.voice"
             }
-          ]
+          ],
+          "kind": 3
         },
-        "actionModel": {
-          "kind": 5,
-          "children": [
-            {
-              "kind": 18,
-              "path": "acoustic.frequency",
-              "input": "acoustic.amplitude",
-              "propertyName": "square"
-            },
-            {
-              "kind": 10,
-              "eventType": "note-played",
-              "publishSubject": "",
-              "publishObject": ""
-            }
-          ]
-        },
+        "conditionSubjects": [],
+        "drives": false,
+        "enabled": true,
+        "id": "law-studio-resonance-play-square",
+        "name": "Studio: Play square note",
         "provenance": [
           {
-            "type": "authored-by",
+            "directed": true,
             "entityA": "law-studio-resonance-play-square",
             "entityB": "studio.author.codex",
-            "directed": true,
-            "weight": 1.0,
-            "events": []
+            "events": [],
+            "type": "authored-by",
+            "weight": 1.0
           }
         ],
-        "applicationLog": []
+        "retrigger": 0,
+        "scope": 0,
+        "targets": []
       },
       {
-        "id": "law-studio-resonance-ink-solar",
-        "name": "Studio: Select solar ink",
-        "enabled": true,
-        "authority": 0,
+        "actionModel": {
+          "children": [
+            {
+              "kind": 0,
+              "operand": {
+                "t": "double",
+                "v": 1.0
+              },
+              "path": "@state.studio.inkR"
+            },
+            {
+              "kind": 0,
+              "operand": {
+                "t": "double",
+                "v": 0.85
+              },
+              "path": "@state.studio.inkG"
+            },
+            {
+              "kind": 0,
+              "operand": {
+                "t": "double",
+                "v": 0.15
+              },
+              "path": "@state.studio.inkB"
+            },
+            {
+              "kind": 0,
+              "operand": {
+                "t": "string",
+                "v": "INK / SOLAR"
+              },
+              "path": "@hud.resonance.ink-caption.label2D"
+            }
+          ],
+          "kind": 5
+        },
         "activation": 0,
-        "scope": 0,
-        "drives": false,
-        "retrigger": 0,
-        "conditionMode": "all",
+        "applicationLog": [],
+        "authority": 0,
         "authors": [
           "studio.author.codex"
         ],
-        "conditionSubjects": [],
-        "targets": [],
+        "conditionMode": "all",
         "conditionModel": {
           "kind": 0,
-          "path": "studioInk",
           "op": 0,
           "operand": {
             "t": "string",
             "v": "SOLAR"
-          }
+          },
+          "path": "studioInk"
         },
+        "conditionSubjects": [],
+        "drives": false,
+        "enabled": true,
+        "id": "law-studio-resonance-ink-solar",
+        "name": "Studio: Select solar ink",
+        "provenance": [
+          {
+            "directed": true,
+            "entityA": "law-studio-resonance-ink-solar",
+            "entityB": "studio.author.codex",
+            "events": [],
+            "type": "authored-by",
+            "weight": 1.0
+          }
+        ],
+        "retrigger": 0,
+        "scope": 0,
+        "targets": []
+      },
+      {
         "actionModel": {
-          "kind": 5,
           "children": [
             {
               "kind": 0,
-              "path": "@state.studio.inkR",
               "operand": {
                 "t": "double",
-                "v": 1.0
-              }
+                "v": 0.22
+              },
+              "path": "@state.studio.inkR"
             },
             {
               "kind": 0,
-              "path": "@state.studio.inkG",
               "operand": {
                 "t": "double",
-                "v": 0.85
-              }
+                "v": 0.88
+              },
+              "path": "@state.studio.inkG"
             },
             {
               "kind": 0,
-              "path": "@state.studio.inkB",
               "operand": {
                 "t": "double",
-                "v": 0.15
-              }
+                "v": 0.82
+              },
+              "path": "@state.studio.inkB"
             },
             {
               "kind": 0,
-              "path": "@hud.resonance.ink-caption.label2D",
               "operand": {
                 "t": "string",
-                "v": "INK / SOLAR"
-              }
+                "v": "INK / TIDAL"
+              },
+              "path": "@hud.resonance.ink-caption.label2D"
             }
-          ]
+          ],
+          "kind": 5
         },
-        "provenance": [
-          {
-            "type": "authored-by",
-            "entityA": "law-studio-resonance-ink-solar",
-            "entityB": "studio.author.codex",
-            "directed": true,
-            "weight": 1.0,
-            "events": []
-          }
-        ],
-        "applicationLog": []
-      },
-      {
-        "id": "law-studio-resonance-ink-tidal",
-        "name": "Studio: Select tidal ink",
-        "enabled": true,
-        "authority": 0,
         "activation": 0,
-        "scope": 0,
-        "drives": false,
-        "retrigger": 0,
-        "conditionMode": "all",
+        "applicationLog": [],
+        "authority": 0,
         "authors": [
           "studio.author.codex"
         ],
-        "conditionSubjects": [],
-        "targets": [],
+        "conditionMode": "all",
         "conditionModel": {
           "kind": 0,
-          "path": "studioInk",
           "op": 0,
           "operand": {
             "t": "string",
             "v": "TIDAL"
-          }
+          },
+          "path": "studioInk"
         },
+        "conditionSubjects": [],
+        "drives": false,
+        "enabled": true,
+        "id": "law-studio-resonance-ink-tidal",
+        "name": "Studio: Select tidal ink",
+        "provenance": [
+          {
+            "directed": true,
+            "entityA": "law-studio-resonance-ink-tidal",
+            "entityB": "studio.author.codex",
+            "events": [],
+            "type": "authored-by",
+            "weight": 1.0
+          }
+        ],
+        "retrigger": 0,
+        "scope": 0,
+        "targets": []
+      },
+      {
         "actionModel": {
-          "kind": 5,
           "children": [
             {
               "kind": 0,
-              "path": "@state.studio.inkR",
               "operand": {
                 "t": "double",
-                "v": 0.22
-              }
+                "v": 0.85
+              },
+              "path": "@state.studio.inkR"
             },
             {
               "kind": 0,
-              "path": "@state.studio.inkG",
               "operand": {
                 "t": "double",
-                "v": 0.88
-              }
+                "v": 0.4
+              },
+              "path": "@state.studio.inkG"
             },
             {
               "kind": 0,
-              "path": "@state.studio.inkB",
               "operand": {
                 "t": "double",
-                "v": 0.82
-              }
+                "v": 0.95
+              },
+              "path": "@state.studio.inkB"
             },
             {
               "kind": 0,
-              "path": "@hud.resonance.ink-caption.label2D",
               "operand": {
                 "t": "string",
-                "v": "INK / TIDAL"
-              }
+                "v": "INK / ORCHID"
+              },
+              "path": "@hud.resonance.ink-caption.label2D"
             }
-          ]
+          ],
+          "kind": 5
         },
-        "provenance": [
-          {
-            "type": "authored-by",
-            "entityA": "law-studio-resonance-ink-tidal",
-            "entityB": "studio.author.codex",
-            "directed": true,
-            "weight": 1.0,
-            "events": []
-          }
-        ],
-        "applicationLog": []
-      },
-      {
-        "id": "law-studio-resonance-ink-orchid",
-        "name": "Studio: Select orchid ink",
-        "enabled": true,
-        "authority": 0,
         "activation": 0,
-        "scope": 0,
-        "drives": false,
-        "retrigger": 0,
-        "conditionMode": "all",
+        "applicationLog": [],
+        "authority": 0,
         "authors": [
           "studio.author.codex"
         ],
-        "conditionSubjects": [],
-        "targets": [],
+        "conditionMode": "all",
         "conditionModel": {
           "kind": 0,
-          "path": "studioInk",
           "op": 0,
           "operand": {
             "t": "string",
             "v": "ORCHID"
-          }
+          },
+          "path": "studioInk"
         },
-        "actionModel": {
-          "kind": 5,
-          "children": [
-            {
-              "kind": 0,
-              "path": "@state.studio.inkR",
-              "operand": {
-                "t": "double",
-                "v": 0.85
-              }
-            },
-            {
-              "kind": 0,
-              "path": "@state.studio.inkG",
-              "operand": {
-                "t": "double",
-                "v": 0.4
-              }
-            },
-            {
-              "kind": 0,
-              "path": "@state.studio.inkB",
-              "operand": {
-                "t": "double",
-                "v": 0.95
-              }
-            },
-            {
-              "kind": 0,
-              "path": "@hud.resonance.ink-caption.label2D",
-              "operand": {
-                "t": "string",
-                "v": "INK / ORCHID"
-              }
-            }
-          ]
-        },
+        "conditionSubjects": [],
+        "drives": false,
+        "enabled": true,
+        "id": "law-studio-resonance-ink-orchid",
+        "name": "Studio: Select orchid ink",
         "provenance": [
           {
-            "type": "authored-by",
+            "directed": true,
             "entityA": "law-studio-resonance-ink-orchid",
             "entityB": "studio.author.codex",
-            "directed": true,
-            "weight": 1.0,
-            "events": []
+            "events": [],
+            "type": "authored-by",
+            "weight": 1.0
           }
         ],
-        "applicationLog": []
+        "retrigger": 0,
+        "scope": 0,
+        "targets": []
       },
       {
-        "id": "law-studio-resonance-struck",
-        "name": "Studio: A played note strikes its light",
-        "enabled": true,
-        "authority": 0,
-        "activation": 0,
-        "scope": 1,
-        "drives": false,
-        "retrigger": 0,
-        "conditionMode": "all",
-        "authors": [
-          "studio.author.codex"
-        ],
-        "conditionSubjects": [],
-        "targets": [],
-        "conditionModel": {
-          "kind": 0,
-          "path": "resonanceNote",
-          "op": 0,
-          "operandPath": "@event.subject.noteName"
-        },
         "actionModel": {
-          "kind": 8,
-          "path": "struckAt",
           "bindings": {
             "t": "time"
           },
@@ -2415,466 +2393,462 @@
                 }
               }
             ]
-          }
+          },
+          "kind": 8,
+          "path": "struckAt"
         },
-        "provenance": [
-          {
-            "type": "authored-by",
-            "entityA": "law-studio-resonance-struck",
-            "entityB": "studio.author.codex",
-            "directed": true,
-            "weight": 1.0,
-            "events": []
-          }
-        ],
-        "applicationLog": []
-      },
-      {
-        "id": "law-studio-resonance-readout-c5",
-        "name": "Studio: Show the last note C5",
-        "enabled": true,
-        "authority": 0,
         "activation": 0,
-        "scope": 0,
-        "drives": false,
-        "retrigger": 0,
-        "conditionMode": "all",
+        "applicationLog": [],
+        "authority": 0,
         "authors": [
           "studio.author.codex"
         ],
-        "conditionSubjects": [],
-        "targets": [],
+        "conditionMode": "all",
         "conditionModel": {
           "kind": 0,
-          "path": "noteName",
           "op": 0,
-          "operand": {
-            "t": "string",
-            "v": "C5"
-          }
+          "operandPath": "@event.subject.noteName",
+          "path": "resonanceNote"
         },
+        "conditionSubjects": [],
+        "drives": false,
+        "enabled": true,
+        "id": "law-studio-resonance-struck",
+        "name": "Studio: A played note strikes its light",
+        "provenance": [
+          {
+            "directed": true,
+            "entityA": "law-studio-resonance-struck",
+            "entityB": "studio.author.codex",
+            "events": [],
+            "type": "authored-by",
+            "weight": 1.0
+          }
+        ],
+        "retrigger": 0,
+        "scope": 1,
+        "targets": []
+      },
+      {
         "actionModel": {
-          "kind": 5,
           "children": [
             {
               "kind": 0,
-              "path": "@hud.resonance.note.label2D",
               "operand": {
                 "t": "string",
                 "v": "C5 / PLAYED"
-              }
+              },
+              "path": "@hud.resonance.note.label2D"
             },
             {
               "kind": 0,
-              "path": "@hud.resonance.note.color",
               "operand": {
                 "t": "vec3",
                 "x": 0.94,
                 "y": 0.32,
                 "z": 0.43
-              }
+              },
+              "path": "@hud.resonance.note.color"
             }
-          ]
+          ],
+          "kind": 5
         },
-        "provenance": [
-          {
-            "type": "authored-by",
-            "entityA": "law-studio-resonance-readout-c5",
-            "entityB": "studio.author.codex",
-            "directed": true,
-            "weight": 1.0,
-            "events": []
-          }
-        ],
-        "applicationLog": []
-      },
-      {
-        "id": "law-studio-resonance-readout-d5",
-        "name": "Studio: Show the last note D5",
-        "enabled": true,
-        "authority": 0,
         "activation": 0,
-        "scope": 0,
-        "drives": false,
-        "retrigger": 0,
-        "conditionMode": "all",
+        "applicationLog": [],
+        "authority": 0,
         "authors": [
           "studio.author.codex"
         ],
-        "conditionSubjects": [],
-        "targets": [],
+        "conditionMode": "all",
         "conditionModel": {
           "kind": 0,
-          "path": "noteName",
           "op": 0,
           "operand": {
             "t": "string",
-            "v": "D5"
-          }
+            "v": "C5"
+          },
+          "path": "noteName"
         },
+        "conditionSubjects": [],
+        "drives": false,
+        "enabled": true,
+        "id": "law-studio-resonance-readout-c5",
+        "name": "Studio: Show the last note C5",
+        "provenance": [
+          {
+            "directed": true,
+            "entityA": "law-studio-resonance-readout-c5",
+            "entityB": "studio.author.codex",
+            "events": [],
+            "type": "authored-by",
+            "weight": 1.0
+          }
+        ],
+        "retrigger": 0,
+        "scope": 0,
+        "targets": []
+      },
+      {
         "actionModel": {
-          "kind": 5,
           "children": [
             {
               "kind": 0,
-              "path": "@hud.resonance.note.label2D",
               "operand": {
                 "t": "string",
                 "v": "D5 / PLAYED"
-              }
+              },
+              "path": "@hud.resonance.note.label2D"
             },
             {
               "kind": 0,
-              "path": "@hud.resonance.note.color",
               "operand": {
                 "t": "vec3",
                 "x": 1.0,
                 "y": 0.53,
                 "z": 0.3
-              }
+              },
+              "path": "@hud.resonance.note.color"
             }
-          ]
+          ],
+          "kind": 5
         },
-        "provenance": [
-          {
-            "type": "authored-by",
-            "entityA": "law-studio-resonance-readout-d5",
-            "entityB": "studio.author.codex",
-            "directed": true,
-            "weight": 1.0,
-            "events": []
-          }
-        ],
-        "applicationLog": []
-      },
-      {
-        "id": "law-studio-resonance-readout-e5",
-        "name": "Studio: Show the last note E5",
-        "enabled": true,
-        "authority": 0,
         "activation": 0,
-        "scope": 0,
-        "drives": false,
-        "retrigger": 0,
-        "conditionMode": "all",
+        "applicationLog": [],
+        "authority": 0,
         "authors": [
           "studio.author.codex"
         ],
-        "conditionSubjects": [],
-        "targets": [],
+        "conditionMode": "all",
         "conditionModel": {
           "kind": 0,
-          "path": "noteName",
           "op": 0,
           "operand": {
             "t": "string",
-            "v": "E5"
-          }
+            "v": "D5"
+          },
+          "path": "noteName"
         },
+        "conditionSubjects": [],
+        "drives": false,
+        "enabled": true,
+        "id": "law-studio-resonance-readout-d5",
+        "name": "Studio: Show the last note D5",
+        "provenance": [
+          {
+            "directed": true,
+            "entityA": "law-studio-resonance-readout-d5",
+            "entityB": "studio.author.codex",
+            "events": [],
+            "type": "authored-by",
+            "weight": 1.0
+          }
+        ],
+        "retrigger": 0,
+        "scope": 0,
+        "targets": []
+      },
+      {
         "actionModel": {
-          "kind": 5,
           "children": [
             {
               "kind": 0,
-              "path": "@hud.resonance.note.label2D",
               "operand": {
                 "t": "string",
                 "v": "E5 / PLAYED"
-              }
+              },
+              "path": "@hud.resonance.note.label2D"
             },
             {
               "kind": 0,
-              "path": "@hud.resonance.note.color",
               "operand": {
                 "t": "vec3",
                 "x": 0.98,
                 "y": 0.78,
                 "z": 0.34
-              }
+              },
+              "path": "@hud.resonance.note.color"
             }
-          ]
+          ],
+          "kind": 5
         },
-        "provenance": [
-          {
-            "type": "authored-by",
-            "entityA": "law-studio-resonance-readout-e5",
-            "entityB": "studio.author.codex",
-            "directed": true,
-            "weight": 1.0,
-            "events": []
-          }
-        ],
-        "applicationLog": []
-      },
-      {
-        "id": "law-studio-resonance-readout-f5",
-        "name": "Studio: Show the last note F5",
-        "enabled": true,
-        "authority": 0,
         "activation": 0,
-        "scope": 0,
-        "drives": false,
-        "retrigger": 0,
-        "conditionMode": "all",
+        "applicationLog": [],
+        "authority": 0,
         "authors": [
           "studio.author.codex"
         ],
-        "conditionSubjects": [],
-        "targets": [],
+        "conditionMode": "all",
         "conditionModel": {
           "kind": 0,
-          "path": "noteName",
           "op": 0,
           "operand": {
             "t": "string",
-            "v": "F5"
-          }
+            "v": "E5"
+          },
+          "path": "noteName"
         },
+        "conditionSubjects": [],
+        "drives": false,
+        "enabled": true,
+        "id": "law-studio-resonance-readout-e5",
+        "name": "Studio: Show the last note E5",
+        "provenance": [
+          {
+            "directed": true,
+            "entityA": "law-studio-resonance-readout-e5",
+            "entityB": "studio.author.codex",
+            "events": [],
+            "type": "authored-by",
+            "weight": 1.0
+          }
+        ],
+        "retrigger": 0,
+        "scope": 0,
+        "targets": []
+      },
+      {
         "actionModel": {
-          "kind": 5,
           "children": [
             {
               "kind": 0,
-              "path": "@hud.resonance.note.label2D",
               "operand": {
                 "t": "string",
                 "v": "F5 / PLAYED"
-              }
+              },
+              "path": "@hud.resonance.note.label2D"
             },
             {
               "kind": 0,
-              "path": "@hud.resonance.note.color",
               "operand": {
                 "t": "vec3",
                 "x": 0.51,
                 "y": 0.86,
                 "z": 0.44
-              }
+              },
+              "path": "@hud.resonance.note.color"
             }
-          ]
+          ],
+          "kind": 5
         },
-        "provenance": [
-          {
-            "type": "authored-by",
-            "entityA": "law-studio-resonance-readout-f5",
-            "entityB": "studio.author.codex",
-            "directed": true,
-            "weight": 1.0,
-            "events": []
-          }
-        ],
-        "applicationLog": []
-      },
-      {
-        "id": "law-studio-resonance-readout-g5",
-        "name": "Studio: Show the last note G5",
-        "enabled": true,
-        "authority": 0,
         "activation": 0,
-        "scope": 0,
-        "drives": false,
-        "retrigger": 0,
-        "conditionMode": "all",
+        "applicationLog": [],
+        "authority": 0,
         "authors": [
           "studio.author.codex"
         ],
-        "conditionSubjects": [],
-        "targets": [],
+        "conditionMode": "all",
         "conditionModel": {
           "kind": 0,
-          "path": "noteName",
           "op": 0,
           "operand": {
             "t": "string",
-            "v": "G5"
-          }
+            "v": "F5"
+          },
+          "path": "noteName"
         },
+        "conditionSubjects": [],
+        "drives": false,
+        "enabled": true,
+        "id": "law-studio-resonance-readout-f5",
+        "name": "Studio: Show the last note F5",
+        "provenance": [
+          {
+            "directed": true,
+            "entityA": "law-studio-resonance-readout-f5",
+            "entityB": "studio.author.codex",
+            "events": [],
+            "type": "authored-by",
+            "weight": 1.0
+          }
+        ],
+        "retrigger": 0,
+        "scope": 0,
+        "targets": []
+      },
+      {
         "actionModel": {
-          "kind": 5,
           "children": [
             {
               "kind": 0,
-              "path": "@hud.resonance.note.label2D",
               "operand": {
                 "t": "string",
                 "v": "G5 / PLAYED"
-              }
+              },
+              "path": "@hud.resonance.note.label2D"
             },
             {
               "kind": 0,
-              "path": "@hud.resonance.note.color",
               "operand": {
                 "t": "vec3",
                 "x": 0.27,
                 "y": 0.85,
                 "z": 0.7
-              }
+              },
+              "path": "@hud.resonance.note.color"
             }
-          ]
+          ],
+          "kind": 5
         },
-        "provenance": [
-          {
-            "type": "authored-by",
-            "entityA": "law-studio-resonance-readout-g5",
-            "entityB": "studio.author.codex",
-            "directed": true,
-            "weight": 1.0,
-            "events": []
-          }
-        ],
-        "applicationLog": []
-      },
-      {
-        "id": "law-studio-resonance-readout-a5",
-        "name": "Studio: Show the last note A5",
-        "enabled": true,
-        "authority": 0,
         "activation": 0,
-        "scope": 0,
-        "drives": false,
-        "retrigger": 0,
-        "conditionMode": "all",
+        "applicationLog": [],
+        "authority": 0,
         "authors": [
           "studio.author.codex"
         ],
-        "conditionSubjects": [],
-        "targets": [],
+        "conditionMode": "all",
         "conditionModel": {
           "kind": 0,
-          "path": "noteName",
           "op": 0,
           "operand": {
             "t": "string",
-            "v": "A5"
-          }
+            "v": "G5"
+          },
+          "path": "noteName"
         },
+        "conditionSubjects": [],
+        "drives": false,
+        "enabled": true,
+        "id": "law-studio-resonance-readout-g5",
+        "name": "Studio: Show the last note G5",
+        "provenance": [
+          {
+            "directed": true,
+            "entityA": "law-studio-resonance-readout-g5",
+            "entityB": "studio.author.codex",
+            "events": [],
+            "type": "authored-by",
+            "weight": 1.0
+          }
+        ],
+        "retrigger": 0,
+        "scope": 0,
+        "targets": []
+      },
+      {
         "actionModel": {
-          "kind": 5,
           "children": [
             {
               "kind": 0,
-              "path": "@hud.resonance.note.label2D",
               "operand": {
                 "t": "string",
                 "v": "A5 / PLAYED"
-              }
+              },
+              "path": "@hud.resonance.note.label2D"
             },
             {
               "kind": 0,
-              "path": "@hud.resonance.note.color",
               "operand": {
                 "t": "vec3",
                 "x": 0.32,
                 "y": 0.69,
                 "z": 0.98
-              }
+              },
+              "path": "@hud.resonance.note.color"
             }
-          ]
+          ],
+          "kind": 5
         },
-        "provenance": [
-          {
-            "type": "authored-by",
-            "entityA": "law-studio-resonance-readout-a5",
-            "entityB": "studio.author.codex",
-            "directed": true,
-            "weight": 1.0,
-            "events": []
-          }
-        ],
-        "applicationLog": []
-      },
-      {
-        "id": "law-studio-resonance-readout-b5",
-        "name": "Studio: Show the last note B5",
-        "enabled": true,
-        "authority": 0,
         "activation": 0,
-        "scope": 0,
-        "drives": false,
-        "retrigger": 0,
-        "conditionMode": "all",
+        "applicationLog": [],
+        "authority": 0,
         "authors": [
           "studio.author.codex"
         ],
-        "conditionSubjects": [],
-        "targets": [],
+        "conditionMode": "all",
         "conditionModel": {
           "kind": 0,
-          "path": "noteName",
           "op": 0,
           "operand": {
             "t": "string",
-            "v": "B5"
-          }
+            "v": "A5"
+          },
+          "path": "noteName"
         },
+        "conditionSubjects": [],
+        "drives": false,
+        "enabled": true,
+        "id": "law-studio-resonance-readout-a5",
+        "name": "Studio: Show the last note A5",
+        "provenance": [
+          {
+            "directed": true,
+            "entityA": "law-studio-resonance-readout-a5",
+            "entityB": "studio.author.codex",
+            "events": [],
+            "type": "authored-by",
+            "weight": 1.0
+          }
+        ],
+        "retrigger": 0,
+        "scope": 0,
+        "targets": []
+      },
+      {
         "actionModel": {
-          "kind": 5,
           "children": [
             {
               "kind": 0,
-              "path": "@hud.resonance.note.label2D",
               "operand": {
                 "t": "string",
                 "v": "B5 / PLAYED"
-              }
+              },
+              "path": "@hud.resonance.note.label2D"
             },
             {
               "kind": 0,
-              "path": "@hud.resonance.note.color",
               "operand": {
                 "t": "vec3",
                 "x": 0.66,
                 "y": 0.54,
                 "z": 0.97
-              }
+              },
+              "path": "@hud.resonance.note.color"
             }
-          ]
+          ],
+          "kind": 5
         },
-        "provenance": [
-          {
-            "type": "authored-by",
-            "entityA": "law-studio-resonance-readout-b5",
-            "entityB": "studio.author.codex",
-            "directed": true,
-            "weight": 1.0,
-            "events": []
-          }
-        ],
-        "applicationLog": []
-      },
-      {
-        "id": "law-studio-resonance-envelope",
-        "name": "Studio: Light relaxes after a note",
-        "enabled": true,
+        "activation": 0,
+        "applicationLog": [],
         "authority": 0,
-        "activation": 1,
-        "scope": 1,
-        "drives": false,
-        "retrigger": 0,
-        "conditionMode": "all",
         "authors": [
           "studio.author.codex"
         ],
-        "conditionSubjects": [],
-        "targets": [],
+        "conditionMode": "all",
         "conditionModel": {
           "kind": 0,
-          "path": "resonanceAge",
-          "op": 5,
+          "op": 0,
           "operand": {
-            "t": "double",
-            "v": 0
-          }
+            "t": "string",
+            "v": "B5"
+          },
+          "path": "noteName"
         },
+        "conditionSubjects": [],
+        "drives": false,
+        "enabled": true,
+        "id": "law-studio-resonance-readout-b5",
+        "name": "Studio: Show the last note B5",
+        "provenance": [
+          {
+            "directed": true,
+            "entityA": "law-studio-resonance-readout-b5",
+            "entityB": "studio.author.codex",
+            "events": [],
+            "type": "authored-by",
+            "weight": 1.0
+          }
+        ],
+        "retrigger": 0,
+        "scope": 0,
+        "targets": []
+      },
+      {
         "actionModel": {
-          "kind": 5,
           "children": [
             {
-              "kind": 8,
-              "path": "resonanceAge",
               "bindings": {
-                "t": "time",
-                "s": "struckAt"
+                "s": "struckAt",
+                "t": "time"
               },
               "function": {
                 "pieces": [
@@ -2897,15 +2871,16 @@
                     }
                   }
                 ]
-              }
+              },
+              "kind": 8,
+              "path": "resonanceAge"
             },
             {
-              "kind": 8,
-              "path": "resonanceAge",
               "bindings": {
                 "a": "resonanceAge"
               },
               "function": {
+                "input": "a",
                 "pieces": [
                   {
                     "expr": {
@@ -2934,10 +2909,10 @@
                         }
                       ]
                     },
-                    "lo": 0.0,
-                    "includeLo": true,
                     "hi": 3600.0,
-                    "includeHi": true
+                    "includeHi": true,
+                    "includeLo": true,
+                    "lo": 0.0
                   },
                   {
                     "expr": {
@@ -2948,16 +2923,15 @@
                         }
                       ]
                     },
-                    "lo": 3600.0,
-                    "includeLo": true
+                    "includeLo": true,
+                    "lo": 3600.0
                   }
-                ],
-                "input": "a"
-              }
+                ]
+              },
+              "kind": 8,
+              "path": "resonanceAge"
             },
             {
-              "kind": 8,
-              "path": "resonanceEnergy",
               "bindings": {
                 "a": "resonanceAge"
               },
@@ -2972,9 +2946,9 @@
                           "trans": [
                             {
                               "kind": 2,
-                              "var": "a",
                               "scale": -3.8,
-                              "shift": 0
+                              "shift": 0,
+                              "var": "a"
                             }
                           ]
                         }
@@ -2982,55 +2956,55 @@
                     }
                   }
                 ]
-              }
+              },
+              "kind": 8,
+              "path": "resonanceEnergy"
             }
-          ]
+          ],
+          "kind": 5
         },
-        "provenance": [
-          {
-            "type": "authored-by",
-            "entityA": "law-studio-resonance-envelope",
-            "entityB": "studio.author.codex",
-            "directed": true,
-            "weight": 1.0,
-            "events": []
-          }
-        ],
-        "applicationLog": []
-      },
-      {
-        "id": "law-studio-resonance-sculpture",
-        "name": "Studio: Resonators rise and swell with the note",
-        "enabled": true,
-        "authority": 0,
         "activation": 1,
-        "scope": 1,
-        "drives": false,
-        "retrigger": 0,
-        "conditionMode": "all",
+        "applicationLog": [],
+        "authority": 0,
         "authors": [
           "studio.author.codex"
         ],
-        "conditionSubjects": [],
-        "targets": [],
+        "conditionMode": "all",
         "conditionModel": {
           "kind": 0,
-          "path": "resonanceRadius",
-          "op": 4,
+          "op": 5,
           "operand": {
             "t": "double",
             "v": 0
-          }
+          },
+          "path": "resonanceAge"
         },
+        "conditionSubjects": [],
+        "drives": false,
+        "enabled": true,
+        "id": "law-studio-resonance-envelope",
+        "name": "Studio: Light relaxes after a note",
+        "provenance": [
+          {
+            "directed": true,
+            "entityA": "law-studio-resonance-envelope",
+            "entityB": "studio.author.codex",
+            "events": [],
+            "type": "authored-by",
+            "weight": 1.0
+          }
+        ],
+        "retrigger": 0,
+        "scope": 1,
+        "targets": []
+      },
+      {
         "actionModel": {
-          "kind": 5,
           "children": [
             {
-              "kind": 8,
-              "path": "shape.r",
               "bindings": {
-                "r": "resonanceRadius",
-                "e": "resonanceEnergy"
+                "e": "resonanceEnergy",
+                "r": "resonanceRadius"
               },
               "function": {
                 "pieces": [
@@ -3053,15 +3027,15 @@
                     }
                   }
                 ]
-              }
+              },
+              "kind": 8,
+              "path": "shape.r"
             },
             {
-              "kind": 8,
-              "path": "position.y",
               "bindings": {
-                "y": "resonanceBaseY",
                 "e": "resonanceEnergy",
-                "t": "time"
+                "t": "time",
+                "y": "resonanceBaseY"
               },
               "function": {
                 "pieces": [
@@ -3086,9 +3060,9 @@
                           "trans": [
                             {
                               "kind": 0,
-                              "var": "t",
                               "scale": 1.2,
-                              "shift": 0.0
+                              "shift": 0.0,
+                              "var": "t"
                             }
                           ]
                         }
@@ -3096,52 +3070,52 @@
                     }
                   }
                 ]
-              }
+              },
+              "kind": 8,
+              "path": "position.y"
             }
-          ]
+          ],
+          "kind": 5
         },
-        "provenance": [
-          {
-            "type": "authored-by",
-            "entityA": "law-studio-resonance-sculpture",
-            "entityB": "studio.author.codex",
-            "directed": true,
-            "weight": 1.0,
-            "events": []
-          }
-        ],
-        "applicationLog": []
-      },
-      {
-        "id": "law-studio-resonance-meter",
-        "name": "Studio: The spectrum shows each note's decay",
-        "enabled": true,
-        "authority": 0,
         "activation": 1,
-        "scope": 1,
-        "drives": false,
-        "retrigger": 0,
-        "conditionMode": "all",
+        "applicationLog": [],
+        "authority": 0,
         "authors": [
           "studio.author.codex"
         ],
-        "conditionSubjects": [],
-        "targets": [],
+        "conditionMode": "all",
         "conditionModel": {
           "kind": 0,
-          "path": "resonanceMeter",
-          "op": 0,
+          "op": 4,
           "operand": {
-            "t": "bool",
-            "v": true
-          }
+            "t": "double",
+            "v": 0
+          },
+          "path": "resonanceRadius"
         },
+        "conditionSubjects": [],
+        "drives": false,
+        "enabled": true,
+        "id": "law-studio-resonance-sculpture",
+        "name": "Studio: Resonators rise and swell with the note",
+        "provenance": [
+          {
+            "directed": true,
+            "entityA": "law-studio-resonance-sculpture",
+            "entityB": "studio.author.codex",
+            "events": [],
+            "type": "authored-by",
+            "weight": 1.0
+          }
+        ],
+        "retrigger": 0,
+        "scope": 1,
+        "targets": []
+      },
+      {
         "actionModel": {
-          "kind": 5,
           "children": [
             {
-              "kind": 8,
-              "path": "shape.height2D",
               "bindings": {
                 "e": "resonanceEnergy"
               },
@@ -3164,11 +3138,11 @@
                     }
                   }
                 ]
-              }
+              },
+              "kind": 8,
+              "path": "shape.height2D"
             },
             {
-              "kind": 8,
-              "path": "y2D",
               "bindings": {
                 "e": "resonanceEnergy"
               },
@@ -3191,21 +3165,47 @@
                     }
                   }
                 ]
-              }
+              },
+              "kind": 8,
+              "path": "y2D"
             }
-          ]
+          ],
+          "kind": 5
         },
+        "activation": 1,
+        "applicationLog": [],
+        "authority": 0,
+        "authors": [
+          "studio.author.codex"
+        ],
+        "conditionMode": "all",
+        "conditionModel": {
+          "kind": 0,
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": true
+          },
+          "path": "resonanceMeter"
+        },
+        "conditionSubjects": [],
+        "drives": false,
+        "enabled": true,
+        "id": "law-studio-resonance-meter",
+        "name": "Studio: The spectrum shows each note's decay",
         "provenance": [
           {
-            "type": "authored-by",
+            "directed": true,
             "entityA": "law-studio-resonance-meter",
             "entityB": "studio.author.codex",
-            "directed": true,
-            "weight": 1.0,
-            "events": []
+            "events": [],
+            "type": "authored-by",
+            "weight": 1.0
           }
         ],
-        "applicationLog": []
+        "retrigger": 0,
+        "scope": 1,
+        "targets": []
       }
     ],
     "triggers": {
@@ -3221,34 +3221,7 @@
       "law-studio-pad-play": [
         "control-activated"
       ],
-      "law-studio-spawn-orb": [
-        "control-activated"
-      ],
-      "law-studio-theme-toggle": [
-        "control-activated"
-      ],
-      "law-studio-toggle-spring": [
-        "object-released"
-      ],
-      "law-studio-resonance-press-2d": [
-        "object-pressed"
-      ],
-      "law-studio-resonance-press-3d": [
-        "object-pressed"
-      ],
-      "law-studio-resonance-voice-triangle": [
-        "control-activated"
-      ],
-      "law-studio-resonance-voice-sine": [
-        "control-activated"
-      ],
-      "law-studio-resonance-play-sine": [
-        "control-activated"
-      ],
-      "law-studio-resonance-voice-square": [
-        "control-activated"
-      ],
-      "law-studio-resonance-play-square": [
+      "law-studio-resonance-ink-orchid": [
         "control-activated"
       ],
       "law-studio-resonance-ink-solar": [
@@ -3257,10 +3230,22 @@
       "law-studio-resonance-ink-tidal": [
         "control-activated"
       ],
-      "law-studio-resonance-ink-orchid": [
+      "law-studio-resonance-play-sine": [
         "control-activated"
       ],
-      "law-studio-resonance-struck": [
+      "law-studio-resonance-play-square": [
+        "control-activated"
+      ],
+      "law-studio-resonance-press-2d": [
+        "object-pressed"
+      ],
+      "law-studio-resonance-press-3d": [
+        "object-pressed"
+      ],
+      "law-studio-resonance-readout-a5": [
+        "note-played"
+      ],
+      "law-studio-resonance-readout-b5": [
         "note-played"
       ],
       "law-studio-resonance-readout-c5": [
@@ -3278,11 +3263,26 @@
       "law-studio-resonance-readout-g5": [
         "note-played"
       ],
-      "law-studio-resonance-readout-a5": [
+      "law-studio-resonance-struck": [
         "note-played"
       ],
-      "law-studio-resonance-readout-b5": [
-        "note-played"
+      "law-studio-resonance-voice-sine": [
+        "control-activated"
+      ],
+      "law-studio-resonance-voice-square": [
+        "control-activated"
+      ],
+      "law-studio-resonance-voice-triangle": [
+        "control-activated"
+      ],
+      "law-studio-spawn-orb": [
+        "control-activated"
+      ],
+      "law-studio-theme-toggle": [
+        "control-activated"
+      ],
+      "law-studio-toggle-spring": [
+        "object-released"
       ]
     }
   },
@@ -3959,6 +3959,7 @@
   ],
   "pitch": -13.0,
   "saveFormat": "zone-identity-v1",
+  "studioUpgrade": "resonance-1",
   "yaw": 90.0,
   "zoneRefs": [
     {
@@ -4337,426 +4338,426 @@
           "weight": 1.0
         },
         {
-          "type": "commissioned-by",
+          "directed": true,
           "entityA": "studio.author.codex",
           "entityB": "Zach",
-          "directed": true,
-          "weight": 1.0,
-          "events": []
+          "events": [],
+          "type": "commissioned-by",
+          "weight": 1.0
         },
         {
-          "type": "authored-by",
+          "directed": true,
           "entityA": "hud.title",
           "entityB": "studio.author.codex",
-          "directed": true,
-          "weight": 1.0,
-          "events": []
+          "events": [],
+          "type": "authored-by",
+          "weight": 1.0
         },
         {
-          "type": "authored-by",
+          "directed": true,
           "entityA": "hud.title.sub",
           "entityB": "studio.author.codex",
-          "directed": true,
-          "weight": 1.0,
-          "events": []
+          "events": [],
+          "type": "authored-by",
+          "weight": 1.0
         },
         {
-          "type": "authored-by",
+          "directed": true,
           "entityA": "hud.legend.0",
           "entityB": "studio.author.codex",
-          "directed": true,
-          "weight": 1.0,
-          "events": []
+          "events": [],
+          "type": "authored-by",
+          "weight": 1.0
         },
         {
-          "type": "authored-by",
+          "directed": true,
           "entityA": "hud.legend.1",
           "entityB": "studio.author.codex",
-          "directed": true,
-          "weight": 1.0,
-          "events": []
+          "events": [],
+          "type": "authored-by",
+          "weight": 1.0
         },
         {
-          "type": "authored-by",
+          "directed": true,
           "entityA": "hud.legend.2",
           "entityB": "studio.author.codex",
-          "directed": true,
-          "weight": 1.0,
-          "events": []
+          "events": [],
+          "type": "authored-by",
+          "weight": 1.0
         },
         {
-          "type": "authored-by",
+          "directed": true,
           "entityA": "hud.legend.3",
           "entityB": "studio.author.codex",
-          "directed": true,
-          "weight": 1.0,
-          "events": []
+          "events": [],
+          "type": "authored-by",
+          "weight": 1.0
         },
         {
-          "type": "authored-by",
+          "directed": true,
           "entityA": "hud.legend.4",
           "entityB": "studio.author.codex",
-          "directed": true,
-          "weight": 1.0,
-          "events": []
+          "events": [],
+          "type": "authored-by",
+          "weight": 1.0
         },
         {
-          "type": "authored-by",
+          "directed": true,
           "entityA": "hud.dock.bg",
           "entityB": "studio.author.codex",
-          "directed": true,
-          "weight": 1.0,
-          "events": []
+          "events": [],
+          "type": "authored-by",
+          "weight": 1.0
         },
         {
-          "type": "authored-by",
+          "directed": true,
           "entityA": "hud.resonance.dock-caption",
           "entityB": "studio.author.codex",
-          "directed": true,
-          "weight": 1.0,
-          "events": []
+          "events": [],
+          "type": "authored-by",
+          "weight": 1.0
         },
         {
-          "type": "authored-by",
+          "directed": true,
           "entityA": "hud.resonance.notes-caption",
           "entityB": "studio.author.codex",
-          "directed": true,
-          "weight": 1.0,
-          "events": []
+          "events": [],
+          "type": "authored-by",
+          "weight": 1.0
         },
         {
-          "type": "authored-by",
+          "directed": true,
           "entityA": "hud.resonance.draw-caption",
           "entityB": "studio.author.codex",
-          "directed": true,
-          "weight": 1.0,
-          "events": []
+          "events": [],
+          "type": "authored-by",
+          "weight": 1.0
         },
         {
-          "type": "authored-by",
+          "directed": true,
           "entityA": "hud.btn.spawn-orb",
           "entityB": "studio.author.codex",
-          "directed": true,
-          "weight": 1.0,
-          "events": []
+          "events": [],
+          "type": "authored-by",
+          "weight": 1.0
         },
         {
-          "type": "authored-by",
+          "directed": true,
           "entityA": "hud.btn.toggle-theme",
           "entityB": "studio.author.codex",
-          "directed": true,
-          "weight": 1.0,
-          "events": []
+          "events": [],
+          "type": "authored-by",
+          "weight": 1.0
         },
         {
-          "type": "authored-by",
+          "directed": true,
           "entityA": "hud.btn.draw-stroke",
           "entityB": "studio.author.codex",
-          "directed": true,
-          "weight": 1.0,
-          "events": []
+          "events": [],
+          "type": "authored-by",
+          "weight": 1.0
         },
         {
-          "type": "authored-by",
+          "directed": true,
           "entityA": "hud.pad.c5",
           "entityB": "studio.author.codex",
-          "directed": true,
-          "weight": 1.0,
-          "events": []
+          "events": [],
+          "type": "authored-by",
+          "weight": 1.0
         },
         {
-          "type": "authored-by",
+          "directed": true,
           "entityA": "studio.resonance.c5",
           "entityB": "studio.author.codex",
-          "directed": true,
-          "weight": 1.0,
-          "events": []
+          "events": [],
+          "type": "authored-by",
+          "weight": 1.0
         },
         {
-          "type": "authored-by",
+          "directed": true,
           "entityA": "hud.resonance.meter.c5",
           "entityB": "studio.author.codex",
-          "directed": true,
-          "weight": 1.0,
-          "events": []
+          "events": [],
+          "type": "authored-by",
+          "weight": 1.0
         },
         {
-          "type": "authored-by",
+          "directed": true,
           "entityA": "hud.pad.d5",
           "entityB": "studio.author.codex",
-          "directed": true,
-          "weight": 1.0,
-          "events": []
+          "events": [],
+          "type": "authored-by",
+          "weight": 1.0
         },
         {
-          "type": "authored-by",
+          "directed": true,
           "entityA": "studio.resonance.d5",
           "entityB": "studio.author.codex",
-          "directed": true,
-          "weight": 1.0,
-          "events": []
+          "events": [],
+          "type": "authored-by",
+          "weight": 1.0
         },
         {
-          "type": "authored-by",
+          "directed": true,
           "entityA": "hud.resonance.meter.d5",
           "entityB": "studio.author.codex",
-          "directed": true,
-          "weight": 1.0,
-          "events": []
+          "events": [],
+          "type": "authored-by",
+          "weight": 1.0
         },
         {
-          "type": "authored-by",
+          "directed": true,
           "entityA": "hud.pad.e5",
           "entityB": "studio.author.codex",
-          "directed": true,
-          "weight": 1.0,
-          "events": []
+          "events": [],
+          "type": "authored-by",
+          "weight": 1.0
         },
         {
-          "type": "authored-by",
+          "directed": true,
           "entityA": "studio.resonance.e5",
           "entityB": "studio.author.codex",
-          "directed": true,
-          "weight": 1.0,
-          "events": []
+          "events": [],
+          "type": "authored-by",
+          "weight": 1.0
         },
         {
-          "type": "authored-by",
+          "directed": true,
           "entityA": "hud.resonance.meter.e5",
           "entityB": "studio.author.codex",
-          "directed": true,
-          "weight": 1.0,
-          "events": []
+          "events": [],
+          "type": "authored-by",
+          "weight": 1.0
         },
         {
-          "type": "authored-by",
+          "directed": true,
           "entityA": "hud.pad.f5",
           "entityB": "studio.author.codex",
-          "directed": true,
-          "weight": 1.0,
-          "events": []
+          "events": [],
+          "type": "authored-by",
+          "weight": 1.0
         },
         {
-          "type": "authored-by",
+          "directed": true,
           "entityA": "studio.resonance.f5",
           "entityB": "studio.author.codex",
-          "directed": true,
-          "weight": 1.0,
-          "events": []
+          "events": [],
+          "type": "authored-by",
+          "weight": 1.0
         },
         {
-          "type": "authored-by",
+          "directed": true,
           "entityA": "hud.resonance.meter.f5",
           "entityB": "studio.author.codex",
-          "directed": true,
-          "weight": 1.0,
-          "events": []
+          "events": [],
+          "type": "authored-by",
+          "weight": 1.0
         },
         {
-          "type": "authored-by",
+          "directed": true,
           "entityA": "hud.pad.g5",
           "entityB": "studio.author.codex",
-          "directed": true,
-          "weight": 1.0,
-          "events": []
+          "events": [],
+          "type": "authored-by",
+          "weight": 1.0
         },
         {
-          "type": "authored-by",
+          "directed": true,
           "entityA": "studio.resonance.g5",
           "entityB": "studio.author.codex",
-          "directed": true,
-          "weight": 1.0,
-          "events": []
+          "events": [],
+          "type": "authored-by",
+          "weight": 1.0
         },
         {
-          "type": "authored-by",
+          "directed": true,
           "entityA": "hud.resonance.meter.g5",
           "entityB": "studio.author.codex",
-          "directed": true,
-          "weight": 1.0,
-          "events": []
+          "events": [],
+          "type": "authored-by",
+          "weight": 1.0
         },
         {
-          "type": "authored-by",
+          "directed": true,
           "entityA": "hud.pad.a5",
           "entityB": "studio.author.codex",
-          "directed": true,
-          "weight": 1.0,
-          "events": []
+          "events": [],
+          "type": "authored-by",
+          "weight": 1.0
         },
         {
-          "type": "authored-by",
+          "directed": true,
           "entityA": "studio.resonance.a5",
           "entityB": "studio.author.codex",
-          "directed": true,
-          "weight": 1.0,
-          "events": []
+          "events": [],
+          "type": "authored-by",
+          "weight": 1.0
         },
         {
-          "type": "authored-by",
+          "directed": true,
           "entityA": "hud.resonance.meter.a5",
           "entityB": "studio.author.codex",
-          "directed": true,
-          "weight": 1.0,
-          "events": []
+          "events": [],
+          "type": "authored-by",
+          "weight": 1.0
         },
         {
-          "type": "authored-by",
+          "directed": true,
           "entityA": "hud.pad.b5",
           "entityB": "studio.author.codex",
-          "directed": true,
-          "weight": 1.0,
-          "events": []
+          "events": [],
+          "type": "authored-by",
+          "weight": 1.0
         },
         {
-          "type": "authored-by",
+          "directed": true,
           "entityA": "studio.resonance.b5",
           "entityB": "studio.author.codex",
-          "directed": true,
-          "weight": 1.0,
-          "events": []
+          "events": [],
+          "type": "authored-by",
+          "weight": 1.0
         },
         {
-          "type": "authored-by",
+          "directed": true,
           "entityA": "hud.resonance.meter.b5",
           "entityB": "studio.author.codex",
-          "directed": true,
-          "weight": 1.0,
-          "events": []
+          "events": [],
+          "type": "authored-by",
+          "weight": 1.0
         },
         {
-          "type": "authored-by",
+          "directed": true,
           "entityA": "hud.resonance.note",
           "entityB": "studio.author.codex",
-          "directed": true,
-          "weight": 1.0,
-          "events": []
+          "events": [],
+          "type": "authored-by",
+          "weight": 1.0
         },
         {
-          "type": "authored-by",
+          "directed": true,
           "entityA": "hud.resonance.note-hint",
           "entityB": "studio.author.codex",
-          "directed": true,
-          "weight": 1.0,
-          "events": []
+          "events": [],
+          "type": "authored-by",
+          "weight": 1.0
         },
         {
-          "type": "authored-by",
+          "directed": true,
           "entityA": "hud.resonance.voice-caption",
           "entityB": "studio.author.codex",
-          "directed": true,
-          "weight": 1.0,
-          "events": []
+          "events": [],
+          "type": "authored-by",
+          "weight": 1.0
         },
         {
-          "type": "authored-by",
+          "directed": true,
           "entityA": "hud.resonance.ink-caption",
           "entityB": "studio.author.codex",
-          "directed": true,
-          "weight": 1.0,
-          "events": []
+          "events": [],
+          "type": "authored-by",
+          "weight": 1.0
         },
         {
-          "type": "authored-by",
+          "directed": true,
           "entityA": "hud.resonance.voice.triangle",
           "entityB": "studio.author.codex",
-          "directed": true,
-          "weight": 1.0,
-          "events": []
+          "events": [],
+          "type": "authored-by",
+          "weight": 1.0
         },
         {
-          "type": "instance-of",
+          "directed": true,
           "entityA": "hud.resonance.voice.triangle",
           "entityB": "category.control.button",
-          "directed": true,
-          "weight": 1.0,
-          "events": []
+          "events": [],
+          "type": "instance-of",
+          "weight": 1.0
         },
         {
-          "type": "authored-by",
+          "directed": true,
           "entityA": "hud.resonance.voice.sine",
           "entityB": "studio.author.codex",
-          "directed": true,
-          "weight": 1.0,
-          "events": []
+          "events": [],
+          "type": "authored-by",
+          "weight": 1.0
         },
         {
-          "type": "instance-of",
+          "directed": true,
           "entityA": "hud.resonance.voice.sine",
           "entityB": "category.control.button",
-          "directed": true,
-          "weight": 1.0,
-          "events": []
+          "events": [],
+          "type": "instance-of",
+          "weight": 1.0
         },
         {
-          "type": "authored-by",
+          "directed": true,
           "entityA": "hud.resonance.voice.square",
           "entityB": "studio.author.codex",
-          "directed": true,
-          "weight": 1.0,
-          "events": []
+          "events": [],
+          "type": "authored-by",
+          "weight": 1.0
         },
         {
-          "type": "instance-of",
+          "directed": true,
           "entityA": "hud.resonance.voice.square",
           "entityB": "category.control.button",
-          "directed": true,
-          "weight": 1.0,
-          "events": []
+          "events": [],
+          "type": "instance-of",
+          "weight": 1.0
         },
         {
-          "type": "authored-by",
+          "directed": true,
           "entityA": "hud.resonance.ink.solar",
           "entityB": "studio.author.codex",
-          "directed": true,
-          "weight": 1.0,
-          "events": []
+          "events": [],
+          "type": "authored-by",
+          "weight": 1.0
         },
         {
-          "type": "instance-of",
+          "directed": true,
           "entityA": "hud.resonance.ink.solar",
           "entityB": "category.control.button",
-          "directed": true,
-          "weight": 1.0,
-          "events": []
+          "events": [],
+          "type": "instance-of",
+          "weight": 1.0
         },
         {
-          "type": "authored-by",
+          "directed": true,
           "entityA": "hud.resonance.ink.tidal",
           "entityB": "studio.author.codex",
-          "directed": true,
-          "weight": 1.0,
-          "events": []
+          "events": [],
+          "type": "authored-by",
+          "weight": 1.0
         },
         {
-          "type": "instance-of",
+          "directed": true,
           "entityA": "hud.resonance.ink.tidal",
           "entityB": "category.control.button",
-          "directed": true,
-          "weight": 1.0,
-          "events": []
+          "events": [],
+          "type": "instance-of",
+          "weight": 1.0
         },
         {
-          "type": "authored-by",
+          "directed": true,
           "entityA": "hud.resonance.ink.orchid",
           "entityB": "studio.author.codex",
-          "directed": true,
-          "weight": 1.0,
-          "events": []
+          "events": [],
+          "type": "authored-by",
+          "weight": 1.0
         },
         {
-          "type": "instance-of",
+          "directed": true,
           "entityA": "hud.resonance.ink.orchid",
           "entityB": "category.control.button",
-          "directed": true,
-          "weight": 1.0,
-          "events": []
+          "events": [],
+          "type": "instance-of",
+          "weight": 1.0
         }
       ],
       "identifier": "SynthesisStudio",
       "injected_by": "Gemini Spark (authored) / Claude Opus 5 (repaired) / Antigravity (major scale 2026-09-02)",
       "name": "SynthesisStudio",
-      "owner": "Player",
+      "owner": "Zach",
       "parentZone": "",
       "qualities": {
         "kind": "studio"
@@ -5014,7 +5015,7 @@
             "authoredProperties": {
               "displayName": {
                 "t": "string",
-                "v": "\u270e ART DRAWING CANVAS (Drag to draw light strokes)"
+                "v": "✎ ART DRAWING CANVAS (Drag to draw light strokes)"
               }
             },
             "center": [
@@ -5268,7 +5269,7 @@
               },
               "displayName": {
                 "t": "string",
-                "v": "\u2726 Spawn Harmonic Orb"
+                "v": "✦ Spawn Harmonic Orb"
               },
               "restY": {
                 "t": "double",
@@ -5350,7 +5351,7 @@
             "authoredProperties": {
               "displayName": {
                 "t": "string",
-                "v": "[ \u2726 SPAWN ORB ]"
+                "v": "[ ✦ SPAWN ORB ]"
               }
             },
             "center": [
@@ -5526,7 +5527,7 @@
               },
               "displayName": {
                 "t": "string",
-                "v": "\u263c Toggle Night/Day Theme"
+                "v": "☼ Toggle Night/Day Theme"
               },
               "restY": {
                 "t": "double",
@@ -5608,7 +5609,7 @@
             "authoredProperties": {
               "displayName": {
                 "t": "string",
-                "v": "[ \u263c DAY / NIGHT ]"
+                "v": "[ ☼ DAY / NIGHT ]"
               }
             },
             "center": [
@@ -5780,7 +5781,7 @@
               },
               "displayName": {
                 "t": "string",
-                "v": "\u266b Note C5 (Do)"
+                "v": "♫ Note C5 (Do)"
               },
               "isChordPad": {
                 "t": "bool",
@@ -5886,7 +5887,7 @@
               },
               "displayName": {
                 "t": "string",
-                "v": "\u266b Note D5 (Re)"
+                "v": "♫ Note D5 (Re)"
               },
               "isChordPad": {
                 "t": "bool",
@@ -5992,7 +5993,7 @@
               },
               "displayName": {
                 "t": "string",
-                "v": "\u266b Note E5 (Mi)"
+                "v": "♫ Note E5 (Mi)"
               },
               "isChordPad": {
                 "t": "bool",
@@ -6098,7 +6099,7 @@
               },
               "displayName": {
                 "t": "string",
-                "v": "\u266b Note F5 (Fa)"
+                "v": "♫ Note F5 (Fa)"
               },
               "isChordPad": {
                 "t": "bool",
@@ -6204,7 +6205,7 @@
               },
               "displayName": {
                 "t": "string",
-                "v": "\u266b Note G5 (Sol)"
+                "v": "♫ Note G5 (Sol)"
               },
               "isChordPad": {
                 "t": "bool",
@@ -6310,7 +6311,7 @@
               },
               "displayName": {
                 "t": "string",
-                "v": "\u266b Note A5 (La)"
+                "v": "♫ Note A5 (La)"
               },
               "isChordPad": {
                 "t": "bool",
@@ -6416,7 +6417,7 @@
               },
               "displayName": {
                 "t": "string",
-                "v": "\u266b Note B5 (Ti)"
+                "v": "♫ Note B5 (Ti)"
               },
               "isChordPad": {
                 "t": "bool",
@@ -6506,7 +6507,7 @@
             "authoredProperties": {
               "displayName": {
                 "t": "string",
-                "v": "[ \u266b MAJOR SCALE: C5 \u00b7 D5 \u00b7 E5 \u00b7 F5 \u00b7 G5 \u00b7 A5 \u00b7 B5 ]"
+                "v": "[ ♫ MAJOR SCALE: C5 · D5 · E5 · F5 · G5 · A5 · B5 ]"
               }
             },
             "center": [
@@ -6764,7 +6765,7 @@
             "authoredProperties": {
               "displayName": {
                 "t": "string",
-                "v": "[ \u27f7 RESONANCE SLIDER ]"
+                "v": "[ ⟷ RESONANCE SLIDER ]"
               }
             },
             "center": [
@@ -6852,6 +6853,10 @@
                 "t": "double",
                 "v": -1
               },
+              "restY2D": {
+                "t": "double",
+                "v": 26.0
+              },
               "shape.height2D": {
                 "t": "double",
                 "v": 28.0
@@ -6859,10 +6864,6 @@
               "shape.width2D": {
                 "t": "double",
                 "v": 0.0
-              },
-              "restY2D": {
-                "t": "double",
-                "v": 26.0
               }
             },
             "center": [
@@ -6955,6 +6956,10 @@
                 "t": "double",
                 "v": -1
               },
+              "restY2D": {
+                "t": "double",
+                "v": 64.0
+              },
               "shape.height2D": {
                 "t": "double",
                 "v": 16.0
@@ -6962,10 +6967,6 @@
               "shape.width2D": {
                 "t": "double",
                 "v": 0.0
-              },
-              "restY2D": {
-                "t": "double",
-                "v": 64.0
               }
             },
             "center": [
@@ -7058,6 +7059,10 @@
                 "t": "double",
                 "v": -1
               },
+              "restY2D": {
+                "t": "double",
+                "v": 98.0
+              },
               "shape.height2D": {
                 "t": "double",
                 "v": 13.0
@@ -7065,10 +7070,6 @@
               "shape.width2D": {
                 "t": "double",
                 "v": 0.0
-              },
-              "restY2D": {
-                "t": "double",
-                "v": 98.0
               }
             },
             "center": [
@@ -7161,6 +7162,10 @@
                 "t": "double",
                 "v": -1
               },
+              "restY2D": {
+                "t": "double",
+                "v": 117.0
+              },
               "shape.height2D": {
                 "t": "double",
                 "v": 13.0
@@ -7168,10 +7173,6 @@
               "shape.width2D": {
                 "t": "double",
                 "v": 0.0
-              },
-              "restY2D": {
-                "t": "double",
-                "v": 117.0
               }
             },
             "center": [
@@ -7264,6 +7265,10 @@
                 "t": "double",
                 "v": -1
               },
+              "restY2D": {
+                "t": "double",
+                "v": 136.0
+              },
               "shape.height2D": {
                 "t": "double",
                 "v": 13.0
@@ -7271,10 +7276,6 @@
               "shape.width2D": {
                 "t": "double",
                 "v": 0.0
-              },
-              "restY2D": {
-                "t": "double",
-                "v": 136.0
               }
             },
             "center": [
@@ -7367,6 +7368,10 @@
                 "t": "double",
                 "v": -1
               },
+              "restY2D": {
+                "t": "double",
+                "v": 155.0
+              },
               "shape.height2D": {
                 "t": "double",
                 "v": 13.0
@@ -7374,10 +7379,6 @@
               "shape.width2D": {
                 "t": "double",
                 "v": 0.0
-              },
-              "restY2D": {
-                "t": "double",
-                "v": 155.0
               }
             },
             "center": [
@@ -7470,6 +7471,10 @@
                 "t": "double",
                 "v": -1
               },
+              "restY2D": {
+                "t": "double",
+                "v": 174.0
+              },
               "shape.height2D": {
                 "t": "double",
                 "v": 13.0
@@ -7477,10 +7482,6 @@
               "shape.width2D": {
                 "t": "double",
                 "v": 0.0
-              },
-              "restY2D": {
-                "t": "double",
-                "v": 174.0
               }
             },
             "center": [
@@ -7561,6 +7562,10 @@
           },
           {
             "authoredProperties": {
+              "controlLabel": {
+                "t": "string",
+                "v": ""
+              },
               "displayName": {
                 "t": "string",
                 "v": ""
@@ -7576,10 +7581,6 @@
               "shape.width2D": {
                 "t": "double",
                 "v": 1232.0
-              },
-              "controlLabel": {
-                "t": "string",
-                "v": ""
               }
             },
             "center": [
@@ -7680,6 +7681,10 @@
                 "t": "string",
                 "v": "SPAWN ORB"
               },
+              "label.size2D": {
+                "t": "double",
+                "v": 16
+              },
               "restY2D": {
                 "t": "double",
                 "v": 624.0
@@ -7691,10 +7696,6 @@
               "shape.width2D": {
                 "t": "double",
                 "v": 150.0
-              },
-              "label.size2D": {
-                "t": "double",
-                "v": 16
               }
             },
             "center": [
@@ -7795,6 +7796,10 @@
                 "t": "string",
                 "v": "DAY / NIGHT"
               },
+              "label.size2D": {
+                "t": "double",
+                "v": 16
+              },
               "restY2D": {
                 "t": "double",
                 "v": 624.0
@@ -7806,10 +7811,6 @@
               "shape.width2D": {
                 "t": "double",
                 "v": 150.0
-              },
-              "label.size2D": {
-                "t": "double",
-                "v": 16
               }
             },
             "center": [
@@ -7914,6 +7915,10 @@
                 "t": "bool",
                 "v": true
               },
+              "label.size2D": {
+                "t": "double",
+                "v": 23
+              },
               "noteName": {
                 "t": "string",
                 "v": "C5"
@@ -7929,10 +7934,6 @@
               "shape.width2D": {
                 "t": "double",
                 "v": 76.0
-              },
-              "label.size2D": {
-                "t": "double",
-                "v": 23
               }
             },
             "center": [
@@ -8037,6 +8038,10 @@
                 "t": "bool",
                 "v": true
               },
+              "label.size2D": {
+                "t": "double",
+                "v": 23
+              },
               "noteName": {
                 "t": "string",
                 "v": "D5"
@@ -8052,10 +8057,6 @@
               "shape.width2D": {
                 "t": "double",
                 "v": 76.0
-              },
-              "label.size2D": {
-                "t": "double",
-                "v": 23
               }
             },
             "center": [
@@ -8160,6 +8161,10 @@
                 "t": "bool",
                 "v": true
               },
+              "label.size2D": {
+                "t": "double",
+                "v": 23
+              },
               "noteName": {
                 "t": "string",
                 "v": "E5"
@@ -8175,10 +8180,6 @@
               "shape.width2D": {
                 "t": "double",
                 "v": 76.0
-              },
-              "label.size2D": {
-                "t": "double",
-                "v": 23
               }
             },
             "center": [
@@ -8283,6 +8284,10 @@
                 "t": "bool",
                 "v": true
               },
+              "label.size2D": {
+                "t": "double",
+                "v": 23
+              },
               "noteName": {
                 "t": "string",
                 "v": "F5"
@@ -8298,10 +8303,6 @@
               "shape.width2D": {
                 "t": "double",
                 "v": 76.0
-              },
-              "label.size2D": {
-                "t": "double",
-                "v": 23
               }
             },
             "center": [
@@ -8406,6 +8407,10 @@
                 "t": "bool",
                 "v": true
               },
+              "label.size2D": {
+                "t": "double",
+                "v": 23
+              },
               "noteName": {
                 "t": "string",
                 "v": "G5"
@@ -8421,10 +8426,6 @@
               "shape.width2D": {
                 "t": "double",
                 "v": 76.0
-              },
-              "label.size2D": {
-                "t": "double",
-                "v": 23
               }
             },
             "center": [
@@ -8529,6 +8530,10 @@
                 "t": "bool",
                 "v": true
               },
+              "label.size2D": {
+                "t": "double",
+                "v": 23
+              },
               "noteName": {
                 "t": "string",
                 "v": "A5"
@@ -8544,10 +8549,6 @@
               "shape.width2D": {
                 "t": "double",
                 "v": 76.0
-              },
-              "label.size2D": {
-                "t": "double",
-                "v": 23
               }
             },
             "center": [
@@ -8652,6 +8653,10 @@
                 "t": "bool",
                 "v": true
               },
+              "label.size2D": {
+                "t": "double",
+                "v": 23
+              },
               "noteName": {
                 "t": "string",
                 "v": "B5"
@@ -8667,10 +8672,6 @@
               "shape.width2D": {
                 "t": "double",
                 "v": 76.0
-              },
-              "label.size2D": {
-                "t": "double",
-                "v": 23
               }
             },
             "center": [
@@ -8771,6 +8772,10 @@
                 "t": "string",
                 "v": "DRAW: OFF"
               },
+              "label.size2D": {
+                "t": "double",
+                "v": 16
+              },
               "restY2D": {
                 "t": "double",
                 "v": 624.0
@@ -8782,10 +8787,6 @@
               "shape.width2D": {
                 "t": "double",
                 "v": 228.0
-              },
-              "label.size2D": {
-                "t": "double",
-                "v": 16
               }
             },
             "center": [
@@ -8874,6 +8875,18 @@
                 "t": "bool",
                 "v": false
               },
+              "inkB": {
+                "t": "double",
+                "v": 0.15
+              },
+              "inkG": {
+                "t": "double",
+                "v": 0.85
+              },
+              "inkR": {
+                "t": "double",
+                "v": 1.0
+              },
               "pulseRate": {
                 "t": "double",
                 "v": 1.0
@@ -8897,18 +8910,6 @@
               "voice": {
                 "t": "string",
                 "v": "triangle"
-              },
-              "inkR": {
-                "t": "double",
-                "v": 1.0
-              },
-              "inkG": {
-                "t": "double",
-                "v": 0.85
-              },
-              "inkB": {
-                "t": "double",
-                "v": 0.15
               }
             },
             "center": [
@@ -8983,9 +8984,61 @@
             ]
           },
           {
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "Codex / Studio authoring"
+              },
+              "onBehalfOf": {
+                "t": "string",
+                "v": "Zach"
+              },
+              "revision": {
+                "t": "string",
+                "v": "resonance-1"
+              }
+            },
+            "center": [
+              0,
+              -5,
+              0
+            ],
+            "faceColors": [
+              [
+                0.035,
+                0.055,
+                0.073
+              ],
+              [
+                0.035,
+                0.055,
+                0.073
+              ],
+              [
+                0.035,
+                0.055,
+                0.073
+              ],
+              [
+                0.035,
+                0.055,
+                0.073
+              ],
+              [
+                0.035,
+                0.055,
+                0.073
+              ],
+              [
+                0.035,
+                0.055,
+                0.073
+              ]
+            ],
+            "geometryType": 0,
+            "materialId": "",
             "objectID": "studio.author.codex",
             "shapeKind": 0,
-            "geometryType": 0,
             "shapeParams": [
               0.01,
               0.01,
@@ -9014,64 +9067,76 @@
               -5,
               0,
               1.0
-            ],
-            "center": [
-              0,
-              -5,
-              0
-            ],
-            "materialId": "",
-            "faceColors": [
-              [
-                0.035,
-                0.055,
-                0.073
-              ],
-              [
-                0.035,
-                0.055,
-                0.073
-              ],
-              [
-                0.035,
-                0.055,
-                0.073
-              ],
-              [
-                0.035,
-                0.055,
-                0.073
-              ],
-              [
-                0.035,
-                0.055,
-                0.073
-              ],
-              [
-                0.035,
-                0.055,
-                0.073
-              ]
-            ],
+            ]
+          },
+          {
             "authoredProperties": {
               "displayName": {
                 "t": "string",
-                "v": "Codex / Studio authoring"
+                "v": "PLAY / CREATE"
               },
-              "onBehalfOf": {
+              "label2D": {
                 "t": "string",
-                "v": "Zach"
+                "v": "PLAY / CREATE"
               },
-              "revision": {
-                "t": "string",
-                "v": "resonance-1"
+              "pickPriority": {
+                "t": "double",
+                "v": -1
+              },
+              "restY2D": {
+                "t": "double",
+                "v": 599.0
+              },
+              "shape.height2D": {
+                "t": "double",
+                "v": 12.0
+              },
+              "shape.width2D": {
+                "t": "double",
+                "v": 0.0
               }
-            }
-          },
-          {
+            },
+            "center": [
+              0,
+              0,
+              0
+            ],
+            "faceColors": [
+              [
+                0.3,
+                0.91,
+                0.78
+              ],
+              [
+                0.3,
+                0.91,
+                0.78
+              ],
+              [
+                0.3,
+                0.91,
+                0.78
+              ],
+              [
+                0.3,
+                0.91,
+                0.78
+              ],
+              [
+                0.3,
+                0.91,
+                0.78
+              ],
+              [
+                0.3,
+                0.91,
+                0.78
+              ]
+            ],
+            "geometryType": 13,
+            "materialId": "",
             "objectID": "hud.resonance.dock-caption",
             "shapeKind": 13,
-            "geometryType": 13,
             "shapeParams": [
               0.0,
               0.0,
@@ -9102,79 +9167,79 @@
               0,
               0,
               1.0
-            ],
-            "center": [
-              0,
-              0,
-              0
             ],
             "x2D": 42.0,
             "y2D": 599.0,
-            "zOrder2D": 40,
-            "materialId": "",
-            "faceColors": [
-              [
-                0.3,
-                0.91,
-                0.78
-              ],
-              [
-                0.3,
-                0.91,
-                0.78
-              ],
-              [
-                0.3,
-                0.91,
-                0.78
-              ],
-              [
-                0.3,
-                0.91,
-                0.78
-              ],
-              [
-                0.3,
-                0.91,
-                0.78
-              ],
-              [
-                0.3,
-                0.91,
-                0.78
-              ]
-            ],
+            "zOrder2D": 40
+          },
+          {
             "authoredProperties": {
               "displayName": {
                 "t": "string",
-                "v": "PLAY / CREATE"
+                "v": "THE SPECTRUM   /   C MAJOR"
               },
               "label2D": {
                 "t": "string",
-                "v": "PLAY / CREATE"
+                "v": "THE SPECTRUM   /   C MAJOR"
               },
-              "shape.width2D": {
+              "pickPriority": {
                 "t": "double",
-                "v": 0.0
-              },
-              "shape.height2D": {
-                "t": "double",
-                "v": 12.0
+                "v": -1
               },
               "restY2D": {
                 "t": "double",
                 "v": 599.0
               },
-              "pickPriority": {
+              "shape.height2D": {
                 "t": "double",
-                "v": -1
+                "v": 12.0
+              },
+              "shape.width2D": {
+                "t": "double",
+                "v": 0.0
               }
-            }
-          },
-          {
+            },
+            "center": [
+              0,
+              0,
+              0
+            ],
+            "faceColors": [
+              [
+                0.46,
+                0.57,
+                0.64
+              ],
+              [
+                0.46,
+                0.57,
+                0.64
+              ],
+              [
+                0.46,
+                0.57,
+                0.64
+              ],
+              [
+                0.46,
+                0.57,
+                0.64
+              ],
+              [
+                0.46,
+                0.57,
+                0.64
+              ],
+              [
+                0.46,
+                0.57,
+                0.64
+              ]
+            ],
+            "geometryType": 13,
+            "materialId": "",
             "objectID": "hud.resonance.notes-caption",
             "shapeKind": 13,
-            "geometryType": 13,
             "shapeParams": [
               0.0,
               0.0,
@@ -9205,16 +9270,43 @@
               0,
               0,
               1.0
-            ],
-            "center": [
-              0,
-              0,
-              0
             ],
             "x2D": 380.0,
             "y2D": 599.0,
-            "zOrder2D": 40,
-            "materialId": "",
+            "zOrder2D": 40
+          },
+          {
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "MARK MAKING"
+              },
+              "label2D": {
+                "t": "string",
+                "v": "MARK MAKING"
+              },
+              "pickPriority": {
+                "t": "double",
+                "v": -1
+              },
+              "restY2D": {
+                "t": "double",
+                "v": 599.0
+              },
+              "shape.height2D": {
+                "t": "double",
+                "v": 12.0
+              },
+              "shape.width2D": {
+                "t": "double",
+                "v": 0.0
+              }
+            },
+            "center": [
+              0,
+              0,
+              0
+            ],
             "faceColors": [
               [
                 0.46,
@@ -9247,37 +9339,10 @@
                 0.64
               ]
             ],
-            "authoredProperties": {
-              "displayName": {
-                "t": "string",
-                "v": "THE SPECTRUM   /   C MAJOR"
-              },
-              "label2D": {
-                "t": "string",
-                "v": "THE SPECTRUM   /   C MAJOR"
-              },
-              "shape.width2D": {
-                "t": "double",
-                "v": 0.0
-              },
-              "shape.height2D": {
-                "t": "double",
-                "v": 12.0
-              },
-              "restY2D": {
-                "t": "double",
-                "v": 599.0
-              },
-              "pickPriority": {
-                "t": "double",
-                "v": -1
-              }
-            }
-          },
-          {
+            "geometryType": 13,
+            "materialId": "",
             "objectID": "hud.resonance.draw-caption",
             "shapeKind": 13,
-            "geometryType": 13,
             "shapeParams": [
               0.0,
               0.0,
@@ -9309,157 +9374,121 @@
               0,
               1.0
             ],
-            "center": [
-              0,
-              0,
-              0
-            ],
             "x2D": 1008.0,
             "y2D": 599.0,
-            "zOrder2D": 40,
-            "materialId": "",
-            "faceColors": [
-              [
-                0.46,
-                0.57,
-                0.64
-              ],
-              [
-                0.46,
-                0.57,
-                0.64
-              ],
-              [
-                0.46,
-                0.57,
-                0.64
-              ],
-              [
-                0.46,
-                0.57,
-                0.64
-              ],
-              [
-                0.46,
-                0.57,
-                0.64
-              ],
-              [
-                0.46,
-                0.57,
-                0.64
-              ]
-            ],
-            "authoredProperties": {
-              "displayName": {
-                "t": "string",
-                "v": "MARK MAKING"
-              },
-              "label2D": {
-                "t": "string",
-                "v": "MARK MAKING"
-              },
-              "shape.width2D": {
-                "t": "double",
-                "v": 0.0
-              },
-              "shape.height2D": {
-                "t": "double",
-                "v": 12.0
-              },
-              "restY2D": {
-                "t": "double",
-                "v": 599.0
-              },
-              "pickPriority": {
-                "t": "double",
-                "v": -1
-              }
-            }
+            "zOrder2D": 40
           },
           {
-            "objectID": "studio.resonance.c5",
-            "shapeKind": 2,
-            "geometryType": 2,
-            "shapeParams": [
-              0.13,
-              0.13,
-              0.13,
-              0.5,
-              0,
-              0,
-              0,
-              0,
-              0
-            ],
-            "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              -1.71,
-              3.3,
-              1.9,
-              1.0
-            ],
-            "center": [
-              -1.71,
-              3.3,
-              1.9
-            ],
-            "materialId": "",
-            "faceColors": [
-              [
-                0.94,
-                0.32,
-                0.43
-              ],
-              [
-                0.94,
-                0.32,
-                0.43
-              ],
-              [
-                0.94,
-                0.32,
-                0.43
-              ],
-              [
-                0.94,
-                0.32,
-                0.43
-              ],
-              [
-                0.94,
-                0.32,
-                0.43
-              ],
-              [
-                0.94,
-                0.32,
-                0.43
-              ]
-            ],
             "authoredProperties": {
               "displayName": {
                 "t": "string",
                 "v": "C5 / Resonator"
               },
+              "resonanceAge": {
+                "t": "double",
+                "v": 100
+              },
+              "resonanceBaseY": {
+                "t": "double",
+                "v": 3.3
+              },
+              "resonanceEnergy": {
+                "t": "double",
+                "v": 0
+              },
               "resonanceNote": {
                 "t": "string",
                 "v": "C5"
               },
+              "resonanceRadius": {
+                "t": "double",
+                "v": 0.13
+              },
               "struckAt": {
                 "t": "double",
                 "v": -100
+              }
+            },
+            "center": [
+              -1.71,
+              3.3,
+              1.9
+            ],
+            "faceColors": [
+              [
+                0.94,
+                0.32,
+                0.43
+              ],
+              [
+                0.94,
+                0.32,
+                0.43
+              ],
+              [
+                0.94,
+                0.32,
+                0.43
+              ],
+              [
+                0.94,
+                0.32,
+                0.43
+              ],
+              [
+                0.94,
+                0.32,
+                0.43
+              ],
+              [
+                0.94,
+                0.32,
+                0.43
+              ]
+            ],
+            "geometryType": 2,
+            "materialId": "",
+            "objectID": "studio.resonance.c5",
+            "shapeKind": 2,
+            "shapeParams": [
+              0.13,
+              0.13,
+              0.13,
+              0.5,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "transform": [
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              -1.71,
+              3.3,
+              1.9,
+              1.0
+            ]
+          },
+          {
+            "authoredProperties": {
+              "controlLabel": {
+                "t": "string",
+                "v": ""
+              },
+              "displayName": {
+                "t": "string",
+                "v": ""
               },
               "resonanceAge": {
                 "t": "double",
@@ -9469,20 +9498,72 @@
                 "t": "double",
                 "v": 0
               },
-              "resonanceBaseY": {
-                "t": "double",
-                "v": 3.3
+              "resonanceMeter": {
+                "t": "bool",
+                "v": true
               },
-              "resonanceRadius": {
+              "resonanceNote": {
+                "t": "string",
+                "v": "C5"
+              },
+              "restY2D": {
                 "t": "double",
-                "v": 0.13
+                "v": 617.0
+              },
+              "shape.height2D": {
+                "t": "double",
+                "v": 3.0
+              },
+              "shape.width2D": {
+                "t": "double",
+                "v": 76.0
+              },
+              "struckAt": {
+                "t": "double",
+                "v": -100
               }
-            }
-          },
-          {
+            },
+            "center": [
+              0,
+              0,
+              0
+            ],
+            "faceColors": [
+              [
+                0.94,
+                0.32,
+                0.43
+              ],
+              [
+                0.94,
+                0.32,
+                0.43
+              ],
+              [
+                0.94,
+                0.32,
+                0.43
+              ],
+              [
+                0.94,
+                0.32,
+                0.43
+              ],
+              [
+                0.94,
+                0.32,
+                0.43
+              ],
+              [
+                0.94,
+                0.32,
+                0.43
+              ]
+            ],
+            "geometryType": 12,
+            "materialId": "",
             "objectID": "hud.resonance.meter.c5",
             "shapeKind": 12,
-            "geometryType": 12,
             "shapeParams": [
               0.0,
               0.0,
@@ -9514,173 +9595,121 @@
               0,
               1.0
             ],
-            "center": [
-              0,
-              0,
-              0
-            ],
             "x2D": 380.0,
             "y2D": 617.0,
-            "zOrder2D": 25,
-            "materialId": "",
-            "faceColors": [
-              [
-                0.94,
-                0.32,
-                0.43
-              ],
-              [
-                0.94,
-                0.32,
-                0.43
-              ],
-              [
-                0.94,
-                0.32,
-                0.43
-              ],
-              [
-                0.94,
-                0.32,
-                0.43
-              ],
-              [
-                0.94,
-                0.32,
-                0.43
-              ],
-              [
-                0.94,
-                0.32,
-                0.43
-              ]
-            ],
-            "authoredProperties": {
-              "displayName": {
-                "t": "string",
-                "v": ""
-              },
-              "controlLabel": {
-                "t": "string",
-                "v": ""
-              },
-              "shape.width2D": {
-                "t": "double",
-                "v": 76.0
-              },
-              "shape.height2D": {
-                "t": "double",
-                "v": 3.0
-              },
-              "restY2D": {
-                "t": "double",
-                "v": 617.0
-              },
-              "resonanceNote": {
-                "t": "string",
-                "v": "C5"
-              },
-              "struckAt": {
-                "t": "double",
-                "v": -100
-              },
-              "resonanceAge": {
-                "t": "double",
-                "v": 100
-              },
-              "resonanceEnergy": {
-                "t": "double",
-                "v": 0
-              },
-              "resonanceMeter": {
-                "t": "bool",
-                "v": true
-              }
-            }
+            "zOrder2D": 25
           },
           {
-            "objectID": "studio.resonance.d5",
-            "shapeKind": 2,
-            "geometryType": 2,
-            "shapeParams": [
-              0.13,
-              0.13,
-              0.13,
-              0.5,
-              0,
-              0,
-              0,
-              0,
-              0
-            ],
-            "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              -1.14,
-              3.46,
-              1.9,
-              1.0
-            ],
-            "center": [
-              -1.14,
-              3.46,
-              1.9
-            ],
-            "materialId": "",
-            "faceColors": [
-              [
-                1.0,
-                0.53,
-                0.3
-              ],
-              [
-                1.0,
-                0.53,
-                0.3
-              ],
-              [
-                1.0,
-                0.53,
-                0.3
-              ],
-              [
-                1.0,
-                0.53,
-                0.3
-              ],
-              [
-                1.0,
-                0.53,
-                0.3
-              ],
-              [
-                1.0,
-                0.53,
-                0.3
-              ]
-            ],
             "authoredProperties": {
               "displayName": {
                 "t": "string",
                 "v": "D5 / Resonator"
               },
+              "resonanceAge": {
+                "t": "double",
+                "v": 100
+              },
+              "resonanceBaseY": {
+                "t": "double",
+                "v": 3.46
+              },
+              "resonanceEnergy": {
+                "t": "double",
+                "v": 0
+              },
               "resonanceNote": {
                 "t": "string",
                 "v": "D5"
               },
+              "resonanceRadius": {
+                "t": "double",
+                "v": 0.13
+              },
               "struckAt": {
                 "t": "double",
                 "v": -100
+              }
+            },
+            "center": [
+              -1.14,
+              3.46,
+              1.9
+            ],
+            "faceColors": [
+              [
+                1.0,
+                0.53,
+                0.3
+              ],
+              [
+                1.0,
+                0.53,
+                0.3
+              ],
+              [
+                1.0,
+                0.53,
+                0.3
+              ],
+              [
+                1.0,
+                0.53,
+                0.3
+              ],
+              [
+                1.0,
+                0.53,
+                0.3
+              ],
+              [
+                1.0,
+                0.53,
+                0.3
+              ]
+            ],
+            "geometryType": 2,
+            "materialId": "",
+            "objectID": "studio.resonance.d5",
+            "shapeKind": 2,
+            "shapeParams": [
+              0.13,
+              0.13,
+              0.13,
+              0.5,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "transform": [
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              -1.14,
+              3.46,
+              1.9,
+              1.0
+            ]
+          },
+          {
+            "authoredProperties": {
+              "controlLabel": {
+                "t": "string",
+                "v": ""
+              },
+              "displayName": {
+                "t": "string",
+                "v": ""
               },
               "resonanceAge": {
                 "t": "double",
@@ -9690,20 +9719,72 @@
                 "t": "double",
                 "v": 0
               },
-              "resonanceBaseY": {
-                "t": "double",
-                "v": 3.46
+              "resonanceMeter": {
+                "t": "bool",
+                "v": true
               },
-              "resonanceRadius": {
+              "resonanceNote": {
+                "t": "string",
+                "v": "D5"
+              },
+              "restY2D": {
                 "t": "double",
-                "v": 0.13
+                "v": 617.0
+              },
+              "shape.height2D": {
+                "t": "double",
+                "v": 3.0
+              },
+              "shape.width2D": {
+                "t": "double",
+                "v": 76.0
+              },
+              "struckAt": {
+                "t": "double",
+                "v": -100
               }
-            }
-          },
-          {
+            },
+            "center": [
+              0,
+              0,
+              0
+            ],
+            "faceColors": [
+              [
+                1.0,
+                0.53,
+                0.3
+              ],
+              [
+                1.0,
+                0.53,
+                0.3
+              ],
+              [
+                1.0,
+                0.53,
+                0.3
+              ],
+              [
+                1.0,
+                0.53,
+                0.3
+              ],
+              [
+                1.0,
+                0.53,
+                0.3
+              ],
+              [
+                1.0,
+                0.53,
+                0.3
+              ]
+            ],
+            "geometryType": 12,
+            "materialId": "",
             "objectID": "hud.resonance.meter.d5",
             "shapeKind": 12,
-            "geometryType": 12,
             "shapeParams": [
               0.0,
               0.0,
@@ -9735,173 +9816,121 @@
               0,
               1.0
             ],
-            "center": [
-              0,
-              0,
-              0
-            ],
             "x2D": 466.0,
             "y2D": 617.0,
-            "zOrder2D": 25,
-            "materialId": "",
-            "faceColors": [
-              [
-                1.0,
-                0.53,
-                0.3
-              ],
-              [
-                1.0,
-                0.53,
-                0.3
-              ],
-              [
-                1.0,
-                0.53,
-                0.3
-              ],
-              [
-                1.0,
-                0.53,
-                0.3
-              ],
-              [
-                1.0,
-                0.53,
-                0.3
-              ],
-              [
-                1.0,
-                0.53,
-                0.3
-              ]
-            ],
-            "authoredProperties": {
-              "displayName": {
-                "t": "string",
-                "v": ""
-              },
-              "controlLabel": {
-                "t": "string",
-                "v": ""
-              },
-              "shape.width2D": {
-                "t": "double",
-                "v": 76.0
-              },
-              "shape.height2D": {
-                "t": "double",
-                "v": 3.0
-              },
-              "restY2D": {
-                "t": "double",
-                "v": 617.0
-              },
-              "resonanceNote": {
-                "t": "string",
-                "v": "D5"
-              },
-              "struckAt": {
-                "t": "double",
-                "v": -100
-              },
-              "resonanceAge": {
-                "t": "double",
-                "v": 100
-              },
-              "resonanceEnergy": {
-                "t": "double",
-                "v": 0
-              },
-              "resonanceMeter": {
-                "t": "bool",
-                "v": true
-              }
-            }
+            "zOrder2D": 25
           },
           {
-            "objectID": "studio.resonance.e5",
-            "shapeKind": 2,
-            "geometryType": 2,
-            "shapeParams": [
-              0.13,
-              0.13,
-              0.13,
-              0.5,
-              0,
-              0,
-              0,
-              0,
-              0
-            ],
-            "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              -0.57,
-              3.6199999999999997,
-              1.9,
-              1.0
-            ],
-            "center": [
-              -0.57,
-              3.6199999999999997,
-              1.9
-            ],
-            "materialId": "",
-            "faceColors": [
-              [
-                0.98,
-                0.78,
-                0.34
-              ],
-              [
-                0.98,
-                0.78,
-                0.34
-              ],
-              [
-                0.98,
-                0.78,
-                0.34
-              ],
-              [
-                0.98,
-                0.78,
-                0.34
-              ],
-              [
-                0.98,
-                0.78,
-                0.34
-              ],
-              [
-                0.98,
-                0.78,
-                0.34
-              ]
-            ],
             "authoredProperties": {
               "displayName": {
                 "t": "string",
                 "v": "E5 / Resonator"
               },
+              "resonanceAge": {
+                "t": "double",
+                "v": 100
+              },
+              "resonanceBaseY": {
+                "t": "double",
+                "v": 3.6199999999999997
+              },
+              "resonanceEnergy": {
+                "t": "double",
+                "v": 0
+              },
               "resonanceNote": {
                 "t": "string",
                 "v": "E5"
               },
+              "resonanceRadius": {
+                "t": "double",
+                "v": 0.13
+              },
               "struckAt": {
                 "t": "double",
                 "v": -100
+              }
+            },
+            "center": [
+              -0.57,
+              3.6199999999999997,
+              1.9
+            ],
+            "faceColors": [
+              [
+                0.98,
+                0.78,
+                0.34
+              ],
+              [
+                0.98,
+                0.78,
+                0.34
+              ],
+              [
+                0.98,
+                0.78,
+                0.34
+              ],
+              [
+                0.98,
+                0.78,
+                0.34
+              ],
+              [
+                0.98,
+                0.78,
+                0.34
+              ],
+              [
+                0.98,
+                0.78,
+                0.34
+              ]
+            ],
+            "geometryType": 2,
+            "materialId": "",
+            "objectID": "studio.resonance.e5",
+            "shapeKind": 2,
+            "shapeParams": [
+              0.13,
+              0.13,
+              0.13,
+              0.5,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "transform": [
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              -0.57,
+              3.6199999999999997,
+              1.9,
+              1.0
+            ]
+          },
+          {
+            "authoredProperties": {
+              "controlLabel": {
+                "t": "string",
+                "v": ""
+              },
+              "displayName": {
+                "t": "string",
+                "v": ""
               },
               "resonanceAge": {
                 "t": "double",
@@ -9911,20 +9940,72 @@
                 "t": "double",
                 "v": 0
               },
-              "resonanceBaseY": {
-                "t": "double",
-                "v": 3.6199999999999997
+              "resonanceMeter": {
+                "t": "bool",
+                "v": true
               },
-              "resonanceRadius": {
+              "resonanceNote": {
+                "t": "string",
+                "v": "E5"
+              },
+              "restY2D": {
                 "t": "double",
-                "v": 0.13
+                "v": 617.0
+              },
+              "shape.height2D": {
+                "t": "double",
+                "v": 3.0
+              },
+              "shape.width2D": {
+                "t": "double",
+                "v": 76.0
+              },
+              "struckAt": {
+                "t": "double",
+                "v": -100
               }
-            }
-          },
-          {
+            },
+            "center": [
+              0,
+              0,
+              0
+            ],
+            "faceColors": [
+              [
+                0.98,
+                0.78,
+                0.34
+              ],
+              [
+                0.98,
+                0.78,
+                0.34
+              ],
+              [
+                0.98,
+                0.78,
+                0.34
+              ],
+              [
+                0.98,
+                0.78,
+                0.34
+              ],
+              [
+                0.98,
+                0.78,
+                0.34
+              ],
+              [
+                0.98,
+                0.78,
+                0.34
+              ]
+            ],
+            "geometryType": 12,
+            "materialId": "",
             "objectID": "hud.resonance.meter.e5",
             "shapeKind": 12,
-            "geometryType": 12,
             "shapeParams": [
               0.0,
               0.0,
@@ -9956,315 +10037,82 @@
               0,
               1.0
             ],
-            "center": [
-              0,
-              0,
-              0
-            ],
             "x2D": 552.0,
             "y2D": 617.0,
-            "zOrder2D": 25,
-            "materialId": "",
-            "faceColors": [
-              [
-                0.98,
-                0.78,
-                0.34
-              ],
-              [
-                0.98,
-                0.78,
-                0.34
-              ],
-              [
-                0.98,
-                0.78,
-                0.34
-              ],
-              [
-                0.98,
-                0.78,
-                0.34
-              ],
-              [
-                0.98,
-                0.78,
-                0.34
-              ],
-              [
-                0.98,
-                0.78,
-                0.34
-              ]
-            ],
-            "authoredProperties": {
-              "displayName": {
-                "t": "string",
-                "v": ""
-              },
-              "controlLabel": {
-                "t": "string",
-                "v": ""
-              },
-              "shape.width2D": {
-                "t": "double",
-                "v": 76.0
-              },
-              "shape.height2D": {
-                "t": "double",
-                "v": 3.0
-              },
-              "restY2D": {
-                "t": "double",
-                "v": 617.0
-              },
-              "resonanceNote": {
-                "t": "string",
-                "v": "E5"
-              },
-              "struckAt": {
-                "t": "double",
-                "v": -100
-              },
-              "resonanceAge": {
-                "t": "double",
-                "v": 100
-              },
-              "resonanceEnergy": {
-                "t": "double",
-                "v": 0
-              },
-              "resonanceMeter": {
-                "t": "bool",
-                "v": true
-              }
-            }
+            "zOrder2D": 25
           },
           {
-            "objectID": "studio.resonance.f5",
-            "shapeKind": 2,
-            "geometryType": 2,
-            "shapeParams": [
-              0.13,
-              0.13,
-              0.13,
-              0.5,
-              0,
-              0,
-              0,
-              0,
-              0
-            ],
-            "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              3.78,
-              1.9,
-              1.0
-            ],
-            "center": [
-              0.0,
-              3.78,
-              1.9
-            ],
-            "materialId": "",
-            "faceColors": [
-              [
-                0.51,
-                0.86,
-                0.44
-              ],
-              [
-                0.51,
-                0.86,
-                0.44
-              ],
-              [
-                0.51,
-                0.86,
-                0.44
-              ],
-              [
-                0.51,
-                0.86,
-                0.44
-              ],
-              [
-                0.51,
-                0.86,
-                0.44
-              ],
-              [
-                0.51,
-                0.86,
-                0.44
-              ]
-            ],
             "authoredProperties": {
               "displayName": {
                 "t": "string",
                 "v": "F5 / Resonator"
               },
-              "resonanceNote": {
-                "t": "string",
-                "v": "F5"
-              },
-              "struckAt": {
-                "t": "double",
-                "v": -100
-              },
               "resonanceAge": {
                 "t": "double",
                 "v": 100
-              },
-              "resonanceEnergy": {
-                "t": "double",
-                "v": 0
               },
               "resonanceBaseY": {
                 "t": "double",
                 "v": 3.78
               },
-              "resonanceRadius": {
+              "resonanceEnergy": {
                 "t": "double",
-                "v": 0.13
-              }
-            }
-          },
-          {
-            "objectID": "hud.resonance.meter.f5",
-            "shapeKind": 12,
-            "geometryType": 12,
-            "shapeParams": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              76.0,
-              3.0
-            ],
-            "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0,
-              0,
-              0,
-              1.0
-            ],
-            "center": [
-              0,
-              0,
-              0
-            ],
-            "x2D": 638.0,
-            "y2D": 617.0,
-            "zOrder2D": 25,
-            "materialId": "",
-            "faceColors": [
-              [
-                0.51,
-                0.86,
-                0.44
-              ],
-              [
-                0.51,
-                0.86,
-                0.44
-              ],
-              [
-                0.51,
-                0.86,
-                0.44
-              ],
-              [
-                0.51,
-                0.86,
-                0.44
-              ],
-              [
-                0.51,
-                0.86,
-                0.44
-              ],
-              [
-                0.51,
-                0.86,
-                0.44
-              ]
-            ],
-            "authoredProperties": {
-              "displayName": {
-                "t": "string",
-                "v": ""
-              },
-              "controlLabel": {
-                "t": "string",
-                "v": ""
-              },
-              "shape.width2D": {
-                "t": "double",
-                "v": 76.0
-              },
-              "shape.height2D": {
-                "t": "double",
-                "v": 3.0
-              },
-              "restY2D": {
-                "t": "double",
-                "v": 617.0
+                "v": 0
               },
               "resonanceNote": {
                 "t": "string",
                 "v": "F5"
               },
+              "resonanceRadius": {
+                "t": "double",
+                "v": 0.13
+              },
               "struckAt": {
                 "t": "double",
                 "v": -100
-              },
-              "resonanceAge": {
-                "t": "double",
-                "v": 100
-              },
-              "resonanceEnergy": {
-                "t": "double",
-                "v": 0
-              },
-              "resonanceMeter": {
-                "t": "bool",
-                "v": true
               }
-            }
-          },
-          {
-            "objectID": "studio.resonance.g5",
-            "shapeKind": 2,
+            },
+            "center": [
+              0.0,
+              3.78,
+              1.9
+            ],
+            "faceColors": [
+              [
+                0.51,
+                0.86,
+                0.44
+              ],
+              [
+                0.51,
+                0.86,
+                0.44
+              ],
+              [
+                0.51,
+                0.86,
+                0.44
+              ],
+              [
+                0.51,
+                0.86,
+                0.44
+              ],
+              [
+                0.51,
+                0.86,
+                0.44
+              ],
+              [
+                0.51,
+                0.86,
+                0.44
+              ]
+            ],
             "geometryType": 2,
+            "materialId": "",
+            "objectID": "studio.resonance.f5",
+            "shapeKind": 2,
             "shapeParams": [
               0.13,
               0.13,
@@ -10289,203 +10137,203 @@
               0.0,
               1.0,
               0.0,
-              0.57,
-              3.6199999999999997,
+              0.0,
+              3.78,
               1.9,
               1.0
-            ],
+            ]
+          },
+          {
+            "authoredProperties": {
+              "controlLabel": {
+                "t": "string",
+                "v": ""
+              },
+              "displayName": {
+                "t": "string",
+                "v": ""
+              },
+              "resonanceAge": {
+                "t": "double",
+                "v": 100
+              },
+              "resonanceEnergy": {
+                "t": "double",
+                "v": 0
+              },
+              "resonanceMeter": {
+                "t": "bool",
+                "v": true
+              },
+              "resonanceNote": {
+                "t": "string",
+                "v": "F5"
+              },
+              "restY2D": {
+                "t": "double",
+                "v": 617.0
+              },
+              "shape.height2D": {
+                "t": "double",
+                "v": 3.0
+              },
+              "shape.width2D": {
+                "t": "double",
+                "v": 76.0
+              },
+              "struckAt": {
+                "t": "double",
+                "v": -100
+              }
+            },
             "center": [
-              0.57,
-              3.6199999999999997,
-              1.9
+              0,
+              0,
+              0
             ],
-            "materialId": "",
             "faceColors": [
               [
-                0.27,
-                0.85,
-                0.7
+                0.51,
+                0.86,
+                0.44
               ],
               [
-                0.27,
-                0.85,
-                0.7
+                0.51,
+                0.86,
+                0.44
               ],
               [
-                0.27,
-                0.85,
-                0.7
+                0.51,
+                0.86,
+                0.44
               ],
               [
-                0.27,
-                0.85,
-                0.7
+                0.51,
+                0.86,
+                0.44
               ],
               [
-                0.27,
-                0.85,
-                0.7
+                0.51,
+                0.86,
+                0.44
               ],
               [
-                0.27,
-                0.85,
-                0.7
+                0.51,
+                0.86,
+                0.44
               ]
             ],
+            "geometryType": 12,
+            "materialId": "",
+            "objectID": "hud.resonance.meter.f5",
+            "shapeKind": 12,
+            "shapeParams": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              76.0,
+              3.0
+            ],
+            "transform": [
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0,
+              0,
+              0,
+              1.0
+            ],
+            "x2D": 638.0,
+            "y2D": 617.0,
+            "zOrder2D": 25
+          },
+          {
             "authoredProperties": {
               "displayName": {
                 "t": "string",
                 "v": "G5 / Resonator"
               },
-              "resonanceNote": {
-                "t": "string",
-                "v": "G5"
-              },
-              "struckAt": {
-                "t": "double",
-                "v": -100
-              },
               "resonanceAge": {
                 "t": "double",
                 "v": 100
-              },
-              "resonanceEnergy": {
-                "t": "double",
-                "v": 0
               },
               "resonanceBaseY": {
                 "t": "double",
                 "v": 3.6199999999999997
               },
-              "resonanceRadius": {
+              "resonanceEnergy": {
                 "t": "double",
-                "v": 0.13
-              }
-            }
-          },
-          {
-            "objectID": "hud.resonance.meter.g5",
-            "shapeKind": 12,
-            "geometryType": 12,
-            "shapeParams": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              76.0,
-              3.0
-            ],
-            "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0,
-              0,
-              0,
-              1.0
-            ],
-            "center": [
-              0,
-              0,
-              0
-            ],
-            "x2D": 724.0,
-            "y2D": 617.0,
-            "zOrder2D": 25,
-            "materialId": "",
-            "faceColors": [
-              [
-                0.27,
-                0.85,
-                0.7
-              ],
-              [
-                0.27,
-                0.85,
-                0.7
-              ],
-              [
-                0.27,
-                0.85,
-                0.7
-              ],
-              [
-                0.27,
-                0.85,
-                0.7
-              ],
-              [
-                0.27,
-                0.85,
-                0.7
-              ],
-              [
-                0.27,
-                0.85,
-                0.7
-              ]
-            ],
-            "authoredProperties": {
-              "displayName": {
-                "t": "string",
-                "v": ""
-              },
-              "controlLabel": {
-                "t": "string",
-                "v": ""
-              },
-              "shape.width2D": {
-                "t": "double",
-                "v": 76.0
-              },
-              "shape.height2D": {
-                "t": "double",
-                "v": 3.0
-              },
-              "restY2D": {
-                "t": "double",
-                "v": 617.0
+                "v": 0
               },
               "resonanceNote": {
                 "t": "string",
                 "v": "G5"
               },
+              "resonanceRadius": {
+                "t": "double",
+                "v": 0.13
+              },
               "struckAt": {
                 "t": "double",
                 "v": -100
-              },
-              "resonanceAge": {
-                "t": "double",
-                "v": 100
-              },
-              "resonanceEnergy": {
-                "t": "double",
-                "v": 0
-              },
-              "resonanceMeter": {
-                "t": "bool",
-                "v": true
               }
-            }
-          },
-          {
-            "objectID": "studio.resonance.a5",
-            "shapeKind": 2,
+            },
+            "center": [
+              0.57,
+              3.6199999999999997,
+              1.9
+            ],
+            "faceColors": [
+              [
+                0.27,
+                0.85,
+                0.7
+              ],
+              [
+                0.27,
+                0.85,
+                0.7
+              ],
+              [
+                0.27,
+                0.85,
+                0.7
+              ],
+              [
+                0.27,
+                0.85,
+                0.7
+              ],
+              [
+                0.27,
+                0.85,
+                0.7
+              ],
+              [
+                0.27,
+                0.85,
+                0.7
+              ]
+            ],
             "geometryType": 2,
+            "materialId": "",
+            "objectID": "studio.resonance.g5",
+            "shapeKind": 2,
             "shapeParams": [
               0.13,
               0.13,
@@ -10510,124 +10358,167 @@
               0.0,
               1.0,
               0.0,
-              1.14,
-              3.46,
+              0.57,
+              3.6199999999999997,
               1.9,
               1.0
-            ],
+            ]
+          },
+          {
+            "authoredProperties": {
+              "controlLabel": {
+                "t": "string",
+                "v": ""
+              },
+              "displayName": {
+                "t": "string",
+                "v": ""
+              },
+              "resonanceAge": {
+                "t": "double",
+                "v": 100
+              },
+              "resonanceEnergy": {
+                "t": "double",
+                "v": 0
+              },
+              "resonanceMeter": {
+                "t": "bool",
+                "v": true
+              },
+              "resonanceNote": {
+                "t": "string",
+                "v": "G5"
+              },
+              "restY2D": {
+                "t": "double",
+                "v": 617.0
+              },
+              "shape.height2D": {
+                "t": "double",
+                "v": 3.0
+              },
+              "shape.width2D": {
+                "t": "double",
+                "v": 76.0
+              },
+              "struckAt": {
+                "t": "double",
+                "v": -100
+              }
+            },
             "center": [
-              1.14,
-              3.46,
-              1.9
+              0,
+              0,
+              0
             ],
-            "materialId": "",
             "faceColors": [
               [
-                0.32,
-                0.69,
-                0.98
+                0.27,
+                0.85,
+                0.7
               ],
               [
-                0.32,
-                0.69,
-                0.98
+                0.27,
+                0.85,
+                0.7
               ],
               [
-                0.32,
-                0.69,
-                0.98
+                0.27,
+                0.85,
+                0.7
               ],
               [
-                0.32,
-                0.69,
-                0.98
+                0.27,
+                0.85,
+                0.7
               ],
               [
-                0.32,
-                0.69,
-                0.98
+                0.27,
+                0.85,
+                0.7
               ],
               [
-                0.32,
-                0.69,
-                0.98
+                0.27,
+                0.85,
+                0.7
               ]
             ],
+            "geometryType": 12,
+            "materialId": "",
+            "objectID": "hud.resonance.meter.g5",
+            "shapeKind": 12,
+            "shapeParams": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              76.0,
+              3.0
+            ],
+            "transform": [
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0,
+              0,
+              0,
+              1.0
+            ],
+            "x2D": 724.0,
+            "y2D": 617.0,
+            "zOrder2D": 25
+          },
+          {
             "authoredProperties": {
               "displayName": {
                 "t": "string",
                 "v": "A5 / Resonator"
               },
-              "resonanceNote": {
-                "t": "string",
-                "v": "A5"
-              },
-              "struckAt": {
-                "t": "double",
-                "v": -100
-              },
               "resonanceAge": {
                 "t": "double",
                 "v": 100
-              },
-              "resonanceEnergy": {
-                "t": "double",
-                "v": 0
               },
               "resonanceBaseY": {
                 "t": "double",
                 "v": 3.46
               },
+              "resonanceEnergy": {
+                "t": "double",
+                "v": 0
+              },
+              "resonanceNote": {
+                "t": "string",
+                "v": "A5"
+              },
               "resonanceRadius": {
                 "t": "double",
                 "v": 0.13
+              },
+              "struckAt": {
+                "t": "double",
+                "v": -100
               }
-            }
-          },
-          {
-            "objectID": "hud.resonance.meter.a5",
-            "shapeKind": 12,
-            "geometryType": 12,
-            "shapeParams": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              76.0,
-              3.0
-            ],
-            "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0,
-              0,
-              0,
-              1.0
-            ],
+            },
             "center": [
-              0,
-              0,
-              0
+              1.14,
+              3.46,
+              1.9
             ],
-            "x2D": 810.0,
-            "y2D": 617.0,
-            "zOrder2D": 25,
-            "materialId": "",
             "faceColors": [
               [
                 0.32,
@@ -10660,34 +10551,49 @@
                 0.98
               ]
             ],
+            "geometryType": 2,
+            "materialId": "",
+            "objectID": "studio.resonance.a5",
+            "shapeKind": 2,
+            "shapeParams": [
+              0.13,
+              0.13,
+              0.13,
+              0.5,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "transform": [
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              1.14,
+              3.46,
+              1.9,
+              1.0
+            ]
+          },
+          {
             "authoredProperties": {
-              "displayName": {
-                "t": "string",
-                "v": ""
-              },
               "controlLabel": {
                 "t": "string",
                 "v": ""
               },
-              "shape.width2D": {
-                "t": "double",
-                "v": 76.0
-              },
-              "shape.height2D": {
-                "t": "double",
-                "v": 3.0
-              },
-              "restY2D": {
-                "t": "double",
-                "v": 617.0
-              },
-              "resonanceNote": {
+              "displayName": {
                 "t": "string",
-                "v": "A5"
-              },
-              "struckAt": {
-                "t": "double",
-                "v": -100
+                "v": ""
               },
               "resonanceAge": {
                 "t": "double",
@@ -10700,13 +10606,176 @@
               "resonanceMeter": {
                 "t": "bool",
                 "v": true
+              },
+              "resonanceNote": {
+                "t": "string",
+                "v": "A5"
+              },
+              "restY2D": {
+                "t": "double",
+                "v": 617.0
+              },
+              "shape.height2D": {
+                "t": "double",
+                "v": 3.0
+              },
+              "shape.width2D": {
+                "t": "double",
+                "v": 76.0
+              },
+              "struckAt": {
+                "t": "double",
+                "v": -100
               }
-            }
+            },
+            "center": [
+              0,
+              0,
+              0
+            ],
+            "faceColors": [
+              [
+                0.32,
+                0.69,
+                0.98
+              ],
+              [
+                0.32,
+                0.69,
+                0.98
+              ],
+              [
+                0.32,
+                0.69,
+                0.98
+              ],
+              [
+                0.32,
+                0.69,
+                0.98
+              ],
+              [
+                0.32,
+                0.69,
+                0.98
+              ],
+              [
+                0.32,
+                0.69,
+                0.98
+              ]
+            ],
+            "geometryType": 12,
+            "materialId": "",
+            "objectID": "hud.resonance.meter.a5",
+            "shapeKind": 12,
+            "shapeParams": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              76.0,
+              3.0
+            ],
+            "transform": [
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0,
+              0,
+              0,
+              1.0
+            ],
+            "x2D": 810.0,
+            "y2D": 617.0,
+            "zOrder2D": 25
           },
           {
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "B5 / Resonator"
+              },
+              "resonanceAge": {
+                "t": "double",
+                "v": 100
+              },
+              "resonanceBaseY": {
+                "t": "double",
+                "v": 3.3
+              },
+              "resonanceEnergy": {
+                "t": "double",
+                "v": 0
+              },
+              "resonanceNote": {
+                "t": "string",
+                "v": "B5"
+              },
+              "resonanceRadius": {
+                "t": "double",
+                "v": 0.13
+              },
+              "struckAt": {
+                "t": "double",
+                "v": -100
+              }
+            },
+            "center": [
+              1.71,
+              3.3,
+              1.9
+            ],
+            "faceColors": [
+              [
+                0.66,
+                0.54,
+                0.97
+              ],
+              [
+                0.66,
+                0.54,
+                0.97
+              ],
+              [
+                0.66,
+                0.54,
+                0.97
+              ],
+              [
+                0.66,
+                0.54,
+                0.97
+              ],
+              [
+                0.66,
+                0.54,
+                0.97
+              ],
+              [
+                0.66,
+                0.54,
+                0.97
+              ]
+            ],
+            "geometryType": 2,
+            "materialId": "",
             "objectID": "studio.resonance.b5",
             "shapeKind": 2,
-            "geometryType": 2,
             "shapeParams": [
               0.13,
               0.13,
@@ -10735,13 +10804,56 @@
               3.3,
               1.9,
               1.0
-            ],
+            ]
+          },
+          {
+            "authoredProperties": {
+              "controlLabel": {
+                "t": "string",
+                "v": ""
+              },
+              "displayName": {
+                "t": "string",
+                "v": ""
+              },
+              "resonanceAge": {
+                "t": "double",
+                "v": 100
+              },
+              "resonanceEnergy": {
+                "t": "double",
+                "v": 0
+              },
+              "resonanceMeter": {
+                "t": "bool",
+                "v": true
+              },
+              "resonanceNote": {
+                "t": "string",
+                "v": "B5"
+              },
+              "restY2D": {
+                "t": "double",
+                "v": 617.0
+              },
+              "shape.height2D": {
+                "t": "double",
+                "v": 3.0
+              },
+              "shape.width2D": {
+                "t": "double",
+                "v": 76.0
+              },
+              "struckAt": {
+                "t": "double",
+                "v": -100
+              }
+            },
             "center": [
-              1.71,
-              3.3,
-              1.9
+              0,
+              0,
+              0
             ],
-            "materialId": "",
             "faceColors": [
               [
                 0.66,
@@ -10774,41 +10886,10 @@
                 0.97
               ]
             ],
-            "authoredProperties": {
-              "displayName": {
-                "t": "string",
-                "v": "B5 / Resonator"
-              },
-              "resonanceNote": {
-                "t": "string",
-                "v": "B5"
-              },
-              "struckAt": {
-                "t": "double",
-                "v": -100
-              },
-              "resonanceAge": {
-                "t": "double",
-                "v": 100
-              },
-              "resonanceEnergy": {
-                "t": "double",
-                "v": 0
-              },
-              "resonanceBaseY": {
-                "t": "double",
-                "v": 3.3
-              },
-              "resonanceRadius": {
-                "t": "double",
-                "v": 0.13
-              }
-            }
-          },
-          {
+            "geometryType": 12,
+            "materialId": "",
             "objectID": "hud.resonance.meter.b5",
             "shapeKind": 12,
-            "geometryType": 12,
             "shapeParams": [
               0.0,
               0.0,
@@ -10840,94 +10921,78 @@
               0,
               1.0
             ],
+            "x2D": 896.0,
+            "y2D": 617.0,
+            "zOrder2D": 25
+          },
+          {
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "PLAY A NOTE"
+              },
+              "label2D": {
+                "t": "string",
+                "v": "PLAY A NOTE"
+              },
+              "pickPriority": {
+                "t": "double",
+                "v": -1
+              },
+              "restY2D": {
+                "t": "double",
+                "v": 34.0
+              },
+              "shape.height2D": {
+                "t": "double",
+                "v": 26.0
+              },
+              "shape.width2D": {
+                "t": "double",
+                "v": 0.0
+              }
+            },
             "center": [
               0,
               0,
               0
             ],
-            "x2D": 896.0,
-            "y2D": 617.0,
-            "zOrder2D": 25,
-            "materialId": "",
             "faceColors": [
               [
-                0.66,
-                0.54,
-                0.97
+                0.3,
+                0.91,
+                0.78
               ],
               [
-                0.66,
-                0.54,
-                0.97
+                0.3,
+                0.91,
+                0.78
               ],
               [
-                0.66,
-                0.54,
-                0.97
+                0.3,
+                0.91,
+                0.78
               ],
               [
-                0.66,
-                0.54,
-                0.97
+                0.3,
+                0.91,
+                0.78
               ],
               [
-                0.66,
-                0.54,
-                0.97
+                0.3,
+                0.91,
+                0.78
               ],
               [
-                0.66,
-                0.54,
-                0.97
+                0.3,
+                0.91,
+                0.78
               ]
             ],
-            "authoredProperties": {
-              "displayName": {
-                "t": "string",
-                "v": ""
-              },
-              "controlLabel": {
-                "t": "string",
-                "v": ""
-              },
-              "shape.width2D": {
-                "t": "double",
-                "v": 76.0
-              },
-              "shape.height2D": {
-                "t": "double",
-                "v": 3.0
-              },
-              "restY2D": {
-                "t": "double",
-                "v": 617.0
-              },
-              "resonanceNote": {
-                "t": "string",
-                "v": "B5"
-              },
-              "struckAt": {
-                "t": "double",
-                "v": -100
-              },
-              "resonanceAge": {
-                "t": "double",
-                "v": 100
-              },
-              "resonanceEnergy": {
-                "t": "double",
-                "v": 0
-              },
-              "resonanceMeter": {
-                "t": "bool",
-                "v": true
-              }
-            }
-          },
-          {
+            "geometryType": 13,
+            "materialId": "",
             "objectID": "hud.resonance.note",
             "shapeKind": 13,
-            "geometryType": 13,
             "shapeParams": [
               0.0,
               0.0,
@@ -10959,78 +11024,78 @@
               0,
               1.0
             ],
+            "x2D": 1000.0,
+            "y2D": 34.0,
+            "zOrder2D": 40
+          },
+          {
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "and watch it become light"
+              },
+              "label2D": {
+                "t": "string",
+                "v": "and watch it become light"
+              },
+              "pickPriority": {
+                "t": "double",
+                "v": -1
+              },
+              "restY2D": {
+                "t": "double",
+                "v": 69.0
+              },
+              "shape.height2D": {
+                "t": "double",
+                "v": 12.0
+              },
+              "shape.width2D": {
+                "t": "double",
+                "v": 0.0
+              }
+            },
             "center": [
               0,
               0,
               0
             ],
-            "x2D": 1000.0,
-            "y2D": 34.0,
-            "zOrder2D": 40,
-            "materialId": "",
             "faceColors": [
               [
-                0.3,
-                0.91,
-                0.78
+                0.46,
+                0.57,
+                0.64
               ],
               [
-                0.3,
-                0.91,
-                0.78
+                0.46,
+                0.57,
+                0.64
               ],
               [
-                0.3,
-                0.91,
-                0.78
+                0.46,
+                0.57,
+                0.64
               ],
               [
-                0.3,
-                0.91,
-                0.78
+                0.46,
+                0.57,
+                0.64
               ],
               [
-                0.3,
-                0.91,
-                0.78
+                0.46,
+                0.57,
+                0.64
               ],
               [
-                0.3,
-                0.91,
-                0.78
+                0.46,
+                0.57,
+                0.64
               ]
             ],
-            "authoredProperties": {
-              "displayName": {
-                "t": "string",
-                "v": "PLAY A NOTE"
-              },
-              "label2D": {
-                "t": "string",
-                "v": "PLAY A NOTE"
-              },
-              "shape.width2D": {
-                "t": "double",
-                "v": 0.0
-              },
-              "shape.height2D": {
-                "t": "double",
-                "v": 26.0
-              },
-              "restY2D": {
-                "t": "double",
-                "v": 34.0
-              },
-              "pickPriority": {
-                "t": "double",
-                "v": -1
-              }
-            }
-          },
-          {
+            "geometryType": 13,
+            "materialId": "",
             "objectID": "hud.resonance.note-hint",
             "shapeKind": 13,
-            "geometryType": 13,
             "shapeParams": [
               0.0,
               0.0,
@@ -11062,181 +11127,78 @@
               0,
               1.0
             ],
-            "center": [
-              0,
-              0,
-              0
-            ],
             "x2D": 1000.0,
             "y2D": 69.0,
-            "zOrder2D": 40,
-            "materialId": "",
-            "faceColors": [
-              [
-                0.46,
-                0.57,
-                0.64
-              ],
-              [
-                0.46,
-                0.57,
-                0.64
-              ],
-              [
-                0.46,
-                0.57,
-                0.64
-              ],
-              [
-                0.46,
-                0.57,
-                0.64
-              ],
-              [
-                0.46,
-                0.57,
-                0.64
-              ],
-              [
-                0.46,
-                0.57,
-                0.64
-              ]
-            ],
+            "zOrder2D": 40
+          },
+          {
             "authoredProperties": {
               "displayName": {
                 "t": "string",
-                "v": "and watch it become light"
+                "v": "VOICE / TRIANGLE"
               },
               "label2D": {
                 "t": "string",
-                "v": "and watch it become light"
-              },
-              "shape.width2D": {
-                "t": "double",
-                "v": 0.0
-              },
-              "shape.height2D": {
-                "t": "double",
-                "v": 12.0
-              },
-              "restY2D": {
-                "t": "double",
-                "v": 69.0
+                "v": "VOICE / TRIANGLE"
               },
               "pickPriority": {
                 "t": "double",
                 "v": -1
-              }
-            }
-          },
-          {
-            "objectID": "hud.resonance.voice-caption",
-            "shapeKind": 13,
-            "geometryType": 13,
-            "shapeParams": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              13.0
-            ],
-            "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0,
-              0,
-              0,
-              1.0
-            ],
-            "center": [
-              0,
-              0,
-              0
-            ],
-            "x2D": 1000.0,
-            "y2D": 109.0,
-            "zOrder2D": 40,
-            "materialId": "",
-            "faceColors": [
-              [
-                0.88,
-                0.93,
-                0.96
-              ],
-              [
-                0.88,
-                0.93,
-                0.96
-              ],
-              [
-                0.88,
-                0.93,
-                0.96
-              ],
-              [
-                0.88,
-                0.93,
-                0.96
-              ],
-              [
-                0.88,
-                0.93,
-                0.96
-              ],
-              [
-                0.88,
-                0.93,
-                0.96
-              ]
-            ],
-            "authoredProperties": {
-              "displayName": {
-                "t": "string",
-                "v": "VOICE / TRIANGLE"
-              },
-              "label2D": {
-                "t": "string",
-                "v": "VOICE / TRIANGLE"
-              },
-              "shape.width2D": {
-                "t": "double",
-                "v": 0.0
-              },
-              "shape.height2D": {
-                "t": "double",
-                "v": 13.0
               },
               "restY2D": {
                 "t": "double",
                 "v": 109.0
               },
-              "pickPriority": {
+              "shape.height2D": {
                 "t": "double",
-                "v": -1
+                "v": 13.0
+              },
+              "shape.width2D": {
+                "t": "double",
+                "v": 0.0
               }
-            }
-          },
-          {
-            "objectID": "hud.resonance.ink-caption",
-            "shapeKind": 13,
+            },
+            "center": [
+              0,
+              0,
+              0
+            ],
+            "faceColors": [
+              [
+                0.88,
+                0.93,
+                0.96
+              ],
+              [
+                0.88,
+                0.93,
+                0.96
+              ],
+              [
+                0.88,
+                0.93,
+                0.96
+              ],
+              [
+                0.88,
+                0.93,
+                0.96
+              ],
+              [
+                0.88,
+                0.93,
+                0.96
+              ],
+              [
+                0.88,
+                0.93,
+                0.96
+              ]
+            ],
             "geometryType": 13,
+            "materialId": "",
+            "objectID": "hud.resonance.voice-caption",
+            "shapeKind": 13,
             "shapeParams": [
               0.0,
               0.0,
@@ -11268,47 +11230,11 @@
               0,
               1.0
             ],
-            "center": [
-              0,
-              0,
-              0
-            ],
             "x2D": 1000.0,
-            "y2D": 205.0,
-            "zOrder2D": 40,
-            "materialId": "",
-            "faceColors": [
-              [
-                0.88,
-                0.93,
-                0.96
-              ],
-              [
-                0.88,
-                0.93,
-                0.96
-              ],
-              [
-                0.88,
-                0.93,
-                0.96
-              ],
-              [
-                0.88,
-                0.93,
-                0.96
-              ],
-              [
-                0.88,
-                0.93,
-                0.96
-              ],
-              [
-                0.88,
-                0.93,
-                0.96
-              ]
-            ],
+            "y2D": 109.0,
+            "zOrder2D": 40
+          },
+          {
             "authoredProperties": {
               "displayName": {
                 "t": "string",
@@ -11318,28 +11244,64 @@
                 "t": "string",
                 "v": "INK / SOLAR"
               },
-              "shape.width2D": {
+              "pickPriority": {
                 "t": "double",
-                "v": 0.0
-              },
-              "shape.height2D": {
-                "t": "double",
-                "v": 13.0
+                "v": -1
               },
               "restY2D": {
                 "t": "double",
                 "v": 205.0
               },
-              "pickPriority": {
+              "shape.height2D": {
                 "t": "double",
-                "v": -1
+                "v": 13.0
+              },
+              "shape.width2D": {
+                "t": "double",
+                "v": 0.0
               }
-            }
-          },
-          {
-            "objectID": "hud.resonance.voice.triangle",
-            "shapeKind": 12,
-            "geometryType": 12,
+            },
+            "center": [
+              0,
+              0,
+              0
+            ],
+            "faceColors": [
+              [
+                0.88,
+                0.93,
+                0.96
+              ],
+              [
+                0.88,
+                0.93,
+                0.96
+              ],
+              [
+                0.88,
+                0.93,
+                0.96
+              ],
+              [
+                0.88,
+                0.93,
+                0.96
+              ],
+              [
+                0.88,
+                0.93,
+                0.96
+              ],
+              [
+                0.88,
+                0.93,
+                0.96
+              ]
+            ],
+            "geometryType": 13,
+            "materialId": "",
+            "objectID": "hud.resonance.ink-caption",
+            "shapeKind": 13,
             "shapeParams": [
               0.0,
               0.0,
@@ -11350,8 +11312,8 @@
               0.0,
               0.0,
               0.0,
-              72.0,
-              40.0
+              0.0,
+              13.0
             ],
             "transform": [
               1.0,
@@ -11371,118 +11333,42 @@
               0,
               1.0
             ],
-            "center": [
-              0,
-              0,
-              0
-            ],
             "x2D": 1000.0,
-            "y2D": 137.0,
-            "zOrder2D": 30,
-            "materialId": "",
-            "faceColors": [
-              [
-                0.17,
-                0.27,
-                0.32
-              ],
-              [
-                0.17,
-                0.27,
-                0.32
-              ],
-              [
-                0.17,
-                0.27,
-                0.32
-              ],
-              [
-                0.17,
-                0.27,
-                0.32
-              ],
-              [
-                0.17,
-                0.27,
-                0.32
-              ],
-              [
-                0.17,
-                0.27,
-                0.32
-              ]
-            ],
+            "y2D": 205.0,
+            "zOrder2D": 40
+          },
+          {
             "authoredProperties": {
-              "displayName": {
-                "t": "string",
-                "v": "TRI"
-              },
               "controlLabel": {
                 "t": "string",
                 "v": "TRI"
               },
-              "shape.width2D": {
+              "displayName": {
+                "t": "string",
+                "v": "TRI"
+              },
+              "restY2D": {
                 "t": "double",
-                "v": 72.0
+                "v": 137.0
               },
               "shape.height2D": {
                 "t": "double",
                 "v": 40.0
               },
-              "restY2D": {
+              "shape.width2D": {
                 "t": "double",
-                "v": 137.0
+                "v": 72.0
               },
               "studioVoice": {
                 "t": "string",
                 "v": "triangle"
               }
-            }
-          },
-          {
-            "objectID": "hud.resonance.voice.sine",
-            "shapeKind": 12,
-            "geometryType": 12,
-            "shapeParams": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              72.0,
-              40.0
-            ],
-            "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0,
-              0,
-              0,
-              1.0
-            ],
+            },
             "center": [
               0,
               0,
               0
             ],
-            "x2D": 1080.0,
-            "y2D": 137.0,
-            "zOrder2D": 30,
-            "materialId": "",
             "faceColors": [
               [
                 0.17,
@@ -11515,77 +11401,77 @@
                 0.32
               ]
             ],
+            "geometryType": 12,
+            "materialId": "",
+            "objectID": "hud.resonance.voice.triangle",
+            "shapeKind": 12,
+            "shapeParams": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              72.0,
+              40.0
+            ],
+            "transform": [
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0,
+              0,
+              0,
+              1.0
+            ],
+            "x2D": 1000.0,
+            "y2D": 137.0,
+            "zOrder2D": 30
+          },
+          {
             "authoredProperties": {
-              "displayName": {
-                "t": "string",
-                "v": "SINE"
-              },
               "controlLabel": {
                 "t": "string",
                 "v": "SINE"
               },
-              "shape.width2D": {
+              "displayName": {
+                "t": "string",
+                "v": "SINE"
+              },
+              "restY2D": {
                 "t": "double",
-                "v": 72.0
+                "v": 137.0
               },
               "shape.height2D": {
                 "t": "double",
                 "v": 40.0
               },
-              "restY2D": {
+              "shape.width2D": {
                 "t": "double",
-                "v": 137.0
+                "v": 72.0
               },
               "studioVoice": {
                 "t": "string",
                 "v": "sine"
               }
-            }
-          },
-          {
-            "objectID": "hud.resonance.voice.square",
-            "shapeKind": 12,
-            "geometryType": 12,
-            "shapeParams": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              72.0,
-              40.0
-            ],
-            "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0,
-              0,
-              0,
-              1.0
-            ],
+            },
             "center": [
               0,
               0,
               0
             ],
-            "x2D": 1160.0,
-            "y2D": 137.0,
-            "zOrder2D": 30,
-            "materialId": "",
             "faceColors": [
               [
                 0.17,
@@ -11618,37 +11504,113 @@
                 0.32
               ]
             ],
+            "geometryType": 12,
+            "materialId": "",
+            "objectID": "hud.resonance.voice.sine",
+            "shapeKind": 12,
+            "shapeParams": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              72.0,
+              40.0
+            ],
+            "transform": [
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0,
+              0,
+              0,
+              1.0
+            ],
+            "x2D": 1080.0,
+            "y2D": 137.0,
+            "zOrder2D": 30
+          },
+          {
             "authoredProperties": {
-              "displayName": {
-                "t": "string",
-                "v": "SQR"
-              },
               "controlLabel": {
                 "t": "string",
                 "v": "SQR"
               },
-              "shape.width2D": {
-                "t": "double",
-                "v": 72.0
-              },
-              "shape.height2D": {
-                "t": "double",
-                "v": 40.0
+              "displayName": {
+                "t": "string",
+                "v": "SQR"
               },
               "restY2D": {
                 "t": "double",
                 "v": 137.0
               },
+              "shape.height2D": {
+                "t": "double",
+                "v": 40.0
+              },
+              "shape.width2D": {
+                "t": "double",
+                "v": 72.0
+              },
               "studioVoice": {
                 "t": "string",
                 "v": "square"
               }
-            }
-          },
-          {
-            "objectID": "hud.resonance.ink.solar",
-            "shapeKind": 12,
+            },
+            "center": [
+              0,
+              0,
+              0
+            ],
+            "faceColors": [
+              [
+                0.17,
+                0.27,
+                0.32
+              ],
+              [
+                0.17,
+                0.27,
+                0.32
+              ],
+              [
+                0.17,
+                0.27,
+                0.32
+              ],
+              [
+                0.17,
+                0.27,
+                0.32
+              ],
+              [
+                0.17,
+                0.27,
+                0.32
+              ],
+              [
+                0.17,
+                0.27,
+                0.32
+              ]
+            ],
             "geometryType": 12,
+            "materialId": "",
+            "objectID": "hud.resonance.voice.square",
+            "shapeKind": 12,
             "shapeParams": [
               0.0,
               0.0,
@@ -11680,82 +11642,189 @@
               0,
               1.0
             ],
+            "x2D": 1160.0,
+            "y2D": 137.0,
+            "zOrder2D": 30
+          },
+          {
+            "authoredProperties": {
+              "controlLabel": {
+                "t": "string",
+                "v": "SOLAR"
+              },
+              "displayName": {
+                "t": "string",
+                "v": "SOLAR"
+              },
+              "label.size2D": {
+                "t": "double",
+                "v": 13
+              },
+              "restY2D": {
+                "t": "double",
+                "v": 233.0
+              },
+              "shape.height2D": {
+                "t": "double",
+                "v": 40.0
+              },
+              "shape.width2D": {
+                "t": "double",
+                "v": 72.0
+              },
+              "studioInk": {
+                "t": "string",
+                "v": "SOLAR"
+              }
+            },
             "center": [
               0,
               0,
               0
+            ],
+            "faceColors": [
+              [
+                1.0,
+                0.85,
+                0.15
+              ],
+              [
+                1.0,
+                0.85,
+                0.15
+              ],
+              [
+                1.0,
+                0.85,
+                0.15
+              ],
+              [
+                1.0,
+                0.85,
+                0.15
+              ],
+              [
+                1.0,
+                0.85,
+                0.15
+              ],
+              [
+                1.0,
+                0.85,
+                0.15
+              ]
+            ],
+            "geometryType": 12,
+            "materialId": "",
+            "objectID": "hud.resonance.ink.solar",
+            "shapeKind": 12,
+            "shapeParams": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              72.0,
+              40.0
+            ],
+            "transform": [
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0,
+              0,
+              0,
+              1.0
             ],
             "x2D": 1000.0,
             "y2D": 233.0,
-            "zOrder2D": 30,
-            "materialId": "",
-            "faceColors": [
-              [
-                1.0,
-                0.85,
-                0.15
-              ],
-              [
-                1.0,
-                0.85,
-                0.15
-              ],
-              [
-                1.0,
-                0.85,
-                0.15
-              ],
-              [
-                1.0,
-                0.85,
-                0.15
-              ],
-              [
-                1.0,
-                0.85,
-                0.15
-              ],
-              [
-                1.0,
-                0.85,
-                0.15
-              ]
-            ],
+            "zOrder2D": 30
+          },
+          {
             "authoredProperties": {
-              "displayName": {
-                "t": "string",
-                "v": "SOLAR"
-              },
               "controlLabel": {
                 "t": "string",
-                "v": "SOLAR"
+                "v": "TIDAL"
               },
-              "shape.width2D": {
-                "t": "double",
-                "v": 72.0
+              "displayName": {
+                "t": "string",
+                "v": "TIDAL"
               },
-              "shape.height2D": {
+              "label.size2D": {
                 "t": "double",
-                "v": 40.0
+                "v": 13
               },
               "restY2D": {
                 "t": "double",
                 "v": 233.0
               },
+              "shape.height2D": {
+                "t": "double",
+                "v": 40.0
+              },
+              "shape.width2D": {
+                "t": "double",
+                "v": 72.0
+              },
               "studioInk": {
                 "t": "string",
-                "v": "SOLAR"
-              },
-              "label.size2D": {
-                "t": "double",
-                "v": 13
+                "v": "TIDAL"
               }
-            }
-          },
-          {
+            },
+            "center": [
+              0,
+              0,
+              0
+            ],
+            "faceColors": [
+              [
+                0.22,
+                0.88,
+                0.82
+              ],
+              [
+                0.22,
+                0.88,
+                0.82
+              ],
+              [
+                0.22,
+                0.88,
+                0.82
+              ],
+              [
+                0.22,
+                0.88,
+                0.82
+              ],
+              [
+                0.22,
+                0.88,
+                0.82
+              ],
+              [
+                0.22,
+                0.88,
+                0.82
+              ]
+            ],
+            "geometryType": 12,
+            "materialId": "",
             "objectID": "hud.resonance.ink.tidal",
             "shapeKind": 12,
-            "geometryType": 12,
             "shapeParams": [
               0.0,
               0.0,
@@ -11786,83 +11855,83 @@
               0,
               0,
               1.0
-            ],
-            "center": [
-              0,
-              0,
-              0
             ],
             "x2D": 1080.0,
             "y2D": 233.0,
-            "zOrder2D": 30,
-            "materialId": "",
-            "faceColors": [
-              [
-                0.22,
-                0.88,
-                0.82
-              ],
-              [
-                0.22,
-                0.88,
-                0.82
-              ],
-              [
-                0.22,
-                0.88,
-                0.82
-              ],
-              [
-                0.22,
-                0.88,
-                0.82
-              ],
-              [
-                0.22,
-                0.88,
-                0.82
-              ],
-              [
-                0.22,
-                0.88,
-                0.82
-              ]
-            ],
+            "zOrder2D": 30
+          },
+          {
             "authoredProperties": {
-              "displayName": {
-                "t": "string",
-                "v": "TIDAL"
-              },
               "controlLabel": {
                 "t": "string",
-                "v": "TIDAL"
+                "v": "ORCHID"
               },
-              "shape.width2D": {
-                "t": "double",
-                "v": 72.0
+              "displayName": {
+                "t": "string",
+                "v": "ORCHID"
               },
-              "shape.height2D": {
+              "label.size2D": {
                 "t": "double",
-                "v": 40.0
+                "v": 13
               },
               "restY2D": {
                 "t": "double",
                 "v": 233.0
               },
+              "shape.height2D": {
+                "t": "double",
+                "v": 40.0
+              },
+              "shape.width2D": {
+                "t": "double",
+                "v": 72.0
+              },
               "studioInk": {
                 "t": "string",
-                "v": "TIDAL"
-              },
-              "label.size2D": {
-                "t": "double",
-                "v": 13
+                "v": "ORCHID"
               }
-            }
-          },
-          {
+            },
+            "center": [
+              0,
+              0,
+              0
+            ],
+            "faceColors": [
+              [
+                0.85,
+                0.4,
+                0.95
+              ],
+              [
+                0.85,
+                0.4,
+                0.95
+              ],
+              [
+                0.85,
+                0.4,
+                0.95
+              ],
+              [
+                0.85,
+                0.4,
+                0.95
+              ],
+              [
+                0.85,
+                0.4,
+                0.95
+              ],
+              [
+                0.85,
+                0.4,
+                0.95
+              ]
+            ],
+            "geometryType": 12,
+            "materialId": "",
             "objectID": "hud.resonance.ink.orchid",
             "shapeKind": 12,
-            "geometryType": 12,
             "shapeParams": [
               0.0,
               0.0,
@@ -11894,81 +11963,12 @@
               0,
               1.0
             ],
-            "center": [
-              0,
-              0,
-              0
-            ],
             "x2D": 1160.0,
             "y2D": 233.0,
-            "zOrder2D": 30,
-            "materialId": "",
-            "faceColors": [
-              [
-                0.85,
-                0.4,
-                0.95
-              ],
-              [
-                0.85,
-                0.4,
-                0.95
-              ],
-              [
-                0.85,
-                0.4,
-                0.95
-              ],
-              [
-                0.85,
-                0.4,
-                0.95
-              ],
-              [
-                0.85,
-                0.4,
-                0.95
-              ],
-              [
-                0.85,
-                0.4,
-                0.95
-              ]
-            ],
-            "authoredProperties": {
-              "displayName": {
-                "t": "string",
-                "v": "ORCHID"
-              },
-              "controlLabel": {
-                "t": "string",
-                "v": "ORCHID"
-              },
-              "shape.width2D": {
-                "t": "double",
-                "v": 72.0
-              },
-              "shape.height2D": {
-                "t": "double",
-                "v": 40.0
-              },
-              "restY2D": {
-                "t": "double",
-                "v": 233.0
-              },
-              "studioInk": {
-                "t": "string",
-                "v": "ORCHID"
-              },
-              "label.size2D": {
-                "t": "double",
-                "v": 13
-              }
-            }
+            "zOrder2D": 30
           }
         ]
       }
     }
-  ],
-  "studioUpgrade": "resonance-1"
+  ]
 }

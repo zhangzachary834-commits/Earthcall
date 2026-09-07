@@ -1,6 +1,7 @@
 {
   "deletable": {
-    "Player": true
+    "Player": true,
+    "Zach": true
   },
   "formationRelations": [
     {
@@ -66,6 +67,16 @@
           "deltaWeight": 1.0,
           "description": "subcategory-of",
           "timestamp": 1788765152
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "subcategory-of",
+          "timestamp": 1788772864
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "subcategory-of",
+          "timestamp": 1788772864
         }
       ],
       "type": "subcategory-of",
@@ -134,6 +145,16 @@
           "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1788765152
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "instance-of",
+          "timestamp": 1788772864
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "instance-of",
+          "timestamp": 1788772864
         }
       ],
       "type": "instance-of",
@@ -143,7 +164,7 @@
   "identifier": "FarLands",
   "lexemes": [],
   "name": "FarLands",
-  "owner": "Player",
+  "owner": "Zach",
   "parentZone": "",
   "qualities": {
     "kind": "farlands",

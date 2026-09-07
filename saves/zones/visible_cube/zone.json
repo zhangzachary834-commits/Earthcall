@@ -1,6 +1,7 @@
 {
   "deletable": {
-    "Player": true
+    "Player": true,
+    "Zach": true
   },
   "formationRelations": [],
   "identifier": "visible_cube",
@@ -21,7 +22,7 @@
     }
   ],
   "name": "visible_cube",
-  "owner": "Player",
+  "owner": "Zach",
   "parentZone": "",
   "qualities": {
     "ownerKind": "person"

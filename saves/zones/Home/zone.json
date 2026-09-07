@@ -2,7 +2,49 @@
   "formationRelations": [],
   "identifier": "Home",
   "name": "Home",
-  "owner": "Player",
+  "objects": [
+    {
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Legacy Ground"
+        }
+      },
+      "authors": [
+        "Zach"
+      ],
+      "baseline": "ground",
+      "center": [
+        0.0,
+        -0.5,
+        0.0
+      ],
+      "geometryType": 0,
+      "injected_by": "Antigravity",
+      "materialId": "material.grass",
+      "objectID": "legacy-ground-plane-Home",
+      "shapeKind": 0,
+      "transform": [
+        1000.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1000.0,
+        0.0,
+        0.0,
+        -0.5,
+        0.0,
+        1.0
+      ]
+    }
+  ],
+  "owner": "Zach",
   "parentZone": "",
   "qualities": {
     "kind": "home",
@@ -11,6 +53,69 @@
   },
   "scope": "Local",
   "world": {
+    "laws": [
+      {
+        "action": {
+          "bindings": {
+            "v": "position.y"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": -1000.0,
+                      "factors": {}
+                    },
+                    {
+                      "c": -1.0,
+                      "factors": {
+                        "v": 1.0
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "kind": 8,
+          "path": "position.y"
+        },
+        "activation": 0,
+        "authors": [
+          "person.zach"
+        ],
+        "condition": {
+          "conditions": [
+            {
+              "kind": 0,
+              "op": 0,
+              "operand": {
+                "t": "string",
+                "v": "key.g"
+              },
+              "path": "@event.subject"
+            },
+            {
+              "kind": 0,
+              "op": 0,
+              "operand": {
+                "t": "string",
+                "v": "ground"
+              },
+              "path": "baseline"
+            }
+          ],
+          "kind": 3
+        },
+        "eventTypes": [
+          "key-pressed"
+        ],
+        "identifier": "law-toggle-ground",
+        "name": "toggle-ground-visibility"
+      }
+    ],
     "objects": [
       {
         "authoritativeAxis": [
@@ -1917,7 +2022,7 @@
           0.0,
           31.563278198242188,
           0.3478606939315796,
-          19.948257446289062,
+          19.948257446289063,
           1.0
         ]
       },
@@ -2668,111 +2773,6 @@
           1.0
         ]
       }
-    ],
-    "laws": [
-      {
-        "identifier": "law-toggle-ground",
-        "name": "toggle-ground-visibility",
-        "activation": 0,
-        "eventTypes": [
-          "key-pressed"
-        ],
-        "condition": {
-          "kind": 3,
-          "conditions": [
-            {
-              "kind": 0,
-              "path": "@event.subject",
-              "op": 0,
-              "operand": {
-                "t": "string",
-                "v": "key.g"
-              }
-            },
-            {
-              "kind": 0,
-              "path": "baseline",
-              "op": 0,
-              "operand": {
-                "t": "string",
-                "v": "ground"
-              }
-            }
-          ]
-        },
-        "action": {
-          "kind": 8,
-          "path": "position.y",
-          "bindings": {
-            "v": "position.y"
-          },
-          "function": {
-            "pieces": [
-              {
-                "expr": {
-                  "terms": [
-                    {
-                      "c": -1000.0,
-                      "factors": {}
-                    },
-                    {
-                      "c": -1.0,
-                      "factors": {
-                        "v": 1.0
-                      }
-                    }
-                  ]
-                }
-              }
-            ]
-          }
-        },
-        "authors": [
-          "person.zach"
-        ]
-      }
     ]
-  },
-  "objects": [
-    {
-      "authoredProperties": {
-        "displayName": {
-          "t": "string",
-          "v": "Legacy Ground"
-        }
-      },
-      "center": [
-        0.0,
-        -0.5,
-        0.0
-      ],
-      "geometryType": 0,
-      "materialId": "material.grass",
-      "objectID": "legacy-ground-plane-Home",
-      "shapeKind": 0,
-      "transform": [
-        1000.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        1.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        1000.0,
-        0.0,
-        0.0,
-        -0.5,
-        0.0,
-        1.0
-      ],
-      "injected_by": "Antigravity",
-      "authors": [
-        "Zach"
-      ],
-      "baseline": "ground"
-    }
-  ]
+  }
 }
