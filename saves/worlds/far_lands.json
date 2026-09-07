@@ -1922,7 +1922,7 @@
   ],
   "authoredLaws": {
     "firstMoverEnabled": {
-      "physics-gravity": true,
+      "physics-gravity": false,
       "physics-kinematics": true,
       "physics-acoustics": true,
       "interaction-channel": true,

@@ -2065,3 +2065,48 @@ no recoverable Git object contains it.
 **Session:** `01a072e2-017b-7b03-aa4a-1ef25dab65d1`
 **Date:** 2026-09-06
 **Timestamp:** 2026-09-06T17:53:07-07:00
+
+## Person A/B result — 10–20 ms is not commit-reproducible · 2026-09-06 18:19 PDT
+
+**To Gemini Spark, Antigravity, and Zach:**
+
+Zach directly retested both `20549cbe` and `1dfceb1d`, each from a clean detached
+checkout followed by a successful rebuild of `earthcall_webgpu`. Both runs settled near
+30 ms. Neither reproduced the earlier 10–20 ms observation. Zach also closed many Chrome
+tabs during the experiment, but explicitly reports that this must **not** be credited
+with the change: both the prior ~30 ms state and the earlier 10–20 ms observation had
+already occurred with those many tabs open. Tab count and measured performance were not
+isolated, so no causal inference is licensed.
+
+This falsifies a source-level regression between those two commits as the explanation
+for the missing 10–20 ms state. It also means the one earlier 10–20 ms reading must not
+be used as a proven baseline or credited to an optimization until it recurs under a
+controlled camera/workload. It may have been an unusually favorable camera, GPU
+contention/power state, driver specialization state, or measurement sample; the current
+evidence cannot distinguish those.
+
+The workspace has been restored to `sync-from-earthcall-main` at `7bda885b`, and the
+current `earthcall_webgpu` target has been rebuilt successfully. The next optimization
+decision should use a repeatable fixed camera corpus and report distributions rather
+than one minimum: exact framebuffer and camera transform, at least three fresh-process
+runs per state, cold and warm p50/p95, and surrounding GPU/desktop load. Continue to
+treat surface acquisition as delayed queue pressure, not the cost of the current call.
+
+**Signed:** Codex
+**Session:** `01a072e2-017b-7b03-aa4a-1ef25dab65d1`
+**Date:** 2026-09-06
+**Timestamp:** 2026-09-06T18:19:41-07:00
+
+### Zach's causal correction — Chrome is a recorded variable, not an explanation · 2026-09-06 18:27 PDT
+
+Zach corrects the interpretation directly: he does not believe closing the tabs caused
+the improvement, because the same many-tabs condition accompanied both the earlier
+~30 ms result and the 10–20 ms outlier. The live GPU-utilization snapshot establishes
+only that the desktop was non-isolated when sampled; it does not establish that desktop
+contention caused any Earthcall timing. Future summaries must distinguish observation,
+correlation, and causation here.
+
+**Signed:** Codex
+**Session:** `01a072e2-017b-7b03-aa4a-1ef25dab65d1`
+**Date:** 2026-09-06
+**Timestamp:** 2026-09-06T18:27:32-07:00

@@ -39,169 +39,11 @@
             "v": "Perlin Ground Plane"
           }
         },
-        "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
-        ],
         "baseline": "ground",
-        "center": [
-          0.0,
-          -2.0,
-          0.0
-        ],
-        "faceColors": [
-          [
-            1.0,
-            0.0,
-            0.0
-          ],
-          [
-            1.0,
-            0.0,
-            0.0
-          ],
-          [
-            0.0,
-            1.0,
-            0.0
-          ],
-          [
-            0.0,
-            1.0,
-            0.0
-          ],
-          [
-            0.0,
-            0.0,
-            1.0
-          ],
-          [
-            0.0,
-            0.0,
-            1.0
-          ]
-        ],
-        "field": {
-          "dims": [
-            0.5,
-            0.5,
-            0.5
-          ],
-          "mathNode": {
-            "children": [
-              {
-                "op": 1,
-                "var": "y"
-              },
-              {
-                "children": [
-                  {
-                    "op": 0,
-                    "scalarForm": {
-                      "terms": [
-                        {
-                          "c": 40.0,
-                          "factors": {}
-                        }
-                      ]
-                    }
-                  },
-                  {
-                    "children": [
-                      {
-                        "children": [
-                          {
-                            "op": 0,
-                            "scalarForm": {
-                              "terms": [
-                                {
-                                  "c": 0.008,
-                                  "factors": {}
-                                }
-                              ]
-                            }
-                          },
-                          {
-                            "children": [
-                              {
-                                "op": 1,
-                                "var": "p"
-                              },
-                              {
-                                "children": [
-                                  {
-                                    "op": 0,
-                                    "scalarForm": {
-                                      "terms": [
-                                        {
-                                          "c": 100.0,
-                                          "factors": {}
-                                        }
-                                      ]
-                                    }
-                                  },
-                                  {
-                                    "op": 0,
-                                    "scalarForm": {
-                                      "terms": [
-                                        {
-                                          "c": 0.0,
-                                          "factors": {}
-                                        }
-                                      ]
-                                    }
-                                  },
-                                  {
-                                    "op": 0,
-                                    "scalarForm": {
-                                      "terms": [
-                                        {
-                                          "c": 100.0,
-                                          "factors": {}
-                                        }
-                                      ]
-                                    }
-                                  }
-                                ],
-                                "op": 2
-                              }
-                            ],
-                            "op": 4
-                          }
-                        ],
-                        "op": 6
-                      }
-                    ],
-                    "op": 29
-                  }
-                ],
-                "op": 6
-              }
-            ],
-            "op": 5
-          },
-          "offset": [
-            0.0,
-            0.0,
-            0.0
-          ],
-          "op": 0,
-          "p0": 0.0,
-          "p1": 0.0,
-          "prim": 7,
-          "t": 0.5
-        },
-        "fieldExtent": [
-          1000.0,
-          30.0,
-          1000.0
-        ],
         "geometryType": 10,
         "materialId": "material.grass",
         "objectID": "perlin-ground-plane",
         "renderMode": 0,
-        "rotationResponsiveness": 10.0,
         "shapeKind": 10,
         "shapeParams": [
           0.5,
@@ -212,30 +54,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
-        ],
-        "targetRotation": [
-          0.0,
-          -0.0,
-          0.0
-        ],
-        "transform": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          -2.0,
-          0.0,
-          1.0
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "x2D": 100.0,
         "y2D": 100.0,

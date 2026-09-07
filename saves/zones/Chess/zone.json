@@ -1,97 +1,392 @@
 {
-  "name": "Chess",
-  "identifier": "Chess",
-  "owner": "Player",
-  "parentZone": "",
-  "scope": "Local",
-  "qualities": {
-    "kind": "chess"
+  "deletable": {
+    "Player": true
   },
-  "world": {
-    "objects": [
-      {
-        "objectID": "object.chess.board",
-        "baseline": "ground",
-        "shapeKind": 0,
-        "geometryType": 0,
-        "shapeParams": [
-          0.5,
-          0.5,
-          0.5,
-          0.5,
-          0.0,
-          0.0,
+  "formationRelations": [
+    {
+      "attachment": {
+        "childAnchor": [
           0.0,
           0.0,
           0.0
         ],
-        "transform": [
-          8.0,
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
           0.0,
           0.0,
           0.0,
           0.0,
-          0.28,
+          1.0,
           0.0,
           0.0,
           0.0,
           0.0,
-          8.0,
+          1.0,
           0.0,
           0.0,
-          -0.14,
+          0.0,
           0.0,
           1.0
         ],
-        "center": [
+        "parentAnchor": [
           0.0,
-          -0.14,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "category.control.button",
+      "entityB": "category.control",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "subcategory-of",
+          "timestamp": 1787390000
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "subcategory-of",
+          "timestamp": 1788744909
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "subcategory-of",
+          "timestamp": 1788744909
+        }
+      ],
+      "type": "subcategory-of",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
           0.0
         ],
-        "materialId": "material.chess.board",
-        "faceColors": [
-          [
-            0.3607843137254902,
-            0.22745098039215686,
-            0.10980392156862745
-          ],
-          [
-            0.3607843137254902,
-            0.22745098039215686,
-            0.10980392156862745
-          ],
-          [
-            0.93,
-            0.84,
-            0.65
-          ],
-          [
-            0.3607843137254902,
-            0.22745098039215686,
-            0.10980392156862745
-          ],
-          [
-            0.3607843137254902,
-            0.22745098039215686,
-            0.10980392156862745
-          ],
-          [
-            0.3607843137254902,
-            0.22745098039215686,
-            0.10980392156862745
-          ]
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
         ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "hud.chess.promo.queen",
+      "entityB": "category.control.button",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "instance-of",
+          "timestamp": 1787390000
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "instance-of",
+          "timestamp": 1788744909
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "instance-of",
+          "timestamp": 1788744909
+        }
+      ],
+      "type": "instance-of",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "hud.chess.promo.knight",
+      "entityB": "category.control.button",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "instance-of",
+          "timestamp": 1787390000
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "instance-of",
+          "timestamp": 1788744909
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "instance-of",
+          "timestamp": 1788744909
+        }
+      ],
+      "type": "instance-of",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "hud.chess.promo.rook",
+      "entityB": "category.control.button",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "instance-of",
+          "timestamp": 1787390000
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "instance-of",
+          "timestamp": 1788744909
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "instance-of",
+          "timestamp": 1788744909
+        }
+      ],
+      "type": "instance-of",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "hud.chess.promo.bishop",
+      "entityB": "category.control.button",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "instance-of",
+          "timestamp": 1787390000
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "instance-of",
+          "timestamp": 1788744909
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "instance-of",
+          "timestamp": 1788744909
+        }
+      ],
+      "type": "instance-of",
+      "weight": 1.0
+    }
+  ],
+  "identifier": "Chess",
+  "lexemes": [],
+  "name": "Chess",
+  "owner": "Player",
+  "parentZone": "",
+  "qualities": {
+    "kind": "chess",
+    "ownerKind": "person"
+  },
+  "scope": "Local",
+  "world": {
+    "objects": [
+      {
+        "attributes": {
+          "baseline": "ground"
+        },
         "authoredProperties": {
           "isBoard": {
             "t": "bool",
             "v": true
           }
-        }
+        },
+        "baseline": "ground",
+        "geometryType": 0,
+        "materialId": "material.chess.board",
+        "objectID": "object.chess.board",
+        "renderMode": 0,
+        "shapeKind": 0,
+        "shapeParams": [
+          0.5,
+          0.5,
+          0.5,
+          0.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          100.0,
+          100.0
+        ],
+        "x2D": 100.0,
+        "y2D": 100.0,
+        "zOrder2D": 0
       },
       {
+        "authoredProperties": {
+          "capturedSlot": {
+            "t": "int",
+            "v": 0
+          },
+          "capturedThisMove": {
+            "t": "bool",
+            "v": false
+          },
+          "chessColor": {
+            "t": "int",
+            "v": 0
+          },
+          "chessRole": {
+            "t": "int",
+            "v": 1
+          },
+          "gridX": {
+            "t": "int",
+            "v": 0
+          },
+          "gridY": {
+            "t": "int",
+            "v": 0
+          },
+          "hasMoved": {
+            "t": "bool",
+            "v": false
+          },
+          "isSelected": {
+            "t": "bool",
+            "v": false
+          },
+          "onBoard": {
+            "t": "bool",
+            "v": true
+          },
+          "restY": {
+            "t": "double",
+            "v": 0.36
+          }
+        },
+        "geometryType": 0,
+        "materialId": "material.chess.white",
         "objectID": "piece-white-rook-0-0",
+        "renderMode": 0,
         "shapeKind": 0,
-        "geometryType": 0,
         "shapeParams": [
           0.5,
           0.5,
@@ -101,72 +396,23 @@
           0.0,
           0.0,
           0.0,
-          0.0
+          0.0,
+          100.0,
+          100.0
         ],
-        "transform": [
-          0.42,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.72,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.42,
-          0.0,
-          -3.5,
-          0.36,
-          -3.5,
-          1.0
-        ],
-        "center": [
-          -3.5,
-          0.36,
-          -3.5
-        ],
-        "materialId": "material.chess.white",
-        "faceColors": [
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ]
-        ],
+        "x2D": 100.0,
+        "y2D": 100.0,
+        "zOrder2D": 0
+      },
+      {
         "authoredProperties": {
-          "gridX": {
+          "capturedSlot": {
             "t": "int",
             "v": 0
           },
-          "gridY": {
-            "t": "int",
-            "v": 0
+          "capturedThisMove": {
+            "t": "bool",
+            "v": false
           },
           "chessColor": {
             "t": "int",
@@ -174,13 +420,21 @@
           },
           "chessRole": {
             "t": "int",
+            "v": 2
+          },
+          "gridX": {
+            "t": "int",
             "v": 1
           },
-          "isSelected": {
+          "gridY": {
+            "t": "int",
+            "v": 0
+          },
+          "hasMoved": {
             "t": "bool",
             "v": false
           },
-          "hasMoved": {
+          "isSelected": {
             "t": "bool",
             "v": false
           },
@@ -188,99 +442,42 @@
             "t": "bool",
             "v": true
           },
-          "capturedThisMove": {
-            "t": "bool",
-            "v": false
-          },
-          "capturedSlot": {
-            "t": "int",
-            "v": 0
-          },
           "restY": {
             "t": "double",
-            "v": 0.36
+            "v": 0.32
           }
-        }
-      },
-      {
+        },
+        "geometryType": 5,
+        "materialId": "material.chess.white",
         "objectID": "piece-white-knight-1-0",
+        "renderMode": 0,
         "shapeKind": 5,
-        "geometryType": 5,
         "shapeParams": [
-          0.2,
-          0.32,
-          0.16,
-          0.32,
+          0.20000000298023224,
+          0.3199999928474426,
+          0.1599999964237213,
+          0.3199999928474426,
           0.0,
           0.0,
           0.0,
           0.0,
-          0.0
+          0.0,
+          100.0,
+          100.0
         ],
-        "transform": [
-          1,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1,
-          0.0,
-          -2.5,
-          0.32,
-          -3.5,
-          1.0
-        ],
-        "center": [
-          -2.5,
-          0.32,
-          -3.5
-        ],
-        "materialId": "material.chess.white",
-        "faceColors": [
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ]
-        ],
+        "x2D": 100.0,
+        "y2D": 100.0,
+        "zOrder2D": 0
+      },
+      {
         "authoredProperties": {
-          "gridX": {
-            "t": "int",
-            "v": 1
-          },
-          "gridY": {
+          "capturedSlot": {
             "t": "int",
             "v": 0
+          },
+          "capturedThisMove": {
+            "t": "bool",
+            "v": false
           },
           "chessColor": {
             "t": "int",
@@ -288,13 +485,21 @@
           },
           "chessRole": {
             "t": "int",
+            "v": 3
+          },
+          "gridX": {
+            "t": "int",
             "v": 2
           },
-          "isSelected": {
+          "gridY": {
+            "t": "int",
+            "v": 0
+          },
+          "hasMoved": {
             "t": "bool",
             "v": false
           },
-          "hasMoved": {
+          "isSelected": {
             "t": "bool",
             "v": false
           },
@@ -302,99 +507,42 @@
             "t": "bool",
             "v": true
           },
-          "capturedThisMove": {
-            "t": "bool",
-            "v": false
-          },
-          "capturedSlot": {
-            "t": "int",
-            "v": 0
-          },
           "restY": {
             "t": "double",
-            "v": 0.32
+            "v": 0.4
           }
-        }
-      },
-      {
+        },
+        "geometryType": 4,
+        "materialId": "material.chess.white",
         "objectID": "piece-white-bishop-2-0",
+        "renderMode": 0,
         "shapeKind": 4,
-        "geometryType": 4,
         "shapeParams": [
-          0.22,
-          0.22,
-          0.22,
-          0.4,
+          0.2199999988079071,
+          0.2199999988079071,
+          0.2199999988079071,
+          0.4000000059604645,
           0.0,
           0.0,
           0.0,
           0.0,
-          0.0
+          0.0,
+          100.0,
+          100.0
         ],
-        "transform": [
-          1,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1,
-          0.0,
-          0.0,
-          -1,
-          0.0,
-          0.0,
-          -1.5,
-          0.4,
-          -3.5,
-          1.0
-        ],
-        "center": [
-          -1.5,
-          0.4,
-          -3.5
-        ],
-        "materialId": "material.chess.white",
-        "faceColors": [
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ]
-        ],
+        "x2D": 100.0,
+        "y2D": 100.0,
+        "zOrder2D": 0
+      },
+      {
         "authoredProperties": {
-          "gridX": {
-            "t": "int",
-            "v": 2
-          },
-          "gridY": {
+          "capturedSlot": {
             "t": "int",
             "v": 0
+          },
+          "capturedThisMove": {
+            "t": "bool",
+            "v": false
           },
           "chessColor": {
             "t": "int",
@@ -402,13 +550,21 @@
           },
           "chessRole": {
             "t": "int",
+            "v": 4
+          },
+          "gridX": {
+            "t": "int",
             "v": 3
           },
-          "isSelected": {
+          "gridY": {
+            "t": "int",
+            "v": 0
+          },
+          "hasMoved": {
             "t": "bool",
             "v": false
           },
-          "hasMoved": {
+          "isSelected": {
             "t": "bool",
             "v": false
           },
@@ -416,99 +572,42 @@
             "t": "bool",
             "v": true
           },
-          "capturedThisMove": {
-            "t": "bool",
-            "v": false
-          },
-          "capturedSlot": {
-            "t": "int",
-            "v": 0
-          },
           "restY": {
             "t": "double",
-            "v": 0.4
+            "v": 0.42
           }
-        }
-      },
-      {
+        },
+        "geometryType": 6,
+        "materialId": "material.chess.white",
         "objectID": "piece-white-queen-3-0",
+        "renderMode": 0,
         "shapeKind": 6,
-        "geometryType": 6,
         "shapeParams": [
-          0.24,
-          0.24,
-          0.24,
-          0.42,
+          0.23999999463558197,
+          0.23999999463558197,
+          0.23999999463558197,
+          0.41999998688697815,
           0.0,
           0.0,
           0.0,
-          0.35,
-          0.0
+          0.3499999940395355,
+          0.0,
+          100.0,
+          100.0
         ],
-        "transform": [
-          1,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1,
-          0.0,
-          -0.5,
-          0.42,
-          -3.5,
-          1.0
-        ],
-        "center": [
-          -0.5,
-          0.42,
-          -3.5
-        ],
-        "materialId": "material.chess.white",
-        "faceColors": [
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ]
-        ],
+        "x2D": 100.0,
+        "y2D": 100.0,
+        "zOrder2D": 0
+      },
+      {
         "authoredProperties": {
-          "gridX": {
-            "t": "int",
-            "v": 3
-          },
-          "gridY": {
+          "capturedSlot": {
             "t": "int",
             "v": 0
+          },
+          "capturedThisMove": {
+            "t": "bool",
+            "v": false
           },
           "chessColor": {
             "t": "int",
@@ -516,13 +615,21 @@
           },
           "chessRole": {
             "t": "int",
+            "v": 5
+          },
+          "gridX": {
+            "t": "int",
             "v": 4
           },
-          "isSelected": {
+          "gridY": {
+            "t": "int",
+            "v": 0
+          },
+          "hasMoved": {
             "t": "bool",
             "v": false
           },
-          "hasMoved": {
+          "isSelected": {
             "t": "bool",
             "v": false
           },
@@ -530,213 +637,42 @@
             "t": "bool",
             "v": true
           },
-          "capturedThisMove": {
-            "t": "bool",
-            "v": false
-          },
-          "capturedSlot": {
-            "t": "int",
-            "v": 0
-          },
           "restY": {
             "t": "double",
-            "v": 0.42
+            "v": 0.48
           }
-        }
-      },
-      {
+        },
+        "geometryType": 3,
+        "materialId": "material.chess.white",
         "objectID": "piece-white-king-4-0",
+        "renderMode": 0,
         "shapeKind": 3,
-        "geometryType": 3,
         "shapeParams": [
-          0.2,
-          0.2,
-          0.2,
-          0.48,
+          0.20000000298023224,
+          0.20000000298023224,
+          0.20000000298023224,
+          0.47999998927116394,
           0.0,
           0.0,
           0.0,
           0.0,
-          0.0
+          0.0,
+          100.0,
+          100.0
         ],
-        "transform": [
-          1,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1,
-          0.0,
-          0.0,
-          -1,
-          0.0,
-          0.0,
-          0.5,
-          0.48,
-          -3.5,
-          1.0
-        ],
-        "center": [
-          0.5,
-          0.48,
-          -3.5
-        ],
-        "materialId": "material.chess.white",
-        "faceColors": [
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ]
-        ],
+        "x2D": 100.0,
+        "y2D": 100.0,
+        "zOrder2D": 0
+      },
+      {
         "authoredProperties": {
-          "gridX": {
-            "t": "int",
-            "v": 4
-          },
-          "gridY": {
-            "t": "int",
-            "v": 0
-          },
-          "chessColor": {
-            "t": "int",
-            "v": 0
-          },
-          "chessRole": {
-            "t": "int",
-            "v": 5
-          },
-          "isSelected": {
-            "t": "bool",
-            "v": false
-          },
-          "hasMoved": {
-            "t": "bool",
-            "v": false
-          },
-          "onBoard": {
-            "t": "bool",
-            "v": true
-          },
-          "capturedThisMove": {
-            "t": "bool",
-            "v": false
-          },
           "capturedSlot": {
             "t": "int",
             "v": 0
           },
-          "restY": {
-            "t": "double",
-            "v": 0.48
-          }
-        }
-      },
-      {
-        "objectID": "piece-white-bishop-5-0",
-        "shapeKind": 4,
-        "geometryType": 4,
-        "shapeParams": [
-          0.22,
-          0.22,
-          0.22,
-          0.4,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "transform": [
-          1,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1,
-          0.0,
-          0.0,
-          -1,
-          0.0,
-          0.0,
-          1.5,
-          0.4,
-          -3.5,
-          1.0
-        ],
-        "center": [
-          1.5,
-          0.4,
-          -3.5
-        ],
-        "materialId": "material.chess.white",
-        "faceColors": [
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ]
-        ],
-        "authoredProperties": {
-          "gridX": {
-            "t": "int",
-            "v": 5
-          },
-          "gridY": {
-            "t": "int",
-            "v": 0
+          "capturedThisMove": {
+            "t": "bool",
+            "v": false
           },
           "chessColor": {
             "t": "int",
@@ -746,11 +682,19 @@
             "t": "int",
             "v": 3
           },
-          "isSelected": {
+          "gridX": {
+            "t": "int",
+            "v": 5
+          },
+          "gridY": {
+            "t": "int",
+            "v": 0
+          },
+          "hasMoved": {
             "t": "bool",
             "v": false
           },
-          "hasMoved": {
+          "isSelected": {
             "t": "bool",
             "v": false
           },
@@ -758,92 +702,51 @@
             "t": "bool",
             "v": true
           },
-          "capturedThisMove": {
-            "t": "bool",
-            "v": false
-          },
-          "capturedSlot": {
-            "t": "int",
-            "v": 0
-          },
           "restY": {
             "t": "double",
             "v": 0.4
           }
-        }
+        },
+        "geometryType": 4,
+        "materialId": "material.chess.white",
+        "objectID": "piece-white-bishop-5-0",
+        "renderMode": 0,
+        "shapeKind": 4,
+        "shapeParams": [
+          0.2199999988079071,
+          0.2199999988079071,
+          0.2199999988079071,
+          0.4000000059604645,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          100.0,
+          100.0
+        ],
+        "x2D": 100.0,
+        "y2D": 100.0,
+        "zOrder2D": 0
       },
       {
-        "objectID": "piece-white-knight-6-0",
-        "shapeKind": 5,
-        "geometryType": 5,
-        "shapeParams": [
-          0.2,
-          0.32,
-          0.16,
-          0.32,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "transform": [
-          1,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1,
-          0.0,
-          2.5,
-          0.32,
-          -3.5,
-          1.0
-        ],
-        "center": [
-          2.5,
-          0.32,
-          -3.5
-        ],
-        "materialId": "material.chess.white",
-        "faceColors": [
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ]
-        ],
         "authoredProperties": {
+          "capturedSlot": {
+            "t": "int",
+            "v": 0
+          },
+          "capturedThisMove": {
+            "t": "bool",
+            "v": false
+          },
+          "chessColor": {
+            "t": "int",
+            "v": 0
+          },
+          "chessRole": {
+            "t": "int",
+            "v": 2
+          },
           "gridX": {
             "t": "int",
             "v": 6
@@ -852,347 +755,184 @@
             "t": "int",
             "v": 0
           },
-          "chessColor": {
-            "t": "int",
-            "v": 0
-          },
-          "chessRole": {
-            "t": "int",
-            "v": 2
-          },
-          "isSelected": {
+          "hasMoved": {
             "t": "bool",
             "v": false
           },
-          "hasMoved": {
+          "isSelected": {
             "t": "bool",
             "v": false
           },
           "onBoard": {
             "t": "bool",
             "v": true
-          },
-          "capturedThisMove": {
-            "t": "bool",
-            "v": false
-          },
-          "capturedSlot": {
-            "t": "int",
-            "v": 0
           },
           "restY": {
             "t": "double",
             "v": 0.32
           }
-        }
-      },
-      {
-        "objectID": "piece-white-rook-7-0",
-        "shapeKind": 0,
-        "geometryType": 0,
-        "shapeParams": [
-          0.5,
-          0.5,
-          0.5,
-          0.5,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "transform": [
-          0.42,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.72,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.42,
-          0.0,
-          3.5,
-          0.36,
-          -3.5,
-          1.0
-        ],
-        "center": [
-          3.5,
-          0.36,
-          -3.5
-        ],
-        "materialId": "material.chess.white",
-        "faceColors": [
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ]
-        ],
-        "authoredProperties": {
-          "gridX": {
-            "t": "int",
-            "v": 7
-          },
-          "gridY": {
-            "t": "int",
-            "v": 0
-          },
-          "chessColor": {
-            "t": "int",
-            "v": 0
-          },
-          "chessRole": {
-            "t": "int",
-            "v": 1
-          },
-          "isSelected": {
-            "t": "bool",
-            "v": false
-          },
-          "hasMoved": {
-            "t": "bool",
-            "v": false
-          },
-          "onBoard": {
-            "t": "bool",
-            "v": true
-          },
-          "capturedThisMove": {
-            "t": "bool",
-            "v": false
-          },
-          "capturedSlot": {
-            "t": "int",
-            "v": 0
-          },
-          "restY": {
-            "t": "double",
-            "v": 0.36
-          }
-        }
-      },
-      {
-        "objectID": "piece-black-rook-0-7",
-        "shapeKind": 0,
-        "geometryType": 0,
-        "shapeParams": [
-          0.5,
-          0.5,
-          0.5,
-          0.5,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "transform": [
-          0.42,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.72,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.42,
-          0.0,
-          -3.5,
-          0.36,
-          3.5,
-          1.0
-        ],
-        "center": [
-          -3.5,
-          0.36,
-          3.5
-        ],
-        "materialId": "material.chess.black",
-        "faceColors": [
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ]
-        ],
-        "authoredProperties": {
-          "gridX": {
-            "t": "int",
-            "v": 0
-          },
-          "gridY": {
-            "t": "int",
-            "v": 7
-          },
-          "chessColor": {
-            "t": "int",
-            "v": 1
-          },
-          "chessRole": {
-            "t": "int",
-            "v": 1
-          },
-          "isSelected": {
-            "t": "bool",
-            "v": false
-          },
-          "hasMoved": {
-            "t": "bool",
-            "v": false
-          },
-          "onBoard": {
-            "t": "bool",
-            "v": true
-          },
-          "capturedThisMove": {
-            "t": "bool",
-            "v": false
-          },
-          "capturedSlot": {
-            "t": "int",
-            "v": 0
-          },
-          "restY": {
-            "t": "double",
-            "v": 0.36
-          }
-        }
-      },
-      {
-        "objectID": "piece-black-knight-1-7",
-        "shapeKind": 5,
+        },
         "geometryType": 5,
+        "materialId": "material.chess.white",
+        "objectID": "piece-white-knight-6-0",
+        "renderMode": 0,
+        "shapeKind": 5,
         "shapeParams": [
-          0.2,
-          0.32,
-          0.16,
-          0.32,
+          0.20000000298023224,
+          0.3199999928474426,
+          0.1599999964237213,
+          0.3199999928474426,
           0.0,
           0.0,
           0.0,
           0.0,
-          0.0
+          0.0,
+          100.0,
+          100.0
         ],
-        "transform": [
-          1,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1,
-          0.0,
-          -2.5,
-          0.32,
-          3.5,
-          1.0
-        ],
-        "center": [
-          -2.5,
-          0.32,
-          3.5
-        ],
-        "materialId": "material.chess.black",
-        "faceColors": [
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ]
-        ],
+        "x2D": 100.0,
+        "y2D": 100.0,
+        "zOrder2D": 0
+      },
+      {
         "authoredProperties": {
-          "gridX": {
+          "capturedSlot": {
+            "t": "int",
+            "v": 0
+          },
+          "capturedThisMove": {
+            "t": "bool",
+            "v": false
+          },
+          "chessColor": {
+            "t": "int",
+            "v": 0
+          },
+          "chessRole": {
             "t": "int",
             "v": 1
+          },
+          "gridX": {
+            "t": "int",
+            "v": 7
+          },
+          "gridY": {
+            "t": "int",
+            "v": 0
+          },
+          "hasMoved": {
+            "t": "bool",
+            "v": false
+          },
+          "isSelected": {
+            "t": "bool",
+            "v": false
+          },
+          "onBoard": {
+            "t": "bool",
+            "v": true
+          },
+          "restY": {
+            "t": "double",
+            "v": 0.36
+          }
+        },
+        "geometryType": 0,
+        "materialId": "material.chess.white",
+        "objectID": "piece-white-rook-7-0",
+        "renderMode": 0,
+        "shapeKind": 0,
+        "shapeParams": [
+          0.5,
+          0.5,
+          0.5,
+          0.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          100.0,
+          100.0
+        ],
+        "x2D": 100.0,
+        "y2D": 100.0,
+        "zOrder2D": 0
+      },
+      {
+        "authoredProperties": {
+          "capturedSlot": {
+            "t": "int",
+            "v": 0
+          },
+          "capturedThisMove": {
+            "t": "bool",
+            "v": false
+          },
+          "chessColor": {
+            "t": "int",
+            "v": 1
+          },
+          "chessRole": {
+            "t": "int",
+            "v": 1
+          },
+          "gridX": {
+            "t": "int",
+            "v": 0
           },
           "gridY": {
             "t": "int",
             "v": 7
+          },
+          "hasMoved": {
+            "t": "bool",
+            "v": false
+          },
+          "isSelected": {
+            "t": "bool",
+            "v": false
+          },
+          "onBoard": {
+            "t": "bool",
+            "v": true
+          },
+          "restY": {
+            "t": "double",
+            "v": 0.36
+          }
+        },
+        "geometryType": 0,
+        "materialId": "material.chess.black",
+        "objectID": "piece-black-rook-0-7",
+        "renderMode": 0,
+        "shapeKind": 0,
+        "shapeParams": [
+          0.5,
+          0.5,
+          0.5,
+          0.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          100.0,
+          100.0
+        ],
+        "x2D": 100.0,
+        "y2D": 100.0,
+        "zOrder2D": 0
+      },
+      {
+        "authoredProperties": {
+          "capturedSlot": {
+            "t": "int",
+            "v": 0
+          },
+          "capturedThisMove": {
+            "t": "bool",
+            "v": false
           },
           "chessColor": {
             "t": "int",
@@ -1202,11 +942,19 @@
             "t": "int",
             "v": 2
           },
-          "isSelected": {
+          "gridX": {
+            "t": "int",
+            "v": 1
+          },
+          "gridY": {
+            "t": "int",
+            "v": 7
+          },
+          "hasMoved": {
             "t": "bool",
             "v": false
           },
-          "hasMoved": {
+          "isSelected": {
             "t": "bool",
             "v": false
           },
@@ -1214,99 +962,42 @@
             "t": "bool",
             "v": true
           },
-          "capturedThisMove": {
-            "t": "bool",
-            "v": false
-          },
-          "capturedSlot": {
-            "t": "int",
-            "v": 0
-          },
           "restY": {
             "t": "double",
             "v": 0.32
           }
-        }
+        },
+        "geometryType": 5,
+        "materialId": "material.chess.black",
+        "objectID": "piece-black-knight-1-7",
+        "renderMode": 0,
+        "shapeKind": 5,
+        "shapeParams": [
+          0.20000000298023224,
+          0.3199999928474426,
+          0.1599999964237213,
+          0.3199999928474426,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          100.0,
+          100.0
+        ],
+        "x2D": 100.0,
+        "y2D": 100.0,
+        "zOrder2D": 0
       },
       {
-        "objectID": "piece-black-bishop-2-7",
-        "shapeKind": 4,
-        "geometryType": 4,
-        "shapeParams": [
-          0.22,
-          0.22,
-          0.22,
-          0.4,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "transform": [
-          1,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1,
-          0.0,
-          0.0,
-          -1,
-          0.0,
-          0.0,
-          -1.5,
-          0.4,
-          3.5,
-          1.0
-        ],
-        "center": [
-          -1.5,
-          0.4,
-          3.5
-        ],
-        "materialId": "material.chess.black",
-        "faceColors": [
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ]
-        ],
         "authoredProperties": {
-          "gridX": {
+          "capturedSlot": {
             "t": "int",
-            "v": 2
+            "v": 0
           },
-          "gridY": {
-            "t": "int",
-            "v": 7
+          "capturedThisMove": {
+            "t": "bool",
+            "v": false
           },
           "chessColor": {
             "t": "int",
@@ -1316,111 +1007,62 @@
             "t": "int",
             "v": 3
           },
-          "isSelected": {
+          "gridX": {
+            "t": "int",
+            "v": 2
+          },
+          "gridY": {
+            "t": "int",
+            "v": 7
+          },
+          "hasMoved": {
             "t": "bool",
             "v": false
           },
-          "hasMoved": {
+          "isSelected": {
             "t": "bool",
             "v": false
           },
           "onBoard": {
             "t": "bool",
             "v": true
-          },
-          "capturedThisMove": {
-            "t": "bool",
-            "v": false
-          },
-          "capturedSlot": {
-            "t": "int",
-            "v": 0
           },
           "restY": {
             "t": "double",
             "v": 0.4
           }
-        }
+        },
+        "geometryType": 4,
+        "materialId": "material.chess.black",
+        "objectID": "piece-black-bishop-2-7",
+        "renderMode": 0,
+        "shapeKind": 4,
+        "shapeParams": [
+          0.2199999988079071,
+          0.2199999988079071,
+          0.2199999988079071,
+          0.4000000059604645,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          100.0,
+          100.0
+        ],
+        "x2D": 100.0,
+        "y2D": 100.0,
+        "zOrder2D": 0
       },
       {
-        "objectID": "piece-black-queen-3-7",
-        "shapeKind": 6,
-        "geometryType": 6,
-        "shapeParams": [
-          0.24,
-          0.24,
-          0.24,
-          0.42,
-          0.0,
-          0.0,
-          0.0,
-          0.35,
-          0.0
-        ],
-        "transform": [
-          1,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1,
-          0.0,
-          -0.5,
-          0.42,
-          3.5,
-          1.0
-        ],
-        "center": [
-          -0.5,
-          0.42,
-          3.5
-        ],
-        "materialId": "material.chess.black",
-        "faceColors": [
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ]
-        ],
         "authoredProperties": {
-          "gridX": {
+          "capturedSlot": {
             "t": "int",
-            "v": 3
+            "v": 0
           },
-          "gridY": {
-            "t": "int",
-            "v": 7
+          "capturedThisMove": {
+            "t": "bool",
+            "v": false
           },
           "chessColor": {
             "t": "int",
@@ -1430,111 +1072,62 @@
             "t": "int",
             "v": 4
           },
-          "isSelected": {
+          "gridX": {
+            "t": "int",
+            "v": 3
+          },
+          "gridY": {
+            "t": "int",
+            "v": 7
+          },
+          "hasMoved": {
             "t": "bool",
             "v": false
           },
-          "hasMoved": {
+          "isSelected": {
             "t": "bool",
             "v": false
           },
           "onBoard": {
             "t": "bool",
             "v": true
-          },
-          "capturedThisMove": {
-            "t": "bool",
-            "v": false
-          },
-          "capturedSlot": {
-            "t": "int",
-            "v": 0
           },
           "restY": {
             "t": "double",
             "v": 0.42
           }
-        }
+        },
+        "geometryType": 6,
+        "materialId": "material.chess.black",
+        "objectID": "piece-black-queen-3-7",
+        "renderMode": 0,
+        "shapeKind": 6,
+        "shapeParams": [
+          0.23999999463558197,
+          0.23999999463558197,
+          0.23999999463558197,
+          0.41999998688697815,
+          0.0,
+          0.0,
+          0.0,
+          0.3499999940395355,
+          0.0,
+          100.0,
+          100.0
+        ],
+        "x2D": 100.0,
+        "y2D": 100.0,
+        "zOrder2D": 0
       },
       {
-        "objectID": "piece-black-king-4-7",
-        "shapeKind": 3,
-        "geometryType": 3,
-        "shapeParams": [
-          0.2,
-          0.2,
-          0.2,
-          0.48,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "transform": [
-          1,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1,
-          0.0,
-          0.0,
-          -1,
-          0.0,
-          0.0,
-          0.5,
-          0.48,
-          3.5,
-          1.0
-        ],
-        "center": [
-          0.5,
-          0.48,
-          3.5
-        ],
-        "materialId": "material.chess.black",
-        "faceColors": [
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ]
-        ],
         "authoredProperties": {
-          "gridX": {
+          "capturedSlot": {
             "t": "int",
-            "v": 4
+            "v": 0
           },
-          "gridY": {
-            "t": "int",
-            "v": 7
+          "capturedThisMove": {
+            "t": "bool",
+            "v": false
           },
           "chessColor": {
             "t": "int",
@@ -1544,111 +1137,62 @@
             "t": "int",
             "v": 5
           },
-          "isSelected": {
+          "gridX": {
+            "t": "int",
+            "v": 4
+          },
+          "gridY": {
+            "t": "int",
+            "v": 7
+          },
+          "hasMoved": {
             "t": "bool",
             "v": false
           },
-          "hasMoved": {
+          "isSelected": {
             "t": "bool",
             "v": false
           },
           "onBoard": {
             "t": "bool",
             "v": true
-          },
-          "capturedThisMove": {
-            "t": "bool",
-            "v": false
-          },
-          "capturedSlot": {
-            "t": "int",
-            "v": 0
           },
           "restY": {
             "t": "double",
             "v": 0.48
           }
-        }
+        },
+        "geometryType": 3,
+        "materialId": "material.chess.black",
+        "objectID": "piece-black-king-4-7",
+        "renderMode": 0,
+        "shapeKind": 3,
+        "shapeParams": [
+          0.20000000298023224,
+          0.20000000298023224,
+          0.20000000298023224,
+          0.47999998927116394,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          100.0,
+          100.0
+        ],
+        "x2D": 100.0,
+        "y2D": 100.0,
+        "zOrder2D": 0
       },
       {
-        "objectID": "piece-black-bishop-5-7",
-        "shapeKind": 4,
-        "geometryType": 4,
-        "shapeParams": [
-          0.22,
-          0.22,
-          0.22,
-          0.4,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "transform": [
-          1,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1,
-          0.0,
-          0.0,
-          -1,
-          0.0,
-          0.0,
-          1.5,
-          0.4,
-          3.5,
-          1.0
-        ],
-        "center": [
-          1.5,
-          0.4,
-          3.5
-        ],
-        "materialId": "material.chess.black",
-        "faceColors": [
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ]
-        ],
         "authoredProperties": {
-          "gridX": {
+          "capturedSlot": {
             "t": "int",
-            "v": 5
+            "v": 0
           },
-          "gridY": {
-            "t": "int",
-            "v": 7
+          "capturedThisMove": {
+            "t": "bool",
+            "v": false
           },
           "chessColor": {
             "t": "int",
@@ -1658,111 +1202,62 @@
             "t": "int",
             "v": 3
           },
-          "isSelected": {
+          "gridX": {
+            "t": "int",
+            "v": 5
+          },
+          "gridY": {
+            "t": "int",
+            "v": 7
+          },
+          "hasMoved": {
             "t": "bool",
             "v": false
           },
-          "hasMoved": {
+          "isSelected": {
             "t": "bool",
             "v": false
           },
           "onBoard": {
             "t": "bool",
             "v": true
-          },
-          "capturedThisMove": {
-            "t": "bool",
-            "v": false
-          },
-          "capturedSlot": {
-            "t": "int",
-            "v": 0
           },
           "restY": {
             "t": "double",
             "v": 0.4
           }
-        }
+        },
+        "geometryType": 4,
+        "materialId": "material.chess.black",
+        "objectID": "piece-black-bishop-5-7",
+        "renderMode": 0,
+        "shapeKind": 4,
+        "shapeParams": [
+          0.2199999988079071,
+          0.2199999988079071,
+          0.2199999988079071,
+          0.4000000059604645,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          100.0,
+          100.0
+        ],
+        "x2D": 100.0,
+        "y2D": 100.0,
+        "zOrder2D": 0
       },
       {
-        "objectID": "piece-black-knight-6-7",
-        "shapeKind": 5,
-        "geometryType": 5,
-        "shapeParams": [
-          0.2,
-          0.32,
-          0.16,
-          0.32,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "transform": [
-          1,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1,
-          0.0,
-          2.5,
-          0.32,
-          3.5,
-          1.0
-        ],
-        "center": [
-          2.5,
-          0.32,
-          3.5
-        ],
-        "materialId": "material.chess.black",
-        "faceColors": [
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ]
-        ],
         "authoredProperties": {
-          "gridX": {
+          "capturedSlot": {
             "t": "int",
-            "v": 6
+            "v": 0
           },
-          "gridY": {
-            "t": "int",
-            "v": 7
+          "capturedThisMove": {
+            "t": "bool",
+            "v": false
           },
           "chessColor": {
             "t": "int",
@@ -1772,111 +1267,62 @@
             "t": "int",
             "v": 2
           },
-          "isSelected": {
+          "gridX": {
+            "t": "int",
+            "v": 6
+          },
+          "gridY": {
+            "t": "int",
+            "v": 7
+          },
+          "hasMoved": {
             "t": "bool",
             "v": false
           },
-          "hasMoved": {
+          "isSelected": {
             "t": "bool",
             "v": false
           },
           "onBoard": {
             "t": "bool",
             "v": true
-          },
-          "capturedThisMove": {
-            "t": "bool",
-            "v": false
-          },
-          "capturedSlot": {
-            "t": "int",
-            "v": 0
           },
           "restY": {
             "t": "double",
             "v": 0.32
           }
-        }
+        },
+        "geometryType": 5,
+        "materialId": "material.chess.black",
+        "objectID": "piece-black-knight-6-7",
+        "renderMode": 0,
+        "shapeKind": 5,
+        "shapeParams": [
+          0.20000000298023224,
+          0.3199999928474426,
+          0.1599999964237213,
+          0.3199999928474426,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          100.0,
+          100.0
+        ],
+        "x2D": 100.0,
+        "y2D": 100.0,
+        "zOrder2D": 0
       },
       {
-        "objectID": "piece-black-rook-7-7",
-        "shapeKind": 0,
-        "geometryType": 0,
-        "shapeParams": [
-          0.5,
-          0.5,
-          0.5,
-          0.5,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "transform": [
-          0.42,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.72,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.42,
-          0.0,
-          3.5,
-          0.36,
-          3.5,
-          1.0
-        ],
-        "center": [
-          3.5,
-          0.36,
-          3.5
-        ],
-        "materialId": "material.chess.black",
-        "faceColors": [
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ]
-        ],
         "authoredProperties": {
-          "gridX": {
+          "capturedSlot": {
             "t": "int",
-            "v": 7
+            "v": 0
           },
-          "gridY": {
-            "t": "int",
-            "v": 7
+          "capturedThisMove": {
+            "t": "bool",
+            "v": false
           },
           "chessColor": {
             "t": "int",
@@ -1886,125 +1332,149 @@
             "t": "int",
             "v": 1
           },
-          "isSelected": {
+          "gridX": {
+            "t": "int",
+            "v": 7
+          },
+          "gridY": {
+            "t": "int",
+            "v": 7
+          },
+          "hasMoved": {
             "t": "bool",
             "v": false
           },
-          "hasMoved": {
+          "isSelected": {
             "t": "bool",
             "v": false
           },
           "onBoard": {
             "t": "bool",
             "v": true
-          },
-          "capturedThisMove": {
-            "t": "bool",
-            "v": false
-          },
-          "capturedSlot": {
-            "t": "int",
-            "v": 0
           },
           "restY": {
             "t": "double",
             "v": 0.36
           }
-        }
+        },
+        "geometryType": 0,
+        "materialId": "material.chess.black",
+        "objectID": "piece-black-rook-7-7",
+        "renderMode": 0,
+        "shapeKind": 0,
+        "shapeParams": [
+          0.5,
+          0.5,
+          0.5,
+          0.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          100.0,
+          100.0
+        ],
+        "x2D": 100.0,
+        "y2D": 100.0,
+        "zOrder2D": 0
       },
       {
+        "authoredProperties": {
+          "capturedSlot": {
+            "t": "int",
+            "v": 0
+          },
+          "capturedThisMove": {
+            "t": "bool",
+            "v": false
+          },
+          "chessColor": {
+            "t": "int",
+            "v": 0
+          },
+          "chessRole": {
+            "t": "int",
+            "v": 0
+          },
+          "gridX": {
+            "t": "int",
+            "v": 0
+          },
+          "gridY": {
+            "t": "int",
+            "v": 1
+          },
+          "hasMoved": {
+            "t": "bool",
+            "v": false
+          },
+          "isSelected": {
+            "t": "bool",
+            "v": false
+          },
+          "onBoard": {
+            "t": "bool",
+            "v": true
+          },
+          "restY": {
+            "t": "double",
+            "v": 0.22
+          }
+        },
+        "geometryType": 2,
+        "materialId": "material.chess.white",
         "objectID": "piece-white-pawn-0-1",
+        "renderMode": 0,
         "shapeKind": 2,
-        "geometryType": 2,
         "shapeParams": [
-          0.22,
-          0.22,
-          0.22,
-          0.22,
+          0.2199999988079071,
+          0.2199999988079071,
+          0.2199999988079071,
+          0.2199999988079071,
           0.0,
           0.0,
           0.0,
           0.0,
-          0.0
+          0.0,
+          100.0,
+          100.0
         ],
-        "transform": [
-          1,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1,
-          0.0,
-          -3.5,
-          0.22,
-          -2.5,
-          1.0
-        ],
-        "center": [
-          -3.5,
-          0.22,
-          -2.5
-        ],
-        "materialId": "material.chess.white",
-        "faceColors": [
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ]
-        ],
+        "x2D": 100.0,
+        "y2D": 100.0,
+        "zOrder2D": 0
+      },
+      {
         "authoredProperties": {
+          "capturedSlot": {
+            "t": "int",
+            "v": 0
+          },
+          "capturedThisMove": {
+            "t": "bool",
+            "v": false
+          },
+          "chessColor": {
+            "t": "int",
+            "v": 1
+          },
+          "chessRole": {
+            "t": "int",
+            "v": 0
+          },
           "gridX": {
             "t": "int",
             "v": 0
           },
           "gridY": {
             "t": "int",
-            "v": 1
+            "v": 6
           },
-          "chessColor": {
-            "t": "int",
-            "v": 0
-          },
-          "chessRole": {
-            "t": "int",
-            "v": 0
-          },
-          "isSelected": {
+          "hasMoved": {
             "t": "bool",
             "v": false
           },
-          "hasMoved": {
+          "isSelected": {
             "t": "bool",
             "v": false
           },
@@ -2012,113 +1482,64 @@
             "t": "bool",
             "v": true
           },
-          "capturedThisMove": {
-            "t": "bool",
-            "v": false
-          },
-          "capturedSlot": {
-            "t": "int",
-            "v": 0
-          },
           "restY": {
             "t": "double",
             "v": 0.22
           }
-        }
-      },
-      {
+        },
+        "geometryType": 2,
+        "materialId": "material.chess.black",
         "objectID": "piece-black-pawn-0-6",
+        "renderMode": 0,
         "shapeKind": 2,
-        "geometryType": 2,
         "shapeParams": [
-          0.22,
-          0.22,
-          0.22,
-          0.22,
+          0.2199999988079071,
+          0.2199999988079071,
+          0.2199999988079071,
+          0.2199999988079071,
           0.0,
           0.0,
           0.0,
           0.0,
-          0.0
+          0.0,
+          100.0,
+          100.0
         ],
-        "transform": [
-          1,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1,
-          0.0,
-          -3.5,
-          0.22,
-          2.5,
-          1.0
-        ],
-        "center": [
-          -3.5,
-          0.22,
-          2.5
-        ],
-        "materialId": "material.chess.black",
-        "faceColors": [
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ]
-        ],
+        "x2D": 100.0,
+        "y2D": 100.0,
+        "zOrder2D": 0
+      },
+      {
         "authoredProperties": {
-          "gridX": {
+          "capturedSlot": {
             "t": "int",
             "v": 0
           },
-          "gridY": {
-            "t": "int",
-            "v": 6
+          "capturedThisMove": {
+            "t": "bool",
+            "v": false
           },
           "chessColor": {
             "t": "int",
-            "v": 1
+            "v": 0
           },
           "chessRole": {
             "t": "int",
             "v": 0
           },
-          "isSelected": {
+          "gridX": {
+            "t": "int",
+            "v": 1
+          },
+          "gridY": {
+            "t": "int",
+            "v": 1
+          },
+          "hasMoved": {
             "t": "bool",
             "v": false
           },
-          "hasMoved": {
+          "isSelected": {
             "t": "bool",
             "v": false
           },
@@ -2126,113 +1547,64 @@
             "t": "bool",
             "v": true
           },
-          "capturedThisMove": {
-            "t": "bool",
-            "v": false
-          },
-          "capturedSlot": {
-            "t": "int",
-            "v": 0
-          },
           "restY": {
             "t": "double",
             "v": 0.22
           }
-        }
-      },
-      {
+        },
+        "geometryType": 2,
+        "materialId": "material.chess.white",
         "objectID": "piece-white-pawn-1-1",
+        "renderMode": 0,
         "shapeKind": 2,
-        "geometryType": 2,
         "shapeParams": [
-          0.22,
-          0.22,
-          0.22,
-          0.22,
+          0.2199999988079071,
+          0.2199999988079071,
+          0.2199999988079071,
+          0.2199999988079071,
           0.0,
           0.0,
           0.0,
           0.0,
-          0.0
+          0.0,
+          100.0,
+          100.0
         ],
-        "transform": [
-          1,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1,
-          0.0,
-          -2.5,
-          0.22,
-          -2.5,
-          1.0
-        ],
-        "center": [
-          -2.5,
-          0.22,
-          -2.5
-        ],
-        "materialId": "material.chess.white",
-        "faceColors": [
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ]
-        ],
+        "x2D": 100.0,
+        "y2D": 100.0,
+        "zOrder2D": 0
+      },
+      {
         "authoredProperties": {
+          "capturedSlot": {
+            "t": "int",
+            "v": 0
+          },
+          "capturedThisMove": {
+            "t": "bool",
+            "v": false
+          },
+          "chessColor": {
+            "t": "int",
+            "v": 1
+          },
+          "chessRole": {
+            "t": "int",
+            "v": 0
+          },
           "gridX": {
             "t": "int",
             "v": 1
           },
           "gridY": {
             "t": "int",
-            "v": 1
+            "v": 6
           },
-          "chessColor": {
-            "t": "int",
-            "v": 0
-          },
-          "chessRole": {
-            "t": "int",
-            "v": 0
-          },
-          "isSelected": {
+          "hasMoved": {
             "t": "bool",
             "v": false
           },
-          "hasMoved": {
+          "isSelected": {
             "t": "bool",
             "v": false
           },
@@ -2240,113 +1612,64 @@
             "t": "bool",
             "v": true
           },
-          "capturedThisMove": {
-            "t": "bool",
-            "v": false
-          },
-          "capturedSlot": {
-            "t": "int",
-            "v": 0
-          },
           "restY": {
             "t": "double",
             "v": 0.22
           }
-        }
-      },
-      {
+        },
+        "geometryType": 2,
+        "materialId": "material.chess.black",
         "objectID": "piece-black-pawn-1-6",
+        "renderMode": 0,
         "shapeKind": 2,
-        "geometryType": 2,
         "shapeParams": [
-          0.22,
-          0.22,
-          0.22,
-          0.22,
+          0.2199999988079071,
+          0.2199999988079071,
+          0.2199999988079071,
+          0.2199999988079071,
           0.0,
           0.0,
           0.0,
           0.0,
-          0.0
+          0.0,
+          100.0,
+          100.0
         ],
-        "transform": [
-          1,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1,
-          0.0,
-          -2.5,
-          0.22,
-          2.5,
-          1.0
-        ],
-        "center": [
-          -2.5,
-          0.22,
-          2.5
-        ],
-        "materialId": "material.chess.black",
-        "faceColors": [
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ]
-        ],
+        "x2D": 100.0,
+        "y2D": 100.0,
+        "zOrder2D": 0
+      },
+      {
         "authoredProperties": {
-          "gridX": {
+          "capturedSlot": {
             "t": "int",
-            "v": 1
+            "v": 0
           },
-          "gridY": {
-            "t": "int",
-            "v": 6
+          "capturedThisMove": {
+            "t": "bool",
+            "v": false
           },
           "chessColor": {
             "t": "int",
-            "v": 1
+            "v": 0
           },
           "chessRole": {
             "t": "int",
             "v": 0
           },
-          "isSelected": {
+          "gridX": {
+            "t": "int",
+            "v": 2
+          },
+          "gridY": {
+            "t": "int",
+            "v": 1
+          },
+          "hasMoved": {
             "t": "bool",
             "v": false
           },
-          "hasMoved": {
+          "isSelected": {
             "t": "bool",
             "v": false
           },
@@ -2354,113 +1677,64 @@
             "t": "bool",
             "v": true
           },
-          "capturedThisMove": {
-            "t": "bool",
-            "v": false
-          },
-          "capturedSlot": {
-            "t": "int",
-            "v": 0
-          },
           "restY": {
             "t": "double",
             "v": 0.22
           }
-        }
-      },
-      {
+        },
+        "geometryType": 2,
+        "materialId": "material.chess.white",
         "objectID": "piece-white-pawn-2-1",
+        "renderMode": 0,
         "shapeKind": 2,
-        "geometryType": 2,
         "shapeParams": [
-          0.22,
-          0.22,
-          0.22,
-          0.22,
+          0.2199999988079071,
+          0.2199999988079071,
+          0.2199999988079071,
+          0.2199999988079071,
           0.0,
           0.0,
           0.0,
           0.0,
-          0.0
+          0.0,
+          100.0,
+          100.0
         ],
-        "transform": [
-          1,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1,
-          0.0,
-          -1.5,
-          0.22,
-          -2.5,
-          1.0
-        ],
-        "center": [
-          -1.5,
-          0.22,
-          -2.5
-        ],
-        "materialId": "material.chess.white",
-        "faceColors": [
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ]
-        ],
+        "x2D": 100.0,
+        "y2D": 100.0,
+        "zOrder2D": 0
+      },
+      {
         "authoredProperties": {
+          "capturedSlot": {
+            "t": "int",
+            "v": 0
+          },
+          "capturedThisMove": {
+            "t": "bool",
+            "v": false
+          },
+          "chessColor": {
+            "t": "int",
+            "v": 1
+          },
+          "chessRole": {
+            "t": "int",
+            "v": 0
+          },
           "gridX": {
             "t": "int",
             "v": 2
           },
           "gridY": {
             "t": "int",
-            "v": 1
+            "v": 6
           },
-          "chessColor": {
-            "t": "int",
-            "v": 0
-          },
-          "chessRole": {
-            "t": "int",
-            "v": 0
-          },
-          "isSelected": {
+          "hasMoved": {
             "t": "bool",
             "v": false
           },
-          "hasMoved": {
+          "isSelected": {
             "t": "bool",
             "v": false
           },
@@ -2468,113 +1742,64 @@
             "t": "bool",
             "v": true
           },
-          "capturedThisMove": {
-            "t": "bool",
-            "v": false
-          },
-          "capturedSlot": {
-            "t": "int",
-            "v": 0
-          },
           "restY": {
             "t": "double",
             "v": 0.22
           }
-        }
-      },
-      {
+        },
+        "geometryType": 2,
+        "materialId": "material.chess.black",
         "objectID": "piece-black-pawn-2-6",
+        "renderMode": 0,
         "shapeKind": 2,
-        "geometryType": 2,
         "shapeParams": [
-          0.22,
-          0.22,
-          0.22,
-          0.22,
+          0.2199999988079071,
+          0.2199999988079071,
+          0.2199999988079071,
+          0.2199999988079071,
           0.0,
           0.0,
           0.0,
           0.0,
-          0.0
+          0.0,
+          100.0,
+          100.0
         ],
-        "transform": [
-          1,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1,
-          0.0,
-          -1.5,
-          0.22,
-          2.5,
-          1.0
-        ],
-        "center": [
-          -1.5,
-          0.22,
-          2.5
-        ],
-        "materialId": "material.chess.black",
-        "faceColors": [
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ]
-        ],
+        "x2D": 100.0,
+        "y2D": 100.0,
+        "zOrder2D": 0
+      },
+      {
         "authoredProperties": {
-          "gridX": {
+          "capturedSlot": {
             "t": "int",
-            "v": 2
+            "v": 0
           },
-          "gridY": {
-            "t": "int",
-            "v": 6
+          "capturedThisMove": {
+            "t": "bool",
+            "v": false
           },
           "chessColor": {
             "t": "int",
-            "v": 1
+            "v": 0
           },
           "chessRole": {
             "t": "int",
             "v": 0
           },
-          "isSelected": {
+          "gridX": {
+            "t": "int",
+            "v": 3
+          },
+          "gridY": {
+            "t": "int",
+            "v": 1
+          },
+          "hasMoved": {
             "t": "bool",
             "v": false
           },
-          "hasMoved": {
+          "isSelected": {
             "t": "bool",
             "v": false
           },
@@ -2582,113 +1807,64 @@
             "t": "bool",
             "v": true
           },
-          "capturedThisMove": {
-            "t": "bool",
-            "v": false
-          },
-          "capturedSlot": {
-            "t": "int",
-            "v": 0
-          },
           "restY": {
             "t": "double",
             "v": 0.22
           }
-        }
-      },
-      {
+        },
+        "geometryType": 2,
+        "materialId": "material.chess.white",
         "objectID": "piece-white-pawn-3-1",
+        "renderMode": 0,
         "shapeKind": 2,
-        "geometryType": 2,
         "shapeParams": [
-          0.22,
-          0.22,
-          0.22,
-          0.22,
+          0.2199999988079071,
+          0.2199999988079071,
+          0.2199999988079071,
+          0.2199999988079071,
           0.0,
           0.0,
           0.0,
           0.0,
-          0.0
+          0.0,
+          100.0,
+          100.0
         ],
-        "transform": [
-          1,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1,
-          0.0,
-          -0.5,
-          0.22,
-          -2.5,
-          1.0
-        ],
-        "center": [
-          -0.5,
-          0.22,
-          -2.5
-        ],
-        "materialId": "material.chess.white",
-        "faceColors": [
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ]
-        ],
+        "x2D": 100.0,
+        "y2D": 100.0,
+        "zOrder2D": 0
+      },
+      {
         "authoredProperties": {
+          "capturedSlot": {
+            "t": "int",
+            "v": 0
+          },
+          "capturedThisMove": {
+            "t": "bool",
+            "v": false
+          },
+          "chessColor": {
+            "t": "int",
+            "v": 1
+          },
+          "chessRole": {
+            "t": "int",
+            "v": 0
+          },
           "gridX": {
             "t": "int",
             "v": 3
           },
           "gridY": {
             "t": "int",
-            "v": 1
+            "v": 6
           },
-          "chessColor": {
-            "t": "int",
-            "v": 0
-          },
-          "chessRole": {
-            "t": "int",
-            "v": 0
-          },
-          "isSelected": {
+          "hasMoved": {
             "t": "bool",
             "v": false
           },
-          "hasMoved": {
+          "isSelected": {
             "t": "bool",
             "v": false
           },
@@ -2696,113 +1872,64 @@
             "t": "bool",
             "v": true
           },
-          "capturedThisMove": {
-            "t": "bool",
-            "v": false
-          },
-          "capturedSlot": {
-            "t": "int",
-            "v": 0
-          },
           "restY": {
             "t": "double",
             "v": 0.22
           }
-        }
-      },
-      {
+        },
+        "geometryType": 2,
+        "materialId": "material.chess.black",
         "objectID": "piece-black-pawn-3-6",
+        "renderMode": 0,
         "shapeKind": 2,
-        "geometryType": 2,
         "shapeParams": [
-          0.22,
-          0.22,
-          0.22,
-          0.22,
+          0.2199999988079071,
+          0.2199999988079071,
+          0.2199999988079071,
+          0.2199999988079071,
           0.0,
           0.0,
           0.0,
           0.0,
-          0.0
+          0.0,
+          100.0,
+          100.0
         ],
-        "transform": [
-          1,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1,
-          0.0,
-          -0.5,
-          0.22,
-          2.5,
-          1.0
-        ],
-        "center": [
-          -0.5,
-          0.22,
-          2.5
-        ],
-        "materialId": "material.chess.black",
-        "faceColors": [
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ]
-        ],
+        "x2D": 100.0,
+        "y2D": 100.0,
+        "zOrder2D": 0
+      },
+      {
         "authoredProperties": {
-          "gridX": {
+          "capturedSlot": {
             "t": "int",
-            "v": 3
+            "v": 0
           },
-          "gridY": {
-            "t": "int",
-            "v": 6
+          "capturedThisMove": {
+            "t": "bool",
+            "v": false
           },
           "chessColor": {
             "t": "int",
-            "v": 1
+            "v": 0
           },
           "chessRole": {
             "t": "int",
             "v": 0
           },
-          "isSelected": {
+          "gridX": {
+            "t": "int",
+            "v": 4
+          },
+          "gridY": {
+            "t": "int",
+            "v": 1
+          },
+          "hasMoved": {
             "t": "bool",
             "v": false
           },
-          "hasMoved": {
+          "isSelected": {
             "t": "bool",
             "v": false
           },
@@ -2810,113 +1937,64 @@
             "t": "bool",
             "v": true
           },
-          "capturedThisMove": {
-            "t": "bool",
-            "v": false
-          },
-          "capturedSlot": {
-            "t": "int",
-            "v": 0
-          },
           "restY": {
             "t": "double",
             "v": 0.22
           }
-        }
-      },
-      {
+        },
+        "geometryType": 2,
+        "materialId": "material.chess.white",
         "objectID": "piece-white-pawn-4-1",
+        "renderMode": 0,
         "shapeKind": 2,
-        "geometryType": 2,
         "shapeParams": [
-          0.22,
-          0.22,
-          0.22,
-          0.22,
+          0.2199999988079071,
+          0.2199999988079071,
+          0.2199999988079071,
+          0.2199999988079071,
           0.0,
           0.0,
           0.0,
           0.0,
-          0.0
+          0.0,
+          100.0,
+          100.0
         ],
-        "transform": [
-          1,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1,
-          0.0,
-          0.5,
-          0.22,
-          -2.5,
-          1.0
-        ],
-        "center": [
-          0.5,
-          0.22,
-          -2.5
-        ],
-        "materialId": "material.chess.white",
-        "faceColors": [
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ]
-        ],
+        "x2D": 100.0,
+        "y2D": 100.0,
+        "zOrder2D": 0
+      },
+      {
         "authoredProperties": {
+          "capturedSlot": {
+            "t": "int",
+            "v": 0
+          },
+          "capturedThisMove": {
+            "t": "bool",
+            "v": false
+          },
+          "chessColor": {
+            "t": "int",
+            "v": 1
+          },
+          "chessRole": {
+            "t": "int",
+            "v": 0
+          },
           "gridX": {
             "t": "int",
             "v": 4
           },
           "gridY": {
             "t": "int",
-            "v": 1
+            "v": 6
           },
-          "chessColor": {
-            "t": "int",
-            "v": 0
-          },
-          "chessRole": {
-            "t": "int",
-            "v": 0
-          },
-          "isSelected": {
+          "hasMoved": {
             "t": "bool",
             "v": false
           },
-          "hasMoved": {
+          "isSelected": {
             "t": "bool",
             "v": false
           },
@@ -2924,113 +2002,64 @@
             "t": "bool",
             "v": true
           },
-          "capturedThisMove": {
-            "t": "bool",
-            "v": false
-          },
-          "capturedSlot": {
-            "t": "int",
-            "v": 0
-          },
           "restY": {
             "t": "double",
             "v": 0.22
           }
-        }
-      },
-      {
+        },
+        "geometryType": 2,
+        "materialId": "material.chess.black",
         "objectID": "piece-black-pawn-4-6",
+        "renderMode": 0,
         "shapeKind": 2,
-        "geometryType": 2,
         "shapeParams": [
-          0.22,
-          0.22,
-          0.22,
-          0.22,
+          0.2199999988079071,
+          0.2199999988079071,
+          0.2199999988079071,
+          0.2199999988079071,
           0.0,
           0.0,
           0.0,
           0.0,
-          0.0
+          0.0,
+          100.0,
+          100.0
         ],
-        "transform": [
-          1,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1,
-          0.0,
-          0.5,
-          0.22,
-          2.5,
-          1.0
-        ],
-        "center": [
-          0.5,
-          0.22,
-          2.5
-        ],
-        "materialId": "material.chess.black",
-        "faceColors": [
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ]
-        ],
+        "x2D": 100.0,
+        "y2D": 100.0,
+        "zOrder2D": 0
+      },
+      {
         "authoredProperties": {
-          "gridX": {
+          "capturedSlot": {
             "t": "int",
-            "v": 4
+            "v": 0
           },
-          "gridY": {
-            "t": "int",
-            "v": 6
+          "capturedThisMove": {
+            "t": "bool",
+            "v": false
           },
           "chessColor": {
             "t": "int",
-            "v": 1
+            "v": 0
           },
           "chessRole": {
             "t": "int",
             "v": 0
           },
-          "isSelected": {
+          "gridX": {
+            "t": "int",
+            "v": 5
+          },
+          "gridY": {
+            "t": "int",
+            "v": 1
+          },
+          "hasMoved": {
             "t": "bool",
             "v": false
           },
-          "hasMoved": {
+          "isSelected": {
             "t": "bool",
             "v": false
           },
@@ -3038,113 +2067,64 @@
             "t": "bool",
             "v": true
           },
-          "capturedThisMove": {
-            "t": "bool",
-            "v": false
-          },
-          "capturedSlot": {
-            "t": "int",
-            "v": 0
-          },
           "restY": {
             "t": "double",
             "v": 0.22
           }
-        }
-      },
-      {
+        },
+        "geometryType": 2,
+        "materialId": "material.chess.white",
         "objectID": "piece-white-pawn-5-1",
+        "renderMode": 0,
         "shapeKind": 2,
-        "geometryType": 2,
         "shapeParams": [
-          0.22,
-          0.22,
-          0.22,
-          0.22,
+          0.2199999988079071,
+          0.2199999988079071,
+          0.2199999988079071,
+          0.2199999988079071,
           0.0,
           0.0,
           0.0,
           0.0,
-          0.0
+          0.0,
+          100.0,
+          100.0
         ],
-        "transform": [
-          1,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1,
-          0.0,
-          1.5,
-          0.22,
-          -2.5,
-          1.0
-        ],
-        "center": [
-          1.5,
-          0.22,
-          -2.5
-        ],
-        "materialId": "material.chess.white",
-        "faceColors": [
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ]
-        ],
+        "x2D": 100.0,
+        "y2D": 100.0,
+        "zOrder2D": 0
+      },
+      {
         "authoredProperties": {
+          "capturedSlot": {
+            "t": "int",
+            "v": 0
+          },
+          "capturedThisMove": {
+            "t": "bool",
+            "v": false
+          },
+          "chessColor": {
+            "t": "int",
+            "v": 1
+          },
+          "chessRole": {
+            "t": "int",
+            "v": 0
+          },
           "gridX": {
             "t": "int",
             "v": 5
           },
           "gridY": {
             "t": "int",
-            "v": 1
+            "v": 6
           },
-          "chessColor": {
-            "t": "int",
-            "v": 0
-          },
-          "chessRole": {
-            "t": "int",
-            "v": 0
-          },
-          "isSelected": {
+          "hasMoved": {
             "t": "bool",
             "v": false
           },
-          "hasMoved": {
+          "isSelected": {
             "t": "bool",
             "v": false
           },
@@ -3152,113 +2132,64 @@
             "t": "bool",
             "v": true
           },
-          "capturedThisMove": {
-            "t": "bool",
-            "v": false
-          },
-          "capturedSlot": {
-            "t": "int",
-            "v": 0
-          },
           "restY": {
             "t": "double",
             "v": 0.22
           }
-        }
-      },
-      {
+        },
+        "geometryType": 2,
+        "materialId": "material.chess.black",
         "objectID": "piece-black-pawn-5-6",
+        "renderMode": 0,
         "shapeKind": 2,
-        "geometryType": 2,
         "shapeParams": [
-          0.22,
-          0.22,
-          0.22,
-          0.22,
+          0.2199999988079071,
+          0.2199999988079071,
+          0.2199999988079071,
+          0.2199999988079071,
           0.0,
           0.0,
           0.0,
           0.0,
-          0.0
+          0.0,
+          100.0,
+          100.0
         ],
-        "transform": [
-          1,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1,
-          0.0,
-          1.5,
-          0.22,
-          2.5,
-          1.0
-        ],
-        "center": [
-          1.5,
-          0.22,
-          2.5
-        ],
-        "materialId": "material.chess.black",
-        "faceColors": [
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ]
-        ],
+        "x2D": 100.0,
+        "y2D": 100.0,
+        "zOrder2D": 0
+      },
+      {
         "authoredProperties": {
-          "gridX": {
+          "capturedSlot": {
             "t": "int",
-            "v": 5
+            "v": 0
           },
-          "gridY": {
-            "t": "int",
-            "v": 6
+          "capturedThisMove": {
+            "t": "bool",
+            "v": false
           },
           "chessColor": {
             "t": "int",
-            "v": 1
+            "v": 0
           },
           "chessRole": {
             "t": "int",
             "v": 0
           },
-          "isSelected": {
+          "gridX": {
+            "t": "int",
+            "v": 6
+          },
+          "gridY": {
+            "t": "int",
+            "v": 1
+          },
+          "hasMoved": {
             "t": "bool",
             "v": false
           },
-          "hasMoved": {
+          "isSelected": {
             "t": "bool",
             "v": false
           },
@@ -3266,113 +2197,64 @@
             "t": "bool",
             "v": true
           },
-          "capturedThisMove": {
-            "t": "bool",
-            "v": false
-          },
-          "capturedSlot": {
-            "t": "int",
-            "v": 0
-          },
           "restY": {
             "t": "double",
             "v": 0.22
           }
-        }
-      },
-      {
+        },
+        "geometryType": 2,
+        "materialId": "material.chess.white",
         "objectID": "piece-white-pawn-6-1",
+        "renderMode": 0,
         "shapeKind": 2,
-        "geometryType": 2,
         "shapeParams": [
-          0.22,
-          0.22,
-          0.22,
-          0.22,
+          0.2199999988079071,
+          0.2199999988079071,
+          0.2199999988079071,
+          0.2199999988079071,
           0.0,
           0.0,
           0.0,
           0.0,
-          0.0
+          0.0,
+          100.0,
+          100.0
         ],
-        "transform": [
-          1,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1,
-          0.0,
-          2.5,
-          0.22,
-          -2.5,
-          1.0
-        ],
-        "center": [
-          2.5,
-          0.22,
-          -2.5
-        ],
-        "materialId": "material.chess.white",
-        "faceColors": [
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ]
-        ],
+        "x2D": 100.0,
+        "y2D": 100.0,
+        "zOrder2D": 0
+      },
+      {
         "authoredProperties": {
+          "capturedSlot": {
+            "t": "int",
+            "v": 0
+          },
+          "capturedThisMove": {
+            "t": "bool",
+            "v": false
+          },
+          "chessColor": {
+            "t": "int",
+            "v": 1
+          },
+          "chessRole": {
+            "t": "int",
+            "v": 0
+          },
           "gridX": {
             "t": "int",
             "v": 6
           },
           "gridY": {
             "t": "int",
-            "v": 1
+            "v": 6
           },
-          "chessColor": {
-            "t": "int",
-            "v": 0
-          },
-          "chessRole": {
-            "t": "int",
-            "v": 0
-          },
-          "isSelected": {
+          "hasMoved": {
             "t": "bool",
             "v": false
           },
-          "hasMoved": {
+          "isSelected": {
             "t": "bool",
             "v": false
           },
@@ -3380,113 +2262,64 @@
             "t": "bool",
             "v": true
           },
-          "capturedThisMove": {
-            "t": "bool",
-            "v": false
-          },
-          "capturedSlot": {
-            "t": "int",
-            "v": 0
-          },
           "restY": {
             "t": "double",
             "v": 0.22
           }
-        }
-      },
-      {
+        },
+        "geometryType": 2,
+        "materialId": "material.chess.black",
         "objectID": "piece-black-pawn-6-6",
+        "renderMode": 0,
         "shapeKind": 2,
-        "geometryType": 2,
         "shapeParams": [
-          0.22,
-          0.22,
-          0.22,
-          0.22,
+          0.2199999988079071,
+          0.2199999988079071,
+          0.2199999988079071,
+          0.2199999988079071,
           0.0,
           0.0,
           0.0,
           0.0,
-          0.0
+          0.0,
+          100.0,
+          100.0
         ],
-        "transform": [
-          1,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1,
-          0.0,
-          2.5,
-          0.22,
-          2.5,
-          1.0
-        ],
-        "center": [
-          2.5,
-          0.22,
-          2.5
-        ],
-        "materialId": "material.chess.black",
-        "faceColors": [
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ]
-        ],
+        "x2D": 100.0,
+        "y2D": 100.0,
+        "zOrder2D": 0
+      },
+      {
         "authoredProperties": {
-          "gridX": {
+          "capturedSlot": {
             "t": "int",
-            "v": 6
+            "v": 0
           },
-          "gridY": {
-            "t": "int",
-            "v": 6
+          "capturedThisMove": {
+            "t": "bool",
+            "v": false
           },
           "chessColor": {
             "t": "int",
-            "v": 1
+            "v": 0
           },
           "chessRole": {
             "t": "int",
             "v": 0
           },
-          "isSelected": {
+          "gridX": {
+            "t": "int",
+            "v": 7
+          },
+          "gridY": {
+            "t": "int",
+            "v": 1
+          },
+          "hasMoved": {
             "t": "bool",
             "v": false
           },
-          "hasMoved": {
+          "isSelected": {
             "t": "bool",
             "v": false
           },
@@ -3494,206 +2327,51 @@
             "t": "bool",
             "v": true
           },
-          "capturedThisMove": {
-            "t": "bool",
-            "v": false
-          },
-          "capturedSlot": {
-            "t": "int",
-            "v": 0
-          },
           "restY": {
             "t": "double",
             "v": 0.22
           }
-        }
-      },
-      {
+        },
+        "geometryType": 2,
+        "materialId": "material.chess.white",
         "objectID": "piece-white-pawn-7-1",
+        "renderMode": 0,
         "shapeKind": 2,
-        "geometryType": 2,
         "shapeParams": [
-          0.22,
-          0.22,
-          0.22,
-          0.22,
+          0.2199999988079071,
+          0.2199999988079071,
+          0.2199999988079071,
+          0.2199999988079071,
           0.0,
           0.0,
           0.0,
           0.0,
-          0.0
+          0.0,
+          100.0,
+          100.0
         ],
-        "transform": [
-          1,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1,
-          0.0,
-          3.5,
-          0.22,
-          -2.5,
-          1.0
-        ],
-        "center": [
-          3.5,
-          0.22,
-          -2.5
-        ],
-        "materialId": "material.chess.white",
-        "faceColors": [
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ]
-        ],
+        "x2D": 100.0,
+        "y2D": 100.0,
+        "zOrder2D": 0
+      },
+      {
         "authoredProperties": {
-          "gridX": {
-            "t": "int",
-            "v": 7
-          },
-          "gridY": {
-            "t": "int",
-            "v": 1
-          },
-          "chessColor": {
+          "capturedSlot": {
             "t": "int",
             "v": 0
-          },
-          "chessRole": {
-            "t": "int",
-            "v": 0
-          },
-          "isSelected": {
-            "t": "bool",
-            "v": false
-          },
-          "hasMoved": {
-            "t": "bool",
-            "v": false
-          },
-          "onBoard": {
-            "t": "bool",
-            "v": true
           },
           "capturedThisMove": {
             "t": "bool",
             "v": false
           },
-          "capturedSlot": {
+          "chessColor": {
+            "t": "int",
+            "v": 1
+          },
+          "chessRole": {
             "t": "int",
             "v": 0
           },
-          "restY": {
-            "t": "double",
-            "v": 0.22
-          }
-        }
-      },
-      {
-        "objectID": "piece-black-pawn-7-6",
-        "shapeKind": 2,
-        "geometryType": 2,
-        "shapeParams": [
-          0.22,
-          0.22,
-          0.22,
-          0.22,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "transform": [
-          1,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1,
-          0.0,
-          3.5,
-          0.22,
-          2.5,
-          1.0
-        ],
-        "center": [
-          3.5,
-          0.22,
-          2.5
-        ],
-        "materialId": "material.chess.black",
-        "faceColors": [
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ]
-        ],
-        "authoredProperties": {
           "gridX": {
             "t": "int",
             "v": 7
@@ -3702,19 +2380,11 @@
             "t": "int",
             "v": 6
           },
-          "chessColor": {
-            "t": "int",
-            "v": 1
-          },
-          "chessRole": {
-            "t": "int",
-            "v": 0
-          },
-          "isSelected": {
+          "hasMoved": {
             "t": "bool",
             "v": false
           },
-          "hasMoved": {
+          "isSelected": {
             "t": "bool",
             "v": false
           },
@@ -3722,196 +2392,135 @@
             "t": "bool",
             "v": true
           },
-          "capturedThisMove": {
-            "t": "bool",
-            "v": false
-          },
-          "capturedSlot": {
-            "t": "int",
-            "v": 0
-          },
           "restY": {
             "t": "double",
             "v": 0.22
           }
-        }
+        },
+        "geometryType": 2,
+        "materialId": "material.chess.black",
+        "objectID": "piece-black-pawn-7-6",
+        "renderMode": 0,
+        "shapeKind": 2,
+        "shapeParams": [
+          0.2199999988079071,
+          0.2199999988079071,
+          0.2199999988079071,
+          0.2199999988079071,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          100.0,
+          100.0
+        ],
+        "x2D": 100.0,
+        "y2D": 100.0,
+        "zOrder2D": 0
       },
       {
-        "objectID": "object.chess.seat.white",
-        "shapeKind": 0,
-        "geometryType": 0,
-        "shapeParams": [
-          0.5,
-          0.5,
-          0.5,
-          0.5,
-          0,
-          0,
-          0,
-          0,
-          0
-        ],
-        "transform": [
-          0.6,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.3,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.6,
-          0.0,
-          0.0,
-          0.15,
-          -5.4,
-          1.0
-        ],
-        "center": [
-          0.0,
-          0.15,
-          -5.4
-        ],
-        "materialId": "material.chess.white",
-        "faceColors": [
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ],
-          [
-            0.9568627450980393,
-            0.9450980392156862,
-            0.9098039215686274
-          ]
-        ],
         "authoredProperties": {
-          "playsColor": {
-            "t": "int",
-            "v": 0
+          "designatedBy": {
+            "t": "string",
+            "v": "Player"
           },
           "isToMove": {
             "t": "bool",
             "v": true
           },
-          "designatedBy": {
-            "t": "string",
-            "v": "Player"
+          "playsColor": {
+            "t": "int",
+            "v": 0
           }
-        }
-      },
-      {
-        "objectID": "object.chess.seat.black",
-        "shapeKind": 0,
+        },
         "geometryType": 0,
+        "materialId": "material.chess.white",
+        "objectID": "object.chess.seat.white",
+        "renderMode": 0,
+        "shapeKind": 0,
         "shapeParams": [
           0.5,
           0.5,
           0.5,
           0.5,
-          0,
-          0,
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          100.0,
+          100.0
         ],
-        "transform": [
-          0.6,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.3,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.6,
-          0.0,
-          0.0,
-          0.15,
-          5.4,
-          1.0
-        ],
-        "center": [
-          0.0,
-          0.15,
-          5.4
-        ],
-        "materialId": "material.chess.black",
-        "faceColors": [
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ],
-          [
-            0.10980392156862745,
-            0.10196078431372549,
-            0.09411764705882353
-          ]
-        ],
+        "x2D": 100.0,
+        "y2D": 100.0,
+        "zOrder2D": 0
+      },
+      {
         "authoredProperties": {
-          "playsColor": {
-            "t": "int",
-            "v": 1
+          "designatedBy": {
+            "t": "string",
+            "v": "Player"
           },
           "isToMove": {
             "t": "bool",
             "v": false
           },
-          "designatedBy": {
-            "t": "string",
-            "v": "Player"
+          "playsColor": {
+            "t": "int",
+            "v": 1
           }
-        }
+        },
+        "geometryType": 0,
+        "materialId": "material.chess.black",
+        "objectID": "object.chess.seat.black",
+        "renderMode": 0,
+        "shapeKind": 0,
+        "shapeParams": [
+          0.5,
+          0.5,
+          0.5,
+          0.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          100.0,
+          100.0
+        ],
+        "x2D": 100.0,
+        "y2D": 100.0,
+        "zOrder2D": 0
       },
       {
-        "objectID": "hud.chess.promo.queen",
-        "shapeKind": 12,
+        "authoredProperties": {
+          "controlLabel": {
+            "t": "string",
+            "v": "PROMOTE: QUEEN"
+          },
+          "displayName": {
+            "t": "string",
+            "v": "PROMOTE: QUEEN"
+          },
+          "pickPriority": {
+            "t": "double",
+            "v": 100.0
+          },
+          "shape.height2D": {
+            "t": "double",
+            "v": 32.0
+          },
+          "shape.width2D": {
+            "t": "double",
+            "v": 130.0
+          }
+        },
         "geometryType": 12,
+        "materialId": "",
+        "objectID": "hud.chess.promo.queen",
+        "renderMode": 0,
+        "shapeKind": 12,
         "shapeParams": [
           0.0,
           0.0,
@@ -3925,92 +2534,38 @@
           130.0,
           32.0
         ],
-        "transform": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0
-        ],
-        "center": [
-          0.0,
-          0.0,
-          0.0
-        ],
         "x2D": 340.0,
         "y2D": 24.0,
-        "zOrder2D": 20,
-        "materialId": "",
-        "faceColors": [
-          [
-            0.85,
-            0.7,
-            0.2
-          ],
-          [
-            0.85,
-            0.7,
-            0.2
-          ],
-          [
-            0.85,
-            0.7,
-            0.2
-          ],
-          [
-            0.85,
-            0.7,
-            0.2
-          ],
-          [
-            0.85,
-            0.7,
-            0.2
-          ],
-          [
-            0.85,
-            0.7,
-            0.2
-          ]
-        ],
+        "zOrder2D": 20
+      },
+      {
         "authoredProperties": {
-          "displayName": {
-            "t": "string",
-            "v": "PROMOTE: QUEEN"
-          },
           "controlLabel": {
             "t": "string",
-            "v": "PROMOTE: QUEEN"
+            "v": "KNIGHT"
           },
-          "shape.width2D": {
+          "displayName": {
+            "t": "string",
+            "v": "KNIGHT"
+          },
+          "pickPriority": {
             "t": "double",
-            "v": 130.0
+            "v": 100.0
           },
           "shape.height2D": {
             "t": "double",
             "v": 32.0
           },
-          "pickPriority": {
+          "shape.width2D": {
             "t": "double",
-            "v": 100.0
+            "v": 90.0
           }
-        }
-      },
-      {
-        "objectID": "hud.chess.promo.knight",
-        "shapeKind": 12,
+        },
         "geometryType": 12,
+        "materialId": "",
+        "objectID": "hud.chess.promo.knight",
+        "renderMode": 0,
+        "shapeKind": 12,
         "shapeParams": [
           0.0,
           0.0,
@@ -4024,92 +2579,38 @@
           90.0,
           32.0
         ],
-        "transform": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0
-        ],
-        "center": [
-          0.0,
-          0.0,
-          0.0
-        ],
         "x2D": 480.0,
         "y2D": 24.0,
-        "zOrder2D": 20,
-        "materialId": "",
-        "faceColors": [
-          [
-            0.2,
-            0.65,
-            0.4
-          ],
-          [
-            0.2,
-            0.65,
-            0.4
-          ],
-          [
-            0.2,
-            0.65,
-            0.4
-          ],
-          [
-            0.2,
-            0.65,
-            0.4
-          ],
-          [
-            0.2,
-            0.65,
-            0.4
-          ],
-          [
-            0.2,
-            0.65,
-            0.4
-          ]
-        ],
+        "zOrder2D": 20
+      },
+      {
         "authoredProperties": {
-          "displayName": {
-            "t": "string",
-            "v": "KNIGHT"
-          },
           "controlLabel": {
             "t": "string",
-            "v": "KNIGHT"
+            "v": "ROOK"
           },
-          "shape.width2D": {
+          "displayName": {
+            "t": "string",
+            "v": "ROOK"
+          },
+          "pickPriority": {
             "t": "double",
-            "v": 90.0
+            "v": 100.0
           },
           "shape.height2D": {
             "t": "double",
             "v": 32.0
           },
-          "pickPriority": {
+          "shape.width2D": {
             "t": "double",
-            "v": 100.0
+            "v": 80.0
           }
-        }
-      },
-      {
-        "objectID": "hud.chess.promo.rook",
-        "shapeKind": 12,
+        },
         "geometryType": 12,
+        "materialId": "",
+        "objectID": "hud.chess.promo.rook",
+        "renderMode": 0,
+        "shapeKind": 12,
         "shapeParams": [
           0.0,
           0.0,
@@ -4123,92 +2624,38 @@
           80.0,
           32.0
         ],
-        "transform": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0
-        ],
-        "center": [
-          0.0,
-          0.0,
-          0.0
-        ],
         "x2D": 580.0,
         "y2D": 24.0,
-        "zOrder2D": 20,
-        "materialId": "",
-        "faceColors": [
-          [
-            0.25,
-            0.5,
-            0.85
-          ],
-          [
-            0.25,
-            0.5,
-            0.85
-          ],
-          [
-            0.25,
-            0.5,
-            0.85
-          ],
-          [
-            0.25,
-            0.5,
-            0.85
-          ],
-          [
-            0.25,
-            0.5,
-            0.85
-          ],
-          [
-            0.25,
-            0.5,
-            0.85
-          ]
-        ],
+        "zOrder2D": 20
+      },
+      {
         "authoredProperties": {
-          "displayName": {
-            "t": "string",
-            "v": "ROOK"
-          },
           "controlLabel": {
             "t": "string",
-            "v": "ROOK"
+            "v": "BISHOP"
           },
-          "shape.width2D": {
+          "displayName": {
+            "t": "string",
+            "v": "BISHOP"
+          },
+          "pickPriority": {
             "t": "double",
-            "v": 80.0
+            "v": 100.0
           },
           "shape.height2D": {
             "t": "double",
             "v": 32.0
           },
-          "pickPriority": {
+          "shape.width2D": {
             "t": "double",
-            "v": 100.0
+            "v": 90.0
           }
-        }
-      },
-      {
-        "objectID": "hud.chess.promo.bishop",
-        "shapeKind": 12,
+        },
         "geometryType": 12,
+        "materialId": "",
+        "objectID": "hud.chess.promo.bishop",
+        "renderMode": 0,
+        "shapeKind": 12,
         "shapeParams": [
           0.0,
           0.0,
@@ -4222,692 +2669,10 @@
           90.0,
           32.0
         ],
-        "transform": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0
-        ],
-        "center": [
-          0.0,
-          0.0,
-          0.0
-        ],
         "x2D": 670.0,
         "y2D": 24.0,
-        "zOrder2D": 20,
-        "materialId": "",
-        "faceColors": [
-          [
-            0.65,
-            0.35,
-            0.8
-          ],
-          [
-            0.65,
-            0.35,
-            0.8
-          ],
-          [
-            0.65,
-            0.35,
-            0.8
-          ],
-          [
-            0.65,
-            0.35,
-            0.8
-          ],
-          [
-            0.65,
-            0.35,
-            0.8
-          ],
-          [
-            0.65,
-            0.35,
-            0.8
-          ]
-        ],
-        "authoredProperties": {
-          "displayName": {
-            "t": "string",
-            "v": "BISHOP"
-          },
-          "controlLabel": {
-            "t": "string",
-            "v": "BISHOP"
-          },
-          "shape.width2D": {
-            "t": "double",
-            "v": 90.0
-          },
-          "shape.height2D": {
-            "t": "double",
-            "v": 32.0
-          },
-          "pickPriority": {
-            "t": "double",
-            "v": 100.0
-          }
-        }
+        "zOrder2D": 20
       }
     ]
-  },
-  "formationRelations": [
-    {
-      "type": "instance-of",
-      "entityA": "object.chess.board",
-      "entityB": "category.chess.board",
-      "directed": true,
-      "weight": 1.0,
-      "events": [
-        {
-          "description": "instance-of",
-          "deltaWeight": 1.0,
-          "timestamp": 1787390000
-        }
-      ]
-    },
-    {
-      "type": "subcategory-of",
-      "entityA": "category.chess.piece",
-      "entityB": "category.chess",
-      "directed": true,
-      "weight": 1.0,
-      "events": [
-        {
-          "description": "subcategory-of",
-          "deltaWeight": 1.0,
-          "timestamp": 1787390000
-        }
-      ]
-    },
-    {
-      "type": "subcategory-of",
-      "entityA": "category.chess.board",
-      "entityB": "category.chess",
-      "directed": true,
-      "weight": 1.0,
-      "events": [
-        {
-          "description": "subcategory-of",
-          "deltaWeight": 1.0,
-          "timestamp": 1787390000
-        }
-      ]
-    },
-    {
-      "type": "subcategory-of",
-      "entityA": "category.chess.player",
-      "entityB": "category.chess",
-      "directed": true,
-      "weight": 1.0,
-      "events": [
-        {
-          "description": "subcategory-of",
-          "deltaWeight": 1.0,
-          "timestamp": 1787390000
-        }
-      ]
-    },
-    {
-      "type": "subcategory-of",
-      "entityA": "category.control.button",
-      "entityB": "category.control",
-      "directed": true,
-      "weight": 1.0,
-      "events": [
-        {
-          "description": "subcategory-of",
-          "deltaWeight": 1.0,
-          "timestamp": 1787390000
-        }
-      ]
-    },
-    {
-      "type": "instance-of",
-      "entityA": "piece-white-rook-0-0",
-      "entityB": "category.chess.piece",
-      "directed": true,
-      "weight": 1.0,
-      "events": [
-        {
-          "description": "instance-of",
-          "deltaWeight": 1.0,
-          "timestamp": 1787390000
-        }
-      ]
-    },
-    {
-      "type": "instance-of",
-      "entityA": "piece-white-knight-1-0",
-      "entityB": "category.chess.piece",
-      "directed": true,
-      "weight": 1.0,
-      "events": [
-        {
-          "description": "instance-of",
-          "deltaWeight": 1.0,
-          "timestamp": 1787390000
-        }
-      ]
-    },
-    {
-      "type": "instance-of",
-      "entityA": "piece-white-bishop-2-0",
-      "entityB": "category.chess.piece",
-      "directed": true,
-      "weight": 1.0,
-      "events": [
-        {
-          "description": "instance-of",
-          "deltaWeight": 1.0,
-          "timestamp": 1787390000
-        }
-      ]
-    },
-    {
-      "type": "instance-of",
-      "entityA": "piece-white-queen-3-0",
-      "entityB": "category.chess.piece",
-      "directed": true,
-      "weight": 1.0,
-      "events": [
-        {
-          "description": "instance-of",
-          "deltaWeight": 1.0,
-          "timestamp": 1787390000
-        }
-      ]
-    },
-    {
-      "type": "instance-of",
-      "entityA": "piece-white-king-4-0",
-      "entityB": "category.chess.piece",
-      "directed": true,
-      "weight": 1.0,
-      "events": [
-        {
-          "description": "instance-of",
-          "deltaWeight": 1.0,
-          "timestamp": 1787390000
-        }
-      ]
-    },
-    {
-      "type": "instance-of",
-      "entityA": "piece-white-bishop-5-0",
-      "entityB": "category.chess.piece",
-      "directed": true,
-      "weight": 1.0,
-      "events": [
-        {
-          "description": "instance-of",
-          "deltaWeight": 1.0,
-          "timestamp": 1787390000
-        }
-      ]
-    },
-    {
-      "type": "instance-of",
-      "entityA": "piece-white-knight-6-0",
-      "entityB": "category.chess.piece",
-      "directed": true,
-      "weight": 1.0,
-      "events": [
-        {
-          "description": "instance-of",
-          "deltaWeight": 1.0,
-          "timestamp": 1787390000
-        }
-      ]
-    },
-    {
-      "type": "instance-of",
-      "entityA": "piece-white-rook-7-0",
-      "entityB": "category.chess.piece",
-      "directed": true,
-      "weight": 1.0,
-      "events": [
-        {
-          "description": "instance-of",
-          "deltaWeight": 1.0,
-          "timestamp": 1787390000
-        }
-      ]
-    },
-    {
-      "type": "instance-of",
-      "entityA": "piece-black-rook-0-7",
-      "entityB": "category.chess.piece",
-      "directed": true,
-      "weight": 1.0,
-      "events": [
-        {
-          "description": "instance-of",
-          "deltaWeight": 1.0,
-          "timestamp": 1787390000
-        }
-      ]
-    },
-    {
-      "type": "instance-of",
-      "entityA": "piece-black-knight-1-7",
-      "entityB": "category.chess.piece",
-      "directed": true,
-      "weight": 1.0,
-      "events": [
-        {
-          "description": "instance-of",
-          "deltaWeight": 1.0,
-          "timestamp": 1787390000
-        }
-      ]
-    },
-    {
-      "type": "instance-of",
-      "entityA": "piece-black-bishop-2-7",
-      "entityB": "category.chess.piece",
-      "directed": true,
-      "weight": 1.0,
-      "events": [
-        {
-          "description": "instance-of",
-          "deltaWeight": 1.0,
-          "timestamp": 1787390000
-        }
-      ]
-    },
-    {
-      "type": "instance-of",
-      "entityA": "piece-black-queen-3-7",
-      "entityB": "category.chess.piece",
-      "directed": true,
-      "weight": 1.0,
-      "events": [
-        {
-          "description": "instance-of",
-          "deltaWeight": 1.0,
-          "timestamp": 1787390000
-        }
-      ]
-    },
-    {
-      "type": "instance-of",
-      "entityA": "piece-black-king-4-7",
-      "entityB": "category.chess.piece",
-      "directed": true,
-      "weight": 1.0,
-      "events": [
-        {
-          "description": "instance-of",
-          "deltaWeight": 1.0,
-          "timestamp": 1787390000
-        }
-      ]
-    },
-    {
-      "type": "instance-of",
-      "entityA": "piece-black-bishop-5-7",
-      "entityB": "category.chess.piece",
-      "directed": true,
-      "weight": 1.0,
-      "events": [
-        {
-          "description": "instance-of",
-          "deltaWeight": 1.0,
-          "timestamp": 1787390000
-        }
-      ]
-    },
-    {
-      "type": "instance-of",
-      "entityA": "piece-black-knight-6-7",
-      "entityB": "category.chess.piece",
-      "directed": true,
-      "weight": 1.0,
-      "events": [
-        {
-          "description": "instance-of",
-          "deltaWeight": 1.0,
-          "timestamp": 1787390000
-        }
-      ]
-    },
-    {
-      "type": "instance-of",
-      "entityA": "piece-black-rook-7-7",
-      "entityB": "category.chess.piece",
-      "directed": true,
-      "weight": 1.0,
-      "events": [
-        {
-          "description": "instance-of",
-          "deltaWeight": 1.0,
-          "timestamp": 1787390000
-        }
-      ]
-    },
-    {
-      "type": "instance-of",
-      "entityA": "piece-white-pawn-0-1",
-      "entityB": "category.chess.piece",
-      "directed": true,
-      "weight": 1.0,
-      "events": [
-        {
-          "description": "instance-of",
-          "deltaWeight": 1.0,
-          "timestamp": 1787390000
-        }
-      ]
-    },
-    {
-      "type": "instance-of",
-      "entityA": "piece-black-pawn-0-6",
-      "entityB": "category.chess.piece",
-      "directed": true,
-      "weight": 1.0,
-      "events": [
-        {
-          "description": "instance-of",
-          "deltaWeight": 1.0,
-          "timestamp": 1787390000
-        }
-      ]
-    },
-    {
-      "type": "instance-of",
-      "entityA": "piece-white-pawn-1-1",
-      "entityB": "category.chess.piece",
-      "directed": true,
-      "weight": 1.0,
-      "events": [
-        {
-          "description": "instance-of",
-          "deltaWeight": 1.0,
-          "timestamp": 1787390000
-        }
-      ]
-    },
-    {
-      "type": "instance-of",
-      "entityA": "piece-black-pawn-1-6",
-      "entityB": "category.chess.piece",
-      "directed": true,
-      "weight": 1.0,
-      "events": [
-        {
-          "description": "instance-of",
-          "deltaWeight": 1.0,
-          "timestamp": 1787390000
-        }
-      ]
-    },
-    {
-      "type": "instance-of",
-      "entityA": "piece-white-pawn-2-1",
-      "entityB": "category.chess.piece",
-      "directed": true,
-      "weight": 1.0,
-      "events": [
-        {
-          "description": "instance-of",
-          "deltaWeight": 1.0,
-          "timestamp": 1787390000
-        }
-      ]
-    },
-    {
-      "type": "instance-of",
-      "entityA": "piece-black-pawn-2-6",
-      "entityB": "category.chess.piece",
-      "directed": true,
-      "weight": 1.0,
-      "events": [
-        {
-          "description": "instance-of",
-          "deltaWeight": 1.0,
-          "timestamp": 1787390000
-        }
-      ]
-    },
-    {
-      "type": "instance-of",
-      "entityA": "piece-white-pawn-3-1",
-      "entityB": "category.chess.piece",
-      "directed": true,
-      "weight": 1.0,
-      "events": [
-        {
-          "description": "instance-of",
-          "deltaWeight": 1.0,
-          "timestamp": 1787390000
-        }
-      ]
-    },
-    {
-      "type": "instance-of",
-      "entityA": "piece-black-pawn-3-6",
-      "entityB": "category.chess.piece",
-      "directed": true,
-      "weight": 1.0,
-      "events": [
-        {
-          "description": "instance-of",
-          "deltaWeight": 1.0,
-          "timestamp": 1787390000
-        }
-      ]
-    },
-    {
-      "type": "instance-of",
-      "entityA": "piece-white-pawn-4-1",
-      "entityB": "category.chess.piece",
-      "directed": true,
-      "weight": 1.0,
-      "events": [
-        {
-          "description": "instance-of",
-          "deltaWeight": 1.0,
-          "timestamp": 1787390000
-        }
-      ]
-    },
-    {
-      "type": "instance-of",
-      "entityA": "piece-black-pawn-4-6",
-      "entityB": "category.chess.piece",
-      "directed": true,
-      "weight": 1.0,
-      "events": [
-        {
-          "description": "instance-of",
-          "deltaWeight": 1.0,
-          "timestamp": 1787390000
-        }
-      ]
-    },
-    {
-      "type": "instance-of",
-      "entityA": "piece-white-pawn-5-1",
-      "entityB": "category.chess.piece",
-      "directed": true,
-      "weight": 1.0,
-      "events": [
-        {
-          "description": "instance-of",
-          "deltaWeight": 1.0,
-          "timestamp": 1787390000
-        }
-      ]
-    },
-    {
-      "type": "instance-of",
-      "entityA": "piece-black-pawn-5-6",
-      "entityB": "category.chess.piece",
-      "directed": true,
-      "weight": 1.0,
-      "events": [
-        {
-          "description": "instance-of",
-          "deltaWeight": 1.0,
-          "timestamp": 1787390000
-        }
-      ]
-    },
-    {
-      "type": "instance-of",
-      "entityA": "piece-white-pawn-6-1",
-      "entityB": "category.chess.piece",
-      "directed": true,
-      "weight": 1.0,
-      "events": [
-        {
-          "description": "instance-of",
-          "deltaWeight": 1.0,
-          "timestamp": 1787390000
-        }
-      ]
-    },
-    {
-      "type": "instance-of",
-      "entityA": "piece-black-pawn-6-6",
-      "entityB": "category.chess.piece",
-      "directed": true,
-      "weight": 1.0,
-      "events": [
-        {
-          "description": "instance-of",
-          "deltaWeight": 1.0,
-          "timestamp": 1787390000
-        }
-      ]
-    },
-    {
-      "type": "instance-of",
-      "entityA": "piece-white-pawn-7-1",
-      "entityB": "category.chess.piece",
-      "directed": true,
-      "weight": 1.0,
-      "events": [
-        {
-          "description": "instance-of",
-          "deltaWeight": 1.0,
-          "timestamp": 1787390000
-        }
-      ]
-    },
-    {
-      "type": "instance-of",
-      "entityA": "piece-black-pawn-7-6",
-      "entityB": "category.chess.piece",
-      "directed": true,
-      "weight": 1.0,
-      "events": [
-        {
-          "description": "instance-of",
-          "deltaWeight": 1.0,
-          "timestamp": 1787390000
-        }
-      ]
-    },
-    {
-      "type": "instance-of",
-      "entityA": "object.chess.seat.white",
-      "entityB": "category.chess.player",
-      "directed": true,
-      "weight": 1.0,
-      "events": [
-        {
-          "description": "instance-of",
-          "deltaWeight": 1.0,
-          "timestamp": 1787390000
-        }
-      ]
-    },
-    {
-      "type": "instance-of",
-      "entityA": "object.chess.seat.black",
-      "entityB": "category.chess.player",
-      "directed": true,
-      "weight": 1.0,
-      "events": [
-        {
-          "description": "instance-of",
-          "deltaWeight": 1.0,
-          "timestamp": 1787390000
-        }
-      ]
-    },
-    {
-      "type": "instance-of",
-      "entityA": "hud.chess.promo.queen",
-      "entityB": "category.control.button",
-      "directed": true,
-      "weight": 1.0,
-      "events": [
-        {
-          "description": "instance-of",
-          "deltaWeight": 1.0,
-          "timestamp": 1787390000
-        }
-      ]
-    },
-    {
-      "type": "instance-of",
-      "entityA": "hud.chess.promo.knight",
-      "entityB": "category.control.button",
-      "directed": true,
-      "weight": 1.0,
-      "events": [
-        {
-          "description": "instance-of",
-          "deltaWeight": 1.0,
-          "timestamp": 1787390000
-        }
-      ]
-    },
-    {
-      "type": "instance-of",
-      "entityA": "hud.chess.promo.rook",
-      "entityB": "category.control.button",
-      "directed": true,
-      "weight": 1.0,
-      "events": [
-        {
-          "description": "instance-of",
-          "deltaWeight": 1.0,
-          "timestamp": 1787390000
-        }
-      ]
-    },
-    {
-      "type": "instance-of",
-      "entityA": "hud.chess.promo.bishop",
-      "entityB": "category.control.button",
-      "directed": true,
-      "weight": 1.0,
-      "events": [
-        {
-          "description": "instance-of",
-          "deltaWeight": 1.0,
-          "timestamp": 1787390000
-        }
-      ]
-    }
-  ]
+  }
 }

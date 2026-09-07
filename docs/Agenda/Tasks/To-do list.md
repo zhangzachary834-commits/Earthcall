@@ -87,6 +87,7 @@ Addendum: Also ensure save system works in every case and everything that needs 
 - **`maxChainRounds` is a default, not a ceiling** — serialized, settable, unclamped on load (`Law.cpp:2360`); clamp it or promote it to `constexpr`, since `ALGORITHMS_AS_LAW.md` and `INTELLECTUAL_LINEAGE.md` both cite it as constitutional. → [`INTELLECTUAL_LINEAGE_VERIFICATION_2026-09-03.md`](../../audits/INTELLECTUAL_LINEAGE_VERIFICATION_2026-09-03.md) §2
 - **`kMaxBirthsPerTick` — nothing bounds creation** — a `Create` in a `WhileTrue` mints beings forever; no rate limit, object cap, or birth budget exists anywhere in `ZonesOfEarth/`. Bounded time with unbounded creation is still Babel. → same audit §2b
 - **Law provenance beyond the text log** — `LawAuditLogger` is a capped façade over `Logger`; the replayable chain of laws and facts behind any state change is unbuilt, and the largest authored world is still only 43 laws. → same audit §7
+- Add NOT operator for condition nodes and action nodes if we don't have that already. We want everything in formal logic. - Zach
 
 ### Person-facing surface
 - Make `Key` and `KeyBind` `Singular`s and integrate into Earthcall. *(Person Interface programme — near-term 7. `KeyboardHandler`'s ten `setup*Bindings()` presets are dead scaffolding with empty callbacks and no caller; delete rather than fix.)*

@@ -5,7 +5,7 @@
       "interaction-channel": true,
       "locomotion-channel": true,
       "physics-acoustics": true,
-      "physics-gravity": true,
+      "physics-gravity": false,
       "physics-kinematics": true,
       "shape-generator-3d-law": false,
       "tool-create-3d-law": false
