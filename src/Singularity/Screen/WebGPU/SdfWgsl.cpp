@@ -292,8 +292,7 @@ std::string wgslLiteral(double v) {
     std::snprintf(buf, sizeof(buf), "%.9g", v);
     std::string s = buf;
     // WGSL needs a decimal point or exponent to read a literal as f32.
-    if (s.find('.') == std::string::npos && s.find('e') == std::string::npos &&
-        s.find('E') == std::string::npos) {
+    if (s.find_first_of(".eE") == std::string::npos) {
         s += ".0";
     }
     return s;
