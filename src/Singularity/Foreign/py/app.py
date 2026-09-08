@@ -22,11 +22,14 @@ load_dotenv()
 app = Flask(__name__, static_folder='static', template_folder='templates')
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or secrets.token_hex(32)
 
+# Configure allowed origins
+allowed_origins = os.environ.get('CORS_ALLOWED_ORIGINS', 'http://localhost:5005,http://127.0.0.1:5005').split(',')
+
 # Apply CORS (Cross-Origin Resource Sharing)
-CORS(app)
+CORS(app, origins=allowed_origins)
 
 # Initialize SocketIO
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
+socketio = SocketIO(app, cors_allowed_origins=allowed_origins, async_mode='threading')
 
 # Initialize C++ Engine Bridge (WebSocket client to C++ Engine on port 8080)
 from bridge import CppBridge
